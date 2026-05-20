@@ -14,7 +14,7 @@ function App() {
 
   return (
     <div>
-      LMS Platform
+      Frontend Connected
     </div>
   );
 }
