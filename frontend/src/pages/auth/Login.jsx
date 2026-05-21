@@ -58,7 +58,10 @@ function Login() {
       }
 
     };
+  const registerRedirect = () => {
 
+    navigate("/register");      
+  }
   return (
 
     <div>
@@ -84,6 +87,12 @@ function Login() {
             : "Send OTP"
         }
 
+      </button>
+      <button
+        onClick={registerRedirect}
+      >
+
+        Create New Account
       </button>
 
     </div>

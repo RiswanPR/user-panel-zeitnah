@@ -1,6 +1,7 @@
 import {
   IsEmail,
   IsString,
+  IsOptional,
 } from 'class-validator';
 
 export class RegisterVerifyOtpDto {
@@ -13,5 +14,14 @@ export class RegisterVerifyOtpDto {
 
   @IsString()
   otp!: string;
+
+  @IsString()
+  deviceId!: string;
+
+  @IsString()
+  deviceType!: string;
+
+  @IsOptional()
+  forceLogin?: boolean;
 
 }

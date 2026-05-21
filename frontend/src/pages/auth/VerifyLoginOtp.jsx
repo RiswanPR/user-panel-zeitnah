@@ -64,29 +64,61 @@ function VerifyOtp() {
   }, [timer]);
 
   // VERIFY OTP
-  const handleVerifyOtp =
-    async () => {
+const handleVerifyOtp =
+  async () => {
 
-      try {
+    try {
 
-        setLoading(true);
+      setLoading(true);
 
-        const email =
-          localStorage.getItem(
-            "login_email"
+      const email =
+        localStorage.getItem(
+          "login_email"
+        );
+
+      // DEVICE ID
+      const deviceId =
+        await getDeviceId();
+
+      // DEVICE TYPE
+      const deviceType =
+        isMobile
+          ? "mobile"
+          : "desktop";
+
+      // FIRST LOGIN ATTEMPT
+      let res =
+        await api.post(
+          "/auth/login/verify-otp",
+          {
+            email,
+            otp,
+            deviceId,
+            deviceType,
+          }
+        );
+
+      // DEVICE REPLACEMENT
+      if (
+        res.data.replaceDevice
+      ) {
+
+        const confirmReplace =
+          window.confirm(
+            res.data.message
           );
 
-        // DEVICE ID
-        const deviceId =
-          await getDeviceId();
+        // USER CANCELLED
+        if (!confirmReplace) {
 
-        // DEVICE TYPE
-        const deviceType =
-          isMobile
-            ? "mobile"
-            : "desktop";
+          setLoading(false);
 
-        const res =
+          return;
+
+        }
+
+        // FORCE LOGIN
+        res =
           await api.post(
             "/auth/login/verify-otp",
             {
@@ -94,38 +126,43 @@ function VerifyOtp() {
               otp,
               deviceId,
               deviceType,
+              forceLogin: true,
             }
           );
 
-        localStorage.setItem(
-          "token",
-          res.data.token
-        );
-
-        setUser(res.data.user);
-
-        localStorage.removeItem(
-          "login_email"
-        );
-
-        alert("Login Successful");
-
-        navigate("/");
-
-      } catch (error) {
-
-        alert(
-          error.response?.data?.message
-        );
-
-      } finally {
-
-        setLoading(false);
-
       }
 
-    };
+      // SAVE TOKEN
+      localStorage.setItem(
+        "token",
+        res.data.token
+      );
 
+      setUser(res.data.user);
+
+      localStorage.removeItem(
+        "login_email"
+      );
+
+      alert(
+        "Login Successful"
+      );
+
+      navigate("/");
+
+    } catch (error) {
+
+      alert(
+        error.response?.data?.message
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  };
   // RESEND OTP
   const handleResendOtp =
     async () => {

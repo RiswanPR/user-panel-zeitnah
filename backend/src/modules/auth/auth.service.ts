@@ -64,6 +64,8 @@ export class AuthService {
       otp: hashedOtp,
 
       otpExpiry,
+
+      isVerified: false,
     });
 
     try {
@@ -105,63 +107,179 @@ export class AuthService {
   // ==================================================
   // REGISTER VERIFY OTP
   // ==================================================
+async registerVerifyOtp(
+  data: RegisterVerifyOtpDto,
+) {
 
-  async registerVerifyOtp(data: RegisterVerifyOtpDto) {
-    const user = await this.userModel.findOne({
+  const user =
+    await this.userModel.findOne({
       email: data.email,
     });
 
-    if (!user) {
-      throw new UnauthorizedException('User not found');
+  if (!user) {
+
+    throw new UnauthorizedException(
+      'User not found',
+    );
+
+  }
+
+  // CHECK OTP EXPIRY
+  if (
+    !user.otpExpiry ||
+    new Date() > user.otpExpiry
+  ) {
+
+    throw new UnauthorizedException(
+      'OTP expired',
+    );
+
+  }
+
+  // CHECK OTP EXISTS
+  if (!user.otp) {
+
+    throw new UnauthorizedException(
+      'OTP not found',
+    );
+
+  }
+
+  // VERIFY OTP
+  const isOtpValid =
+    await bcrypt.compare(
+      data.otp,
+      user.otp,
+    );
+
+  if (!isOtpValid) {
+
+    throw new UnauthorizedException(
+      'Invalid OTP',
+    );
+
+  }
+
+  // =========================
+  // DEVICE LIMIT SYSTEM
+  // =========================
+
+  const existingDevice =
+    user.devices.find(
+      (device) =>
+        device.deviceId ===
+        data.deviceId
+    );
+
+  // NEW DEVICE
+  if (!existingDevice) {
+
+    // CHECK SAME DEVICE TYPE
+    const sameTypeDevice =
+      user.devices.find(
+        (device) =>
+          device.deviceType ===
+          data.deviceType
+      );
+
+    // ASK REPLACEMENT
+    if (sameTypeDevice) {
+
+      if (!data.forceLogin) {
+
+        return {
+
+          replaceDevice: true,
+
+          message:
+            `Another ${data.deviceType} device is already logged in`,
+
+        };
+
+      }
+
+      // REMOVE OLD DEVICE
+      user.devices =
+        user.devices.filter(
+          (device) =>
+            device.deviceType !==
+            data.deviceType
+        );
+
     }
 
-    // Check OTP Expiry
-    if (!user.otpExpiry || new Date() > user.otpExpiry) {
-      throw new UnauthorizedException('OTP expired');
+    // MAX 2 DEVICES
+    if (
+      user.devices.length >= 2
+    ) {
+
+      throw new UnauthorizedException(
+        'Device limit exceeded',
+      );
+
     }
 
-    // Check OTP Exists
-    if (!user.otp) {
-      throw new UnauthorizedException('OTP not found');
-    }
+    // ADD DEVICE
+    user.devices.push({
 
-    // Compare OTP
-    const isOtpValid = await bcrypt.compare(data.otp, user.otp);
+      deviceId:
+        data.deviceId,
 
-    if (!isOtpValid) {
-      throw new UnauthorizedException('Invalid OTP');
-    }
+      deviceType:
+        data.deviceType,
 
-    // Clear OTP
-    user.otp = null;
-    user.otpExpiry = null;
+    });
 
-    await user.save();
+  }
 
-    // Generate JWT
-    const token = this.jwtService.sign({
+  // CLEAR OTP
+  user.otp = null;
+
+  user.otpExpiry = null;
+
+  // DEFAULT VERIFICATION STATUS
+  user.isVerified = false;
+
+  await user.save();
+
+  // GENERATE JWT
+  const token =
+    this.jwtService.sign({
+
       userId: user._id,
 
       role: user.role,
+
+      deviceId:
+        data.deviceId,
+
     });
 
-    return {
-      message: 'Registration successful',
+  return {
 
-      token,
+    message:
+      'Registration successful',
 
-      user: {
-        id: user._id,
+    token,
 
-        name: user.name,
+    user: {
 
-        email: user.email,
+      id: user._id,
 
-        role: user.role,
-      },
-    };
-  }
+      name: user.name,
 
+      email: user.email,
+
+      role: user.role,
+
+      userVerification:
+        user.isVerified,
+
+    },
+
+  };
+
+}
   // ==================================================
   // LOGIN SEND OTP
   // ==================================================
@@ -227,154 +345,105 @@ export class AuthService {
   // ==================================================
   // LOGIN VERIFY OTP
   // ==================================================
-async loginVerifyOtp(
-  data: LoginVerifyOtpDto,
-) {
-
-  const user =
-    await this.userModel.findOne({
+  async loginVerifyOtp(data: LoginVerifyOtpDto) {
+    const user = await this.userModel.findOne({
       email: data.email,
     });
 
-  if (!user) {
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
 
-    throw new UnauthorizedException(
-      'User not found',
+    // OTP Expiry
+    if (!user.otpExpiry || new Date() > user.otpExpiry) {
+      throw new UnauthorizedException('OTP expired');
+    }
+
+    // OTP Exists
+    if (!user.otp) {
+      throw new UnauthorizedException('OTP not found');
+    }
+
+    // Compare OTP
+    const isOtpValid = await bcrypt.compare(data.otp, user.otp);
+
+    if (!isOtpValid) {
+      throw new UnauthorizedException('Invalid OTP');
+    } // =========================
+    // DEVICE LIMIT SYSTEM
+    // =========================
+
+    const existingDevice = user.devices.find(
+      (device) => device.deviceId === data.deviceId,
     );
 
-  }
+    // NEW DEVICE
+    if (!existingDevice) {
+      // CHECK SAME DEVICE TYPE
+      const sameTypeDevice = user.devices.find(
+        (device) => device.deviceType === data.deviceType,
+      );
 
-  // OTP Expiry
-  if (
-    !user.otpExpiry ||
-    new Date() > user.otpExpiry
-  ) {
+      // SAME TYPE DEVICE EXISTS
+      if (sameTypeDevice) {
+        // ASK REPLACE DEVICE
+        if (!data.forceLogin) {
+          return {
+            replaceDevice: true,
 
-    throw new UnauthorizedException(
-      'OTP expired',
-    );
+            message: `Another ${data.deviceType} device is already logged in`,
+          };
+        }
 
-  }
+        // REMOVE OLD DEVICE
+        user.devices = user.devices.filter(
+          (device) => device.deviceType !== data.deviceType,
+        );
+      }
 
-  // OTP Exists
-  if (!user.otp) {
+      // MAX TOTAL DEVICES
+      if (user.devices.length >= 2) {
+        throw new UnauthorizedException('Device limit exceeded');
+      }
 
-    throw new UnauthorizedException(
-      'OTP not found',
-    );
+      // ADD NEW DEVICE
+      user.devices.push({
+        deviceId: data.deviceId,
 
-  }
+        deviceType: data.deviceType,
+      });
+    }
+    // =========================
+    // GENERATE JWT
+    // =========================
 
-  // Compare OTP
-  const isOtpValid =
-    await bcrypt.compare(
-      data.otp,
-      user.otp,
-    );
-
-  if (!isOtpValid) {
-
-    throw new UnauthorizedException(
-      'Invalid OTP',
-    );
-
-  }
-// =========================
-// DEVICE LIMIT SYSTEM
-// =========================
-
-const existingDevice =
-  user.devices.find(
-    (device) =>
-      device.deviceId ===
-      data.deviceId
-  );
-
-// NEW DEVICE
-if (!existingDevice) {
-
-  // CHECK SAME DEVICE TYPE
-  const sameTypeDevice =
-    user.devices.find(
-      (device) =>
-        device.deviceType ===
-        data.deviceType
-    );
-
-  // BLOCK SAME DEVICE TYPE
-  if (sameTypeDevice) {
-
-    throw new UnauthorizedException(
-
-      `Only one ${data.deviceType} device allowed`
-
-    );
-
-  }
-
-  // MAX 2 DEVICES
-  if (
-    user.devices.length >= 2
-  ) {
-
-    throw new UnauthorizedException(
-      'Device limit exceeded',
-    );
-
-  }
-
-  // ADD DEVICE
-  user.devices.push({
-
-    deviceId:
-      data.deviceId,
-
-    deviceType:
-      data.deviceType,
-
-  });
-
-}
-  // =========================
-  // GENERATE JWT
-  // =========================
-
-  const token =
-    this.jwtService.sign({
-
+    const token = this.jwtService.sign({
       userId: user._id,
 
       role: user.role,
 
+      deviceId: data.deviceId,
     });
+    // Clear OTP
+    user.otp = null;
+    user.otpExpiry = null;
 
-  // Clear OTP
-  user.otp = null;
-  user.otpExpiry = null;
+    await user.save();
 
-  await user.save();
+    return {
+      message: 'Login successful',
 
-  return {
+      token,
 
-    message:
-      'Login successful',
+      user: {
+        id: user._id,
 
-    token,
+        name: user.name,
 
-    user: {
+        email: user.email,
 
-      id: user._id,
-
-      name: user.name,
-
-      email: user.email,
-
-      role: user.role,
-
-    },
-
-  };
-
-}
-
+        role: user.role,
+      },
+    };
+  }
 }

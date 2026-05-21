@@ -3,6 +3,8 @@ import {
   IsNotEmpty,
   IsString,
   Length,
+  IsOptional,
+  IsBoolean,
 } from 'class-validator';
 
 import { Transform }
@@ -40,5 +42,11 @@ export class LoginVerifyOtpDto {
   @IsString()
 
   deviceType!: string;
+
+  @IsOptional()
+
+  @IsBoolean()
+
+  forceLogin?: boolean;
 
 }
