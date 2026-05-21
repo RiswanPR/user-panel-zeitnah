@@ -17,32 +17,43 @@ function Login() {
   const navigate =
     useNavigate();
 
+  const [loading, setLoading] =
+    useState(false);
+
   const handleSendOtp =
     async () => {
 
       try {
 
+        setLoading(true);
+
         await api.post(
-          "/auth/send-otp",
+          "/auth/login/send-otp",
           {
             email,
           }
         );
 
         localStorage.setItem(
-          "email",
+          "login_email",
           email
         );
 
         alert("OTP Sent");
 
-        navigate("/verify-otp");
+        navigate(
+          "/verify-login-otp"
+        );
 
       } catch (error) {
 
         alert(
-          error.response.data.message
+          error.response?.data?.message
         );
+
+      } finally {
+
+        setLoading(false);
 
       }
 
@@ -64,8 +75,15 @@ function Login() {
 
       <button
         onClick={handleSendOtp}
+        disabled={loading}
       >
-        Send OTP
+
+        {
+          loading
+            ? "Sending OTP..."
+            : "Send OTP"
+        }
+
       </button>
 
     </div>

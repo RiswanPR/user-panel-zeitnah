@@ -1,12 +1,14 @@
 import {
   IsEmail,
   IsNotEmpty,
+  IsString,
+  Length,
 } from 'class-validator';
 
 import { Transform }
 from 'class-transformer';
 
-export class SendOtpDto {
+export class LoginVerifyOtpDto {
 
   @IsNotEmpty()
 
@@ -18,5 +20,13 @@ export class SendOtpDto {
   )
 
   email!: string;
+
+  @IsNotEmpty()
+
+  @IsString()
+
+  @Length(6, 6)
+
+  otp!: string;
 
 }

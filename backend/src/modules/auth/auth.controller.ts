@@ -12,11 +12,17 @@ import { Request } from 'express';
 import { AuthService }
 from './auth.service';
 
-import { SendOtpDto }
-from './dto/send-otp.dto';
+import { LoginSendOtpDto }
+from './dto/login-send-otp.dto';
 
-import { VerifyOtpDto }
-from './dto/verify-otp.dto';
+import { LoginVerifyOtpDto }
+from './dto/login-verify-otp.dto';
+
+import { RegisterSendOtpDto }
+from './dto/register-send-otp.dto';
+
+import { RegisterVerifyOtpDto }
+from './dto/register-verify-otp.dto';
 
 import { JwtAuthGuard }
 from '../../common/guards/jwt-auth.guard';
@@ -35,45 +41,83 @@ export class AuthController {
   test() {
 
     return {
+
       success: true,
 
       message:
         'Backend Connected Successfully',
+
     };
 
   }
 
-  // SEND OTP
-  @Post('send-otp')
+  // =========================
+  // REGISTER
+  // =========================
 
-  async sendOtp(
-    @Body() body: SendOtpDto,
+  @Post('register/send-otp')
+
+  async registerSendOtp(
+    @Body()
+    body: RegisterSendOtpDto,
   ) {
 
     return await this.authService
-      .sendOtp(body.email);
+      .registerSendOtp(body);
 
   }
 
-  // VERIFY OTP
-  @Post('verify-otp')
+  @Post('register/verify-otp')
 
-  async verifyOtp(
-    @Body() body: VerifyOtpDto,
+  async registerVerifyOtp(
+    @Body()
+    body: RegisterVerifyOtpDto,
   ) {
 
     return await this.authService
-      .verifyOtp(body);
+      .registerVerifyOtp(body);
 
   }
 
-  // GET CURRENT USER
+  // =========================
+  // LOGIN
+  // =========================
+
+  @Post('login/send-otp')
+
+  async loginSendOtp(
+    @Body()
+    body: LoginSendOtpDto,
+  ) {
+
+    return await this.authService
+      .loginSendOtp(body.email);
+
+  }
+
+  @Post('login/verify-otp')
+
+  async loginVerifyOtp(
+    @Body()
+    body: LoginVerifyOtpDto,
+  ) {
+
+    return await this.authService
+      .loginVerifyOtp(body);
+
+  }
+
+  // =========================
+  // CURRENT USER
+  // =========================
+
   @UseGuards(JwtAuthGuard)
 
   @Get('me')
 
   getMe(
-    @Req() req: Request & {
+    @Req()
+    req: Request & {
       user: any;
     },
   ) {

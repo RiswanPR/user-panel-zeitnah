@@ -9,11 +9,10 @@ const logout = () => {
 };
 function Home() {
   const { user } = useContext(AuthContext);
-
+  
   return (
     <div>
-      <h1>Welcome {user?.userId}</h1>
-
+      <h1>Welcome {user?.name}</h1>
       <button onClick={logout}>Logout</button>
     </div>
   );

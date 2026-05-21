@@ -18,9 +18,11 @@ import { resend } from '../../config/resend.config';
 
 import { User, UserDocument } from './schemas/user.schema';
 
-import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { LoginVerifyOtpDto } from './dto/login-verify-otp.dto';
 
+import { RegisterSendOtpDto } from './dto/register-send-otp.dto';
 
+import { RegisterVerifyOtpDto } from './dto/register-verify-otp.dto';
 
 @Injectable()
 export class AuthService {
@@ -31,30 +33,38 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  // SEND OTP
-  async sendOtp(email: string) {
-    const user = await this.userModel.findOne({
-      email,
+  // ==================================================
+  // REGISTER SEND OTP
+  // ==================================================
+
+  async registerSendOtp(data: RegisterSendOtpDto) {
+    const existingUser = await this.userModel.findOne({
+      email: data.email,
     });
 
-    if (!user) {
-      throw new UnauthorizedException('User not found');
+    if (existingUser) {
+      throw new BadRequestException('Email already registered');
     }
 
-    // Generate Secure OTP
+    // Generate OTP
     const otp = crypto.randomInt(100000, 999999).toString();
 
     // Hash OTP
     const hashedOtp = await bcrypt.hash(otp, 10);
 
-    // OTP Expiry = 5 Minutes
+    // Expiry
     const otpExpiry = new Date(Date.now() + 3 * 60 * 1000);
 
-    // Save OTP
-    user.otp = hashedOtp;
-    user.otpExpiry = otpExpiry;
+    // Create temporary user
+    const user = await this.userModel.create({
+      name: data.name,
 
-    await user.save();
+      email: data.email,
+
+      otp: hashedOtp,
+
+      otpExpiry,
+    });
 
     try {
       await resend.emails.send({
@@ -62,33 +72,41 @@ export class AuthService {
           process.env.RESEND_FROM_EMAIL ||
           'LMS Platform <onboarding@resend.dev>',
 
-        to: email,
+        to: data.email,
 
-        subject: 'Your OTP Code',
+        subject: 'Registration OTP',
 
         html: `
           <div style="font-family:sans-serif">
-            <h2>Your OTP Code</h2>
+
+            <h2>Registration OTP</h2>
 
             <h1>${otp}</h1>
 
             <p>
-              OTP valid for 5 minutes
+              OTP valid for 3 minutes
             </p>
+
           </div>
         `,
       });
+      console.log(`OTP for ${data.email}: ${otp}`);
     } catch (error) {
       throw new BadRequestException('Failed to send OTP email');
     }
 
     return {
       message: 'OTP sent successfully',
+
+      email: data.email,
     };
   }
 
-  // VERIFY OTP
-  async verifyOtp(data: VerifyOtpDto) {
+  // ==================================================
+  // REGISTER VERIFY OTP
+  // ==================================================
+
+  async registerVerifyOtp(data: RegisterVerifyOtpDto) {
     const user = await this.userModel.findOne({
       email: data.email,
     });
@@ -102,17 +120,141 @@ export class AuthService {
       throw new UnauthorizedException('OTP expired');
     }
 
-    // Compare OTP
+    // Check OTP Exists
     if (!user.otp) {
       throw new UnauthorizedException('OTP not found');
     }
 
+    // Compare OTP
     const isOtpValid = await bcrypt.compare(data.otp, user.otp);
+
     if (!isOtpValid) {
       throw new UnauthorizedException('Invalid OTP');
     }
 
-    // Generate JWT Token
+    // Clear OTP
+    user.otp = null;
+    user.otpExpiry = null;
+
+    await user.save();
+
+    // Generate JWT
+    const token = this.jwtService.sign({
+      userId: user._id,
+
+      role: user.role,
+    });
+
+    return {
+      message: 'Registration successful',
+
+      token,
+
+      user: {
+        id: user._id,
+
+        name: user.name,
+
+        email: user.email,
+
+        role: user.role,
+      },
+    };
+  }
+
+  // ==================================================
+  // LOGIN SEND OTP
+  // ==================================================
+
+  async loginSendOtp(email: string) {
+    const user = await this.userModel.findOne({
+      email,
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Generate OTP
+    const otp = crypto.randomInt(100000, 999999).toString();
+
+    // Hash OTP
+    const hashedOtp = await bcrypt.hash(otp, 10);
+
+    // Expiry
+    const otpExpiry = new Date(Date.now() + 3 * 60 * 1000);
+
+    // Save OTP
+    user.otp = hashedOtp;
+
+    user.otpExpiry = otpExpiry;
+
+    await user.save();
+
+    try {
+      await resend.emails.send({
+        from:
+          process.env.RESEND_FROM_EMAIL ||
+          'LMS Platform <onboarding@resend.dev>',
+
+        to: email,
+
+        subject: 'Login OTP',
+
+        html: `
+          <div style="font-family:sans-serif">
+
+            <h2>Your Login OTP</h2>
+
+            <h1>${otp}</h1>
+
+            <p>
+              OTP valid for 3 minutes
+            </p>
+
+          </div>
+        `,
+      });
+    } catch (error) {
+      throw new BadRequestException('Failed to send OTP email');
+    }
+
+    return {
+      message: 'OTP sent successfully',
+    };
+  }
+
+  // ==================================================
+  // LOGIN VERIFY OTP
+  // ==================================================
+
+  async loginVerifyOtp(data: LoginVerifyOtpDto) {
+    const user = await this.userModel.findOne({
+      email: data.email,
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Check OTP Expiry
+    if (!user.otpExpiry || new Date() > user.otpExpiry) {
+      throw new UnauthorizedException('OTP expired');
+    }
+
+    // Check OTP Exists
+    if (!user.otp) {
+      throw new UnauthorizedException('OTP not found');
+    }
+
+    // Compare OTP
+    const isOtpValid = await bcrypt.compare(data.otp, user.otp);
+
+    if (!isOtpValid) {
+      throw new UnauthorizedException('Invalid OTP');
+    }
+
+    // Generate JWT
     const token = this.jwtService.sign({
       userId: user._id,
 
@@ -121,6 +263,7 @@ export class AuthService {
 
     // Clear OTP
     user.otp = null;
+
     user.otpExpiry = null;
 
     await user.save();

@@ -1,6 +1,6 @@
 import {
-  useState,
   useContext,
+  useState,
 } from "react";
 
 import api
@@ -14,7 +14,10 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-function VerifyOtp() {
+function VerifyRegisterOtp() {
+
+  const navigate =
+    useNavigate();
 
   const { setUser } =
     useContext(AuthContext);
@@ -25,25 +28,30 @@ function VerifyOtp() {
   const [loading, setLoading] =
     useState(false);
 
-  const navigate =
-    useNavigate();
-
   const handleVerifyOtp =
-    async () => {
+    async (e) => {
+
+      e.preventDefault();
 
       try {
 
         setLoading(true);
 
+        const name =
+          localStorage.getItem(
+            "register_name"
+          );
+
         const email =
           localStorage.getItem(
-            "login_email"
+            "register_email"
           );
 
         const res =
           await api.post(
-            "/auth/login/verify-otp",
+            "/auth/register/verify-otp",
             {
+              name,
               email,
               otp,
             }
@@ -57,10 +65,16 @@ function VerifyOtp() {
         setUser(res.data.user);
 
         localStorage.removeItem(
-          "login_email"
+          "register_name"
         );
 
-        alert("Login Successful");
+        localStorage.removeItem(
+          "register_email"
+        );
+
+        alert(
+          "Registration Successful"
+        );
 
         navigate("/");
 
@@ -102,8 +116,12 @@ function VerifyOtp() {
 
           <div className="bg-white py-8 px-4 sm:shadow sm:rounded-lg sm:px-10 sm:border sm:border-gray-200">
 
-            <div className="space-y-6">
+            <form
+              className="space-y-6"
+              onSubmit={handleVerifyOtp}
+            >
 
+              {/* OTP Input */}
               <div>
 
                 <label className="block text-sm font-medium text-gray-700">
@@ -114,10 +132,12 @@ function VerifyOtp() {
 
                   <input
                     type="text"
-                    placeholder="Enter OTP"
+                    value={otp}
                     onChange={(e) =>
                       setOtp(e.target.value)
                     }
+                    required
+                    placeholder="Enter OTP"
                     className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-black focus:border-black sm:text-sm"
                   />
 
@@ -125,8 +145,9 @@ function VerifyOtp() {
 
               </div>
 
+              {/* Button */}
               <button
-                onClick={handleVerifyOtp}
+                type="submit"
                 disabled={loading}
                 className="w-full flex justify-center py-2 px-4 rounded-md text-sm font-medium text-white bg-black hover:bg-gray-800"
               >
@@ -139,7 +160,7 @@ function VerifyOtp() {
 
               </button>
 
-            </div>
+            </form>
 
           </div>
 
@@ -153,4 +174,4 @@ function VerifyOtp() {
 
 }
 
-export default VerifyOtp;
+export default VerifyRegisterOtp;
