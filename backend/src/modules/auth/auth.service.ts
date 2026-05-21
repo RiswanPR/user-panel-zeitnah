@@ -23,13 +23,14 @@ import { LoginVerifyOtpDto } from './dto/login-verify-otp.dto';
 import { RegisterSendOtpDto } from './dto/register-send-otp.dto';
 
 import { RegisterVerifyOtpDto } from './dto/register-verify-otp.dto';
+import { LoginHistoryService } from '../login-history/login-history.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectModel(User.name)
     private userModel: Model<UserDocument>,
-
+    private loginHistoryService: LoginHistoryService,
     private jwtService: JwtService,
   ) {}
 
@@ -107,179 +108,113 @@ export class AuthService {
   // ==================================================
   // REGISTER VERIFY OTP
   // ==================================================
-async registerVerifyOtp(
-  data: RegisterVerifyOtpDto,
-) {
-
-  const user =
-    await this.userModel.findOne({
+  async registerVerifyOtp(data: RegisterVerifyOtpDto) {
+    const user = await this.userModel.findOne({
       email: data.email,
     });
 
-  if (!user) {
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
 
-    throw new UnauthorizedException(
-      'User not found',
+    // CHECK OTP EXPIRY
+    if (!user.otpExpiry || new Date() > user.otpExpiry) {
+      throw new UnauthorizedException('OTP expired');
+    }
+
+    // CHECK OTP EXISTS
+    if (!user.otp) {
+      throw new UnauthorizedException('OTP not found');
+    }
+
+    // VERIFY OTP
+    const isOtpValid = await bcrypt.compare(data.otp, user.otp);
+
+    if (!isOtpValid) {
+      throw new UnauthorizedException('Invalid OTP');
+    }
+
+    // =========================
+    // DEVICE LIMIT SYSTEM
+    // =========================
+
+    const existingDevice = user.devices.find(
+      (device) => device.deviceId === data.deviceId,
     );
 
-  }
-
-  // CHECK OTP EXPIRY
-  if (
-    !user.otpExpiry ||
-    new Date() > user.otpExpiry
-  ) {
-
-    throw new UnauthorizedException(
-      'OTP expired',
-    );
-
-  }
-
-  // CHECK OTP EXISTS
-  if (!user.otp) {
-
-    throw new UnauthorizedException(
-      'OTP not found',
-    );
-
-  }
-
-  // VERIFY OTP
-  const isOtpValid =
-    await bcrypt.compare(
-      data.otp,
-      user.otp,
-    );
-
-  if (!isOtpValid) {
-
-    throw new UnauthorizedException(
-      'Invalid OTP',
-    );
-
-  }
-
-  // =========================
-  // DEVICE LIMIT SYSTEM
-  // =========================
-
-  const existingDevice =
-    user.devices.find(
-      (device) =>
-        device.deviceId ===
-        data.deviceId
-    );
-
-  // NEW DEVICE
-  if (!existingDevice) {
-
-    // CHECK SAME DEVICE TYPE
-    const sameTypeDevice =
-      user.devices.find(
-        (device) =>
-          device.deviceType ===
-          data.deviceType
+    // NEW DEVICE
+    if (!existingDevice) {
+      // CHECK SAME DEVICE TYPE
+      const sameTypeDevice = user.devices.find(
+        (device) => device.deviceType === data.deviceType,
       );
 
-    // ASK REPLACEMENT
-    if (sameTypeDevice) {
+      // ASK REPLACEMENT
+      if (sameTypeDevice) {
+        if (!data.forceLogin) {
+          return {
+            replaceDevice: true,
 
-      if (!data.forceLogin) {
+            message: `Another ${data.deviceType} device is already logged in`,
+          };
+        }
 
-        return {
-
-          replaceDevice: true,
-
-          message:
-            `Another ${data.deviceType} device is already logged in`,
-
-        };
-
+        // REMOVE OLD DEVICE
+        user.devices = user.devices.filter(
+          (device) => device.deviceType !== data.deviceType,
+        );
       }
 
-      // REMOVE OLD DEVICE
-      user.devices =
-        user.devices.filter(
-          (device) =>
-            device.deviceType !==
-            data.deviceType
-        );
+      // MAX 2 DEVICES
+      if (user.devices.length >= 2) {
+        throw new UnauthorizedException('Device limit exceeded');
+      }
 
+      // ADD DEVICE
+      user.devices.push({
+        deviceId: data.deviceId,
+
+        deviceType: data.deviceType,
+      });
     }
 
-    // MAX 2 DEVICES
-    if (
-      user.devices.length >= 2
-    ) {
+    // CLEAR OTP
+    user.otp = null;
 
-      throw new UnauthorizedException(
-        'Device limit exceeded',
-      );
+    user.otpExpiry = null;
 
-    }
+    // DEFAULT VERIFICATION STATUS
+    user.isVerified = false;
 
-    // ADD DEVICE
-    user.devices.push({
+    await user.save();
 
-      deviceId:
-        data.deviceId,
-
-      deviceType:
-        data.deviceType,
-
-    });
-
-  }
-
-  // CLEAR OTP
-  user.otp = null;
-
-  user.otpExpiry = null;
-
-  // DEFAULT VERIFICATION STATUS
-  user.isVerified = false;
-
-  await user.save();
-
-  // GENERATE JWT
-  const token =
-    this.jwtService.sign({
-
+    // GENERATE JWT
+    const token = this.jwtService.sign({
       userId: user._id,
 
       role: user.role,
 
-      deviceId:
-        data.deviceId,
-
+      deviceId: data.deviceId,
     });
 
-  return {
+    return {
+      message: 'Registration successful',
 
-    message:
-      'Registration successful',
+      token,
 
-    token,
+      user: {
+        id: user._id,
 
-    user: {
+        name: user.name,
 
-      id: user._id,
+        email: user.email,
 
-      name: user.name,
+        role: user.role,
 
-      email: user.email,
-
-      role: user.role,
-
-      userVerification:
-        user.isVerified,
-
-    },
-
-  };
-
-}
+        userVerification: user.isVerified,
+      },
+    };
+  }
   // ==================================================
   // LOGIN SEND OTP
   // ==================================================
@@ -413,6 +348,16 @@ async registerVerifyOtp(
         deviceType: data.deviceType,
       });
     }
+
+    await this.loginHistoryService.create({
+      user: user._id,
+
+      deviceId: data.deviceId,
+
+      deviceType: data.deviceType,
+
+      browser: data.deviceType,
+    });
     // =========================
     // GENERATE JWT
     // =========================
@@ -445,5 +390,41 @@ async registerVerifyOtp(
         role: user.role,
       },
     };
+  }async logout(
+  userData: any,
+) {
+
+  const user =
+    await this.userModel.findById(
+      userData.userId
+    );
+
+  if (!user) {
+
+    throw new UnauthorizedException(
+      'User not found',
+    );
+
   }
+
+  // REMOVE DEVICE
+  user.devices =
+    user.devices.filter(
+      (device) =>
+        device.deviceId !==
+        userData.deviceId
+    );
+
+  await user.save();
+
+  return {
+
+    message:
+      'Logout successful',
+
+    success: true,
+
+  };
+
+}
 }

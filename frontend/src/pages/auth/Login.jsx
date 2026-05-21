@@ -1,104 +1,72 @@
-import {
-  useState,
-} from "react";
+import { useState } from "react";
 
-import api
-from "../../services/api";
+import api from "../../services/api";
 
-import {
-  useNavigate,
-} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 function Login() {
+  const [email, setEmail] = useState("");
 
-  const [email, setEmail] =
-    useState("");
+  const navigate = useNavigate();
 
-  const navigate =
-    useNavigate();
+  const [loading, setLoading] = useState(false);
 
-  const [loading, setLoading] =
-    useState(false);
+  const handleSendOtp = async () => {
+    try {
+      setLoading(true);
 
-  const handleSendOtp =
-    async () => {
+      await api.post("/auth/login/send-otp", {
+        email,
+      });
 
-      try {
+      localStorage.setItem("login_email", email);
 
-        setLoading(true);
+      alert("OTP Sent");
 
-        await api.post(
-          "/auth/login/send-otp",
-          {
-            email,
-          }
-        );
+      navigate("/verify-login-otp");
+    } catch (error) {
 
-        localStorage.setItem(
-          "login_email",
-          email
-        );
+  console.log(error);
 
-        alert("OTP Sent");
+  console.log(
+    error.response
+  );
 
-        navigate(
-          "/verify-login-otp"
-        );
+  console.log(
+    error.response?.data
+  );
 
-      } catch (error) {
+  alert(
 
-        alert(
-          error.response?.data?.message
-        );
+    JSON.stringify(
+      error.response?.data
+    )
 
-      } finally {
+  );
 
-        setLoading(false);
-
-      }
-
-    };
+}finally {
+      setLoading(false);
+    }
+  };
   const registerRedirect = () => {
-
-    navigate("/register");      
-  }
+    navigate("/register");
+  };
   return (
-
     <div>
-
       <h1>Login</h1>
 
       <input
         type="email"
         placeholder="Enter Email"
-        onChange={(e) =>
-          setEmail(e.target.value)
-        }
+        onChange={(e) => setEmail(e.target.value)}
       />
 
-      <button
-        onClick={handleSendOtp}
-        disabled={loading}
-      >
-
-        {
-          loading
-            ? "Sending OTP..."
-            : "Send OTP"
-        }
-
+      <button onClick={handleSendOtp} disabled={loading}>
+        {loading ? "Sending OTP..." : "Send OTP"}
       </button>
-      <button
-        onClick={registerRedirect}
-      >
-
-        Create New Account
-      </button>
-
+      <button onClick={registerRedirect}>Create New Account</button>
     </div>
-
   );
-
 }
 
 export default Login;

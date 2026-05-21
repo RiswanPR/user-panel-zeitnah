@@ -92,6 +92,21 @@ export class User {
     default: true,
   })
   isActive!: boolean;
+
+  @Prop({
+    default: Date.now,
+  })
+  lastSeen!: Date;
+
+  @Prop({
+    default: false,
+  })
+  isBlocked!: boolean;
+
+  @Prop({
+    default: false,
+  })
+  isDeleted!: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

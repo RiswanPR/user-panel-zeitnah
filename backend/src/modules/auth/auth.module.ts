@@ -2,7 +2,8 @@ import { Module } from '@nestjs/common';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-
+import { LoginHistoryModule }
+from '../login-history/login-history.module';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 
@@ -34,6 +35,7 @@ import { JwtStrategy } from '../strategies/jwt.strategy';
         expiresIn: '7d',
       },
     }),
+    LoginHistoryModule,
 
   ],
 
@@ -50,6 +52,8 @@ import { JwtStrategy } from '../strategies/jwt.strategy';
     JwtModule,
     PassportModule,
   ],
+
+  
 
 })
 

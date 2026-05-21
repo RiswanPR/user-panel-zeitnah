@@ -1,21 +1,70 @@
-import { useContext } from "react";
+import {
+  useContext,
+} from "react";
 
-import { AuthContext } from "../../context/AuthContext";
+import api
+from "../../services/api";
 
-const logout = () => {
-  localStorage.removeItem("token");
+import {
+  AuthContext,
+} from "../../context/AuthContext";
 
-  window.location.href = "/login";
-};
 function Home() {
-  const { user } = useContext(AuthContext);
-  
-  return (
-    <div>
-      <h1>Welcome {user?.name}</h1>
-      <button onClick={logout}>Logout</button>
-    </div>
+
+  const {
+    user,
+    setUser,
+  } = useContext(
+    AuthContext
   );
+
+  // LOGOUT
+  const handleLogout =
+    async () => {
+
+      try {
+
+        await api.post(
+          "/auth/logout"
+        );
+
+      } catch (error) {
+
+        console.log(error);
+
+      } finally {
+
+        localStorage.removeItem(
+          "token"
+        );
+
+        setUser(null);
+
+        window.location.href =
+          "/login";
+
+      }
+
+    };
+
+  return (
+
+    <div>
+
+      <h1>
+        Welcome {user?.name}
+      </h1>
+
+      <button
+        onClick={handleLogout}
+      >
+        Logout
+      </button>
+
+    </div>
+
+  );
+
 }
 
 export default Home;
