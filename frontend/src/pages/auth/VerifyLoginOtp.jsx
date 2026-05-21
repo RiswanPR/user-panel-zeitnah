@@ -1,5 +1,6 @@
 import {
   useState,
+  useEffect,
   useContext,
 } from "react";
 
@@ -14,6 +15,14 @@ import {
   useNavigate,
 } from "react-router-dom";
 
+import {
+  getDeviceId,
+} from "../../utils/device";
+
+import {
+  isMobile,
+} from "react-device-detect";
+
 function VerifyOtp() {
 
   const { setUser } =
@@ -25,9 +34,36 @@ function VerifyOtp() {
   const [loading, setLoading] =
     useState(false);
 
+  const [resendLoading,
+    setResendLoading] =
+    useState(false);
+
+  const [timer, setTimer] =
+    useState(30);
+
   const navigate =
     useNavigate();
 
+  // Countdown Timer
+  useEffect(() => {
+
+    if (timer <= 0) return;
+
+    const interval =
+      setInterval(() => {
+
+        setTimer((prev) =>
+          prev - 1
+        );
+
+      }, 1000);
+
+    return () =>
+      clearInterval(interval);
+
+  }, [timer]);
+
+  // VERIFY OTP
   const handleVerifyOtp =
     async () => {
 
@@ -40,12 +76,24 @@ function VerifyOtp() {
             "login_email"
           );
 
+        // DEVICE ID
+        const deviceId =
+          await getDeviceId();
+
+        // DEVICE TYPE
+        const deviceType =
+          isMobile
+            ? "mobile"
+            : "desktop";
+
         const res =
           await api.post(
             "/auth/login/verify-otp",
             {
               email,
               otp,
+              deviceId,
+              deviceType,
             }
           );
 
@@ -78,6 +126,44 @@ function VerifyOtp() {
 
     };
 
+  // RESEND OTP
+  const handleResendOtp =
+    async () => {
+
+      try {
+
+        setResendLoading(true);
+
+        const email =
+          localStorage.getItem(
+            "login_email"
+          );
+
+        await api.post(
+          "/auth/login/send-otp",
+          {
+            email,
+          }
+        );
+
+        alert("OTP Resent");
+
+        setTimer(30);
+
+      } catch (error) {
+
+        alert(
+          error.response?.data?.message
+        );
+
+      } finally {
+
+        setResendLoading(false);
+
+      }
+
+    };
+
   return (
 
     <div className="h-full">
@@ -104,6 +190,7 @@ function VerifyOtp() {
 
             <div className="space-y-6">
 
+              {/* OTP Input */}
               <div>
 
                 <label className="block text-sm font-medium text-gray-700">
@@ -115,6 +202,7 @@ function VerifyOtp() {
                   <input
                     type="text"
                     placeholder="Enter OTP"
+                    value={otp}
                     onChange={(e) =>
                       setOtp(e.target.value)
                     }
@@ -125,6 +213,7 @@ function VerifyOtp() {
 
               </div>
 
+              {/* Verify Button */}
               <button
                 onClick={handleVerifyOtp}
                 disabled={loading}
@@ -138,6 +227,37 @@ function VerifyOtp() {
                 }
 
               </button>
+
+              {/* Resend */}
+              <div className="text-center">
+
+                {
+                  timer > 0 ? (
+
+                    <p className="text-sm text-gray-500">
+                      Resend OTP in {timer}s
+                    </p>
+
+                  ) : (
+
+                    <button
+                      onClick={handleResendOtp}
+                      disabled={resendLoading}
+                      className="text-sm font-medium text-black hover:underline"
+                    >
+
+                      {
+                        resendLoading
+                          ? "Sending..."
+                          : "Resend OTP"
+                      }
+
+                    </button>
+
+                  )
+                }
+
+              </div>
 
             </div>
 

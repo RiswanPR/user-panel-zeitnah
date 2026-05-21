@@ -227,61 +227,154 @@ export class AuthService {
   // ==================================================
   // LOGIN VERIFY OTP
   // ==================================================
+async loginVerifyOtp(
+  data: LoginVerifyOtpDto,
+) {
 
-  async loginVerifyOtp(data: LoginVerifyOtpDto) {
-    const user = await this.userModel.findOne({
+  const user =
+    await this.userModel.findOne({
       email: data.email,
     });
 
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
+  if (!user) {
 
-    // Check OTP Expiry
-    if (!user.otpExpiry || new Date() > user.otpExpiry) {
-      throw new UnauthorizedException('OTP expired');
-    }
+    throw new UnauthorizedException(
+      'User not found',
+    );
 
-    // Check OTP Exists
-    if (!user.otp) {
-      throw new UnauthorizedException('OTP not found');
-    }
+  }
 
-    // Compare OTP
-    const isOtpValid = await bcrypt.compare(data.otp, user.otp);
+  // OTP Expiry
+  if (
+    !user.otpExpiry ||
+    new Date() > user.otpExpiry
+  ) {
 
-    if (!isOtpValid) {
-      throw new UnauthorizedException('Invalid OTP');
-    }
+    throw new UnauthorizedException(
+      'OTP expired',
+    );
 
-    // Generate JWT
-    const token = this.jwtService.sign({
+  }
+
+  // OTP Exists
+  if (!user.otp) {
+
+    throw new UnauthorizedException(
+      'OTP not found',
+    );
+
+  }
+
+  // Compare OTP
+  const isOtpValid =
+    await bcrypt.compare(
+      data.otp,
+      user.otp,
+    );
+
+  if (!isOtpValid) {
+
+    throw new UnauthorizedException(
+      'Invalid OTP',
+    );
+
+  }
+// =========================
+// DEVICE LIMIT SYSTEM
+// =========================
+
+const existingDevice =
+  user.devices.find(
+    (device) =>
+      device.deviceId ===
+      data.deviceId
+  );
+
+// NEW DEVICE
+if (!existingDevice) {
+
+  // CHECK SAME DEVICE TYPE
+  const sameTypeDevice =
+    user.devices.find(
+      (device) =>
+        device.deviceType ===
+        data.deviceType
+    );
+
+  // BLOCK SAME DEVICE TYPE
+  if (sameTypeDevice) {
+
+    throw new UnauthorizedException(
+
+      `Only one ${data.deviceType} device allowed`
+
+    );
+
+  }
+
+  // MAX 2 DEVICES
+  if (
+    user.devices.length >= 2
+  ) {
+
+    throw new UnauthorizedException(
+      'Device limit exceeded',
+    );
+
+  }
+
+  // ADD DEVICE
+  user.devices.push({
+
+    deviceId:
+      data.deviceId,
+
+    deviceType:
+      data.deviceType,
+
+  });
+
+}
+  // =========================
+  // GENERATE JWT
+  // =========================
+
+  const token =
+    this.jwtService.sign({
+
       userId: user._id,
 
       role: user.role,
+
     });
 
-    // Clear OTP
-    user.otp = null;
+  // Clear OTP
+  user.otp = null;
+  user.otpExpiry = null;
 
-    user.otpExpiry = null;
+  await user.save();
 
-    await user.save();
+  return {
 
-    return {
-      message: 'Login successful',
+    message:
+      'Login successful',
 
-      token,
+    token,
 
-      user: {
-        id: user._id,
+    user: {
 
-        name: user.name,
+      id: user._id,
 
-        email: user.email,
+      name: user.name,
 
-        role: user.role,
-      },
-    };
-  }
+      email: user.email,
+
+      role: user.role,
+
+    },
+
+  };
+
+}
+
 }

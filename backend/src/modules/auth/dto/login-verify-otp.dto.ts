@@ -29,4 +29,16 @@ export class LoginVerifyOtpDto {
 
   otp!: string;
 
+  @IsNotEmpty()
+
+  @IsString()
+
+  deviceId!: string;
+
+  @IsNotEmpty()
+
+  @IsString()
+
+  deviceType!: string;
+
 }

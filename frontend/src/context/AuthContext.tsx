@@ -5,18 +5,27 @@ import {
   ReactNode,
 } from "react";
 
-import api from "../services/api";
+import api
+from "../services/api";
 
 interface AuthContextType {
+
   user: any;
+
   setUser: React.Dispatch<
     React.SetStateAction<any>
   >;
+
   loading: boolean;
+
+  logout: () => void;
+
 }
 
 interface AuthProviderProps {
+
   children: ReactNode;
+
 }
 
 export const AuthContext =
@@ -34,49 +43,81 @@ export const AuthProvider = ({
   const [loading, setLoading] =
     useState(true);
 
+  // AUTO LOGIN
   useEffect(() => {
 
-    const token =
-      localStorage.getItem("token");
+    const loadUser =
+      async () => {
 
-    if (token) {
+        try {
 
-      api.get("/auth/me", {
+          const token =
+            localStorage.getItem(
+              "token"
+            );
 
-        headers: {
-          Authorization:
-            `Bearer ${token}`,
-        },
+          if (!token) {
 
-      })
+            setLoading(false);
 
-      .then((res) => {
-        setUser(res.data.user);
-      })
+            return;
 
-      .catch(() => {
-        localStorage.removeItem("token");
-      })
+          }
 
-      .finally(() => {
-        setLoading(false);
-      });
+          // TOKEN automatically
+          // added by interceptor
+          const res =
+            await api.get(
+              "/auth/me"
+            );
 
-    } else {
+          setUser(
+            res.data.user
+          );
 
-      setLoading(false);
+        } catch (error) {
 
-    }
+          localStorage.removeItem(
+            "token"
+          );
+
+          setUser(null);
+
+        } finally {
+
+          setLoading(false);
+
+        }
+
+      };
+
+    loadUser();
 
   }, []);
+
+  // LOGOUT
+  const logout = () => {
+
+    localStorage.removeItem(
+      "token"
+    );
+
+    setUser(null);
+
+  };
 
   return (
 
     <AuthContext.Provider
       value={{
+
         user,
         setUser,
+
         loading,
+
+        logout,
+
       }}
     >
 
