@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "./pages/auth/Login";
 
-import VerifyOtp from "./pages/auth/VerifyOtp";
+import VerifyOtp from "./pages/auth/VerifyLoginOtp";
 
 import Register from "./pages/auth/Register";
 
