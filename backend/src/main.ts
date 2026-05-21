@@ -6,6 +6,12 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 
+import {
+  ThrottlerGuard,
+} from '@nestjs/throttler';
+import {
+  APP_GUARD,
+} from '@nestjs/core';
 async function bootstrap() {
 
   const app =

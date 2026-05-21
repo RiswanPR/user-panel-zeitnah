@@ -245,6 +245,7 @@ export class AuthService {
     await user.save();
 
     try {
+      console.log(`OTP for $email}: ${otp}`);
       await resend.emails.send({
         from:
           process.env.RESEND_FROM_EMAIL ||

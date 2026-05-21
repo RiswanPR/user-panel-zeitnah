@@ -13,6 +13,7 @@ import { RegisterSendOtpDto } from './dto/register-send-otp.dto';
 import { RegisterVerifyOtpDto } from './dto/register-verify-otp.dto';
 
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { Throttle } from '@nestjs/throttler/dist/throttler.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -51,7 +52,12 @@ export class AuthController {
   // =========================
   // LOGIN
   // =========================
-
+  @Throttle({
+    default: {
+      limit: 3,
+      ttl: 60000,
+    },
+  })
   @Post('login/send-otp')
   async loginSendOtp(
     @Body()
