@@ -2,10 +2,14 @@ import {
   BrowserRouter,
   Routes,
   Route,
+  Navigate,
 } from "react-router-dom";
 
 import Login
 from "./pages/auth/Login";
+
+import VerifyOtp
+from "./pages/auth/VerifyOtp";
 
 import Home
 from "./pages/home/Home";
@@ -21,10 +25,21 @@ function App() {
 
       <Routes>
 
+        {/* Login */}
+
         <Route
           path="/login"
           element={<Login />}
         />
+
+        {/* Verify OTP */}
+
+        <Route
+          path="/verify-otp"
+          element={<VerifyOtp />}
+        />
+
+        {/* Protected Home */}
 
         <Route
 
@@ -40,6 +55,15 @@ function App() {
 
           }
 
+        />
+
+        {/* Redirect Unknown Routes */}
+
+        <Route
+          path="*"
+          element={
+            <Navigate to="/" />
+          }
         />
 
       </Routes>

@@ -7,10 +7,16 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
-import { AuthService } from './auth.service';
+import { Request } from 'express';
 
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
+import { AuthService }
+from './auth.service';
+
+import { SendOtpDto }
+from './dto/send-otp.dto';
+
+import { VerifyOtpDto }
+from './dto/verify-otp.dto';
 
 import { JwtAuthGuard }
 from '../../common/guards/jwt-auth.guard';
@@ -20,37 +26,64 @@ from '../../common/guards/jwt-auth.guard';
 export class AuthController {
 
   constructor(
-    private authService: AuthService,
+    private readonly authService: AuthService,
   ) {}
 
+  // TEST ROUTE
   @Get()
+
   test() {
+
     return {
-      message: 'Backend Connected Successfully',
+      success: true,
+
+      message:
+        'Backend Connected Successfully',
     };
+
   }
 
-  @Post('register')
-  register(
-    @Body() body: RegisterDto,
+  // SEND OTP
+  @Post('send-otp')
+
+  async sendOtp(
+    @Body() body: SendOtpDto,
   ) {
-    return this.authService.register(body);
+
+    return await this.authService
+      .sendOtp(body.email);
+
   }
 
-  @Post('login')
-  login(
-    @Body() body: LoginDto,
+  // VERIFY OTP
+  @Post('verify-otp')
+
+  async verifyOtp(
+    @Body() body: VerifyOtpDto,
   ) {
-    return this.authService.login(body);
+
+    return await this.authService
+      .verifyOtp(body);
+
   }
 
+  // GET CURRENT USER
   @UseGuards(JwtAuthGuard)
 
   @Get('me')
-  getMe(@Req() req: any) {
+
+  getMe(
+    @Req() req: Request & {
+      user: any;
+    },
+  ) {
 
     return {
+
+      success: true,
+
       user: req.user,
+
     };
 
   }
