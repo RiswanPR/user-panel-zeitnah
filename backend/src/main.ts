@@ -1,29 +1,25 @@
 import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from './app.module';
+import helmet from 'helmet';
+import { ValidationPipe } from '@nestjs/common';
 
-import {
-  ValidationPipe,
-} from '@nestjs/common';
-
-import {
-  ThrottlerGuard,
-} from '@nestjs/throttler';
-import {
-  APP_GUARD,
-} from '@nestjs/core';
+import { ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
 
-  const app =
-    await NestFactory.create(
-      AppModule,
-    );
+  // HELMET SECURITY
+  app.use(helmet());
 
+  app.use(
+    helmet({
+      contentSecurityPolicy: true,
+    }),
+  );
   // GLOBAL VALIDATION
   app.useGlobalPipes(
-
     new ValidationPipe({
-
       whitelist: true,
 
       forbidNonWhitelisted: true,
@@ -33,46 +29,25 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
-
     }),
-
   );
 
   // CORS
   app.enableCors({
-
-    origin: [
-      'http://localhost:5173',
-    ],
+    origin: ['http://localhost:5173'],
 
     credentials: true,
 
-    methods: [
-      'GET',
-      'POST',
-      'PUT',
-      'PATCH',
-      'DELETE',
-      'OPTIONS',
-    ],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-    ],
-
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   // PORT
-  const PORT =
-    process.env.PORT || 3000;
+  const PORT = process.env.PORT || 3000;
 
   await app.listen(PORT);
 
-  console.log(
-    `🚀 Server running on port ${PORT}`,
-  );
-
+  console.log(`🚀 Server running on port ${PORT}`);
 }
-
 bootstrap();
