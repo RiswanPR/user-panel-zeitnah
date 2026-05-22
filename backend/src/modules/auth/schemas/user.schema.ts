@@ -77,6 +77,16 @@ export class User {
         type: Date,
         default: Date.now,
       },
+
+      refreshToken: {
+        type: String,
+        default: null,
+      },
+
+      refreshTokenExpiry: {
+        type: Date,
+        default: null,
+      },
     },
   ],
 
@@ -98,6 +108,10 @@ devices!: {
   location: string;
 
   lastSeen: Date;
+
+  refreshToken: string | null;
+
+  refreshTokenExpiry: Date | null;
 
 }[];
 

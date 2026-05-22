@@ -12,6 +12,8 @@ import { RegisterSendOtpDto } from './dto/register-send-otp.dto';
 
 import { RegisterVerifyOtpDto } from './dto/register-verify-otp.dto';
 
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { Throttle } from '@nestjs/throttler/dist/throttler.decorator';
 
@@ -85,6 +87,14 @@ export class AuthController {
     .loginVerifyOtp(
       body,
       req.ip);
+  }
+
+  @Post('refresh-token')
+  async refreshToken(
+    @Body()
+    body: RefreshTokenDto,
+  ) {
+    return await this.authService.refreshToken(body.refreshToken);
   }
 
   // =========================

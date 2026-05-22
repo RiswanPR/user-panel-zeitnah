@@ -27,12 +27,59 @@ import { LoginHistoryService } from '../login-history/login-history.service';
 
 @Injectable()
 export class AuthService {
+  private readonly accessTokenExpiresIn =
+    process.env.JWT_ACCESS_EXPIRES_IN || '15m';
+
+  private readonly refreshTokenExpiresIn =
+    process.env.JWT_REFRESH_EXPIRES_IN || '30d';
+
+  private readonly refreshTokenExpiryMs =
+    Number(process.env.JWT_REFRESH_EXPIRES_IN_MS) ||
+    30 * 24 * 60 * 60 * 1000;
+
+  private readonly refreshTokenSecret =
+    process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET!;
+
   constructor(
     @InjectModel(User.name)
     private userModel: Model<UserDocument>,
     private loginHistoryService: LoginHistoryService,
     private jwtService: JwtService,
   ) {}
+
+  private async generateAuthTokens(user: UserDocument, deviceId: string) {
+    const payload = {
+      userId: user._id.toString(),
+
+      role: user.role,
+
+      deviceId,
+    };
+
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: this.accessTokenExpiresIn as any,
+    });
+
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: this.refreshTokenSecret,
+
+      expiresIn: this.refreshTokenExpiresIn as any,
+    });
+
+    const refreshTokenHash = await bcrypt.hash(refreshToken, 10);
+
+    return {
+      accessToken,
+
+      refreshToken,
+
+      refreshTokenHash,
+
+      refreshTokenExpiry: new Date(
+        Date.now() + this.refreshTokenExpiryMs,
+      ),
+    };
+  }
 
   // ==================================================
   // REGISTER SEND OTP
@@ -191,6 +238,10 @@ export class AuthService {
         location: data.location || 'Unknown',
 
         lastSeen: new Date(),
+
+        refreshToken: null,
+
+        refreshTokenExpiry: null,
       });
     }
 
@@ -202,16 +253,25 @@ export class AuthService {
     // DEFAULT VERIFICATION STATUS
     user.isVerified = false;
 
+    const device: any = user.devices.find(
+      (currentDevice: any) => currentDevice.deviceId === data.deviceId,
+    );
+
+    const tokens = await this.generateAuthTokens(
+      user,
+      data.deviceId,
+    );
+
+    if (device) {
+      device.refreshToken = tokens.refreshTokenHash;
+
+      device.refreshTokenExpiry = tokens.refreshTokenExpiry;
+
+      device.lastSeen = new Date();
+    }
+
     await user.save();
 
-    // GENERATE JWT
-    const token = this.jwtService.sign({
-      userId: user._id,
-
-      role: user.role,
-
-      deviceId: data.deviceId,
-    });
     await this.loginHistoryService.create({
       user: user._id,
 
@@ -228,7 +288,11 @@ export class AuthService {
     return {
       message: 'Registration successful',
 
-      token,
+      token: tokens.accessToken,
+
+      accessToken: tokens.accessToken,
+
+      refreshToken: tokens.refreshToken,
 
       user: {
         id: user._id,
@@ -391,6 +455,10 @@ export class AuthService {
         location: data.location || 'Unknown',
 
         lastSeen: new Date(),
+
+        refreshToken: null,
+
+        refreshTokenExpiry: null,
       });
     }
 
@@ -411,13 +479,23 @@ export class AuthService {
     // GENERATE JWT
     // =========================
 
-    const token = this.jwtService.sign({
-      userId: user._id,
+    const device: any = user.devices.find(
+      (currentDevice: any) => currentDevice.deviceId === data.deviceId,
+    );
 
-      role: user.role,
+    const tokens = await this.generateAuthTokens(
+      user,
+      data.deviceId,
+    );
 
-      deviceId: data.deviceId,
-    });
+    if (device) {
+      device.refreshToken = tokens.refreshTokenHash;
+
+      device.refreshTokenExpiry = tokens.refreshTokenExpiry;
+
+      device.lastSeen = new Date();
+    }
+
     // Clear OTP
     user.otp = null;
     user.otpExpiry = null;
@@ -427,7 +505,11 @@ export class AuthService {
     return {
       message: 'Login successful',
 
-      token,
+      token: tokens.accessToken,
+
+      accessToken: tokens.accessToken,
+
+      refreshToken: tokens.refreshToken,
 
       user: {
         id: user._id,
@@ -440,6 +522,79 @@ export class AuthService {
       },
     };
   }
+
+  async refreshToken(refreshToken: string) {
+    let payload: any;
+
+    try {
+      payload = this.jwtService.verify(refreshToken, {
+        secret: this.refreshTokenSecret,
+      });
+    } catch (error) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const user = await this.userModel.findById(payload.userId);
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    if (user.isBlocked || user.isDeleted) {
+      throw new UnauthorizedException('Account restricted');
+    }
+
+    const device: any = user.devices.find(
+      (currentDevice: any) =>
+        currentDevice.deviceId === payload.deviceId,
+    );
+
+    if (!device || !device.refreshToken) {
+      throw new UnauthorizedException('Device session expired');
+    }
+
+    if (
+      !device.refreshTokenExpiry ||
+      new Date() > device.refreshTokenExpiry
+    ) {
+      throw new UnauthorizedException('Refresh token expired');
+    }
+
+    const isRefreshTokenValid = await bcrypt.compare(
+      refreshToken,
+      device.refreshToken,
+    );
+
+    if (!isRefreshTokenValid) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const tokens = await this.generateAuthTokens(
+      user,
+      payload.deviceId,
+    );
+
+    device.refreshToken = tokens.refreshTokenHash;
+
+    device.refreshTokenExpiry = tokens.refreshTokenExpiry;
+
+    device.lastSeen = new Date();
+
+    user.lastSeen = new Date();
+
+    await user.save();
+
+    return {
+      message: 'Token refreshed successfully',
+
+      token: tokens.accessToken,
+
+      accessToken: tokens.accessToken,
+
+      refreshToken: tokens.refreshToken,
+    };
+  }
+
   async logout(userData: any) {
     const user = await this.userModel.findById(userData.userId);
 
