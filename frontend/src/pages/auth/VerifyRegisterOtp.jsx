@@ -9,6 +9,9 @@ import { useNavigate } from "react-router-dom";
 import { getDeviceId } from "../../utils/device";
 
 import { isMobile } from "react-device-detect";
+import {
+  UAParser,
+} from "ua-parser-js";
 
 function VerifyRegisterOtp() {
   const navigate = useNavigate();
@@ -32,7 +35,15 @@ function VerifyRegisterOtp() {
       const deviceId = await getDeviceId();
 
       // DEVICE TYPE
+      // DEVICE TYPE
       const deviceType = isMobile ? "mobile" : "desktop";
+
+      // UA PARSER
+      const parser = new UAParser();
+
+      const browser = parser.getBrowser().name || "Unknown";
+
+      const os = parser.getOS().name || "Unknown";
 
       // FIRST ATTEMPT
       let res = await api.post("/auth/register/verify-otp", {
@@ -41,6 +52,8 @@ function VerifyRegisterOtp() {
         otp,
         deviceId,
         deviceType,
+        browser,
+        os,
       });
 
       // DEVICE REPLACEMENT
@@ -61,6 +74,8 @@ function VerifyRegisterOtp() {
           otp,
           deviceId,
           deviceType,
+          browser,
+          os,
           forceLogin: true,
         });
       }

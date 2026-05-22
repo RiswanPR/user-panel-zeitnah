@@ -45,8 +45,15 @@ export class AuthController {
   async registerVerifyOtp(
     @Body()
     body: RegisterVerifyOtpDto,
+
+    @Req()
+    req: any,
   ) {
-    return await this.authService.registerVerifyOtp(body);
+    return await this.authService
+    .registerVerifyOtp(
+       body,
+       req.ip,
+    );
   }
 
   // =========================
@@ -70,8 +77,14 @@ export class AuthController {
   async loginVerifyOtp(
     @Body()
     body: LoginVerifyOtpDto,
+    
+  @Req()
+  req: any,
   ) {
-    return await this.authService.loginVerifyOtp(body);
+    return await this.authService
+    .loginVerifyOtp(
+      body,
+      req.ip);
   }
 
   // =========================

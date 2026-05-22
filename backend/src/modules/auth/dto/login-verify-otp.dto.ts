@@ -43,6 +43,35 @@ export class LoginVerifyOtpDto {
 
   deviceType!: string;
 
+  // BROWSER
+  @IsNotEmpty()
+
+  @IsString()
+
+  browser!: string;
+
+  // OPERATING SYSTEM
+  @IsNotEmpty()
+
+  @IsString()
+
+  os!: string;
+
+  // IP ADDRESS
+  @IsOptional()
+
+  @IsString()
+
+  ip?: string;
+
+  // LOCATION
+  @IsOptional()
+
+  @IsString()
+
+  location?: string;
+
+  // FORCE LOGIN
   @IsOptional()
 
   @IsBoolean()

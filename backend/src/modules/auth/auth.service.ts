@@ -108,13 +108,16 @@ export class AuthService {
   // ==================================================
   // REGISTER VERIFY OTP
   // ==================================================
-  async registerVerifyOtp(data: RegisterVerifyOtpDto) {
+  async registerVerifyOtp(data: RegisterVerifyOtpDto, ip: string) {
     const user = await this.userModel.findOne({
       email: data.email,
     });
 
     if (!user) {
       throw new UnauthorizedException('User not found');
+    }
+    if (user.isBlocked) {
+      throw new UnauthorizedException('Account blocked');
     }
 
     // CHECK OTP EXPIRY
@@ -138,16 +141,19 @@ export class AuthService {
     // DEVICE LIMIT SYSTEM
     // =========================
 
-    const existingDevice = user.devices.find(
-      (device) => device.deviceId === data.deviceId,
+    const existingDevice: any = user.devices.find(
+      (device: any) => device.deviceId === data.deviceId,
     );
 
     // NEW DEVICE
     if (!existingDevice) {
       // CHECK SAME DEVICE TYPE
-      const sameTypeDevice = user.devices.find(
-        (device) => device.deviceType === data.deviceType,
+      const sameTypeDevice: any = user.devices.find(
+        (device: any) => device.deviceType === data.deviceType,
       );
+      if (existingDevice) {
+        existingDevice.lastSeen = new Date();
+      }
 
       // ASK REPLACEMENT
       if (sameTypeDevice) {
@@ -161,7 +167,7 @@ export class AuthService {
 
         // REMOVE OLD DEVICE
         user.devices = user.devices.filter(
-          (device) => device.deviceType !== data.deviceType,
+          (device: any) => device.deviceType !== data.deviceType,
         );
       }
 
@@ -175,6 +181,16 @@ export class AuthService {
         deviceId: data.deviceId,
 
         deviceType: data.deviceType,
+
+        browser: data.browser,
+
+        os: data.os,
+
+        ip,
+
+        location: data.location || 'Unknown',
+
+        lastSeen: new Date(),
       });
     }
 
@@ -196,7 +212,19 @@ export class AuthService {
 
       deviceId: data.deviceId,
     });
+    await this.loginHistoryService.create({
+      user: user._id,
 
+      deviceId: data.deviceId,
+
+      deviceType: data.deviceType,
+
+      browser: data.browser,
+
+      os: data.os,
+
+      ipAddress: data.ip || '',
+    });
     return {
       message: 'Registration successful',
 
@@ -245,7 +273,7 @@ export class AuthService {
     await user.save();
 
     try {
-      console.log(`OTP for $email}: ${otp}`);
+      console.log(`OTP for ${email}: ${otp}`);
       await resend.emails.send({
         from:
           process.env.RESEND_FROM_EMAIL ||
@@ -281,13 +309,16 @@ export class AuthService {
   // ==================================================
   // LOGIN VERIFY OTP
   // ==================================================
-  async loginVerifyOtp(data: LoginVerifyOtpDto) {
+  async loginVerifyOtp(data: LoginVerifyOtpDto, ip: string) {
     const user = await this.userModel.findOne({
       email: data.email,
     });
 
     if (!user) {
       throw new UnauthorizedException('User not found');
+    }
+    if (user.isBlocked) {
+      throw new UnauthorizedException('Account blocked');
     }
 
     // OTP Expiry
@@ -309,16 +340,19 @@ export class AuthService {
     // DEVICE LIMIT SYSTEM
     // =========================
 
-    const existingDevice = user.devices.find(
-      (device) => device.deviceId === data.deviceId,
+    const existingDevice: any = user.devices.find(
+      (device: any) => device.deviceId === data.deviceId,
     );
 
     // NEW DEVICE
     if (!existingDevice) {
       // CHECK SAME DEVICE TYPE
-      const sameTypeDevice = user.devices.find(
-        (device) => device.deviceType === data.deviceType,
+      const sameTypeDevice: any = user.devices.find(
+        (device: any) => device.deviceType === data.deviceType,
       );
+      if (existingDevice) {
+        existingDevice.lastSeen = new Date();
+      }
 
       // SAME TYPE DEVICE EXISTS
       if (sameTypeDevice) {
@@ -333,7 +367,7 @@ export class AuthService {
 
         // REMOVE OLD DEVICE
         user.devices = user.devices.filter(
-          (device) => device.deviceType !== data.deviceType,
+          (device: any) => device.deviceType !== data.deviceType,
         );
       }
 
@@ -347,6 +381,16 @@ export class AuthService {
         deviceId: data.deviceId,
 
         deviceType: data.deviceType,
+
+        browser: data.browser,
+
+        os: data.os,
+
+        ip: data.ip || '',
+
+        location: data.location || 'Unknown',
+
+        lastSeen: new Date(),
       });
     }
 
@@ -357,7 +401,11 @@ export class AuthService {
 
       deviceType: data.deviceType,
 
-      browser: data.deviceType,
+      browser: data.browser,
+
+      os: data.os,
+
+      ipAddress: data.ip || '',
     });
     // =========================
     // GENERATE JWT
@@ -391,41 +439,25 @@ export class AuthService {
         role: user.role,
       },
     };
-  }async logout(
-  userData: any,
-) {
-
-  const user =
-    await this.userModel.findById(
-      userData.userId
-    );
-
-  if (!user) {
-
-    throw new UnauthorizedException(
-      'User not found',
-    );
-
   }
+  async logout(userData: any) {
+    const user = await this.userModel.findById(userData.userId);
 
-  // REMOVE DEVICE
-  user.devices =
-    user.devices.filter(
-      (device) =>
-        device.deviceId !==
-        userData.deviceId
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // REMOVE DEVICE
+    user.devices = user.devices.filter(
+      (device: any) => device.deviceId !== userData.deviceId,
     );
 
-  await user.save();
+    await user.save();
 
-  return {
+    return {
+      message: 'Logout successful',
 
-    message:
-      'Logout successful',
-
-    success: true,
-
-  };
-
-}
+      success: true,
+    };
+  }
 }

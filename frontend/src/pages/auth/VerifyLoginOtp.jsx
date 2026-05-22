@@ -23,6 +23,10 @@ import {
   isMobile,
 } from "react-device-detect";
 
+import {
+  UAParser,
+} from "ua-parser-js";
+
 function VerifyOtp() {
 
   const { setUser } =
@@ -44,7 +48,7 @@ function VerifyOtp() {
   const navigate =
     useNavigate();
 
-  // Countdown Timer
+  // TIMER
   useEffect(() => {
 
     if (timer <= 0) return;
@@ -64,61 +68,42 @@ function VerifyOtp() {
   }, [timer]);
 
   // VERIFY OTP
-const handleVerifyOtp =
-  async () => {
+  const handleVerifyOtp =
+    async () => {
 
-    try {
+      try {
 
-      setLoading(true);
+        setLoading(true);
 
-      const email =
-        localStorage.getItem(
-          "login_email"
-        );
-
-      // DEVICE ID
-      const deviceId =
-        await getDeviceId();
-
-      // DEVICE TYPE
-      const deviceType =
-        isMobile
-          ? "mobile"
-          : "desktop";
-
-      // FIRST LOGIN ATTEMPT
-      let res =
-        await api.post(
-          "/auth/login/verify-otp",
-          {
-            email,
-            otp,
-            deviceId,
-            deviceType,
-          }
-        );
-
-      // DEVICE REPLACEMENT
-      if (
-        res.data.replaceDevice
-      ) {
-
-        const confirmReplace =
-          window.confirm(
-            res.data.message
+        const email =
+          localStorage.getItem(
+            "login_email"
           );
 
-        // USER CANCELLED
-        if (!confirmReplace) {
+        // DEVICE ID
+        const deviceId =
+          await getDeviceId();
 
-          setLoading(false);
+        // DEVICE TYPE
+        const deviceType =
+          isMobile
+            ? "mobile"
+            : "desktop";
 
-          return;
+        // UA PARSER
+        const parser =
+          new UAParser();
 
-        }
+        const browser =
+          parser.getBrowser().name ||
+          "Unknown";
 
-        // FORCE LOGIN
-        res =
+        const os =
+          parser.getOS().name ||
+          "Unknown";
+
+        // FIRST ATTEMPT
+        let res =
           await api.post(
             "/auth/login/verify-otp",
             {
@@ -126,43 +111,79 @@ const handleVerifyOtp =
               otp,
               deviceId,
               deviceType,
-              forceLogin: true,
+              browser,
+              os,
             }
           );
 
+        // REPLACE DEVICE
+        if (
+          res.data.replaceDevice
+        ) {
+
+          const confirmReplace =
+            window.confirm(
+              res.data.message
+            );
+
+          // USER CANCELLED
+          if (!confirmReplace) {
+
+            setLoading(false);
+
+            return;
+
+          }
+
+          // FORCE LOGIN
+          res =
+            await api.post(
+              "/auth/login/verify-otp",
+              {
+                email,
+                otp,
+                deviceId,
+                deviceType,
+                browser,
+                os,
+                forceLogin: true,
+              }
+            );
+
+        }
+
+        // SAVE TOKEN
+        localStorage.setItem(
+          "token",
+          res.data.token
+        );
+
+        setUser(res.data.user);
+
+        localStorage.removeItem(
+          "login_email"
+        );
+
+        alert(
+          "Login Successful"
+        );
+
+        navigate("/");
+
+      } catch (error) {
+
+        alert(
+          error.response?.data?.message
+        );
+
+      } finally {
+
+        setLoading(false);
+
       }
 
-      // SAVE TOKEN
-      localStorage.setItem(
-        "token",
-        res.data.token
-      );
+    };
 
-      setUser(res.data.user);
-
-      localStorage.removeItem(
-        "login_email"
-      );
-
-      alert(
-        "Login Successful"
-      );
-
-      navigate("/");
-
-    } catch (error) {
-
-      alert(
-        error.response?.data?.message
-      );
-
-    } finally {
-
-      setLoading(false);
-
-    }
-
-  };
   // RESEND OTP
   const handleResendOtp =
     async () => {
@@ -227,7 +248,7 @@ const handleVerifyOtp =
 
             <div className="space-y-6">
 
-              {/* OTP Input */}
+              {/* OTP INPUT */}
               <div>
 
                 <label className="block text-sm font-medium text-gray-700">
@@ -250,7 +271,7 @@ const handleVerifyOtp =
 
               </div>
 
-              {/* Verify Button */}
+              {/* VERIFY BUTTON */}
               <button
                 onClick={handleVerifyOtp}
                 disabled={loading}
@@ -265,7 +286,7 @@ const handleVerifyOtp =
 
               </button>
 
-              {/* Resend */}
+              {/* RESEND */}
               <div className="text-center">
 
                 {

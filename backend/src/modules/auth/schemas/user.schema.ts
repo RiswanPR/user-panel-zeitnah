@@ -45,22 +45,61 @@ export class User {
   })
   otpExpiry!: Date | null;
 
-  // DEVICE IDS
-  @Prop({
-    type: [
-      {
-        deviceId: String,
-        deviceType: String,
+// ACTIVE DEVICES / SESSIONS
+@Prop({
+  type: [
+    {
+      deviceId: String,
+
+      deviceType: String,
+
+      browser: {
+        type: String,
+        default: '',
       },
-    ],
 
-    default: [],
-  })
-  devices!: {
-    deviceId: string;
+      os: {
+        type: String,
+        default: '',
+      },
 
-    deviceType: string;
-  }[];
+      ip: {
+        type: String,
+        default: '',
+      },
+
+      location: {
+        type: String,
+        default: '',
+      },
+
+      lastSeen: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
+
+  default: [],
+})
+
+devices!: {
+
+  deviceId: string;
+
+  deviceType: string;
+
+  browser: string;
+
+  os: string;
+
+  ip: string;
+
+  location: string;
+
+  lastSeen: Date;
+
+}[];
 
   // PROFILE IMAGE
   @Prop({
