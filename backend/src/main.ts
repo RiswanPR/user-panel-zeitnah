@@ -1,22 +1,27 @@
 import { NestFactory } from '@nestjs/core';
 
-import { AppModule } from './app.module';
-import helmet from 'helmet';
 import { ValidationPipe } from '@nestjs/common';
 
-import { ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import helmet from 'helmet';
+
+import { AppModule } from './app.module';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // HELMET SECURITY
-  app.use(helmet());
+  // TRUST PROXY
+  app.getHttpAdapter().getInstance().set('trust proxy', true);
 
+  // GLOBAL PREFIX
+  app.setGlobalPrefix('api');
+
+  // HELMET SECURITY
   app.use(
     helmet({
-      contentSecurityPolicy: true,
+      crossOriginResourcePolicy: false,
     }),
   );
+
   // GLOBAL VALIDATION
   app.useGlobalPipes(
     new ValidationPipe({
@@ -50,4 +55,5 @@ async function bootstrap() {
 
   console.log(`🚀 Server running on port ${PORT}`);
 }
+
 bootstrap();
