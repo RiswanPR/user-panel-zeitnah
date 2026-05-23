@@ -13,6 +13,8 @@ import * as bcrypt from 'bcrypt';
 
 import * as crypto from 'crypto';
 
+import axios from 'axios';
+
 import { JwtService } from '@nestjs/jwt';
 
 import { resend } from '../../config/resend.config';
@@ -40,6 +42,11 @@ type SuspiciousLoginResult = {
   reasons: string[];
 };
 
+type LoginRequestMetadata = {
+  ip: string;
+  location: string;
+};
+
 @Injectable()
 export class AuthService {
   private readonly accessTokenExpiresIn =
@@ -49,8 +56,7 @@ export class AuthService {
     process.env.JWT_REFRESH_EXPIRES_IN || '30d';
 
   private readonly refreshTokenExpiryMs =
-    Number(process.env.JWT_REFRESH_EXPIRES_IN_MS) ||
-    30 * 24 * 60 * 60 * 1000;
+    Number(process.env.JWT_REFRESH_EXPIRES_IN_MS) || 30 * 24 * 60 * 60 * 1000;
 
   private readonly refreshTokenSecret =
     process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET!;
@@ -75,26 +81,142 @@ export class AuthService {
       .replace(/'/g, '&#039;');
   }
 
+  private isPrivateOrLocalIp(ip?: string | null) {
+    const value = (ip || '').trim().toLowerCase();
+
+    if (!value) {
+      return true;
+    }
+
+    if (
+      value === '::1' ||
+      value === 'localhost' ||
+      value.startsWith('fe80:') ||
+      value.startsWith('fc') ||
+      value.startsWith('fd')
+    ) {
+      return true;
+    }
+
+    const ipv4 = value.startsWith('::ffff:')
+      ? value.replace('::ffff:', '')
+      : value;
+    const parts = ipv4.split('.').map(Number);
+
+    if (parts.length !== 4 || parts.some((part) => Number.isNaN(part))) {
+      return false;
+    }
+
+    const [first, second] = parts;
+
+    return (
+      first === 10 ||
+      first === 127 ||
+      (first === 172 && second >= 16 && second <= 31) ||
+      (first === 192 && second === 168) ||
+      (first === 169 && second === 254)
+    );
+  }
+
+  private normalizeLocation(value?: string | null) {
+    const location = (value || '').trim();
+
+    return location && location.toLowerCase() !== 'unknown' ? location : '';
+  }
+
+  private async findLocationByIp(ip: string) {
+    if (!ip || this.isPrivateOrLocalIp(ip)) {
+      return '';
+    }
+
+    try {
+      const response = await axios.get(
+        `http://ip-api.com/json/${encodeURIComponent(ip)}`,
+        {
+          params: {
+            fields: 'status,message,country,regionName,city,query',
+          },
+          timeout: 2500,
+        },
+      );
+
+      if (response.data?.status !== 'success') {
+        return '';
+      }
+
+      return [
+        response.data.city,
+        response.data.regionName,
+        response.data.country,
+      ]
+        .filter(Boolean)
+        .join(', ');
+    } catch (error) {
+      return '';
+    }
+  }
+
+  private async findPublicIp() {
+    try {
+      const response = await axios.get('https://api.ipify.org', {
+        params: {
+          format: 'json',
+        },
+        timeout: 2500,
+      });
+
+      return typeof response.data?.ip === 'string'
+        ? response.data.ip.trim()
+        : '';
+    } catch (error) {
+      return '';
+    }
+  }
+
+  private async resolveLoginMetadata(
+    data: Pick<LoginVerifyOtpDto | RegisterVerifyOtpDto, 'ip' | 'location'>,
+    requestIp: string,
+  ): Promise<LoginRequestMetadata> {
+    const clientIp = (data.ip || '').trim();
+    const serverIp = (requestIp || '').trim();
+    const publicIpFromServer = !this.isPrivateOrLocalIp(serverIp)
+      ? serverIp
+      : '';
+    const publicIpFromClient = !this.isPrivateOrLocalIp(clientIp)
+      ? clientIp
+      : '';
+    const ip =
+      publicIpFromServer ||
+      publicIpFromClient ||
+      (await this.findPublicIp()) ||
+      clientIp ||
+      serverIp;
+
+    const location =
+      (await this.findLocationByIp(ip)) ||
+      this.normalizeLocation(data.location) ||
+      'Unknown';
+
+    return {
+      ip,
+      location,
+    };
+  }
+
   private detectSuspiciousLogin(
     knownDevices: LoginDeviceSnapshot[],
     currentDevice: LoginDeviceSnapshot,
   ): SuspiciousLoginResult {
     const reasons: string[] = [];
 
-    const currentDeviceId = this.normalizeSecurityValue(
-      currentDevice.deviceId,
-    );
+    const currentDeviceId = this.normalizeSecurityValue(currentDevice.deviceId);
     const currentIp = this.normalizeSecurityValue(currentDevice.ip);
-    const currentLocation = this.normalizeSecurityValue(
-      currentDevice.location,
-    );
-    const currentBrowser = this.normalizeSecurityValue(
-      currentDevice.browser,
-    );
+    const currentLocation = this.normalizeSecurityValue(currentDevice.location);
+    const currentBrowser = this.normalizeSecurityValue(currentDevice.browser);
     const currentOs = this.normalizeSecurityValue(currentDevice.os);
 
-    const previousDevices = knownDevices.filter(
-      (device) => this.normalizeSecurityValue(device.deviceId),
+    const previousDevices = knownDevices.filter((device) =>
+      this.normalizeSecurityValue(device.deviceId),
     );
 
     if (!previousDevices.length) {
@@ -106,8 +228,7 @@ export class AuthService {
 
     const matchingDevice = previousDevices.find(
       (device) =>
-        this.normalizeSecurityValue(device.deviceId) ===
-        currentDeviceId,
+        this.normalizeSecurityValue(device.deviceId) === currentDeviceId,
     );
 
     if (!matchingDevice) {
@@ -139,8 +260,7 @@ export class AuthService {
       if (
         currentBrowser &&
         this.normalizeSecurityValue(matchingDevice.browser) &&
-        this.normalizeSecurityValue(matchingDevice.browser) !==
-          currentBrowser
+        this.normalizeSecurityValue(matchingDevice.browser) !== currentBrowser
       ) {
         reasons.push('Browser changed');
       }
@@ -230,9 +350,7 @@ export class AuthService {
 
       refreshTokenHash,
 
-      refreshTokenExpiry: new Date(
-        Date.now() + this.refreshTokenExpiryMs,
-      ),
+      refreshTokenExpiry: new Date(Date.now() + this.refreshTokenExpiryMs),
     };
   }
 
@@ -343,8 +461,9 @@ export class AuthService {
     // DEVICE LIMIT SYSTEM
     // =========================
 
-    const requestIp = data.ip || ip || '';
-    const loginLocation = data.location || 'Unknown';
+    const loginMetadata = await this.resolveLoginMetadata(data, ip);
+    const requestIp = loginMetadata.ip;
+    const loginLocation = loginMetadata.location;
 
     const existingDevice: any = user.devices.find(
       (device: any) => device.deviceId === data.deviceId,
@@ -415,10 +534,7 @@ export class AuthService {
       (currentDevice: any) => currentDevice.deviceId === data.deviceId,
     );
 
-    const tokens = await this.generateAuthTokens(
-      user,
-      data.deviceId,
-    );
+    const tokens = await this.generateAuthTokens(user, data.deviceId);
 
     if (device) {
       device.refreshToken = tokens.refreshTokenHash;
@@ -568,8 +684,9 @@ export class AuthService {
     // DEVICE LIMIT SYSTEM
     // =========================
 
-    const requestIp = data.ip || ip || '';
-    const loginLocation = data.location || 'Unknown';
+    const loginMetadata = await this.resolveLoginMetadata(data, ip);
+    const requestIp = loginMetadata.ip;
+    const loginLocation = loginMetadata.location;
     const knownDevices = [...user.devices];
 
     const suspiciousLogin = this.detectSuspiciousLogin(knownDevices, {
@@ -681,10 +798,7 @@ export class AuthService {
       (currentDevice: any) => currentDevice.deviceId === data.deviceId,
     );
 
-    const tokens = await this.generateAuthTokens(
-      user,
-      data.deviceId,
-    );
+    const tokens = await this.generateAuthTokens(user, data.deviceId);
 
     if (device) {
       device.refreshToken = tokens.refreshTokenHash;
@@ -761,18 +875,14 @@ export class AuthService {
     }
 
     const device: any = user.devices.find(
-      (currentDevice: any) =>
-        currentDevice.deviceId === payload.deviceId,
+      (currentDevice: any) => currentDevice.deviceId === payload.deviceId,
     );
 
     if (!device || !device.refreshToken) {
       throw new UnauthorizedException('Device session expired');
     }
 
-    if (
-      !device.refreshTokenExpiry ||
-      new Date() > device.refreshTokenExpiry
-    ) {
+    if (!device.refreshTokenExpiry || new Date() > device.refreshTokenExpiry) {
       throw new UnauthorizedException('Refresh token expired');
     }
 
@@ -785,10 +895,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const tokens = await this.generateAuthTokens(
-      user,
-      payload.deviceId,
-    );
+    const tokens = await this.generateAuthTokens(user, payload.deviceId);
 
     device.refreshToken = tokens.refreshTokenHash;
 

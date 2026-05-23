@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
-import { Request } from 'express';
+import type { Request } from 'express';
 
 import { AuthService } from './auth.service';
 
@@ -29,6 +29,42 @@ import { Throttle } from '@nestjs/throttler/dist/throttler.decorator';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  private getHeaderValue(req: Request, headerName: string) {
+    const value = req.headers[headerName.toLowerCase()];
+
+    return Array.isArray(value) ? value[0] : value;
+  }
+
+  private normalizeIp(ip?: string | null) {
+    if (!ip) {
+      return '';
+    }
+
+    let normalizedIp = ip.split(',')[0].trim();
+
+    if (normalizedIp.startsWith('::ffff:')) {
+      normalizedIp = normalizedIp.replace('::ffff:', '');
+    }
+
+    if (/^\d{1,3}(\.\d{1,3}){3}:\d+$/.test(normalizedIp)) {
+      normalizedIp = normalizedIp.replace(/:\d+$/, '');
+    }
+
+    return normalizedIp;
+  }
+
+  private getClientIp(req: Request) {
+    return this.normalizeIp(
+      this.getHeaderValue(req, 'cf-connecting-ip') ||
+        this.getHeaderValue(req, 'true-client-ip') ||
+        this.getHeaderValue(req, 'x-real-ip') ||
+        this.getHeaderValue(req, 'x-forwarded-for') ||
+        req.ip ||
+        req.socket?.remoteAddress ||
+        '',
+    );
+  }
 
   // TEST ROUTE
   @Get()
@@ -58,12 +94,11 @@ export class AuthController {
     body: RegisterVerifyOtpDto,
 
     @Req()
-    req: any,
+    req: Request,
   ) {
-    return await this.authService
-    .registerVerifyOtp(
-       body,
-       req.ip,
+    return await this.authService.registerVerifyOtp(
+      body,
+      this.getClientIp(req),
     );
   }
 
@@ -88,14 +123,11 @@ export class AuthController {
   async loginVerifyOtp(
     @Body()
     body: LoginVerifyOtpDto,
-    
-  @Req()
-  req: any,
+
+    @Req()
+    req: Request,
   ) {
-    return await this.authService
-    .loginVerifyOtp(
-      body,
-      req.ip);
+    return await this.authService.loginVerifyOtp(body, this.getClientIp(req));
   }
 
   @Post('refresh-token')
@@ -133,10 +165,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Delete('sessions/:deviceId')
-  revokeSession(
-    @Req() req: any,
-    @Param('deviceId') deviceId: string,
-  ) {
+  revokeSession(@Req() req: any, @Param('deviceId') deviceId: string) {
     return this.authService.revokeSession(req.user, deviceId);
   }
 
