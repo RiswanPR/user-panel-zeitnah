@@ -10,6 +10,8 @@ import VerifyRegisterOtp from "./pages/auth/VerifyRegisterOtp";
 
 import Home from "./pages/home/Home";
 
+import ActiveSessions from "./pages/sessions/ActiveSessions";
+
 import ProtectedRoute from "./components/common/ProtectedRoute/ProtectedRoute";
 
 function App() {
@@ -33,6 +35,15 @@ function App() {
           element={
             <ProtectedRoute>
               <Home />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/active-sessions"
+          element={
+            <ProtectedRoute>
+              <ActiveSessions />
             </ProtectedRoute>
           }
         />

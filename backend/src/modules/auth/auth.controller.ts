@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 
 import { Request } from 'express';
 
@@ -115,6 +124,22 @@ export class AuthController {
       user: req.user,
     };
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('sessions')
+  getActiveSessions(@Req() req: any) {
+    return this.authService.getActiveSessions(req.user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('sessions/:deviceId')
+  revokeSession(
+    @Req() req: any,
+    @Param('deviceId') deviceId: string,
+  ) {
+    return this.authService.revokeSession(req.user, deviceId);
+  }
+
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   logout(@Req() req: any) {

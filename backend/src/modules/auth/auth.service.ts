@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 
 import { InjectModel } from '@nestjs/mongoose';
@@ -592,6 +593,70 @@ export class AuthService {
       accessToken: tokens.accessToken,
 
       refreshToken: tokens.refreshToken,
+    };
+  }
+
+  async getActiveSessions(userData: any) {
+    const user = await this.userModel.findById(userData.userId);
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const sessions = user.devices.map((device: any) => ({
+      deviceId: device.deviceId,
+
+      deviceType: device.deviceType || 'Unknown',
+
+      browser: device.browser || 'Unknown browser',
+
+      os: device.os || 'Unknown OS',
+
+      ip: device.ip || '',
+
+      location: device.location || 'Unknown',
+
+      lastSeen: device.lastSeen,
+
+      refreshTokenExpiry: device.refreshTokenExpiry,
+
+      isCurrent: device.deviceId === userData.deviceId,
+    }));
+
+    return {
+      success: true,
+
+      sessions,
+    };
+  }
+
+  async revokeSession(userData: any, deviceId: string) {
+    const user = await this.userModel.findById(userData.userId);
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const existingDevice = user.devices.find(
+      (device: any) => device.deviceId === deviceId,
+    );
+
+    if (!existingDevice) {
+      throw new NotFoundException('Session not found');
+    }
+
+    user.devices = user.devices.filter(
+      (device: any) => device.deviceId !== deviceId,
+    );
+
+    await user.save();
+
+    return {
+      success: true,
+
+      revokedCurrentSession: deviceId === userData.deviceId,
+
+      message: 'Session revoked successfully',
     };
   }
 

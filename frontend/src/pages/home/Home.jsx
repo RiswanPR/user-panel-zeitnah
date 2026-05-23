@@ -2,6 +2,10 @@ import {
   useContext,
 } from "react";
 
+import {
+  Link,
+} from "react-router-dom";
+
 import api
 from "../../services/api";
 
@@ -60,6 +64,12 @@ function Home() {
       >
         Logout
       </button>
+
+      <p>
+        <Link to="/active-sessions">
+          Active Sessions
+        </Link>
+      </p>
 
     </div>
 
