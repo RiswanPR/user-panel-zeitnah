@@ -24,7 +24,7 @@ import { RegisterVerifyOtpDto } from './dto/register-verify-otp.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { Throttle } from '@nestjs/throttler/dist/throttler.decorator';
+import { Throttle } from '@nestjs/throttler';
 
 type AuthenticatedRequest = Request & {
   user: AuthenticatedUser;
@@ -85,6 +85,12 @@ export class AuthController {
   // =========================
 
   @Post('register/send-otp')
+  @Throttle({
+    default: {
+      limit: 3,
+      ttl: 60000,
+    },
+  })
   async registerSendOtp(
     @Body()
     body: RegisterSendOtpDto,

@@ -32,7 +32,7 @@ import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
       {
         ttl: 60000,
 
-        limit: 5,
+        limit: 100,
       },
     ]),
   ],
