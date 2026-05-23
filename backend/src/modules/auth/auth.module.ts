@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { LoginHistoryModule } from '../login-history/login-history.module';
+import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 
@@ -31,6 +32,7 @@ import { JwtStrategy } from '../strategies/jwt.strategy';
       },
     }),
     LoginHistoryModule,
+    AuditLogsModule,
   ],
 
   controllers: [AuthController],

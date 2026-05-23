@@ -9,6 +9,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 
 import { AuthModule } from './modules/auth/auth.module';
+import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 
 @Module({
   imports: [
@@ -22,6 +23,9 @@ import { AuthModule } from './modules/auth/auth.module';
 
     // AUTH MODULE
     AuthModule,
+
+    // AUDIT LOGS
+    AuditLogsModule,
 
     // RATE LIMITING
     ThrottlerModule.forRoot([

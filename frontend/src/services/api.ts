@@ -17,6 +17,19 @@ const api = axios.create({
   },
 });
 
+export type AuditLogFilters = {
+  action?: string;
+  entityType?: string;
+  severity?: string;
+  page?: number;
+  limit?: number;
+};
+
+export const getAuditLogs = (filters: AuditLogFilters = {}) =>
+  api.get("/audit-logs", {
+    params: filters,
+  });
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
 

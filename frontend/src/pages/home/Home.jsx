@@ -71,6 +71,12 @@ function Home() {
         </Link>
       </p>
 
+      <p>
+        <Link to="/audit-logs">
+          Audit Logs
+        </Link>
+      </p>
+
     </div>
 
   );

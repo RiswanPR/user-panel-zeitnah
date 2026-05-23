@@ -28,6 +28,7 @@ import { RegisterSendOtpDto } from './dto/register-send-otp.dto';
 
 import { RegisterVerifyOtpDto } from './dto/register-verify-otp.dto';
 import { LoginHistoryService } from '../login-history/login-history.service';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
 type LoginDeviceSnapshot = {
   deviceId?: string;
@@ -131,6 +132,7 @@ export class AuthService {
     @InjectModel(User.name)
     private userModel: Model<UserDocument>,
     private loginHistoryService: LoginHistoryService,
+    private auditLogsService: AuditLogsService,
     private jwtService: JwtService,
   ) {}
 
@@ -463,7 +465,7 @@ export class AuthService {
     const otpExpiry = new Date(Date.now() + 3 * 60 * 1000);
 
     // Create temporary user
-    await this.userModel.create({
+    const user = await this.userModel.create({
       name: data.name,
 
       email: data.email,
@@ -473,6 +475,17 @@ export class AuthService {
       otpExpiry,
 
       isVerified: false,
+    });
+
+    await this.auditLogsService.record({
+      actor: user._id,
+      action: 'REGISTER_OTP_SENT',
+      entityType: 'auth',
+      entityId: user._id.toString(),
+      message: 'Registration OTP sent',
+      metadata: {
+        email: data.email,
+      },
     });
 
     try {
@@ -647,6 +660,24 @@ export class AuthService {
 
       suspiciousReasons: [],
     });
+
+    await this.auditLogsService.record({
+      actor: user._id,
+      action: 'REGISTER_SUCCESS',
+      entityType: 'user',
+      entityId: user._id.toString(),
+      severity: 'info',
+      ipAddress: requestIp,
+      deviceId: data.deviceId,
+      message: 'User completed registration',
+      metadata: {
+        deviceType: data.deviceType,
+        browser: data.browser,
+        os: data.os,
+        location: loginLocation,
+      },
+    });
+
     return {
       message: 'Registration successful',
 
@@ -699,6 +730,17 @@ export class AuthService {
     user.otpExpiry = otpExpiry;
 
     await user.save();
+
+    await this.auditLogsService.record({
+      actor: user._id,
+      action: 'LOGIN_OTP_SENT',
+      entityType: 'auth',
+      entityId: user._id.toString(),
+      message: 'Login OTP sent',
+      metadata: {
+        email,
+      },
+    });
 
     try {
       console.log(`OTP for ${email}: ${otp}`);
@@ -857,7 +899,45 @@ export class AuthService {
       suspiciousReasons: suspiciousLogin.reasons,
     });
 
+    await this.auditLogsService.record({
+      actor: user._id,
+      action: 'LOGIN_SUCCESS',
+      entityType: 'auth',
+      entityId: user._id.toString(),
+      severity: suspiciousLogin.isSuspicious ? 'warning' : 'info',
+      ipAddress: requestIp,
+      deviceId: data.deviceId,
+      message: suspiciousLogin.isSuspicious
+        ? 'User logged in with suspicious signals'
+        : 'User logged in',
+      metadata: {
+        deviceType: data.deviceType,
+        browser: data.browser,
+        os: data.os,
+        location: loginLocation,
+        suspiciousReasons: suspiciousLogin.reasons,
+      },
+    });
+
     if (suspiciousLogin.isSuspicious) {
+      await this.auditLogsService.record({
+        actor: user._id,
+        action: 'SUSPICIOUS_LOGIN_DETECTED',
+        entityType: 'auth',
+        entityId: user._id.toString(),
+        severity: 'warning',
+        ipAddress: requestIp,
+        deviceId: data.deviceId,
+        message: 'Suspicious login detected',
+        metadata: {
+          reasons: suspiciousLogin.reasons,
+          deviceType: data.deviceType,
+          browser: data.browser,
+          os: data.os,
+          location: loginLocation,
+        },
+      });
+
       await this.sendSuspiciousLoginEmail(
         user,
         {
@@ -996,6 +1076,15 @@ export class AuthService {
 
     await user.save();
 
+    await this.auditLogsService.record({
+      actor: user._id,
+      action: 'TOKEN_REFRESHED',
+      entityType: 'auth',
+      entityId: user._id.toString(),
+      deviceId: payload.deviceId,
+      message: 'Session token refreshed',
+    });
+
     return {
       message: 'Token refreshed successfully',
 
@@ -1070,6 +1159,20 @@ export class AuthService {
 
     await user.save();
 
+    await this.auditLogsService.record({
+      actor: user._id,
+      action: 'SESSION_REVOKED',
+      entityType: 'session',
+      entityId: deviceId,
+      severity: deviceId === userData.deviceId ? 'warning' : 'info',
+      deviceId: userData.deviceId,
+      message: 'User revoked a session',
+      metadata: {
+        revokedDeviceId: deviceId,
+        revokedCurrentSession: deviceId === userData.deviceId,
+      },
+    });
+
     return {
       success: true,
 
@@ -1092,6 +1195,15 @@ export class AuthService {
     );
 
     await user.save();
+
+    await this.auditLogsService.record({
+      actor: user._id,
+      action: 'LOGOUT',
+      entityType: 'auth',
+      entityId: user._id.toString(),
+      deviceId: userData.deviceId,
+      message: 'User logged out',
+    });
 
     return {
       message: 'Logout successful',

@@ -12,6 +12,8 @@ import Home from "./pages/home/Home";
 
 import ActiveSessions from "./pages/sessions/ActiveSessions";
 
+import AuditLogs from "./pages/audit/AuditLogs";
+
 import ProtectedRoute from "./components/common/ProtectedRoute/ProtectedRoute";
 
 function App() {
@@ -44,6 +46,15 @@ function App() {
           element={
             <ProtectedRoute>
               <ActiveSessions />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/audit-logs"
+          element={
+            <ProtectedRoute>
+              <AuditLogs />
             </ProtectedRoute>
           }
         />
