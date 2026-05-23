@@ -1,89 +1,65 @@
-import {
-  Prop,
-  Schema,
-  SchemaFactory,
-} from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-import {
-  Document,
-  Types,
-} from 'mongoose';
+import { Document, Types } from 'mongoose';
 
-export type LoginHistoryDocument =
-  LoginHistory & Document;
+export type LoginHistoryDocument = LoginHistory & Document;
 
 @Schema({
   timestamps: true,
 })
-
 export class LoginHistory {
-
   @Prop({
     type: Types.ObjectId,
     ref: 'User',
     required: true,
   })
-
   user!: Types.ObjectId;
 
   @Prop({
     required: true,
   })
-
   deviceId!: string;
 
   @Prop({
     required: true,
   })
-
   deviceType!: string;
 
   @Prop({
     default: '',
   })
-
   browser!: string;
 
   @Prop({
     default: '',
   })
-
   ipAddress!: string;
 
   @Prop({
     default: '',
   })
-
   os!: string;
 
   @Prop({
     default: '',
   })
-
   location!: string;
 
   @Prop({
     default: false,
   })
-
   isSuspicious!: boolean;
 
   @Prop({
     type: [String],
     default: [],
   })
-
   suspiciousReasons!: string[];
 
   @Prop({
     default: true,
   })
-
   isActive!: boolean;
-
 }
 
-export const LoginHistorySchema =
-  SchemaFactory.createForClass(
-    LoginHistory,
-  );
+export const LoginHistorySchema = SchemaFactory.createForClass(LoginHistory);

@@ -1,76 +1,45 @@
 import axios from "axios";
 
+declare global {
+  interface ImportMetaEnv {
+    readonly VITE_API_BASE_URL?: string;
+  }
+
+  interface ImportMeta {
+    readonly env: ImportMetaEnv;
+  }
+}
+
 const api = axios.create({
-
-  baseURL:
-    "http://localhost:3000/api",
-
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api",
   headers: {
-    "Content-Type":
-      "application/json",
+    "Content-Type": "application/json",
   },
-
 });
 
-// REQUEST INTERCEPTOR
-api.interceptors.request.use(
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
 
-  (config) => {
-
-    const token =
-      localStorage.getItem(
-        "token"
-      );
-
-    // Attach JWT Token
-    if (token) {
-
-      config.headers.Authorization =
-        `Bearer ${token}`;
-
-    }
-
-    return config;
-
-  },
-
-  (error) => {
-
-    return Promise.reject(error);
-
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
 
-);
+  return config;
+});
 
-// RESPONSE INTERCEPTOR
 api.interceptors.response.use(
-
-  (response) => {
-
-    return response;
-
-  },
-
+  (response) => response,
   (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
 
-    // Unauthorized
-    if (
-      error.response?.status === 401
-    ) {
-
-      localStorage.removeItem(
-        "token"
-      );
-
-      window.location.href =
-        "/login";
-
+      if (window.location.pathname !== "/login") {
+        window.location.assign("/login");
+      }
     }
 
     return Promise.reject(error);
-
-  }
-
+  },
 );
 
 export default api;

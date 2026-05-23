@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -73,32 +74,29 @@ function ActiveSessions() {
     [sessions]
   );
 
-  const loadSessions =
-    async () => {
-      try {
-        setError("");
+  const loadSessions = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError("");
 
-        const res =
-          await api.get(
-            "/auth/sessions"
-          );
+      const res = await api.get("/auth/sessions");
 
-        setSessions(
-          res.data.sessions || []
-        );
-      } catch (err) {
-        setError(
-          err.response?.data?.message ||
-            "Unable to load active sessions"
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+      setSessions(res.data.sessions || []);
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          "Unable to load active sessions"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    loadSessions();
-  }, []);
+    queueMicrotask(() => {
+      void loadSessions();
+    });
+  }, [loadSessions]);
 
   const handleRevoke =
     async (session) => {

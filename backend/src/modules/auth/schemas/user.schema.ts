@@ -4,6 +4,18 @@ import { Document } from 'mongoose';
 
 export type UserDocument = User & Document;
 
+export type UserDevice = {
+  deviceId: string;
+  deviceType: string;
+  browser: string;
+  os: string;
+  ip: string;
+  location: string;
+  lastSeen: Date;
+  refreshToken: string | null;
+  refreshTokenExpiry: Date | null;
+};
+
 @Schema({
   timestamps: true,
 })
@@ -45,75 +57,54 @@ export class User {
   })
   otpExpiry!: Date | null;
 
-// ACTIVE DEVICES / SESSIONS
-@Prop({
-  type: [
-    {
-      deviceId: String,
+  // ACTIVE DEVICES / SESSIONS
+  @Prop({
+    type: [
+      {
+        deviceId: String,
 
-      deviceType: String,
+        deviceType: String,
 
-      browser: {
-        type: String,
-        default: '',
+        browser: {
+          type: String,
+          default: '',
+        },
+
+        os: {
+          type: String,
+          default: '',
+        },
+
+        ip: {
+          type: String,
+          default: '',
+        },
+
+        location: {
+          type: String,
+          default: '',
+        },
+
+        lastSeen: {
+          type: Date,
+          default: Date.now,
+        },
+
+        refreshToken: {
+          type: String,
+          default: null,
+        },
+
+        refreshTokenExpiry: {
+          type: Date,
+          default: null,
+        },
       },
+    ],
 
-      os: {
-        type: String,
-        default: '',
-      },
-
-      ip: {
-        type: String,
-        default: '',
-      },
-
-      location: {
-        type: String,
-        default: '',
-      },
-
-      lastSeen: {
-        type: Date,
-        default: Date.now,
-      },
-
-      refreshToken: {
-        type: String,
-        default: null,
-      },
-
-      refreshTokenExpiry: {
-        type: Date,
-        default: null,
-      },
-    },
-  ],
-
-  default: [],
-})
-
-devices!: {
-
-  deviceId: string;
-
-  deviceType: string;
-
-  browser: string;
-
-  os: string;
-
-  ip: string;
-
-  location: string;
-
-  lastSeen: Date;
-
-  refreshToken: string | null;
-
-  refreshTokenExpiry: Date | null;
-
-}[];
+    default: [],
+  })
+  devices!: UserDevice[];
 
   // PROFILE IMAGE
   @Prop({

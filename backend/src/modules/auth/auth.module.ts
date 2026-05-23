@@ -2,23 +2,18 @@ import { Module } from '@nestjs/common';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { LoginHistoryModule }
-from '../login-history/login-history.module';
+import { LoginHistoryModule } from '../login-history/login-history.module';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 
 import { MongooseModule } from '@nestjs/mongoose';
 
-import {
-  User,
-  UserSchema,
-} from './schemas/user.schema';
+import { User, UserSchema } from './schemas/user.schema';
 
 import { JwtStrategy } from '../strategies/jwt.strategy';
 
 @Module({
   imports: [
-
     MongooseModule.forFeature([
       {
         name: User.name,
@@ -29,33 +24,19 @@ import { JwtStrategy } from '../strategies/jwt.strategy';
     PassportModule,
 
     JwtModule.register({
-      secret:
-  process.env.JWT_SECRET!,
+      secret: process.env.JWT_SECRET!,
 
       signOptions: {
         expiresIn: '7d',
       },
     }),
     LoginHistoryModule,
-
   ],
 
-  controllers: [
-    AuthController,
-  ],
+  controllers: [AuthController],
 
-  providers: [
-    AuthService,
-    JwtStrategy,
-  ],
+  providers: [AuthService, JwtStrategy],
 
-  exports: [
-    JwtModule,
-    PassportModule,
-  ],
-
-  
-
+  exports: [JwtModule, PassportModule],
 })
-
 export class AuthModule {}

@@ -12,6 +12,7 @@ import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 
 import * as crypto from 'crypto';
+import type { StringValue } from 'ms';
 
 import axios from 'axios';
 
@@ -19,7 +20,7 @@ import { JwtService } from '@nestjs/jwt';
 
 import { resend } from '../../config/resend.config';
 
-import { User, UserDocument } from './schemas/user.schema';
+import { User, UserDevice, UserDocument } from './schemas/user.schema';
 
 import { LoginVerifyOtpDto } from './dto/login-verify-otp.dto';
 
@@ -45,6 +46,30 @@ type SuspiciousLoginResult = {
 type LoginRequestMetadata = {
   ip: string;
   location: string;
+};
+
+export type AuthenticatedUser = {
+  userId: string;
+  name?: string;
+  role: string;
+  deviceId: string;
+};
+
+type RefreshTokenPayload = {
+  userId: string;
+  role: string;
+  deviceId: string;
+};
+
+type IpApiResponse = {
+  status?: string;
+  city?: string;
+  regionName?: string;
+  country?: string;
+};
+
+type PublicIpResponse = {
+  ip?: string;
 };
 
 const DEFAULT_SESSION_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000;
@@ -87,11 +112,11 @@ function parseDurationToMs(value?: string | number | null): number | null {
 
 @Injectable()
 export class AuthService {
-  private readonly accessTokenExpiresIn =
-    process.env.JWT_ACCESS_EXPIRES_IN || '15m';
+  private readonly accessTokenExpiresIn = (process.env.JWT_ACCESS_EXPIRES_IN ||
+    '15m') as StringValue;
 
-  private readonly refreshTokenExpiresIn =
-    process.env.JWT_REFRESH_EXPIRES_IN || '30d';
+  private readonly refreshTokenExpiresIn = (process.env
+    .JWT_REFRESH_EXPIRES_IN || '30d') as StringValue;
 
   private readonly refreshTokenExpiryMs =
     Number(process.env.JWT_SESSION_EXPIRES_IN_MS) ||
@@ -171,7 +196,7 @@ export class AuthService {
     }
 
     try {
-      const response = await axios.get(
+      const response = await axios.get<IpApiResponse>(
         `http://ip-api.com/json/${encodeURIComponent(ip)}`,
         {
           params: {
@@ -192,24 +217,27 @@ export class AuthService {
       ]
         .filter(Boolean)
         .join(', ');
-    } catch (error) {
+    } catch {
       return '';
     }
   }
 
   private async findPublicIp() {
     try {
-      const response = await axios.get('https://api.ipify.org', {
-        params: {
-          format: 'json',
+      const response = await axios.get<PublicIpResponse>(
+        'https://api.ipify.org',
+        {
+          params: {
+            format: 'json',
+          },
+          timeout: 2500,
         },
-        timeout: 2500,
-      });
+      );
 
-      return typeof response.data?.ip === 'string'
+      return typeof response.data.ip === 'string'
         ? response.data.ip.trim()
         : '';
-    } catch (error) {
+    } catch {
       return '';
     }
   }
@@ -373,13 +401,13 @@ export class AuthService {
     };
 
     const accessToken = this.jwtService.sign(payload, {
-      expiresIn: this.accessTokenExpiresIn as any,
+      expiresIn: this.accessTokenExpiresIn,
     });
 
     const refreshToken = this.jwtService.sign(payload, {
       secret: this.refreshTokenSecret,
 
-      expiresIn: this.refreshTokenExpiresIn as any,
+      expiresIn: this.refreshTokenExpiresIn,
     });
 
     const refreshTokenHash = await bcrypt.hash(refreshToken, 10);
@@ -395,7 +423,7 @@ export class AuthService {
     };
   }
 
-  private isSessionExpired(device: any) {
+  private isSessionExpired(device: UserDevice) {
     return (
       !device?.refreshTokenExpiry ||
       new Date() > new Date(device.refreshTokenExpiry)
@@ -406,7 +434,7 @@ export class AuthService {
     const initialSessionCount = user.devices.length;
 
     user.devices = user.devices.filter(
-      (device: any) => !this.isSessionExpired(device),
+      (device) => !this.isSessionExpired(device),
     );
 
     return user.devices.length !== initialSessionCount;
@@ -435,7 +463,7 @@ export class AuthService {
     const otpExpiry = new Date(Date.now() + 3 * 60 * 1000);
 
     // Create temporary user
-    const user = await this.userModel.create({
+    await this.userModel.create({
       name: data.name,
 
       email: data.email,
@@ -472,7 +500,7 @@ export class AuthService {
         `,
       });
       console.log(`OTP for ${data.email}: ${otp}`);
-    } catch (error) {
+    } catch {
       throw new BadRequestException('Failed to send OTP email');
     }
 
@@ -523,19 +551,16 @@ export class AuthService {
     const requestIp = loginMetadata.ip;
     const loginLocation = loginMetadata.location;
 
-    const existingDevice: any = user.devices.find(
-      (device: any) => device.deviceId === data.deviceId,
+    const existingDevice = user.devices.find(
+      (device) => device.deviceId === data.deviceId,
     );
 
     // NEW DEVICE
     if (!existingDevice) {
       // CHECK SAME DEVICE TYPE
-      const sameTypeDevice: any = user.devices.find(
-        (device: any) => device.deviceType === data.deviceType,
+      const sameTypeDevice = user.devices.find(
+        (device) => device.deviceType === data.deviceType,
       );
-      if (existingDevice) {
-        existingDevice.lastSeen = new Date();
-      }
 
       // ASK REPLACEMENT
       if (sameTypeDevice) {
@@ -549,7 +574,7 @@ export class AuthService {
 
         // REMOVE OLD DEVICE
         user.devices = user.devices.filter(
-          (device: any) => device.deviceType !== data.deviceType,
+          (device) => device.deviceType !== data.deviceType,
         );
       }
 
@@ -585,11 +610,10 @@ export class AuthService {
 
     user.otpExpiry = null;
 
-    // DEFAULT VERIFICATION STATUS
-    user.isVerified = false;
+    user.isVerified = true;
 
-    const device: any = user.devices.find(
-      (currentDevice: any) => currentDevice.deviceId === data.deviceId,
+    const device = user.devices.find(
+      (currentDevice) => currentDevice.deviceId === data.deviceId,
     );
 
     const tokens = await this.generateAuthTokens(user, data.deviceId);
@@ -701,7 +725,7 @@ export class AuthService {
           </div>
         `,
       });
-    } catch (error) {
+    } catch {
       throw new BadRequestException('Failed to send OTP email');
     }
 
@@ -758,19 +782,16 @@ export class AuthService {
       location: loginLocation,
     });
 
-    const existingDevice: any = user.devices.find(
-      (device: any) => device.deviceId === data.deviceId,
+    const existingDevice = user.devices.find(
+      (device) => device.deviceId === data.deviceId,
     );
 
     // NEW DEVICE
     if (!existingDevice) {
       // CHECK SAME DEVICE TYPE
-      const sameTypeDevice: any = user.devices.find(
-        (device: any) => device.deviceType === data.deviceType,
+      const sameTypeDevice = user.devices.find(
+        (device) => device.deviceType === data.deviceType,
       );
-      if (existingDevice) {
-        existingDevice.lastSeen = new Date();
-      }
 
       // SAME TYPE DEVICE EXISTS
       if (sameTypeDevice) {
@@ -785,7 +806,7 @@ export class AuthService {
 
         // REMOVE OLD DEVICE
         user.devices = user.devices.filter(
-          (device: any) => device.deviceType !== data.deviceType,
+          (device) => device.deviceType !== data.deviceType,
         );
       }
 
@@ -854,8 +875,8 @@ export class AuthService {
     // GENERATE JWT
     // =========================
 
-    const device: any = user.devices.find(
-      (currentDevice: any) => currentDevice.deviceId === data.deviceId,
+    const device = user.devices.find(
+      (currentDevice) => currentDevice.deviceId === data.deviceId,
     );
 
     const tokens = await this.generateAuthTokens(user, data.deviceId);
@@ -916,13 +937,13 @@ export class AuthService {
   }
 
   async refreshToken(refreshToken: string) {
-    let payload: any;
+    let payload: RefreshTokenPayload;
 
     try {
-      payload = this.jwtService.verify(refreshToken, {
+      payload = this.jwtService.verify<RefreshTokenPayload>(refreshToken, {
         secret: this.refreshTokenSecret,
       });
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
@@ -936,8 +957,8 @@ export class AuthService {
       throw new UnauthorizedException('Account restricted');
     }
 
-    const device: any = user.devices.find(
-      (currentDevice: any) => currentDevice.deviceId === payload.deviceId,
+    const device = user.devices.find(
+      (currentDevice) => currentDevice.deviceId === payload.deviceId,
     );
 
     if (!device || !device.refreshToken) {
@@ -946,7 +967,7 @@ export class AuthService {
 
     if (this.isSessionExpired(device)) {
       user.devices = user.devices.filter(
-        (currentDevice: any) => currentDevice.deviceId !== payload.deviceId,
+        (currentDevice) => currentDevice.deviceId !== payload.deviceId,
       );
 
       await user.save();
@@ -988,7 +1009,7 @@ export class AuthService {
     };
   }
 
-  async getActiveSessions(userData: any) {
+  async getActiveSessions(userData: AuthenticatedUser) {
     const user = await this.userModel.findById(userData.userId);
 
     if (!user) {
@@ -1001,7 +1022,7 @@ export class AuthService {
       await user.save();
     }
 
-    const sessions = user.devices.map((device: any) => ({
+    const sessions = user.devices.map((device) => ({
       deviceId: device.deviceId,
 
       deviceType: device.deviceType || 'Unknown',
@@ -1028,7 +1049,7 @@ export class AuthService {
     };
   }
 
-  async revokeSession(userData: any, deviceId: string) {
+  async revokeSession(userData: AuthenticatedUser, deviceId: string) {
     const user = await this.userModel.findById(userData.userId);
 
     if (!user) {
@@ -1036,7 +1057,7 @@ export class AuthService {
     }
 
     const existingDevice = user.devices.find(
-      (device: any) => device.deviceId === deviceId,
+      (device) => device.deviceId === deviceId,
     );
 
     if (!existingDevice) {
@@ -1044,7 +1065,7 @@ export class AuthService {
     }
 
     user.devices = user.devices.filter(
-      (device: any) => device.deviceId !== deviceId,
+      (device) => device.deviceId !== deviceId,
     );
 
     await user.save();
@@ -1058,7 +1079,7 @@ export class AuthService {
     };
   }
 
-  async logout(userData: any) {
+  async logout(userData: AuthenticatedUser) {
     const user = await this.userModel.findById(userData.userId);
 
     if (!user) {
@@ -1067,7 +1088,7 @@ export class AuthService {
 
     // REMOVE DEVICE
     user.devices = user.devices.filter(
-      (device: any) => device.deviceId !== userData.deviceId,
+      (device) => device.deviceId !== userData.deviceId,
     );
 
     await user.save();

@@ -11,7 +11,7 @@ import {
 
 import type { Request } from 'express';
 
-import { AuthService } from './auth.service';
+import { AuthenticatedUser, AuthService } from './auth.service';
 
 import { LoginSendOtpDto } from './dto/login-send-otp.dto';
 
@@ -25,6 +25,10 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { Throttle } from '@nestjs/throttler/dist/throttler.decorator';
+
+type AuthenticatedRequest = Request & {
+  user: AuthenticatedUser;
+};
 
 @Controller('auth')
 export class AuthController {
@@ -144,12 +148,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  getMe(
-    @Req()
-    req: Request & {
-      user: any;
-    },
-  ) {
+  getMe(@Req() req: AuthenticatedRequest) {
     return {
       success: true,
 
@@ -159,19 +158,25 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('sessions')
-  getActiveSessions(@Req() req: any) {
+  getActiveSessions(@Req() req: AuthenticatedRequest) {
     return this.authService.getActiveSessions(req.user);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete('sessions/:deviceId')
-  revokeSession(@Req() req: any, @Param('deviceId') deviceId: string) {
+  revokeSession(
+    @Req()
+    req: AuthenticatedRequest,
+
+    @Param('deviceId')
+    deviceId: string,
+  ) {
     return this.authService.revokeSession(req.user, deviceId);
   }
 
   @Post('logout')
   @UseGuards(JwtAuthGuard)
-  logout(@Req() req: any) {
+  logout(@Req() req: AuthenticatedRequest) {
     return this.authService.logout(req.user);
   }
 }

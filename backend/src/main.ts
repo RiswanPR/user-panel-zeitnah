@@ -6,11 +6,14 @@ import helmet from 'helmet';
 
 import { AppModule } from './app.module';
 
-async function bootstrap() {
+import type { Express } from 'express';
+
+async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
 
   // TRUST PROXY
-  app.getHttpAdapter().getInstance().set('trust proxy', true);
+  const expressApp = app.getHttpAdapter().getInstance() as Express;
+  expressApp.set('trust proxy', true);
 
   // GLOBAL PREFIX
   app.setGlobalPrefix('api');
@@ -56,4 +59,4 @@ async function bootstrap() {
   console.log(`🚀 Server running on port ${PORT}`);
 }
 
-bootstrap();
+void bootstrap();
