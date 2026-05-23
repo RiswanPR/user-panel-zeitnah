@@ -47,6 +47,44 @@ type LoginRequestMetadata = {
   location: string;
 };
 
+const DEFAULT_SESSION_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000;
+
+function parseDurationToMs(value?: string | number | null): number | null {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) && value > 0 ? value : null;
+  }
+
+  const duration = (value || '').trim();
+
+  if (!duration) {
+    return null;
+  }
+
+  if (/^\d+$/.test(duration)) {
+    const seconds = Number(duration);
+
+    return seconds > 0 ? seconds * 1000 : null;
+  }
+
+  const match = duration.match(/^(\d+(?:\.\d+)?)(ms|s|m|h|d)$/i);
+
+  if (!match) {
+    return null;
+  }
+
+  const amount = Number(match[1]);
+  const unit = match[2].toLowerCase();
+  const unitToMs: Record<string, number> = {
+    ms: 1,
+    s: 1000,
+    m: 60 * 1000,
+    h: 60 * 60 * 1000,
+    d: 24 * 60 * 60 * 1000,
+  };
+
+  return amount > 0 ? amount * unitToMs[unit] : null;
+}
+
 @Injectable()
 export class AuthService {
   private readonly accessTokenExpiresIn =
@@ -56,7 +94,10 @@ export class AuthService {
     process.env.JWT_REFRESH_EXPIRES_IN || '30d';
 
   private readonly refreshTokenExpiryMs =
-    Number(process.env.JWT_REFRESH_EXPIRES_IN_MS) || 30 * 24 * 60 * 60 * 1000;
+    Number(process.env.JWT_SESSION_EXPIRES_IN_MS) ||
+    Number(process.env.JWT_REFRESH_EXPIRES_IN_MS) ||
+    parseDurationToMs(this.refreshTokenExpiresIn) ||
+    DEFAULT_SESSION_EXPIRY_MS;
 
   private readonly refreshTokenSecret =
     process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET!;
@@ -354,6 +395,23 @@ export class AuthService {
     };
   }
 
+  private isSessionExpired(device: any) {
+    return (
+      !device?.refreshTokenExpiry ||
+      new Date() > new Date(device.refreshTokenExpiry)
+    );
+  }
+
+  private removeExpiredSessions(user: UserDocument) {
+    const initialSessionCount = user.devices.length;
+
+    user.devices = user.devices.filter(
+      (device: any) => !this.isSessionExpired(device),
+    );
+
+    return user.devices.length !== initialSessionCount;
+  }
+
   // ==================================================
   // REGISTER SEND OTP
   // ==================================================
@@ -573,6 +631,8 @@ export class AuthService {
       accessToken: tokens.accessToken,
 
       refreshToken: tokens.refreshToken,
+
+      sessionExpiresAt: tokens.refreshTokenExpiry,
 
       user: {
         id: user._id,
@@ -831,6 +891,8 @@ export class AuthService {
 
       refreshToken: tokens.refreshToken,
 
+      sessionExpiresAt: tokens.refreshTokenExpiry,
+
       suspiciousLogin: suspiciousLogin.isSuspicious
         ? {
             detected: true,
@@ -882,7 +944,13 @@ export class AuthService {
       throw new UnauthorizedException('Device session expired');
     }
 
-    if (!device.refreshTokenExpiry || new Date() > device.refreshTokenExpiry) {
+    if (this.isSessionExpired(device)) {
+      user.devices = user.devices.filter(
+        (currentDevice: any) => currentDevice.deviceId !== payload.deviceId,
+      );
+
+      await user.save();
+
       throw new UnauthorizedException('Refresh token expired');
     }
 
@@ -915,6 +983,8 @@ export class AuthService {
       accessToken: tokens.accessToken,
 
       refreshToken: tokens.refreshToken,
+
+      sessionExpiresAt: tokens.refreshTokenExpiry,
     };
   }
 
@@ -923,6 +993,12 @@ export class AuthService {
 
     if (!user) {
       throw new UnauthorizedException('User not found');
+    }
+
+    const removedExpiredSessions = this.removeExpiredSessions(user);
+
+    if (removedExpiredSessions) {
+      await user.save();
     }
 
     const sessions = user.devices.map((device: any) => ({

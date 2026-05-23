@@ -107,7 +107,11 @@ function Register() {
 
       navigate("/verify-otp");
     } catch (error) {
-      alert(getErrorMessage(error));
+      alert(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong",
+      );
     } finally {
       setLoading(false);
     }

@@ -100,6 +100,24 @@ export class JwtStrategy extends PassportStrategy(
 
     }
 
+    if (
+      !deviceExists.refreshTokenExpiry ||
+      new Date() > new Date(deviceExists.refreshTokenExpiry)
+    ) {
+      user.devices = user.devices.filter(
+        (device: any) =>
+          device.deviceId !==
+          payload.deviceId,
+      );
+
+      await user.save();
+
+      throw new UnauthorizedException(
+        'Session expired',
+      );
+
+    }
+
     // UPDATE LAST SEEN
     deviceExists.lastSeen =
       new Date();
