@@ -26,6 +26,20 @@ import { RegisterSendOtpDto } from './dto/register-send-otp.dto';
 import { RegisterVerifyOtpDto } from './dto/register-verify-otp.dto';
 import { LoginHistoryService } from '../login-history/login-history.service';
 
+type LoginDeviceSnapshot = {
+  deviceId?: string;
+  deviceType?: string;
+  browser?: string;
+  os?: string;
+  ip?: string;
+  location?: string;
+};
+
+type SuspiciousLoginResult = {
+  isSuspicious: boolean;
+  reasons: string[];
+};
+
 @Injectable()
 export class AuthService {
   private readonly accessTokenExpiresIn =
@@ -47,6 +61,146 @@ export class AuthService {
     private loginHistoryService: LoginHistoryService,
     private jwtService: JwtService,
   ) {}
+
+  private normalizeSecurityValue(value?: string | null) {
+    return (value || '').trim().toLowerCase();
+  }
+
+  private escapeHtml(value?: string | null) {
+    return (value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  private detectSuspiciousLogin(
+    knownDevices: LoginDeviceSnapshot[],
+    currentDevice: LoginDeviceSnapshot,
+  ): SuspiciousLoginResult {
+    const reasons: string[] = [];
+
+    const currentDeviceId = this.normalizeSecurityValue(
+      currentDevice.deviceId,
+    );
+    const currentIp = this.normalizeSecurityValue(currentDevice.ip);
+    const currentLocation = this.normalizeSecurityValue(
+      currentDevice.location,
+    );
+    const currentBrowser = this.normalizeSecurityValue(
+      currentDevice.browser,
+    );
+    const currentOs = this.normalizeSecurityValue(currentDevice.os);
+
+    const previousDevices = knownDevices.filter(
+      (device) => this.normalizeSecurityValue(device.deviceId),
+    );
+
+    if (!previousDevices.length) {
+      return {
+        isSuspicious: false,
+        reasons,
+      };
+    }
+
+    const matchingDevice = previousDevices.find(
+      (device) =>
+        this.normalizeSecurityValue(device.deviceId) ===
+        currentDeviceId,
+    );
+
+    if (!matchingDevice) {
+      reasons.push('New device');
+    }
+
+    const knownIps = previousDevices
+      .map((device) => this.normalizeSecurityValue(device.ip))
+      .filter(Boolean);
+
+    if (currentIp && knownIps.length && !knownIps.includes(currentIp)) {
+      reasons.push('New IP address');
+    }
+
+    const knownLocations = previousDevices
+      .map((device) => this.normalizeSecurityValue(device.location))
+      .filter((location) => location && location !== 'unknown');
+
+    if (
+      currentLocation &&
+      currentLocation !== 'unknown' &&
+      knownLocations.length &&
+      !knownLocations.includes(currentLocation)
+    ) {
+      reasons.push('New location');
+    }
+
+    if (matchingDevice) {
+      if (
+        currentBrowser &&
+        this.normalizeSecurityValue(matchingDevice.browser) &&
+        this.normalizeSecurityValue(matchingDevice.browser) !==
+          currentBrowser
+      ) {
+        reasons.push('Browser changed');
+      }
+
+      if (
+        currentOs &&
+        this.normalizeSecurityValue(matchingDevice.os) &&
+        this.normalizeSecurityValue(matchingDevice.os) !== currentOs
+      ) {
+        reasons.push('Operating system changed');
+      }
+    }
+
+    return {
+      isSuspicious: reasons.length > 0,
+      reasons,
+    };
+  }
+
+  private async sendSuspiciousLoginEmail(
+    user: UserDocument,
+    loginDetails: LoginDeviceSnapshot,
+    reasons: string[],
+  ) {
+    try {
+      await resend.emails.send({
+        from:
+          process.env.RESEND_FROM_EMAIL ||
+          'LMS Platform <onboarding@resend.dev>',
+
+        to: user.email,
+
+        subject: 'Suspicious login detected',
+
+        html: `
+          <div style="font-family:sans-serif">
+            <h2>Suspicious login detected</h2>
+            <p>
+              We noticed a login to your LMS account that looked different from your usual activity.
+            </p>
+            <ul>
+              ${reasons
+                .map((reason) => `<li>${this.escapeHtml(reason)}</li>`)
+                .join('')}
+            </ul>
+            <p><strong>Device:</strong> ${this.escapeHtml(loginDetails.deviceType || 'Unknown')}</p>
+            <p><strong>Browser:</strong> ${this.escapeHtml(loginDetails.browser || 'Unknown')}</p>
+            <p><strong>OS:</strong> ${this.escapeHtml(loginDetails.os || 'Unknown')}</p>
+            <p><strong>IP:</strong> ${this.escapeHtml(loginDetails.ip || 'Unknown')}</p>
+            <p><strong>Location:</strong> ${this.escapeHtml(loginDetails.location || 'Unknown')}</p>
+            <p>
+              If this was you, no action is needed. If this was not you, revoke unknown sessions and contact support immediately.
+            </p>
+          </div>
+        `,
+      });
+    } catch (error) {
+      console.error('Failed to send suspicious login email', error);
+    }
+  }
 
   private async generateAuthTokens(user: UserDocument, deviceId: string) {
     const payload = {
@@ -189,6 +343,9 @@ export class AuthService {
     // DEVICE LIMIT SYSTEM
     // =========================
 
+    const requestIp = data.ip || ip || '';
+    const loginLocation = data.location || 'Unknown';
+
     const existingDevice: any = user.devices.find(
       (device: any) => device.deviceId === data.deviceId,
     );
@@ -234,9 +391,9 @@ export class AuthService {
 
         os: data.os,
 
-        ip,
+        ip: requestIp,
 
-        location: data.location || 'Unknown',
+        location: loginLocation,
 
         lastSeen: new Date(),
 
@@ -284,7 +441,13 @@ export class AuthService {
 
       os: data.os,
 
-      ipAddress: data.ip || '',
+      ipAddress: requestIp,
+
+      location: loginLocation,
+
+      isSuspicious: false,
+
+      suspiciousReasons: [],
     });
     return {
       message: 'Registration successful',
@@ -405,6 +568,19 @@ export class AuthService {
     // DEVICE LIMIT SYSTEM
     // =========================
 
+    const requestIp = data.ip || ip || '';
+    const loginLocation = data.location || 'Unknown';
+    const knownDevices = [...user.devices];
+
+    const suspiciousLogin = this.detectSuspiciousLogin(knownDevices, {
+      deviceId: data.deviceId,
+      deviceType: data.deviceType,
+      browser: data.browser,
+      os: data.os,
+      ip: requestIp,
+      location: loginLocation,
+    });
+
     const existingDevice: any = user.devices.find(
       (device: any) => device.deviceId === data.deviceId,
     );
@@ -451,9 +627,9 @@ export class AuthService {
 
         os: data.os,
 
-        ip: data.ip || '',
+        ip: requestIp,
 
-        location: data.location || 'Unknown',
+        location: loginLocation,
 
         lastSeen: new Date(),
 
@@ -474,8 +650,29 @@ export class AuthService {
 
       os: data.os,
 
-      ipAddress: data.ip || '',
+      ipAddress: requestIp,
+
+      location: loginLocation,
+
+      isSuspicious: suspiciousLogin.isSuspicious,
+
+      suspiciousReasons: suspiciousLogin.reasons,
     });
+
+    if (suspiciousLogin.isSuspicious) {
+      await this.sendSuspiciousLoginEmail(
+        user,
+        {
+          deviceId: data.deviceId,
+          deviceType: data.deviceType,
+          browser: data.browser,
+          os: data.os,
+          ip: requestIp,
+          location: loginLocation,
+        },
+        suspiciousLogin.reasons,
+      );
+    }
     // =========================
     // GENERATE JWT
     // =========================
@@ -495,6 +692,14 @@ export class AuthService {
       device.refreshTokenExpiry = tokens.refreshTokenExpiry;
 
       device.lastSeen = new Date();
+
+      device.ip = requestIp;
+
+      device.location = loginLocation;
+
+      device.browser = data.browser;
+
+      device.os = data.os;
     }
 
     // Clear OTP
@@ -511,6 +716,16 @@ export class AuthService {
       accessToken: tokens.accessToken,
 
       refreshToken: tokens.refreshToken,
+
+      suspiciousLogin: suspiciousLogin.isSuspicious
+        ? {
+            detected: true,
+            reasons: suspiciousLogin.reasons,
+          }
+        : {
+            detected: false,
+            reasons: [],
+          },
 
       user: {
         id: user._id,

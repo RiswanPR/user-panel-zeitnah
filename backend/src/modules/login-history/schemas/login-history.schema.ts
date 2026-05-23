@@ -51,6 +51,31 @@ export class LoginHistory {
   ipAddress!: string;
 
   @Prop({
+    default: '',
+  })
+
+  os!: string;
+
+  @Prop({
+    default: '',
+  })
+
+  location!: string;
+
+  @Prop({
+    default: false,
+  })
+
+  isSuspicious!: boolean;
+
+  @Prop({
+    type: [String],
+    default: [],
+  })
+
+  suspiciousReasons!: string[];
+
+  @Prop({
     default: true,
   })
 
