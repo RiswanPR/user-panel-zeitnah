@@ -474,7 +474,13 @@ export class AuthService {
 
       otpExpiry,
 
-      isVerified: false,
+      account_Status: {
+        isVerified: false,
+        isActive: true,
+        lastSeen: new Date(),
+        isBlocked: false,
+        isDeleted: false,
+      },
     });
 
     await this.auditLogsService.record({
@@ -535,7 +541,7 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
-    if (user.isBlocked) {
+    if (user.account_Status?.isBlocked) {
       throw new UnauthorizedException('Account blocked');
     }
 
@@ -623,7 +629,7 @@ export class AuthService {
 
     user.otpExpiry = null;
 
-    user.isVerified = true;
+    user.account_Status.isVerified = true;
 
     const device = user.devices.find(
       (currentDevice) => currentDevice.deviceId === data.deviceId,
@@ -698,7 +704,7 @@ export class AuthService {
 
         role: user.role,
 
-        userVerification: user.isVerified,
+        userVerification: user.account_Status?.isVerified,
       },
     };
   }
@@ -787,7 +793,7 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
-    if (user.isBlocked) {
+    if (user.account_Status?.isBlocked) {
       throw new UnauthorizedException('Account blocked');
     }
 
@@ -1033,7 +1039,7 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
-    if (user.isBlocked || user.isDeleted) {
+    if (user.account_Status?.isBlocked || user.account_Status?.isDeleted) {
       throw new UnauthorizedException('Account restricted');
     }
 
@@ -1072,7 +1078,7 @@ export class AuthService {
 
     device.lastSeen = new Date();
 
-    user.lastSeen = new Date();
+    user.account_Status.lastSeen = new Date();
 
     await user.save();
 

@@ -71,7 +71,7 @@ function VerifyRegisterOtp() {
     localStorage.removeItem("register_name");
     localStorage.removeItem("register_email");
     setSuccess("Account created! Redirecting…");
-    setTimeout(() => navigate("/"), 1200);
+    setTimeout(() => navigate("/profile"), 1200);
   };
 
   const handleVerifyOtp = async (e) => {

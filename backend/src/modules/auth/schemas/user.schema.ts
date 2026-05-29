@@ -125,32 +125,65 @@ export class User {
   })
   skills!: string[];
 
-  // VERIFIED USER
-  @Prop({
-    default: false,
-  })
-  isVerified!: boolean;
+//   // VERIFIED USER
+//   @Prop({
+//     default: false,
+//   })
+//   isVerified!: boolean;
 
-  // ACCOUNT STATUS
-  @Prop({
-    default: true,
-  })
-  isActive!: boolean;
+//   // ACCOUNT STATUS
+//   @Prop({
+//     default: true,
+//   })
+//   isActive!: boolean;
 
-  @Prop({
-    default: Date.now,
-  })
-  lastSeen!: Date;
+//   @Prop({
+//     default: Date.now,
+//   })
+//   lastSeen!: Date;
 
-  @Prop({
-    default: false,
-  })
-  isBlocked!: boolean;
+//   @Prop({
+//     default: false,
+//   })
+//   isBlocked!: boolean;
 
-  @Prop({
-    default: false,
-  })
-  isDeleted!: boolean;
+//   @Prop({
+//     default: false,
+//   })
+//   isDeleted!: boolean;
+// }
+@Prop({
+  type: {
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    lastSeen: {
+      type: Date,
+      default: Date.now,
+    },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  default: {},
+})
+account_Status!: {
+  isVerified: boolean;
+  isActive: boolean;
+  lastSeen: Date;
+  isBlocked: boolean;
+  isDeleted: boolean;
+};
 }
-
 export const UserSchema = SchemaFactory.createForClass(User);
+

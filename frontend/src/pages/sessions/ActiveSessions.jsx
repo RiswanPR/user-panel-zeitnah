@@ -15,9 +15,10 @@ import {
   FaArrowLeft,
   FaDesktop,
   FaMobileAlt,
-  FaSyncAlt,
   FaTabletAlt,
+  FaSyncAlt,
   FaTrash,
+  FaShieldAlt,
 } from "react-icons/fa";
 
 import api from "../../services/api";
@@ -26,90 +27,132 @@ import {
   AuthContext,
 } from "../../context/AuthContext";
 
-import "./ActiveSessions.css";
-
 const formatDate = (value) => {
-  if (!value) return "Not available";
 
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
+  if (!value)
+    return "Not available";
+
+  return new Intl.DateTimeFormat(
+    undefined,
+    {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }
+  ).format(
+    new Date(value)
+  );
+
 };
 
-const getDeviceIcon = (deviceType) => {
-  const type = deviceType?.toLowerCase();
+const getDeviceIcon = (
+  deviceType
+) => {
 
-  if (type === "mobile") return <FaMobileAlt />;
+  const type =
+    deviceType?.toLowerCase();
 
-  if (type === "tablet") return <FaTabletAlt />;
+  if (type === "mobile")
+    return <FaMobileAlt />;
+
+  if (type === "tablet")
+    return <FaTabletAlt />;
 
   return <FaDesktop />;
+
 };
 
 function ActiveSessions() {
-  const navigate = useNavigate();
+
+  const navigate =
+    useNavigate();
 
   const { setUser } =
-    useContext(AuthContext);
+    useContext(
+      AuthContext
+    );
 
-  const [sessions, setSessions] =
+  const [sessions,
+    setSessions] =
     useState([]);
 
-  const [loading, setLoading] =
+  const [loading,
+    setLoading] =
     useState(true);
 
-  const [error, setError] =
+  const [error,
+    setError] =
     useState("");
 
-  const [revokingDeviceId, setRevokingDeviceId] =
+  const [revokingDeviceId,
+    setRevokingDeviceId] =
     useState("");
 
-  const currentSession = useMemo(
-    () =>
-      sessions.find(
-        (session) =>
-          session.isCurrent
-      ),
-    [sessions]
-  );
+  const currentSession =
+    useMemo(
+      () =>
+        sessions.find(
+          (s) =>
+            s.isCurrent
+        ),
+      [sessions]
+    );
 
-  const loadSessions = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError("");
+  const loadSessions =
+    useCallback(
+      async () => {
 
-      const res = await api.get("/auth/sessions");
+        try {
 
-      setSessions(res.data.sessions || []);
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Unable to load active sessions"
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+          setLoading(true);
+
+          const res =
+            await api.get(
+              "/auth/sessions"
+            );
+
+          setSessions(
+            res.data.sessions || []
+          );
+
+        } catch (err) {
+
+          setError(
+            err.response?.data
+              ?.message ||
+              "Unable to load sessions"
+          );
+
+        } finally {
+
+          setLoading(false);
+
+        }
+
+      },
+      []
+    );
 
   useEffect(() => {
-    queueMicrotask(() => {
-      void loadSessions();
-    });
+
+    loadSessions();
+
   }, [loadSessions]);
 
   const handleRevoke =
     async (session) => {
+
       const confirmed =
         window.confirm(
           session.isCurrent
-            ? "Revoke this session and log out?"
-            : "Revoke this session?"
+            ? "Logout this device?"
+            : "Revoke session?"
         );
 
-      if (!confirmed) return;
+      if (!confirmed)
+        return;
 
       try {
+
         setRevokingDeviceId(
           session.deviceId
         );
@@ -120,8 +163,10 @@ function ActiveSessions() {
           );
 
         if (
-          res.data.revokedCurrentSession
+          res.data
+            .revokedCurrentSession
         ) {
+
           localStorage.removeItem(
             "token"
           );
@@ -131,181 +176,275 @@ function ActiveSessions() {
           navigate("/login");
 
           return;
+
         }
 
-        setSessions((items) =>
-          items.filter(
-            (item) =>
-              item.deviceId !==
-              session.deviceId
-          )
+        setSessions(
+          (items) =>
+            items.filter(
+              (item) =>
+                item.deviceId !==
+                session.deviceId
+            )
         );
+
       } catch (err) {
+
         alert(
-          err.response?.data?.message ||
-            "Unable to revoke session"
+          err.response?.data
+            ?.message
         );
+
       } finally {
-        setRevokingDeviceId("");
+
+        setRevokingDeviceId(
+          ""
+        );
+
       }
+
     };
 
   return (
-    <main className="sessions-page">
-      <header className="sessions-header">
-        <div>
-          <Link
-            to="/"
-            className="sessions-back-link"
+
+    <div className="min-h-screen bg-[#0a0a0a] relative overflow-hidden px-4 py-10">
+
+      {/* Glow */}
+      <div className="absolute top-[-120px] left-[-100px] w-[420px] h-[420px] bg-cyan-500/10 rounded-full blur-[120px]" />
+
+      <div className="absolute bottom-[-100px] right-[-80px] w-[360px] h-[360px] bg-violet-600/10 rounded-full blur-[100px]" />
+
+      <div className="relative z-10 max-w-6xl mx-auto">
+
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between gap-4 mb-8">
+
+          <div>
+
+        <Link
+  to="/profile"
+  className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-[#111111] border border-white/[0.06] text-white/75 hover:text-cyan-300 hover:border-cyan-400/20 hover:bg-cyan-500/[0.03] transition-all duration-300 mb-5 shadow-lg shadow-black/30"
+>
+
+  <div className="w-8 h-8 rounded-xl bg-gradient-to-r from-cyan-500/10 to-violet-500/10 border border-cyan-400/10 flex items-center justify-center text-cyan-300">
+    <FaArrowLeft />
+  </div>
+
+  <span className="font-medium  text-white">
+    Back to Profile
+  </span>
+
+</Link>
+
+            <h1 className="text-4xl font-bold text-white">
+              Active Sessions
+            </h1>
+
+            <p className="text-white/35 mt-2">
+              Monitor and manage your logged-in devices.
+            </p>
+
+          </div>
+
+          <button
+            onClick={loadSessions}
+            disabled={loading}
+            className="self-start flex items-center gap-2 px-5 py-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] text-white hover:border-cyan-400/20"
           >
-            <FaArrowLeft />
-            Dashboard
-          </Link>
+            <FaSyncAlt />
+            Refresh
+          </button>
 
-          <h1>Active Sessions</h1>
-
-          <p>
-            Manage the devices currently signed in to your account.
-          </p>
         </div>
 
-        <button
-          className="sessions-refresh-button"
-          onClick={loadSessions}
-          disabled={loading}
-          title="Refresh sessions"
-          aria-label="Refresh sessions"
-        >
-          <FaSyncAlt />
-        </button>
-      </header>
+        {/* Summary */}
+        <div className="grid md:grid-cols-2 gap-5 mb-8">
 
-      <section className="sessions-summary">
-        <div>
-          <span>Signed-in devices</span>
-          <strong>
-            {sessions.length}
-          </strong>
+          <div className="bg-[#111111] border border-white/[0.06] rounded-3xl p-6">
+
+            <div className="flex items-center gap-3 mb-3">
+
+              <FaShieldAlt className="text-cyan-300" />
+
+              <h3 className="text-white font-semibold">
+                Signed-in Devices
+              </h3>
+
+            </div>
+
+            <h2 className="text-4xl font-bold text-white">
+              {sessions.length}
+            </h2>
+
+          </div>
+
+          <div className="bg-[#111111] border border-white/[0.06] rounded-3xl p-6">
+
+            <h3 className="text-white font-semibold mb-3">
+              Current Device
+            </h3>
+
+            <h2 className="text-2xl text-cyan-300">
+              {
+                currentSession?.deviceType ||
+                "Unknown"
+              }
+            </h2>
+
+          </div>
+
         </div>
 
-        <div>
-          <span>Current device</span>
-          <strong>
-            {currentSession
-              ? currentSession.deviceType
-              : "Unknown"}
-          </strong>
-        </div>
-      </section>
+        {/* States */}
+        {
 
-      {loading ? (
-        <div className="sessions-state">
-          Loading sessions...
-        </div>
-      ) : error ? (
-        <div className="sessions-state sessions-state-error">
-          {error}
-        </div>
-      ) : sessions.length === 0 ? (
-        <div className="sessions-state">
-          No active sessions found.
-        </div>
-      ) : (
-        <section className="sessions-list">
-          {sessions.map((session) => (
-            <article
-              className="session-card"
-              key={session.deviceId}
-            >
-              <div className="session-device-icon">
-                {getDeviceIcon(
-                  session.deviceType
-                )}
-              </div>
+          loading ? (
 
-              <div className="session-details">
-                <div className="session-title-row">
-                  <h2>
-                    {session.browser} on {session.os}
-                  </h2>
+            <div className="text-white/40">
+              Loading...
+            </div>
 
-                  {session.isCurrent && (
-                    <span className="session-current-badge">
-                      Current
-                    </span>
-                  )}
-                </div>
+          ) : error ? (
 
-                <dl>
-                  <div>
-                    <dt>Device</dt>
-                    <dd>
-                      {session.deviceType}
-                    </dd>
-                  </div>
+            <div className="text-red-400">
+              {error}
+            </div>
 
-                  <div>
-                    <dt>Location</dt>
-                    <dd>
-                      {session.location ||
-                        "Unknown"}
-                    </dd>
-                  </div>
+          ) : (
 
-                  <div>
-                    <dt>IP address</dt>
-                    <dd>
-                      {session.ip ||
-                        "Not available"}
-                    </dd>
-                  </div>
+            <div className="space-y-5">
 
-                  <div>
-                    <dt>Last seen</dt>
-                    <dd>
-                      {formatDate(
-                        session.lastSeen
-                      )}
-                    </dd>
-                  </div>
+              {
 
-                  <div>
-                    <dt>Expires</dt>
-                    <dd>
-                      {formatDate(
-                        session.refreshTokenExpiry
-                      )}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
+                sessions.map(
+                  (session) => (
 
-              <button
-                className="session-revoke-button"
-                onClick={() =>
-                  handleRevoke(session)
-                }
-                disabled={
-                  revokingDeviceId ===
-                  session.deviceId
-                }
-                title="Revoke session"
-                aria-label="Revoke session"
-              >
-                <FaTrash />
-                <span>
-                  {revokingDeviceId ===
-                  session.deviceId
-                    ? "Revoking"
-                    : "Revoke"}
-                </span>
-              </button>
-            </article>
-          ))}
-        </section>
-      )}
-    </main>
+                    <div
+                      key={
+                        session.deviceId
+                      }
+                      className={`bg-[#111111] border rounded-3xl p-6 transition-all ${
+                        session.isCurrent
+                          ? "border-cyan-400/20 shadow-lg shadow-cyan-500/5"
+                          : "border-white/[0.06]"
+                      }`}
+                    >
+
+                      <div className="flex flex-col lg:flex-row gap-6 justify-between">
+
+                        {/* Left */}
+                        <div className="flex gap-5">
+
+                          <div className="w-14 h-14 rounded-2xl bg-gradient-to-r from-cyan-500/10 to-violet-500/10 flex items-center justify-center text-cyan-300 text-xl">
+                            {
+                              getDeviceIcon(
+                                session.deviceType
+                              )
+                            }
+                          </div>
+
+                          <div>
+
+                            <div className="flex items-center gap-3 mb-2">
+
+                              <h2 className="text-xl text-white font-semibold">
+                                {session.browser} on {session.os}
+                              </h2>
+
+                              {
+
+                                session.isCurrent && (
+
+                                  <span className="px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-300 text-xs border border-cyan-400/20">
+                                    Current
+                                  </span>
+
+                                )
+
+                              }
+
+                            </div>
+
+                            <div className="grid sm:grid-cols-2 gap-x-8 gap-y-2 text-sm text-white/40">
+
+                              <p>
+                                Device:
+                                {" "}
+                                {session.deviceType}
+                              </p>
+
+                              <p>
+                                IP:
+                                {" "}
+                                {session.ip || "N/A"}
+                              </p>
+
+                              <p>
+                                Location:
+                                {" "}
+                                {session.location || "Unknown"}
+                              </p>
+
+                              <p>
+                                Last Seen:
+                                {" "}
+                                {formatDate(
+                                  session.lastSeen
+                                )}
+                              </p>
+
+                            </div>
+
+                          </div>
+
+                        </div>
+
+                        {/* Button */}
+                        <button
+                          onClick={() =>
+                            handleRevoke(
+                              session
+                            )
+                          }
+                          disabled={
+                            revokingDeviceId ===
+                            session.deviceId
+                          }
+                          className="self-start flex items-center gap-2 px-5 py-3 rounded-2xl bg-red-500/10 border border-red-400/20 text-red-300 hover:bg-red-500/15"
+                        >
+
+                          <FaTrash />
+
+                          {
+                            revokingDeviceId ===
+                            session.deviceId
+                              ? "Revoking..."
+                              : "Revoke"
+                          }
+
+                        </button>
+
+                      </div>
+
+                    </div>
+
+                  )
+                )
+
+              }
+
+            </div>
+
+          )
+
+        }
+
+      </div>
+
+    </div>
+
   );
+
 }
 
 export default ActiveSessions;
