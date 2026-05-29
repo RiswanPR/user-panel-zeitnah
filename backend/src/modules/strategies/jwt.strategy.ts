@@ -42,7 +42,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     // BLOCKED ACCOUNT
-    if (user.isBlocked || user.isDeleted) {
+    if (user.account_Status?.isBlocked || user.account_Status?.isDeleted) {
       throw new UnauthorizedException('Account restricted');
     }
 
@@ -72,7 +72,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // UPDATE LAST SEEN
     deviceExists.lastSeen = new Date();
 
-    user.lastSeen = new Date();
+    user.account_Status.lastSeen = new Date();
 
     await user.save();
 
