@@ -14,24 +14,28 @@ import ActiveSessions from "./pages/sessions/ActiveSessions";
 
 import AuditLogs from "./pages/audit/AuditLogs";
 
+import Profile from "./pages/profile/Profile";
+
+import EditProfile from "./pages/profile/EditProfile";
+
 import ProtectedRoute from "./components/common/ProtectedRoute/ProtectedRoute";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Login */}
+        {/* AUTH */}
 
         <Route path="/login" element={<Login />} />
 
-        {/* Verify OTP */}
-
         <Route path="/verify-login-otp" element={<VerifyOtp />} />
 
-        {/* Protected Home */}
         <Route path="/register" element={<Register />} />
 
         <Route path="/verify-register-otp" element={<VerifyRegisterOtp />} />
+
+        {/* HOME */}
+
         <Route
           path="/"
           element={
@@ -40,6 +44,27 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* PROFILE */}
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profile/edit"
+          element={
+            <ProtectedRoute>
+              <EditProfile />
+            </ProtectedRoute>
+          }
+        />
+        {/* SESSIONS */}
 
         <Route
           path="/active-sessions"
@@ -50,6 +75,8 @@ function App() {
           }
         />
 
+        {/* AUDIT */}
+
         <Route
           path="/audit-logs"
           element={
@@ -59,7 +86,7 @@ function App() {
           }
         />
 
-        {/* Redirect Unknown Routes */}
+        {/* FALLBACK */}
 
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

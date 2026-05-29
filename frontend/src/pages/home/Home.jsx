@@ -54,12 +54,36 @@ function Home() {
             className="text-white/40 text-sm"
             style={{ fontFamily: "'DM Sans', sans-serif" }}
           >
-            Manage your sessions, activity logs, and account security.
+            Manage your profile, sessions, activity logs, and account security.
           </p>
         </div>
 
         {/* Dashboard cards */}
-        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
+
+          {/* Profile */}
+          <Link
+            to="/profile"
+            className="group bg-[#111111] border border-white/[0.07] rounded-2xl p-6 hover:border-blue-400/30 hover:bg-white/[0.02] transition-all duration-300 shadow-2xl shadow-black/60"
+          >
+
+            <div className="flex items-center justify-between mb-5">
+
+              <h2 className="text-lg font-semibold text-white">
+                Profile
+              </h2>
+
+              <div className="text-blue-400 group-hover:translate-x-1 transition-transform">
+                →
+              </div>
+
+            </div>
+
+            <p className="text-white/40 text-sm">
+              View and manage your profile details.
+            </p>
+
+          </Link>
 
           {/* Security Status */}
           <div className="bg-[#111111] border border-white/[0.07] rounded-2xl p-6 shadow-2xl shadow-black/60">
@@ -146,7 +170,6 @@ function Home() {
             style={{ fontFamily: "'Sora', sans-serif" }}
           >
 
-            {/* Shimmer effect */}
             <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
             <span className="relative">
