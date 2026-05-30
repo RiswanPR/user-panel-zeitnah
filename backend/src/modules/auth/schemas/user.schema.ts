@@ -124,34 +124,7 @@ export class User {
     default: [],
   })
   skills!: string[];
-
-//   // VERIFIED USER
-//   @Prop({
-//     default: false,
-//   })
-//   isVerified!: boolean;
-
-//   // ACCOUNT STATUS
-//   @Prop({
-//     default: true,
-//   })
-//   isActive!: boolean;
-
-//   @Prop({
-//     default: Date.now,
-//   })
-//   lastSeen!: Date;
-
-//   @Prop({
-//     default: false,
-//   })
-//   isBlocked!: boolean;
-
-//   @Prop({
-//     default: false,
-//   })
-//   isDeleted!: boolean;
-// }
+  
 @Prop({
   type: {
     isVerified: {

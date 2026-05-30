@@ -629,7 +629,7 @@ export class AuthService {
 
     user.otpExpiry = null;
 
-    user.account_Status.isVerified = true;
+    user.account_Status.isVerified = false;
 
     const device = user.devices.find(
       (currentDevice) => currentDevice.deviceId === data.deviceId,
