@@ -9,91 +9,54 @@ import { AppModule } from './app.module';
 import type { Express } from 'express';
 
 async function bootstrap(): Promise<void> {
-
-  const app =
-    await NestFactory.create(
-      AppModule,
-    );
+  const app = await NestFactory.create(AppModule);
 
   // TRUST PROXY
-  const expressApp =
-    app
-      .getHttpAdapter()
-      .getInstance() as Express;
-
-  expressApp.set(
-    'trust proxy',
-    true,
-  );
+  const expressApp = app.getHttpAdapter().getInstance() as Express;
+  expressApp.set('trust proxy', true);
 
   // GLOBAL PREFIX
-  app.setGlobalPrefix(
-    'api',
-  );
+  app.setGlobalPrefix('api');
 
-  // HELMET
+  // HELMET SECURITY
   app.use(
     helmet({
-      crossOriginResourcePolicy:
-        false,
-
-      contentSecurityPolicy:
-        false,
+      crossOriginResourcePolicy: false,
     }),
   );
 
-  // VALIDATION
+  // GLOBAL VALIDATION
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
 
-      forbidNonWhitelisted:
-        true,
+      forbidNonWhitelisted: true,
 
       transform: true,
 
       transformOptions: {
-        enableImplicitConversion:
-          true,
+        enableImplicitConversion: true,
       },
     }),
   );
 
   // CORS
   app.enableCors({
-    origin: [
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-    ],
+    origin: ['http://localhost:5173'],
 
     credentials: true,
 
-    methods: [
-      'GET',
-      'POST',
-      'PUT',
-      'PATCH',
-      'DELETE',
-      'OPTIONS',
-    ],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-    ],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-  const PORT =
-    process.env.PORT ||
-    3000;
+  // PORT
+  const PORT = process.env.PORT || 3000;
 
-  await app.listen(
-    PORT,
-  );
+  await app.listen(PORT);
 
-  console.log(
-    `🚀 Server running on port ${PORT}`,
-  );
+  console.log(`🚀 Server running on port ${PORT}`);
 }
 
 void bootstrap();
