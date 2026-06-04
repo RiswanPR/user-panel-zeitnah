@@ -18,6 +18,15 @@ import AuditLogs from "./pages/audit/AuditLogs";
 import Profile from "./pages/profile/Profile";
 import EditProfile from "./pages/profile/EditProfile";
 
+import Courses
+  from "./pages/courses/Courses";
+import CourseChapters
+  from "./pages/courses/CourseChapters";
+import CourseClasses
+  from "./pages/courses/CourseClasses";
+import ClassView
+  from "./pages/courses/ClassView";
+
 import ProtectedRoute from "./components/common/ProtectedRoute/ProtectedRoute";
 
 import MainLayout from "./layouts/MainLayout";
@@ -98,6 +107,64 @@ function App() {
           }
         />
 
+        <Route
+          path="/courses"
+          element={
+            <ProtectedRoute>
+
+              <MainLayout>
+
+                <Courses />
+
+              </MainLayout>
+
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/courses/:courseId/chapters"
+          element={
+            <ProtectedRoute>
+
+              <MainLayout>
+
+                <CourseChapters />
+
+              </MainLayout>
+
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/courses/:courseId/chapters/:chapterCode/classes"
+          element={
+            <ProtectedRoute>
+
+              <MainLayout>
+
+                <CourseClasses />
+
+              </MainLayout>
+
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/courses/class/:classId"
+          element={
+            <ProtectedRoute>
+
+              <MainLayout>
+
+                <ClassView />
+
+              </MainLayout>
+
+            </ProtectedRoute>
+          }
+        />
         {/* SESSIONS */}
         <Route
           path="/active-sessions"

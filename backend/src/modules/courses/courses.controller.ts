@@ -1,0 +1,235 @@
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+
+import {
+  CoursesService,
+} from './courses.service';
+
+import {
+  GetCoursesDto,
+} from './dto/get-courses.dto';
+
+import {
+  UpdateClassProgressDto,
+} from './dto/update-class-progress.dto';
+
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+@Controller('courses')
+export class CoursesController {
+
+  constructor(
+    private readonly coursesService: CoursesService,
+  ) {}
+
+  // =====================
+  // ALL COURSES
+  // =====================
+
+  @Get()
+  getAllCourses(
+    @Query()
+    query: GetCoursesDto,
+  ) {
+
+    return this.coursesService.getAllCourses(
+      query,
+    );
+
+  }
+
+  // =====================
+  // MY COURSES
+  // =====================
+
+  @UseGuards(
+    JwtAuthGuard,
+  )
+  @Get('my')
+  getMyCourses(
+    @Req()
+    req: any,
+  ) {
+
+    return this.coursesService.getMyCourses(
+      req.user.userId,
+    );
+
+  }
+
+  // =====================
+  // COURSE DETAILS
+  // =====================
+
+@UseGuards(
+  JwtAuthGuard,
+)
+ // =====================
+ // COURSE CHAPTERS
+ // =====================
+
+ @UseGuards(
+   JwtAuthGuard,
+ )
+
+ @Get(
+   ':courseId/chapters',
+ )
+
+ getCourseChapters(
+   @Param(
+     'courseId',
+   )
+   courseId: string,
+
+   @Req()
+   req: any,
+ ) {
+
+   return this
+     .coursesService
+     .getCourseChapters(
+       courseId,
+       req.user.userId,
+     );
+
+ }
+ // =====================
+// CHAPTER CLASSES
+// =====================
+
+@UseGuards(
+  JwtAuthGuard,
+)
+
+@Get(
+  ':courseId/chapters/:chapterCode/classes',
+)
+
+getChapterClasses(
+
+  @Param(
+    'courseId',
+  )
+  courseId: string,
+
+  @Param(
+    'chapterCode',
+  )
+  chapterCode: string,
+
+  @Req()
+  req: any,
+
+) {
+
+  return this
+    .coursesService
+    .getChapterClasses(
+
+      courseId,
+
+      chapterCode,
+
+      req.user.userId,
+
+    );
+
+}
+
+// =====================
+// CLASS VIEWER
+// =====================
+
+@UseGuards(
+  JwtAuthGuard,
+)
+
+@Get(
+  'class/:classId',
+)
+
+getClassView(
+
+  @Param(
+    'classId',
+  )
+  classId: string,
+
+  @Req()
+  req: any,
+
+) {
+
+  return this
+    .coursesService
+    .getClassView(
+
+      classId,
+
+      req.user.userId,
+
+    );
+
+}
+
+@UseGuards(
+  JwtAuthGuard,
+)
+
+@Post(
+  'class/:classId/progress',
+)
+
+updateClassProgress(
+
+  @Param(
+    'classId',
+  )
+  classId: string,
+
+  @Body()
+  body: UpdateClassProgressDto,
+
+  @Req()
+  req: any,
+
+) {
+
+  return this
+    .coursesService
+    .updateClassProgress(
+      classId,
+      req.user.userId,
+      body,
+    );
+
+}
+
+@Get(':id')
+
+getCourseById(
+  @Param('id')
+  id: string,
+
+  @Req()
+  req: any,
+) {
+
+  return this
+    .coursesService
+    .getCourseById(
+      id,
+      req.user.userId,
+    );
+
+}
+
+}

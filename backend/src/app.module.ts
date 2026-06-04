@@ -11,6 +11,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './modules/auth/auth.module';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { ProfileModule } from './modules/profile/profile.module';
+import { CoursesModule } from './modules/courses/courses.module';
 
 @Module({
   imports: [
@@ -38,6 +39,8 @@ import { ProfileModule } from './modules/profile/profile.module';
     ]),
 
     ProfileModule,
+
+    CoursesModule,
   ],
 
   providers: [

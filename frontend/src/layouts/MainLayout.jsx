@@ -12,7 +12,7 @@ function MainLayout({
       <Navbar />
 
       {/* CONTENT */}
-      <div className="lg:ml-64 pb-20 lg:pb-0">
+      <div className="pb-28 lg:ml-72 lg:pb-0">
 
         {children}
 

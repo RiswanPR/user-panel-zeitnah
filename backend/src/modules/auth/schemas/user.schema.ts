@@ -106,6 +106,183 @@ export class User {
   })
   devices!: UserDevice[];
 
+  // =========================
+// USER COURSES
+// =========================
+
+@Prop({
+  type: [
+    {
+      courseId: String,
+
+      courseName: String,
+
+      courseFee: String,
+
+      Start_Date: Date,
+
+      End_Date: Date,
+
+      duration: String,
+
+      learningProgress: {
+
+        totalClasses: {
+          type: Number,
+          default: 0,
+        },
+
+        watchedClasses: {
+          type: Number,
+          default: 0,
+        },
+
+        completionPercent: {
+          type: Number,
+          default: 0,
+        },
+
+        streak: {
+          type: Number,
+          default: 0,
+        },
+
+        averageWatchTime: {
+          type: String,
+          default: '',
+        },
+
+        certificateEligible: {
+          type: Boolean,
+          default: false,
+        },
+
+      },
+
+      classProgress: {
+        type: [
+          {
+            classId: String,
+
+            chapterCode: {
+              type: String,
+              default: '',
+            },
+
+            watchedSeconds: {
+              type: Number,
+              default: 0,
+            },
+
+            coveredSeconds: {
+              type: Number,
+              default: 0,
+            },
+
+            lastPositionSeconds: {
+              type: Number,
+              default: 0,
+            },
+
+            durationSeconds: {
+              type: Number,
+              default: 0,
+            },
+
+            progressPercent: {
+              type: Number,
+              default: 0,
+            },
+
+            completed: {
+              type: Boolean,
+              default: false,
+            },
+
+            startedAt: {
+              type: Date,
+              default: Date.now,
+            },
+
+            lastWatchedAt: {
+              type: Date,
+              default: Date.now,
+            },
+          },
+        ],
+
+        default: [],
+      },
+
+      activityDates: {
+        type: [String],
+        default: [],
+      },
+
+    },
+  ],
+
+  default: [],
+})
+
+course!: {
+
+  courseId: string;
+
+  courseName: string;
+
+  courseFee: string;
+
+  Start_Date: Date;
+
+  End_Date: Date;
+
+  duration: string;
+
+  learningProgress: {
+
+    totalClasses: number;
+
+    watchedClasses: number;
+
+    completionPercent: number;
+
+    streak: number;
+
+    averageWatchTime: string;
+
+    certificateEligible: boolean;
+
+  };
+
+  classProgress?: {
+
+    classId: string;
+
+    chapterCode: string;
+
+    watchedSeconds: number;
+
+    coveredSeconds: number;
+
+    lastPositionSeconds: number;
+
+    durationSeconds: number;
+
+    progressPercent: number;
+
+    completed: boolean;
+
+    startedAt: Date;
+
+    lastWatchedAt: Date;
+
+  }[];
+
+  activityDates?: string[];
+
+}[];
+
   // PROFILE IMAGE
   @Prop({
     default: '',
@@ -159,4 +336,3 @@ account_Status!: {
 };
 }
 export const UserSchema = SchemaFactory.createForClass(User);
-
