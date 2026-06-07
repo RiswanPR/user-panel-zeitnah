@@ -8,11 +8,11 @@ import {
 
 export const navItems = [
 
-  {
-    name: "Home",
-    path: "/",
-    icon: FiHome,
-  },
+//   {
+//     name: "Home",
+//     path: "/",
+//     icon: FiHome,
+//   },
 
   {
     name: "Courses",

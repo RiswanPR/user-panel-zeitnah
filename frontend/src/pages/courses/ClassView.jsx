@@ -1,13 +1,6 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 
-import {
-  useNavigate,
-  useParams,
-} from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import {
   FiArrowLeft,
@@ -16,7 +9,7 @@ import {
   FiFileText,
   FiPlayCircle,
 } from "react-icons/fi";
-
+import { getDeviceId } from "../../utils/device";
 import api from "../../services/api";
 import {
   formatDuration,
@@ -25,13 +18,20 @@ import {
   getVdoCipherEmbedUrl,
 } from "../../utils/courseUi";
 
+import VideoWatermark from "../../components/player/VideoWatermark";
+import { useContext } from "react";
+
+import { AuthContext } from "../../context/AuthContext";
+
 function loadVdoCipherApi() {
   if (window.VdoPlayer) {
     return Promise.resolve();
   }
 
   return new Promise((resolve, reject) => {
-    const existing = document.querySelector('script[data-vdocipher-api="true"]');
+    const existing = document.querySelector(
+      'script[data-vdocipher-api="true"]',
+    );
 
     if (existing) {
       existing.addEventListener("load", resolve, {
@@ -61,6 +61,7 @@ function ClassView() {
   const { classId } = useParams();
   const navigate = useNavigate();
 
+  const { user } = useContext(AuthContext);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [progressState, setProgressState] = useState(null);
@@ -104,11 +105,139 @@ function ClassView() {
     return () => {
       mounted = false;
     };
-  }, [classId, navigate]);
+  }, [classId, navigate]);// =====================================
+// ACTIVE STREAM PROTECTION
+// =====================================
 
+useEffect(() => {
+  if (!classId) return;
+
+  let heartbeatInterval;
+
+  const initializeStream = async () => {
+    try {
+
+      const deviceId =
+        await getDeviceId();
+
+      console.log(
+        "Stream Device ID:",
+        deviceId,
+      );
+
+      await api.post(
+        "/courses/start-stream",
+        {
+          classId,
+          deviceId,
+        },
+      );
+
+      heartbeatInterval =
+        setInterval(async () => {
+
+          try {
+
+            await api.post(
+              "/courses/heartbeat",
+              {
+                deviceId,
+              },
+            );
+
+          } catch (err) {
+            console.log(err);
+          }
+
+        }, 15000);
+
+    } catch (error) {
+
+      alert(
+        error.response?.data?.message ||
+          "Another device is currently watching this course.",
+      );
+
+      navigate(-1);
+    }
+  };
+
+  initializeStream();
+
+  const stopStream = async () => {
+
+    try {
+
+      const deviceId =
+        await getDeviceId();
+
+      await api.post(
+        "/courses/stop-stream",
+        {
+          deviceId,
+        },
+      );
+
+    } catch (error) {
+
+      console.log(error);
+
+    }
+
+  };
+
+  const handleUnload = async () => {
+
+    const deviceId =
+      await getDeviceId();
+
+    navigator.sendBeacon(
+      "http://localhost:3000/api/courses/stop-stream",
+      new Blob(
+        [
+          JSON.stringify({
+            deviceId,
+          }),
+        ],
+        {
+          type:
+            "application/json",
+        },
+      ),
+    );
+
+  };
+
+  window.addEventListener(
+    "beforeunload",
+    handleUnload,
+  );
+
+  return () => {
+
+    if (
+      heartbeatInterval
+    ) {
+      clearInterval(
+        heartbeatInterval,
+      );
+    }
+
+    stopStream();
+
+    window.removeEventListener(
+      "beforeunload",
+      handleUnload,
+    );
+
+  };
+
+}, [
+  classId,
+  navigate,
+]);
   useEffect(() => {
-    const initial =
-      data?.progress?.classProgress;
+    const initial = data?.progress?.classProgress;
 
     lastSyncedRef.current = {
       currentTime: initial?.lastPositionSeconds || 0,
@@ -144,10 +273,8 @@ function ClassView() {
           player.api.getTotalCovered(),
         ]);
 
-        const currentTimeSeconds =
-          Number(player.video.currentTime) || 0;
-        const durationSeconds =
-          Number(player.video.duration) || 0;
+        const currentTimeSeconds = Number(player.video.currentTime) || 0;
+        const durationSeconds = Number(player.video.duration) || 0;
 
         const snapshot = {
           completed,
@@ -282,28 +409,17 @@ function ClassView() {
     );
   }
 
-  const {
-    chapter,
-    class: cls,
-    course,
-  } = data;
+  const { chapter, class: cls, course } = data;
   const videoUrl =
-    getVdoCipherEmbedUrl(cls.vdoCipher) ||
-    getBunnyEmbedUrl(cls.videoId);
+    getVdoCipherEmbedUrl(cls.vdoCipher) || getBunnyEmbedUrl(cls.videoId);
   const classProgress =
-    progressState?.classProgress ||
-    data.progress?.classProgress;
+    progressState?.classProgress || data.progress?.classProgress;
   const learningProgress =
-    progressState?.learningProgress ||
-    data.progress?.learningProgress;
-  const classProgressPercent =
-    classProgress?.progressPercent || 0;
-  const courseCompletionPercent =
-    learningProgress?.completionPercent || 0;
-  const watchedClasses =
-    learningProgress?.watchedClasses || 0;
-  const totalClasses =
-    learningProgress?.totalClasses || 0;
+    progressState?.learningProgress || data.progress?.learningProgress;
+  const classProgressPercent = classProgress?.progressPercent || 0;
+  const courseCompletionPercent = learningProgress?.completionPercent || 0;
+  const watchedClasses = learningProgress?.watchedClasses || 0;
+  const totalClasses = learningProgress?.totalClasses || 0;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#0a0a0a] px-4 py-8">
@@ -336,14 +452,18 @@ function ClassView() {
           </h1>
 
           <p className="mt-4 max-w-2xl text-sm leading-7 text-white/60 sm:text-base">
-            {cls.description || "Class details will appear here once they are added."}
+            {cls.description ||
+              "Class details will appear here once they are added."}
           </p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
           <div className="space-y-6">
             <div className="overflow-hidden rounded-[32px] border border-white/[0.08] bg-[#111111] shadow-[0_24px_90px_rgba(0,0,0,0.3)]">
-              <div className="aspect-video bg-black">
+              <div className="relative aspect-video bg-black overflow-hidden">
+                {/* Dynamic Watermark */}
+                <VideoWatermark user={user} />
+
                 {videoUrl ? (
                   <iframe
                     ref={iframeRef}
@@ -370,7 +490,8 @@ function ClassView() {
               </div>
 
               <p className="text-white/50 leading-7">
-                {cls.description || "Class details will appear here once they are added."}
+                {cls.description ||
+                  "Class details will appear here once they are added."}
               </p>
 
               <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white/65">
@@ -445,18 +566,18 @@ function ClassView() {
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-2 text-xs text-white/55">
-                  <span className="rounded-full border border-white/[0.08] bg-black/20 px-3 py-2">
+                  <span className="rounded-full border border-white/[0.08] bg-black/20 animate-pulse px-3 py-2">
                     {watchedClasses}/{totalClasses} classes started
                   </span>
 
                   {learningProgress?.averageWatchTime ? (
-                    <span className="rounded-full border border-white/[0.08] bg-black/20 px-3 py-2">
+                    <span className="rounded-full border border-white/[0.08] bg-black/20 animate-pulse px-3 py-2">
                       Avg watch: {learningProgress.averageWatchTime}
                     </span>
                   ) : null}
 
                   {learningProgress?.streak ? (
-                    <span className="rounded-full border border-white/[0.08] bg-black/20 px-3 py-2">
+                    <span className="rounded-full border border-white/[0.08] bg-black/20 animate-pulse px-3 py-2">
                       Streak: {learningProgress.streak} days
                     </span>
                   ) : null}
@@ -467,15 +588,11 @@ function ClassView() {
             <div className="rounded-[30px] border border-white/[0.08] bg-[#111111] p-6">
               <div className="mb-5 flex items-center gap-3">
                 <FiFileText className="text-cyan-300" />
-                <h2 className="text-xl font-semibold text-white">
-                  Exercises
-                </h2>
+                <h2 className="text-xl font-semibold text-white">Exercises</h2>
               </div>
 
               {cls.exercises?.length === 0 ? (
-                <p className="text-white/40">
-                  No exercises
-                </p>
+                <p className="text-white/40">No exercises</p>
               ) : (
                 <div className="space-y-3">
                   {cls.exercises.map((exercise) => (
@@ -487,12 +604,8 @@ function ClassView() {
                       className="flex items-center justify-between rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-4 transition-all hover:border-cyan-400/20"
                     >
                       <div>
-                        <h3 className="text-white">
-                          {exercise.title}
-                        </h3>
-                        <p className="text-sm text-white/40">
-                          {exercise.type}
-                        </p>
+                        <h3 className="text-white">{exercise.title}</h3>
+                        <p className="text-sm text-white/40">{exercise.type}</p>
                       </div>
 
                       <FiDownload className="text-cyan-300" />

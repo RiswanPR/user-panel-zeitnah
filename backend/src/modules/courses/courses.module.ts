@@ -1,35 +1,23 @@
-import {
-  Module,
-} from '@nestjs/common';
+import { Module } from '@nestjs/common';
+
+import { MongooseModule } from '@nestjs/mongoose';
+
+import { CoursesController } from './courses.controller';
+
+import { CoursesService } from './courses.service';
+
+import { Course, CourseSchema } from './schemas/course.schema';
+
+import { User, UserSchema } from '../auth/schemas/user.schema';
 
 import {
-  MongooseModule,
-} from '@nestjs/mongoose';
-
-import {
-  CoursesController,
-} from './courses.controller';
-
-import {
-  CoursesService,
-} from './courses.service';
-
-import {
-  Course,
-  CourseSchema,
-} from './schemas/course.schema';
-
-import {
-  User,
-  UserSchema,
-} from '../auth/schemas/user.schema';
+  ActiveStream,
+  ActiveStreamSchema,
+} from './schemas/active-stream.schema';
 
 @Module({
-
   imports: [
-
     MongooseModule.forFeature([
-
       {
         name: Course.name,
         schema: CourseSchema,
@@ -40,18 +28,15 @@ import {
         schema: UserSchema,
       },
 
+      {
+        name: ActiveStream.name,
+        schema: ActiveStreamSchema,
+      },
     ]),
-
   ],
 
-  controllers: [
-    CoursesController,
-  ],
+  controllers: [CoursesController],
 
-  providers: [
-    CoursesService,
-  ],
-
+  providers: [CoursesService],
 })
-
 export class CoursesModule {}
