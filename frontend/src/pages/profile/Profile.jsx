@@ -10,6 +10,27 @@ import {
 import api
 from "../../services/api";
 
+import {
+  FiAward,
+  FiBookOpen,
+  FiChevronRight,
+  FiClock,
+  FiStar,
+  FiTarget,
+  FiTrendingUp,
+} from "react-icons/fi";
+
+const formatMinutes = (minutes = 0) => {
+  if (minutes < 60) {
+    return `${minutes} min`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const remaining = minutes % 60;
+
+  return remaining ? `${hours}h ${remaining}m` : `${hours}h`;
+};
+
 function Profile() {
 
   const [user, setUser] =
@@ -17,6 +38,10 @@ function Profile() {
 
   const [loading, setLoading] =
     useState(true);
+  const [learningSummary, setLearningSummary] =
+    useState(null);
+  const [pointsSummary, setPointsSummary] =
+    useState(null);
 
   useEffect(() => {
 
@@ -29,14 +54,39 @@ function Profile() {
 
       try {
 
-        const res =
-          await api.get(
+        const [
+          profileResult,
+          learningResult,
+          pointsResult,
+        ] = await Promise.allSettled([
+          api.get(
             "/profile/me"
-          );
+          ),
+          api.get(
+            "/courses/my-learning"
+          ),
+          api.get(
+            "/courses/my-points"
+          ),
+        ]);
 
-        setUser(
-          res.data.user
-        );
+        if (profileResult.status === "fulfilled") {
+          setUser(
+            profileResult.value.data.user
+          );
+        }
+
+        if (learningResult.status === "fulfilled") {
+          setLearningSummary(
+            learningResult.value.data.summary
+          );
+        }
+
+        if (pointsResult.status === "fulfilled") {
+          setPointsSummary(
+            pointsResult.value.data
+          );
+        }
 
       } catch (error) {
 
@@ -113,6 +163,117 @@ function Profile() {
 
       <div className="relative z-10 max-w-6xl mx-auto">
 
+        {(() => {
+
+          const gamification =
+            user?.gamification || {};
+
+          const stats = [
+            {
+              label: "Completion",
+              value: `${gamification.profileCompletion || 0}%`,
+              icon: FiTarget,
+              color: "text-cyan-300",
+            },
+            {
+              label: "Points",
+              value: gamification.totalPoints || 0,
+              icon: FiStar,
+              color: "text-amber-300",
+            },
+            {
+              label: "Level",
+              value: gamification.level || 1,
+              icon: FiTrendingUp,
+              color: "text-emerald-300",
+            },
+            {
+              label: "Rank",
+              value: gamification.rank || "Beginner",
+              icon: FiAward,
+              color: "text-violet-300",
+            },
+            {
+              label: "Completed Courses",
+              value: gamification.completedCourses || 0,
+              icon: FiBookOpen,
+              color: "text-sky-300",
+            },
+            {
+              label: "Watch Time",
+              value: formatMinutes(gamification.totalWatchMinutes || 0),
+              icon: FiClock,
+              color: "text-rose-300",
+            },
+          ];
+
+          return (
+
+            <div className="mb-8 rounded-[28px] border border-white/[0.08] bg-white/[0.04] p-5 shadow-2xl shadow-black/40 backdrop-blur-xl">
+
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+
+                <h2 className="text-xl font-semibold text-white">
+                  My Progress
+                </h2>
+
+                <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-sm text-emerald-200">
+                  {gamification.achievements?.length || 0} achievements
+                </span>
+
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+
+                {stats.map((stat) => {
+
+                  const Icon =
+                    stat.icon;
+
+                  return (
+
+                    <div
+                      key={stat.label}
+                      className="rounded-2xl border border-white/[0.07] bg-black/20 p-4"
+                    >
+
+                      <div className="mb-3 flex items-center gap-2 text-sm text-white/45">
+
+                        <Icon className={stat.color} />
+
+                        {stat.label}
+
+                      </div>
+
+                      <p className="text-xl font-semibold text-white">
+                        {stat.value}
+                      </p>
+
+                    </div>
+
+                  );
+
+                })}
+
+              </div>
+
+              <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/[0.07]">
+
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-cyan-300 via-emerald-300 to-amber-300"
+                  style={{
+                    width: `${gamification.profileCompletion || 0}%`,
+                  }}
+                />
+
+              </div>
+
+            </div>
+
+          );
+
+        })()}
+
         {/* HEADER */}
         <div className="bg-[#111111] border border-white/[0.07] rounded-3xl p-8 mb-8 shadow-2xl shadow-black/60">
 
@@ -179,6 +340,161 @@ function Profile() {
 
         {/* GRID */}
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+
+          {/* MY LEARNING */}
+          <Link
+            to="/my-learning"
+            className="group bg-[#111111] border border-white/[0.07] rounded-2xl p-6 hover:border-cyan-400/30 transition-all"
+          >
+
+            <div className="flex justify-between mb-5">
+
+              <div className="flex items-center gap-3">
+
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-300">
+                  <FiBookOpen />
+                </span>
+
+                <h2 className="text-lg font-semibold text-white">
+                  My Learning
+                </h2>
+
+              </div>
+
+              <FiChevronRight className="text-cyan-300 transition-transform group-hover:translate-x-1" />
+
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-3">
+                <p className="text-xs text-white/35">
+                  Courses
+                </p>
+                <p className="mt-1 text-lg font-semibold text-white">
+                  {learningSummary?.totalCourses || 0}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-3">
+                <p className="text-xs text-white/35">
+                  Complete
+                </p>
+                <p className="mt-1 text-lg font-semibold text-white">
+                  {learningSummary?.overallCompletionPercent || 0}%
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-3">
+                <p className="text-xs text-white/35">
+                  Classes
+                </p>
+                <p className="mt-1 text-lg font-semibold text-white">
+                  {learningSummary?.completedClasses || 0}/
+                  {learningSummary?.totalClasses || 0}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-3">
+                <p className="text-xs text-white/35">
+                  Streak
+                </p>
+                <p className="mt-1 text-lg font-semibold text-white">
+                  {learningSummary?.learningStreak || 0}d
+                </p>
+              </div>
+
+            </div>
+
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/[0.07]">
+
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-emerald-300"
+                style={{
+                  width: `${learningSummary?.overallCompletionPercent || 0}%`,
+                }}
+              />
+
+            </div>
+
+          </Link>
+
+          {/* MY POINTS */}
+          <Link
+            to="/my-points"
+            className="group bg-[#111111] border border-white/[0.07] rounded-2xl p-6 hover:border-amber-400/30 transition-all"
+          >
+
+            <div className="flex justify-between mb-5">
+
+              <div className="flex items-center gap-3">
+
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-300">
+                  <FiStar />
+                </span>
+
+                <h2 className="text-lg font-semibold text-white">
+                  My Points
+                </h2>
+
+              </div>
+
+              <FiChevronRight className="text-amber-300 transition-transform group-hover:translate-x-1" />
+
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-3">
+                <p className="text-xs text-white/35">
+                  Points
+                </p>
+                <p className="mt-1 text-lg font-semibold text-white">
+                  {pointsSummary?.gamification?.totalPoints || user?.gamification?.totalPoints || 0}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-3">
+                <p className="text-xs text-white/35">
+                  Level
+                </p>
+                <p className="mt-1 text-lg font-semibold text-white">
+                  {pointsSummary?.gamification?.level || user?.gamification?.level || 1}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-3">
+                <p className="text-xs text-white/35">
+                  Rank
+                </p>
+                <p className="mt-1 truncate text-lg font-semibold text-white">
+                  {pointsSummary?.gamification?.rank || user?.gamification?.rank || "Beginner"}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-3">
+                <p className="text-xs text-white/35">
+                  Next
+                </p>
+                <p className="mt-1 text-lg font-semibold text-white">
+                  {pointsSummary?.levelProgress?.pointsToNextLevel || 0} pts
+                </p>
+              </div>
+
+            </div>
+
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/[0.07]">
+
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-amber-300 to-cyan-300"
+                style={{
+                  width: `${pointsSummary?.levelProgress?.progressPercent || 0}%`,
+                }}
+              />
+
+            </div>
+
+          </Link>
 
           {/* INFO */}
           <div className="bg-[#111111] border border-white/[0.07] rounded-2xl p-6">

@@ -1,5 +1,6 @@
 import {
   FiBookOpen,
+  FiCheckCircle,
   FiPlay,
   FiTrendingUp,
   FiVideo,
@@ -19,12 +20,19 @@ function CourseCard({
 
   const progress = course.learningProgress?.completionPercent || 0;
   const purchased = !!course.learningProgress;
+  const completed = purchased && progress >= 100;
   const isRecording = course.type === "Recording";
   const imageUrl = getUploadUrl(course.image) || "https://placehold.co/600x400";
   const chapterCount = course.chapters?.length || 0;
 
   return (
-    <article className="group overflow-hidden rounded-[32px] border border-white/[0.08] bg-[#101010]/95 shadow-[0_24px_80px_rgba(0,0,0,0.26)] transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400/20 hover:shadow-[0_28px_90px_rgba(34,211,238,0.14)]">
+    <article
+      className={`group overflow-hidden rounded-[32px] border bg-[#101010]/95 shadow-[0_24px_80px_rgba(0,0,0,0.26)] transition-all duration-300 hover:-translate-y-1 ${
+        completed
+          ? "border-emerald-400/25 hover:border-emerald-400/40 hover:shadow-[0_28px_90px_rgba(52,211,153,0.14)]"
+          : "border-white/[0.08] hover:border-cyan-400/20 hover:shadow-[0_28px_90px_rgba(34,211,238,0.14)]"
+      }`}
+    >
       <div className="relative h-56 overflow-hidden">
         <img
           src={imageUrl}
@@ -47,12 +55,14 @@ function CourseCard({
 
           <span
             className={`rounded-full border px-3 py-1 text-xs font-medium backdrop-blur ${
-              purchased
+              completed
+                ? "border-emerald-300/30 bg-emerald-500/15 text-emerald-100"
+                : purchased
                 ? "border-emerald-400/20 bg-emerald-500/10 text-emerald-200"
                 : "border-white/[0.12] bg-black/35 text-white/75"
             }`}
           >
-            {purchased ? "Enrolled" : "Available"}
+            {completed ? "Completed" : purchased ? "Enrolled" : "Available"}
           </span>
         </div>
 
@@ -99,18 +109,32 @@ function CourseCard({
           </div>
         </div>
 
-        <div className="mt-5 rounded-[24px] border border-white/[0.08] bg-black/20 p-4">
+        <div
+          className={`mt-5 rounded-[24px] border p-4 ${
+            completed
+              ? "border-emerald-400/20 bg-emerald-500/10"
+              : "border-white/[0.08] bg-black/20"
+          }`}
+        >
           <div className="mb-3 flex items-center justify-between text-xs text-white/45">
             <span className="inline-flex items-center gap-2">
-              <FiTrendingUp className="text-cyan-300" />
-              {purchased ? "Your progress" : "Start progress"}
+              {completed ? (
+                <FiCheckCircle className="text-emerald-300" />
+              ) : (
+                <FiTrendingUp className="text-cyan-300" />
+              )}
+              {completed ? "Course Completed 🎉" : purchased ? "Your progress" : "Start progress"}
             </span>
             <span>{progress}%</span>
           </div>
 
           <div className="h-2 overflow-hidden rounded-full bg-white/[0.05]">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-300 to-violet-400 transition-all duration-500"
+              className={`h-full rounded-full transition-all duration-500 ${
+                completed
+                  ? "bg-gradient-to-r from-emerald-400 to-cyan-300"
+                  : "bg-gradient-to-r from-cyan-400 via-sky-300 to-violet-400"
+              }`}
               style={{
                 width: `${progress}%`,
               }}
@@ -121,9 +145,13 @@ function CourseCard({
         <button
           type="button"
           onClick={() => navigate(`/courses/${course._id}/chapters`)}
-          className="mt-5 inline-flex w-full items-center justify-center rounded-2xl border border-cyan-400/20 bg-gradient-to-r from-cyan-500/12 to-violet-500/12 px-4 py-3 text-sm font-medium text-cyan-200 transition-all hover:shadow-[0_18px_45px_rgba(34,211,238,0.14)]"
+          className={`mt-5 inline-flex w-full items-center justify-center rounded-2xl border px-4 py-3 text-sm font-medium transition-all ${
+            completed
+              ? "border-emerald-400/25 bg-emerald-500/10 text-emerald-200 hover:shadow-[0_18px_45px_rgba(52,211,153,0.14)]"
+              : "border-cyan-400/20 bg-gradient-to-r from-cyan-500/12 to-violet-500/12 text-cyan-200 hover:shadow-[0_18px_45px_rgba(34,211,238,0.14)]"
+          }`}
         >
-          {purchased ? "Continue Learning" : "Explore Course"}
+          {completed ? "Review Course" : purchased ? "Continue Learning" : "Explore Course"}
         </button>
       </div>
     </article>

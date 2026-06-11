@@ -4,6 +4,8 @@ import {
   FiUsers,
   FiBriefcase,
   FiUser,
+  FiAward,
+  FiTrendingUp,
 } from "react-icons/fi";
 
 export const navItems = [
@@ -19,6 +21,18 @@ export const navItems = [
     path: "/courses",
     icon: FiBookOpen,
   },
+
+  // {
+  //   name: "My Learning",
+  //   path: "/my-learning",
+  //   icon: FiTrendingUp,
+  // },
+
+  // {
+  //   name: "My Points",
+  //   path: "/my-points",
+  //   icon: FiAward,
+  // },
 
 //   {
 //     name: "Network",

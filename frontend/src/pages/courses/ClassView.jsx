@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import {
   FiArrowLeft,
+  FiCheckCircle,
   FiClock,
   FiDownload,
   FiFileText,
@@ -75,6 +76,11 @@ function ClassView() {
     duration: 0,
     totalCovered: 0,
     totalPlayed: 0,
+  });
+  const latestSnapshotRef = useRef(null);
+  const savedProgressBaseRef = useRef({
+    coveredSeconds: 0,
+    watchedSeconds: 0,
   });
 
   useEffect(() => {
@@ -245,6 +251,19 @@ useEffect(() => {
       totalCovered: initial?.coveredSeconds || 0,
       totalPlayed: initial?.watchedSeconds || 0,
     };
+    savedProgressBaseRef.current = {
+      coveredSeconds: initial?.coveredSeconds || 0,
+      watchedSeconds: initial?.watchedSeconds || 0,
+    };
+    latestSnapshotRef.current = initial
+      ? {
+          completed: Boolean(initial.completed),
+          currentTimeSeconds: initial.lastPositionSeconds || 0,
+          durationSeconds: initial.durationSeconds || 0,
+          totalCoveredSeconds: initial.coveredSeconds || 0,
+          totalPlayedSeconds: initial.watchedSeconds || 0,
+        }
+      : null;
   }, [data]);
 
   useEffect(() => {
@@ -257,6 +276,40 @@ useEffect(() => {
     let cancelled = false;
     let cleanup = () => {};
 
+    const buildProgressSnapshot = async (completed = false) => {
+      if (!playerRef.current) {
+        return null;
+      }
+
+      const player = playerRef.current;
+
+      const [sessionPlayedSeconds, sessionCoveredSeconds] = await Promise.all([
+        player.api.getTotalPlayed(),
+        player.api.getTotalCovered(),
+      ]);
+
+      const currentTimeSeconds = Number(player.video.currentTime) || 0;
+      const durationSeconds = Number(player.video.duration) || 0;
+      const savedBase = savedProgressBaseRef.current;
+      const totalPlayedSeconds =
+        savedBase.watchedSeconds + (Number(sessionPlayedSeconds) || 0);
+      const totalCoveredSeconds = Math.max(
+        savedBase.coveredSeconds,
+        Number(sessionCoveredSeconds) || 0,
+      );
+      const snapshot = {
+        completed,
+        currentTimeSeconds: Math.round(currentTimeSeconds),
+        durationSeconds: Math.round(durationSeconds),
+        totalCoveredSeconds: Math.round(totalCoveredSeconds),
+        totalPlayedSeconds: Math.round(totalPlayedSeconds),
+      };
+
+      latestSnapshotRef.current = snapshot;
+
+      return snapshot;
+    };
+
     const persistProgress = async ({
       completed = false,
       force = false,
@@ -266,23 +319,11 @@ useEffect(() => {
       }
 
       try {
-        const player = playerRef.current;
+        const snapshot = await buildProgressSnapshot(completed);
 
-        const [totalPlayedSeconds, totalCoveredSeconds] = await Promise.all([
-          player.api.getTotalPlayed(),
-          player.api.getTotalCovered(),
-        ]);
-
-        const currentTimeSeconds = Number(player.video.currentTime) || 0;
-        const durationSeconds = Number(player.video.duration) || 0;
-
-        const snapshot = {
-          completed,
-          currentTimeSeconds: Math.round(currentTimeSeconds),
-          durationSeconds: Math.round(durationSeconds),
-          totalCoveredSeconds: Math.round(totalCoveredSeconds),
-          totalPlayedSeconds: Math.round(totalPlayedSeconds),
-        };
+        if (!snapshot) {
+          return;
+        }
 
         if (
           !force &&
@@ -342,6 +383,18 @@ useEffect(() => {
         playerRef.current = player;
 
         const onLoadedMetadata = () => {
+          const resumeAt = Number(
+            data?.progress?.classProgress?.lastPositionSeconds,
+          );
+
+          if (
+            Number.isFinite(resumeAt) &&
+            resumeAt > 0 &&
+            resumeAt < Number(player.video.duration || 0) - 3
+          ) {
+            player.video.currentTime = resumeAt;
+          }
+
           void persistProgress({
             force: true,
           });
@@ -351,7 +404,18 @@ useEffect(() => {
           void persistProgress();
         };
 
+        const onPlay = () => {
+          setSyncState("watching");
+          void buildProgressSnapshot(false);
+        };
+
         const onPause = () => {
+          void persistProgress({
+            force: true,
+          });
+        };
+
+        const onSeeked = () => {
           void persistProgress({
             force: true,
           });
@@ -364,16 +428,64 @@ useEffect(() => {
           });
         };
 
+        const progressInterval = window.setInterval(() => {
+          void persistProgress({
+            force: true,
+          });
+        }, 15000);
+
+        const flushLatestProgress = () => {
+          const snapshot = latestSnapshotRef.current;
+          const token = localStorage.getItem("token");
+
+          if (!snapshot || !token) {
+            return;
+          }
+
+          const baseUrl =
+            api.defaults.baseURL || "http://localhost:3000/api";
+
+          void fetch(`${baseUrl}/courses/class/${classId}/progress`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(snapshot),
+            keepalive: true,
+          });
+        };
+
+        const onPageHide = () => {
+          flushLatestProgress();
+        };
+
+        const onVisibilityChange = () => {
+          if (document.visibilityState === "hidden") {
+            flushLatestProgress();
+          }
+        };
+
         player.video.addEventListener("loadedmetadata", onLoadedMetadata);
+        player.video.addEventListener("play", onPlay);
         player.video.addEventListener("timeupdate", onTimeUpdate);
         player.video.addEventListener("pause", onPause);
+        player.video.addEventListener("seeked", onSeeked);
         player.video.addEventListener("ended", onEnded);
+        window.addEventListener("pagehide", onPageHide);
+        document.addEventListener("visibilitychange", onVisibilityChange);
 
         cleanup = () => {
+          window.clearInterval(progressInterval);
           player.video.removeEventListener("loadedmetadata", onLoadedMetadata);
+          player.video.removeEventListener("play", onPlay);
           player.video.removeEventListener("timeupdate", onTimeUpdate);
           player.video.removeEventListener("pause", onPause);
+          player.video.removeEventListener("seeked", onSeeked);
           player.video.removeEventListener("ended", onEnded);
+          window.removeEventListener("pagehide", onPageHide);
+          document.removeEventListener("visibilitychange", onVisibilityChange);
+          flushLatestProgress();
         };
       } catch (error) {
         console.log(error);
@@ -417,8 +529,10 @@ useEffect(() => {
   const learningProgress =
     progressState?.learningProgress || data.progress?.learningProgress;
   const classProgressPercent = classProgress?.progressPercent || 0;
+  const isClassCompleted = Boolean(classProgress?.completed) || classProgressPercent >= 100;
   const courseCompletionPercent = learningProgress?.completionPercent || 0;
   const watchedClasses = learningProgress?.watchedClasses || 0;
+  const completedClasses = learningProgress?.completedClasses || 0;
   const totalClasses = learningProgress?.totalClasses || 0;
 
   return (
@@ -445,6 +559,17 @@ useEffect(() => {
             <span className="rounded-full border border-white/[0.1] bg-white/[0.03] px-3 py-1 text-xs font-medium text-white/65">
               {chapter.title}
             </span>
+
+            {isClassCompleted ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-200">
+                <FiCheckCircle />
+                Completed
+              </span>
+            ) : classProgressPercent > 0 ? (
+              <span className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-200">
+                Continue watching
+              </span>
+            ) : null}
           </div>
 
           <h1 className="mt-5 font-['Sora'] text-3xl font-semibold text-white sm:text-5xl">
@@ -460,6 +585,20 @@ useEffect(() => {
         <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
           <div className="space-y-6">
             <div className="overflow-hidden rounded-[32px] border border-white/[0.08] bg-[#111111] shadow-[0_24px_90px_rgba(0,0,0,0.3)]">
+              <div className="flex items-center justify-between gap-4 border-b border-white/[0.08] px-5 py-4">
+                <span className="text-sm font-medium text-white/75">
+                  {isClassCompleted
+                    ? "Rewatch this class"
+                    : classProgressPercent > 0
+                      ? "Continue watching"
+                      : "Start watching"}
+                </span>
+
+                <span className="text-sm text-white/45">
+                  {classProgressPercent}%
+                </span>
+              </div>
+
               <div className="relative aspect-video bg-black overflow-hidden">
                 {/* Dynamic Watermark */}
                 <VideoWatermark user={user} />
@@ -515,34 +654,57 @@ useEffect(() => {
 
                 <span
                   className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                    syncState === "saved"
+                    isClassCompleted
+                      ? "border-emerald-400/20 bg-emerald-500/10 text-emerald-200"
+                      : syncState === "saved"
                       ? "border-emerald-400/20 bg-emerald-500/10 text-emerald-200"
                       : syncState === "saving"
                         ? "border-cyan-400/20 bg-cyan-500/10 text-cyan-200"
+                        : syncState === "watching"
+                          ? "border-cyan-400/20 bg-cyan-500/10 text-cyan-200"
                         : syncState === "error"
                           ? "border-red-400/20 bg-red-500/10 text-red-200"
                           : "border-white/[0.08] bg-white/[0.03] text-white/55"
                   }`}
                 >
-                  {syncState === "saved"
+                  {isClassCompleted
+                    ? "Completed"
+                    : syncState === "saved"
                     ? "Synced"
                     : syncState === "saving"
                       ? "Saving"
+                      : syncState === "watching"
+                        ? "Watching"
                       : syncState === "error"
                         ? "Sync failed"
                         : "Waiting"}
                 </span>
               </div>
 
-              <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-4">
+              <div
+                className={`rounded-[24px] border p-4 ${
+                  isClassCompleted
+                    ? "border-emerald-400/20 bg-emerald-500/10"
+                    : "border-white/[0.08] bg-white/[0.03]"
+                }`}
+              >
                 <div className="mb-3 flex items-center justify-between text-sm text-white/65">
-                  <span>This class</span>
+                  <span className="inline-flex items-center gap-2">
+                    {isClassCompleted ? (
+                      <FiCheckCircle className="text-emerald-300" />
+                    ) : null}
+                    This class
+                  </span>
                   <span>{classProgressPercent}%</span>
                 </div>
 
                 <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-300 to-violet-400 transition-all duration-500"
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      isClassCompleted
+                        ? "bg-gradient-to-r from-emerald-400 to-cyan-300"
+                        : "bg-gradient-to-r from-cyan-400 via-sky-300 to-violet-400"
+                    }`}
                     style={{
                       width: `${classProgressPercent}%`,
                     }}
@@ -568,6 +730,10 @@ useEffect(() => {
                 <div className="mt-4 flex flex-wrap gap-2 text-xs text-white/55">
                   <span className="rounded-full border border-white/[0.08] bg-black/20 animate-pulse px-3 py-2">
                     {watchedClasses}/{totalClasses} classes started
+                  </span>
+
+                  <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-emerald-200">
+                    {completedClasses}/{totalClasses} completed
                   </span>
 
                   {learningProgress?.averageWatchTime ? (

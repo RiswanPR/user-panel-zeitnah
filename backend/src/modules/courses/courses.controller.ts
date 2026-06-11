@@ -52,6 +52,28 @@ export class CoursesController {
     );
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('my-learning')
+  getMyLearningOverview(
+    @Req()
+    req: any,
+  ) {
+    return this.coursesService.getMyLearningOverview(
+      req.user.userId,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('my-points')
+  getMyPointsOverview(
+    @Req()
+    req: any,
+  ) {
+    return this.coursesService.getMyPointsOverview(
+      req.user.userId,
+    );
+  }
+
   // =====================
   // COURSE CHAPTERS
   // =====================

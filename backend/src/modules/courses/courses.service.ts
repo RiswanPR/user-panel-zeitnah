@@ -25,6 +25,14 @@ import {
 } from './schemas/active-stream.schema';
 
 import { BadRequestException } from '@nestjs/common';
+import {
+  awardPoints,
+  calculatePoints,
+  calculateStreak as calculateLearningStreak,
+  ensureGamification,
+  getNextLevelProgress,
+  syncGamificationStats,
+} from '../../common/gamification.helpers';
 
 @Injectable()
 export class CoursesService {
@@ -79,7 +87,31 @@ export class CoursesService {
       return Math.round(numeric * 3600);
     }
 
+    if (/sec|second|seconds/i.test(value)) {
+      return Math.round(numeric);
+    }
+
     return Math.round(numeric * 60);
+  }
+
+  private normaliseSeconds(value: any) {
+    const seconds = Number(value);
+
+    if (!Number.isFinite(seconds) || seconds <= 0) {
+      return 0;
+    }
+
+    return Math.round(seconds);
+  }
+
+  private clampSeconds(value: number, durationSeconds: number) {
+    const seconds = this.normaliseSeconds(value);
+
+    if (durationSeconds <= 0) {
+      return seconds;
+    }
+
+    return Math.min(seconds, durationSeconds);
   }
 
   private formatAverageWatchTime(
@@ -115,34 +147,7 @@ export class CoursesService {
   }
 
   private calculateStreak(activityDates: string[] = []) {
-    if (!activityDates.length) {
-      return 0;
-    }
-
-    const uniqueDates = Array.from(new Set(activityDates))
-      .filter(Boolean)
-      .sort()
-      .reverse();
-
-    let streak = 1;
-
-    for (let index = 1; index < uniqueDates.length; index += 1) {
-      const previous = new Date(`${uniqueDates[index - 1]}T00:00:00.000Z`);
-
-      const current = new Date(`${uniqueDates[index]}T00:00:00.000Z`);
-
-      const diffDays = Math.round(
-        (previous.getTime() - current.getTime()) / 86400000,
-      );
-
-      if (diffDays !== 1) {
-        break;
-      }
-
-      streak += 1;
-    }
-
-    return streak;
+    return calculateLearningStreak(activityDates);
   }
 
   private getCourseTotalClasses(course: any) {
@@ -152,29 +157,80 @@ export class CoursesService {
     );
   }
 
+  private getCourseClassMeta(course: any) {
+    const classIds = new Set<string>();
+    const durationByClassId = new Map<string, number>();
+
+    course.chapters.forEach((chapter: any) => {
+      chapter.classes?.forEach((cls: any) => {
+        const classId = cls._id.toString();
+
+        classIds.add(classId);
+        durationByClassId.set(classId, this.parseDurationToSeconds(cls.duration));
+      });
+    });
+
+    return {
+      classIds,
+      durationByClassId,
+    };
+  }
+
+  private normaliseClassProgress(item: any, fallbackDurationSeconds = 0) {
+    const raw = typeof item?.toObject === 'function' ? item.toObject() : item;
+    const durationSeconds = Math.max(
+      this.normaliseSeconds(raw?.durationSeconds),
+      fallbackDurationSeconds,
+    );
+    const coveredSeconds = this.clampSeconds(
+      this.normaliseSeconds(raw?.coveredSeconds),
+      durationSeconds,
+    );
+    const lastPositionSeconds = this.clampSeconds(
+      raw?.lastPositionSeconds,
+      durationSeconds,
+    );
+    const calculatedPercent =
+      durationSeconds > 0
+        ? Math.min(100, Math.round((coveredSeconds / durationSeconds) * 100))
+        : Math.min(100, Math.max(0, Math.round(raw?.progressPercent || 0)));
+    const completed = Boolean(raw?.completed) || calculatedPercent >= 90;
+    const progressPercent = completed ? 100 : calculatedPercent;
+
+    return {
+      ...raw,
+      coveredSeconds,
+      durationSeconds,
+      lastPositionSeconds,
+      progressPercent,
+      completed,
+    };
+  }
+
   private summariseLearningProgress(course: any, enrollment: any) {
     const totalClasses = this.getCourseTotalClasses(course);
+    const { classIds, durationByClassId } = this.getCourseClassMeta(course);
 
-    const classProgress = (enrollment.classProgress || []).filter(
-      (item: any) => item.classId,
-    );
+    const classProgress = (enrollment.classProgress || [])
+      .filter((item: any) => item.classId && classIds.has(item.classId))
+      .map((item: any) =>
+        this.normaliseClassProgress(
+          item,
+          durationByClassId.get(item.classId) || 0,
+        ),
+      );
 
     const watchedClasses = classProgress.filter(
-      (item: any) =>
-        (item.coveredSeconds || 0) > 0 ||
-        (item.watchedSeconds || 0) > 0 ||
-        (item.progressPercent || 0) > 0,
+      (item: any) => (item.progressPercent || 0) > 0,
     ).length;
 
-    const totalProgressPercent = classProgress.reduce(
-      (sum: number, item: any) =>
-        sum + Math.min(100, item.progressPercent || 0),
-      0,
-    );
+    const completedClasses = classProgress.filter(
+      (item: any) => item.completed,
+    ).length;
 
     const completionPercent =
       totalClasses > 0
-        ? Math.min(100, Math.round(totalProgressPercent / totalClasses))
+        ? Math.min(100, Math.round((completedClasses / totalClasses) * 100))
         : 0;
 
     const totalPlayedSeconds = classProgress.reduce(
@@ -182,13 +238,10 @@ export class CoursesService {
       0,
     );
 
-    const completedClasses = classProgress.filter(
-      (item: any) => item.completed,
-    ).length;
-
     return {
       totalClasses,
       watchedClasses,
+      completedClasses,
       completionPercent,
       streak: this.calculateStreak(enrollment.activityDates || []),
       averageWatchTime: this.formatAverageWatchTime(
@@ -296,16 +349,109 @@ export class CoursesService {
       const progress = user.course.find(
         (c: any) => c.courseId.toString() === course._id.toString(),
       );
+      const learningProgress = progress
+        ? this.summariseLearningProgress(course, progress)
+        : null;
 
       return {
         ...course.toObject(),
 
-        learningProgress: progress?.learningProgress || null,
+        learningProgress,
       };
     });
 
     return {
       courses: formatted,
+    };
+  }
+
+  async getMyLearningOverview(userId: string) {
+    const user = await this.userModel.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const courseIds = user.course?.map((course: any) => course.courseId) || [];
+    const courses = await this.courseModel.find({
+      _id: {
+        $in: courseIds,
+      },
+    });
+
+    let totalClasses = 0;
+    let completedClasses = 0;
+    let watchedClasses = 0;
+
+    const courseProgress = courses.map((course) => {
+      const enrollment = user.course.find(
+        (entry: any) => entry.courseId.toString() === course._id.toString(),
+      );
+      const learningProgress = enrollment
+        ? this.summariseLearningProgress(course, enrollment)
+        : null;
+
+      if (enrollment && learningProgress) {
+        enrollment.learningProgress = learningProgress;
+        totalClasses += learningProgress.totalClasses;
+        completedClasses += learningProgress.completedClasses;
+        watchedClasses += learningProgress.watchedClasses;
+      }
+
+      return {
+        _id: course._id,
+        name: course.name,
+        image: course.image,
+        type: course.type,
+        learningProgress,
+      };
+    });
+
+    syncGamificationStats(user);
+    user.markModified('course');
+    user.markModified('gamification');
+    await user.save();
+
+    const completedCourses = user.gamification.completedCourses;
+    const totalCourses = courseIds.length;
+
+    return {
+      summary: {
+        totalCourses,
+        completedCourses,
+        activeCourses: Math.max(0, totalCourses - completedCourses),
+        totalClasses,
+        watchedClasses,
+        completedClasses,
+        totalWatchMinutes: user.gamification.totalWatchMinutes,
+        learningStreak: calculateLearningStreak(
+          user.gamification.activityDates || [],
+        ),
+        overallCompletionPercent:
+          totalClasses > 0
+            ? Math.min(100, Math.round((completedClasses / totalClasses) * 100))
+            : 0,
+      },
+      gamification: user.gamification,
+      courses: courseProgress,
+    };
+  }
+
+  async getMyPointsOverview(userId: string) {
+    const user = await this.userModel.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    syncGamificationStats(user);
+    user.markModified('gamification');
+    await user.save();
+
+    return {
+      gamification: user.gamification,
+      levelProgress: getNextLevelProgress(user.gamification.totalPoints),
+      recentActivities: user.gamification.recentActivities || [],
     };
   }
 
@@ -320,16 +466,20 @@ export class CoursesService {
       throw new NotFoundException('Course not found');
     }
 
+    const user = userId ? await this.userModel.findById(userId) : null;
+    const enrollment = user?.course?.find(
+      (entry: any) => entry.courseId.toString() === course._id.toString(),
+    );
     let purchased = false;
 
-    if (userId) {
-      const user = await this.userModel.findById(userId);
-
-      purchased =
-        user?.course?.some((c: any) => c.courseId.toString() === id) || false;
+    if (user) {
+      purchased = Boolean(enrollment);
     }
 
     const courseObj = course.toObject();
+    const learningProgress = enrollment
+      ? this.summariseLearningProgress(course, enrollment)
+      : null;
 
     // LOCK CLASSES
     if (!purchased) {
@@ -348,12 +498,41 @@ export class CoursesService {
           locked: true,
         })),
       }));
+    } else {
+      courseObj.chapters = courseObj.chapters.map((chapter: any) => ({
+        ...chapter,
+
+        classes: chapter.classes.map((cls: any) => {
+          const classId = cls._id.toString();
+          const rawProgress = enrollment?.classProgress?.find(
+            (entry: any) => entry.classId === classId,
+          );
+          const progress = rawProgress
+            ? this.normaliseClassProgress(
+                rawProgress,
+                this.parseDurationToSeconds(cls.duration),
+              )
+            : null;
+
+          return {
+            ...cls,
+            progressPercent: progress?.progressPercent || 0,
+            completed: progress?.completed || false,
+            completedAt: progress?.completedAt || null,
+            classProgress: progress,
+            locked: false,
+          };
+        }),
+      }));
     }
 
     return {
       purchased,
 
-      course: courseObj,
+      course: {
+        ...courseObj,
+        learningProgress,
+      },
     };
   }
 
@@ -368,24 +547,75 @@ export class CoursesService {
       throw new NotFoundException('Course not found');
     }
 
+    const user = userId ? await this.userModel.findById(userId) : null;
+    const enrollment = user?.course?.find(
+      (entry: any) => entry.courseId.toString() === courseId,
+    );
     let purchased = false;
+    let learningProgress: any = null;
 
     // CHECK PURCHASE
-    if (userId) {
-      const user = await this.userModel.findById(userId);
-
-      purchased =
-        user?.course?.some((c: any) => c.courseId.toString() === courseId) ||
-        false;
+    if (user) {
+      purchased = Boolean(enrollment);
+      learningProgress = enrollment
+        ? this.summariseLearningProgress(course, enrollment)
+        : null;
     }
 
-    const chapters = course.chapters.map((chapter: any) => ({
-      ...chapter.toObject(),
+    const chapters = course.chapters.map((chapter: any) => {
+      const chapterClasses = chapter.classes || [];
+      const completedClasses = chapterClasses.filter((cls: any) => {
+        const classId = cls._id.toString();
+        const progress = enrollment?.classProgress?.find(
+          (entry: any) => entry.classId === classId,
+        );
+        const normalisedProgress = progress
+          ? this.normaliseClassProgress(
+              progress,
+              this.parseDurationToSeconds(cls.duration),
+            )
+          : null;
 
-      totalClasses: chapter.classes?.length || 0,
+        return normalisedProgress?.completed;
+      }).length;
+      const watchedClasses = chapterClasses.filter((cls: any) => {
+        const classId = cls._id.toString();
+        const progress = enrollment?.classProgress?.find(
+          (entry: any) => entry.classId === classId,
+        );
+        const normalisedProgress = progress
+          ? this.normaliseClassProgress(
+              progress,
+              this.parseDurationToSeconds(cls.duration),
+            )
+          : null;
 
-      locked: !purchased,
-    }));
+        return (normalisedProgress?.progressPercent || 0) > 0;
+      }).length;
+      const progressPercent =
+        chapterClasses.length > 0
+          ? Math.min(
+              100,
+              Math.round((completedClasses / chapterClasses.length) * 100),
+            )
+          : 0;
+
+      return {
+        ...chapter.toObject(),
+
+        totalClasses: chapterClasses.length,
+
+        watchedClasses,
+
+        completedClasses,
+
+        progressPercent,
+
+        completed: chapterClasses.length > 0 && completedClasses >= chapterClasses.length,
+
+        locked: !purchased,
+      };
+    });
 
     return {
       purchased,
@@ -400,6 +630,8 @@ export class CoursesService {
         type: course.type,
 
         description: course.description,
+
+        learningProgress,
       },
 
       chapters,
@@ -433,34 +665,59 @@ export class CoursesService {
     let purchased = false;
 
     // CHECK PURCHASE
-    if (userId) {
-      const user = await this.userModel.findById(userId);
+    const user = userId ? await this.userModel.findById(userId) : null;
 
+    if (user) {
       purchased =
         user?.course?.some((c: any) => c.courseId.toString() === courseId) ||
         false;
     }
 
+    const enrollment = user?.course?.find(
+      (entry: any) => entry.courseId.toString() === course._id.toString(),
+    );
+
     // LOCK LOGIC
-    const classes = chapter.classes.map((cls: any) => ({
-      _id: cls._id,
+    const classes = chapter.classes.map((cls: any) => {
+      const classId = cls._id.toString();
+      const classProgress = enrollment?.classProgress?.find(
+        (entry: any) => entry.classId === classId,
+      );
+      const progress = classProgress
+        ? this.normaliseClassProgress(
+            classProgress,
+            this.parseDurationToSeconds(cls.duration),
+          )
+        : null;
 
-      title: cls.title,
+      return {
+        _id: cls._id,
 
-      order: cls.order,
+        title: cls.title,
 
-      duration: cls.duration,
+        order: cls.order,
 
-      description: cls.description,
+        duration: cls.duration,
 
-      thumbnail: cls.thumbnail,
+        description: cls.description,
 
-      createdAt: cls.createdAt,
+        thumbnail: cls.thumbnail,
 
-      exerciseCount: cls.exercises?.length || 0,
+        createdAt: cls.createdAt,
 
-      locked: !purchased,
-    }));
+        exerciseCount: cls.exercises?.length || 0,
+
+        progressPercent: progress?.progressPercent || 0,
+
+        completed: progress?.completed || false,
+
+        completedAt: progress?.completedAt || null,
+
+        classProgress: progress,
+
+        locked: !purchased,
+      };
+    });
 
     return {
       purchased,
@@ -541,10 +798,26 @@ export class CoursesService {
       (entry: any) => entry.courseId.toString() === course._id.toString(),
     );
 
-    const classProgress =
-      enrollment?.classProgress?.find(
-        (entry: any) => entry.classId === classId,
-      ) || null;
+    const rawClassProgress =
+      enrollment?.classProgress?.find((entry: any) => entry.classId === classId) ||
+      null;
+    const classProgress = rawClassProgress
+      ? this.normaliseClassProgress(
+          rawClassProgress,
+          this.parseDurationToSeconds(cls.duration),
+        )
+      : null;
+    const learningProgress = enrollment
+      ? this.summariseLearningProgress(course, enrollment)
+      : {
+          totalClasses: this.getCourseTotalClasses(course),
+          watchedClasses: 0,
+          completedClasses: 0,
+          completionPercent: 0,
+          streak: 0,
+          averageWatchTime: '',
+          certificateEligible: false,
+        };
 
     return {
       purchased: true,
@@ -585,14 +858,7 @@ export class CoursesService {
 
       progress: {
         classProgress,
-        learningProgress: enrollment?.learningProgress || {
-          totalClasses: this.getCourseTotalClasses(course),
-          watchedClasses: 0,
-          completionPercent: 0,
-          streak: 0,
-          averageWatchTime: '',
-          certificateEligible: false,
-        },
+        learningProgress,
       },
     };
   }
@@ -601,6 +867,7 @@ export class CoursesService {
     classId: string,
     userId: string,
     payload: UpdateClassProgressDto,
+    attempt = 0,
   ) {
     const course = await this.courseModel.findOne({
       'chapters.classes._id': classId,
@@ -653,27 +920,33 @@ export class CoursesService {
     const existing = enrollment.classProgress.find(
       (entry: any) => entry.classId === classId,
     );
+    const previousWatchedMinutes = Math.floor(
+      this.normaliseSeconds(existing?.watchedSeconds) / 60,
+    );
 
     const durationSeconds = Math.max(
-      existing?.durationSeconds || 0,
+      this.normaliseSeconds(existing?.durationSeconds),
       this.parseDurationToSeconds(cls.duration),
-      payload.durationSeconds || 0,
+      this.normaliseSeconds(payload.durationSeconds),
     );
 
     const watchedSeconds = Math.max(
-      existing?.watchedSeconds || 0,
-      payload.totalPlayedSeconds || 0,
+      this.normaliseSeconds(existing?.watchedSeconds),
+      this.normaliseSeconds(payload.totalPlayedSeconds),
     );
 
-    const coveredSeconds = Math.max(
-      existing?.coveredSeconds || 0,
-      payload.totalCoveredSeconds || 0,
-      payload.currentTimeSeconds || 0,
+    const coveredSeconds = this.clampSeconds(
+      Math.max(
+        this.normaliseSeconds(existing?.coveredSeconds),
+        this.normaliseSeconds(payload.totalCoveredSeconds),
+        this.normaliseSeconds(payload.currentTimeSeconds),
+      ),
+      durationSeconds,
     );
 
-    const lastPositionSeconds = Math.max(
-      0,
-      payload.currentTimeSeconds || existing?.lastPositionSeconds || 0,
+    const lastPositionSeconds = this.clampSeconds(
+      payload.currentTimeSeconds ?? existing?.lastPositionSeconds ?? 0,
+      durationSeconds,
     );
 
     const calculatedPercent =
@@ -681,7 +954,10 @@ export class CoursesService {
         ? Math.min(100, Math.round((coveredSeconds / durationSeconds) * 100))
         : Math.min(100, Math.round(payload.progressPercent || 0));
 
-    const completed = Boolean(payload.completed) || calculatedPercent >= 90;
+    const completed =
+      Boolean(existing?.completed) ||
+      Boolean(payload.completed) ||
+      calculatedPercent >= 90;
 
     const nextProgress = {
       classId,
@@ -694,7 +970,60 @@ export class CoursesService {
       completed,
       startedAt: existing?.startedAt || now,
       lastWatchedAt: now,
+      completedAt: completed ? existing?.completedAt || now : null,
     };
+
+    const gamification = ensureGamification(user);
+    const recentRewards: any[] = [];
+    const nextWatchedMinutes = Math.floor(nextProgress.watchedSeconds / 60);
+    const earnedWatchMinutes = Math.max(
+      0,
+      nextWatchedMinutes - previousWatchedMinutes,
+    );
+    const watchPoints = calculatePoints(earnedWatchMinutes);
+
+    if (watchPoints > 0) {
+      const reward = awardPoints(
+        user,
+        watchPoints,
+        `${earnedWatchMinutes} Watch Minutes`,
+        'watch_minutes',
+        {
+          courseId: course._id.toString(),
+          classId,
+        },
+      );
+
+      if (reward) {
+        recentRewards.push(reward);
+      }
+    }
+
+    if (
+      nextProgress.completed &&
+      !gamification.rewardedClassIds.includes(classId)
+    ) {
+      gamification.rewardedClassIds.push(classId);
+
+      const reward = awardPoints(user, 25, 'Class Completed', 'class_completed', {
+        courseId: course._id.toString(),
+        classId,
+      });
+
+      if (reward) {
+        recentRewards.push(reward);
+      }
+    }
+
+    console.log('[LearningProgress]', {
+      userId,
+      courseId: course._id.toString(),
+      classId,
+      coveredSeconds: nextProgress.coveredSeconds,
+      durationSeconds: nextProgress.durationSeconds,
+      progressPercent: nextProgress.progressPercent,
+      completed: nextProgress.completed,
+    });
 
     if (existing) {
       Object.assign(existing, nextProgress);
@@ -719,9 +1048,45 @@ export class CoursesService {
       enrollment,
     );
 
-    user.markModified('course');
+    const courseId = course._id.toString();
 
-    await user.save();
+    if (
+      enrollment.learningProgress.totalClasses > 0 &&
+      enrollment.learningProgress.completedClasses >=
+        enrollment.learningProgress.totalClasses &&
+      !gamification.rewardedCourseIds.includes(courseId)
+    ) {
+      gamification.rewardedCourseIds.push(courseId);
+
+      const reward = awardPoints(
+        user,
+        100,
+        'Course Completed',
+        'course_completed',
+        {
+          courseId,
+        },
+      );
+
+      if (reward) {
+        recentRewards.push(reward);
+      }
+    }
+
+    syncGamificationStats(user);
+
+    user.markModified('course');
+    user.markModified('gamification');
+
+    try {
+      await user.save();
+    } catch (error: any) {
+      if (error?.name === 'VersionError' && attempt < 2) {
+        return this.updateClassProgress(classId, userId, payload, attempt + 1);
+      }
+
+      throw error;
+    }
 
     const updatedClassProgress =
       enrollment.classProgress.find(
@@ -729,8 +1094,12 @@ export class CoursesService {
       ) || null;
 
     return {
-      classProgress: updatedClassProgress,
+      classProgress: updatedClassProgress
+        ? this.normaliseClassProgress(updatedClassProgress, durationSeconds)
+        : null,
       learningProgress: enrollment.learningProgress,
+      gamification: user.gamification,
+      rewards: recentRewards,
     };
   }
   async startStream(userId: string, classId: string, deviceId: string) {

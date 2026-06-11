@@ -86,6 +86,9 @@ function CourseChapters() {
     chapters,
     purchased,
   } = data;
+  const learningProgress = course.learningProgress;
+  const completionPercent = learningProgress?.completionPercent || 0;
+  const completedClasses = learningProgress?.completedClasses || 0;
 
   const imageUrl =
     getUploadUrl(course.image) || "https://placehold.co/1200x500";
@@ -176,6 +179,34 @@ function CourseChapters() {
               </p>
             </div>
           </div>
+
+          {purchased ? (
+            <div className="border-t border-white/[0.08] bg-black/20 px-6 pb-6">
+              <div className="rounded-[26px] border border-white/[0.08] bg-white/[0.03] p-4">
+                <div className="mb-3 flex items-center justify-between text-sm text-white/65">
+                  <span>
+                    {completionPercent >= 100
+                      ? "Course Completed 🎉"
+                      : "Course progress"}
+                  </span>
+                  <span>{completionPercent}%</span>
+                </div>
+
+                <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-300 transition-all duration-500"
+                    style={{
+                      width: `${completionPercent}%`,
+                    }}
+                  />
+                </div>
+
+                <p className="mt-3 text-xs text-white/50">
+                  {completedClasses}/{totalClasses} lessons completed
+                </p>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         {!purchased && (

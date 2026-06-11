@@ -1,6 +1,7 @@
 import {
   FiArrowRight,
   FiBookOpen,
+  FiCheckCircle,
   FiLock,
   FiPlayCircle,
 } from "react-icons/fi";
@@ -11,6 +12,8 @@ function ChapterCard({
   onOpen,
 }) {
   const locked = chapter.locked;
+  const completed = Boolean(chapter.completed);
+  const completedClasses = chapter.completedClasses || 0;
 
   return (
     <button
@@ -34,12 +37,14 @@ function ChapterCard({
 
               <span
                 className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                  locked
+                  completed
+                    ? "border-emerald-400/25 bg-emerald-500/10 text-emerald-200"
+                    : locked
                     ? "border-yellow-400/20 bg-yellow-500/10 text-yellow-200"
-                    : "border-emerald-400/20 bg-emerald-500/10 text-emerald-200"
+                    : "border-cyan-400/20 bg-cyan-500/10 text-cyan-200"
                 }`}
               >
-                {locked ? "Locked" : "Open"}
+                {completed ? "Completed" : locked ? "Locked" : "Open"}
               </span>
             </div>
 
@@ -50,7 +55,13 @@ function ChapterCard({
         </div>
 
         <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-3 text-cyan-300">
-          {locked ? <FiLock className="text-lg" /> : <FiPlayCircle className="text-lg" />}
+          {locked ? (
+            <FiLock className="text-lg" />
+          ) : completed ? (
+            <FiCheckCircle className="text-lg text-emerald-300" />
+          ) : (
+            <FiPlayCircle className="text-lg" />
+          )}
         </div>
       </div>
 
@@ -61,7 +72,7 @@ function ChapterCard({
       <div className="flex items-center justify-between gap-3 text-sm">
         <span className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-white/65">
           <FiBookOpen className="text-cyan-300" />
-          {chapter.totalClasses} {chapter.totalClasses === 1 ? "class" : "classes"}
+          {completedClasses}/{chapter.totalClasses} completed
         </span>
 
         <span className="inline-flex items-center gap-2 font-medium text-cyan-200">

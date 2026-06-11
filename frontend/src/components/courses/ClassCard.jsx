@@ -1,4 +1,5 @@
 import {
+  FiCheckCircle,
   FiClock,
   FiFileText,
   FiLock,
@@ -21,9 +22,17 @@ function ClassCard({
 }) {
   const thumbnailUrl = getUploadUrl(cls.thumbnail);
   const locked = cls.locked;
+  const completed = Boolean(cls.completed);
+  const inProgress = !completed && (cls.progressPercent || 0) > 0;
 
   return (
-    <article className="group relative overflow-hidden rounded-[30px] border border-white/[0.08] bg-[#101010]/95 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.28)] transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400/20 hover:shadow-[0_28px_90px_rgba(34,211,238,0.12)] sm:p-5">
+    <article
+      className={`group relative overflow-hidden rounded-[30px] border bg-[#101010]/95 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.28)] transition-all duration-300 hover:-translate-y-1 sm:p-5 ${
+        completed
+          ? "border-emerald-400/25 hover:border-emerald-400/40 hover:shadow-[0_28px_90px_rgba(52,211,153,0.14)]"
+          : "border-white/[0.08] hover:border-cyan-400/20 hover:shadow-[0_28px_90px_rgba(34,211,238,0.12)]"
+      }`}
+    >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent opacity-60" />
 
       <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
@@ -39,6 +48,8 @@ function ClassCard({
               <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-cyan-500/18 via-[#121212] to-violet-500/18 text-cyan-200">
                 {locked ? (
                   <FiLock className="text-3xl" />
+                ) : completed ? (
+                  <FiCheckCircle className="text-3xl text-emerald-300" />
                 ) : (
                   <FiVideo className="text-3xl" />
                 )}
@@ -56,15 +67,22 @@ function ClassCard({
                 {getCourseTypeLabel(courseType)}
               </span>
 
-              <span
-                className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                  locked
-                    ? "border-yellow-400/20 bg-yellow-500/10 text-yellow-200"
-                    : "border-emerald-400/20 bg-emerald-500/10 text-emerald-200"
-                }`}
-              >
-                {locked ? "Locked" : "Available now"}
-              </span>
+              {completed ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-200">
+                  <FiCheckCircle />
+                  Completed
+                </span>
+              ) : (
+                <span
+                  className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                    locked
+                      ? "border-yellow-400/20 bg-yellow-500/10 text-yellow-200"
+                      : "border-cyan-400/20 bg-cyan-500/10 text-cyan-200"
+                  }`}
+                >
+                  {locked ? "Locked" : "Available now"}
+                </span>
+              )}
             </div>
 
             <h2 className="text-xl font-semibold text-white sm:text-[1.35rem]">
@@ -95,11 +113,19 @@ function ClassCard({
           className={`inline-flex items-center justify-center gap-2 self-start rounded-2xl border px-5 py-3 text-sm font-medium transition-all xl:self-center ${
             locked
               ? "border-yellow-400/20 bg-yellow-500/10 text-yellow-200 hover:bg-yellow-500/15"
+              : completed
+                ? "border-emerald-400/25 bg-emerald-500/10 text-emerald-200 hover:shadow-[0_18px_45px_rgba(52,211,153,0.14)]"
               : "border-cyan-400/20 bg-gradient-to-r from-cyan-500/12 to-violet-500/12 text-cyan-200 hover:shadow-[0_18px_45px_rgba(34,211,238,0.14)]"
           }`}
         >
-          {locked ? <FiLock /> : <FiPlayCircle />}
-          {locked ? "Unlock to watch" : "Open class"}
+          {locked ? <FiLock /> : completed ? <FiCheckCircle /> : <FiPlayCircle />}
+          {locked
+            ? "Unlock to watch"
+            : completed
+              ? "Rewatch Class"
+              : inProgress
+                ? "Continue"
+                : "Watch Class"}
         </button>
       </div>
     </article>

@@ -60,21 +60,35 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       !deviceExists.refreshTokenExpiry ||
       new Date() > new Date(deviceExists.refreshTokenExpiry)
     ) {
-      user.devices = user.devices.filter(
-        (device) => device.deviceId !== payload.deviceId,
+      await this.userModel.updateOne(
+        {
+          _id: payload.userId,
+        },
+        {
+          $pull: {
+            devices: {
+              deviceId: payload.deviceId,
+            },
+          },
+        },
       );
-
-      await user.save();
 
       throw new UnauthorizedException('Session expired');
     }
 
     // UPDATE LAST SEEN
-    deviceExists.lastSeen = new Date();
-
-    user.account_Status.lastSeen = new Date();
-
-    await user.save();
+    await this.userModel.updateOne(
+      {
+        _id: payload.userId,
+        'devices.deviceId': payload.deviceId,
+      },
+      {
+        $set: {
+          'devices.$.lastSeen': new Date(),
+          'account_Status.lastSeen': new Date(),
+        },
+      },
+    );
 
     return {
       userId: payload.userId,

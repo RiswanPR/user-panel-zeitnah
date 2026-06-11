@@ -26,6 +26,10 @@ import CourseClasses
   from "./pages/courses/CourseClasses";
 import ClassView
   from "./pages/courses/ClassView";
+import MyLearning
+  from "./pages/learning/MyLearning";
+import MyPoints
+  from "./pages/learning/MyPoints";
 
 import ProtectedRoute from "./components/common/ProtectedRoute/ProtectedRoute";
 
@@ -115,6 +119,36 @@ function App() {
               <MainLayout>
 
                 <Courses />
+
+              </MainLayout>
+
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/my-learning"
+          element={
+            <ProtectedRoute>
+
+              <MainLayout>
+
+                <MyLearning />
+
+              </MainLayout>
+
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/my-points"
+          element={
+            <ProtectedRoute>
+
+              <MainLayout>
+
+                <MyPoints />
 
               </MainLayout>
 
