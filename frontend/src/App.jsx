@@ -17,8 +17,13 @@ import ActiveSessions from "./pages/sessions/ActiveSessions";
 import AuditLogs from "./pages/audit/AuditLogs";
 import Profile from "./pages/profile/Profile";
 import EditProfile from "./pages/profile/EditProfile";
+import Courses from "./pages/courses/Courses";
+import CourseChapters from "./pages/courses/CourseChapters";
+import CourseClasses from "./pages/courses/CourseClasses";
+import ClassView from "./pages/courses/ClassView";
+import MyLearning from "./pages/learning/MyLearning";
+import MyPoints from "./pages/learning/MyPoints";
 
-// Security & Layout Infrastructure
 import ProtectedRoute from "./components/common/ProtectedRoute/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";
 
@@ -41,20 +46,27 @@ function App() {
             </ProtectedRoute>
           }
         >
-          {/* All inner components automatically render within ProtectedRoute & MainLayout */}
-          <Route path="/" element={<Home />} />
-          
-          {/* Profile Paths */}
+          <Route path="/" element={<Navigate to="/profile" />} />
+          <Route path="/dashboard" element={<Home />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/edit" element={<EditProfile />} />
-          
-          {/* Administration & Tracking Paths */}
+          <Route path="/courses" element={<Courses />} />
+          <Route path="/courses/:courseId/chapters" element={<CourseChapters />} />
+          <Route path="/courses/:courseId/chapters/:chapterCode/classes" element={<CourseClasses />} />
+          <Route path="/courses/class/:classId" element={<ClassView />} />
+          <Route path="/my-learning" element={<MyLearning />} />
+          <Route path="/my-points" element={<MyPoints />} />
           <Route path="/active-sessions" element={<ActiveSessions />} />
           <Route path="/audit-logs" element={<AuditLogs />} />
         </Route>
 
-        {/* FALLBACK REDIRECTION */}
-        <Route path="*" element={<Navigate to="/profile" />} />
+        {/* FALLBACK */}
+        <Route
+          path="*"
+          element={
+            <Navigate to="/profile" />
+          }
+        />
 
       </Routes>
     </BrowserRouter>

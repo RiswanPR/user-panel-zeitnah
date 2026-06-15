@@ -15,6 +15,10 @@ export class UpdateProfileDto {
   bio?: string;
 
   @IsOptional()
+  @IsString()
+  avatar?: string;
+
+  @IsOptional()
   @IsArray()
   skills?: string[];
 
