@@ -1,21 +1,61 @@
-* {
+/* ═══════════════════════════════════════════════════════════════
+   ZEITNAH — APP-LEVEL BASE RESETS & DEFAULTS
+   ═══════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
 ::selection {
-  background-color: #f6ed4a;
-  color: #07192a;
+  background-color: #F6ED4A;
+  color: #070B14;
 }
 
 a {
   text-decoration: none;
   color: inherit;
+  transition: color 0.2s ease;
 }
 
 button {
   cursor: pointer;
+  font-family: inherit;
 }
 
 input, select, textarea {
   font-family: inherit;
+}
+
+/* Focus-visible accessibility styling */
+:focus-visible {
+  outline: 2px solid rgba(159, 213, 178, 0.4);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid rgba(159, 213, 178, 0.4);
+  outline-offset: 2px;
+}
+
+/* Smooth color transitions for interactive elements */
+button,
+a,
+input,
+select,
+textarea {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Remove default tap highlight on mobile */
+button, a, input {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Image defaults */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
 }

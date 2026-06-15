@@ -1,53 +1,299 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════════
+   ZEITNAH PREMIUM DESIGN SYSTEM — THEME TOKENS
+   ═══════════════════════════════════════════════════════════════ */
 @theme {
-  /* Core Brand & Strategic Identity Colors */
-  --color-zeitnah-navy: #12314c;        
-  --color-zeitnah-mint: #9fd5b2;        
-  --color-zeitnah-yellow: #f6ed4a;      
-  --color-zeitnah-white: #ffffff;       
+  /* ── Brand Foundation ── */
+  --color-brand-navy: #12314C;
+  --color-brand-mint: #9FD5B2;
+  --color-brand-yellow: #F6ED4A;
+  --color-brand-white: #FFFFFF;
 
-  /* Structural UI System Canvas Architecture */
-  --color-bg-primary: #07192a;          
-  --color-surface-card: #0d2035;        
-  --color-surface-card-light: #1a4468;  
+  /* ── Background Layers ── */
+  --color-bg-base: #070B14;
+  --color-bg-surface: #0F1724;
+  --color-bg-card: #131D2D;
+  --color-bg-elevated: #182436;
 
-  /* Direct Semantic Typography System Overrides from Brand Guidelines */
-  --font-heading: "Degular", "Degular Black", "Helvetica Neue", Arial, sans-serif;
-  --font-body: "Helvetica", "Helvetica Neue", Arial, sans-serif;
+  /* ── Border System ── */
+  --color-border-default: #1E293B;
+  --color-border-subtle: rgba(159, 213, 178, 0.08);
+  --color-border-accent: rgba(159, 213, 178, 0.2);
+
+  /* ── Text Hierarchy ── */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #64748B;
+  --color-text-faint: #475569;
+
+  /* ── Semantic Colors ── */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-info: #38BDF8;
+
+  /* ── Typography ── */
+  --font-heading: "Sora", "Inter", system-ui, -apple-system, sans-serif;
+  --font-body: "Inter", "Sora", system-ui, -apple-system, sans-serif;
 }
 
-/* Base Document Configuration Layers */
+/* ═══════════════════════════════════════════════════════════════
+   BASE DOCUMENT LAYER
+   ═══════════════════════════════════════════════════════════════ */
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
 html, body {
-  background-color: #07192a;
-  color: #ffffff;
-  font-family: var(--font-body); /* Default body text to Helvetica  */
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-/* Centralized Glassmorphism Engine Classes */
+/* ═══════════════════════════════════════════════════════════════
+   PREMIUM GLASS SYSTEM
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Primary glass card — the workhorse component */
 .glass-card {
-  background: rgba(255, 255, 255, 0.04);
-  border: 0.5px solid rgba(159, 213, 178, 0.15);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    rgba(15, 23, 36, 0.8) 0%,
+    rgba(19, 29, 45, 0.6) 100%
+  );
+  border: 1px solid rgba(159, 213, 178, 0.1);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
   border-radius: 20px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 0 0 1px rgba(159, 213, 178, 0.04),
+    0 4px 24px -4px rgba(0, 0, 0, 0.3),
+    0 8px 48px -8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.glass-input {
-  background: rgba(7, 25, 42, 0.6);
-  border: 0.5px solid rgba(159, 213, 178, 0.15);
-  border-radius: 10px;
-  color: white;
+.glass-card:hover {
+  border-color: rgba(159, 213, 178, 0.18);
+  box-shadow:
+    0 0 0 1px rgba(159, 213, 178, 0.06),
+    0 8px 32px -4px rgba(0, 0, 0, 0.35),
+    0 16px 64px -8px rgba(0, 0, 0, 0.25);
+}
+
+/* Surface variant for nested elements */
+.glass-surface {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
   transition: all 0.2s ease;
+}
+
+.glass-surface:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Premium input styling */
+.glass-input {
+  background: rgba(7, 11, 20, 0.6);
+  border: 1px solid rgba(159, 213, 178, 0.1);
+  border-radius: 12px;
+  color: white;
+  font-family: var(--font-body);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-input:focus {
   outline: none;
-  border-color: #9fd5b2;
-  box-shadow: 0 0 0 2px rgba(159, 213, 178, 0.2);
+  border-color: rgba(159, 213, 178, 0.4);
+  box-shadow:
+    0 0 0 3px rgba(159, 213, 178, 0.08),
+    0 0 20px rgba(159, 213, 178, 0.06);
+  background: rgba(7, 11, 20, 0.8);
+}
+
+.glass-input::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PREMIUM EFFECTS LIBRARY
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Gradient accent line (top of cards) */
+.gradient-line-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(159, 213, 178, 0.3) 50%,
+    transparent 100%
+  );
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Mint glow effect */
+.glow-mint {
+  box-shadow:
+    0 0 20px rgba(159, 213, 178, 0.08),
+    0 0 60px rgba(159, 213, 178, 0.04);
+}
+
+/* Yellow glow effect */
+.glow-yellow {
+  box-shadow:
+    0 0 20px rgba(246, 237, 74, 0.1),
+    0 0 60px rgba(246, 237, 74, 0.05);
+}
+
+/* Shimmer loading skeleton */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Premium button base */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: #F6ED4A;
+  color: #070B14;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 4px 24px rgba(246, 237, 74, 0.2);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-primary:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(159, 213, 178, 0.25);
+  color: white;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CUSTOM SCROLLBAR
+   ═══════════════════════════════════════════════════════════════ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(159, 213, 178, 0.15);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(159, 213, 178, 0.25);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(159, 213, 178, 0.15) transparent;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AMBIENT BACKGROUND SYSTEM
+   ═══════════════════════════════════════════════════════════════ */
+.ambient-glow {
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ambient-glow::before,
+.ambient-glow::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.04;
+}
+
+.ambient-glow::before {
+  top: -15%;
+  left: -10%;
+  width: 500px;
+  height: 500px;
+  background: #9FD5B2;
+}
+
+.ambient-glow::after {
+  bottom: -10%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: #12314C;
 }
