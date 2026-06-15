@@ -22,30 +22,6 @@ export const navItems = [
     icon: FiBookOpen,
   },
 
-  // {
-  //   name: "My Learning",
-  //   path: "/my-learning",
-  //   icon: FiTrendingUp,
-  // },
-
-  // {
-  //   name: "My Points",
-  //   path: "/my-points",
-  //   icon: FiAward,
-  // },
-
-//   {
-//     name: "Network",
-//     path: "/network",
-//     icon: FiUsers,
-//   },
-
-//   {
-//     name: "Jobs",
-//     path: "/jobs",
-//     icon: FiBriefcase,
-//   },
-
   {
     name: "Profile",
     path: "/profile",

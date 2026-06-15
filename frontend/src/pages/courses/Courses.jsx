@@ -58,7 +58,16 @@ function Courses() {
   return (
     <div className="space-y-6 sm:space-y-8">
 
-      {/* ── Hero Header ── */}
+    
+
+      {/* ── Navigation / Filters ── */}
+      <CourseNavbar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        search={search}
+        setSearch={setSearch}
+      />
+        {/* ── Hero Header ── */}
       <motion.section
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -107,15 +116,6 @@ function Courses() {
           </div>
         </div>
       </motion.section>
-
-      {/* ── Navigation / Filters ── */}
-      <CourseNavbar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        search={search}
-        setSearch={setSearch}
-      />
-
       {/* ── Results Header ── */}
       <div className="flex items-end justify-between gap-4 border-b border-border-default pb-4">
         <div>

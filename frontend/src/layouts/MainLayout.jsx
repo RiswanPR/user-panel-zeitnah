@@ -14,10 +14,10 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { path: "/dashboard", label: "Dashboard", icon: Home },
+  // { path: "/dashboard", label: "Dashboard", icon: Home },
   { path: "/courses", label: "Courses", icon: BookOpen },
-  { path: "/my-learning", label: "My Learning", icon: BarChart3 },
-  { path: "/my-points", label: "My Points", icon: Star },
+  // { path: "/my-learning", label: "My Learning", icon: BarChart3 },
+  // { path: "/my-points", label: "My Points", icon: Star },
   { path: "/profile", label: "Profile", icon: User },
 ];
 
