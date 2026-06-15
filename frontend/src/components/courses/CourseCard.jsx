@@ -27,113 +27,121 @@ function CourseCard({
 
   return (
     <article
-      className={`group overflow-hidden rounded-[32px] border bg-[#101010]/95 shadow-[0_24px_80px_rgba(0,0,0,0.26)] transition-all duration-300 hover:-translate-y-1 ${
+      className={`group overflow-hidden glass-card shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col relative w-full ${
         completed
-          ? "border-emerald-400/25 hover:border-emerald-400/40 hover:shadow-[0_28px_90px_rgba(52,211,153,0.14)]"
-          : "border-white/[0.08] hover:border-cyan-400/20 hover:shadow-[0_28px_90px_rgba(34,211,238,0.14)]"
+          ? "border-emerald-500/30 hover:border-emerald-500/50 hover:shadow-[0_20px_50px_rgba(16,185,129,0.12)]"
+          : "hover:border-[#9fd5b2]/40 hover:shadow-[0_20px_50px_rgba(159,213,178,0.08)]"
       }`}
     >
-      <div className="relative h-56 overflow-hidden">
+      {/* Subtle interior edge lighting accent line */}
+      <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[rgba(159,213,178,0.25)] to-transparent z-20" />
+
+      {/* MEDIA BANNER MODULE */}
+      <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-[#0d2035] shrink-0 select-none">
         <img
           src={imageUrl}
           alt={course.name}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-103"
         />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f0f] via-[#0f0f0f]/35 to-transparent" />
+        {/* Gradated visual shield text protections */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#07192a] via-[#07192a]/40 to-transparent z-10" />
 
-        <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+        {/* BADGES DISPLAY LAYER */}
+        <div className="absolute left-4 top-4 flex flex-wrap gap-1.5 z-20">
           <span
-            className={`rounded-full border px-3 py-1 text-xs font-medium backdrop-blur ${
+            className={`rounded-lg border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider backdrop-blur-xs ${
               isRecording
-                ? "border-violet-400/20 bg-violet-500/10 text-violet-200"
-                : "border-cyan-400/20 bg-cyan-500/10 text-cyan-200"
+                ? "border-amber-500/20 bg-amber-500/10 text-amber-400"
+                : "border-[rgba(159,213,178,0.25)] bg-[rgba(159,213,178,0.06)] text-[#9fd5b2]"
             }`}
           >
             {getCourseTypeLabel(course.type)}
           </span>
 
           <span
-            className={`rounded-full border px-3 py-1 text-xs font-medium backdrop-blur ${
+            className={`rounded-lg border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider backdrop-blur-xs ${
               completed
-                ? "border-emerald-300/30 bg-emerald-500/15 text-emerald-100"
+                ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-400"
                 : purchased
-                ? "border-emerald-400/20 bg-emerald-500/10 text-emerald-200"
-                : "border-white/[0.12] bg-black/35 text-white/75"
+                ? "border-[rgba(159,213,178,0.25)] bg-[rgba(159,213,178,0.06)] text-[#9fd5b2]"
+                : "border-white/[0.08] bg-white/[0.02] text-white/50"
             }`}
           >
             {completed ? "Completed" : purchased ? "Enrolled" : "Available"}
           </span>
         </div>
 
-        <div className="absolute inset-x-0 bottom-0 p-5">
-          <p className="text-xs uppercase tracking-[0.22em] text-white/45">
-            Course
+        {/* BOTTOM METADATA CONTAINER INSIDE OVERLAY */}
+        <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 z-20 flex flex-col justify-end">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+            Course Module
           </p>
-          <h2 className="mt-2 text-xl font-semibold text-white">
+          <h2 className="mt-1 font-heading font-black text-lg sm:text-xl text-white tracking-tight leading-tight truncate">
             {course.name}
           </h2>
         </div>
       </div>
 
-      <div className="p-5">
-        <p className="text-sm leading-7 text-white/55">
-          {course.description || "No description has been added to this course yet."}
+      {/* CORE BODY INFO BLOCK */}
+      <div className="p-4 sm:p-5 flex flex-col flex-1 justify-between w-full">
+        <p className="text-xs sm:text-sm font-medium text-white/50 leading-relaxed line-clamp-3">
+          {course.description || "No specific configuration roadmap summary appended to this catalog context yet."}
         </p>
 
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-3">
-            <div className="mb-2 inline-flex items-center gap-2 text-cyan-200">
-              <FiBookOpen />
-              <span className="text-xs uppercase tracking-[0.18em] text-white/40">
+        {/* METRICS SPECIFICATION GRID */}
+        <div className="mt-5 grid grid-cols-2 gap-2.5 w-full">
+          <div className="rounded-xl border border-white/[0.04] bg-white/[0.01] p-3 flex flex-col">
+            <div className="mb-1.5 flex items-center gap-1.5 text-[#9fd5b2]">
+              <FiBookOpen className="text-xs shrink-0" />
+              <span className="text-[9px] font-bold uppercase tracking-wider text-white/30">
                 Structure
               </span>
             </div>
-
-            <p className="text-sm text-white/75">
+            <p className="text-xs sm:text-sm font-bold text-white/90 truncate">
               {chapterCount} {chapterCount === 1 ? "chapter" : "chapters"}
             </p>
           </div>
 
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-3">
-            <div className="mb-2 inline-flex items-center gap-2 text-cyan-200">
-              {isRecording ? <FiPlay /> : <FiVideo />}
-              <span className="text-xs uppercase tracking-[0.18em] text-white/40">
+          <div className="rounded-xl border border-white/[0.04] bg-white/[0.01] p-3 flex flex-col">
+            <div className="mb-1.5 flex items-center gap-1.5 text-[#9fd5b2]">
+              {isRecording ? <FiPlay className="text-xs shrink-0" /> : <FiVideo className="text-xs shrink-0" />}
+              <span className="text-[9px] font-bold uppercase tracking-wider text-white/30">
                 Format
               </span>
             </div>
-
-            <p className="text-sm text-white/75">
+            <p className="text-xs sm:text-sm font-bold text-white/90 truncate">
               {getCourseTypeLabel(course.type)}
             </p>
           </div>
         </div>
 
+        {/* PROGRESS SYSTEM VISUAL RENDER PIPELINE */}
         <div
-          className={`mt-5 rounded-[24px] border p-4 ${
+          className={`mt-4 rounded-xl border p-3.5 flex flex-col w-full ${
             completed
-              ? "border-emerald-400/20 bg-emerald-500/10"
-              : "border-white/[0.08] bg-black/20"
+              ? "border-emerald-500/20 bg-emerald-500/5"
+              : "border-white/[0.04] bg-white/[0.01]"
           }`}
         >
-          <div className="mb-3 flex items-center justify-between text-xs text-white/45">
-            <span className="inline-flex items-center gap-2">
+          <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-white/40">
+            <span className="inline-flex items-center gap-1.5">
               {completed ? (
-                <FiCheckCircle className="text-emerald-300" />
+                <FiCheckCircle className="text-emerald-400 text-xs shrink-0" />
               ) : (
-                <FiTrendingUp className="text-cyan-300" />
+                <FiTrendingUp className="text-[#9fd5b2] text-xs shrink-0" />
               )}
-              {completed ? "Course Completed 🎉" : purchased ? "Your progress" : "Start progress"}
+              {completed ? "Course Completed 🎉" : purchased ? "Your Progress" : "Start Progress"}
             </span>
-            <span>{progress}%</span>
+            <span className="font-bold text-white">{progress}%</span>
           </div>
 
-          <div className="h-2 overflow-hidden rounded-full bg-white/[0.05]">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
             <div
-              className={`h-full rounded-full transition-all duration-500 ${
+              className={`h-full rounded-full transition-all duration-500 ease-out ${
                 completed
-                  ? "bg-gradient-to-r from-emerald-400 to-cyan-300"
-                  : "bg-gradient-to-r from-cyan-400 via-sky-300 to-violet-400"
+                  ? "bg-gradient-to-r from-emerald-400 to-[#9fd5b2]"
+                  : "bg-gradient-to-r from-[#9fd5b2] to-[#f6ed4a]"
               }`}
               style={{
                 width: `${progress}%`,
@@ -142,13 +150,16 @@ function CourseCard({
           </div>
         </div>
 
+        {/* ACTION CALL PIPELINE ROUTE INTERACTIVE CTAS */}
         <button
           type="button"
           onClick={() => navigate(`/courses/${course._id}/chapters`)}
-          className={`mt-5 inline-flex w-full items-center justify-center rounded-2xl border px-4 py-3 text-sm font-medium transition-all ${
+          className={`mt-4 inline-flex w-full items-center justify-center rounded-xl py-3 text-xs font-extrabold uppercase tracking-wider transition-all duration-150 cursor-pointer select-none border block ${
             completed
-              ? "border-emerald-400/25 bg-emerald-500/10 text-emerald-200 hover:shadow-[0_18px_45px_rgba(52,211,153,0.14)]"
-              : "border-cyan-400/20 bg-gradient-to-r from-cyan-500/12 to-violet-500/12 text-cyan-200 hover:shadow-[0_18px_45px_rgba(34,211,238,0.14)]"
+              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/15"
+              : purchased
+              ? "bg-white/[0.03] border-white/[0.08] text-white hover:bg-white/[0.06] hover:border-[rgba(159,213,178,0.25)]"
+              : "bg-[#f6ed4a] border-[#f6ed4a] text-[#07192a] hover:shadow-[0_4px_15px_rgba(246,237,74,0.2)] active:scale-[0.99]"
           }`}
         >
           {completed ? "Review Course" : purchased ? "Continue Learning" : "Explore Course"}

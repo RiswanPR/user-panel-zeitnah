@@ -1,8 +1,10 @@
-/* App-level styles */
-/* All component styling is handled via Tailwind utility classes */
-
 * {
   box-sizing: border-box;
+}
+
+::selection {
+  background-color: #f6ed4a;
+  color: #07192a;
 }
 
 a {
@@ -12,4 +14,8 @@ a {
 
 button {
   cursor: pointer;
+}
+
+input, select, textarea {
+  font-family: inherit;
 }

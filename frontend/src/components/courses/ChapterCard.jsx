@@ -19,65 +19,83 @@ function ChapterCard({
     <button
       type="button"
       onClick={onOpen}
-      className="group relative flex h-full w-full flex-col overflow-hidden rounded-[30px] border border-white/[0.08] bg-[#101010]/95 p-6 text-left shadow-[0_24px_80px_rgba(0,0,0,0.26)] transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400/20 hover:shadow-[0_28px_90px_rgba(34,211,238,0.12)]"
+      className={`group relative flex h-full w-full flex-col overflow-hidden glass-card p-5 sm:p-6 text-left shadow-xl transition-all duration-300 hover:-translate-y-0.5 cursor-pointer select-none ${
+        completed
+          ? "border-emerald-500/30 hover:border-emerald-500/50 hover:shadow-[0_20px_50px_rgba(16,185,129,0.12)]"
+          : "hover:border-[#9fd5b2]/40 hover:shadow-[0_20px_50px_rgba(159,213,178,0.08)]"
+      }`}
     >
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent opacity-60" />
+      {/* Subtle interior edge lighting top architectural accent line */}
+      <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[rgba(159,213,178,0.25)] to-transparent z-20" />
 
-      <div className="mb-5 flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/[0.08] bg-gradient-to-br from-cyan-500/18 via-[#111111] to-violet-500/18 text-sm font-semibold text-cyan-100">
+      {/* HEADER SECTION WRAPPER */}
+      <div className="mb-4 flex items-start justify-between gap-4 w-full relative z-10">
+        <div className="flex items-start gap-3.5 min-w-0 flex-1">
+          
+          {/* Index Counter Badge Box */}
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[rgba(7,25,42,0.6)] border border-white/[0.05] text-xs font-heading font-black text-white/90 select-none">
             {String(index + 1).padStart(2, "0")}
           </div>
 
-          <div>
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-xs font-medium text-white/65">
+          {/* Module Information Details Block */}
+          <div className="min-w-0 flex-1">
+            <div className="mb-2 flex flex-wrap items-center gap-1.5">
+              <span className="rounded-md border border-white/[0.08] bg-white/[0.02] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white/50 select-none">
                 Module
               </span>
 
               <span
-                className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                className={`rounded-lg border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider select-none ${
                   completed
-                    ? "border-emerald-400/25 bg-emerald-500/10 text-emerald-200"
+                    ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
                     : locked
-                    ? "border-yellow-400/20 bg-yellow-500/10 text-yellow-200"
-                    : "border-cyan-400/20 bg-cyan-500/10 text-cyan-200"
+                    ? "border-[#f6ed4a]/20 bg-[#f6ed4a]/5 text-[#f6ed4a]"
+                    : "border-[rgba(159,213,178,0.25)] bg-[rgba(159,213,178,0.06)] text-[#9fd5b2]"
                 }`}
               >
                 {completed ? "Completed" : locked ? "Locked" : "Open"}
               </span>
             </div>
 
-            <h2 className="text-xl font-semibold text-white">
+            <h2 className="text-base sm:text-lg font-heading font-bold text-white tracking-tight leading-snug truncate">
               {chapter.title}
             </h2>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-3 text-cyan-300">
+        {/* Functional Icon Capsule Node State Identifier */}
+        <div className={`h-9 w-9 rounded-xl border flex items-center justify-center shrink-0 transition-colors select-none ${
+          locked 
+            ? "bg-[#f6ed4a]/5 border-[#f6ed4a]/15 text-[#f6ed4a]" 
+            : completed 
+            ? "bg-emerald-500/5 border-emerald-500/15 text-emerald-400" 
+            : "bg-[rgba(159,213,178,0.06)] border-[rgba(159,213,178,0.15)] text-[#9fd5b2]"
+        }`}>
           {locked ? (
-            <FiLock className="text-lg" />
+            <FiLock className="text-sm" />
           ) : completed ? (
-            <FiCheckCircle className="text-lg text-emerald-300" />
+            <FiCheckCircle className="text-sm" />
           ) : (
-            <FiPlayCircle className="text-lg" />
+            <FiPlayCircle className="text-sm" />
           )}
         </div>
       </div>
 
-      <p className="mb-6 flex-1 text-sm leading-7 text-white/55">
-        {chapter.description || "Chapter details will appear here once they are added."}
+      {/* Description Body Paragraph Module */}
+      <p className="mb-5 flex-1 text-xs sm:text-sm font-medium text-white/50 leading-relaxed line-clamp-3 sm:line-clamp-none w-full relative z-10">
+        {chapter.description || "Chapter operational specifications will load here once configuration parameters sync."}
       </p>
 
-      <div className="flex items-center justify-between gap-3 text-sm">
-        <span className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-white/65">
-          <FiBookOpen className="text-cyan-300" />
-          {completedClasses}/{chapter.totalClasses} completed
+      {/* FOOTER PARAMETER ROWS MAPS - Fully responsive fluid structure */}
+      <div className="flex flex-wrap items-center justify-between gap-3 text-[10px] font-bold uppercase tracking-wider w-full border-t border-white/[0.04] pt-4 mt-auto relative z-10">
+        <span className="inline-flex items-center gap-1.5 rounded-md border border-white/[0.04] bg-white/[0.01] px-2.5 py-1.5 text-white/60 select-none">
+          <FiBookOpen className="text-[#9fd5b2] w-3.5 h-3.5" />
+          {completedClasses} / {chapter.totalClasses} completed
         </span>
 
-        <span className="inline-flex items-center gap-2 font-medium text-cyan-200">
-          View lessons
-          <FiArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
+        <span className="inline-flex items-center gap-1.5 text-[#9fd5b2] group-hover:text-white transition-colors duration-200">
+          <span>View lessons</span>
+          <FiArrowRight className="text-xs transition-transform duration-200 group-hover:translate-x-0.5" />
         </span>
       </div>
     </button>

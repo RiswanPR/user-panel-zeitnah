@@ -1,7 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-
+import { useEffect, useRef, useState, useContext, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
 import {
   FiArrowLeft,
   FiCheckCircle,
@@ -20,8 +18,6 @@ import {
 } from "../../utils/courseUi";
 
 import VideoWatermark from "../../components/player/VideoWatermark";
-import { useContext } from "react";
-
 import { AuthContext } from "../../context/AuthContext";
 
 function loadVdoCipherApi() {
@@ -47,7 +43,6 @@ function loadVdoCipherApi() {
     }
 
     const script = document.createElement("script");
-
     script.src = "https://player.vdocipher.com/v2/api.js";
     script.async = true;
     script.dataset.vdocipherApi = "true";
@@ -89,7 +84,6 @@ function ClassView() {
     const loadClass = async () => {
       try {
         setLoading(true);
-
         const res = await api.get(`/courses/class/${classId}`);
 
         if (mounted) {
@@ -97,7 +91,7 @@ function ClassView() {
           setProgressState(res.data.progress || null);
         }
       } catch (error) {
-        alert(error.response?.data?.message);
+        alert(error.response?.data?.message || "Failed to load class configuration module.");
         navigate("/courses");
       } finally {
         if (mounted) {
@@ -111,137 +105,84 @@ function ClassView() {
     return () => {
       mounted = false;
     };
-  }, [classId, navigate]);// =====================================
-// ACTIVE STREAM PROTECTION
-// =====================================
+  }, [classId, navigate]);
 
-useEffect(() => {
-  if (!classId) return;
+  // ACTIVE STREAM SECURITY PROTECTION HEARTBEAT LOOP
+  useEffect(() => {
+    if (!classId) return;
 
-  let heartbeatInterval;
+    let heartbeatInterval;
 
-  const initializeStream = async () => {
-    try {
+    const initializeStream = async () => {
+      try {
+        const deviceId = await getDeviceId();
+        console.log("Stream Device ID:", deviceId);
 
-      const deviceId =
-        await getDeviceId();
-
-      console.log(
-        "Stream Device ID:",
-        deviceId,
-      );
-
-      await api.post(
-        "/courses/start-stream",
-        {
+        await api.post("/courses/start-stream", {
           classId,
           deviceId,
-        },
-      );
+        });
 
-      heartbeatInterval =
-        setInterval(async () => {
-
+        heartbeatInterval = setInterval(async () => {
           try {
-
-            await api.post(
-              "/courses/heartbeat",
-              {
-                deviceId,
-              },
-            );
-
+            await api.post("/courses/heartbeat", {
+              deviceId,
+            });
           } catch (err) {
             console.log(err);
           }
-
         }, 15000);
 
-    } catch (error) {
+      } catch (error) {
+        alert(
+          error.response?.data?.message ||
+            "Another device is currently watching this course.",
+        );
+        navigate(-1);
+      }
+    };
 
-      alert(
-        error.response?.data?.message ||
-          "Another device is currently watching this course.",
-      );
+    initializeStream();
 
-      navigate(-1);
-    }
-  };
-
-  initializeStream();
-
-  const stopStream = async () => {
-
-    try {
-
-      const deviceId =
-        await getDeviceId();
-
-      await api.post(
-        "/courses/stop-stream",
-        {
+    const stopStream = async () => {
+      try {
+        const deviceId = await getDeviceId();
+        await api.post("/courses/stop-stream", {
           deviceId,
-        },
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    const handleUnload = async () => {
+      const deviceId = await getDeviceId();
+      navigator.sendBeacon(
+        "http://localhost:3000/api/courses/stop-stream",
+        new Blob(
+          [
+            JSON.stringify({
+              deviceId,
+            }),
+          ],
+          {
+            type: "application/json",
+          },
+        ),
       );
+    };
 
-    } catch (error) {
+    window.addEventListener("beforeunload", handleUnload);
 
-      console.log(error);
+    return () => {
+      if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+      }
+      stopStream();
+      window.removeEventListener("beforeunload", handleUnload);
+    };
+  }, [classId, navigate]);
 
-    }
-
-  };
-
-  const handleUnload = async () => {
-
-    const deviceId =
-      await getDeviceId();
-
-    navigator.sendBeacon(
-      "http://localhost:3000/api/courses/stop-stream",
-      new Blob(
-        [
-          JSON.stringify({
-            deviceId,
-          }),
-        ],
-        {
-          type:
-            "application/json",
-        },
-      ),
-    );
-
-  };
-
-  window.addEventListener(
-    "beforeunload",
-    handleUnload,
-  );
-
-  return () => {
-
-    if (
-      heartbeatInterval
-    ) {
-      clearInterval(
-        heartbeatInterval,
-      );
-    }
-
-    stopStream();
-
-    window.removeEventListener(
-      "beforeunload",
-      handleUnload,
-    );
-
-  };
-
-}, [
-  classId,
-  navigate,
-]);
   useEffect(() => {
     const initial = data?.progress?.classProgress;
 
@@ -306,7 +247,6 @@ useEffect(() => {
       };
 
       latestSnapshotRef.current = snapshot;
-
       return snapshot;
     };
 
@@ -379,7 +319,6 @@ useEffect(() => {
         }
 
         const player = window.VdoPlayer.getInstance(iframeRef.current);
-
         playerRef.current = player;
 
         const onLoadedMetadata = () => {
@@ -442,8 +381,7 @@ useEffect(() => {
             return;
           }
 
-          const baseUrl =
-            api.defaults.baseURL || "http://localhost:3000/api";
+          const baseUrl = api.defaults.baseURL || "http://localhost:3000/api";
 
           void fetch(`${baseUrl}/courses/class/${classId}/progress`, {
             method: "POST",
@@ -507,27 +445,30 @@ useEffect(() => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a] text-white">
-        Loading...
+      <div className="flex min-h-screen items-center justify-center bg-[#07192a] text-white font-body">
+        <div className="flex items-center gap-3">
+          <svg className="animate-spin h-5 w-5 text-[#9fd5b2]" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <span className="text-sm font-semibold uppercase tracking-widest text-white/60">Loading Class Workstation…</span>
+        </div>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a] px-4 text-center text-white/70">
-        Unable to load this class right now.
+      <div className="flex min-h-screen items-center justify-center bg-[#07192a] px-4 text-center text-white/60 font-body text-sm uppercase tracking-wider">
+        Unable to load this class parameter allocation context right now.
       </div>
     );
   }
 
   const { chapter, class: cls, course } = data;
-  const videoUrl =
-    getVdoCipherEmbedUrl(cls.vdoCipher) || getBunnyEmbedUrl(cls.videoId);
-  const classProgress =
-    progressState?.classProgress || data.progress?.classProgress;
-  const learningProgress =
-    progressState?.learningProgress || data.progress?.learningProgress;
+  const videoUrl = getVdoCipherEmbedUrl(cls.vdoCipher) || getBunnyEmbedUrl(cls.videoId);
+  const classProgress = progressState?.classProgress || data.progress?.classProgress;
+  const learningProgress = progressState?.learningProgress || data.progress?.learningProgress;
   const classProgressPercent = classProgress?.progressPercent || 0;
   const isClassCompleted = Boolean(classProgress?.completed) || classProgressPercent >= 100;
   const courseCompletionPercent = learningProgress?.completionPercent || 0;
@@ -536,255 +477,254 @@ useEffect(() => {
   const totalClasses = learningProgress?.totalClasses || 0;
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#0a0a0a] px-4 py-8">
-      <div className="absolute left-[-100px] top-[-120px] h-[420px] w-[420px] rounded-full bg-cyan-500/10 blur-[120px]" />
-      <div className="absolute bottom-[-100px] right-[-80px] h-[360px] w-[360px] rounded-full bg-violet-500/10 blur-[120px]" />
+    <div className="min-h-screen bg-[#07192a] relative overflow-hidden px-4 py-6 sm:py-8 font-body text-white antialiased selection:bg-[#f6ed4a] selection:text-[#07192a]">
+      
+      {/* Decorative ambient brand accent blur */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[400px] h-[400px] bg-[#9fd5b2] opacity-5 rounded-full blur-[100px]" />
+      </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="mb-6 inline-flex items-center gap-2 rounded-2xl border border-white/[0.08] bg-[#111111] px-4 py-2 text-white/70 transition-all hover:border-cyan-400/20 hover:text-cyan-300"
-        >
-          <FiArrowLeft />
-          Back
-        </button>
+      <div className="relative z-10 mx-auto max-w-7xl space-y-6">
+        
+        {/* BACK WORKSPACE NAVIGATOR CONTAINER */}
+        <div className="flex justify-between items-center w-full">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white/70 transition-all hover:border-[rgba(159,213,178,0.3)] hover:text-[#9fd5b2] cursor-pointer"
+          >
+            <FiArrowLeft className="text-sm shrink-0" />
+            Back
+          </button>
+        </div>
 
-        <div className="mb-8">
-          <div className="flex flex-wrap gap-2">
-            <span className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-200">
+        {/* HERO SPECIFICATION SHEET OVERVIEW */}
+        <div className="space-y-4 w-full">
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="rounded-lg border border-[rgba(159,213,178,0.25)] bg-[rgba(159,213,178,0.06)] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#9fd5b2]">
               {course.name}
             </span>
 
-            <span className="rounded-full border border-white/[0.1] bg-white/[0.03] px-3 py-1 text-xs font-medium text-white/65">
+            <span className="rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/60">
               {chapter.title}
             </span>
 
             {isClassCompleted ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-200">
-                <FiCheckCircle />
-                Completed
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                <FiCheckCircle className="shrink-0" />
+                Completed Module
               </span>
             ) : classProgressPercent > 0 ? (
-              <span className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-200">
+              <span className="rounded-lg border border-[#f6ed4a]/20 bg-[#f6ed4a]/5 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#f6ed4a]">
                 Continue watching
               </span>
             ) : null}
           </div>
 
-          <h1 className="mt-5 font-['Sora'] text-3xl font-semibold text-white sm:text-5xl">
+          <h1 className="font-heading font-black text-2xl sm:text-4xl lg:text-5xl text-white tracking-tight leading-none pt-1">
             {cls.title}
           </h1>
 
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-white/60 sm:text-base">
-            {cls.description ||
-              "Class details will appear here once they are added."}
+          <p className="max-w-3xl text-xs sm:text-sm font-medium text-white/50 leading-relaxed">
+            {cls.description || "Class operational descriptors will load here once configured."}
           </p>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-          <div className="space-y-6">
-            <div className="overflow-hidden rounded-[32px] border border-white/[0.08] bg-[#111111] shadow-[0_24px_90px_rgba(0,0,0,0.3)]">
-              <div className="flex items-center justify-between gap-4 border-b border-white/[0.08] px-5 py-4">
-                <span className="text-sm font-medium text-white/75">
-                  {isClassCompleted
-                    ? "Rewatch this class"
-                    : classProgressPercent > 0
-                      ? "Continue watching"
-                      : "Start watching"}
+        {/* TWO-COLUMN CONTENT PLAYBACK FRAMEWORK */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full">
+          
+          {/* LEFT PRIMARY PANEL: MEDIA STREAM & DESCRIPTION */}
+          <div className="lg:col-span-8 space-y-6 flex flex-col">
+            
+            {/* VIDEO INTEGRITY CAPTURE INTERFACE CARD */}
+            <div className="glass-card overflow-hidden shadow-2xl relative flex flex-col w-full">
+              <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[rgba(159,213,178,0.25)] to-transparent z-20" />
+              
+              <div className="flex items-center justify-between gap-4 border-b border-[rgba(159,213,178,0.12)] px-5 py-3.5 bg-[#0d2035]/40 select-none">
+                <span className="text-xs font-bold uppercase tracking-wider text-white/70">
+                  {isClassCompleted ? "Rewatch this class" : classProgressPercent > 0 ? "Continue watching" : "Start streaming"}
                 </span>
-
-                <span className="text-sm text-white/45">
-                  {classProgressPercent}%
+                <span className="text-xs font-bold tracking-wide text-[#9fd5b2] bg-[rgba(159,213,178,0.08)] px-2 py-0.5 rounded-md border border-[rgba(159,213,178,0.15)]">
+                  {classProgressPercent}% Complete
                 </span>
               </div>
 
-              <div className="relative aspect-video bg-black overflow-hidden">
-                {/* Dynamic Watermark */}
+              {/* VIDEO PLAYER RENDER CORE CANVAS */}
+              <div className="relative aspect-video bg-black/90 overflow-hidden w-full">
                 <VideoWatermark user={user} />
 
                 {videoUrl ? (
                   <iframe
                     ref={iframeRef}
                     src={videoUrl}
-                    className="h-full w-full"
+                    className="h-full w-full block border-0"
                     allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
                     allowFullScreen
                     title={cls.title}
                   />
                 ) : (
-                  <div className="flex h-full items-center justify-center px-6 text-center text-white/60">
-                    Video link is missing for this class.
+                  <div className="flex h-full items-center justify-center px-6 text-center text-white/40 text-xs font-semibold uppercase tracking-wider">
+                    Video asset link pathway is missing for this class module.
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="rounded-[30px] border border-white/[0.08] bg-[#111111] p-6">
-              <div className="mb-4 flex items-center gap-3">
-                <FiPlayCircle className="text-cyan-300" />
-                <h2 className="text-xl font-semibold text-white">
+            {/* EXPANDED DESCRIPTIVE INDEX CARD */}
+            <div className="glass-card p-6 shadow-xl relative overflow-hidden flex flex-col">
+              <div className="mb-4 flex items-center gap-3 border-b border-[rgba(159,213,178,0.12)] pb-3.5">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[rgba(159,213,178,0.1)] border border-[rgba(159,213,178,0.15)] text-[#9fd5b2] shrink-0">
+                  <FiPlayCircle className="w-4 h-4" />
+                </span>
+                <h2 className="text-lg font-heading font-black text-white tracking-tight">
                   About This Class
                 </h2>
               </div>
 
-              <p className="text-white/50 leading-7">
-                {cls.description ||
-                  "Class details will appear here once they are added."}
+              <p className="text-white/60 text-sm font-medium leading-relaxed">
+                {cls.description || "No specific detailed overview matrix supplied for this lecture field parameter."}
               </p>
 
-              <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white/65">
-                <FiClock className="text-cyan-300" />
-                {formatDuration(cls.duration)}
+              <div className="mt-5 self-start inline-flex items-center gap-2 rounded-lg border border-[rgba(159,213,178,0.15)] bg-white/[0.02] px-3 py-1.5 text-xs font-bold tracking-wide text-white/70 uppercase select-none">
+                <FiClock className="text-[#9fd5b2] w-3.5 h-3.5" />
+                Duration: {formatDuration(cls.duration)}
               </div>
             </div>
           </div>
 
-          <div className="space-y-6">
-            <div className="rounded-[30px] border border-white/[0.08] bg-[#111111] p-6">
-              <div className="mb-5 flex items-center justify-between gap-4">
+          {/* RIGHT SIDEBAR: PROGRESS TRACKER & DATA ATTACHMENTS */}
+          <div className="lg:col-span-4 space-y-6 flex flex-col w-full">
+            
+            {/* METRICS DISPATCH SYNCHRONIZATION SUMMARY */}
+            <div className="glass-card p-6 shadow-2xl relative overflow-hidden flex flex-col">
+              <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[rgba(159,213,178,0.25)] to-transparent" />
+              
+              <div className="mb-5 flex items-start justify-between gap-4 border-b border-[rgba(159,213,178,0.12)] pb-4">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.22em] text-white/35">
-                    Learning Progress
-                  </p>
-                  <h2 className="mt-2 text-xl font-semibold text-white">
-                    Saved Progress
-                  </h2>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">Learning Progress</p>
+                  <h2 className="mt-1 text-base font-heading font-black text-white tracking-tight">Saved Parameters</h2>
                 </div>
 
                 <span
-                  className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                    isClassCompleted
-                      ? "border-emerald-400/20 bg-emerald-500/10 text-emerald-200"
-                      : syncState === "saved"
-                      ? "border-emerald-400/20 bg-emerald-500/10 text-emerald-200"
-                      : syncState === "saving"
-                        ? "border-cyan-400/20 bg-cyan-500/10 text-cyan-200"
-                        : syncState === "watching"
-                          ? "border-cyan-400/20 bg-cyan-500/10 text-cyan-200"
-                        : syncState === "error"
-                          ? "border-red-400/20 bg-red-500/10 text-red-200"
-                          : "border-white/[0.08] bg-white/[0.03] text-white/55"
+                  className={`rounded-md border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                    isClassCompleted || syncState === "saved"
+                      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+                      : syncState === "saving" || syncState === "watching"
+                      ? "border-[#9fd5b2]/30 bg-[rgba(159,213,178,0.06)] text-[#9fd5b2]"
+                      : syncState === "error"
+                      ? "border-red-500/20 bg-red-500/10 text-red-400"
+                      : "border-white/[0.08] bg-white/[0.02] text-white/40"
                   }`}
                 >
-                  {isClassCompleted
-                    ? "Completed"
-                    : syncState === "saved"
-                    ? "Synced"
-                    : syncState === "saving"
-                      ? "Saving"
-                      : syncState === "watching"
-                        ? "Watching"
-                      : syncState === "error"
-                        ? "Sync failed"
-                        : "Waiting"}
+                  {isClassCompleted ? "Completed" : syncState === "saved" ? "Synced" : syncState === "saving" ? "Saving" : syncState === "watching" ? "Watching" : syncState === "error" ? "Sync failed" : "Waiting"}
                 </span>
               </div>
 
-              <div
-                className={`rounded-[24px] border p-4 ${
-                  isClassCompleted
-                    ? "border-emerald-400/20 bg-emerald-500/10"
-                    : "border-white/[0.08] bg-white/[0.03]"
-                }`}
-              >
-                <div className="mb-3 flex items-center justify-between text-sm text-white/65">
-                  <span className="inline-flex items-center gap-2">
-                    {isClassCompleted ? (
-                      <FiCheckCircle className="text-emerald-300" />
-                    ) : null}
-                    This class
-                  </span>
-                  <span>{classProgressPercent}%</span>
-                </div>
-
-                <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      isClassCompleted
-                        ? "bg-gradient-to-r from-emerald-400 to-cyan-300"
-                        : "bg-gradient-to-r from-cyan-400 via-sky-300 to-violet-400"
-                    }`}
-                    style={{
-                      width: `${classProgressPercent}%`,
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="mt-4 rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-4">
-                <div className="mb-3 flex items-center justify-between text-sm text-white/65">
-                  <span>Course completion</span>
-                  <span>{courseCompletionPercent}%</span>
-                </div>
-
-                <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-300 transition-all duration-500"
-                    style={{
-                      width: `${courseCompletionPercent}%`,
-                    }}
-                  />
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2 text-xs text-white/55">
-                  <span className="rounded-full border border-white/[0.08] bg-black/20 animate-pulse px-3 py-2">
-                    {watchedClasses}/{totalClasses} classes started
-                  </span>
-
-                  <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-emerald-200">
-                    {completedClasses}/{totalClasses} completed
-                  </span>
-
-                  {learningProgress?.averageWatchTime ? (
-                    <span className="rounded-full border border-white/[0.08] bg-black/20 animate-pulse px-3 py-2">
-                      Avg watch: {learningProgress.averageWatchTime}
+              {/* CARD PROGRESS SLIDER 1: CURRENT CLASS TRACK */}
+              <div className="space-y-5 w-full flex flex-col">
+                <div className={`rounded-xl border p-4 flex flex-col w-full ${isClassCompleted ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-white/[0.04] bg-white/[0.01]'}`}>
+                  <div className="mb-2.5 flex items-center justify-between text-xs font-medium text-white/70">
+                    <span className="inline-flex items-center gap-1.5">
+                      {isClassCompleted && <FiCheckCircle className="text-emerald-400 w-3.5 h-3.5" />}
+                      This Lecture Matrix
                     </span>
-                  ) : null}
+                    <span className="font-bold text-white">{classProgressPercent}%</span>
+                  </div>
 
-                  {learningProgress?.streak ? (
-                    <span className="rounded-full border border-white/[0.08] bg-black/20 animate-pulse px-3 py-2">
-                      Streak: {learningProgress.streak} days
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ease-out ${isClassCompleted ? 'bg-gradient-to-r from-emerald-400 to-[#9fd5b2]' : 'bg-gradient-to-r from-[#9fd5b2] to-[#f6ed4a]'}`}
+                      style={{ width: `${classProgressPercent}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* CARD PROGRESS SLIDER 2: COURSE OVERVIEW TRACK */}
+                <div className="rounded-xl border border-white/[0.04] bg-white/[0.01] p-4 flex flex-col w-full">
+                  <div className="mb-2.5 flex items-center justify-between text-xs font-medium text-white/70">
+                    <span>Course Completion Metric</span>
+                    <span className="font-bold text-white">{courseCompletionPercent}%</span>
+                  </div>
+
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-[#9fd5b2] to-[#f6ed4a] transition-all duration-500 ease-out"
+                      style={{ width: `${courseCompletionPercent}%` }}
+                    />
+                  </div>
+
+                  {/* Summary Metric Badges Box */}
+                  <div className="mt-4 flex flex-wrap gap-1.5 text-[10px] font-bold uppercase tracking-wider w-full">
+                    <span className="rounded-md border border-white/[0.06] bg-white/[0.02] px-2 py-1 text-white/60">
+                      {watchedClasses} / {totalClasses} started
                     </span>
-                  ) : null}
+                    <span className="rounded-md border border-emerald-500/20 bg-emerald-500/5 px-2 py-1 text-emerald-400">
+                      {completedClasses} / {totalClasses} completed
+                    </span>
+                    {learningProgress?.averageWatchTime && (
+                      <span className="rounded-md border border-white/[0.06] bg-white/[0.02] px-2 py-1 text-white/60">
+                        Avg: {learningProgress.averageWatchTime}
+                      </span>
+                    )}
+                    {learningProgress?.streak && (
+                      <span className="rounded-md border border-white/[0.06] bg-white/[0.02] px-2 py-1 text-white/60">
+                        Streak: {learningProgress.streak} days
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-[30px] border border-white/[0.08] bg-[#111111] p-6">
-              <div className="mb-5 flex items-center gap-3">
-                <FiFileText className="text-cyan-300" />
-                <h2 className="text-xl font-semibold text-white">Exercises</h2>
+            {/* ATTACHED EXERCISES & LABS PANEL DOWNLOADING SHEET */}
+            <div className="glass-card p-6 shadow-2xl relative overflow-hidden flex flex-col w-full">
+              <div className="mb-4 flex items-center gap-3 border-b border-[rgba(159,213,178,0.12)] pb-4 w-full">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[rgba(159,213,178,0.1)] border border-[rgba(159,213,178,0.15)] text-[#9fd5b2] shrink-0">
+                  <FiFileText className="w-4 h-4" />
+                </span>
+                <h2 className="text-base font-heading font-black text-white tracking-tight">
+                  Exercise Attachments
+                </h2>
               </div>
 
               {cls.exercises?.length === 0 ? (
-                <p className="text-white/40">No exercises</p>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-white/30 py-2 text-center">
+                  No exercise metrics allocated for this session.
+                </p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-3.5 w-full flex flex-col">
                   {cls.exercises.map((exercise) => (
                     <a
                       key={exercise._id}
                       href={getUploadUrl(exercise.file)}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center justify-between rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-4 transition-all hover:border-cyan-400/20"
+                      className="flex items-center justify-between rounded-xl border border-white/[0.05] bg-white/[0.02] p-4 transition-colors duration-200 hover:border-[rgba(159,213,178,0.25)] hover:bg-white/[0.04] group"
                     >
-                      <div>
-                        <h3 className="text-white">{exercise.title}</h3>
-                        <p className="text-sm text-white/40">{exercise.type}</p>
+                      <div className="min-w-0 pr-2">
+                        <h3 className="text-white font-bold text-sm truncate leading-snug group-hover:text-[#9fd5b2] transition-colors">
+                          {exercise.title}
+                        </h3>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mt-1">
+                          Type Variant: {exercise.type}
+                        </p>
                       </div>
-
-                      <FiDownload className="text-cyan-300" />
+                      <div className="h-8 w-8 rounded-lg bg-white/[0.03] border border-white/[0.05] flex items-center justify-center text-[#9fd5b2] group-hover:text-white group-hover:bg-[#9fd5b2] group-hover:border-[#9fd5b2] transition-all shrink-0">
+                        <FiDownload className="w-3.5 h-3.5" />
+                      </div>
                     </a>
                   ))}
                 </div>
               )}
             </div>
+
           </div>
         </div>
+
       </div>
     </div>
   );
 }
 
 export default ClassView;
+

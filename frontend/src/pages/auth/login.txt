@@ -1,72 +1,132 @@
 import { useState } from "react";
-
 import api from "../../services/api";
-
 import { useNavigate } from "react-router-dom";
 
 function Login() {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const navigate = useNavigate();
+  const handleSendOtp = async () => {
+    setError("");
+    if (!email) {
+      setError("Please enter your email address.");
+      return;
+    }
+    try {
+      setLoading(true);
+      await api.post("/auth/login/send-otp", { email });
+      localStorage.setItem("login_email", email);
+      navigate("/verify-login-otp");
+    } catch (err) {
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data ||
+        "Something went wrong. Please try again.";
+      setError(typeof msg === "string" ? msg : JSON.stringify(msg));
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const [loading, setLoading] = useState(false);
+  return (
+    /* Solid true-dark base container */
+    <div className="min-h-screen bg-tmc-charcoal flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden font-body">
+      
+      {/* MINIMALIST DOODLE LAYER 
+        - mix-blend-luminosity + opacity-[0.07] makes the navy background disappear,
+          leaving only the sleek, minimal wavy design lines over your charcoal canvas.
+      */}
+      <div 
+        className="absolute inset-0 pointer-events-none bg-cover bg-center opacity-[0.07] mix-blend-luminosity scale-105 select-none"
+        style={{ backgroundImage: "url('/zeitnah_doodleart.png')" }}
+      />
 
-  const handleSendOtp = async () => {
-    try {
-      setLoading(true);
+      {/* Main Content Wrapper Container */}
+      <div className="relative w-full max-w-md z-10 flex flex-col items-center">
+        
+        {/* Brand Logo Component */}
+        <div className="mb-10 block">
+          <img 
+            src="/zeitnah-logo.svg" 
+            alt="Zeitnah Group of Institutions" 
+            className="h-14 w-auto object-contain select-none pointer-events-none" 
+            onError={(e) => {
+              // Automatically switch to text rendering if pathing has broken links
+              e.target.style.display = 'none';
+              document.getElementById('fallback-logo-text').style.display = 'flex';
+            }}
+          />
+          {/* Native code fallback text logo block */}
+          <div id="fallback-logo-text" className="hidden items-center gap-3">
+            <div className="w-9 h-9 bg-tmc-navy rounded-lg flex items-center justify-center font-heading font-black text-tmc-mint text-lg">
+              Z
+            </div>
+            <span className="font-heading font-black text-xl tracking-wider text-tmc-yellow uppercase">
+              Zeitnah
+            </span>
+          </div>
+        </div>
 
-      await api.post("/auth/login/send-otp", {
-        email,
-      });
+        {/* Clean matte card configuration block */}
+        <div className="w-full bg-[#111111] border border-white/[0.04] rounded-xl p-8 md:p-10 shadow-2xl">
+          
+          <h2 className="text-xl md:text-2xl font-bold text-tmc-white mb-6 tracking-tight">
+            Login to your account
+          </h2>
 
-      localStorage.setItem("login_email", email);
+          {/* Input Form Elements */}
+          <div className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-2">
+                Email
+              </label>
+              <input
+                type="email"
+                placeholder="qsadmin@zeitnahacademy.com"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (error) setError("");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handleSendOtp()}
+                className="w-full bg-[#e8f0fe] text-[#222222] placeholder-gray-400 rounded-lg px-4 py-3 text-base outline-none font-medium transition-all duration-150 focus:bg-white"
+                autoComplete="email"
+              />
+              
+              {/* Error message reporting box */}
+              {error && (
+                <div className="mt-2.5 flex items-start gap-2 text-red-400 text-xs font-medium">
+                  <span>{error}</span>
+                </div>
+              )}
+            </div>
 
-      alert("OTP Sent");
+            {/* Submit Action Button */}
+            <button
+              onClick={handleSendOtp}
+              disabled={loading}
+              className="w-full bg-tmc-yellow hover:bg-[#ebd431] text-[#111111] font-bold py-3.5 px-4 rounded-lg text-sm transition-all duration-150 disabled:opacity-50 active:scale-[0.99] cursor-pointer"
+            >
+              {loading ? "Sending OTP..." : "Sign In"}
+            </button>
+          </div>
 
-      navigate("/verify-login-otp");
-    } catch (error) {
+          {/* Simple Navigation Anchor */}
+          <div className="text-center mt-6">
+            <button 
+              onClick={() => navigate("/register")}
+              className="text-sm font-medium text-white/50 hover:text-white transition-colors duration-150 cursor-pointer"
+            >
+              Go Back
+            </button>
+          </div>
 
-  console.log(error);
-
-  console.log(
-    error.response
-  );
-
-  console.log(
-    error.response?.data
-  );
-
-  alert(
-
-    JSON.stringify(
-      error.response?.data
-    )
-
-  );
-
-}finally {
-      setLoading(false);
-    }
-  };
-  const registerRedirect = () => {
-    navigate("/register");
-  };
-  return (
-    <div>
-      <h1>Login</h1>
-
-      <input
-        type="email"
-        placeholder="Enter Email"
-        onChange={(e) => setEmail(e.target.value)}
-      />
-
-      <button onClick={handleSendOtp} disabled={loading}>
-        {loading ? "Sending OTP..." : "Send OTP"}
-      </button>
-      <button onClick={registerRedirect}>Create New Account</button>
-    </div>
-  );
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default Login;

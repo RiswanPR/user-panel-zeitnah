@@ -1,13 +1,12 @@
 import { useContext } from "react";
 import { Link } from "react-router-dom";
-
 import api from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
 
 function Home() {
   const { user, setUser } = useContext(AuthContext);
 
-  // LOGOUT
+  // SECURE DISCONNECT PIPELINE
   const handleLogout = async () => {
     try {
       await api.post("/auth/logout");
@@ -21,172 +20,145 @@ function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] relative overflow-hidden px-4 py-10">
+    <div className="min-h-screen bg-[#07192a] relative overflow-hidden px-4 py-6 sm:py-10 text-white font-body antialiased selection:bg-[#f6ed4a] selection:text-[#07192a]">
+      
+      {/* Decorative ambient internal branded accent glow */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[350px] h-[350px] bg-[#9fd5b2] opacity-5 rounded-full blur-[100px]" />
+      </div>
 
-      {/* Background glow blobs */}
-      <div className="absolute top-[-120px] left-[-100px] w-[420px] h-[420px] bg-cyan-500/10 rounded-full blur-[120px]" />
+      <div className="relative z-10 max-w-6xl mx-auto space-y-8 sm:space-y-10">
 
-      <div className="absolute bottom-[-100px] right-[-80px] w-[360px] h-[360px] bg-violet-600/10 rounded-full blur-[100px]" />
-
-      {/* Grid overlay */}
-      <div
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage:
-            "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
-
-      {/* Main content */}
-      <div className="relative z-10 max-w-6xl mx-auto">
-
-        {/* Header */}
-        <div className="mb-10">
-          <h1
-            className="text-4xl font-bold text-white mb-3 tracking-tight"
-            style={{ fontFamily: "'Sora', sans-serif" }}
-          >
-            Welcome back, {user?.name} 👋
+        {/* WELCOME IDENTIFICATION HUB */}
+        <div className="space-y-2 text-center sm:text-left">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-heading font-black text-white tracking-tight leading-none">
+            Welcome back, {user?.name || "Academic Member"} 👋
           </h1>
-
-          <p
-            className="text-white/40 text-sm"
-            style={{ fontFamily: "'DM Sans', sans-serif" }}
-          >
-            Manage your profile, sessions, activity logs, and account security.
+          <p className="text-[rgba(255,255,255,0.45)] text-sm font-medium max-w-xl leading-relaxed mx-auto sm:mx-0">
+            Manage your academic parameters, active profile sessions, performance activities, and system security.
           </p>
         </div>
 
-        {/* Dashboard cards */}
-        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
+        {/* WORKSPACE OPERATIONS GRID SYSTEM */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 w-full">
 
-          {/* Profile */}
+          {/* PROFILE CONTROL HUB */}
           <Link
             to="/profile"
-            className="group bg-[#111111] border border-white/[0.07] rounded-2xl p-6 hover:border-blue-400/30 hover:bg-white/[0.02] transition-all duration-300 shadow-2xl shadow-black/60"
+            className="group glass-card p-6 shadow-xl hover:border-[#9fd5b2]/40 hover:bg-white/[0.06] transition-all duration-200 flex flex-col justify-between h-44 w-full"
           >
-
-            <div className="flex items-center justify-between mb-5">
-
-              <h2 className="text-lg font-semibold text-white">
-                Profile
-              </h2>
-
-              <div className="text-blue-400 group-hover:translate-x-1 transition-transform">
-                →
+            <div className="w-full min-w-0">
+              <div className="flex items-center justify-between mb-4 gap-2">
+                <h2 className="text-base font-heading font-black text-white tracking-tight truncate">
+                  Profile Asset
+                </h2>
+                <span className="text-[#9fd5b2] group-hover:translate-x-0.5 transition-transform text-lg leading-none shrink-0">
+                  &rarr;
+                </span>
               </div>
-
+              <p className="text-[rgba(255,255,255,0.45)] text-xs font-medium leading-relaxed line-clamp-3">
+                View, audit, and modify your corporate technical specialty indexes and biography metadata.
+              </p>
             </div>
-
-            <p className="text-white/40 text-sm">
-              View and manage your profile details.
-            </p>
-
+            <div className="text-[9px] font-bold tracking-widest text-white/30 uppercase select-none mt-2">
+              Identity Matrix
+            </div>
           </Link>
 
-          {/* Security Status */}
-          <div className="bg-[#111111] border border-white/[0.07] rounded-2xl p-6 shadow-2xl shadow-black/60">
-
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-semibold text-white">
-                Security Status
-              </h2>
-
-              <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse" />
+          {/* ACTIVE ACCOUNT SECURITY WORKSPACE STATUS */}
+          <div className="glass-card p-6 shadow-xl flex flex-col justify-between h-44 w-full relative overflow-hidden">
+            <div className="w-full min-w-0">
+              <div className="flex items-center justify-between mb-4 gap-2">
+                <h2 className="text-base font-heading font-black text-white tracking-tight truncate">
+                  Security Status
+                </h2>
+                <span className="flex h-2 w-2 relative shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+              </div>
+              <p className="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-2 truncate">
+                Workstation Shield Active
+              </p>
+              <p className="text-[rgba(255,255,255,0.45)] text-xs font-medium leading-relaxed line-clamp-2">
+                Cryptographic 6-digit OTP verification parameters are active across your node.
+              </p>
             </div>
-
-            <p className="text-green-400 text-sm">
-              Your account is secure
-            </p>
-
-            <p className="text-white/30 text-sm mt-3">
-              OTP authentication is active.
-            </p>
-
+            <div className="text-[9px] font-bold tracking-widest text-white/30 uppercase select-none mt-2">
+              Operational Safety
+            </div>
           </div>
 
-          {/* Active Sessions */}
+          {/* ACTIVE ALLOCATIONS METRIC HUB */}
           <Link
             to="/active-sessions"
-            className="group bg-[#111111] border border-white/[0.07] rounded-2xl p-6 hover:border-cyan-400/30 hover:bg-white/[0.02] transition-all duration-300 shadow-2xl shadow-black/60"
+            className="group glass-card p-6 shadow-xl hover:border-[#9fd5b2]/40 hover:bg-white/[0.06] transition-all duration-200 flex flex-col justify-between h-44 w-full"
           >
-
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-semibold text-white">
-                Active Sessions
-              </h2>
-
-              <div className="text-cyan-400 group-hover:translate-x-1 transition-transform">
-                →
+            <div className="w-full min-w-0">
+              <div className="flex items-center justify-between mb-4 gap-2">
+                <h2 className="text-base font-heading font-black text-white tracking-tight truncate">
+                  Active Sessions
+                </h2>
+                <span className="text-[#9fd5b2] group-hover:translate-x-0.5 transition-transform text-lg leading-none shrink-0">
+                  &rarr;
+                </span>
               </div>
+              <p className="text-[rgba(255,255,255,0.45)] text-xs font-medium leading-relaxed line-clamp-3">
+                Examine running hardware device addresses and cross-verify active authorized workspace connections.
+              </p>
             </div>
-
-            <p className="text-white/40 text-sm">
-              View logged in devices and active sessions.
-            </p>
-
+            <div className="text-[9px] font-bold tracking-widest text-white/30 uppercase select-none mt-2">
+              Session Tracking
+            </div>
           </Link>
 
-          {/* Audit Logs */}
+          {/* SYSTEM CHANGE OPERATION METRIC STREAM */}
           <Link
             to="/audit-logs"
-            className="group bg-[#111111] border border-white/[0.07] rounded-2xl p-6 hover:border-violet-400/30 hover:bg-white/[0.02] transition-all duration-300 shadow-2xl shadow-black/60"
+            className="group glass-card p-6 shadow-xl hover:border-[#9fd5b2]/40 hover:bg-white/[0.06] transition-all duration-200 flex flex-col justify-between h-44 w-full"
           >
-
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-semibold text-white">
-                Audit Logs
-              </h2>
-
-              <div className="text-violet-400 group-hover:translate-x-1 transition-transform">
-                →
+            <div className="w-full min-w-0">
+              <div className="flex items-center justify-between mb-4 gap-2">
+                <h2 className="text-base font-heading font-black text-white tracking-tight truncate">
+                  Audit Logs
+                </h2>
+                <span className="text-[#9fd5b2] group-hover:translate-x-0.5 transition-transform text-lg leading-none shrink-0">
+                  &rarr;
+                </span>
               </div>
+              <p className="text-[rgba(255,255,255,0.45)] text-xs font-medium leading-relaxed line-clamp-3">
+                Trace account metadata modifications, chronological authentication records, and core system actions.
+              </p>
             </div>
-
-            <p className="text-white/40 text-sm">
-              Track authentication and account activity.
-            </p>
-
+            <div className="text-[9px] font-bold tracking-widest text-white/30 uppercase select-none mt-2">
+              Activity Stream
+            </div>
           </Link>
 
         </div>
 
-        {/* Bottom section */}
-        <div className="mt-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-
-          <div>
-            <p
-              className="text-white/20 text-sm"
-              style={{ fontFamily: "'DM Sans', sans-serif" }}
-            >
-              Protected session active
-            </p>
+        {/* BOTTOM METADATA CONTROLS FOOTER */}
+        <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 w-full border-t border-white/[0.04]">
+          <div className="flex items-center gap-2 text-xs font-bold tracking-wider text-[rgba(255,255,255,0.25)] uppercase select-none text-center sm:text-left">
+            <svg className="w-4 h-4 text-emerald-500/40 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            Protected Academic Session Active
           </div>
 
+          {/* TERMINATION TRIGGER — VOLT YELLOW EXCLUSIVE CTA */}
           <button
             onClick={handleLogout}
-            className="relative group overflow-hidden rounded-xl px-6 py-3 text-sm font-semibold text-[#0a0a0a] bg-cyan-400 hover:bg-cyan-300 transition-all duration-200 active:scale-[0.98]"
-            style={{ fontFamily: "'Sora', sans-serif" }}
+            className="w-full sm:w-auto relative group overflow-hidden rounded-xl px-6 py-3 text-xs font-extrabold tracking-wider uppercase text-[#07192a] bg-[#f6ed4a] shadow-[0_4px_15px_rgba(246,237,74,0.15)] hover:shadow-[0_4px_20px_rgba(246,237,74,0.25)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-150 cursor-pointer block"
           >
-
             <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-
             <span className="relative">
-              Logout
+              Logout Securely
             </span>
-
           </button>
-
         </div>
 
       </div>
-
-      {/* Fonts */}
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=DM+Sans:wght@400;500&display=swap');
-      `}</style>
-
     </div>
   );
 }

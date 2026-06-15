@@ -72,61 +72,66 @@ function Courses() {
   );
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#0a0a0a] px-4 py-8">
-      <div className="absolute left-[-100px] top-[-120px] h-[420px] w-[420px] rounded-full bg-cyan-500/10 blur-[120px]" />
-      <div className="absolute bottom-[-100px] right-[-80px] h-[360px] w-[360px] rounded-full bg-violet-600/10 blur-[100px]" />
+    <div className="min-h-screen bg-[#07192a] relative overflow-hidden px-4 py-6 sm:py-8 font-body text-white antialiased selection:bg-[#f6ed4a] selection:text-[#07192a]">
+      
+      {/* Subtle brand ambient color spot */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[400px] h-[400px] bg-[#9fd5b2] opacity-5 rounded-full blur-[100px]" />
+      </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl">
-        <section className="overflow-hidden rounded-[34px] border border-white/[0.08] bg-[#111111]/92 shadow-[0_24px_90px_rgba(0,0,0,0.28)]">
-          <div className="p-6 sm:p-8">
-            <p className="text-xs uppercase tracking-[0.3em] text-cyan-200/60">
-              Learning Portal
-            </p>
+      <div className="relative z-10 mx-auto max-w-7xl space-y-6 sm:space-y-8">
+        
+        {/* HERO INSIGHT MODULE BANNER */}
+        <section className="glass-card relative overflow-hidden flex flex-col shadow-2xl">
+          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[rgba(159,213,178,0.25)] to-transparent" />
+          
+          <div className="p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div className="space-y-2 text-center lg:text-left">
+              <p className="text-xs font-bold uppercase tracking-widest text-[#9fd5b2]">
+                Learning Portal
+              </p>
+              <h1 className="font-heading font-black text-3xl sm:text-4xl md:text-5xl text-white tracking-tight leading-none mt-2">
+                Course Hub
+              </h1>
+              <p className="max-w-xl text-xs sm:text-sm font-medium text-white/50 leading-relaxed pt-2">
+                Browse your specialized technical library, jump directly back into active surveying lessons, and keep your next core class within reach.
+              </p>
+            </div>
 
-            <div className="mt-4 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <h1 className="font-['Sora'] text-3xl font-semibold text-white sm:text-5xl">
-                  Course Hub
-                </h1>
-
-                <p className="mt-4 max-w-2xl text-sm leading-7 text-white/60 sm:text-base">
-                  Browse your library, jump back into active lessons, and keep the next class within reach.
+            {/* Quick Metrics Columns */}
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-3 w-full lg:w-auto shrink-0">
+              <div className="rounded-xl border border-white/[0.04] bg-white/[0.02] p-4 text-center sm:text-left min-w-[120px]">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                  Library
+                </p>
+                <p className="mt-1 text-2xl font-heading font-black text-white">
+                  {stats.total}
                 </p>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.03] px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.22em] text-white/40">
-                    Library
-                  </p>
-                  <p className="mt-2 text-2xl font-semibold text-white">
-                    {stats.total}
-                  </p>
-                </div>
+              <div className="rounded-xl border border-white/[0.04] bg-white/[0.02] p-4 text-center sm:text-left min-w-[120px]">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                  Enrolled
+                </p>
+                <p className="mt-1 text-2xl font-heading font-black text-white">
+                  {stats.enrolled}
+                </p>
+              </div>
 
-                <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.03] px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.22em] text-white/40">
-                    Enrolled
-                  </p>
-                  <p className="mt-2 text-2xl font-semibold text-white">
-                    {stats.enrolled}
-                  </p>
-                </div>
-
-                <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.03] px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.22em] text-white/40">
-                    Recordings
-                  </p>
-                  <p className="mt-2 text-2xl font-semibold text-white">
-                    {stats.recordings}
-                  </p>
-                </div>
+              <div className="rounded-xl border border-white/[0.04] bg-white/[0.02] p-4 text-center sm:text-left min-w-[120px]">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                  Recordings
+                </p>
+                <p className="mt-1 text-2xl font-heading font-black text-white">
+                  {stats.recordings}
+                </p>
               </div>
             </div>
           </div>
         </section>
 
-        <div className="mt-8">
+        {/* INTERACTIVE NAVIGATION CAPSULE BAR */}
+        <div className="w-full">
           <CourseNavbar
             activeTab={activeTab}
             setActiveTab={setActiveTab}
@@ -135,32 +140,39 @@ function Courses() {
           />
         </div>
 
-        <div className="mt-8 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.28em] text-white/35">
+        {/* FEED PARAMETER HEADINGS */}
+        <div className="w-full flex items-end justify-between gap-4 border-b border-[rgba(159,213,178,0.12)] pb-4">
+          <div className="text-center sm:text-left">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white/35">
               Course Results
             </p>
-            <h2 className="mt-2 font-['Sora'] text-2xl font-semibold text-white">
-              {loading ? "Loading your library" : `${filtered.length} courses ready`}
+            <h2 className="mt-1 font-heading font-black text-xl sm:text-2xl text-white tracking-tight">
+              {loading ? "Loading library catalog..." : `${filtered.length} courses ready`}
             </h2>
           </div>
         </div>
 
+        {/* DATA RENDERING FEED FLOW PIPELINE */}
         {loading ? (
-          <div className="mt-6 rounded-[30px] border border-white/[0.08] bg-[#111111]/90 p-10 text-center text-white/50">
-            Loading courses...
+          <div className="glass-card p-10 text-center flex items-center justify-center gap-3 shadow-xl">
+            <svg className="animate-spin h-5 w-5 text-[#9fd5b2]" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            <span className="text-xs font-bold uppercase tracking-widest text-white/40">Querying repository indexes...</span>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="mt-6 rounded-[30px] border border-white/[0.08] bg-[#111111]/90 p-10 text-center">
-            <h3 className="text-xl font-semibold text-white">
-              No courses found
+          <div className="glass-card p-10 text-center flex flex-col items-center justify-center max-w-xl mx-auto shadow-xl">
+            <h3 className="text-lg font-heading font-black text-white tracking-tight">
+              No matching courses found
             </h3>
-            <p className="mt-3 text-sm leading-7 text-white/55">
-              Try a different search term or switch the course filter to widen the results.
+            <p className="mt-2 text-xs font-medium text-white/50 leading-relaxed">
+              Try a different search term parameters or modify the category filter tab settings to widen the workspace results.
             </p>
           </div>
         ) : (
-          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          /* Main Responsive Responsive Layout Catalog Feed Layout Grid */
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full">
             {filtered.map((course) => (
               <CourseCard
                 key={course._id}

@@ -1,30 +1,16 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-
-import {
-  useNavigate,
-  useParams,
-} from "react-router-dom";
-
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   FiArrowLeft,
   FiBookOpen,
   FiFileText,
   FiLock,
 } from "react-icons/fi";
-
 import ClassCard from "../../components/courses/ClassCard";
 import api from "../../services/api";
 
 function CourseClasses() {
-  const {
-    chapterCode,
-    courseId,
-  } = useParams();
-
+  const { chapterCode, courseId } = useParams();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -37,7 +23,6 @@ function CourseClasses() {
     const loadClasses = async () => {
       try {
         setLoading(true);
-
         const res = await api.get(`/courses/${courseId}/chapters/${chapterCode}/classes`);
 
         if (mounted) {
@@ -80,114 +65,124 @@ function CourseClasses() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a] text-white">
-        Loading...
+      <div className="flex min-h-screen items-center justify-center bg-[#07192a] text-white font-body">
+        <div className="flex items-center gap-3">
+          <svg className="animate-spin h-5 w-5 text-[#9fd5b2]" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <span className="text-sm font-semibold uppercase tracking-widest text-white/60">Loading Class Syllabus…</span>
+        </div>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a] px-4 text-center text-white/70">
+      <div className="flex min-h-screen items-center justify-center bg-[#07192a] px-4 text-center text-white/60 font-body text-sm uppercase tracking-wider">
         Unable to load the chapter classes right now.
       </div>
     );
   }
 
-  const {
-    chapter,
-    classes,
-    course,
-    purchased,
-  } = data;
+  const { chapter, classes, course, purchased } = data;
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#0a0a0a] px-4 py-8">
-      <div className="absolute left-[-120px] top-[-120px] h-[420px] w-[420px] rounded-full bg-cyan-500/10 blur-[120px]" />
-      <div className="absolute bottom-[-80px] right-[-80px] h-[360px] w-[360px] rounded-full bg-violet-500/10 blur-[120px]" />
+    <div className="min-h-screen bg-[#07192a] relative overflow-hidden px-4 py-6 sm:py-8 font-body text-white antialiased selection:bg-[#f6ed4a] selection:text-[#07192a]">
+      
+      {/* Decorative ambient branded visual spot */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[400px] h-[400px] bg-[#9fd5b2] opacity-5 rounded-full blur-[100px]" />
+      </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl">
-        <button
-          type="button"
-          onClick={() => navigate(`/courses/${courseId}/chapters`)}
-          className="mb-6 inline-flex items-center gap-2 rounded-2xl border border-white/[0.08] bg-[#111111]/85 px-4 py-2 text-sm text-white/70 transition-all hover:border-cyan-400/20 hover:text-cyan-200"
-        >
-          <FiArrowLeft />
-          Back to chapters
-        </button>
+      <div className="relative z-10 mx-auto max-w-7xl space-y-6 sm:space-y-8">
+        
+        {/* NAVIGATION BACK ROW */}
+        <div className="flex justify-between items-center w-full">
+          <button
+            type="button"
+            onClick={() => navigate(`/courses/${courseId}/chapters`)}
+            className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white/70 transition-all hover:border-[rgba(159,213,178,0.3)] hover:text-[#9fd5b2] cursor-pointer"
+          >
+            <FiArrowLeft className="text-sm shrink-0" />
+            Back to chapters
+          </button>
+        </div>
 
-        <section className="overflow-hidden rounded-[34px] border border-white/[0.08] bg-[#111111]/92 shadow-[0_24px_90px_rgba(0,0,0,0.28)]">
-          <div className="relative p-6 sm:p-8">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent opacity-70" />
-
-            <div className="flex flex-wrap gap-2">
-              <span className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-200">
+        {/* HERO SYLLABUS INSIGHT HEADER */}
+        <section className="glass-card relative overflow-hidden flex flex-col shadow-2xl">
+          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[rgba(159,213,178,0.25)] to-transparent z-20" />
+          
+          <div className="p-6 sm:p-8 flex flex-col w-full space-y-4">
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="rounded-lg border border-[rgba(159,213,178,0.25)] bg-[rgba(159,213,178,0.06)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#9fd5b2]">
                 {course.name}
               </span>
 
               <span
-                className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                className={`rounded-lg border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                   purchased
-                    ? "border-emerald-400/20 bg-emerald-500/10 text-emerald-200"
-                    : "border-yellow-400/20 bg-yellow-500/10 text-yellow-200"
+                    ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+                    : "border-[#f6ed4a]/20 bg-[#f6ed4a]/5 text-[#f6ed4a]"
                 }`}
               >
                 {purchased ? "Access unlocked" : "Locked chapter"}
               </span>
             </div>
 
-            <h1 className="mt-5 max-w-3xl font-['Sora'] text-3xl font-semibold text-white sm:text-5xl">
+            <h1 className="font-heading font-black text-2xl sm:text-4xl lg:text-5xl text-white tracking-tight leading-none pt-1">
               {chapter.title}
             </h1>
 
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-white/60 sm:text-base">
-              {chapter.description || "Chapter details will appear here once they are added."}
+            <p className="max-w-3xl text-xs sm:text-sm font-medium text-white/50 leading-relaxed">
+              {chapter.description || "Chapter operational specifications will load here once configured."}
             </p>
           </div>
 
-          <div className="grid gap-4 border-t border-white/[0.08] bg-black/20 p-6 md:grid-cols-3">
-            <div className="rounded-[26px] border border-white/[0.08] bg-white/[0.03] p-4">
-              <p className="text-xs uppercase tracking-[0.22em] text-white/40">
-                Classes
+          {/* LOWER REPOSITORY METRICS COHORT BAR */}
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-3 border-t border-[rgba(159,213,178,0.12)] bg-[#0d2035]/30 p-5 sm:p-6 w-full">
+            <div className="rounded-lg border border-white/[0.04] bg-white/[0.01] p-4 flex flex-col justify-center">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                Chapter Lectures
               </p>
-              <p className="mt-3 text-2xl font-semibold text-white">
+              <p className="mt-1 text-2xl font-heading font-black text-white leading-none">
                 {stats.totalClasses}
               </p>
             </div>
 
-            <div className="rounded-[26px] border border-white/[0.08] bg-white/[0.03] p-4">
-              <p className="text-xs uppercase tracking-[0.22em] text-white/40">
-                Exercises
+            <div className="rounded-lg border border-white/[0.04] bg-white/[0.01] p-4 flex flex-col justify-center">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                Resource Files
               </p>
-              <p className="mt-3 text-2xl font-semibold text-white">
+              <p className="mt-1 text-2xl font-heading font-black text-white leading-none">
                 {stats.totalExercises}
               </p>
             </div>
 
-            <div className="rounded-[26px] border border-white/[0.08] bg-white/[0.03] p-4">
-              <p className="text-xs uppercase tracking-[0.22em] text-white/40">
-                Access
+            <div className="rounded-lg border border-white/[0.04] bg-white/[0.01] p-4 flex flex-col justify-center">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                Workstation Clearance
               </p>
-              <p className="mt-3 text-sm font-medium text-white/80">
+              <p className="mt-1 text-xs font-bold text-white/80 leading-normal">
                 {purchased
-                  ? `${stats.unlockedClasses} classes ready to watch`
-                  : "Unlock the course to watch every lesson"}
+                  ? `${stats.unlockedClasses} modules ready to stream`
+                  : "Unlock course to authorize links"}
               </p>
             </div>
           </div>
         </section>
 
+        {/* LOCKED INTERCEPT ACCESS ALERT BANNER */}
         {!purchased && (
-          <div className="mt-6 flex flex-col gap-3 rounded-[28px] border border-yellow-400/20 bg-yellow-500/10 p-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-3">
-              <FiLock className="mt-1 text-xl text-yellow-300" />
-
-              <div>
-                <h2 className="text-base font-semibold text-yellow-100">
+          <div className="flex flex-col gap-4 rounded-xl border border-[#f6ed4a]/20 bg-[#f6ed4a]/5 p-5 sm:flex-row sm:items-center sm:justify-between w-full">
+            <div className="flex items-start gap-3 min-w-0">
+              <FiLock className="text-xl text-[#f6ed4a] shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <h2 className="text-sm font-bold text-[#f6ed4a] uppercase tracking-wide">
                   Classes are locked for this chapter
                 </h2>
-                <p className="mt-1 text-sm leading-6 text-yellow-100/75">
-                  You can review the lesson outline now and unlock the course when you are ready to continue.
+                <p className="mt-1 text-xs font-medium text-white/60 leading-relaxed">
+                  You can review the lecture sequence outline mappings now. Complete the checkout verification to authorize your stream keys.
                 </p>
               </div>
             </div>
@@ -195,36 +190,40 @@ function CourseClasses() {
             <button
               type="button"
               onClick={() => navigate(`/courses/${courseId}/chapters`)}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-yellow-400/20 bg-black/20 px-4 py-2 text-sm font-medium text-yellow-100/85"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-white/70 hover:bg-white/[0.05] cursor-pointer transition-colors shrink-0 self-start sm:self-auto"
             >
-              <FiBookOpen />
+              <FiBookOpen className="text-xs" />
               View course overview
             </button>
           </div>
         )}
 
-        <div className="mt-8 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.28em] text-white/35">
+        {/* FEED SEQUENCE LABEL HEADERS */}
+        <div className="flex items-end justify-between gap-4 border-b border-[rgba(159,213,178,0.12)] pb-4">
+          <div className="text-center sm:text-left">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white/35">
               Chapter Lessons
             </p>
-            <h2 className="mt-2 font-['Sora'] text-2xl font-semibold text-white">
+            <h2 className="mt-1 font-heading font-black text-xl sm:text-2xl text-white tracking-tight">
               Watch the class sequence
             </h2>
           </div>
 
-          <div className="hidden items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-sm text-white/60 md:inline-flex">
-            <FiFileText className="text-cyan-300" />
-            {stats.totalExercises} resource items
+          <div className="hidden items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white/60 md:inline-flex select-none">
+            <FiFileText className="text-[#9fd5b2] text-sm" />
+            {stats.totalExercises} Resource Items Allocated
           </div>
         </div>
 
+        {/* INTERACTIVE CLASSES MAP RENDER LOOP */}
         {classes.length === 0 ? (
-          <div className="mt-6 rounded-[30px] border border-white/[0.08] bg-[#111111]/90 p-8 text-center text-white/60">
-            No classes have been added to this chapter yet.
+          <div className="glass-card p-10 text-center flex flex-col items-center justify-center max-w-xl mx-auto shadow-xl">
+            <p className="text-white/40 text-xs font-semibold uppercase tracking-wider">
+              No operational lecture structures have been linked to this chapter yet.
+            </p>
           </div>
         ) : (
-          <div className="mt-6 space-y-5">
+          <div className="space-y-4 w-full flex flex-col">
             {classes.map((cls, index) => (
               <ClassCard
                 key={cls._id}
@@ -239,26 +238,29 @@ function CourseClasses() {
         )}
       </div>
 
+      {/* RE-ARCHITECTED BRANDED WORKSPACE LIMIT POPUP MODAL */}
       {showPopup && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[32px] border border-white/[0.08] bg-[#111111] p-7 shadow-[0_30px_100px_rgba(0,0,0,0.45)]">
-            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-yellow-400/20 bg-yellow-500/10 text-2xl text-yellow-300">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+          <div className="w-full max-w-md bg-[#0d2035] border border-[rgba(159,213,178,0.15)] rounded-2xl p-6 sm:p-7 shadow-2xl flex flex-col relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#f6ed4a]/20 to-transparent" />
+            
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-[#f6ed4a]/10 border border-[#f6ed4a]/20 text-xl text-[#f6ed4a]">
               <FiLock />
             </div>
 
-            <h2 className="text-center text-2xl font-semibold text-white">
-              Course Locked
+            <h2 className="text-center font-heading font-black text-xl sm:text-2xl text-white tracking-tight">
+              Allocation Locked
             </h2>
 
-            <p className="mt-3 text-center text-sm leading-7 text-white/55">
-              Unlock this course from the overview page to watch the lessons and access the chapter resources.
+            <p className="mt-3 text-center text-xs font-medium leading-relaxed text-white/50">
+              Authorize this specific structural discipline stream from the main overview catalogue page to activate resources and source files.
             </p>
 
-            <div className="mt-6 flex gap-3">
+            <div className="mt-6 flex gap-3 w-full">
               <button
                 type="button"
                 onClick={() => setShowPopup(false)}
-                className="flex-1 rounded-2xl border border-white/[0.08] px-4 py-3 text-sm font-medium text-white/75 transition-all hover:border-white/[0.14]"
+                className="flex-1 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider text-white/60 border border-white/[0.08] hover:border-white/20 hover:text-white transition-all duration-200 cursor-pointer"
               >
                 Later
               </button>
@@ -266,9 +268,9 @@ function CourseClasses() {
               <button
                 type="button"
                 onClick={() => navigate(`/courses/${courseId}/chapters`)}
-                className="flex-1 rounded-2xl border border-cyan-400/20 bg-gradient-to-r from-cyan-500/12 to-violet-500/12 px-4 py-3 text-sm font-medium text-cyan-200 transition-all hover:shadow-[0_18px_45px_rgba(34,211,238,0.14)]"
+                className="flex-1 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider text-[#07192a] bg-[#f6ed4a] hover:shadow-[0_0_15px_rgba(246,237,74,0.2)] transition-all duration-200 cursor-pointer"
               >
-                Back to overview
+                Go to overview
               </button>
             </div>
           </div>

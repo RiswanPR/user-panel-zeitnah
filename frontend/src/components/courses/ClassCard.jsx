@@ -27,57 +27,61 @@ function ClassCard({
 
   return (
     <article
-      className={`group relative overflow-hidden rounded-[30px] border bg-[#101010]/95 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.28)] transition-all duration-300 hover:-translate-y-1 sm:p-5 ${
+      className={`group relative overflow-hidden glass-card p-4 sm:p-5 shadow-xl transition-all duration-300 hover:-translate-y-0.5 w-full ${
         completed
-          ? "border-emerald-400/25 hover:border-emerald-400/40 hover:shadow-[0_28px_90px_rgba(52,211,153,0.14)]"
-          : "border-white/[0.08] hover:border-cyan-400/20 hover:shadow-[0_28px_90px_rgba(34,211,238,0.12)]"
+          ? "border-emerald-500/30 hover:border-emerald-500/50 hover:shadow-[0_20px_50px_rgba(16,185,129,0.12)]"
+          : "hover:border-[#9fd5b2]/40 hover:shadow-[0_20px_50px_rgba(159,213,178,0.08)]"
       }`}
     >
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent opacity-60" />
+      {/* Subtle interior edge lighting accent line */}
+      <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[rgba(159,213,178,0.25)] to-transparent z-20" />
 
-      <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex flex-col gap-4 sm:flex-row">
-          <div className="relative h-40 w-full overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#0c1418] sm:h-32 sm:w-48">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between w-full relative z-10">
+        <div className="flex flex-col gap-4 sm:flex-row flex-1 min-w-0">
+          
+          {/* THUMBNAIL GRAPHIC CELL */}
+          <div className="relative h-40 w-full overflow-hidden rounded-xl border border-white/[0.04] bg-[#0d2035] sm:h-32 sm:w-48 shrink-0 select-none flex items-center justify-center">
             {thumbnailUrl ? (
               <img
                 src={thumbnailUrl}
                 alt={cls.title}
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-103"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-cyan-500/18 via-[#121212] to-violet-500/18 text-cyan-200">
+              <div className="flex h-full w-full items-center justify-center text-[#9fd5b2]">
                 {locked ? (
-                  <FiLock className="text-3xl" />
+                  <FiLock className="text-2xl opacity-60" />
                 ) : completed ? (
-                  <FiCheckCircle className="text-3xl text-emerald-300" />
+                  <FiCheckCircle className="text-2xl text-emerald-400" />
                 ) : (
-                  <FiVideo className="text-3xl" />
+                  <FiVideo className="text-2xl opacity-60" />
                 )}
               </div>
             )}
 
-            <div className="absolute left-3 top-3 rounded-full border border-white/[0.14] bg-[#090909]/75 px-3 py-1 text-xs font-medium text-white/80 backdrop-blur">
+            <div className="absolute left-3 top-3 rounded-md border border-white/[0.1] bg-[#07192a]/80 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white/90 backdrop-blur-xs">
               Lesson {String(index + 1).padStart(2, "0")}
             </div>
           </div>
 
-          <div className="flex flex-1 flex-col">
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-200">
+          {/* LECTURE DESCRIPTION METADATA */}
+          <div className="flex flex-1 flex-col min-w-0">
+            <div className="mb-2 flex flex-wrap items-center gap-1.5">
+              <span className="rounded-lg border border-[rgba(159,213,178,0.25)] bg-[rgba(159,213,178,0.06)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#9fd5b2]">
                 {getCourseTypeLabel(courseType)}
               </span>
 
               {completed ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-200">
-                  <FiCheckCircle />
+                <span className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                  <FiCheckCircle className="shrink-0" />
                   Completed
                 </span>
               ) : (
                 <span
-                  className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                  className={`rounded-lg border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                     locked
-                      ? "border-yellow-400/20 bg-yellow-500/10 text-yellow-200"
-                      : "border-cyan-400/20 bg-cyan-500/10 text-cyan-200"
+                      ? "border-[#f6ed4a]/20 bg-[#f6ed4a]/5 text-[#f6ed4a]"
+                      : "border-white/[0.08] bg-white/[0.02] text-white/50"
                   }`}
                 >
                   {locked ? "Locked" : "Available now"}
@@ -85,47 +89,51 @@ function ClassCard({
               )}
             </div>
 
-            <h2 className="text-xl font-semibold text-white sm:text-[1.35rem]">
+            <h2 className="text-lg sm:text-xl font-heading font-bold text-white tracking-tight leading-snug truncate">
               {cls.title}
             </h2>
 
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-white/55 sm:text-[0.95rem]">
-              {cls.description || "Class details will appear here once they are added."}
+            <p className="mt-2 text-xs sm:text-sm font-medium text-white/50 leading-relaxed line-clamp-2 sm:line-clamp-none">
+              {cls.description || "Class structural details will appear here once configuration parameters sync."}
             </p>
 
-            <div className="mt-4 flex flex-wrap gap-3 text-sm text-white/60">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-2">
-                <FiClock className="text-cyan-300" />
+            {/* LOWER PILL METRICS FOOTER */}
+            <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-wider text-white/60">
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-white/[0.04] bg-white/[0.01] px-2.5 py-1.5">
+                <FiClock className="text-[#9fd5b2] w-3.5 h-3.5" />
                 {formatDuration(cls.duration)}
               </span>
 
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-2">
-                <FiFileText className="text-cyan-300" />
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-white/[0.04] bg-white/[0.01] px-2.5 py-1.5">
+                <FiFileText className="text-[#9fd5b2] w-3.5 h-3.5" />
                 {cls.exerciseCount} {cls.exerciseCount === 1 ? "exercise" : "exercises"}
               </span>
             </div>
           </div>
         </div>
 
+        {/* INTERACTIVE WORKSTATION TRIGGER INTERFACE CTA */}
         <button
           type="button"
           onClick={locked ? onLockedClick : onOpen}
-          className={`inline-flex items-center justify-center gap-2 self-start rounded-2xl border px-5 py-3 text-sm font-medium transition-all xl:self-center ${
+          className={`inline-flex w-full lg:w-auto items-center justify-center gap-2 self-start rounded-xl py-3 px-5 text-xs font-extrabold uppercase tracking-wider transition-all duration-150 lg:self-center cursor-pointer select-none border block ${
             locked
-              ? "border-yellow-400/20 bg-yellow-500/10 text-yellow-200 hover:bg-yellow-500/15"
+              ? "border-[#f6ed4a]/30 bg-[#f6ed4a]/5 text-[#f6ed4a] hover:bg-[#f6ed4a]/10"
               : completed
-                ? "border-emerald-400/25 bg-emerald-500/10 text-emerald-200 hover:shadow-[0_18px_45px_rgba(52,211,153,0.14)]"
-              : "border-cyan-400/20 bg-gradient-to-r from-cyan-500/12 to-violet-500/12 text-cyan-200 hover:shadow-[0_18px_45px_rgba(34,211,238,0.14)]"
+              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/15"
+              : "bg-[#f6ed4a] border-[#f6ed4a] text-[#07192a] shadow-[0_4px_15px_rgba(246,237,74,0.15)] hover:shadow-[0_4px_20px_rgba(246,237,74,0.25)] hover:scale-[1.01] active:scale-[0.99]"
           }`}
         >
-          {locked ? <FiLock /> : completed ? <FiCheckCircle /> : <FiPlayCircle />}
-          {locked
-            ? "Unlock to watch"
-            : completed
+          {locked ? <FiLock className="w-3.5 h-3.5" /> : completed ? <FiCheckCircle className="w-3.5 h-3.5" /> : <FiPlayCircle className="w-3.5 h-3.5" />}
+          <span>
+            {locked
+              ? "Unlock to watch"
+              : completed
               ? "Rewatch Class"
               : inProgress
-                ? "Continue"
-                : "Watch Class"}
+              ? "Continue"
+              : "Watch Class"}
+          </span>
         </button>
       </div>
     </article>
