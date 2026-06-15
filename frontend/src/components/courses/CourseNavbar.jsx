@@ -1,162 +1,163 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  FiBook,
-  FiMenu,
-  FiPlayCircle,
-  FiSearch,
-  FiVideo,
-  FiX,
-} from "react-icons/fi";
+  BookOpen,
+  Menu,
+  Play,
+  Search,
+  Video,
+  X,
+} from "lucide-react";
 
 const tabs = [
-  {
-    key: "all",
-    label: "All Courses",
-    icon: FiBook,
-  },
-  {
-    key: "online",
-    label: "Studio Class",
-    icon: FiVideo,
-  },
-  {
-    key: "Recording",
-    label: "Zoom Recordings",
-    icon: FiPlayCircle,
-  },
-  {
-    key: "my",
-    label: "My Courses",
-    icon: FiBook,
-  },
+  { key: "all", label: "All Courses", icon: BookOpen },
+  { key: "online", label: "Studio Class", icon: Video },
+  { key: "Recording", label: "Recordings", icon: Play },
+  { key: "my", label: "My Courses", icon: BookOpen },
 ];
 
-function CourseNavbar({
-  activeTab,
-  search,
-  setActiveTab,
-  setSearch,
-}) {
+function CourseNavbar({ activeTab, search, setActiveTab, setSearch }) {
   const [open, setOpen] = useState(false);
-
-  // Re-architected tab rendering to adapt dynamically between desktop rows and mobile side stacks
-  const renderTabButton = (tab) => {
-    const Icon = tab.icon;
-    const active = activeTab === tab.key;
-
-    return (
-      <button
-        key={tab.key}
-        type="button"
-        onClick={() => {
-          setActiveTab(tab.key);
-          setOpen(false);
-        }}
-        className={`inline-flex items-center gap-2.5 rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-150 cursor-pointer select-none w-full lg:w-auto ${
-          active
-            ? "bg-white/[0.05] text-[#9fd5b2] border border-[rgba(159,213,178,0.25)] shadow-sm"
-            : "border border-transparent text-white/50 hover:text-white/80 hover:bg-white/[0.01]"
-        }`}
-      >
-        <Icon className="text-sm shrink-0" />
-        <span>{tab.label}</span>
-      </button>
-    );
-  };
 
   return (
     <>
-      {/* DESKTOP MATRIX BAR LAYOUT CONTEXT */}
-      <div className="hidden items-center justify-between gap-4 glass-card p-3 shadow-xl relative overflow-hidden lg:flex w-full">
-        {/* Interior horizontal edge accent path */}
-        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[rgba(159,213,178,0.15)] to-transparent" />
+      {/* ═══ DESKTOP NAVIGATION BAR ═══ */}
+      <div className="hidden lg:flex items-center justify-between gap-4 rounded-2xl bg-bg-card/60 border border-border-default backdrop-blur-lg p-2 relative overflow-hidden">
+        <div className="gradient-line-top" />
 
-        <div className="flex flex-wrap gap-1.5 items-center">
-          {tabs.map(renderTabButton)}
+        {/* Tab buttons */}
+        <div className="flex gap-1 items-center">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const active = activeTab === tab.key;
+
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                className={`relative inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold transition-all duration-200 cursor-pointer select-none ${
+                  active
+                    ? "text-white"
+                    : "text-text-muted hover:text-text-secondary"
+                }`}
+              >
+                {active && (
+                  <motion.div
+                    layoutId="course-tab-active"
+                    className="absolute inset-0 rounded-xl bg-brand-mint/10 border border-brand-mint/15"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <Icon className={`relative z-10 w-4 h-4 shrink-0 ${active ? "text-brand-mint" : ""}`} />
+                <span className="relative z-10">{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Desktop Interactive Search Node */}
-        <div className="relative min-w-[320px] shrink-0">
-          <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-white/30">
-            <FiSearch className="text-sm" />
+        {/* Search */}
+        <div className="relative min-w-[300px] shrink-0">
+          <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-text-faint">
+            <Search className="w-4 h-4" />
           </div>
           <input
             type="text"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by course name..."
-            className="w-full glass-input pl-10 pr-4 py-2.5 text-xs font-medium placeholder-white/20 block"
+            className="w-full glass-input pl-10 pr-4 py-2.5 text-sm font-medium"
           />
         </div>
       </div>
 
-      {/* MOBILE BREAKPOINT NAVIGATION VIEWPORTS */}
+      {/* ═══ MOBILE NAVIGATION ═══ */}
       <div className="w-full lg:hidden">
         <div className="flex items-center gap-2.5 w-full">
-          
-          {/* Drawer operational trigger toggle */}
+          {/* Filter trigger */}
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.02] border border-[rgba(159,213,178,0.15)] text-[#9fd5b2] hover:bg-white/[0.05] active:scale-95 transition-all cursor-pointer"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-bg-card border border-border-default text-brand-mint hover:bg-bg-elevated active:scale-95 transition-all cursor-pointer"
           >
-            <FiMenu className="text-base" />
+            <Menu className="w-5 h-5" />
           </button>
 
-          {/* Mobile Fluid Search Capsule Input */}
+          {/* Search */}
           <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-white/30">
-              <FiSearch className="text-sm" />
+            <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-text-faint">
+              <Search className="w-4 h-4" />
             </div>
             <input
               type="text"
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="Search courses..."
-              className="w-full glass-input pl-10 pr-4 py-2.5 text-xs font-medium placeholder-white/20 block"
+              className="w-full glass-input pl-10 pr-4 py-2.5 text-sm font-medium"
             />
           </div>
         </div>
 
-        {/* SLIDEOUT SIDE DRAWER DISMISS OVERLAY DIALOG */}
-        {open && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md transition-opacity duration-300">
-            <button
-              type="button"
-              aria-label="Close navigation"
-              onClick={() => setOpen(false)}
-              className="absolute inset-0 h-full w-full bg-transparent border-0 outline-none cursor-default"
-            />
+        {/* Mobile bottom sheet drawer */}
+        <AnimatePresence>
+          {open && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setOpen(false)}
+                className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="fixed bottom-0 inset-x-0 z-50 rounded-t-3xl bg-bg-surface border-t border-border-accent p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-16px_64px_rgba(0,0,0,0.4)]"
+              >
+                <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-5" />
 
-            <div className="absolute left-0 top-0 h-full w-[280px] border-r border-[rgba(159,213,178,0.15)] bg-[#0d2035] p-5 shadow-2xl flex flex-col justify-start">
-              
-              {/* Drawer Modular Panel Top Heading */}
-              <div className="mb-6 flex items-center justify-between w-full border-b border-[rgba(159,213,178,0.12)] pb-4">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/35">
-                    Course View
-                  </p>
-                  <h2 className="mt-1 text-lg font-heading font-black text-white tracking-tight">
-                    Filter Library
-                  </h2>
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-lg font-heading font-bold text-white">Filter Courses</h2>
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.04] border border-white/[0.06] text-text-muted hover:text-white transition-colors cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.03] border border-white/[0.08] text-white/60 hover:text-white transition-colors cursor-pointer"
-                >
-                  <FiX className="text-sm" />
-                </button>
-              </div>
+                <div className="space-y-1.5 w-full flex flex-col">
+                  {tabs.map((tab) => {
+                    const Icon = tab.icon;
+                    const active = activeTab === tab.key;
 
-              {/* Vertical Stack Navigation Link Collection */}
-              <div className="space-y-1.5 w-full flex flex-col">
-                {tabs.map(renderTabButton)}
-              </div>
-            </div>
-          </div>
-        )}
+                    return (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        onClick={() => {
+                          setActiveTab(tab.key);
+                          setOpen(false);
+                        }}
+                        className={`inline-flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all cursor-pointer w-full ${
+                          active
+                            ? "bg-brand-mint/10 text-white border border-brand-mint/15"
+                            : "text-text-muted hover:text-white hover:bg-white/[0.03] border border-transparent"
+                        }`}
+                      >
+                        <Icon className={`w-4.5 h-4.5 shrink-0 ${active ? "text-brand-mint" : ""}`} />
+                        <span>{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     </>
   );
