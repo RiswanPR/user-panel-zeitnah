@@ -1,0 +1,27 @@
+import React from 'react';
+import { Outlet } from 'react-router-dom';
+
+export default function MainLayout() {
+  return (
+    <div className="flex min-h-screen bg-tmc-white text-tmc-navy">
+      {/* 1. Global Layout Elements (e.g., Sidebar or Navigation Headers) */}
+      <aside className="w-64 bg-tmc-navy text-tmc-white">
+        {/* Adhering to branding rules, place your Filled Logo in the top-left section here [cite: 73, 75] */}
+        <div className="p-6">
+          <img src="/logo-filled.svg" alt="Zeitnah Logo" className="h-12 w-auto" /> {/* Maintain explicit size & space boundaries [cite: 86, 87] */}
+        </div>
+        <nav className="p-4 font-body font-medium">
+          {/* Navigation Links go here */}
+        </nav>
+      </aside>
+
+      {/* 2. Primary Layout Framework Wrapper */}
+      <main className="flex-1 p-8">
+        
+        {/* DYNAMIC CHILD VIEWS INJECT HERE */}
+        <Outlet /> 
+        
+      </main>
+    </div>
+  );
+}

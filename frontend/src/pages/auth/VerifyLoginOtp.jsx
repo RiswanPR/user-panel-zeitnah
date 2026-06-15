@@ -137,81 +137,70 @@ function VerifyOtp() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4 py-12 relative overflow-hidden">
+    <div className="min-h-screen bg-[#07192a] flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden text-white font-body antialiased selection:bg-[#f6ed4a] selection:text-[#07192a]">
 
-      {/* Glow blobs */}
-      <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-cyan-500/8 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-80px] right-[-60px] w-[300px] h-[300px] bg-violet-600/8 rounded-full blur-[100px] pointer-events-none" />
-
-      {/* Grid texture */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.03]"
-        style={{
-          backgroundImage: "linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
-
-      {/* Device replace confirm modal */}
+      {/* DEVICE REPLACE CONFIRM MODAL */}
       {showConfirm && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
-          <div className="bg-[#161616] border border-white/10 rounded-2xl p-7 max-w-sm w-full shadow-2xl">
-            <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4">
-              <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4">
+          <div className="bg-[#0d2035] border border-[rgba(159,213,178,0.15)] rounded-2xl p-6 sm:p-7 max-w-sm w-full shadow-2xl flex flex-col">
+            <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4 text-amber-400">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
               </svg>
             </div>
-            <h3 className="text-white font-semibold text-base mb-2" style={{ fontFamily: "'Sora', sans-serif" }}>Replace existing device?</h3>
-            <p className="text-white/45 text-sm mb-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-              You've reached your device limit. Continuing will sign out your oldest registered device.
+            <h3 className="text-white font-heading font-black text-base mb-2">Replace existing device?</h3>
+            <p className="text-[rgba(255,255,255,0.45)] text-xs font-medium mb-6 leading-relaxed">
+              You've reached your device limit. Continuing will sign out your oldest active registered workstation session.
             </p>
-            <div className="flex gap-3">
+            <div className="flex gap-3 w-full">
               <button
+                type="button"
                 onClick={() => handleConfirmReplace(false)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white/55 border border-white/[0.08] hover:border-white/20 hover:text-white/80 transition-all duration-200"
-                style={{ fontFamily: "'DM Sans', sans-serif" }}
+                className="flex-1 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider text-white/60 border border-white/[0.08] hover:border-white/20 hover:text-white transition-all duration-200 cursor-pointer"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={() => handleConfirmReplace(true)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-[#0a0a0a] bg-amber-400 hover:bg-amber-300 transition-all duration-200"
-                style={{ fontFamily: "'Sora', sans-serif" }}
+                className="flex-1 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider text-[#07192a] bg-[#f6ed4a] hover:shadow-[0_0_15px_rgba(246,237,74,0.2)] transition-all duration-200 cursor-pointer"
               >
-                Replace device
+                Replace
               </button>
             </div>
           </div>
         </div>
       )}
 
-      <div className="relative w-full max-w-md">
-        <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent rounded-full" />
+      {/* CORE FORM WRAPPER */}
+      <div className="relative w-full max-w-md z-10 flex flex-col items-center">
+        <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[rgba(159,213,178,0.25)] to-transparent z-20" />
 
-        <div className="bg-[#111111] border border-white/[0.07] rounded-2xl px-8 py-10 shadow-2xl shadow-black/60">
+        <div className="w-full glass-card px-5 sm:px-8 py-10 shadow-2xl flex flex-col relative overflow-hidden">
 
-          {/* Icon */}
-          <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mx-auto mb-6">
-            <svg className="w-7 h-7 text-cyan-400" fill="none" stroke="currentColor" strokeWidth="1.6" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M7.864 4.243A7.5 7.5 0 0119.5 10.5c0 2.92-.556 5.709-1.568 8.268M5.742 6.364A7.465 7.465 0 004.5 10.5a7.464 7.464 0 01-1.15 3.993m1.989 3.559A11.209 11.209 0 008.25 10.5a3.75 3.75 0 117.5 0c0 .527-.021 1.049-.064 1.565M12 10.5a14.94 14.94 0 01-3.6 9.75m6.633-4.596a18.666 18.666 0 01-2.485 5.33" />
+          {/* Secure Technical Verification Keyhole Envelope Icon */}
+          <div className="w-14 h-14 rounded-2xl bg-[rgba(159,213,178,0.1)] border border-[rgba(159,213,178,0.25)] flex items-center justify-center mx-auto mb-6 text-[#9fd5b2] shadow-sm select-none">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 11.25v2.25m0 0a1.125 1.125 0 100 2.25 1.125 1.125 0 000-2.25z" />
             </svg>
           </div>
 
-          {/* Heading */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white tracking-tight mb-2" style={{ fontFamily: "'Sora', sans-serif" }}>
+          {/* Context Headings */}
+          <div className="text-center mb-8 w-full flex flex-col items-center">
+            <h1 className="text-2xl font-heading font-black text-white tracking-tight mb-2">
               Check your email
             </h1>
-            <p className="text-sm text-white/38" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-              We sent a 6-digit code to
+            <p className="text-sm text-[rgba(255,255,255,0.45)] font-medium">
+              We sent a 6-digit verification metric to
             </p>
-            <p className="text-sm text-cyan-400 font-medium mt-0.5" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+            <p className="text-sm text-[#9fd5b2] font-semibold mt-0.5 tracking-wide break-all px-2">
               {maskedEmail}
             </p>
           </div>
 
-          {/* 6-box OTP Input */}
-          <div className="flex gap-2.5 justify-center mb-6" onPaste={handleBoxPaste}>
+          {/* 6-Box Discrete Digital Matrix Input Grid - Upgraded for multi-viewport compatibility */}
+          <div className="flex gap-1.5 sm:gap-2 justify-center mb-6 w-full max-w-full overflow-hidden" onPaste={handleBoxPaste}>
             {otp.map((digit, i) => (
               <input
                 key={i}
@@ -222,44 +211,43 @@ function VerifyOtp() {
                 value={digit}
                 onChange={(e) => handleBoxChange(i, e.target.value)}
                 onKeyDown={(e) => handleBoxKeyDown(i, e)}
-                className={`w-11 h-13 text-center text-xl font-bold text-white bg-white/[0.04] border rounded-xl outline-none transition-all duration-200 focus:bg-white/[0.07] focus:ring-1 ${
+                className={`w-9 sm:w-11 h-12 sm:h-13 text-center text-lg sm:text-xl font-bold text-white bg-[rgba(7,25,42,0.6)] border rounded-lg sm:rounded-xl outline-none transition-all duration-150 focus:ring-2 block shrink ${
                   error
-                    ? "border-red-500/50 focus:border-red-400/70 focus:ring-red-400/20"
+                    ? "border-red-500/50 focus:border-red-400 focus:ring-red-400/10"
                     : digit
-                    ? "border-cyan-400/50 focus:border-cyan-400/70 focus:ring-cyan-400/20"
-                    : "border-white/[0.08] focus:border-cyan-400/60 focus:ring-cyan-400/20"
+                    ? "border-[#9fd5b2] focus:border-[#9fd5b2] focus:ring-[#9fd5b2]/10"
+                    : "border-[rgba(159,213,178,0.15)] focus:border-[#9fd5b2] focus:ring-[#9fd5b2]/10"
                 }`}
-                style={{ fontFamily: "'Sora', sans-serif", height: "52px" }}
               />
             ))}
           </div>
 
-          {/* Error */}
+          {/* Error Alert Box */}
           {error && (
-            <div className="mb-5 flex items-start gap-2 bg-red-500/8 border border-red-500/20 rounded-xl px-4 py-3">
-              <svg className="w-4 h-4 text-red-400 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <div className="mb-5 flex items-center gap-1.5 text-red-400 text-xs font-medium bg-red-500/10 border border-red-500/20 px-3 py-2.5 rounded-lg w-full">
+              <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
               </svg>
-              <p className="text-sm text-red-400" style={{ fontFamily: "'DM Sans', sans-serif" }}>{error}</p>
+              <p className="leading-tight">{error}</p>
             </div>
           )}
 
-          {/* Success */}
+          {/* Success Banner Box */}
           {success && (
-            <div className="mb-5 flex items-center gap-2 bg-emerald-500/8 border border-emerald-500/20 rounded-xl px-4 py-3">
-              <svg className="w-4 h-4 text-emerald-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <div className="mb-5 flex items-center gap-1.5 text-emerald-400 text-xs font-medium bg-emerald-500/10 border border-emerald-500/20 px-3 py-2.5 rounded-lg w-full">
+              <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
               </svg>
-              <p className="text-sm text-emerald-400" style={{ fontFamily: "'DM Sans', sans-serif" }}>{success}</p>
+              <p className="leading-tight">{success}</p>
             </div>
           )}
 
-          {/* Verify Button */}
+          {/* Verification Submit Button */}
           <button
+            type="button"
             onClick={handleVerifyOtp}
             disabled={loading || otpString.length < 6}
-            className="w-full relative group overflow-hidden rounded-xl py-3.5 text-sm font-semibold text-[#0a0a0a] bg-cyan-400 hover:bg-cyan-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-[0.98]"
-            style={{ fontFamily: "'Sora', sans-serif" }}
+            className="w-full relative group overflow-hidden rounded-xl py-3.5 text-xs font-extrabold uppercase tracking-wider text-[#07192a] bg-[#f6ed4a] hover:shadow-[0_0_20px_rgba(246,237,74,0.2)] disabled:opacity-40 disabled:pointer-events-none transition-all duration-200 active:scale-[0.98] cursor-pointer block"
           >
             <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
             <span className="relative flex items-center justify-center gap-2">
@@ -274,7 +262,7 @@ function VerifyOtp() {
               ) : (
                 <>
                   Verify & Sign in
-                  <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                   </svg>
                 </>
@@ -282,58 +270,52 @@ function VerifyOtp() {
             </span>
           </button>
 
-          {/* Resend */}
-          <div className="text-center mt-5">
+          {/* Resend Code Interface */}
+          <div className="text-center mt-6 w-full flex justify-center">
             {timer > 0 ? (
               <div className="flex items-center justify-center gap-2">
-                <div className="relative w-5 h-5">
-                  <svg className="w-5 h-5 -rotate-90" viewBox="0 0 20 20">
-                    <circle cx="10" cy="10" r="8" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="2" />
+                <div className="relative w-4 h-4">
+                  <svg className="w-4 h-4 -rotate-90" viewBox="0 0 20 20">
+                    <circle cx="10" cy="10" r="8" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="2" />
                     <circle
                       cx="10" cy="10" r="8" fill="none"
-                      stroke="#22d3ee" strokeWidth="2"
+                      stroke="#9fd5b2" strokeWidth="2"
                       strokeDasharray={`${(50.27 * (30 - timer)) / 30} 50.27`}
                       strokeLinecap="round"
                     />
                   </svg>
                 </div>
-                <span className="text-sm text-white/35" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-                  Resend code in <span className="text-white/60 font-medium">{timer}s</span>
+                <span className="text-xs text-[rgba(255,255,255,0.45)] font-semibold uppercase tracking-wider">
+                  Resend code in <span className="text-white font-bold">{timer}s</span>
                 </span>
               </div>
             ) : (
               <button
+                type="button"
                 onClick={handleResendOtp}
                 disabled={resendLoading}
-                className="text-sm font-medium text-cyan-400 hover:text-cyan-300 disabled:opacity-50 transition-colors duration-200 underline underline-offset-2 decoration-cyan-400/40"
-                style={{ fontFamily: "'DM Sans', sans-serif" }}
+                className="text-xs font-bold uppercase tracking-wider text-[#9fd5b2] hover:text-white disabled:opacity-40 transition-colors duration-200 underline underline-offset-4 decoration-[rgba(159,213,178,0.3)] cursor-pointer inline-block"
               >
                 {resendLoading ? "Sending…" : "Resend OTP"}
               </button>
             )}
           </div>
 
-          {/* Back link */}
-          <div className="text-center mt-4">
+          {/* Back Redirect Anchor */}
+          <div className="text-center mt-5 w-full">
             <button
+              type="button"
               onClick={() => navigate("/login")}
-              className="text-xs text-white/25 hover:text-white/50 transition-colors duration-200 flex items-center gap-1.5 mx-auto"
-              style={{ fontFamily: "'DM Sans', sans-serif" }}
+              className="text-xs font-semibold tracking-wider uppercase text-[rgba(255,255,255,0.35)] hover:text-[#9fd5b2] transition-colors duration-200 flex items-center gap-1.5 mx-auto cursor-pointer"
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
               </svg>
               Back to login
             </button>
           </div>
         </div>
-
-        <div className="h-[1px] w-3/4 mx-auto bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       </div>
-
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=DM+Sans:wght@400;500&display=swap');
-      `}</style>
     </div>
   );
 }

@@ -1,43 +1,53 @@
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=DM+Sans:wght@400;500&display=swap');
-
 @import "tailwindcss";
 
-/* Root layout */
-html,
-body,
-#root {
-  width: 100%;
-  min-height: 100%;
+@theme {
+  /* Core Brand & Strategic Identity Colors */
+  --color-zeitnah-navy: #12314c;        
+  --color-zeitnah-mint: #9fd5b2;        
+  --color-zeitnah-yellow: #f6ed4a;      
+  --color-zeitnah-white: #ffffff;       
+
+  /* Structural UI System Canvas Architecture */
+  --color-bg-primary: #07192a;          
+  --color-surface-card: #0d2035;        
+  --color-surface-card-light: #1a4468;  
+
+  /* Direct Semantic Typography System Overrides from Brand Guidelines */
+  --font-heading: "Degular", "Degular Black", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Helvetica", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Base Document Configuration Layers */
+html, body {
+  background-color: #07192a;
+  color: #ffffff;
+  font-family: var(--font-body); /* Default body text to Helvetica  */
   margin: 0;
   padding: 0;
-
-  background-color: #0a0a0a;
-
-  font-family: 'DM Sans', sans-serif;
-
-  overflow-x: hidden;
-}
-
-/* Reset */
-* {
-  box-sizing: border-box;
-}
-
-/* Fix SVG overflow issues */
-svg {
-  display: block;
-  max-width: 100%;
-  flex-shrink: 0;
-}
-
-/* Images */
-img {
-  max-width: 100%;
-  display: block;
-}
-
-/* Smooth rendering */
-body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Centralized Glassmorphism Engine Classes */
+.glass-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 0.5px solid rgba(159, 213, 178, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 20px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-input {
+  background: rgba(7, 25, 42, 0.6);
+  border: 0.5px solid rgba(159, 213, 178, 0.15);
+  border-radius: 10px;
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.glass-input:focus {
+  outline: none;
+  border-color: #9fd5b2;
+  box-shadow: 0 0 0 2px rgba(159, 213, 178, 0.2);
 }
