@@ -47,7 +47,7 @@ function App() {
           }
         >
           <Route path="/" element={<Navigate to="/profile" />} />
-          <Route path="/dashboard" element={<Home />} />
+          {/* <Route path="/dashboard" element={<Home />} /> */}
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/edit" element={<EditProfile />} />
           <Route path="/courses" element={<Courses />} />
