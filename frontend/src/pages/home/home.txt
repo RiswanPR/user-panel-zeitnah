@@ -20,83 +20,17 @@ function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070B14] relative overflow-hidden px-4 py-6 sm:py-10 text-white font-body antialiased selection:bg-[#f6ed4a] selection:text-[#07192a] accelerated-canvas">
+    <div className="min-h-screen bg-[#07192a] relative overflow-hidden px-4 py-6 sm:py-10 text-white font-body antialiased selection:bg-[#f6ed4a] selection:text-[#07192a]">
       
-      {/* ── HIGH PERFORMANCE CUSTOM NETWORK LOOP BACKGROUND GRAPHICS ── */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        .accelerated-canvas {
-          transform: translate3d(0, 0, 0);
-          backface-visibility: hidden;
-        }
-
-        /* Fluid breathing motion for custom architectural loop networks */
-        @keyframes abstractBreathe {
-          0%, 100% {
-            transform: translate3d(0, 0, 0) scale(1);
-          }
-          50% {
-            transform: translate3d(6px, -10px, 0) scale(1.01);
-          }
-        }
-
-        .animated-mesh-art {
-          animation: abstractBreathe 32s ease-in-out infinite;
-          transform-origin: center;
-        }
-
-        /* Panoramic fade mask to isolate workspace text structures */
-        .workspace-panoramic-mask {
-          mask-image: radial-gradient(circle at center, transparent 20%, black 80%, black 100%);
-          -webkit-mask-image: radial-gradient(circle at center, transparent 20%, black 80%, black 100%);
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .animated-mesh-art {
-            animation: none !important;
-          }
-        }
-      `}} />
-
-      {/* Atmospheric Ambient Lighting Gradients */}
-      <div className="absolute inset-0 pointer-events-none select-none z-0">
-        <div className="absolute inset-0 filter blur-[130px] opacity-50 mix-blend-screen">
-          <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] max-w-[500px] rounded-full bg-[radial-gradient(circle,rgba(159,213,178,0.08)_0%,transparent_65%)]" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] max-w-[500px] rounded-full bg-[radial-gradient(circle,rgba(246,237,74,0.03)_0%,transparent_65%)]" />
-        </div>
-
-        {/* Custom Integrated Continuous Loop Grid Architecture */}
-        <div className="absolute inset-0 workspace-panoramic-mask opacity-75">
-          <svg 
-            className="w-full h-full animated-mesh-art" 
-            viewBox="0 0 1200 800" 
-            preserveAspectRatio="xMidYMid slice" 
-            fill="none" 
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <defs>
-              <linearGradient id="homeBrandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#9fd5b2" stopOpacity="0.08" />
-                <stop offset="50%" stopColor="#a8f06a" stopOpacity="0.04" />
-                <stop offset="100%" stopColor="#f6ed4a" stopOpacity="0.08" />
-              </linearGradient>
-            </defs>
-
-            {/* Interlocking Custom Circuit Flow Lines */}
-            <g stroke="url(#homeBrandGrad)" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M 100,150 C 130,100 170,100 200,150 C 230,200 200,250 250,280 C 300,310 330,270 360,320 C 390,370 350,420 400,450 C 450,480 490,430 520,490 C 550,550 510,600 560,640 C 610,680 650,630 690,680 C 730,730 710,780 760,790" />
-              <path d="M 950,100 C 920,50 850,80 820,130 C 790,180 840,220 800,270 C 760,320 700,300 660,360 C 620,420 650,480 600,530 C 550,580 480,560 440,620 C 400,680 420,740 370,790" />
-              <path d="M 850,200 C 900,150 960,180 990,240 C 1020,300 970,350 1010,420 C 1050,490 1120,470 1150,540" />
-              <path d="M 150,500 C 180,450 240,480 270,540 C 300,600 260,650 300,710 C 340,770 410,750 440,820" />
-            </g>
-          </svg>
-        </div>
+      {/* Decorative ambient internal branded accent glow */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[350px] h-[350px] bg-[#9fd5b2] opacity-5 rounded-full blur-[100px]" />
       </div>
 
-      {/* ── INTERACTIVE WORKSPACE HUB CONTENT ── */}
       <div className="relative z-10 max-w-6xl mx-auto space-y-8 sm:space-y-10">
 
         {/* WELCOME IDENTIFICATION HUB */}
-        <div className="space-y-2 text-center sm:text-left select-none">
+        <div className="space-y-2 text-center sm:text-left">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-heading font-black text-white tracking-tight leading-none">
             Welcome back, {user?.name || "Academic Member"} 👋
           </h1>
@@ -111,11 +45,11 @@ function Home() {
           {/* PROFILE CONTROL HUB */}
           <Link
             to="/profile"
-            className="group glass-card p-6 flex flex-col justify-between h-44 w-full"
+            className="group glass-card p-6 shadow-xl hover:border-[#9fd5b2]/40 hover:bg-white/[0.06] transition-all duration-200 flex flex-col justify-between h-44 w-full"
           >
             <div className="w-full min-w-0">
               <div className="flex items-center justify-between mb-4 gap-2">
-                <h2 className="text-base font-heading font-bold text-white tracking-tight truncate">
+                <h2 className="text-base font-heading font-black text-white tracking-tight truncate">
                   Profile Asset
                 </h2>
                 <span className="text-[#9fd5b2] group-hover:translate-x-0.5 transition-transform text-lg leading-none shrink-0">
@@ -132,10 +66,10 @@ function Home() {
           </Link>
 
           {/* ACTIVE ACCOUNT SECURITY WORKSPACE STATUS */}
-          <div className="glass-card p-6 flex flex-col justify-between h-44 w-full relative overflow-hidden">
+          <div className="glass-card p-6 shadow-xl flex flex-col justify-between h-44 w-full relative overflow-hidden">
             <div className="w-full min-w-0">
               <div className="flex items-center justify-between mb-4 gap-2">
-                <h2 className="text-base font-heading font-bold text-white tracking-tight truncate">
+                <h2 className="text-base font-heading font-black text-white tracking-tight truncate">
                   Security Status
                 </h2>
                 <span className="flex h-2 w-2 relative shrink-0">
@@ -158,11 +92,11 @@ function Home() {
           {/* ACTIVE ALLOCATIONS METRIC HUB */}
           <Link
             to="/active-sessions"
-            className="group glass-card p-6 flex flex-col justify-between h-44 w-full"
+            className="group glass-card p-6 shadow-xl hover:border-[#9fd5b2]/40 hover:bg-white/[0.06] transition-all duration-200 flex flex-col justify-between h-44 w-full"
           >
             <div className="w-full min-w-0">
               <div className="flex items-center justify-between mb-4 gap-2">
-                <h2 className="text-base font-heading font-bold text-white tracking-tight truncate">
+                <h2 className="text-base font-heading font-black text-white tracking-tight truncate">
                   Active Sessions
                 </h2>
                 <span className="text-[#9fd5b2] group-hover:translate-x-0.5 transition-transform text-lg leading-none shrink-0">
@@ -181,11 +115,11 @@ function Home() {
           {/* SYSTEM CHANGE OPERATION METRIC STREAM */}
           <Link
             to="/audit-logs"
-            className="group glass-card p-6 flex flex-col justify-between h-44 w-full"
+            className="group glass-card p-6 shadow-xl hover:border-[#9fd5b2]/40 hover:bg-white/[0.06] transition-all duration-200 flex flex-col justify-between h-44 w-full"
           >
             <div className="w-full min-w-0">
               <div className="flex items-center justify-between mb-4 gap-2">
-                <h2 className="text-base font-heading font-bold text-white tracking-tight truncate">
+                <h2 className="text-base font-heading font-black text-white tracking-tight truncate">
                   Audit Logs
                 </h2>
                 <span className="text-[#9fd5b2] group-hover:translate-x-0.5 transition-transform text-lg leading-none shrink-0">
@@ -212,12 +146,15 @@ function Home() {
             Protected Academic Session Active
           </div>
 
-          {/* TERMINATION TRIGGER — VOLT YELLOW EXCLUSIVE CTA FROM DESIGN SYSTEM */}
+          {/* TERMINATION TRIGGER — VOLT YELLOW EXCLUSIVE CTA */}
           <button
             onClick={handleLogout}
-            className="w-full sm:w-auto btn-primary shrink-0 block"
+            className="w-full sm:w-auto relative group overflow-hidden rounded-xl px-6 py-3 text-xs font-extrabold tracking-wider uppercase text-[#07192a] bg-[#f6ed4a] shadow-[0_4px_15px_rgba(246,237,74,0.15)] hover:shadow-[0_4px_20px_rgba(246,237,74,0.25)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-150 cursor-pointer block"
           >
-            Logout Securely
+            <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+            <span className="relative">
+              Logout Securely
+            </span>
           </button>
         </div>
 
