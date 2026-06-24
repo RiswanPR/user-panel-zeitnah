@@ -4,6 +4,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 
 import axios from 'axios';
@@ -24,7 +25,6 @@ import {
   ActiveStreamDocument,
 } from './schemas/active-stream.schema';
 
-import { BadRequestException } from '@nestjs/common';
 import {
   awardPoints,
   calculatePoints,
@@ -33,6 +33,8 @@ import {
   getNextLevelProgress,
   syncGamificationStats,
 } from '../../common/gamification.helpers';
+import { SignedUrlService } from '../../common/aws/signed-url.service';
+import { HlsService } from './hls.service';
 
 @Injectable()
 export class CoursesService {
@@ -44,6 +46,8 @@ export class CoursesService {
     private userModel: Model<UserDocument>,
     @InjectModel(ActiveStream.name)
     private activeStreamModel: Model<ActiveStreamDocument>,
+    private signedUrlService: SignedUrlService,
+    private hlsService: HlsService,
   ) {}
 
   private parseDurationToSeconds(duration: any) {
@@ -92,6 +96,22 @@ export class CoursesService {
     }
 
     return Math.round(numeric * 60);
+  }
+
+  private getClassVideoSource(courseType: any, videoSource: any) {
+    const explicitSource = String(videoSource || '').trim().toLowerCase();
+
+    if (explicitSource === 's3' || explicitSource === 'aws') {
+      return 's3';
+    }
+
+    if (explicitSource === 'vdocipher' || explicitSource === 'vdo') {
+      return 'vdocipher';
+    }
+
+    return String(courseType || '').trim().toLowerCase() === 'recording'
+      ? 's3'
+      : 'vdocipher';
   }
 
   private normaliseSeconds(value: any) {
@@ -319,8 +339,12 @@ export class CoursesService {
       createdAt: -1,
     });
 
+    const formatted = await Promise.all(
+      courses.map((c) => this.signCourseImages(c.toObject()))
+    );
+
     return {
-      courses,
+      courses: formatted,
     };
   }
 
@@ -345,7 +369,7 @@ export class CoursesService {
     });
 
     // ADD PROGRESS
-    const formatted = courses.map((course) => {
+    const formatted = await Promise.all(courses.map(async (course) => {
       const progress = user.course.find(
         (c: any) => c.courseId.toString() === course._id.toString(),
       );
@@ -353,12 +377,12 @@ export class CoursesService {
         ? this.summariseLearningProgress(course, progress)
         : null;
 
-      return {
+      const mapped = {
         ...course.toObject(),
-
         learningProgress,
       };
-    });
+      return this.signCourseImages(mapped);
+    }));
 
     return {
       courses: formatted,
@@ -383,7 +407,7 @@ export class CoursesService {
     let completedClasses = 0;
     let watchedClasses = 0;
 
-    const courseProgress = courses.map((course) => {
+    const courseProgress = await Promise.all(courses.map(async (course) => {
       const enrollment = user.course.find(
         (entry: any) => entry.courseId.toString() === course._id.toString(),
       );
@@ -398,14 +422,15 @@ export class CoursesService {
         watchedClasses += learningProgress.watchedClasses;
       }
 
-      return {
+      const mapped = {
         _id: course._id,
         name: course.name,
-        image: course.image,
+        coverImage: course.coverImage || (course as any).image,
         type: course.type,
         learningProgress,
       };
-    });
+      return this.signCourseImages(mapped);
+    }));
 
     syncGamificationStats(user);
     user.markModified('course');
@@ -493,7 +518,7 @@ export class CoursesService {
 
           duration: cls.duration,
 
-          thumbnail: cls.thumbnail,
+          coverImage: cls.coverImage || (cls as any).thumbnail,
 
           locked: true,
         })),
@@ -526,13 +551,15 @@ export class CoursesService {
       }));
     }
 
+    const formattedCourse = await this.signCourseImages({
+      ...courseObj,
+      learningProgress,
+    });
+
     return {
       purchased,
 
-      course: {
-        ...courseObj,
-        learningProgress,
-      },
+      course: formattedCourse,
     };
   }
 
@@ -617,24 +644,28 @@ export class CoursesService {
       };
     });
 
+    const formattedCourse = await this.signCourseImages({
+      _id: course._id,
+
+      name: course.name,
+
+      coverImage: course.coverImage || (course as any).image,
+
+      type: course.type,
+
+      description: course.description,
+
+      learningProgress,
+
+      chapters,
+    });
+
     return {
       purchased,
 
-      course: {
-        _id: course._id,
+      course: formattedCourse,
 
-        name: course.name,
-
-        image: course.image,
-
-        type: course.type,
-
-        description: course.description,
-
-        learningProgress,
-      },
-
-      chapters,
+      chapters: formattedCourse.chapters,
     };
   }
 
@@ -678,7 +709,7 @@ export class CoursesService {
     );
 
     // LOCK LOGIC
-    const classes = chapter.classes.map((cls: any) => {
+    const classes = await Promise.all(chapter.classes.map(async (cls: any) => {
       const classId = cls._id.toString();
       const classProgress = enrollment?.classProgress?.find(
         (entry: any) => entry.classId === classId,
@@ -690,7 +721,7 @@ export class CoursesService {
           )
         : null;
 
-      return {
+      const mappedClass = {
         _id: cls._id,
 
         title: cls.title,
@@ -717,28 +748,26 @@ export class CoursesService {
 
         locked: !purchased,
       };
+      return mappedClass;
+    }));
+
+    const formattedCourse = await this.signCourseImages({
+      _id: course._id,
+      name: course.name,
+      type: course.type,
+      chapters: [{
+        title: chapter.title,
+        description: chapter.description,
+        totalClasses: chapter.classes.length,
+        classes,
+      }],
     });
 
     return {
       purchased,
-
-      course: {
-        _id: course._id,
-
-        name: course.name,
-
-        type: course.type,
-      },
-
-      chapter: {
-        title: chapter.title,
-
-        description: chapter.description,
-
-        totalClasses: chapter.classes.length,
-      },
-
-      classes,
+      course: formattedCourse,
+      chapter: formattedCourse.chapters[0],
+      classes: formattedCourse.chapters[0].classes,
     };
   }
   // ======================
@@ -790,7 +819,14 @@ export class CoursesService {
       throw new NotFoundException('Class not found');
     }
 
-    const vdoCipher = await this.getVdoCipherPlaybackData(cls.videoId);
+    const videoSource = this.getClassVideoSource(
+      course.type,
+      cls.videoSource,
+    );
+    const vdoCipher =
+      videoSource === 'vdocipher'
+        ? await this.getVdoCipherPlaybackData(cls.videoId)
+        : null;
 
     const user = userId ? await this.userModel.findById(userId) : null;
 
@@ -827,7 +863,9 @@ export class CoursesService {
 
         name: course.name,
 
-        image: course.image,
+        coverImage: course.coverImage || (course as any).image,
+
+        type: course.type,
       },
 
       chapter: {
@@ -845,9 +883,11 @@ export class CoursesService {
 
         duration: cls.duration,
 
-        thumbnail: cls.thumbnail,
+        coverImage: cls.coverImage || (cls as any).thumbnail,
 
         videoId: cls.videoId,
+
+        videoSource,
 
         vdoCipher,
 
@@ -1171,5 +1211,177 @@ export class CoursesService {
     return {
       success: true,
     };
+  }
+
+  async getSecureVideoPlayback(classId: string, userId: string) {
+    const course = await this.courseModel.findOne({
+      'chapters.classes._id': classId,
+    });
+
+    if (!course) {
+      throw new NotFoundException('Class not found');
+    }
+
+    const user = await this.userModel.findById(userId);
+    const purchased = user?.course?.some(
+      (c: any) => c.courseId.toString() === course._id.toString(),
+    ) || false;
+
+    if (!purchased) {
+      throw new ForbiddenException('Purchase course to access video stream');
+    }
+
+    let foundClass: any = null;
+    for (const chapter of course.chapters) {
+      const cls = chapter.classes.find((c: any) => c._id.toString() === classId);
+      if (cls) {
+        foundClass = cls;
+        break;
+      }
+    }
+
+    if (!foundClass) {
+      throw new NotFoundException('Class not found');
+    }
+
+    const videoTarget = foundClass.videoUrl || foundClass.videoId;
+
+    if (!videoTarget) {
+      throw new NotFoundException('Video not found for this class');
+    }
+
+    let playbackUrl: string;
+    
+    if (videoTarget.endsWith('.m3u8')) {
+      const baseUrl = process.env.API_URL || 'http://localhost:3000/api';
+      playbackUrl = `${baseUrl}/courses/video/${classId}/playlist.m3u8`;
+    } else {
+      // Fallback for MP4 videos that haven't been converted to HLS yet
+      playbackUrl = await this.signedUrlService.generateSignedVideoUrl(videoTarget, 900);
+    }
+
+    return {
+      playbackUrl,
+      watermarkData: {
+        userId: user?._id,
+        name: user?.name || '',
+        email: user?.email
+      }
+    };
+  }
+
+  async getSecurePlaylist(classId: string, userId: string): Promise<string> {
+    const course = await this.courseModel.findOne({
+      'chapters.classes._id': classId,
+    });
+
+    if (!course) {
+      throw new NotFoundException('Class not found');
+    }
+
+    const user = await this.userModel.findById(userId);
+    const purchased = user?.course?.some(
+      (c: any) => c.courseId.toString() === course._id.toString(),
+    ) || false;
+
+    if (!purchased) {
+      throw new ForbiddenException('Purchase course to access video stream');
+    }
+
+    let foundClass: any = null;
+    for (const chapter of course.chapters) {
+      const cls = chapter.classes.find((c: any) => c._id.toString() === classId);
+      if (cls) {
+        foundClass = cls;
+        break;
+      }
+    }
+
+    if (!foundClass) {
+      throw new NotFoundException('Class not found');
+    }
+
+    const videoTarget = foundClass.videoUrl || foundClass.videoId;
+    if (!videoTarget) {
+      throw new NotFoundException('Video not found');
+    }
+
+    return this.hlsService.getSecurePlaylist(videoTarget);
+  }
+
+  async convertVideoToHls(classId: string) {
+    const course = await this.courseModel.findOne({
+      'chapters.classes._id': classId,
+    });
+
+    if (!course) {
+      throw new NotFoundException('Class not found');
+    }
+
+    let foundClass: any = null;
+    for (const chapter of course.chapters) {
+      const cls = chapter.classes.find((c: any) => c._id.toString() === classId);
+      if (cls) {
+        foundClass = cls;
+        break;
+      }
+    }
+
+    const videoTarget = foundClass?.videoUrl || foundClass?.videoId;
+    if (!videoTarget) {
+      throw new NotFoundException('Video not found');
+    }
+
+    const result = await this.hlsService.convertVideoToHls(videoTarget);
+    
+    if (result.success && result.hlsPath) {
+      // Update database with new HLS path
+      foundClass.videoUrl = result.hlsPath;
+      await course.save();
+    }
+
+    return result;
+  }
+
+
+  private async signCourseImages(courseObj: any) {
+    if (!courseObj) return courseObj;
+
+    if (courseObj.image) {
+      courseObj.coverImage = courseObj.image;
+      delete courseObj.image;
+    }
+    if (courseObj.coverImage) {
+      courseObj.coverImage = await this.signedUrlService.generateSignedImageUrl(courseObj.coverImage);
+    }
+
+    if (courseObj.chapters && Array.isArray(courseObj.chapters)) {
+      courseObj.chapters.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+      for (const chapter of courseObj.chapters) {
+        if (chapter.imageName) {
+          chapter.coverImage = chapter.imageName;
+          delete chapter.imageName;
+        }
+        if (chapter.coverImage) {
+          chapter.coverImage = await this.signedUrlService.generateSignedImageUrl(chapter.coverImage);
+        }
+        if (chapter.classes && Array.isArray(chapter.classes)) {
+          chapter.classes.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+          for (const cls of chapter.classes) {
+            if (cls.thumbnail) {
+              cls.coverImage = cls.thumbnail;
+              delete cls.thumbnail;
+            }
+            if (cls.coverImage) {
+              cls.coverImage = await this.signedUrlService.generateSignedImageUrl(cls.coverImage);
+            }
+            if (cls.exercises && Array.isArray(cls.exercises)) {
+              cls.exercises.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+            }
+          }
+        }
+      }
+    }
+    return courseObj;
   }
 }

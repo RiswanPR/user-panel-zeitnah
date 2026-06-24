@@ -25,6 +25,9 @@ import {
   PROFILE_COMPLETION_REWARDS,
   syncGamificationStats,
 } from '../../common/gamification.helpers';
+import { UploadService } from '../../common/aws/upload.service';
+import { SignedUrlService } from '../../common/aws/signed-url.service';
+import * as crypto from 'crypto';
 
 @Injectable()
 
@@ -35,6 +38,8 @@ export class ProfileService {
     @InjectModel(User.name)
     private userModel:
       Model<UserDocument>,
+    private uploadService: UploadService,
+    private signedUrlService: SignedUrlService,
 
   ) {}
 
@@ -60,9 +65,14 @@ export class ProfileService {
     user.markModified('gamification');
     await user.save();
 
+    const userObj = user.toObject();
+    if (userObj.avatar) {
+      userObj.avatar = await this.signedUrlService.generateSignedImageUrl(userObj.avatar);
+    }
+
     return {
 
-      user,
+      user: userObj,
 
     };
 
@@ -130,15 +140,41 @@ export class ProfileService {
 
     await user.save();
 
+    const userObj = user.toObject();
+    if (userObj.avatar) {
+      userObj.avatar = await this.signedUrlService.generateSignedImageUrl(userObj.avatar);
+    }
+
     return {
 
       message:
         'Profile updated successfully',
 
-      user,
+      user: userObj,
 
     };
 
+  }
+
+  // UPLOAD AVATAR
+  async uploadAvatar(userId: string, file: Express.Multer.File) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const extension = file.originalname.split('.').pop();
+    const key = `profiles/${userId}-${crypto.randomUUID()}.${extension}`;
+    
+    await this.uploadService.uploadFile(key, file.buffer, file.mimetype);
+    
+    user.avatar = key;
+    await user.save();
+
+    const signedUrl = await this.signedUrlService.generateSignedImageUrl(key);
+
+    return {
+      message: 'Avatar uploaded successfully',
+      avatar: signedUrl,
+    };
   }
 
 }

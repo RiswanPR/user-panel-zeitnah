@@ -34,6 +34,8 @@ class Exercise {
   @Prop()
   type!: string;
 
+  @Prop({ default: 0 })
+  order!: number;
 }
 
 // =========================
@@ -61,10 +63,19 @@ class CourseClass {
   description!: string;
 
   @Prop()
+  coverImage!: string;
+
+  @Prop()
   thumbnail!: string;
 
   @Prop()
   videoId!: string;
+
+  @Prop()
+  videoUrl!: string;
+
+  @Prop()
+  videoSource!: string;
 
   @Prop({
     default: Date.now,
@@ -100,6 +111,9 @@ class Chapter {
 
   @Prop()
   description!: string;
+
+  @Prop()
+  coverImage!: string;
 
   @Prop()
   imageName!: string;
@@ -159,6 +173,9 @@ export class Course {
   @Prop({
     default: '',
   })
+  coverImage!: string;
+
+  @Prop()
   image!: string;
 
   @Prop({
@@ -167,6 +184,8 @@ export class Course {
   })
   chapters!: Chapter[];
 
+  @Prop({ default: 0 })
+  order!: number;
 }
 
 export const CourseSchema =

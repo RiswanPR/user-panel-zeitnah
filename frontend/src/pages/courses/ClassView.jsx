@@ -14,10 +14,12 @@ import api from "../../services/api";
 import {
   formatDuration,
   getBunnyEmbedUrl,
+  getClassVideoSource,
   getUploadUrl,
   getVdoCipherEmbedUrl,
 } from "../../utils/courseUi";
 import VideoWatermark from "../../components/player/VideoWatermark";
+import VideoPlayer from "../../components/player/VideoPlayer";
 import { AuthContext } from "../../context/AuthContext";
 
 function loadVdoCipherApi() {
@@ -45,6 +47,7 @@ function ClassView() {
   const { user } = useContext(AuthContext);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
+  const [videoData, setVideoData] = useState(null);
   const [progressState, setProgressState] = useState(null);
   const [syncState, setSyncState] = useState("idle");
 
@@ -61,10 +64,25 @@ function ClassView() {
     const loadClass = async () => {
       try {
         setLoading(true);
+        setVideoData(null);
         const res = await api.get(`/courses/class/${classId}`);
         if (mounted) {
           setData(res.data);
           setProgressState(res.data.progress || null);
+          const videoSource = getClassVideoSource(
+            res.data.course?.type,
+            res.data.class?.videoSource,
+          );
+
+          if (videoSource === "s3") {
+            try {
+              const videoRes = await api.get(`/courses/video/${classId}`);
+              if (mounted) setVideoData(videoRes.data);
+            } catch (err) {
+              console.log("Failed to load S3 video playback data:", err);
+              if (mounted) setVideoData({ error: true });
+            }
+          }
         }
       } catch (error) {
         alert(error.response?.data?.message || "Failed to load class.");
@@ -120,7 +138,17 @@ function ClassView() {
   // ── VdoCipher player setup ──
   useEffect(() => {
     const classData = data?.class;
-    if (!classData?.vdoCipher || !iframeRef.current) return undefined;
+    const videoSource = getClassVideoSource(
+      data?.course?.type,
+      classData?.videoSource,
+    );
+    if (
+      videoSource === "s3" ||
+      !classData?.vdoCipher ||
+      !iframeRef.current
+    ) {
+      return undefined;
+    }
     let cancelled = false;
     let cleanup = () => {};
 
@@ -249,6 +277,7 @@ function ClassView() {
   }
 
   const { chapter, class: cls, course } = data;
+  const isS3Video = getClassVideoSource(course?.type, cls?.videoSource) === "s3";
   const videoUrl = getVdoCipherEmbedUrl(cls.vdoCipher) || getBunnyEmbedUrl(cls.videoId);
   const classProgress = progressState?.classProgress || data.progress?.classProgress;
   const learningProgress = progressState?.learningProgress || data.progress?.learningProgress;
@@ -335,8 +364,54 @@ function ClassView() {
 
             {/* Video frame */}
             <div className="relative aspect-video bg-black/90 overflow-hidden w-full">
-              <VideoWatermark user={user} />
-              {videoUrl ? (
+              {!isS3Video && <VideoWatermark user={user} />}
+              {isS3Video ? (
+                videoData?.playbackUrl ? (
+                  <VideoPlayer 
+                    src={videoData.playbackUrl} 
+                    watermarkData={videoData.watermarkData} 
+                    initialTime={Number(data?.progress?.classProgress?.lastPositionSeconds || 0)}
+                    onProgress={({ currentTime, duration }) => {
+                      const state = latestSnapshotRef.current || { lastSaveTime: 0, lastCurrentTime: 0 };
+                      const now = Date.now();
+                      const isEnding = duration > 0 && currentTime >= duration - 2;
+                      const shouldSave = (now - (state.lastSaveTime || 0) > 15000) || isEnding;
+
+                      if (isEnding && state.lastCurrentTime === currentTime) return;
+
+                      if (shouldSave) {
+                        state.lastSaveTime = now;
+                        state.lastCurrentTime = currentTime;
+                        latestSnapshotRef.current = state;
+
+                        const snapshot = {
+                          completed: isEnding,
+                          currentTimeSeconds: Math.round(currentTime),
+                          durationSeconds: Math.round(duration),
+                          totalCoveredSeconds: Math.round((savedProgressBaseRef.current?.coveredSeconds || 0) + currentTime),
+                          totalPlayedSeconds: Math.round((savedProgressBaseRef.current?.watchedSeconds || 0) + currentTime)
+                        };
+
+                        setSyncState("saving");
+                        api.post(`/courses/class/${classId}/progress`, snapshot)
+                          .then(res => {
+                            setProgressState(res.data);
+                            setSyncState("saved");
+                          })
+                          .catch(() => setSyncState("error"));
+                      }
+                    }}
+                  />
+                ) : videoData?.error ? (
+                  <div className="flex h-full items-center justify-center text-danger text-sm font-medium">
+                    Failed to load secure video stream.
+                  </div>
+                ) : (
+                  <div className="flex h-full items-center justify-center text-text-muted text-sm font-medium shimmer">
+                    Loading secure video...
+                  </div>
+                )
+              ) : videoUrl ? (
                 <iframe
                   ref={iframeRef}
                   src={videoUrl}

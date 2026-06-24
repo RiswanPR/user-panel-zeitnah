@@ -30,7 +30,19 @@ function ChapterCard({ chapter, index, onOpen }) {
       }`}
     >
       {/* Gradient accent line */}
-      <div className="gradient-line-top" />
+      <div className="gradient-line-top z-20" />
+
+      {/* ── Optional Chapter Cover Image ── */}
+      {chapter.coverImage && (
+        <div className="absolute inset-0 z-0">
+          <img 
+            src={chapter.coverImage} 
+            alt={chapter.title} 
+            className="w-full h-full object-cover opacity-10 transition-transform duration-700 group-hover:scale-105 group-hover:opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-bg-card via-bg-card/90 to-transparent" />
+        </div>
+      )}
 
       {/* ── Header ── */}
       <div className="mb-4 flex items-start justify-between gap-4 w-full relative z-10">

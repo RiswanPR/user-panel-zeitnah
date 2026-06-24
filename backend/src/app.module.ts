@@ -12,6 +12,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { CoursesModule } from './modules/courses/courses.module';
+import { AwsModule } from './common/aws/aws.module';
 
 @Module({
   imports: [
@@ -41,6 +42,8 @@ import { CoursesModule } from './modules/courses/courses.module';
     ProfileModule,
 
     CoursesModule,
+
+    AwsModule,
   ],
 
   providers: [

@@ -46,7 +46,25 @@ export function formatDuration(duration) {
 }
 
 export function getCourseTypeLabel(type) {
-  return type === "Recording" ? "Zoom Recording" : "Studio Class";
+  return (type || "").toLowerCase() === "recording"
+    ? "Studio Class"
+    : "Zoom Recording";
+}
+
+export function getClassVideoSource(courseType, videoSource) {
+  const explicitSource = String(videoSource || "").trim().toLowerCase();
+
+  if (explicitSource === "s3" || explicitSource === "aws") {
+    return "s3";
+  }
+
+  if (explicitSource === "vdocipher" || explicitSource === "vdo") {
+    return "vdocipher";
+  }
+
+  return String(courseType || "").trim().toLowerCase() === "recording"
+    ? "s3"
+    : "vdocipher";
 }
 
 export function getVdoCipherEmbedUrl(vdoCipher) {

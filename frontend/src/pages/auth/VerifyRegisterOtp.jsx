@@ -176,7 +176,7 @@ function VerifyRegisterOtp() {
           </div>
 
           <form onSubmit={handleVerifyOtp} className="w-full flex flex-col">
-            
+
             {/* 6-Box Discrete Key Tokens */}
             <div className="flex gap-2 justify-center mb-6 w-full" onPaste={handleBoxPaste}>
               {otp.map((digit, i) => (
@@ -189,13 +189,12 @@ function VerifyRegisterOtp() {
                   value={digit}
                   onChange={(e) => handleBoxChange(i, e.target.value)}
                   onKeyDown={(e) => handleBoxKeyDown(i, e)}
-                  className={`w-11 h-13 text-center text-xl font-bold text-white bg-[rgba(7,25,42,0.6)] border rounded-xl outline-none transition-all duration-150 focus:ring-2 block ${
-                    error
+                  className={`w-11 h-13 text-center text-xl font-bold text-white bg-[rgba(7,25,42,0.6)] border rounded-xl outline-none transition-all duration-150 focus:ring-2 block ${error
                       ? "border-red-500/50 focus:border-red-400 focus:ring-red-400/10"
                       : digit
-                      ? "border-[#9fd5b2] focus:border-[#9fd5b2] focus:ring-[#9fd5b2]/10"
-                      : "border-[rgba(159,213,178,0.15)] focus:border-[#9fd5b2] focus:ring-[#9fd5b2]/10"
-                  }`}
+                        ? "border-[#9fd5b2] focus:border-[#9fd5b2] focus:ring-[#9fd5b2]/10"
+                        : "border-[rgba(159,213,178,0.15)] focus:border-[#9fd5b2] focus:ring-[#9fd5b2]/10"
+                    }`}
                   style={{ height: "52px" }}
                 />
               ))}

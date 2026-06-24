@@ -10,7 +10,7 @@ import {
 import { formatDuration, getCourseTypeLabel, getUploadUrl } from "../../utils/courseUi";
 
 function ClassCard({ cls, courseType, index, onLockedClick, onOpen }) {
-  const thumbnailUrl = getUploadUrl(cls.thumbnail);
+  const thumbnailUrl = cls.coverImage;
   const locked = cls.locked;
   const completed = Boolean(cls.completed);
   const inProgress = !completed && (cls.progressPercent || 0) > 0;

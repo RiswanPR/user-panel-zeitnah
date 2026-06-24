@@ -15,8 +15,9 @@ function CourseCard({ course }) {
   const progress = course.learningProgress?.completionPercent || 0;
   const purchased = !!course.learningProgress;
   const completed = purchased && progress >= 100;
+  const completedClasses = course.learningProgress?.completedClasses || 0;
   const isRecording = course.type === "Recording";
-  const imageUrl = getUploadUrl(course.image) || "https://placehold.co/600x400";
+  const imageUrl = course.coverImage || "https://placehold.co/1280x720/0A0D14/FFFFFF?text=Course+Cover";
   const chapterCount = course.chapters?.length || 0;
 
   return (
@@ -35,7 +36,7 @@ function CourseCard({ course }) {
       <div className="gradient-line-top" />
 
       {/* ── Cover Image ── */}
-      <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-bg-elevated shrink-0 select-none">
+      <div className="relative aspect-video w-full overflow-hidden bg-bg-elevated shrink-0 select-none">
         <img
           src={imageUrl}
           alt={course.name}

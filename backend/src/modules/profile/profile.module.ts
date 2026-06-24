@@ -19,6 +19,8 @@ import {
   UserSchema,
 } from '../auth/schemas/user.schema';
 
+import { AwsModule } from '../../common/aws/aws.module';
+
 @Module({
 
   imports: [
@@ -31,7 +33,7 @@ import {
       },
 
     ]),
-
+    AwsModule,
   ],
 
   controllers: [

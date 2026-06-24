@@ -5,7 +5,12 @@ import {
   Body,
   Req,
   UseGuards,
+  Post,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 import {
   JwtAuthGuard,
@@ -63,6 +68,21 @@ export class ProfileController {
         body,
       );
 
+  }
+
+  // UPLOAD AVATAR
+  @Post('avatar')
+  @UseInterceptors(FileInterceptor('avatar', {
+    limits: { fileSize: 5 * 1024 * 1024 },
+  }))
+  async uploadAvatar(
+    @Req() req: any,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('No avatar file provided');
+    }
+    return this.profileService.uploadAvatar(req.user.userId, file);
   }
 
 }

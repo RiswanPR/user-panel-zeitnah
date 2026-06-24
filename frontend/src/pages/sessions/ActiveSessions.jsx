@@ -39,7 +39,8 @@ function ActiveSessions() {
     }
   }, []);
 
-  useEffect(() => { loadSessions(); }, [loadSessions]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { void loadSessions(); }, [loadSessions]);
 
   const handleRevoke = async (session) => {
     const confirmed = window.confirm(session.isCurrent ? "Logout this device?" : "Revoke session?");

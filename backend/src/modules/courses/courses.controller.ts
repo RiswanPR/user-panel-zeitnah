@@ -7,14 +7,12 @@ import {
   Query,
   Req,
   UseGuards,
+  Header,
 } from '@nestjs/common';
 
 import { CoursesService } from './courses.service';
-
 import { GetCoursesDto } from './dto/get-courses.dto';
-
 import { UpdateClassProgressDto } from './dto/update-class-progress.dto';
-
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 @Controller('courses')
@@ -160,9 +158,53 @@ export class CoursesController {
     );
   }
 
+
+  // =====================
+  // SECURE VIDEO PLAYBACK
+  // =====================
+
+  @UseGuards(JwtAuthGuard)
+  @Get('video/:classId')
+  getSecureVideoPlayback(
+    @Param('classId')
+    classId: string,
+
+    @Req()
+    req: any,
+  ) {
+    return this.coursesService.getSecureVideoPlayback(
+      classId,
+      req.user.userId,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('video/:classId/playlist.m3u8')
+  @Header('Content-Type', 'application/vnd.apple.mpegurl')
+  async getSecurePlaylist(
+    @Param('classId') classId: string,
+    @Req() req: any,
+  ) {
+    return this.coursesService.getSecurePlaylist(
+      classId,
+      req.user.userId,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('video/:classId/convert-to-hls')
+  async convertVideoToHls(
+    @Param('classId') classId: string,
+    @Req() req: any,
+  ) {
+    // Ideally add an admin guard here
+    return this.coursesService.convertVideoToHls(classId);
+  }
+
   // =====================
   // START STREAM
   // =====================
+
 
   @UseGuards(JwtAuthGuard)
   @Post('start-stream')

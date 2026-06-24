@@ -12,7 +12,7 @@ import Register from "./pages/auth/Register";
 import VerifyRegisterOtp from "./pages/auth/VerifyRegisterOtp";
 
 // Application Views
-import Home from "./pages/home/Home";
+
 import ActiveSessions from "./pages/sessions/ActiveSessions";
 import AuditLogs from "./pages/audit/AuditLogs";
 import Profile from "./pages/profile/Profile";

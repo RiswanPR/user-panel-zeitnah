@@ -11,8 +11,8 @@ import {
 
 const tabs = [
   { key: "all", label: "All Courses", icon: BookOpen },
-  { key: "online", label: "Studio Class", icon: Video },
-  { key: "Recording", label: "Recordings", icon: Play },
+  { key: "online", label: "Recordings", icon: Video },
+  { key: "Recording", label: "Studio Classes", icon: Play },
   { key: "my", label: "My Courses", icon: BookOpen },
 ];
 

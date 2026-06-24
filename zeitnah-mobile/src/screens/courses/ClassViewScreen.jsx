@@ -1,5 +1,0 @@
-<WebView
- source={{
-   uri: playerUrl
- }}
-/>
