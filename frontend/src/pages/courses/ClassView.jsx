@@ -117,7 +117,8 @@ function ClassView() {
     };
     const handleUnload = async () => {
       const deviceId = await getDeviceId();
-      navigator.sendBeacon("http://localhost:3000/api/courses/stop-stream", new Blob([JSON.stringify({ deviceId })], { type: "application/json" }));
+      // navigator.sendBeacon("https://api.your-domain.com/api/courses/stop-stream", new Blob([JSON.stringify({ deviceId })], { type: "application/json" }));
+      navigator.sendBeacon("http://<SERVER_IP>:3000/api/courses/stop-stream", new Blob([JSON.stringify({ deviceId })], { type: "application/json" }));
     };
     window.addEventListener("beforeunload", handleUnload);
     return () => {
@@ -209,7 +210,8 @@ function ClassView() {
           const snapshot = latestSnapshotRef.current;
           const token = localStorage.getItem("token");
           if (!snapshot || !token) return;
-          const baseUrl = api.defaults.baseURL || "http://localhost:3000/api";
+          // const baseUrl = api.defaults.baseURL || "https://api.your-domain.com/api";
+          const baseUrl = api.defaults.baseURL || "http://<SERVER_IP>:3000/api";
           void fetch(`${baseUrl}/courses/class/${classId}/progress`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(snapshot), keepalive: true });
         };
         const onPageHide = () => { flushLatestProgress(); };

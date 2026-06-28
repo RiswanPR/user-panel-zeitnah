@@ -43,7 +43,8 @@ async function bootstrap(): Promise<void> {
   // CORS
   const allowedOrigins = process.env.FRONTEND_URL 
     ? process.env.FRONTEND_URL.split(',') 
-    : ['http://localhost:5173'];
+    // : ['https://your-frontend-domain.com'];
+    : ['http://<SERVER_IP>:5173'];
 
   app.enableCors({
     origin: allowedOrigins,

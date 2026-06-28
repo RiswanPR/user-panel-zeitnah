@@ -1253,7 +1253,8 @@ export class CoursesService {
     let playbackUrl: string;
     
     if (videoTarget.endsWith('.m3u8')) {
-      const baseUrl = process.env.API_URL || 'http://localhost:3000/api';
+      // const baseUrl = process.env.API_URL || 'https://api.your-domain.com/api';
+      const baseUrl = process.env.API_URL || 'http://<SERVER_IP>:3000/api';
       playbackUrl = `${baseUrl}/courses/video/${classId}/playlist.m3u8`;
     } else {
       // Fallback for MP4 videos that haven't been converted to HLS yet
