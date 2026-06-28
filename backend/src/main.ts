@@ -41,8 +41,12 @@ async function bootstrap(): Promise<void> {
   );
 
   // CORS
+  const allowedOrigins = process.env.FRONTEND_URL 
+    ? process.env.FRONTEND_URL.split(',') 
+    : ['http://localhost:5173'];
+
   app.enableCors({
-    origin: ['http://localhost:5173'],
+    origin: allowedOrigins,
 
     credentials: true,
 
@@ -54,7 +58,7 @@ async function bootstrap(): Promise<void> {
   // PORT
   const PORT = process.env.PORT || 3000;
 
-  await app.listen(PORT);
+  await app.listen(PORT, '0.0.0.0');
 
   console.log(`🚀 Server running on port ${PORT}`);
 }
