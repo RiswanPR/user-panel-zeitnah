@@ -22,6 +22,16 @@ export class CoursesController {
   ) {}
 
   // =====================
+  // GLOBAL SEARCH
+  // =====================
+
+  @Get('global-search')
+  globalSearch(@Query('q') query: string) {
+    if (!query) return { results: [] };
+    return this.coursesService.globalSearch(query);
+  }
+
+  // =====================
   // ALL COURSES
   // =====================
 
@@ -209,16 +219,19 @@ export class CoursesController {
   @UseGuards(JwtAuthGuard)
   @Post('start-stream')
   startStream(
-    @Body()
-    body: any,
-
-    @Req()
-    req: any,
+    @Body() body: any,
+    @Req() req: any,
   ) {
+    const ipAddress = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+    const userAgent = req.headers['user-agent'] || 'unknown';
+
     return this.coursesService.startStream(
       req.user.userId,
       body.classId,
       body.deviceId,
+      body.browserFingerprint,
+      ipAddress,
+      userAgent,
     );
   }
 

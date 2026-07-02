@@ -101,25 +101,36 @@ function ClassView() {
     let heartbeatInterval;
     const initializeStream = async () => {
       try {
-        const deviceId = await getDeviceId();
-        await api.post("/courses/start-stream", { classId, deviceId });
+        const { getPersistentDeviceId, getBrowserFingerprint } = await import('../../utils/deviceFingerprint');
+        const deviceId = await getPersistentDeviceId();
+        const browserFingerprint = JSON.stringify(getBrowserFingerprint());
+        await api.post("/courses/start-stream", { classId, deviceId, browserFingerprint });
+        
         heartbeatInterval = setInterval(async () => {
           try { await api.post("/courses/heartbeat", { deviceId }); } catch (err) { console.log(err); }
-        }, 15000);
+        }, 25000); // Heartbeat every 25 seconds
       } catch (error) {
         alert(error.response?.data?.message || "Another device is currently watching this course.");
         navigate(-1);
       }
     };
     initializeStream();
+    
     const stopStream = async () => {
-      try { const deviceId = await getDeviceId(); await api.post("/courses/stop-stream", { deviceId }); } catch (error) { console.log(error); }
+      try { 
+        const { getPersistentDeviceId } = await import('../../utils/deviceFingerprint');
+        const deviceId = await getPersistentDeviceId(); 
+        await api.post("/courses/stop-stream", { deviceId }); 
+      } catch (error) { console.log(error); }
     };
+    
     const handleUnload = async () => {
-      const deviceId = await getDeviceId();
-      // navigator.sendBeacon("https://api.your-domain.com/api/courses/stop-stream", new Blob([JSON.stringify({ deviceId })], { type: "application/json" }));
-      navigator.sendBeacon("http://<SERVER_IP>:3000/api/courses/stop-stream", new Blob([JSON.stringify({ deviceId })], { type: "application/json" }));
+      const { getPersistentDeviceId } = await import('../../utils/deviceFingerprint');
+      const deviceId = await getPersistentDeviceId();
+      const baseUrl = api.defaults.baseURL || window.location.origin + "/api";
+      navigator.sendBeacon(`${baseUrl}/courses/stop-stream`, new Blob([JSON.stringify({ deviceId })], { type: "application/json" }));
     };
+    
     window.addEventListener("beforeunload", handleUnload);
     return () => {
       if (heartbeatInterval) clearInterval(heartbeatInterval);

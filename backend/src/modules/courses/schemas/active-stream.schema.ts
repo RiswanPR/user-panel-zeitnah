@@ -34,9 +34,38 @@ export class ActiveStream {
   deviceId!: string;
 
   @Prop({
+    required: false,
+  })
+  browserFingerprint?: string;
+
+  @Prop({
+    required: false,
+  })
+  ipAddress?: string;
+
+  @Prop({
+    required: false,
+  })
+  userAgent?: string;
+
+  @Prop({
+    type: String,
+    enum: ['ACTIVE', 'ENDED', 'EXPIRED'],
+    default: 'ACTIVE',
+  })
+  status!: string;
+
+  @Prop({
     default: Date.now,
   })
   heartbeatAt!: Date;
+
+  @Prop({
+    type: Date,
+    expires: 0, 
+    required: true,
+  })
+  expiresAt!: Date;
 
 }
 

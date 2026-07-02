@@ -13,6 +13,7 @@ import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { CoursesModule } from './modules/courses/courses.module';
 import { AwsModule } from './common/aws/aws.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -44,6 +45,8 @@ import { AwsModule } from './common/aws/aws.module';
     CoursesModule,
 
     AwsModule,
+    
+    NotificationsModule,
   ],
 
   providers: [

@@ -315,6 +315,48 @@ export class CoursesService {
   }
 
   // ======================
+  // GLOBAL SEARCH
+  // ======================
+
+  async globalSearch(searchQuery: string) {
+    const regex = new RegExp(searchQuery, 'i');
+    
+    // Search courses matching name or description
+    const courses = await this.courseModel.find({
+      $or: [
+        { name: regex },
+        { description: regex },
+        { 'chapters.title': regex },
+        { 'chapters.description': regex },
+        { 'chapters.classes.title': regex },
+        { 'chapters.classes.description': regex },
+      ]
+    }).lean();
+
+    const results = [];
+
+    for (const course of courses) {
+      if (regex.test(course.name) || regex.test(course.description)) {
+        results.push({ type: 'course', courseId: course._id, title: course.name, description: course.description, coverImage: course.coverImage });
+      }
+
+      for (const chapter of course.chapters || []) {
+        if (regex.test(chapter.title) || regex.test(chapter.description)) {
+          results.push({ type: 'chapter', courseId: course._id, chapterCode: chapter.uniqueCode, title: chapter.title, description: chapter.description });
+        }
+
+        for (const cls of chapter.classes || []) {
+          if (regex.test(cls.title) || regex.test(cls.description)) {
+            results.push({ type: 'class', courseId: course._id, chapterCode: chapter.uniqueCode, classId: cls._id, title: cls.title, description: cls.description, thumbnail: cls.thumbnail });
+          }
+        }
+      }
+    }
+
+    return { results: results.slice(0, 20) }; // Limit to top 20 results
+  }
+
+  // ======================
   // GET ALL COURSES
   // ======================
 
@@ -1142,75 +1184,105 @@ export class CoursesService {
       rewards: recentRewards,
     };
   }
-  async startStream(userId: string, classId: string, deviceId: string) {
+  async startStream(
+    userId: string,
+    classId: string,
+    deviceId: string,
+    browserFingerprint?: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ) {
     if (!deviceId) {
       throw new BadRequestException('Device ID missing');
     }
+
+    // Clean up expired sessions first (if TTL hasn't kicked in yet)
+    await this.activeStreamModel.updateMany(
+      { userId, expiresAt: { $lt: new Date() }, status: 'ACTIVE' },
+      { $set: { status: 'EXPIRED' } }
+    );
+
     const active = await this.activeStreamModel.findOne({
       userId,
+      status: 'ACTIVE',
     });
 
-    // Existing stream
+    // Existing stream on another device
     if (active && active.deviceId !== deviceId) {
       throw new UnauthorizedException(
-        'Another device is currently watching a class',
+        'Another device is currently watching a class. Please close the stream on the other device or wait 90 seconds for it to expire.',
       );
     }
 
-    // Update existing
+    const expiresAt = new Date(Date.now() + 90000); // 90 seconds
+
+    // Update existing stream on this device
     if (active) {
       active.classId = classId;
-
       active.heartbeatAt = new Date();
+      active.expiresAt = expiresAt;
+      active.browserFingerprint = browserFingerprint || active.browserFingerprint;
+      active.ipAddress = ipAddress || active.ipAddress;
+      active.userAgent = userAgent || active.userAgent;
 
       await active.save();
 
-      return {
-        success: true,
-      };
+      return { success: true };
     }
 
     // Create new stream
     await this.activeStreamModel.create({
       userId,
-
       classId,
-
       deviceId,
-
+      browserFingerprint,
+      ipAddress,
+      userAgent,
+      status: 'ACTIVE',
       heartbeatAt: new Date(),
+      expiresAt,
     });
 
-    return {
-      success: true,
-    };
+    return { success: true };
   }
+
   async heartbeat(userId: string, deviceId: string) {
+    const expiresAt = new Date(Date.now() + 90000); // 90 seconds
+
+    const updated = await this.activeStreamModel.findOneAndUpdate(
+      {
+        userId,
+        deviceId,
+        status: 'ACTIVE',
+      },
+      {
+        heartbeatAt: new Date(),
+        expiresAt,
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      throw new UnauthorizedException('Session expired or invalid device');
+    }
+
+    return { success: true };
+  }
+
+  async stopStream(userId: string, deviceId: string) {
     await this.activeStreamModel.findOneAndUpdate(
       {
         userId,
         deviceId,
+        status: 'ACTIVE'
       },
-
       {
-        heartbeatAt: new Date(),
-      },
+        status: 'ENDED',
+        expiresAt: new Date(),
+      }
     );
 
-    return {
-      success: true,
-    };
-  }
-  async stopStream(userId: string, deviceId: string) {
-    await this.activeStreamModel.deleteOne({
-      userId,
-
-      deviceId,
-    });
-
-    return {
-      success: true,
-    };
+    return { success: true };
   }
 
   async getSecureVideoPlayback(classId: string, userId: string) {

@@ -1,23 +1,21 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const positions = [
-  { top: "1.5rem", left: "1.5rem" },
-  { top: "1.5rem", right: "1.5rem" },
-  { bottom: "1.5rem", left: "1.5rem" },
-  { bottom: "1.5rem", right: "1.5rem" },
-];
-
 function VideoWatermark({ user }) {
   const [position, setPosition] = useState({ top: "5%", left: "5%" });
   const [time, setTime] = useState("");
+  const [deviceId, setDeviceId] = useState("");
 
   useEffect(() => {
+    // Attempt to get device id from local storage
+    const storedId = localStorage.getItem("device_id") || "Unknown Device";
+    setDeviceId(storedId);
+
     const move = setInterval(() => {
       const top = Math.max(5, Math.floor(Math.random() * 85)) + "%";
       const left = Math.max(5, Math.floor(Math.random() * 80)) + "%";
       setPosition({ top, left });
-    }, 12000);
+    }, 20000); // 20 seconds
 
     const clock = setInterval(() => {
       setTime(new Date().toLocaleString());
@@ -44,6 +42,7 @@ function VideoWatermark({ user }) {
           <div>{user?.name || "Student"}</div>
           <div className="opacity-70">{user?.email || user?.userId || "Secure View"}</div>
           <div className="opacity-50 font-mono mt-0.5">{time}</div>
+          <div className="opacity-40 font-mono mt-0.5 text-[8px] uppercase tracking-widest">{deviceId}</div>
         </div>
       </motion.div>
     </AnimatePresence>
