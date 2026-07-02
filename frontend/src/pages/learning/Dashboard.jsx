@@ -51,7 +51,7 @@ export default function Dashboard() {
           { icon: <Trophy />, label: 'Total Points', value: gamification?.totalPoints || 0, color: 'text-brand-yellow' }
         ].map((stat, i) => (
           <div key={i} className="bg-bg-card border border-white/10 rounded-2xl p-5 flex flex-col hover:border-white/20 transition-colors cursor-default group">
-            <div className={`p-3 bg-white/5 rounded-xl w-12 h-12 flex items-center justify-center mb-4 \${stat.color} group-hover:scale-110 transition-transform`}>
+            <div className={`p-3 bg-white/5 rounded-xl w-12 h-12 flex items-center justify-center mb-4 ${stat.color} group-hover:scale-110 transition-transform`}>
               {stat.icon}
             </div>
             <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
@@ -78,9 +78,9 @@ export default function Dashboard() {
               </div>
               <div className="p-4">
                 <div className="w-full bg-white/10 rounded-full h-1.5 mb-4">
-                  <div className="bg-brand-mint h-1.5 rounded-full" style={{ width: \`\${course.learningProgress?.completionPercent || 0}%\` }} />
+                  <div className="bg-brand-mint h-1.5 rounded-full" style={{ width: `${course.learningProgress?.completionPercent || 0}%` }} />
                 </div>
-                <a href={`/courses/\${course._id}`} className="block w-full text-center py-2 bg-brand-mint/10 text-brand-mint font-semibold rounded-xl hover:bg-brand-mint hover:text-black transition-colors">
+                <a href={`/courses/${course._id}`} className="block w-full text-center py-2 bg-brand-mint/10 text-brand-mint font-semibold rounded-xl hover:bg-brand-mint hover:text-black transition-colors">
                   Resume Course
                 </a>
               </div>

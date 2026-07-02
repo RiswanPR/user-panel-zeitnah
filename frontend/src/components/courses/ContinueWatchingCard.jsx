@@ -34,7 +34,7 @@ export default function ContinueWatchingCard({ course }) {
           <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
             <motion.div 
               initial={{ width: 0 }}
-              animate={{ width: \`\${learningProgress.completionPercent}%\` }}
+              animate={{ width: `${learningProgress.completionPercent}%` }}
               transition={{ duration: 1, delay: 0.2 }}
               className="h-full bg-brand-mint rounded-full relative"
             >
@@ -46,7 +46,7 @@ export default function ContinueWatchingCard({ course }) {
       </div>
       
       <a 
-        href={`/courses/\${_id}`}
+        href={`/courses/${_id}`}
         className="w-full md:w-auto shrink-0 bg-white text-black font-bold px-6 py-3 rounded-xl hover:bg-brand-mint hover:scale-105 transition-all text-sm text-center relative z-10"
       >
         Resume Now

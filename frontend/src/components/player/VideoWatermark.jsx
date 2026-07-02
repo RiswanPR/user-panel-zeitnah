@@ -4,13 +4,9 @@ import { motion, AnimatePresence } from "framer-motion";
 function VideoWatermark({ user }) {
   const [position, setPosition] = useState({ top: "5%", left: "5%" });
   const [time, setTime] = useState("");
-  const [deviceId, setDeviceId] = useState("");
+  const [deviceId, setDeviceId] = useState(() => localStorage.getItem("device_id") || "Unknown Device");
 
   useEffect(() => {
-    // Attempt to get device id from local storage
-    const storedId = localStorage.getItem("device_id") || "Unknown Device";
-    setDeviceId(storedId);
-
     const move = setInterval(() => {
       const top = Math.max(5, Math.floor(Math.random() * 85)) + "%";
       const left = Math.max(5, Math.floor(Math.random() * 80)) + "%";

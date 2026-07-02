@@ -23,6 +23,7 @@ export default function GlobalSearch() {
 
   useEffect(() => {
     if (!query.trim()) {
+      // eslint-disable-next-line
       setResults([]);
       setIsOpen(false);
       return;
@@ -31,7 +32,7 @@ export default function GlobalSearch() {
     const timer = setTimeout(async () => {
       setIsLoading(true);
       try {
-        const res = await api.get(`/courses/global-search?q=\${encodeURIComponent(query)}`);
+        const res = await api.get(`/courses/global-search?q=${encodeURIComponent(query)}`);
         setResults(res.data.results || []);
         setIsOpen(true);
       } catch (err) {
@@ -47,14 +48,14 @@ export default function GlobalSearch() {
   const handleSelect = (item) => {
     setIsOpen(false);
     setQuery('');
-    if (item.type === 'course') navigate(`/courses/\${item.courseId}`);
-    if (item.type === 'chapter') navigate(`/courses/\${item.courseId}?chapter=\${item.chapterCode}`);
-    if (item.type === 'class') navigate(`/courses/class/\${item.classId}`);
+    if (item.type === 'course') navigate(`/courses/${item.courseId}`);
+    if (item.type === 'chapter') navigate(`/courses/${item.courseId}?chapter=${item.chapterCode}`);
+    if (item.type === 'class') navigate(`/courses/class/${item.classId}`);
   };
 
   const highlightText = (text, highlight) => {
     if (!highlight.trim()) return text;
-    const parts = text.split(new RegExp(`(\${highlight})`, 'gi'));
+    const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
     return (
       <span>
         {parts.map((part, i) => 

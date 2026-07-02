@@ -393,9 +393,8 @@ function ClassView() {
                       if (isEnding && state.lastCurrentTime === currentTime) return;
 
                       if (shouldSave) {
-                        state.lastSaveTime = now;
-                        state.lastCurrentTime = currentTime;
-                        latestSnapshotRef.current = state;
+                        const newState = { ...state, lastSaveTime: now, lastCurrentTime: currentTime };
+                        latestSnapshotRef.current = newState;
 
                         const snapshot = {
                           completed: isEnding,

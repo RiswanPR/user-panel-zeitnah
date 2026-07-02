@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Hls from 'hls.js';
 import VideoWatermark from './VideoWatermark';
-import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, Settings, Loader2, FastForward, Rewind } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, Settings, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => {
   const containerRef = useRef(null);
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
-  const progressIntervalRef = useRef(null);
+
   
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -24,6 +24,24 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
   
   const [isDevToolsOpen, setIsDevToolsOpen] = useState(false);
   const [playbackError, setPlaybackError] = useState(false);
+
+  const togglePlay = useCallback(() => {
+    if (videoRef.current?.paused) {
+      videoRef.current.play();
+    } else {
+      videoRef.current?.pause();
+    }
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen().catch(err => console.log(err));
+    } else {
+      document.exitFullscreen();
+    }
+  }, []);
+
+  const toggleMute = useCallback(() => setMuted(prev => !prev), []);
 
   // Keyboard Shortcuts
   useEffect(() => {
@@ -65,7 +83,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [toggleFullscreen, toggleMute, togglePlay]);
 
   // Controls Hide Timer
   useEffect(() => {
@@ -161,21 +179,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     }
   }, [volume, muted]);
 
-  const togglePlay = () => {
-    if (videoRef.current.paused) {
-      videoRef.current.play();
-    } else {
-      videoRef.current.pause();
-    }
-  };
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen().catch(err => console.log(err));
-    } else {
-      document.exitFullscreen();
-    }
-  };
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -185,7 +189,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  const toggleMute = () => setMuted(!muted);
+
 
   const formatTime = (timeInSeconds) => {
     if (isNaN(timeInSeconds)) return "00:00";
@@ -292,11 +296,11 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
               >
                 <div 
                   className="absolute h-full bg-white/40 rounded-full pointer-events-none"
-                  style={{ width: \`\${(buffered / duration) * 100}%\` }}
+                  style={{ width: `${(buffered / duration) * 100}%` }}
                 />
                 <div 
                   className="absolute h-full bg-brand-mint rounded-full pointer-events-none"
-                  style={{ width: \`\${(currentTime / duration) * 100}%\` }}
+                  style={{ width: `${(currentTime / duration) * 100}%` }}
                 >
                   <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full scale-0 group-hover/progress:scale-100 transition-transform shadow" />
                 </div>
@@ -336,7 +340,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
                   <div className="relative">
                     <button 
                       onClick={() => setShowSettings(!showSettings)}
-                      className={`hover:text-brand-mint transition-colors \${showSettings ? 'text-brand-mint' : ''}`}
+                      className={`hover:text-brand-mint transition-colors ${showSettings ? 'text-brand-mint' : ''}`}
                     >
                       <Settings className="w-5 h-5" />
                     </button>
@@ -358,7 +362,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
                                 videoRef.current.playbackRate = rate;
                                 setShowSettings(false);
                               }}
-                              className={`block w-full text-left px-3 py-1.5 text-sm rounded-lg hover:bg-white/10 transition-colors \${playbackRate === rate ? 'text-brand-mint font-bold' : 'text-white'}`}
+                              className={`block w-full text-left px-3 py-1.5 text-sm rounded-lg hover:bg-white/10 transition-colors ${playbackRate === rate ? 'text-brand-mint font-bold' : 'text-white'}`}
                             >
                               {rate}x
                             </button>

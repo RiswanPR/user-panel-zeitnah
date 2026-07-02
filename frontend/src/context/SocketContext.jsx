@@ -13,6 +13,7 @@ export const SocketProvider = ({ children }) => {
     if (!user) {
       if (socket) {
         socket.disconnect();
+        // eslint-disable-next-line
         setSocket(null);
       }
       return;
@@ -39,6 +40,7 @@ export const SocketProvider = ({ children }) => {
     return () => {
       newSocket.disconnect();
     };
+    // eslint-disable-next-line
   }, [user]);
 
   return (
