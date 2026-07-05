@@ -35,9 +35,11 @@ function ChapterCard({ chapter, index, onOpen }) {
       {/* ── Optional Chapter Cover Image ── */}
       {chapter.coverImage && (
         <div className="absolute inset-0 z-0">
+          <link rel="preload" as="image" href={chapter.coverImage} fetchPriority="high" />
           <img 
             src={chapter.coverImage} 
             alt={chapter.title} 
+            fetchPriority="high"
             className="w-full h-full object-cover opacity-10 transition-transform duration-700 group-hover:scale-105 group-hover:opacity-20"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-bg-card via-bg-card/90 to-transparent" />

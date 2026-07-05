@@ -69,7 +69,8 @@ export default function Dashboard() {
           {courses.filter(c => !c.learningProgress?.certificateEligible).map(course => (
             <div key={course._id} className="bg-bg-card border border-white/10 rounded-2xl overflow-hidden hover:border-brand-mint/30 transition-all hover:-translate-y-1">
               <div className="aspect-video relative">
-                <img src={course.coverImage} alt={course.name} className="w-full h-full object-cover" />
+                <link rel="preload" as="image" href={course.coverImage} fetchPriority="high" />
+                <img src={course.coverImage} alt={course.name} fetchPriority="high" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                 <div className="absolute bottom-3 left-3 right-3">
                   <div className="text-sm font-bold text-white line-clamp-1">{course.name}</div>

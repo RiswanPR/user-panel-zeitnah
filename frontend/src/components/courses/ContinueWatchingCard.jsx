@@ -15,7 +15,8 @@ export default function ContinueWatchingCard({ course }) {
       <div className="absolute top-0 right-0 w-64 h-64 bg-brand-mint/10 blur-[80px] rounded-full pointer-events-none -mr-20 -mt-20" />
       
       <div className="w-full md:w-48 h-28 rounded-xl overflow-hidden shrink-0 relative">
-        <img src={coverImage} alt={name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        <link rel="preload" as="image" href={coverImage} fetchPriority="high" />
+        <img src={coverImage} alt={name} fetchPriority="high" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors" />
         <div className="absolute inset-0 flex items-center justify-center">
           <PlayCircle className="w-10 h-10 text-white/80 group-hover:text-brand-mint transition-colors group-hover:scale-110 drop-shadow-lg" />
