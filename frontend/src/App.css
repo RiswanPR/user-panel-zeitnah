@@ -59,3 +59,64 @@ img {
   height: auto;
   display: block;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   PAGE TRANSITION SYSTEM
+   ═══════════════════════════════════════════════════════════════ */
+
+.page-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.page-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.page-exit-active {
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 200ms ease-in,
+              transform 200ms ease-in;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PREMIUM LINK UNDERLINE ANIMATION
+   ═══════════════════════════════════════════════════════════════ */
+
+.link-underline {
+  position: relative;
+  display: inline-block;
+}
+
+.link-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.link-underline:hover::after {
+  width: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PERFORMANCE — OFF-SCREEN OPTIMIZATION
+   ═══════════════════════════════════════════════════════════════ */
+
+.offscreen-optimize {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px;
+}

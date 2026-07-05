@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -7,25 +7,20 @@ import {
   BarChart3,
   Star,
   User,
-  Menu,
-  X,
   LogOut,
-  Shield,
+  Search,
 } from "lucide-react";
+import { AuthContext } from "../context/AuthContext";
+import { getUploadUrl } from "../utils/courseUi";
+import PageTransition from "../components/ui/PageTransition";
 
 const navItems = [
-  // { path: "/dashboard", label: "Dashboard", icon: Home },
+  { path: "/dashboard", label: "Dashboard", icon: Home },
   { path: "/courses", label: "Courses", icon: BookOpen },
-  // { path: "/my-learning", label: "My Learning", icon: BarChart3 },
-  // { path: "/my-points", label: "My Points", icon: Star },
+  { path: "/my-learning", label: "My Learning", icon: BarChart3 },
+  { path: "/my-points", label: "My Points", icon: Star },
   { path: "/profile", label: "Profile", icon: User },
 ];
-
-const sidebarVariants = {
-  hidden: { x: -280, opacity: 0 },
-  visible: { x: 0, opacity: 1, transition: { type: "spring", stiffness: 300, damping: 30 } },
-  exit: { x: -280, opacity: 0, transition: { duration: 0.2 } },
-};
 
 const navItemVariants = {
   hidden: { opacity: 0, x: -12 },
@@ -38,13 +33,28 @@ const navItemVariants = {
 
 export default function MainLayout({ children }) {
   const location = useLocation();
-  // const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, logout } = useContext(AuthContext);
 
   const isActive = (path) =>
     location.pathname === path || location.pathname.startsWith(`${path}/`);
 
+  // Get user initials for avatar fallback
+  const userInitials = user?.name
+    ? user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "Z";
+
+  const avatarUrl = user?.avatar ? getUploadUrl(user.avatar) : null;
+
   return (
     <div className="min-h-screen bg-bg-base text-white font-body antialiased flex flex-col md:flex-row">
+
+      {/* Ambient background */}
+      <div className="ambient-glow inset-0" />
 
       {/* ═══════════════════════════════════════════════
           DESKTOP SIDEBAR — Luxury vertical navigation
@@ -142,15 +152,29 @@ export default function MainLayout({ children }) {
           {/* ── User Card ── */}
           <div className="p-4 flex items-center gap-3 select-none">
             <div className="relative">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-mint/20 to-brand-navy/40 border border-brand-mint/25 flex items-center justify-center">
-                <span className="text-xs font-heading font-bold text-brand-mint">Z</span>
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-mint/20 to-brand-navy/40 border border-brand-mint/25 flex items-center justify-center overflow-hidden">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={user?.name || "User"}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-xs font-heading font-bold text-brand-mint">
+                    {userInitials}
+                  </span>
+                )}
               </div>
               {/* Online indicator */}
               <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-success border-2 border-bg-surface" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold truncate text-white">Zeitnah User</p>
-              <p className="text-[10px] text-text-muted truncate">Active Session</p>
+              <p className="text-xs font-semibold truncate text-white">
+                {user?.name || "Zeitnah User"}
+              </p>
+              <p className="text-[10px] text-text-muted truncate">
+                {user?.email || "Active Session"}
+              </p>
             </div>
           </div>
         </div>
@@ -162,7 +186,7 @@ export default function MainLayout({ children }) {
       <div className="fixed bottom-0 inset-x-0 z-50 md:hidden pb-[env(safe-area-inset-bottom)]">
         <div className="mx-3 mb-3 px-2 py-2 rounded-2xl bg-bg-surface/80 border border-border-subtle backdrop-blur-2xl shadow-[0_-8px_32px_rgba(0,0,0,0.4)]">
           <nav className="flex items-center justify-around">
-            {navItems.map((item) => {
+            {navItems.slice(0, 5).map((item) => {
               const active = isActive(item.path);
               const Icon = item.icon;
 
@@ -201,9 +225,11 @@ export default function MainLayout({ children }) {
       {/* ═══════════════════════════════════════════════
           MAIN CONTENT AREA
           ═══════════════════════════════════════════════ */}
-      <main className="flex-1 min-w-0 pb-24 md:pb-0">
+      <main className="flex-1 min-w-0 pb-24 md:pb-0 relative z-10">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          {children || <Outlet />}
+          <PageTransition key={location.pathname}>
+            {children || <Outlet />}
+          </PageTransition>
         </div>
       </main>
     </div>

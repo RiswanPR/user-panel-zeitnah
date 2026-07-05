@@ -1,129 +1,269 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { PlayCircle, Award, Clock, Trophy, Flame, TrendingUp, CheckCircle, Search } from 'lucide-react';
-import api from '../../services/api';
+import { useContext } from "react";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import {
+  Award,
+  BookOpen,
+  CheckCircle2,
+  Clock,
+  Flame,
+  Sparkles,
+  Star,
+  TrendingUp,
+  Zap,
+  ArrowRight,
+} from "lucide-react";
+import { useApi } from "../../hooks/useApi";
+import { AuthContext } from "../../context/AuthContext";
+import { Skeleton, SkeletonCard } from "../../components/ui/Skeleton";
+import ErrorState from "../../components/ui/ErrorState";
+import EmptyState from "../../components/ui/EmptyState";
 
-export default function Dashboard() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+const formatMinutes = (minutes = 0) => {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const remaining = minutes % 60;
+  return remaining ? `${hours}h ${remaining}m` : `${hours}h`;
+};
 
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const res = await api.get('/courses/my-learning');
-        setData(res.data);
-      } catch (err) {
-        console.error("Failed to load dashboard", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDashboard();
-  }, []);
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+};
+
+function Dashboard() {
+  const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
+  const { data, loading, error, refetch } = useApi("/courses/my-learning", {
+    cacheTTL: 60000,
+  });
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-mint"></div>
+      <div className="space-y-6">
+        <Skeleton className="h-40 rounded-2xl" />
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-2xl" />
+          ))}
+        </div>
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {[...Array(3)].map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
       </div>
     );
   }
 
-  if (!data) return <div className="text-center text-text-muted">Unable to load dashboard.</div>;
+  if (error) {
+    return <ErrorState onRetry={refetch} />;
+  }
 
-  const { summary, courses, gamification } = data;
+  const summary = data?.summary || {};
+  const courses = data?.courses || [];
+  const activeCourses = courses.filter(
+    (c) => c.learningProgress && c.learningProgress.completionPercent < 100
+  );
+  const completedCourses = courses.filter(
+    (c) => c.learningProgress?.completionPercent >= 100
+  );
+  const firstName = user?.name?.split(" ")[0] || "Learner";
+
+  const stats = [
+    { icon: BookOpen, label: "Courses", value: summary.totalCourses || 0 },
+    { icon: CheckCircle2, label: "Completed", value: summary.completedCourses || 0 },
+    { icon: Clock, label: "Watch Time", value: formatMinutes(summary.totalWatchMinutes || 0) },
+    { icon: Flame, label: "Streak", value: `${summary.learningStreak || 0}d` },
+  ];
 
   return (
-    <div className="max-w-6xl mx-auto space-y-10 py-6">
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-between items-end">
-        <div>
-          <h1 className="text-3xl font-extrabold text-white">My Learning</h1>
-          <p className="text-text-muted mt-2">Track your progress, achievements, and courses.</p>
-        </div>
-      </motion.div>
+    <div className="space-y-6 sm:space-y-8">
 
-      {/* Stats Grid */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { icon: <PlayCircle />, label: 'Active Courses', value: summary.activeCourses, color: 'text-brand-mint' },
-          { icon: <Clock />, label: 'Watch Hours', value: Math.round(summary.totalWatchMinutes / 60), color: 'text-info' },
-          { icon: <Flame />, label: 'Day Streak', value: summary.learningStreak, color: 'text-warning' },
-          { icon: <Trophy />, label: 'Total Points', value: gamification?.totalPoints || 0, color: 'text-brand-yellow' }
-        ].map((stat, i) => (
-          <div key={i} className="bg-bg-card border border-white/10 rounded-2xl p-5 flex flex-col hover:border-white/20 transition-colors cursor-default group">
-            <div className={`p-3 bg-white/5 rounded-xl w-12 h-12 flex items-center justify-center mb-4 ${stat.color} group-hover:scale-110 transition-transform`}>
-              {stat.icon}
+      {/* ── Greeting Hero ── */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="relative overflow-hidden rounded-2xl bg-bg-card border border-border-default"
+      >
+        <div className="gradient-line-top" />
+        <div className="absolute top-0 right-0 w-[400px] h-[300px] bg-brand-mint/4 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[300px] h-[200px] bg-brand-yellow/3 rounded-full blur-[100px] pointer-events-none" />
+
+        <div className="relative p-6 sm:p-8 lg:p-10">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-lg bg-brand-mint/8 border border-brand-mint/15 px-3 py-1.5 text-xs font-semibold text-brand-mint uppercase tracking-wider mb-3">
+                <Sparkles className="w-3.5 h-3.5" />
+                {getGreeting()}
+              </div>
+              <h1 className="font-heading font-extrabold text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight leading-none">
+                Welcome back, <span className="text-gradient">{firstName}</span>
+              </h1>
+              <p className="text-sm font-medium text-text-muted mt-3 max-w-lg leading-relaxed">
+                {activeCourses.length > 0
+                  ? `You have ${activeCourses.length} course${activeCourses.length !== 1 ? "s" : ""} in progress. Keep up the momentum!`
+                  : "Explore courses and start your learning journey today."}
+              </p>
             </div>
-            <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
-            <div className="text-xs font-semibold text-text-muted uppercase tracking-wider">{stat.label}</div>
+
+            {/* Completion circle */}
+            <div className="relative h-24 w-24 sm:h-28 sm:w-28 mx-auto sm:mx-0 shrink-0">
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+                <motion.circle
+                  cx="60" cy="60" r="52" fill="none" stroke="url(#dashGrad)" strokeWidth="8" strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 52}`}
+                  initial={{ strokeDashoffset: 2 * Math.PI * 52 }}
+                  animate={{ strokeDashoffset: 2 * Math.PI * 52 * (1 - (summary.overallCompletionPercent || 0) / 100) }}
+                  transition={{ duration: 1.2, ease: "easeOut" }}
+                />
+                <defs>
+                  <linearGradient id="dashGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#9FD5B2" />
+                    <stop offset="100%" stopColor="#F6ED4A" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-xl sm:text-2xl font-heading font-extrabold text-white">
+                  {summary.overallCompletionPercent || 0}%
+                </span>
+                <span className="text-[9px] font-semibold uppercase tracking-wider text-text-muted">Overall</span>
+              </div>
+            </div>
           </div>
+        </div>
+      </motion.section>
+
+      {/* ── Stats Grid ── */}
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat, i) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + i * 0.05 }}
+            className="rounded-2xl border border-border-default bg-bg-card p-5 flex items-center justify-between group hover:border-brand-mint/15 transition-colors relative overflow-hidden"
+          >
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-text-muted mb-1">{stat.label}</p>
+              <p className="text-xl sm:text-2xl font-heading font-extrabold text-white truncate">{stat.value}</p>
+            </div>
+            <div className="h-11 w-11 rounded-xl bg-brand-mint/8 border border-brand-mint/15 flex items-center justify-center text-brand-mint shrink-0 ml-3 group-hover:bg-brand-mint/12 transition-colors">
+              <stat.icon className="w-5 h-5" />
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* ── Continue Learning ── */}
+      {activeCourses.length > 0 && (
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg sm:text-xl font-heading font-bold text-white">Continue Learning</h2>
+            <button
+              type="button"
+              onClick={() => navigate("/courses")}
+              className="text-xs font-semibold text-brand-mint hover:text-white transition-colors inline-flex items-center gap-1 cursor-pointer"
+            >
+              View All
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {activeCourses.slice(0, 3).map((course, i) => {
+              const progress = course.learningProgress;
+              const percent = progress?.completionPercent || 0;
+              return (
+                <motion.button
+                  key={course._id}
+                  type="button"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.35 + i * 0.06 }}
+                  onClick={() => navigate(`/courses/${course._id}/chapters`)}
+                  className="group text-left rounded-2xl border border-border-default bg-bg-card p-5 hover:border-brand-mint/20 transition-all duration-300 hover:-translate-y-0.5 cursor-pointer relative overflow-hidden w-full"
+                >
+                  <div className="gradient-line-top" />
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-text-muted mb-1">Course</p>
+                      <h3 className="font-semibold text-white text-base tracking-tight line-clamp-2 group-hover:text-brand-mint transition-colors">
+                        {course.name}
+                      </h3>
+                    </div>
+                    <span className="text-sm font-bold text-brand-mint bg-brand-mint/8 px-2.5 py-0.5 rounded-lg border border-brand-mint/15 shrink-0">
+                      {percent}%
+                    </span>
+                  </div>
+                  <p className="text-xs font-medium text-text-muted mb-3">
+                    {progress?.completedClasses || 0} of {progress?.totalClasses || 0} classes
+                  </p>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${percent}%` }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
+                      className="h-full rounded-full bg-gradient-to-r from-brand-mint to-brand-yellow"
+                    />
+                  </div>
+                </motion.button>
+              );
+            })}
+          </div>
+        </motion.section>
+      )}
+
+      {/* ── Quick Actions ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="grid gap-4 grid-cols-1 sm:grid-cols-3"
+      >
+        {[
+          { label: "Browse Courses", desc: "Explore all available courses", icon: BookOpen, path: "/courses" },
+          { label: "View Progress", desc: "Track your learning analytics", icon: TrendingUp, path: "/my-learning" },
+          { label: "My Profile", desc: "Settings & achievements", icon: Star, path: "/profile" },
+        ].map((action, i) => (
+          <button
+            key={action.path}
+            type="button"
+            onClick={() => navigate(action.path)}
+            className="group rounded-2xl border border-border-default bg-bg-card p-5 flex items-center gap-4 hover:border-brand-mint/20 transition-all duration-200 w-full text-left cursor-pointer"
+          >
+            <div className="h-11 w-11 rounded-xl bg-brand-mint/8 border border-brand-mint/15 flex items-center justify-center text-brand-mint shrink-0 group-hover:bg-brand-mint/12 transition-colors">
+              <action.icon className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-white group-hover:text-brand-mint transition-colors truncate">{action.label}</p>
+              <p className="text-xs font-medium text-text-muted mt-0.5">{action.desc}</p>
+            </div>
+          </button>
         ))}
       </motion.div>
 
-      {/* In Progress Courses */}
-      <div>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-white">Continue Learning</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {courses.filter(c => !c.learningProgress?.certificateEligible).map(course => (
-            <div key={course._id} className="bg-bg-card border border-white/10 rounded-2xl overflow-hidden hover:border-brand-mint/30 transition-all hover:-translate-y-1">
-              <div className="aspect-video relative">
-                <link rel="preload" as="image" href={course.coverImage} fetchPriority="high" />
-                <img src={course.coverImage} alt={course.name} fetchPriority="high" decoding="async" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                <div className="absolute bottom-3 left-3 right-3">
-                  <div className="text-sm font-bold text-white line-clamp-1">{course.name}</div>
-                  <div className="text-xs text-brand-mint mt-1">{course.learningProgress?.completionPercent}% Completed</div>
-                </div>
-              </div>
-              <div className="p-4">
-                <div className="w-full bg-white/10 rounded-full h-1.5 mb-4">
-                  <div className="bg-brand-mint h-1.5 rounded-full" style={{ width: `${course.learningProgress?.completionPercent || 0}%` }} />
-                </div>
-                <a href={`/courses/${course._id}`} className="block w-full text-center py-2 bg-brand-mint/10 text-brand-mint font-semibold rounded-xl hover:bg-brand-mint hover:text-black transition-colors">
-                  Resume Course
-                </a>
-              </div>
-            </div>
-          ))}
-          {courses.filter(c => !c.learningProgress?.certificateEligible).length === 0 && (
-            <div className="col-span-full py-12 text-center text-text-muted border border-dashed border-white/20 rounded-2xl">
-              <Search className="w-8 h-8 mx-auto mb-3 opacity-50" />
-              <p>You don't have any active courses.</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Completed Courses & Certificates */}
-      <div>
-        <h2 className="text-xl font-bold text-white mb-6">Completed Courses</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {courses.filter(c => c.learningProgress?.certificateEligible).map(course => (
-            <div key={course._id} className="bg-bg-card border border-success/20 rounded-2xl p-5 flex items-center gap-4">
-              <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0">
-                <img src={course.coverImage} alt={course.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-white text-sm line-clamp-1">{course.name}</h3>
-                <div className="flex items-center gap-1.5 text-success text-xs mt-1.5 font-medium">
-                  <CheckCircle className="w-3.5 h-3.5" />
-                  Completed
-                </div>
-              </div>
-              <button className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider border border-white/20 rounded-lg hover:bg-white hover:text-black transition-colors shrink-0">
-                Certificate
-              </button>
-            </div>
-          ))}
-          {courses.filter(c => c.learningProgress?.certificateEligible).length === 0 && (
-            <div className="col-span-full py-8 text-center text-text-muted text-sm border border-dashed border-white/10 rounded-2xl">
-              No completed courses yet.
-            </div>
-          )}
-        </div>
-      </div>
+      {/* ── Empty state if no courses ── */}
+      {courses.length === 0 && (
+        <EmptyState
+          icon={BookOpen}
+          title="No courses yet"
+          description="Start your learning journey by exploring our available courses."
+          action={() => navigate("/courses")}
+          actionLabel="Browse Courses"
+        />
+      )}
     </div>
   );
 }
+
+export default Dashboard;

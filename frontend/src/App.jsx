@@ -9,6 +9,7 @@ import VerifyRegisterOtp from "./pages/auth/VerifyRegisterOtp";
 
 // Context
 import { SocketProvider } from "./context/SocketContext";
+import { ToastProvider } from "./components/ui/Toast";
 
 // Lazy Loaded Application Views
 const ActiveSessions = React.lazy(() => import("./pages/sessions/ActiveSessions"));
@@ -22,63 +23,125 @@ const ClassView = React.lazy(() => import("./pages/courses/ClassView"));
 const MyLearning = React.lazy(() => import("./pages/learning/MyLearning"));
 const Dashboard = React.lazy(() => import("./pages/learning/Dashboard"));
 const MyPoints = React.lazy(() => import("./pages/learning/MyPoints"));
+const NotFoundPage = React.lazy(() => import("./pages/NotFoundPage"));
 
 import ProtectedRoute from "./components/common/ProtectedRoute/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";
 
+/**
+ * Premium page loader with branded skeleton.
+ */
 const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-[60vh]">
-    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-mint"></div>
+  <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+    <div className="relative">
+      <div className="w-10 h-10 rounded-full border-2 border-white/[0.06]" />
+      <div className="absolute inset-0 w-10 h-10 rounded-full border-2 border-transparent border-t-brand-mint animate-spin" />
+    </div>
+    <p className="text-xs font-semibold uppercase tracking-widest text-text-muted animate-pulse">
+      Loading...
+    </p>
   </div>
 );
 
+/**
+ * Error Boundary for graceful error handling.
+ */
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("[ErrorBoundary]", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-bg-base flex items-center justify-center px-6">
+          <div className="text-center max-w-md">
+            <div className="h-16 w-16 rounded-2xl bg-danger/8 border border-danger/15 flex items-center justify-center text-danger mx-auto mb-5">
+              <span className="text-2xl font-bold">!</span>
+            </div>
+            <h1 className="text-2xl font-heading font-bold text-white mb-3">
+              Something went wrong
+            </h1>
+            <p className="text-sm font-medium text-text-muted mb-6 leading-relaxed">
+              An unexpected error occurred. Please refresh the page to continue.
+            </p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="btn-primary py-3 px-6"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 function App() {
   return (
-    <BrowserRouter>
-      {/* We wrap ProtectedRoute contents in SocketProvider if we only want it for logged-in users, but it's easier to put it inside ProtectedRoute or wrap everything and handle null user inside provider. Let's keep it simple. */}
-      <Routes>
-        
-        {/* PUBLIC AUTHENTICATION ROUTES */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/verify-login-otp" element={<VerifyOtp />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/verify-register-otp" element={<VerifyRegisterOtp />} />
+    <ErrorBoundary>
+      <ToastProvider>
+        <BrowserRouter>
+          <Routes>
+            
+            {/* PUBLIC AUTHENTICATION ROUTES */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/verify-login-otp" element={<VerifyOtp />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/verify-register-otp" element={<VerifyRegisterOtp />} />
 
-        {/* SECURE APPLICATION ROUTING */}
-        <Route
-          element={
-            <ProtectedRoute>
-              <SocketProvider>
-                <MainLayout />
-              </SocketProvider>
-            </ProtectedRoute>
-          }
-        >
-          <Route path="/" element={<Navigate to="/dashboard" />} />
-          <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
-          <Route path="/profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
-          <Route path="/profile/edit" element={<Suspense fallback={<PageLoader />}><EditProfile /></Suspense>} />
-          <Route path="/courses" element={<Suspense fallback={<PageLoader />}><Courses /></Suspense>} />
-          <Route path="/courses/:courseId" element={<Suspense fallback={<PageLoader />}><CourseChapters /></Suspense>} />
-          <Route path="/courses/:courseId/chapters" element={<Suspense fallback={<PageLoader />}><CourseChapters /></Suspense>} />
-          <Route path="/courses/:courseId/chapters/:chapterCode/classes" element={<Suspense fallback={<PageLoader />}><CourseClasses /></Suspense>} />
-          <Route path="/courses/class/:classId" element={<Suspense fallback={<PageLoader />}><ClassView /></Suspense>} />
-          <Route path="/my-learning" element={<Suspense fallback={<PageLoader />}><MyLearning /></Suspense>} />
-          <Route path="/my-points" element={<Suspense fallback={<PageLoader />}><MyPoints /></Suspense>} />
-          <Route path="/active-sessions" element={<Suspense fallback={<PageLoader />}><ActiveSessions /></Suspense>} />
-          <Route path="/audit-logs" element={<Suspense fallback={<PageLoader />}><AuditLogs /></Suspense>} />
-        </Route>
+            {/* SECURE APPLICATION ROUTING */}
+            <Route
+              element={
+                <ProtectedRoute>
+                  <SocketProvider>
+                    <MainLayout />
+                  </SocketProvider>
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/" element={<Navigate to="/dashboard" />} />
+              <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
+              <Route path="/profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
+              <Route path="/profile/edit" element={<Suspense fallback={<PageLoader />}><EditProfile /></Suspense>} />
+              <Route path="/courses" element={<Suspense fallback={<PageLoader />}><Courses /></Suspense>} />
+              <Route path="/courses/:courseId" element={<Suspense fallback={<PageLoader />}><CourseChapters /></Suspense>} />
+              <Route path="/courses/:courseId/chapters" element={<Suspense fallback={<PageLoader />}><CourseChapters /></Suspense>} />
+              <Route path="/courses/:courseId/chapters/:chapterCode/classes" element={<Suspense fallback={<PageLoader />}><CourseClasses /></Suspense>} />
+              <Route path="/courses/class/:classId" element={<Suspense fallback={<PageLoader />}><ClassView /></Suspense>} />
+              <Route path="/my-learning" element={<Suspense fallback={<PageLoader />}><MyLearning /></Suspense>} />
+              <Route path="/my-points" element={<Suspense fallback={<PageLoader />}><MyPoints /></Suspense>} />
+              <Route path="/active-sessions" element={<Suspense fallback={<PageLoader />}><ActiveSessions /></Suspense>} />
+              <Route path="/audit-logs" element={<Suspense fallback={<PageLoader />}><AuditLogs /></Suspense>} />
+            </Route>
 
-        {/* FALLBACK */}
-        <Route
-          path="*"
-          element={
-            <Navigate to="/dashboard" />
-          }
-        />
+            {/* 404 — NOT FOUND */}
+            <Route
+              path="*"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <NotFoundPage />
+                </Suspense>
+              }
+            />
 
-      </Routes>
-    </BrowserRouter>
+          </Routes>
+        </BrowserRouter>
+      </ToastProvider>
+    </ErrorBoundary>
   );
 }
 

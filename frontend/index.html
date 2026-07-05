@@ -1,17 +1,67 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    
+    <!-- SEO Meta -->
+    <title>Zeitnah Academy — Premium Learning Platform</title>
+    <meta name="description" content="Zeitnah Academy is a premium learning management platform. Access structured courses, track your progress, and achieve your educational goals with an enterprise-grade experience." />
     <meta name="theme-color" content="#070B14" />
-    <meta name="description" content="Zeitnah — Premium learning management platform for modern education. Access courses, track progress, and achieve your learning goals." />
-    <title>Zeitnah — Premium Learning Platform</title>
+    <meta name="color-scheme" content="dark" />
 
-    <!-- Google Fonts: Sora (headings) + Inter (body) -->
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Zeitnah Academy — Premium Learning Platform" />
+    <meta property="og:description" content="Access structured courses, track your progress, and achieve your educational goals." />
+    <meta property="og:site_name" content="Zeitnah Academy" />
+    <meta property="og:image" content="/zeitnah-logo.svg" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Zeitnah Academy — Premium Learning Platform" />
+    <meta name="twitter:description" content="Access structured courses, track your progress, and achieve your educational goals." />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Zeitnah" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+
+    <!-- Resource Hints -->
+    <link rel="dns-prefetch" href="https://beta.zeitnahacademy.com" />
+    <link rel="preconnect" href="https://beta.zeitnahacademy.com" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- Fonts — only critical weights, swap display -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap"
+      />
+    </noscript>
+
+    <!-- Critical inline styles for instant first paint -->
+    <style>
+      html, body { background-color: #070B14; color: #fff; margin: 0; padding: 0; }
+      #root { min-height: 100vh; }
+    </style>
   </head>
   <body>
     <div id="root"></div>

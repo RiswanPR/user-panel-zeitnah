@@ -1,0 +1,45 @@
+{
+  "name": "Zeitnah Academy — Premium Learning Platform",
+  "short_name": "Zeitnah",
+  "description": "Premium learning management platform for modern education. Access courses, track progress, and achieve your learning goals.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#070B14",
+  "theme_color": "#070B14",
+  "orientation": "any",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "My Courses",
+      "short_name": "Courses",
+      "url": "/courses",
+      "description": "Browse and continue your courses"
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "url": "/dashboard",
+      "description": "View your learning dashboard"
+    },
+    {
+      "name": "Profile",
+      "short_name": "Profile",
+      "url": "/profile",
+      "description": "Manage your profile and settings"
+    }
+  ]
+}
