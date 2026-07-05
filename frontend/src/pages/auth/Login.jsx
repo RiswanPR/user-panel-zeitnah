@@ -130,7 +130,7 @@ function Login() {
               <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[rgba(159,213,178,0.25)] to-transparent z-20" />
 
               <h2 className="text-2xl sm:text-3xl font-heading font-black text-white tracking-tight leading-none mb-2 text-left">
-                Welcome Back
+                Welcome Richu
               </h2>
 
               <p className="text-xs sm:text-sm font-medium text-white/45 mb-8 text-left">
