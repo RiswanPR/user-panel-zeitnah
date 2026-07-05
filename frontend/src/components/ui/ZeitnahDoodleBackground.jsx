@@ -1,6 +1,6 @@
-import React from "react";
+import React, { memo } from "react";
 
-export default function ZeitnahVibrantBackground() {
+const ZeitnahVibrantBackground = memo(function ZeitnahVibrantBackground() {
   return (
     <div className="absolute inset-0 pointer-events-none select-none overflow-hidden z-0 accelerated-glow-canvas">
 
@@ -121,4 +121,6 @@ export default function ZeitnahVibrantBackground() {
 
     </div>
   );
-}
+});
+
+export default ZeitnahVibrantBackground;

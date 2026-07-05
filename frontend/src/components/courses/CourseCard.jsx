@@ -42,6 +42,7 @@ function CourseCard({ course }) {
           src={imageUrl}
           alt={course.name}
           fetchPriority="high"
+          decoding="async"
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
 

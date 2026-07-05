@@ -40,6 +40,7 @@ function ChapterCard({ chapter, index, onOpen }) {
             src={chapter.coverImage} 
             alt={chapter.title} 
             fetchPriority="high"
+            decoding="async"
             className="w-full h-full object-cover opacity-10 transition-transform duration-700 group-hover:scale-105 group-hover:opacity-20"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-bg-card via-bg-card/90 to-transparent" />

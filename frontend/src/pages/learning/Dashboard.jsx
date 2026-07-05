@@ -70,7 +70,7 @@ export default function Dashboard() {
             <div key={course._id} className="bg-bg-card border border-white/10 rounded-2xl overflow-hidden hover:border-brand-mint/30 transition-all hover:-translate-y-1">
               <div className="aspect-video relative">
                 <link rel="preload" as="image" href={course.coverImage} fetchPriority="high" />
-                <img src={course.coverImage} alt={course.name} fetchPriority="high" className="w-full h-full object-cover" />
+                <img src={course.coverImage} alt={course.name} fetchPriority="high" decoding="async" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                 <div className="absolute bottom-3 left-3 right-3">
                   <div className="text-sm font-bold text-white line-clamp-1">{course.name}</div>
@@ -103,7 +103,7 @@ export default function Dashboard() {
           {courses.filter(c => c.learningProgress?.certificateEligible).map(course => (
             <div key={course._id} className="bg-bg-card border border-success/20 rounded-2xl p-5 flex items-center gap-4">
               <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0">
-                <img src={course.coverImage} alt={course.name} className="w-full h-full object-cover" />
+                <img src={course.coverImage} alt={course.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-white text-sm line-clamp-1">{course.name}</h3>

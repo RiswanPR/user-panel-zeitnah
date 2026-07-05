@@ -48,6 +48,7 @@ function ClassCard({ cls, courseType, index, onLockedClick, onOpen }) {
                   src={thumbnailUrl}
                   alt={cls.title}
                   fetchPriority="high"
+                  decoding="async"
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
               </>
