@@ -7,8 +7,7 @@ import {
   BarChart3,
   Star,
   User,
-  LogOut,
-  Search,
+  Users
 } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { getUploadUrl } from "../utils/courseUi";
@@ -18,6 +17,7 @@ const navItems = [
   { path: "/dashboard", label: "Dashboard", icon: Home },
   { path: "/courses", label: "Courses", icon: BookOpen },
   { path: "/my-learning", label: "My Learning", icon: BarChart3 },
+  { path: "/community", label: "Community", icon: Users },
   { path: "/my-points", label: "My Points", icon: Star },
   { path: "/profile", label: "Profile", icon: User },
 ];
@@ -33,7 +33,7 @@ const navItemVariants = {
 
 export default function MainLayout({ children }) {
   const location = useLocation();
-  const { user, logout } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
 
   const isActive = (path) =>
     location.pathname === path || location.pathname.startsWith(`${path}/`);

@@ -21,7 +21,7 @@ import { getUploadUrl } from "../../utils/courseUi";
 
 function Profile() {
   const navigate = useNavigate();
-  const { user, setUser, logout } = useContext(AuthContext);
+  const { setUser, logout } = useContext(AuthContext);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);

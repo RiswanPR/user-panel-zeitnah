@@ -113,8 +113,10 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
 
   // HLS Setup
   useEffect(() => {
-    setPlaybackError(false);
-    setPlaying(false);
+    Promise.resolve().then(() => {
+      setPlaybackError(false);
+      setPlaying(false);
+    });
 
     if (!src || !videoRef.current) return;
     const video = videoRef.current;

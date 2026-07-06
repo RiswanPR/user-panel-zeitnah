@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useContext, useMemo } from "react";
+import { useEffect, useRef, useState, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -9,7 +9,6 @@ import {
   FileText,
   PlayCircle,
 } from "lucide-react";
-import { getDeviceId } from "../../utils/device";
 import api from "../../services/api";
 import {
   formatDuration,

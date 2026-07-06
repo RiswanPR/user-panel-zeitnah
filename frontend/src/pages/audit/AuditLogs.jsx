@@ -7,7 +7,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  Filter,
   History,
   RefreshCw,
   Shield,

@@ -2,16 +2,16 @@ import { useContext } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
-  Award,
-  BookOpen,
   CheckCircle2,
   Clock,
   Flame,
   Sparkles,
   Star,
   TrendingUp,
-  Zap,
   ArrowRight,
+  Users,
+  MessageCircle,
+  BookOpen,
 } from "lucide-react";
 import { useApi } from "../../hooks/useApi";
 import { AuthContext } from "../../context/AuthContext";
@@ -66,9 +66,6 @@ function Dashboard() {
   const courses = data?.courses || [];
   const activeCourses = courses.filter(
     (c) => c.learningProgress && c.learningProgress.completionPercent < 100
-  );
-  const completedCourses = courses.filter(
-    (c) => c.learningProgress?.completionPercent >= 100
   );
   const firstName = user?.name?.split(" ")[0] || "Learner";
 
@@ -234,7 +231,7 @@ function Dashboard() {
           { label: "Browse Courses", desc: "Explore all available courses", icon: BookOpen, path: "/courses" },
           { label: "View Progress", desc: "Track your learning analytics", icon: TrendingUp, path: "/my-learning" },
           { label: "My Profile", desc: "Settings & achievements", icon: Star, path: "/profile" },
-        ].map((action, i) => (
+        ].map((action) => (
           <button
             key={action.path}
             type="button"
@@ -251,6 +248,72 @@ function Dashboard() {
           </button>
         ))}
       </motion.div>
+
+      {/* ── Community Activity Widget ── */}
+      <motion.section
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="mt-8"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg sm:text-xl font-heading font-bold text-white flex items-center gap-2">
+            <Users className="w-5 h-5 text-brand-mint" />
+            Community Activity
+          </h2>
+          <button
+            type="button"
+            onClick={() => navigate("/community")}
+            className="text-xs font-semibold text-brand-mint hover:text-white transition-colors inline-flex items-center gap-1 cursor-pointer"
+          >
+            Enter Community
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+          {/* Latest Discussions */}
+          <div className="rounded-2xl border border-border-default bg-bg-card p-5 hover:border-brand-mint/15 transition-colors">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-4 flex items-center gap-2">
+              <MessageCircle className="w-3.5 h-3.5" /> Latest Discussions
+            </h3>
+            <div className="space-y-4">
+              {[1, 2].map((i) => (
+                <div key={i} className="flex gap-3 cursor-pointer group">
+                  <div className="w-8 h-8 rounded-full bg-brand-mint/20 shrink-0 overflow-hidden mt-0.5 border border-brand-mint/30">
+                    <img src={`https://i.pravatar.cc/150?img=${i+10}`} alt="Avatar" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-text-secondary group-hover:text-white transition-colors line-clamp-2">
+                      Does anyone have resources for Advanced System Design patterns?
+                    </p>
+                    <p className="text-[10px] text-text-muted mt-1 font-medium">Alex Developer • 2h ago</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Trending Stories */}
+          <div className="rounded-2xl border border-border-default bg-bg-card p-5 hover:border-brand-mint/15 transition-colors">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-4 flex items-center gap-2">
+              <Flame className="w-3.5 h-3.5" /> Trending Stories
+            </h3>
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group">
+                  <div className="w-14 h-14 rounded-full p-[2px] bg-gradient-to-tr from-brand-yellow to-brand-mint group-hover:scale-105 transition-transform">
+                    <div className="w-full h-full rounded-full bg-bg-card border-2 border-bg-base overflow-hidden">
+                      <img src={`https://i.pravatar.cc/150?img=${i+20}`} alt="Avatar" className="w-full h-full object-cover" />
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-semibold text-text-muted group-hover:text-white transition-colors truncate w-14 text-center">Mentor {i}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </motion.section>
 
       {/* ── Empty state if no courses ── */}
       {courses.length === 0 && (

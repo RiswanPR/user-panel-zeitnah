@@ -116,12 +116,17 @@ export function useApi(url, {
   // Initial fetch
   useEffect(() => {
     mountedRef.current = true;
-    if (enabled) fetchData();
+    if (enabled) {
+      // Delay fetching by a tick to prevent React 19 cascading renders warning
+      Promise.resolve().then(() => {
+        if (mountedRef.current) fetchData();
+      });
+    }
     return () => {
       mountedRef.current = false;
       abortRef.current?.abort();
     };
-  }, [enabled, fetchData]);
+  }, [fetchData, enabled]);
 
   const refetch = useCallback(() => fetchData(true), [fetchData]);
   const mutate = useCallback((newData) => {

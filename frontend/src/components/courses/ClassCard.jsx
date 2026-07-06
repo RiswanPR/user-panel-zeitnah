@@ -7,7 +7,7 @@ import {
   PlayCircle,
   Video,
 } from "lucide-react";
-import { formatDuration, getCourseTypeLabel, getUploadUrl } from "../../utils/courseUi";
+import { formatDuration, getCourseTypeLabel } from "../../utils/courseUi";
 
 function ClassCard({ cls, courseType, index, onLockedClick, onOpen }) {
   const thumbnailUrl = cls.coverImage;

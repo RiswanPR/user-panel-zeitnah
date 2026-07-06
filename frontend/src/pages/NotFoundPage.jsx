@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ArrowLeft, Home, BookOpen, Search } from 'lucide-react';
+import { ArrowLeft, Home, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function NotFoundPage() {

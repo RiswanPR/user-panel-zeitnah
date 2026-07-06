@@ -1,31 +1,31 @@
 import {
-  FiHome,
-  FiBookOpen,
-  FiUsers,
-  FiBriefcase,
-  FiUser,
-  FiAward,
-  FiTrendingUp,
-} from "react-icons/fi";
+  BookOpen,
+  Users,
+  User,
+} from "lucide-react";
 
 export const navItems = [
 
 //   {
 //     name: "Home",
 //     path: "/",
-//     icon: FiHome,
+//     icon: Home,
 //   },
 
   {
     name: "Courses",
     path: "/courses",
-    icon: FiBookOpen,
+    icon: BookOpen,
   },
-
+  {
+    name: "Community",
+    path: "/community",
+    icon: Users,
+  },
   {
     name: "Profile",
     path: "/profile",
-    icon: FiUser,
+    icon: User,
   },
 
 ];

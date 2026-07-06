@@ -6,7 +6,6 @@ function Register() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("register");
   const [registerData, setRegisterData] = useState({ name: "", email: "" });
-  const [loginData, setLoginData] = useState({ email: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -18,12 +17,6 @@ function Register() {
   const handleRegisterChange = (e) => {
     const { name, value } = e.target;
     setRegisterData((d) => ({ ...d, [name]: value }));
-    if (error) setError("");
-  };
-
-  const handleLoginChange = (e) => {
-    const { name, value } = e.target;
-    setLoginData((d) => ({ ...d, [name]: value }));
     if (error) setError("");
   };
 
@@ -46,25 +39,6 @@ function Register() {
       localStorage.setItem("register_name", name);
       localStorage.setItem("register_email", email);
       navigate("/verify-register-otp");
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    const email = loginData.email.trim();
-    if (!email) {
-      setError("Please enter your email address.");
-      return;
-    }
-    try {
-      setLoading(true);
-      await api.post("/auth/login/send-otp", { email });
-      localStorage.setItem("login_email", email);
-      navigate("/verify-otp");
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {

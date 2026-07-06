@@ -7,7 +7,7 @@ import {
   Video,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { getCourseTypeLabel, getUploadUrl } from "../../utils/courseUi";
+import { getCourseTypeLabel } from "../../utils/courseUi";
 
 function CourseCard({ course }) {
   const navigate = useNavigate();
@@ -15,7 +15,6 @@ function CourseCard({ course }) {
   const progress = course.learningProgress?.completionPercent || 0;
   const purchased = !!course.learningProgress;
   const completed = purchased && progress >= 100;
-  const completedClasses = course.learningProgress?.completedClasses || 0;
   const isRecording = course.type === "Recording";
   const imageUrl = course.coverImage || "https://placehold.co/1280x720/0A0D14/FFFFFF?text=Course+Cover";
   const chapterCount = course.chapters?.length || 0;

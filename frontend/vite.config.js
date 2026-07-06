@@ -70,7 +70,6 @@ export default defineConfig({
   // Build optimization
   build: {
     target: 'es2020',
-    minify: 'esbuild',
     sourcemap: false,
     cssMinify: true,
     assetsInlineLimit: 4096,
@@ -79,13 +78,16 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // Intelligent code splitting
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-motion': ['framer-motion'],
-          'vendor-video': ['hls.js'],
-          'vendor-icons': ['lucide-react'],
-          'vendor-network': ['axios', 'socket.io-client'],
-          'vendor-utils': ['@fingerprintjs/fingerprintjs'],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) return 'vendor-react';
+            if (id.includes('framer-motion')) return 'vendor-motion';
+            if (id.includes('hls.js')) return 'vendor-video';
+            if (id.includes('lucide-react')) return 'vendor-icons';
+            if (id.includes('axios') || id.includes('socket.io-client')) return 'vendor-network';
+            if (id.includes('@fingerprintjs')) return 'vendor-utils';
+            return 'vendor';
+          }
         },
         // Optimize asset file naming for long-term caching
         assetFileNames: (assetInfo) => {

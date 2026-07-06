@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, BookOpen, CheckCircle2, Lock, PlayCircle } from "lucide-react";
 import ChapterCard from "../../components/courses/ChapterCard";
 import api from "../../services/api";
-import { getUploadUrl } from "../../utils/courseUi";
+
 
 function CourseChapters() {
   const { courseId } = useParams();
@@ -169,7 +169,7 @@ function CourseChapters() {
                 </div>
               ),
             },
-          ].map((stat, i) => (
+          ].map((stat) => (
             <div key={stat.label} className="bg-[#0A0D14]/60 p-6 sm:p-8 transition-colors duration-300 hover:bg-[#0A0D14]/40">
               <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-1">{stat.label}</p>
               {stat.custom || (
