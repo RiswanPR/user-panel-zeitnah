@@ -1,23 +1,13 @@
-import {
-  Prop,
-  Schema,
-  SchemaFactory,
-} from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-import {
-  Document,
-} from 'mongoose';
+import { Document } from 'mongoose';
 
-export type ActiveStreamDocument =
-  ActiveStream &
-  Document;
+export type ActiveStreamDocument = ActiveStream & Document;
 
 @Schema({
   timestamps: true,
 })
-
 export class ActiveStream {
-
   @Prop({
     required: true,
   })
@@ -62,14 +52,10 @@ export class ActiveStream {
 
   @Prop({
     type: Date,
-    expires: 0, 
+    expires: 0,
     required: true,
   })
   expiresAt!: Date;
-
 }
 
-export const ActiveStreamSchema =
-  SchemaFactory.createForClass(
-    ActiveStream,
-  );
+export const ActiveStreamSchema = SchemaFactory.createForClass(ActiveStream);

@@ -1,51 +1,44 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useCallback } from 'react';
 import Composer from '../../components/community/Composer';
 import PostCard from '../../components/community/PostCard';
 import StoryViewer from '../../components/community/StoryViewer';
-
-const MOCK_STORIES = [
-  { id: 1, author: { name: 'Sarah Designer', avatar: 'https://i.pravatar.cc/150?img=5' }, text: 'Finished the UI design course! The Glassmorphism chapter was incredible. 🎨', bg: 'bg-gradient-to-br from-purple-900 to-indigo-600' },
-  { id: 2, author: { name: 'Alex Developer', avatar: 'https://i.pravatar.cc/150?img=12' }, text: 'Anyone want to pair program on the advanced React assignment tonight?', bg: 'bg-gradient-to-br from-brand-navy to-brand-mint/40' },
-  { id: 3, author: { name: 'Instructor John', avatar: 'https://i.pravatar.cc/150?img=68' }, text: 'New Office Hours scheduled for Friday 2 PM. Bring your questions!', bg: 'bg-gradient-to-br from-gray-900 to-gray-700' },
-];
+import { useCommunityFeed, useActiveStories } from '../../hooks/useCommunity';
+import { useIntersectionObserver } from '../../hooks/useIntersectionObserver';
 
 export default function CommunityHome() {
   const [activeStoryIndex, setActiveStoryIndex] = useState(null);
 
-  // Fetch feed (mocked for now)
-  const { data: posts, isLoading } = useQuery({
-    queryKey: ['community', 'feed'],
-    queryFn: async () => {
-      // Mock data representing the Feed
-      return [
-        {
-          id: 1,
-          author: { name: 'Alex Developer', role: 'Mentor', avatar: 'https://i.pravatar.cc/150?img=12' },
-          content: 'Just released a new lecture on Server Actions in Next.js 14! This completely changes how we handle data mutations without needing dedicated API routes. Check it out in the course module. 🚀',
-          createdAt: new Date(),
-          stats: { likes: 24, comments: 8, shares: 2 },
-          tags: ['NextJS', 'Course Update'],
-        },
-        {
-          id: 2,
-          author: { name: 'Sarah Designer', role: 'Student', avatar: 'https://i.pravatar.cc/150?img=5' },
-          content: 'Finally finished my capstone project! The Framer Motion animations took a while to get right, but it feels so smooth now. Any feedback is welcome!',
-          createdAt: new Date(Date.now() - 3600000),
-          stats: { likes: 15, comments: 3, shares: 0 },
-          tags: ['FramerMotion', 'Design'],
-          hasMedia: true,
-        }
-      ];
-    }
+  // ── Fetch Stories ──
+  const { data: storiesData, isLoading: storiesLoading } = useActiveStories();
+  const stories = storiesData || [];
+
+  // ── Fetch Feed ──
+  const { 
+    data: feedData, 
+    isLoading: feedLoading, 
+    fetchNextPage, 
+    hasNextPage, 
+    isFetchingNextPage 
+  } = useCommunityFeed();
+
+  // Infinite Scroll Trigger
+  const { targetRef } = useIntersectionObserver({
+    threshold: 0.1,
+    onIntersect: useCallback(() => {
+      if (hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage]),
   });
+
+  const posts = feedData?.pages?.flatMap(page => page.items) || [];
 
   return (
     <div className="space-y-6">
       
-      {activeStoryIndex !== null && (
+      {activeStoryIndex !== null && stories.length > 0 && (
         <StoryViewer 
-          stories={MOCK_STORIES} 
+          stories={stories} 
           initialIndex={activeStoryIndex} 
           onClose={() => setActiveStoryIndex(null)} 
         />
@@ -59,20 +52,38 @@ export default function CommunityHome() {
           </div>
           <span className="text-[10px] font-semibold text-text-muted group-hover:text-white transition-colors">Create</span>
         </div>
-        {MOCK_STORIES.map((story, idx) => (
-          <div 
-            key={story.id} 
-            onClick={() => setActiveStoryIndex(idx)}
-            className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group snap-start"
-          >
-            <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-tr from-brand-yellow to-brand-mint group-hover:scale-105 transition-transform">
-              <div className="w-full h-full rounded-full bg-bg-surface border-2 border-bg-base overflow-hidden">
-                <img src={story.author.avatar} alt="Avatar" className="w-full h-full object-cover" />
-              </div>
+        
+        {storiesLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex flex-col items-center gap-1.5 shrink-0">
+              <div className="w-16 h-16 rounded-full border-2 border-transparent shimmer bg-white/[0.02]" />
             </div>
-            <span className="text-[10px] font-semibold text-white">{story.author.name.split(' ')[0]}</span>
-          </div>
-        ))}
+          ))
+        ) : (
+          stories.map((story, idx) => {
+            const authorName = story.author?.name || 'User';
+            const avatarUrl = story.author?.avatar || `https://i.pravatar.cc/150?u=${story._id}`;
+            
+            return (
+              <div 
+                key={story._id} 
+                onClick={() => setActiveStoryIndex(idx)}
+                className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group snap-start"
+              >
+                <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-tr from-brand-yellow to-brand-mint group-hover:scale-105 transition-transform">
+                  <div className="w-full h-full rounded-full bg-bg-surface border-2 border-bg-base overflow-hidden flex items-center justify-center text-[10px] font-bold text-brand-mint">
+                    {avatarUrl.includes('http') ? (
+                      <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      authorName.slice(0,2).toUpperCase()
+                    )}
+                  </div>
+                </div>
+                <span className="text-[10px] font-semibold text-white">{authorName.split(' ')[0]}</span>
+              </div>
+            );
+          })
+        )}
       </div>
 
       {/* ── Composer ── */}
@@ -80,15 +91,35 @@ export default function CommunityHome() {
 
       {/* ── Feed ── */}
       <div className="space-y-4">
-        {isLoading ? (
+        {feedLoading ? (
           // Skeleton loading
           Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="glass-card p-5 h-48 shimmer" />
           ))
         ) : (
-          posts?.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))
+          <>
+            {posts.map((post) => (
+              <PostCard key={post._id || post.id} post={post} />
+            ))}
+            
+            {/* Infinite Scroll Trigger */}
+            {hasNextPage && (
+              <div ref={targetRef} className="py-8 flex justify-center">
+                <div className="w-6 h-6 border-2 border-brand-mint/30 border-t-brand-mint rounded-full animate-spin" />
+              </div>
+            )}
+            
+            {!hasNextPage && posts.length > 0 && (
+              <p className="text-center text-xs text-text-faint py-8">You've reached the end.</p>
+            )}
+            
+            {!feedLoading && posts.length === 0 && (
+              <div className="glass-card p-12 text-center">
+                <h3 className="text-lg font-heading font-bold text-white mb-2">No posts yet</h3>
+                <p className="text-sm text-text-muted">Be the first to share something with the community!</p>
+              </div>
+            )}
+          </>
         )}
       </div>
       

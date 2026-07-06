@@ -29,7 +29,7 @@ export const SocketProvider = ({ children }) => {
     });
 
     newSocket.on('connect', () => {
-      console.log('Connected to real-time notifications');
+      // connected
     });
 
     newSocket.on('notification', (notif) => {

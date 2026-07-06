@@ -1,17 +1,42 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Heart, MoreHorizontal, Pause, Play } from 'lucide-react';
+import { X, MoreHorizontal, Pause, Play, Send } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import { useViewStory } from '../../hooks/useCommunity';
+import { communityApi } from '../../services/communityApi';
+import toast from 'react-hot-toast';
 
 export default function StoryViewer({ stories, initialIndex = 0, onClose }) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [replyText, setReplyText] = useState('');
   
   const currentStory = stories[currentIndex] || null;
   const duration = 5000; // 5 seconds per story
   const startTimeRef = useRef(0);
   const animationRef = useRef(null);
+
+  const viewMutation = useViewStory();
+
+  // Track story views
+  useEffect(() => {
+    if (currentStory) {
+      viewMutation.mutate(currentStory._id || currentStory.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex, currentStory]);
+
+  const handleReply = async () => {
+    if (!replyText.trim()) return;
+    try {
+      await communityApi.replyToStory(currentStory._id || currentStory.id, { content: replyText });
+      toast.success('Reply sent!');
+      setReplyText('');
+    } catch {
+      toast.error('Failed to send reply');
+    }
+  };
   
   useEffect(() => {
     if (startTimeRef.current === 0) startTimeRef.current = Date.now();
@@ -145,13 +170,20 @@ export default function StoryViewer({ stories, initialIndex = 0, onClose }) {
           <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/80 to-transparent z-20 flex gap-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
              <input 
                type="text" 
-               placeholder={`Reply to ${currentStory.author.name}...`}
+               value={replyText}
+               onChange={(e) => setReplyText(e.target.value)}
+               onKeyDown={(e) => { if (e.key === 'Enter') handleReply(); }}
+               placeholder={`Reply to ${currentStory.author?.name || 'User'}...`}
                className="flex-1 bg-transparent border border-white/30 rounded-full px-5 py-2.5 text-sm text-white placeholder-white/70 focus:outline-none focus:border-white focus:bg-white/10 transition-all backdrop-blur-sm"
                onFocus={() => setIsPaused(true)}
                onBlur={() => setIsPaused(false)}
              />
-             <button className="p-3 rounded-full hover:bg-white/10 text-white transition-colors shrink-0">
-               <Heart className="w-6 h-6" />
+             <button 
+               onClick={handleReply}
+               disabled={!replyText.trim()}
+               className="p-3 rounded-full hover:bg-white/10 text-white transition-colors shrink-0 disabled:opacity-50"
+             >
+               <Send className="w-5 h-5" />
              </button>
           </div>
 

@@ -29,6 +29,7 @@ const NotFoundPage = React.lazy(() => import("./pages/NotFoundPage"));
 // Community Views
 const CommunityLayout = React.lazy(() => import("./layouts/CommunityLayout"));
 const CommunityHome = React.lazy(() => import("./pages/community/CommunityHome"));
+const ModeratorDashboard = React.lazy(() => import("./pages/community/ModeratorDashboard"));
 
 import ProtectedRoute from "./components/common/ProtectedRoute/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";
@@ -38,7 +39,12 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false,
       staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes (cache unused data for 30m)
+      retry: 2, // Retry failed requests twice
     },
+    mutations: {
+      retry: 1,
+    }
   },
 });
 
@@ -156,6 +162,7 @@ function App() {
                 }
               >
                 <Route path="/community" element={<Suspense fallback={<PageLoader />}><CommunityHome /></Suspense>} />
+                <Route path="/community/moderator" element={<Suspense fallback={<PageLoader />}><ModeratorDashboard /></Suspense>} />
               </Route>
 
               {/* 404 — NOT FOUND */}

@@ -31,15 +31,15 @@ export interface IPollOption {
 export interface IPost {
   id: string; // UUID string
   authorId: string;
-  
+
   content: string; // Rich text / markdown
   type: PostType;
   audience: PostAudience;
   courseId?: string; // If audience is COURSE
   batchId?: string; // If audience is BATCH
-  
+
   media?: IPostMedia[];
-  
+
   pollOptions?: IPollOption[];
   pollExpiresAt?: Date;
 

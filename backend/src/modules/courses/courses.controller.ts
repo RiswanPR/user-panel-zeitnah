@@ -17,9 +17,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 @Controller('courses')
 export class CoursesController {
-  constructor(
-    private readonly coursesService: CoursesService,
-  ) {}
+  constructor(private readonly coursesService: CoursesService) {}
 
   // =====================
   // GLOBAL SEARCH
@@ -40,9 +38,7 @@ export class CoursesController {
     @Query()
     query: GetCoursesDto,
   ) {
-    return this.coursesService.getAllCourses(
-      query,
-    );
+    return this.coursesService.getAllCourses(query);
   }
 
   // =====================
@@ -55,9 +51,7 @@ export class CoursesController {
     @Req()
     req: any,
   ) {
-    return this.coursesService.getMyCourses(
-      req.user.userId,
-    );
+    return this.coursesService.getMyCourses(req.user.userId);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -66,9 +60,7 @@ export class CoursesController {
     @Req()
     req: any,
   ) {
-    return this.coursesService.getMyLearningOverview(
-      req.user.userId,
-    );
+    return this.coursesService.getMyLearningOverview(req.user.userId);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -77,9 +69,7 @@ export class CoursesController {
     @Req()
     req: any,
   ) {
-    return this.coursesService.getMyPointsOverview(
-      req.user.userId,
-    );
+    return this.coursesService.getMyPointsOverview(req.user.userId);
   }
 
   // =====================
@@ -95,10 +85,7 @@ export class CoursesController {
     @Req()
     req: any,
   ) {
-    return this.coursesService.getCourseChapters(
-      courseId,
-      req.user.userId,
-    );
+    return this.coursesService.getCourseChapters(courseId, req.user.userId);
   }
 
   // =====================
@@ -106,9 +93,7 @@ export class CoursesController {
   // =====================
 
   @UseGuards(JwtAuthGuard)
-  @Get(
-    ':courseId/chapters/:chapterCode/classes',
-  )
+  @Get(':courseId/chapters/:chapterCode/classes')
   getChapterClasses(
     @Param('courseId')
     courseId: string,
@@ -139,10 +124,7 @@ export class CoursesController {
     @Req()
     req: any,
   ) {
-    return this.coursesService.getClassView(
-      classId,
-      req.user.userId,
-    );
+    return this.coursesService.getClassView(classId, req.user.userId);
   }
 
   // =====================
@@ -168,7 +150,6 @@ export class CoursesController {
     );
   }
 
-
   // =====================
   // SECURE VIDEO PLAYBACK
   // =====================
@@ -182,31 +163,19 @@ export class CoursesController {
     @Req()
     req: any,
   ) {
-    return this.coursesService.getSecureVideoPlayback(
-      classId,
-      req.user.userId,
-    );
+    return this.coursesService.getSecureVideoPlayback(classId, req.user.userId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('video/:classId/playlist.m3u8')
   @Header('Content-Type', 'application/vnd.apple.mpegurl')
-  async getSecurePlaylist(
-    @Param('classId') classId: string,
-    @Req() req: any,
-  ) {
-    return this.coursesService.getSecurePlaylist(
-      classId,
-      req.user.userId,
-    );
+  async getSecurePlaylist(@Param('classId') classId: string, @Req() req: any) {
+    return this.coursesService.getSecurePlaylist(classId, req.user.userId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('video/:classId/convert-to-hls')
-  async convertVideoToHls(
-    @Param('classId') classId: string,
-    @Req() req: any,
-  ) {
+  async convertVideoToHls(@Param('classId') classId: string, @Req() req: any) {
     // Ideally add an admin guard here
     return this.coursesService.convertVideoToHls(classId);
   }
@@ -215,13 +184,9 @@ export class CoursesController {
   // START STREAM
   // =====================
 
-
   @UseGuards(JwtAuthGuard)
   @Post('start-stream')
-  startStream(
-    @Body() body: any,
-    @Req() req: any,
-  ) {
+  startStream(@Body() body: any, @Req() req: any) {
     const ipAddress = req.ip || req.headers['x-forwarded-for'] || 'unknown';
     const userAgent = req.headers['user-agent'] || 'unknown';
 
@@ -248,10 +213,7 @@ export class CoursesController {
     @Req()
     req: any,
   ) {
-    return this.coursesService.heartbeat(
-      req.user.userId,
-      body.deviceId,
-    );
+    return this.coursesService.heartbeat(req.user.userId, body.deviceId);
   }
 
   // =====================
@@ -267,10 +229,7 @@ export class CoursesController {
     @Req()
     req: any,
   ) {
-    return this.coursesService.stopStream(
-      req.user.userId,
-      body.deviceId,
-    );
+    return this.coursesService.stopStream(req.user.userId, body.deviceId);
   }
 
   // =====================
@@ -286,9 +245,6 @@ export class CoursesController {
     @Req()
     req: any,
   ) {
-    return this.coursesService.getCourseById(
-      id,
-      req.user.userId,
-    );
+    return this.coursesService.getCourseById(id, req.user.userId);
   }
 }

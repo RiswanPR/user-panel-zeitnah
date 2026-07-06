@@ -1,103 +1,160 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { IPostRepository } from './community.repository.interface';
-import { IPost } from '../domain/post.model';
-import { Post, PostDocument } from '../schemas/post.schema';
+import { BaseRepository } from './base.repository';
+import {
+  Post,
+  PostDocument,
+  PostMedia,
+  PostMediaDocument,
+  PostReaction,
+  PostReactionDocument,
+  Poll,
+  PollDocument,
+  PollOption,
+  PollOptionDocument,
+} from '../schemas/post.schema';
 
 @Injectable()
-export class MongoPostRepository implements IPostRepository {
+export class PostRepository extends BaseRepository<PostDocument> {
   constructor(
-    @InjectModel(Post.name) private readonly postModel: Model<PostDocument>,
-  ) {}
-
-  private toDomain(doc: PostDocument): IPost {
-    const obj = doc.toObject();
-    return {
-      id: obj._id,
-      authorId: obj.authorId,
-      content: obj.content,
-      type: obj.type,
-      audience: obj.audience,
-      courseId: obj.courseId,
-      batchId: obj.batchId,
-      media: obj.media,
-      pollOptions: obj.pollOptions,
-      pollExpiresAt: obj.pollExpiresAt,
-      hashtags: obj.hashtags,
-      mentions: obj.mentions,
-      stats: obj.stats,
-      isPinned: obj.isPinned,
-      isEdited: obj.isEdited,
-      isDeleted: obj.isDeleted,
-      createdAt: obj.createdAt,
-      updatedAt: obj.updatedAt,
-      deletedAt: obj.deletedAt,
-    };
+    @InjectModel(Post.name) private postModel: Model<PostDocument>,
+    @InjectModel(PostMedia.name)
+    private postMediaModel: Model<PostMediaDocument>,
+    @InjectModel(PostReaction.name)
+    private postReactionModel: Model<PostReactionDocument>,
+    @InjectModel(Poll.name) private pollModel: Model<PollDocument>,
+    @InjectModel(PollOption.name)
+    private pollOptionModel: Model<PollOptionDocument>,
+  ) {
+    super(postModel);
   }
 
-  async create(postData: Omit<IPost, 'id' | 'stats' | 'isPinned' | 'isEdited' | 'isDeleted' | 'createdAt' | 'updatedAt'>): Promise<IPost> {
-    const createdPost = new this.postModel(postData);
-    const saved = await createdPost.save();
-    return this.toDomain(saved as PostDocument);
-  }
-
-  async findById(id: string): Promise<IPost | null> {
-    const post = await this.postModel.findOne({ _id: id as any, isDeleted: false }).exec();
-    return post ? this.toDomain(post) : null;
-  }
-
+  // Optimized Aggregation Pipeline to avoid N+1 queries
   async findFeed(params: {
     userId: string;
     courseIds: string[];
     limit: number;
     cursor?: string;
-  }): Promise<{ items: IPost[]; nextCursor: string | null }> {
+  }): Promise<any> {
     const { courseIds, limit, cursor } = params;
 
-    const query: any = {
+    const matchStage: any = {
       isDeleted: false,
       $or: [
         { audience: 'PUBLIC' },
-        { audience: 'COURSE', courseId: { $in: courseIds } }
-      ]
+        { audience: 'COURSE', courseId: { $in: courseIds } },
+      ],
     };
 
     if (cursor) {
-      // Cursor pagination based on createdAt string / timestamp logic
-      query.createdAt = { $lt: new Date(cursor) };
+      matchStage.createdAt = { $lt: new Date(cursor) };
     }
 
     const posts = await this.postModel
-      .find(query)
-      .sort({ createdAt: -1 })
-      .limit(limit + 1)
+      .aggregate([
+        { $match: matchStage },
+        { $sort: { createdAt: -1 } },
+        { $limit: limit + 1 },
+        // Lookup Media
+        {
+          $lookup: {
+            from: 'community_post_media',
+            localField: '_id',
+            foreignField: 'postId',
+            as: 'media',
+          },
+        },
+        // Lookup Polls
+        {
+          $lookup: {
+            from: 'community_polls',
+            localField: '_id',
+            foreignField: 'postId',
+            as: 'poll',
+          },
+        },
+        {
+          $unwind: {
+            path: '$poll',
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+      ])
       .exec();
 
     let nextCursor = null;
     if (posts.length > limit) {
       const nextItem = posts.pop();
-      nextCursor = (nextItem as any).createdAt.toISOString();
+      nextCursor = nextItem.createdAt.toISOString();
     }
 
     return {
-      items: posts.map((p) => this.toDomain(p)),
+      items: posts,
       nextCursor,
     };
   }
 
-  async updateStats(id: string, stat: keyof IPost['stats'], increment: number): Promise<void> {
-    const updateKey = `stats.${stat}`;
-    await this.postModel.updateOne(
-      { _id: id as any },
-      { $inc: { [updateKey]: increment } }
-    ).exec();
+  async createMedia(mediaData: Partial<PostMedia>[]): Promise<void> {
+    if (mediaData.length > 0) {
+      await this.postMediaModel.insertMany(mediaData);
+    }
   }
 
-  async softDelete(id: string): Promise<void> {
-    await this.postModel.updateOne(
-      { _id: id as any },
-      { $set: { isDeleted: true, deletedAt: new Date() } }
-    ).exec();
+  async createPoll(
+    pollData: Partial<Poll>,
+    options: Partial<PollOption>[],
+  ): Promise<void> {
+    const poll = new this.pollModel(pollData);
+    await poll.save();
+
+    const optionsWithPollId = options.map((opt) => ({
+      ...opt,
+      pollId: poll._id,
+    }));
+    await this.pollOptionModel.insertMany(optionsWithPollId);
+  }
+
+  async setAcceptedAnswer(postId: string, commentId: string): Promise<void> {
+    await this.postModel.findByIdAndUpdate(postId, {
+      $set: { acceptedAnswerId: commentId },
+    });
+  }
+
+  async setLockStatus(postId: string, isLocked: boolean): Promise<void> {
+    await this.postModel.findByIdAndUpdate(postId, { $set: { isLocked } });
+  }
+
+  async addReaction(postId: string, userId: string, type: string): Promise<void> {
+    // Check if reaction exists
+    const existing = await this.postReactionModel.findOne({ postId, userId });
+    if (existing) {
+      if (existing.type === type) return; // same reaction
+      // Remove old reaction stats
+      await this.postModel.findByIdAndUpdate(postId, {
+        $inc: { [`stats.${existing.type}s`]: -1 },
+      });
+      existing.type = type;
+      await existing.save();
+      await this.postModel.findByIdAndUpdate(postId, {
+        $inc: { [`stats.${type}s`]: 1 },
+      });
+      return;
+    }
+
+    const reaction = new this.postReactionModel({ postId, userId, type });
+    await reaction.save();
+    await this.postModel.findByIdAndUpdate(postId, {
+      $inc: { [`stats.${type}s`]: 1 },
+    });
+  }
+
+  async removeReaction(postId: string, userId: string): Promise<void> {
+    const reaction = await this.postReactionModel.findOneAndDelete({ postId, userId });
+    if (reaction) {
+      await this.postModel.findByIdAndUpdate(postId, {
+        $inc: { [`stats.${reaction.type}s`]: -1 },
+      });
+    }
   }
 }

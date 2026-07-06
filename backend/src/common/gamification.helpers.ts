@@ -103,7 +103,9 @@ export function calculatePoints(minutesWatched: number) {
 
 export function getNextLevelProgress(points = 0) {
   const ascending = [...LEVEL_THRESHOLDS].sort((a, b) => a.points - b.points);
-  const current = [...ascending].reverse().find((item) => points >= item.points);
+  const current = [...ascending]
+    .reverse()
+    .find((item) => points >= item.points);
   const next = ascending.find((item) => item.points > points);
 
   if (!next) {
@@ -151,9 +153,7 @@ export function ensureGamification(user: any) {
     Number(user.gamification.totalWatchMinutes) || 0;
   user.gamification.profileCompletion =
     Number(user.gamification.profileCompletion) || 0;
-  user.gamification.achievements = Array.isArray(
-    user.gamification.achievements,
-  )
+  user.gamification.achievements = Array.isArray(user.gamification.achievements)
     ? user.gamification.achievements
     : [];
   user.gamification.rewardedClassIds = Array.isArray(

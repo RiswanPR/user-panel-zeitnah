@@ -1,48 +1,113 @@
-import { Controller, Get, Post, Body, Param, Query, Delete, UseGuards, Req, Put } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { PostService } from '../services/post.service';
+import { CreatePostDto, UpdatePostDto, ReactionDto } from '../dto/post.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { CommunityOwnershipGuard } from '../guards/community-ownership.guard';
 
-@Controller('community/posts')
+@ApiTags('Community Posts')
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
+@Controller('community/posts')
 export class PostController {
   constructor(private readonly postService: PostService) {}
 
   @Post()
-  async createPost(@Req() req, @Body() body: any) {
-    const userId = req.user.id || req.user._id; // Depending on JWT payload strategy
-    const post = await this.postService.createPost(userId, body);
-    return { success: true, post };
+  @ApiOperation({ summary: 'Create a new post' })
+  async createPost(@Req() req, @Body() data: CreatePostDto) {
+    return this.postService.createPost(req.user._id || req.user.sub, data);
   }
 
-  @Get('feed')
-  async getFeed(@Req() req, @Query('limit') limitStr: string, @Query('cursor') cursor?: string) {
-    const userId = req.user.id || req.user._id;
-    const limit = parseInt(limitStr, 10) || 10;
-    
-    // In a real implementation, you'd get courseIds from the user's enrollment data
-    const courseIds = req.user.enrolledCourses || []; 
-    
-    const feed = await this.postService.getFeed(userId, courseIds, limit, cursor);
-    return { success: true, ...feed };
+  @Get()
+  @ApiOperation({ summary: 'Get community feed' })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'cursor', required: false })
+  async getFeed(
+    @Req() req,
+    @Query('limit') limit: number,
+    @Query('cursor') cursor: string,
+  ) {
+    // In a real scenario, we'd extract courseIds from the user's enrolled courses.
+    const courseIds = [];
+    return this.postService.getFeed(
+      req.user._id || req.user.sub,
+      courseIds,
+      limit ? Number(limit) : 10,
+      cursor,
+    );
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get a post by ID' })
   async getPost(@Param('id') id: string) {
-    const post = await this.postService.getPostById(id);
-    if (!post) {
-      return { success: false, message: 'Post not found' };
-    }
-    return { success: true, post };
+    return this.postService.getPostById(id);
+  }
+
+  @Patch(':id')
+  @UseGuards(CommunityOwnershipGuard)
+  @ApiOperation({ summary: 'Update a post' })
+  async updatePost(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() data: UpdatePostDto,
+  ) {
+    return this.postService.updatePost(id, req.user._id || req.user.sub, data);
   }
 
   @Delete(':id')
+  @UseGuards(CommunityOwnershipGuard)
+  @ApiOperation({ summary: 'Delete a post' })
   async deletePost(@Req() req, @Param('id') id: string) {
-    const userId = req.user.id || req.user._id;
-    try {
-      const deleted = await this.postService.deletePost(id, userId);
-      return { success: deleted };
-    } catch (err) {
-      return { success: false, message: err.message };
-    }
+    return this.postService.deletePost(
+      id,
+      req.user._id || req.user.sub,
+      req.user.role,
+    );
+  }
+
+  @Post(':id/reactions')
+  @ApiOperation({ summary: 'Add a reaction to a post' })
+  async addReaction(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() data: ReactionDto,
+  ) {
+    await this.postService.addReaction(id, req.user._id || req.user.sub, data.type);
+    return { success: true, message: 'Reaction added' };
+  }
+
+  @Delete(':id/reactions')
+  @ApiOperation({ summary: 'Remove a reaction from a post' })
+  async removeReaction(@Req() req, @Param('id') id: string) {
+    await this.postService.removeReaction(id, req.user._id || req.user.sub);
+    return { success: true, message: 'Reaction removed' };
+  }
+
+  @Post(':id/bookmarks')
+  @ApiOperation({ summary: 'Save a post' })
+  async savePost(@Req() req, @Param('id') id: string) {
+    return { success: true, message: 'Post saved' };
+  }
+
+  @Delete(':id/bookmarks')
+  @ApiOperation({ summary: 'Remove a saved post' })
+  async removeSavedPost(@Req() req, @Param('id') id: string) {
+    return { success: true, message: 'Post removed from saved' };
   }
 }

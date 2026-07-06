@@ -1,11 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
+import { v4 as uuidv4 } from 'uuid';
 
 export type CommentDocument = Comment & Document;
+export type CommentReactionDocument = CommentReaction & Document;
 
 @Schema({ timestamps: true, collection: 'community_comments' })
 export class Comment {
-  @Prop({ type: String, default: () => new Types.ObjectId().toString(), index: true })
+  @Prop({ type: String, default: () => uuidv4(), index: true })
   _id: string;
 
   @Prop({ type: String, required: true, index: true })
@@ -45,9 +47,12 @@ export class Comment {
   isMentorHighlight: boolean;
 
   @Prop({ type: Boolean, default: false })
-  isEdited: boolean;
+  isAcceptedAnswer: boolean;
 
   @Prop({ type: Boolean, default: false })
+  isEdited: boolean;
+
+  @Prop({ type: Boolean, default: false, index: true })
   isDeleted: boolean;
 
   @Prop({ type: Date })
@@ -55,6 +60,26 @@ export class Comment {
 }
 
 export const CommentSchema = SchemaFactory.createForClass(Comment);
-
-// Index for fetching top-level comments of a post efficiently
 CommentSchema.index({ postId: 1, parentId: 1, createdAt: -1 });
+
+@Schema({ timestamps: true, collection: 'community_comment_reactions' })
+export class CommentReaction {
+  @Prop({ type: String, default: () => uuidv4(), index: true })
+  _id: string;
+
+  @Prop({ type: String, required: true, index: true })
+  commentId: string;
+
+  @Prop({ type: String, required: true, index: true })
+  userId: string;
+
+  @Prop({ type: String, required: true })
+  type: string; // like
+
+  @Prop({ type: Date })
+  deletedAt?: Date;
+}
+
+export const CommentReactionSchema =
+  SchemaFactory.createForClass(CommentReaction);
+CommentReactionSchema.index({ commentId: 1, userId: 1 }, { unique: true });

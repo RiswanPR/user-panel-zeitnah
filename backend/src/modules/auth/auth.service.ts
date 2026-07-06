@@ -126,7 +126,7 @@ export class AuthService {
     DEFAULT_SESSION_EXPIRY_MS;
 
   private readonly refreshTokenSecret =
-    process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET!;
+    process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
 
   constructor(
     @InjectModel(User.name)

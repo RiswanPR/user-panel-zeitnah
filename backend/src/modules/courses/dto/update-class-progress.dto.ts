@@ -1,13 +1,6 @@
-import {
-  IsBoolean,
-  IsNumber,
-  IsOptional,
-  Max,
-  Min,
-} from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, Max, Min } from 'class-validator';
 
 export class UpdateClassProgressDto {
-
   @IsOptional()
   @IsNumber()
   @Min(0)
@@ -37,5 +30,4 @@ export class UpdateClassProgressDto {
   @IsOptional()
   @IsBoolean()
   completed?: boolean;
-
 }

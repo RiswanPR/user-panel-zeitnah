@@ -5,6 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 
 import { AppModule } from './app.module';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 import type { Express } from 'express';
 
@@ -40,11 +41,21 @@ async function bootstrap(): Promise<void> {
     }),
   );
 
+  // SWAGGER
+  const config = new DocumentBuilder()
+    .setTitle('Zeitnah LMS Community API')
+    .setDescription('Phase 1 - Community Module API documentation')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
+
   // CORS
-  const allowedOrigins = process.env.FRONTEND_URL 
-    ? process.env.FRONTEND_URL.split(',') 
-    // : ['https://your-frontend-domain.com'];
-    : ['http://<SERVER_IP>:5173'];
+  const allowedOrigins = process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(',')
+    : // : ['https://your-frontend-domain.com'];
+      ['http://<SERVER_IP>:5173'];
 
   app.enableCors({
     origin: allowedOrigins,

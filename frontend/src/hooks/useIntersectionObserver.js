@@ -1,36 +1,32 @@
 import { useEffect, useRef, useState } from 'react';
 
-/**
- * Observe when an element enters or leaves the viewport.
- * @param {{ threshold?: number, rootMargin?: string, triggerOnce?: boolean }} options
- */
-export function useIntersectionObserver({
-  threshold = 0.1,
-  rootMargin = '0px',
-  triggerOnce = true,
-} = {}) {
+export function useIntersectionObserver(options = {}) {
+  const { threshold = 1.0, root = null, rootMargin = '0px', onIntersect } = options;
   const [isIntersecting, setIsIntersecting] = useState(false);
-  const ref = useRef(null);
+  const targetRef = useRef(null);
 
   useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-
     const observer = new IntersectionObserver(
       ([entry]) => {
         setIsIntersecting(entry.isIntersecting);
-        if (entry.isIntersecting && triggerOnce) {
-          observer.unobserve(element);
+        if (entry.isIntersecting && onIntersect) {
+          onIntersect();
         }
       },
-      { threshold, rootMargin }
+      { root, rootMargin, threshold }
     );
 
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [threshold, rootMargin, triggerOnce]);
+    const currentTarget = targetRef.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
 
-  return [ref, isIntersecting];
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [targetRef, root, rootMargin, threshold, onIntersect]);
+
+  return { targetRef, isIntersecting };
 }
-
-export default useIntersectionObserver;

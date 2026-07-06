@@ -1,17 +1,28 @@
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import React, { useState, useRef, useEffect, useContext, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Image, Video, Send, Paperclip, Globe, Users, Lock, ChevronDown } from 'lucide-react';
+import { Image, Video, Send, Globe, Users, Lock, ChevronDown, X, Sparkles, Hash } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import { getUploadUrl } from '../../utils/courseUi';
-import { useMutation } from '@tanstack/react-query';
+import { useCreatePost, useAIImproveText, useAISuggestTags } from '../../hooks/useCommunity';
+import { communityApi } from '../../services/communityApi';
+import toast from 'react-hot-toast';
 
 export default function Composer() {
   const { user } = useContext(AuthContext);
   const [content, setContent] = useState('');
+  const [tags, setTags] = useState([]);
   const [isExpanded, setIsExpanded] = useState(false);
   const [audience, setAudience] = useState('PUBLIC');
   const [showAudienceMenu, setShowAudienceMenu] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const textareaRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  const createPostMutation = useCreatePost();
+  const improveMutation = useAIImproveText();
+  const suggestTagsMutation = useAISuggestTags();
 
   const userInitials = user?.name
     ? user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
@@ -26,26 +37,82 @@ export default function Composer() {
     }
   }, [content]);
 
-  // Handle post submission
-  const createPostMutation = useMutation({
-    mutationFn: async (postData) => {
-      // return api.post('/community/posts', postData);
-      return new Promise(resolve => setTimeout(() => resolve({ success: true, data: { ...postData, id: Date.now() } }), 800));
-    },
-    onSuccess: () => {
-      setContent('');
-      setIsExpanded(false);
-      // In a real app: queryClient.invalidateQueries(['community', 'feed']);
+  const handleFileSelect = useCallback(async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    setIsUploading(true);
+    setUploadProgress(0);
+    try {
+      const uploadedMedia = [];
+      for (const file of files) {
+        // Upload each file via API
+        const response = await communityApi.uploadMedia(file, (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        });
+        
+        uploadedMedia.push({
+          url: response.url,
+          type: file.type.startsWith('video/') ? 'video' : 'image',
+          mimeType: file.type,
+          size: file.size,
+        });
+      }
+      setAttachedFiles((prev) => [...prev, ...uploadedMedia]);
+    } catch {
+      toast.error('Failed to upload file');
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
-  });
+  }, []);
+
+  const removeFile = useCallback((index) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const handleImprove = useCallback(() => {
+    if (!content.trim()) return;
+    improveMutation.mutate(content, {
+      onSuccess: (data) => setContent(data.improved)
+    });
+  }, [content, improveMutation]);
+
+  const handleSuggestTags = useCallback(() => {
+    if (!content.trim()) return;
+    suggestTagsMutation.mutate(content, {
+      onSuccess: (data) => {
+        const newTags = data.tags.filter(t => !tags.includes(t));
+        setTags(prev => [...prev, ...newTags]);
+      }
+    });
+  }, [content, tags, suggestTagsMutation]);
+
+  const removeTag = useCallback((tagToRemove) => {
+    setTags(prev => prev.filter(t => t !== tagToRemove));
+  }, []);
 
   const handleSubmit = () => {
-    if (!content.trim()) return;
-    createPostMutation.mutate({
-      content,
-      audience,
-      type: 'TEXT',
-    });
+    if (!content.trim() && attachedFiles.length === 0) return;
+    createPostMutation.mutate(
+      {
+        content,
+        audience,
+        type: 'TEXT',
+        media: attachedFiles,
+        tags,
+      },
+      {
+        onSuccess: () => {
+          setContent('');
+          setTags([]);
+          setIsExpanded(false);
+          setAttachedFiles([]);
+        },
+      }
+    );
   };
 
   const getAudienceIcon = (type) => {
@@ -138,29 +205,100 @@ export default function Composer() {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="flex items-center justify-between pt-4 mt-3 border-t border-white/[0.04]">
-              <div className="flex gap-1 sm:gap-2">
-                <button className="p-2 text-brand-mint hover:bg-brand-mint/10 rounded-lg transition-colors cursor-pointer" title="Add Image">
+            {/* Attached Files Preview */}
+            {attachedFiles.length > 0 && (
+              <div className="flex gap-3 mt-3 overflow-x-auto pb-2">
+                {attachedFiles.map((file, i) => (
+                  <div key={i} className="relative w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-bg-base border border-white/[0.05]">
+                    {file.type === 'image' ? (
+                      <img src={file.url} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-black">
+                        <Video className="w-6 h-6 text-white/50" />
+                      </div>
+                    )}
+                    <button 
+                      onClick={() => removeFile(i)}
+                      className="absolute top-1 right-1 p-1 bg-black/60 rounded-full hover:bg-danger text-white transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Upload Progress */}
+            {isUploading && (
+              <div className="mt-3">
+                <div className="h-1 w-full bg-white/[0.05] rounded-full overflow-hidden">
+                  <div className="h-full bg-brand-mint transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                </div>
+                <p className="text-[10px] text-text-faint mt-1 text-right">Uploading... {uploadProgress}%</p>
+              </div>
+            )}
+
+            {/* Tags Preview */}
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-white/[0.04]">
+                {tags.map((tag, i) => (
+                  <span key={i} className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-brand-mint/10 text-brand-mint text-xs font-semibold">
+                    <Hash className="w-3 h-3" />
+                    {tag}
+                    <button onClick={() => removeTag(tag)} className="hover:text-white transition-colors cursor-pointer ml-1">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-4 mt-3 border-t border-white/[0.04] gap-4">
+              <div className="flex items-center gap-1 sm:gap-2 relative">
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleFileSelect} 
+                  className="hidden" 
+                  multiple 
+                  accept="image/*,video/*" 
+                />
+                <button onClick={() => fileInputRef.current?.click()} className="p-2 text-brand-mint hover:bg-brand-mint/10 rounded-lg transition-colors cursor-pointer" title="Add Media">
                   <Image className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
-                <button className="p-2 text-info hover:bg-info/10 rounded-lg transition-colors cursor-pointer" title="Add Video">
-                  <Video className="w-4 h-4 sm:w-5 sm:h-5" />
+                
+                {/* AI Tools */}
+                <div className="h-6 w-px bg-white/[0.1] mx-1"></div>
+                <button 
+                  onClick={handleImprove}
+                  disabled={improveMutation.isPending || !content.trim()}
+                  className="p-2 flex items-center gap-1.5 text-brand-purple hover:bg-brand-purple/10 rounded-lg transition-colors cursor-pointer disabled:opacity-50 text-xs font-medium" 
+                  title="Improve Writing with AI"
+                >
+                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="hidden md:inline">Improve</span>
                 </button>
-                <button className="p-2 text-warning hover:bg-warning/10 rounded-lg transition-colors cursor-pointer" title="Attach Document">
-                  <Paperclip className="w-4 h-4 sm:w-5 sm:h-5" />
+                <button 
+                  onClick={handleSuggestTags}
+                  disabled={suggestTagsMutation.isPending || !content.trim()}
+                  className="p-2 flex items-center gap-1.5 text-info hover:bg-info/10 rounded-lg transition-colors cursor-pointer disabled:opacity-50 text-xs font-medium" 
+                  title="Suggest Tags with AI"
+                >
+                  <Hash className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="hidden md:inline">Auto-tag</span>
                 </button>
               </div>
               <div className="flex items-center gap-3">
                 <button 
-                  onClick={() => { setIsExpanded(false); setContent(''); }}
-                  className="text-xs font-semibold text-text-muted hover:text-white transition-colors"
+                  onClick={() => { setIsExpanded(false); setContent(''); setAttachedFiles([]); setTags([]); }}
+                  className="text-xs font-semibold text-text-muted hover:text-white transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={handleSubmit}
-                  disabled={!content.trim() || createPostMutation.isPending}
-                  className="btn-primary py-1.5 px-4 sm:py-2 sm:px-5 text-xs flex items-center gap-2 opacity-90 disabled:opacity-50 relative overflow-hidden"
+                  disabled={(!content.trim() && attachedFiles.length === 0) || createPostMutation.isPending || isUploading}
+                  className="btn-primary py-1.5 px-4 sm:py-2 sm:px-5 text-xs flex items-center gap-2 opacity-90 disabled:opacity-50 relative overflow-hidden cursor-pointer"
                 >
                   {createPostMutation.isPending ? (
                      <div className="w-4 h-4 border-2 border-bg-base/30 border-t-bg-base rounded-full animate-spin" />

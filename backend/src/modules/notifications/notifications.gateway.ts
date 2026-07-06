@@ -14,7 +14,9 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
     origin: '*',
   },
 })
-export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class NotificationsGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server!: Server;
 
@@ -22,7 +24,8 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   private userSockets: Map<string, Set<string>> = new Map();
 
   handleConnection(client: Socket) {
-    const userId = client.handshake.auth?.userId || client.handshake.query?.userId;
+    const userId =
+      client.handshake.auth?.userId || client.handshake.query?.userId;
     if (userId) {
       if (!this.userSockets.has(userId as string)) {
         this.userSockets.set(userId as string, new Set());
@@ -34,7 +37,8 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   }
 
   handleDisconnect(client: Socket) {
-    const userId = client.handshake.auth?.userId || client.handshake.query?.userId;
+    const userId =
+      client.handshake.auth?.userId || client.handshake.query?.userId;
     if (userId && this.userSockets.has(userId as string)) {
       this.userSockets.get(userId as string)?.delete(client.id);
       if (this.userSockets.get(userId as string)?.size === 0) {
@@ -57,9 +61,12 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   @SubscribeMessage('markAsRead')
   handleMarkAsRead(client: Socket, payload: { notificationId: string }) {
     // Ideally update in DB
-    const userId = client.handshake.auth?.userId || client.handshake.query?.userId;
+    const userId =
+      client.handshake.auth?.userId || client.handshake.query?.userId;
     if (userId) {
-      this.server.to(`user_${userId}`).emit('notificationRead', payload.notificationId);
+      this.server
+        .to(`user_${userId}`)
+        .emit('notificationRead', payload.notificationId);
     }
   }
 }

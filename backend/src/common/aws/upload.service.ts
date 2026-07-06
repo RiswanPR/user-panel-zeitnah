@@ -7,7 +7,11 @@ export class UploadService {
 
   constructor(private s3Service: S3Service) {}
 
-  async uploadFile(key: string, body: Buffer, contentType: string): Promise<string> {
+  async uploadFile(
+    key: string,
+    body: Buffer,
+    contentType: string,
+  ): Promise<string> {
     this.logger.log(`Uploading file to S3: ${key}`);
     const { PutObjectCommand } = require('@aws-sdk/client-s3');
     try {

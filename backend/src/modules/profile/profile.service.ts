@@ -1,24 +1,12 @@
-import {
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 
-import {
-  InjectModel,
-} from '@nestjs/mongoose';
+import { InjectModel } from '@nestjs/mongoose';
 
-import {
-  Model,
-} from 'mongoose';
+import { Model } from 'mongoose';
 
-import {
-  User,
-  UserDocument,
-} from '../auth/schemas/user.schema';
+import { User, UserDocument } from '../auth/schemas/user.schema';
 
-import {
-  UpdateProfileDto,
-} from './dto/update-profile.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import {
   awardPoints,
   ensureGamification,
@@ -30,35 +18,22 @@ import { SignedUrlService } from '../../common/aws/signed-url.service';
 import * as crypto from 'crypto';
 
 @Injectable()
-
 export class ProfileService {
-
   constructor(
-
     @InjectModel(User.name)
-    private userModel:
-      Model<UserDocument>,
+    private userModel: Model<UserDocument>,
     private uploadService: UploadService,
     private signedUrlService: SignedUrlService,
-
   ) {}
 
   // GET MY PROFILE
-  async getMe(
-    userId: string,
-  ) {
-
-    const user =
-      await this.userModel
-        .findById(userId)
-        .select('-otp -otpExpiry');
+  async getMe(userId: string) {
+    const user = await this.userModel
+      .findById(userId)
+      .select('-otp -otpExpiry');
 
     if (!user) {
-
-      throw new UnauthorizedException(
-        'User not found',
-      );
-
+      throw new UnauthorizedException('User not found');
     }
 
     syncGamificationStats(user);
@@ -67,34 +42,22 @@ export class ProfileService {
 
     const userObj = user.toObject();
     if (userObj.avatar) {
-      userObj.avatar = await this.signedUrlService.generateSignedImageUrl(userObj.avatar);
+      userObj.avatar = await this.signedUrlService.generateSignedImageUrl(
+        userObj.avatar,
+      );
     }
 
     return {
-
       user: userObj,
-
     };
-
   }
 
   // UPDATE PROFILE
-  async updateProfile(
-    userId: string,
-    data: UpdateProfileDto,
-  ) {
-
-    const user =
-      await this.userModel.findById(
-        userId,
-      );
+  async updateProfile(userId: string, data: UpdateProfileDto) {
+    const user = await this.userModel.findById(userId);
 
     if (!user) {
-
-      throw new UnauthorizedException(
-        'User not found',
-      );
-
+      throw new UnauthorizedException('User not found');
     }
 
     if (data.name !== undefined) {
@@ -142,18 +105,16 @@ export class ProfileService {
 
     const userObj = user.toObject();
     if (userObj.avatar) {
-      userObj.avatar = await this.signedUrlService.generateSignedImageUrl(userObj.avatar);
+      userObj.avatar = await this.signedUrlService.generateSignedImageUrl(
+        userObj.avatar,
+      );
     }
 
     return {
-
-      message:
-        'Profile updated successfully',
+      message: 'Profile updated successfully',
 
       user: userObj,
-
     };
-
   }
 
   // UPLOAD AVATAR
@@ -163,9 +124,9 @@ export class ProfileService {
 
     const extension = file.originalname.split('.').pop();
     const key = `profiles/${userId}-${crypto.randomUUID()}.${extension}`;
-    
+
     await this.uploadService.uploadFile(key, file.buffer, file.mimetype);
-    
+
     user.avatar = key;
     await user.save();
 
@@ -176,5 +137,4 @@ export class ProfileService {
       avatar: signedUrl,
     };
   }
-
 }

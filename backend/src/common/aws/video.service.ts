@@ -12,6 +12,6 @@ export class VideoService {
     this.logger.log(`Processing video to HLS: ${objectKey}`);
     // Will be implemented based on the chosen processing strategy
     // e.g., MediaConvert or local FFmpeg
-    return objectKey; 
+    return objectKey;
   }
 }

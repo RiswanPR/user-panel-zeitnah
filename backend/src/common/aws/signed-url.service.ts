@@ -58,7 +58,10 @@ export class SignedUrlService {
     return null;
   }
 
-  async generateSignedImageUrl(objectKey: string, expiresIn = 3600): Promise<string> {
+  async generateSignedImageUrl(
+    objectKey: string,
+    expiresIn = 3600,
+  ): Promise<string> {
     if (!objectKey) return '';
     // If it's already a full URL, return it
     if (/^https?:\/\//i.test(objectKey)) return objectKey;
@@ -68,14 +71,21 @@ export class SignedUrlService {
         Bucket: this.s3Service.bucketName,
         Key: objectKey,
       });
-      return await getSignedUrl(this.s3Service.s3Client, command, { expiresIn });
+      return await getSignedUrl(this.s3Service.s3Client, command, {
+        expiresIn,
+      });
     } catch (error) {
-      this.logger.warn(`Failed to generate signed URL for image: ${objectKey}. Falling back to public URL.`);
+      this.logger.warn(
+        `Failed to generate signed URL for image: ${objectKey}. Falling back to public URL.`,
+      );
       return `https://${this.s3Service.bucketName}.s3.${this.s3Service.region}.amazonaws.com/${objectKey}`;
     }
   }
 
-  async generateSignedVideoUrl(objectKey: string, expiresIn = 900): Promise<string> {
+  async generateSignedVideoUrl(
+    objectKey: string,
+    expiresIn = 900,
+  ): Promise<string> {
     if (!objectKey) return '';
     const resolvedObjectKey = this.getConfiguredBucketObjectKey(objectKey);
 
@@ -88,9 +98,13 @@ export class SignedUrlService {
         Bucket: this.s3Service.bucketName,
         Key: resolvedObjectKey,
       });
-      return await getSignedUrl(this.s3Service.s3Client, command, { expiresIn });
+      return await getSignedUrl(this.s3Service.s3Client, command, {
+        expiresIn,
+      });
     } catch (error) {
-      this.logger.warn(`Failed to generate signed URL for video: ${resolvedObjectKey}. Falling back to public URL.`);
+      this.logger.warn(
+        `Failed to generate signed URL for video: ${resolvedObjectKey}. Falling back to public URL.`,
+      );
       return `https://${this.s3Service.bucketName}.s3.${this.s3Service.region}.amazonaws.com/${resolvedObjectKey}`;
     }
   }

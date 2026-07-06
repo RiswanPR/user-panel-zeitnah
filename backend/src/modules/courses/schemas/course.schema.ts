@@ -1,19 +1,10 @@
-import {
-  Prop,
-  Schema,
-  SchemaFactory,
-} from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-import {
-  Document,
-} from 'mongoose';
+import { Document } from 'mongoose';
 
-import {
-  Types,
-} from 'mongoose';
+import { Types } from 'mongoose';
 
-export type CourseDocument =
-  Course & Document;
+export type CourseDocument = Course & Document;
 
 // =========================
 // EXERCISE
@@ -22,9 +13,7 @@ export type CourseDocument =
 @Schema({
   _id: true,
 })
-
 class Exercise {
-
   @Prop()
   title!: string;
 
@@ -45,10 +34,8 @@ class Exercise {
 @Schema({
   _id: true,
 })
-
 class CourseClass {
-
-    _id!: Types.ObjectId; 
+  _id!: Types.ObjectId;
 
   @Prop()
   title!: string;
@@ -87,7 +74,6 @@ class CourseClass {
     default: [],
   })
   exercises!: Exercise[];
-
 }
 
 // =========================
@@ -97,9 +83,7 @@ class CourseClass {
 @Schema({
   _id: false,
 })
-
 class Chapter {
-
   @Prop()
   package!: string;
 
@@ -129,7 +113,6 @@ class Chapter {
     default: [],
   })
   classes!: CourseClass[];
-
 }
 
 // =========================
@@ -139,9 +122,7 @@ class Chapter {
 @Schema({
   timestamps: true,
 })
-
 export class Course {
-
   @Prop({
     required: true,
   })
@@ -158,10 +139,7 @@ export class Course {
   Total_Fees!: string;
 
   @Prop({
-    enum: [
-      'online',
-      'Recording',
-    ],
+    enum: ['online', 'Recording'],
   })
   type!: string;
 
@@ -188,7 +166,4 @@ export class Course {
   order!: number;
 }
 
-export const CourseSchema =
-  SchemaFactory.createForClass(
-    Course,
-  );
+export const CourseSchema = SchemaFactory.createForClass(Course);

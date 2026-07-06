@@ -1,66 +1,68 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { IStoryRepository } from './community.repository.interface';
-import { IStory } from '../domain/story.model';
-import { Story, StoryDocument } from '../schemas/story.schema';
+import { BaseRepository } from './base.repository';
+import {
+  Story,
+  StoryDocument,
+  StoryMedia,
+  StoryMediaDocument,
+  StoryView,
+  StoryViewDocument,
+} from '../schemas/story.schema';
 
 @Injectable()
-export class MongoStoryRepository implements IStoryRepository {
+export class StoryRepository extends BaseRepository<StoryDocument> {
   constructor(
-    @InjectModel(Story.name) private readonly storyModel: Model<StoryDocument>,
-  ) {}
-
-  private toDomain(doc: StoryDocument): IStory {
-    const obj = doc.toObject();
-    return {
-      id: obj._id,
-      authorId: obj.authorId,
-      type: obj.type,
-      mediaUrl: obj.mediaUrl,
-      thumbnailUrl: obj.thumbnailUrl,
-      backgroundColor: obj.backgroundColor,
-      text: obj.text,
-      link: obj.link,
-      courseTag: obj.courseTag,
-      stats: obj.stats,
-      isPinned: obj.isPinned,
-      expiresAt: obj.expiresAt,
-      isDeleted: obj.isDeleted,
-      createdAt: obj.createdAt,
-      updatedAt: obj.updatedAt,
-    };
+    @InjectModel(Story.name) private storyModel: Model<StoryDocument>,
+    @InjectModel(StoryMedia.name)
+    private storyMediaModel: Model<StoryMediaDocument>,
+    @InjectModel(StoryView.name)
+    private storyViewModel: Model<StoryViewDocument>,
+  ) {
+    super(storyModel);
   }
 
-  async create(storyData: Omit<IStory, 'id' | 'stats' | 'isDeleted' | 'createdAt' | 'updatedAt'>): Promise<IStory> {
-    const createdStory = new this.storyModel(storyData);
-    const saved = await createdStory.save();
-    return this.toDomain(saved as StoryDocument);
+  async getActiveStories(): Promise<any[]> {
+    const now = new Date();
+    return this.storyModel
+      .aggregate([
+        { $match: { isDeleted: false, expiresAt: { $gt: now } } },
+        { $sort: { createdAt: -1 } },
+        {
+          $lookup: {
+            from: 'community_story_media',
+            localField: '_id',
+            foreignField: 'storyId',
+            as: 'media',
+          },
+        },
+      ])
+      .exec();
   }
 
-  async findActiveStories(userIds: string[], courseIds: string[]): Promise<IStory[]> {
-    // Find stories from specific users (like followed users or mentors) or specific course tags
-    const query: any = {
-      isDeleted: false,
-      expiresAt: { $gt: new Date() }, // Redundant because of TTL, but safe
-      $or: [
-        { authorId: { $in: userIds } },
-        { courseTag: { $in: courseIds } }
-      ]
-    };
+  async addView(storyId: string, userId: string): Promise<void> {
+    const exists = await this.storyViewModel.findOne({ storyId, userId });
+    if (!exists) {
+      await new this.storyViewModel({ storyId, userId }).save();
+      await this.storyModel.updateOne(
+        { _id: storyId as any },
+        { $inc: { 'stats.views': 1 } },
+      );
+    }
+  }
 
-    const stories = await this.storyModel
-      .find(query)
-      .sort({ createdAt: 1 }) // Chronological order for stories
+  async deleteExpiredStories(): Promise<number> {
+    const now = new Date();
+    // In a real scenario, we might want to soft delete instead of hard delete, depending on analytics requirements.
+    // The requirement says "remove expired stories". We'll soft delete them.
+    const result = await this.storyModel
+      .updateMany(
+        { expiresAt: { $lte: now }, isDeleted: false, isPinned: false },
+        { $set: { isDeleted: true, deletedAt: now } },
+      )
       .exec();
 
-    return stories.map((s) => this.toDomain(s));
-  }
-
-  async softDelete(id: string): Promise<void> {
-    await this.storyModel.updateOne(
-      { _id: id as any },
-      { $set: { isDeleted: true } }
-    ).exec();
+    return result.modifiedCount;
   }
 }

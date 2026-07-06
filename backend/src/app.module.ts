@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import { AuthModule } from './modules/auth/auth.module';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
@@ -18,9 +19,10 @@ import { CommunityModule } from './modules/community/community.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
 
     // MONGODB
-    MongooseModule.forRoot(process.env.MONGO_URL!),
+    MongooseModule.forRoot(process.env.MONGO_URL),
 
     // CORE MODULES
     AuthModule,
@@ -29,7 +31,7 @@ import { CommunityModule } from './modules/community/community.module';
     CoursesModule,
     AwsModule,
     NotificationsModule,
-    
+
     // COMMUNITY
     CommunityModule,
 

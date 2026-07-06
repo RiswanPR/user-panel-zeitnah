@@ -33,4 +33,3 @@ import { AwsModule } from '../../common/aws/aws.module';
   providers: [CoursesService, HlsService],
 })
 export class CoursesModule {}
-

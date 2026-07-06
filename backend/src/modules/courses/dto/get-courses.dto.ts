@@ -1,10 +1,6 @@
-import {
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class GetCoursesDto {
-
   @IsOptional()
   @IsString()
   search?: string;
@@ -12,5 +8,4 @@ export class GetCoursesDto {
   @IsOptional()
   @IsString()
   type?: string;
-
 }

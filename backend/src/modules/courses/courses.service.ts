@@ -99,7 +99,9 @@ export class CoursesService {
   }
 
   private getClassVideoSource(courseType: any, videoSource: any) {
-    const explicitSource = String(videoSource || '').trim().toLowerCase();
+    const explicitSource = String(videoSource || '')
+      .trim()
+      .toLowerCase();
 
     if (explicitSource === 's3' || explicitSource === 'aws') {
       return 's3';
@@ -109,7 +111,9 @@ export class CoursesService {
       return 'vdocipher';
     }
 
-    return String(courseType || '').trim().toLowerCase() === 'recording'
+    return String(courseType || '')
+      .trim()
+      .toLowerCase() === 'recording'
       ? 's3'
       : 'vdocipher';
   }
@@ -186,7 +190,10 @@ export class CoursesService {
         const classId = cls._id.toString();
 
         classIds.add(classId);
-        durationByClassId.set(classId, this.parseDurationToSeconds(cls.duration));
+        durationByClassId.set(
+          classId,
+          this.parseDurationToSeconds(cls.duration),
+        );
       });
     });
 
@@ -320,34 +327,56 @@ export class CoursesService {
 
   async globalSearch(searchQuery: string) {
     const regex = new RegExp(searchQuery, 'i');
-    
+
     // Search courses matching name or description
-    const courses = await this.courseModel.find({
-      $or: [
-        { name: regex },
-        { description: regex },
-        { 'chapters.title': regex },
-        { 'chapters.description': regex },
-        { 'chapters.classes.title': regex },
-        { 'chapters.classes.description': regex },
-      ]
-    }).lean();
+    const courses = await this.courseModel
+      .find({
+        $or: [
+          { name: regex },
+          { description: regex },
+          { 'chapters.title': regex },
+          { 'chapters.description': regex },
+          { 'chapters.classes.title': regex },
+          { 'chapters.classes.description': regex },
+        ],
+      })
+      .lean();
 
     const results = [];
 
     for (const course of courses) {
       if (regex.test(course.name) || regex.test(course.description)) {
-        results.push({ type: 'course', courseId: course._id, title: course.name, description: course.description, coverImage: course.coverImage });
+        results.push({
+          type: 'course',
+          courseId: course._id,
+          title: course.name,
+          description: course.description,
+          coverImage: course.coverImage,
+        });
       }
 
       for (const chapter of course.chapters || []) {
         if (regex.test(chapter.title) || regex.test(chapter.description)) {
-          results.push({ type: 'chapter', courseId: course._id, chapterCode: chapter.uniqueCode, title: chapter.title, description: chapter.description });
+          results.push({
+            type: 'chapter',
+            courseId: course._id,
+            chapterCode: chapter.uniqueCode,
+            title: chapter.title,
+            description: chapter.description,
+          });
         }
 
         for (const cls of chapter.classes || []) {
           if (regex.test(cls.title) || regex.test(cls.description)) {
-            results.push({ type: 'class', courseId: course._id, chapterCode: chapter.uniqueCode, classId: cls._id, title: cls.title, description: cls.description, thumbnail: cls.thumbnail });
+            results.push({
+              type: 'class',
+              courseId: course._id,
+              chapterCode: chapter.uniqueCode,
+              classId: cls._id,
+              title: cls.title,
+              description: cls.description,
+              thumbnail: cls.thumbnail,
+            });
           }
         }
       }
@@ -382,7 +411,7 @@ export class CoursesService {
     });
 
     const formatted = await Promise.all(
-      courses.map((c) => this.signCourseImages(c.toObject()))
+      courses.map((c) => this.signCourseImages(c.toObject())),
     );
 
     return {
@@ -411,20 +440,22 @@ export class CoursesService {
     });
 
     // ADD PROGRESS
-    const formatted = await Promise.all(courses.map(async (course) => {
-      const progress = user.course.find(
-        (c: any) => c.courseId.toString() === course._id.toString(),
-      );
-      const learningProgress = progress
-        ? this.summariseLearningProgress(course, progress)
-        : null;
+    const formatted = await Promise.all(
+      courses.map(async (course) => {
+        const progress = user.course.find(
+          (c: any) => c.courseId.toString() === course._id.toString(),
+        );
+        const learningProgress = progress
+          ? this.summariseLearningProgress(course, progress)
+          : null;
 
-      const mapped = {
-        ...course.toObject(),
-        learningProgress,
-      };
-      return this.signCourseImages(mapped);
-    }));
+        const mapped = {
+          ...course.toObject(),
+          learningProgress,
+        };
+        return this.signCourseImages(mapped);
+      }),
+    );
 
     return {
       courses: formatted,
@@ -449,30 +480,32 @@ export class CoursesService {
     let completedClasses = 0;
     let watchedClasses = 0;
 
-    const courseProgress = await Promise.all(courses.map(async (course) => {
-      const enrollment = user.course.find(
-        (entry: any) => entry.courseId.toString() === course._id.toString(),
-      );
-      const learningProgress = enrollment
-        ? this.summariseLearningProgress(course, enrollment)
-        : null;
+    const courseProgress = await Promise.all(
+      courses.map(async (course) => {
+        const enrollment = user.course.find(
+          (entry: any) => entry.courseId.toString() === course._id.toString(),
+        );
+        const learningProgress = enrollment
+          ? this.summariseLearningProgress(course, enrollment)
+          : null;
 
-      if (enrollment && learningProgress) {
-        enrollment.learningProgress = learningProgress;
-        totalClasses += learningProgress.totalClasses;
-        completedClasses += learningProgress.completedClasses;
-        watchedClasses += learningProgress.watchedClasses;
-      }
+        if (enrollment && learningProgress) {
+          enrollment.learningProgress = learningProgress;
+          totalClasses += learningProgress.totalClasses;
+          completedClasses += learningProgress.completedClasses;
+          watchedClasses += learningProgress.watchedClasses;
+        }
 
-      const mapped = {
-        _id: course._id,
-        name: course.name,
-        coverImage: course.coverImage || (course as any).image,
-        type: course.type,
-        learningProgress,
-      };
-      return this.signCourseImages(mapped);
-    }));
+        const mapped = {
+          _id: course._id,
+          name: course.name,
+          coverImage: course.coverImage || (course as any).image,
+          type: course.type,
+          learningProgress,
+        };
+        return this.signCourseImages(mapped);
+      }),
+    );
 
     syncGamificationStats(user);
     user.markModified('course');
@@ -560,7 +593,7 @@ export class CoursesService {
 
           duration: cls.duration,
 
-          coverImage: cls.coverImage || (cls as any).thumbnail,
+          coverImage: cls.coverImage || cls.thumbnail,
 
           locked: true,
         })),
@@ -680,7 +713,9 @@ export class CoursesService {
 
         progressPercent,
 
-        completed: chapterClasses.length > 0 && completedClasses >= chapterClasses.length,
+        completed:
+          chapterClasses.length > 0 &&
+          completedClasses >= chapterClasses.length,
 
         locked: !purchased,
       };
@@ -751,58 +786,62 @@ export class CoursesService {
     );
 
     // LOCK LOGIC
-    const classes = await Promise.all(chapter.classes.map(async (cls: any) => {
-      const classId = cls._id.toString();
-      const classProgress = enrollment?.classProgress?.find(
-        (entry: any) => entry.classId === classId,
-      );
-      const progress = classProgress
-        ? this.normaliseClassProgress(
-            classProgress,
-            this.parseDurationToSeconds(cls.duration),
-          )
-        : null;
+    const classes = await Promise.all(
+      chapter.classes.map(async (cls: any) => {
+        const classId = cls._id.toString();
+        const classProgress = enrollment?.classProgress?.find(
+          (entry: any) => entry.classId === classId,
+        );
+        const progress = classProgress
+          ? this.normaliseClassProgress(
+              classProgress,
+              this.parseDurationToSeconds(cls.duration),
+            )
+          : null;
 
-      const mappedClass = {
-        _id: cls._id,
+        const mappedClass = {
+          _id: cls._id,
 
-        title: cls.title,
+          title: cls.title,
 
-        order: cls.order,
+          order: cls.order,
 
-        duration: cls.duration,
+          duration: cls.duration,
 
-        description: cls.description,
+          description: cls.description,
 
-        thumbnail: cls.thumbnail,
+          thumbnail: cls.thumbnail,
 
-        createdAt: cls.createdAt,
+          createdAt: cls.createdAt,
 
-        exerciseCount: cls.exercises?.length || 0,
+          exerciseCount: cls.exercises?.length || 0,
 
-        progressPercent: progress?.progressPercent || 0,
+          progressPercent: progress?.progressPercent || 0,
 
-        completed: progress?.completed || false,
+          completed: progress?.completed || false,
 
-        completedAt: progress?.completedAt || null,
+          completedAt: progress?.completedAt || null,
 
-        classProgress: progress,
+          classProgress: progress,
 
-        locked: !purchased,
-      };
-      return mappedClass;
-    }));
+          locked: !purchased,
+        };
+        return mappedClass;
+      }),
+    );
 
     const formattedCourse = await this.signCourseImages({
       _id: course._id,
       name: course.name,
       type: course.type,
-      chapters: [{
-        title: chapter.title,
-        description: chapter.description,
-        totalClasses: chapter.classes.length,
-        classes,
-      }],
+      chapters: [
+        {
+          title: chapter.title,
+          description: chapter.description,
+          totalClasses: chapter.classes.length,
+          classes,
+        },
+      ],
     });
 
     return {
@@ -861,10 +900,7 @@ export class CoursesService {
       throw new NotFoundException('Class not found');
     }
 
-    const videoSource = this.getClassVideoSource(
-      course.type,
-      cls.videoSource,
-    );
+    const videoSource = this.getClassVideoSource(course.type, cls.videoSource);
     const vdoCipher =
       videoSource === 'vdocipher'
         ? await this.getVdoCipherPlaybackData(cls.videoId)
@@ -877,8 +913,9 @@ export class CoursesService {
     );
 
     const rawClassProgress =
-      enrollment?.classProgress?.find((entry: any) => entry.classId === classId) ||
-      null;
+      enrollment?.classProgress?.find(
+        (entry: any) => entry.classId === classId,
+      ) || null;
     const classProgress = rawClassProgress
       ? this.normaliseClassProgress(
           rawClassProgress,
@@ -1087,10 +1124,16 @@ export class CoursesService {
     ) {
       gamification.rewardedClassIds.push(classId);
 
-      const reward = awardPoints(user, 25, 'Class Completed', 'class_completed', {
-        courseId: course._id.toString(),
-        classId,
-      });
+      const reward = awardPoints(
+        user,
+        25,
+        'Class Completed',
+        'class_completed',
+        {
+          courseId: course._id.toString(),
+          classId,
+        },
+      );
 
       if (reward) {
         recentRewards.push(reward);
@@ -1199,7 +1242,7 @@ export class CoursesService {
     // Clean up expired sessions first (if TTL hasn't kicked in yet)
     await this.activeStreamModel.updateMany(
       { userId, expiresAt: { $lt: new Date() }, status: 'ACTIVE' },
-      { $set: { status: 'EXPIRED' } }
+      { $set: { status: 'EXPIRED' } },
     );
 
     const active = await this.activeStreamModel.findOne({
@@ -1221,7 +1264,8 @@ export class CoursesService {
       active.classId = classId;
       active.heartbeatAt = new Date();
       active.expiresAt = expiresAt;
-      active.browserFingerprint = browserFingerprint || active.browserFingerprint;
+      active.browserFingerprint =
+        browserFingerprint || active.browserFingerprint;
       active.ipAddress = ipAddress || active.ipAddress;
       active.userAgent = userAgent || active.userAgent;
 
@@ -1259,7 +1303,7 @@ export class CoursesService {
         heartbeatAt: new Date(),
         expiresAt,
       },
-      { new: true }
+      { new: true },
     );
 
     if (!updated) {
@@ -1274,12 +1318,12 @@ export class CoursesService {
       {
         userId,
         deviceId,
-        status: 'ACTIVE'
+        status: 'ACTIVE',
       },
       {
         status: 'ENDED',
         expiresAt: new Date(),
-      }
+      },
     );
 
     return { success: true };
@@ -1295,9 +1339,10 @@ export class CoursesService {
     }
 
     const user = await this.userModel.findById(userId);
-    const purchased = user?.course?.some(
-      (c: any) => c.courseId.toString() === course._id.toString(),
-    ) || false;
+    const purchased =
+      user?.course?.some(
+        (c: any) => c.courseId.toString() === course._id.toString(),
+      ) || false;
 
     if (!purchased) {
       throw new ForbiddenException('Purchase course to access video stream');
@@ -1305,7 +1350,9 @@ export class CoursesService {
 
     let foundClass: any = null;
     for (const chapter of course.chapters) {
-      const cls = chapter.classes.find((c: any) => c._id.toString() === classId);
+      const cls = chapter.classes.find(
+        (c: any) => c._id.toString() === classId,
+      );
       if (cls) {
         foundClass = cls;
         break;
@@ -1323,14 +1370,17 @@ export class CoursesService {
     }
 
     let playbackUrl: string;
-    
+
     if (videoTarget.endsWith('.m3u8')) {
       // const baseUrl = process.env.API_URL || 'https://api.your-domain.com/api';
       const baseUrl = process.env.API_URL || 'http://<SERVER_IP>:3000/api';
       playbackUrl = `${baseUrl}/courses/video/${classId}/playlist.m3u8`;
     } else {
       // Fallback for MP4 videos that haven't been converted to HLS yet
-      playbackUrl = await this.signedUrlService.generateSignedVideoUrl(videoTarget, 900);
+      playbackUrl = await this.signedUrlService.generateSignedVideoUrl(
+        videoTarget,
+        900,
+      );
     }
 
     return {
@@ -1338,8 +1388,8 @@ export class CoursesService {
       watermarkData: {
         userId: user?._id,
         name: user?.name || '',
-        email: user?.email
-      }
+        email: user?.email,
+      },
     };
   }
 
@@ -1353,9 +1403,10 @@ export class CoursesService {
     }
 
     const user = await this.userModel.findById(userId);
-    const purchased = user?.course?.some(
-      (c: any) => c.courseId.toString() === course._id.toString(),
-    ) || false;
+    const purchased =
+      user?.course?.some(
+        (c: any) => c.courseId.toString() === course._id.toString(),
+      ) || false;
 
     if (!purchased) {
       throw new ForbiddenException('Purchase course to access video stream');
@@ -1363,7 +1414,9 @@ export class CoursesService {
 
     let foundClass: any = null;
     for (const chapter of course.chapters) {
-      const cls = chapter.classes.find((c: any) => c._id.toString() === classId);
+      const cls = chapter.classes.find(
+        (c: any) => c._id.toString() === classId,
+      );
       if (cls) {
         foundClass = cls;
         break;
@@ -1393,7 +1446,9 @@ export class CoursesService {
 
     let foundClass: any = null;
     for (const chapter of course.chapters) {
-      const cls = chapter.classes.find((c: any) => c._id.toString() === classId);
+      const cls = chapter.classes.find(
+        (c: any) => c._id.toString() === classId,
+      );
       if (cls) {
         foundClass = cls;
         break;
@@ -1406,7 +1461,7 @@ export class CoursesService {
     }
 
     const result = await this.hlsService.convertVideoToHls(videoTarget);
-    
+
     if (result.success && result.hlsPath) {
       // Update database with new HLS path
       foundClass.videoUrl = result.hlsPath;
@@ -1416,7 +1471,6 @@ export class CoursesService {
     return result;
   }
 
-
   private async signCourseImages(courseObj: any) {
     if (!courseObj) return courseObj;
 
@@ -1425,31 +1479,45 @@ export class CoursesService {
       delete courseObj.image;
     }
     if (courseObj.coverImage) {
-      courseObj.coverImage = await this.signedUrlService.generateSignedImageUrl(courseObj.coverImage);
+      courseObj.coverImage = await this.signedUrlService.generateSignedImageUrl(
+        courseObj.coverImage,
+      );
     }
 
     if (courseObj.chapters && Array.isArray(courseObj.chapters)) {
-      courseObj.chapters.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+      courseObj.chapters.sort(
+        (a: any, b: any) => (a.order || 0) - (b.order || 0),
+      );
       for (const chapter of courseObj.chapters) {
         if (chapter.imageName) {
           chapter.coverImage = chapter.imageName;
           delete chapter.imageName;
         }
         if (chapter.coverImage) {
-          chapter.coverImage = await this.signedUrlService.generateSignedImageUrl(chapter.coverImage);
+          chapter.coverImage =
+            await this.signedUrlService.generateSignedImageUrl(
+              chapter.coverImage,
+            );
         }
         if (chapter.classes && Array.isArray(chapter.classes)) {
-          chapter.classes.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+          chapter.classes.sort(
+            (a: any, b: any) => (a.order || 0) - (b.order || 0),
+          );
           for (const cls of chapter.classes) {
             if (cls.thumbnail) {
               cls.coverImage = cls.thumbnail;
               delete cls.thumbnail;
             }
             if (cls.coverImage) {
-              cls.coverImage = await this.signedUrlService.generateSignedImageUrl(cls.coverImage);
+              cls.coverImage =
+                await this.signedUrlService.generateSignedImageUrl(
+                  cls.coverImage,
+                );
             }
             if (cls.exercises && Array.isArray(cls.exercises)) {
-              cls.exercises.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+              cls.exercises.sort(
+                (a: any, b: any) => (a.order || 0) - (b.order || 0),
+              );
             }
           }
         }

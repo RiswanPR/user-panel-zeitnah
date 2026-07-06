@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  Inject,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 
 import { Redis } from '@upstash/redis';
 
@@ -80,7 +76,9 @@ export class RedisService {
 
     await this.client.set(key, hashedOtp, { ex: ttlSeconds });
 
-    this.logger.debug(`OTP stored for ${context}:${email} (TTL: ${ttlSeconds}s)`);
+    this.logger.debug(
+      `OTP stored for ${context}:${email} (TTL: ${ttlSeconds}s)`,
+    );
   }
 
   /**
