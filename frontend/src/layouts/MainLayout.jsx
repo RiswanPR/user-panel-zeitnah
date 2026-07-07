@@ -14,11 +14,11 @@ import { getUploadUrl } from "../utils/courseUi";
 import PageTransition from "../components/ui/PageTransition";
 
 const navItems = [
-  { path: "/dashboard", label: "Dashboard", icon: Home },
+  // { path: "/dashboard", label: "Dashboard", icon: Home },
   { path: "/courses", label: "Courses", icon: BookOpen },
-  { path: "/my-learning", label: "My Learning", icon: BarChart3 },
-  { path: "/community", label: "Community", icon: Users },
-  { path: "/my-points", label: "My Points", icon: Star },
+  // { path: "/my-learning", label: "My Learning", icon: BarChart3 },
+  // { path: "/community", label: "Community", icon: Users },
+  // { path: "/my-points", label: "My Points", icon: Star },
   { path: "/profile", label: "Profile", icon: User },
 ];
 
@@ -41,11 +41,11 @@ export default function MainLayout({ children }) {
   // Get user initials for avatar fallback
   const userInitials = user?.name
     ? user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase()
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase()
     : "Z";
 
   const avatarUrl = user?.avatar ? getUploadUrl(user.avatar) : null;
@@ -103,11 +103,10 @@ export default function MainLayout({ children }) {
                 >
                   <Link
                     to={item.path}
-                    className={`relative flex items-center gap-3 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 group ${
-                      active
+                    className={`relative flex items-center gap-3 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 group ${active
                         ? "text-white"
                         : "text-text-muted hover:text-text-secondary"
-                    }`}
+                      }`}
                   >
                     {/* Active background gradient */}
                     {active && (
@@ -128,11 +127,10 @@ export default function MainLayout({ children }) {
                     )}
 
                     <Icon
-                      className={`relative z-10 w-[18px] h-[18px] shrink-0 transition-colors duration-200 ${
-                        active
+                      className={`relative z-10 w-[18px] h-[18px] shrink-0 transition-colors duration-200 ${active
                           ? "text-brand-mint"
                           : "text-text-faint group-hover:text-text-muted"
-                      }`}
+                        }`}
                     />
                     <span className="relative z-10">{item.label}</span>
 
@@ -204,14 +202,12 @@ export default function MainLayout({ children }) {
                     />
                   )}
                   <Icon
-                    className={`relative z-10 w-5 h-5 transition-colors duration-200 ${
-                      active ? "text-brand-mint" : "text-text-faint"
-                    }`}
+                    className={`relative z-10 w-5 h-5 transition-colors duration-200 ${active ? "text-brand-mint" : "text-text-faint"
+                      }`}
                   />
                   <span
-                    className={`relative z-10 text-[9px] font-semibold tracking-wide transition-colors duration-200 ${
-                      active ? "text-brand-mint" : "text-text-faint"
-                    }`}
+                    className={`relative z-10 text-[9px] font-semibold tracking-wide transition-colors duration-200 ${active ? "text-brand-mint" : "text-text-faint"
+                      }`}
                   >
                     {item.label}
                   </span>

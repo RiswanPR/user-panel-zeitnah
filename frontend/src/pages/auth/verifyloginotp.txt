@@ -77,7 +77,7 @@ function VerifyOtp() {
     setUser(res.data.user);
     localStorage.removeItem("login_email");
     setSuccess("Login successful! Redirecting…");
-    setTimeout(() => navigate("/profile"), 1200);
+    setTimeout(() => navigate("/courses"), 1200);
   };
 
   const handleVerifyOtp = async () => {
