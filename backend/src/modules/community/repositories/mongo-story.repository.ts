@@ -23,6 +23,10 @@ export class StoryRepository extends BaseRepository<StoryDocument> {
     super(storyModel);
   }
 
+  async createMedia(data: Partial<StoryMediaDocument>): Promise<StoryMediaDocument> {
+    return new this.storyMediaModel(data).save();
+  }
+
   async getActiveStories(): Promise<any[]> {
     const now = new Date();
     return this.storyModel

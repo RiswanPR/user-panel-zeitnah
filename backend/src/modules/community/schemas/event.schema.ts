@@ -7,7 +7,7 @@ export type EventRsvpDocument = EventRsvp & Document;
 
 @Schema({ timestamps: true, collection: 'community_events' })
 export class CommunityEvent {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
   @Prop({ type: String, required: true })
@@ -52,13 +52,13 @@ export const CommunityEventSchema =
 
 @Schema({ timestamps: true, collection: 'community_event_rsvps' })
 export class EventRsvp {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   eventId: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   userId: string;
 
   @Prop({

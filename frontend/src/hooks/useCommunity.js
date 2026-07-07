@@ -18,8 +18,18 @@ export function useCreatePost() {
 
   return useMutation({
     mutationFn: communityApi.createPost,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['community', 'feed'] });
+    onSuccess: (post) => {
+      queryClient.setQueryData(['community', 'feed'], (oldData) => {
+        if (!oldData || !oldData.pages) return oldData;
+        const newPages = [...oldData.pages];
+        if (newPages.length > 0) {
+          newPages[0] = {
+            ...newPages[0],
+            items: [post, ...newPages[0].items.filter((p) => (p._id || p.id) !== (post._id || post.id))],
+          };
+        }
+        return { ...oldData, pages: newPages };
+      });
       toast.success('Post published!');
     },
     onError: () => {
@@ -106,6 +116,20 @@ export function useActiveStories() {
   return useQuery({
     queryKey: ['community', 'stories'],
     queryFn: communityApi.getActiveStories,
+  });
+}
+
+export function useCreateStory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: communityApi.createStory,
+    onSuccess: (story) => {
+      queryClient.setQueryData(['community', 'stories'], (oldData) => {
+        if (!oldData) return [story];
+        return [story, ...oldData.filter(s => s._id !== story._id)];
+      });
+    },
   });
 }
 

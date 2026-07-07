@@ -94,6 +94,10 @@ export class CommunityGateway
     }
   }
 
+  emitStoryCreated(story: any) {
+    this.server.emit('story_created', story);
+  }
+
   emitCommentAdded(postId: string, comment: any) {
     this.server.emit(`post_${postId}_comments`, { action: 'added', comment });
   }

@@ -8,12 +8,16 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { StoryRepository } from '../repositories/mongo-story.repository';
 import { CreateStoryDto, StoryReplyDto } from '../dto/story.dto';
 import { StoryDocument } from '../schemas/story.schema';
+import { CommunityGateway } from '../gateways/community.gateway';
 
 @Injectable()
 export class StoryService {
   private readonly logger = new Logger(StoryService.name);
 
-  constructor(private readonly storyRepository: StoryRepository) {}
+  constructor(
+    private readonly storyRepository: StoryRepository,
+    private readonly communityGateway: CommunityGateway,
+  ) {}
 
   async createStory(
     userId: string,
@@ -22,7 +26,7 @@ export class StoryService {
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24); // 24 hours from now
 
-    return this.storyRepository.create({
+    const createdStory = await this.storyRepository.create({
       authorId: userId,
       type: data.type,
       text: data.text,
@@ -31,6 +35,25 @@ export class StoryService {
       courseTag: data.courseTag,
       expiresAt,
     });
+
+    let media = null;
+    if (data.mediaUrl) {
+      media = await this.storyRepository.createMedia({
+        storyId: createdStory._id,
+        url: data.mediaUrl,
+        type: data.mediaType || 'image',
+        duration: data.mediaDuration,
+      });
+    }
+
+    const storyToEmit = {
+      ...createdStory.toObject(),
+      media: media ? [media] : [],
+    };
+
+    this.communityGateway.emitStoryCreated(storyToEmit);
+
+    return createdStory;
   }
 
   async getActiveFeed(): Promise<any[]> {

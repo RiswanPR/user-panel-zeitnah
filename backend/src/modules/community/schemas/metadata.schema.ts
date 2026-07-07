@@ -11,7 +11,7 @@ export type ReportDocument = Report & Document;
 
 @Schema({ timestamps: true, collection: 'community_tags' })
 export class Tag {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
   @Prop({ type: String, required: true, unique: true })
@@ -21,13 +21,13 @@ export const TagSchema = SchemaFactory.createForClass(Tag);
 
 @Schema({ timestamps: true, collection: 'community_post_tags' })
 export class PostTag {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   postId: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   tagId: string;
 }
 export const PostTagSchema = SchemaFactory.createForClass(PostTag);
@@ -35,7 +35,7 @@ PostTagSchema.index({ postId: 1, tagId: 1 }, { unique: true });
 
 @Schema({ timestamps: true, collection: 'community_mentions' })
 export class Mention {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
   @Prop({ type: String, required: true, index: true })
@@ -51,7 +51,7 @@ export const MentionSchema = SchemaFactory.createForClass(Mention);
 
 @Schema({ timestamps: true, collection: 'community_hashtags' })
 export class Hashtag {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
   @Prop({ type: String, required: true, unique: true })
@@ -64,13 +64,13 @@ export const HashtagSchema = SchemaFactory.createForClass(Hashtag);
 
 @Schema({ timestamps: true, collection: 'community_views' })
 export class View {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   userId: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   entityId: string; // postId or storyId
 
   @Prop({ type: String, required: true })
@@ -81,7 +81,7 @@ ViewSchema.index({ userId: 1, entityId: 1, entityType: 1 }, { unique: true });
 
 @Schema({ timestamps: true, collection: 'community_reports' })
 export class Report {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
   @Prop({ type: String, required: true, index: true })

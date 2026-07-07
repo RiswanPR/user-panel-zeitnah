@@ -6,7 +6,7 @@ export type ModerationLogDocument = ModerationLog & Document;
 
 @Schema({ timestamps: true, collection: 'community_moderation_logs' })
 export class ModerationLog {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
   @Prop({ type: String, required: true, index: true })

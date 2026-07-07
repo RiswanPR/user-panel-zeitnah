@@ -8,7 +8,7 @@ export type AnnouncementDocument = Announcement & Document;
 
 @Schema({ timestamps: true, collection: 'community_groups' })
 export class Group {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
   @Prop({ type: String, required: true })
@@ -37,17 +37,16 @@ export class Group {
 }
 
 export const GroupSchema = SchemaFactory.createForClass(Group);
-GroupSchema.index({ courseId: 1 });
 
 @Schema({ timestamps: true, collection: 'community_group_members' })
 export class GroupMember {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   groupId: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   userId: string;
 
   @Prop({
@@ -66,16 +65,16 @@ GroupMemberSchema.index({ groupId: 1, userId: 1 }, { unique: true });
 
 @Schema({ timestamps: true, collection: 'community_announcements' })
 export class Announcement {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
   @Prop({ type: String, required: true, index: true })
   authorId: string;
 
-  @Prop({ type: String, index: true })
+  @Prop({ type: String })
   groupId?: string;
 
-  @Prop({ type: String, index: true })
+  @Prop({ type: String })
   courseId?: string;
 
   @Prop({ type: String, required: true })

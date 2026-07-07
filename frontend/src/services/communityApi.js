@@ -127,13 +127,18 @@ export const communityApi = {
     
     // Using common upload endpoint, assuming it exists or will be created.
     // If not, we will add an endpoint in community module for this.
-    // Let's assume /upload endpoint exists based on Phase 1 instructions: "Use the existing S3 service. Create reusable upload service."
-    const response = await api.post('/upload', formData, {
+    // Using common upload endpoint in community module.
+    const response = await api.post('/community/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
       onUploadProgress,
     });
+    return response.data;
+  },
+
+  deleteMedia: async (url) => {
+    const response = await api.delete('/community/upload', { data: { url } });
     return response.data;
   },
 

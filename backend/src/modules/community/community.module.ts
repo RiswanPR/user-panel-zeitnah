@@ -111,6 +111,7 @@ import { CommunityGroupController } from './controllers/community-group.controll
 import { GamificationController } from './controllers/gamification.controller';
 import { ModerationController } from './controllers/moderation.controller';
 import { AIController } from './controllers/ai.controller';
+import { CommunityUploadController } from './controllers/community-upload.controller';
 
 // Gateways
 import { CommunityGateway } from './gateways/community.gateway';
@@ -167,6 +168,7 @@ import { CommunityGateway } from './gateways/community.gateway';
     GamificationController,
     ModerationController,
     AIController,
+    CommunityUploadController,
   ],
   providers: [
     PostRepository,

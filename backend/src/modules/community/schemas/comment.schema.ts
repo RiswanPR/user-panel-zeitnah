@@ -7,10 +7,10 @@ export type CommentReactionDocument = CommentReaction & Document;
 
 @Schema({ timestamps: true, collection: 'community_comments' })
 export class Comment {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   postId: string;
 
   @Prop({ type: String, required: true, index: true })
@@ -64,13 +64,13 @@ CommentSchema.index({ postId: 1, parentId: 1, createdAt: -1 });
 
 @Schema({ timestamps: true, collection: 'community_comment_reactions' })
 export class CommentReaction {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   commentId: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   userId: string;
 
   @Prop({ type: String, required: true })

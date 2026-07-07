@@ -13,7 +13,7 @@ export type PollVoteDocument = PollVote & Document;
 
 @Schema({ timestamps: true, collection: 'community_posts' })
 export class Post {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
   @Prop({ type: String, required: true, index: true })
@@ -25,7 +25,7 @@ export class Post {
   @Prop({ type: String, enum: PostType, required: true })
   type: PostType;
 
-  @Prop({ type: String, enum: PostAudience, required: true, index: true })
+  @Prop({ type: String, enum: PostAudience, required: true })
   audience: PostAudience;
 
   @Prop({ type: String, index: true })
@@ -71,7 +71,7 @@ export class Post {
   @Prop({ type: Boolean, default: false })
   isLocked: boolean;
 
-  @Prop({ type: Boolean, default: false, index: true })
+  @Prop({ type: Boolean, default: false })
   isDeleted: boolean;
 
   @Prop({ type: Date })
@@ -86,7 +86,7 @@ PostSchema.index({ isDeleted: 1, createdAt: -1, audience: 1 });
 
 @Schema({ timestamps: true, collection: 'community_post_media' })
 export class PostMedia {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
   @Prop({ type: String, required: true, index: true })
@@ -118,17 +118,16 @@ export class PostMedia {
 }
 
 export const PostMediaSchema = SchemaFactory.createForClass(PostMedia);
-PostMediaSchema.index({ postId: 1 });
 
 @Schema({ timestamps: true, collection: 'community_post_reactions' })
 export class PostReaction {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   postId: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   userId: string;
 
   @Prop({ type: String, required: true })
@@ -143,13 +142,13 @@ PostReactionSchema.index({ postId: 1, userId: 1 }, { unique: true });
 
 @Schema({ timestamps: true, collection: 'community_saved_posts' })
 export class SavedPost {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   userId: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   postId: string;
 
   @Prop({ type: Date })
@@ -161,7 +160,7 @@ SavedPostSchema.index({ userId: 1, postId: 1 }, { unique: true });
 
 @Schema({ timestamps: true, collection: 'community_polls' })
 export class Poll {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
   @Prop({ type: String, required: true, index: true })
@@ -178,11 +177,10 @@ export class Poll {
 }
 
 export const PollSchema = SchemaFactory.createForClass(Poll);
-PollSchema.index({ postId: 1 });
 
 @Schema({ timestamps: true, collection: 'community_poll_options' })
 export class PollOption {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
   @Prop({ type: String, required: true, index: true })
@@ -199,20 +197,19 @@ export class PollOption {
 }
 
 export const PollOptionSchema = SchemaFactory.createForClass(PollOption);
-PollOptionSchema.index({ pollId: 1 });
 
 @Schema({ timestamps: true, collection: 'community_poll_votes' })
 export class PollVote {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   pollId: string;
 
   @Prop({ type: String, required: true, index: true })
   optionId: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   userId: string;
 
   @Prop({ type: Date })

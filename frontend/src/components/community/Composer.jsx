@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useContext, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Image, Video, Send, Globe, Users, Lock, ChevronDown, X, Sparkles, Hash } from 'lucide-react';
+import { Image, Video, Send, Globe, Users, Lock, ChevronDown, X, Sparkles, Hash, FileText } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import { getUploadUrl } from '../../utils/courseUi';
 import { useCreatePost, useAIImproveText, useAISuggestTags } from '../../hooks/useCommunity';
@@ -54,7 +54,7 @@ export default function Composer() {
         
         uploadedMedia.push({
           url: response.url,
-          type: file.type.startsWith('video/') ? 'video' : 'image',
+          type: file.type.startsWith('video/') ? 'video' : file.type.includes('pdf') ? 'document' : 'image',
           mimeType: file.type,
           size: file.size,
         });
@@ -69,9 +69,17 @@ export default function Composer() {
     }
   }, []);
 
-  const removeFile = useCallback((index) => {
+  const removeFile = useCallback(async (index) => {
+    const file = attachedFiles[index];
+    if (file && file.url) {
+      try {
+        await communityApi.deleteMedia(file.url);
+      } catch (err) {
+        console.error('Failed to delete media', err);
+      }
+    }
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
-  }, []);
+  }, [attachedFiles]);
 
   const handleImprove = useCallback(() => {
     if (!content.trim()) return;
@@ -212,6 +220,11 @@ export default function Composer() {
                   <div key={i} className="relative w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-bg-base border border-white/[0.05]">
                     {file.type === 'image' ? (
                       <img src={file.url} alt="Preview" className="w-full h-full object-cover" />
+                    ) : file.type === 'document' ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-brand-purple/10 border border-brand-purple/20">
+                        <FileText className="w-6 h-6 text-brand-purple mb-1" />
+                        <span className="text-[8px] text-text-muted">PDF</span>
+                      </div>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-black">
                         <Video className="w-6 h-6 text-white/50" />
@@ -261,7 +274,7 @@ export default function Composer() {
                   onChange={handleFileSelect} 
                   className="hidden" 
                   multiple 
-                  accept="image/*,video/*" 
+                  accept="image/*,video/*,application/pdf" 
                 />
                 <button onClick={() => fileInputRef.current?.click()} className="p-2 text-brand-mint hover:bg-brand-mint/10 rounded-lg transition-colors cursor-pointer" title="Add Media">
                   <Image className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -290,7 +303,15 @@ export default function Composer() {
               </div>
               <div className="flex items-center gap-3">
                 <button 
-                  onClick={() => { setIsExpanded(false); setContent(''); setAttachedFiles([]); setTags([]); }}
+                  onClick={() => { 
+                    setIsExpanded(false); 
+                    setContent(''); 
+                    attachedFiles.forEach(f => {
+                      if (f.url) communityApi.deleteMedia(f.url).catch(() => {});
+                    });
+                    setAttachedFiles([]); 
+                    setTags([]); 
+                  }}
                   className="text-xs font-semibold text-text-muted hover:text-white transition-colors cursor-pointer"
                 >
                   Cancel

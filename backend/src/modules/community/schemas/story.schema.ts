@@ -12,10 +12,10 @@ export type StoryMentionDocument = StoryMention & Document;
 
 @Schema({ timestamps: true, collection: 'community_stories' })
 export class Story {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   authorId: string;
 
   @Prop({ type: String, enum: StoryType, required: true })
@@ -65,7 +65,7 @@ StorySchema.index({ authorId: 1, expiresAt: 1 });
 
 @Schema({ timestamps: true, collection: 'community_story_media' })
 export class StoryMedia {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
   @Prop({ type: String, required: true, index: true })
@@ -97,17 +97,16 @@ export class StoryMedia {
 }
 
 export const StoryMediaSchema = SchemaFactory.createForClass(StoryMedia);
-StoryMediaSchema.index({ storyId: 1 });
 
 @Schema({ timestamps: true, collection: 'community_story_views' })
 export class StoryView {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   storyId: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   userId: string;
 }
 
@@ -116,13 +115,13 @@ StoryViewSchema.index({ storyId: 1, userId: 1 }, { unique: true });
 
 @Schema({ timestamps: true, collection: 'community_story_reactions' })
 export class StoryReaction {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   storyId: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   userId: string;
 
   @Prop({ type: String, required: true })
@@ -134,7 +133,7 @@ StoryReactionSchema.index({ storyId: 1, userId: 1 }, { unique: true });
 
 @Schema({ timestamps: true, collection: 'community_story_replies' })
 export class StoryReply {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
   @Prop({ type: String, required: true, index: true })
@@ -154,17 +153,16 @@ export class StoryReply {
 }
 
 export const StoryReplySchema = SchemaFactory.createForClass(StoryReply);
-StoryReplySchema.index({ storyId: 1 });
 
 @Schema({ timestamps: true, collection: 'community_story_mentions' })
 export class StoryMention {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   storyId: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   userId: string;
 }
 

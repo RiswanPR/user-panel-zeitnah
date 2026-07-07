@@ -7,10 +7,10 @@ export type AchievementLogDocument = AchievementLog & Document;
 
 @Schema({ timestamps: true, collection: 'community_profiles' })
 export class CommunityProfile {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
-  @Prop({ type: String, required: true, unique: true, index: true })
+  @Prop({ type: String, required: true, unique: true })
   userId: string;
 
   @Prop({ type: Number, default: 0 })
@@ -42,7 +42,7 @@ export const CommunityProfileSchema =
 
 @Schema({ timestamps: true, collection: 'community_achievement_logs' })
 export class AchievementLog {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
   @Prop({ type: String, required: true, index: true })

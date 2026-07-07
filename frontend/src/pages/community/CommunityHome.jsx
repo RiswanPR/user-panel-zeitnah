@@ -2,11 +2,13 @@ import { useState, useCallback } from 'react';
 import Composer from '../../components/community/Composer';
 import PostCard from '../../components/community/PostCard';
 import StoryViewer from '../../components/community/StoryViewer';
+import CreateStoryModal from '../../components/community/CreateStoryModal';
 import { useCommunityFeed, useActiveStories } from '../../hooks/useCommunity';
 import { useIntersectionObserver } from '../../hooks/useIntersectionObserver';
 
 export default function CommunityHome() {
   const [activeStoryIndex, setActiveStoryIndex] = useState(null);
+  const [isCreateStoryModalOpen, setIsCreateStoryModalOpen] = useState(false);
 
   // ── Fetch Stories ──
   const { data: storiesData, isLoading: storiesLoading } = useActiveStories();
@@ -44,9 +46,17 @@ export default function CommunityHome() {
         />
       )}
 
+      <CreateStoryModal 
+        isOpen={isCreateStoryModalOpen} 
+        onClose={() => setIsCreateStoryModalOpen(false)} 
+      />
+
       {/* ── Learning Highlights (Stories) Strip ── */}
       <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide px-1 snap-x">
-        <div className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group snap-start">
+        <div 
+          onClick={() => setIsCreateStoryModalOpen(true)}
+          className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group snap-start"
+        >
           <div className="w-16 h-16 rounded-full border-2 border-dashed border-text-faint flex items-center justify-center bg-white/[0.02] group-hover:bg-white/[0.04] transition-colors shadow-sm">
             <span className="text-2xl text-text-muted font-light group-hover:text-brand-mint transition-colors">+</span>
           </div>

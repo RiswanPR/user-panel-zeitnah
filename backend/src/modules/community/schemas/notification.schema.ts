@@ -6,10 +6,10 @@ export type NotificationDocument = Notification & Document;
 
 @Schema({ timestamps: true, collection: 'community_notifications' })
 export class Notification {
-  @Prop({ type: String, default: () => uuidv4(), index: true })
+  @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   userId: string; // Recipient of the notification
 
   @Prop({ type: String, required: true })

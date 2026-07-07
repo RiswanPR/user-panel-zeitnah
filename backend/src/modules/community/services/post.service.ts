@@ -6,10 +6,14 @@ import {
 import { PostRepository } from '../repositories/mongo-post.repository';
 import { CreatePostDto, UpdatePostDto } from '../dto/post.dto';
 import { PostDocument } from '../schemas/post.schema';
+import { CommunityGateway } from '../gateways/community.gateway';
 
 @Injectable()
 export class PostService {
-  constructor(private readonly postRepository: PostRepository) {}
+  constructor(
+    private readonly postRepository: PostRepository,
+    private readonly communityGateway: CommunityGateway,
+  ) {}
 
   async createPost(userId: string, data: CreatePostDto): Promise<PostDocument> {
     const postData = {
@@ -48,6 +52,12 @@ export class PostService {
         },
         data.pollOptions,
       );
+    }
+
+    // Fetch the fully populated post to broadcast it
+    const populatedPost = await this.postRepository.findById(createdPost._id as string);
+    if (populatedPost) {
+      this.communityGateway.emitPostCreated(populatedPost.courseId, populatedPost);
     }
 
     return createdPost;

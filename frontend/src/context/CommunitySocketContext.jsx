@@ -33,14 +33,32 @@ export const CommunitySocketProvider = ({ children }) => {
     });
 
     newSocket.on('post_created', (post) => {
-      // Invalidate feed so it fetches the new post, or manually insert it
-      queryClient.invalidateQueries({ queryKey: ['community', 'feed'] });
+      // Intelligent Cache Update (Prepend to first page of infinite query)
+      queryClient.setQueryData(['community', 'feed'], (oldData) => {
+        if (!oldData || !oldData.pages) return oldData;
+        const newPages = [...oldData.pages];
+        if (newPages.length > 0) {
+          // Prepend to the first page's items array
+          newPages[0] = {
+            ...newPages[0],
+            items: [post, ...newPages[0].items.filter(p => (p._id || p.id) !== (post._id || post.id))],
+          };
+        }
+        return { ...oldData, pages: newPages };
+      });
       
-      // Optionally show a toast if the user is not the author
       const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
       if (post.authorId !== currentUser._id) {
         toast('New post in the community!', { icon: '📣' });
       }
+    });
+
+    newSocket.on('story_created', (story) => {
+      // Intelligent Cache Update (Prepend to stories array)
+      queryClient.setQueryData(['community', 'stories'], (oldData) => {
+        if (!oldData) return [story];
+        return [story, ...oldData.filter(s => s._id !== story._id)];
+      });
     });
 
     newSocket.on('new_notification', (notification) => {
