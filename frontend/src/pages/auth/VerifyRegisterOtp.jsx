@@ -94,7 +94,8 @@ function VerifyRegisterOtp() {
       }
       finalizeRegister(res);
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid OTP. Please try again.");
+      if (err.isCancelled) return;
+      setError(err.friendlyMessage || "Invalid OTP. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -108,7 +109,8 @@ function VerifyRegisterOtp() {
       const res = await api.post("/auth/register/verify-otp", { ...pendingPayload, forceLogin: true });
       finalizeRegister(res);
     } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong.");
+      if (err.isCancelled) return;
+      setError(err.friendlyMessage || "Something went wrong.");
     } finally {
       setLoading(false);
     }

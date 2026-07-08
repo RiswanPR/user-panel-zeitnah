@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Req, UseGuards } from '@nestjs/common';
 
 import type { Request } from 'express';
 
@@ -12,10 +12,10 @@ type AuthenticatedRequest = Request & {
 };
 
 @Controller('audit-logs')
-@UseGuards(JwtAuthGuard)
 export class AuditLogsController {
   constructor(private readonly auditLogsService: AuditLogsService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Get()
   find(
     @Req()
@@ -44,5 +44,16 @@ export class AuditLogsController {
       page: Number(page),
       limit: Number(limit),
     });
+  }
+
+  @Post('client-error')
+  logClientError(@Req() req: Request, @Body() body: any) {
+    // Log the detailed diagnostic internally
+    const correlationId = body.correlationId || 'no-correlation-id';
+    console.error(
+      `[CLIENT_ERROR] [${correlationId}] URL: ${body.apiUrl} Status: ${body.httpStatus}`,
+      JSON.stringify(body, null, 2)
+    );
+    return { success: true };
   }
 }

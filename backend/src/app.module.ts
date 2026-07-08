@@ -12,6 +12,7 @@ import { CoursesModule } from './modules/courses/courses.module';
 import { AwsModule } from './common/aws/aws.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { CommunityModule } from './modules/community/community.module';
+import { ErrorReportsModule } from './modules/error-reports/error-reports.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { CommunityModule } from './modules/community/community.module';
     // CORE MODULES
     AuthModule,
     AuditLogsModule,
+    ErrorReportsModule,
     ProfileModule,
     CoursesModule,
     AwsModule,

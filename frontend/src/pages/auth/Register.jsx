@@ -9,10 +9,6 @@ function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const getErrorMessage = (error) =>
-    error.response?.data?.message ||
-    error?.message ||
-    "Something went wrong. Please try again.";
 
   const handleRegisterChange = (e) => {
     const { name, value } = e.target;
@@ -35,12 +31,18 @@ function Register() {
     }
     try {
       setLoading(true);
+      const slowTimer = setTimeout(() => {
+        setError("Network seems slow, please wait...");
+      }, 5000);
+
       await api.post("/auth/register/send-otp", { name, email });
+      clearTimeout(slowTimer);
       localStorage.setItem("register_name", name);
       localStorage.setItem("register_email", email);
       navigate("/verify-register-otp");
     } catch (err) {
-      setError(getErrorMessage(err));
+      if (err.isCancelled) return;
+      setError(err.friendlyMessage || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }

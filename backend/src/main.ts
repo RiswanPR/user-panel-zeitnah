@@ -5,6 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 
 import { AppModule } from './app.module';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 import type { Express } from 'express';
@@ -40,6 +41,9 @@ async function bootstrap(): Promise<void> {
       },
     }),
   );
+
+  // GLOBAL EXCEPTION FILTER
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   // SWAGGER
   const config = new DocumentBuilder()

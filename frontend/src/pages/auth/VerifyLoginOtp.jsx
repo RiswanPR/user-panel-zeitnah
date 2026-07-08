@@ -99,7 +99,8 @@ function VerifyOtp() {
       }
       finalizeLogin(res);
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid OTP. Please try again.");
+      if (err.isCancelled) return;
+      setError(err.friendlyMessage || "Invalid OTP. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -113,7 +114,8 @@ function VerifyOtp() {
       const res = await api.post("/auth/login/verify-otp", { ...pendingPayload, forceLogin: true });
       finalizeLogin(res);
     } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong.");
+      if (err.isCancelled) return;
+      setError(err.friendlyMessage || "Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -130,7 +132,8 @@ function VerifyOtp() {
       setSuccess("OTP resent successfully!");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to resend OTP.");
+      if (err.isCancelled) return;
+      setError(err.friendlyMessage || "Failed to resend OTP.");
     } finally {
       setResendLoading(false);
     }

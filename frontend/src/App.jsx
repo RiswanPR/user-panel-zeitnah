@@ -25,6 +25,7 @@ const MyLearning = React.lazy(() => import("./pages/learning/MyLearning"));
 const Dashboard = React.lazy(() => import("./pages/learning/Dashboard"));
 const MyPoints = React.lazy(() => import("./pages/learning/MyPoints"));
 const NotFoundPage = React.lazy(() => import("./pages/NotFoundPage"));
+const ErrorReportsDashboard = React.lazy(() => import("./pages/admin/ErrorReportsDashboard"));
 
 // Community Views
 const CommunityLayout = React.lazy(() => import("./layouts/CommunityLayout"));
@@ -63,59 +64,12 @@ const PageLoader = () => (
   </div>
 );
 
-/**
- * Error Boundary for graceful error handling.
- */
-class ErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error, errorInfo) {
-    console.error("[ErrorBoundary]", error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen bg-bg-base flex items-center justify-center px-6">
-          <div className="text-center max-w-md">
-            <div className="h-16 w-16 rounded-2xl bg-danger/8 border border-danger/15 flex items-center justify-center text-danger mx-auto mb-5">
-              <span className="text-2xl font-bold">!</span>
-            </div>
-            <h1 className="text-2xl font-heading font-bold text-white mb-3">
-              Something went wrong
-            </h1>
-            <p className="text-sm font-medium text-text-muted mb-6 leading-relaxed">
-              An unexpected error occurred. Please refresh the page to continue.
-            </p>
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              className="btn-primary py-3 px-6"
-            >
-              Refresh Page
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ErrorBoundary>
-        <ToastProvider>
-          <BrowserRouter>
+      <ToastProvider>
+        <BrowserRouter>
             <Routes>
               
               {/* PUBLIC AUTHENTICATION ROUTES */}
@@ -147,6 +101,7 @@ function App() {
                 <Route path="/my-points" element={<Suspense fallback={<PageLoader />}><MyPoints /></Suspense>} />
                 <Route path="/active-sessions" element={<Suspense fallback={<PageLoader />}><ActiveSessions /></Suspense>} />
                 <Route path="/audit-logs" element={<Suspense fallback={<PageLoader />}><AuditLogs /></Suspense>} />
+                <Route path="/admin/error-reports" element={<Suspense fallback={<PageLoader />}><ErrorReportsDashboard /></Suspense>} />
               </Route>
 
               {/* SECURE COMMUNITY ROUTING */}
@@ -176,9 +131,8 @@ function App() {
               />
 
             </Routes>
-          </BrowserRouter>
-        </ToastProvider>
-      </ErrorBoundary>
+        </BrowserRouter>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }
