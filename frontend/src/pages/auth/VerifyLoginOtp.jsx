@@ -74,6 +74,15 @@ function VerifyOtp() {
 
   const finalizeLogin = (res) => {
     localStorage.setItem("token", res.data.token);
+    
+    // Store refresh token and session expiry for robust session management
+    if (res.data.refreshToken) {
+      localStorage.setItem("refreshToken", res.data.refreshToken);
+    }
+    if (res.data.sessionExpiresAt) {
+      localStorage.setItem("sessionExpiresAt", res.data.sessionExpiresAt);
+    }
+    
     setUser(res.data.user);
     localStorage.removeItem("login_email");
     setSuccess("Login successful! Redirecting…");

@@ -26,6 +26,7 @@ const Dashboard = React.lazy(() => import("./pages/learning/Dashboard"));
 const MyPoints = React.lazy(() => import("./pages/learning/MyPoints"));
 const NotFoundPage = React.lazy(() => import("./pages/NotFoundPage"));
 const ErrorReportsDashboard = React.lazy(() => import("./pages/admin/ErrorReportsDashboard"));
+const SessionDiagnostics = React.lazy(() => import("./pages/admin/SessionDiagnostics"));
 
 // Community Views
 const CommunityLayout = React.lazy(() => import("./layouts/CommunityLayout"));
@@ -102,6 +103,7 @@ function App() {
                 <Route path="/active-sessions" element={<Suspense fallback={<PageLoader />}><ActiveSessions /></Suspense>} />
                 <Route path="/audit-logs" element={<Suspense fallback={<PageLoader />}><AuditLogs /></Suspense>} />
                 <Route path="/admin/error-reports" element={<Suspense fallback={<PageLoader />}><ErrorReportsDashboard /></Suspense>} />
+                <Route path="/session-diagnostics" element={<Suspense fallback={<PageLoader />}><SessionDiagnostics /></Suspense>} />
               </Route>
 
               {/* SECURE COMMUNITY ROUTING */}
