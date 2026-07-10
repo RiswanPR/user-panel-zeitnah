@@ -12,6 +12,7 @@ import { CoursesModule } from './modules/courses/courses.module';
 import { AwsModule } from './common/aws/aws.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { CommunityModule } from './modules/community/community.module';
+import { TroubleshootModule } from './modules/troubleshoot/troubleshoot.module';
 
 @Module({
   imports: [
@@ -34,6 +35,9 @@ import { CommunityModule } from './modules/community/community.module';
 
     // COMMUNITY
     CommunityModule,
+
+    // TROUBLESHOOT ERROR REPORTING
+    TroubleshootModule,
 
     // RATE LIMITING
     ThrottlerModule.forRoot([

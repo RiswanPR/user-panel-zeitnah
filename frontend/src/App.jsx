@@ -12,6 +12,13 @@ import VerifyRegisterOtp from "./pages/auth/VerifyRegisterOtp";
 import { SocketProvider } from "./context/SocketContext";
 import { ToastProvider } from "./components/ui/Toast";
 
+// Error Capture & Troubleshoot
+import { initErrorCapture } from "./utils/errorCapture";
+import TroubleshootReporter from "./components/common/TroubleshootReporter";
+
+// Initialize global error capture as early as possible
+initErrorCapture();
+
 // Lazy Loaded Application Views
 const ActiveSessions = React.lazy(() => import("./pages/sessions/ActiveSessions"));
 const AuditLogs = React.lazy(() => import("./pages/audit/AuditLogs"));
@@ -176,6 +183,9 @@ function App() {
               />
 
             </Routes>
+
+            {/* Global Troubleshoot Error Reporter */}
+            <TroubleshootReporter />
           </BrowserRouter>
         </ToastProvider>
       </ErrorBoundary>

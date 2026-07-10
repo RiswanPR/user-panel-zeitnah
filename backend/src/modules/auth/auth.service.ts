@@ -52,6 +52,7 @@ type LoginRequestMetadata = {
 export type AuthenticatedUser = {
   userId: string;
   name?: string;
+  email: string;
   role: string;
   deviceId: string;
 };

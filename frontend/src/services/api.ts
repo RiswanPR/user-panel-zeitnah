@@ -1,4 +1,5 @@
 import axios from "axios";
+import { captureNetworkError } from "../utils/errorCapture";
 
 declare global {
   interface ImportMetaEnv {
@@ -12,7 +13,7 @@ declare global {
 }
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://<SERVER_IP>:3000/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL || "https://beta.zeitnahacademy.com/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -93,6 +94,20 @@ api.interceptors.response.use(
           isRedirecting = false;
         }, 3000);
       }
+    }
+
+    // Capture network errors for troubleshoot reports
+    // (skip capturing failures from the troubleshoot endpoint itself)
+    if (config?.url && !config.url.includes('/troubleshoot/')) {
+      captureNetworkError({
+        method: (config.method || 'UNKNOWN').toUpperCase(),
+        url: config.url || '',
+        status: error.response?.status || 0,
+        message:
+          error.response?.data?.message ||
+          error.message ||
+          'Network error',
+      });
     }
 
     return Promise.reject(error);

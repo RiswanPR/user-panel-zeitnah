@@ -220,8 +220,7 @@ function ClassView() {
           const snapshot = latestSnapshotRef.current;
           const token = localStorage.getItem("token");
           if (!snapshot || !token) return;
-          // const baseUrl = api.defaults.baseURL || "https://api.your-domain.com/api";
-          const baseUrl = api.defaults.baseURL || "http://<SERVER_IP>:3000/api";
+          const baseUrl = api.defaults.baseURL || "https://beta.zeitnahacademy.com/api";
           void fetch(`${baseUrl}/courses/class/${classId}/progress`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(snapshot), keepalive: true });
         };
         const onPageHide = () => { flushLatestProgress(); };

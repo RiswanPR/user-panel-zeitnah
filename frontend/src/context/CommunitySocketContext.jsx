@@ -16,7 +16,7 @@ export const CommunitySocketProvider = ({ children }) => {
 
     const baseURL = import.meta.env.VITE_API_BASE_URL 
       ? import.meta.env.VITE_API_BASE_URL.replace('/api', '') 
-      : 'http://<SERVER_IP>:3000';
+      : 'https://beta.zeitnahacademy.com';
 
     const newSocket = io(`${baseURL}/community`, {
       auth: { token },
