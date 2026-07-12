@@ -26,10 +26,17 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
   const [playbackError, setPlaybackError] = useState(false);
 
   const togglePlay = useCallback(() => {
-    if (videoRef.current?.paused) {
-      videoRef.current.play();
+    if (!videoRef.current) return;
+    if (videoRef.current.paused) {
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          // Play was interrupted by a call to pause() or auto-play was prevented.
+          console.log('Playback interrupted:', error);
+        });
+      }
     } else {
-      videoRef.current?.pause();
+      videoRef.current.pause();
     }
   }, []);
 
