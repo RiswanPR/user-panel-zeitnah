@@ -1303,7 +1303,7 @@ export class CoursesService {
         heartbeatAt: new Date(),
         expiresAt,
       },
-      { new: true },
+      { returnDocument: 'after' },
     );
 
     if (!updated) {

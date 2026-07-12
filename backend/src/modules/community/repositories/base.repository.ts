@@ -23,7 +23,7 @@ export abstract class BaseRepository<T extends Document> {
   async update(id: string, updateQuery: any): Promise<T | null> {
     return this.model
       .findOneAndUpdate({ _id: id as any, isDeleted: false }, updateQuery, {
-        new: true,
+        returnDocument: 'after',
       })
       .exec();
   }
