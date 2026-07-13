@@ -74,6 +74,9 @@ function VerifyOtp() {
 
   const finalizeLogin = (res) => {
     localStorage.setItem("token", res.data.token);
+    if (res.data.refreshToken) {
+      localStorage.setItem("refreshToken", res.data.refreshToken);
+    }
     setUser(res.data.user);
     localStorage.removeItem("login_email");
     setSuccess("Login successful! Redirecting…");

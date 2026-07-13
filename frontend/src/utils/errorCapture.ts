@@ -9,9 +9,9 @@
 const MAX_BUFFER_SIZE = 50;
 
 // Error buffers
-const consoleErrors = [];
-const networkErrors = [];
-const unhandledErrors = [];
+const consoleErrors: any[] = [];
+const networkErrors: any[] = [];
+const unhandledErrors: any[] = [];
 
 let initialized = false;
 
@@ -21,7 +21,7 @@ function now() {
   return new Date().toISOString();
 }
 
-function safeStringify(val) {
+function safeStringify(val: any) {
   if (val === null || val === undefined) return String(val);
   if (typeof val === 'string') return val;
   if (val instanceof Error) return val.message || val.toString();
@@ -32,7 +32,7 @@ function safeStringify(val) {
   }
 }
 
-function pushWithLimit(arr, item) {
+function pushWithLimit(arr: any[], item: any) {
   arr.push(item);
   if (arr.length > MAX_BUFFER_SIZE) arr.shift();
 }
@@ -109,7 +109,7 @@ export function initErrorCapture() {
 /**
  * Push a network error (called from api.ts interceptor).
  */
-export function captureNetworkError({ method, url, status, message }) {
+export function captureNetworkError({ method, url, status, message }: { method?: string; url?: string; status?: number; message?: string }) {
   pushWithLimit(networkErrors, {
     method: method || 'UNKNOWN',
     url: url || '',

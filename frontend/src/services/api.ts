@@ -50,6 +50,25 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+/* ── Token Refresh Logic ── */
+
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value?: unknown) => void;
+  reject: (reason?: unknown) => void;
+}> = [];
+
+const processQueue = (error: unknown, token: string | null = null) => {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error);
+    } else {
+      resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 /* ── Response Interceptor ── */
 
 let isRedirecting = false;
@@ -81,18 +100,62 @@ api.interceptors.response.use(
       return api(config);
     }
 
-    // Handle 401 — prevent redirect loops
-    if (error.response?.status === 401 && !isRedirecting) {
-      localStorage.removeItem("token");
+    // Handle 401 — attempt token refresh before logging out
+    if (error.response?.status === 401 && config && !config._isRefreshRequest) {
+      // If we're already refreshing, queue this request
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            config.headers.Authorization = `Bearer ${token}`;
+            return api(config);
+          })
+          .catch((err) => Promise.reject(err));
+      }
 
-      if (window.location.pathname !== "/login") {
-        isRedirecting = true;
-        window.location.assign("/login");
+      const refreshToken = localStorage.getItem("refreshToken");
 
-        // Reset after navigation
-        setTimeout(() => {
-          isRedirecting = false;
-        }, 3000);
+      // No refresh token available — go straight to logout
+      if (!refreshToken) {
+        forceLogout();
+        return Promise.reject(error);
+      }
+
+      isRefreshing = true;
+
+      try {
+        // Call the refresh endpoint
+        const res = await api.post(
+          "/auth/refresh-token",
+          { refreshToken },
+          { _isRefreshRequest: true } as any,
+        );
+
+        const newAccessToken = res.data.accessToken || res.data.token;
+        const newRefreshToken = res.data.refreshToken;
+
+        // Persist the new tokens
+        if (newAccessToken) {
+          localStorage.setItem("token", newAccessToken);
+        }
+        if (newRefreshToken) {
+          localStorage.setItem("refreshToken", newRefreshToken);
+        }
+
+        // Process queued requests with the new token
+        processQueue(null, newAccessToken);
+
+        // Retry the original failed request
+        config.headers.Authorization = `Bearer ${newAccessToken}`;
+        return api(config);
+      } catch (refreshError) {
+        // Refresh failed — token is truly expired, force logout
+        processQueue(refreshError, null);
+        forceLogout();
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
 
@@ -113,5 +176,21 @@ api.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+/** Clear all auth tokens and redirect to login */
+function forceLogout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("refreshToken");
+
+  if (window.location.pathname !== "/login" && !isRedirecting) {
+    isRedirecting = true;
+    window.location.assign("/login");
+
+    // Reset after navigation
+    setTimeout(() => {
+      isRedirecting = false;
+    }, 3000);
+  }
+}
 
 export default api;

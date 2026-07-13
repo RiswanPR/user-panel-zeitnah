@@ -218,18 +218,19 @@ export class CoursesController {
 
   // =====================
   // STOP STREAM
+  // (No JwtAuthGuard — navigator.sendBeacon cannot send Authorization headers.
+  //  Validated via userId + deviceId matching an active stream record.)
   // =====================
 
-  @UseGuards(JwtAuthGuard)
   @Post('stop-stream')
   stopStream(
     @Body()
     body: any,
-
-    @Req()
-    req: any,
   ) {
-    return this.coursesService.stopStream(req.user.userId, body.deviceId);
+    if (!body.deviceId || !body.userId) {
+      return { success: false, message: 'Missing deviceId or userId' };
+    }
+    return this.coursesService.stopStream(body.userId, body.deviceId);
   }
 
   // =====================

@@ -81,6 +81,10 @@ export const AuthProvider = ({
             "token"
           );
 
+          localStorage.removeItem(
+            "refreshToken"
+          );
+
           setUser(null);
 
         } finally {
@@ -100,6 +104,10 @@ export const AuthProvider = ({
 
     localStorage.removeItem(
       "token"
+    );
+
+    localStorage.removeItem(
+      "refreshToken"
     );
 
     setUser(null);

@@ -67,6 +67,9 @@ function VerifyRegisterOtp() {
 
   const finalizeRegister = (res) => {
     localStorage.setItem("token", res.data.token);
+    if (res.data.refreshToken) {
+      localStorage.setItem("refreshToken", res.data.refreshToken);
+    }
     setUser(res.data.user);
     localStorage.removeItem("register_name");
     localStorage.removeItem("register_email");

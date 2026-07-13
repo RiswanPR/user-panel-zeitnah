@@ -118,16 +118,18 @@ function ClassView() {
     const stopStream = async () => {
       try { 
         const { getPersistentDeviceId } = await import('../../utils/deviceFingerprint');
-        const deviceId = await getPersistentDeviceId(); 
-        await api.post("/courses/stop-stream", { deviceId }); 
+        const deviceId = await getPersistentDeviceId();
+        const userId = user?.userId || user?.id;
+        await api.post("/courses/stop-stream", { deviceId, userId }); 
       } catch (error) { console.log(error); }
     };
     
     const handleUnload = async () => {
       const { getPersistentDeviceId } = await import('../../utils/deviceFingerprint');
       const deviceId = await getPersistentDeviceId();
+      const userId = user?.userId || user?.id;
       const baseUrl = api.defaults.baseURL || window.location.origin + "/api";
-      navigator.sendBeacon(`${baseUrl}/courses/stop-stream`, new Blob([JSON.stringify({ deviceId })], { type: "application/json" }));
+      navigator.sendBeacon(`${baseUrl}/courses/stop-stream`, new Blob([JSON.stringify({ deviceId, userId })], { type: "application/json" }));
     };
     
     window.addEventListener("beforeunload", handleUnload);
@@ -136,7 +138,7 @@ function ClassView() {
       stopStream();
       window.removeEventListener("beforeunload", handleUnload);
     };
-  }, [classId, navigate]);
+  }, [classId, navigate, user]);
 
   // ── Initialize progress refs ──
   useEffect(() => {
