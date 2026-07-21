@@ -158,6 +158,13 @@ function CourseChapters() {
                       </div>
                       <span className="text-white/90">Ready to stream</span>
                     </>
+                  ) : String(course.type || "").trim().toLowerCase() === "recording" ? (
+                    <>
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-mint/20 border border-brand-mint/30">
+                        <BookOpen className="w-3.5 h-3.5 text-brand-mint" />
+                      </div>
+                      <span className="text-white/90">Chapter 1 Unlocked</span>
+                    </>
                   ) : (
                     <>
                       <div className="flex h-6 w-6 items-center justify-center rounded-full bg-warning/20 border border-warning/30">
@@ -209,8 +216,28 @@ function CourseChapters() {
         )}
       </motion.section>
 
-      {/* ── Locked Alert ── */}
-      {!purchased && (
+      {/* ── Unlocked/Locked Alert ── */}
+      {!purchased && String(course.type || "").trim().toLowerCase() === "recording" ? (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col gap-4 rounded-2xl border border-brand-mint/30 bg-brand-mint/5 p-5 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div className="flex items-start gap-3 min-w-0">
+            <BookOpen className="w-5 h-5 text-brand-mint shrink-0 mt-0.5" />
+            <div>
+              <h2 className="text-sm font-bold text-brand-mint">First Chapter Unlocked</h2>
+              <p className="mt-1 text-xs font-medium text-text-muted leading-relaxed">
+                Chapter 1 is defaultly unlocked for all students. Click Chapter 1 below to start watching!
+              </p>
+            </div>
+          </div>
+          <span className="inline-flex items-center gap-2 rounded-xl bg-brand-mint/10 border border-brand-mint/20 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-brand-mint shrink-0">
+            <PlayCircle className="w-3.5 h-3.5" />
+            Free Chapter Unlocked
+          </span>
+        </motion.div>
+      ) : !purchased && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

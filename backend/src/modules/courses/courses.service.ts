@@ -581,26 +581,70 @@ export class CoursesService {
       ? this.summariseLearningProgress(course, enrollment)
       : null;
 
+    const isRecording =
+      String(course.type || '')
+        .trim()
+        .toLowerCase() === 'recording';
+
     // LOCK CLASSES
     if (!purchased) {
-      courseObj.chapters = courseObj.chapters.map((chapter: any) => ({
-        ...chapter,
+      courseObj.chapters = courseObj.chapters.map(
+        (chapter: any, chapterIndex: number) => {
+          const isUnlocked = isRecording && chapterIndex === 0;
 
-        classes: chapter.classes.map((cls: any) => ({
-          _id: cls._id,
+          return {
+            ...chapter,
 
-          title: cls.title,
+            locked: !isUnlocked,
 
-          duration: cls.duration,
+            classes: chapter.classes.map((cls: any) => {
+              if (isUnlocked) {
+                const classId = cls._id.toString();
+                const rawProgress = enrollment?.classProgress?.find(
+                  (entry: any) => entry.classId === classId,
+                );
+                const progress = rawProgress
+                  ? this.normaliseClassProgress(
+                      rawProgress,
+                      this.parseDurationToSeconds(cls.duration),
+                    )
+                  : null;
 
-          coverImage: cls.coverImage || cls.thumbnail,
+                return {
+                  ...cls,
 
-          locked: true,
-        })),
-      }));
+                  progressPercent: progress?.progressPercent || 0,
+
+                  completed: progress?.completed || false,
+
+                  completedAt: progress?.completedAt || null,
+
+                  classProgress: progress,
+
+                  locked: false,
+                };
+              } else {
+                return {
+                  _id: cls._id,
+
+                  title: cls.title,
+
+                  duration: cls.duration,
+
+                  coverImage: cls.coverImage || cls.thumbnail,
+
+                  locked: true,
+                };
+              }
+            }),
+          };
+        },
+      );
     } else {
       courseObj.chapters = courseObj.chapters.map((chapter: any) => ({
         ...chapter,
+
+        locked: false,
 
         classes: chapter.classes.map((cls: any) => {
           const classId = cls._id.toString();
@@ -664,7 +708,12 @@ export class CoursesService {
         : null;
     }
 
-    const chapters = course.chapters.map((chapter: any) => {
+    const isRecording =
+      String(course.type || '')
+        .trim()
+        .toLowerCase() === 'recording';
+
+    const chapters = course.chapters.map((chapter: any, chapterIndex: number) => {
       const chapterClasses = chapter.classes || [];
       const completedClasses = chapterClasses.filter((cls: any) => {
         const classId = cls._id.toString();
@@ -702,6 +751,8 @@ export class CoursesService {
             )
           : 0;
 
+      const isUnlocked = purchased || (isRecording && chapterIndex === 0);
+
       return {
         ...chapter.toObject(),
 
@@ -717,7 +768,7 @@ export class CoursesService {
           chapterClasses.length > 0 &&
           completedClasses >= chapterClasses.length,
 
-        locked: !purchased,
+        locked: !isUnlocked,
       };
     });
 
@@ -785,6 +836,18 @@ export class CoursesService {
       (entry: any) => entry.courseId.toString() === course._id.toString(),
     );
 
+    const isRecording =
+      String(course.type || '')
+        .trim()
+        .toLowerCase() === 'recording';
+    const firstChapter = course.chapters[0] as any;
+    const currentChapter = chapter as any;
+    const isFirstChapter =
+      course.chapters.length > 0 &&
+      (firstChapter?.uniqueCode === chapterCode ||
+        firstChapter?._id?.toString() === currentChapter?._id?.toString());
+    const isChapterUnlocked = purchased || (isRecording && isFirstChapter);
+
     // LOCK LOGIC
     const classes = await Promise.all(
       chapter.classes.map(async (cls: any) => {
@@ -824,7 +887,7 @@ export class CoursesService {
 
           classProgress: progress,
 
-          locked: !purchased,
+          locked: !isChapterUnlocked,
         };
         return mappedClass;
       }),
@@ -877,8 +940,20 @@ export class CoursesService {
         ) || false;
     }
 
+    const isRecording =
+      String(course.type || '')
+        .trim()
+        .toLowerCase() === 'recording';
+    const firstChapter = course.chapters[0];
+    const isFirstChapterClass = Boolean(
+      firstChapter?.classes?.some(
+        (cls: any) => cls._id.toString() === classId,
+      ),
+    );
+    const isUnlocked = purchased || (isRecording && isFirstChapterClass);
+
     // BLOCK ACCESS
-    if (!purchased) {
+    if (!isUnlocked) {
       throw new NotFoundException('Purchase course to access class');
     }
 
@@ -1005,8 +1080,27 @@ export class CoursesService {
     const enrollment = user.course?.find(
       (entry: any) => entry.courseId.toString() === course._id.toString(),
     );
+    const purchased = Boolean(enrollment);
+
+    const isRecording =
+      String(course.type || '')
+        .trim()
+        .toLowerCase() === 'recording';
+    const firstChapter = course.chapters[0];
+    const isFirstChapterClass = Boolean(
+      firstChapter?.classes?.some(
+        (cls: any) => cls._id.toString() === classId,
+      ),
+    );
+    const isUnlocked = purchased || (isRecording && isFirstChapterClass);
 
     if (!enrollment) {
+      if (isUnlocked) {
+        return {
+          classProgress: null,
+          learningProgress: null,
+        };
+      }
       throw new ForbiddenException('Course not purchased');
     }
 
@@ -1338,13 +1432,25 @@ export class CoursesService {
       throw new NotFoundException('Class not found');
     }
 
-    const user = await this.userModel.findById(userId);
+    const user = userId ? await this.userModel.findById(userId) : null;
     const purchased =
       user?.course?.some(
         (c: any) => c.courseId.toString() === course._id.toString(),
       ) || false;
 
-    if (!purchased) {
+    const isRecording =
+      String(course.type || '')
+        .trim()
+        .toLowerCase() === 'recording';
+    const firstChapter = course.chapters[0];
+    const isFirstChapterClass = Boolean(
+      firstChapter?.classes?.some(
+        (cls: any) => cls._id.toString() === classId,
+      ),
+    );
+    const isUnlocked = purchased || (isRecording && isFirstChapterClass);
+
+    if (!isUnlocked) {
       throw new ForbiddenException('Purchase course to access video stream');
     }
 
@@ -1401,13 +1507,25 @@ export class CoursesService {
       throw new NotFoundException('Class not found');
     }
 
-    const user = await this.userModel.findById(userId);
+    const user = userId ? await this.userModel.findById(userId) : null;
     const purchased =
       user?.course?.some(
         (c: any) => c.courseId.toString() === course._id.toString(),
       ) || false;
 
-    if (!purchased) {
+    const isRecording =
+      String(course.type || '')
+        .trim()
+        .toLowerCase() === 'recording';
+    const firstChapter = course.chapters[0];
+    const isFirstChapterClass = Boolean(
+      firstChapter?.classes?.some(
+        (cls: any) => cls._id.toString() === classId,
+      ),
+    );
+    const isUnlocked = purchased || (isRecording && isFirstChapterClass);
+
+    if (!isUnlocked) {
       throw new ForbiddenException('Purchase course to access video stream');
     }
 
