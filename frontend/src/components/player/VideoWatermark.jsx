@@ -28,17 +28,17 @@ function VideoWatermark({ user }) {
       <motion.div
         key={`${position.top}-${position.left}`}
         initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        animate={{ opacity: 0.35 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 1.5 }}
         className="absolute z-50 pointer-events-none select-none"
         style={position}
       >
-        <div className="bg-black/25 backdrop-blur-md px-3.5 py-2 rounded-xl text-white/50 text-[10px] font-medium leading-relaxed border border-white/5 shadow-2xl">
+        <div className="bg-black/20 backdrop-blur-[2px] px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-white/40 text-[8px] sm:text-[9.5px] font-medium leading-tight border border-white/5 shadow-lg">
           <div>{user?.name || "Student"}</div>
-          <div className="opacity-70">{user?.email || user?.userId || "Secure View"}</div>
-          <div className="opacity-50 font-mono mt-0.5">{time}</div>
-          <div className="opacity-40 font-mono mt-0.5 text-[8px] uppercase tracking-widest">{deviceId}</div>
+          <div className="opacity-70 text-[7.5px] sm:text-[9px]">{user?.email || user?.userId || "Secure View"}</div>
+          <div className="opacity-50 font-mono mt-0.5 text-[7px] sm:text-[8.5px]">{time}</div>
+          <div className="opacity-40 font-mono mt-0.5 text-[6.5px] sm:text-[7.5px] uppercase tracking-wider truncate max-w-[120px] sm:max-w-none">{deviceId}</div>
         </div>
       </motion.div>
     </AnimatePresence>
