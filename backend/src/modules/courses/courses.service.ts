@@ -590,7 +590,7 @@ export class CoursesService {
     if (!purchased) {
       courseObj.chapters = courseObj.chapters.map(
         (chapter: any, chapterIndex: number) => {
-          const isUnlocked = isRecording && chapterIndex === 0;
+          const isUnlocked = isRecording && chapterIndex < 2;
 
           return {
             ...chapter,
@@ -751,7 +751,7 @@ export class CoursesService {
             )
           : 0;
 
-      const isUnlocked = purchased || (isRecording && chapterIndex === 0);
+      const isUnlocked = purchased || (isRecording && chapterIndex < 2);
 
       return {
         ...chapter.toObject(),
@@ -840,13 +840,13 @@ export class CoursesService {
       String(course.type || '')
         .trim()
         .toLowerCase() === 'recording';
-    const firstChapter = course.chapters[0] as any;
-    const currentChapter = chapter as any;
-    const isFirstChapter =
-      course.chapters.length > 0 &&
-      (firstChapter?.uniqueCode === chapterCode ||
-        firstChapter?._id?.toString() === currentChapter?._id?.toString());
-    const isChapterUnlocked = purchased || (isRecording && isFirstChapter);
+    const firstTwoChapters = (course.chapters || []).slice(0, 2);
+    const isFreePreviewChapter = firstTwoChapters.some(
+      (c: any) =>
+        c.uniqueCode === chapterCode ||
+        c._id?.toString() === (chapter as any)._id?.toString(),
+    );
+    const isChapterUnlocked = purchased || (isRecording && isFreePreviewChapter);
 
     // LOCK LOGIC
     const classes = await Promise.all(
@@ -944,13 +944,11 @@ export class CoursesService {
       String(course.type || '')
         .trim()
         .toLowerCase() === 'recording';
-    const firstChapter = course.chapters[0];
-    const isFirstChapterClass = Boolean(
-      firstChapter?.classes?.some(
-        (cls: any) => cls._id.toString() === classId,
-      ),
+    const firstTwoChapters = (course.chapters || []).slice(0, 2);
+    const isFreePreviewClass = firstTwoChapters.some((ch: any) =>
+      ch.classes?.some((cls: any) => cls._id?.toString() === classId),
     );
-    const isUnlocked = purchased || (isRecording && isFirstChapterClass);
+    const isUnlocked = purchased || (isRecording && isFreePreviewClass);
 
     // BLOCK ACCESS
     if (!isUnlocked) {
@@ -1086,13 +1084,11 @@ export class CoursesService {
       String(course.type || '')
         .trim()
         .toLowerCase() === 'recording';
-    const firstChapter = course.chapters[0];
-    const isFirstChapterClass = Boolean(
-      firstChapter?.classes?.some(
-        (cls: any) => cls._id.toString() === classId,
-      ),
+    const firstTwoChapters = (course.chapters || []).slice(0, 2);
+    const isFreePreviewClass = firstTwoChapters.some((ch: any) =>
+      ch.classes?.some((cls: any) => cls._id?.toString() === classId),
     );
-    const isUnlocked = purchased || (isRecording && isFirstChapterClass);
+    const isUnlocked = purchased || (isRecording && isFreePreviewClass);
 
     if (!enrollment) {
       if (isUnlocked) {
@@ -1442,13 +1438,11 @@ export class CoursesService {
       String(course.type || '')
         .trim()
         .toLowerCase() === 'recording';
-    const firstChapter = course.chapters[0];
-    const isFirstChapterClass = Boolean(
-      firstChapter?.classes?.some(
-        (cls: any) => cls._id.toString() === classId,
-      ),
+    const firstTwoChapters = (course.chapters || []).slice(0, 2);
+    const isFreePreviewClass = firstTwoChapters.some((ch: any) =>
+      ch.classes?.some((cls: any) => cls._id?.toString() === classId),
     );
-    const isUnlocked = purchased || (isRecording && isFirstChapterClass);
+    const isUnlocked = purchased || (isRecording && isFreePreviewClass);
 
     if (!isUnlocked) {
       throw new ForbiddenException('Purchase course to access video stream');
@@ -1517,13 +1511,11 @@ export class CoursesService {
       String(course.type || '')
         .trim()
         .toLowerCase() === 'recording';
-    const firstChapter = course.chapters[0];
-    const isFirstChapterClass = Boolean(
-      firstChapter?.classes?.some(
-        (cls: any) => cls._id.toString() === classId,
-      ),
+    const firstTwoChapters = (course.chapters || []).slice(0, 2);
+    const isFreePreviewClass = firstTwoChapters.some((ch: any) =>
+      ch.classes?.some((cls: any) => cls._id?.toString() === classId),
     );
-    const isUnlocked = purchased || (isRecording && isFirstChapterClass);
+    const isUnlocked = purchased || (isRecording && isFreePreviewClass);
 
     if (!isUnlocked) {
       throw new ForbiddenException('Purchase course to access video stream');
