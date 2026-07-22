@@ -10,9 +10,9 @@ import {
 } from "lucide-react";
 
 const tabs = [
-  { key: "all", label: "All Courses", icon: BookOpen },
-  { key: "online", label: "Recordings", icon: Video },
   { key: "Recording", label: "Studio Classes", icon: Play },
+  { key: "online", label: "Recordings", icon: Video },
+  { key: "all", label: "All Courses", icon: BookOpen },
   { key: "my", label: "My Courses", icon: BookOpen },
 ];
 

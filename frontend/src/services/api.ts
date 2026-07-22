@@ -91,6 +91,7 @@ api.interceptors.request.use((config) => {
 /* ── Token Refresh Logic ── */
 
 let isRefreshing = false;
+let isRedirecting = false;
 let failedQueue: Array<{
   resolve: (value?: unknown) => void;
   reject: (reason?: unknown) => void;
@@ -108,18 +109,6 @@ const processQueue = (error: unknown, token: string | null = null) => {
 };
 
 /* ── Response Interceptor ── */
-let isRedirecting = false;
-let isRefreshing = false;
-let refreshSubscribers: ((token: string) => void)[] = [];
-
-const subscribeTokenRefresh = (cb: (token: string) => void) => {
-  refreshSubscribers.push(cb);
-};
-
-const onRefreshed = (token: string) => {
-  refreshSubscribers.forEach((cb) => cb(token));
-  refreshSubscribers = [];
-};
 
 // Friendly error mapping
 const getFriendlyErrorMessage = (error: AxiosError, isOffline: boolean): string => {
@@ -214,7 +203,6 @@ api.interceptors.response.use(
       return api(config); // retry
     }
 
-<<<<<<< HEAD
     // Handle 401 — attempt token refresh before logging out
     if (error.response?.status === 401 && config && !config._isRefreshRequest) {
       // If we're already refreshing, queue this request
@@ -227,76 +215,6 @@ api.interceptors.response.use(
             return api(config);
           })
           .catch((err) => Promise.reject(err));
-=======
-    // Handle 401 — attempt token refresh first
-    if (error.response?.status === 401 && !config._retry) {
-      if (config.url?.includes("/auth/refresh-token") || config.url?.includes("/auth/login") || config.url?.includes("/auth/register")) {
-        // If refresh or auth request fails with 401, clear tokens and log out
-        localStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("sessionExpiresAt");
-        if (!isRedirecting && window.location.pathname !== "/login") {
-          isRedirecting = true;
-          window.location.assign("/login");
-          setTimeout(() => { isRedirecting = false; }, 3000);
-        }
-        return Promise.reject(error);
-      }
-
-      const refreshToken = localStorage.getItem("refreshToken");
-      if (!refreshToken) {
-        // No refresh token available, logout immediately
-        localStorage.removeItem("token");
-        if (!isRedirecting && window.location.pathname !== "/login") {
-          isRedirecting = true;
-          window.location.assign("/login");
-          setTimeout(() => { isRedirecting = false; }, 3000);
-        }
-        return Promise.reject(error);
-      }
-
-      if (isRefreshing) {
-        // Queue the request until token is refreshed
-        return new Promise((resolve) => {
-          subscribeTokenRefresh((newToken) => {
-            config.headers.Authorization = `Bearer ${newToken}`;
-            resolve(api(config));
-          });
-        });
-      }
-
-      config._retry = true;
-      isRefreshing = true;
-
-      try {
-        const res = await axios.post(`${api.defaults.baseURL}/auth/refresh-token`, { refreshToken });
-        const newToken = res.data.token || res.data.accessToken;
-        
-        localStorage.setItem("token", newToken);
-        if (res.data.refreshToken) localStorage.setItem("refreshToken", res.data.refreshToken);
-        if (res.data.sessionExpiresAt) localStorage.setItem("sessionExpiresAt", res.data.sessionExpiresAt);
-
-        isRefreshing = false;
-        onRefreshed(newToken);
-
-        config.headers.Authorization = `Bearer ${newToken}`;
-        return api(config);
-      } catch (refreshError) {
-        isRefreshing = false;
-        refreshSubscribers = [];
-        
-        // Refresh failed, clear tokens and log out
-        localStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("sessionExpiresAt");
-        
-        if (!isRedirecting && window.location.pathname !== "/login") {
-          isRedirecting = true;
-          window.location.assign("/login");
-          setTimeout(() => { isRedirecting = false; }, 3000);
-        }
-        return Promise.reject(refreshError);
->>>>>>> origin/main
       }
 
       const refreshToken = localStorage.getItem("refreshToken");
@@ -352,7 +270,7 @@ api.interceptors.response.use(
         url: config.url || '',
         status: error.response?.status || 0,
         message:
-          error.response?.data?.message ||
+          (error.response?.data as any)?.message ||
           error.message ||
           'Network error',
       });
