@@ -27,13 +27,7 @@ lerna-debug.log*
 *.launch
 .settings/
 *.sublime-workspace
-
-# IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+.vscode/
 
 # dotenv environment variable files
 .env
@@ -46,11 +40,13 @@ lerna-debug.log*
 .temp
 .tmp
 
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
+# Frontend specific
+frontend/dist/
+frontend/build/
+frontend/.eslintcache
 
-# Diagnostic reports (https://nodejs.org/api/report.html)
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+# Backend specific
+backend/dist/
+backend/build/
+backend/.nest/
+*.tsbuildinfo

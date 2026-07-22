@@ -13,6 +13,7 @@ import { AwsModule } from './common/aws/aws.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { CommunityModule } from './modules/community/community.module';
 import { TroubleshootModule } from './modules/troubleshoot/troubleshoot.module';
+import { ErrorReportsModule } from './modules/error-reports/error-reports.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { TroubleshootModule } from './modules/troubleshoot/troubleshoot.module';
     // CORE MODULES
     AuthModule,
     AuditLogsModule,
+    ErrorReportsModule,
     ProfileModule,
     CoursesModule,
     AwsModule,

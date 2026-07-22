@@ -357,40 +357,46 @@ export class AuthService {
     loginDetails: LoginDeviceSnapshot,
     reasons: string[],
   ) {
-    try {
-      await resend.emails.send({
-        from:
-          process.env.RESEND_FROM_EMAIL ||
-          'LMS Platform <onboarding@resend.dev>',
-
-        to: user.email,
-
-        subject: 'Suspicious login detected',
-
-        html: `
-          <div style="font-family:sans-serif">
-            <h2>Suspicious login detected</h2>
-            <p>
-              We noticed a login to your LMS account that looked different from your usual activity.
-            </p>
-            <ul>
-              ${reasons
-                .map((reason) => `<li>${this.escapeHtml(reason)}</li>`)
-                .join('')}
-            </ul>
-            <p><strong>Device:</strong> ${this.escapeHtml(loginDetails.deviceType || 'Unknown')}</p>
-            <p><strong>Browser:</strong> ${this.escapeHtml(loginDetails.browser || 'Unknown')}</p>
-            <p><strong>OS:</strong> ${this.escapeHtml(loginDetails.os || 'Unknown')}</p>
-            <p><strong>IP:</strong> ${this.escapeHtml(loginDetails.ip || 'Unknown')}</p>
-            <p><strong>Location:</strong> ${this.escapeHtml(loginDetails.location || 'Unknown')}</p>
-            <p>
-              If this was you, no action is needed. If this was not you, revoke unknown sessions and contact support immediately.
-            </p>
-          </div>
-        `,
-      });
-    } catch (error) {
-      console.error('Failed to send suspicious login email', error);
+    let attempts = 0;
+    while (attempts < 2) {
+      try {
+        await resend.emails.send({
+          from:
+            process.env.RESEND_FROM_EMAIL ||
+            'LMS Platform <onboarding@resend.dev>',
+          to: user.email,
+          subject: 'Suspicious login detected',
+          html: `
+            <div style="font-family:sans-serif">
+              <h2>Suspicious login detected</h2>
+              <p>
+                We noticed a login to your LMS account that looked different from your usual activity.
+              </p>
+              <ul>
+                ${reasons
+                  .map((reason) => `<li>${this.escapeHtml(reason)}</li>`)
+                  .join('')}
+              </ul>
+              <p><strong>Device:</strong> ${this.escapeHtml(loginDetails.deviceType || 'Unknown')}</p>
+              <p><strong>Browser:</strong> ${this.escapeHtml(loginDetails.browser || 'Unknown')}</p>
+              <p><strong>OS:</strong> ${this.escapeHtml(loginDetails.os || 'Unknown')}</p>
+              <p><strong>IP:</strong> ${this.escapeHtml(loginDetails.ip || 'Unknown')}</p>
+              <p><strong>Location:</strong> ${this.escapeHtml(loginDetails.location || 'Unknown')}</p>
+              <p>
+                If this was you, no action is needed. If this was not you, revoke unknown sessions and contact support immediately.
+              </p>
+            </div>
+          `,
+        });
+        break; // Success
+      } catch (error) {
+        attempts++;
+        if (attempts >= 2) {
+          console.error('Failed to send suspicious login email after retry', error);
+        } else {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      }
     }
   }
 
@@ -495,33 +501,35 @@ export class AuthService {
       },
     });
 
-    try {
-      await resend.emails.send({
-        from:
-          process.env.RESEND_FROM_EMAIL ||
-          'LMS Platform <onboarding@resend.dev>',
-
-        to: data.email,
-
-        subject: 'Registration OTP',
-
-        html: `
-          <div style="font-family:sans-serif">
-
-            <h2>Registration OTP</h2>
-
-            <h1>${otp}</h1>
-
-            <p>
-              OTP valid for 3 minutes
-            </p>
-
-          </div>
-        `,
-      });
-      console.log(`OTP for ${data.email}: ${otp}`);
-    } catch {
-      throw new BadRequestException('Failed to send OTP email');
+    let attempts = 0;
+    while (attempts < 2) {
+      try {
+        await resend.emails.send({
+          from:
+            process.env.RESEND_FROM_EMAIL ||
+            'LMS Platform <onboarding@resend.dev>',
+          to: data.email,
+          subject: 'Registration OTP',
+          html: `
+            <div style="font-family:sans-serif">
+              <h2>Registration OTP</h2>
+              <h1>${otp}</h1>
+              <p>
+                OTP valid for 3 minutes
+              </p>
+            </div>
+          `,
+        });
+        console.log(`OTP for ${data.email}: ${otp}`);
+        break; // Success
+      } catch (error) {
+        attempts++;
+        if (attempts >= 2) {
+          console.error('Failed to send registration OTP email', error);
+          throw new BadRequestException('Failed to send OTP email');
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
     }
 
     return {
@@ -749,33 +757,35 @@ export class AuthService {
       },
     });
 
-    try {
-      console.log(`OTP for ${email}: ${otp}`);
-      await resend.emails.send({
-        from:
-          process.env.RESEND_FROM_EMAIL ||
-          'LMS Platform <onboarding@resend.dev>',
-
-        to: email,
-
-        subject: 'Login OTP',
-
-        html: `
-          <div style="font-family:sans-serif">
-
-            <h2>Your Login OTP</h2>
-
-            <h1>${otp}</h1>
-
-            <p>
-              OTP valid for 3 minutes
-            </p>
-
-          </div>
-        `,
-      });
-    } catch {
-      throw new BadRequestException('Failed to send OTP email');
+    let attempts = 0;
+    while (attempts < 2) {
+      try {
+        console.log(`OTP for ${email}: ${otp}`);
+        await resend.emails.send({
+          from:
+            process.env.RESEND_FROM_EMAIL ||
+            'LMS Platform <onboarding@resend.dev>',
+          to: email,
+          subject: 'Login OTP',
+          html: `
+            <div style="font-family:sans-serif">
+              <h2>Your Login OTP</h2>
+              <h1>${otp}</h1>
+              <p>
+                OTP valid for 3 minutes
+              </p>
+            </div>
+          `,
+        });
+        break; // Success
+      } catch (error) {
+        attempts++;
+        if (attempts >= 2) {
+          console.error('Failed to send login OTP email', error);
+          throw new BadRequestException('Failed to send OTP email');
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
     }
 
     return {

@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import ZeitnahDoodleBackground from "../../components/ui/ZeitnahDoodleBackground";
@@ -18,15 +18,18 @@ function Login() {
     }
     try {
       setLoading(true);
+      // Slow network warning timer
+      const slowTimer = setTimeout(() => {
+        setError("Network seems slow, please wait...");
+      }, 5000);
+
       await api.post("/auth/login/send-otp", { email });
+      clearTimeout(slowTimer);
       localStorage.setItem("login_email", email);
       navigate("/verify-login-otp");
     } catch (err) {
-      const msg =
-        err.response?.data?.message ||
-        err.response?.data ||
-        "Something went wrong. Please try again.";
-      setError(typeof msg === "string" ? msg : JSON.stringify(msg));
+      if (err.isCancelled) return;
+      setError(err.friendlyMessage || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
