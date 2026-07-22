@@ -50,3 +50,6 @@ backend/dist/
 backend/build/
 backend/.nest/
 *.tsbuildinfo
+
+
+frontend/package-lock.json
