@@ -722,8 +722,9 @@ export class AuthService {
   // ==================================================
 
   async loginSendOtp(email: string) {
+    const cleanEmail = email ? email.trim().toLowerCase() : email;
     const user = await this.userModel.findOne({
-      email,
+      email: cleanEmail,
     });
 
     if (!user) {

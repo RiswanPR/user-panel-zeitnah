@@ -57,11 +57,19 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       path: request.url,
     };
 
-    // Log the full diagnostic internally
-    this.logger.error(
-      `[${correlationId}] ${request.method} ${request.url} - Status: ${status}`,
-      exception instanceof Error ? exception.stack : JSON.stringify(exception),
-    );
+    // Log internally based on error severity:
+    // Log 5xx & unhandled internal errors as ERROR with stack trace
+    // Log 4xx expected client errors as WARN without stack trace to prevent PM2 error log spam
+    if (status >= 500) {
+      this.logger.error(
+        `[${correlationId}] ${request.method} ${request.url} - Status: ${status}`,
+        exception instanceof Error ? exception.stack : JSON.stringify(exception),
+      );
+    } else {
+      this.logger.warn(
+        `[${correlationId}] ${request.method} ${request.url} - Status: ${status} - ${message}`,
+      );
+    }
 
     response.status(status).json(errorResponse);
   }
