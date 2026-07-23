@@ -6,8 +6,10 @@ import {
   CheckCircle2,
   Clock,
   Download,
+  Eye,
   FileText,
   PlayCircle,
+  X,
 } from "lucide-react";
 import api from "../../services/api";
 import {
@@ -49,6 +51,7 @@ function ClassView() {
   const [videoData, setVideoData] = useState(null);
   const [progressState, setProgressState] = useState(null);
   const [syncState, setSyncState] = useState("idle");
+  const [previewResource, setPreviewResource] = useState(null);
 
   const iframeRef = useRef(null);
   const playerRef = useRef(null);
@@ -563,15 +566,14 @@ function ClassView() {
             ) : (
               <div className="space-y-3 w-full">
                 {cls.exercises.map((exercise) => (
-                  <a
+                  <div
                     key={exercise._id || exercise.title}
-                    href={getUploadUrl(exercise.file)}
-                    target="_blank"
-                    rel="noreferrer"
-                    download
                     className="flex items-center justify-between rounded-xl border border-white/[0.05] bg-white/[0.02] p-3.5 transition-all duration-200 hover:border-brand-mint/20 hover:bg-white/[0.04] group"
                   >
-                    <div className="min-w-0 pr-2">
+                    <div
+                      className="min-w-0 pr-2 cursor-pointer flex-1"
+                      onClick={() => setPreviewResource(exercise)}
+                    >
                       <h3 className="text-white font-semibold text-sm truncate leading-snug group-hover:text-brand-mint transition-colors">
                         {exercise.title || "Resource File"}
                       </h3>
@@ -579,16 +581,126 @@ function ClassView() {
                         {exercise.type || "file"}
                       </p>
                     </div>
-                    <div className="h-8 w-8 rounded-lg bg-white/[0.03] border border-white/[0.05] flex items-center justify-center text-brand-mint group-hover:text-white group-hover:bg-brand-mint group-hover:border-brand-mint transition-all shrink-0">
-                      <Download className="w-3.5 h-3.5" />
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      {/* VIEW BUTTON */}
+                      <button
+                        type="button"
+                        onClick={() => setPreviewResource(exercise)}
+                        className="h-8 px-2.5 rounded-lg bg-white/[0.04] hover:bg-brand-mint/20 text-white/80 hover:text-brand-mint border border-white/10 hover:border-brand-mint/30 flex items-center gap-1.5 text-xs font-semibold transition-all"
+                        title="View File"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-brand-mint" />
+                        <span className="hidden sm:inline">View</span>
+                      </button>
+
+                      {/* DOWNLOAD BUTTON */}
+                      <a
+                        href={getUploadUrl(exercise.file)}
+                        target="_blank"
+                        rel="noreferrer"
+                        download
+                        className="h-8 px-2.5 rounded-lg bg-brand-mint/10 hover:bg-brand-mint/25 text-brand-mint border border-brand-mint/20 hover:border-brand-mint/40 flex items-center gap-1.5 text-xs font-semibold transition-all"
+                        title="Download File"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Download</span>
+                      </a>
                     </div>
-                  </a>
+                  </div>
                 ))}
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* ── RESOURCE FILE PREVIEW MODAL ── */}
+      {previewResource && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-6 transition-all duration-300">
+          <div className="relative flex flex-col w-full max-w-5xl h-[88vh] bg-[#0c1825] border border-white/15 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/10 bg-white/[0.02]">
+              <div className="flex items-center gap-3 min-w-0 pr-4">
+                <span className="h-9 w-9 rounded-xl bg-brand-mint/10 border border-brand-mint/20 flex items-center justify-center text-brand-mint shrink-0">
+                  <FileText className="w-5 h-5" />
+                </span>
+                <div className="min-w-0">
+                  <h3 className="text-white font-heading font-bold text-sm sm:text-base truncate">
+                    {previewResource.title || "Resource Preview"}
+                  </h3>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-brand-mint">
+                    {previewResource.type || "Document"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Download Button */}
+                <a
+                  href={getUploadUrl(previewResource.file)}
+                  target="_blank"
+                  rel="noreferrer"
+                  download
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-mint text-bg-dark hover:bg-brand-mint/90 font-bold text-xs shadow-md transition-all"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download</span>
+                </a>
+
+                {/* Close Button */}
+                <button
+                  type="button"
+                  onClick={() => setPreviewResource(null)}
+                  className="h-8 w-8 rounded-lg bg-white/5 hover:bg-white/15 text-white/70 hover:text-white flex items-center justify-center transition-all border border-white/10"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body / Viewer */}
+            <div className="flex-1 bg-[#07111c] relative flex items-center justify-center p-2 overflow-hidden">
+              {previewResource.type?.toLowerCase() === "pdf" ||
+              (previewResource.file && String(previewResource.file).toLowerCase().includes(".pdf")) ? (
+                <iframe
+                  src={`${getUploadUrl(previewResource.file)}#toolbar=1&navpanes=0`}
+                  className="w-full h-full rounded-xl border-0 bg-white"
+                  title={previewResource.title || "PDF Preview"}
+                />
+              ) : previewResource.type?.toLowerCase() === "image" ||
+                /\.(png|jpe?g|webp|gif|svg)/i.test(String(previewResource.file || "")) ? (
+                <div className="w-full h-full flex items-center justify-center p-4 overflow-auto">
+                  <img
+                    src={getUploadUrl(previewResource.file)}
+                    alt={previewResource.title}
+                    className="max-w-full max-h-full object-contain rounded-xl shadow-2xl border border-white/10"
+                  />
+                </div>
+              ) : (
+                <div className="text-center p-8 space-y-4 max-w-md">
+                  <FileText className="w-14 h-14 text-brand-mint/50 mx-auto" />
+                  <p className="text-white/80 text-sm font-medium">
+                    Direct inline view is not supported for this file format, but you can download or open it in a new window.
+                  </p>
+                  <div className="flex items-center justify-center gap-3 pt-2">
+                    <a
+                      href={getUploadUrl(previewResource.file)}
+                      target="_blank"
+                      rel="noreferrer"
+                      download
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-mint text-bg-dark font-bold text-xs shadow-lg hover:bg-brand-mint/90 transition-all"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download File
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
