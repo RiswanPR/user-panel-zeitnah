@@ -1007,6 +1007,25 @@ export class CoursesService {
           certificateEligible: false,
         };
 
+    const rawExercises = cls.exercises || [];
+    const signedExercises = await Promise.all(
+      rawExercises.map(async (ex: any) => {
+        const exObj = typeof ex.toObject === 'function' ? ex.toObject() : { ...ex };
+        const fileUrl = exObj.file
+          ? await this.signedUrlService.generateSignedImageUrl(exObj.file)
+          : '';
+        return {
+          ...exObj,
+          file: fileUrl,
+        };
+      }),
+    );
+
+    const rawClassCover = cls.coverImage || (cls as any).thumbnail;
+    const signedClassCover = rawClassCover
+      ? await this.signedUrlService.generateSignedImageUrl(rawClassCover)
+      : null;
+
     return {
       purchased: true,
 
@@ -1035,7 +1054,7 @@ export class CoursesService {
 
         duration: cls.duration,
 
-        coverImage: cls.coverImage || (cls as any).thumbnail,
+        coverImage: signedClassCover,
 
         videoId: cls.videoId,
 
@@ -1045,7 +1064,7 @@ export class CoursesService {
 
         createdAt: cls.createdAt,
 
-        exercises: cls.exercises || [],
+        exercises: signedExercises,
       },
 
       progress: {
@@ -1627,6 +1646,14 @@ export class CoursesService {
               cls.exercises.sort(
                 (a: any, b: any) => (a.order || 0) - (b.order || 0),
               );
+              for (const exercise of cls.exercises) {
+                if (exercise.file) {
+                  exercise.file =
+                    await this.signedUrlService.generateSignedImageUrl(
+                      exercise.file,
+                    );
+                }
+              }
             }
           }
         }

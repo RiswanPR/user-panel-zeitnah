@@ -564,18 +564,19 @@ function ClassView() {
               <div className="space-y-3 w-full">
                 {cls.exercises.map((exercise) => (
                   <a
-                    key={exercise._id}
+                    key={exercise._id || exercise.title}
                     href={getUploadUrl(exercise.file)}
                     target="_blank"
                     rel="noreferrer"
+                    download
                     className="flex items-center justify-between rounded-xl border border-white/[0.05] bg-white/[0.02] p-3.5 transition-all duration-200 hover:border-brand-mint/20 hover:bg-white/[0.04] group"
                   >
                     <div className="min-w-0 pr-2">
                       <h3 className="text-white font-semibold text-sm truncate leading-snug group-hover:text-brand-mint transition-colors">
-                        {exercise.title}
+                        {exercise.title || "Resource File"}
                       </h3>
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-text-muted mt-0.5">
-                        {exercise.type}
+                        {exercise.type || "file"}
                       </p>
                     </div>
                     <div className="h-8 w-8 rounded-lg bg-white/[0.03] border border-white/[0.05] flex items-center justify-center text-brand-mint group-hover:text-white group-hover:bg-brand-mint group-hover:border-brand-mint transition-all shrink-0">
