@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, BookOpen, CheckCircle2, Lock, PlayCircle } from "lucide-react";
+import { ArrowLeft, BookOpen, CheckCircle2, Lock, PlayCircle, HelpCircle, MessageSquare } from "lucide-react";
 import ChapterCard from "../../components/courses/ChapterCard";
+import CourseEnquiryModal from "../../components/courses/CourseEnquiryModal";
 import api from "../../services/api";
 
 
@@ -11,6 +12,7 @@ function CourseChapters() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
+  const [enquiryModalOpen, setEnquiryModalOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -80,18 +82,34 @@ function CourseChapters() {
 
   return (
     <div className="space-y-6 sm:space-y-8">
+      {course && <CourseEnquiryModal isOpen={enquiryModalOpen} onClose={() => setEnquiryModalOpen(false)} course={course} />}
 
-      {/* ── Back Button ── */}
-      <motion.button
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        type="button"
-        onClick={() => navigate("/courses")}
-        className="btn-secondary text-xs uppercase tracking-wider"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back to courses
-      </motion.button>
+      {/* ── Back Button & Enquire Action Bar ── */}
+      <div className="flex items-center justify-between gap-4">
+        <motion.button
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          type="button"
+          onClick={() => navigate("/courses")}
+          className="btn-secondary text-xs uppercase tracking-wider"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to courses
+        </motion.button>
+
+        {!purchased && (
+          <motion.button
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            type="button"
+            onClick={() => setEnquiryModalOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-yellow text-bg-base font-bold text-xs uppercase tracking-wider hover:opacity-90 transition-all cursor-pointer shadow-lg shadow-brand-yellow/15 active:scale-[0.98]"
+          >
+            <HelpCircle className="w-4 h-4" />
+            Enquire Now
+          </motion.button>
+        )}
+      </div>
 
       {/* ── Ultra-Premium Hero Cover Card ── */}
       <motion.section
@@ -139,6 +157,19 @@ function CourseChapters() {
             <p className="mt-4 max-w-2xl text-sm sm:text-base font-medium text-white/60 leading-relaxed line-clamp-3">
               {course.description || "Explore the course structure and chapters below."}
             </p>
+
+            {!purchased && (
+              <div className="mt-5">
+                <button
+                  type="button"
+                  onClick={() => setEnquiryModalOpen(true)}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-yellow text-bg-base font-bold text-xs uppercase tracking-wider hover:opacity-90 transition-all cursor-pointer shadow-lg shadow-brand-yellow/15 active:scale-[0.98]"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Enquire About This Course
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -163,24 +194,30 @@ function CourseChapters() {
                       <div className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-mint/20 border border-brand-mint/30">
                         <BookOpen className="w-3.5 h-3.5 text-brand-mint" />
                       </div>
-                      <span className="text-white/90">2 Chapters Unlocked</span>
+                      <span className="text-brand-mint">2 Free Chapters</span>
                     </>
                   ) : (
                     <>
                       <div className="flex h-6 w-6 items-center justify-center rounded-full bg-warning/20 border border-warning/30">
                         <Lock className="w-3.5 h-3.5 text-warning" />
                       </div>
-                      <span className="text-white/90">Locked</span>
+                      <span className="text-warning">Enrollment Required</span>
                     </>
                   )}
                 </div>
               ),
             },
-          ].map((stat) => (
-            <div key={stat.label} className="bg-[#0A0D14]/60 p-6 sm:p-8 transition-colors duration-300 hover:bg-[#0A0D14]/40">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-1">{stat.label}</p>
-              {stat.custom || (
-                <p className="text-3xl font-heading font-extrabold text-white/95 tracking-tight">{stat.value}</p>
+          ].map((stat, idx) => (
+            <div key={idx} className="p-4 sm:p-5 text-left bg-black/20">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                {stat.label}
+              </p>
+              {stat.custom ? (
+                stat.custom
+              ) : (
+                <p className="mt-1 font-heading font-extrabold text-xl sm:text-2xl text-white">
+                  {stat.value}
+                </p>
               )}
             </div>
           ))}
@@ -232,10 +269,20 @@ function CourseChapters() {
               </p>
             </div>
           </div>
-          <span className="inline-flex items-center gap-2 rounded-xl bg-brand-mint/10 border border-brand-mint/20 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-brand-mint shrink-0">
-            <PlayCircle className="w-3.5 h-3.5" />
-            Free Chapters Unlocked
-          </span>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setEnquiryModalOpen(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-brand-yellow text-bg-base px-4 py-2 text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all cursor-pointer shadow-md"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              Enquire Now
+            </button>
+            <span className="inline-flex items-center gap-2 rounded-xl bg-brand-mint/10 border border-brand-mint/20 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-brand-mint">
+              <PlayCircle className="w-3.5 h-3.5" />
+              Free Chapters Unlocked
+            </span>
+          </div>
         </motion.div>
       ) : !purchased && (
         <motion.div
@@ -248,14 +295,20 @@ function CourseChapters() {
             <div>
               <h2 className="text-sm font-bold text-warning">This course is locked</h2>
               <p className="mt-1 text-xs font-medium text-text-muted leading-relaxed">
-                You can browse the chapter roadmap. To access lessons, unlock the course.
+                You can browse the chapter roadmap. To access lessons or enquire about pricing, click Enquire Now.
               </p>
             </div>
           </div>
-          <span className="inline-flex items-center gap-2 rounded-xl bg-white/[0.03] border border-white/[0.06] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-text-muted shrink-0">
-            <PlayCircle className="w-3.5 h-3.5" />
-            Preview Available Below
-          </span>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setEnquiryModalOpen(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-brand-yellow text-bg-base px-4 py-2 text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all cursor-pointer shadow-md"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              Enquire Now
+            </button>
+          </div>
         </motion.div>
       )}
 

@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ErrorReport, ErrorReportDocument } from './schemas/error-report.schema';
 import { Resend } from 'resend';
+import { generateProductionErrorReportEmailHtml } from '../../common/templates/email-templates';
 
 @Injectable()
 export class ErrorReportsService {
@@ -86,22 +87,16 @@ export class ErrorReportsService {
     const correlationId = report.correlationId || 'N/A';
 
     await this.resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || 'LMS Errors <onboarding@resend.dev>',
+      from: process.env.RESEND_FROM_EMAIL || 'Zeitnah Errors <onboarding@resend.dev>',
       to: process.env.DEV_TEAM_EMAIL,
       subject: `🚨 Production Error [${source}] - ${errorDetails}`,
-      html: `
-        <h2>Zeitnah Academy - Production Error Report</h2>
-        <p><strong>Source:</strong> ${source}</p>
-        <p><strong>Correlation ID:</strong> ${correlationId}</p>
-        <p><strong>User Feedback:</strong> ${report.feedback?.whatHappened || 'None provided'}</p>
-        <p><strong>Error:</strong> ${errorDetails}</p>
-        
-        <p>
-          <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/admin/error-reports" style="padding:10px 15px; background:#07192a; color:#f6ed4a; text-decoration:none; border-radius:5px; font-weight:bold;">
-            View Full Report in Admin Panel
-          </a>
-        </p>
-      `,
+      html: generateProductionErrorReportEmailHtml({
+        source,
+        correlationId,
+        errorDetails,
+        feedback: report.feedback,
+        adminUrl: `${process.env.FRONTEND_URL || 'https://beta.zeitnahacademy.com'}/admin/error-reports`,
+      }),
     });
   }
 }

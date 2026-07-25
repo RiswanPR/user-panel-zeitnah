@@ -11,7 +11,7 @@ import axios from 'axios';
 
 import { InjectModel } from '@nestjs/mongoose';
 
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { Course, CourseDocument } from './schemas/course.schema';
 
@@ -24,6 +24,13 @@ import {
   ActiveStream,
   ActiveStreamDocument,
 } from './schemas/active-stream.schema';
+import {
+  CourseEnquiry,
+  CourseEnquiryDocument,
+} from './schemas/course-enquiry.schema';
+import { CreateCourseEnquiryDto } from './dto/create-course-enquiry.dto';
+import { resend } from '../../config/resend.config';
+import { generateCourseEnquiryNotificationEmailHtml } from '../../common/templates/email-templates';
 
 import {
   awardPoints,
@@ -46,6 +53,8 @@ export class CoursesService {
     private userModel: Model<UserDocument>,
     @InjectModel(ActiveStream.name)
     private activeStreamModel: Model<ActiveStreamDocument>,
+    @InjectModel(CourseEnquiry.name)
+    private courseEnquiryModel: Model<CourseEnquiryDocument>,
     private signedUrlService: SignedUrlService,
     private hlsService: HlsService,
   ) {}
@@ -1661,4 +1670,47 @@ export class CoursesService {
     }
     return courseObj;
   }
+
+  // ==================================================
+  // CREATE COURSE ENQUIRY
+  // ==================================================
+  async createCourseEnquiry(dto: CreateCourseEnquiryDto, userId?: string) {
+    const enquiry = await this.courseEnquiryModel.create({
+      courseId: new Types.ObjectId(dto.courseId),
+      courseName: dto.courseName,
+      name: dto.name,
+      email: dto.email,
+      phone: dto.phone,
+      message: dto.message || '',
+      userId: userId ? new Types.ObjectId(userId) : undefined,
+    });
+
+    const recipients = ['riswanpr94@gmail.com', 'zeitnahpkd@gmail.com'];
+    const emailHtml = generateCourseEnquiryNotificationEmailHtml({
+      courseName: dto.courseName,
+      name: dto.name,
+      email: dto.email,
+      phone: dto.phone,
+      message: dto.message,
+    });
+
+    try {
+      await resend.emails.send({
+        from:
+          process.env.RESEND_FROM_EMAIL ||
+          'Zeitnah Enquiries <onboarding@resend.dev>',
+        to: recipients,
+        subject: `🎓 New Course Enquiry: ${dto.courseName} - ${dto.name}`,
+        html: emailHtml,
+      });
+    } catch (err) {
+      console.error('[CoursesService] Failed to send enquiry email:', err);
+    }
+
+    return {
+      message: 'Course enquiry submitted successfully',
+      enquiry,
+    };
+  }
 }
+

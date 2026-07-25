@@ -9,6 +9,10 @@ import {
   ActiveStream,
   ActiveStreamSchema,
 } from './schemas/active-stream.schema';
+import {
+  CourseEnquiry,
+  CourseEnquirySchema,
+} from './schemas/course-enquiry.schema';
 import { AwsModule } from '../../common/aws/aws.module';
 
 @Module({
@@ -26,6 +30,10 @@ import { AwsModule } from '../../common/aws/aws.module';
       {
         name: ActiveStream.name,
         schema: ActiveStreamSchema,
+      },
+      {
+        name: CourseEnquiry.name,
+        schema: CourseEnquirySchema,
       },
     ]),
   ],

@@ -13,6 +13,7 @@ import {
 import { CoursesService } from './courses.service';
 import { GetCoursesDto } from './dto/get-courses.dto';
 import { UpdateClassProgressDto } from './dto/update-class-progress.dto';
+import { CreateCourseEnquiryDto } from './dto/create-course-enquiry.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 @Controller('courses')
@@ -234,6 +235,16 @@ export class CoursesController {
   }
 
   // =====================
+  // COURSE ENQUIRY
+  // =====================
+
+  @Post('enquiry')
+  createCourseEnquiry(@Body() body: CreateCourseEnquiryDto, @Req() req: any) {
+    const userId = req.user?.userId || req.user?._id;
+    return this.coursesService.createCourseEnquiry(body, userId);
+  }
+
+  // =====================
   // COURSE DETAILS
   // =====================
 
@@ -249,3 +260,4 @@ export class CoursesController {
     return this.coursesService.getCourseById(id, req.user.userId);
   }
 }
+

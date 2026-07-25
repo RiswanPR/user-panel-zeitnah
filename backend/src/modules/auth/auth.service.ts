@@ -19,6 +19,10 @@ import axios from 'axios';
 import { JwtService } from '@nestjs/jwt';
 
 import { resend } from '../../config/resend.config';
+import {
+  generateOtpEmailHtml,
+  generateSuspiciousLoginEmailHtml,
+} from '../../common/templates/email-templates';
 
 import { User, UserDevice, UserDocument } from './schemas/user.schema';
 
@@ -363,30 +367,14 @@ export class AuthService {
         await resend.emails.send({
           from:
             process.env.RESEND_FROM_EMAIL ||
-            'LMS Platform <onboarding@resend.dev>',
+            'Zeitnah Academy <onboarding@resend.dev>',
           to: user.email,
-          subject: 'Suspicious login detected',
-          html: `
-            <div style="font-family:sans-serif">
-              <h2>Suspicious login detected</h2>
-              <p>
-                We noticed a login to your LMS account that looked different from your usual activity.
-              </p>
-              <ul>
-                ${reasons
-                  .map((reason) => `<li>${this.escapeHtml(reason)}</li>`)
-                  .join('')}
-              </ul>
-              <p><strong>Device:</strong> ${this.escapeHtml(loginDetails.deviceType || 'Unknown')}</p>
-              <p><strong>Browser:</strong> ${this.escapeHtml(loginDetails.browser || 'Unknown')}</p>
-              <p><strong>OS:</strong> ${this.escapeHtml(loginDetails.os || 'Unknown')}</p>
-              <p><strong>IP:</strong> ${this.escapeHtml(loginDetails.ip || 'Unknown')}</p>
-              <p><strong>Location:</strong> ${this.escapeHtml(loginDetails.location || 'Unknown')}</p>
-              <p>
-                If this was you, no action is needed. If this was not you, revoke unknown sessions and contact support immediately.
-              </p>
-            </div>
-          `,
+          subject: 'Security Alert: Suspicious login detected',
+          html: generateSuspiciousLoginEmailHtml(
+            user.email,
+            loginDetails,
+            reasons,
+          ),
         });
         break; // Success
       } catch (error) {
@@ -507,18 +495,10 @@ export class AuthService {
         await resend.emails.send({
           from:
             process.env.RESEND_FROM_EMAIL ||
-            'LMS Platform <onboarding@resend.dev>',
+            'Zeitnah Academy <onboarding@resend.dev>',
           to: data.email,
-          subject: 'Registration OTP',
-          html: `
-            <div style="font-family:sans-serif">
-              <h2>Registration OTP</h2>
-              <h1>${otp}</h1>
-              <p>
-                OTP valid for 3 minutes
-              </p>
-            </div>
-          `,
+          subject: `${otp} is your Registration Code - Zeitnah Academy`,
+          html: generateOtpEmailHtml(otp, 'Registration'),
         });
         console.log(`OTP for ${data.email}: ${otp}`);
         break; // Success
@@ -765,18 +745,10 @@ export class AuthService {
         await resend.emails.send({
           from:
             process.env.RESEND_FROM_EMAIL ||
-            'LMS Platform <onboarding@resend.dev>',
+            'Zeitnah Academy <onboarding@resend.dev>',
           to: email,
-          subject: 'Login OTP',
-          html: `
-            <div style="font-family:sans-serif">
-              <h2>Your Login OTP</h2>
-              <h1>${otp}</h1>
-              <p>
-                OTP valid for 3 minutes
-              </p>
-            </div>
-          `,
+          subject: `${otp} is your Login Verification Code - Zeitnah Academy`,
+          html: generateOtpEmailHtml(otp, 'Login'),
         });
         break; // Success
       } catch (error) {
