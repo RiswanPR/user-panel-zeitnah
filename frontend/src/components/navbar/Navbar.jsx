@@ -21,16 +21,18 @@ function Navbar() {
         <div className="absolute bottom-[-80px] right-[-80px] w-[220px] h-[220px] bg-violet-500/10 blur-[100px] rounded-full" />
 
         {/* Logo */}
-        <div className="relative z-10 mb-12">
-
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-300 to-violet-400 bg-clip-text text-transparent">
-            ZEITNAH
-          </h1>
-
-          <p className="text-white/25 text-xs mt-1">
-            Learning Platform
-          </p>
-
+        <div className="relative z-10 mb-12 flex items-center gap-3 select-none">
+          <div className="w-10 h-10 rounded-xl border border-cyan-400/30 overflow-hidden shadow-lg bg-black/40 flex-shrink-0">
+            <img src="/zeitnah-logo.png" alt="Zeitnah Logo" className="w-full h-full object-cover" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-300 to-violet-400 bg-clip-text text-transparent leading-none">
+              ZEITNAH
+            </h1>
+            <p className="text-white/40 text-[10px] tracking-wide mt-1">
+              Learning Platform
+            </p>
+          </div>
         </div>
 
         {/* Links */}

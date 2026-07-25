@@ -47,20 +47,22 @@ function Login() {
         {/* LEFT PRIMARY PANEL: BRAND INSIGHT HERO (DESKTOP ONLY) */}
         <div className="hidden lg:flex flex-1 flex-col justify-center px-16 xl:px-24 relative select-none">
           <div className="max-w-2xl space-y-6">
-            <img
-              src="/zeitnah-logo.svg"
-              alt="Zeitnah Group of Institutions Logo"
-              className="h-14 w-auto object-contain self-start text-left pointer-events-none mb-2"
-              onError={(e) => {
-                e.target.style.display = "none";
-                document.getElementById("hero-fallback-title").style.display = "flex";
-              }}
-            />
-            <div id="hero-fallback-title" className="hidden items-center gap-2.5 mb-2">
-              <svg className="w-8 h-8 text-[#9fd5b2]" viewBox="0 0 160 160" fill="currentColor">
-                <path d="M40,50 C65,25 115,35 125,65 C135,95 70,125 80,155 C90,185 140,175 160,150 L140,180 C110,205 60,195 50,165 C40,135 105,105 95,75 C85,45 50,55 30,75 Z" transform="translate(-15, -25) scale(0.9)" />
-              </svg>
-              <span className="font-heading font-black text-xl tracking-wider uppercase text-white">Zeitnah</span>
+            <div className="flex items-center gap-4 mb-3">
+              <div className="w-14 h-14 rounded-2xl border border-[rgba(159,213,178,0.3)] overflow-hidden shadow-2xl bg-[#07192a] flex items-center justify-center shrink-0">
+                <img
+                  src="/zeitnah-logo.png"
+                  alt="Zeitnah Group of Institutions Logo"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div>
+                <span className="font-heading font-black text-2xl tracking-wider uppercase text-white block leading-none">
+                  Zeitnah
+                </span>
+                <span className="text-[11px] font-bold tracking-widest text-[#9fd5b2] uppercase block mt-1">
+                  Group of Institutions
+                </span>
+              </div>
             </div>
 
             <span className="inline-flex items-center rounded-lg border border-[rgba(159,213,178,0.25)] bg-[rgba(159,213,178,0.06)] px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#9fd5b2]">
@@ -112,20 +114,18 @@ function Login() {
           <div className="w-full max-w-md flex flex-col items-center">
 
             {/* Mobile Title Viewport Badge Indicator Header */}
-            <div className="lg:hidden mb-8 flex items-center gap-2 select-none">
-              <img
-                src="/zeitnah-logo.svg"
-                alt="Zeitnah Group of Institutions Logo"
-                className="h-14 w-auto object-contain self-start text-left pointer-events-none mb-2"
-                onError={(e) => {
-                  e.target.style.display = "none";
-                  document.getElementById("hero-fallback-title").style.display = "flex";
-                }}
-              />
-              {/* <svg className="w-7 h-7 text-[#9fd5b2]" viewBox="0 0 160 160" fill="currentColor">
-                <path d="M40,50 C65,25 115,35 125,65 C135,95 70,125 80,155 C90,185 140,175 160,150 L140,180 C110,205 60,195 50,165 C40,135 105,105 95,75 C85,45 50,55 30,75 Z" transform="translate(-15, -25) scale(0.9)"/>
-              </svg> */}
-              {/* <span className="font-heading font-black text-lg tracking-wider text-white uppercase">Zeitnah</span> */}
+            <div className="lg:hidden mb-8 flex items-center gap-3 select-none">
+              <div className="w-12 h-12 rounded-xl border border-[rgba(159,213,178,0.3)] overflow-hidden shadow-lg bg-[#07192a] flex items-center justify-center shrink-0">
+                <img
+                  src="/zeitnah-logo.png"
+                  alt="Zeitnah Group of Institutions Logo"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div>
+                <span className="font-heading font-black text-xl tracking-wider text-white uppercase block leading-none">Zeitnah</span>
+                <span className="text-[10px] font-bold tracking-widest text-[#9fd5b2] uppercase block mt-1">Learning Platform</span>
+              </div>
             </div>
 
             {/* HIGH FIDELITY AUTH COMPONENT OVERFLOW STRUCTURE */}

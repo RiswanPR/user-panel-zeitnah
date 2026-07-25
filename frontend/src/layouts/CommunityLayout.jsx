@@ -48,13 +48,11 @@ export default function CommunityLayout({ children }) {
         {/* ── Premium Navbar (Sticky) ── */}
         <header className="sticky top-0 z-50 h-16 bg-bg-surface/80 backdrop-blur-xl border-b border-border-default flex items-center justify-between px-4 sm:px-8">
           <div className="flex items-center gap-3">
-            <Link to="/dashboard" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-brand-mint/10 border border-brand-mint/20 flex items-center justify-center">
-                <svg className="w-4 h-4 text-brand-mint" viewBox="0 0 160 160" fill="currentColor">
-                  <path d="M40,50 C65,25 115,35 125,65 C135,95 70,125 80,155 C90,185 140,175 160,150 L140,180 C110,205 60,195 50,165 C40,135 105,105 95,75 C85,45 50,55 30,75 Z" transform="translate(-15, -25) scale(0.9)" />
-                </svg>
+            <Link to="/community" className="flex items-center gap-2.5 group">
+              <div className="relative w-9 h-9 rounded-xl border border-brand-mint/30 overflow-hidden shadow-md bg-bg-surface flex items-center justify-center">
+                <img src="/zeitnah-logo.png" alt="Zeitnah Logo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
               </div>
-              <span className="font-heading font-extrabold tracking-wider uppercase text-white hidden sm:block text-sm">
+              <span className="font-heading font-extrabold tracking-wider uppercase text-white hidden sm:block text-sm group-hover:text-brand-mint transition-colors">
                 Zeitnah <span className="text-brand-mint font-medium capitalize tracking-normal ml-1">Community</span>
               </span>
             </Link>

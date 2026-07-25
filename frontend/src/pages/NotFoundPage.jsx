@@ -17,6 +17,11 @@ export default function NotFoundPage() {
         transition={{ duration: 0.6 }}
         className="relative text-center max-w-lg mx-auto"
       >
+        {/* Logo Badge */}
+        <div className="w-16 h-16 rounded-2xl border border-brand-mint/30 overflow-hidden shadow-2xl bg-bg-surface flex items-center justify-center mx-auto mb-6">
+          <img src="/zeitnah-logo.png" alt="Zeitnah Logo" className="w-full h-full object-cover" />
+        </div>
+
         {/* Large 404 */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}

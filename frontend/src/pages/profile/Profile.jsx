@@ -100,6 +100,13 @@ function Profile() {
         {/* Ambient gradient */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-brand-mint/4 rounded-full blur-[120px] pointer-events-none" />
 
+        {/* Brand Logo Watermark / Badge */}
+        <div className="absolute top-4 right-4 sm:top-6 sm:right-6 opacity-40 hover:opacity-100 transition-opacity">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-brand-mint/30 overflow-hidden shadow-md bg-bg-elevated flex items-center justify-center">
+            <img src="/zeitnah-logo.png" alt="Zeitnah Logo" className="w-full h-full object-cover" />
+          </div>
+        </div>
+
         <div className="relative p-6 sm:p-10 flex flex-col md:flex-row gap-6 md:gap-10 items-center md:items-start w-full">
 
           {/* Avatar */}

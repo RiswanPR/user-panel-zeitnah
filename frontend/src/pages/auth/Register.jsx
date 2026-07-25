@@ -56,10 +56,8 @@ function Register() {
         <div className="glass-card shadow-2xl relative overflow-hidden flex flex-col">
           {/* Header Section */}
           <div className="px-8 pt-8 pb-0 text-center flex flex-col items-center">
-            <div className="w-12 h-12 rounded-xl bg-[rgba(159,213,178,0.1)] border border-[rgba(159,213,178,0.25)] flex items-center justify-center mb-5 text-[#9fd5b2]">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-              </svg>
+            <div className="w-14 h-14 rounded-2xl border border-[rgba(159,213,178,0.3)] overflow-hidden shadow-xl bg-[#07192a] flex items-center justify-center mb-5">
+              <img src="/zeitnah-logo.png" alt="Zeitnah Logo" className="w-full h-full object-cover" />
             </div>
 
             <h1 className="text-2xl font-heading font-bold text-white tracking-tight mb-1.5">

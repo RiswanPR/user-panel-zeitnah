@@ -187,12 +187,9 @@ function VerifyOtp() {
 
         <div className="w-full glass-card px-5 sm:px-8 py-10 shadow-2xl flex flex-col relative overflow-hidden">
 
-          {/* Secure Technical Verification Keyhole Envelope Icon */}
-          <div className="w-14 h-14 rounded-2xl bg-[rgba(159,213,178,0.1)] border border-[rgba(159,213,178,0.25)] flex items-center justify-center mx-auto mb-6 text-[#9fd5b2] shadow-sm select-none">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 11.25v2.25m0 0a1.125 1.125 0 100 2.25 1.125 1.125 0 000-2.25z" />
-            </svg>
+          {/* Logo Header */}
+          <div className="w-14 h-14 rounded-2xl border border-[rgba(159,213,178,0.3)] overflow-hidden shadow-xl bg-[#07192a] flex items-center justify-center mx-auto mb-6 select-none">
+            <img src="/zeitnah-logo.png" alt="Zeitnah Logo" className="w-full h-full object-cover" />
           </div>
 
           {/* Context Headings */}

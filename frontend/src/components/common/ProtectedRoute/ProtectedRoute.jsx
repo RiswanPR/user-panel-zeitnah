@@ -15,12 +15,15 @@ function ProtectedRoute({ children }) {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-brand-mint/5 rounded-full blur-[120px] pointer-events-none" />
 
         {/* Logo */}
-        <div className="relative mb-8">
-          <img
-            src="/zeitnah-logo.svg"
-            alt="Zeitnah Academy"
-            className="h-10 w-auto opacity-80"
-          />
+        <div className="relative mb-8 flex flex-col items-center gap-3">
+          <div className="w-16 h-16 rounded-2xl border border-brand-mint/30 overflow-hidden shadow-2xl bg-bg-surface flex items-center justify-center animate-pulse">
+            <img
+              src="/zeitnah-logo.png"
+              alt="Zeitnah Academy"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <span className="font-heading font-black text-lg tracking-widest uppercase text-white">Zeitnah</span>
         </div>
 
         {/* Premium spinner */}
