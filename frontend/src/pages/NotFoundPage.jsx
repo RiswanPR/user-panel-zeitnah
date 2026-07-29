@@ -45,7 +45,7 @@ export default function NotFoundPage() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <button
             type="button"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/courses')}
             className="btn-primary py-3 px-6 w-full sm:w-auto"
           >
             <Home className="w-4 h-4" />

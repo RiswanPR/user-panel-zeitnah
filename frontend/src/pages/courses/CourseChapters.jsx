@@ -40,7 +40,7 @@ function CourseChapters() {
     return (
       <div className="space-y-6">
         <div className="h-10 w-40 shimmer rounded-xl" />
-        <div className="rounded-[2rem] border border-border-default bg-[#0A0D14] overflow-hidden flex flex-col md:flex-row w-full p-2 sm:p-3">
+        <div className="rounded-[2rem] border border-border-default bg-[#0A0D14] overflow-hidden flex flex-col md:flex-row items-center w-full p-2 sm:p-3">
           <div className="w-full md:w-5/12 aspect-video shimmer rounded-2xl shrink-0" />
           <div className="p-6 md:p-10 space-y-4 flex-1 flex flex-col justify-center">
             <div className="flex gap-2 mb-2">
@@ -121,7 +121,7 @@ function CourseChapters() {
         <div className="absolute inset-0 bg-gradient-to-br from-brand-mint/[0.03] via-transparent to-brand-yellow/[0.02] opacity-50 z-0" />
         <div className="gradient-line-top z-20" />
 
-        <div className="flex flex-col md:flex-row w-full relative z-10 p-2 sm:p-3">
+        <div className="flex flex-col md:flex-row items-center w-full relative z-10 p-2 sm:p-3">
           {/* Framed Cover Image - strictly 16:9 */}
           <div className="relative w-full md:w-5/12 aspect-video shrink-0 rounded-2xl overflow-hidden border border-white/[0.08] shadow-2xl bg-bg-elevated isolate">
             <img 

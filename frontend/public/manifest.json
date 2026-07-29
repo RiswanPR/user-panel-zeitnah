@@ -2,12 +2,15 @@
   "name": "Zeitnah Academy — Premium Learning Platform",
   "short_name": "Zeitnah",
   "description": "Premium learning management platform for modern education. Access courses, track progress, and achieve your learning goals.",
-  "start_url": "/dashboard",
+  "start_url": "/courses",
   "display": "standalone",
   "background_color": "#070B14",
   "theme_color": "#070B14",
   "orientation": "any",
-  "categories": ["education", "productivity"],
+  "categories": [
+    "education",
+    "productivity"
+  ],
   "icons": [
     {
       "src": "/favicon.svg",

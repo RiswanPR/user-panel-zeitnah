@@ -78,72 +78,72 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <BrowserRouter>
-            <Routes>
-              
-              {/* PUBLIC AUTHENTICATION ROUTES */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/verify-login-otp" element={<VerifyOtp />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/verify-register-otp" element={<VerifyRegisterOtp />} />
+          <Routes>
 
-              {/* SECURE APPLICATION ROUTING (Main Layout) */}
-              <Route
-                element={
-                  <ProtectedRoute>
-                    <SocketProvider>
-                      <MainLayout />
-                    </SocketProvider>
-                  </ProtectedRoute>
-                }
-              >
-                <Route path="/" element={<Navigate to="/dashboard" />} />
-                <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
-                <Route path="/profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
-                <Route path="/profile/edit" element={<Suspense fallback={<PageLoader />}><EditProfile /></Suspense>} />
-                <Route path="/courses" element={<Suspense fallback={<PageLoader />}><Courses /></Suspense>} />
-                <Route path="/courses/:courseId" element={<Suspense fallback={<PageLoader />}><CourseChapters /></Suspense>} />
-                <Route path="/courses/:courseId/chapters" element={<Suspense fallback={<PageLoader />}><CourseChapters /></Suspense>} />
-                <Route path="/courses/:courseId/chapters/:chapterCode/classes" element={<Suspense fallback={<PageLoader />}><CourseClasses /></Suspense>} />
-                <Route path="/courses/class/:classId" element={<Suspense fallback={<PageLoader />}><ClassView /></Suspense>} />
-                <Route path="/my-learning" element={<Suspense fallback={<PageLoader />}><MyLearning /></Suspense>} />
-                <Route path="/my-points" element={<Suspense fallback={<PageLoader />}><MyPoints /></Suspense>} />
-                <Route path="/active-sessions" element={<Suspense fallback={<PageLoader />}><ActiveSessions /></Suspense>} />
-                <Route path="/audit-logs" element={<Suspense fallback={<PageLoader />}><AuditLogs /></Suspense>} />
-                <Route path="/admin/error-reports" element={<Suspense fallback={<PageLoader />}><ErrorReportsDashboard /></Suspense>} />
-                <Route path="/session-diagnostics" element={<Suspense fallback={<PageLoader />}><SessionDiagnostics /></Suspense>} />
-              </Route>
+            {/* PUBLIC AUTHENTICATION ROUTES */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/verify-login-otp" element={<VerifyOtp />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/verify-register-otp" element={<VerifyRegisterOtp />} />
 
-              {/* SECURE COMMUNITY ROUTING */}
-              <Route
-                element={
-                  <ProtectedRoute>
-                    <SocketProvider>
-                      <Suspense fallback={<PageLoader />}>
-                        <CommunityLayout />
-                      </Suspense>
-                    </SocketProvider>
-                  </ProtectedRoute>
-                }
-              >
-                <Route path="/community" element={<Suspense fallback={<PageLoader />}><CommunityHome /></Suspense>} />
-                <Route path="/community/moderator" element={<Suspense fallback={<PageLoader />}><ModeratorDashboard /></Suspense>} />
-              </Route>
+            {/* SECURE APPLICATION ROUTING (Main Layout) */}
+            <Route
+              element={
+                <ProtectedRoute>
+                  <SocketProvider>
+                    <MainLayout />
+                  </SocketProvider>
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/" element={<Navigate to="/courses" />} />
+              <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
+              <Route path="/profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
+              <Route path="/profile/edit" element={<Suspense fallback={<PageLoader />}><EditProfile /></Suspense>} />
+              <Route path="/courses" element={<Suspense fallback={<PageLoader />}><Courses /></Suspense>} />
+              <Route path="/courses/:courseId" element={<Suspense fallback={<PageLoader />}><CourseChapters /></Suspense>} />
+              <Route path="/courses/:courseId/chapters" element={<Suspense fallback={<PageLoader />}><CourseChapters /></Suspense>} />
+              <Route path="/courses/:courseId/chapters/:chapterCode/classes" element={<Suspense fallback={<PageLoader />}><CourseClasses /></Suspense>} />
+              <Route path="/courses/class/:classId" element={<Suspense fallback={<PageLoader />}><ClassView /></Suspense>} />
+              <Route path="/my-learning" element={<Suspense fallback={<PageLoader />}><MyLearning /></Suspense>} />
+              <Route path="/my-points" element={<Suspense fallback={<PageLoader />}><MyPoints /></Suspense>} />
+              <Route path="/active-sessions" element={<Suspense fallback={<PageLoader />}><ActiveSessions /></Suspense>} />
+              <Route path="/audit-logs" element={<Suspense fallback={<PageLoader />}><AuditLogs /></Suspense>} />
+              <Route path="/admin/error-reports" element={<Suspense fallback={<PageLoader />}><ErrorReportsDashboard /></Suspense>} />
+              <Route path="/session-diagnostics" element={<Suspense fallback={<PageLoader />}><SessionDiagnostics /></Suspense>} />
+            </Route>
 
-              {/* 404 — NOT FOUND */}
-              <Route
-                path="*"
-                element={
-                  <Suspense fallback={<PageLoader />}>
-                    <NotFoundPage />
-                  </Suspense>
-                }
-              />
+            {/* SECURE COMMUNITY ROUTING */}
+            <Route
+              element={
+                <ProtectedRoute>
+                  <SocketProvider>
+                    <Suspense fallback={<PageLoader />}>
+                      <CommunityLayout />
+                    </Suspense>
+                  </SocketProvider>
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/community" element={<Suspense fallback={<PageLoader />}><CommunityHome /></Suspense>} />
+              <Route path="/community/moderator" element={<Suspense fallback={<PageLoader />}><ModeratorDashboard /></Suspense>} />
+            </Route>
 
-            </Routes>
-            {/* Global Troubleshoot Error Reporter */}
-            <TroubleshootReporter />
-          </BrowserRouter>
-        </ToastProvider>
+            {/* 404 — NOT FOUND */}
+            <Route
+              path="*"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <NotFoundPage />
+                </Suspense>
+              }
+            />
+
+          </Routes>
+          {/* Global Troubleshoot Error Reporter */}
+          <TroubleshootReporter />
+        </BrowserRouter>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }
