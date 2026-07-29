@@ -78,7 +78,7 @@ function CourseChapters() {
   const learningProgress = course.learningProgress;
   const completionPercent = learningProgress?.completionPercent || 0;
   const completedClasses = learningProgress?.completedClasses || 0;
-  const imageUrl = course.coverImage || "https://placehold.co/1280x720/0A0D14/FFFFFF?text=Course+Cover";
+  const imageUrl = course.coverImage || "https://placehold.co/1920x1080/0A0D14/FFFFFF?text=Course+Cover";
 
   return (
     <div className="space-y-6 sm:space-y-8">

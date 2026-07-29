@@ -20,7 +20,7 @@ function CourseCard({ course }) {
   const purchased = !!course.learningProgress;
   const completed = purchased && progress >= 100;
   const isRecording = course.type === "Recording";
-  const imageUrl = course.coverImage || "https://placehold.co/1280x720/0A0D14/FFFFFF?text=Course+Cover";
+  const imageUrl = course.coverImage || "https://placehold.co/1920x1080/0A0D14/FFFFFF?text=Course+Cover";
   const chapterCount = course.chapters?.length || 0;
 
   return (
