@@ -39,6 +39,8 @@ const SessionDiagnostics = React.lazy(() => import("./pages/admin/SessionDiagnos
 const CommunityLayout = React.lazy(() => import("./layouts/CommunityLayout"));
 const CommunityHome = React.lazy(() => import("./pages/community/CommunityHome"));
 const ModeratorDashboard = React.lazy(() => import("./pages/community/ModeratorDashboard"));
+const CommunityProfilePage = React.lazy(() => import("./pages/community/ProfilePage"));
+const CommunityMessagesPage = React.lazy(() => import("./pages/community/MessagesPage"));
 
 import ProtectedRoute from "./components/common/ProtectedRoute/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";
@@ -126,6 +128,10 @@ function App() {
               }
             >
               <Route path="/community" element={<Suspense fallback={<PageLoader />}><CommunityHome /></Suspense>} />
+              <Route path="/community/profile" element={<Suspense fallback={<PageLoader />}><CommunityProfilePage /></Suspense>} />
+              <Route path="/community/profile/:username" element={<Suspense fallback={<PageLoader />}><CommunityProfilePage /></Suspense>} />
+              <Route path="/community/messages" element={<Suspense fallback={<PageLoader />}><CommunityMessagesPage /></Suspense>} />
+              <Route path="/community/messages/:conversationId" element={<Suspense fallback={<PageLoader />}><CommunityMessagesPage /></Suspense>} />
               <Route path="/community/moderator" element={<Suspense fallback={<PageLoader />}><ModeratorDashboard /></Suspense>} />
             </Route>
 

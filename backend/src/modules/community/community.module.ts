@@ -116,8 +116,13 @@ import { CommunityUploadController } from './controllers/community-upload.contro
 // Gateways
 import { CommunityGateway } from './gateways/community.gateway';
 
+import { CommunityProfileModule } from './profile/community-profile.module';
+import { MessagingModule } from './messaging/messaging.module';
+
 @Module({
   imports: [
+    CommunityProfileModule,
+    MessagingModule,
     MongooseModule.forFeature([
       { name: Post.name, schema: PostSchema },
       { name: PostMedia.name, schema: PostMediaSchema },
@@ -191,6 +196,8 @@ import { CommunityGateway } from './gateways/community.gateway';
     CommunityGateway,
   ],
   exports: [
+    CommunityProfileModule,
+    MessagingModule,
     PostService,
     CommentService,
     StoryService,
