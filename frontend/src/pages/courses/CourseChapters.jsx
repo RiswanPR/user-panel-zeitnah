@@ -5,6 +5,7 @@ import { ArrowLeft, BookOpen, CheckCircle2, Lock, PlayCircle, HelpCircle, Messag
 import ChapterCard from "../../components/courses/ChapterCard";
 import CourseEnquiryModal from "../../components/courses/CourseEnquiryModal";
 import api from "../../services/api";
+import { useImagePreloader } from "../../hooks/useImagePreloader";
 
 
 function CourseChapters() {
@@ -79,6 +80,13 @@ function CourseChapters() {
   const completionPercent = learningProgress?.completionPercent || 0;
   const completedClasses = learningProgress?.completedClasses || 0;
   const imageUrl = course.coverImage || "https://placehold.co/1920x1080/0A0D14/FFFFFF?text=Course+Cover";
+
+  // Preload chapter cover images in background
+  const chapterImageUrls = useMemo(
+    () => (chapters || []).map((ch) => ch.coverImage).filter(Boolean),
+    [chapters],
+  );
+  useImagePreloader(chapterImageUrls);
 
   return (
     <div className="space-y-6 sm:space-y-8">

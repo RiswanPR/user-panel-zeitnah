@@ -8,6 +8,7 @@ import {
   Video,
 } from "lucide-react";
 import { formatDuration, getCourseTypeLabel } from "../../utils/courseUi";
+import OptimizedImage from "../ui/OptimizedImage";
 
 function ClassCard({ cls, courseType, index, onLockedClick, onOpen }) {
   const thumbnailUrl = cls.coverImage;
@@ -42,16 +43,12 @@ function ClassCard({ cls, courseType, index, onLockedClick, onOpen }) {
           {/* ── Thumbnail ── */}
           <div className="relative h-36 w-full overflow-hidden rounded-xl border border-white/[0.04] bg-bg-elevated sm:h-28 sm:w-44 shrink-0 select-none flex items-center justify-center">
             {thumbnailUrl ? (
-              <>
-                <link rel="preload" as="image" href={thumbnailUrl} fetchPriority="high" />
-                <img
-                  src={thumbnailUrl}
-                  alt={cls.title}
-                  fetchPriority="high"
-                  decoding="async"
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              </>
+              <OptimizedImage
+                src={thumbnailUrl}
+                alt={cls.title}
+                containerClassName="h-full w-full"
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-text-muted">
                 {locked ? (

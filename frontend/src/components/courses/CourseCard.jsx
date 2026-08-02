@@ -11,6 +11,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { getCourseTypeLabel } from "../../utils/courseUi";
 import CourseEnquiryModal from "./CourseEnquiryModal";
+import OptimizedImage from "../ui/OptimizedImage";
 
 function CourseCard({ course }) {
   const navigate = useNavigate();
@@ -41,12 +42,11 @@ function CourseCard({ course }) {
 
         {/* ── Cover Image ── */}
         <div className="relative aspect-video w-full overflow-hidden bg-bg-elevated shrink-0 select-none">
-          <link rel="preload" as="image" href={imageUrl} fetchPriority="high" />
-          <img
+          <OptimizedImage
             src={imageUrl}
             alt={course.name}
-            fetchPriority="high"
-            decoding="async"
+            eager
+            containerClassName="h-full w-full"
             className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
 

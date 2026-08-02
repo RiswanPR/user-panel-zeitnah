@@ -10,6 +10,7 @@ import { useIntersectionObserver } from '../../hooks/useIntersectionObserver';
  * @param {string} [className] – Additional classes for the image
  * @param {string} [containerClassName] – Additional classes for the wrapper
  * @param {boolean} [eager=false] – Skip lazy loading (for above-fold images)
+ * @param {string} [fetchPriority] – 'high' | 'low' | 'auto'
  */
 export default function OptimizedImage({
   src,
@@ -18,13 +19,18 @@ export default function OptimizedImage({
   className = '',
   containerClassName = '',
   eager = false,
+  fetchPriority,
   ...rest
 }) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
-  const [ref, isVisible] = useIntersectionObserver({ rootMargin: '200px', triggerOnce: true });
+  const { targetRef, isIntersecting } = useIntersectionObserver({
+    rootMargin: '300px',
+    threshold: 0,
+    triggerOnce: true,
+  });
 
-  const shouldLoad = eager || isVisible;
+  const shouldLoad = eager || isIntersecting;
 
   const handleLoad = useCallback(() => setLoaded(true), []);
   const handleError = useCallback(() => setError(true), []);
@@ -32,7 +38,7 @@ export default function OptimizedImage({
   if (error || !src) {
     return (
       <div
-        ref={ref}
+        ref={targetRef}
         className={`flex items-center justify-center bg-bg-elevated text-text-muted ${containerClassName}`}
       >
         {fallback || (
@@ -45,7 +51,7 @@ export default function OptimizedImage({
   }
 
   return (
-    <div ref={ref} className={`relative overflow-hidden ${containerClassName}`}>
+    <div ref={targetRef} className={`relative overflow-hidden ${containerClassName}`}>
       {/* Shimmer placeholder */}
       {!loaded && (
         <div className="absolute inset-0 shimmer" />
@@ -57,6 +63,7 @@ export default function OptimizedImage({
           alt={alt}
           loading={eager ? 'eager' : 'lazy'}
           decoding="async"
+          fetchPriority={fetchPriority || (eager ? 'high' : 'auto')}
           onLoad={handleLoad}
           onError={handleError}
           className={`transition-opacity duration-500 ${

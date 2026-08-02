@@ -4,6 +4,8 @@ import { ValidationPipe } from '@nestjs/common';
 
 import helmet from 'helmet';
 
+import cookieParser from 'cookie-parser';
+
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -16,6 +18,9 @@ async function bootstrap(): Promise<void> {
   // TRUST PROXY
   const expressApp = app.getHttpAdapter().getInstance() as Express;
   expressApp.set('trust proxy', true);
+
+  // COOKIE PARSER
+  app.use(cookieParser());
 
   // GLOBAL PREFIX
   app.setGlobalPrefix('api');

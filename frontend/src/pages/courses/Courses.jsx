@@ -4,6 +4,7 @@ import { BookOpen, GraduationCap, Video } from "lucide-react";
 import CourseCard from "../../components/courses/CourseCard";
 import CourseNavbar from "../../components/courses/CourseNavbar";
 import api from "../../services/api";
+import { useImagePreloader } from "../../hooks/useImagePreloader";
 
 function Courses() {
   const [courses, setCourses] = useState([]);
@@ -54,6 +55,13 @@ function Courses() {
     }),
     [courses],
   );
+
+  // Preload all course cover images in background
+  const coverImageUrls = useMemo(
+    () => filtered.map((c) => c.coverImage).filter(Boolean),
+    [filtered],
+  );
+  useImagePreloader(coverImageUrls);
 
   return (
     <div className="space-y-6 sm:space-y-8">

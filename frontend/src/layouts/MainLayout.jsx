@@ -12,6 +12,7 @@ import {
 import { AuthContext } from "../context/AuthContext";
 import { getUploadUrl } from "../utils/courseUi";
 import PageTransition from "../components/ui/PageTransition";
+import CookieConsentBanner from "../components/common/CookieConsentBanner";
 
 const navItems = [
   // { path: "/dashboard", label: "Dashboard", icon: Home },
@@ -242,6 +243,7 @@ export default function MainLayout({ children }) {
           </PageTransition>
         </div>
       </main>
+      <CookieConsentBanner />
     </div>
   );
 }

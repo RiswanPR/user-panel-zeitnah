@@ -6,10 +6,11 @@ import {
   Param,
   Post,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 
 import { AuthenticatedUser, AuthService } from './auth.service';
 
@@ -33,6 +34,43 @@ type AuthenticatedRequest = Request & {
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  private setAuthCookies(res: Response, token?: string, refreshToken?: string) {
+    const isProduction = process.env.NODE_ENV === 'production';
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? ('none' as const) : ('lax' as const),
+      path: '/',
+    };
+    const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000;
+
+    if (token) {
+      res.cookie('token', token, {
+        ...cookieOptions,
+        maxAge: SIXTY_DAYS_MS,
+      });
+    }
+
+    if (refreshToken) {
+      res.cookie('refreshToken', refreshToken, {
+        ...cookieOptions,
+        maxAge: SIXTY_DAYS_MS,
+      });
+    }
+  }
+
+  private clearAuthCookies(res: Response) {
+    const isProduction = process.env.NODE_ENV === 'production';
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? ('none' as const) : ('lax' as const),
+      path: '/',
+    };
+    res.clearCookie('token', cookieOptions);
+    res.clearCookie('refreshToken', cookieOptions);
+  }
 
   private getHeaderValue(req: Request, headerName: string) {
     const value = req.headers[headerName.toLowerCase()];
@@ -105,11 +143,24 @@ export class AuthController {
 
     @Req()
     req: Request,
+
+    @Res({ passthrough: true })
+    res: Response,
   ) {
-    return await this.authService.registerVerifyOtp(
+    const result = await this.authService.registerVerifyOtp(
       body,
       this.getClientIp(req),
     );
+
+    if (result?.token || result?.accessToken) {
+      this.setAuthCookies(
+        res,
+        result.token || result.accessToken,
+        result.refreshToken,
+      );
+    }
+
+    return result;
   }
 
   // =========================
@@ -136,16 +187,51 @@ export class AuthController {
 
     @Req()
     req: Request,
+
+    @Res({ passthrough: true })
+    res: Response,
   ) {
-    return await this.authService.loginVerifyOtp(body, this.getClientIp(req));
+    const result = await this.authService.loginVerifyOtp(
+      body,
+      this.getClientIp(req),
+    );
+
+    if (result?.token || result?.accessToken) {
+      this.setAuthCookies(
+        res,
+        result.token || result.accessToken,
+        result.refreshToken,
+      );
+    }
+
+    return result;
   }
 
   @Post('refresh-token')
   async refreshToken(
     @Body()
     body: RefreshTokenDto,
+
+    @Req()
+    req: Request,
+
+    @Res({ passthrough: true })
+    res: Response,
   ) {
-    return await this.authService.refreshToken(body.refreshToken);
+    const refreshTokenToUse =
+      req.cookies?.refreshToken || body?.refreshToken;
+
+    const result = await this.authService.refreshToken(refreshTokenToUse);
+
+    if (result?.accessToken || result?.token) {
+      this.setAuthCookies(
+        res,
+        result.accessToken || result.token,
+        result.refreshToken,
+      );
+    }
+
+    return result;
   }
 
   // =========================
@@ -182,7 +268,11 @@ export class AuthController {
 
   @Post('logout')
   @UseGuards(JwtAuthGuard)
-  logout(@Req() req: AuthenticatedRequest) {
+  logout(
+    @Req() req: AuthenticatedRequest,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    this.clearAuthCookies(res);
     return this.authService.logout(req.user);
   }
 }

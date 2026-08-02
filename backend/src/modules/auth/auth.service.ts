@@ -78,7 +78,7 @@ type PublicIpResponse = {
   ip?: string;
 };
 
-const DEFAULT_SESSION_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000;
+const DEFAULT_SESSION_EXPIRY_MS = 60 * 24 * 60 * 60 * 1000;
 
 function parseDurationToMs(value?: string | number | null): number | null {
   if (typeof value === 'number') {
@@ -122,7 +122,7 @@ export class AuthService {
     '15m') as StringValue;
 
   private readonly refreshTokenExpiresIn = (process.env
-    .JWT_REFRESH_EXPIRES_IN || '30d') as StringValue;
+    .JWT_REFRESH_EXPIRES_IN || '60d') as StringValue;
 
   private readonly refreshTokenExpiryMs =
     Number(process.env.JWT_SESSION_EXPIRES_IN_MS) ||

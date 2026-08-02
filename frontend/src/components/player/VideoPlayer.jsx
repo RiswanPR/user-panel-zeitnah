@@ -137,8 +137,36 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
             xhr.setRequestHeader('Authorization', `Bearer ${token}`);
           }
         },
-        maxBufferLength: 30,
-        maxMaxBufferLength: 600,
+        // ── Buffer management ──
+        maxBufferLength: 30,           // Buffer up to 30s ahead
+        maxMaxBufferLength: 600,       // Allow up to 10 min max buffer
+        maxBufferSize: 120 * 1000000,  // 120MB memory cap for buffer
+        maxBufferHole: 0.5,            // Tolerate 0.5s gaps in buffer
+        backBufferLength: 30,          // Keep only 30s of played-back buffer
+
+        // ── ABR (Adaptive Bitrate) ──
+        startLevel: -1,                        // Auto-detect best starting quality
+        abrEwmaDefaultEstimate: 500000,        // 500kbps conservative initial estimate
+        abrEwmaDefaultEstimateMax: 5000000,    // 5Mbps max estimate
+        abrBandWidthFactor: 0.95,              // Use 95% of measured bandwidth
+        abrBandWidthUpFactor: 0.7,             // Be cautious upgrading quality
+        testBandwidth: true,                   // Measure bandwidth actively
+
+        // ── Stall recovery ──
+        maxStarvationDelay: 2,   // Downgrade quality after 2s stall (default 4s)
+        maxLoadingDelay: 4,      // Timeout slow segments after 4s
+        lowLatencyMode: false,   // VOD, not live
+
+        // ── Segment loading resilience ──
+        fragLoadingTimeOut: 20000,     // 20s timeout per segment
+        fragLoadingMaxRetry: 6,        // Retry failed segments 6 times
+        fragLoadingRetryDelay: 1000,   // 1s delay between retries
+        levelLoadingTimeOut: 10000,    // 10s timeout for level playlists
+        levelLoadingMaxRetry: 4,       // Retry level playlists 4 times
+
+        // ── Performance ──
+        enableWorker: true,     // Parse segments off main thread
+        progressive: true,      // Start playback before full segment download
       });
 
       hlsRef.current = hls;
