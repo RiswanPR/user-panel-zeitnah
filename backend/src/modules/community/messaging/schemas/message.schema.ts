@@ -91,4 +91,3 @@ export class Message {
 export const MessageSchema = SchemaFactory.createForClass(Message);
 MessageSchema.index({ conversationId: 1, createdAt: -1 });
 MessageSchema.index({ conversationId: 1, isPinned: -1 });
-MessageSchema.index({ senderId: 1 });

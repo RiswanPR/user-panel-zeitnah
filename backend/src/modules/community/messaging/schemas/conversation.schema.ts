@@ -47,7 +47,3 @@ export class Conversation {
 
 export const ConversationSchema =
   SchemaFactory.createForClass(Conversation);
-
-ConversationSchema.index({ participants: 1 });
-ConversationSchema.index({ lastActivity: -1 });
-ConversationSchema.index({ createdAt: -1 });
