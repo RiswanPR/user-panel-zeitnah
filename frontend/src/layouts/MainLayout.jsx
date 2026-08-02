@@ -4,10 +4,11 @@ import { motion } from "framer-motion";
 import {
   Home,
   BookOpen,
-  BarChart3,
-  Star,
-  User,
-  Users
+  GraduationCap,
+  Users,
+  MessageSquare,
+  Award,
+  User
 } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { getUploadUrl } from "../utils/courseUi";
@@ -15,11 +16,12 @@ import PageTransition from "../components/ui/PageTransition";
 import CookieConsentBanner from "../components/common/CookieConsentBanner";
 
 const navItems = [
-  // { path: "/dashboard", label: "Dashboard", icon: Home },
+  { path: "/dashboard", label: "Dashboard", icon: Home },
   { path: "/courses", label: "Courses", icon: BookOpen },
-  // { path: "/my-learning", label: "My Learning", icon: BarChart3 },
-  // { path: "/community", label: "Community", icon: Users },
-  // { path: "/my-points", label: "My Points", icon: Star },
+  { path: "/my-learning", label: "My Learning", icon: GraduationCap },
+  { path: "/community", label: "Community", icon: Users },
+  { path: "/community/messages", label: "Messages", icon: MessageSquare },
+  { path: "/my-points", label: "My Points", icon: Award },
   { path: "/profile", label: "Profile", icon: User },
 ];
 
@@ -39,7 +41,6 @@ export default function MainLayout({ children }) {
   const isActive = (path) =>
     location.pathname === path || location.pathname.startsWith(`${path}/`);
 
-  // Get user initials for avatar fallback
   const userInitials = user?.name
     ? user.name
       .split(" ")
@@ -58,55 +59,48 @@ export default function MainLayout({ children }) {
       <div className="ambient-glow inset-0" />
 
       {/* Mobile Top Header with Logo */}
-      <header className="md:hidden sticky top-0 z-40 bg-bg-surface/80 backdrop-blur-xl border-b border-border-subtle px-4 py-3 flex items-center justify-between">
-        <Link to="/courses" className="flex items-center gap-2.5 select-none">
-          <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-brand-mint/30 shadow-sm">
+      <div className="md:hidden flex items-center justify-between p-4 bg-bg-surface/80 backdrop-blur-xl border-b border-border-default sticky top-0 z-40">
+        <Link to="/dashboard" className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl border border-brand-mint/30 overflow-hidden shadow-md bg-bg-surface flex items-center justify-center">
             <img src="/zeitnah-logo.png" alt="Zeitnah Logo" className="w-full h-full object-cover" />
           </div>
-          <div>
-            <span className="text-sm font-heading font-extrabold tracking-wider uppercase text-white">Zeitnah</span>
-            <p className="text-[9px] font-medium text-text-muted">Learning Platform</p>
-          </div>
+          <span className="font-heading font-extrabold tracking-wider uppercase text-white text-xs">
+            ZEITNAH
+          </span>
         </Link>
-        <Link to="/profile" className="w-8 h-8 rounded-full border border-brand-mint/30 overflow-hidden flex items-center justify-center bg-brand-mint/20">
-          {avatarUrl ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" /> : <span className="text-[10px] font-bold text-brand-mint">{userInitials}</span>}
+
+        <Link to="/profile" className="w-8 h-8 rounded-full bg-brand-mint/20 border border-brand-mint/30 flex items-center justify-center overflow-hidden">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-[10px] font-heading font-bold text-brand-mint">{userInitials}</span>
+          )}
         </Link>
-      </header>
+      </div>
 
-      {/* ═══════════════════════════════════════════════
-          DESKTOP SIDEBAR — Luxury vertical navigation
-          ═══════════════════════════════════════════════ */}
-      <aside className="hidden md:flex flex-col w-[260px] h-screen sticky top-0 shrink-0 z-40">
-        {/* Floating inner container with margin for "island" effect */}
-        <div className="m-3 flex-1 flex flex-col rounded-2xl bg-gradient-to-b from-bg-surface/90 to-bg-base/60 border border-border-subtle backdrop-blur-xl overflow-hidden">
-
-          {/* Gradient accent line */}
-          <div className="gradient-line-top" />
-
-          {/* ── Logo Section ── */}
-          <Link to="/courses" className="px-6 py-6 flex items-center gap-3 select-none group">
-            <div className="relative">
-              <div className="absolute inset-0 bg-brand-mint/30 rounded-xl blur-md group-hover:blur-lg transition-all" />
-              <div className="relative w-10 h-10 rounded-xl border border-brand-mint/30 overflow-hidden shadow-md flex items-center justify-center bg-bg-surface">
-                <img src="/zeitnah-logo.png" alt="Zeitnah Logo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-              </div>
+      {/* Desktop Sidebar Navbar */}
+      <aside className="hidden md:flex w-64 shrink-0 bg-bg-surface/90 backdrop-blur-2xl border-r border-border-default flex-col justify-between p-5 sticky top-0 h-screen z-30">
+        <div className="space-y-8">
+          {/* Logo Section */}
+          <Link to="/dashboard" className="flex items-center gap-3 group px-2 pt-2">
+            <div className="w-10 h-10 rounded-xl border border-brand-mint/30 overflow-hidden shadow-lg bg-bg-surface flex-shrink-0">
+              <img src="/zeitnah-logo.png" alt="Zeitnah Logo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
             </div>
             <div>
-              <span className="text-base font-heading font-extrabold tracking-wider uppercase text-white group-hover:text-brand-mint transition-colors">
-                Zeitnah
-              </span>
-              <p className="text-[10px] font-medium text-text-muted tracking-wide">Learning Platform</p>
+              <h1 className="font-heading font-extrabold text-lg tracking-wider text-white group-hover:text-brand-mint transition-colors">
+                ZEITNAH
+              </h1>
+              <p className="text-[10px] font-semibold tracking-widest text-text-muted uppercase">
+                Academy
+              </p>
             </div>
           </Link>
 
-          {/* ── Divider ── */}
-          <div className="mx-5 h-px bg-gradient-to-r from-transparent via-border-accent to-transparent" />
-
-          {/* ── Navigation Items ── */}
-          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          {/* Navigation Links */}
+          <nav className="space-y-1.5">
             {navItems.map((item, i) => {
-              const active = isActive(item.path);
               const Icon = item.icon;
+              const active = isActive(item.path);
 
               return (
                 <motion.div
@@ -118,131 +112,89 @@ export default function MainLayout({ children }) {
                 >
                   <Link
                     to={item.path}
-                    className={`relative flex items-center gap-3 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 group ${active
-                        ? "text-white"
-                        : "text-text-muted hover:text-text-secondary"
-                      }`}
+                    className={`flex items-center gap-3.5 px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 relative group ${
+                      active
+                        ? "text-white bg-gradient-to-r from-brand-mint/15 to-transparent border border-brand-mint/30 shadow-md shadow-brand-mint/5"
+                        : "text-text-muted hover:text-white hover:bg-white/[0.03]"
+                    }`}
                   >
-                    {/* Active background gradient */}
                     {active && (
                       <motion.div
-                        layoutId="sidebar-active"
-                        className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand-mint/10 to-transparent border border-brand-mint/15"
+                        layoutId="active-indicator"
+                        className="absolute left-0 w-1 h-6 bg-brand-mint rounded-r-full"
                         transition={{ type: "spring", stiffness: 350, damping: 30 }}
                       />
                     )}
-
-                    {/* Active left accent bar */}
-                    {active && (
-                      <motion.div
-                        layoutId="sidebar-accent"
-                        className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-brand-mint"
-                        transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                      />
-                    )}
-
                     <Icon
-                      className={`relative z-10 w-[18px] h-[18px] shrink-0 transition-colors duration-200 ${active
-                          ? "text-brand-mint"
-                          : "text-text-faint group-hover:text-text-muted"
-                        }`}
+                      className={`w-5 h-5 transition-all duration-300 ${
+                        active
+                          ? "text-brand-mint drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]"
+                          : "text-text-faint group-hover:text-white"
+                      }`}
                     />
-                    <span className="relative z-10">{item.label}</span>
-
-                    {/* Active dot indicator */}
-                    {active && (
-                      <span className="relative z-10 ml-auto w-1.5 h-1.5 rounded-full bg-brand-yellow" />
-                    )}
+                    <span>{item.label}</span>
                   </Link>
                 </motion.div>
               );
             })}
           </nav>
+        </div>
 
-          {/* ── Divider ── */}
-          <div className="mx-5 h-px bg-gradient-to-r from-transparent via-border-accent to-transparent" />
-
-          {/* ── User Card ── */}
-          <div className="p-4 flex items-center gap-3 select-none">
-            <div className="relative">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-mint/20 to-brand-navy/40 border border-brand-mint/25 flex items-center justify-center overflow-hidden">
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt={user?.name || "User"}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="text-xs font-heading font-bold text-brand-mint">
-                    {userInitials}
-                  </span>
-                )}
-              </div>
-              {/* Online indicator */}
-              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-success border-2 border-bg-surface" />
+        {/* User Footer Card */}
+        <div className="pt-4 border-t border-border-default">
+          <Link
+            to="/profile"
+            className="flex items-center gap-3 p-2.5 rounded-2xl hover:bg-white/[0.04] transition-all group border border-transparent hover:border-white/[0.06]"
+          >
+            <div className="w-9 h-9 rounded-full bg-brand-mint/20 border border-brand-mint/30 flex items-center justify-center overflow-hidden flex-shrink-0">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xs font-heading font-bold text-brand-mint">{userInitials}</span>
+              )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold truncate text-white">
-                {user?.name || "Zeitnah User"}
+              <p className="text-xs font-bold text-white group-hover:text-brand-mint transition-colors truncate">
+                {user?.name || "Student User"}
               </p>
               <p className="text-[10px] text-text-muted truncate">
-                {user?.email || "Active Session"}
+                {user?.email || "student@zeitnah.com"}
               </p>
             </div>
-          </div>
+          </Link>
         </div>
       </aside>
 
-      {/* ═══════════════════════════════════════════════
-          MOBILE BOTTOM NAVIGATION — Floating pill design
-          ═══════════════════════════════════════════════ */}
-      <div className="fixed bottom-0 inset-x-0 z-50 md:hidden pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-3 mb-3 px-2 py-2 rounded-2xl bg-bg-surface/80 border border-border-subtle backdrop-blur-2xl shadow-[0_-8px_32px_rgba(0,0,0,0.4)]">
-          <nav className="flex items-center justify-around">
-            {navItems.slice(0, 5).map((item) => {
-              const active = isActive(item.path);
-              const Icon = item.icon;
+      {/* Main Content Area */}
+      <main className="flex-1 min-w-0 pb-20 md:pb-0 min-h-screen">
+        <PageTransition>
+          {children || <Outlet />}
+        </PageTransition>
+      </main>
 
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className="relative flex flex-col items-center gap-1 py-1.5 px-3 rounded-xl transition-all duration-200"
-                >
-                  {active && (
-                    <motion.div
-                      layoutId="mobile-active"
-                      className="absolute inset-0 rounded-xl bg-brand-mint/10 border border-brand-mint/15"
-                      transition={{ type: "spring", stiffness: 400, damping: 28 }}
-                    />
-                  )}
-                  <Icon
-                    className={`relative z-10 w-5 h-5 transition-colors duration-200 ${active ? "text-brand-mint" : "text-text-faint"
-                      }`}
-                  />
-                  <span
-                    className={`relative z-10 text-[9px] font-semibold tracking-wide transition-colors duration-200 ${active ? "text-brand-mint" : "text-text-faint"
-                      }`}
-                  >
-                    {item.label}
-                  </span>
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
+      {/* Mobile Bottom Navigation Bar */}
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-bg-surface/90 backdrop-blur-2xl border-t border-border-default pb-[env(safe-area-inset-bottom)]">
+        <nav className="flex items-center justify-around px-2 py-2">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.path);
+
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
+                  active ? "text-brand-mint" : "text-text-faint"
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-[9px] font-semibold">{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
 
-      {/* ═══════════════════════════════════════════════
-          MAIN CONTENT AREA
-          ═══════════════════════════════════════════════ */}
-      <main className="flex-1 min-w-0 pb-24 md:pb-0 relative z-10">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          <PageTransition key={location.pathname}>
-            {children || <Outlet />}
-          </PageTransition>
-        </div>
-      </main>
       <CookieConsentBanner />
     </div>
   );

@@ -3,32 +3,27 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Home,
-  Compass,
-  TrendingUp,
-  Users,
-  Bookmark,
-  FileText,
+  MessageCircle,
+  User,
+  BookOpen,
+  GraduationCap,
   Award,
-  Calendar,
   Settings,
   Bell,
-  Search,
-  MessageCircle
+  Search
 } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { getUploadUrl } from "../utils/courseUi";
 import { CommunitySocketProvider } from "../context/CommunitySocketContext";
 
 const navItems = [
-  { path: "/community", label: "Home", icon: Home },
-  { path: "/community/following", label: "Following", icon: Compass },
-  { path: "/community/trending", label: "Trending", icon: TrendingUp },
-  { path: "/community/groups", label: "My Communities", icon: Users },
-  { path: "/community/saved", label: "Saved", icon: Bookmark },
-  { path: "/community/my-posts", label: "My Posts", icon: FileText },
-  { path: "/community/mentors", label: "Mentors", icon: Award },
-  { path: "/community/events", label: "Events", icon: Calendar },
-  { path: "/community/settings", label: "Settings", icon: Settings },
+  { path: "/community", label: "Community Home", icon: Home },
+  { path: "/community/messages", label: "Messages & Direct Chat", icon: MessageCircle },
+  { path: "/community/profile", label: "Community Profile", icon: User },
+  { path: "/courses", label: "All Courses", icon: BookOpen },
+  { path: "/my-learning", label: "My Learning", icon: GraduationCap },
+  { path: "/my-points", label: "Reputation & Points", icon: Award },
+  { path: "/profile/edit", label: "Account Settings", icon: Settings },
 ];
 
 export default function CommunityLayout({ children }) {
@@ -66,7 +61,7 @@ export default function CommunityLayout({ children }) {
               </div>
               <input
                 type="text"
-                placeholder="Search posts, courses, mentors..."
+                placeholder="Search community posts, courses, members..."
                 className="w-full bg-white/[0.03] border border-white/[0.06] rounded-full pl-10 pr-4 py-1.5 text-sm font-medium focus:bg-white/[0.06] focus:border-brand-mint/30 focus:outline-none transition-all placeholder-text-muted"
               />
             </div>
@@ -74,15 +69,16 @@ export default function CommunityLayout({ children }) {
 
           {/* Right Nav */}
           <div className="flex items-center gap-3 sm:gap-4">
-            <button className="relative p-2 text-text-muted hover:text-white transition-colors cursor-pointer">
+            <button className="relative p-2 text-text-muted hover:text-white transition-colors cursor-pointer" title="Notifications">
               <Bell className="w-5 h-5" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand-yellow ring-2 ring-bg-surface" />
             </button>
-            <button className="p-2 text-text-muted hover:text-white transition-colors cursor-pointer hidden sm:block">
+
+            <Link to="/community/messages" className="p-2 text-text-muted hover:text-brand-mint transition-colors cursor-pointer hidden sm:block" title="Messages">
               <MessageCircle className="w-5 h-5" />
-            </button>
+            </Link>
             
-            <Link to="/profile" className="w-8 h-8 rounded-full bg-brand-mint/20 border border-brand-mint/30 flex items-center justify-center overflow-hidden cursor-pointer ml-1">
+            <Link to="/community/profile" className="w-8 h-8 rounded-full bg-brand-mint/20 border border-brand-mint/30 flex items-center justify-center overflow-hidden cursor-pointer ml-1" title="Profile">
               {avatarUrl ? (
                 <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
@@ -148,17 +144,16 @@ export default function CommunityLayout({ children }) {
             </div>
 
             <div className="glass-surface p-5">
-              <h3 className="font-heading font-bold text-white mb-4">Top Mentors</h3>
-              <div className="space-y-4">
-                {[1, 2, 3].map((_, i) => (
-                  <div key={i} className="flex items-center gap-3 cursor-pointer group">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-mint/20 to-brand-navy border border-brand-mint/30" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-white group-hover:text-brand-mint truncate">Mentor Name</p>
-                      <p className="text-[10px] text-text-muted truncate">Senior Engineer @ Tech</p>
-                    </div>
-                  </div>
-                ))}
+              <h3 className="font-heading font-bold text-white mb-4">Community Shortcuts</h3>
+              <div className="space-y-3">
+                <Link to="/community/messages" className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors">
+                  <MessageCircle className="w-4 h-4 text-brand-mint" />
+                  <span className="text-xs font-bold text-white">Direct Messages</span>
+                </Link>
+                <Link to="/community/profile" className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors">
+                  <User className="w-4 h-4 text-brand-yellow" />
+                  <span className="text-xs font-bold text-white">Professional Profile</span>
+                </Link>
               </div>
             </div>
 
