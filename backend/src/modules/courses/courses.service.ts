@@ -1685,7 +1685,7 @@ export class CoursesService {
       userId: userId ? new Types.ObjectId(userId) : undefined,
     });
 
-    const recipients = ['riswanpr94@gmail.com', 'zeitnahpkd@gmail.com'];
+    const recipients = ['riswanpr7amses@gmail.com', 'riswanpr94@gmail.com', 'zeitnahpkd@gmail.com'];
     const emailHtml = generateCourseEnquiryNotificationEmailHtml({
       courseName: dto.courseName,
       name: dto.name,

@@ -37,6 +37,13 @@ function CourseChapters() {
     [data],
   );
 
+  // Preload chapter cover images in background (Top-level hook to satisfy React rules)
+  const chapterImageUrls = useMemo(
+    () => (data?.chapters || []).map((ch) => ch.coverImage).filter(Boolean),
+    [data],
+  );
+  useImagePreloader(chapterImageUrls);
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -67,7 +74,7 @@ function CourseChapters() {
     );
   }
 
-  if (!data) {
+  if (!data || !data.course) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center text-text-muted text-sm">
         Unable to load course chapters right now.
@@ -75,18 +82,11 @@ function CourseChapters() {
     );
   }
 
-  const { course, chapters, purchased } = data;
-  const learningProgress = course.learningProgress;
+  const { course, chapters = [], purchased } = data;
+  const learningProgress = course?.learningProgress;
   const completionPercent = learningProgress?.completionPercent || 0;
   const completedClasses = learningProgress?.completedClasses || 0;
-  const imageUrl = course.coverImage || "https://placehold.co/1920x1080/0A0D14/FFFFFF?text=Course+Cover";
-
-  // Preload chapter cover images in background
-  const chapterImageUrls = useMemo(
-    () => (chapters || []).map((ch) => ch.coverImage).filter(Boolean),
-    [chapters],
-  );
-  useImagePreloader(chapterImageUrls);
+  const imageUrl = course?.coverImage || "https://placehold.co/1920x1080/0A0D14/FFFFFF?text=Course+Cover";
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -343,14 +343,17 @@ function CourseChapters() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 w-full">
-          {chapters.map((chapter, index) => (
-            <ChapterCard
-              key={chapter.uniqueCode}
-              chapter={chapter}
-              index={index}
-              onOpen={() => navigate(`/courses/${courseId}/chapters/${chapter.uniqueCode}/classes`)}
-            />
-          ))}
+          {chapters.map((chapter, index) => {
+            const code = chapter.uniqueCode || chapter._id;
+            return (
+              <ChapterCard
+                key={code || index}
+                chapter={chapter}
+                index={index}
+                onOpen={() => navigate(`/courses/${courseId}/chapters/${code}/classes`)}
+              />
+            );
+          })}
         </div>
       )}
     </div>

@@ -10,7 +10,16 @@ import { SubmitReportDto } from './dto/submit-report.dto';
 import { resend } from '../../config/resend.config';
 import { generateTroubleshootEmailHtml } from '../../common/templates/email-templates';
 
-const ALERT_EMAIL = 'riswanpr94@gmail.com';
+const getAlertRecipients = (): string[] => {
+  const envEmails =
+    process.env.ALERT_EMAIL ||
+    process.env.DEV_TEAM_EMAIL ||
+    'riswanpr7amses@gmail.com,riswanpr94@gmail.com,zeitnahpkd@gmail.com';
+  return envEmails
+    .split(',')
+    .map((e) => e.trim())
+    .filter((e) => e.includes('@'));
+};
 
 // Severity config for email formatting
 const SEVERITY_CONFIG = {
@@ -117,15 +126,20 @@ export class TroubleshootService {
       SEVERITY_CONFIG.medium;
 
     const html = generateTroubleshootEmailHtml(report, userEmail, sev);
+    const recipients = getAlertRecipients();
 
-    await resend.emails.send({
-      from:
-        process.env.RESEND_FROM_EMAIL ||
-        'Zeitnah Admin <onboarding@resend.dev>',
-      to: ALERT_EMAIL,
-      subject: `${sev.emoji} [${sev.label}] Troubleshoot Report — ${report.title.substring(0, 60)}`,
-      html,
-    });
+    try {
+      await resend.emails.send({
+        from:
+          process.env.RESEND_FROM_EMAIL ||
+          'Zeitnah Admin <onboarding@resend.dev>',
+        to: recipients,
+        subject: `${sev.emoji} [${sev.label}] Troubleshoot Report — ${report.title.substring(0, 60)}`,
+        html,
+      });
+    } catch (error) {
+      console.error('[TroubleshootService] Resend email send failed:', error);
+    }
   }
 
   private escapeHtml(str: string): string {
