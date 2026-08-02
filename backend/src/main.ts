@@ -1,16 +1,13 @@
 import { NestFactory } from '@nestjs/core';
-
 import { ValidationPipe } from '@nestjs/common';
-
 import helmet from 'helmet';
-
 import cookieParser from 'cookie-parser';
+import express from 'express';
+import type { Express } from 'express';
 
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-
-import type { Express } from 'express';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
@@ -18,6 +15,10 @@ async function bootstrap(): Promise<void> {
   // TRUST PROXY
   const expressApp = app.getHttpAdapter().getInstance() as Express;
   expressApp.set('trust proxy', true);
+
+  // INCREASE BODY PARSER PAYLOAD SIZE LIMIT (FIX HTTP 413)
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
   // COOKIE PARSER
   app.use(cookieParser());
@@ -36,11 +37,8 @@ async function bootstrap(): Promise<void> {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-
       forbidNonWhitelisted: true,
-
       transform: true,
-
       transformOptions: {
         enableImplicitConversion: true,
       },
@@ -67,11 +65,8 @@ async function bootstrap(): Promise<void> {
 
   app.enableCors({
     origin: allowedOrigins,
-
     credentials: true,
-
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
