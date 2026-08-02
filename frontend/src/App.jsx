@@ -31,6 +31,7 @@ const ClassView = React.lazy(() => import("./pages/courses/ClassView"));
 const MyLearning = React.lazy(() => import("./pages/learning/MyLearning"));
 const Dashboard = React.lazy(() => import("./pages/learning/Dashboard"));
 const MyPoints = React.lazy(() => import("./pages/learning/MyPoints"));
+const NotFoundPage = React.lazy(() => import("./pages/NotFoundPage"));
 const ErrorReportsDashboard = React.lazy(() => import("./pages/admin/ErrorReportsDashboard"));
 const SessionDiagnostics = React.lazy(() => import("./pages/admin/SessionDiagnostics"));
 
@@ -73,6 +74,7 @@ const PageLoader = () => (
   </div>
 );
 
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -96,11 +98,7 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/home" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/index" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/app" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/messages" element={<Navigate to="/community/messages" replace />} />
+              <Route path="/" element={<Navigate to="/courses" />} />
               <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
               <Route path="/profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
               <Route path="/profile/edit" element={<Suspense fallback={<PageLoader />}><EditProfile /></Suspense>} />
@@ -135,11 +133,17 @@ function App() {
               <Route path="/community/messages" element={<Suspense fallback={<PageLoader />}><CommunityMessagesPage /></Suspense>} />
               <Route path="/community/messages/:conversationId" element={<Suspense fallback={<PageLoader />}><CommunityMessagesPage /></Suspense>} />
               <Route path="/community/moderator" element={<Suspense fallback={<PageLoader />}><ModeratorDashboard /></Suspense>} />
-              <Route path="/community/*" element={<Navigate to="/community" replace />} />
             </Route>
 
-            {/* CATCH-ALL ROUTE — REDIRECT TO DASHBOARD */}
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            {/* 404 — NOT FOUND */}
+            <Route
+              path="*"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <NotFoundPage />
+                </Suspense>
+              }
+            />
 
           </Routes>
           {/* Global Troubleshoot Error Reporter */}
