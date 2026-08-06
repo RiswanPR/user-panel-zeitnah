@@ -15,7 +15,10 @@ function VideoWatermark({ user }) {
 
     const clock = setInterval(() => {
       setTime(new Date().toLocaleString());
-    }, 1000);
+    }, 30000); // Update every 30 seconds — no need for per-second precision on watermark
+
+    // Set initial time immediately
+    setTime(new Date().toLocaleString());
 
     return () => {
       clearInterval(move);

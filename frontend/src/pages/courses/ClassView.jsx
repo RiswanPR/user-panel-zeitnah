@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useContext } from "react";
+import { useEffect, useRef, useState, useContext, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -28,8 +28,40 @@ function loadVdoCipherApi() {
   return new Promise((resolve, reject) => {
     const existing = document.querySelector('script[data-vdocipher-api="true"]');
     if (existing) {
-      existing.addEventListener("load", resolve, { once: true });
-      existing.addEventListener("error", reject, { once: true });
+      // If the script tag exists and has already loaded, VdoPlayer should be on window.
+      // If not, the script may still be loading — listen for load/error.
+      // Guard: if the script already finished loading but VdoPlayer isn't set yet,
+      // use a short poll to avoid hanging forever.
+      if (window.VdoPlayer) {
+        resolve();
+        return;
+      }
+      let settled = false;
+      const onLoad = () => { settled = true; resolve(); };
+      const onError = () => { settled = true; reject(new Error('VdoCipher script failed to load')); };
+      existing.addEventListener("load", onLoad, { once: true });
+      existing.addEventListener("error", onError, { once: true });
+      // Fallback: if the load event already fired before we attached the listener,
+      // the promise would hang. Poll briefly to catch this edge case.
+      setTimeout(() => {
+        if (!settled) {
+          existing.removeEventListener("load", onLoad);
+          existing.removeEventListener("error", onError);
+          if (window.VdoPlayer) {
+            resolve();
+          } else {
+            // Script tag exists but VdoPlayer not available — force reload
+            existing.remove();
+            const script = document.createElement("script");
+            script.src = "https://player.vdocipher.com/v2/api.js";
+            script.async = true;
+            script.dataset.vdocipherApi = "true";
+            script.onload = resolve;
+            script.onerror = reject;
+            document.body.appendChild(script);
+          }
+        }
+      }, 3000);
       return;
     }
     const script = document.createElement("script");
@@ -59,6 +91,8 @@ function ClassView() {
   const lastSyncedRef = useRef({ currentTime: 0, duration: 0, totalCovered: 0, totalPlayed: 0 });
   const latestSnapshotRef = useRef(null);
   const savedProgressBaseRef = useRef({ coveredSeconds: 0, watchedSeconds: 0 });
+  const s3ProgressRef = useRef({ lastSaveTime: 0, lastCurrentTime: 0, saveInFlight: false });
+  const dataRef = useRef(null);
 
   // ── Load class data ──
   useEffect(() => {
@@ -101,10 +135,13 @@ function ClassView() {
   useEffect(() => {
     if (!classId) return;
     let heartbeatInterval;
+    let cachedDeviceId = null;
+
     const initializeStream = async () => {
       try {
         const { getPersistentDeviceId, getBrowserFingerprint } = await import('../../utils/deviceFingerprint');
         const deviceId = await getPersistentDeviceId();
+        cachedDeviceId = deviceId; // Cache for synchronous access in beforeunload
         const browserFingerprint = JSON.stringify(getBrowserFingerprint());
         await api.post("/courses/start-stream", { classId, deviceId, browserFingerprint });
         
@@ -127,9 +164,11 @@ function ClassView() {
       } catch (error) { console.log(error); }
     };
     
-    const handleUnload = async () => {
-      const { getPersistentDeviceId } = await import('../../utils/deviceFingerprint');
-      const deviceId = await getPersistentDeviceId();
+    // beforeunload must be SYNCHRONOUS — no async imports allowed here
+    // Use the cachedDeviceId from initializeStream instead
+    const handleUnload = () => {
+      const deviceId = cachedDeviceId;
+      if (!deviceId) return;
       const userId = user?.userId || user?.id;
       const baseUrl = api.defaults.baseURL || window.location.origin + "/api";
       navigator.sendBeacon(`${baseUrl}/courses/stop-stream`, new Blob([JSON.stringify({ deviceId, userId })], { type: "application/json" }));
@@ -149,13 +188,16 @@ function ClassView() {
     lastSyncedRef.current = { currentTime: initial?.lastPositionSeconds || 0, duration: initial?.durationSeconds || 0, totalCovered: initial?.coveredSeconds || 0, totalPlayed: initial?.watchedSeconds || 0 };
     savedProgressBaseRef.current = { coveredSeconds: initial?.coveredSeconds || 0, watchedSeconds: initial?.watchedSeconds || 0 };
     latestSnapshotRef.current = initial ? { completed: Boolean(initial.completed), currentTimeSeconds: initial.lastPositionSeconds || 0, durationSeconds: initial.durationSeconds || 0, totalCoveredSeconds: initial.coveredSeconds || 0, totalPlayedSeconds: initial.watchedSeconds || 0 } : null;
+    // Keep dataRef in sync for VdoCipher setup to read without re-triggering effect
+    dataRef.current = data;
   }, [data]);
 
   // ── VdoCipher player setup ──
+  // Only depends on classId — reads data from dataRef to avoid tearing down player on progress syncs
   useEffect(() => {
-    const classData = data?.class;
+    const classData = dataRef.current?.class;
     const videoSource = getClassVideoSource(
-      data?.course?.type,
+      dataRef.current?.course?.type,
       classData?.videoSource,
     );
     if (
@@ -183,7 +225,7 @@ function ClassView() {
     };
 
     const persistProgress = async ({ completed = false, force = false } = {}) => {
-      if (!playerRef.current || saveInFlightRef.current) return;
+      if (cancelled || !playerRef.current || saveInFlightRef.current) return;
       try {
         const snapshot = await buildProgressSnapshot(completed);
         if (!snapshot) return;
@@ -211,7 +253,7 @@ function ClassView() {
         const player = window.VdoPlayer.getInstance(iframeRef.current);
         playerRef.current = player;
         const onLoadedMetadata = () => {
-          const resumeAt = Number(data?.progress?.classProgress?.lastPositionSeconds);
+          const resumeAt = Number(dataRef.current?.progress?.classProgress?.lastPositionSeconds);
           if (Number.isFinite(resumeAt) && resumeAt > 0 && resumeAt < Number(player.video.duration || 0) - 3) player.video.currentTime = resumeAt;
           void persistProgress({ force: true });
         };
@@ -258,11 +300,10 @@ function ClassView() {
     void setupPlayer();
     return () => {
       cancelled = true;
-      void persistProgress({ force: true });
       cleanup();
       playerRef.current = null;
     };
-  }, [classId, data]);
+  }, [classId, data?.class?._id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Loading State ──
   if (loading) {
@@ -388,33 +429,42 @@ function ClassView() {
                     watermarkData={videoData.watermarkData} 
                     initialTime={Number(data?.progress?.classProgress?.lastPositionSeconds || 0)}
                     onProgress={({ currentTime, duration }) => {
-                      const state = latestSnapshotRef.current || { lastSaveTime: 0, lastCurrentTime: 0 };
+                      const s3State = s3ProgressRef.current;
                       const now = Date.now();
                       const isEnding = duration > 0 && currentTime >= duration - 2;
-                      const shouldSave = (now - (state.lastSaveTime || 0) > 15000) || isEnding;
 
-                      if (isEnding && state.lastCurrentTime === currentTime) return;
+                      // Throttle: only save every 15 seconds, or at end
+                      const shouldSave = (now - s3State.lastSaveTime > 15000) || isEnding;
 
-                      if (shouldSave) {
-                        const newState = { ...state, lastSaveTime: now, lastCurrentTime: currentTime };
-                        latestSnapshotRef.current = newState;
+                      // Skip duplicate end-of-video saves
+                      if (isEnding && s3State.lastCurrentTime === currentTime) return;
 
-                        const snapshot = {
-                          completed: isEnding,
-                          currentTimeSeconds: Math.round(currentTime),
-                          durationSeconds: Math.round(duration),
-                          totalCoveredSeconds: Math.round((savedProgressBaseRef.current?.coveredSeconds || 0) + currentTime),
-                          totalPlayedSeconds: Math.round((savedProgressBaseRef.current?.watchedSeconds || 0) + currentTime)
-                        };
+                      // Don't fire if a save is already in-flight
+                      if (!shouldSave || s3State.saveInFlight) return;
 
-                        setSyncState("saving");
-                        api.post(`/courses/class/${classId}/progress`, snapshot)
-                          .then(res => {
-                            setProgressState(res.data);
-                            setSyncState("saved");
-                          })
-                          .catch(() => setSyncState("error"));
-                      }
+                      s3State.lastSaveTime = now;
+                      s3State.lastCurrentTime = currentTime;
+                      s3State.saveInFlight = true;
+
+                      const snapshot = {
+                        completed: isEnding,
+                        currentTimeSeconds: Math.round(currentTime),
+                        durationSeconds: Math.round(duration),
+                        totalCoveredSeconds: Math.round((savedProgressBaseRef.current?.coveredSeconds || 0) + currentTime),
+                        totalPlayedSeconds: Math.round((savedProgressBaseRef.current?.watchedSeconds || 0) + currentTime)
+                      };
+
+                      // Also keep latestSnapshotRef updated for page-hide flush
+                      latestSnapshotRef.current = snapshot;
+
+                      setSyncState("saving");
+                      api.post(`/courses/class/${classId}/progress`, snapshot)
+                        .then(res => {
+                          setProgressState(res.data);
+                          setSyncState("saved");
+                        })
+                        .catch(() => setSyncState("error"))
+                        .finally(() => { s3State.saveInFlight = false; });
                     }}
                   />
                 ) : videoData?.error ? (

@@ -8,6 +8,12 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
   const containerRef = useRef(null);
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
+  const initialTimeRef = useRef(initialTime);
+
+  // Keep ref in sync but don't trigger re-renders
+  useEffect(() => {
+    initialTimeRef.current = initialTime;
+  }, [initialTime]);
 
   
   const [playing, setPlaying] = useState(false);
@@ -18,7 +24,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
   const [muted, setMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  const [isBuffering, setIsBuffering] = useState(true);
+  const [isBuffering, setIsBuffering] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showSettings, setShowSettings] = useState(false);
   
@@ -102,23 +108,25 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
         if (playing && !showSettings) setShowControls(false);
       }, 3000);
     };
+    const handleMouseLeave = () => {
+      if (playing && !showSettings) setShowControls(false);
+    };
     
     const container = containerRef.current;
     if (container) {
       container.addEventListener('mousemove', handleMouseMove);
-      container.addEventListener('mouseleave', () => {
-        if (playing && !showSettings) setShowControls(false);
-      });
+      container.addEventListener('mouseleave', handleMouseLeave);
     }
     return () => {
       if (container) {
         container.removeEventListener('mousemove', handleMouseMove);
+        container.removeEventListener('mouseleave', handleMouseLeave);
       }
       clearTimeout(timeout);
     };
   }, [playing, showSettings]);
 
-  // HLS Setup
+  // HLS Setup — only depends on `src`, NOT initialTime (uses ref to avoid recreation)
   useEffect(() => {
     Promise.resolve().then(() => {
       setPlaybackError(false);
@@ -127,11 +135,15 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
 
     if (!src || !videoRef.current) return;
     const video = videoRef.current;
-    if (hlsRef.current) hlsRef.current.destroy();
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
+    }
 
     if (Hls.isSupported() && src.endsWith('.m3u8')) {
       const token = localStorage.getItem('token');
       const hls = new Hls({
+        enableWorker: true,
         xhrSetup: (xhr, url) => {
           if (url.includes('/api/courses/video/') && token) {
             xhr.setRequestHeader('Authorization', `Bearer ${token}`);
@@ -174,40 +186,59 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
       hls.attachMedia(video);
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        if (initialTime && initialTime > 0) {
-          video.currentTime = initialTime;
+        const resumeAt = initialTimeRef.current;
+        if (resumeAt && resumeAt > 0) {
+          video.currentTime = resumeAt;
         }
       });
 
-      hls.on(Hls.Events.ERROR, (event, data) => {
+      hls.on(Hls.Events.ERROR, (_event, data) => {
         if (data.fatal) {
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
+              console.warn('HLS fatal network error, attempting recovery...');
               hls.startLoad();
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
+              console.warn('HLS fatal media error, attempting recovery...');
               hls.recoverMediaError();
               break;
             default:
               setPlaybackError(true);
               hls.destroy();
+              hlsRef.current = null;
               break;
+          }
+        } else {
+          // Non-fatal error recovery — prevents silent freezes from buffer stalls
+          if (data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR) {
+            console.warn('HLS buffer stalled, nudging playback...');
+            if (video.paused) return;
+            // Small seek nudge to unstick the buffer
+            const nudge = video.currentTime + 0.1;
+            if (Number.isFinite(nudge) && nudge < (video.duration || Infinity)) {
+              video.currentTime = nudge;
+            }
           }
         }
       });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = src;
       video.addEventListener('loadedmetadata', () => {
-        if (initialTime && initialTime > 0) video.currentTime = initialTime;
+        const resumeAt = initialTimeRef.current;
+        if (resumeAt && resumeAt > 0) video.currentTime = resumeAt;
       });
     } else {
       video.src = src;
     }
 
     return () => {
-      if (hlsRef.current) hlsRef.current.destroy();
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
     };
-  }, [src, initialTime]);
+  }, [src]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (videoRef.current) {
@@ -236,8 +267,9 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
   };
 
   const handleSeek = (e) => {
+    if (!videoRef.current || !duration) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const pos = (e.clientX - rect.left) / rect.width;
+    const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     videoRef.current.currentTime = pos * duration;
   };
 
@@ -256,14 +288,8 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     }
   };
 
-  // Anti-Piracy
+  // Anti-Piracy — context menu + devtools blocked; visibility pause removed to prevent unexpected freezes
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        if (videoRef.current) videoRef.current.pause();
-      }
-    };
-    
     const handleContextMenu = (e) => e.preventDefault();
     const handleDevTools = (e) => {
       if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key))) {
@@ -272,12 +298,10 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
     document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('keydown', handleDevTools);
     
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
       document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('keydown', handleDevTools);
     };
@@ -301,6 +325,8 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
         onTimeUpdate={updateProgress}
         onWaiting={() => setIsBuffering(true)}
         onPlaying={() => setIsBuffering(false)}
+        onCanPlay={() => setIsBuffering(false)}
+        onLoadedData={() => setIsBuffering(false)}
         onLoadedMetadata={updateProgress}
         onClick={togglePlay}
       />
@@ -333,11 +359,11 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
               >
                 <div 
                   className="absolute h-full bg-white/40 rounded-full pointer-events-none"
-                  style={{ width: `${(buffered / duration) * 100}%` }}
+                  style={{ width: `${duration > 0 ? (buffered / duration) * 100 : 0}%` }}
                 />
                 <div 
                   className="absolute h-full bg-brand-mint rounded-full pointer-events-none"
-                  style={{ width: `${(currentTime / duration) * 100}%` }}
+                  style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
                 >
                   <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full scale-0 group-hover/progress:scale-100 transition-transform shadow" />
                 </div>
