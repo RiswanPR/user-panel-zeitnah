@@ -6,7 +6,9 @@ import { ErrorReport, ErrorReportSchema } from './schemas/error-report.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: ErrorReport.name, schema: ErrorReportSchema }]),
+    MongooseModule.forFeature([
+      { name: ErrorReport.name, schema: ErrorReportSchema },
+    ]),
   ],
   controllers: [ErrorReportsController],
   providers: [ErrorReportsService],

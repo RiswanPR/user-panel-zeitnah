@@ -38,7 +38,8 @@ export class CreateProfileDto {
   @IsNotEmpty()
   @Length(3, 30)
   @Matches(/^[a-zA-Z0-9_.-]+$/, {
-    message: 'Username can only contain alphanumeric characters, underscores, hyphens, and dots',
+    message:
+      'Username can only contain alphanumeric characters, underscores, hyphens, and dots',
   })
   username: string;
 
@@ -47,7 +48,9 @@ export class CreateProfileDto {
   @IsString()
   headline?: string;
 
-  @ApiPropertyOptional({ example: 'Passionate about building scalable applications' })
+  @ApiPropertyOptional({
+    example: 'Passionate about building scalable applications',
+  })
   @IsOptional()
   @IsString()
   bio?: string;

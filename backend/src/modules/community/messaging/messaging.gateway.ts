@@ -46,7 +46,9 @@ export class MessagingGateway
         client.handshake.headers?.authorization?.split(' ')[1];
 
       if (!token) {
-        this.logger.warn(`Rejected unauthorized socket connection: ${client.id}`);
+        this.logger.warn(
+          `Rejected unauthorized socket connection: ${client.id}`,
+        );
         client.disconnect();
         return;
       }
@@ -65,7 +67,9 @@ export class MessagingGateway
         status: PresenceStatus.ONLINE,
       });
 
-      this.logger.log(`User connected to messaging socket: ${userId} (${client.id})`);
+      this.logger.log(
+        `User connected to messaging socket: ${userId} (${client.id})`,
+      );
     } catch (err) {
       this.logger.error(`Socket auth failed for client ${client.id}:`, err);
       client.disconnect();
@@ -140,7 +144,9 @@ export class MessagingGateway
         });
       }
     } catch (err) {
-      client.emit('error', { message: err.message || 'Failed to send message' });
+      client.emit('error', {
+        message: err.message || 'Failed to send message',
+      });
     }
   }
 
@@ -161,7 +167,9 @@ export class MessagingGateway
         .to(`conversation_${updatedMessage.conversationId}`)
         .emit('message_reacted', updatedMessage);
     } catch (err) {
-      client.emit('error', { message: err.message || 'Failed to react to message' });
+      client.emit('error', {
+        message: err.message || 'Failed to react to message',
+      });
     }
   }
 

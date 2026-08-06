@@ -21,7 +21,7 @@ export class PresenceService {
     status: PresenceStatus,
   ): Promise<UserPresenceDocument> {
     const updated = await this.presenceModel.findOneAndUpdate(
-      { userId } as any,
+      { userId },
       {
         $set: {
           status,

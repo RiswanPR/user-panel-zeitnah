@@ -24,19 +24,14 @@ type AuthenticatedRequest = Request & {
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class TroubleshootController {
-  constructor(
-    private readonly troubleshootService: TroubleshootService,
-  ) {}
+  constructor(private readonly troubleshootService: TroubleshootService) {}
 
   /**
    * Submit a troubleshoot error report.
    * Available to any authenticated user.
    */
   @Post('report')
-  submitReport(
-    @Req() req: AuthenticatedRequest,
-    @Body() dto: SubmitReportDto,
-  ) {
+  submitReport(@Req() req: AuthenticatedRequest, @Body() dto: SubmitReportDto) {
     return this.troubleshootService.submitReport(
       req.user.userId,
       req.user.email,

@@ -55,9 +55,12 @@ export class PostService {
     }
 
     // Fetch the fully populated post to broadcast it
-    const populatedPost = await this.postRepository.findById(createdPost._id as string);
+    const populatedPost = await this.postRepository.findById(createdPost._id);
     if (populatedPost) {
-      this.communityGateway.emitPostCreated(populatedPost.courseId, populatedPost);
+      this.communityGateway.emitPostCreated(
+        populatedPost.courseId,
+        populatedPost,
+      );
     }
 
     return createdPost;
@@ -99,7 +102,11 @@ export class PostService {
     return this.postRepository.softDelete(id);
   }
 
-  async addReaction(postId: string, userId: string, type: string): Promise<void> {
+  async addReaction(
+    postId: string,
+    userId: string,
+    type: string,
+  ): Promise<void> {
     return this.postRepository.addReaction(postId, userId, type);
   }
 

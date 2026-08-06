@@ -132,13 +132,14 @@ function MessagesContent() {
     }
   };
 
-  const [mobileView, setMobileView] = useState('sidebar');
+  const [mobileView, setMobileView] = useState(() => activeConversationId ? 'chat' : 'sidebar');
 
   useEffect(() => {
-    if (activeConversationId) {
-      setMobileView('chat');
+    if (activeConversationId && mobileView !== 'chat') {
+      const timer = setTimeout(() => setMobileView('chat'), 0);
+      return () => clearTimeout(timer);
     }
-  }, [activeConversationId]);
+  }, [activeConversationId, mobileView]);
 
   return (
     <div className="h-[calc(100vh-64px)] w-full bg-slate-950 text-white flex overflow-hidden selection:bg-indigo-500 selection:text-white">

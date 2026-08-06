@@ -50,7 +50,7 @@ const SessionDiagnostics = () => {
   };
 
   useEffect(() => {
-    loadData();
+    queueMicrotask(() => loadData());
   }, []);
 
   const handleManualRefresh = async () => {

@@ -23,7 +23,9 @@ export class StoryRepository extends BaseRepository<StoryDocument> {
     super(storyModel);
   }
 
-  async createMedia(data: Partial<StoryMediaDocument>): Promise<StoryMediaDocument> {
+  async createMedia(
+    data: Partial<StoryMediaDocument>,
+  ): Promise<StoryMediaDocument> {
     return new this.storyMediaModel(data).save();
   }
 

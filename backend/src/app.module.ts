@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -24,7 +24,13 @@ import { ErrorReportsModule } from './modules/error-reports/error-reports.module
     ScheduleModule.forRoot(),
 
     // MONGODB
-    MongooseModule.forRoot(process.env.MONGO_URL),
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        uri: configService.get<string>('MONGO_URL') || process.env.MONGO_URL,
+      }),
+      inject: [ConfigService],
+    }),
 
     // CORE MODULES
     AuthModule,

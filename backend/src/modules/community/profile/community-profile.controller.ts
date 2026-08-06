@@ -28,7 +28,10 @@ import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { AddSkillDto, UpdateSkillDto } from './dto/add-skill.dto';
 import { AddProjectDto, UpdateProjectDto } from './dto/add-project.dto';
-import { AddExperienceDto, UpdateExperienceDto } from './dto/add-experience.dto';
+import {
+  AddExperienceDto,
+  UpdateExperienceDto,
+} from './dto/add-experience.dto';
 import { AddEducationDto, UpdateEducationDto } from './dto/add-education.dto';
 import {
   AddCertificateDto,
@@ -49,7 +52,9 @@ export class CommunityProfileController {
   // ----------------------------------------------------
 
   @Get('me')
-  @ApiOperation({ summary: 'Get current user profile with all sections & completion score' })
+  @ApiOperation({
+    summary: 'Get current user profile with all sections & completion score',
+  })
   async getMyProfile(@CurrentUser('id') userId: string) {
     return this.communityProfileService.getMyProfile(userId);
   }
@@ -306,7 +311,9 @@ export class CommunityProfileController {
   }
 
   @Post('media')
-  @ApiOperation({ summary: 'Upload general project or certificate media asset to S3' })
+  @ApiOperation({
+    summary: 'Upload general project or certificate media asset to S3',
+  })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
   async uploadMedia(

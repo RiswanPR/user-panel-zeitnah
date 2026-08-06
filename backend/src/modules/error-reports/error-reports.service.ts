@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ErrorReport, ErrorReportDocument } from './schemas/error-report.schema';
+import {
+  ErrorReport,
+  ErrorReportDocument,
+} from './schemas/error-report.schema';
 import { Resend } from 'resend';
 import { generateProductionErrorReportEmailHtml } from '../../common/templates/email-templates';
 
@@ -11,7 +14,8 @@ export class ErrorReportsService {
   private resend: Resend;
 
   constructor(
-    @InjectModel(ErrorReport.name) private errorReportModel: Model<ErrorReportDocument>,
+    @InjectModel(ErrorReport.name)
+    private errorReportModel: Model<ErrorReportDocument>,
   ) {
     if (process.env.RESEND_API_KEY) {
       this.resend = new Resend(process.env.RESEND_API_KEY);
@@ -21,17 +25,17 @@ export class ErrorReportsService {
   async create(data: any, userId?: string) {
     // 1. Sanitize Data (Prevent secrets from being saved)
     const sanitizedData = this.sanitizePayload(data);
-    
+
     // 2. Save to DB
     const report = new this.errorReportModel({
       ...sanitizedData,
       userId: userId || undefined,
     });
-    
+
     await report.save();
 
     // 3. Send Email Notification
-    this.sendNotification(report).catch(err => {
+    this.sendNotification(report).catch((err) => {
       this.logger.error('Failed to send error report email notification', err);
     });
 
@@ -62,7 +66,9 @@ export class ErrorReportsService {
   }
 
   async update(id: string, updateData: any) {
-    return this.errorReportModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
+    return this.errorReportModel
+      .findByIdAndUpdate(id, updateData, { new: true })
+      .exec();
   }
 
   private sanitizePayload(data: any) {
@@ -72,7 +78,7 @@ export class ErrorReportsService {
       .replace(/"token":"[^"]+"/gi, '"token":"[REDACTED]"')
       .replace(/"password":"[^"]+"/gi, '"password":"[REDACTED]"')
       .replace(/"otp":"[^"]+"/gi, '"otp":"[REDACTED]"');
-    
+
     return JSON.parse(sanitizedStr);
   }
 
@@ -92,13 +98,17 @@ export class ErrorReportsService {
       .map((e) => e.trim())
       .filter((e) => e.includes('@'));
 
-    const errorDetails = report.error ? report.error.message || report.error.name : 'Unknown Error';
+    const errorDetails = report.error
+      ? report.error.message || report.error.name
+      : 'Unknown Error';
     const source = report.source;
     const correlationId = report.correlationId || 'N/A';
 
     try {
       await this.resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL || 'Zeitnah Errors <onboarding@resend.dev>',
+        from:
+          process.env.RESEND_FROM_EMAIL ||
+          'Zeitnah Errors <onboarding@resend.dev>',
         to: recipients,
         subject: `🚨 Production Error [${source}] - ${errorDetails}`,
         html: generateProductionErrorReportEmailHtml({

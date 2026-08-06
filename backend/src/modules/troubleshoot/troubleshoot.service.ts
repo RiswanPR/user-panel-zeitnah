@@ -39,11 +39,7 @@ export class TroubleshootService {
   /**
    * Submit a troubleshoot error report — save to DB and send email alert.
    */
-  async submitReport(
-    userId: string,
-    userEmail: string,
-    dto: SubmitReportDto,
-  ) {
+  async submitReport(userId: string, userEmail: string, dto: SubmitReportDto) {
     // Save to MongoDB
     const report = await this.errorReportModel.create({
       userId: new Types.ObjectId(userId),
@@ -117,13 +113,8 @@ export class TroubleshootService {
   /**
    * Build and send a rich HTML email alert.
    */
-  private async sendEmailAlert(
-    report: ErrorReportDocument,
-    userEmail: string,
-  ) {
-    const sev =
-      SEVERITY_CONFIG[report.severity as keyof typeof SEVERITY_CONFIG] ||
-      SEVERITY_CONFIG.medium;
+  private async sendEmailAlert(report: ErrorReportDocument, userEmail: string) {
+    const sev = SEVERITY_CONFIG[report.severity] || SEVERITY_CONFIG.medium;
 
     const html = generateTroubleshootEmailHtml(report, userEmail, sev);
     const recipients = getAlertRecipients();

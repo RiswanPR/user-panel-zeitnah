@@ -380,7 +380,10 @@ export class AuthService {
       } catch (error) {
         attempts++;
         if (attempts >= 2) {
-          console.error('Failed to send suspicious login email after retry', error);
+          console.error(
+            'Failed to send suspicious login email after retry',
+            error,
+          );
         } else {
           await new Promise((resolve) => setTimeout(resolve, 1000));
         }

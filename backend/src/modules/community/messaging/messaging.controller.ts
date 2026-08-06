@@ -49,7 +49,9 @@ export class MessagingController {
   // ----------------------------------------------------
 
   @Post('conversations')
-  @ApiOperation({ summary: 'Create or get existing direct conversation with a target user' })
+  @ApiOperation({
+    summary: 'Create or get existing direct conversation with a target user',
+  })
   async createConversation(
     @CurrentUser('id') userId: string,
     @Body() dto: CreateConversationDto,
@@ -250,10 +252,7 @@ export class MessagingController {
 
   @Post('read')
   @ApiOperation({ summary: 'Mark messages as read' })
-  async markRead(
-    @CurrentUser('id') userId: string,
-    @Body() dto: MarkReadDto,
-  ) {
+  async markRead(@CurrentUser('id') userId: string, @Body() dto: MarkReadDto) {
     return this.messageService.markRead(userId, dto);
   }
 

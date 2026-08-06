@@ -15,7 +15,10 @@ export function escapeHtml(str?: string | null): string {
 /**
  * Base Wrapper for all Zeitnah Academy emails
  */
-function wrapInEmailBase(contentHtml: string, previewText: string = 'Zeitnah Academy Notification'): string {
+function wrapInEmailBase(
+  contentHtml: string,
+  previewText: string = 'Zeitnah Academy Notification',
+): string {
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -100,11 +103,14 @@ function wrapInEmailBase(contentHtml: string, previewText: string = 'Zeitnah Aca
 /**
  * 1. OTP Verification Email Template (Login / Register)
  */
-export function generateOtpEmailHtml(otp: string, type: 'Login' | 'Registration'): string {
+export function generateOtpEmailHtml(
+  otp: string,
+  type: 'Login' | 'Registration',
+): string {
   const isLogin = type === 'Login';
   const title = isLogin ? 'Login Verification' : 'Welcome to Zeitnah Academy';
-  const subtitle = isLogin 
-    ? 'Use the code below to complete your login securely.' 
+  const subtitle = isLogin
+    ? 'Use the code below to complete your login securely.'
     : 'Use the code below to verify your email address and activate your account.';
 
   const bodyHtml = `
@@ -158,12 +164,12 @@ export function generateSuspiciousLoginEmailHtml(
     ip?: string;
     location?: string;
   },
-  reasons: string[]
+  reasons: string[],
 ): string {
   const reasonsListHtml = reasons
     .map(
       (r) =>
-        `<li style="margin-bottom: 6px; color: #fca5a5; font-size: 13px;">${escapeHtml(r)}</li>`
+        `<li style="margin-bottom: 6px; color: #fca5a5; font-size: 13px;">${escapeHtml(r)}</li>`,
     )
     .join('');
 
@@ -238,7 +244,10 @@ export function generateSuspiciousLoginEmailHtml(
     </div>
   `;
 
-  return wrapInEmailBase(bodyHtml, `Security Alert: Suspicious login detected for ${userEmail}`);
+  return wrapInEmailBase(
+    bodyHtml,
+    `Security Alert: Suspicious login detected for ${userEmail}`,
+  );
 }
 
 /**
@@ -255,7 +264,8 @@ export function generateProductionErrorReportEmailHtml(report: {
   const correlationId = report.correlationId || 'N/A';
   const errorDetails = report.errorDetails || 'Unknown Error';
   const feedbackText = report.feedback?.whatHappened;
-  const adminUrl = report.adminUrl || 'https://beta.zeitnahacademy.com/admin/error-reports';
+  const adminUrl =
+    report.adminUrl || 'https://beta.zeitnahacademy.com/admin/error-reports';
 
   const bodyHtml = `
     <!-- Header Badge -->
@@ -324,8 +334,10 @@ export function generateProductionErrorReportEmailHtml(report: {
     </div>
   `;
 
-
-  return wrapInEmailBase(bodyHtml, `🚨 Production Error [${source}] - ${errorDetails}`);
+  return wrapInEmailBase(
+    bodyHtml,
+    `🚨 Production Error [${source}] - ${errorDetails}`,
+  );
 }
 
 /**
@@ -334,7 +346,7 @@ export function generateProductionErrorReportEmailHtml(report: {
 export function generateTroubleshootEmailHtml(
   report: any,
   userEmail: string,
-  sev: { label: string; color: string; emoji: string }
+  sev: { label: string; color: string; emoji: string },
 ): string {
   const consoleErrorsHtml =
     report.consoleErrors && report.consoleErrors.length > 0
@@ -346,16 +358,18 @@ export function generateTroubleshootEmailHtml(
               <td style="padding: 8px 12px; color: #94a3b8; font-size: 12px;">${i + 1}</td>
               <td style="padding: 8px 12px;">
                 <span style="display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; background: ${
-                  e.type === 'error' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.2)'
+                  e.type === 'error'
+                    ? 'rgba(239, 68, 68, 0.2)'
+                    : 'rgba(245, 158, 11, 0.2)'
                 }; color: ${e.type === 'error' ? '#fca5a5' : '#fde68a'};">${escapeHtml(e.type)}</span>
               </td>
               <td style="padding: 8px 12px; color: #e2e8f0; font-size: 12px; font-family: monospace; word-break: break-all;">${escapeHtml(
-                e.message?.substring(0, 200)
+                e.message?.substring(0, 200),
               )}</td>
               <td style="padding: 8px 12px; color: #64748b; font-size: 11px; white-space: nowrap;">${escapeHtml(
-                e.timestamp
+                e.timestamp,
               )}</td>
-            </tr>`
+            </tr>`,
           )
           .join('')
       : '<tr><td colspan="4" style="padding: 16px; color: #64748b; text-align: center; font-size: 12px;">No console errors captured</td></tr>';
@@ -372,7 +386,7 @@ export function generateTroubleshootEmailHtml(
                 <span style="font-weight: 700; color: #38bdf8; font-size: 12px;">${escapeHtml(e.method)}</span>
               </td>
               <td style="padding: 8px 12px; color: #e2e8f0; font-size: 12px; font-family: monospace; word-break: break-all;">${escapeHtml(
-                e.url?.substring(0, 150)
+                e.url?.substring(0, 150),
               )}</td>
               <td style="padding: 8px 12px;">
                 <span style="display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; background: rgba(239, 68, 68, 0.2); color: #fca5a5;">${
@@ -380,9 +394,9 @@ export function generateTroubleshootEmailHtml(
                 }</span>
               </td>
               <td style="padding: 8px 12px; color: #94a3b8; font-size: 12px;">${escapeHtml(
-                e.message?.substring(0, 100)
+                e.message?.substring(0, 100),
               )}</td>
-            </tr>`
+            </tr>`,
           )
           .join('')
       : '<tr><td colspan="5" style="padding: 16px; color: #64748b; text-align: center; font-size: 12px;">No network errors captured</td></tr>';
@@ -394,8 +408,8 @@ export function generateTroubleshootEmailHtml(
           .map(
             (e: any) =>
               `<li style="margin-bottom: 6px; color: #fca5a5; font-size: 12px; font-family: monospace;">[${escapeHtml(
-                e.type
-              )}] ${escapeHtml(e.message?.substring(0, 200))}</li>`
+                e.type,
+              )}] ${escapeHtml(e.message?.substring(0, 200))}</li>`,
           )
           .join('')
       : '<li style="color: #64748b; font-size: 12px;">None</li>';
@@ -430,19 +444,21 @@ export function generateTroubleshootEmailHtml(
         <tr>
           <td style="padding: 6px 0; color: #64748b; font-weight: 600;">PAGE:</td>
           <td style="padding: 6px 0; color: #38bdf8; font-family: monospace; word-break: break-all;">${escapeHtml(
-            report.pageUrl || 'N/A'
+            report.pageUrl || 'N/A',
           )}</td>
         </tr>
         <tr>
           <td style="padding: 6px 0; color: #64748b; font-weight: 600;">TIMESTAMP:</td>
-          <td style="padding: 6px 0; color: #e2e8f0;">${new Date(report['createdAt']).toLocaleString('en-IN', {
+          <td style="padding: 6px 0; color: #e2e8f0;">${new Date(
+            report['createdAt'],
+          ).toLocaleString('en-IN', {
             timeZone: 'Asia/Kolkata',
           })} IST</td>
         </tr>
         <tr>
           <td style="padding: 6px 0; color: #64748b; font-weight: 600;">BROWSER:</td>
           <td style="padding: 6px 0; color: #e2e8f0;">${escapeHtml(browserInfo.browser || 'Unknown')} | ${escapeHtml(
-            browserInfo.os || 'Unknown'
+            browserInfo.os || 'Unknown',
           )} | ${escapeHtml(browserInfo.screenSize || 'Unknown')}</td>
         </tr>
         <tr>
@@ -518,7 +534,10 @@ export function generateTroubleshootEmailHtml(
     </div>
   `;
 
-  return wrapInEmailBase(bodyHtml, `${sev.emoji} [${sev.label}] Troubleshoot Report — ${report.title}`);
+  return wrapInEmailBase(
+    bodyHtml,
+    `${sev.emoji} [${sev.label}] Troubleshoot Report — ${report.title}`,
+  );
 }
 
 /**
@@ -605,7 +624,8 @@ export function generateCourseEnquiryNotificationEmailHtml(data: {
     </div>
   `;
 
-  return wrapInEmailBase(bodyHtml, `New Course Enquiry for ${data.courseName} from ${data.name}`);
+  return wrapInEmailBase(
+    bodyHtml,
+    `New Course Enquiry for ${data.courseName} from ${data.name}`,
+  );
 }
-
-

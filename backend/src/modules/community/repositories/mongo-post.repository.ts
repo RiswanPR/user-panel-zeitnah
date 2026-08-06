@@ -125,7 +125,11 @@ export class PostRepository extends BaseRepository<PostDocument> {
     await this.postModel.findByIdAndUpdate(postId, { $set: { isLocked } });
   }
 
-  async addReaction(postId: string, userId: string, type: string): Promise<void> {
+  async addReaction(
+    postId: string,
+    userId: string,
+    type: string,
+  ): Promise<void> {
     // Check if reaction exists
     const existing = await this.postReactionModel.findOne({ postId, userId });
     if (existing) {
@@ -150,7 +154,10 @@ export class PostRepository extends BaseRepository<PostDocument> {
   }
 
   async removeReaction(postId: string, userId: string): Promise<void> {
-    const reaction = await this.postReactionModel.findOneAndDelete({ postId, userId });
+    const reaction = await this.postReactionModel.findOneAndDelete({
+      postId,
+      userId,
+    });
     if (reaction) {
       await this.postModel.findByIdAndUpdate(postId, {
         $inc: { [`stats.${reaction.type}s`]: -1 },

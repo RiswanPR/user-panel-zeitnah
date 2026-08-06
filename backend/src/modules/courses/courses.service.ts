@@ -722,64 +722,66 @@ export class CoursesService {
         .trim()
         .toLowerCase() === 'recording';
 
-    const chapters = course.chapters.map((chapter: any, chapterIndex: number) => {
-      const chapterClasses = chapter.classes || [];
-      const completedClasses = chapterClasses.filter((cls: any) => {
-        const classId = cls._id.toString();
-        const progress = enrollment?.classProgress?.find(
-          (entry: any) => entry.classId === classId,
-        );
-        const normalisedProgress = progress
-          ? this.normaliseClassProgress(
-              progress,
-              this.parseDurationToSeconds(cls.duration),
-            )
-          : null;
+    const chapters = course.chapters.map(
+      (chapter: any, chapterIndex: number) => {
+        const chapterClasses = chapter.classes || [];
+        const completedClasses = chapterClasses.filter((cls: any) => {
+          const classId = cls._id.toString();
+          const progress = enrollment?.classProgress?.find(
+            (entry: any) => entry.classId === classId,
+          );
+          const normalisedProgress = progress
+            ? this.normaliseClassProgress(
+                progress,
+                this.parseDurationToSeconds(cls.duration),
+              )
+            : null;
 
-        return normalisedProgress?.completed;
-      }).length;
-      const watchedClasses = chapterClasses.filter((cls: any) => {
-        const classId = cls._id.toString();
-        const progress = enrollment?.classProgress?.find(
-          (entry: any) => entry.classId === classId,
-        );
-        const normalisedProgress = progress
-          ? this.normaliseClassProgress(
-              progress,
-              this.parseDurationToSeconds(cls.duration),
-            )
-          : null;
+          return normalisedProgress?.completed;
+        }).length;
+        const watchedClasses = chapterClasses.filter((cls: any) => {
+          const classId = cls._id.toString();
+          const progress = enrollment?.classProgress?.find(
+            (entry: any) => entry.classId === classId,
+          );
+          const normalisedProgress = progress
+            ? this.normaliseClassProgress(
+                progress,
+                this.parseDurationToSeconds(cls.duration),
+              )
+            : null;
 
-        return (normalisedProgress?.progressPercent || 0) > 0;
-      }).length;
-      const progressPercent =
-        chapterClasses.length > 0
-          ? Math.min(
-              100,
-              Math.round((completedClasses / chapterClasses.length) * 100),
-            )
-          : 0;
+          return (normalisedProgress?.progressPercent || 0) > 0;
+        }).length;
+        const progressPercent =
+          chapterClasses.length > 0
+            ? Math.min(
+                100,
+                Math.round((completedClasses / chapterClasses.length) * 100),
+              )
+            : 0;
 
-      const isUnlocked = purchased || (isRecording && chapterIndex < 2);
+        const isUnlocked = purchased || (isRecording && chapterIndex < 2);
 
-      return {
-        ...chapter.toObject(),
+        return {
+          ...chapter.toObject(),
 
-        totalClasses: chapterClasses.length,
+          totalClasses: chapterClasses.length,
 
-        watchedClasses,
+          watchedClasses,
 
-        completedClasses,
+          completedClasses,
 
-        progressPercent,
+          progressPercent,
 
-        completed:
-          chapterClasses.length > 0 &&
-          completedClasses >= chapterClasses.length,
+          completed:
+            chapterClasses.length > 0 &&
+            completedClasses >= chapterClasses.length,
 
-        locked: !isUnlocked,
-      };
-    });
+          locked: !isUnlocked,
+        };
+      },
+    );
 
     const formattedCourse = await this.signCourseImages({
       _id: course._id,
@@ -855,7 +857,8 @@ export class CoursesService {
         c.uniqueCode === chapterCode ||
         c._id?.toString() === (chapter as any)._id?.toString(),
     );
-    const isChapterUnlocked = purchased || (isRecording && isFreePreviewChapter);
+    const isChapterUnlocked =
+      purchased || (isRecording && isFreePreviewChapter);
 
     // LOCK LOGIC
     const classes = await Promise.all(
@@ -1019,7 +1022,8 @@ export class CoursesService {
     const rawExercises = cls.exercises || [];
     const signedExercises = await Promise.all(
       rawExercises.map(async (ex: any) => {
-        const exObj = typeof ex.toObject === 'function' ? ex.toObject() : { ...ex };
+        const exObj =
+          typeof ex.toObject === 'function' ? ex.toObject() : { ...ex };
         const fileUrl = exObj.file
           ? await this.signedUrlService.generateSignedImageUrl(exObj.file)
           : '';
@@ -1500,7 +1504,8 @@ export class CoursesService {
     let playbackUrl: string;
 
     if (videoTarget.endsWith('.m3u8')) {
-      const baseUrl = process.env.API_URL || 'https://beta.zeitnahacademy.com/api';
+      const baseUrl =
+        process.env.API_URL || 'https://beta.zeitnahacademy.com/api';
       playbackUrl = `${baseUrl}/courses/video/${classId}/playlist.m3u8`;
     } else {
       // Fallback for MP4 videos that haven't been converted to HLS yet
@@ -1685,7 +1690,11 @@ export class CoursesService {
       userId: userId ? new Types.ObjectId(userId) : undefined,
     });
 
-    const recipients = ['riswanpr7amses@gmail.com', 'riswanpr94@gmail.com', 'zeitnahpkd@gmail.com'];
+    const recipients = [
+      'riswanpr7amses@gmail.com',
+      'riswanpr94@gmail.com',
+      'zeitnahpkd@gmail.com',
+    ];
     const emailHtml = generateCourseEnquiryNotificationEmailHtml({
       courseName: dto.courseName,
       name: dto.name,
@@ -1713,4 +1722,3 @@ export class CoursesService {
     };
   }
 }
-

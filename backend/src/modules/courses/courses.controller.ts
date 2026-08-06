@@ -260,4 +260,3 @@ export class CoursesController {
     return this.coursesService.getCourseById(id, req.user.userId);
   }
 }
-

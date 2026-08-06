@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 
 import type { Request } from 'express';
 
@@ -52,7 +60,7 @@ export class AuditLogsController {
     const correlationId = body.correlationId || 'no-correlation-id';
     console.error(
       `[CLIENT_ERROR] [${correlationId}] URL: ${body.apiUrl} Status: ${body.httpStatus}`,
-      JSON.stringify(body, null, 2)
+      JSON.stringify(body, null, 2),
     );
     return { success: true };
   }

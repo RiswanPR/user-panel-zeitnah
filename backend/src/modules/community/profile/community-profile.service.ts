@@ -18,12 +18,18 @@ import { Experience, ExperienceDocument } from './schemas/experience.schema';
 import { Education, EducationDocument } from './schemas/education.schema';
 import { Certificate, CertificateDocument } from './schemas/certificate.schema';
 import { Follower, FollowerDocument } from './schemas/follower.schema';
-import { ProfileView, ProfileViewDocument } from './schemas/profile-view.schema';
+import {
+  ProfileView,
+  ProfileViewDocument,
+} from './schemas/profile-view.schema';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { AddSkillDto, UpdateSkillDto } from './dto/add-skill.dto';
 import { AddProjectDto, UpdateProjectDto } from './dto/add-project.dto';
-import { AddExperienceDto, UpdateExperienceDto } from './dto/add-experience.dto';
+import {
+  AddExperienceDto,
+  UpdateExperienceDto,
+} from './dto/add-experience.dto';
 import { AddEducationDto, UpdateEducationDto } from './dto/add-education.dto';
 import {
   AddCertificateDto,
@@ -71,7 +77,7 @@ export class CommunityProfileService {
     if (!profile) {
       const username =
         defaultData?.username || `user_${userId.substring(0, 8)}`;
-      
+
       const existingUsername = await this.profileModel.findOne({ username });
       const finalUsername = existingUsername
         ? `${username}_${Math.floor(1000 + Math.random() * 9000)}`
@@ -104,7 +110,10 @@ export class CommunityProfileService {
     const [skills, projects, experiences, educations, certificates] =
       await Promise.all([
         this.skillModel.find({ userId }).exec(),
-        this.projectModel.find({ userId }).sort({ featured: -1, createdAt: -1 }).exec(),
+        this.projectModel
+          .find({ userId })
+          .sort({ featured: -1, createdAt: -1 })
+          .exec(),
         this.experienceModel.find({ userId }).sort({ startDate: -1 }).exec(),
         this.educationModel.find({ userId }).sort({ startDate: -1 }).exec(),
         this.certificateModel.find({ userId }).sort({ issueDate: -1 }).exec(),
@@ -126,7 +135,9 @@ export class CommunityProfileService {
   ): Promise<FullCommunityProfile> {
     const profile = await this.profileModel.findOne({ username });
     if (!profile) {
-      throw new NotFoundException(`Profile with username '@${username}' not found`);
+      throw new NotFoundException(
+        `Profile with username '@${username}' not found`,
+      );
     }
 
     // Record Profile View async
@@ -210,10 +221,18 @@ export class CommunityProfileService {
 
     if (dto.socialLinks) {
       profile.socialLinks = {
-        github: sanitizeUrl(dto.socialLinks.github ?? profile.socialLinks?.github),
-        linkedin: sanitizeUrl(dto.socialLinks.linkedin ?? profile.socialLinks?.linkedin),
-        twitter: sanitizeUrl(dto.socialLinks.twitter ?? profile.socialLinks?.twitter),
-        website: sanitizeUrl(dto.socialLinks.website ?? profile.socialLinks?.website),
+        github: sanitizeUrl(
+          dto.socialLinks.github ?? profile.socialLinks?.github,
+        ),
+        linkedin: sanitizeUrl(
+          dto.socialLinks.linkedin ?? profile.socialLinks?.linkedin,
+        ),
+        twitter: sanitizeUrl(
+          dto.socialLinks.twitter ?? profile.socialLinks?.twitter,
+        ),
+        website: sanitizeUrl(
+          dto.socialLinks.website ?? profile.socialLinks?.website,
+        ),
       };
     }
 
@@ -221,7 +240,9 @@ export class CommunityProfileService {
     return this.recalculateCompletion(userId);
   }
 
-  async recalculateCompletion(userId: string): Promise<CommunityProfileDocument> {
+  async recalculateCompletion(
+    userId: string,
+  ): Promise<CommunityProfileDocument> {
     const profile = await this.profileModel.findOne({ userId });
     if (!profile) return null;
 
@@ -264,7 +285,9 @@ export class CommunityProfileService {
       name: { $regex: new RegExp(`^${dto.name.trim()}$`, 'i') },
     });
     if (existing) {
-      throw new ConflictException(`Skill '${dto.name}' already added to profile`);
+      throw new ConflictException(
+        `Skill '${dto.name}' already added to profile`,
+      );
     }
 
     const skill = await this.skillModel.create({
@@ -288,7 +311,10 @@ export class CommunityProfileService {
     skillId: string,
     dto: UpdateSkillDto,
   ): Promise<Skill> {
-    const skill = await this.skillModel.findOne({ _id: skillId, userId } as any);
+    const skill = await this.skillModel.findOne({
+      _id: skillId,
+      userId,
+    } as any);
     if (!skill) {
       throw new NotFoundException('Skill not found or unauthorized');
     }
@@ -296,7 +322,10 @@ export class CommunityProfileService {
     if (dto.name && dto.name !== skill.name) {
       await this.profileModel.updateOne(
         { userId },
-        { $pull: { skills: skill.name }, $addToSet: { skills: dto.name.trim() } },
+        {
+          $pull: { skills: skill.name },
+          $addToSet: { skills: dto.name.trim() },
+        },
       );
       skill.name = dto.name.trim();
     }
@@ -307,7 +336,10 @@ export class CommunityProfileService {
     return skill;
   }
 
-  async deleteSkill(userId: string, skillId: string): Promise<{ success: boolean }> {
+  async deleteSkill(
+    userId: string,
+    skillId: string,
+  ): Promise<{ success: boolean }> {
     const skill = await this.skillModel.findOneAndDelete({
       _id: skillId,
       userId,
@@ -369,8 +401,10 @@ export class CommunityProfileService {
     if (dto.title !== undefined) project.title = dto.title.trim();
     if (dto.description !== undefined) project.description = dto.description;
     if (dto.tags !== undefined) project.tags = dto.tags;
-    if (dto.githubUrl !== undefined) project.githubUrl = sanitizeUrl(dto.githubUrl);
-    if (dto.liveDemoUrl !== undefined) project.liveDemoUrl = sanitizeUrl(dto.liveDemoUrl);
+    if (dto.githubUrl !== undefined)
+      project.githubUrl = sanitizeUrl(dto.githubUrl);
+    if (dto.liveDemoUrl !== undefined)
+      project.liveDemoUrl = sanitizeUrl(dto.liveDemoUrl);
     if (dto.mediaUrls !== undefined) project.mediaUrls = dto.mediaUrls;
     if (dto.featured !== undefined) project.featured = dto.featured;
 
@@ -378,7 +412,10 @@ export class CommunityProfileService {
     return project;
   }
 
-  async deleteProject(userId: string, projectId: string): Promise<{ success: boolean }> {
+  async deleteProject(
+    userId: string,
+    projectId: string,
+  ): Promise<{ success: boolean }> {
     const project = await this.projectModel.findOneAndDelete({
       _id: projectId,
       userId,
@@ -395,7 +432,10 @@ export class CommunityProfileService {
   // EXPERIENCE APIs
   // ----------------------------------------------------
 
-  async addExperience(userId: string, dto: AddExperienceDto): Promise<Experience> {
+  async addExperience(
+    userId: string,
+    dto: AddExperienceDto,
+  ): Promise<Experience> {
     await this.getOrCreateProfile(userId);
 
     const exp = await this.experienceModel.create({
@@ -420,7 +460,10 @@ export class CommunityProfileService {
     expId: string,
     dto: UpdateExperienceDto,
   ): Promise<Experience> {
-    const exp = await this.experienceModel.findOne({ _id: expId, userId } as any);
+    const exp = await this.experienceModel.findOne({
+      _id: expId,
+      userId,
+    } as any);
     if (!exp) {
       throw new NotFoundException('Experience entry not found or unauthorized');
     }
@@ -428,7 +471,8 @@ export class CommunityProfileService {
     if (dto.company !== undefined) exp.company = dto.company.trim();
     if (dto.role !== undefined) exp.role = dto.role.trim();
     if (dto.location !== undefined) exp.location = dto.location;
-    if (dto.employmentType !== undefined) exp.employmentType = dto.employmentType;
+    if (dto.employmentType !== undefined)
+      exp.employmentType = dto.employmentType;
     if (dto.startDate !== undefined) exp.startDate = new Date(dto.startDate);
     if (dto.endDate !== undefined)
       exp.endDate = dto.endDate ? new Date(dto.endDate) : null;
@@ -440,7 +484,10 @@ export class CommunityProfileService {
     return exp;
   }
 
-  async deleteExperience(userId: string, expId: string): Promise<{ success: boolean }> {
+  async deleteExperience(
+    userId: string,
+    expId: string,
+  ): Promise<{ success: boolean }> {
     const exp = await this.experienceModel.findOneAndDelete({
       _id: expId,
       userId,
@@ -480,7 +527,10 @@ export class CommunityProfileService {
     eduId: string,
     dto: UpdateEducationDto,
   ): Promise<Education> {
-    const edu = await this.educationModel.findOne({ _id: eduId, userId } as any);
+    const edu = await this.educationModel.findOne({
+      _id: eduId,
+      userId,
+    } as any);
     if (!edu) {
       throw new NotFoundException('Education entry not found or unauthorized');
     }
@@ -498,7 +548,10 @@ export class CommunityProfileService {
     return edu;
   }
 
-  async deleteEducation(userId: string, eduId: string): Promise<{ success: boolean }> {
+  async deleteEducation(
+    userId: string,
+    eduId: string,
+  ): Promise<{ success: boolean }> {
     const edu = await this.educationModel.findOneAndDelete({
       _id: eduId,
       userId,
@@ -553,7 +606,9 @@ export class CommunityProfileService {
       userId,
     } as any);
     if (!cert) {
-      throw new NotFoundException('Certificate entry not found or unauthorized');
+      throw new NotFoundException(
+        'Certificate entry not found or unauthorized',
+      );
     }
 
     if (dto.title !== undefined) cert.title = dto.title.trim();
@@ -583,7 +638,9 @@ export class CommunityProfileService {
       userId,
     } as any);
     if (!cert) {
-      throw new NotFoundException('Certificate entry not found or unauthorized');
+      throw new NotFoundException(
+        'Certificate entry not found or unauthorized',
+      );
     }
 
     await this.recalculateCompletion(userId);
@@ -711,7 +768,9 @@ export class CommunityProfileService {
       throw new BadRequestException('You cannot follow yourself');
     }
 
-    const targetProfile = await this.profileModel.findOne({ userId: targetUserId });
+    const targetProfile = await this.profileModel.findOne({
+      userId: targetUserId,
+    });
     if (!targetProfile) {
       throw new NotFoundException('Target user profile not found');
     }

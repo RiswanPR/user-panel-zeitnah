@@ -7,10 +7,7 @@ import {
   ConversationSchema,
 } from './schemas/conversation.schema';
 import { Message, MessageSchema } from './schemas/message.schema';
-import {
-  MessageRead,
-  MessageReadSchema,
-} from './schemas/message-read.schema';
+import { MessageRead, MessageReadSchema } from './schemas/message-read.schema';
 import {
   UserPresence,
   UserPresenceSchema,

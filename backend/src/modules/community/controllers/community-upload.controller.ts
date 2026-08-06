@@ -8,7 +8,13 @@ import {
   Delete,
   Body,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { CommunityS3Service } from '../services/community-s3.service';
@@ -35,18 +41,22 @@ export class CommunityUploadController {
     },
   })
   @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(
-    @UploadedFile() file: Express.Multer.File,
-  ) {
+  async uploadFile(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('File is required');
     }
 
     // Allowed MIME types
     const allowedMimeTypes = [
-      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-      'video/mp4', 'video/webm', 'video/quicktime',
-      'application/pdf', 'application/msword',
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'video/mp4',
+      'video/webm',
+      'video/quicktime',
+      'application/pdf',
+      'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ];
 
@@ -54,7 +64,8 @@ export class CommunityUploadController {
       throw new BadRequestException(`Unsupported file type: ${file.mimetype}`);
     }
 
-    if (file.size > 50 * 1024 * 1024) { // 50MB
+    if (file.size > 50 * 1024 * 1024) {
+      // 50MB
       throw new BadRequestException('File too large (max 50MB)');
     }
 

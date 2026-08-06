@@ -54,7 +54,9 @@ export class SendMessageDto {
   @IsString()
   codeLanguage?: string;
 
-  @ApiPropertyOptional({ example: { courseId: 'crs_123', title: 'NestJS Architecture' } })
+  @ApiPropertyOptional({
+    example: { courseId: 'crs_123', title: 'NestJS Architecture' },
+  })
   @IsOptional()
   @IsObject()
   sharedMetadata?: Record<string, any>;

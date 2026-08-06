@@ -36,16 +36,18 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       const responseBody = exception.getResponse() as any;
       message = responseBody?.message || exception.message;
       code = responseBody?.error || 'HTTP_EXCEPTION';
-      
+
       // Keep it somewhat generic if it's a 500
       if (status >= 500) {
-        message = 'We encountered an internal server error. Our team has been notified.';
+        message =
+          'We encountered an internal server error. Our team has been notified.';
         code = 'INTERNAL_SERVER_ERROR';
       }
     } else {
       // It's a raw exception (DB error, NodeJS error, AWS error, etc)
       // Do not leak stack traces to the client!
-      message = 'We encountered an unexpected error. Our team has been notified.';
+      message =
+        'We encountered an unexpected error. Our team has been notified.';
     }
 
     const errorResponse = {
@@ -63,7 +65,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     if (status >= 500) {
       this.logger.error(
         `[${correlationId}] ${request.method} ${request.url} - Status: ${status}`,
-        exception instanceof Error ? exception.stack : JSON.stringify(exception),
+        exception instanceof Error
+          ? exception.stack
+          : JSON.stringify(exception),
       );
     } else {
       this.logger.warn(

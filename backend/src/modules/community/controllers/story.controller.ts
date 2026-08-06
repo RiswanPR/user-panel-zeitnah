@@ -24,7 +24,7 @@ import { NotFoundException } from '@nestjs/common';
 export class StoryController {
   constructor(
     private readonly storyService: StoryService,
-    private readonly notificationService: NotificationService
+    private readonly notificationService: NotificationService,
   ) {}
 
   @Post()
@@ -66,14 +66,14 @@ export class StoryController {
   ) {
     const story = await this.storyService.getStoryById(id);
     if (!story) throw new NotFoundException('Story not found');
-    
+
     await this.notificationService.createNotification(
       story.authorId,
       req.user._id || req.user.sub,
       'story_reply',
       id,
       'story',
-      data.content
+      data.content,
     );
     return { success: true, message: 'Reply sent' };
   }
@@ -87,14 +87,14 @@ export class StoryController {
   ) {
     const story = await this.storyService.getStoryById(id);
     if (!story) throw new NotFoundException('Story not found');
-    
+
     await this.notificationService.createNotification(
       story.authorId,
       req.user._id || req.user.sub,
       'story_reaction',
       id,
       'story',
-      data.type
+      data.type,
     );
     return { success: true, message: 'Reaction added' };
   }

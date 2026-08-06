@@ -23,7 +23,7 @@ export class NotificationsGateway
   // Track connected users (userId -> set of socket IDs)
   private userSockets: Map<string, Set<string>> = new Map();
 
-  handleConnection(client: Socket) {
+  async handleConnection(client: Socket) {
     const userId =
       client.handshake.auth?.userId || client.handshake.query?.userId;
     if (userId) {
@@ -32,7 +32,7 @@ export class NotificationsGateway
       }
       this.userSockets.get(userId as string)?.add(client.id);
       // Join a room specific to the user for easy broadcasting
-      client.join(`user_${userId}`);
+      await client.join(`user_${userId}`);
     }
   }
 

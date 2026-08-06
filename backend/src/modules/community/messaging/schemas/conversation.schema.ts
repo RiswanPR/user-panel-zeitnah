@@ -45,5 +45,4 @@ export class Conversation {
   createdAt: Date;
 }
 
-export const ConversationSchema =
-  SchemaFactory.createForClass(Conversation);
+export const ConversationSchema = SchemaFactory.createForClass(Conversation);

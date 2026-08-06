@@ -141,11 +141,11 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     }
 
     if (Hls.isSupported() && src.endsWith('.m3u8')) {
-      const token = localStorage.getItem('token');
       const hls = new Hls({
         xhrSetup: (xhr, url) => {
-          if (url.includes('/api/courses/video/') && token) {
-            xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+          const currentToken = localStorage.getItem('token');
+          if (url.includes('/api/courses/video/') && currentToken) {
+            xhr.setRequestHeader('Authorization', `Bearer ${currentToken}`);
           }
         },
         // ── Buffer management ──
@@ -266,10 +266,13 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
   };
 
   const handleSeek = (e) => {
-    if (!videoRef.current || !duration) return;
+    if (!videoRef.current || !duration || isNaN(duration) || duration <= 0) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    videoRef.current.currentTime = pos * duration;
+    const targetTime = pos * duration;
+    if (Number.isFinite(targetTime)) {
+      videoRef.current.currentTime = targetTime;
+    }
   };
 
   const updateProgress = () => {
@@ -457,7 +460,13 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
       {isDevToolsOpen && (
         <div className="absolute inset-0 z-50 bg-black/95 flex flex-col items-center justify-center text-white p-6">
           <h3 className="text-2xl font-bold text-danger mb-2">Protected Content</h3>
-          <p className="text-sm text-white/60 text-center">Screen recording and developer tools are not permitted during playback.</p>
+          <p className="text-sm text-white/60 text-center mb-4">Screen recording and developer tools are not permitted during playback.</p>
+          <button 
+            onClick={() => setIsDevToolsOpen(false)}
+            className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-semibold transition-colors"
+          >
+            Dismiss Warning
+          </button>
         </div>
       )}
     </div>

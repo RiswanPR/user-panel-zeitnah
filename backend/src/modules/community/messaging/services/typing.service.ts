@@ -15,7 +15,7 @@ export class TypingService {
     userId: string,
   ): Promise<TypingDocument> {
     return this.typingModel.findOneAndUpdate(
-      { conversationId, userId } as any,
+      { conversationId, userId },
       {
         $set: { startedAt: new Date() },
       },
@@ -27,7 +27,7 @@ export class TypingService {
     conversationId: string,
     userId: string,
   ): Promise<{ success: boolean }> {
-    await this.typingModel.deleteOne({ conversationId, userId } as any);
+    await this.typingModel.deleteOne({ conversationId, userId });
     return { success: true };
   }
 

@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Query, UseGuards, Req, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Query,
+  UseGuards,
+  Req,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ErrorReportsService } from './error-reports.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import type { Request } from 'express';
@@ -39,7 +50,11 @@ export class ErrorReportsController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
-  update(@Req() req: AuthenticatedRequest, @Param('id') id: string, @Body() updateData: any) {
+  update(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() updateData: any,
+  ) {
     if (req.user.role !== 'admin') {
       throw new ForbiddenException('Admin access required');
     }

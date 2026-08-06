@@ -88,7 +88,11 @@ export class PostController {
     @Param('id') id: string,
     @Body() data: ReactionDto,
   ) {
-    await this.postService.addReaction(id, req.user._id || req.user.sub, data.type);
+    await this.postService.addReaction(
+      id,
+      req.user._id || req.user.sub,
+      data.type,
+    );
     return { success: true, message: 'Reaction added' };
   }
 

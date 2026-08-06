@@ -6,7 +6,11 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Message, MessageDocument, MessageType } from '../schemas/message.schema';
+import {
+  Message,
+  MessageDocument,
+  MessageType,
+} from '../schemas/message.schema';
 import {
   MessageRead,
   MessageReadDocument,
@@ -52,7 +56,9 @@ export class MessageService {
     const currentCount = currentCountStr ? parseInt(currentCountStr, 10) : 0;
 
     if (currentCount >= 30) {
-      throw new BadRequestException('Rate limit exceeded: Maximum 30 messages per minute allowed');
+      throw new BadRequestException(
+        'Rate limit exceeded: Maximum 30 messages per minute allowed',
+      );
     }
     await this.redisService.set(rateKey, (currentCount + 1).toString(), 60);
 
@@ -64,7 +70,10 @@ export class MessageService {
     }
 
     // Verify conversation access
-    await this.conversationService.getConversationById(conversationId, senderId);
+    await this.conversationService.getConversationById(
+      conversationId,
+      senderId,
+    );
 
     const message = await this.messageModel.create({
       conversationId,
@@ -90,10 +99,12 @@ export class MessageService {
       preview,
     );
 
-    await this.messageReadModel.create({
-      messageId: message._id,
-      userId: senderId,
-    }).catch(() => {});
+    await this.messageReadModel
+      .create({
+        messageId: message._id,
+        userId: senderId,
+      })
+      .catch(() => {});
 
     return message;
   }
@@ -153,7 +164,9 @@ export class MessageService {
     } else if (type === 'CODE') {
       filter.type = MessageType.CODE;
     } else if (type === 'RESOURCES') {
-      filter.type = { $in: [MessageType.COURSE, MessageType.PROJECT, MessageType.PLACEMENT] };
+      filter.type = {
+        $in: [MessageType.COURSE, MessageType.PROJECT, MessageType.PLACEMENT],
+      };
     } else {
       filter.type = { $ne: MessageType.TEXT };
     }
@@ -250,7 +263,12 @@ export class MessageService {
   async uploadMessagingFile(
     userId: string,
     file: Express.Multer.File,
-  ): Promise<{ mediaUrl: string; fileName: string; fileSize: number; type: MessageType }> {
+  ): Promise<{
+    mediaUrl: string;
+    fileName: string;
+    fileSize: number;
+    type: MessageType;
+  }> {
     if (!file) {
       throw new BadRequestException('File is required');
     }
@@ -431,7 +449,9 @@ export class MessageService {
     }
 
     if (message.senderId !== senderId) {
-      throw new ForbiddenException('Access denied: You can only edit your own messages');
+      throw new ForbiddenException(
+        'Access denied: You can only edit your own messages',
+      );
     }
 
     message.content = dto.content.trim();
@@ -450,7 +470,9 @@ export class MessageService {
     }
 
     if (message.senderId !== senderId) {
-      throw new ForbiddenException('Access denied: You can only delete your own messages');
+      throw new ForbiddenException(
+        'Access denied: You can only delete your own messages',
+      );
     }
 
     message.deleted = true;
@@ -458,14 +480,17 @@ export class MessageService {
     return message.save();
   }
 
-  async markRead(userId: string, dto: MarkReadDto): Promise<{ success: boolean }> {
+  async markRead(
+    userId: string,
+    dto: MarkReadDto,
+  ): Promise<{ success: boolean }> {
     const { conversationId, messageId } = dto;
 
     await this.conversationService.getConversationById(conversationId, userId);
 
     if (messageId) {
       await this.messageReadModel.updateOne(
-        { messageId, userId } as any,
+        { messageId, userId },
         { $setOnInsert: { messageId, userId, seenAt: new Date() } },
         { upsert: true },
       );
@@ -478,7 +503,9 @@ export class MessageService {
       const bulkOps = unreadMessages.map((msg) => ({
         updateOne: {
           filter: { messageId: msg._id, userId },
-          update: { $setOnInsert: { messageId: msg._id, userId, seenAt: new Date() } },
+          update: {
+            $setOnInsert: { messageId: msg._id, userId, seenAt: new Date() },
+          },
           upsert: true,
         },
       }));

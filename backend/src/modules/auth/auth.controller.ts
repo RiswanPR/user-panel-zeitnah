@@ -218,8 +218,7 @@ export class AuthController {
     @Res({ passthrough: true })
     res: Response,
   ) {
-    const refreshTokenToUse =
-      req.cookies?.refreshToken || body?.refreshToken;
+    const refreshTokenToUse = req.cookies?.refreshToken || body?.refreshToken;
 
     const result = await this.authService.refreshToken(refreshTokenToUse);
 

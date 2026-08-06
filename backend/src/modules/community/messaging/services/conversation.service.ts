@@ -27,7 +27,9 @@ export class ConversationService {
     const { targetUserId } = dto;
 
     if (currentUserId === targetUserId) {
-      throw new BadRequestException('Cannot start a direct conversation with yourself');
+      throw new BadRequestException(
+        'Cannot start a direct conversation with yourself',
+      );
     }
 
     // Check if direct conversation already exists between these 2 users
@@ -84,7 +86,9 @@ export class ConversationService {
     }
 
     if (!conversation.participants.includes(userId)) {
-      throw new ForbiddenException('Access denied: You are not a participant in this conversation');
+      throw new ForbiddenException(
+        'Access denied: You are not a participant in this conversation',
+      );
     }
 
     return conversation;
@@ -95,15 +99,12 @@ export class ConversationService {
     messageId: string,
     preview: string,
   ): Promise<void> {
-    await this.conversationModel.updateOne(
-      { _id: conversationId } as any,
-      {
-        $set: {
-          lastMessageId: messageId,
-          lastMessagePreview: preview.substring(0, 100),
-          lastActivity: new Date(),
-        },
+    await this.conversationModel.updateOne({ _id: conversationId } as any, {
+      $set: {
+        lastMessageId: messageId,
+        lastMessagePreview: preview.substring(0, 100),
+        lastActivity: new Date(),
       },
-    );
+    });
   }
 }
