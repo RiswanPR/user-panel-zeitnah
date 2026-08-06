@@ -143,7 +143,6 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     if (Hls.isSupported() && src.endsWith('.m3u8')) {
       const token = localStorage.getItem('token');
       const hls = new Hls({
-        enableWorker: true,
         xhrSetup: (xhr, url) => {
           if (url.includes('/api/courses/video/') && token) {
             xhr.setRequestHeader('Authorization', `Bearer ${token}`);
