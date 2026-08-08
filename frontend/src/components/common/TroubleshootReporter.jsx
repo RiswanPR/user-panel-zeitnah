@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Bug, Send, ChevronDown, ChevronUp, AlertTriangle, Wifi, Terminal, Monitor } from 'lucide-react';
-import api from '../../services/api';
 import {
   getErrorBuffer,
   getErrorCount,
@@ -77,7 +76,8 @@ export default function TroubleshootReporter() {
     return () => document.removeEventListener('keydown', handler);
   }, [isOpen, closeModal]);
 
-  // Submit report
+  // Submit report — uses raw fetch() to bypass axios interceptors entirely.
+  // This prevents retry/error-capture cascades when the troubleshoot POST itself fails.
   const handleSubmit = async () => {
     if (!title.trim()) {
       setSubmitError('Please enter a title for the report.');
@@ -90,17 +90,40 @@ export default function TroubleshootReporter() {
 
       const buffer = errorData || getErrorBuffer();
       const browserInfo = getBrowserInfo();
+      const token = localStorage.getItem('token');
+      const baseURL =
+        import.meta.env.VITE_API_BASE_URL || 'https://beta.zeitnahacademy.com/api';
 
-      await api.post('/troubleshoot/report', {
-        severity,
-        title: title.trim(),
-        description: description.trim(),
-        pageUrl: window.location.href,
-        consoleErrors: buffer.consoleErrors.slice(-30),
-        networkErrors: buffer.networkErrors.slice(-20),
-        unhandledErrors: buffer.unhandledErrors.slice(-20),
-        browserInfo,
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
+
+      const res = await fetch(`${baseURL}/troubleshoot/report`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          severity,
+          title: title.trim(),
+          description: description.trim(),
+          pageUrl: window.location.href,
+          consoleErrors: buffer.consoleErrors.slice(-30),
+          networkErrors: buffer.networkErrors.slice(-20),
+          unhandledErrors: buffer.unhandledErrors.slice(-20),
+          browserInfo,
+        }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(
+          data?.message || `Server responded with ${res.status}`
+        );
+      }
 
       setSubmitted(true);
       clearErrorBuffer();
@@ -115,9 +138,13 @@ export default function TroubleshootReporter() {
         setSubmitted(false);
       }, 2500);
     } catch (err) {
-      setSubmitError(
-        err.response?.data?.message || 'Failed to submit report. Please try again.'
-      );
+      if (err.name === 'AbortError') {
+        setSubmitError('Request timed out. Please check your connection and try again.');
+      } else {
+        setSubmitError(
+          err.message || 'Failed to submit report. Please try again.'
+        );
+      }
     } finally {
       setSubmitting(false);
     }

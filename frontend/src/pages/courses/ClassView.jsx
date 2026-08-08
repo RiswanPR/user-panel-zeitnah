@@ -91,7 +91,7 @@ function ClassView() {
   const lastSyncedRef = useRef({ currentTime: 0, duration: 0, totalCovered: 0, totalPlayed: 0 });
   const latestSnapshotRef = useRef(null);
   const savedProgressBaseRef = useRef({ coveredSeconds: 0, watchedSeconds: 0 });
-  const s3ProgressRef = useRef({ lastSaveTime: 0, lastCurrentTime: 0, saveInFlight: false });
+  const s3ProgressRef = useRef({ lastSaveTime: 0, lastCurrentTime: 0, saveInFlight: false, sessionElapsed: 0, lastTickTime: 0 });
   const dataRef = useRef(null);
 
   // ── Load class data ──
@@ -433,6 +433,18 @@ function ClassView() {
                       const now = Date.now();
                       const isEnding = duration > 0 && currentTime >= duration - 2;
 
+                      // ── Accumulate real elapsed play time ──
+                      // Each tick, add the real wall-clock delta since last tick
+                      // (only if we have a valid previous tick — skip the first call)
+                      if (s3State.lastTickTime > 0) {
+                        const deltaMs = now - s3State.lastTickTime;
+                        // Clamp to max 2s to avoid huge jumps from tab-switch or resume
+                        if (deltaMs > 0 && deltaMs < 2000) {
+                          s3State.sessionElapsed += deltaMs / 1000;
+                        }
+                      }
+                      s3State.lastTickTime = now;
+
                       // Throttle: only save every 15 seconds, or at end
                       const shouldSave = (now - s3State.lastSaveTime > 15000) || isEnding;
 
@@ -446,12 +458,20 @@ function ClassView() {
                       s3State.lastCurrentTime = currentTime;
                       s3State.saveInFlight = true;
 
+                      const savedBase = savedProgressBaseRef.current;
                       const snapshot = {
                         completed: isEnding,
                         currentTimeSeconds: Math.round(currentTime),
                         durationSeconds: Math.round(duration),
-                        totalCoveredSeconds: Math.round((savedProgressBaseRef.current?.coveredSeconds || 0) + currentTime),
-                        totalPlayedSeconds: Math.round((savedProgressBaseRef.current?.watchedSeconds || 0) + currentTime)
+                        // Covered = unique seconds reached — never decreases
+                        totalCoveredSeconds: Math.round(Math.max(
+                          savedBase.coveredSeconds || 0,
+                          (savedBase.coveredSeconds || 0) + currentTime
+                        )),
+                        // Played = actual wall-clock seconds spent watching this session
+                        totalPlayedSeconds: Math.round(
+                          (savedBase.watchedSeconds || 0) + s3State.sessionElapsed
+                        ),
                       };
 
                       // Also keep latestSnapshotRef updated for page-hide flush

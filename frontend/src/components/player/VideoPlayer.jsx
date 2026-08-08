@@ -1,14 +1,31 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import Hls from 'hls.js';
 import VideoWatermark from './VideoWatermark';
-import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, Settings, Loader2 } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, Settings, Loader2, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// Detect iOS — volume control is hardware-only on iOS Safari
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+// Detect any touch device
+const IS_TOUCH = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
 export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => {
   const containerRef = useRef(null);
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
   const initialTimeRef = useRef(initialTime);
+
+  // Single-tap / double-tap disambiguation refs
+  const tapTimerRef = useRef(null);
+  const tapCountRef = useRef(0);
+
+  // HLS recovery retry counters
+  const networkRetryRef = useRef(0);
+  const mediaRetryRef = useRef(0);
+  const MAX_NETWORK_RETRIES = 3;
+  const MAX_MEDIA_RETRIES = 2;
 
   // Keep ref in sync but don't trigger re-renders
   useEffect(() => {
@@ -31,6 +48,10 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
   const [isDevToolsOpen, setIsDevToolsOpen] = useState(false);
   const [playbackError, setPlaybackError] = useState(false);
 
+  // Keep playbackRate in a ref so the HLS callback can read the latest value
+  const playbackRateRef = useRef(playbackRate);
+  useEffect(() => { playbackRateRef.current = playbackRate; }, [playbackRate]);
+
   const togglePlay = useCallback(() => {
     if (!videoRef.current) return;
     if (videoRef.current.paused) {
@@ -47,14 +68,56 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
   }, []);
 
   const toggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen().catch(err => console.log(err));
+    const el = containerRef.current;
+    if (!el) return;
+
+    const isFullscreenNow =
+      document.fullscreenElement ||
+      document.webkitFullscreenElement;
+
+    if (!isFullscreenNow) {
+      // Try standard API first, then webkit prefix (Safari/iOS)
+      if (el.requestFullscreen) {
+        el.requestFullscreen().catch(() => {});
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen();
+      }
     } else {
-      document.exitFullscreen();
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
     }
   }, []);
 
   const toggleMute = useCallback(() => setMuted(prev => !prev), []);
+
+  // ── Single-tap vs double-tap disambiguation ──
+  // On touch: single tap = play/pause, double tap = fullscreen
+  // Prevents both from firing on a double-tap
+  const handleVideoTap = useCallback(() => {
+    tapCountRef.current += 1;
+
+    if (tapCountRef.current === 1) {
+      // Wait to see if another tap comes within 300ms
+      tapTimerRef.current = setTimeout(() => {
+        // Single tap confirmed — toggle play/pause
+        tapCountRef.current = 0;
+        togglePlay();
+      }, 300);
+    } else if (tapCountRef.current === 2) {
+      // Double tap — cancel the pending single-tap action
+      clearTimeout(tapTimerRef.current);
+      tapCountRef.current = 0;
+      toggleFullscreen();
+    }
+  }, [togglePlay, toggleFullscreen]);
+
+  // Cleanup tap timer on unmount
+  useEffect(() => {
+    return () => { clearTimeout(tapTimerRef.current); };
+  }, []);
 
   // Keyboard Shortcuts
   useEffect(() => {
@@ -98,10 +161,10 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [toggleFullscreen, toggleMute, togglePlay]);
 
-  // Controls Hide Timer
+  // Controls Hide Timer — supports both mouse and touch
   useEffect(() => {
     let timeout;
-    const handleMouseMove = () => {
+    const resetHideTimer = () => {
       setShowControls(true);
       clearTimeout(timeout);
       timeout = setTimeout(() => {
@@ -114,13 +177,16 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     
     const container = containerRef.current;
     if (container) {
-      container.addEventListener('mousemove', handleMouseMove);
+      container.addEventListener('mousemove', resetHideTimer);
       container.addEventListener('mouseleave', handleMouseLeave);
+      // Touch devices: reset timer on any touch interaction
+      container.addEventListener('touchstart', resetHideTimer, { passive: true });
     }
     return () => {
       if (container) {
-        container.removeEventListener('mousemove', handleMouseMove);
+        container.removeEventListener('mousemove', resetHideTimer);
         container.removeEventListener('mouseleave', handleMouseLeave);
+        container.removeEventListener('touchstart', resetHideTimer);
       }
       clearTimeout(timeout);
     };
@@ -132,6 +198,10 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
       setPlaybackError(false);
       setPlaying(false);
     });
+
+    // Reset retry counters on new source
+    networkRetryRef.current = 0;
+    mediaRetryRef.current = 0;
 
     if (!src || !videoRef.current) return;
     const video = videoRef.current;
@@ -189,18 +259,39 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
         if (resumeAt && resumeAt > 0) {
           video.currentTime = resumeAt;
         }
+        // Re-apply playback rate after source change
+        const rate = playbackRateRef.current;
+        if (rate !== 1) {
+          video.playbackRate = rate;
+        }
       });
 
       hls.on(Hls.Events.ERROR, (_event, data) => {
         if (data.fatal) {
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
-              console.warn('HLS fatal network error, attempting recovery...');
-              hls.startLoad();
+              networkRetryRef.current += 1;
+              if (networkRetryRef.current <= MAX_NETWORK_RETRIES) {
+                console.warn(`HLS fatal network error, recovery attempt ${networkRetryRef.current}/${MAX_NETWORK_RETRIES}...`);
+                hls.startLoad();
+              } else {
+                console.error('HLS fatal network error — max retries exceeded.');
+                setPlaybackError(true);
+                hls.destroy();
+                hlsRef.current = null;
+              }
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
-              console.warn('HLS fatal media error, attempting recovery...');
-              hls.recoverMediaError();
+              mediaRetryRef.current += 1;
+              if (mediaRetryRef.current <= MAX_MEDIA_RETRIES) {
+                console.warn(`HLS fatal media error, recovery attempt ${mediaRetryRef.current}/${MAX_MEDIA_RETRIES}...`);
+                hls.recoverMediaError();
+              } else {
+                console.error('HLS fatal media error — max retries exceeded.');
+                setPlaybackError(true);
+                hls.destroy();
+                hlsRef.current = null;
+              }
               break;
             default:
               setPlaybackError(true);
@@ -226,6 +317,11 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
       video.addEventListener('loadedmetadata', () => {
         const resumeAt = initialTimeRef.current;
         if (resumeAt && resumeAt > 0) video.currentTime = resumeAt;
+        // Re-apply playback rate for native HLS too
+        const rate = playbackRateRef.current;
+        if (rate !== 1) {
+          video.playbackRate = rate;
+        }
       });
     } else {
       video.src = src;
@@ -250,25 +346,41 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
 
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      setIsFullscreen(
+        !!(document.fullscreenElement || document.webkitFullscreenElement)
+      );
     };
     document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+    };
   }, []);
 
 
 
+  // Format time — supports hours for long videos
   const formatTime = (timeInSeconds) => {
-    if (isNaN(timeInSeconds)) return "00:00";
-    const m = Math.floor(timeInSeconds / 60).toString().padStart(2, '0');
-    const s = Math.floor(timeInSeconds % 60).toString().padStart(2, '0');
+    if (isNaN(timeInSeconds) || timeInSeconds < 0) return "00:00";
+    const totalSeconds = Math.floor(timeInSeconds);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
+    const s = (totalSeconds % 60).toString().padStart(2, '0');
+    // Only show hours if the video is longer than 60 minutes
+    if (h > 0 || duration >= 3600) {
+      return `${h}:${m}:${s}`;
+    }
     return `${m}:${s}`;
   };
 
+  // Seek handler — supports both mouse click and touch
   const handleSeek = (e) => {
     if (!videoRef.current || !duration || isNaN(duration) || duration <= 0) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    // Use touch position if available, otherwise mouse
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     const targetTime = pos * duration;
     if (Number.isFinite(targetTime)) {
       videoRef.current.currentTime = targetTime;
@@ -290,6 +402,72 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     }
   };
 
+  // Handle native video element errors (e.g. 403, corrupt segment on Safari native HLS)
+  const handleVideoError = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const error = video.error;
+    // MediaError.MEDIA_ERR_ABORTED (1) is usually user-initiated, ignore it
+    if (error && error.code !== 1) {
+      console.error('Video element error:', error.code, error.message);
+      setPlaybackError(true);
+    }
+  }, []);
+
+  // Retry handler for the error overlay
+  const handleRetry = useCallback(() => {
+    setPlaybackError(false);
+    networkRetryRef.current = 0;
+    mediaRetryRef.current = 0;
+    // Force HLS re-initialization by re-setting the same src
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
+    }
+    const video = videoRef.current;
+    if (!video || !src) return;
+
+    if (Hls.isSupported() && src.endsWith('.m3u8')) {
+      // Re-trigger the HLS effect by destroying + setting a micro state change
+      // Simplest approach: reload from scratch
+      const hls = new Hls({
+        xhrSetup: (xhr, url) => {
+          const currentToken = localStorage.getItem('token');
+          if (url.includes('/api/courses/video/') && currentToken) {
+            xhr.setRequestHeader('Authorization', `Bearer ${currentToken}`);
+          }
+        },
+        maxBufferLength: 30,
+        maxMaxBufferLength: 600,
+        maxBufferSize: 120 * 1000000,
+        maxBufferHole: 0.5,
+        backBufferLength: 30,
+        startLevel: -1,
+        fragLoadingTimeOut: 20000,
+        fragLoadingMaxRetry: 6,
+        fragLoadingRetryDelay: 1000,
+        enableWorker: true,
+        progressive: true,
+      });
+      hlsRef.current = hls;
+      hls.loadSource(src);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play().catch(() => {});
+      });
+      hls.on(Hls.Events.ERROR, (_event, data) => {
+        if (data.fatal) {
+          setPlaybackError(true);
+          hls.destroy();
+          hlsRef.current = null;
+        }
+      });
+    } else {
+      video.src = src;
+      video.load();
+    }
+  }, [src]);
+
   // Anti-Piracy — context menu + devtools blocked; visibility pause removed to prevent unexpected freezes
   useEffect(() => {
     const handleContextMenu = (e) => e.preventDefault();
@@ -309,11 +487,17 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     };
   }, []);
 
+  // Determine if we should show volume controls
+  // iOS doesn't support programmatic volume — hide entirely
+  const showVolumeControl = !IS_IOS;
+
   return (
     <div 
       ref={containerRef}
       className={`relative w-full h-full bg-black overflow-hidden select-none group font-sans ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}
-      onDoubleClick={toggleFullscreen}
+      // Desktop: double-click for fullscreen (no conflict since click is on <video>)
+      // Touch: handled by handleVideoTap disambiguation
+      onDoubleClick={IS_TOUCH ? undefined : toggleFullscreen}
     >
       <video
         ref={videoRef}
@@ -330,7 +514,9 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
         onCanPlay={() => setIsBuffering(false)}
         onLoadedData={() => setIsBuffering(false)}
         onLoadedMetadata={updateProgress}
-        onClick={togglePlay}
+        onError={handleVideoError}
+        // Touch: use tap disambiguation; Desktop: direct click
+        onClick={IS_TOUCH ? handleVideoTap : togglePlay}
       />
 
       {isBuffering && !playbackError && (
@@ -353,11 +539,12 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
           >
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
             
-            <div className="relative z-10 px-6 py-4 pointer-events-auto">
-              {/* Progress Bar */}
+            <div className="relative z-10 px-4 sm:px-6 py-3 sm:py-4 pointer-events-auto">
+              {/* Progress Bar — supports both click and touch */}
               <div 
-                className="relative h-1.5 w-full bg-white/20 rounded-full mb-4 cursor-pointer hover:h-2 transition-all group/progress"
+                className="relative h-2 sm:h-1.5 w-full bg-white/20 rounded-full mb-3 sm:mb-4 cursor-pointer sm:hover:h-2 transition-all group/progress"
                 onClick={handleSeek}
+                onTouchStart={handleSeek}
               >
                 <div 
                   className="absolute h-full bg-white/40 rounded-full pointer-events-none"
@@ -367,41 +554,47 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
                   className="absolute h-full bg-brand-mint rounded-full pointer-events-none"
                   style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
                 >
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full scale-0 group-hover/progress:scale-100 transition-transform shadow" />
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-3 sm:h-3 bg-white rounded-full sm:scale-0 sm:group-hover/progress:scale-100 transition-transform shadow" />
                 </div>
               </div>
 
               {/* Controls Row */}
               <div className="flex items-center justify-between text-white">
-                <div className="flex items-center gap-4">
-                  <button onClick={togglePlay} className="hover:text-brand-mint transition-colors">
-                    {playing ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current" />}
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <button onClick={togglePlay} className="hover:text-brand-mint transition-colors p-1">
+                    {playing ? <Pause className="w-5 h-5 sm:w-6 sm:h-6 fill-current" /> : <Play className="w-5 h-5 sm:w-6 sm:h-6 fill-current" />}
                   </button>
                   
-                  <div className="flex items-center gap-2 group/volume">
-                    <button onClick={toggleMute} className="hover:text-brand-mint transition-colors">
-                      {muted || volume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-                    </button>
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.05"
-                      value={muted ? 0 : volume}
-                      onChange={(e) => {
-                        setVolume(parseFloat(e.target.value));
-                        setMuted(false);
-                      }}
-                      className="w-0 scale-x-0 group-hover/volume:w-20 group-hover/volume:scale-x-100 transition-all origin-left accent-brand-mint h-1"
-                    />
-                  </div>
+                  {showVolumeControl && (
+                    <div className="flex items-center gap-2 group/volume">
+                      <button onClick={toggleMute} className="hover:text-brand-mint transition-colors">
+                        {muted || volume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                      </button>
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.05"
+                        value={muted ? 0 : volume}
+                        onChange={(e) => {
+                          setVolume(parseFloat(e.target.value));
+                          setMuted(false);
+                        }}
+                        className={
+                          IS_TOUCH
+                            ? "w-16 accent-brand-mint h-1"
+                            : "w-0 scale-x-0 group-hover/volume:w-20 group-hover/volume:scale-x-100 transition-all origin-left accent-brand-mint h-1"
+                        }
+                      />
+                    </div>
+                  )}
                   
-                  <span className="text-xs font-medium tracking-wide">
-                    {formatTime(currentTime)} <span className="text-white/50 mx-1">/</span> {formatTime(duration)}
+                  <span className="text-[10px] sm:text-xs font-medium tracking-wide">
+                    {formatTime(currentTime)} <span className="text-white/50 mx-0.5 sm:mx-1">/</span> {formatTime(duration)}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 sm:gap-4">
                   <div className="relative">
                     <button 
                       onClick={() => setShowSettings(!showSettings)}
@@ -424,7 +617,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
                               key={rate}
                               onClick={() => {
                                 setPlaybackRate(rate);
-                                videoRef.current.playbackRate = rate;
+                                if (videoRef.current) videoRef.current.playbackRate = rate;
                                 setShowSettings(false);
                               }}
                               className={`block w-full text-left px-3 py-1.5 text-sm rounded-lg hover:bg-white/10 transition-colors ${playbackRate === rate ? 'text-brand-mint font-bold' : 'text-white'}`}
@@ -453,7 +646,16 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
             <span className="text-xl font-bold">!</span>
           </div>
           <h3 className="text-lg font-bold mb-2">Playback Error</h3>
-          <p className="text-sm text-white/60 text-center max-w-sm">The video stream was interrupted. Please refresh the page to try again.</p>
+          <p className="text-sm text-white/60 text-center max-w-sm mb-5">
+            The video stream was interrupted. This may be due to a network issue or an expired session.
+          </p>
+          <button
+            onClick={handleRetry}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-mint text-black font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-brand-mint/90 transition-all active:scale-[0.97]"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Retry Playback
+          </button>
         </div>
       )}
 

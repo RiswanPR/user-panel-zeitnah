@@ -10,7 +10,7 @@ function Courses() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState("Recording");
+  const [activeTab, setActiveTab] = useState("all");
 
   useEffect(() => {
     let mounted = true;

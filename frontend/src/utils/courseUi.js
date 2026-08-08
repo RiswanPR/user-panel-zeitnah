@@ -47,8 +47,8 @@ export function formatDuration(duration) {
 
 export function getCourseTypeLabel(type) {
   return (type || "").toLowerCase() === "recording"
-    ? "Studio Class"
-    : "Zoom Recording";
+    ? "Recording "
+    : "Online Class";
 }
 
 export function getClassVideoSource(courseType, videoSource) {

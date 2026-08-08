@@ -10,9 +10,9 @@ import {
 } from "lucide-react";
 
 const tabs = [
-  { key: "Recording", label: "Studio Classes", icon: Play },
-  { key: "online", label: "Recordings", icon: Video },
   { key: "all", label: "All Courses", icon: BookOpen },
+  { key: "Recording", label: "Recording Classes", icon: Play },
+  { key: "online", label: "Online Classes", icon: Video },
   { key: "my", label: "My Courses", icon: BookOpen },
 ];
 
@@ -36,11 +36,10 @@ function CourseNavbar({ activeTab, search, setActiveTab, setSearch }) {
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
-                className={`relative inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold transition-all duration-200 cursor-pointer select-none ${
-                  active
-                    ? "text-white"
-                    : "text-text-muted hover:text-text-secondary"
-                }`}
+                className={`relative inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold transition-all duration-200 cursor-pointer select-none ${active
+                  ? "text-white"
+                  : "text-text-muted hover:text-text-secondary"
+                  }`}
               >
                 {active && (
                   <motion.div
@@ -142,11 +141,10 @@ function CourseNavbar({ activeTab, search, setActiveTab, setSearch }) {
                           setActiveTab(tab.key);
                           setOpen(false);
                         }}
-                        className={`inline-flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all cursor-pointer w-full ${
-                          active
-                            ? "bg-brand-mint/10 text-white border border-brand-mint/15"
-                            : "text-text-muted hover:text-white hover:bg-white/[0.03] border border-transparent"
-                        }`}
+                        className={`inline-flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all cursor-pointer w-full ${active
+                          ? "bg-brand-mint/10 text-white border border-brand-mint/15"
+                          : "text-text-muted hover:text-white hover:bg-white/[0.03] border border-transparent"
+                          }`}
                       >
                         <Icon className={`w-4.5 h-4.5 shrink-0 ${active ? "text-brand-mint" : ""}`} />
                         <span>{tab.label}</span>

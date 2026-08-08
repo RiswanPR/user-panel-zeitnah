@@ -148,11 +148,12 @@ export class HlsService {
             );
             const segmentKey = folderPrefix + trimmed;
 
-            // Generate a signed URL for this segment valid for 15 minutes
+            // Generate a signed URL for this segment valid for 6 hours
+            // (playlist is fetched once at load time — must outlast the entire video)
             const signedUrl =
               await this.signedUrlService.generateSignedVideoUrl(
                 segmentKey,
-                900,
+                21600,
               );
             return signedUrl;
           }

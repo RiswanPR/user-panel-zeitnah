@@ -189,14 +189,17 @@ api.interceptors.response.use(
 
     const isNetworkOr5xx = !error.response || (error.response?.status >= 500);
     const isOffline = !navigator.onLine;
+    const isTroubleshootRequest = config?.url?.includes('/troubleshoot/');
 
     // Retry once for network failures or 5xx errors (only for non-GET requests)
+    // Never retry troubleshoot endpoints to prevent infinite error cascades
     if (
       !isOffline &&
       isNetworkOr5xx &&
       config &&
       !config._retried &&
-      config.method !== "get"
+      config.method !== "get" &&
+      !isTroubleshootRequest
     ) {
       config._retried = true;
       console.warn(`[API] Retrying request ${config.url} due to ${error.code || error.response?.status}`);
@@ -281,7 +284,8 @@ api.interceptors.response.use(
     const friendlyMessage = getFriendlyErrorMessage(error, isOffline);
 
     // Only log to backend if it's an auth route, or maybe log all 5xx / Network errors
-    if ((config?.url?.includes("/auth/") || (error.response && error.response.status >= 500) || !error.response) && !isOffline) {
+    // Skip troubleshoot endpoints to prevent error cascades
+    if ((config?.url?.includes("/auth/") || (error.response && error.response.status >= 500) || !error.response) && !isOffline && !isTroubleshootRequest) {
       // Fire and forget logging
       logClientError({
         message: error.message,
