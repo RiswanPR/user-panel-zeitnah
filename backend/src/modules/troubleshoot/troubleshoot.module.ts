@@ -3,14 +3,17 @@ import { MongooseModule } from '@nestjs/mongoose';
 
 import { TroubleshootController } from './troubleshoot.controller';
 import { TroubleshootService } from './troubleshoot.service';
-import { ErrorReport, ErrorReportSchema } from './schemas/error-report.schema';
+import {
+  TroubleshootReport,
+  TroubleshootReportSchema,
+} from './schemas/error-report.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       {
-        name: ErrorReport.name,
-        schema: ErrorReportSchema,
+        name: TroubleshootReport.name,
+        schema: TroubleshootReportSchema,
       },
     ]),
   ],

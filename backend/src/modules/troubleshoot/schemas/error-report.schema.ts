@@ -1,7 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema, Types } from 'mongoose';
 
-export type ErrorReportDocument = ErrorReport & Document;
+export type TroubleshootReportDocument = TroubleshootReport & Document;
+export type ErrorReportDocument = TroubleshootReportDocument;
 
 export type ErrorSeverity = 'low' | 'medium' | 'high' | 'critical';
 export type ReportStatus = 'open' | 'investigating' | 'resolved';
@@ -10,7 +11,7 @@ export type ReportStatus = 'open' | 'investigating' | 'resolved';
   timestamps: true,
   collection: 'troubleshoot-reports',
 })
-export class ErrorReport {
+export class TroubleshootReport {
   @Prop({
     type: Types.ObjectId,
     ref: 'User',
@@ -20,6 +21,9 @@ export class ErrorReport {
 
   @Prop({ default: '', trim: true })
   userEmail!: string;
+
+  @Prop({ default: 'troubleshoot_user_report', trim: true })
+  source!: string;
 
   @Prop({
     required: true,
@@ -90,8 +94,10 @@ export class ErrorReport {
   status!: ReportStatus;
 }
 
-export const ErrorReportSchema = SchemaFactory.createForClass(ErrorReport);
+export type ErrorReport = TroubleshootReport;
+export const TroubleshootReportSchema = SchemaFactory.createForClass(TroubleshootReport);
+export const ErrorReportSchema = TroubleshootReportSchema;
 
-ErrorReportSchema.index({ userId: 1, createdAt: -1 });
-ErrorReportSchema.index({ severity: 1, createdAt: -1 });
-ErrorReportSchema.index({ status: 1, createdAt: -1 });
+TroubleshootReportSchema.index({ userId: 1, createdAt: -1 });
+TroubleshootReportSchema.index({ severity: 1, createdAt: -1 });
+TroubleshootReportSchema.index({ status: 1, createdAt: -1 });

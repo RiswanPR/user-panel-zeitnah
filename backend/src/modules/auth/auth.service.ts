@@ -1020,7 +1020,8 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const user = await this.userModel.findById(payload.userId);
+    // Fetch plain lean object to eliminate Mongoose version key (__v) concurrency conflicts
+    const user = await this.userModel.findById(payload.userId).lean();
 
     if (!user) {
       throw new UnauthorizedException('User not found');
@@ -1030,7 +1031,7 @@ export class AuthService {
       throw new UnauthorizedException('Account restricted');
     }
 
-    const device = user.devices.find(
+    const device = user.devices?.find(
       (currentDevice) => currentDevice.deviceId === payload.deviceId,
     );
 
@@ -1039,35 +1040,54 @@ export class AuthService {
     }
 
     if (this.isSessionExpired(device)) {
-      user.devices = user.devices.filter(
-        (currentDevice) => currentDevice.deviceId !== payload.deviceId,
+      await this.userModel.updateOne(
+        { _id: user._id },
+        { $pull: { devices: { deviceId: payload.deviceId } } },
       );
-
-      await user.save();
 
       throw new UnauthorizedException('Refresh token expired');
     }
 
-    const isRefreshTokenValid = await bcrypt.compare(
+    const isCurrentValid = await bcrypt.compare(
       refreshToken,
       device.refreshToken,
     );
 
-    if (!isRefreshTokenValid) {
+    let isPreviousValid = false;
+    if (
+      !isCurrentValid &&
+      device.previousRefreshToken &&
+      device.lastSeen &&
+      Date.now() - new Date(device.lastSeen).getTime() < 15000
+    ) {
+      isPreviousValid = await bcrypt.compare(
+        refreshToken,
+        device.previousRefreshToken,
+      );
+    }
+
+    if (!isCurrentValid && !isPreviousValid) {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
     const tokens = await this.generateAuthTokens(user, payload.deviceId);
 
-    device.refreshToken = tokens.refreshTokenHash;
-
-    device.refreshTokenExpiry = tokens.refreshTokenExpiry;
-
-    device.lastSeen = new Date();
-
-    user.account_Status.lastSeen = new Date();
-
-    await user.save();
+    // Atomic update targeted only at device token fields & lastSeen
+    await this.userModel.updateOne(
+      {
+        _id: user._id,
+        'devices.deviceId': payload.deviceId,
+      },
+      {
+        $set: {
+          'devices.$.previousRefreshToken': device.refreshToken,
+          'devices.$.refreshToken': tokens.refreshTokenHash,
+          'devices.$.refreshTokenExpiry': tokens.refreshTokenExpiry,
+          'devices.$.lastSeen': new Date(),
+          'account_Status.lastSeen': new Date(),
+        },
+      },
+    );
 
     await this.auditLogsService.record({
       actor: user._id,

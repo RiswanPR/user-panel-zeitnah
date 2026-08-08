@@ -104,6 +104,7 @@ export default function TroubleshootReporter() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
+          source: 'troubleshoot_user_report',
           severity,
           title: title.trim(),
           description: description.trim(),

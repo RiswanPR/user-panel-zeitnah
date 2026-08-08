@@ -76,6 +76,11 @@ class BrowserInfoDto {
 }
 
 export class SubmitReportDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  source?: string;
+
   @ApiProperty({ enum: ['low', 'medium', 'high', 'critical'] })
   @IsEnum(['low', 'medium', 'high', 'critical'])
   severity: string;

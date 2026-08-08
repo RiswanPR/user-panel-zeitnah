@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import {
-  ErrorReport,
-  ErrorReportDocument,
+  TroubleshootReport,
+  TroubleshootReportDocument,
   ErrorSeverity,
 } from './schemas/error-report.schema';
 import { SubmitReportDto } from './dto/submit-report.dto';
@@ -32,8 +32,8 @@ const SEVERITY_CONFIG = {
 @Injectable()
 export class TroubleshootService {
   constructor(
-    @InjectModel(ErrorReport.name)
-    private errorReportModel: Model<ErrorReportDocument>,
+    @InjectModel(TroubleshootReport.name)
+    private errorReportModel: Model<TroubleshootReportDocument>,
   ) {}
 
   /**
@@ -44,6 +44,7 @@ export class TroubleshootService {
     const report = await this.errorReportModel.create({
       userId: new Types.ObjectId(userId),
       userEmail,
+      source: dto.source || 'troubleshoot_user_report',
       severity: dto.severity as ErrorSeverity,
       title: dto.title,
       description: dto.description || '',
@@ -113,7 +114,7 @@ export class TroubleshootService {
   /**
    * Build and send a rich HTML email alert.
    */
-  private async sendEmailAlert(report: ErrorReportDocument, userEmail: string) {
+  private async sendEmailAlert(report: TroubleshootReportDocument, userEmail: string) {
     const sev = SEVERITY_CONFIG[report.severity] || SEVERITY_CONFIG.medium;
 
     const html = generateTroubleshootEmailHtml(report, userEmail, sev);

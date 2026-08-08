@@ -14,6 +14,7 @@ export type UserDevice = {
   lastSeen: Date;
   refreshToken: string | null;
   refreshTokenExpiry: Date | null;
+  previousRefreshToken?: string | null;
 };
 
 export type UserGamificationActivity = {
@@ -121,6 +122,11 @@ export class User {
 
         refreshTokenExpiry: {
           type: Date,
+          default: null,
+        },
+
+        previousRefreshToken: {
+          type: String,
           default: null,
         },
       },

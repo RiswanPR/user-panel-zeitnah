@@ -190,16 +190,18 @@ api.interceptors.response.use(
     const isNetworkOr5xx = !error.response || (error.response?.status >= 500);
     const isOffline = !navigator.onLine;
     const isTroubleshootRequest = config?.url?.includes('/troubleshoot/');
+    const isRefreshRequest = config?.url?.includes('/auth/refresh-token') || config?._isRefreshRequest;
 
     // Retry once for network failures or 5xx errors (only for non-GET requests)
-    // Never retry troubleshoot endpoints to prevent infinite error cascades
+    // Never retry troubleshoot or refresh-token endpoints to prevent infinite cascades / retries
     if (
       !isOffline &&
       isNetworkOr5xx &&
       config &&
       !config._retried &&
       config.method !== "get" &&
-      !isTroubleshootRequest
+      !isTroubleshootRequest &&
+      !isRefreshRequest
     ) {
       config._retried = true;
       console.warn(`[API] Retrying request ${config.url} due to ${error.code || error.response?.status}`);
