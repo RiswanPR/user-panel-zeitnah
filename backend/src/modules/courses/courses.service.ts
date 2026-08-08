@@ -423,6 +423,16 @@ export class CoursesService {
       courses.map((c) => this.signCourseImages(c.toObject())),
     );
 
+    formatted.sort((a, b) => {
+      const typeA = String(a.type || '').trim().toLowerCase();
+      const typeB = String(b.type || '').trim().toLowerCase();
+      const isRecA = typeA === 'recording';
+      const isRecB = typeB === 'recording';
+      if (isRecA && !isRecB) return -1;
+      if (!isRecA && isRecB) return 1;
+      return 0;
+    });
+
     return {
       courses: formatted,
     };
