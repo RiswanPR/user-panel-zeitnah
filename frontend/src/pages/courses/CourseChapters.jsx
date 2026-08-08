@@ -83,6 +83,7 @@ function CourseChapters() {
   }
 
   const { course, chapters = [], purchased } = data;
+  const isPurchased = !!purchased || !!course?.learningProgress || !!course?.purchased || !!course?.isPurchased || !!course?.isEnrolled;
   const learningProgress = course?.learningProgress;
   const completionPercent = learningProgress?.completionPercent || 0;
   const completedClasses = learningProgress?.completedClasses || 0;
@@ -105,7 +106,7 @@ function CourseChapters() {
           Back to courses
         </motion.button>
 
-        {!purchased && (
+        {!isPurchased && (
           <motion.button
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -150,12 +151,12 @@ function CourseChapters() {
               </span>
               <span
                 className={`rounded-lg border px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest backdrop-blur-md shadow-sm ${
-                  purchased
+                  isPurchased
                     ? "border-success/30 bg-success/10 text-success shadow-success/10"
                     : "border-warning/30 bg-warning/10 text-warning shadow-warning/10"
                 }`}
               >
-                {purchased ? "Course unlocked" : "Purchase required"}
+                {isPurchased ? "Course unlocked" : "Purchase required"}
               </span>
             </div>
 
@@ -166,7 +167,7 @@ function CourseChapters() {
               {course.description || "Explore the course structure and chapters below."}
             </p>
 
-            {!purchased && (
+            {!isPurchased && (
               <div className="mt-5">
                 <button
                   type="button"
@@ -190,7 +191,7 @@ function CourseChapters() {
               label: "Access Status",
               custom: (
                 <div className="mt-1.5 flex items-center gap-2.5 text-sm font-semibold">
-                  {purchased ? (
+                  {isPurchased ? (
                     <>
                       <div className="flex h-6 w-6 items-center justify-center rounded-full bg-success/20 border border-success/30">
                         <CheckCircle2 className="w-3.5 h-3.5 text-success" />
@@ -232,7 +233,7 @@ function CourseChapters() {
         </div>
 
         {/* Floating Progress bar (if purchased) */}
-        {purchased && (
+        {isPurchased && (
           <div className="bg-[#0A0D14] px-6 sm:px-8 pb-6 sm:pb-8 pt-0 relative z-10">
             <div className="rounded-2xl border border-white/[0.06] bg-gradient-to-r from-white/[0.03] to-transparent p-5 sm:p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
               <div className="mb-3 flex items-end justify-between">
@@ -262,7 +263,7 @@ function CourseChapters() {
       </motion.section>
 
       {/* ── Unlocked/Locked Alert ── */}
-      {!purchased && String(course.type || "").trim().toLowerCase() === "recording" ? (
+      {!isPurchased && String(course.type || "").trim().toLowerCase() === "recording" ? (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -292,7 +293,7 @@ function CourseChapters() {
             </span>
           </div>
         </motion.div>
-      ) : !purchased && (
+      ) : !isPurchased && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

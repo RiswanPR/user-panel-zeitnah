@@ -18,7 +18,7 @@ function CourseCard({ course }) {
   const [enquiryModalOpen, setEnquiryModalOpen] = useState(false);
 
   const progress = course.learningProgress?.completionPercent || 0;
-  const purchased = !!course.learningProgress;
+  const purchased = !!course.learningProgress || !!course.purchased || !!course.isPurchased || !!course.isEnrolled;
   const completed = purchased && progress >= 100;
   const isRecording = course.type === "Recording";
   const imageUrl = course.coverImage || "https://placehold.co/1920x1080/0A0D14/FFFFFF?text=Course+Cover";
