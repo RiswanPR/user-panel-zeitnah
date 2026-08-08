@@ -16,6 +16,8 @@ import { UpdateClassProgressDto } from './dto/update-class-progress.dto';
 import { CreateCourseEnquiryDto } from './dto/create-course-enquiry.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
+import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
+
 @Controller('courses')
 export class CoursesController {
   constructor(private readonly coursesService: CoursesService) {}
@@ -34,12 +36,15 @@ export class CoursesController {
   // ALL COURSES
   // =====================
 
+  @UseGuards(OptionalJwtAuthGuard)
   @Get()
   getAllCourses(
     @Query()
     query: GetCoursesDto,
+    @Req()
+    req?: any,
   ) {
-    return this.coursesService.getAllCourses(query);
+    return this.coursesService.getAllCourses(query, req?.user?.userId);
   }
 
   // =====================

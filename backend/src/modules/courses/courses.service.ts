@@ -398,7 +398,7 @@ export class CoursesService {
   // GET ALL COURSES
   // ======================
 
-  async getAllCourses(query: GetCoursesDto) {
+  async getAllCourses(query: GetCoursesDto, userId?: string) {
     const filter: any = {};
 
     // SEARCH
@@ -419,8 +419,32 @@ export class CoursesService {
       createdAt: -1,
     });
 
+    let userCourseMap = new Map<string, any>();
+    if (userId) {
+      const user = await this.userModel.findById(userId).select('course').lean();
+      if (user?.course) {
+        user.course.forEach((c: any) => {
+          if (c?.courseId) {
+            userCourseMap.set(c.courseId.toString(), c);
+          }
+        });
+      }
+    }
+
     const formatted = await Promise.all(
-      courses.map((c) => this.signCourseImages(c.toObject())),
+      courses.map(async (c) => {
+        const courseObj = c.toObject();
+        const userCourse = userCourseMap.get(c._id.toString());
+        const learningProgress = userCourse
+          ? this.summariseLearningProgress(c, userCourse)
+          : null;
+
+        const mapped = {
+          ...courseObj,
+          learningProgress,
+        };
+        return this.signCourseImages(mapped);
+      }),
     );
 
     formatted.sort((a, b) => {
