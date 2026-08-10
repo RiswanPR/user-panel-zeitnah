@@ -757,8 +757,8 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     }
   };
 
-  // Handle native video element errors (e.g. 403, corrupt segment on Safari native HLS)
-  // Includes retry logic for native HLS — attempts reload before giving up
+  // Handle native video element errors (e.g. PIPELINE_ERROR_READ, 403, corrupt segment)
+  // Ensures proper teardown of Chrome demuxer and HLS instance to prevent infinite Error 4 loops
   const handleVideoError = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -768,26 +768,65 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
 
     console.error('Video element error:', error.code, error.message);
 
-    // If using HLS.js, let the HLS error handler deal with it
-    if (hlsRef.current) return;
+    const isHls = !!hlsRef.current;
+    if (isHls) {
+      console.warn('Native video element error detected while HLS.js is active. Resetting HLS and media pipeline.');
+      try {
+        hlsRef.current.destroy();
+      } catch (e) {}
+      hlsRef.current = null;
+    }
 
-    // Native HLS (Safari) or direct source — attempt retries
+    // Capture position before resetting pipeline
+    const resumeTime = Number.isFinite(video.currentTime) ? video.currentTime : 0;
+
+    // Purge media element state to reset Chrome FFmpeg demuxer pipeline
+    try {
+      video.removeAttribute('src');
+      video.load();
+    } catch (e) {}
+
     nativeRetryRef.current += 1;
     if (nativeRetryRef.current <= MAX_NATIVE_RETRIES) {
-      console.warn(`Native video error, retry attempt ${nativeRetryRef.current}/${MAX_NATIVE_RETRIES}`);
-      const resumeTime = video.currentTime;
-      video.load();
-      video.addEventListener('loadedmetadata', () => {
-        if (resumeTime > 0) video.currentTime = resumeTime;
-        video.play().catch(() => {});
-      }, { once: true });
+      console.warn(`Video pipeline error recovery attempt ${nativeRetryRef.current}/${MAX_NATIVE_RETRIES}`);
+      // Re-initialize player from current playback position
+      setTimeout(() => {
+        if (!videoRef.current || !src) return;
+        if (Hls.isSupported() && src.endsWith('.m3u8')) {
+          const hls = new Hls(createHlsConfig());
+          hlsRef.current = hls;
+          hls.loadSource(src);
+          hls.attachMedia(videoRef.current);
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            if (resumeTime > 0) videoRef.current.currentTime = resumeTime;
+            videoRef.current.play().catch(() => {});
+          });
+          hls.on(Hls.Events.ERROR, (_event, data) => {
+            if (data.fatal) {
+              const type = data.type === Hls.ErrorTypes.NETWORK_ERROR ? 'network'
+                : data.type === Hls.ErrorTypes.MEDIA_ERROR ? 'media' : 'unknown';
+              setErrorType(type);
+              setPlaybackError(true);
+              try { hls.destroy(); } catch (e) {}
+              hlsRef.current = null;
+            }
+          });
+        } else {
+          videoRef.current.src = src;
+          videoRef.current.load();
+          videoRef.current.addEventListener('loadedmetadata', () => {
+            if (resumeTime > 0) videoRef.current.currentTime = resumeTime;
+            videoRef.current.play().catch(() => {});
+          }, { once: true });
+        }
+      }, 200);
     } else {
       // Determine error type from MediaError code
-      const type = error.code === 2 ? 'network' : error.code === 3 ? 'media' : 'unknown';
+      const type = error.code === 2 ? 'network' : 'media';
       setErrorType(type);
       setPlaybackError(true);
     }
-  }, []);
+  }, [src]);
 
   // Retry handler for the error overlay — uses shared HLS config for full resilience
   const handleRetry = useCallback(() => {
@@ -801,11 +840,19 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
 
     // Force HLS re-initialization
     if (hlsRef.current) {
-      hlsRef.current.destroy();
+      try {
+        hlsRef.current.destroy();
+      } catch (e) {}
       hlsRef.current = null;
     }
     const video = videoRef.current;
     if (!video || !src) return;
+
+    // Purge media element source to reset Chrome FFmpeg demuxer pipeline
+    try {
+      video.removeAttribute('src');
+      video.load();
+    } catch (e) {}
 
     if (Hls.isSupported() && src.endsWith('.m3u8')) {
       const hls = new Hls(createHlsConfig());
@@ -821,7 +868,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
             : data.type === Hls.ErrorTypes.MEDIA_ERROR ? 'media' : 'unknown';
           setErrorType(type);
           setPlaybackError(true);
-          hls.destroy();
+          try { hls.destroy(); } catch (e) {}
           hlsRef.current = null;
         }
       });

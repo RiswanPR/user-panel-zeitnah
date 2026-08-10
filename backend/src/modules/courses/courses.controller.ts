@@ -175,6 +175,8 @@ export class CoursesController {
   @UseGuards(JwtAuthGuard)
   @Get('video/:classId/playlist.m3u8')
   @Header('Content-Type', 'application/vnd.apple.mpegurl')
+  @Header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+  @Header('Pragma', 'no-cache')
   async getSecurePlaylist(@Param('classId') classId: string, @Req() req: any) {
     return this.coursesService.getSecurePlaylist(classId, req.user.userId);
   }
