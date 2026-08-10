@@ -30,10 +30,26 @@ if (cachedVersion !== APP_VERSION) {
   }
 }
 
+// ── Helpers: Detect third-party browser-extension errors ──
+function isBrowserExtensionError(errorOrMessage, filename) {
+  const extProtocols = ["chrome-extension://", "moz-extension://", "safari-extension://"];
+  const str = String(errorOrMessage || "");
+  if (extProtocols.some((p) => str.includes(p))) return true;
+  if (filename && extProtocols.some((p) => filename.startsWith(p))) return true;
+  // MetaMask-specific noise — the extension rejects internally when it
+  // can't establish a connection to a dApp on every page load.
+  if (/failed to connect to metamask/i.test(str)) return true;
+  return false;
+}
+
 // ── Global Error Listeners (Outside React) ──
 window.addEventListener("error", async (event) => {
   // Ignore resize observer errors which are often benign
   if (event.message === "ResizeObserver loop limit exceeded" || event.message === "ResizeObserver loop completed with undelivered notifications.") {
+    return;
+  }
+  // Ignore errors originating from browser extensions (MetaMask, etc.)
+  if (isBrowserExtensionError(event.message, event.filename) || isBrowserExtensionError(event.error)) {
     return;
   }
   const diagnostics = await collectDiagnostics(event.error);
@@ -54,7 +70,14 @@ window.addEventListener("error", async (event) => {
 });
 
 window.addEventListener("unhandledrejection", async (event) => {
-  const diagnostics = await collectDiagnostics(event.reason instanceof Error ? event.reason : new Error(String(event.reason)));
+  // Ignore unhandled rejections from browser extensions (MetaMask, etc.)
+  const reason = event.reason;
+  const reasonStr = reason instanceof Error ? reason.message + " " + (reason.stack || "") : String(reason || "");
+  if (isBrowserExtensionError(reasonStr)) {
+    event.preventDefault(); // Suppress console noise
+    return;
+  }
+  const diagnostics = await collectDiagnostics(reason instanceof Error ? reason : new Error(String(reason)));
   diagnostics.source = "unhandled_rejection";
   diagnostics.isSilent = true;
 

@@ -9,6 +9,8 @@ import {
   Eye,
   FileText,
   PlayCircle,
+  RefreshCw,
+  WifiOff,
   X,
 } from "lucide-react";
 import api from "../../services/api";
@@ -84,6 +86,7 @@ function ClassView() {
   const [progressState, setProgressState] = useState(null);
   const [syncState, setSyncState] = useState("idle");
   const [previewResource, setPreviewResource] = useState(null);
+  const [vdoPlayerError, setVdoPlayerError] = useState(false);
 
   const iframeRef = useRef(null);
   const playerRef = useRef(null);
@@ -278,6 +281,35 @@ function ClassView() {
         player.video.addEventListener("pause", onPause);
         player.video.addEventListener("seeked", onSeeked);
         player.video.addEventListener("ended", onEnded);
+        // ── VdoCipher video error detection ──
+        // Listen for fatal video errors from the embedded player's <video> element.
+        // These correspond to Chrome's FFmpegDemuxer errors (data source read failures).
+        const onVideoError = () => {
+          const err = player.video.error;
+          if (err && err.code !== 1) {
+            console.error('VdoCipher player video error:', err.code, err.message);
+            setVdoPlayerError(true);
+          }
+        };
+        // Also detect prolonged stalls (waiting > 20s) that VdoCipher doesn't recover from
+        let vdoStallTimer = null;
+        const onVdoWaiting = () => {
+          if (vdoStallTimer) clearTimeout(vdoStallTimer);
+          vdoStallTimer = setTimeout(() => {
+            // If still not playing after 20s, flag as error
+            if (player.video && !player.video.paused && player.video.readyState < 3) {
+              console.warn('VdoCipher prolonged stall detected (20s), showing recovery overlay');
+              setVdoPlayerError(true);
+            }
+          }, 20000);
+        };
+        const onVdoPlaying = () => {
+          if (vdoStallTimer) { clearTimeout(vdoStallTimer); vdoStallTimer = null; }
+        };
+        player.video.addEventListener("error", onVideoError);
+        player.video.addEventListener("waiting", onVdoWaiting);
+        player.video.addEventListener("playing", onVdoPlaying);
+        player.video.addEventListener("canplay", onVdoPlaying);
         window.addEventListener("pagehide", onPageHide);
         document.addEventListener("visibilitychange", onVisibilityChange);
         cleanup = () => {
@@ -288,6 +320,11 @@ function ClassView() {
           player.video.removeEventListener("pause", onPause);
           player.video.removeEventListener("seeked", onSeeked);
           player.video.removeEventListener("ended", onEnded);
+          player.video.removeEventListener("error", onVideoError);
+          player.video.removeEventListener("waiting", onVdoWaiting);
+          player.video.removeEventListener("playing", onVdoPlaying);
+          player.video.removeEventListener("canplay", onVdoPlaying);
+          if (vdoStallTimer) clearTimeout(vdoStallTimer);
           window.removeEventListener("pagehide", onPageHide);
           document.removeEventListener("visibilitychange", onVisibilityChange);
           flushLatestProgress();
@@ -304,6 +341,50 @@ function ClassView() {
       playerRef.current = null;
     };
   }, [classId, data?.class?._id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── VdoCipher network recovery ──
+  // When the device comes back online and the VdoCipher player was in an error state,
+  // re-fetch class data to get a fresh OTP/playbackInfo and reload the iframe.
+  useEffect(() => {
+    const classData = dataRef.current?.class;
+    const videoSource = getClassVideoSource(
+      dataRef.current?.course?.type,
+      classData?.videoSource,
+    );
+    // Only relevant for VdoCipher classes
+    if (videoSource === "s3") return;
+
+    const handleOnline = () => {
+      if (!vdoPlayerError) return;
+      console.log('Network restored — reloading VdoCipher class data for fresh OTP');
+      setVdoPlayerError(false);
+      // Re-fetch class data to get fresh OTP/playbackInfo
+      api.get(`/courses/class/${classId}`)
+        .then(res => {
+          setData(res.data);
+          setProgressState(res.data.progress || null);
+        })
+        .catch(err => {
+          console.error('Failed to reload class data after network recovery:', err);
+        });
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [classId, vdoPlayerError]);
+
+  // ── VdoCipher manual reload handler ──
+  const handleVdoReload = useCallback(async () => {
+    setVdoPlayerError(false);
+    try {
+      const res = await api.get(`/courses/class/${classId}`);
+      setData(res.data);
+      setProgressState(res.data.progress || null);
+    } catch (err) {
+      console.error('Failed to reload class data:', err);
+      alert(err.response?.data?.message || 'Failed to reload video. Please try again.');
+    }
+  }, [classId]);
 
   // ── Loading State ──
   if (loading) {
@@ -497,14 +578,35 @@ function ClassView() {
                   </div>
                 )
               ) : videoUrl ? (
-                <iframe
-                  ref={iframeRef}
-                  src={videoUrl}
-                  className="h-full w-full block border-0"
-                  allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-                  allowFullScreen
-                  title={cls.title}
-                />
+                <>
+                  <iframe
+                    ref={iframeRef}
+                    src={videoUrl}
+                    className="h-full w-full block border-0"
+                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                    allowFullScreen
+                    title={cls.title}
+                  />
+                  {/* VdoCipher error recovery overlay */}
+                  {vdoPlayerError && (
+                    <div className="absolute inset-0 z-30 bg-black/90 flex flex-col items-center justify-center text-white p-6">
+                      <div className="w-12 h-12 rounded-full bg-warning/20 flex items-center justify-center text-warning mb-4">
+                        <WifiOff className="w-6 h-6" />
+                      </div>
+                      <h3 className="text-lg font-bold mb-2">Video Stream Interrupted</h3>
+                      <p className="text-sm text-white/60 text-center max-w-sm mb-5">
+                        The video stream was interrupted, likely due to a network issue. Reloading will fetch a fresh video session.
+                      </p>
+                      <button
+                        onClick={handleVdoReload}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-mint text-black font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-brand-mint/90 transition-all active:scale-[0.97]"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                        Reload Player
+                      </button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="flex h-full items-center justify-center text-text-muted text-sm font-medium">
                   Video not available for this class.

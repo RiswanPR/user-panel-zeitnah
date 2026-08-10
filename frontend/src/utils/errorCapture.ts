@@ -37,6 +37,18 @@ function pushWithLimit(arr: any[], item: any) {
   if (arr.length > MAX_BUFFER_SIZE) arr.shift();
 }
 
+/**
+ * Detect errors originating from browser extensions (MetaMask, etc.).
+ * These are not application bugs and should be excluded from reports.
+ */
+function isBrowserExtensionNoise(messageOrStack) {
+  const str = String(messageOrStack || '');
+  const extProtocols = ['chrome-extension://', 'moz-extension://', 'safari-extension://'];
+  if (extProtocols.some((p) => str.includes(p))) return true;
+  if (/failed to connect to metamask/i.test(str)) return true;
+  return false;
+}
+
 // ── Console Interceptors ──
 
 const originalConsoleError = console.error;
@@ -68,6 +80,10 @@ function interceptConsole() {
 function interceptGlobalErrors() {
   // Uncaught exceptions
   window.addEventListener('error', (event) => {
+    // Skip errors from browser extensions
+    if (isBrowserExtensionNoise(event.message) || isBrowserExtensionNoise(event.filename) || isBrowserExtensionNoise(event.error?.stack)) {
+      return;
+    }
     pushWithLimit(unhandledErrors, {
       type: 'uncaught_exception',
       message: event.message || 'Unknown error',
@@ -82,14 +98,17 @@ function interceptGlobalErrors() {
   // Unhandled promise rejections
   window.addEventListener('unhandledrejection', (event) => {
     const reason = event.reason;
+    const msg = reason instanceof Error ? reason.message : safeStringify(reason);
+    const stack = reason instanceof Error ? reason.stack || '' : '';
+    // Skip rejections from browser extensions
+    if (isBrowserExtensionNoise(msg) || isBrowserExtensionNoise(stack)) {
+      return;
+    }
     pushWithLimit(unhandledErrors, {
       type: 'unhandled_rejection',
-      message:
-        reason instanceof Error
-          ? reason.message
-          : safeStringify(reason),
+      message: msg,
       timestamp: now(),
-      stack: reason instanceof Error ? reason.stack || '' : '',
+      stack,
     });
   });
 }
