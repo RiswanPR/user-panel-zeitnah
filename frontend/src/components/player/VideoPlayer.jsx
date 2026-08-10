@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import Hls from 'hls.js';
 import VideoWatermark from './VideoWatermark';
-import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, Settings, Loader2, RefreshCw, WifiOff } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, Settings, Loader2, RefreshCw, WifiOff, SkipForward, SkipBack } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Detect iOS — volume control is hardware-only on iOS Safari
@@ -63,6 +63,16 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
   // Single-tap / double-tap disambiguation refs
   const tapTimerRef = useRef(null);
   const tapCountRef = useRef(0);
+
+  // Fast-forward / rewind ripple animation state
+  // { side: 'left'|'right', seconds: number, key: number } or null
+  const [skipRipple, setSkipRipple] = useState(null);
+  const skipRippleTimerRef = useRef(null);
+
+  // Long-press-to-2x refs (touch only)
+  const longPressTimerRef = useRef(null);
+  const longPressActiveRef = useRef(false);
+  const savedRateRef = useRef(1);
 
   // HLS recovery retry counters
   const networkRetryRef = useRef(0);
@@ -131,6 +141,18 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     }
   }, []);
 
+  // ── Skip forward / backward (optimised — single fn, no state deps) ──
+  const skipBy = useCallback((seconds) => {
+    const video = videoRef.current;
+    if (!video || !Number.isFinite(video.duration)) return;
+    const target = Math.max(0, Math.min(video.duration, video.currentTime + seconds));
+    video.currentTime = target;
+    // Show ripple animation
+    clearTimeout(skipRippleTimerRef.current);
+    setSkipRipple({ side: seconds > 0 ? 'right' : 'left', seconds: Math.abs(seconds), key: Date.now() });
+    skipRippleTimerRef.current = setTimeout(() => setSkipRipple(null), 700);
+  }, []);
+
   const toggleFullscreen = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -158,9 +180,16 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
   const toggleMute = useCallback(() => setMuted(prev => !prev), []);
 
   // ── Single-tap vs double-tap disambiguation ──
-  // On touch: single tap = play/pause, double tap = fullscreen
-  // Prevents both from firing on a double-tap
-  const handleVideoTap = useCallback(() => {
+  // Touch: single tap = show/hide controls, double tap LEFT = rewind 10s,
+  // double tap RIGHT = forward 10s, double tap CENTER = fullscreen.
+  // Long press = 2x speed while held.
+  const handleVideoTap = useCallback((e) => {
+    // Determine tap zone (left 30% / center 40% / right 30%)
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+    const pct = (clientX - rect.left) / rect.width;
+    const zone = pct < 0.3 ? 'left' : pct > 0.7 ? 'right' : 'center';
+
     tapCountRef.current += 1;
 
     if (tapCountRef.current === 1) {
@@ -174,13 +203,43 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
       // Double tap — cancel the pending single-tap action
       clearTimeout(tapTimerRef.current);
       tapCountRef.current = 0;
-      toggleFullscreen();
+      if (zone === 'left') {
+        skipBy(-10);
+      } else if (zone === 'right') {
+        skipBy(10);
+      } else {
+        toggleFullscreen();
+      }
     }
-  }, [togglePlay, toggleFullscreen]);
+  }, [togglePlay, toggleFullscreen, skipBy]);
+
+  // ── Long-press to 2x speed (touch only) ──
+  const handleTouchStart = useCallback(() => {
+    longPressTimerRef.current = setTimeout(() => {
+      const video = videoRef.current;
+      if (!video || video.paused) return;
+      longPressActiveRef.current = true;
+      savedRateRef.current = video.playbackRate;
+      video.playbackRate = 2;
+    }, 500); // 500ms hold = activate 2x
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    clearTimeout(longPressTimerRef.current);
+    if (longPressActiveRef.current) {
+      longPressActiveRef.current = false;
+      const video = videoRef.current;
+      if (video) video.playbackRate = savedRateRef.current;
+    }
+  }, []);
 
   // Cleanup tap timer on unmount
   useEffect(() => {
-    return () => { clearTimeout(tapTimerRef.current); };
+    return () => {
+      clearTimeout(tapTimerRef.current);
+      clearTimeout(skipRippleTimerRef.current);
+      clearTimeout(longPressTimerRef.current);
+    };
   }, []);
 
   // Keyboard Shortcuts
@@ -204,11 +263,11 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
           break;
         case 'arrowright':
           e.preventDefault();
-          videoRef.current.currentTime += 10;
+          skipBy(10);
           break;
         case 'arrowleft':
           e.preventDefault();
-          videoRef.current.currentTime -= 10;
+          skipBy(-10);
           break;
         case 'arrowup':
           e.preventDefault();
@@ -223,7 +282,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [toggleFullscreen, toggleMute, togglePlay]);
+  }, [toggleFullscreen, toggleMute, togglePlay, skipBy]);
 
   // Controls Hide Timer — supports both mouse and touch
   useEffect(() => {
@@ -752,7 +811,47 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
         onError={handleVideoError}
         // Touch: use tap disambiguation; Desktop: direct click
         onClick={IS_TOUCH ? handleVideoTap : togglePlay}
+        // Long-press to 2x speed (touch only)
+        onTouchStart={IS_TOUCH ? handleTouchStart : undefined}
+        onTouchEnd={IS_TOUCH ? handleTouchEnd : undefined}
+        onTouchCancel={IS_TOUCH ? handleTouchEnd : undefined}
       />
+
+      {/* ── Skip ripple animation overlay ── */}
+      <AnimatePresence>
+        {skipRipple && (
+          <motion.div
+            key={skipRipple.key}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35 }}
+            className={`absolute top-0 bottom-0 ${skipRipple.side === 'right' ? 'right-0' : 'left-0'} w-[30%] flex items-center justify-center pointer-events-none`}
+          >
+            <div className="flex flex-col items-center gap-1">
+              <motion.div
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 1.2, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center"
+              >
+                {skipRipple.side === 'right'
+                  ? <SkipForward className="w-6 h-6 text-white" />
+                  : <SkipBack className="w-6 h-6 text-white" />
+                }
+              </motion.div>
+              <motion.span
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-white text-xs font-bold"
+              >
+                {skipRipple.seconds}s
+              </motion.span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {isBuffering && !playbackError && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -810,9 +909,27 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
 
               {/* Controls Row */}
               <div className="flex items-center justify-between text-white">
-                <div className="flex items-center gap-3 sm:gap-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  {/* Skip backward 10s */}
+                  <button
+                    onClick={() => skipBy(-10)}
+                    className="hover:text-brand-mint transition-colors p-1 hidden sm:block"
+                    title="Rewind 10s"
+                  >
+                    <SkipBack className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </button>
+
                   <button onClick={togglePlay} className="hover:text-brand-mint transition-colors p-1">
                     {playing ? <Pause className="w-5 h-5 sm:w-6 sm:h-6 fill-current" /> : <Play className="w-5 h-5 sm:w-6 sm:h-6 fill-current" />}
+                  </button>
+
+                  {/* Skip forward 10s */}
+                  <button
+                    onClick={() => skipBy(10)}
+                    className="hover:text-brand-mint transition-colors p-1 hidden sm:block"
+                    title="Forward 10s"
+                  >
+                    <SkipForward className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                   
                   {showVolumeControl && (
