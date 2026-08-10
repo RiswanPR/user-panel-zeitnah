@@ -153,29 +153,92 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     skipRippleTimerRef.current = setTimeout(() => setSkipRipple(null), 700);
   }, []);
 
+  // Ref tracking pseudo fullscreen status for fallback when native APIs fail or are unsupported
+  const isPseudoFullscreenRef = useRef(false);
+
+  // Helper to check if currently in native or webkit fullscreen
+  const getIsNativeFullscreen = useCallback(() => {
+    const video = videoRef.current;
+    return !!(
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement ||
+      (video && video.webkitDisplayingFullscreen)
+    );
+  }, []);
+
   const toggleFullscreen = useCallback(() => {
     const el = containerRef.current;
+    const video = videoRef.current;
     if (!el) return;
 
-    const isFullscreenNow =
-      document.fullscreenElement ||
-      document.webkitFullscreenElement;
+    const isNative = getIsNativeFullscreen();
+    const isPseudo = isPseudoFullscreenRef.current;
+    const isCurrentlyFS = isNative || isPseudo;
 
-    if (!isFullscreenNow) {
-      // Try standard API first, then webkit prefix (Safari/iOS)
-      if (el.requestFullscreen) {
-        el.requestFullscreen().catch(() => {});
-      } else if (el.webkitRequestFullscreen) {
-        el.webkitRequestFullscreen();
-      }
-    } else {
+    if (isCurrentlyFS) {
+      // ── EXIT FULLSCREEN ──
+      isPseudoFullscreenRef.current = false;
+      setIsFullscreen(false);
+      document.body.style.overflow = '';
+
       if (document.exitFullscreen) {
         document.exitFullscreen().catch(() => {});
       } else if (document.webkitExitFullscreen) {
         document.webkitExitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      } else if (video && video.webkitExitFullscreen) {
+        video.webkitExitFullscreen();
+      }
+
+      if (window.screen && window.screen.orientation && window.screen.orientation.unlock) {
+        try { window.screen.orientation.unlock(); } catch (e) {}
+      }
+    } else {
+      // ── ENTER FULLSCREEN ──
+      let nativePromise = null;
+
+      if (el.requestFullscreen) {
+        nativePromise = el.requestFullscreen();
+      } else if (el.webkitRequestFullscreen) {
+        try { el.webkitRequestFullscreen(); } catch (e) {}
+      } else if (el.mozRequestFullScreen) {
+        try { el.mozRequestFullScreen(); } catch (e) {}
+      } else if (el.msRequestFullscreen) {
+        try { el.msRequestFullscreen(); } catch (e) {}
+      } else if (video && video.webkitEnterFullscreen) {
+        // iOS iPhone native video player fullscreen
+        try { video.webkitEnterFullscreen(); } catch (e) {}
+      }
+
+      if (nativePromise && typeof nativePromise.catch === 'function') {
+        nativePromise.catch(() => {
+          // Native fullscreen rejected (e.g. WebView permissions, user gesture rules) — fall back to pseudo-fullscreen
+          isPseudoFullscreenRef.current = true;
+          setIsFullscreen(true);
+          document.body.style.overflow = 'hidden';
+        });
+      } else {
+        // Double check after a tick if native fullscreen activated; if not, activate pseudo-fullscreen
+        setTimeout(() => {
+          if (!getIsNativeFullscreen()) {
+            isPseudoFullscreenRef.current = true;
+            setIsFullscreen(true);
+            document.body.style.overflow = 'hidden';
+          }
+        }, 100);
+      }
+
+      // Try orientation lock on mobile devices (optional enhancement)
+      if (window.screen && window.screen.orientation && window.screen.orientation.lock) {
+        window.screen.orientation.lock('landscape').catch(() => {});
       }
     }
-  }, []);
+  }, [getIsNativeFullscreen]);
 
   const toggleMute = useCallback(() => setMuted(prev => !prev), []);
 
@@ -606,17 +669,49 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
 
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(
-        !!(document.fullscreenElement || document.webkitFullscreenElement)
-      );
+      const isNative = getIsNativeFullscreen();
+      if (!isNative && !isPseudoFullscreenRef.current) {
+        setIsFullscreen(false);
+        document.body.style.overflow = '';
+      } else {
+        setIsFullscreen(true);
+        document.body.style.overflow = 'hidden';
+      }
     };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isPseudoFullscreenRef.current) {
+        isPseudoFullscreenRef.current = false;
+        setIsFullscreen(false);
+        document.body.style.overflow = '';
+      }
+    };
+
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    document.addEventListener('keydown', handleKeyDown);
+
+    const video = videoRef.current;
+    if (video) {
+      video.addEventListener('webkitbeginfullscreen', handleFullscreenChange);
+      video.addEventListener('webkitendfullscreen', handleFullscreenChange);
+    }
+
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+      document.removeEventListener('keydown', handleKeyDown);
+      if (video) {
+        video.removeEventListener('webkitbeginfullscreen', handleFullscreenChange);
+        video.removeEventListener('webkitendfullscreen', handleFullscreenChange);
+      }
+      document.body.style.overflow = '';
     };
-  }, []);
+  }, [getIsNativeFullscreen]);
 
 
 
@@ -788,7 +883,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
   return (
     <div 
       ref={containerRef}
-      className={`relative w-full h-full bg-black overflow-hidden select-none group font-sans ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}
+      className={`relative w-full h-full bg-black overflow-hidden select-none group font-sans ${isFullscreen ? 'fixed inset-0 z-[9999] bg-black' : ''}`}
       // Desktop: double-click for fullscreen (no conflict since click is on <video>)
       // Touch: handled by handleVideoTap disambiguation
       onDoubleClick={IS_TOUCH ? undefined : toggleFullscreen}
