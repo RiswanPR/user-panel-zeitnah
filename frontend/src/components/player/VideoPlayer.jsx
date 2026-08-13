@@ -32,7 +32,10 @@ function createHlsConfig() {
     maxBufferLength: 30,
     maxMaxBufferLength: 600,
     maxBufferSize: 120 * 1000000,
-    maxBufferHole: 0.5,
+    maxBufferHole: 0.8,
+    maxSeekHole: 2,
+    nudgeOffset: 0.1,
+    nudgeMaxRetry: 5,
     backBufferLength: 30,
     startLevel: -1,
     abrEwmaDefaultEstimate: 500000,
@@ -88,6 +91,12 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
   const stallWatchdogRef = useRef(null);
   const rebuildTimeoutRef = useRef(null);
   const eventTimelineRef = useRef([]);
+
+  // Deep Diagnostic Refs for Root-Cause Analysis & Repeated Failure Detection
+  const lastHlsErrorRef = useRef(null);
+  const lastRecoveryTimeRef = useRef(null);
+  const lastNativeErrorTimeRef = useRef(null);
+  const recentErrorTimestampsRef = useRef([]);
 
   useEffect(() => { initialTimeRef.current = initialTime; }, [initialTime]);
 
@@ -149,6 +158,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
 
   const logRecoveryTelemetry = useCallback((status, payload = {}) => {
     const video = videoRef.current;
+    const nowMs = Date.now();
     let bufferedRanges = [];
     if (video && video.buffered) {
       for (let i = 0; i < video.buffered.length; i++) {
@@ -173,6 +183,9 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
       networkState: video ? video.networkState : null,
       buffered: bufferedRanges.join(', '),
       visibility: document.visibilityState,
+      timeSinceLastRecovery: lastRecoveryTimeRef.current ? Number(((nowMs - lastRecoveryTimeRef.current) / 1000).toFixed(1)) : null,
+      timeSinceLastNativeError: lastNativeErrorTimeRef.current ? Number(((nowMs - lastNativeErrorTimeRef.current) / 1000).toFixed(1)) : null,
+      lastHlsError: lastHlsErrorRef.current,
       timelineSummary: eventTimelineRef.current.slice(-6).map(e => `${e.time} ${e.event}(${e.state})`).join(' -> '),
       ...payload,
     };
@@ -271,6 +284,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     }
     isRecoveringRef.current = true;
     recoveryLockTimeRef.current = now;
+    lastRecoveryTimeRef.current = now;
     if (options.resetAttempt) recoveryAttemptRef.current = 1; else recoveryAttemptRef.current += 1;
     const targetPos = options.targetTime != null ? options.targetTime : (requestedTimeRef.current != null ? requestedTimeRef.current : (video && Number.isFinite(video.currentTime) && video.currentTime > 0 ? video.currentTime : (initialTimeRef.current || 0)));
     requestedTimeRef.current = targetPos;
@@ -396,32 +410,119 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     seekTo(current + seconds, { rippleSeconds: seconds });
   }, [seekTo, currentTime]);
 
+  const isPseudoFullscreenRef = useRef(false);
+
   const getIsNativeFullscreen = useCallback(() => {
     const video = videoRef.current;
-    return !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || (video && video.webkitDisplayingFullscreen));
+    return !!(
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement ||
+      (video && (video.webkitDisplayingFullscreen || video.webkitSupportsFullscreen && video.webkitDisplayingFullscreen))
+    );
   }, []);
 
   const toggleFullscreen = useCallback(() => {
-    const el = containerRef.current;
-    if (!el) return;
+    const container = containerRef.current;
+    const video = videoRef.current;
+    if (!container || !video) return;
+
     const isCurrentlyFS = getIsNativeFullscreen() || isPseudoFullscreenRef.current;
+
     if (isCurrentlyFS) {
       isPseudoFullscreenRef.current = false;
       setIsFullscreen(false);
       document.body.style.overflow = '';
-      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
-      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      } else if (document.webkitFullscreenElement && document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (video.webkitDisplayingFullscreen && typeof video.webkitExitFullscreen === 'function') {
+        try { video.webkitExitFullscreen(); } catch (e) {}
+      }
     } else {
-      let nativePromise = el.requestFullscreen ? el.requestFullscreen() : null;
-      if (nativePromise && typeof nativePromise.catch === 'function') {
-        nativePromise.catch(() => { isPseudoFullscreenRef.current = true; setIsFullscreen(true); document.body.style.overflow = 'hidden'; });
+      // Priority 1: Standard Element requestFullscreen (Android, Desktop, iPad OS)
+      if (typeof container.requestFullscreen === 'function') {
+        container.requestFullscreen().catch(() => {
+          if (typeof video.webkitEnterFullscreen === 'function') {
+            try { video.webkitEnterFullscreen(); setIsFullscreen(true); } catch (e) {}
+          } else {
+            isPseudoFullscreenRef.current = true;
+            setIsFullscreen(true);
+            document.body.style.overflow = 'hidden';
+          }
+        });
+      } else if (typeof video.webkitEnterFullscreen === 'function') {
+        // Priority 2: iOS iPhone Native Video Fullscreen
+        try {
+          video.webkitEnterFullscreen();
+          setIsFullscreen(true);
+        } catch (e) {
+          isPseudoFullscreenRef.current = true;
+          setIsFullscreen(true);
+          document.body.style.overflow = 'hidden';
+        }
+      } else if (typeof container.webkitRequestFullscreen === 'function') {
+        // Priority 3: WebKit Container requestFullscreen
+        try {
+          container.webkitRequestFullscreen();
+        } catch (e) {
+          isPseudoFullscreenRef.current = true;
+          setIsFullscreen(true);
+          document.body.style.overflow = 'hidden';
+        }
       } else {
-        setTimeout(() => { if (!getIsNativeFullscreen()) { isPseudoFullscreenRef.current = true; setIsFullscreen(true); document.body.style.overflow = 'hidden'; } }, 100);
+        // Priority 4: Pseudo Fullscreen Fallback
+        isPseudoFullscreenRef.current = true;
+        setIsFullscreen(true);
+        document.body.style.overflow = 'hidden';
       }
     }
   }, [getIsNativeFullscreen]);
 
-  const isPseudoFullscreenRef = useRef(false);
+  useEffect(() => {
+    const video = videoRef.current;
+    const handleFSChange = () => {
+      const isFS = getIsNativeFullscreen() || isPseudoFullscreenRef.current;
+      setIsFullscreen(isFS);
+      if (!isFS) {
+        isPseudoFullscreenRef.current = false;
+        document.body.style.overflow = '';
+      }
+    };
+
+    const handleIOSBeginFS = () => {
+      setIsFullscreen(true);
+      recordEvent('ios_begin_fullscreen');
+    };
+
+    const handleIOSEndFS = () => {
+      setIsFullscreen(false);
+      isPseudoFullscreenRef.current = false;
+      document.body.style.overflow = '';
+      recordEvent('ios_end_fullscreen');
+    };
+
+    document.addEventListener('fullscreenchange', handleFSChange);
+    document.addEventListener('webkitfullscreenchange', handleFSChange);
+
+    if (video) {
+      video.addEventListener('webkitbeginfullscreen', handleIOSBeginFS);
+      video.addEventListener('webkitendfullscreen', handleIOSEndFS);
+    }
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFSChange);
+      document.removeEventListener('webkitfullscreenchange', handleFSChange);
+      if (video) {
+        video.removeEventListener('webkitbeginfullscreen', handleIOSBeginFS);
+        video.removeEventListener('webkitendfullscreen', handleIOSEndFS);
+      }
+    };
+  }, [getIsNativeFullscreen, recordEvent]);
+
   const toggleMute = useCallback(() => setMuted(prev => !prev), []);
 
   const handleVideoTap = useCallback((e) => {
@@ -545,7 +646,21 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
       const hls = new Hls(createHlsConfig()); hlsRef.current = hls; hls.loadSource(src); hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => { const r = initialTimeRef.current; if (r > 0) try { video.currentTime = r; } catch (e) {} });
       hls.on(Hls.Events.ERROR, (_e, data) => {
-        recordEvent('hls_error', { type: data.type, details: data.details, fatal: data.fatal });
+        let fragUrl = null;
+        if (data.frag?.url) fragUrl = data.frag.url.split('?')[0];
+        else if (data.response?.url) fragUrl = data.response.url.split('?')[0];
+
+        lastHlsErrorRef.current = {
+          timestamp: new Date().toISOString(),
+          type: data.type,
+          details: data.details,
+          fatal: data.fatal,
+          url: fragUrl,
+          reason: data.reason || null,
+          error: data.error ? (data.error.message || String(data.error)) : null,
+        };
+
+        recordEvent('hls_error', { type: data.type, details: data.details, fatal: data.fatal, fragUrl });
         if (data.fatal) {
           if (data.type === Hls.ErrorTypes.NETWORK_ERROR) { logRecoveryTelemetry('HLS_FATAL_NETWORK_ERROR', { details: data.details }); executeRecovery('hls-fatal-network-error', { forceLevel: 1 }); }
           else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) { logRecoveryTelemetry('HLS_FATAL_MEDIA_ERROR', { details: data.details }); executeRecovery('hls-fatal-media-error', { forceLevel: 2 }); }
@@ -585,10 +700,52 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
   };
 
   const handleVideoError = useCallback(() => {
-    const error = videoRef.current?.error;
+    const video = videoRef.current;
+    const error = video?.error;
     if (!error || error.code === 1) return;
-    recordEvent('native_video_error', { code: error.code, message: error.message });
-    logRecoveryTelemetry('NATIVE_VIDEO_ERROR', { code: error.code, message: error.message });
+
+    const nowMs = Date.now();
+    const timeSinceLastNative = lastNativeErrorTimeRef.current ? Number(((nowMs - lastNativeErrorTimeRef.current) / 1000).toFixed(1)) : null;
+    const timeSinceLastRecovery = lastRecoveryTimeRef.current ? Number(((nowMs - lastRecoveryTimeRef.current) / 1000).toFixed(1)) : null;
+    lastNativeErrorTimeRef.current = nowMs;
+
+    recentErrorTimestampsRef.current = recentErrorTimestampsRef.current.filter(ts => (nowMs - ts) < 300000);
+    recentErrorTimestampsRef.current.push(nowMs);
+
+    const errorPayload = {
+      mediaErrorCode: error.code,
+      mediaErrorMessage: error.message,
+      currentSrc: video.currentSrc ? video.currentSrc.split('?')[0] : null,
+      currentTime: Number(video.currentTime.toFixed(2)),
+      duration: Number(video.duration.toFixed(2)),
+      readyState: video.readyState,
+      networkState: video.networkState,
+      paused: video.paused,
+      seeking: video.seeking,
+      buffered: eventTimelineRef.current.slice(-1)[0]?.buffered || [],
+      playbackRate: video.playbackRate,
+      visibilityState: document.visibilityState,
+      hlsState: hlsRef.current ? {
+        attached: !!hlsRef.current.media,
+        currentLevel: hlsRef.current.currentLevel,
+        nextAutoLevel: hlsRef.current.nextAutoLevel,
+        loadLevel: hlsRef.current.loadLevel,
+      } : null,
+      lastHlsError: lastHlsErrorRef.current,
+      timeSinceLastNativeError: timeSinceLastNative,
+      timeSinceLastRecovery: timeSinceLastRecovery,
+    };
+
+    recordEvent('native_video_error', errorPayload);
+    logRecoveryTelemetry('NATIVE_VIDEO_ERROR', errorPayload);
+
+    if (recentErrorTimestampsRef.current.length >= 3) {
+      logRecoveryTelemetry('REPEATED_MEDIA_FAILURE', {
+        failureCountIn5Min: recentErrorTimestampsRef.current.length,
+        ...errorPayload,
+      });
+    }
+
     executeRecovery('native-video-error', { forceLevel: 3 });
   }, [recordEvent, logRecoveryTelemetry, executeRecovery]);
 
