@@ -8,11 +8,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-// Detect any touch device
 const IS_TOUCH = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-// ── Shared HLS configuration ──
-// Single source of truth for all HLS instances (initial load + retry)
+export const PLAYER_STATES = {
+  IDLE: 'IDLE',
+  PLAYING: 'PLAYING',
+  BUFFERING: 'BUFFERING',
+  SEEKING: 'SEEKING',
+  RECOVERING_SOFT: 'RECOVERING_SOFT',
+  RECOVERING_MEDIA: 'RECOVERING_MEDIA',
+  REBUILDING: 'REBUILDING',
+  FATAL: 'FATAL',
+};
+
 function createHlsConfig() {
   return {
     xhrSetup: (xhr, url) => {
@@ -21,36 +29,27 @@ function createHlsConfig() {
         xhr.setRequestHeader('Authorization', `Bearer ${currentToken}`);
       }
     },
-    // ── Buffer management ──
-    maxBufferLength: 30,           // Buffer up to 30s ahead
-    maxMaxBufferLength: 600,       // Allow up to 10 min max buffer
-    maxBufferSize: 120 * 1000000,  // 120MB memory cap for buffer
-    maxBufferHole: 0.5,            // Tolerate 0.5s gaps in buffer
-    backBufferLength: 30,          // Keep only 30s of played-back buffer
-
-    // ── ABR (Adaptive Bitrate) ──
-    startLevel: -1,                        // Auto-detect best starting quality
-    abrEwmaDefaultEstimate: 500000,        // 500kbps conservative initial estimate
-    abrEwmaDefaultEstimateMax: 5000000,    // 5Mbps max estimate
-    abrBandWidthFactor: 0.95,              // Use 95% of measured bandwidth
-    abrBandWidthUpFactor: 0.7,             // Be cautious upgrading quality
-    testBandwidth: true,                   // Measure bandwidth actively
-
-    // ── Stall recovery ──
-    maxStarvationDelay: 2,   // Downgrade quality after 2s stall (default 4s)
-    maxLoadingDelay: 4,      // Timeout slow segments after 4s
-    lowLatencyMode: false,   // VOD, not live
-
-    // ── Segment loading resilience ──
-    fragLoadingTimeOut: 20000,     // 20s timeout per segment
-    fragLoadingMaxRetry: 6,        // Retry failed segments 6 times
-    fragLoadingRetryDelay: 1000,   // 1s delay between retries
-    levelLoadingTimeOut: 10000,    // 10s timeout for level playlists
-    levelLoadingMaxRetry: 4,       // Retry level playlists 4 times
-
-    // ── Performance ──
-    enableWorker: true,     // Parse segments off main thread
-    progressive: true,      // Start playback before full segment download
+    maxBufferLength: 30,
+    maxMaxBufferLength: 600,
+    maxBufferSize: 120 * 1000000,
+    maxBufferHole: 0.5,
+    backBufferLength: 30,
+    startLevel: -1,
+    abrEwmaDefaultEstimate: 500000,
+    abrEwmaDefaultEstimateMax: 5000000,
+    abrBandWidthFactor: 0.95,
+    abrBandWidthUpFactor: 0.7,
+    testBandwidth: true,
+    maxStarvationDelay: 2,
+    maxLoadingDelay: 4,
+    lowLatencyMode: false,
+    fragLoadingTimeOut: 20000,
+    fragLoadingMaxRetry: 6,
+    fragLoadingRetryDelay: 1000,
+    levelLoadingTimeOut: 10000,
+    levelLoadingMaxRetry: 4,
+    enableWorker: true,
+    progressive: true,
   };
 }
 
@@ -60,41 +59,38 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
   const hlsRef = useRef(null);
   const initialTimeRef = useRef(initialTime);
 
-  // Single-tap / double-tap disambiguation refs
   const tapTimerRef = useRef(null);
   const tapCountRef = useRef(0);
-
-  // Fast-forward / rewind ripple animation state
-  // { side: 'left'|'right', seconds: number, key: number } or null
   const [skipRipple, setSkipRipple] = useState(null);
   const skipRippleTimerRef = useRef(null);
-
-  // Long-press-to-2x refs (touch only)
   const longPressTimerRef = useRef(null);
   const longPressActiveRef = useRef(false);
   const savedRateRef = useRef(1);
 
-  // HLS recovery retry counters
-  const networkRetryRef = useRef(0);
-  const mediaRetryRef = useRef(0);
-  const MAX_NETWORK_RETRIES = 3;
-  const MAX_MEDIA_RETRIES = 2;
+  const [playerState, setPlayerState] = useState(PLAYER_STATES.IDLE);
+  const playerStateRef = useRef(PLAYER_STATES.IDLE);
 
-  // Stall watchdog refs
+  const setPlayerStateSync = useCallback((newState) => {
+    playerStateRef.current = newState;
+    setPlayerState(newState);
+  }, []);
+
+  const recoveryLevelRef = useRef(0);
+  const recoveryAttemptRef = useRef(0);
+  const recoveryGenerationRef = useRef(0);
+  const isRecoveringRef = useRef(false);
+  const recoveryLockTimeRef = useRef(0);
+  const lastSuccessfulTimeRef = useRef(0);
+  const verificationStartPosRef = useRef(null);
+  const verificationStartTimeRef = useRef(0);
+  const requestedTimeRef = useRef(null);
+  const wasPlayingRef = useRef(false);
   const stallWatchdogRef = useRef(null);
-  const stallRecoveryCountRef = useRef(0);
-  const MAX_STALL_RECOVERIES = 2;
+  const rebuildTimeoutRef = useRef(null);
+  const eventTimelineRef = useRef([]);
 
-  // Native HLS (Safari) retry refs
-  const nativeRetryRef = useRef(0);
-  const MAX_NATIVE_RETRIES = 2;
+  useEffect(() => { initialTimeRef.current = initialTime; }, [initialTime]);
 
-  // Keep ref in sync but don't trigger re-renders
-  useEffect(() => {
-    initialTimeRef.current = initialTime;
-  }, [initialTime]);
-
-  
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -106,177 +102,345 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
   const [isBuffering, setIsBuffering] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showSettings, setShowSettings] = useState(false);
-  
   const [isDevToolsOpen, setIsDevToolsOpen] = useState(false);
   const [playbackError, setPlaybackError] = useState(false);
-  // Tracks error type for differentiated UI messages
-  const [errorType, setErrorType] = useState('unknown'); // 'network' | 'media' | 'unknown'
-  // Auto-retry countdown (seconds remaining); null = no countdown active
+  const [errorType, setErrorType] = useState('unknown');
   const [autoRetryCountdown, setAutoRetryCountdown] = useState(null);
-  // Network offline indicator
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
-  // Refs mirroring state for use inside event handlers (avoids stale closures)
   const playbackErrorRef = useRef(false);
   const errorTypeRef = useRef('unknown');
   useEffect(() => { playbackErrorRef.current = playbackError; }, [playbackError]);
   useEffect(() => { errorTypeRef.current = errorType; }, [errorType]);
 
-  // Keep playbackRate in a ref so the HLS callback can read the latest value
   const playbackRateRef = useRef(playbackRate);
   useEffect(() => { playbackRateRef.current = playbackRate; }, [playbackRate]);
+
+  const recordEvent = useCallback((eventName, extra = {}) => {
+    const video = videoRef.current;
+    const now = new Date().toISOString().substring(11, 19);
+    let bufferedRanges = [];
+    if (video && video.buffered) {
+      for (let i = 0; i < video.buffered.length; i++) {
+        try {
+          bufferedRanges.push({
+            start: Number(video.buffered.start(i).toFixed(1)),
+            end: Number(video.buffered.end(i).toFixed(1)),
+          });
+        } catch (e) {}
+      }
+    }
+    const entry = {
+      time: now,
+      event: eventName,
+      currentTime: video ? Number(video.currentTime.toFixed(2)) : null,
+      readyState: video ? video.readyState : null,
+      networkState: video ? video.networkState : null,
+      paused: video ? video.paused : null,
+      videoError: video && video.error ? { code: video.error.code, message: video.error.message } : null,
+      buffered: bufferedRanges,
+      state: playerStateRef.current,
+      gen: recoveryGenerationRef.current,
+      ...extra,
+    };
+    eventTimelineRef.current.push(entry);
+    if (eventTimelineRef.current.length > 25) eventTimelineRef.current.shift();
+  }, []);
+
+  const logRecoveryTelemetry = useCallback((status, payload = {}) => {
+    const video = videoRef.current;
+    let bufferedRanges = [];
+    if (video && video.buffered) {
+      for (let i = 0; i < video.buffered.length; i++) {
+        try {
+          bufferedRanges.push(`[${video.buffered.start(i).toFixed(1)}s - ${video.buffered.end(i).toFixed(1)}s]`);
+        } catch (e) {}
+      }
+    }
+    const logData = {
+      tag: `[VideoPlayer Recovery] ${status}`,
+      timestamp: new Date().toISOString(),
+      status,
+      state: playerStateRef.current,
+      generation: recoveryGenerationRef.current,
+      attempt: recoveryAttemptRef.current,
+      level: recoveryLevelRef.current,
+      currentTime: video ? Number(video.currentTime.toFixed(2)) : null,
+      targetTime: requestedTimeRef.current,
+      wasPlaying: wasPlayingRef.current,
+      videoError: video && video.error ? { code: video.error.code, message: video.error.message } : null,
+      readyState: video ? video.readyState : null,
+      networkState: video ? video.networkState : null,
+      buffered: bufferedRanges.join(', '),
+      visibility: document.visibilityState,
+      timelineSummary: eventTimelineRef.current.slice(-6).map(e => `${e.time} ${e.event}(${e.state})`).join(' -> '),
+      ...payload,
+    };
+    console.warn(logData.tag, logData);
+  }, []);
+
+  let executeRecovery;
+
+  const rebuildPlayerPipeline = useCallback((targetTime, shouldPlay = false, generation) => {
+    logRecoveryTelemetry('HARD_REBUILD_START', { targetTime, shouldPlay, generation });
+    setPlayerStateSync(PLAYER_STATES.REBUILDING);
+    if (rebuildTimeoutRef.current) clearTimeout(rebuildTimeoutRef.current);
+    const video = videoRef.current;
+    if (video) try { video.pause(); } catch (e) {}
+    if (hlsRef.current) {
+      try { hlsRef.current.detachMedia(); hlsRef.current.destroy(); } catch (e) {}
+      hlsRef.current = null;
+    }
+    if (!video || !src) { isRecoveringRef.current = false; return; }
+    try { video.removeAttribute('src'); video.load(); } catch (e) {}
+    rebuildTimeoutRef.current = setTimeout(() => {
+      if (generation !== recoveryGenerationRef.current) return;
+      logRecoveryTelemetry('HARD_REBUILD_TIMEOUT', { generation, attempt: recoveryAttemptRef.current });
+      if (recoveryAttemptRef.current < 2) {
+        executeRecovery('rebuild-timeout-retry', { forceLevel: 3, targetTime: requestedTimeRef.current, wasPlaying: shouldPlay });
+      } else {
+        setPlayerStateSync(PLAYER_STATES.FATAL);
+        setErrorType('media');
+        setPlaybackError(true);
+        isRecoveringRef.current = false;
+      }
+    }, 15000);
+    setTimeout(() => {
+      if (generation !== recoveryGenerationRef.current || !videoRef.current || !src) return;
+      const currentVideo = videoRef.current;
+      if (Hls.isSupported() && src.endsWith('.m3u8')) {
+        const hls = new Hls(createHlsConfig());
+        hlsRef.current = hls;
+        hls.loadSource(src);
+        hls.attachMedia(currentVideo);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          if (generation !== recoveryGenerationRef.current) return;
+          const activeTarget = requestedTimeRef.current != null ? requestedTimeRef.current : targetTime;
+          if (activeTarget > 0 && Number.isFinite(activeTarget)) try { currentVideo.currentTime = activeTarget; } catch (e) {}
+          if (playbackRateRef.current !== 1) currentVideo.playbackRate = playbackRateRef.current;
+          if (shouldPlay) {
+            currentVideo.play().catch(err => logRecoveryTelemetry('HARD_REBUILD_PLAY_PREVENTED', { error: err.message }));
+          } else {
+            try { currentVideo.pause(); } catch (e) {}
+          }
+        });
+        hls.on(Hls.Events.ERROR, (_event, data) => {
+          if (generation !== recoveryGenerationRef.current) return;
+          if (data.fatal) {
+            logRecoveryTelemetry('HARD_REBUILD_HLS_FATAL', { type: data.type, details: data.details });
+            if (rebuildTimeoutRef.current) clearTimeout(rebuildTimeoutRef.current);
+            if (recoveryAttemptRef.current < 2) {
+              executeRecovery('hls-fatal-rebuild-retry', { forceLevel: 3, targetTime: requestedTimeRef.current, wasPlaying: shouldPlay });
+            } else {
+              setPlayerStateSync(PLAYER_STATES.FATAL);
+              setErrorType(data.type === Hls.ErrorTypes.NETWORK_ERROR ? 'network' : 'media');
+              setPlaybackError(true);
+              try { hls.destroy(); } catch (e) {}
+              hlsRef.current = null;
+              isRecoveringRef.current = false;
+            }
+          }
+        });
+      } else {
+        currentVideo.src = src;
+        currentVideo.load();
+        currentVideo.addEventListener('loadedmetadata', () => {
+          if (generation !== recoveryGenerationRef.current) return;
+          const activeTarget = requestedTimeRef.current != null ? requestedTimeRef.current : targetTime;
+          if (activeTarget > 0 && Number.isFinite(activeTarget)) try { currentVideo.currentTime = activeTarget; } catch (e) {}
+          if (playbackRateRef.current !== 1) currentVideo.playbackRate = playbackRateRef.current;
+          if (shouldPlay) {
+            currentVideo.play().catch(() => {});
+          } else {
+            try { currentVideo.pause(); } catch (e) {}
+          }
+        }, { once: true });
+      }
+    }, 150);
+  }, [src, logRecoveryTelemetry, setPlayerStateSync]);
+
+  executeRecovery = useCallback((cause, options = {}) => {
+    const video = videoRef.current;
+    const hls = hlsRef.current;
+    const now = Date.now();
+    recoveryGenerationRef.current += 1;
+    const generation = recoveryGenerationRef.current;
+    if (isRecoveringRef.current && (now - recoveryLockTimeRef.current < 12000) && !options.forceLevel) {
+      logRecoveryTelemetry('RECOVERY_BLOCKED_CONCURRENT', { cause, generation });
+      return;
+    }
+    isRecoveringRef.current = true;
+    recoveryLockTimeRef.current = now;
+    if (options.resetAttempt) recoveryAttemptRef.current = 1; else recoveryAttemptRef.current += 1;
+    const targetPos = options.targetTime != null ? options.targetTime : (requestedTimeRef.current != null ? requestedTimeRef.current : (video && Number.isFinite(video.currentTime) && video.currentTime > 0 ? video.currentTime : (initialTimeRef.current || 0)));
+    requestedTimeRef.current = targetPos;
+    if (options.wasPlaying != null) wasPlayingRef.current = options.wasPlaying; else if (video) wasPlayingRef.current = !video.paused;
+    let level = options.forceLevel || 1;
+    if (!options.forceLevel) {
+      if (recoveryAttemptRef.current === 1) level = 1;
+      else if (recoveryAttemptRef.current === 2) level = 2;
+      else if (recoveryAttemptRef.current >= 3 && recoveryAttemptRef.current <= 4) level = 3;
+      else level = 4;
+    }
+    if (video && video.error && video.error.code === 4 && level < 3) level = 3;
+    recoveryLevelRef.current = level;
+    logRecoveryTelemetry('RECOVERY_EXECUTE', { cause, level, attempt: recoveryAttemptRef.current, targetTime: targetPos, generation });
+    if (level === 1) {
+      setPlayerStateSync(PLAYER_STATES.RECOVERING_SOFT);
+      if (hls) {
+        const nudge = targetPos + 0.1;
+        if (video && Number.isFinite(nudge) && nudge < (video.duration || Infinity)) try { video.currentTime = nudge; } catch (e) {}
+        try { hls.startLoad(); } catch (e) {}
+      } else if (video) {
+        try {
+          const nudge = targetPos + 0.1;
+          if (Number.isFinite(nudge) && nudge < (video.duration || Infinity)) video.currentTime = nudge;
+        } catch (e) {}
+      }
+      setTimeout(() => { if (generation === recoveryGenerationRef.current) isRecoveringRef.current = false; }, 3000);
+    } else if (level === 2) {
+      setPlayerStateSync(PLAYER_STATES.RECOVERING_MEDIA);
+      if (hls) try { hls.recoverMediaError(); } catch (e) {} else if (video) {
+        try {
+          video.load();
+          video.addEventListener('loadedmetadata', () => {
+            if (generation !== recoveryGenerationRef.current) return;
+            if (requestedTimeRef.current > 0) video.currentTime = requestedTimeRef.current;
+            if (wasPlayingRef.current) video.play().catch(() => {});
+          }, { once: true });
+        } catch (e) {}
+      }
+      setTimeout(() => { if (generation === recoveryGenerationRef.current) isRecoveringRef.current = false; }, 4000);
+    } else if (level === 3) rebuildPlayerPipeline(targetPos, wasPlayingRef.current, generation);
+    else {
+      setPlayerStateSync(PLAYER_STATES.FATAL);
+      logRecoveryTelemetry('RECOVERY_FATAL_UI', { cause });
+      const isNet = cause.includes('network') || (video && video.error && video.error.code === 2);
+      setErrorType(isNet ? 'network' : 'media');
+      setPlaybackError(true);
+      isRecoveringRef.current = false;
+    }
+  }, [logRecoveryTelemetry, rebuildPlayerPipeline, setPlayerStateSync]);
+
+  const seekTo = useCallback((targetTime, options = {}) => {
+    const video = videoRef.current;
+    if (!video || !Number.isFinite(targetTime)) return;
+    const validDuration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : Infinity;
+    const clampedTarget = Math.max(0, Math.min(validDuration, targetTime));
+    if (stallWatchdogRef.current) { clearTimeout(stallWatchdogRef.current); stallWatchdogRef.current = null; }
+    recoveryGenerationRef.current += 1;
+    const generation = recoveryGenerationRef.current;
+    requestedTimeRef.current = clampedTarget;
+    wasPlayingRef.current = options.shouldPlay != null ? options.shouldPlay : !video.paused;
+    setCurrentTime(clampedTarget);
+    setPlayerStateSync(PLAYER_STATES.SEEKING);
+    recordEvent('user_seek', { targetTime: clampedTarget, options });
+
+    // Pipeline health check: readyState < 1 alone is NOT fatal unless accompanied by video.error, missing HLS, or FATAL state
+    const isHlsMissing = !hlsRef.current && Hls.isSupported() && src?.endsWith('.m3u8');
+    const isPipUnhealthy = !!video.error || isHlsMissing || playerStateRef.current === PLAYER_STATES.FATAL;
+
+    if (isPipUnhealthy || options.forceRebuild) {
+      if (playbackErrorRef.current) { setPlaybackError(false); setErrorType('unknown'); }
+      executeRecovery('user-seek-unhealthy-pipeline', { forceLevel: 3, targetTime: clampedTarget, wasPlaying: wasPlayingRef.current, resetAttempt: true });
+    } else {
+      try {
+        video.currentTime = clampedTarget;
+        if (hlsRef.current && (isBuffering || video.paused)) hlsRef.current.startLoad();
+        setTimeout(() => {
+          if (generation === recoveryGenerationRef.current) {
+            setPlayerStateSync(video.paused && !wasPlayingRef.current ? PLAYER_STATES.IDLE : PLAYER_STATES.PLAYING);
+          }
+        }, 500);
+      } catch (e) {
+        recordEvent('seek_exception', { error: e.message });
+        executeRecovery('user-seek-exception', { forceLevel: 3, targetTime: clampedTarget, wasPlaying: wasPlayingRef.current });
+      }
+    }
+    if (options.rippleSeconds != null) {
+      clearTimeout(skipRippleTimerRef.current);
+      setSkipRipple({ side: options.rippleSeconds > 0 ? 'right' : 'left', seconds: Math.abs(options.rippleSeconds), key: Date.now() });
+      skipRippleTimerRef.current = setTimeout(() => setSkipRipple(null), 700);
+    }
+  }, [recordEvent, executeRecovery, isBuffering, setPlayerStateSync]);
+
+  const handleSeek = useCallback((e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const targetTime = pos * (duration || 0);
+    seekTo(targetTime);
+  }, [duration, seekTo]);
+
+  const formatTime = (seconds) => {
+    if (!seconds || isNaN(seconds)) return '00:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
 
   const togglePlay = useCallback(() => {
     if (!videoRef.current) return;
     if (videoRef.current.paused) {
-      const playPromise = videoRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(error => {
-          // Play was interrupted by a call to pause() or auto-play was prevented.
-          console.log('Playback interrupted:', error);
-        });
-      }
+      recordEvent('toggle_play');
+      videoRef.current.play().catch(e => console.log('Playback interrupted:', e));
     } else {
+      recordEvent('toggle_pause');
       videoRef.current.pause();
     }
-  }, []);
+  }, [recordEvent]);
 
-  // ── Skip forward / backward (optimised — single fn, no state deps) ──
   const skipBy = useCallback((seconds) => {
     const video = videoRef.current;
-    if (!video || !Number.isFinite(video.duration)) return;
-    const target = Math.max(0, Math.min(video.duration, video.currentTime + seconds));
-    video.currentTime = target;
-    // Show ripple animation
-    clearTimeout(skipRippleTimerRef.current);
-    setSkipRipple({ side: seconds > 0 ? 'right' : 'left', seconds: Math.abs(seconds), key: Date.now() });
-    skipRippleTimerRef.current = setTimeout(() => setSkipRipple(null), 700);
-  }, []);
+    const current = video && Number.isFinite(video.currentTime) ? video.currentTime : (currentTime || 0);
+    seekTo(current + seconds, { rippleSeconds: seconds });
+  }, [seekTo, currentTime]);
 
-  // Ref tracking pseudo fullscreen status for fallback when native APIs fail or are unsupported
-  const isPseudoFullscreenRef = useRef(false);
-
-  // Helper to check if currently in native or webkit fullscreen
   const getIsNativeFullscreen = useCallback(() => {
     const video = videoRef.current;
-    return !!(
-      document.fullscreenElement ||
-      document.webkitFullscreenElement ||
-      document.mozFullScreenElement ||
-      document.msFullscreenElement ||
-      (video && video.webkitDisplayingFullscreen)
-    );
+    return !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || (video && video.webkitDisplayingFullscreen));
   }, []);
 
   const toggleFullscreen = useCallback(() => {
     const el = containerRef.current;
-    const video = videoRef.current;
     if (!el) return;
-
-    const isNative = getIsNativeFullscreen();
-    const isPseudo = isPseudoFullscreenRef.current;
-    const isCurrentlyFS = isNative || isPseudo;
-
+    const isCurrentlyFS = getIsNativeFullscreen() || isPseudoFullscreenRef.current;
     if (isCurrentlyFS) {
-      // ── EXIT FULLSCREEN ──
       isPseudoFullscreenRef.current = false;
       setIsFullscreen(false);
       document.body.style.overflow = '';
-
-      if (document.exitFullscreen) {
-        document.exitFullscreen().catch(() => {});
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      } else if (document.mozCancelFullScreen) {
-        document.mozCancelFullScreen();
-      } else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
-      } else if (video && video.webkitExitFullscreen) {
-        video.webkitExitFullscreen();
-      }
-
-      if (window.screen && window.screen.orientation && window.screen.orientation.unlock) {
-        try { window.screen.orientation.unlock(); } catch (e) {}
-      }
+      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
     } else {
-      // ── ENTER FULLSCREEN ──
-      let nativePromise = null;
-
-      if (el.requestFullscreen) {
-        nativePromise = el.requestFullscreen();
-      } else if (el.webkitRequestFullscreen) {
-        try { el.webkitRequestFullscreen(); } catch (e) {}
-      } else if (el.mozRequestFullScreen) {
-        try { el.mozRequestFullScreen(); } catch (e) {}
-      } else if (el.msRequestFullscreen) {
-        try { el.msRequestFullscreen(); } catch (e) {}
-      } else if (video && video.webkitEnterFullscreen) {
-        // iOS iPhone native video player fullscreen
-        try { video.webkitEnterFullscreen(); } catch (e) {}
-      }
-
+      let nativePromise = el.requestFullscreen ? el.requestFullscreen() : null;
       if (nativePromise && typeof nativePromise.catch === 'function') {
-        nativePromise.catch(() => {
-          // Native fullscreen rejected (e.g. WebView permissions, user gesture rules) — fall back to pseudo-fullscreen
-          isPseudoFullscreenRef.current = true;
-          setIsFullscreen(true);
-          document.body.style.overflow = 'hidden';
-        });
+        nativePromise.catch(() => { isPseudoFullscreenRef.current = true; setIsFullscreen(true); document.body.style.overflow = 'hidden'; });
       } else {
-        // Double check after a tick if native fullscreen activated; if not, activate pseudo-fullscreen
-        setTimeout(() => {
-          if (!getIsNativeFullscreen()) {
-            isPseudoFullscreenRef.current = true;
-            setIsFullscreen(true);
-            document.body.style.overflow = 'hidden';
-          }
-        }, 100);
-      }
-
-      // Try orientation lock on mobile devices (optional enhancement)
-      if (window.screen && window.screen.orientation && window.screen.orientation.lock) {
-        window.screen.orientation.lock('landscape').catch(() => {});
+        setTimeout(() => { if (!getIsNativeFullscreen()) { isPseudoFullscreenRef.current = true; setIsFullscreen(true); document.body.style.overflow = 'hidden'; } }, 100);
       }
     }
   }, [getIsNativeFullscreen]);
 
+  const isPseudoFullscreenRef = useRef(false);
   const toggleMute = useCallback(() => setMuted(prev => !prev), []);
 
-  // ── Single-tap vs double-tap disambiguation ──
-  // Touch: single tap = show/hide controls, double tap LEFT = rewind 10s,
-  // double tap RIGHT = forward 10s, double tap CENTER = fullscreen.
-  // Long press = 2x speed while held.
   const handleVideoTap = useCallback((e) => {
-    // Determine tap zone (left 30% / center 40% / right 30%)
     const rect = e.currentTarget.getBoundingClientRect();
     const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
     const pct = (clientX - rect.left) / rect.width;
     const zone = pct < 0.3 ? 'left' : pct > 0.7 ? 'right' : 'center';
-
     tapCountRef.current += 1;
-
     if (tapCountRef.current === 1) {
-      // Wait to see if another tap comes within 300ms
-      tapTimerRef.current = setTimeout(() => {
-        // Single tap confirmed — toggle play/pause
-        tapCountRef.current = 0;
-        togglePlay();
-      }, 300);
+      tapTimerRef.current = setTimeout(() => { tapCountRef.current = 0; togglePlay(); }, 300);
     } else if (tapCountRef.current === 2) {
-      // Double tap — cancel the pending single-tap action
       clearTimeout(tapTimerRef.current);
       tapCountRef.current = 0;
-      if (zone === 'left') {
-        skipBy(-10);
-      } else if (zone === 'right') {
-        skipBy(10);
-      } else {
-        toggleFullscreen();
-      }
+      if (zone === 'left') skipBy(-10);
+      else if (zone === 'right') skipBy(10);
+      else toggleFullscreen();
     }
   }, [togglePlay, toggleFullscreen, skipBy]);
 
-  // ── Long-press to 2x speed (touch only) ──
   const handleTouchStart = useCallback(() => {
     longPressTimerRef.current = setTimeout(() => {
       const video = videoRef.current;
@@ -284,627 +448,156 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
       longPressActiveRef.current = true;
       savedRateRef.current = video.playbackRate;
       video.playbackRate = 2;
-    }, 500); // 500ms hold = activate 2x
+    }, 500);
   }, []);
 
   const handleTouchEnd = useCallback(() => {
     clearTimeout(longPressTimerRef.current);
     if (longPressActiveRef.current) {
       longPressActiveRef.current = false;
-      const video = videoRef.current;
-      if (video) video.playbackRate = savedRateRef.current;
+      if (videoRef.current) videoRef.current.playbackRate = savedRateRef.current;
     }
   }, []);
 
-  // Cleanup tap timer on unmount
   useEffect(() => {
     return () => {
       clearTimeout(tapTimerRef.current);
       clearTimeout(skipRippleTimerRef.current);
       clearTimeout(longPressTimerRef.current);
+      if (rebuildTimeoutRef.current) clearTimeout(rebuildTimeoutRef.current);
     };
   }, []);
 
-  // Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!videoRef.current) return;
-      
       switch(e.key.toLowerCase()) {
-        case ' ':
-        case 'k':
-          e.preventDefault();
-          togglePlay();
-          break;
-        case 'f':
-          e.preventDefault();
-          toggleFullscreen();
-          break;
-        case 'm':
-          e.preventDefault();
-          toggleMute();
-          break;
-        case 'arrowright':
-          e.preventDefault();
-          skipBy(10);
-          break;
-        case 'arrowleft':
-          e.preventDefault();
-          skipBy(-10);
-          break;
-        case 'arrowup':
-          e.preventDefault();
-          setVolume(prev => Math.min(1, prev + 0.1));
-          break;
-        case 'arrowdown':
-          e.preventDefault();
-          setVolume(prev => Math.max(0, prev - 0.1));
-          break;
+        case ' ': case 'k': e.preventDefault(); togglePlay(); break;
+        case 'f': e.preventDefault(); toggleFullscreen(); break;
+        case 'm': e.preventDefault(); toggleMute(); break;
+        case 'arrowright': e.preventDefault(); skipBy(10); break;
+        case 'arrowleft': e.preventDefault(); skipBy(-10); break;
+        case 'arrowup': e.preventDefault(); setVolume(v => Math.min(1, v + 0.1)); break;
+        case 'arrowdown': e.preventDefault(); setVolume(v => Math.max(0, v - 0.1)); break;
       }
     };
-    
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [toggleFullscreen, toggleMute, togglePlay, skipBy]);
 
-  // Controls Hide Timer — supports both mouse and touch
   useEffect(() => {
     let timeout;
-    const resetHideTimer = () => {
-      setShowControls(true);
-      clearTimeout(timeout);
-      timeout = setTimeout(() => {
-        if (playing && !showSettings) setShowControls(false);
-      }, 3000);
-    };
-    const handleMouseLeave = () => {
-      if (playing && !showSettings) setShowControls(false);
-    };
-    
+    const resetHideTimer = () => { setShowControls(true); clearTimeout(timeout); timeout = setTimeout(() => { if (playing && !showSettings) setShowControls(false); }, 3000); };
     const container = containerRef.current;
     if (container) {
       container.addEventListener('mousemove', resetHideTimer);
-      container.addEventListener('mouseleave', handleMouseLeave);
-      // Touch devices: reset timer on any touch interaction
       container.addEventListener('touchstart', resetHideTimer, { passive: true });
     }
     return () => {
       if (container) {
         container.removeEventListener('mousemove', resetHideTimer);
-        container.removeEventListener('mouseleave', handleMouseLeave);
         container.removeEventListener('touchstart', resetHideTimer);
       }
       clearTimeout(timeout);
     };
   }, [playing, showSettings]);
 
-  // ── Stall watchdog ──
-  // Detects when the video is stuck in a "waiting" state for too long and
-  // attempts recovery (seek-nudge, HLS recoverMediaError, or full reload).
-  // This directly addresses the FFmpegDemuxer stuck-spinner scenario.
   useEffect(() => {
-    // Start watchdog when buffering begins during active playback
     if (isBuffering && playing && !playbackError) {
       stallWatchdogRef.current = setTimeout(() => {
-        const video = videoRef.current;
-        const hls = hlsRef.current;
-        if (!video || playbackErrorRef.current) return;
-
-        stallRecoveryCountRef.current += 1;
-        const attempt = stallRecoveryCountRef.current;
-        console.warn(`Stall watchdog fired (attempt ${attempt}/${MAX_STALL_RECOVERIES})`);
-
-        if (attempt <= MAX_STALL_RECOVERIES) {
-          // Try graduated recovery strategies
-          if (hls) {
-            if (attempt === 1) {
-              // First attempt: seek nudge + restart loading
-              console.warn('Stall recovery: seek nudge + startLoad');
-              const nudge = video.currentTime + 0.2;
-              if (Number.isFinite(nudge) && nudge < (video.duration || Infinity)) {
-                video.currentTime = nudge;
-              }
-              hls.startLoad();
-            } else {
-              // Second attempt: full media error recovery
-              console.warn('Stall recovery: recoverMediaError');
-              hls.recoverMediaError();
-            }
-          } else {
-            // Native HLS or direct source — reload
-            const resumeTime = video.currentTime;
-            video.load();
-            video.addEventListener('loadedmetadata', () => {
-              video.currentTime = resumeTime;
-              video.play().catch(() => {});
-            }, { once: true });
-          }
-        } else {
-          // Max recoveries exhausted — show error with auto-retry
-          console.error('Stall watchdog: max recoveries exhausted, showing error overlay');
-          setErrorType('network');
-          setPlaybackError(true);
-        }
-      }, 15000); // 15-second stall threshold
+        if (!videoRef.current || playbackErrorRef.current) return;
+        recordEvent('stall_watchdog_fired');
+        logRecoveryTelemetry('STALL_WATCHDOG_FIRED');
+        executeRecovery('stall-watchdog');
+      }, 12000);
     }
+    return () => { if (stallWatchdogRef.current) { clearTimeout(stallWatchdogRef.current); stallWatchdogRef.current = null; } };
+  }, [isBuffering, playing, playbackError, executeRecovery, recordEvent, logRecoveryTelemetry]);
 
-    return () => {
-      // Clear watchdog when buffering ends or component re-renders
-      if (stallWatchdogRef.current) {
-        clearTimeout(stallWatchdogRef.current);
-        stallWatchdogRef.current = null;
-      }
-    };
-  }, [isBuffering, playing, playbackError]);
-
-  // Reset stall recovery counter when playback resumes normally
   useEffect(() => {
-    if (playing && !isBuffering) {
-      stallRecoveryCountRef.current = 0;
-    }
-  }, [playing, isBuffering]);
-
-  // ── Network online/offline listener ──
-  // Auto-restarts HLS loading when connectivity is restored (common on mobile).
-  // Uses refs (playbackErrorRef, errorTypeRef) to avoid stale closures.
-  useEffect(() => {
-    const handleOffline = () => {
-      setIsOffline(true);
-      console.warn('Network offline detected');
-    };
-
-    const handleOnline = () => {
-      setIsOffline(false);
-      console.log('Network online restored');
-
-      const hls = hlsRef.current;
-      const video = videoRef.current;
-
-      // Reset retry counters — the connection is back
-      networkRetryRef.current = 0;
-      mediaRetryRef.current = 0;
-      stallRecoveryCountRef.current = 0;
-
-      if (hls) {
-        // HLS instance still alive — just restart loading
-        hls.startLoad();
-        console.log('HLS loading restarted after network recovery');
-      } else if (playbackErrorRef.current && errorTypeRef.current === 'network' && video && src) {
-        // HLS was destroyed after max retries — need to re-create it
-        console.log('HLS was destroyed, re-initializing after network recovery');
-        if (Hls.isSupported() && src.endsWith('.m3u8')) {
-          const newHls = new Hls(createHlsConfig());
-          hlsRef.current = newHls;
-          newHls.loadSource(src);
-          newHls.attachMedia(video);
-          newHls.on(Hls.Events.MANIFEST_PARSED, () => {
-            video.play().catch(() => {});
-          });
-          newHls.on(Hls.Events.ERROR, (_event, data) => {
-            if (data.fatal) {
-              const type = data.type === Hls.ErrorTypes.NETWORK_ERROR ? 'network'
-                : data.type === Hls.ErrorTypes.MEDIA_ERROR ? 'media' : 'unknown';
-              setErrorType(type);
-              setPlaybackError(true);
-              newHls.destroy();
-              hlsRef.current = null;
-            }
-          });
-        }
-      }
-
-      // If we were showing an error overlay from a network failure, auto-clear it
-      if (playbackErrorRef.current && errorTypeRef.current === 'network') {
-        setPlaybackError(false);
-        setErrorType('unknown');
-      }
-    };
-
+    const handleOffline = () => { setIsOffline(true); recordEvent('network_offline'); logRecoveryTelemetry('NETWORK_OFFLINE'); };
+    const handleOnline = () => { setIsOffline(false); recordEvent('network_online'); logRecoveryTelemetry('NETWORK_ONLINE_RESTORED'); if (playbackErrorRef.current && errorTypeRef.current === 'network') { setPlaybackError(false); setErrorType('unknown'); executeRecovery('network-restored', { forceLevel: 3 }); } else if (hlsRef.current) try { hlsRef.current.startLoad(); } catch (e) {} };
     window.addEventListener('offline', handleOffline);
     window.addEventListener('online', handleOnline);
-    return () => {
-      window.removeEventListener('offline', handleOffline);
-      window.removeEventListener('online', handleOnline);
-    };
-  }, [src]); // src is the only stable dependency needed
+    return () => { window.removeEventListener('offline', handleOffline); window.removeEventListener('online', handleOnline); };
+  }, [executeRecovery, recordEvent, logRecoveryTelemetry]);
 
-  // ── Visibility change recovery ──
-  // On Android Chrome, backgrounding a tab can stall the media pipeline.
-  // When the tab becomes visible again, check if playback is stalled and recover.
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState !== 'visible') return;
-
-      const video = videoRef.current;
-      const hls = hlsRef.current;
-      if (!video || playbackError) return;
-
-      // If the video was supposed to be playing but is now stalled
-      const isStalled = !video.paused && (video.readyState < 3 || isBuffering);
-      if (isStalled) {
-        console.warn('Tab restored — playback appears stalled, attempting recovery');
-
-        if (hls) {
-          // Restart HLS loading to re-fetch segments
-          hls.startLoad();
-        }
-
-        // Seek nudge to kick the media pipeline
-        const nudge = video.currentTime + 0.1;
-        if (Number.isFinite(nudge) && nudge < (video.duration || Infinity)) {
-          video.currentTime = nudge;
-        }
+      recordEvent(`visibility_${document.visibilityState}`);
+      if (document.visibilityState !== 'visible' || !videoRef.current || playbackErrorRef.current) return;
+      if (!videoRef.current.paused && (videoRef.current.readyState < 3 || isBuffering)) {
+        logRecoveryTelemetry('TAB_RESTORED_STALLED');
+        executeRecovery('visibility-return');
       }
     };
-
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [playbackError, isBuffering]);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [executeRecovery, recordEvent, logRecoveryTelemetry, isBuffering]);
 
-  // HLS Setup — only depends on `src`, NOT initialTime (uses ref to avoid recreation)
   useEffect(() => {
-    Promise.resolve().then(() => {
-      setPlaybackError(false);
-      setErrorType('unknown');
-      setAutoRetryCountdown(null);
-      setPlaying(false);
-    });
-
-    // Reset all retry counters on new source
-    networkRetryRef.current = 0;
-    mediaRetryRef.current = 0;
-    stallRecoveryCountRef.current = 0;
-    nativeRetryRef.current = 0;
-
+    setPlaybackError(false); setErrorType('unknown'); setAutoRetryCountdown(null); setPlaying(false);
+    setPlayerStateSync(PLAYER_STATES.IDLE); recoveryLevelRef.current = 0; recoveryAttemptRef.current = 0; isRecoveringRef.current = false;
     if (!src || !videoRef.current) return;
     const video = videoRef.current;
-    if (hlsRef.current) {
-      hlsRef.current.destroy();
-      hlsRef.current = null;
-    }
-
+    if (hlsRef.current) { try { hlsRef.current.detachMedia(); hlsRef.current.destroy(); } catch (e) {} hlsRef.current = null; }
     if (Hls.isSupported() && src.endsWith('.m3u8')) {
-      const hls = new Hls(createHlsConfig());
-
-      hlsRef.current = hls;
-      hls.loadSource(src);
-      hls.attachMedia(video);
-
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        const resumeAt = initialTimeRef.current;
-        if (resumeAt && resumeAt > 0) {
-          video.currentTime = resumeAt;
-        }
-        // Re-apply playback rate after source change
-        const rate = playbackRateRef.current;
-        if (rate !== 1) {
-          video.playbackRate = rate;
-        }
-      });
-
-      hls.on(Hls.Events.ERROR, (_event, data) => {
+      const hls = new Hls(createHlsConfig()); hlsRef.current = hls; hls.loadSource(src); hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => { const r = initialTimeRef.current; if (r > 0) try { video.currentTime = r; } catch (e) {} });
+      hls.on(Hls.Events.ERROR, (_e, data) => {
+        recordEvent('hls_error', { type: data.type, details: data.details, fatal: data.fatal });
         if (data.fatal) {
-          switch (data.type) {
-            case Hls.ErrorTypes.NETWORK_ERROR:
-              networkRetryRef.current += 1;
-              if (networkRetryRef.current <= MAX_NETWORK_RETRIES) {
-                console.warn(`HLS fatal network error, recovery attempt ${networkRetryRef.current}/${MAX_NETWORK_RETRIES}...`);
-                hls.startLoad();
-              } else {
-                console.error('HLS fatal network error — max retries exceeded.');
-                setErrorType('network');
-                setPlaybackError(true);
-                hls.destroy();
-                hlsRef.current = null;
-              }
-              break;
-            case Hls.ErrorTypes.MEDIA_ERROR:
-              mediaRetryRef.current += 1;
-              if (mediaRetryRef.current <= MAX_MEDIA_RETRIES) {
-                console.warn(`HLS fatal media error, recovery attempt ${mediaRetryRef.current}/${MAX_MEDIA_RETRIES}...`);
-                hls.recoverMediaError();
-              } else {
-                console.error('HLS fatal media error — max retries exceeded.');
-                setErrorType('media');
-                setPlaybackError(true);
-                hls.destroy();
-                hlsRef.current = null;
-              }
-              break;
-            default:
-              setErrorType('unknown');
-              setPlaybackError(true);
-              hls.destroy();
-              hlsRef.current = null;
-              break;
-          }
-        } else {
-          // Non-fatal error recovery — prevents silent freezes from buffer stalls
-          if (data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR) {
-            console.warn('HLS buffer stalled, nudging playback...');
-            if (video.paused) return;
-            // Small seek nudge to unstick the buffer
-            const nudge = video.currentTime + 0.1;
-            if (Number.isFinite(nudge) && nudge < (video.duration || Infinity)) {
-              video.currentTime = nudge;
-            }
-          }
-        }
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) { logRecoveryTelemetry('HLS_FATAL_NETWORK_ERROR', { details: data.details }); executeRecovery('hls-fatal-network-error', { forceLevel: 1 }); }
+          else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) { logRecoveryTelemetry('HLS_FATAL_MEDIA_ERROR', { details: data.details }); executeRecovery('hls-fatal-media-error', { forceLevel: 2 }); }
+          else { logRecoveryTelemetry('HLS_FATAL_UNKNOWN_ERROR', { type: data.type, details: data.details }); executeRecovery('hls-fatal-unknown-error', { forceLevel: 3 }); }
+        } else if (data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR && !video.paused) executeRecovery('hls-buffer-stalled', { forceLevel: 1 });
       });
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      // Native HLS (Safari / iOS)
-      nativeRetryRef.current = 0;
-      video.src = src;
-      video.addEventListener('loadedmetadata', () => {
-        const resumeAt = initialTimeRef.current;
-        if (resumeAt && resumeAt > 0) video.currentTime = resumeAt;
-        // Re-apply playback rate for native HLS too
-        const rate = playbackRateRef.current;
-        if (rate !== 1) {
-          video.playbackRate = rate;
-        }
-      });
-    } else {
-      video.src = src;
-    }
+    } else { video.src = src; }
+    return () => { if (hlsRef.current) { try { hlsRef.current.detachMedia(); hlsRef.current.destroy(); } catch (e) {} hlsRef.current = null; } };
+  }, [src, recordEvent, logRecoveryTelemetry, executeRecovery, setPlayerStateSync]);
 
-    return () => {
-      if (hlsRef.current) {
-        hlsRef.current.destroy();
-        hlsRef.current = null;
-      }
-    };
-  }, [src]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.volume = volume;
-      videoRef.current.muted = muted;
-    }
-  }, [volume, muted]);
-
-
-
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      const isNative = getIsNativeFullscreen();
-      if (!isNative && !isPseudoFullscreenRef.current) {
-        setIsFullscreen(false);
-        document.body.style.overflow = '';
-      } else {
-        setIsFullscreen(true);
-        document.body.style.overflow = 'hidden';
-      }
-    };
-
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isPseudoFullscreenRef.current) {
-        isPseudoFullscreenRef.current = false;
-        setIsFullscreen(false);
-        document.body.style.overflow = '';
-      }
-    };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-    document.addEventListener('keydown', handleKeyDown);
-
-    const video = videoRef.current;
-    if (video) {
-      video.addEventListener('webkitbeginfullscreen', handleFullscreenChange);
-      video.addEventListener('webkitendfullscreen', handleFullscreenChange);
-    }
-
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
-      document.removeEventListener('keydown', handleKeyDown);
-      if (video) {
-        video.removeEventListener('webkitbeginfullscreen', handleFullscreenChange);
-        video.removeEventListener('webkitendfullscreen', handleFullscreenChange);
-      }
-      document.body.style.overflow = '';
-    };
-  }, [getIsNativeFullscreen]);
-
-
-
-  // Format time — supports hours for long videos
-  const formatTime = (timeInSeconds) => {
-    if (isNaN(timeInSeconds) || timeInSeconds < 0) return "00:00";
-    const totalSeconds = Math.floor(timeInSeconds);
-    const h = Math.floor(totalSeconds / 3600);
-    const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
-    const s = (totalSeconds % 60).toString().padStart(2, '0');
-    // Only show hours if the video is longer than 60 minutes
-    if (h > 0 || duration >= 3600) {
-      return `${h}:${m}:${s}`;
-    }
-    return `${m}:${s}`;
-  };
-
-  // Seek handler — supports both mouse click and touch
-  const handleSeek = (e) => {
-    if (!videoRef.current || !duration || isNaN(duration) || duration <= 0) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    // Use touch position if available, otherwise mouse
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    const targetTime = pos * duration;
-    if (Number.isFinite(targetTime)) {
-      videoRef.current.currentTime = targetTime;
-    }
-  };
+  useEffect(() => { if (videoRef.current) { videoRef.current.volume = volume; videoRef.current.muted = muted; } }, [volume, muted]);
 
   const updateProgress = () => {
-    if (!videoRef.current) return;
-    const { currentTime, duration, buffered } = videoRef.current;
-    setCurrentTime(currentTime);
-    setDuration(duration);
-    
-    if (buffered.length > 0) {
-      setBuffered(buffered.end(buffered.length - 1));
-    }
-
-    if (onProgress) {
-      onProgress({ currentTime, duration });
-    }
-  };
-
-  // Handle native video element errors (e.g. PIPELINE_ERROR_READ, 403, corrupt segment)
-  // Ensures proper teardown of Chrome demuxer and HLS instance to prevent infinite Error 4 loops
-  const handleVideoError = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
-    const error = video.error;
-    // MediaError.MEDIA_ERR_ABORTED (1) is usually user-initiated, ignore it
-    if (!error || error.code === 1) return;
-
-    console.error('Video element error:', error.code, error.message);
-
-    const isHls = !!hlsRef.current;
-    if (isHls) {
-      console.warn('Native video element error detected while HLS.js is active. Resetting HLS and media pipeline.');
-      try {
-        hlsRef.current.destroy();
-      } catch (e) {}
-      hlsRef.current = null;
-    }
-
-    // Capture position before resetting pipeline
-    const resumeTime = Number.isFinite(video.currentTime) ? video.currentTime : 0;
-
-    // Purge media element state to reset Chrome FFmpeg demuxer pipeline
-    try {
-      video.removeAttribute('src');
-      video.load();
-    } catch (e) {}
-
-    nativeRetryRef.current += 1;
-    if (nativeRetryRef.current <= MAX_NATIVE_RETRIES) {
-      console.warn(`Video pipeline error recovery attempt ${nativeRetryRef.current}/${MAX_NATIVE_RETRIES}`);
-      // Re-initialize player from current playback position
-      setTimeout(() => {
-        if (!videoRef.current || !src) return;
-        if (Hls.isSupported() && src.endsWith('.m3u8')) {
-          const hls = new Hls(createHlsConfig());
-          hlsRef.current = hls;
-          hls.loadSource(src);
-          hls.attachMedia(videoRef.current);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            if (resumeTime > 0) videoRef.current.currentTime = resumeTime;
-            videoRef.current.play().catch(() => {});
-          });
-          hls.on(Hls.Events.ERROR, (_event, data) => {
-            if (data.fatal) {
-              const type = data.type === Hls.ErrorTypes.NETWORK_ERROR ? 'network'
-                : data.type === Hls.ErrorTypes.MEDIA_ERROR ? 'media' : 'unknown';
-              setErrorType(type);
-              setPlaybackError(true);
-              try { hls.destroy(); } catch (e) {}
-              hlsRef.current = null;
-            }
-          });
-        } else {
-          videoRef.current.src = src;
-          videoRef.current.load();
-          videoRef.current.addEventListener('loadedmetadata', () => {
-            if (resumeTime > 0) videoRef.current.currentTime = resumeTime;
-            videoRef.current.play().catch(() => {});
-          }, { once: true });
+    const { currentTime, duration, buffered } = video;
+    setCurrentTime(currentTime); setDuration(duration);
+    if (buffered && buffered.length > 0) setBuffered(buffered.end(buffered.length - 1));
+    if (!video.paused && !isBuffering && playerStateRef.current !== PLAYER_STATES.SEEKING && !playerStateRef.current.startsWith('RECOVERING') && playerStateRef.current !== PLAYER_STATES.REBUILDING && playerStateRef.current !== PLAYER_STATES.FATAL) setPlayerStateSync(PLAYER_STATES.PLAYING);
+    if (!video.paused && !isBuffering && video.readyState >= 2 && !video.error && !playbackErrorRef.current) {
+      const now = Date.now();
+      if (verificationStartPosRef.current == null || Math.abs(currentTime - lastSuccessfulTimeRef.current) > 2) { verificationStartPosRef.current = currentTime; verificationStartTimeRef.current = now; }
+      else {
+        const advancedSecs = currentTime - verificationStartPosRef.current;
+        const elapsedMs = now - verificationStartTimeRef.current;
+        if (advancedSecs >= 1.2 && elapsedMs >= 1200) {
+          if (recoveryAttemptRef.current > 0 || isRecoveringRef.current || playerStateRef.current.startsWith('RECOVERING') || playerStateRef.current === PLAYER_STATES.REBUILDING) {
+            logRecoveryTelemetry('RECOVERY_SUCCESS_VERIFIED', { restoredTime: currentTime, advancedSecs });
+            if (rebuildTimeoutRef.current) { clearTimeout(rebuildTimeoutRef.current); rebuildTimeoutRef.current = null; }
+            recoveryAttemptRef.current = 0; recoveryLevelRef.current = 0; isRecoveringRef.current = false; setPlayerStateSync(PLAYER_STATES.PLAYING);
+          }
         }
-      }, 200);
-    } else {
-      // Determine error type from MediaError code
-      const type = error.code === 2 ? 'network' : 'media';
-      setErrorType(type);
-      setPlaybackError(true);
-    }
-  }, [src]);
-
-  // Retry handler for the error overlay — uses shared HLS config for full resilience
-  const handleRetry = useCallback(() => {
-    setPlaybackError(false);
-    setErrorType('unknown');
-    setAutoRetryCountdown(null);
-    networkRetryRef.current = 0;
-    mediaRetryRef.current = 0;
-    stallRecoveryCountRef.current = 0;
-    nativeRetryRef.current = 0;
-
-    // Force HLS re-initialization
-    if (hlsRef.current) {
-      try {
-        hlsRef.current.destroy();
-      } catch (e) {}
-      hlsRef.current = null;
-    }
-    const video = videoRef.current;
-    if (!video || !src) return;
-
-    // Purge media element source to reset Chrome FFmpeg demuxer pipeline
-    try {
-      video.removeAttribute('src');
-      video.load();
-    } catch (e) {}
-
-    if (Hls.isSupported() && src.endsWith('.m3u8')) {
-      const hls = new Hls(createHlsConfig());
-      hlsRef.current = hls;
-      hls.loadSource(src);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.play().catch(() => {});
-      });
-      hls.on(Hls.Events.ERROR, (_event, data) => {
-        if (data.fatal) {
-          const type = data.type === Hls.ErrorTypes.NETWORK_ERROR ? 'network'
-            : data.type === Hls.ErrorTypes.MEDIA_ERROR ? 'media' : 'unknown';
-          setErrorType(type);
-          setPlaybackError(true);
-          try { hls.destroy(); } catch (e) {}
-          hlsRef.current = null;
-        }
-      });
-    } else {
-      video.src = src;
-      video.load();
-    }
-  }, [src]);
-
-  // ── Auto-retry countdown ──
-  // When a recoverable error occurs, start a 10-second countdown then auto-retry
-  useEffect(() => {
-    if (!playbackError) {
-      setAutoRetryCountdown(null);
-      return;
-    }
-
-    // Only auto-retry for network errors (most likely to be transient)
-    if (errorType !== 'network') return;
-
-    let seconds = 10;
-    setAutoRetryCountdown(seconds);
-
-    const interval = setInterval(() => {
-      seconds -= 1;
-      setAutoRetryCountdown(seconds);
-      if (seconds <= 0) {
-        clearInterval(interval);
-        handleRetry();
       }
-    }, 1000);
+      lastSuccessfulTimeRef.current = currentTime;
+    } else verificationStartPosRef.current = null;
+    if (onProgress) onProgress({ currentTime, duration });
+  };
 
-    return () => clearInterval(interval);
-  }, [playbackError, errorType, handleRetry]);
+  const handleVideoError = useCallback(() => {
+    const error = videoRef.current?.error;
+    if (!error || error.code === 1) return;
+    recordEvent('native_video_error', { code: error.code, message: error.message });
+    logRecoveryTelemetry('NATIVE_VIDEO_ERROR', { code: error.code, message: error.message });
+    executeRecovery('native-video-error', { forceLevel: 3 });
+  }, [recordEvent, logRecoveryTelemetry, executeRecovery]);
 
-  // Anti-Piracy — context menu + devtools blocked; visibility pause removed to prevent unexpected freezes
+  const handleRetry = useCallback(() => {
+    setPlaybackError(false); setErrorType('unknown'); setAutoRetryCountdown(null);
+    recoveryLevelRef.current = 0; recoveryAttemptRef.current = 0; isRecoveringRef.current = false;
+    executeRecovery('manual-user-retry', { forceLevel: 3, targetTime: requestedTimeRef.current || currentTime || initialTimeRef.current || 0, wasPlaying: true, resetAttempt: true });
+  }, [currentTime, executeRecovery]);
+
   useEffect(() => {
     const handleContextMenu = (e) => e.preventDefault();
     const handleDevTools = (e) => {
@@ -913,18 +606,14 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
         setIsDevToolsOpen(true);
       }
     };
-
     document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('keydown', handleDevTools);
-    
     return () => {
       document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('keydown', handleDevTools);
     };
   }, []);
 
-  // Determine if we should show volume controls
-  // iOS doesn't support programmatic volume — hide entirely
   const showVolumeControl = !IS_IOS;
 
   return (
