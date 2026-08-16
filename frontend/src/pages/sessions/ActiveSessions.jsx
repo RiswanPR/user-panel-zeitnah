@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Monitor, RefreshCw, Shield, Smartphone, Tablet, Trash2 } from "lucide-react";
 import api from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
+import { useToast } from "../../components/ui/Toast";
 
 const formatDate = (value) => {
   if (!value) return "Not available";
@@ -20,6 +21,7 @@ const getDeviceIcon = (deviceType) => {
 function ActiveSessions() {
   const navigate = useNavigate();
   const { setUser } = useContext(AuthContext);
+  const toast = useToast();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -56,7 +58,7 @@ function ActiveSessions() {
       }
       setSessions((items) => items.filter((item) => item.deviceId !== session.deviceId));
     } catch (err) {
-      alert(err.response?.data?.message);
+      toast.error("Revoke failed", "Could not revoke the session. Please try again.");
     } finally {
       setRevokingDeviceId("");
     }

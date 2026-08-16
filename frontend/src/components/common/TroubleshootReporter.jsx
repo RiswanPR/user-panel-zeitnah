@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Bug, Send, ChevronDown, ChevronUp, AlertTriangle, Wifi, Terminal, Monitor } from 'lucide-react';
 import {
   getErrorBuffer,
-  getErrorCount,
+  getSignificantErrorCount,
   clearErrorBuffer,
   getBrowserInfo,
   hasErrors,
@@ -34,10 +34,10 @@ export default function TroubleshootReporter() {
   const [errorData, setErrorData] = useState(null);
   const modalRef = useRef(null);
 
-  // Poll error count every 3 seconds
+  // Poll significant error count every 3 seconds (excludes console warnings)
   useEffect(() => {
     const interval = setInterval(() => {
-      setErrorCount(getErrorCount());
+      setErrorCount(getSignificantErrorCount());
     }, 3000);
     return () => clearInterval(interval);
   }, []);

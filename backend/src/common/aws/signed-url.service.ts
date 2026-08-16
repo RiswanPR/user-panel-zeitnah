@@ -84,7 +84,7 @@ export class SignedUrlService {
 
   async generateSignedVideoUrl(
     objectKey: string,
-    expiresIn = 900,
+    expiresIn = 86400,
   ): Promise<string> {
     if (!objectKey) return '';
     const resolvedObjectKey = this.getConfiguredBucketObjectKey(objectKey);

@@ -5,7 +5,6 @@ import "./index.css";
 import "./App.css";
 import { AuthProvider } from "./context/AuthContext";
 import GlobalErrorBoundary from "./components/GlobalErrorBoundary";
-import { collectDiagnostics } from "./utils/diagnostics";
 
 // ── Version Control & Cache Invalidation ──
 const APP_VERSION = import.meta.env.VITE_APP_VERSION || "1.0.0";
@@ -30,7 +29,14 @@ if (cachedVersion !== APP_VERSION) {
   }
 }
 
+// ── Global Error Capture ──
+// NOTE: Global error/rejection listeners are handled by errorCapture.ts
+// (initialized via initErrorCapture() in App.jsx) and reported through
+// the TroubleshootReporter component. Duplicate listeners were removed
+// here to prevent generating 2-3x email alerts and DB records per error.
+
 // ── Helpers: Detect third-party browser-extension errors ──
+// Used by GlobalErrorBoundary for filtering before reporting.
 function isBrowserExtensionError(errorOrMessage, filename) {
   const extProtocols = ["chrome-extension://", "moz-extension://", "safari-extension://"];
   const str = String(errorOrMessage || "");
@@ -41,58 +47,6 @@ function isBrowserExtensionError(errorOrMessage, filename) {
   if (/failed to connect to metamask/i.test(str)) return true;
   return false;
 }
-
-// ── Global Error Listeners (Outside React) ──
-window.addEventListener("error", async (event) => {
-  // Ignore resize observer errors which are often benign
-  if (event.message === "ResizeObserver loop limit exceeded" || event.message === "ResizeObserver loop completed with undelivered notifications.") {
-    return;
-  }
-  // Ignore errors originating from browser extensions (MetaMask, etc.)
-  if (isBrowserExtensionError(event.message, event.filename) || isBrowserExtensionError(event.error)) {
-    return;
-  }
-  const diagnostics = await collectDiagnostics(event.error);
-  diagnostics.source = "window_error";
-  diagnostics.isSilent = true;
-  
-  try {
-    const token = localStorage.getItem("token");
-    fetch(`${import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:3000/api"}/error-reports`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { "Authorization": `Bearer ${token}` } : {})
-      },
-      body: JSON.stringify(diagnostics)
-    }).catch(() => {});
-  } catch (e) {}
-});
-
-window.addEventListener("unhandledrejection", async (event) => {
-  // Ignore unhandled rejections from browser extensions (MetaMask, etc.)
-  const reason = event.reason;
-  const reasonStr = reason instanceof Error ? reason.message + " " + (reason.stack || "") : String(reason || "");
-  if (isBrowserExtensionError(reasonStr)) {
-    event.preventDefault(); // Suppress console noise
-    return;
-  }
-  const diagnostics = await collectDiagnostics(reason instanceof Error ? reason : new Error(String(reason)));
-  diagnostics.source = "unhandled_rejection";
-  diagnostics.isSilent = true;
-
-  try {
-    const token = localStorage.getItem("token");
-    fetch(`${import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:3000/api"}/error-reports`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { "Authorization": `Bearer ${token}` } : {})
-      },
-      body: JSON.stringify(diagnostics)
-    }).catch(() => {});
-  } catch (e) {}
-});
 
 // Mount the React app
 ReactDOM.createRoot(document.getElementById("root")).render(

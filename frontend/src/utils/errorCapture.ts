@@ -4,12 +4,17 @@
  * Intercepts console.error, console.warn, window.onerror, and
  * unhandled promise rejections. Stores them in a ring buffer
  * (max 50 entries) for use in troubleshoot reports.
+ * 
+ * console.warn is stored in a separate buffer and NOT counted
+ * towards the visible error count to prevent inflating the
+ * troubleshoot badge for minor warnings.
  */
 
 const MAX_BUFFER_SIZE = 50;
 
-// Error buffers
+// Error buffers — warnings are separated from real errors
 const consoleErrors: any[] = [];
+const consoleWarnings: any[] = [];
 const networkErrors: any[] = [];
 const unhandledErrors: any[] = [];
 
@@ -41,12 +46,49 @@ function pushWithLimit(arr: any[], item: any) {
  * Detect errors originating from browser extensions (MetaMask, etc.).
  * These are not application bugs and should be excluded from reports.
  */
-function isBrowserExtensionNoise(messageOrStack) {
+function isBrowserExtensionNoise(messageOrStack: unknown) {
   const str = String(messageOrStack || '');
   const extProtocols = ['chrome-extension://', 'moz-extension://', 'safari-extension://'];
   if (extProtocols.some((p) => str.includes(p))) return true;
   if (/failed to connect to metamask/i.test(str)) return true;
   return false;
+}
+
+/**
+ * Detect noisy console messages that are not actual application errors.
+ * These include React dev-mode warnings, HMR/Vite messages, slow API
+ * logs, service worker registration, and similar development noise.
+ */
+function isConsoleNoise(message: string): boolean {
+  const noisePatterns = [
+    // React dev-mode warnings
+    /^Warning:/,
+    /react-dom\.development/i,
+    /ReactDOM\.render is no longer supported/i,
+    /Each child in a list should have a unique/,
+    /Cannot update a component/,
+    /Can't perform a React state update on an unmounted component/i,
+    // HMR / Vite / build tool messages
+    /\[HMR\]/,
+    /\[vite\]/i,
+    /\[hmr\]/,
+    /hot module replacement/i,
+    // Service worker noise
+    /\[SW\]/,
+    /service.?worker/i,
+    // Own API interceptor slow request warnings
+    /\[API\] Slow request:/,
+    /\[API\] Retrying request/,
+    // Version control logs
+    /\[Version\]/,
+    // Web Vitals dev-mode console logs
+    /^{name:"(CLS|FCP|LCP|TTFB|INP|FID)"/,
+    // ResizeObserver benign warnings
+    /ResizeObserver loop/i,
+    // Browser deprecation notices
+    /\[Deprecation\]/i,
+  ];
+  return noisePatterns.some((pattern) => pattern.test(message));
 }
 
 // ── Console Interceptors ──
@@ -56,21 +98,29 @@ const originalConsoleWarn = console.warn;
 
 function interceptConsole() {
   console.error = (...args) => {
-    pushWithLimit(consoleErrors, {
-      type: 'error',
-      message: args.map(safeStringify).join(' '),
-      timestamp: now(),
-      stack: args.find((a) => a instanceof Error)?.stack || '',
-    });
+    const message = args.map(safeStringify).join(' ');
+    // Skip noise — don't pollute the error buffer with dev-mode or framework messages
+    if (!isConsoleNoise(message) && !isBrowserExtensionNoise(message)) {
+      pushWithLimit(consoleErrors, {
+        type: 'error',
+        message,
+        timestamp: now(),
+        stack: args.find((a) => a instanceof Error)?.stack || '',
+      });
+    }
     originalConsoleError.apply(console, args);
   };
 
   console.warn = (...args) => {
-    pushWithLimit(consoleErrors, {
-      type: 'warn',
-      message: args.map(safeStringify).join(' '),
-      timestamp: now(),
-    });
+    const message = args.map(safeStringify).join(' ');
+    // Warnings go into a separate buffer and are NOT counted as errors
+    if (!isConsoleNoise(message) && !isBrowserExtensionNoise(message)) {
+      pushWithLimit(consoleWarnings, {
+        type: 'warn',
+        message,
+        timestamp: now(),
+      });
+    }
     originalConsoleWarn.apply(console, args);
   };
 }
@@ -139,28 +189,37 @@ export function captureNetworkError({ method, url, status, message }: { method?:
 }
 
 /**
- * Get all captured errors (snapshot).
+ * Get all captured errors and warnings (snapshot).
+ * Warnings are included for completeness in reports but stored separately.
  */
 export function getErrorBuffer() {
   return {
-    consoleErrors: [...consoleErrors],
+    consoleErrors: [...consoleErrors, ...consoleWarnings],
     networkErrors: [...networkErrors],
     unhandledErrors: [...unhandledErrors],
   };
 }
 
 /**
- * Get total error count across all buffers.
+ * Get total error count across all buffers (includes warnings for report data).
  */
 export function getErrorCount() {
+  return consoleErrors.length + consoleWarnings.length + networkErrors.length + unhandledErrors.length;
+}
+
+/**
+ * Get count of significant errors only (excludes console warnings).
+ * Use this to determine whether to show the troubleshoot badge.
+ */
+export function getSignificantErrorCount() {
   return consoleErrors.length + networkErrors.length + unhandledErrors.length;
 }
 
 /**
- * Check if there are any errors captured.
+ * Check if there are any significant errors captured (excludes warnings).
  */
 export function hasErrors() {
-  return getErrorCount() > 0;
+  return getSignificantErrorCount() > 0;
 }
 
 /**
@@ -168,6 +227,7 @@ export function hasErrors() {
  */
 export function clearErrorBuffer() {
   consoleErrors.length = 0;
+  consoleWarnings.length = 0;
   networkErrors.length = 0;
   unhandledErrors.length = 0;
 }

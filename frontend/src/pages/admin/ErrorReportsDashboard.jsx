@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import api from "../../services/api";
 import dayjs from "dayjs";
+import { useToast } from "../../components/ui/Toast";
 
 export default function ErrorReportsDashboard() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState(null);
   const [statusFilter, setStatusFilter] = useState("");
+  const toast = useToast();
 
   const fetchReports = async () => {
     try {
@@ -34,7 +36,7 @@ export default function ErrorReportsDashboard() {
         setSelectedReport({ ...selectedReport, status });
       }
     } catch (err) {
-      alert("Failed to update status");
+      toast.error("Update failed", "Could not update the report status.");
     }
   };
 

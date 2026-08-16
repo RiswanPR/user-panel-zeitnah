@@ -24,6 +24,7 @@ import {
 import VideoWatermark from "../../components/player/VideoWatermark";
 import VideoPlayer from "../../components/player/VideoPlayer";
 import { AuthContext } from "../../context/AuthContext";
+import { useToast } from "../../components/ui/Toast";
 
 function loadVdoCipherApi() {
   if (window.VdoPlayer) return Promise.resolve();
@@ -80,6 +81,7 @@ function ClassView() {
   const { classId } = useParams();
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
+  const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [videoData, setVideoData] = useState(null);
@@ -124,7 +126,7 @@ function ClassView() {
           }
         }
       } catch (error) {
-        alert(error.response?.data?.message || "Failed to load class.");
+        toast.error("Load failed", "Could not load class content. Please try again.");
         navigate("/courses");
       } finally {
         if (mounted) setLoading(false);
@@ -133,6 +135,20 @@ function ClassView() {
     loadClass();
     return () => { mounted = false; };
   }, [classId, navigate]);
+
+  const refreshPlaybackUrl = useCallback(async () => {
+    try {
+      const videoRes = await api.get(`/courses/video/${classId}`);
+      if (videoRes.data?.playbackUrl) {
+        setVideoData(videoRes.data);
+        return videoRes.data.playbackUrl;
+      }
+      return null;
+    } catch (err) {
+      console.error("Failed to refresh playback URL:", err);
+      throw err;
+    }
+  }, [classId]);
 
   // ── Stream security heartbeat ──
   useEffect(() => {
@@ -152,7 +168,7 @@ function ClassView() {
           try { await api.post("/courses/heartbeat", { deviceId }); } catch (err) { console.log(err); }
         }, 25000); // Heartbeat every 25 seconds
       } catch (error) {
-        alert(error.response?.data?.message || "Another device is currently watching this course.");
+        toast.error("Playback restricted", "Another device may be currently watching this course.");
         navigate(-1);
       }
     };
@@ -382,7 +398,7 @@ function ClassView() {
       setProgressState(res.data.progress || null);
     } catch (err) {
       console.error('Failed to reload class data:', err);
-      alert(err.response?.data?.message || 'Failed to reload video. Please try again.');
+      toast.error("Reload failed", "Could not reload the video. Please try again.");
     }
   }, [classId]);
 
@@ -507,6 +523,7 @@ function ClassView() {
                 videoData?.playbackUrl ? (
                   <VideoPlayer 
                     src={videoData.playbackUrl} 
+                    refreshUrl={refreshPlaybackUrl}
                     watermarkData={videoData.watermarkData} 
                     initialTime={Number(data?.progress?.classProgress?.lastPositionSeconds || 0)}
                     onProgress={({ currentTime, duration }) => {

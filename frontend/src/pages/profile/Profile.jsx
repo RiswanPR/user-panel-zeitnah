@@ -18,10 +18,12 @@ import {
 import api from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
 import { getUploadUrl } from "../../utils/courseUi";
+import { useToast } from "../../components/ui/Toast";
 
 function Profile() {
   const navigate = useNavigate();
   const { setUser, logout } = useContext(AuthContext);
+  const toast = useToast();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -45,7 +47,7 @@ function Profile() {
     const file = e.target.files?.[0];
     if (!file) return;
     const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) return alert("Max 5 MB");
+    if (file.size > maxSize) return toast.error("File too large", "Avatar must be under 5 MB.");
     try {
       setUploading(true);
       const formData = new FormData();
@@ -54,7 +56,7 @@ function Profile() {
       setProfile((prev) => ({ ...prev, avatar: res.data.avatar }));
       setUser((prev) => prev ? { ...prev, avatar: res.data.avatar } : prev);
     } catch (err) {
-      alert(err.response?.data?.message || "Upload failed.");
+      toast.error("Upload failed", "Could not upload avatar. Please try again.");
     } finally {
       setUploading(false);
     }

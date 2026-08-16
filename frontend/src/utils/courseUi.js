@@ -47,7 +47,7 @@ export function formatDuration(duration) {
 
 export function getCourseTypeLabel(type) {
   return (type || "").toLowerCase() === "recording"
-    ? "Recording "
+    ? "Recording Class"
     : "Online Class";
 }
 

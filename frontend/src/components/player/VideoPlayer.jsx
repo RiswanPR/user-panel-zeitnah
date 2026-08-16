@@ -5,10 +5,12 @@ import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, Settings, Loader2, R
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Detect iOS — volume control is hardware-only on iOS Safari
-const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const IS_IOS = typeof navigator !== 'undefined' && (
+  /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+);
 
-const IS_TOUCH = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+const IS_TOUCH = typeof window !== 'undefined' && ('ontouchstart' in window || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0));
 
 export const PLAYER_STATES = {
   IDLE: 'IDLE',
@@ -21,6 +23,14 @@ export const PLAYER_STATES = {
   FATAL: 'FATAL',
 };
 
+/**
+ * YouTube-grade HLS configuration:
+ * - Forward buffer: 60s (up to 120s) for uninterrupted streaming through network dips
+ * - Back buffer: 60s auto-eviction to guarantee lightweight RAM footprint during 1–3+ hour classes
+ * - Max buffer size: 200MB to prevent memory inflation
+ * - Smooth ABR tuning: EWMA estimator with conservative down-switching to prevent stalls
+ * - Progressive fragment streaming enabled
+ */
 function createHlsConfig() {
   return {
     xhrSetup: (xhr, url) => {
@@ -29,38 +39,52 @@ function createHlsConfig() {
         xhr.setRequestHeader('Authorization', `Bearer ${currentToken}`);
       }
     },
-    maxBufferLength: 30,
-    maxMaxBufferLength: 600,
-    maxBufferSize: 120 * 1000000,
-    maxBufferHole: 0.8,
+    // Buffer targets
+    maxBufferLength: 60,
+    maxMaxBufferLength: 120,
+    maxBufferSize: 200 * 1024 * 1024, // 200MB memory safety ceiling
+    maxBufferHole: 0.5,
     maxSeekHole: 2,
     nudgeOffset: 0.1,
     nudgeMaxRetry: 5,
-    backBufferLength: 30,
+    backBufferLength: 60, // Auto-evicts played chunks >60s old to prevent memory leaks
+
+    // ABR (Adaptive Bitrate) settings
     startLevel: -1,
-    abrEwmaDefaultEstimate: 500000,
-    abrEwmaDefaultEstimateMax: 5000000,
-    abrBandWidthFactor: 0.95,
+    abrEwmaDefaultEstimate: 1000000,
+    abrEwmaDefaultEstimateMax: 10000000,
+    abrBandWidthFactor: 0.9,
     abrBandWidthUpFactor: 0.7,
     testBandwidth: true,
-    maxStarvationDelay: 2,
+
+    // Timeouts and retries for resilient streaming
+    maxStarvationDelay: 3,
     maxLoadingDelay: 4,
     lowLatencyMode: false,
     fragLoadingTimeOut: 20000,
     fragLoadingMaxRetry: 6,
     fragLoadingRetryDelay: 1000,
+    fragLoadingMaxRetryTimeout: 64000,
     levelLoadingTimeOut: 10000,
     levelLoadingMaxRetry: 4,
+    levelLoadingRetryDelay: 1000,
+
     enableWorker: true,
     progressive: true,
   };
 }
 
-export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => {
+export const VideoPlayer = ({ src, refreshUrl, watermarkData, onProgress, initialTime }) => {
   const containerRef = useRef(null);
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
   const initialTimeRef = useRef(initialTime);
+  const activeSrcRef = useRef(src);
+
+  // Sync activeSrcRef when src prop changes
+  useEffect(() => {
+    activeSrcRef.current = src;
+  }, [src]);
 
   const tapTimerRef = useRef(null);
   const tapCountRef = useRef(0);
@@ -92,7 +116,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
   const rebuildTimeoutRef = useRef(null);
   const eventTimelineRef = useRef([]);
 
-  // Deep Diagnostic Refs for Root-Cause Analysis & Repeated Failure Detection
+  // Deep Diagnostic Refs
   const lastHlsErrorRef = useRef(null);
   const lastRecoveryTimeRef = useRef(null);
   const lastNativeErrorTimeRef = useRef(null);
@@ -153,7 +177,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
       ...extra,
     };
     eventTimelineRef.current.push(entry);
-    if (eventTimelineRef.current.length > 25) eventTimelineRef.current.shift();
+    if (eventTimelineRef.current.length > 20) eventTimelineRef.current.shift();
   }, []);
 
   const logRecoveryTelemetry = useCallback((status, payload = {}) => {
@@ -186,7 +210,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
       timeSinceLastRecovery: lastRecoveryTimeRef.current ? Number(((nowMs - lastRecoveryTimeRef.current) / 1000).toFixed(1)) : null,
       timeSinceLastNativeError: lastNativeErrorTimeRef.current ? Number(((nowMs - lastNativeErrorTimeRef.current) / 1000).toFixed(1)) : null,
       lastHlsError: lastHlsErrorRef.current,
-      timelineSummary: eventTimelineRef.current.slice(-6).map(e => `${e.time} ${e.event}(${e.state})`).join(' -> '),
+      timelineSummary: eventTimelineRef.current.slice(-5).map(e => `${e.time} ${e.event}(${e.state})`).join(' -> '),
       ...payload,
     };
     console.warn(logData.tag, logData);
@@ -194,7 +218,8 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
 
   let executeRecovery;
 
-  const rebuildPlayerPipeline = useCallback((targetTime, shouldPlay = false, generation) => {
+  // ── REBUILD PLAYER PIPELINE WITH DYNAMIC URL REFRESH ──
+  const rebuildPlayerPipeline = useCallback(async (targetTime, shouldPlay = false, generation) => {
     logRecoveryTelemetry('HARD_REBUILD_START', { targetTime, shouldPlay, generation });
     setPlayerStateSync(PLAYER_STATES.REBUILDING);
     if (rebuildTimeoutRef.current) clearTimeout(rebuildTimeoutRef.current);
@@ -204,8 +229,25 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
       try { hlsRef.current.detachMedia(); hlsRef.current.destroy(); } catch (e) {}
       hlsRef.current = null;
     }
-    if (!video || !src) { isRecoveringRef.current = false; return; }
+
+    // Proactively fetch a fresh signed URL if refreshUrl is available
+    let effectiveSrc = activeSrcRef.current;
+    if (refreshUrl && typeof refreshUrl === 'function') {
+      try {
+        const freshUrl = await refreshUrl();
+        if (freshUrl) {
+          activeSrcRef.current = freshUrl;
+          effectiveSrc = freshUrl;
+          logRecoveryTelemetry('HARD_REBUILD_URL_REFRESHED', { newUrl: freshUrl.substring(0, 60) + '...' });
+        }
+      } catch (err) {
+        logRecoveryTelemetry('HARD_REBUILD_URL_REFRESH_FAILED', { error: err.message });
+      }
+    }
+
+    if (!video || !effectiveSrc) { isRecoveringRef.current = false; return; }
     try { video.removeAttribute('src'); video.load(); } catch (e) {}
+
     rebuildTimeoutRef.current = setTimeout(() => {
       if (generation !== recoveryGenerationRef.current) return;
       logRecoveryTelemetry('HARD_REBUILD_TIMEOUT', { generation, attempt: recoveryAttemptRef.current });
@@ -217,14 +259,16 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
         setPlaybackError(true);
         isRecoveringRef.current = false;
       }
-    }, 15000);
+    }, 12000);
+
     setTimeout(() => {
-      if (generation !== recoveryGenerationRef.current || !videoRef.current || !src) return;
+      if (generation !== recoveryGenerationRef.current || !videoRef.current || !effectiveSrc) return;
       const currentVideo = videoRef.current;
-      if (Hls.isSupported() && src.endsWith('.m3u8')) {
+
+      if (Hls.isSupported() && effectiveSrc.endsWith('.m3u8')) {
         const hls = new Hls(createHlsConfig());
         hlsRef.current = hls;
-        hls.loadSource(src);
+        hls.loadSource(effectiveSrc);
         hls.attachMedia(currentVideo);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           if (generation !== recoveryGenerationRef.current) return;
@@ -237,7 +281,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
             try { currentVideo.pause(); } catch (e) {}
           }
         });
-        hls.on(Hls.Events.ERROR, (_event, data) => {
+        hls.on(Hls.Events.ERROR, async (_event, data) => {
           if (generation !== recoveryGenerationRef.current) return;
           if (data.fatal) {
             logRecoveryTelemetry('HARD_REBUILD_HLS_FATAL', { type: data.type, details: data.details });
@@ -255,7 +299,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
           }
         });
       } else {
-        currentVideo.src = src;
+        currentVideo.src = effectiveSrc;
         currentVideo.load();
         currentVideo.addEventListener('loadedmetadata', () => {
           if (generation !== recoveryGenerationRef.current) return;
@@ -269,26 +313,39 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
           }
         }, { once: true });
       }
-    }, 150);
-  }, [src, logRecoveryTelemetry, setPlayerStateSync]);
+    }, 100);
+  }, [refreshUrl, logRecoveryTelemetry, setPlayerStateSync]);
 
+  // ── GRADUATED MULTI-TIER RECOVERY ──
   executeRecovery = useCallback((cause, options = {}) => {
     const video = videoRef.current;
     const hls = hlsRef.current;
     const now = Date.now();
     recoveryGenerationRef.current += 1;
     const generation = recoveryGenerationRef.current;
-    if (isRecoveringRef.current && (now - recoveryLockTimeRef.current < 12000) && !options.forceLevel) {
+
+    // Lock recovery throttle to prevent hammering
+    if (isRecoveringRef.current && (now - recoveryLockTimeRef.current < 8000) && !options.forceLevel) {
       logRecoveryTelemetry('RECOVERY_BLOCKED_CONCURRENT', { cause, generation });
       return;
     }
     isRecoveringRef.current = true;
     recoveryLockTimeRef.current = now;
     lastRecoveryTimeRef.current = now;
+
     if (options.resetAttempt) recoveryAttemptRef.current = 1; else recoveryAttemptRef.current += 1;
-    const targetPos = options.targetTime != null ? options.targetTime : (requestedTimeRef.current != null ? requestedTimeRef.current : (video && Number.isFinite(video.currentTime) && video.currentTime > 0 ? video.currentTime : (initialTimeRef.current || 0)));
+    const targetPos = options.targetTime != null
+      ? options.targetTime
+      : (requestedTimeRef.current != null
+        ? requestedTimeRef.current
+        : (video && Number.isFinite(video.currentTime) && video.currentTime > 0
+          ? video.currentTime
+          : (initialTimeRef.current || 0)));
     requestedTimeRef.current = targetPos;
-    if (options.wasPlaying != null) wasPlayingRef.current = options.wasPlaying; else if (video) wasPlayingRef.current = !video.paused;
+
+    if (options.wasPlaying != null) wasPlayingRef.current = options.wasPlaying;
+    else if (video) wasPlayingRef.current = !video.paused;
+
     let level = options.forceLevel || 1;
     if (!options.forceLevel) {
       if (recoveryAttemptRef.current === 1) level = 1;
@@ -296,25 +353,36 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
       else if (recoveryAttemptRef.current >= 3 && recoveryAttemptRef.current <= 4) level = 3;
       else level = 4;
     }
+
+    // Media element error 4 (SRC_NOT_SUPPORTED / 403 Forbidden) mandates full pipeline rebuild
     if (video && video.error && video.error.code === 4 && level < 3) level = 3;
     recoveryLevelRef.current = level;
     logRecoveryTelemetry('RECOVERY_EXECUTE', { cause, level, attempt: recoveryAttemptRef.current, targetTime: targetPos, generation });
+
+    // Tier 1: Soft micro-nudge (0.05s) to bypass tiny buffer holes + restart load
     if (level === 1) {
       setPlayerStateSync(PLAYER_STATES.RECOVERING_SOFT);
       if (hls) {
-        const nudge = targetPos + 0.1;
-        if (video && Number.isFinite(nudge) && nudge < (video.duration || Infinity)) try { video.currentTime = nudge; } catch (e) {}
+        const nudge = targetPos + 0.05;
+        if (video && Number.isFinite(nudge) && nudge < (video.duration || Infinity)) {
+          try { video.currentTime = nudge; } catch (e) {}
+        }
         try { hls.startLoad(); } catch (e) {}
       } else if (video) {
         try {
-          const nudge = targetPos + 0.1;
+          const nudge = targetPos + 0.05;
           if (Number.isFinite(nudge) && nudge < (video.duration || Infinity)) video.currentTime = nudge;
+          if (wasPlayingRef.current) video.play().catch(() => {});
         } catch (e) {}
       }
-      setTimeout(() => { if (generation === recoveryGenerationRef.current) isRecoveringRef.current = false; }, 3000);
-    } else if (level === 2) {
+      setTimeout(() => { if (generation === recoveryGenerationRef.current) isRecoveringRef.current = false; }, 2000);
+    }
+    // Tier 2: Media Source recovery
+    else if (level === 2) {
       setPlayerStateSync(PLAYER_STATES.RECOVERING_MEDIA);
-      if (hls) try { hls.recoverMediaError(); } catch (e) {} else if (video) {
+      if (hls) {
+        try { hls.recoverMediaError(); } catch (e) {}
+      } else if (video) {
         try {
           video.load();
           video.addEventListener('loadedmetadata', () => {
@@ -324,8 +392,13 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
           }, { once: true });
         } catch (e) {}
       }
-      setTimeout(() => { if (generation === recoveryGenerationRef.current) isRecoveringRef.current = false; }, 4000);
-    } else if (level === 3) rebuildPlayerPipeline(targetPos, wasPlayingRef.current, generation);
+      setTimeout(() => { if (generation === recoveryGenerationRef.current) isRecoveringRef.current = false; }, 3000);
+    }
+    // Tier 3: Hard rebuild pipeline with fresh signed URL
+    else if (level === 3) {
+      rebuildPlayerPipeline(targetPos, wasPlayingRef.current, generation);
+    }
+    // Tier 4: Fatal fallback with user retry overlay
     else {
       setPlayerStateSync(PLAYER_STATES.FATAL);
       logRecoveryTelemetry('RECOVERY_FATAL_UI', { cause });
@@ -336,6 +409,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     }
   }, [logRecoveryTelemetry, rebuildPlayerPipeline, setPlayerStateSync]);
 
+  // ── USER SEEKING ──
   const seekTo = useCallback((targetTime, options = {}) => {
     const video = videoRef.current;
     if (!video || !Number.isFinite(targetTime)) return;
@@ -350,8 +424,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     setPlayerStateSync(PLAYER_STATES.SEEKING);
     recordEvent('user_seek', { targetTime: clampedTarget, options });
 
-    // Pipeline health check: readyState < 1 alone is NOT fatal unless accompanied by video.error, missing HLS, or FATAL state
-    const isHlsMissing = !hlsRef.current && Hls.isSupported() && src?.endsWith('.m3u8');
+    const isHlsMissing = !hlsRef.current && Hls.isSupported() && activeSrcRef.current?.endsWith('.m3u8');
     const isPipUnhealthy = !!video.error || isHlsMissing || playerStateRef.current === PLAYER_STATES.FATAL;
 
     if (isPipUnhealthy || options.forceRebuild) {
@@ -365,7 +438,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
           if (generation === recoveryGenerationRef.current) {
             setPlayerStateSync(video.paused && !wasPlayingRef.current ? PLAYER_STATES.IDLE : PLAYER_STATES.PLAYING);
           }
-        }, 500);
+        }, 400);
       } catch (e) {
         recordEvent('seek_exception', { error: e.message });
         executeRecovery('user-seek-exception', { forceLevel: 3, targetTime: clampedTarget, wasPlaying: wasPlayingRef.current });
@@ -388,8 +461,13 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
 
   const formatTime = (seconds) => {
     if (!seconds || isNaN(seconds)) return '00:00';
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
+    const totalSecs = Math.floor(seconds);
+    const hrs = Math.floor(totalSecs / 3600);
+    const mins = Math.floor((totalSecs % 3600) / 60);
+    const secs = totalSecs % 60;
+    if (hrs > 0) {
+      return `${hrs}:${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
     return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
@@ -419,7 +497,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
       document.webkitFullscreenElement ||
       document.mozFullScreenElement ||
       document.msFullscreenElement ||
-      (video && (video.webkitDisplayingFullscreen || video.webkitSupportsFullscreen && video.webkitDisplayingFullscreen))
+      (video && (video.webkitDisplayingFullscreen || (video.webkitSupportsFullscreen && video.webkitDisplayingFullscreen)))
     );
   }, []);
 
@@ -443,7 +521,6 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
         try { video.webkitExitFullscreen(); } catch (e) {}
       }
     } else {
-      // Priority 1: Standard Element requestFullscreen (Android, Desktop, iPad OS)
       if (typeof container.requestFullscreen === 'function') {
         container.requestFullscreen().catch(() => {
           if (typeof video.webkitEnterFullscreen === 'function') {
@@ -455,7 +532,6 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
           }
         });
       } else if (typeof video.webkitEnterFullscreen === 'function') {
-        // Priority 2: iOS iPhone Native Video Fullscreen
         try {
           video.webkitEnterFullscreen();
           setIsFullscreen(true);
@@ -465,7 +541,6 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
           document.body.style.overflow = 'hidden';
         }
       } else if (typeof container.webkitRequestFullscreen === 'function') {
-        // Priority 3: WebKit Container requestFullscreen
         try {
           container.webkitRequestFullscreen();
         } catch (e) {
@@ -474,7 +549,6 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
           document.body.style.overflow = 'hidden';
         }
       } else {
-        // Priority 4: Pseudo Fullscreen Fallback
         isPseudoFullscreenRef.current = true;
         setIsFullscreen(true);
         document.body.style.overflow = 'hidden';
@@ -532,7 +606,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     const zone = pct < 0.3 ? 'left' : pct > 0.7 ? 'right' : 'center';
     tapCountRef.current += 1;
     if (tapCountRef.current === 1) {
-      tapTimerRef.current = setTimeout(() => { tapCountRef.current = 0; togglePlay(); }, 300);
+      tapTimerRef.current = setTimeout(() => { tapCountRef.current = 0; togglePlay(); }, 250);
     } else if (tapCountRef.current === 2) {
       clearTimeout(tapTimerRef.current);
       tapCountRef.current = 0;
@@ -572,6 +646,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!videoRef.current) return;
+      if (['input', 'textarea'].includes(document.activeElement?.tagName?.toLowerCase())) return;
       switch(e.key.toLowerCase()) {
         case ' ': case 'k': e.preventDefault(); togglePlay(); break;
         case 'f': e.preventDefault(); toggleFullscreen(); break;
@@ -588,7 +663,13 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
 
   useEffect(() => {
     let timeout;
-    const resetHideTimer = () => { setShowControls(true); clearTimeout(timeout); timeout = setTimeout(() => { if (playing && !showSettings) setShowControls(false); }, 3000); };
+    const resetHideTimer = () => {
+      setShowControls(true);
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        if (playing && !showSettings) setShowControls(false);
+      }, 3000);
+    };
     const container = containerRef.current;
     if (container) {
       container.addEventListener('mousemove', resetHideTimer);
@@ -603,6 +684,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     };
   }, [playing, showSettings]);
 
+  // ── FAST MICRO-STALL WATCHDOG (2.5 SECONDS) ──
   useEffect(() => {
     if (isBuffering && playing && !playbackError) {
       stallWatchdogRef.current = setTimeout(() => {
@@ -610,41 +692,88 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
         recordEvent('stall_watchdog_fired');
         logRecoveryTelemetry('STALL_WATCHDOG_FIRED');
         executeRecovery('stall-watchdog');
-      }, 12000);
+      }, 2500); // 2.5s fast detection
     }
-    return () => { if (stallWatchdogRef.current) { clearTimeout(stallWatchdogRef.current); stallWatchdogRef.current = null; } };
+    return () => {
+      if (stallWatchdogRef.current) {
+        clearTimeout(stallWatchdogRef.current);
+        stallWatchdogRef.current = null;
+      }
+    };
   }, [isBuffering, playing, playbackError, executeRecovery, recordEvent, logRecoveryTelemetry]);
 
+  // ── NETWORK RESILIENCE: OFFLINE / ONLINE AUTO-RESUME ──
   useEffect(() => {
-    const handleOffline = () => { setIsOffline(true); recordEvent('network_offline'); logRecoveryTelemetry('NETWORK_OFFLINE'); };
-    const handleOnline = () => { setIsOffline(false); recordEvent('network_online'); logRecoveryTelemetry('NETWORK_ONLINE_RESTORED'); if (playbackErrorRef.current && errorTypeRef.current === 'network') { setPlaybackError(false); setErrorType('unknown'); executeRecovery('network-restored', { forceLevel: 3 }); } else if (hlsRef.current) try { hlsRef.current.startLoad(); } catch (e) {} };
+    const handleOffline = () => {
+      setIsOffline(true);
+      recordEvent('network_offline');
+      logRecoveryTelemetry('NETWORK_OFFLINE');
+    };
+    const handleOnline = async () => {
+      setIsOffline(false);
+      recordEvent('network_online');
+      logRecoveryTelemetry('NETWORK_ONLINE_RESTORED');
+      if (playbackErrorRef.current && errorTypeRef.current === 'network') {
+        setPlaybackError(false);
+        setErrorType('unknown');
+        executeRecovery('network-restored', { forceLevel: 3, resetAttempt: true });
+      } else if (hlsRef.current) {
+        try { hlsRef.current.startLoad(); } catch (e) {}
+      }
+    };
     window.addEventListener('offline', handleOffline);
     window.addEventListener('online', handleOnline);
-    return () => { window.removeEventListener('offline', handleOffline); window.removeEventListener('online', handleOnline); };
+    return () => {
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+    };
   }, [executeRecovery, recordEvent, logRecoveryTelemetry]);
 
+  // ── VISIBILITY RECOVERY: TAB SWITCH RESTORATION ──
   useEffect(() => {
     const handleVisibilityChange = () => {
       recordEvent(`visibility_${document.visibilityState}`);
       if (document.visibilityState !== 'visible' || !videoRef.current || playbackErrorRef.current) return;
       if (!videoRef.current.paused && (videoRef.current.readyState < 3 || isBuffering)) {
         logRecoveryTelemetry('TAB_RESTORED_STALLED');
-        executeRecovery('visibility-return');
+        executeRecovery('visibility-return', { forceLevel: 1 });
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [executeRecovery, recordEvent, logRecoveryTelemetry, isBuffering]);
 
+  // ── INITIAL MEDIA PIPELINE SETUP ──
   useEffect(() => {
-    setPlaybackError(false); setErrorType('unknown'); setAutoRetryCountdown(null); setPlaying(false);
-    setPlayerStateSync(PLAYER_STATES.IDLE); recoveryLevelRef.current = 0; recoveryAttemptRef.current = 0; isRecoveringRef.current = false;
+    setPlaybackError(false);
+    setErrorType('unknown');
+    setAutoRetryCountdown(null);
+    setPlaying(false);
+    setPlayerStateSync(PLAYER_STATES.IDLE);
+    recoveryLevelRef.current = 0;
+    recoveryAttemptRef.current = 0;
+    isRecoveringRef.current = false;
+    activeSrcRef.current = src;
+
     if (!src || !videoRef.current) return;
     const video = videoRef.current;
-    if (hlsRef.current) { try { hlsRef.current.detachMedia(); hlsRef.current.destroy(); } catch (e) {} hlsRef.current = null; }
+
+    if (hlsRef.current) {
+      try { hlsRef.current.detachMedia(); hlsRef.current.destroy(); } catch (e) {}
+      hlsRef.current = null;
+    }
+
     if (Hls.isSupported() && src.endsWith('.m3u8')) {
-      const hls = new Hls(createHlsConfig()); hlsRef.current = hls; hls.loadSource(src); hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => { const r = initialTimeRef.current; if (r > 0) try { video.currentTime = r; } catch (e) {} });
+      const hls = new Hls(createHlsConfig());
+      hlsRef.current = hls;
+      hls.loadSource(src);
+      hls.attachMedia(video);
+
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        const r = initialTimeRef.current;
+        if (r > 0) try { video.currentTime = r; } catch (e) {}
+      });
+
       hls.on(Hls.Events.ERROR, (_e, data) => {
         let fragUrl = null;
         if (data.frag?.url) fragUrl = data.frag.url.split('?')[0];
@@ -661,42 +790,89 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
         };
 
         recordEvent('hls_error', { type: data.type, details: data.details, fatal: data.fatal, fragUrl });
+
         if (data.fatal) {
-          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) { logRecoveryTelemetry('HLS_FATAL_NETWORK_ERROR', { details: data.details }); executeRecovery('hls-fatal-network-error', { forceLevel: 1 }); }
-          else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) { logRecoveryTelemetry('HLS_FATAL_MEDIA_ERROR', { details: data.details }); executeRecovery('hls-fatal-media-error', { forceLevel: 2 }); }
-          else { logRecoveryTelemetry('HLS_FATAL_UNKNOWN_ERROR', { type: data.type, details: data.details }); executeRecovery('hls-fatal-unknown-error', { forceLevel: 3 }); }
-        } else if (data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR && !video.paused) executeRecovery('hls-buffer-stalled', { forceLevel: 1 });
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            logRecoveryTelemetry('HLS_FATAL_NETWORK_ERROR', { details: data.details });
+            executeRecovery('hls-fatal-network-error', { forceLevel: 1 });
+          } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+            logRecoveryTelemetry('HLS_FATAL_MEDIA_ERROR', { details: data.details });
+            executeRecovery('hls-fatal-media-error', { forceLevel: 2 });
+          } else {
+            logRecoveryTelemetry('HLS_FATAL_UNKNOWN_ERROR', { type: data.type, details: data.details });
+            executeRecovery('hls-fatal-unknown-error', { forceLevel: 3 });
+          }
+        } else if (data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR && !video.paused) {
+          executeRecovery('hls-buffer-stalled', { forceLevel: 1 });
+        }
       });
-    } else { video.src = src; }
-    return () => { if (hlsRef.current) { try { hlsRef.current.detachMedia(); hlsRef.current.destroy(); } catch (e) {} hlsRef.current = null; } };
+    } else {
+      video.src = src;
+    }
+
+    return () => {
+      if (hlsRef.current) {
+        try { hlsRef.current.detachMedia(); hlsRef.current.destroy(); } catch (e) {}
+        hlsRef.current = null;
+      }
+    };
   }, [src, recordEvent, logRecoveryTelemetry, executeRecovery, setPlayerStateSync]);
 
-  useEffect(() => { if (videoRef.current) { videoRef.current.volume = volume; videoRef.current.muted = muted; } }, [volume, muted]);
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.volume = volume;
+      videoRef.current.muted = muted;
+    }
+  }, [volume, muted]);
 
+  // ── PROGRESS & BUFFER TRACKING ──
   const updateProgress = () => {
     const video = videoRef.current;
     if (!video) return;
-    const { currentTime, duration, buffered } = video;
-    setCurrentTime(currentTime); setDuration(duration);
-    if (buffered && buffered.length > 0) setBuffered(buffered.end(buffered.length - 1));
-    if (!video.paused && !isBuffering && playerStateRef.current !== PLAYER_STATES.SEEKING && !playerStateRef.current.startsWith('RECOVERING') && playerStateRef.current !== PLAYER_STATES.REBUILDING && playerStateRef.current !== PLAYER_STATES.FATAL) setPlayerStateSync(PLAYER_STATES.PLAYING);
+    const { currentTime: cTime, duration: dur, buffered: buf } = video;
+    setCurrentTime(cTime);
+    setDuration(dur);
+
+    // Calculate maximum buffered end point ahead of current playback
+    if (buf && buf.length > 0) {
+      let maxBuf = 0;
+      for (let i = 0; i < buf.length; i++) {
+        if (buf.start(i) <= cTime + 1 && buf.end(i) > maxBuf) {
+          maxBuf = buf.end(i);
+        }
+      }
+      setBuffered(maxBuf || buf.end(buf.length - 1));
+    }
+
+    if (!video.paused && !isBuffering && playerStateRef.current !== PLAYER_STATES.SEEKING && !playerStateRef.current.startsWith('RECOVERING') && playerStateRef.current !== PLAYER_STATES.REBUILDING && playerStateRef.current !== PLAYER_STATES.FATAL) {
+      setPlayerStateSync(PLAYER_STATES.PLAYING);
+    }
+
     if (!video.paused && !isBuffering && video.readyState >= 2 && !video.error && !playbackErrorRef.current) {
       const now = Date.now();
-      if (verificationStartPosRef.current == null || Math.abs(currentTime - lastSuccessfulTimeRef.current) > 2) { verificationStartPosRef.current = currentTime; verificationStartTimeRef.current = now; }
-      else {
-        const advancedSecs = currentTime - verificationStartPosRef.current;
+      if (verificationStartPosRef.current == null || Math.abs(cTime - lastSuccessfulTimeRef.current) > 2) {
+        verificationStartPosRef.current = cTime;
+        verificationStartTimeRef.current = now;
+      } else {
+        const advancedSecs = cTime - verificationStartPosRef.current;
         const elapsedMs = now - verificationStartTimeRef.current;
-        if (advancedSecs >= 1.2 && elapsedMs >= 1200) {
+        if (advancedSecs >= 1.0 && elapsedMs >= 1000) {
           if (recoveryAttemptRef.current > 0 || isRecoveringRef.current || playerStateRef.current.startsWith('RECOVERING') || playerStateRef.current === PLAYER_STATES.REBUILDING) {
-            logRecoveryTelemetry('RECOVERY_SUCCESS_VERIFIED', { restoredTime: currentTime, advancedSecs });
+            logRecoveryTelemetry('RECOVERY_SUCCESS_VERIFIED', { restoredTime: cTime, advancedSecs });
             if (rebuildTimeoutRef.current) { clearTimeout(rebuildTimeoutRef.current); rebuildTimeoutRef.current = null; }
-            recoveryAttemptRef.current = 0; recoveryLevelRef.current = 0; isRecoveringRef.current = false; setPlayerStateSync(PLAYER_STATES.PLAYING);
+            recoveryAttemptRef.current = 0;
+            recoveryLevelRef.current = 0;
+            isRecoveringRef.current = false;
+            setPlayerStateSync(PLAYER_STATES.PLAYING);
           }
         }
       }
-      lastSuccessfulTimeRef.current = currentTime;
-    } else verificationStartPosRef.current = null;
-    if (onProgress) onProgress({ currentTime, duration });
+      lastSuccessfulTimeRef.current = cTime;
+    } else {
+      verificationStartPosRef.current = null;
+    }
+
+    if (onProgress) onProgress({ currentTime: cTime, duration: dur });
   };
 
   const handleVideoError = useCallback(() => {
@@ -725,13 +901,6 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
       buffered: eventTimelineRef.current.slice(-1)[0]?.buffered || [],
       playbackRate: video.playbackRate,
       visibilityState: document.visibilityState,
-      hlsState: hlsRef.current ? {
-        attached: !!hlsRef.current.media,
-        currentLevel: hlsRef.current.currentLevel,
-        nextAutoLevel: hlsRef.current.nextAutoLevel,
-        loadLevel: hlsRef.current.loadLevel,
-      } : null,
-      lastHlsError: lastHlsErrorRef.current,
       timeSinceLastNativeError: timeSinceLastNative,
       timeSinceLastRecovery: timeSinceLastRecovery,
     };
@@ -739,19 +908,17 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     recordEvent('native_video_error', errorPayload);
     logRecoveryTelemetry('NATIVE_VIDEO_ERROR', errorPayload);
 
-    if (recentErrorTimestampsRef.current.length >= 3) {
-      logRecoveryTelemetry('REPEATED_MEDIA_FAILURE', {
-        failureCountIn5Min: recentErrorTimestampsRef.current.length,
-        ...errorPayload,
-      });
-    }
-
+    // Automatically trigger level 3 recovery with fresh signed URL
     executeRecovery('native-video-error', { forceLevel: 3 });
   }, [recordEvent, logRecoveryTelemetry, executeRecovery]);
 
   const handleRetry = useCallback(() => {
-    setPlaybackError(false); setErrorType('unknown'); setAutoRetryCountdown(null);
-    recoveryLevelRef.current = 0; recoveryAttemptRef.current = 0; isRecoveringRef.current = false;
+    setPlaybackError(false);
+    setErrorType('unknown');
+    setAutoRetryCountdown(null);
+    recoveryLevelRef.current = 0;
+    recoveryAttemptRef.current = 0;
+    isRecoveringRef.current = false;
     executeRecovery('manual-user-retry', { forceLevel: 3, targetTime: requestedTimeRef.current || currentTime || initialTimeRef.current || 0, wasPlaying: true, resetAttempt: true });
   }, [currentTime, executeRecovery]);
 
@@ -777,14 +944,13 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
     <div 
       ref={containerRef}
       className={`relative w-full h-full bg-black overflow-hidden select-none group font-sans ${isFullscreen ? 'fixed inset-0 z-[9999] bg-black' : ''}`}
-      // Desktop: double-click for fullscreen (no conflict since click is on <video>)
-      // Touch: handled by handleVideoTap disambiguation
       onDoubleClick={IS_TOUCH ? undefined : toggleFullscreen}
     >
       <video
         ref={videoRef}
         className="w-full h-full object-contain"
         playsInline
+        preload="auto"
         controls={false}
         disablePictureInPicture
         disableRemotePlayback
@@ -797,15 +963,13 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
         onLoadedData={() => setIsBuffering(false)}
         onLoadedMetadata={updateProgress}
         onError={handleVideoError}
-        // Touch: use tap disambiguation; Desktop: direct click
         onClick={IS_TOUCH ? handleVideoTap : togglePlay}
-        // Long-press to 2x speed (touch only)
         onTouchStart={IS_TOUCH ? handleTouchStart : undefined}
         onTouchEnd={IS_TOUCH ? handleTouchEnd : undefined}
         onTouchCancel={IS_TOUCH ? handleTouchEnd : undefined}
       />
 
-      {/* ── Skip ripple animation overlay ── */}
+      {/* ── Skip Ripple Animation Overlay ── */}
       <AnimatePresence>
         {skipRipple && (
           <motion.div
@@ -822,7 +986,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 1.2, opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center"
+                className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg"
               >
                 {skipRipple.side === 'right'
                   ? <SkipForward className="w-6 h-6 text-white" />
@@ -841,57 +1005,60 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
         )}
       </AnimatePresence>
 
+      {/* ── Buffering Spinner ── */}
       {isBuffering && !playbackError && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <Loader2 className="w-12 h-12 text-brand-mint animate-spin" />
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/10 backdrop-blur-[1px]">
+          <Loader2 className="w-12 h-12 text-brand-mint animate-spin drop-shadow" />
         </div>
       )}
 
-      {/* Network offline indicator — subtle top banner */}
+      {/* ── Network Offline Banner ── */}
       <AnimatePresence>
         {isOffline && !playbackError && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="absolute top-0 left-0 right-0 z-30 flex items-center justify-center gap-2 bg-danger/90 backdrop-blur-sm px-4 py-2 text-white text-xs font-semibold"
+            className="absolute top-0 left-0 right-0 z-30 flex items-center justify-center gap-2 bg-danger/90 backdrop-blur-md px-4 py-2 text-white text-xs font-semibold shadow-md"
           >
-            <WifiOff className="w-3.5 h-3.5" />
-            No internet connection — will reconnect automatically
+            <WifiOff className="w-4 h-4" />
+            Internet disconnected — stream will resume automatically
           </motion.div>
         )}
       </AnimatePresence>
 
       {watermarkData && <VideoWatermark user={watermarkData} />}
 
-      {/* Custom Controls */}
+      {/* ── Custom Video Controls ── */}
       <AnimatePresence>
         {(showControls || !playing) && !playbackError && !isDevToolsOpen && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.25 }}
             className="absolute inset-0 flex flex-col justify-end pointer-events-none"
           >
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent pointer-events-none" />
             
             <div className="relative z-10 px-4 sm:px-6 py-3 sm:py-4 pointer-events-auto">
-              {/* Progress Bar — supports both click and touch */}
+              {/* Progress & Buffer Bar */}
               <div 
                 className="relative h-2 sm:h-1.5 w-full bg-white/20 rounded-full mb-3 sm:mb-4 cursor-pointer sm:hover:h-2 transition-all group/progress"
                 onClick={handleSeek}
                 onTouchStart={handleSeek}
               >
+                {/* Buffered Range Bar */}
                 <div 
-                  className="absolute h-full bg-white/40 rounded-full pointer-events-none"
-                  style={{ width: `${duration > 0 ? (buffered / duration) * 100 : 0}%` }}
+                  className="absolute h-full bg-white/40 rounded-full pointer-events-none transition-all duration-300"
+                  style={{ width: `${duration > 0 ? Math.min(100, (buffered / duration) * 100) : 0}%` }}
                 />
+                {/* Current Playback Bar */}
                 <div 
                   className="absolute h-full bg-brand-mint rounded-full pointer-events-none"
-                  style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+                  style={{ width: `${duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0}%` }}
                 >
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-3 sm:h-3 bg-white rounded-full sm:scale-0 sm:group-hover/progress:scale-100 transition-transform shadow" />
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-3 sm:h-3 bg-white rounded-full sm:scale-0 sm:group-hover/progress:scale-100 transition-transform shadow-md" />
                 </div>
               </div>
 
@@ -907,7 +1074,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
                     <SkipBack className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
 
-                  <button onClick={togglePlay} className="hover:text-brand-mint transition-colors p-1">
+                  <button onClick={togglePlay} className="hover:text-brand-mint transition-colors p-1" title={playing ? "Pause" : "Play"}>
                     {playing ? <Pause className="w-5 h-5 sm:w-6 sm:h-6 fill-current" /> : <Play className="w-5 h-5 sm:w-6 sm:h-6 fill-current" />}
                   </button>
 
@@ -922,7 +1089,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
                   
                   {showVolumeControl && (
                     <div className="flex items-center gap-2 group/volume">
-                      <button onClick={toggleMute} className="hover:text-brand-mint transition-colors">
+                      <button onClick={toggleMute} className="hover:text-brand-mint transition-colors" title={muted ? "Unmute" : "Mute"}>
                         {muted || volume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                       </button>
                       <input
@@ -954,6 +1121,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
                     <button 
                       onClick={() => setShowSettings(!showSettings)}
                       className={`hover:text-brand-mint transition-colors ${showSettings ? 'text-brand-mint' : ''}`}
+                      title="Playback Speed"
                     >
                       <Settings className="w-5 h-5" />
                     </button>
@@ -964,10 +1132,10 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 10 }}
-                          className="absolute bottom-full right-0 mb-4 bg-black/80 backdrop-blur-md rounded-xl border border-white/10 p-2 min-w-[120px]"
+                          className="absolute bottom-full right-0 mb-4 bg-black/90 backdrop-blur-md rounded-xl border border-white/10 p-2 min-w-[120px] shadow-2xl z-50"
                         >
                           <div className="text-xs font-semibold text-white/50 px-3 py-1 mb-1">Speed</div>
-                          {[0.5, 1, 1.25, 1.5, 2].map(rate => (
+                          {[0.5, 0.75, 1, 1.25, 1.5, 2].map(rate => (
                             <button
                               key={rate}
                               onClick={() => {
@@ -985,7 +1153,7 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
                     </AnimatePresence>
                   </div>
                   
-                  <button onClick={toggleFullscreen} className="hover:text-brand-mint transition-colors">
+                  <button onClick={toggleFullscreen} className="hover:text-brand-mint transition-colors" title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}>
                     {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
                   </button>
                 </div>
@@ -995,10 +1163,10 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
         )}
       </AnimatePresence>
 
-      {/* ── Error overlay with differentiated messages + auto-retry countdown ── */}
+      {/* ── Error Overlay with Auto-Recovery ── */}
       {playbackError && (
-        <div className="absolute inset-0 z-40 bg-black/90 flex flex-col items-center justify-center text-white p-6">
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${
+        <div className="absolute inset-0 z-40 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center text-white p-6">
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 shadow-lg ${
             errorType === 'network' ? 'bg-warning/20 text-warning' : 'bg-danger/20 text-danger'
           }`}>
             {errorType === 'network' ? (
@@ -1008,32 +1176,31 @@ export const VideoPlayer = ({ src, watermarkData, onProgress, initialTime }) => 
             )}
           </div>
           <h3 className="text-lg font-bold mb-2">
-            {errorType === 'network' ? 'Connection Lost' : errorType === 'media' ? 'Video Decode Error' : 'Playback Error'}
+            {errorType === 'network' ? 'Connection Interrupted' : errorType === 'media' ? 'Media Decoding Issue' : 'Stream Session Stalled'}
           </h3>
           <p className="text-sm text-white/60 text-center max-w-sm mb-5">
             {errorType === 'network'
-              ? 'The video stream was interrupted due to a network issue. Please check your internet connection.'
-              : errorType === 'media'
-                ? 'The video data could not be decoded. This is usually a temporary issue.'
-                : 'The video stream was interrupted. This may be due to a network issue or an expired session.'}
+              ? 'The video stream was interrupted. Reconnecting with a fresh secure stream...'
+              : 'The video stream encountered a temporary playback issue. Click retry to reconnect seamlessly.'}
           </p>
           <div className="flex flex-col items-center gap-3">
             <button
               onClick={handleRetry}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-mint text-black font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-brand-mint/90 transition-all active:scale-[0.97]"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-mint text-black font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-brand-mint/90 transition-all active:scale-[0.97] shadow-lg"
             >
               <RefreshCw className="w-4 h-4" />
-              Retry Playback
+              Reconnect Stream
             </button>
             {autoRetryCountdown !== null && autoRetryCountdown > 0 && (
               <span className="text-[11px] text-white/40 font-medium">
-                Auto-retrying in {autoRetryCountdown}s…
+                Auto-reconnecting in {autoRetryCountdown}s…
               </span>
             )}
           </div>
         </div>
       )}
 
+      {/* ── DevTools / Protection Warning ── */}
       {isDevToolsOpen && (
         <div className="absolute inset-0 z-50 bg-black/95 flex flex-col items-center justify-center text-white p-6">
           <h3 className="text-2xl font-bold text-danger mb-2">Protected Content</h3>

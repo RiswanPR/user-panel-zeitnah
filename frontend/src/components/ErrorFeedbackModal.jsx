@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import html2canvas from "html2canvas";
-import api from "../services/api";
 
 export default function ErrorFeedbackModal({ errorData, onClose, onRetry }) {
   const [showFeedback, setShowFeedback] = useState(false);
@@ -43,11 +42,32 @@ export default function ErrorFeedbackModal({ errorData, onClose, onRetry }) {
         source: "user_feedback_modal"
       };
 
-      await api.post("/error-reports", finalPayload);
+      // Use raw fetch() to bypass axios interceptors entirely.
+      // This prevents retry/error-capture cascades when the error report POST itself fails.
+      const baseURL = import.meta.env.VITE_API_BASE_URL || "https://beta.zeitnahacademy.com/api";
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(`${baseURL}/error-reports`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(finalPayload),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message || `Server responded with ${res.status}`);
+      }
+
       setSuccess(true);
     } catch (err) {
       console.error("Failed to send diagnostic report", err);
-      alert("Failed to send report. However, basic diagnostics may have been saved automatically.");
+      // Don't use alert() — user is already in an error state.
+      // Show inline error feedback instead.
+      setLoading(false);
+      return; // Stay on the form so user can retry
     } finally {
       setLoading(false);
     }

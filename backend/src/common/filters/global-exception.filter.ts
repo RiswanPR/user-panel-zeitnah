@@ -13,10 +13,6 @@ import { v4 as uuidv4 } from 'uuid';
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
 
-  Catch(exception: unknown, host: ArgumentsHost) {
-    this.catch(exception, host);
-  }
-
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -50,13 +46,17 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         'We encountered an unexpected error. Our team has been notified.';
     }
 
+    const sanitizedUrl = request.url
+      ? request.url.replace(/([?&]token=)[^&]+/gi, '$1[REDACTED]')
+      : request.url;
+
     const errorResponse = {
       success: false,
       code,
       message,
       correlationId,
       timestamp: new Date().toISOString(),
-      path: request.url,
+      path: sanitizedUrl,
     };
 
     // Log internally based on error severity:
@@ -64,14 +64,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     // Log 4xx expected client errors as WARN without stack trace to prevent PM2 error log spam
     if (status >= 500) {
       this.logger.error(
-        `[${correlationId}] ${request.method} ${request.url} - Status: ${status}`,
+        `[${correlationId}] ${request.method} ${sanitizedUrl} - Status: ${status}`,
         exception instanceof Error
           ? exception.stack
           : JSON.stringify(exception),
       );
     } else {
       this.logger.warn(
-        `[${correlationId}] ${request.method} ${request.url} - Status: ${status} - ${message}`,
+        `[${correlationId}] ${request.method} ${sanitizedUrl} - Status: ${status} - ${message}`,
       );
     }
 

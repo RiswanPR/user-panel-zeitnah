@@ -2,12 +2,14 @@ import React, { useState, useEffect } from "react";
 import { Clock, ShieldCheck, ShieldAlert, KeyRound, RefreshCw, Laptop, Loader2, LogOut } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import api from "../../services/api";
+import { useToast } from "../../components/ui/Toast";
 
 const SessionDiagnostics = () => {
   const [tokenData, setTokenData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [now, setNow] = useState(new Date());
+  const toast = useToast();
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
@@ -67,7 +69,7 @@ const SessionDiagnostics = () => {
       loadData();
     } catch (err) {
       console.error("Refresh failed", err);
-      alert("Manual refresh failed: " + (err.response?.data?.message || err.message));
+      toast.error("Refresh failed", "Could not refresh the session token. Please try logging in again.");
     } finally {
       setRefreshing(false);
     }

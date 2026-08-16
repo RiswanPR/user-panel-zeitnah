@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Save, X } from "lucide-react";
 import api from "../../services/api";
+import { useToast } from "../../components/ui/Toast";
 
 function EditProfile() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState("");
@@ -38,10 +40,10 @@ function EditProfile() {
         bio,
         skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
       });
-      alert("Profile Updated");
+      toast.success("Profile updated", "Your changes have been saved.");
       navigate("/profile");
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to update profile.");
+      toast.error("Update failed", "Could not save your profile. Please try again.");
     } finally {
       setSaving(false);
     }

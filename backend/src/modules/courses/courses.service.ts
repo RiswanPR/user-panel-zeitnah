@@ -1545,7 +1545,7 @@ export class CoursesService {
       // Fallback for MP4 videos that haven't been converted to HLS yet
       playbackUrl = await this.signedUrlService.generateSignedVideoUrl(
         videoTarget,
-        900,
+        86400,
       );
     }
 
