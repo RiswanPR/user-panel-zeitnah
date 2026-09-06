@@ -38,8 +38,8 @@ export default defineConfig({
       manifest: false, // Using our custom public/manifest.json
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
-        // Exclude video segments and playlists from SW precaching/runtime caching
-        navigateFallbackDenylist: [/^\/api\//, /^\/hls\//, /\.m3u8$/, /\.ts$/],
+        // Exclude API, video segments, playlists, and .well-known deep-link files from SW navigate fallback
+        navigateFallbackDenylist: [/^\/api\//, /^\/hls\//, /^\/\.well-known\//, /\.m3u8$/, /\.ts$/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

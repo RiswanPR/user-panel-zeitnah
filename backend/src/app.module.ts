@@ -14,6 +14,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { CommunityModule } from './modules/community/community.module';
 import { TroubleshootModule } from './modules/troubleshoot/troubleshoot.module';
 import { ErrorReportsModule } from './modules/error-reports/error-reports.module';
+import { WellKnownModule } from './modules/well-known/well-known.module';
 
 @Module({
   imports: [
@@ -46,6 +47,9 @@ import { ErrorReportsModule } from './modules/error-reports/error-reports.module
 
     // TROUBLESHOOT ERROR REPORTING
     TroubleshootModule,
+
+    // WELL-KNOWN DEEP LINK DECLARATIONS
+    WellKnownModule,
 
     // RATE LIMITING
     ThrottlerModule.forRoot([

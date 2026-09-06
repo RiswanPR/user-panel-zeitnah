@@ -23,8 +23,13 @@ async function bootstrap(): Promise<void> {
   // COOKIE PARSER
   app.use(cookieParser());
 
-  // GLOBAL PREFIX
-  app.setGlobalPrefix('api');
+  // GLOBAL PREFIX (exclude .well-known for native Android & iOS verification)
+  app.setGlobalPrefix('api', {
+    exclude: [
+      '.well-known/assetlinks.json',
+      '.well-known/apple-app-site-association',
+    ],
+  });
 
   // HELMET SECURITY
   app.use(
