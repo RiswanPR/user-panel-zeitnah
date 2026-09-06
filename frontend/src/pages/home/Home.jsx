@@ -1,21 +1,27 @@
 import { useContext } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
+import { storage } from "../../services/storage";
 
 function Home() {
-  const { user, setUser } = useContext(AuthContext);
+  const { user, setUser, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   // SECURE DISCONNECT PIPELINE
   const handleLogout = async () => {
     try {
-      await api.post("/auth/logout");
+      if (logout) {
+        await logout();
+      } else {
+        await api.post("/auth/logout").catch(() => {});
+        await storage.clearAuth();
+        setUser(null);
+      }
     } catch (error) {
       console.log(error);
     } finally {
-      localStorage.removeItem("token");
-      setUser(null);
-      window.location.href = "/login";
+      navigate("/login");
     }
   };
 

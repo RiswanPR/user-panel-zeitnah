@@ -17,6 +17,14 @@ export type UserDevice = {
   previousRefreshToken?: string | null;
 };
 
+export type PushDevice = {
+  deviceId: string;
+  platform: string;
+  pushToken: string;
+  enabled: boolean;
+  updatedAt: Date;
+};
+
 export type UserGamificationActivity = {
   type: string;
   label: string;
@@ -135,6 +143,24 @@ export class User {
     default: [],
   })
   devices!: UserDevice[];
+
+  // =========================
+  // PUSH NOTIFICATION DEVICES
+  // =========================
+
+  @Prop({
+    type: [
+      {
+        deviceId: { type: String, required: true },
+        platform: { type: String, default: 'android' },
+        pushToken: { type: String, required: true },
+        enabled: { type: Boolean, default: true },
+        updatedAt: { type: Date, default: Date.now },
+      },
+    ],
+    default: [],
+  })
+  pushDevices!: PushDevice[];
 
   // =========================
   // USER COURSES

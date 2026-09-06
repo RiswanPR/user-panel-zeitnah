@@ -108,7 +108,7 @@ function Navbar() {
       </div>
 
       {/* MOBILE / TABLET */}
-      <div className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] bg-[#0b0b0b]/85 backdrop-blur-2xl border border-white/[0.06] rounded-3xl z-50 px-3 py-3 shadow-2xl shadow-black/50">
+      <div className="lg:hidden fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 w-[92%] bg-[#0b0b0b]/85 backdrop-blur-2xl border border-white/[0.06] rounded-3xl z-50 px-3 py-3 shadow-2xl shadow-black/50">
 
         <div className="flex justify-around items-center">
 

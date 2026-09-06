@@ -5,14 +5,15 @@ import "./index.css";
 import "./App.css";
 import { AuthProvider } from "./context/AuthContext";
 import GlobalErrorBoundary from "./components/GlobalErrorBoundary";
+import storage from "./services/storage";
 
 // ── Version Control & Cache Invalidation ──
 const APP_VERSION = import.meta.env.VITE_APP_VERSION || "1.0.0";
-const cachedVersion = localStorage.getItem("app_version");
+const cachedVersion = storage.getItem("app_version");
 
 if (cachedVersion !== APP_VERSION) {
   console.log(`[Version] Upgrading from ${cachedVersion} to ${APP_VERSION}`);
-  localStorage.setItem("app_version", APP_VERSION);
+  storage.setItem("app_version", APP_VERSION);
   
   // Clear caches if Service Worker is used
   if ("caches" in window) {
@@ -25,7 +26,7 @@ if (cachedVersion !== APP_VERSION) {
 
   // Only reload if we actually had a previous version (not first visit)
   if (cachedVersion) {
-    window.location.reload(true);
+    window.location.reload();
   }
 }
 
@@ -58,20 +59,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </GlobalErrorBoundary>
   </React.StrictMode>
 );
-
-// ── PWA Service Worker Registration ──
-if ("serviceWorker" in navigator && import.meta.env.PROD) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/sw.js")
-      .then((reg) => {
-        console.log("[SW] Registered:", reg.scope);
-      })
-      .catch((err) => {
-        console.warn("[SW] Registration failed:", err);
-      });
-  });
-}
 
 // ── Web Vitals Performance Monitoring ──
 if (import.meta.env.DEV) {

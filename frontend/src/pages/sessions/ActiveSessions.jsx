@@ -5,6 +5,7 @@ import { ArrowLeft, Monitor, RefreshCw, Shield, Smartphone, Tablet, Trash2 } fro
 import api from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../components/ui/Toast";
+import storage from "../../services/storage";
 
 const formatDate = (value) => {
   if (!value) return "Not available";
@@ -51,7 +52,7 @@ function ActiveSessions() {
       setRevokingDeviceId(session.deviceId);
       const res = await api.delete(`/auth/sessions/${session.deviceId}`);
       if (res.data.revokedCurrentSession) {
-        localStorage.removeItem("token");
+        storage.clearAuth();
         setUser(null);
         navigate("/login");
         return;

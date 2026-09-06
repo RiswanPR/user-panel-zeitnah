@@ -1,0 +1,35 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": [
+          "TEAMID.com.zeitnahacademy.app"
+        ],
+        "components": [
+          {
+            "/": "/courses/*",
+            "comment": "Matches course details and lessons"
+          },
+          {
+            "/": "/community/*",
+            "comment": "Matches community feed and direct messages"
+          },
+          {
+            "/": "/auth/*",
+            "comment": "Matches authentication and verify OTP"
+          },
+          {
+            "/": "*",
+            "comment": "Matches all other application routes"
+          }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "TEAMID.com.zeitnahacademy.app"
+    ]
+  }
+}

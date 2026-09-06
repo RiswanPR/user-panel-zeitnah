@@ -1,15 +1,4 @@
-import FingerprintJS
-from '@fingerprintjs/fingerprintjs';
+import { getDeviceId } from '../services/storage';
 
-export const getDeviceId =
-  async () => {
-
-    const fp =
-      await FingerprintJS.load();
-
-    const result =
-      await fp.get();
-
-    return result.visitorId;
-
-};
+export { getDeviceId };
+export default getDeviceId;

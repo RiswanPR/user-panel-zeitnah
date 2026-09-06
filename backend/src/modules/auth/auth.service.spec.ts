@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { User } from './schemas/user.schema';
 import { LoginHistoryService } from '../login-history/login-history.service';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -18,6 +19,10 @@ describe('AuthService', () => {
         },
         {
           provide: LoginHistoryService,
+          useValue: {},
+        },
+        {
+          provide: AuditLogsService,
           useValue: {},
         },
         {

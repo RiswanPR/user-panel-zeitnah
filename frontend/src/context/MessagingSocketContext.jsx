@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useEffect, useState, useContext } from 'react';
 import { io } from 'socket.io-client';
+import { storage } from '../services/storage';
 
 export const MessagingSocketContext = createContext(null);
 
@@ -9,31 +10,48 @@ export const MessagingSocketProvider = ({ children }) => {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
+    let active = true;
+    let messagingSocket = null;
 
-    // Connect to WebSocket gateway namespace /community/messages
-    const origin = window.location.origin;
-    const messagingSocket = io(`${origin}/community/messages`, {
-      auth: { token },
-      transports: ['websocket'],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-    });
+    const connectMessaging = async () => {
+      const token = await storage.getAccessToken();
+      if (!token || !active) return;
 
-    messagingSocket.on('connect', () => {
-      setConnected(true);
-    });
+      const rawBase = import.meta.env.VITE_API_BASE_URL;
+      const baseURL = rawBase
+        ? rawBase.replace(/\/api\/?$/, '')
+        : (typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://beta.zeitnahacademy.com');
 
-    messagingSocket.on('disconnect', () => {
-      setConnected(false);
-    });
+      messagingSocket = io(`${baseURL}/community/messages`, {
+        auth: { token },
+        transports: ['websocket'],
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+      });
 
-    setSocket(messagingSocket);
+      messagingSocket.on('connect', () => {
+        if (active) setConnected(true);
+      });
+
+      messagingSocket.on('disconnect', () => {
+        if (active) setConnected(false);
+      });
+
+      if (active) {
+        setSocket(messagingSocket);
+      } else {
+        messagingSocket.disconnect();
+      }
+    };
+
+    connectMessaging();
 
     return () => {
-      messagingSocket.disconnect();
+      active = false;
+      if (messagingSocket) {
+        messagingSocket.disconnect();
+      }
       setSocket(null);
       setConnected(false);
     };

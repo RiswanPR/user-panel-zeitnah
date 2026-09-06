@@ -8,6 +8,7 @@ import {
   getBrowserInfo,
   hasErrors,
 } from '../../utils/errorCapture';
+import { storage } from '../../services/storage';
 
 // ── Severity Config ──
 const SEVERITIES = [
@@ -90,7 +91,7 @@ export default function TroubleshootReporter() {
 
       const buffer = errorData || getErrorBuffer();
       const browserInfo = getBrowserInfo();
-      const token = localStorage.getItem('token');
+      const token = await storage.getAccessToken();
       const baseURL =
         import.meta.env.VITE_API_BASE_URL || 'https://beta.zeitnahacademy.com/api';
 
@@ -152,7 +153,7 @@ export default function TroubleshootReporter() {
   };
 
   // Don't render badge if no errors and modal is closed
-  const isLoggedIn = !!localStorage.getItem('token');
+  const isLoggedIn = !!storage.getItem('token');
   if (!isLoggedIn && !isOpen) return null;
   if (errorCount === 0 && !isOpen) return null;
 

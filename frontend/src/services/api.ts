@@ -1,6 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { captureNetworkError } from "../utils/errorCapture";
 import { logClientError } from "../utils/errorLogger";
+import storage from "./storage";
 
 declare global {
   interface ImportMetaEnv {
@@ -58,7 +59,7 @@ const getRequestKey = (config: InternalAxiosRequestConfig) => {
 
 /* ── Request Interceptor ── */
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = storage.getAccessToken();
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -223,7 +224,7 @@ api.interceptors.response.use(
           .catch((err) => Promise.reject(err));
       }
 
-      const refreshToken = localStorage.getItem("refreshToken");
+      const refreshToken = storage.getRefreshToken();
 
       // No refresh token available — go straight to logout
       if (!refreshToken) {
@@ -243,13 +244,17 @@ api.interceptors.response.use(
 
         const newAccessToken = res.data.accessToken || res.data.token;
         const newRefreshToken = res.data.refreshToken;
+        const newExpiresAt = res.data.sessionExpiresAt;
 
-        // Persist the new tokens
+        // Persist the new tokens via storage
         if (newAccessToken) {
-          localStorage.setItem("token", newAccessToken);
+          storage.setAccessToken(newAccessToken);
         }
         if (newRefreshToken) {
-          localStorage.setItem("refreshToken", newRefreshToken);
+          storage.setRefreshToken(newRefreshToken);
+        }
+        if (newExpiresAt) {
+          storage.setSessionExpiresAt(newExpiresAt);
         }
 
         // Process queued requests with the new token
@@ -310,19 +315,28 @@ api.interceptors.response.use(
   },
 );
 
-/** Clear all auth tokens and redirect to login */
+/** Clear all auth tokens and navigate to login without hard reload */
 function forceLogout() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("refreshToken");
+  storage.clearAuth();
 
-  if (window.location.pathname !== "/login" && !isRedirecting) {
-    isRedirecting = true;
-    window.location.assign("/login");
+  if (typeof window !== "undefined") {
+    // Notify application context
+    window.dispatchEvent(new CustomEvent("zeitnah:auth:logout"));
 
-    // Reset after navigation
-    setTimeout(() => {
-      isRedirecting = false;
-    }, 3000);
+    if (window.location.pathname !== "/login" && !isRedirecting) {
+      isRedirecting = true;
+      if (window.history && typeof window.history.pushState === "function") {
+        window.history.pushState(null, "", "/login");
+        window.dispatchEvent(new PopStateEvent("popstate"));
+      } else {
+        window.location.assign("/login");
+      }
+
+      // Reset after navigation
+      setTimeout(() => {
+        isRedirecting = false;
+      }, 1500);
+    }
   }
 }
 

@@ -51,5 +51,12 @@ backend/build/
 backend/.nest/
 *.tsbuildinfo
 
-
-frontend/package-lock.json
+# Mobile Credentials & Signing Secrets
+*.jks
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+*.cer
+google-services.json
+GoogleService-Info.plist

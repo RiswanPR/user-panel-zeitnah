@@ -22,10 +22,24 @@ export default defineConfig({
     // PWA with service worker
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'zeitnah-logo.svg', 'icons.svg'],
-      manifest: false, // Using our custom manifest.json
+      injectRegister: 'auto',
+      includeAssets: [
+        'favicon.svg',
+        'favicon.png',
+        'zeitnah-logo.svg',
+        'zeitnah-logo.png',
+        'icons.svg',
+        'icons/icon-192.png',
+        'icons/icon-512.png',
+        'icons/icon-192-maskable.png',
+        'icons/icon-512-maskable.png',
+        'icons/apple-touch-icon.png',
+      ],
+      manifest: false, // Using our custom public/manifest.json
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // Exclude video segments and playlists from SW precaching/runtime caching
+        navigateFallbackDenylist: [/^\/api\//, /^\/hls\//, /\.m3u8$/, /\.ts$/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -45,20 +59,12 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: /\/api\/(courses|profile|auth\/sessions)/,
-            handler: 'NetworkFirst',
+            // Static public UI assets
+            urlPattern: /\/assets\/.*\.(png|jpg|jpeg|svg|webp|avif)$/,
+            handler: 'StaleWhileRevalidate',
             options: {
-              cacheName: 'api-data',
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 5 },
-              networkTimeoutSeconds: 10,
-            },
-          },
-          {
-            urlPattern: /\/uploads\/.*/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'uploaded-assets',
-              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheName: 'static-ui-images',
+              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },

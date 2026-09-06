@@ -3,6 +3,7 @@ import api from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { getDeviceId } from "../../utils/device";
+import storage from "../../services/storage";
 import { isMobile } from "react-device-detect";
 import { UAParser } from "ua-parser-js";
 
@@ -18,8 +19,8 @@ function VerifyRegisterOtp() {
   const [pendingPayload, setPendingPayload] = useState(null);
 
   const inputsRef = useRef([]);
-  const name = localStorage.getItem("register_name") || "";
-  const email = localStorage.getItem("register_email") || "";
+  const name = storage.getItem("register_name") || "";
+  const email = storage.getItem("register_email") || "";
   const maskedEmail = email.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + "*".repeat(b.length) + c);
 
   // Per-box OTP input focus matrix
@@ -66,16 +67,16 @@ function VerifyRegisterOtp() {
   };
 
   const finalizeRegister = (res) => {
-    localStorage.setItem("token", res.data.token);
+    storage.setAccessToken(res.data.token);
     if (res.data.refreshToken) {
-      localStorage.setItem("refreshToken", res.data.refreshToken);
+      storage.setRefreshToken(res.data.refreshToken);
     }
     if (res.data.sessionExpiresAt) {
-      localStorage.setItem("sessionExpiresAt", res.data.sessionExpiresAt);
+      storage.setSessionExpiresAt(res.data.sessionExpiresAt);
     }
     setUser(res.data.user);
-    localStorage.removeItem("register_name");
-    localStorage.removeItem("register_email");
+    storage.removeItem("register_name");
+    storage.removeItem("register_email");
     setSuccess("Account created! Redirecting…");
     setTimeout(() => navigate("/courses"), 1200);
   };

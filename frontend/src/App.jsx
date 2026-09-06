@@ -75,11 +75,31 @@ const PageLoader = () => (
 );
 
 
+import { nativeApp, initDeepLinks } from "./native";
+import { useNavigate } from "react-router-dom";
+
+function NativeBridgeHandler() {
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    nativeApp.initialize();
+    const cleanupDeepLinks = initDeepLinks((path) => {
+      navigate(path);
+    });
+    return () => {
+      cleanupDeepLinks();
+    };
+  }, [navigate]);
+
+  return null;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <BrowserRouter>
+          <NativeBridgeHandler />
           <Routes>
 
             {/* PUBLIC AUTHENTICATION ROUTES */}

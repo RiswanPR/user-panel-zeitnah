@@ -3,6 +3,7 @@ import api from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { getDeviceId } from "../../utils/device";
+import storage from "../../services/storage";
 import { isMobile } from "react-device-detect";
 import { UAParser } from "ua-parser-js";
 
@@ -20,7 +21,7 @@ function VerifyOtp() {
   const [pendingPayload, setPendingPayload] = useState(null);
 
   const inputsRef = useRef([]);
-  const email = localStorage.getItem("login_email") || "";
+  const email = storage.getItem("login_email") || "";
   const maskedEmail = email.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + "*".repeat(b.length) + c);
 
   // Countdown timer
@@ -73,15 +74,15 @@ function VerifyOtp() {
   };
 
   const finalizeLogin = (res) => {
-    localStorage.setItem("token", res.data.token);
+    storage.setAccessToken(res.data.token);
     if (res.data.refreshToken) {
-      localStorage.setItem("refreshToken", res.data.refreshToken);
+      storage.setRefreshToken(res.data.refreshToken);
     }
     if (res.data.sessionExpiresAt) {
-      localStorage.setItem("sessionExpiresAt", res.data.sessionExpiresAt);
+      storage.setSessionExpiresAt(res.data.sessionExpiresAt);
     }
     setUser(res.data.user);
-    localStorage.removeItem("login_email");
+    storage.removeItem("login_email");
     setSuccess("Login successful! Redirecting…");
     setTimeout(() => navigate("/courses"), 1200);
   };

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import storage from "../../services/storage";
 
 function Register() {
   const navigate = useNavigate();
@@ -37,8 +38,8 @@ function Register() {
 
       await api.post("/auth/register/send-otp", { name, email });
       clearTimeout(slowTimer);
-      localStorage.setItem("register_name", name);
-      localStorage.setItem("register_email", email);
+      storage.setItem("register_name", name);
+      storage.setItem("register_email", email);
       navigate("/verify-register-otp");
     } catch (err) {
       if (err.isCancelled) return;

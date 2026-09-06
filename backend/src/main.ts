@@ -58,13 +58,39 @@ async function bootstrap(): Promise<void> {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  // CORS
-  const allowedOrigins = process.env.FRONTEND_URL
+  // CORS ALLOWLIST (Web + Capacitor Native Mobile + Local Dev)
+  const configuredOrigins = process.env.FRONTEND_URL
     ? process.env.FRONTEND_URL.split(',').map((origin) => origin.trim())
     : ['https://beta.zeitnahacademy.com'];
 
+  const defaultMobileAndWebOrigins = [
+    'https://beta.zeitnahacademy.com',
+    'https://zeitnahacademy.com',
+    'capacitor://localhost',
+    'http://localhost',
+    'https://localhost',
+    'http://localhost:5173',
+    'http://localhost:3000',
+  ];
+
+  const allowedOrigins = Array.from(
+    new Set([...configuredOrigins, ...defaultMobileAndWebOrigins].filter(Boolean)),
+  );
+
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (such as mobile native apps, curl, server-to-server)
+      if (!origin) {
+        return callback(null, true);
+      }
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(
+        new Error(`CORS blocked: Origin ${origin} is not in the allowlist`),
+        false,
+      );
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-correlation-id'],

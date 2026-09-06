@@ -3,6 +3,7 @@ import Hls from 'hls.js';
 import VideoWatermark from './VideoWatermark';
 import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, Settings, Loader2, RefreshCw, WifiOff, SkipForward, SkipBack } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import storage from '../../services/storage';
 
 // Detect iOS — volume control is hardware-only on iOS Safari
 const IS_IOS = typeof navigator !== 'undefined' && (
@@ -34,7 +35,7 @@ export const PLAYER_STATES = {
 function createHlsConfig() {
   return {
     xhrSetup: (xhr, url) => {
-      const currentToken = localStorage.getItem('token');
+      const currentToken = storage.getAccessToken();
       if (url.includes('/api/courses/video/') && currentToken) {
         xhr.setRequestHeader('Authorization', `Bearer ${currentToken}`);
       }
@@ -299,7 +300,13 @@ export const VideoPlayer = ({ src, refreshUrl, watermarkData, onProgress, initia
           }
         });
       } else {
-        currentVideo.src = effectiveSrc;
+        const token = storage.getAccessToken();
+        let nativeSrc = effectiveSrc;
+        if (effectiveSrc && effectiveSrc.includes('.m3u8') && token && !effectiveSrc.includes('token=')) {
+          const separator = effectiveSrc.includes('?') ? '&' : '?';
+          nativeSrc = `${effectiveSrc}${separator}token=${encodeURIComponent(token)}`;
+        }
+        currentVideo.src = nativeSrc;
         currentVideo.load();
         currentVideo.addEventListener('loadedmetadata', () => {
           if (generation !== recoveryGenerationRef.current) return;
@@ -807,7 +814,13 @@ export const VideoPlayer = ({ src, refreshUrl, watermarkData, onProgress, initia
         }
       });
     } else {
-      video.src = src;
+      const token = storage.getAccessToken();
+      let nativeSrc = src;
+      if (src && src.includes('.m3u8') && token && !src.includes('token=')) {
+        const separator = src.includes('?') ? '&' : '?';
+        nativeSrc = `${src}${separator}token=${encodeURIComponent(token)}`;
+      }
+      video.src = nativeSrc;
     }
 
     return () => {

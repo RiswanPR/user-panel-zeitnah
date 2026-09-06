@@ -25,6 +25,8 @@ import VideoWatermark from "../../components/player/VideoWatermark";
 import VideoPlayer from "../../components/player/VideoPlayer";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../components/ui/Toast";
+import storage, { getDeviceId, getBrowserFingerprint } from "../../services/storage";
+
 
 function loadVdoCipherApi() {
   if (window.VdoPlayer) return Promise.resolve();
@@ -150,7 +152,7 @@ function ClassView() {
     }
   }, [classId]);
 
-  // ── Stream security heartbeat ──
+  // ── Stream security heartbeat & lifecycle ──
   useEffect(() => {
     if (!classId) return;
     let heartbeatInterval;
@@ -158,9 +160,8 @@ function ClassView() {
 
     const initializeStream = async () => {
       try {
-        const { getPersistentDeviceId, getBrowserFingerprint } = await import('../../utils/deviceFingerprint');
-        const deviceId = await getPersistentDeviceId();
-        cachedDeviceId = deviceId; // Cache for synchronous access in beforeunload
+        const deviceId = await getDeviceId();
+        cachedDeviceId = deviceId; // Cache for synchronous access in lifecycle unload
         const browserFingerprint = JSON.stringify(getBrowserFingerprint());
         await api.post("/courses/start-stream", { classId, deviceId, browserFingerprint });
         
@@ -176,28 +177,33 @@ function ClassView() {
     
     const stopStream = async () => {
       try { 
-        const { getPersistentDeviceId } = await import('../../utils/deviceFingerprint');
-        const deviceId = await getPersistentDeviceId();
+        const deviceId = cachedDeviceId || (await getDeviceId());
         const userId = user?.userId || user?.id;
-        await api.post("/courses/stop-stream", { deviceId, userId }); 
+        if (deviceId && userId) {
+          await api.post("/courses/stop-stream", { deviceId, userId }); 
+        }
       } catch (error) { console.log(error); }
     };
     
-    // beforeunload must be SYNCHRONOUS — no async imports allowed here
-    // Use the cachedDeviceId from initializeStream instead
+    // Synchronous unload handler for web, mobile web, and native WebViews
     const handleUnload = () => {
       const deviceId = cachedDeviceId;
       if (!deviceId) return;
       const userId = user?.userId || user?.id;
       const baseUrl = api.defaults.baseURL || window.location.origin + "/api";
-      navigator.sendBeacon(`${baseUrl}/courses/stop-stream`, new Blob([JSON.stringify({ deviceId, userId })], { type: "application/json" }));
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(`${baseUrl}/courses/stop-stream`, new Blob([JSON.stringify({ deviceId, userId })], { type: "application/json" }));
+      }
     };
     
     window.addEventListener("beforeunload", handleUnload);
+    window.addEventListener("pagehide", handleUnload);
+    
     return () => {
       if (heartbeatInterval) clearInterval(heartbeatInterval);
       stopStream();
       window.removeEventListener("beforeunload", handleUnload);
+      window.removeEventListener("pagehide", handleUnload);
     };
   }, [classId, navigate, user]);
 
@@ -284,7 +290,7 @@ function ClassView() {
         const progressInterval = window.setInterval(() => { void persistProgress({ force: true }); }, 15000);
         const flushLatestProgress = () => {
           const snapshot = latestSnapshotRef.current;
-          const token = localStorage.getItem("token");
+          const token = storage.getAccessToken();
           if (!snapshot || !token) return;
           const baseUrl = api.defaults.baseURL || "https://beta.zeitnahacademy.com/api";
           void fetch(`${baseUrl}/courses/class/${classId}/progress`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(snapshot), keepalive: true });

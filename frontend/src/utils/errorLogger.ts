@@ -1,4 +1,5 @@
 import { collectDiagnostics } from "./diagnostics";
+import { storage } from "../services/storage";
 
 export const logClientError = async (errorData: {
   message: string;
@@ -36,9 +37,9 @@ export const logClientError = async (errorData: {
     };
 
     // Use raw fetch to avoid interceptor loops if api itself is failing
-    const baseURL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:3000/api";
+    const baseURL = import.meta.env.VITE_API_BASE_URL || "https://beta.zeitnahacademy.com/api";
     
-    const token = localStorage.getItem("token");
+    const token = await storage.getAccessToken();
     await fetch(`${baseURL}/error-reports`, {
       method: "POST",
       headers: {

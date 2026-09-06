@@ -1,6 +1,7 @@
 import React from "react";
 import ErrorFeedbackModal from "./ErrorFeedbackModal";
 import { collectDiagnostics } from "../utils/diagnostics";
+import { storage } from "../services/storage";
 
 class GlobalErrorBoundary extends React.Component {
   constructor(props) {
@@ -25,8 +26,8 @@ class GlobalErrorBoundary extends React.Component {
     // Try to silently send an initial report to ensure we catch it even if they close modal
     try {
       // Need to use fetch or api instance if available
-      const token = localStorage.getItem("token");
-      fetch(`${import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:3000/api"}/error-reports`, {
+      const token = await storage.getAccessToken();
+      fetch(`${import.meta.env.VITE_API_BASE_URL || "https://beta.zeitnahacademy.com/api"}/error-reports`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

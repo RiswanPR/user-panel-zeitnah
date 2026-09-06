@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.zeitnahacademy.app",
+      "sha256_cert_fingerprints": [
+        "RELEASE_SHA256_FINGERPRINT_PLACEHOLDER_INSERT_FROM_KEYSTORE_OR_PLAY_CONSOLE_APP_SIGNING",
+        "DEBUG_SHA256_FINGERPRINT_PLACEHOLDER_INSERT_FROM_LOCAL_DEBUG_KEYSTORE"
+      ]
+    }
+  }
+]

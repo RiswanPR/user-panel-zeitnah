@@ -174,7 +174,7 @@ export default function MessageComposer({
   };
 
   return (
-    <div className="p-3 sm:p-4 border-t border-slate-800/80 bg-slate-900/90 backdrop-blur-md relative">
+    <div className="p-3 sm:p-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] sm:pb-4 border-t border-slate-800/80 bg-slate-900/90 backdrop-blur-md relative">
       <input
         type="file"
         ref={fileInputRef}

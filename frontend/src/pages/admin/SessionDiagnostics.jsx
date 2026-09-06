@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Clock, ShieldCheck, ShieldAlert, KeyRound, RefreshCw, Laptop, Loader2, LogOut } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import api from "../../services/api";
+import { storage } from "../../services/storage";
 import { useToast } from "../../components/ui/Toast";
 
 const SessionDiagnostics = () => {
@@ -16,10 +17,10 @@ const SessionDiagnostics = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const loadData = () => {
-    const token = localStorage.getItem("token");
-    const refreshToken = localStorage.getItem("refreshToken");
-    const sessionExpiresAtStr = localStorage.getItem("sessionExpiresAt");
+  const loadData = async () => {
+    const token = await storage.getAccessToken();
+    const refreshToken = await storage.getRefreshToken();
+    const sessionExpiresAtStr = await storage.getSessionExpiresAt();
 
     let decoded = null;
     let accessExpiresAt = null;
@@ -52,7 +53,9 @@ const SessionDiagnostics = () => {
   };
 
   useEffect(() => {
-    queueMicrotask(() => loadData());
+    queueMicrotask(() => {
+      loadData();
+    });
   }, []);
 
   const handleManualRefresh = async () => {
@@ -62,11 +65,11 @@ const SessionDiagnostics = () => {
       const res = await api.post("/auth/refresh-token", { refreshToken: tokenData.rawRefreshToken });
       const newToken = res.data.token || res.data.accessToken;
       
-      localStorage.setItem("token", newToken);
-      if (res.data.refreshToken) localStorage.setItem("refreshToken", res.data.refreshToken);
-      if (res.data.sessionExpiresAt) localStorage.setItem("sessionExpiresAt", res.data.sessionExpiresAt);
+      if (newToken) await storage.setAccessToken(newToken);
+      if (res.data.refreshToken) await storage.setRefreshToken(res.data.refreshToken);
+      if (res.data.sessionExpiresAt) await storage.setSessionExpiresAt(res.data.sessionExpiresAt);
       
-      loadData();
+      await loadData();
     } catch (err) {
       console.error("Refresh failed", err);
       toast.error("Refresh failed", "Could not refresh the session token. Please try logging in again.");
@@ -75,10 +78,9 @@ const SessionDiagnostics = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("sessionExpiresAt");
+  const handleLogout = async () => {
+    await storage.clearAuth();
+    window.dispatchEvent(new CustomEvent('zeitnah:auth:logout'));
     window.location.href = "/login";
   };
 

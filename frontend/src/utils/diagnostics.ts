@@ -1,5 +1,6 @@
 import { UAParser } from "ua-parser-js";
 import { isMobile, isTablet, isDesktop, deviceType, osName, osVersion } from "react-device-detect";
+import { storage } from "../services/storage";
 
 export interface DiagnosticData {
   browser: any;
@@ -104,7 +105,7 @@ export const collectDiagnostics = async (
   };
 
   // 4. Authentication (Scrubbed)
-  const token = localStorage.getItem("token");
+  const token = storage.getItem("token");
   const decoded = safeParseJwt(token);
   const authInfo = {
     status: !!token ? "Authenticated" : "Unauthenticated",

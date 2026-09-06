@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { storage } from "../../services/storage";
 
 function VideoWatermark({ user }) {
   const [position, setPosition] = useState({ top: "5%", left: "5%" });
   const [time, setTime] = useState("");
-  const deviceId = localStorage.getItem("device_id") || "Unknown Device";
+  const [deviceId, setDeviceId] = useState("Unknown Device");
 
   useEffect(() => {
+    storage.getDeviceId().then(id => {
+      if (id) setDeviceId(id);
+    });
+
     const move = setInterval(() => {
       const top = Math.max(5, Math.floor(Math.random() * 85)) + "%";
       const left = Math.max(5, Math.floor(Math.random() * 80)) + "%";

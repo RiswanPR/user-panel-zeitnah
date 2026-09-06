@@ -1,6 +1,7 @@
 import { useState } from "react";
 import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
+import storage from "../../services/storage";
 import ZeitnahDoodleBackground from "../../components/ui/ZeitnahDoodleBackground";
 
 function Login() {
@@ -25,7 +26,7 @@ function Login() {
 
       await api.post("/auth/login/send-otp", { email });
       clearTimeout(slowTimer);
-      localStorage.setItem("login_email", email);
+      storage.setItem("login_email", email);
       navigate("/verify-login-otp");
     } catch (err) {
       if (err.isCancelled) return;
