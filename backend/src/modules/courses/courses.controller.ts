@@ -223,7 +223,7 @@ export class CoursesController {
     req: any,
   ) {
     const deviceId = body?.deviceId || req.user?.deviceId;
-    return this.coursesService.heartbeat(req.user.userId, deviceId);
+    return this.coursesService.heartbeat(req.user.userId, deviceId, body?.classId);
   }
 
   // =====================

@@ -184,7 +184,7 @@ function ClassView() {
 
     const sendHeartbeat = async (devId) => {
       try {
-        await api.post("/courses/heartbeat", { deviceId: devId });
+        await api.post("/courses/heartbeat", { deviceId: devId, classId });
       } catch (err) {
         if (!isMounted) return;
         const status = err?.response?.status;

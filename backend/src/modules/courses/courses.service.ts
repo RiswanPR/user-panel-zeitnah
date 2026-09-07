@@ -1449,7 +1449,7 @@ export class CoursesService {
     return { success: true };
   }
 
-  async heartbeat(userId: string, deviceId: string) {
+  async heartbeat(userId: string, deviceId: string, classId?: string) {
     if (!deviceId) {
       throw new BadRequestException('Device ID missing');
     }
@@ -1512,11 +1512,76 @@ export class CoursesService {
       return { success: true, recovered: true };
     }
 
-    // 4. If no record exists at all for this user and device, throw 401 session expired
-    console.warn(
-      `[Heartbeat] Stream record not found for user=${userId.slice(-6)}, device=${deviceId.slice(0, 8)}...`,
+    // 4. Stream record was completely missing from DB (e.g. purged by MongoDB TTL after inactivity/sleep/navigation)
+    // Perform rigorous authorization checks before controlled recreation to prevent concurrent-device security bypass:
+
+    // A) Verify user exists and is not restricted
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    if (user.account_Status?.isBlocked || user.account_Status?.isDeleted) {
+      throw new UnauthorizedException('Account restricted');
+    }
+
+    // B) Verify device is registered with a valid active session
+    const deviceSession = user.devices?.find((d) => d.deviceId === deviceId);
+    if (
+      !deviceSession ||
+      !deviceSession.refreshTokenExpiry ||
+      new Date() > new Date(deviceSession.refreshTokenExpiry)
+    ) {
+      console.warn(
+        `[Heartbeat] Device session expired for user=${userId.slice(-6)}, device=${deviceId.slice(0, 8)}...`,
+      );
+      throw new UnauthorizedException('Device session expired');
+    }
+
+    // C) Determine classId and verify user enrollment
+    let targetClassId = classId;
+    if (!targetClassId) {
+      for (const c of user.course || []) {
+        for (const cp of c.classProgress || []) {
+          if (cp.classId) {
+            targetClassId = cp.classId.toString();
+            break;
+          }
+        }
+        if (targetClassId) break;
+      }
+    }
+
+    if (!targetClassId) {
+      console.warn(
+        `[Heartbeat] Stream record not found and no class identified for user=${userId.slice(-6)}, device=${deviceId.slice(0, 8)}...`,
+      );
+      throw new UnauthorizedException('Session expired or invalid device');
+    }
+
+    const isEnrolled = user.course?.some((c: any) =>
+      c.classProgress?.some((cp: any) => cp.classId?.toString() === targetClassId) ||
+      c.courseId,
     );
-    throw new UnauthorizedException('Session expired or invalid device');
+
+    if (!isEnrolled) {
+      throw new ForbiddenException('User is not enrolled in this course');
+    }
+
+    // D) Recreate purged stream record in a controlled manner
+    await this.activeStreamModel.create({
+      userId,
+      deviceId,
+      classId: targetClassId,
+      status: 'ACTIVE',
+      heartbeatAt: new Date(),
+      expiresAt,
+    });
+
+    console.log(
+      `[Heartbeat] Controlled recovery: recreated purged stream for user=${userId.slice(-6)}, device=${deviceId.slice(0, 8)}..., class=${targetClassId.slice(-6)}`,
+    );
+
+    return { success: true, recovered: true, recreated: true };
   }
 
   async stopStream(userId: string, deviceId: string) {
@@ -1528,7 +1593,7 @@ export class CoursesService {
       },
       {
         status: 'ENDED',
-        expiresAt: new Date(),
+        expiresAt: new Date(Date.now() + 60000), // 60s grace window before TTL purge
       },
     );
 
