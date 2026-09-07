@@ -76,7 +76,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // LOGOUT
   const logout = async () => {
     try {
-      await nativeNotifications.removePushTokenFromBackend();
+      await api.post("/auth/logout").catch(() => {});
+      await nativeNotifications.removePushTokenFromBackend().catch(() => {});
     } catch {
       // Ignore background push token cleanup errors
     } finally {

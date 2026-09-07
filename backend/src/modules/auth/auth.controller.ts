@@ -44,11 +44,12 @@ export class AuthController {
       path: '/',
     };
     const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000;
+    const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
 
     if (token) {
       res.cookie('token', token, {
         ...cookieOptions,
-        maxAge: SIXTY_DAYS_MS,
+        maxAge: FIFTEEN_MINUTES_MS,
       });
     }
 

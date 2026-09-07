@@ -62,12 +62,22 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     // Log internally based on error severity:
     // Log 5xx & unhandled internal errors as ERROR with stack trace
     // Log 4xx expected client errors as WARN without stack trace to prevent PM2 error log spam
+    // Distinguish expected anonymous/expired-token checks on /auth/me from genuine auth errors
+    const isExpectedMeCheck =
+      status === 401 &&
+      sanitizedUrl?.startsWith('/api/auth/me') &&
+      (message === 'Unauthorized' || code === 'HTTP_EXCEPTION');
+
     if (status >= 500) {
       this.logger.error(
         `[${correlationId}] ${request.method} ${sanitizedUrl} - Status: ${status}`,
         exception instanceof Error
           ? exception.stack
           : JSON.stringify(exception),
+      );
+    } else if (isExpectedMeCheck) {
+      this.logger.debug(
+        `[${correlationId}] ${request.method} ${sanitizedUrl} - Status: ${status} - Expected unauthenticated session check`,
       );
     } else {
       this.logger.warn(
