@@ -307,13 +307,14 @@ export class CoursesService {
             Authorization: `Apisecret ${secret}`,
             'Content-Type': 'application/json',
           },
+          timeout: 5000,
+          signal: AbortSignal.timeout(6000),
         },
       );
 
       if (!data?.otp || !data?.playbackInfo) {
-        throw new InternalServerErrorException(
-          'Invalid VdoCipher playback response',
-        );
+        console.warn('[VdoCipher] Invalid playback response — missing otp or playbackInfo');
+        return null;
       }
 
       return {
@@ -321,8 +322,9 @@ export class CoursesService {
         playbackInfo: data.playbackInfo,
       };
     } catch (error: any) {
+      const isTimeout = error?.code === 'ECONNABORTED' || error?.name === 'AbortError' || error?.message?.includes('timeout');
       console.error(
-        'Failed to generate VdoCipher OTP',
+        `[VdoCipher] Failed to generate OTP${isTimeout ? ' (TIMEOUT)' : ''}`,
         error?.response?.data || error?.message || error,
       );
 
@@ -965,26 +967,23 @@ export class CoursesService {
   // ======================
 
   async getClassView(classId: string, userId?: string) {
-    // FIND COURSE WITH CLASS
-    const course = await this.courseModel.findOne({
-      'chapters.classes._id': classId,
-    });
+    const startTime = Date.now();
+
+    // Parallelize: fetch course and user concurrently (Fix 2: single user query)
+    const [course, user] = await Promise.all([
+      this.courseModel.findOne({ 'chapters.classes._id': classId }),
+      userId ? this.userModel.findById(userId) : Promise.resolve(null),
+    ]);
 
     if (!course) {
       throw new NotFoundException('Class not found');
     }
 
-    // PURCHASE CHECK
-    let purchased = false;
-
-    if (userId) {
-      const user = await this.userModel.findById(userId);
-
-      purchased =
-        user?.course?.some(
-          (c: any) => c.courseId.toString() === course._id.toString(),
-        ) || false;
-    }
+    // PURCHASE CHECK (reuse the single user query)
+    const enrollment = user?.course?.find(
+      (entry: any) => entry.courseId.toString() === course._id.toString(),
+    );
+    const purchased = Boolean(enrollment);
 
     const isRecording =
       String(course.type || '')
@@ -1020,16 +1019,32 @@ export class CoursesService {
     }
 
     const videoSource = this.getClassVideoSource(course.type, cls.videoSource);
-    const vdoCipher =
+
+    // Parallelize: VdoCipher OTP + exercise signing + cover signing (Fix 3 & 5)
+    const rawExercises = cls.exercises || [];
+    const rawClassCover = cls.coverImage || (cls as any).thumbnail;
+
+    const [vdoCipher, signedExercises, signedClassCover] = await Promise.all([
+      // VdoCipher OTP (graceful failure — returns null on timeout/error)
       videoSource === 'vdocipher'
-        ? await this.getVdoCipherPlaybackData(cls.videoId)
-        : null;
-
-    const user = userId ? await this.userModel.findById(userId) : null;
-
-    const enrollment = user?.course?.find(
-      (entry: any) => entry.courseId.toString() === course._id.toString(),
-    );
+        ? this.getVdoCipherPlaybackData(cls.videoId)
+        : Promise.resolve(null),
+      // Sign all exercise files concurrently
+      Promise.all(
+        rawExercises.map(async (ex: any) => {
+          const exObj =
+            typeof ex.toObject === 'function' ? ex.toObject() : { ...ex };
+          const fileUrl = exObj.file
+            ? await this.signedUrlService.generateSignedImageUrl(exObj.file)
+            : '';
+          return { ...exObj, file: fileUrl };
+        }),
+      ),
+      // Sign class cover image
+      rawClassCover
+        ? this.signedUrlService.generateSignedImageUrl(rawClassCover)
+        : Promise.resolve(null),
+    ]);
 
     const rawClassProgress =
       enrollment?.classProgress?.find(
@@ -1053,25 +1068,10 @@ export class CoursesService {
           certificateEligible: false,
         };
 
-    const rawExercises = cls.exercises || [];
-    const signedExercises = await Promise.all(
-      rawExercises.map(async (ex: any) => {
-        const exObj =
-          typeof ex.toObject === 'function' ? ex.toObject() : { ...ex };
-        const fileUrl = exObj.file
-          ? await this.signedUrlService.generateSignedImageUrl(exObj.file)
-          : '';
-        return {
-          ...exObj,
-          file: fileUrl,
-        };
-      }),
-    );
-
-    const rawClassCover = cls.coverImage || (cls as any).thumbnail;
-    const signedClassCover = rawClassCover
-      ? await this.signedUrlService.generateSignedImageUrl(rawClassCover)
-      : null;
+    const duration = Date.now() - startTime;
+    if (duration > 3000) {
+      console.warn(`[ClassView] Slow response: ${duration}ms for classId=${classId}`);
+    }
 
     return {
       purchased: true,
@@ -1654,9 +1654,15 @@ export class CoursesService {
       courseObj.coverImage = courseObj.image;
       delete courseObj.image;
     }
+
+    // Collect all signing promises to run concurrently
+    const signingTasks: Promise<void>[] = [];
+
     if (courseObj.coverImage) {
-      courseObj.coverImage = await this.signedUrlService.generateSignedImageUrl(
-        courseObj.coverImage,
+      signingTasks.push(
+        this.signedUrlService.generateSignedImageUrl(courseObj.coverImage).then(
+          (url) => { courseObj.coverImage = url; },
+        ),
       );
     }
 
@@ -1670,10 +1676,11 @@ export class CoursesService {
           delete chapter.imageName;
         }
         if (chapter.coverImage) {
-          chapter.coverImage =
-            await this.signedUrlService.generateSignedImageUrl(
-              chapter.coverImage,
-            );
+          signingTasks.push(
+            this.signedUrlService.generateSignedImageUrl(chapter.coverImage).then(
+              (url) => { chapter.coverImage = url; },
+            ),
+          );
         }
         if (chapter.classes && Array.isArray(chapter.classes)) {
           chapter.classes.sort(
@@ -1685,10 +1692,11 @@ export class CoursesService {
               delete cls.thumbnail;
             }
             if (cls.coverImage) {
-              cls.coverImage =
-                await this.signedUrlService.generateSignedImageUrl(
-                  cls.coverImage,
-                );
+              signingTasks.push(
+                this.signedUrlService.generateSignedImageUrl(cls.coverImage).then(
+                  (url) => { cls.coverImage = url; },
+                ),
+              );
             }
             if (cls.exercises && Array.isArray(cls.exercises)) {
               cls.exercises.sort(
@@ -1696,10 +1704,11 @@ export class CoursesService {
               );
               for (const exercise of cls.exercises) {
                 if (exercise.file) {
-                  exercise.file =
-                    await this.signedUrlService.generateSignedImageUrl(
-                      exercise.file,
-                    );
+                  signingTasks.push(
+                    this.signedUrlService.generateSignedImageUrl(exercise.file).then(
+                      (url) => { exercise.file = url; },
+                    ),
+                  );
                 }
               }
             }
@@ -1707,6 +1716,10 @@ export class CoursesService {
         }
       }
     }
+
+    // Execute all S3 signed URL requests in parallel
+    await Promise.all(signingTasks);
+
     return courseObj;
   }
 

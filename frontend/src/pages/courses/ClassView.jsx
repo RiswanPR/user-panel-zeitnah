@@ -85,6 +85,7 @@ function ClassView() {
   const { user } = useContext(AuthContext);
   const toast = useToast();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [data, setData] = useState(null);
   const [videoData, setVideoData] = useState(null);
   const [progressState, setProgressState] = useState(null);
@@ -102,41 +103,50 @@ function ClassView() {
   const dataRef = useRef(null);
 
   // ── Load class data ──
-  useEffect(() => {
-    let mounted = true;
-    const loadClass = async () => {
-      try {
-        setLoading(true);
-        setVideoData(null);
-        const res = await api.get(`/courses/class/${classId}`);
-        if (mounted) {
-          setData(res.data);
-          setProgressState(res.data.progress || null);
-          const videoSource = getClassVideoSource(
-            res.data.course?.type,
-            res.data.class?.videoSource,
-          );
+  const loadClass = useCallback(async (mounted = { current: true }) => {
+    try {
+      setLoading(true);
+      setLoadError(null);
+      setVideoData(null);
+      const res = await api.get(`/courses/class/${classId}`);
+      if (mounted.current) {
+        setData(res.data);
+        setProgressState(res.data.progress || null);
+        const videoSource = getClassVideoSource(
+          res.data.course?.type,
+          res.data.class?.videoSource,
+        );
 
-          if (videoSource === "s3") {
-            try {
-              const videoRes = await api.get(`/courses/video/${classId}`);
-              if (mounted) setVideoData(videoRes.data);
-            } catch (err) {
-              console.log("Failed to load S3 video playback data:", err);
-              if (mounted) setVideoData({ error: true });
-            }
+        if (videoSource === "s3") {
+          try {
+            const videoRes = await api.get(`/courses/video/${classId}`);
+            if (mounted.current) setVideoData(videoRes.data);
+          } catch (err) {
+            console.log("Failed to load S3 video playback data:", err);
+            if (mounted.current) setVideoData({ error: true });
           }
         }
-      } catch (error) {
-        toast.error("Load failed", "Could not load class content. Please try again.");
-        navigate("/courses");
-      } finally {
-        if (mounted) setLoading(false);
       }
-    };
-    loadClass();
-    return () => { mounted = false; };
-  }, [classId, navigate]);
+    } catch (error) {
+      if (mounted.current) {
+        const isTimeout = error?.isTimeout || error?.code === "ECONNABORTED";
+        setLoadError({
+          message: isTimeout
+            ? "The server is taking too long to respond. Please try again."
+            : error?.friendlyMessage || "Could not load class content. Please try again.",
+          isTimeout,
+        });
+      }
+    } finally {
+      if (mounted.current) setLoading(false);
+    }
+  }, [classId]);
+
+  useEffect(() => {
+    const mounted = { current: true };
+    loadClass(mounted);
+    return () => { mounted.current = false; };
+  }, [loadClass]);
 
   const refreshPlaybackUrl = useCallback(async () => {
     try {
@@ -424,6 +434,45 @@ function ClassView() {
             <div className="h-48 shimmer rounded-2xl" />
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center gap-4 text-center max-w-sm"
+        >
+          {loadError.isTimeout ? (
+            <Clock className="w-12 h-12 text-amber-400" />
+          ) : navigator.onLine ? (
+            <RefreshCw className="w-12 h-12 text-danger" />
+          ) : (
+            <WifiOff className="w-12 h-12 text-danger" />
+          )}
+          <p className="text-text-secondary text-sm">{loadError.message}</p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => loadClass()}
+              className="btn-primary text-xs uppercase tracking-wider flex items-center gap-2"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Retry
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/courses")}
+              className="btn-secondary text-xs uppercase tracking-wider flex items-center gap-2"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Back to Courses
+            </button>
+          </div>
+        </motion.div>
       </div>
     );
   }

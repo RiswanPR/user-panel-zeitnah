@@ -165,11 +165,11 @@ api.interceptors.response.use(
       pendingRequests.delete(requestKey);
     }
 
-    // Log slow requests in development
+    // Log slow requests (all environments)
     const startTime = (response.config as any)?._startTime;
-    if (startTime && import.meta.env.DEV) {
+    if (startTime) {
       const duration = Date.now() - startTime;
-      if (duration > 2000) {
+      if (duration > 5000) {
         console.warn(`[API] Slow request: ${response.config.url} took ${duration}ms`);
       }
     }
@@ -289,6 +289,8 @@ api.interceptors.response.use(
 
     // Determine friendly message
     const friendlyMessage = getFriendlyErrorMessage(error, isOffline);
+    const requestDuration = config?._startTime ? Date.now() - config._startTime : undefined;
+    const isTimeout = error.code === "ECONNABORTED" || error.message?.includes("timeout");
 
     // Only log to backend if it's an auth route, or maybe log all 5xx / Network errors
     // Skip troubleshoot endpoints to prevent error cascades
@@ -310,7 +312,9 @@ api.interceptors.response.use(
       ...error,
       friendlyMessage,
       correlationId: config?._correlationId,
-      isOffline
+      isOffline,
+      isTimeout,
+      requestDuration,
     });
   },
 );
