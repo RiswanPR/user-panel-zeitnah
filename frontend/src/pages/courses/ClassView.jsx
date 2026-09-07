@@ -162,11 +162,78 @@ function ClassView() {
     }
   }, [classId]);
 
+  const userRef = useRef(user);
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
   // ── Stream security heartbeat & lifecycle ──
   useEffect(() => {
     if (!classId) return;
-    let heartbeatInterval;
+    let heartbeatInterval = null;
     let cachedDeviceId = null;
+    let isMounted = true;
+    let isRecovering = false;
+
+    const stopHeartbeat = () => {
+      if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+      }
+    };
+
+    const sendHeartbeat = async (devId) => {
+      try {
+        await api.post("/courses/heartbeat", { deviceId: devId });
+      } catch (err) {
+        if (!isMounted) return;
+        const status = err?.response?.status;
+        const errorMsg = err?.response?.data?.message || err?.message || "";
+
+        console.warn(`[Heartbeat] Heartbeat returned status ${status}:`, errorMsg);
+
+        // STEP 5: On 401 (stream session expired or invalid device)
+        // Immediately STOP heartbeat timer to prevent request storms
+        stopHeartbeat();
+
+        if (status === 401) {
+          if (isRecovering) return;
+          isRecovering = true;
+          console.warn("[Heartbeat] Stream expired (401). Attempting stream re-initialization...");
+
+          try {
+            const browserFingerprint = JSON.stringify(getBrowserFingerprint());
+            await api.post("/courses/start-stream", { classId, deviceId: devId, browserFingerprint });
+            // Re-initialized successfully! Resume heartbeat
+            isRecovering = false;
+            if (isMounted) {
+              startHeartbeat(devId);
+            }
+          } catch (recoveryErr) {
+            isRecovering = false;
+            const recoveryStatus = recoveryErr?.response?.status;
+            console.error("[Heartbeat] Stream recovery failed:", recoveryErr);
+            if (recoveryStatus === 401 || recoveryStatus === 403) {
+              toast.error("Playback restricted", "Another device may be currently watching this course.");
+              navigate(-1);
+            }
+          }
+        } else if (status === 403) {
+          // STEP 7: 403 Device Restriction — another device is actively streaming
+          toast.error("Playback restricted", "Another device may be currently watching this course.");
+          navigate(-1);
+        }
+      }
+    };
+
+    const startHeartbeat = (devId) => {
+      stopHeartbeat();
+      heartbeatInterval = setInterval(() => {
+        if (isMounted) {
+          void sendHeartbeat(devId);
+        }
+      }, 25000); // Canonical 25-second heartbeat interval
+    };
 
     const initializeStream = async () => {
       try {
@@ -175,47 +242,56 @@ function ClassView() {
         const browserFingerprint = JSON.stringify(getBrowserFingerprint());
         await api.post("/courses/start-stream", { classId, deviceId, browserFingerprint });
         
-        heartbeatInterval = setInterval(async () => {
-          try { await api.post("/courses/heartbeat", { deviceId }); } catch (err) { console.log(err); }
-        }, 25000); // Heartbeat every 25 seconds
+        if (isMounted) {
+          startHeartbeat(deviceId);
+        }
       } catch (error) {
-        toast.error("Playback restricted", "Another device may be currently watching this course.");
-        navigate(-1);
+        if (!isMounted) return;
+        const status = error?.response?.status;
+        console.error("[Stream] start-stream failed:", error);
+        if (status === 401 || status === 403) {
+          toast.error("Playback restricted", "Another device may be currently watching this course.");
+          navigate(-1);
+        }
       }
     };
+
     initializeStream();
-    
+
     const stopStream = async () => {
       try { 
         const deviceId = cachedDeviceId || (await getDeviceId());
-        const userId = user?.userId || user?.id;
+        const currentUser = userRef.current;
+        const userId = currentUser?.userId || currentUser?._id || currentUser?.id;
         if (deviceId && userId) {
           await api.post("/courses/stop-stream", { deviceId, userId }); 
         }
       } catch (error) { console.log(error); }
     };
-    
+
     // Synchronous unload handler for web, mobile web, and native WebViews
     const handleUnload = () => {
       const deviceId = cachedDeviceId;
       if (!deviceId) return;
-      const userId = user?.userId || user?.id;
+      const currentUser = userRef.current;
+      const userId = currentUser?.userId || currentUser?._id || currentUser?.id;
       const baseUrl = api.defaults.baseURL || window.location.origin + "/api";
       if (navigator.sendBeacon) {
         navigator.sendBeacon(`${baseUrl}/courses/stop-stream`, new Blob([JSON.stringify({ deviceId, userId })], { type: "application/json" }));
       }
     };
-    
+
     window.addEventListener("beforeunload", handleUnload);
     window.addEventListener("pagehide", handleUnload);
-    
+
     return () => {
-      if (heartbeatInterval) clearInterval(heartbeatInterval);
+      isMounted = false;
+      stopHeartbeat();
       stopStream();
       window.removeEventListener("beforeunload", handleUnload);
       window.removeEventListener("pagehide", handleUnload);
     };
-  }, [classId, navigate, user]);
+  }, [classId, navigate]);
 
   // ── Initialize progress refs ──
   useEffect(() => {

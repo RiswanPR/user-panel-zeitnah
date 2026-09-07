@@ -211,7 +211,14 @@ api.interceptors.response.use(
     }
 
     // Handle 401 — attempt token refresh before logging out
+    // Guard against infinite 401 retry storms: never refresh if this request already attempted a 401 retry
     if (error.response?.status === 401 && config && !config._isRefreshRequest) {
+      if (config._retried401) {
+        console.warn(`[API] 401 persisted after token refresh for ${config.url}. Rejecting without further retries.`);
+        return Promise.reject(error);
+      }
+      config._retried401 = true;
+
       // If we're already refreshing, queue this request
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -260,7 +267,7 @@ api.interceptors.response.use(
         // Process queued requests with the new token
         processQueue(null, newAccessToken);
 
-        // Retry the original failed request
+        // Retry the original failed request with the fresh token
         config.headers.Authorization = `Bearer ${newAccessToken}`;
         return api(config);
       } catch (refreshError) {

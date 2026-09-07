@@ -197,11 +197,12 @@ export class CoursesController {
   startStream(@Body() body: any, @Req() req: any) {
     const ipAddress = req.ip || req.headers['x-forwarded-for'] || 'unknown';
     const userAgent = req.headers['user-agent'] || 'unknown';
+    const deviceId = body?.deviceId || req.user?.deviceId;
 
     return this.coursesService.startStream(
       req.user.userId,
       body.classId,
-      body.deviceId,
+      deviceId,
       body.browserFingerprint,
       ipAddress,
       userAgent,
@@ -221,7 +222,8 @@ export class CoursesController {
     @Req()
     req: any,
   ) {
-    return this.coursesService.heartbeat(req.user.userId, body.deviceId);
+    const deviceId = body?.deviceId || req.user?.deviceId;
+    return this.coursesService.heartbeat(req.user.userId, deviceId);
   }
 
   // =====================

@@ -1406,9 +1406,12 @@ export class CoursesService {
       status: 'ACTIVE',
     });
 
-    // Existing stream on another device
+    // Existing stream on another device (HTTP 403 device restriction)
     if (active && active.deviceId !== deviceId) {
-      throw new UnauthorizedException(
+      console.warn(
+        `[Stream] Device restriction: user=${userId.slice(-6)} already active on device=${active.deviceId.slice(0, 8)}..., requested by device=${deviceId.slice(0, 8)}...`,
+      );
+      throw new ForbiddenException(
         'Another device is currently watching a class. Please close the stream on the other device or wait 90 seconds for it to expire.',
       );
     }
@@ -1447,8 +1450,13 @@ export class CoursesService {
   }
 
   async heartbeat(userId: string, deviceId: string) {
+    if (!deviceId) {
+      throw new BadRequestException('Device ID missing');
+    }
+
     const expiresAt = new Date(Date.now() + 90000); // 90 seconds
 
+    // 1. Fast atomic update on existing active stream for this user & device
     const updated = await this.activeStreamModel.findOneAndUpdate(
       {
         userId,
@@ -1462,11 +1470,53 @@ export class CoursesService {
       { returnDocument: 'after' },
     );
 
-    if (!updated) {
-      throw new UnauthorizedException('Session expired or invalid device');
+    if (updated) {
+      return { success: true };
     }
 
-    return { success: true };
+    // 2. Stream not updated as ACTIVE. Check if another device is actively streaming
+    const otherActive = await this.activeStreamModel.findOne({
+      userId,
+      status: 'ACTIVE',
+    });
+
+    if (otherActive && otherActive.deviceId !== deviceId) {
+      console.warn(
+        `[Heartbeat] Device restriction: user=${userId.slice(-6)} active on device=${otherActive.deviceId.slice(0, 8)}..., rejected device=${deviceId.slice(0, 8)}...`,
+      );
+      throw new ForbiddenException(
+        'Another device is currently watching a class. Stream restricted.',
+      );
+    }
+
+    // 3. No other device is streaming! The stream either expired or was ended prematurely
+    // (e.g. temporary Wi-Fi drop, laptop sleep / background tab pause, or navigation cleanup race condition).
+    // Auto-recover/re-activate the stream for this legitimate user & device!
+    const recovered = await this.activeStreamModel.findOneAndUpdate(
+      {
+        userId,
+        deviceId,
+      },
+      {
+        status: 'ACTIVE',
+        heartbeatAt: new Date(),
+        expiresAt,
+      },
+      { returnDocument: 'after' },
+    );
+
+    if (recovered) {
+      console.log(
+        `[Heartbeat] Auto-recovered expired stream for user=${userId.slice(-6)}, device=${deviceId.slice(0, 8)}...`,
+      );
+      return { success: true, recovered: true };
+    }
+
+    // 4. If no record exists at all for this user and device, throw 401 session expired
+    console.warn(
+      `[Heartbeat] Stream record not found for user=${userId.slice(-6)}, device=${deviceId.slice(0, 8)}...`,
+    );
+    throw new UnauthorizedException('Session expired or invalid device');
   }
 
   async stopStream(userId: string, deviceId: string) {
