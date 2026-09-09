@@ -81,7 +81,7 @@ function wrapInEmailBase(
                 Zeitnah Academy — Premium Learning Platform
               </p>
               <p style="margin: 0 0 12px 0; font-size: 11px; color: #475569; line-height: 1.5;">
-                This is an automated operational notification. Please do not reply directly to this message.
+                Please do not reply directly to this message.
               </p>
               <p style="margin: 0; font-size: 11px; color: #334155;">
                 &copy; ${new Date().getFullYear()} Zeitnah Academy. All rights reserved.

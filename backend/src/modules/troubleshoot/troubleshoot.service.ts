@@ -115,6 +115,10 @@ export class TroubleshootService {
    * Build and send a rich HTML email alert.
    */
   private async sendEmailAlert(report: TroubleshootReportDocument, userEmail: string) {
+    if (process.env.ENABLE_OPERATIONAL_ALERT_EMAILS !== 'true') {
+      return;
+    }
+
     const sev = SEVERITY_CONFIG[report.severity] || SEVERITY_CONFIG.medium;
 
     const html = generateTroubleshootEmailHtml(report, userEmail, sev);
