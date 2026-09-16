@@ -535,3 +535,60 @@ html, body {
 .bottom-safe {
   bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   COURSE HUB — RECORDING COURSE PREMIUM EFFECTS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Glow border for featured recording card */
+.recording-card-glow {
+  box-shadow:
+    0 0 0 1px rgba(245, 158, 11, 0.12),
+    0 8px 40px -8px rgba(159, 213, 178, 0.10),
+    0 24px 64px -16px rgba(0, 0, 0, 0.4);
+}
+
+.recording-card-glow:hover {
+  box-shadow:
+    0 0 0 1px rgba(245, 158, 11, 0.22),
+    0 12px 48px -8px rgba(159, 213, 178, 0.14),
+    0 32px 80px -16px rgba(0, 0, 0, 0.5);
+}
+
+/* Cinematic image overlay gradient */
+.recording-image-overlay {
+  background: linear-gradient(
+    to top,
+    rgba(7, 11, 20, 0.95) 0%,
+    rgba(7, 11, 20, 0.5) 40%,
+    rgba(7, 11, 20, 0.1) 100%
+  );
+}
+
+/* Premium amber badge glow */
+.badge-recording-glow {
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.18), 0 0 32px rgba(245, 158, 11, 0.08);
+}
+
+/* Featured recording section header accent */
+.section-recording-accent::before {
+  content: '';
+  display: block;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(180deg, #F59E0B 0%, #9FD5B2 100%);
+  border-radius: 4px;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* Recording progress bar — wider and more visible */
+.progress-recording {
+  background: linear-gradient(
+    90deg,
+    rgba(245, 158, 11, 0.7) 0%,
+    #9FD5B2 60%,
+    #9FD5B2 100%
+  );
+}
