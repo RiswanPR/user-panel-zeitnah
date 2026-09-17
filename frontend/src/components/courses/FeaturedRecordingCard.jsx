@@ -78,7 +78,7 @@ export default function FeaturedRecordingCard({ course }) {
         <div className="flex flex-col lg:flex-row lg:min-h-[340px]">
 
           {/* ── LEFT: Course Image (desktop) ── */}
-          <div className="relative w-full shrink-0 overflow-hidden lg:w-[42%] xl:w-[45%]">
+          <div className="relative w-full overflow-hidden lg:w-[42%] xl:w-[45%] lg:self-stretch">
             {/* Desktop featured label */}
             <div className="absolute left-4 top-4 z-20 hidden lg:flex flex-col gap-1.5">
               <span className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-black/40 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-white/50 backdrop-blur-md">
@@ -93,7 +93,7 @@ export default function FeaturedRecordingCard({ course }) {
             </div>
 
             {/* Cover image */}
-            <div className="aspect-video w-full lg:aspect-auto lg:h-full">
+            <div className="aspect-video w-full lg:aspect-auto lg:absolute lg:inset-0">
               <OptimizedImage
                 src={imageUrl}
                 alt={course.name}

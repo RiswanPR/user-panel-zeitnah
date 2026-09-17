@@ -39,7 +39,7 @@ function FeaturedSkeleton() {
   return (
     <div className="overflow-hidden rounded-2xl border border-border-default bg-bg-card">
       <div className="flex flex-col lg:flex-row lg:min-h-[340px]">
-        <div className="w-full lg:w-[42%] aspect-video lg:aspect-auto shimmer" />
+        <div className="w-full lg:w-[42%] lg:self-stretch aspect-video lg:aspect-auto shimmer" />
         <div className="flex flex-1 flex-col gap-4 p-6 lg:p-8">
           <div className="h-5 w-32 shimmer rounded-lg" />
           <div className="h-8 w-3/4 shimmer rounded-lg" />
