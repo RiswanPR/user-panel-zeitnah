@@ -232,7 +232,10 @@ export default function FeaturedRecordingCard({ course }) {
                   <button
                     type="button"
                     id={`featured-recording-explore-${course._id}`}
-                    onClick={handleCTA}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/courses/${course._id}/chapters`);
+                    }}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer select-none border bg-brand-yellow border-brand-yellow text-bg-base hover:shadow-[0_4px_24px_rgba(246,237,74,0.25)] active:scale-[0.98]"
                   >
                     <Play className="w-3.5 h-3.5" />
