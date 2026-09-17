@@ -45,15 +45,22 @@ export default function RecordingCourseCard({ course }) {
         onClick={handleCardClick}
         className={`group relative flex flex-col overflow-hidden rounded-2xl border cursor-pointer w-full
           transition-all duration-400
-          hover:-translate-y-1
+          hover:-translate-y-1.5
           ${
             completed
               ? "bg-gradient-to-b from-bg-card to-bg-surface border-success/15 hover:border-success/30 hover:shadow-[0_16px_48px_rgba(16,185,129,0.08)]"
-              : "bg-gradient-to-b from-bg-card to-bg-surface border-warning/15 hover:border-warning/28 hover:shadow-[0_16px_48px_rgba(245,158,11,0.08),0_4px_16px_rgba(0,0,0,0.3)]"
+              : "bg-gradient-to-b from-bg-card to-bg-surface border-warning/15 hover:border-warning/30 hover:shadow-[0_16px_48px_rgba(245,158,11,0.08),0_4px_16px_rgba(0,0,0,0.3)]"
           }`}
         aria-label={`Recording course: ${course.name}`}
       >
-        <div className="gradient-line-top" />
+        {/* Amber-to-mint top gradient line */}
+        <div
+          className="absolute top-0 left-0 right-0 h-px z-20 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(90deg, transparent 0%, rgba(245,158,11,0.35) 50%, transparent 100%)",
+          }}
+        />
 
         {/* Subtle amber ambient glow */}
         <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-warning/5 blur-[60px]" />
@@ -65,7 +72,7 @@ export default function RecordingCourseCard({ course }) {
             alt={course.name}
             eager
             containerClassName="h-full w-full"
-            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-bg-card via-bg-card/40 to-transparent" />
 
@@ -103,7 +110,7 @@ export default function RecordingCourseCard({ course }) {
               "Complete recorded sessions available for self-paced learning."}
           </p>
 
-          {/* Meta pills */}
+          {/* Meta row */}
           <div className="mt-3.5 flex items-center gap-3 text-text-muted">
             <span className="inline-flex items-center gap-1.5 text-xs font-medium">
               <BookOpen className="w-3.5 h-3.5 text-brand-mint" />

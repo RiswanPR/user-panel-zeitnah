@@ -15,10 +15,11 @@ import CourseEnquiryModal from "./CourseEnquiryModal";
 /**
  * OnlineCourseCard
  *
- * Standard card for Online Courses. Polished but visually secondary
- * compared to the Recording course cards. Same functionality as before.
+ * Premium card for Online Courses.
+ * Accepts `compact` prop when used inside the horizontal carousel —
+ * this keeps the card height consistent for the carousel track.
  */
-export default function OnlineCourseCard({ course }) {
+export default function OnlineCourseCard({ course, compact = false }) {
   const navigate = useNavigate();
   const [enquiryModalOpen, setEnquiryModalOpen] = useState(false);
 
@@ -43,7 +44,7 @@ export default function OnlineCourseCard({ course }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
         onClick={handleCardClick}
-        className={`group relative flex flex-col overflow-hidden rounded-2xl border cursor-pointer w-full
+        className={`group relative flex flex-col overflow-hidden rounded-2xl border cursor-pointer w-full h-full
           transition-all duration-300 hover:-translate-y-1
           ${
             completed
@@ -85,21 +86,24 @@ export default function OnlineCourseCard({ course }) {
             <p className="mb-0.5 text-[9px] font-semibold uppercase tracking-widest text-text-muted">
               Course
             </p>
-            <h3 className="font-heading text-base font-extrabold leading-tight tracking-tight text-white line-clamp-2 sm:text-lg">
+            <h3 className="font-heading text-base font-extrabold leading-tight tracking-tight text-white line-clamp-2">
               {course.name}
             </h3>
           </div>
         </div>
 
         {/* ── Card Body ── */}
-        <div className="flex flex-1 flex-col justify-between p-4 sm:p-5">
-          <p className="text-sm font-medium leading-relaxed text-text-muted line-clamp-2">
-            {course.description ||
-              "Explore this course to discover structured learning modules and content."}
-          </p>
+        <div className="flex flex-1 flex-col justify-between p-4">
+          {/* Description — 1 line max in compact carousel mode */}
+          {!compact && (
+            <p className="text-sm font-medium leading-relaxed text-text-muted line-clamp-2">
+              {course.description ||
+                "Explore this course to discover structured learning modules and content."}
+            </p>
+          )}
 
-          {/* Meta pills */}
-          <div className="mt-4 flex items-center gap-3 text-text-muted">
+          {/* Meta row */}
+          <div className={`flex items-center gap-3 text-text-muted ${compact ? "" : "mt-3"}`}>
             <span className="inline-flex items-center gap-1.5 text-xs font-medium">
               <BookOpen className="w-3.5 h-3.5 text-brand-mint" />
               {chapterCount} {chapterCount === 1 ? "chapter" : "chapters"}
@@ -113,7 +117,7 @@ export default function OnlineCourseCard({ course }) {
 
           {/* Progress */}
           <div
-            className={`mt-4 rounded-xl border p-3.5 flex flex-col w-full ${
+            className={`mt-3 rounded-xl border p-3 flex flex-col w-full ${
               completed
                 ? "border-success/15 bg-success/5"
                 : "border-white/[0.04] bg-white/[0.02]"
@@ -127,7 +131,7 @@ export default function OnlineCourseCard({ course }) {
                   <TrendingUp className="w-3.5 h-3.5 text-brand-mint" />
                 )}
                 {completed
-                  ? "Course Completed"
+                  ? "Completed"
                   : purchased
                   ? "Your Progress"
                   : "Start Progress"}
@@ -157,7 +161,7 @@ export default function OnlineCourseCard({ course }) {
                 e.stopPropagation();
                 navigate(`/courses/${course._id}/chapters`);
               }}
-              className={`mt-4 inline-flex w-full items-center justify-center rounded-xl py-3 text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer select-none border active:scale-[0.98]
+              className={`mt-3 inline-flex w-full items-center justify-center rounded-xl py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer select-none border active:scale-[0.98]
                 ${
                   completed
                     ? "border-success/25 bg-success/8 text-success hover:bg-success/12"
@@ -167,7 +171,7 @@ export default function OnlineCourseCard({ course }) {
               {completed ? "Review Course" : "Continue Learning"}
             </button>
           ) : (
-            <div className="mt-4 grid grid-cols-2 gap-2">
+            <div className="mt-3 grid grid-cols-2 gap-2">
               <button
                 type="button"
                 id={`online-card-explore-${course._id}`}

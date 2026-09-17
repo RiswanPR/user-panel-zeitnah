@@ -592,3 +592,158 @@ html, body {
     #9FD5B2 100%
   );
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   ONLINE CLASS CAROUSEL — NATIVE SCROLL SNAP
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Carousel track — horizontal scrolling container */
+.carousel-track {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 8px; /* tiny bottom pad to avoid cutting shadows */
+  /* Extended right padding so the last card + peek space is visible */
+  padding-right: 1.5rem;
+  cursor: grab;
+  user-select: none;
+  /* Hide scrollbar — cross-browser */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.carousel-track::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel-track.is-dragging {
+  cursor: grabbing;
+  scroll-behavior: auto; /* disable smooth during drag */
+}
+
+/* Individual carousel card — snap aligned */
+.carousel-card {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  /* Card widths at different breakpoints are set inline / via Tailwind classes */
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CAROUSEL NAV BUTTONS
+   ═══════════════════════════════════════════════════════════════ */
+.carousel-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.carousel-btn:hover:not(:disabled) {
+  background: rgba(159, 213, 178, 0.1);
+  border-color: rgba(159, 213, 178, 0.25);
+  color: #9FD5B2;
+}
+
+.carousel-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   COURSE HERO — PREMIUM EDITORIAL STYLE
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Subtle noise texture overlay for the hero */
+.hero-noise::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: overlay;
+}
+
+/* Hero ambient glow animation */
+@keyframes heroGlow {
+  0%, 100% {
+    opacity: 0.06;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.10;
+    transform: scale(1.08);
+  }
+}
+
+.hero-ambient-glow {
+  animation: heroGlow 8s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CONTINUE LEARNING BANNER
+   ═══════════════════════════════════════════════════════════════ */
+
+.continue-learning-banner {
+  background: linear-gradient(
+    135deg,
+    rgba(19, 29, 45, 0.95) 0%,
+    rgba(15, 23, 36, 0.8) 100%
+  );
+  border: 1px solid rgba(159, 213, 178, 0.18);
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.continue-learning-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(159, 213, 178, 0.5) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION VISUAL RHYTHM HELPERS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Vertical accent bar for section headings */
+.section-accent-bar {
+  width: 3px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* Featured section accent (amber → mint gradient) */
+.section-accent-recording {
+  background: linear-gradient(180deg, #F59E0B 0%, #9FD5B2 100%);
+}
+
+/* Online section accent (mint → cyan gradient) */
+.section-accent-online {
+  background: linear-gradient(180deg, #9FD5B2 0%, #38BDF8 100%);
+}
