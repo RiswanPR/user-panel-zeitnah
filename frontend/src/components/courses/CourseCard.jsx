@@ -9,7 +9,7 @@ import {
   Video,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { getCourseTypeLabel } from "../../utils/courseUi";
+import { getCourseTypeLabel, getUploadUrl } from "../../utils/courseUi";
 import CourseEnquiryModal from "./CourseEnquiryModal";
 import OptimizedImage from "../ui/OptimizedImage";
 
@@ -21,7 +21,7 @@ function CourseCard({ course }) {
   const purchased = !!course.learningProgress || !!course.purchased || !!course.isPurchased || !!course.isEnrolled;
   const completed = purchased && progress >= 100;
   const isRecording = course.type === "Recording";
-  const imageUrl = course.coverImage || "https://placehold.co/1920x1080/0A0D14/FFFFFF?text=Course+Cover";
+  const imageUrl = getUploadUrl(course.coverImage) || course.coverImage || "https://placehold.co/1920x1080/0A0D14/FFFFFF?text=Course+Cover";
   const chapterCount = course.chapters?.length || 0;
 
   return (
@@ -40,8 +40,11 @@ function CourseCard({ course }) {
         {/* Gradient accent line */}
         <div className="gradient-line-top" />
 
-        {/* ── Cover Image ── */}
-        <div className="relative aspect-video w-full overflow-hidden bg-bg-elevated shrink-0 select-none">
+        {/* ── Cover Image (16:9 - 1920x1080) ── */}
+        <div
+          className="relative aspect-video w-full overflow-hidden bg-bg-elevated shrink-0 select-none"
+          style={{ aspectRatio: "16 / 9" }}
+        >
           <OptimizedImage
             src={imageUrl}
             alt={course.name}

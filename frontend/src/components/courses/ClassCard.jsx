@@ -7,11 +7,11 @@ import {
   Play,
   Video,
 } from "lucide-react";
-import { formatDuration, getCourseTypeLabel } from "../../utils/courseUi";
+import { formatDuration, getCourseTypeLabel, getUploadUrl } from "../../utils/courseUi";
 import OptimizedImage from "../ui/OptimizedImage";
 
 function ClassCard({ cls, courseType, index, onLockedClick, onOpen }) {
-  const thumbnailUrl = cls.coverImage;
+  const thumbnailUrl = getUploadUrl(cls.coverImage) || cls.coverImage;
   const locked = Boolean(cls.locked);
   const completed = Boolean(cls.completed);
   const inProgress = !completed && (cls.progressPercent || 0) > 0;
@@ -47,6 +47,7 @@ function ClassCard({ cls, courseType, index, onLockedClick, onOpen }) {
               }
             }}
             className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/[0.06] bg-bg-elevated sm:w-44 shrink-0 select-none flex items-center justify-center cursor-pointer focus-ring"
+            style={{ aspectRatio: "16 / 9" }}
           >
             {thumbnailUrl ? (
               <OptimizedImage

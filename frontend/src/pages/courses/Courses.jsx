@@ -82,8 +82,11 @@ function ContinueSkeleton() {
 function FeaturedSkeleton() {
   return (
     <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-bg-card">
-      <div className="flex flex-col lg:flex-row lg:min-h-[400px]">
-        <div className="w-full lg:w-[48%] aspect-video lg:aspect-auto shimmer" />
+      <div className="flex flex-col lg:flex-row items-stretch">
+        <div
+          className="w-full lg:w-1/2 aspect-video shrink-0 shimmer"
+          style={{ aspectRatio: "16 / 9" }}
+        />
         <div className="flex flex-1 flex-col justify-between p-6 lg:p-8 space-y-5">
           <div className="space-y-3">
             <div className="h-4 w-32 shimmer rounded" />
@@ -101,7 +104,10 @@ function FeaturedSkeleton() {
 function CardSkeleton() {
   return (
     <div className="rounded-2xl border border-white/[0.06] bg-bg-card overflow-hidden">
-      <div className="aspect-video w-full shimmer" />
+      <div
+        className="aspect-video w-full shimmer"
+        style={{ aspectRatio: "16 / 9" }}
+      />
       <div className="p-4 sm:p-5 space-y-3">
         <div className="h-4 w-3/4 shimmer rounded" />
         <div className="h-3 w-full shimmer rounded" />

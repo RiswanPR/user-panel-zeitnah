@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, BookOpen, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import OptimizedImage from "../ui/OptimizedImage";
+import { getUploadUrl } from "../../utils/courseUi";
 
 /**
  * ContinueLearning
@@ -18,7 +19,7 @@ export default function ContinueLearning({ course }) {
   if (
     !course ||
     !course.learningProgress ||
-    course.learningProgress.completionPercent <= 0
+    (course.learningProgress.completionPercent ?? 0) <= 0
   ) {
     return null;
   }
@@ -32,7 +33,9 @@ export default function ContinueLearning({ course }) {
     : chapters?.[0] || null;
 
   const imageUrl =
-    coverImage || "https://placehold.co/800x450/0A0D14/FFFFFF?text=Course";
+    getUploadUrl(coverImage) ||
+    coverImage ||
+    "https://placehold.co/1920x1080/0A0D14/FFFFFF?text=Course";
 
   const handleContinue = () => navigate(`/courses/${_id}/chapters`);
 
@@ -77,8 +80,11 @@ export default function ContinueLearning({ course }) {
 
         <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-5 p-5 sm:p-6 w-full">
 
-          {/* Thumbnail */}
-          <div className="relative w-full sm:w-44 md:w-52 shrink-0 aspect-video rounded-xl overflow-hidden bg-bg-elevated border border-white/[0.06]">
+          {/* Thumbnail (16:9 - 1920x1080) */}
+          <div
+            className="relative w-full sm:w-44 md:w-52 shrink-0 aspect-video rounded-xl overflow-hidden bg-bg-elevated border border-white/[0.06]"
+            style={{ aspectRatio: "16 / 9" }}
+          >
             <OptimizedImage
               src={imageUrl}
               alt={name}

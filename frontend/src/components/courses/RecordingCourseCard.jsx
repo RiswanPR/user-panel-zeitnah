@@ -11,12 +11,13 @@ import { useNavigate } from "react-router-dom";
 import OptimizedImage from "../ui/OptimizedImage";
 import CourseTypeBadge from "./CourseTypeBadge";
 import CourseEnquiryModal from "./CourseEnquiryModal";
+import { getUploadUrl } from "../../utils/courseUi";
 
 /**
  * RecordingCourseCard
  *
  * Card for secondary Recorded Courses in the grid.
- * Consistent 16:9 ratio, subtle hover elevation, real data only.
+ * Strict 16:9 (1920x1080) ratio, subtle hover elevation, real data only.
  */
 export default function RecordingCourseCard({ course }) {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ export default function RecordingCourseCard({ course }) {
   const completed = purchased && progress >= 100;
   const chapterCount = course.chapters?.length ?? 0;
   const imageUrl =
+    getUploadUrl(course.coverImage) ||
     course.coverImage ||
     "https://placehold.co/1920x1080/0A0D14/FFFFFF?text=Course+Cover";
 
@@ -60,8 +62,11 @@ export default function RecordingCourseCard({ course }) {
       >
         <div className="gradient-line-top" />
 
-        {/* ── Cover Image (16:9) ── */}
-        <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-bg-elevated">
+        {/* ── Cover Image (16:9 - 1920x1080) ── */}
+        <div
+          className="relative aspect-video w-full shrink-0 overflow-hidden bg-bg-elevated"
+          style={{ aspectRatio: "16 / 9" }}
+        >
           <OptimizedImage
             src={imageUrl}
             alt={course.name}

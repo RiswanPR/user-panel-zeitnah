@@ -13,12 +13,13 @@ import { useNavigate } from "react-router-dom";
 import OptimizedImage from "../ui/OptimizedImage";
 import CourseTypeBadge from "./CourseTypeBadge";
 import CourseEnquiryModal from "./CourseEnquiryModal";
+import { getUploadUrl } from "../../utils/courseUi";
 
 /**
  * FeaturedRecordingCard
  *
  * The primary hero card for the flagship Recorded Course.
- * Balanced cinematic split-layout on desktop, structured stacked on mobile.
+ * Strictly maintains 16:9 (1920x1080) aspect ratio on both mobile and desktop.
  */
 export default function FeaturedRecordingCard({ course }) {
   const navigate = useNavigate();
@@ -33,6 +34,7 @@ export default function FeaturedRecordingCard({ course }) {
   const completed = purchased && progress >= 100;
   const chapterCount = course.chapters?.length ?? 0;
   const imageUrl =
+    getUploadUrl(course.coverImage) ||
     course.coverImage ||
     "https://placehold.co/1920x1080/0A0D14/FFFFFF?text=Course+Cover";
 
@@ -71,10 +73,13 @@ export default function FeaturedRecordingCard({ course }) {
         <div className="pointer-events-none absolute -left-12 bottom-0 h-56 w-56 rounded-full bg-brand-mint/5 blur-[80px]" />
 
         {/* ── LAYOUT: desktop split / mobile stacked ── */}
-        <div className="flex flex-col lg:flex-row lg:min-h-[400px]">
+        <div className="flex flex-col lg:flex-row items-stretch">
 
-          {/* ── LEFT: Course Image ── */}
-          <div className="relative w-full overflow-hidden lg:w-[48%] shrink-0">
+          {/* ── LEFT: Course Image (Strict 16:9 / 1920x1080) ── */}
+          <div
+            className="relative w-full lg:w-1/2 shrink-0 aspect-video overflow-hidden bg-bg-elevated"
+            style={{ aspectRatio: "16 / 9" }}
+          >
             {/* Overlay labels */}
             <div className="absolute left-4 top-4 z-20 flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-black/60 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-white/80 backdrop-blur-md">
@@ -84,8 +89,8 @@ export default function FeaturedRecordingCard({ course }) {
               <CourseTypeBadge type={course.type} size="sm" prominent />
             </div>
 
-            {/* Cover image */}
-            <div className="aspect-video w-full lg:h-full lg:aspect-auto">
+            {/* Cover image (16:9 - 1920x1080) */}
+            <div className="h-full w-full">
               <OptimizedImage
                 src={imageUrl}
                 alt={course.name}
@@ -97,7 +102,7 @@ export default function FeaturedRecordingCard({ course }) {
             </div>
 
             {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-bg-card via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-bg-card/30 lg:to-bg-card" />
+            <div className="absolute inset-0 bg-gradient-to-t from-bg-card via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-bg-card/20 lg:to-bg-card pointer-events-none" />
           </div>
 
           {/* ── RIGHT: Course Info ── */}

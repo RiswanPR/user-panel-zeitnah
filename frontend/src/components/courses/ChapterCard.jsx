@@ -7,6 +7,7 @@ import {
   PlayCircle,
 } from "lucide-react";
 import OptimizedImage from "../ui/OptimizedImage";
+import { getUploadUrl } from "../../utils/courseUi";
 
 function ChapterCard({ chapter, index, onOpen }) {
   const locked = Boolean(chapter.locked);
@@ -58,7 +59,7 @@ function ChapterCard({ chapter, index, onOpen }) {
       {chapter.coverImage && (
         <div className="absolute inset-0 z-0">
           <OptimizedImage
-            src={chapter.coverImage}
+            src={getUploadUrl(chapter.coverImage) || chapter.coverImage}
             alt={chapter.title}
             containerClassName="w-full h-full"
             className="w-full h-full object-cover opacity-10 transition-transform duration-700 group-hover:scale-105 group-hover:opacity-15"

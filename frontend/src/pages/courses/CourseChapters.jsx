@@ -58,7 +58,10 @@ function CourseChapters() {
       <div className="space-y-8 max-w-7xl mx-auto">
         <div className="h-4 w-48 shimmer rounded" />
         <div className="rounded-2xl border border-white/[0.06] bg-bg-card p-6 sm:p-8 flex flex-col md:flex-row gap-6">
-          <div className="w-full md:w-5/12 aspect-video shimmer rounded-xl shrink-0" />
+          <div
+            className="w-full md:w-5/12 aspect-video shimmer rounded-xl shrink-0"
+            style={{ aspectRatio: "16 / 9" }}
+          />
           <div className="flex-1 space-y-4">
             <div className="h-4 w-32 shimmer rounded" />
             <div className="h-8 w-3/4 shimmer rounded-lg" />
@@ -153,8 +156,11 @@ function CourseChapters() {
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand-mint/5 blur-[90px]" />
 
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-6 lg:gap-8">
-          {/* 16:9 Cover Thumbnail */}
-          <div className="relative w-full md:w-5/12 aspect-video shrink-0 rounded-xl overflow-hidden border border-white/[0.08] bg-bg-elevated">
+          {/* 16:9 Cover Thumbnail (1920x1080) */}
+          <div
+            className="relative w-full md:w-5/12 aspect-video shrink-0 rounded-xl overflow-hidden border border-white/[0.08] bg-bg-elevated"
+            style={{ aspectRatio: "16 / 9" }}
+          >
             <img
               src={imageUrl}
               alt={course.name}
