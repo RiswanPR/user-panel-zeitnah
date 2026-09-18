@@ -9,137 +9,172 @@ import {
 import OptimizedImage from "../ui/OptimizedImage";
 
 function ChapterCard({ chapter, index, onOpen }) {
-  const locked = chapter.locked;
+  const locked = Boolean(chapter.locked);
   const completed = Boolean(chapter.completed);
   const completedClasses = chapter.completedClasses || 0;
   const totalClasses = chapter.totalClasses || 0;
-  const progressPercent = totalClasses > 0 ? Math.round((completedClasses / totalClasses) * 100) : 0;
+  const inProgress = !completed && !locked && completedClasses > 0;
+  const progressPercent =
+    totalClasses > 0
+      ? Math.min(100, Math.round((completedClasses / totalClasses) * 100))
+      : 0;
 
   return (
-    <motion.button
-      type="button"
+    <motion.div
+      role="button"
+      tabIndex={0}
       onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: index * 0.06, ease: "easeOut" }}
-      className={`group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border p-5 sm:p-6 text-left transition-all duration-300 hover:-translate-y-0.5 cursor-pointer select-none ${
+      transition={{ duration: 0.35, delay: index * 0.05, ease: "easeOut" }}
+      aria-label={`Chapter ${index + 1}: ${chapter.title}. ${
         completed
-          ? "bg-gradient-to-br from-success/5 to-bg-card border-success/20 hover:border-success/35 hover:shadow-[0_16px_48px_rgba(16,185,129,0.08)]"
+          ? "Completed"
           : locked
-          ? "bg-gradient-to-br from-warning/3 to-bg-card border-warning/12 hover:border-warning/25"
-          : "bg-gradient-to-br from-bg-card to-bg-surface border-border-default hover:border-brand-mint/25 hover:shadow-[0_16px_48px_rgba(159,213,178,0.06)]"
+          ? "Locked"
+          : inProgress
+          ? `${progressPercent}% completed`
+          : "Available"
+      }`}
+      className={`group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border p-5 sm:p-6 text-left transition-all duration-300 cursor-pointer select-none card-subtle focus-ring ${
+        completed
+          ? "border-success/25 hover:border-success/40 bg-gradient-to-br from-success/5 to-bg-card"
+          : inProgress
+          ? "border-brand-mint/30 hover:border-brand-mint/50 bg-gradient-to-br from-brand-mint/5 to-bg-card"
+          : locked
+          ? "border-white/[0.06] hover:border-white/10 opacity-75"
+          : "border-white/[0.08] hover:border-brand-mint/30"
       }`}
     >
-      {/* Gradient accent line */}
-      <div className="gradient-line-top z-20" />
+      <div className="gradient-line-top" />
 
-      {/* ── Optional Chapter Cover Image ── */}
+      {/* Optional Background Art */}
       {chapter.coverImage && (
         <div className="absolute inset-0 z-0">
           <OptimizedImage
             src={chapter.coverImage}
             alt={chapter.title}
             containerClassName="w-full h-full"
-            className="w-full h-full object-cover opacity-10 transition-transform duration-700 group-hover:scale-105 group-hover:opacity-20"
+            className="w-full h-full object-cover opacity-10 transition-transform duration-700 group-hover:scale-105 group-hover:opacity-15"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-bg-card via-bg-card/90 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-bg-card via-bg-card/85 to-transparent" />
         </div>
       )}
 
       {/* ── Header ── */}
-      <div className="mb-4 flex items-start justify-between gap-4 w-full relative z-10">
-        <div className="flex items-start gap-3.5 min-w-0 flex-1">
-
+      <div className="mb-4 flex items-start justify-between gap-3 w-full relative z-10">
+        <div className="flex items-start gap-3 min-w-0 flex-1">
           {/* Index badge */}
-          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-heading font-extrabold select-none border ${
-            completed
-              ? "bg-success/10 border-success/20 text-success"
-              : locked
-              ? "bg-warning/10 border-warning/20 text-warning"
-              : "bg-brand-mint/8 border-brand-mint/15 text-brand-mint"
-          }`}>
+          <div
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-heading font-extrabold border ${
+              completed
+                ? "bg-success/10 border-success/20 text-success"
+                : inProgress
+                ? "bg-brand-mint/10 border-brand-mint/25 text-brand-mint"
+                : locked
+                ? "bg-white/[0.03] border-white/[0.06] text-text-muted"
+                : "bg-white/[0.05] border-white/[0.08] text-white"
+            }`}
+          >
             {String(index + 1).padStart(2, "0")}
           </div>
 
-          {/* Chapter info */}
           <div className="min-w-0 flex-1">
-            <div className="mb-2 flex flex-wrap items-center gap-1.5">
+            <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
               <span className="rounded-md bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-text-muted">
-                Module
+                Chapter
               </span>
               <span
                 className={`rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border ${
                   completed
                     ? "border-success/20 bg-success/10 text-success"
+                    : inProgress
+                    ? "border-brand-mint/20 bg-brand-mint/10 text-brand-mint"
                     : locked
-                    ? "border-warning/20 bg-warning/8 text-warning"
-                    : "border-brand-mint/20 bg-brand-mint/8 text-brand-mint"
+                    ? "border-white/[0.08] bg-white/[0.02] text-text-muted"
+                    : "border-brand-mint/20 bg-brand-mint/5 text-brand-mint"
                 }`}
               >
-                {completed ? "Completed" : locked ? "Locked" : "Open"}
+                {completed
+                  ? "Completed"
+                  : inProgress
+                  ? "In Progress"
+                  : locked
+                  ? "Locked"
+                  : "Open"}
               </span>
             </div>
 
-            <h2 className="text-base sm:text-lg font-heading font-bold text-white tracking-tight leading-snug line-clamp-2">
+            <h3 className="text-base sm:text-lg font-heading font-bold text-white tracking-tight leading-snug line-clamp-2 group-hover:text-brand-mint transition-colors">
               {chapter.title}
-            </h2>
+            </h3>
           </div>
         </div>
 
-        {/* Status icon */}
-        <div className={`h-9 w-9 rounded-xl border flex items-center justify-center shrink-0 transition-all ${
-          locked
-            ? "bg-warning/8 border-warning/15 text-warning"
-            : completed
-            ? "bg-success/8 border-success/15 text-success"
-            : "bg-brand-mint/8 border-brand-mint/15 text-brand-mint"
-        }`}>
+        {/* Status Icon */}
+        <div
+          className={`h-8 w-8 rounded-xl border flex items-center justify-center shrink-0 transition-all ${
+            completed
+              ? "bg-success/10 border-success/25 text-success"
+              : inProgress
+              ? "bg-brand-mint/10 border-brand-mint/25 text-brand-mint"
+              : locked
+              ? "bg-white/[0.03] border-white/[0.06] text-text-muted"
+              : "bg-white/[0.04] border-white/[0.08] text-brand-mint"
+          }`}
+        >
           {locked ? (
-            <Lock className="w-4 h-4" />
+            <Lock className="w-3.5 h-3.5" />
           ) : completed ? (
-            <CheckCircle2 className="w-4 h-4" />
+            <CheckCircle2 className="w-3.5 h-3.5" />
           ) : (
-            <PlayCircle className="w-4 h-4" />
+            <PlayCircle className="w-3.5 h-3.5" />
           )}
         </div>
       </div>
 
       {/* ── Description ── */}
-      <p className="mb-5 flex-1 text-sm font-medium text-text-muted leading-relaxed line-clamp-2 w-full relative z-10">
-        {chapter.description || "Chapter content and learning objectives will appear here."}
-      </p>
+      {chapter.description && (
+        <p className="mb-4 flex-1 text-xs font-medium text-text-muted leading-relaxed line-clamp-2 w-full relative z-10">
+          {chapter.description}
+        </p>
+      )}
 
-      {/* ── Progress bar (for open/completed chapters) ── */}
+      {/* ── Progress bar for open/in-progress/completed chapters ── */}
       {!locked && totalClasses > 0 && (
-        <div className="mb-4 w-full relative z-10">
-          <div className="h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${progressPercent}%` }}
-              transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-              className={`h-full rounded-full ${
+        <div className="mb-4 w-full relative z-10 space-y-1">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
                 completed
-                  ? "bg-gradient-to-r from-success to-brand-mint"
+                  ? "bg-success"
                   : "bg-gradient-to-r from-brand-mint to-brand-yellow"
               }`}
+              style={{ width: `${progressPercent}%` }}
             />
           </div>
         </div>
       )}
 
       {/* ── Footer ── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 text-[10px] font-semibold uppercase tracking-wider w-full border-t border-white/[0.04] pt-4 mt-auto relative z-10">
-        <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/[0.03] border border-white/[0.05] px-2.5 py-1.5 text-text-muted">
+      <div className="flex items-center justify-between gap-2 text-[10px] font-semibold uppercase tracking-wider w-full border-t border-white/[0.06] pt-3.5 mt-auto relative z-10">
+        <span className="inline-flex items-center gap-1.5 text-text-muted">
           <BookOpen className="w-3.5 h-3.5 text-brand-mint" />
-          {completedClasses} / {totalClasses} lessons
+          {completedClasses} / {totalClasses} classes
         </span>
 
-        <span className="inline-flex items-center gap-1.5 text-brand-mint group-hover:text-white transition-colors duration-200">
-          <span>View lessons</span>
-          <ArrowRight className="w-3 h-3 transition-transform duration-200 group-hover:translate-x-0.5" />
+        <span className="inline-flex items-center gap-1 text-brand-mint group-hover:text-white transition-colors">
+          <span>{locked ? "View" : "Open"}</span>
+          <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
         </span>
       </div>
-    </motion.button>
+    </motion.div>
   );
 }
 

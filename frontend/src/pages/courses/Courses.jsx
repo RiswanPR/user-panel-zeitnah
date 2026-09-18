@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useContext, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   BookOpen,
   GraduationCap,
   Play,
-  Video,
+  Sparkles,
+  RefreshCw,
 } from "lucide-react";
 import CourseNavbar from "../../components/courses/CourseNavbar";
 import FeaturedRecordingCard from "../../components/courses/FeaturedRecordingCard";
@@ -13,9 +14,10 @@ import OnlineCourseCarousel from "../../components/courses/OnlineCourseCarousel"
 import ContinueLearning from "../../components/courses/ContinueLearning";
 import api from "../../services/api";
 import { useImagePreloader } from "../../hooks/useImagePreloader";
+import { AuthContext } from "../../context/AuthContext";
 
 /* ══════════════════════════════════════════════════════════════════
-   PRIORITIZATION HELPERS
+   PRIORITIZATION & SORTING HELPERS
    ══════════════════════════════════════════════════════════════════ */
 
 /**
@@ -60,35 +62,36 @@ function pickContinueCourse(courses) {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   LOADING SKELETONS
-   ══════════════════════════════════════════════════════════════════ */
+   LOADING SKELETONS (Exact dimensions to eliminate CLS)
+   ══════════════════════════════════════════════════════════════ */
 
 function ContinueSkeleton() {
   return (
-    <div className="rounded-2xl border border-border-default bg-bg-card overflow-hidden p-5 sm:p-6 flex flex-col sm:flex-row gap-5">
-      <div className="w-full sm:w-48 aspect-video sm:aspect-auto sm:h-28 shimmer rounded-xl shrink-0" />
-      <div className="flex-1 space-y-3">
-        <div className="h-4 w-40 shimmer rounded-md" />
+    <div className="rounded-2xl border border-white/[0.06] bg-bg-card p-5 sm:p-6 flex flex-col sm:flex-row gap-5 items-start sm:items-center">
+      <div className="w-full sm:w-44 md:w-52 aspect-video shimmer rounded-xl shrink-0" />
+      <div className="flex-1 space-y-3 w-full">
+        <div className="h-3 w-28 shimmer rounded" />
         <div className="h-6 w-3/4 shimmer rounded-lg" />
-        <div className="h-2 w-full shimmer rounded-full" />
+        <div className="h-2 w-full shimmer rounded-full mt-2" />
       </div>
-      <div className="w-full sm:w-40 h-11 shimmer rounded-xl shrink-0" />
+      <div className="w-full sm:w-36 h-11 shimmer rounded-xl shrink-0" />
     </div>
   );
 }
 
 function FeaturedSkeleton() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-border-default bg-bg-card">
-      <div className="flex flex-col lg:flex-row lg:min-h-[420px]">
-        <div className="w-full lg:w-[45%] aspect-[4/3] lg:aspect-auto shimmer" />
-        <div className="flex flex-1 flex-col gap-5 p-6 lg:p-10">
-          <div className="h-5 w-36 shimmer rounded-lg" />
-          <div className="h-10 w-3/4 shimmer rounded-xl" />
-          <div className="h-4 w-full shimmer rounded-lg" />
-          <div className="h-4 w-2/3 shimmer rounded-lg" />
-          <div className="mt-auto h-14 w-full shimmer rounded-xl" />
-          <div className="h-12 w-full shimmer rounded-xl" />
+    <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-bg-card">
+      <div className="flex flex-col lg:flex-row lg:min-h-[400px]">
+        <div className="w-full lg:w-[48%] aspect-video lg:aspect-auto shimmer" />
+        <div className="flex flex-1 flex-col justify-between p-6 lg:p-8 space-y-5">
+          <div className="space-y-3">
+            <div className="h-4 w-32 shimmer rounded" />
+            <div className="h-8 w-3/4 shimmer rounded-xl" />
+            <div className="h-4 w-full shimmer rounded" />
+            <div className="h-4 w-2/3 shimmer rounded" />
+          </div>
+          <div className="h-12 w-full shimmer rounded-xl mt-6" />
         </div>
       </div>
     </div>
@@ -97,37 +100,19 @@ function FeaturedSkeleton() {
 
 function CardSkeleton() {
   return (
-    <div className="rounded-2xl border border-border-default bg-bg-card overflow-hidden">
+    <div className="rounded-2xl border border-white/[0.06] bg-bg-card overflow-hidden">
       <div className="aspect-video w-full shimmer" />
-      <div className="p-5 space-y-3">
-        <div className="h-4 w-3/4 shimmer" />
-        <div className="h-3 w-full shimmer" />
-        <div className="h-3 w-2/3 shimmer" />
-        <div className="h-10 w-full shimmer mt-4" />
+      <div className="p-4 sm:p-5 space-y-3">
+        <div className="h-4 w-3/4 shimmer rounded" />
+        <div className="h-3 w-full shimmer rounded" />
+        <div className="h-9 w-full shimmer rounded-xl mt-4" />
       </div>
     </div>
   );
 }
 
-function CarouselSkeletons() {
-  return (
-    <div className="flex gap-4 overflow-hidden">
-      {[...Array(3)].map((_, i) => (
-        <div key={i} className="flex-none w-[calc(85vw-1rem)] sm:w-[300px] rounded-2xl border border-border-default bg-bg-card overflow-hidden">
-          <div className="aspect-video shimmer" />
-          <div className="p-4 space-y-3">
-            <div className="h-4 w-3/4 shimmer rounded" />
-            <div className="h-3 w-1/2 shimmer rounded" />
-            <div className="h-10 w-full shimmer mt-2 rounded-xl" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 /* ══════════════════════════════════════════════════════════════════
-   SECTION WRAPPER — editorial heading with vertical accent bar
+   SECTION WRAPPER
    ══════════════════════════════════════════════════════════════════ */
 
 function CourseSection({
@@ -145,15 +130,15 @@ function CourseSection({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1], delay }}
       aria-labelledby={sectionId}
+      className="space-y-5"
     >
-      <div className="mb-6 flex items-center gap-4 justify-between">
+      <div className="flex items-center gap-4 justify-between">
         <div className="flex items-start gap-3 min-w-0">
-          {/* Vertical accent bar */}
-          <div className={`section-accent-bar self-stretch min-h-[2.5rem] ${accentClass}`} />
+          <div className={`section-accent-bar self-stretch min-h-[2.25rem] ${accentClass}`} />
           <div className="min-w-0">
             <h2
               id={sectionId}
-              className="font-heading text-xl sm:text-2xl font-extrabold tracking-tight text-white leading-tight"
+              className="font-heading text-lg sm:text-xl md:text-2xl font-extrabold tracking-tight text-white leading-tight"
             >
               {title}
             </h2>
@@ -162,10 +147,7 @@ function CourseSection({
             )}
           </div>
         </div>
-        {/* Slot for carousel controls, etc. */}
-        {headerRight && (
-          <div className="shrink-0">{headerRight}</div>
-        )}
+        {headerRight && <div className="shrink-0">{headerRight}</div>}
       </div>
       {children}
     </motion.section>
@@ -173,47 +155,42 @@ function CourseSection({
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   EMPTY STATE
-   ══════════════════════════════════════════════════════════════════ */
-
-function EmptyState({ search }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="rounded-2xl border border-border-default bg-bg-card p-14 text-center flex flex-col items-center justify-center max-w-lg mx-auto"
-    >
-      <div className="w-16 h-16 rounded-2xl bg-brand-mint/8 border border-brand-mint/15 flex items-center justify-center mb-5">
-        <BookOpen className="w-7 h-7 text-brand-mint" />
-      </div>
-      <h3 className="text-lg font-heading font-bold text-white">
-        {search ? "No matching courses" : "No courses available"}
-      </h3>
-      <p className="mt-2 text-sm font-medium text-text-muted leading-relaxed max-w-sm">
-        {search
-          ? "Try a different search term or clear the filter to see all courses."
-          : "Your course library will appear here once courses are added."}
-      </p>
-    </motion.div>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════
-   MAIN PAGE
+   MAIN COMPONENT — COURSES HUB
    ══════════════════════════════════════════════════════════════════ */
 
 function Courses() {
+  const { user } = useContext(AuthContext);
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("all");
 
-  /* ── Data loading ── */
+  /* ── Load Course Library ── */
+  const loadCourses = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      let endpoint = "/courses";
+      if (activeTab === "my") {
+        endpoint = "/courses/my";
+      } else if (activeTab !== "all") {
+        endpoint = `/courses?type=${activeTab}`;
+      }
+      const res = await api.get(endpoint);
+      setCourses(res.data.courses || []);
+    } catch (err) {
+      console.error("Failed to load courses:", err);
+      setError("Unable to load course library. Please check your connection.");
+    } finally {
+      setLoading(false);
+    }
+  }, [activeTab]);
+
   useEffect(() => {
     let mounted = true;
-    const loadCourses = async () => {
+    const fetchOnTabChange = async () => {
       try {
-        setLoading(true);
         let endpoint = "/courses";
         if (activeTab === "my") {
           endpoint = "/courses/my";
@@ -223,20 +200,24 @@ function Courses() {
         const res = await api.get(endpoint);
         if (mounted) {
           setCourses(res.data.courses || []);
+          setError(null);
         }
-      } catch (error) {
-        console.log(error);
+      } catch (err) {
+        if (mounted) {
+          console.error("Failed to load courses:", err);
+          setError("Unable to load course library. Please check your connection.");
+        }
       } finally {
         if (mounted) setLoading(false);
       }
     };
-    loadCourses();
+    void fetchOnTabChange();
     return () => {
       mounted = false;
     };
   }, [activeTab]);
 
-  /* ── Filtered + partitioned courses ── */
+  /* ── Filtered & partitioned courses ── */
   const { recordingCourses, onlineCourses, allFiltered } = useMemo(() => {
     const query = search.trim().toLowerCase();
     const filtered = query
@@ -255,11 +236,13 @@ function Courses() {
     return { recordingCourses: recordings, onlineCourses: online, allFiltered: filtered };
   }, [courses, search]);
 
-  /* ── Stats (computed from unfiltered courses to always show full library counts) ── */
+  /* ── Stats computed from unfiltered courses ── */
   const stats = useMemo(
     () => ({
       total: courses.length,
-      enrolled: courses.filter((c) => !!c.learningProgress || !!c.purchased || !!c.isPurchased || !!c.isEnrolled).length,
+      enrolled: courses.filter(
+        (c) => !!c.learningProgress || !!c.purchased || !!c.isPurchased || !!c.isEnrolled
+      ).length,
       recordings: courses.filter(
         (c) => String(c.type || "").trim().toLowerCase() === "recording"
       ).length,
@@ -267,26 +250,86 @@ function Courses() {
     [courses]
   );
 
-  /* ── Continue Learning course (most in-progress) ── */
+  /* ── Active Continue Course ── */
   const continueCourse = useMemo(() => pickContinueCourse(courses), [courses]);
-
-  /* ── Featured + secondary recording courses ── */
   const [featuredRecording, ...secondaryRecordings] = recordingCourses;
 
-  /* ── Preload images ── */
+  /* ── Preload images to eliminate CLS ── */
   const coverImageUrls = useMemo(
     () => allFiltered.map((c) => c.coverImage).filter(Boolean),
     [allFiltered]
   );
   useImagePreloader(coverImageUrls);
 
-  /* ══════════════════════════════════════════════════════════════
-     RENDER
-     ══════════════════════════════════════════════════════════════ */
-  return (
-    <div className="space-y-10 sm:space-y-14">
+  /* ── Time-based greeting helper ── */
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  }, []);
 
-      {/* ── Navigation / Filters ── */}
+  const firstName = user?.name ? user.name.split(" ")[0] : null;
+
+  return (
+    <div className="space-y-8 sm:space-y-12 max-w-7xl mx-auto">
+
+      {/* ══════════════════════════════════════════════════════════
+          HERO / GREETING & METRICS AREA
+          ══════════════════════════════════════════════════════════ */}
+      <motion.section
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        aria-label="Student Learning Overview"
+        className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-bg-card via-bg-surface to-bg-card p-6 sm:p-8"
+      >
+        <div className="gradient-line-top" />
+        <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-brand-mint/6 blur-[90px]" />
+        <div className="pointer-events-none absolute -left-10 bottom-0 h-56 w-56 rounded-full bg-info/4 blur-[80px]" />
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          {/* Greeting Column */}
+          <div className="space-y-2 max-w-xl">
+            <div className="inline-flex items-center gap-2 rounded-lg bg-brand-mint/10 border border-brand-mint/20 px-2.5 py-1 text-[10px] font-bold text-brand-mint uppercase tracking-[0.16em]">
+              <Sparkles className="w-3 h-3" />
+              {firstName ? `${greeting}, ${firstName}` : "Welcome to Zeitnah"}
+            </div>
+            <h1 className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl text-white tracking-tight leading-tight">
+              Continue your <span className="text-gradient">learning journey.</span>
+            </h1>
+            <p className="text-xs sm:text-sm font-medium text-text-muted leading-relaxed">
+              Pick up where you left off, explore new courses, and track your progress.
+            </p>
+          </div>
+
+          {/* Real Metrics Strip */}
+          {!loading && (
+            <div className="grid grid-cols-3 gap-3 w-full lg:w-auto shrink-0">
+              {[
+                { label: "Library", value: stats.total, icon: BookOpen },
+                { label: "Enrolled", value: stats.enrolled, icon: GraduationCap },
+                { label: "Recorded", value: stats.recordings, icon: Play },
+              ].map((stat) => (
+                <div
+                  key={stat.label}
+                  className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 sm:p-4 text-center"
+                >
+                  <stat.icon className="w-4 h-4 text-brand-mint mx-auto mb-1.5" />
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
+                    {stat.label}
+                  </p>
+                  <p className="mt-0.5 text-lg sm:text-xl font-heading font-extrabold text-white">
+                    {stat.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </motion.section>
+
+      {/* ── Navigation Tabs & Live Search ── */}
       <CourseNavbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -295,128 +338,33 @@ function Courses() {
       />
 
       {/* ══════════════════════════════════════════════════════════
-          HERO — "YOUR LEARNING SPACE"
+          ERROR STATE WITH RETRY
           ══════════════════════════════════════════════════════════ */}
-      <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-        aria-label="Course Hub hero"
-        className="hero-noise relative overflow-hidden rounded-2xl border border-border-default bg-gradient-to-br from-bg-card via-bg-surface to-bg-card"
-      >
-        {/* Gradient accent line */}
-        <div className="gradient-line-top" />
-
-        {/* Ambient mint glow — top right */}
-        <div className="hero-ambient-glow pointer-events-none absolute -right-20 -top-20 h-80 w-80 rounded-full bg-brand-mint/8 blur-[100px]" />
-        {/* Ambient blue glow — bottom left */}
-        <div className="pointer-events-none absolute -left-10 bottom-0 h-56 w-56 rounded-full bg-info/4 blur-[80px]" />
-
-        <div className="relative z-10 p-6 sm:p-8 md:p-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
-
-          {/* Left: heading group */}
-          <div className="space-y-4 max-w-xl">
-            {/* Eyebrow */}
-            <div className="inline-flex items-center gap-2 rounded-lg bg-brand-mint/8 border border-brand-mint/15 px-3 py-1.5 text-[10px] font-bold text-brand-mint uppercase tracking-[0.18em]">
-              <GraduationCap className="w-3 h-3" />
-              Your Learning Space
-            </div>
-
-            {/* Headline */}
-            <h1 className="font-heading font-extrabold text-3xl sm:text-4xl md:text-5xl text-white tracking-tight leading-[1.05]">
-              Continue your{" "}
-              <span className="text-gradient">learning.</span>
-            </h1>
-
-            {/* Sub-text */}
-            <p className="text-sm font-medium text-text-muted leading-relaxed">
-              Pick up where you left off or explore your next learning experience.
-            </p>
-          </div>
-
-          {/* Right: stats */}
-          {!loading && (
-            <div className="grid gap-3 grid-cols-3 w-full lg:w-auto lg:max-w-xs shrink-0">
-              {[
-                { label: "Library", value: stats.total, icon: BookOpen },
-                { label: "Enrolled", value: stats.enrolled, icon: GraduationCap },
-                { label: "Recordings", value: stats.recordings, icon: Play },
-              ].map((stat) => (
-                <div
-                  key={stat.label}
-                  className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-3 sm:p-4 text-center"
-                >
-                  <stat.icon className="w-4 h-4 text-brand-mint mx-auto mb-1.5" />
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-text-muted">
-                    {stat.label}
-                  </p>
-                  <p className="mt-0.5 text-xl sm:text-2xl font-heading font-extrabold text-white">
-                    {stat.value}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Stats skeleton while loading */}
-          {loading && (
-            <div className="grid gap-3 grid-cols-3 w-full lg:w-auto lg:max-w-xs shrink-0">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="rounded-xl border border-border-default bg-bg-elevated p-4">
-                  <div className="h-4 w-4 shimmer rounded-full mx-auto mb-2" />
-                  <div className="h-2 w-full shimmer rounded mb-1.5" />
-                  <div className="h-7 w-2/3 shimmer rounded mx-auto" />
-                </div>
-              ))}
-            </div>
-          )}
+      {error && !loading && (
+        <div className="rounded-2xl border border-danger/20 bg-danger/5 p-8 text-center space-y-4 max-w-md mx-auto">
+          <p className="text-sm font-medium text-text-secondary">{error}</p>
+          <button
+            type="button"
+            onClick={loadCourses}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-mint text-bg-base font-bold text-xs uppercase tracking-wider hover:bg-brand-mint/90 transition-all cursor-pointer"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Retry Loading
+          </button>
         </div>
-      </motion.section>
+      )}
 
       {/* ══════════════════════════════════════════════════════════
-          LOADING STATE — Skeleton placeholders
+          LOADING SKELETONS
           ══════════════════════════════════════════════════════════ */}
       {loading && (
-        <div className="space-y-12">
-          {/* Continue skeleton */}
+        <div className="space-y-10">
           <ContinueSkeleton />
-
-          {/* Featured skeleton */}
-          <div>
-            <div className="mb-6 flex items-center gap-3">
-              <div className="h-10 w-0.5 shimmer rounded-full" />
-              <div className="space-y-1.5">
-                <div className="h-6 w-52 shimmer rounded-lg" />
-                <div className="h-3 w-64 shimmer rounded" />
-              </div>
-            </div>
-            <FeaturedSkeleton />
-          </div>
-
-          {/* Grid skeletons */}
-          <div>
-            <div className="mb-6 flex items-center gap-3">
-              <div className="h-8 w-0.5 shimmer rounded-full" />
-              <div className="space-y-1.5">
-                <div className="h-5 w-40 shimmer rounded-lg" />
-                <div className="h-3 w-56 shimmer rounded" />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
-              {[...Array(3)].map((_, i) => <CardSkeleton key={i} />)}
-            </div>
-          </div>
-
-          {/* Carousel skeletons */}
-          <div>
-            <div className="mb-6 flex items-center gap-3">
-              <div className="h-8 w-0.5 shimmer rounded-full" />
-              <div className="space-y-1.5">
-                <div className="h-5 w-36 shimmer rounded-lg" />
-                <div className="h-3 w-52 shimmer rounded" />
-              </div>
-            </div>
-            <CarouselSkeletons />
+          <FeaturedSkeleton />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[...Array(3)].map((_, i) => (
+              <CardSkeleton key={i} />
+            ))}
           </div>
         </div>
       )}
@@ -424,58 +372,57 @@ function Courses() {
       {/* ══════════════════════════════════════════════════════════
           EMPTY STATE
           ══════════════════════════════════════════════════════════ */}
-      {!loading && allFiltered.length === 0 && (
-        <EmptyState search={search} />
+      {!loading && !error && allFiltered.length === 0 && (
+        <div className="rounded-2xl border border-white/[0.06] bg-bg-card p-12 text-center max-w-md mx-auto space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-brand-mint/10 border border-brand-mint/20 flex items-center justify-center mx-auto text-brand-mint">
+            <BookOpen className="w-7 h-7" />
+          </div>
+          <h3 className="font-heading font-bold text-lg text-white">
+            {search ? "No matching courses" : "No courses available"}
+          </h3>
+          <p className="text-xs sm:text-sm font-medium text-text-muted leading-relaxed">
+            {search
+              ? "Try adjusting your search keywords or clear the filter to view all courses."
+              : "Courses will appear here once they are added to your academy."}
+          </p>
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="inline-flex items-center px-4 py-2 rounded-xl bg-white/[0.06] border border-white/10 text-xs font-semibold text-white hover:bg-white/[0.1] transition-all cursor-pointer"
+            >
+              Clear Search Filter
+            </button>
+          )}
+        </div>
       )}
 
       {/* ══════════════════════════════════════════════════════════
-          CONTINUE LEARNING — personalized banner
+          ACTIVE CONTINUE LEARNING BANNER
           ══════════════════════════════════════════════════════════ */}
-      {!loading && continueCourse && (
+      {!loading && !error && continueCourse && (
         <ContinueLearning course={continueCourse} />
       )}
 
       {/* ══════════════════════════════════════════════════════════
-          FEATURED RECORDING CLASS
+          FEATURED RECORDED CLASS
           ══════════════════════════════════════════════════════════ */}
-      {!loading && recordingCourses.length > 0 && (
+      {!loading && !error && recordingCourses.length > 0 && (
         <CourseSection
-          title="Featured Recording Class"
-          description="Learn at your own pace with complete recorded sessions."
-          icon={Play}
-          delay={0.05}
+          title="Recorded Classes"
+          description="Learn at your own pace with comprehensive modular lessons."
           accentClass="section-accent-recording"
         >
-          <div className="space-y-5">
-            {/* Primary hero card */}
+          <div className="space-y-6">
             {featuredRecording && (
               <FeaturedRecordingCard course={featuredRecording} />
             )}
 
-            {/* ── More Recording Classes ── */}
             {secondaryRecordings.length > 0 && (
-              <div className="pt-6">
-                {/* Sub-section heading */}
-                <div className="mb-5 flex items-center gap-3">
-                  <div className="section-accent-bar self-stretch min-h-[1.75rem] section-accent-recording opacity-50" />
-                  <p className="text-xs font-bold uppercase tracking-[0.15em] text-text-muted">
-                    More Recording Classes
-                  </p>
-                </div>
-
-                <motion.div
-                  initial="hidden"
-                  animate="visible"
-                  variants={{
-                    hidden: {},
-                    visible: { transition: { staggerChildren: 0.07 } },
-                  }}
-                  className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5"
-                >
-                  {secondaryRecordings.map((course) => (
-                    <RecordingCourseCard key={course._id} course={course} />
-                  ))}
-                </motion.div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pt-2">
+                {secondaryRecordings.map((course) => (
+                  <RecordingCourseCard key={course._id} course={course} />
+                ))}
               </div>
             )}
           </div>
@@ -483,14 +430,12 @@ function Courses() {
       )}
 
       {/* ══════════════════════════════════════════════════════════
-          ONLINE CLASSES — HORIZONTAL CAROUSEL
+          ONLINE / SCHEDULED CLASSES CAROUSEL
           ══════════════════════════════════════════════════════════ */}
-      {!loading && onlineCourses.length > 0 && (
+      {!loading && !error && onlineCourses.length > 0 && (
         <CourseSection
           title="Online Classes"
-          description="Join scheduled and live learning sessions."
-          icon={Video}
-          delay={recordingCourses.length > 0 ? 0.1 : 0.05}
+          description="Interactive and scheduled learning sessions."
           accentClass="section-accent-online"
         >
           <OnlineCourseCarousel courses={onlineCourses} />

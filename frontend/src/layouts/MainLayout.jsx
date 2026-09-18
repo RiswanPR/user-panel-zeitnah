@@ -2,12 +2,8 @@ import { useContext } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Home,
   BookOpen,
-  BarChart3,
-  Star,
   User,
-  Users
 } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { getUploadUrl } from "../utils/courseUi";

@@ -747,3 +747,67 @@ html, body {
 .section-accent-online {
   background: linear-gradient(180deg, #9FD5B2 0%, #38BDF8 100%);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   CALM PREMIUM TECHNOLOGY — COURSE COMPONENT UTILITIES
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Accessible focus rings */
+.focus-ring {
+  outline: none;
+}
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-brand-mint);
+  outline-offset: 2px;
+}
+
+/* Hide scrollbars while preserving scrolling */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Subtle card border elevation */
+.card-subtle {
+  background: linear-gradient(180deg, rgba(19, 29, 45, 0.7) 0%, rgba(15, 23, 36, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-subtle:hover {
+  border-color: rgba(159, 213, 178, 0.22);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(159, 213, 178, 0.06);
+}
+
+/* Active lesson marker pulse */
+.active-pulse-ring {
+  animation: activePulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes activePulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
