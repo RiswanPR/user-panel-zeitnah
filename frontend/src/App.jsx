@@ -24,6 +24,7 @@ const ActiveSessions = React.lazy(() => import("./pages/sessions/ActiveSessions"
 const AuditLogs = React.lazy(() => import("./pages/audit/AuditLogs"));
 const Profile = React.lazy(() => import("./pages/profile/Profile"));
 const EditProfile = React.lazy(() => import("./pages/profile/EditProfile"));
+const PublicProfilePage = React.lazy(() => import("./pages/profile/PublicProfilePage"));
 const Courses = React.lazy(() => import("./pages/courses/Courses"));
 const CourseChapters = React.lazy(() => import("./pages/courses/CourseChapters"));
 const CourseClasses = React.lazy(() => import("./pages/courses/CourseClasses"));
@@ -107,6 +108,14 @@ function App() {
             <Route path="/verify-login-otp" element={<VerifyOtp />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-register-otp" element={<VerifyRegisterOtp />} />
+            <Route
+              path="/u/:username"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <PublicProfilePage />
+                </Suspense>
+              }
+            />
 
             {/* SECURE APPLICATION ROUTING (Main Layout) */}
             <Route

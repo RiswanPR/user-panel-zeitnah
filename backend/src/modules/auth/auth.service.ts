@@ -33,6 +33,7 @@ import { RegisterSendOtpDto } from './dto/register-send-otp.dto';
 import { RegisterVerifyOtpDto } from './dto/register-verify-otp.dto';
 import { LoginHistoryService } from '../login-history/login-history.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { UsernameService } from '../profile/services/username.service';
 
 type LoginDeviceSnapshot = {
   deviceId?: string;
@@ -57,6 +58,8 @@ export type AuthenticatedUser = {
   userId: string;
   name?: string;
   email: string;
+  username?: string;
+  usernameClaimed?: boolean;
   role: string;
   deviceId: string;
 };
@@ -139,6 +142,7 @@ export class AuthService {
     private loginHistoryService: LoginHistoryService,
     private auditLogsService: AuditLogsService,
     private jwtService: JwtService,
+    private usernameService: UsernameService,
   ) {}
 
   private normalizeSecurityValue(value?: string | null) {
@@ -445,11 +449,11 @@ export class AuthService {
   // ==================================================
 
   async registerSendOtp(data: RegisterSendOtpDto) {
-    const existingUser = await this.userModel.findOne({
+    let user = await this.userModel.findOne({
       email: data.email,
     });
 
-    if (existingUser) {
+    if (user && user.account_Status?.isVerified) {
       throw new BadRequestException('Email already registered');
     }
 
@@ -462,24 +466,72 @@ export class AuthService {
     // Expiry
     const otpExpiry = new Date(Date.now() + 3 * 60 * 1000);
 
-    // Create temporary user
-    const user = await this.userModel.create({
-      name: data.name,
+    if (user && !user.account_Status?.isVerified) {
+      // Reuse unverified user record to avoid orphan reservations
+      user.otp = hashedOtp;
+      user.otpExpiry = otpExpiry;
+      user.name = data.name;
+      if (!user.username) {
+        const candidates = this.usernameService.generateCandidates(
+          data.name,
+          data.email,
+        );
+        for (const cand of candidates) {
+          const exists = await this.userModel.exists({
+            username: cand,
+            _id: { $ne: user._id },
+          });
+          if (!exists) {
+            user.username = cand;
+            break;
+          }
+        }
+        if (!user.username) {
+          user.username = `user_${crypto.randomBytes(4).toString('hex')}`;
+        }
+      }
+      await user.save();
+    } else {
+      // Generate username candidate
+      const candidates = this.usernameService.generateCandidates(
+        data.name,
+        data.email,
+      );
+      let chosenUsername = '';
+      for (const cand of candidates) {
+        const exists = await this.userModel.exists({ username: cand });
+        if (!exists) {
+          chosenUsername = cand;
+          break;
+        }
+      }
+      if (!chosenUsername) {
+        chosenUsername = `user_${crypto.randomBytes(4).toString('hex')}`;
+      }
 
-      email: data.email,
+      // Create temporary user
+      user = await this.userModel.create({
+        name: data.name,
 
-      otp: hashedOtp,
+        email: data.email,
 
-      otpExpiry,
+        username: chosenUsername,
 
-      account_Status: {
-        isVerified: false,
-        isActive: true,
-        lastSeen: new Date(),
-        isBlocked: false,
-        isDeleted: false,
-      },
-    });
+        usernameClaimed: false,
+
+        otp: hashedOtp,
+
+        otpExpiry,
+
+        account_Status: {
+          isVerified: false,
+          isActive: true,
+          lastSeen: new Date(),
+          isBlocked: false,
+          isDeleted: false,
+        },
+      });
+    }
 
     await this.auditLogsService.record({
       actor: user._id,
@@ -693,6 +745,10 @@ export class AuthService {
         name: user.name,
 
         email: user.email,
+
+        username: user.username,
+
+        usernameClaimed: Boolean(user.usernameClaimed),
 
         role: user.role,
 
@@ -1003,6 +1059,10 @@ export class AuthService {
         name: user.name,
 
         email: user.email,
+
+        username: user.username,
+
+        usernameClaimed: Boolean(user.usernameClaimed),
 
         role: user.role,
       },

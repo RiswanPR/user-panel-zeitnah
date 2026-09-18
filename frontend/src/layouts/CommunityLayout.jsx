@@ -18,6 +18,7 @@ import {
 import { AuthContext } from "../context/AuthContext";
 import { getUploadUrl } from "../utils/courseUi";
 import { CommunitySocketProvider } from "../context/CommunitySocketContext";
+import UsernameClaimModal from "../components/username/UsernameClaimModal";
 
 const navItems = [
   { path: "/community", label: "Home", icon: Home },
@@ -189,6 +190,7 @@ export default function CommunityLayout({ children }) {
         </div>
 
       </div>
+      <UsernameClaimModal />
     </CommunitySocketProvider>
   );
 }

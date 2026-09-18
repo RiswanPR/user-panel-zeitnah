@@ -69,6 +69,23 @@ export class User {
   })
   name!: string;
 
+  // USERNAME
+  @Prop({
+    lowercase: true,
+    trim: true,
+    minlength: 3,
+    maxlength: 20,
+    index: true,
+  })
+  username!: string;
+
+  // USERNAME CLAIM STATUS
+  @Prop({
+    default: false,
+    type: Boolean,
+  })
+  usernameClaimed!: boolean;
+
   // ROLE
   @Prop({
     default: 'student',

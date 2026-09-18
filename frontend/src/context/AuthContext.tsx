@@ -11,6 +11,7 @@ import nativeNotifications from "../native/notifications";
 interface AuthContextType {
   user: any;
   setUser: React.Dispatch<React.SetStateAction<any>>;
+  updateUser: (fields: Record<string, any>) => void;
   loading: boolean;
   logout: () => void;
 }
@@ -86,11 +87,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const updateUser = (fields: Record<string, any>) => {
+    setUser((prev: any) => (prev ? { ...prev, ...fields } : prev));
+  };
+
   return (
     <AuthContext.Provider
       value={{
         user,
         setUser,
+        updateUser,
         loading,
         logout,
       }}

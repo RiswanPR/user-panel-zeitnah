@@ -28,4 +28,19 @@ export class UploadService {
       throw error;
     }
   }
+
+  async deleteFile(key: string): Promise<void> {
+    if (!key) return;
+    this.logger.log(`Deleting file from S3: ${key}`);
+    const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
+    try {
+      const command = new DeleteObjectCommand({
+        Bucket: this.s3Service.bucketName,
+        Key: key,
+      });
+      await this.s3Service.s3Client.send(command);
+    } catch (error) {
+      this.logger.warn(`Failed to delete file from S3: ${key}`, error);
+    }
+  }
 }

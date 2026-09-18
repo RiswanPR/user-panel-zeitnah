@@ -39,6 +39,7 @@ import { UploadService } from '../../../common/aws/upload.service';
 import { calculateProfileCompletion } from './utils/profile-completion.util';
 import { sanitizeUrl } from './utils/url-sanitizer.util';
 import { FullCommunityProfile } from './interfaces/profile.interface';
+import { User, UserDocument } from '../../auth/schemas/user.schema';
 
 @Injectable()
 export class CommunityProfileService {
@@ -61,6 +62,8 @@ export class CommunityProfileService {
     private readonly followerModel: Model<FollowerDocument>,
     @InjectModel(ProfileView.name)
     private readonly profileViewModel: Model<ProfileViewDocument>,
+    @InjectModel(User.name)
+    private readonly userModel: Model<UserDocument>,
     private readonly uploadService: UploadService,
   ) {}
 
@@ -72,25 +75,24 @@ export class CommunityProfileService {
     userId: string,
     defaultData?: Partial<CreateProfileDto>,
   ): Promise<CommunityProfileDocument> {
+    const canonicalUser = await this.userModel.findById(userId).select('username name bio avatar');
     let profile = await this.profileModel.findOne({ userId });
 
     if (!profile) {
       const username =
-        defaultData?.username || `user_${userId.substring(0, 8)}`;
-
-      const existingUsername = await this.profileModel.findOne({ username });
-      const finalUsername = existingUsername
-        ? `${username}_${Math.floor(1000 + Math.random() * 9000)}`
-        : username;
+        canonicalUser?.username ||
+        defaultData?.username ||
+        `user_${userId.substring(0, 8)}`;
 
       profile = await this.profileModel.create({
         userId,
-        username: finalUsername,
+        username,
         headline: defaultData?.headline || '',
-        bio: defaultData?.bio || '',
+        bio: defaultData?.bio || canonicalUser?.bio || '',
         college: defaultData?.college || '',
         branch: defaultData?.branch || '',
         batchYear: defaultData?.batchYear || '',
+        profilePicture: canonicalUser?.avatar || '',
         socialLinks: {
           github: sanitizeUrl(defaultData?.socialLinks?.github),
           linkedin: sanitizeUrl(defaultData?.socialLinks?.linkedin),
@@ -100,6 +102,9 @@ export class CommunityProfileService {
       });
 
       await this.recalculateCompletion(userId);
+    } else if (canonicalUser?.username && profile.username !== canonicalUser.username) {
+      profile.username = canonicalUser.username;
+      await profile.save();
     }
 
     return profile;
@@ -133,7 +138,17 @@ export class CommunityProfileService {
     username: string,
     viewerUserId?: string,
   ): Promise<FullCommunityProfile> {
-    const profile = await this.profileModel.findOne({ username });
+    const normalized = (username || '').toLowerCase().trim();
+    let profile: any = null;
+
+    // Check canonical User collection first to prevent stale identities
+    const canonicalUser = await this.userModel.findOne({ username: normalized });
+    if (canonicalUser) {
+      profile = await this.getOrCreateProfile(String(canonicalUser._id));
+    } else {
+      profile = await this.profileModel.findOne({ username: normalized });
+    }
+
     if (!profile) {
       throw new NotFoundException(
         `Profile with username '@${username}' not found`,
@@ -201,16 +216,9 @@ export class CommunityProfileService {
     const profile = await this.getOrCreateProfile(userId);
 
     if (dto.username && dto.username !== profile.username) {
-      const existing = await this.profileModel.findOne({
-        username: dto.username,
-        userId: { $ne: userId },
-      });
-      if (existing) {
-        throw new ConflictException(
-          `Username '@${dto.username}' is already taken`,
-        );
-      }
-      profile.username = dto.username;
+      throw new BadRequestException(
+        'Username is permanently tied to your Zeitnah LMS account and cannot be modified from community settings.',
+      );
     }
 
     if (dto.headline !== undefined) profile.headline = dto.headline;

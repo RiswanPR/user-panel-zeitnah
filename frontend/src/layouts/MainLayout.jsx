@@ -9,6 +9,7 @@ import { AuthContext } from "../context/AuthContext";
 import { getUploadUrl } from "../utils/courseUi";
 import PageTransition from "../components/ui/PageTransition";
 import CookieConsentBanner from "../components/common/CookieConsentBanner";
+import UsernameClaimModal from "../components/username/UsernameClaimModal";
 
 const navItems = [
   // { path: "/dashboard", label: "Dashboard", icon: Home },
@@ -159,8 +160,11 @@ export default function MainLayout({ children }) {
           <div className="mx-5 h-px bg-gradient-to-r from-transparent via-border-accent to-transparent" />
 
           {/* ── User Card ── */}
-          <div className="p-4 flex items-center gap-3 select-none">
-            <div className="relative">
+          <Link
+            to="/profile"
+            className="p-4 flex items-center gap-3 select-none hover:bg-white/[0.04] transition-colors rounded-xl mx-2 my-1"
+          >
+            <div className="relative shrink-0">
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-mint/20 to-brand-navy/40 border border-brand-mint/25 flex items-center justify-center overflow-hidden">
                 {avatarUrl ? (
                   <img
@@ -181,11 +185,11 @@ export default function MainLayout({ children }) {
               <p className="text-xs font-semibold truncate text-white">
                 {user?.name || "Zeitnah User"}
               </p>
-              <p className="text-[10px] text-text-muted truncate">
-                {user?.email || "Active Session"}
+              <p className="text-[10px] text-brand-mint font-mono truncate">
+                @{user?.username || "student"}
               </p>
             </div>
-          </div>
+          </Link>
         </div>
       </aside>
 
@@ -240,6 +244,7 @@ export default function MainLayout({ children }) {
         </div>
       </main>
       <CookieConsentBanner />
+      <UsernameClaimModal />
     </div>
   );
 }

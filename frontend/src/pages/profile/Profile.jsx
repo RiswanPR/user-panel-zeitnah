@@ -14,11 +14,14 @@ import {
   Star,
   TrendingUp,
   User,
+  Share2,
+  ExternalLink,
 } from "lucide-react";
 import api from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
 import { getUploadUrl } from "../../utils/courseUi";
 import { useToast } from "../../components/ui/Toast";
+import ShareProfileModal from "../../components/profile/ShareProfileModal";
 
 function Profile() {
   const navigate = useNavigate();
@@ -27,6 +30,7 @@ function Profile() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
   const fileRef = useRef(null);
 
   useEffect(() => {
@@ -137,12 +141,24 @@ function Profile() {
 
           {/* Info */}
           <div className="flex-1 text-center md:text-left min-w-0 w-full">
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-2">
-              <h1 className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl text-white tracking-tight leading-none">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-1">
+              <h1 className="font-heading font-black text-2xl sm:text-3xl lg:text-4xl text-white tracking-tight leading-none">
                 {profile.name || "Zeitnah User"}
               </h1>
               {profile.isVerified && (
                 <CheckCircle2 className="w-5 h-5 text-brand-mint shrink-0" />
+              )}
+            </div>
+
+            {/* Username Handle */}
+            <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
+              <span className="font-mono text-sm sm:text-base font-semibold text-brand-mint tracking-tight">
+                @{profile.username || "student"}
+              </span>
+              {profile.usernameClaimed && (
+                <span className="rounded-md border border-brand-mint/20 bg-brand-mint/5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-mint/80">
+                  Verified Handle
+                </span>
               )}
             </div>
 
@@ -177,15 +193,38 @@ function Profile() {
               </div>
             )}
 
-            {/* Edit button */}
-            <button
-              type="button"
-              onClick={() => navigate("/profile/edit")}
-              className="btn-secondary text-xs uppercase tracking-wider mt-5"
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-              Edit Profile
-            </button>
+            {/* Actions: Edit Profile, View Public Profile, Share */}
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5 mt-5">
+              <button
+                type="button"
+                onClick={() => navigate("/profile/edit")}
+                className="btn-secondary text-xs uppercase tracking-wider flex items-center gap-1.5"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                Edit Profile
+              </button>
+
+              {profile.username && (
+                <>
+                  <Link
+                    to={`/u/${profile.username}`}
+                    className="btn-secondary text-xs uppercase tracking-wider flex items-center gap-1.5 hover:text-brand-mint"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Public Profile
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsShareOpen(true)}
+                    className="btn-secondary text-xs uppercase tracking-wider flex items-center gap-1.5 hover:border-brand-mint/30"
+                  >
+                    <Share2 className="w-3.5 h-3.5 text-brand-mint" />
+                    Share
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </motion.section>
@@ -255,6 +294,15 @@ function Profile() {
           Sign Out
         </button>
       </motion.div>
+
+      {profile && (
+        <ShareProfileModal
+          isOpen={isShareOpen}
+          onClose={() => setIsShareOpen(false)}
+          username={profile.username}
+          name={profile.name}
+        />
+      )}
     </div>
   );
 }

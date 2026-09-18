@@ -14,11 +14,13 @@ import { ProfileView, ProfileViewSchema } from './schemas/profile-view.schema';
 import { CommunityProfileService } from './community-profile.service';
 import { CommunityProfileController } from './community-profile.controller';
 import { ProfileOwnershipGuard } from './guards/profile-ownership.guard';
+import { User, UserSchema } from '../../auth/schemas/user.schema';
 import { AwsModule } from '../../../common/aws/aws.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
       { name: CommunityProfile.name, schema: CommunityProfileSchema },
       { name: Skill.name, schema: SkillSchema },
       { name: Project.name, schema: ProjectSchema },

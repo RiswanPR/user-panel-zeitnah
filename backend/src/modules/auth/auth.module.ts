@@ -13,6 +13,8 @@ import { User, UserSchema } from './schemas/user.schema';
 
 import { JwtStrategy } from '../strategies/jwt.strategy';
 
+import { UsernameModule } from '../profile/services/username.module';
+
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -33,6 +35,7 @@ import { JwtStrategy } from '../strategies/jwt.strategy';
     }),
     LoginHistoryModule,
     AuditLogsModule,
+    UsernameModule,
   ],
 
   controllers: [AuthController],
