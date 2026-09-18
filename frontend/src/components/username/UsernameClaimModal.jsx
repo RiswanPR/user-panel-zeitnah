@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useRef } from "react";
+import { useState, useEffect, useContext, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
@@ -18,26 +18,21 @@ export default function UsernameClaimModal() {
   const { user, updateUser } = useContext(AuthContext);
   const toast = useToast();
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
   const [stage, setStage] = useState("reveal"); // "reveal" | "custom"
   const [customHandle, setCustomHandle] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Derived isOpen state based on user claim status
+  const isOpen = Boolean(
+    user && user.username && user.usernameClaimed === false && !isDismissed
+  );
+
   // Live availability check state
   const [isChecking, setIsChecking] = useState(false);
-  const [checkResult, setCheckResult] = useState(null); // { available: boolean, reason?: string }
+  const [serverResult, setServerResult] = useState(null);
   const debounceTimerRef = useRef(null);
   const activeQueryRef = useRef("");
-
-  // Determine if claim modal is required
-  useEffect(() => {
-    if (user && user.username && user.usernameClaimed === false) {
-      setIsOpen(true);
-      setCustomHandle(user.username);
-    } else {
-      setIsOpen(false);
-    }
-  }, [user?.username, user?.usernameClaimed]);
 
   // Keyboard accessibility: Escape key returns to Stage 1
   useEffect(() => {
@@ -51,71 +46,50 @@ export default function UsernameClaimModal() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, stage]);
 
-  // Live availability debouncing (350ms) with race condition cancellation
-  useEffect(() => {
-    if (stage !== "custom") return;
+  const trimmed = customHandle.trim().toLowerCase();
 
-    const trimmed = customHandle.trim().toLowerCase();
-    activeQueryRef.current = trimmed;
-
-    if (!trimmed) {
-      setCheckResult(null);
-      setIsChecking(false);
-      return;
-    }
-
-    // Immediate client-side validation
-    if (trimmed.length < 3) {
-      setCheckResult({ available: false, reason: "Must be at least 3 characters." });
-      setIsChecking(false);
-      return;
-    }
-    if (trimmed.length > 20) {
-      setCheckResult({ available: false, reason: "Must be 20 characters or fewer." });
-      setIsChecking(false);
-      return;
-    }
+  // Immediate synchronous client-side validation
+  const clientValidationError = useMemo(() => {
+    if (!trimmed) return null;
+    if (trimmed.length < 3) return "Must be at least 3 characters.";
+    if (trimmed.length > 20) return "Must be 20 characters or fewer.";
     if (!/^[a-z0-9_]+$/.test(trimmed)) {
-      setCheckResult({
-        available: false,
-        reason: "Only lowercase letters, numbers, and underscores allowed.",
-      });
-      setIsChecking(false);
-      return;
+      return "Only lowercase letters, numbers, and underscores allowed.";
     }
     if (trimmed.startsWith("_") || trimmed.endsWith("_")) {
-      setCheckResult({
-        available: false,
-        reason: "Cannot start or end with an underscore.",
-      });
-      setIsChecking(false);
-      return;
+      return "Cannot start or end with an underscore.";
     }
     if (trimmed.includes("__")) {
-      setCheckResult({
-        available: false,
-        reason: "Cannot contain consecutive underscores.",
-      });
-      setIsChecking(false);
+      return "Cannot contain consecutive underscores.";
+    }
+    return null;
+  }, [trimmed]);
+
+  // Live availability debouncing (350ms) with race condition cancellation
+  useEffect(() => {
+    if (stage !== "custom" || !trimmed || clientValidationError) {
       return;
     }
 
-    setIsChecking(true);
+    activeQueryRef.current = trimmed;
+    const currentTarget = trimmed;
+
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
-    const currentTarget = trimmed;
     debounceTimerRef.current = setTimeout(async () => {
+      setIsChecking(true);
       try {
-        const res = await api.get(`/profile/username/check?username=${encodeURIComponent(currentTarget)}`);
-        // Guard against out-of-order race conditions
+        const res = await api.get(
+          `/profile/username/check?username=${encodeURIComponent(currentTarget)}`
+        );
         if (activeQueryRef.current === currentTarget) {
-          setCheckResult(res.data);
+          setServerResult(res.data);
         }
-      } catch (err) {
+      } catch {
         if (activeQueryRef.current === currentTarget) {
-          setCheckResult({
+          setServerResult({
             available: false,
             reason: "Unable to verify username right now.",
           });
@@ -132,7 +106,11 @@ export default function UsernameClaimModal() {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [customHandle, stage]);
+  }, [trimmed, clientValidationError, stage]);
+
+  const checkResult = clientValidationError
+    ? { available: false, reason: clientValidationError }
+    : serverResult;
 
   const handleClaim = async (chosenUsername) => {
     if (!chosenUsername) return;
@@ -152,9 +130,9 @@ export default function UsernameClaimModal() {
 
       toast.success(
         "Identity Confirmed!",
-        `Welcome, @${claimedUsername}. Your username is now your permanent platform handle.`
+        `Welcome, @${claimedUsername}. Your username has been registered successfully.`
       );
-      setIsOpen(false);
+      setIsDismissed(true);
     } catch (err) {
       const message =
         err.response?.data?.message ||
@@ -211,7 +189,7 @@ export default function UsernameClaimModal() {
               >
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-brand-mint px-3 py-1 rounded-full bg-brand-mint/8 border border-brand-mint/20">
-                    Permanent Identity
+                    Official Identity
                   </span>
                   <h2
                     id="claim-modal-title"
@@ -243,7 +221,7 @@ export default function UsernameClaimModal() {
                 <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-[11px] text-text-secondary flex items-start gap-2.5 text-left">
                   <ShieldCheck className="w-4 h-4 text-brand-mint shrink-0 mt-0.5" />
                   <p>
-                    Every student gets <strong className="text-white">one permanent identity decision</strong>. Once confirmed, this username is locked forever.
+                    Your username will be used as your public Zeitnah identity. You can customize it now or change it later in your profile.
                   </p>
                 </div>
 
@@ -390,7 +368,7 @@ export default function UsernameClaimModal() {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Locking Identity...
+                        Saving Username...
                       </>
                     ) : (
                       <>

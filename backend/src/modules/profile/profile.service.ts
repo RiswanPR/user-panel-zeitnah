@@ -25,6 +25,10 @@ import { UploadService } from '../../common/aws/upload.service';
 import { SignedUrlService } from '../../common/aws/signed-url.service';
 import { UsernameService } from './services/username.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import {
+  USERNAME_CHANGE_COOLDOWN_DAYS,
+  USERNAME_CHANGE_COOLDOWN_MS,
+} from '../../common/constants/reserved-usernames';
 
 @Injectable()
 export class ProfileService {
@@ -44,17 +48,40 @@ export class ProfileService {
   // =========================================================================
 
   /**
-   * Retrieves the current user's username and whether they have claimed it.
+   * Retrieves the current user's username status, claim state, and cooldown details.
    */
   async getUsernameStatus(userId: string) {
-    const user = await this.userModel.findById(userId).select('username usernameClaimed name');
+    const user = await this.userModel
+      .findById(userId)
+      .select('username usernameClaimed usernameChangedAt name');
     if (!user) {
       throw new UnauthorizedException('User not found');
+    }
+
+    let canChange = true;
+    let nextAllowedDate: Date | null = null;
+    let remainingDays = 0;
+
+    if (user.usernameChangedAt) {
+      const elapsed = Date.now() - new Date(user.usernameChangedAt).getTime();
+      if (elapsed < USERNAME_CHANGE_COOLDOWN_MS) {
+        canChange = false;
+        const remainingMs = USERNAME_CHANGE_COOLDOWN_MS - elapsed;
+        remainingDays = Math.ceil(remainingMs / (24 * 60 * 60 * 1000));
+        nextAllowedDate = new Date(
+          new Date(user.usernameChangedAt).getTime() + USERNAME_CHANGE_COOLDOWN_MS,
+        );
+      }
     }
 
     return {
       username: user.username || '',
       usernameClaimed: Boolean(user.usernameClaimed),
+      usernameChangedAt: user.usernameChangedAt || null,
+      canChange,
+      remainingDays,
+      nextAllowedDate,
+      cooldownDays: USERNAME_CHANGE_COOLDOWN_DAYS,
     };
   }
 
@@ -85,7 +112,11 @@ export class ProfileService {
       }
     }
 
-    const existingUser = await this.userModel.findOne({ username: sanitized }).select('_id');
+    const existingUser = await this.userModel.findOne({
+      username: sanitized,
+      ...(currentUserId ? { _id: { $ne: currentUserId } } : {}),
+    }).select('_id');
+
     if (existingUser) {
       return {
         username: sanitized,
@@ -101,8 +132,8 @@ export class ProfileService {
   }
 
   /**
-   * Performs the one-time username claim decision.
-   * If the user already claimed a username, this operation is permanently rejected.
+   * Performs the initial first-time username claim decision.
+   * If already claimed, delegates to changeUsername.
    */
   async claimUsername(userId: string, requestedUsername: string, ipAddress = '') {
     const user = await this.userModel.findById(userId);
@@ -110,8 +141,9 @@ export class ProfileService {
       throw new UnauthorizedException('User not found');
     }
 
+    // If username was already claimed previously, route to changeUsername
     if (user.usernameClaimed) {
-      throw new BadRequestException('Username has already been claimed and is now permanent.');
+      return this.changeUsername(userId, requestedUsername, ipAddress);
     }
 
     const sanitized = this.usernameService.sanitize(requestedUsername);
@@ -145,7 +177,7 @@ export class ProfileService {
             usernameClaimed: true,
           },
         },
-        { new: true },
+        { returnDocument: 'after' },
       );
     } catch (err: any) {
       if (err.code === 11000 || err.message?.includes('duplicate key')) {
@@ -155,7 +187,8 @@ export class ProfileService {
     }
 
     if (!updatedUser) {
-      throw new BadRequestException('Username has already been claimed and is now permanent.');
+      // Concurrent race condition occurred, user is now claimed
+      return this.changeUsername(userId, requestedUsername, ipAddress);
     }
 
     // Synchronize CommunityProfile username if it exists
@@ -173,7 +206,7 @@ export class ProfileService {
       entityId: String(user._id),
       severity: 'info',
       ipAddress,
-      message: `User claimed permanent username @${sanitized}`,
+      message: `User claimed initial username @${sanitized}`,
       metadata: {
         username: sanitized,
         previousUsername,
@@ -188,6 +221,129 @@ export class ProfileService {
     return {
       success: true,
       message: 'Username successfully claimed.',
+      user: userObj,
+    };
+  }
+
+  /**
+   * Modifies an existing user's username subject to 14-day cooldown, validation, and uniqueness.
+   */
+  async changeUsername(userId: string, requestedUsername: string, ipAddress = '') {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const sanitized = this.usernameService.sanitize(requestedUsername);
+    const validation = this.usernameService.validate(sanitized);
+    if (!validation.valid) {
+      throw new BadRequestException(validation.reason);
+    }
+
+    const previousUsername = user.username || '';
+
+    // If handle is unchanged, return gracefully
+    if (previousUsername && previousUsername.toLowerCase() === sanitized.toLowerCase()) {
+      const userObj = user.toObject();
+      if (userObj.avatar) {
+        userObj.avatar = await this.signedUrlService.generateSignedImageUrl(userObj.avatar);
+      }
+      return {
+        success: true,
+        message: 'Username is unchanged.',
+        user: userObj,
+      };
+    }
+
+    // Enforce 14-day cooldown
+    if (user.usernameChangedAt) {
+      const elapsed = Date.now() - new Date(user.usernameChangedAt).getTime();
+      if (elapsed < USERNAME_CHANGE_COOLDOWN_MS) {
+        const remainingMs = USERNAME_CHANGE_COOLDOWN_MS - elapsed;
+        const remainingDays = Math.ceil(remainingMs / (24 * 60 * 60 * 1000));
+        const nextAllowedDate = new Date(
+          new Date(user.usernameChangedAt).getTime() + USERNAME_CHANGE_COOLDOWN_MS,
+        );
+        throw new BadRequestException(
+          `You can change your username again in ${remainingDays} day${remainingDays === 1 ? '' : 's'} (after ${nextAllowedDate.toISOString().split('T')[0]}).`,
+        );
+      }
+    }
+
+    // Check availability against other users
+    const existing = await this.userModel.findOne({
+      username: sanitized,
+      _id: { $ne: user._id },
+    });
+
+    if (existing) {
+      throw new ConflictException('Username is already taken. Please choose another.');
+    }
+
+    const now = new Date();
+    let updatedUser: any;
+    try {
+      updatedUser = await this.userModel.findOneAndUpdate(
+        {
+          _id: user._id,
+        },
+        {
+          $set: {
+            username: sanitized,
+            usernameClaimed: true,
+            usernameChangedAt: now,
+          },
+          $push: {
+            usernameHistory: {
+              username: previousUsername,
+              changedAt: now,
+            },
+          },
+        },
+        { returnDocument: 'after' },
+      );
+    } catch (err: any) {
+      if (err.code === 11000 || err.message?.includes('duplicate key')) {
+        throw new ConflictException('Username is no longer available. Please choose another.');
+      }
+      throw err;
+    }
+
+    if (!updatedUser) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Synchronize CommunityProfile username if it exists
+    await this.communityProfileModel.updateOne(
+      { userId: String(user._id) },
+      { $set: { username: sanitized } },
+      { upsert: false },
+    ).catch(() => {});
+
+    // Record audit log event
+    await this.auditLogsService.record({
+      actor: user._id,
+      action: 'USERNAME_CHANGED',
+      entityType: 'user',
+      entityId: String(user._id),
+      severity: 'info',
+      ipAddress,
+      message: `User changed username from @${previousUsername} to @${sanitized}`,
+      metadata: {
+        newUsername: sanitized,
+        previousUsername,
+        changedAt: now,
+      },
+    });
+
+    const userObj = updatedUser.toObject();
+    if (userObj.avatar) {
+      userObj.avatar = await this.signedUrlService.generateSignedImageUrl(userObj.avatar);
+    }
+
+    return {
+      success: true,
+      message: 'Username updated successfully.',
       user: userObj,
     };
   }

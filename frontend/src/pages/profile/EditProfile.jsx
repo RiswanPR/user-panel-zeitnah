@@ -1,10 +1,11 @@
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Save, X, Lock } from "lucide-react";
+import { ArrowLeft, Save, X, Pencil, AtSign } from "lucide-react";
 import api from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../components/ui/Toast";
+import ChangeUsernameModal from "../../components/username/ChangeUsernameModal";
 
 function EditProfile() {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ function EditProfile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [username, setUsername] = useState("");
+  const [changeUsernameOpen, setChangeUsernameOpen] = useState(false);
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
   const [skills, setSkills] = useState("");
@@ -44,7 +46,7 @@ function EditProfile() {
         .map((s) => s.trim())
         .filter(Boolean);
 
-      const res = await api.patch("/profile/update", {
+      await api.patch("/profile/update", {
         name,
         bio,
         skills: parsedSkills,
@@ -59,7 +61,7 @@ function EditProfile() {
 
       toast.success("Profile updated", "Your changes have been saved.");
       navigate("/profile");
-    } catch (error) {
+    } catch {
       toast.error("Update failed", "Could not save your profile. Please try again.");
     } finally {
       setSaving(false);
@@ -110,23 +112,28 @@ function EditProfile() {
 
         <form onSubmit={handleSubmit} className="space-y-6 w-full flex flex-col">
 
-          {/* Username (Permanent Identity) */}
+          {/* Username (Editable Identity) */}
           <div className="w-full">
             <div className="flex items-center justify-between mb-2">
               <label className="block text-xs font-semibold uppercase tracking-wider text-brand-mint flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5" />
-                Permanent Handle
+                <AtSign className="w-3.5 h-3.5" />
+                Username
               </label>
-              <span className="text-[10px] font-mono text-brand-mint font-bold px-2 py-0.5 rounded bg-brand-mint/10 border border-brand-mint/20">
-                Locked
-              </span>
+              <button
+                type="button"
+                onClick={() => setChangeUsernameOpen(true)}
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-mint hover:text-brand-mint/80 transition-colors px-2.5 py-1 rounded-lg bg-brand-mint/10 border border-brand-mint/20 hover:bg-brand-mint/15 cursor-pointer"
+              >
+                <Pencil className="w-3 h-3" />
+                Edit
+              </button>
             </div>
-            <div className="w-full glass-input px-4 py-3 text-sm font-mono text-text-secondary bg-black/40 flex items-center justify-between border-white/[0.08] cursor-not-allowed select-none">
+            <div className="w-full glass-input px-4 py-3 text-sm font-mono text-white bg-black/40 flex items-center justify-between border-white/[0.08]">
               <span>@{username || "student"}</span>
-              <span className="text-[11px] text-text-muted font-sans font-medium">Permanent Identity</span>
+              <span className="text-[11px] text-text-muted font-sans font-medium">Public Handle</span>
             </div>
             <p className="text-[10px] font-medium text-text-muted mt-1.5">
-              Your Zeitnah handle cannot be changed after initial claim.
+              Your public identity across Zeitnah courses, certificates, and community.
             </p>
           </div>
 
@@ -197,6 +204,14 @@ function EditProfile() {
           </div>
         </form>
       </motion.div>
+
+      {/* Change Username Modal */}
+      <ChangeUsernameModal
+        isOpen={changeUsernameOpen}
+        onClose={() => setChangeUsernameOpen(false)}
+        currentUsername={username}
+        onSuccess={(newHandle) => setUsername(newHandle)}
+      />
     </div>
   );
 }

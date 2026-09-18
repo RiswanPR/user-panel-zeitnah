@@ -60,6 +60,7 @@ export type AuthenticatedUser = {
   email: string;
   username?: string;
   usernameClaimed?: boolean;
+  usernameChangedAt?: Date | null;
   role: string;
   deviceId: string;
 };

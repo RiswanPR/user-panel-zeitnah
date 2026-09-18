@@ -68,7 +68,7 @@ export class ProfileController {
   }
 
   /**
-   * One-time permanent username claim.
+   * Initial first-time username claim.
    */
   @Post('username/claim')
   @UseGuards(JwtAuthGuard)
@@ -84,6 +84,25 @@ export class ProfileController {
   ) {
     const ip = this.getClientIp(req);
     return this.profileService.claimUsername(req.user.userId, body.username, ip);
+  }
+
+  /**
+   * Dedicated username change endpoint (subject to 14-day cooldown, validation, and uniqueness).
+   */
+  @Patch('username')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({
+    default: {
+      limit: 10,
+      ttl: 60000,
+    },
+  })
+  async changeUsername(
+    @Req() req: any,
+    @Body() body: ClaimUsernameDto,
+  ) {
+    const ip = this.getClientIp(req);
+    return this.profileService.changeUsername(req.user.userId, body.username, ip);
   }
 
   /**

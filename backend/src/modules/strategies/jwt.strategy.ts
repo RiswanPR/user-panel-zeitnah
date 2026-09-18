@@ -106,6 +106,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       email: user.email,
       username: user.username,
       usernameClaimed: user.usernameClaimed ?? false,
+      usernameChangedAt: user.usernameChangedAt || null,
 
       role: payload.role,
 

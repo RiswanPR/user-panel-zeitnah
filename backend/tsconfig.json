@@ -24,16 +24,14 @@
     "strict": false,
     "skipLibCheck": true,
 
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "types": ["jest", "node", "multer", "express"]
   },
 
   "include": ["src/**/*.ts"],
 
   "exclude": [
     "node_modules",
-    "dist",
-    "test",
-    "**/*.spec.ts",
-    "**/*.test.ts"
+    "dist"
   ]
 }

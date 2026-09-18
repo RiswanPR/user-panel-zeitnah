@@ -16,12 +16,14 @@ import {
   User,
   Share2,
   ExternalLink,
+  Pencil,
 } from "lucide-react";
 import api from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
 import { getUploadUrl } from "../../utils/courseUi";
 import { useToast } from "../../components/ui/Toast";
 import ShareProfileModal from "../../components/profile/ShareProfileModal";
+import ChangeUsernameModal from "../../components/username/ChangeUsernameModal";
 
 function Profile() {
   const navigate = useNavigate();
@@ -31,6 +33,7 @@ function Profile() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isChangeUsernameOpen, setIsChangeUsernameOpen] = useState(false);
   const fileRef = useRef(null);
 
   useEffect(() => {
@@ -59,7 +62,7 @@ function Profile() {
       const res = await api.post("/profile/avatar", formData, { headers: { "Content-Type": "multipart/form-data" } });
       setProfile((prev) => ({ ...prev, avatar: res.data.avatar }));
       setUser((prev) => prev ? { ...prev, avatar: res.data.avatar } : prev);
-    } catch (err) {
+    } catch {
       toast.error("Upload failed", "Could not upload avatar. Please try again.");
     } finally {
       setUploading(false);
@@ -160,6 +163,15 @@ function Profile() {
                   Verified Handle
                 </span>
               )}
+              <button
+                type="button"
+                onClick={() => setIsChangeUsernameOpen(true)}
+                className="inline-flex items-center gap-1 text-[11px] font-medium text-text-muted hover:text-brand-mint transition-colors px-2 py-0.5 rounded-md hover:bg-white/[0.04] cursor-pointer"
+                title="Change username"
+              >
+                <Pencil className="w-3 h-3" />
+                <span className="hidden sm:inline">Change</span>
+              </button>
             </div>
 
             <p className="text-sm font-medium text-text-muted mb-4 leading-relaxed max-w-xl">
@@ -296,12 +308,22 @@ function Profile() {
       </motion.div>
 
       {profile && (
-        <ShareProfileModal
-          isOpen={isShareOpen}
-          onClose={() => setIsShareOpen(false)}
-          username={profile.username}
-          name={profile.name}
-        />
+        <>
+          <ShareProfileModal
+            isOpen={isShareOpen}
+            onClose={() => setIsShareOpen(false)}
+            username={profile.username}
+            name={profile.name}
+          />
+          <ChangeUsernameModal
+            isOpen={isChangeUsernameOpen}
+            onClose={() => setIsChangeUsernameOpen(false)}
+            currentUsername={profile.username}
+            onSuccess={(newHandle) => {
+              setProfile((prev) => (prev ? { ...prev, username: newHandle, usernameClaimed: true } : prev));
+            }}
+          />
+        </>
       )}
     </div>
   );

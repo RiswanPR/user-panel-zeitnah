@@ -79,12 +79,31 @@ export class User {
   })
   username!: string;
 
-  // USERNAME CLAIM STATUS
+  // USERNAME CLAIM STATUS (Determines whether first-time claim modal is shown)
   @Prop({
     default: false,
     type: Boolean,
   })
   usernameClaimed!: boolean;
+
+  // USERNAME LAST CHANGED AT (For 14-day cooldown enforcement)
+  @Prop({
+    type: Date,
+    default: null,
+  })
+  usernameChangedAt?: Date | null;
+
+  // USERNAME HISTORY (Audit / security tracking)
+  @Prop({
+    type: [
+      {
+        username: { type: String, required: true },
+        changedAt: { type: Date, default: Date.now },
+      },
+    ],
+    default: [],
+  })
+  usernameHistory?: Array<{ username: string; changedAt: Date }>;
 
   // ROLE
   @Prop({

@@ -105,36 +105,7 @@ describe('ProfileService', () => {
   });
 
   describe('claimUsername', () => {
-    it('should reject claim if username was already claimed in-memory', async () => {
-      const mockUser = {
-        _id: 'user_123',
-        username: 'claimed_handle',
-        usernameClaimed: true,
-      };
-      mockUserModel.findById.mockResolvedValue(mockUser);
-
-      await expect(service.claimUsername('user_123', 'new_handle')).rejects.toThrow(
-        BadRequestException,
-      );
-    });
-
-    it('should reject claim if concurrent request claimed it first (atomic lock guard)', async () => {
-      const mockUser = {
-        _id: 'user_123',
-        username: 'initial_handle',
-        usernameClaimed: false,
-      };
-      mockUserModel.findById.mockResolvedValue(mockUser);
-      mockUserModel.findOne.mockResolvedValue(null);
-      // findOneAndUpdate returns null because usernameClaimed was concurrently updated to true
-      mockUserModel.findOneAndUpdate.mockResolvedValue(null);
-
-      await expect(service.claimUsername('user_123', 'desired_handle')).rejects.toThrow(
-        BadRequestException,
-      );
-    });
-
-    it('should successfully claim available username on first decision', async () => {
+    it('should successfully claim initial available username on first decision', async () => {
       const mockUser = {
         _id: 'user_123',
         username: 'initial_handle',
@@ -160,7 +131,7 @@ describe('ProfileService', () => {
       expect(mockUserModel.findOneAndUpdate).toHaveBeenCalledWith(
         { _id: 'user_123', usernameClaimed: false },
         { $set: { username: 'desired_handle', usernameClaimed: true } },
-        { new: true },
+        { returnDocument: 'after' },
       );
       expect(mockAuditLogsService.record).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -170,6 +141,33 @@ describe('ProfileService', () => {
       );
       expect(result.success).toBe(true);
       expect(result.user.username).toBe('desired_handle');
+    });
+
+    it('should delegate to changeUsername if user was already claimed', async () => {
+      const mockUser = {
+        _id: 'user_123',
+        username: 'claimed_handle',
+        usernameClaimed: true,
+        usernameChangedAt: null,
+      };
+      const mockUpdatedUser = {
+        _id: 'user_123',
+        username: 'updated_handle',
+        usernameClaimed: true,
+        toObject: jest.fn().mockReturnValue({
+          _id: 'user_123',
+          username: 'updated_handle',
+          usernameClaimed: true,
+        }),
+      };
+
+      mockUserModel.findById.mockResolvedValue(mockUser);
+      mockUserModel.findOne.mockResolvedValue(null);
+      mockUserModel.findOneAndUpdate.mockResolvedValue(mockUpdatedUser);
+
+      const result = await service.claimUsername('user_123', 'updated_handle', '127.0.0.1');
+      expect(result.success).toBe(true);
+      expect(result.user.username).toBe('updated_handle');
     });
 
     it('should handle MongoDB duplicate key race condition gracefully', async () => {
@@ -188,6 +186,135 @@ describe('ProfileService', () => {
       await expect(
         service.claimUsername('user_123', 'colliding_handle'),
       ).rejects.toThrow(ConflictException);
+    });
+  });
+
+  describe('changeUsername', () => {
+    it('should successfully change username when cooldown is not active', async () => {
+      const mockUser = {
+        _id: 'user_123',
+        username: 'old_handle',
+        usernameClaimed: true,
+        usernameChangedAt: null,
+      };
+      const mockUpdatedUser = {
+        _id: 'user_123',
+        username: 'new_handle',
+        usernameClaimed: true,
+        toObject: jest.fn().mockReturnValue({
+          _id: 'user_123',
+          username: 'new_handle',
+          usernameClaimed: true,
+        }),
+      };
+
+      mockUserModel.findById.mockResolvedValue(mockUser);
+      mockUserModel.findOne.mockResolvedValue(null);
+      mockUserModel.findOneAndUpdate.mockResolvedValue(mockUpdatedUser);
+
+      const res = await service.changeUsername('user_123', 'new_handle', '127.0.0.1');
+      expect(res.success).toBe(true);
+      expect(res.user.username).toBe('new_handle');
+      expect(mockAuditLogsService.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'USERNAME_CHANGED',
+        }),
+      );
+      expect(mockCommunityProfileModel.updateOne).toHaveBeenCalledWith(
+        { userId: 'user_123' },
+        { $set: { username: 'new_handle' } },
+        { upsert: false },
+      );
+    });
+
+    it('should reject change if attempted within 14-day cooldown', async () => {
+      // Changed 2 days ago
+      const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+      const mockUser = {
+        _id: 'user_123',
+        username: 'recent_handle',
+        usernameClaimed: true,
+        usernameChangedAt: twoDaysAgo,
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await expect(
+        service.changeUsername('user_123', 'too_soon_handle'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should allow change after 14-day cooldown expires', async () => {
+      // Changed 16 days ago
+      const sixteenDaysAgo = new Date(Date.now() - 16 * 24 * 60 * 60 * 1000);
+      const mockUser = {
+        _id: 'user_123',
+        username: 'past_handle',
+        usernameClaimed: true,
+        usernameChangedAt: sixteenDaysAgo,
+      };
+      const mockUpdatedUser = {
+        _id: 'user_123',
+        username: 'fresh_handle',
+        usernameClaimed: true,
+        toObject: jest.fn().mockReturnValue({
+          _id: 'user_123',
+          username: 'fresh_handle',
+          usernameClaimed: true,
+        }),
+      };
+
+      mockUserModel.findById.mockResolvedValue(mockUser);
+      mockUserModel.findOne.mockResolvedValue(null);
+      mockUserModel.findOneAndUpdate.mockResolvedValue(mockUpdatedUser);
+
+      const res = await service.changeUsername('user_123', 'fresh_handle', '127.0.0.1');
+      expect(res.success).toBe(true);
+      expect(res.user.username).toBe('fresh_handle');
+    });
+
+    it('should reject change if desired username is already taken', async () => {
+      const mockUser = {
+        _id: 'user_123',
+        username: 'my_handle',
+        usernameClaimed: true,
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+      mockUserModel.findOne.mockResolvedValue({ _id: 'other_user_456' });
+
+      await expect(
+        service.changeUsername('user_123', 'taken_handle'),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('should reject change if desired username is reserved', async () => {
+      const mockUser = {
+        _id: 'user_123',
+        username: 'my_handle',
+        usernameClaimed: true,
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await expect(
+        service.changeUsername('user_123', 'admin'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should return unchanged response if requested handle is current handle', async () => {
+      const mockUser = {
+        _id: 'user_123',
+        username: 'same_handle',
+        usernameClaimed: true,
+        toObject: jest.fn().mockReturnValue({
+          _id: 'user_123',
+          username: 'same_handle',
+          usernameClaimed: true,
+        }),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      const res = await service.changeUsername('user_123', 'same_handle');
+      expect(res.message).toBe('Username is unchanged.');
+      expect(mockUserModel.findOneAndUpdate).not.toHaveBeenCalled();
     });
   });
 

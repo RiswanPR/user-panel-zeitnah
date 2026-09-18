@@ -11,6 +11,7 @@ describe('ProfileController', () => {
       getUsernameStatus: jest.fn().mockResolvedValue({ username: 'riswan', usernameClaimed: true }),
       checkAvailability: jest.fn().mockResolvedValue({ username: 'shahil', available: true }),
       claimUsername: jest.fn().mockResolvedValue({ success: true, message: 'Claimed' }),
+      changeUsername: jest.fn().mockResolvedValue({ success: true, message: 'Username updated successfully' }),
       getPublicProfile: jest.fn().mockResolvedValue({ user: { username: 'riswan' } }),
       getMe: jest.fn(),
       updateProfile: jest.fn(),
@@ -51,6 +52,13 @@ describe('ProfileController', () => {
     const res = await controller.claimUsername(req, { username: 'new_handle' });
     expect(res.success).toBe(true);
     expect(mockProfileService.claimUsername).toHaveBeenCalledWith('123', 'new_handle', '127.0.0.1');
+  });
+
+  it('should change username for authenticated user', async () => {
+    const req = { user: { userId: '123' }, ip: '127.0.0.1' };
+    const res = await controller.changeUsername(req, { username: 'updated_handle' });
+    expect(res.success).toBe(true);
+    expect(mockProfileService.changeUsername).toHaveBeenCalledWith('123', 'updated_handle', '127.0.0.1');
   });
 
   it('should return public student profile', async () => {

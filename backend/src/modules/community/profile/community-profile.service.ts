@@ -217,7 +217,7 @@ export class CommunityProfileService {
 
     if (dto.username && dto.username !== profile.username) {
       throw new BadRequestException(
-        'Username is permanently tied to your Zeitnah LMS account and cannot be modified from community settings.',
+        'Username is managed by your Zeitnah profile settings and cannot be modified from community settings. Please update your username from your profile.',
       );
     }
 

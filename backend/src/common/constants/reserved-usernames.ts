@@ -75,3 +75,9 @@ export function isReservedUsername(username: string): boolean {
   if (!username) return false;
   return RESERVED_USERNAMES.has(username.toLowerCase().trim());
 }
+
+// Configurable cooldown: User can change username once every 14 days
+export const USERNAME_CHANGE_COOLDOWN_DAYS = 14;
+export const USERNAME_CHANGE_COOLDOWN_MS =
+  USERNAME_CHANGE_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
+

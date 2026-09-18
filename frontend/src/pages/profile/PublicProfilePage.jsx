@@ -5,7 +5,6 @@ import {
   Award,
   BookOpen,
   CheckCircle2,
-  ExternalLink,
   Share2,
   Star,
   TrendingUp,
@@ -37,7 +36,7 @@ export default function PublicProfilePage() {
         if (mounted) {
           setStudent(res.data.user);
         }
-      } catch (err) {
+      } catch {
         if (mounted) {
           setNotFound(true);
         }
