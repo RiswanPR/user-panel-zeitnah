@@ -265,7 +265,7 @@ export function generateProductionErrorReportEmailHtml(report: {
   const errorDetails = report.errorDetails || 'Unknown Error';
   const feedbackText = report.feedback?.whatHappened;
   const adminUrl =
-    report.adminUrl || 'https://beta.zeitnahacademy.com/admin/error-reports';
+    report.adminUrl || 'https://zeitnahacademy.com/admin/error-reports';
 
   const bodyHtml = `
     <!-- Header Badge -->

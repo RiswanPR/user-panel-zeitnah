@@ -66,10 +66,10 @@ async function bootstrap(): Promise<void> {
   // CORS ALLOWLIST (Web + Capacitor Native Mobile + Local Dev)
   const configuredOrigins = process.env.FRONTEND_URL
     ? process.env.FRONTEND_URL.split(',').map((origin) => origin.trim())
-    : ['https://beta.zeitnahacademy.com'];
+    : ['https://zeitnahacademy.com'];
 
   const defaultMobileAndWebOrigins = [
-    'https://beta.zeitnahacademy.com',
+    'https://zeitnahacademy.com',
     'https://zeitnahacademy.com',
     'capacitor://localhost',
     'http://localhost',

@@ -108,7 +108,7 @@ export default function TroubleshootReporter() {
       const browserInfo = getBrowserInfo();
       const token = await storage.getAccessToken();
       const baseURL =
-        import.meta.env.VITE_API_BASE_URL || 'https://beta.zeitnahacademy.com/api';
+        import.meta.env.VITE_API_BASE_URL || 'https://zeitnahacademy.com/api';
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout

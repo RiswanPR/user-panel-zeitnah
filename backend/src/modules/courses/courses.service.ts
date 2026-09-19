@@ -1654,7 +1654,7 @@ export class CoursesService {
 
     if (videoTarget.endsWith('.m3u8')) {
       const baseUrl =
-        process.env.API_URL || 'https://beta.zeitnahacademy.com/api';
+        process.env.API_URL || 'https://zeitnahacademy.com/api';
       playbackUrl = `${baseUrl}/courses/video/${classId}/playlist.m3u8`;
     } else {
       // Fallback for MP4 videos that haven't been converted to HLS yet

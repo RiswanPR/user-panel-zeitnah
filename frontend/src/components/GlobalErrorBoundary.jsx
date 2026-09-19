@@ -27,7 +27,7 @@ class GlobalErrorBoundary extends React.Component {
     try {
       // Need to use fetch or api instance if available
       const token = await storage.getAccessToken();
-      fetch(`${import.meta.env.VITE_API_BASE_URL || "https://beta.zeitnahacademy.com/api"}/error-reports`, {
+      fetch(`${import.meta.env.VITE_API_BASE_URL || "https://zeitnahacademy.com/api"}/error-reports`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

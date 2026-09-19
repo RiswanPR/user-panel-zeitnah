@@ -1,5 +1,5 @@
 const apiBaseUrl =
-  import.meta.env.VITE_API_BASE_URL || "https://beta.zeitnahacademy.com/api";
+  import.meta.env.VITE_API_BASE_URL || "https://zeitnahacademy.com/api";
 
 const uploadBaseUrl = apiBaseUrl.replace(/\/api\/?$/, "");
 const bunnyLibraryId = import.meta.env.VITE_BUNNY_LIBRARY_ID?.trim();

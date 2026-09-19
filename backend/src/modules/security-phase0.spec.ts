@@ -14,7 +14,7 @@ describe('Phase 0 Security & Mobile Compatibility Hardening', () => {
 
   describe('Task 2 — CORS Allowlist Security Validation', () => {
     const allowedOrigins = [
-      'https://beta.zeitnahacademy.com',
+      'https://zeitnahacademy.com',
       'https://zeitnahacademy.com',
       'capacitor://localhost',
       'http://localhost',
@@ -33,7 +33,7 @@ describe('Phase 0 Security & Mobile Compatibility Hardening', () => {
     };
 
     it('should allow production web origins', () => {
-      expect(corsValidator('https://beta.zeitnahacademy.com')).toBe(true);
+      expect(corsValidator('https://zeitnahacademy.com')).toBe(true);
       expect(corsValidator('https://zeitnahacademy.com')).toBe(true);
     });
 

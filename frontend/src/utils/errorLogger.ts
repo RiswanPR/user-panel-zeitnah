@@ -37,7 +37,7 @@ export const logClientError = async (errorData: {
     };
 
     // Use raw fetch to avoid interceptor loops if api itself is failing
-    const baseURL = import.meta.env.VITE_API_BASE_URL || "https://beta.zeitnahacademy.com/api";
+    const baseURL = import.meta.env.VITE_API_BASE_URL || "https://zeitnahacademy.com/api";
     
     const token = await storage.getAccessToken();
     await fetch(`${baseURL}/error-reports`, {

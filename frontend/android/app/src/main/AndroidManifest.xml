@@ -30,13 +30,13 @@
                 <data android:scheme="zeitnah" />
             </intent-filter>
 
-            <!-- Android App Links (https://beta.zeitnahacademy.com) -->
+            <!-- Android App Links (https://zeitnahacademy.com) -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https"
-                      android:host="beta.zeitnahacademy.com"
+                      android:host="zeitnahacademy.com"
                       android:pathPrefix="/" />
             </intent-filter>
 

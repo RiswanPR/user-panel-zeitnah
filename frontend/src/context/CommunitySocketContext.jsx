@@ -21,7 +21,7 @@ export const CommunitySocketProvider = ({ children }) => {
 
       const baseURL = import.meta.env.VITE_API_BASE_URL 
         ? import.meta.env.VITE_API_BASE_URL.replace(/\/api\/?$/, '') 
-        : (typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://beta.zeitnahacademy.com');
+        : (typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://zeitnahacademy.com');
 
       newSocket = io(`${baseURL}/community`, {
         auth: { token },

@@ -20,7 +20,7 @@ export const MessagingSocketProvider = ({ children }) => {
       const rawBase = import.meta.env.VITE_API_BASE_URL;
       const baseURL = rawBase
         ? rawBase.replace(/\/api\/?$/, '')
-        : (typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://beta.zeitnahacademy.com');
+        : (typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://zeitnahacademy.com');
 
       messagingSocket = io(`${baseURL}/community/messages`, {
         auth: { token },

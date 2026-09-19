@@ -551,7 +551,7 @@ function ClassView() {
           const token = storage.getAccessToken();
           if (!snapshot || !token) return;
           const baseUrl =
-            api.defaults.baseURL || "https://beta.zeitnahacademy.com/api";
+            api.defaults.baseURL || "https://zeitnahacademy.com/api";
           void fetch(`${baseUrl}/courses/class/${classId}/progress`, {
             method: "POST",
             headers: {

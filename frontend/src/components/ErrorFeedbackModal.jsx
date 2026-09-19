@@ -45,7 +45,7 @@ export default function ErrorFeedbackModal({ errorData, onClose, onRetry }) {
 
       // Use raw fetch() to bypass axios interceptors entirely.
       // This prevents retry/error-capture cascades when the error report POST itself fails.
-      const baseURL = import.meta.env.VITE_API_BASE_URL || "https://beta.zeitnahacademy.com/api";
+      const baseURL = import.meta.env.VITE_API_BASE_URL || "https://zeitnahacademy.com/api";
       const token = await storage.getAccessToken();
 
       const res = await fetch(`${baseURL}/error-reports`, {

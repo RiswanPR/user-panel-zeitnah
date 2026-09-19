@@ -26,7 +26,7 @@ class FeatureErrorBoundary extends React.Component {
 
       // Silent telemetry dispatch
       const token = await storage.getAccessToken();
-      const baseURL = import.meta.env.VITE_API_BASE_URL || "https://beta.zeitnahacademy.com/api";
+      const baseURL = import.meta.env.VITE_API_BASE_URL || "https://zeitnahacademy.com/api";
       fetch(`${baseURL}/error-reports`, {
         method: "POST",
         headers: {

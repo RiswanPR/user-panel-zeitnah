@@ -170,7 +170,7 @@ runTest('5. Safari Native HLS & Query-Token Authentication Support', () => {
     }
   };
 
-  const safariHlsUrl = 'https://beta.zeitnahacademy.com/api/courses/video/class-123/playlist.m3u8?token=JWT_AUTH_TOKEN_TEST_XYZ';
+  const safariHlsUrl = 'https://zeitnahacademy.com/api/courses/video/class-123/playlist.m3u8?token=JWT_AUTH_TOKEN_TEST_XYZ';
   const token = extractQueryToken(safariHlsUrl);
   assert.strictEqual(token, 'JWT_AUTH_TOKEN_TEST_XYZ', 'Query token extractor must extract token for Safari native HLS');
 });

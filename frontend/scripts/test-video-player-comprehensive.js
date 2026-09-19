@@ -251,7 +251,7 @@ testCase('6. Safari & Mobile', 'Query-token extraction handles Safari native AVP
     }
   };
 
-  const testUrl = 'https://beta.zeitnahacademy.com/api/courses/video/class-999/playlist.m3u8?token=VALID_STUDENT_JWT&quality=auto';
+  const testUrl = 'https://zeitnahacademy.com/api/courses/video/class-999/playlist.m3u8?token=VALID_STUDENT_JWT&quality=auto';
   const extracted = extractTokenFromUrl(testUrl);
   assert.strictEqual(extracted, 'VALID_STUDENT_JWT');
 });

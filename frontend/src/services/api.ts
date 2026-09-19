@@ -28,7 +28,7 @@ const generateUUID = () => {
 };
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "https://beta.zeitnahacademy.com/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL || "https://zeitnahacademy.com/api",
   headers: {
     "Content-Type": "application/json",
   },
