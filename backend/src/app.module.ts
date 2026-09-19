@@ -9,6 +9,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { CoursesModule } from './modules/courses/courses.module';
+import { LeaderboardModule } from './modules/leaderboard/leaderboard.module';
 import { AwsModule } from './common/aws/aws.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { CommunityModule } from './modules/community/community.module';
@@ -39,6 +40,7 @@ import { WellKnownModule } from './modules/well-known/well-known.module';
     ErrorReportsModule,
     ProfileModule,
     CoursesModule,
+    LeaderboardModule,
     AwsModule,
     NotificationsModule,
 
