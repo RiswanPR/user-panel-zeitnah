@@ -82,9 +82,9 @@ export default function LeaderboardSidebarCard() {
       <div className="mx-2 my-2">
         <Link
           to="/leaderboard"
-          className={`block p-3 rounded-2xl border transition-all duration-200 group ${
+          className={`block p-3 rounded-2xl border transition-all duration-200 group focus-ring ${
             isLeaderboardActive
-              ? "bg-brand-yellow/[0.05] border-brand-yellow/30 text-white"
+              ? "bg-brand-yellow/[0.05] border-brand-yellow/35 text-white"
               : "bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.12] text-text-muted hover:text-white"
           }`}
           aria-label="View Leaderboard"
@@ -117,10 +117,10 @@ export default function LeaderboardSidebarCard() {
       <Link
         to="/leaderboard"
         aria-label={`Leaderboard, your current standing is rank ${rank} with ${points.toLocaleString()} XP`}
-        className={`relative block rounded-2xl border p-3.5 transition-all duration-200 group overflow-hidden ${
+        className={`relative block rounded-2xl border p-3.5 transition-all duration-200 group overflow-hidden focus-ring ${
           isLeaderboardActive
-            ? "border-brand-yellow/35 bg-gradient-to-b from-brand-yellow/[0.04] via-bg-surface/85 to-bg-card/95 shadow-[0_0_24px_rgba(234,179,8,0.06)]"
-            : "border-white/[0.08] bg-gradient-to-b from-bg-card/90 via-bg-surface/75 to-bg-card/90 hover:border-white/[0.18] hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
+            ? "border-brand-yellow/35 bg-gradient-to-b from-brand-yellow/[0.04] to-bg-card/95 shadow-[0_0_24px_rgba(234,179,8,0.06)]"
+            : "border-white/[0.08] bg-gradient-to-b from-bg-card/95 to-bg-card/75 hover:border-white/[0.18] hover:shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
         }`}
       >
         {/* Subtle top accent line */}
@@ -136,7 +136,7 @@ export default function LeaderboardSidebarCard() {
         <div className="flex items-center justify-between pb-2 border-b border-white/[0.04]">
           <div className="flex items-center gap-1.5">
             <Trophy
-              className="w-3.5 h-3.5 text-brand-yellow shrink-0 group-hover:scale-105 group-hover:-translate-y-0.5 transition-transform duration-200"
+              className="w-3.5 h-3.5 text-brand-yellow shrink-0 group-hover:scale-105 transition-transform duration-200"
               aria-hidden="true"
             />
             <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/90 font-heading">
@@ -145,7 +145,7 @@ export default function LeaderboardSidebarCard() {
           </div>
 
           <ArrowUpRight
-            className="w-3.5 h-3.5 text-text-muted group-hover:text-brand-yellow group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-200"
+            className="w-3.5 h-3.5 text-text-muted group-hover:text-brand-yellow group-hover:translate-x-0.5 transition-all duration-200"
             aria-hidden="true"
           />
         </div>
@@ -156,8 +156,8 @@ export default function LeaderboardSidebarCard() {
           <div
             className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full blur-xl pointer-events-none transition-all duration-300 ${
               isLeaderboardActive
-                ? "bg-brand-yellow/15"
-                : "bg-brand-yellow/8 group-hover:bg-brand-yellow/15"
+                ? "bg-brand-yellow/[0.15]"
+                : "bg-brand-yellow/[0.08] group-hover:bg-brand-yellow/[0.15]"
             }`}
           />
 
@@ -166,7 +166,7 @@ export default function LeaderboardSidebarCard() {
           </p>
 
           <div className="my-0.5 relative z-10">
-            <span className="font-heading font-black text-2xl sm:text-[28px] leading-tight font-mono tracking-tight text-white group-hover:text-brand-yellow transition-colors duration-200">
+            <span className="font-heading font-black text-2xl sm:text-[28px] leading-tight font-mono tracking-tight tabular-nums text-white group-hover:text-brand-yellow transition-colors duration-200">
               #{rank}
             </span>
           </div>
@@ -179,14 +179,14 @@ export default function LeaderboardSidebarCard() {
         {/* ── 3. XP + Level Metadata ── */}
         <div className="flex items-center justify-between py-1.5 px-1 bg-white/[0.02] rounded-xl border border-white/[0.04]">
           <div className="text-left">
-            <p className="text-[11px] font-mono font-bold text-white leading-none">
+            <p className="text-[11px] font-mono font-bold tabular-nums text-white leading-none">
               {points.toLocaleString()}{" "}
               <span className="text-[9px] text-text-muted font-normal">XP</span>
             </p>
           </div>
 
           <div className="text-right">
-            <p className="text-[11px] font-mono font-bold text-brand-mint leading-none flex items-center gap-1 justify-end">
+            <p className="text-[11px] font-mono font-bold tabular-nums text-brand-mint leading-none flex items-center gap-1 justify-end">
               <Star className="w-2.5 h-2.5 text-brand-yellow fill-brand-yellow/30" />
               L{level}
               <span className="text-[9px] text-text-muted font-medium uppercase font-body truncate max-w-[70px]">
@@ -205,7 +205,7 @@ export default function LeaderboardSidebarCard() {
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <div className="flex items-center justify-between text-[9px] text-text-muted font-mono">
+            <div className="flex items-center justify-between text-[9px] text-text-muted font-mono tabular-nums">
               <span>{xpNeeded.toLocaleString()} XP to L{nextLevel}</span>
               <span className="text-text-faint">{progressPercent}%</span>
             </div>
@@ -213,7 +213,7 @@ export default function LeaderboardSidebarCard() {
         ) : null}
 
         {/* ── 5. Premium Copy ── */}
-        <p className="text-[9px] text-text-muted italic text-center pt-1.5 leading-snug">
+        <p className="text-[9px] text-text-faint font-medium text-center pt-1.5 leading-snug">
           Keep learning. Keep climbing.
         </p>
 

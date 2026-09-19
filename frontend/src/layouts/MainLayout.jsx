@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   BookOpen,
   Trophy,
@@ -42,6 +42,7 @@ export default function MainLayout({ children }) {
   const location = useLocation();
   const { user } = useContext(AuthContext);
   const currentUserId = user?._id || user?.userId;
+  const shouldReduceMotion = useReducedMotion();
 
   // Cheaply fetch authenticated student's personal position for mobile trophy rank indicator
   const { data: position } = useQuery({
@@ -106,7 +107,7 @@ export default function MainLayout({ children }) {
           </div>
           <div>
             <span className="text-sm font-heading font-extrabold tracking-wider uppercase text-white">Zeitnah</span>
-            <p className="text-[9px] font-medium text-text-muted">Learning Platform</p>
+            <p className="text-[10px] font-medium text-text-muted">Learning Platform</p>
           </div>
         </Link>
 
@@ -120,15 +121,15 @@ export default function MainLayout({ children }) {
                 ? `Leaderboard, current position ${position.rank}`
                 : "Leaderboard"
             }
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all active:scale-95 ${
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all active:scale-95 focus-ring ${
               isRouteActive("leaderboard")
-                ? "bg-brand-yellow/15 border-brand-yellow/30 text-brand-yellow"
+                ? "bg-brand-yellow/[0.15] border-brand-yellow/35 text-brand-yellow"
                 : "bg-white/[0.04] border-white/[0.08] hover:bg-white/[0.08] text-white"
             }`}
           >
             <Trophy className="w-4 h-4 text-brand-yellow" aria-hidden="true" />
             {position?.rank && (
-              <span className="text-[11px] font-mono font-bold text-white/90">
+              <span className="text-[11px] font-mono font-bold tabular-nums text-white/90">
                 #{position.rank}
               </span>
             )}
@@ -138,12 +139,12 @@ export default function MainLayout({ children }) {
           <Link
             to="/profile"
             aria-label="Profile"
-            className="w-8 h-8 rounded-full border border-brand-mint/30 overflow-hidden flex items-center justify-center bg-brand-mint/20 active:scale-95 transition-all"
+            className="w-8 h-8 rounded-full border border-brand-mint/25 overflow-hidden flex items-center justify-center bg-brand-mint/20 active:scale-95 transition-all focus-ring"
           >
             {avatarUrl ? (
               <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
-              <span className="text-[10px] font-bold text-brand-mint">{userInitials}</span>
+              <span className="text-[10px] font-heading font-bold text-brand-mint">{userInitials}</span>
             )}
           </Link>
         </div>
@@ -152,9 +153,9 @@ export default function MainLayout({ children }) {
       {/* ═══════════════════════════════════════════════
           DESKTOP SIDEBAR — Luxury vertical navigation
           ═══════════════════════════════════════════════ */}
-      <aside className="hidden md:flex flex-col w-[260px] h-screen sticky top-0 shrink-0 z-40">
+      <aside className="hidden md:flex flex-col w-[260px] h-screen sticky top-0 shrink-0 z-40" aria-label="Main sidebar">
         {/* Floating inner container with margin for "island" effect */}
-        <div className="m-3 flex-1 flex flex-col rounded-2xl bg-gradient-to-b from-bg-surface/90 to-bg-base/60 border border-border-subtle backdrop-blur-xl overflow-hidden justify-between">
+        <div className="sidebar-noise m-3 flex-1 flex flex-col rounded-2xl bg-gradient-to-b from-bg-surface/90 to-bg-base/60 border border-border-subtle backdrop-blur-xl overflow-hidden justify-between">
 
           {/* Top section: Logo + Navigation */}
           <div className="shrink-0">
@@ -164,7 +165,7 @@ export default function MainLayout({ children }) {
             {/* ── Logo Section ── */}
             <Link to="/courses" className="px-6 py-5 flex items-center gap-3 select-none group">
               <div className="relative">
-                <div className="absolute inset-0 bg-brand-mint/30 rounded-xl blur-md group-hover:blur-lg transition-all" />
+                <div className="absolute inset-0 bg-brand-mint/30 rounded-xl blur-md transition-all" />
                 <div className="relative w-10 h-10 rounded-xl border border-brand-mint/30 overflow-hidden shadow-md flex items-center justify-center bg-bg-surface">
                   <img src="/zeitnah-logo.png" alt="Zeitnah Logo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 </div>
@@ -191,14 +192,14 @@ export default function MainLayout({ children }) {
                   <motion.div
                     key={item.key}
                     custom={i}
-                    initial="hidden"
+                    initial={shouldReduceMotion ? false : "hidden"}
                     animate="visible"
                     variants={navItemVariants}
                   >
                     <Link
                       to={item.path}
                       aria-current={active ? "page" : undefined}
-                      className={`relative flex items-center gap-3 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 group ${
+                      className={`relative flex items-center gap-3 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 group focus-ring ${
                         active
                           ? "text-white font-bold"
                           : "text-text-muted hover:text-white hover:bg-white/[0.03]"
@@ -207,7 +208,7 @@ export default function MainLayout({ children }) {
                       {/* Active background treatment */}
                       {active && (
                         <motion.div
-                          layoutId="sidebar-active"
+                          layoutId={shouldReduceMotion ? undefined : "sidebar-active"}
                           className={`absolute inset-0 rounded-xl ${
                             isCourses
                               ? "bg-gradient-to-r from-brand-mint/10 to-transparent border border-brand-mint/15"
@@ -220,7 +221,7 @@ export default function MainLayout({ children }) {
                       {/* Active left accent bar */}
                       {active && (
                         <motion.div
-                          layoutId="sidebar-accent"
+                          layoutId={shouldReduceMotion ? undefined : "sidebar-accent"}
                           className={`absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full ${
                             isCourses ? "bg-brand-mint" : "bg-white/60"
                           }`}
@@ -266,7 +267,7 @@ export default function MainLayout({ children }) {
             {/* ── User Card ── */}
             <Link
               to="/profile"
-              className="p-3 flex items-center gap-3 select-none hover:bg-white/[0.04] transition-colors rounded-xl mx-2 my-1.5 group"
+              className="p-3 flex items-center gap-3 select-none hover:bg-white/[0.04] transition-colors rounded-xl mx-2 my-1.5 group focus-ring"
             >
               <div className="relative shrink-0">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-mint/20 to-brand-navy/40 border border-brand-mint/25 flex items-center justify-center overflow-hidden">
@@ -315,11 +316,11 @@ export default function MainLayout({ children }) {
                   key={item.key}
                   to={item.path}
                   aria-current={active ? "page" : undefined}
-                  className="relative flex flex-col items-center gap-1 py-1.5 px-4 rounded-xl transition-all duration-200"
+                  className="relative flex flex-col items-center gap-1 py-1.5 px-4 rounded-xl transition-all duration-200 focus-ring"
                 >
                   {active && (
                     <motion.div
-                      layoutId="mobile-active"
+                      layoutId={shouldReduceMotion ? undefined : "mobile-active"}
                       className={`absolute inset-0 rounded-xl ${
                         isCourses
                           ? "bg-brand-mint/10 border border-brand-mint/20"

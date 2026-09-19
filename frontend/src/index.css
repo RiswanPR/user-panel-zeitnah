@@ -58,6 +58,22 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   SIDEBAR DESIGN TOKENS
+   Single source of truth for sidebar geometry & accent colors.
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  --sidebar-width: 260px;
+  --sidebar-inset: 0.75rem;     /* 12px island margin */
+  --sidebar-radius: 1rem;       /* 16px */
+  --sidebar-accent-w: 3px;
+  --sidebar-accent-h: 1.25rem;  /* 20px */
+  --sidebar-avatar: 2.25rem;    /* 36px */
+  --sidebar-glow: 6rem;         /* 96px */
+  --leaderboard-active-border: rgba(246, 237, 74, 0.35);
+  --leaderboard-active-bg: rgba(246, 237, 74, 0.04);
+}
+
+/* ═══════════════════════════════════════════════════════════════
    BASE DOCUMENT LAYER
    ═══════════════════════════════════════════════════════════════ */
 html {
@@ -667,6 +683,20 @@ html, body {
 
 /* Subtle noise texture overlay for the hero */
 .hero-noise::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: overlay;
+}
+
+/* Sidebar noise texture overlay — kills gradient banding */
+.sidebar-noise::after {
   content: '';
   position: absolute;
   inset: 0;
