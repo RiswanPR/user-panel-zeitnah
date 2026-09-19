@@ -65,6 +65,8 @@
   --sidebar-width: 260px;
   --sidebar-inset: 0.75rem;     /* 12px island margin */
   --sidebar-radius: 1rem;       /* 16px */
+  --sidebar-gutter: 0.75rem;    /* 12px island horizontal gutter */
+  --sidebar-card-radius: 0.75rem; /* 12px card radius */
   --sidebar-accent-w: 3px;
   --sidebar-accent-h: 1.25rem;  /* 20px */
   --sidebar-avatar: 2.25rem;    /* 36px */
@@ -707,6 +709,13 @@ html, body {
   pointer-events: none;
   z-index: 1;
   mix-blend-mode: overlay;
+}
+
+/* Sidebar compact behavior for short viewports (<720px) */
+@media (max-height: 720px) {
+  .sidebar-compact-hide {
+    display: none !important;
+  }
 }
 
 /* Hero ambient glow animation */

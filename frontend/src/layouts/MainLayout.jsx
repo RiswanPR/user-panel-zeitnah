@@ -153,36 +153,39 @@ export default function MainLayout({ children }) {
       {/* ═══════════════════════════════════════════════
           DESKTOP SIDEBAR — Luxury vertical navigation
           ═══════════════════════════════════════════════ */}
+      {/* ═══════════════════════════════════════════════
+          DESKTOP SIDEBAR — Luxury vertical navigation
+          ═══════════════════════════════════════════════ */}
       <aside className="hidden md:flex flex-col w-[260px] h-screen sticky top-0 shrink-0 z-40" aria-label="Main sidebar">
         {/* Floating inner container with margin for "island" effect */}
-        <div className="sidebar-noise m-3 flex-1 flex flex-col rounded-2xl bg-gradient-to-b from-bg-surface/90 to-bg-base/60 border border-border-subtle backdrop-blur-xl overflow-hidden justify-between">
+        <div className="sidebar-noise relative m-3 flex-1 flex flex-col rounded-2xl bg-gradient-to-b from-bg-surface/90 to-bg-base/60 border border-border-subtle backdrop-blur-xl overflow-hidden px-3">
 
-          {/* Top section: Logo + Navigation */}
-          <div className="shrink-0">
+          {/* Top section: Logo + Navigation (scrolls only if viewport is extremely short) */}
+          <div className="shrink-0 flex flex-col min-h-0 overflow-y-auto no-scrollbar">
             {/* Gradient accent line */}
             <div className="gradient-line-top" />
 
             {/* ── Logo Section ── */}
-            <Link to="/courses" className="px-6 py-5 flex items-center gap-3 select-none group">
-              <div className="relative">
-                <div className="absolute inset-0 bg-brand-mint/30 rounded-xl blur-md transition-all" />
-                <div className="relative w-10 h-10 rounded-xl border border-brand-mint/30 overflow-hidden shadow-md flex items-center justify-center bg-bg-surface">
+            <Link to="/courses" className="px-3 py-4 flex items-center gap-3 select-none group rounded-xl hover:bg-white/[0.03] transition-colors focus-ring">
+              <div className="relative w-9 h-9 shrink-0">
+                <div className="absolute inset-0 bg-brand-mint/30 rounded-lg blur-md transition-all" />
+                <div className="relative w-9 h-9 rounded-lg border border-brand-mint/30 overflow-hidden shadow-md flex items-center justify-center bg-bg-surface">
                   <img src="/zeitnah-logo.png" alt="Zeitnah Logo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 </div>
               </div>
-              <div>
-                <span className="text-base font-heading font-extrabold tracking-wider uppercase text-white group-hover:text-brand-mint transition-colors">
+              <div className="min-w-0 flex-1">
+                <span className="text-base font-heading font-extrabold tracking-wider uppercase text-white group-hover:text-brand-mint transition-colors block leading-tight">
                   Zeitnah
                 </span>
-                <p className="text-[10px] font-medium text-text-muted tracking-wide">Learning Platform</p>
+                <p className="text-[10px] font-medium text-text-muted tracking-wide leading-tight">Learning Platform</p>
               </div>
             </Link>
 
-            {/* ── Divider ── */}
-            <div className="mx-5 h-px bg-gradient-to-r from-transparent via-border-accent to-transparent" />
+            {/* ── Top Divider (edge to edge within island gutter) ── */}
+            <div className="w-full h-px bg-gradient-to-r from-transparent via-border-accent to-transparent my-1 shrink-0" />
 
             {/* ── Navigation Items (Courses & Profile strictly) ── */}
-            <nav className="px-3 py-3 space-y-1.5" aria-label="Main Navigation">
+            <nav className="py-2 space-y-1" aria-label="Main Navigation">
               {desktopNavItems.map((item, i) => {
                 const active = isRouteActive(item.key);
                 const Icon = item.icon;
@@ -199,7 +202,7 @@ export default function MainLayout({ children }) {
                     <Link
                       to={item.path}
                       aria-current={active ? "page" : undefined}
-                      className={`relative flex items-center gap-3 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 group focus-ring ${
+                      className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 group focus-ring ${
                         active
                           ? "text-white font-bold"
                           : "text-text-muted hover:text-white hover:bg-white/[0.03]"
@@ -229,16 +232,18 @@ export default function MainLayout({ children }) {
                         />
                       )}
 
-                      {/* Navigation Icon */}
-                      <Icon
-                        className={`relative z-10 w-[18px] h-[18px] shrink-0 transition-colors duration-200 ${
-                          active
-                            ? isCourses
-                              ? "text-brand-mint"
-                              : "text-white"
-                            : "text-text-faint group-hover:text-text-muted"
-                        }`}
-                      />
+                      {/* Navigation Icon in fixed 36px column to align with logo & avatar */}
+                      <div className="w-9 h-9 shrink-0 flex items-center justify-center relative z-10">
+                        <Icon
+                          className={`w-[18px] h-[18px] transition-colors duration-200 ${
+                            active
+                              ? isCourses
+                                ? "text-brand-mint"
+                                : "text-white"
+                              : "text-text-faint group-hover:text-text-muted"
+                          }`}
+                        />
+                      </div>
 
                       {/* Navigation Label */}
                       <span className="relative z-10">{item.label}</span>
@@ -254,22 +259,23 @@ export default function MainLayout({ children }) {
             </nav>
           </div>
 
-          {/* ── Signature Leaderboard Capsule Card ── */}
-          <div className="flex-1 flex flex-col justify-center px-1 overflow-y-auto no-scrollbar">
-            <LeaderboardSidebarCard />
-          </div>
+          {/* ── Flexible Spacer: absorbs all extra vertical height ── */}
+          <div className="flex-1 min-h-[16px]" />
 
-          {/* Bottom section: Divider + User Card */}
-          <div className="shrink-0">
-            {/* ── Divider ── */}
-            <div className="mx-5 h-px bg-gradient-to-r from-transparent via-border-accent to-transparent" />
+          {/* ── Bottom Section: Leaderboard Card + Divider + User Identity ── */}
+          <div className="shrink-0 mt-auto flex flex-col pb-2">
+            {/* Signature Leaderboard Card */}
+            <LeaderboardSidebarCard />
+
+            {/* ── Bottom Divider (edge to edge within island gutter) ── */}
+            <div className="w-full h-px bg-gradient-to-r from-transparent via-border-accent to-transparent my-2" />
 
             {/* ── User Card ── */}
             <Link
               to="/profile"
-              className="p-3 flex items-center gap-3 select-none hover:bg-white/[0.04] transition-colors rounded-xl mx-2 my-1.5 group focus-ring"
+              className="px-3 py-2 flex items-center gap-3 select-none hover:bg-white/[0.04] transition-colors rounded-xl group focus-ring w-full"
             >
-              <div className="relative shrink-0">
+              <div className="relative w-9 h-9 shrink-0">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-mint/20 to-brand-navy/40 border border-brand-mint/25 flex items-center justify-center overflow-hidden">
                   {avatarUrl ? (
                     <img
@@ -284,7 +290,7 @@ export default function MainLayout({ children }) {
                   )}
                 </div>
                 {/* Online indicator */}
-                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-success border-2 border-bg-surface" />
+                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-success border-2 border-bg-surface" />
               </div>
 
               <div className="min-w-0 flex-1">
