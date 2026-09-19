@@ -18,6 +18,7 @@ const activityIconMap = {
   course_completed: Award,
   watch_minutes: Clock,
   profile_completion: Target,
+  profile_milestone: Sparkles,
 };
 
 export default function MyPoints() {

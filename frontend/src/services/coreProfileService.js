@@ -2,13 +2,13 @@ import api from "./api";
 
 /**
  * Dedicated service abstraction for Core Profile APIs.
- * Encapsulates personal account profile operations, avatar media management,
- * and student username identity workflows.
+ * Encapsulates personal student account operations, background banner,
+ * experience, education, certifications, recommendations, and public profile workflows.
  */
 export const coreProfileService = {
   /**
-   * Fetches the current authenticated user's profile, including gamification telemetry
-   * and time-limited pre-signed S3 avatar URL.
+   * Fetches current authenticated user profile with authoritative completion metrics,
+   * signed avatar, signed background banner, and gamification stats.
    */
   getMyProfile: async () => {
     const response = await api.get("/profile/me");
@@ -16,10 +16,8 @@ export const coreProfileService = {
   },
 
   /**
-   * Updates core profile fields (name, bio, skills).
-   * Automatically recalculates profile completion and awards milestone XP on the backend.
-   *
-   * @param {{ name?: string, bio?: string, skills?: string[] }} data
+   * Updates core profile fields (name, headline, currentRole, location, industry, bio, skills).
+   * Automatically triggers authoritative milestone evaluation on the backend.
    */
   updateMyProfile: async (data) => {
     const response = await api.patch("/profile/update", data);
@@ -27,11 +25,7 @@ export const coreProfileService = {
   },
 
   /**
-   * Uploads a new avatar image file (max 5MB, JPG/PNG/WebP).
-   * Replaces the avatar in S3, triggers garbage collection of old avatar,
-   * and returns the new signed URL.
-   *
-   * @param {File} file
+   * Uploads avatar image file (max 5MB, JPG/PNG/WebP).
    */
   uploadAvatar: async (file) => {
     const formData = new FormData();
@@ -43,18 +37,124 @@ export const coreProfileService = {
   },
 
   /**
-   * Retrieves username status, claim state, and 14-day change cooldown information.
+   * Uploads custom background cover banner (max 5MB, JPG/PNG/WebP).
    */
+  uploadBackground: async (file) => {
+    const formData = new FormData();
+    formData.append("background", file);
+    const response = await api.post("/profile/background", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  },
+
+  /**
+   * Removes custom background cover banner.
+   */
+  removeBackground: async () => {
+    const response = await api.delete("/profile/background");
+    return response.data;
+  },
+
+  // =========================================================================
+  // EXPERIENCE SUBDOCUMENT CRUD
+  // =========================================================================
+
+  addExperience: async (data) => {
+    const response = await api.post("/profile/experience", data);
+    return response.data;
+  },
+
+  updateExperience: async (id, data) => {
+    const response = await api.put(`/profile/experience/${id}`, data);
+    return response.data;
+  },
+
+  deleteExperience: async (id) => {
+    const response = await api.delete(`/profile/experience/${id}`);
+    return response.data;
+  },
+
+  // =========================================================================
+  // EDUCATION SUBDOCUMENT CRUD
+  // =========================================================================
+
+  addEducation: async (data) => {
+    const response = await api.post("/profile/education", data);
+    return response.data;
+  },
+
+  updateEducation: async (id, data) => {
+    const response = await api.put(`/profile/education/${id}`, data);
+    return response.data;
+  },
+
+  deleteEducation: async (id) => {
+    const response = await api.delete(`/profile/education/${id}`);
+    return response.data;
+  },
+
+  // =========================================================================
+  // CERTIFICATIONS SUBDOCUMENT CRUD
+  // =========================================================================
+
+  addCertification: async (data) => {
+    const response = await api.post("/profile/certifications", data);
+    return response.data;
+  },
+
+  updateCertification: async (id, data) => {
+    const response = await api.put(`/profile/certifications/${id}`, data);
+    return response.data;
+  },
+
+  deleteCertification: async (id) => {
+    const response = await api.delete(`/profile/certifications/${id}`);
+    return response.data;
+  },
+
+  // =========================================================================
+  // PUBLIC PROFILE PUBLISH STATE
+  // =========================================================================
+
+  setPublicProfilePublishState: async (published) => {
+    const response = await api.post("/profile/public/publish", { published });
+    return response.data;
+  },
+
+  // =========================================================================
+  // RECOMMENDATIONS
+  // =========================================================================
+
+  getRecommendations: async () => {
+    const response = await api.get("/profile/recommendations");
+    return response.data;
+  },
+
+  submitRecommendation: async (data) => {
+    const response = await api.post("/profile/recommendations", data);
+    return response.data;
+  },
+
+  updateRecommendationStatus: async (id, status) => {
+    const response = await api.patch(`/profile/recommendations/${id}/status`, { status });
+    return response.data;
+  },
+
+  deleteRecommendation: async (id) => {
+    const response = await api.delete(`/profile/recommendations/${id}`);
+    return response.data;
+  },
+
+  // =========================================================================
+  // USERNAME IDENTITY
+  // =========================================================================
+
   getUsernameStatus: async () => {
     const response = await api.get("/profile/username/status");
     return response.data;
   },
 
-  /**
-   * Checks candidate username validity and real-time availability.
-   *
-   * @param {string} username
-   */
   checkUsernameAvailability: async (username) => {
     const response = await api.get("/profile/username/check", {
       params: { username },
@@ -62,32 +162,16 @@ export const coreProfileService = {
     return response.data;
   },
 
-  /**
-   * Initial claim of student handle for new or unverified users.
-   *
-   * @param {string} username
-   */
   claimUsername: async (username) => {
     const response = await api.post("/profile/username/claim", { username });
     return response.data;
   },
 
-  /**
-   * Changes an existing claimed username (enforcing 14-day cooldown and uniqueness).
-   *
-   * @param {string} username
-   */
   changeUsername: async (username) => {
     const response = await api.patch("/profile/username", { username });
     return response.data;
   },
 
-  /**
-   * Resolves a public student profile by handle (/profile/u/:username)
-   * returning public fields only.
-   *
-   * @param {string} username
-   */
   getPublicProfile: async (username) => {
     const response = await api.get(`/profile/u/${encodeURIComponent(username)}`);
     return response.data;

@@ -14,6 +14,25 @@ export const PROFILE_COMPLETION_REWARDS = [
   { milestone: 50, points: 20 },
 ];
 
+export const PROFILE_MILESTONES = {
+  PROFILE_PHOTO_COMPLETED: { id: 'PROFILE_PHOTO_COMPLETED', points: 15, label: 'Profile Photo Added' },
+  PROFILE_BACKGROUND_COMPLETED: { id: 'PROFILE_BACKGROUND_COMPLETED', points: 10, label: 'Background Image Added' },
+  PROFILE_HEADLINE_COMPLETED: { id: 'PROFILE_HEADLINE_COMPLETED', points: 10, label: 'Headline Added' },
+  PROFILE_ROLE_COMPLETED: { id: 'PROFILE_ROLE_COMPLETED', points: 5, label: 'Current Role Added' },
+  PROFILE_LOCATION_COMPLETED: { id: 'PROFILE_LOCATION_COMPLETED', points: 5, label: 'Location Added' },
+  PROFILE_INDUSTRY_COMPLETED: { id: 'PROFILE_INDUSTRY_COMPLETED', points: 5, label: 'Industry Added' },
+  PROFILE_ABOUT_COMPLETED: { id: 'PROFILE_ABOUT_COMPLETED', points: 15, label: 'About Story Added' },
+  PROFILE_EXPERIENCE_COMPLETED: { id: 'PROFILE_EXPERIENCE_COMPLETED', points: 20, label: 'First Experience Added' },
+  PROFILE_EDUCATION_COMPLETED: { id: 'PROFILE_EDUCATION_COMPLETED', points: 20, label: 'First Education Added' },
+  PROFILE_CERTIFICATION_COMPLETED: { id: 'PROFILE_CERTIFICATION_COMPLETED', points: 15, label: 'First Certification Added' },
+  PROFILE_SKILLS_COMPLETED: { id: 'PROFILE_SKILLS_COMPLETED', points: 15, label: 'Skills Milestone (3+ Skills)' },
+  PUBLIC_PROFILE_SETUP_COMPLETED: { id: 'PUBLIC_PROFILE_SETUP_COMPLETED', points: 30, label: 'Public Profile Setup' },
+  PUBLIC_PROFILE_PUBLISHED: { id: 'PUBLIC_PROFILE_PUBLISHED', points: 20, label: 'Public Profile Published' },
+  PROFILE_COMPLETION_50: { id: 'PROFILE_COMPLETION_50', points: 15, label: '50% Profile Completion' },
+  PROFILE_COMPLETION_75: { id: 'PROFILE_COMPLETION_75', points: 20, label: '75% Profile Completion' },
+  PROFILE_COMPLETION_100: { id: 'PROFILE_COMPLETION_100', points: 50, label: '100% Profile Completion' },
+} as const;
+
 export function calculateLevel(points = 0) {
   return LEVEL_THRESHOLDS.find((item) => points >= item.points)?.level || 1;
 }
@@ -42,24 +61,377 @@ export function calculateRank(points = 0) {
   return 'Beginner';
 }
 
-export function calculateProfileCompletion(user: any) {
-  const fields = [
-    user?.name,
-    user?.email,
-    user?.avatar,
-    user?.bio,
-    Array.isArray(user?.skills) && user.skills.length > 0,
+export function calculateAuthoritativeProfileCompletion(user: any) {
+  const hasName = Boolean(user?.name && user.name.trim().length > 0);
+  const hasPhoto = Boolean(user?.avatar && user.avatar.trim().length > 0);
+  const hasHeadline = Boolean(user?.headline && user.headline.trim().length > 0);
+  const hasRoleOrLocationOrIndustry = Boolean(
+    (user?.currentRole && user.currentRole.trim().length > 0) ||
+    (user?.location && user.location.trim().length > 0) ||
+    (user?.industry && user.industry.trim().length > 0)
+  );
+  const hasAbout = Boolean(user?.bio && user.bio.trim().length >= 20);
+  const hasSkills = Array.isArray(user?.skills) && user.skills.length >= 3;
+  const hasEducation = Array.isArray(user?.education) && user.education.length > 0;
+  const hasExperienceOrCertOrPortfolio = Boolean(
+    (Array.isArray(user?.experience) && user.experience.length > 0) ||
+    (Array.isArray(user?.certifications) && user.certifications.length > 0) ||
+    (user?.backgroundImage && Array.isArray(user?.skills) && user.skills.length >= 5)
+  );
+
+  let score = 0;
+  if (hasName) score += 10;
+  if (hasPhoto) score += 15;
+  if (hasHeadline) score += 10;
+  if (hasRoleOrLocationOrIndustry) score += 10;
+  if (hasAbout) score += 15;
+  if (hasSkills) score += 15;
+  if (hasEducation) score += 15;
+  if (hasExperienceOrCertOrPortfolio) score += 10;
+
+  const completionPercent = Math.min(100, Math.max(0, score));
+
+  const rewardedMilestones = Array.isArray(user?.gamification?.rewardedMilestones)
+    ? user.gamification.rewardedMilestones
+    : [];
+
+  const completedMilestones = [...rewardedMilestones];
+
+  let potentialXp = 0;
+  let earnedProfileXp = 0;
+  const remainingMilestones: Array<{
+    id: string;
+    title: string;
+    description: string;
+    xp: number;
+    category: string;
+    targetSection: string;
+    actionLabel: string;
+  }> = [];
+
+  const milestoneCatalog = [
+    {
+      id: 'PROFILE_PHOTO_COMPLETED',
+      title: 'Add a profile photo',
+      description: 'Make your identity recognizable',
+      xp: PROFILE_MILESTONES.PROFILE_PHOTO_COMPLETED.points,
+      category: 'IDENTITY',
+      targetSection: 'introduction',
+      actionLabel: 'Add Photo',
+      done: hasPhoto,
+    },
+    {
+      id: 'PROFILE_HEADLINE_COMPLETED',
+      title: 'Add your headline',
+      description: 'Define who you are in one crisp sentence',
+      xp: PROFILE_MILESTONES.PROFILE_HEADLINE_COMPLETED.points,
+      category: 'INTRODUCTION',
+      targetSection: 'introduction',
+      actionLabel: 'Add Headline',
+      done: hasHeadline,
+    },
+    {
+      id: 'PROFILE_ABOUT_COMPLETED',
+      title: 'Write your About',
+      description: 'Tell people what you are learning, building, or working toward',
+      xp: PROFILE_MILESTONES.PROFILE_ABOUT_COMPLETED.points,
+      category: 'ABOUT',
+      targetSection: 'about',
+      actionLabel: 'Add About',
+      done: hasAbout,
+    },
+    {
+      id: 'PROFILE_SKILLS_COMPLETED',
+      title: 'Add 3+ skills',
+      description: 'Showcase technologies and competencies you are developing',
+      xp: PROFILE_MILESTONES.PROFILE_SKILLS_COMPLETED.points,
+      category: 'SKILLS',
+      targetSection: 'skills',
+      actionLabel: 'Add Skills',
+      done: hasSkills,
+    },
+    {
+      id: 'PROFILE_EDUCATION_COMPLETED',
+      title: 'Add your education',
+      description: 'Show your learning journey and studies',
+      xp: PROFILE_MILESTONES.PROFILE_EDUCATION_COMPLETED.points,
+      category: 'EDUCATION',
+      targetSection: 'education',
+      actionLabel: 'Add Education',
+      done: hasEducation,
+    },
+    {
+      id: 'PROFILE_BACKGROUND_COMPLETED',
+      title: 'Add a cover image',
+      description: 'Personalize your profile header banner',
+      xp: PROFILE_MILESTONES.PROFILE_BACKGROUND_COMPLETED.points,
+      category: 'IDENTITY',
+      targetSection: 'introduction',
+      actionLabel: 'Add Cover',
+      done: Boolean(user?.backgroundImage),
+    },
+    {
+      id: 'PROFILE_ROLE_COMPLETED',
+      title: 'Add your current role',
+      description: 'Student, Developer, Designer, or Enthusiast',
+      xp: PROFILE_MILESTONES.PROFILE_ROLE_COMPLETED.points,
+      category: 'INTRODUCTION',
+      targetSection: 'introduction',
+      actionLabel: 'Add Role',
+      done: Boolean(user?.currentRole),
+    },
+    {
+      id: 'PROFILE_LOCATION_COMPLETED',
+      title: 'Add your location',
+      description: 'Share your city or region',
+      xp: PROFILE_MILESTONES.PROFILE_LOCATION_COMPLETED.points,
+      category: 'INTRODUCTION',
+      targetSection: 'introduction',
+      actionLabel: 'Add Location',
+      done: Boolean(user?.location),
+    },
+    {
+      id: 'PROFILE_INDUSTRY_COMPLETED',
+      title: 'Add industry focus',
+      description: 'Select your field of interest or study',
+      xp: PROFILE_MILESTONES.PROFILE_INDUSTRY_COMPLETED.points,
+      category: 'INTRODUCTION',
+      targetSection: 'introduction',
+      actionLabel: 'Add Industry',
+      done: Boolean(user?.industry),
+    },
+    {
+      id: 'PROFILE_EXPERIENCE_COMPLETED',
+      title: 'Add experience or project',
+      description: 'Work, internships, volunteering, leadership, or personal projects',
+      xp: PROFILE_MILESTONES.PROFILE_EXPERIENCE_COMPLETED.points,
+      category: 'EXPERIENCE',
+      targetSection: 'experience',
+      actionLabel: 'Add Experience',
+      done: Array.isArray(user?.experience) && user.experience.length > 0,
+    },
+    {
+      id: 'PROFILE_CERTIFICATION_COMPLETED',
+      title: 'Add certification',
+      description: 'Highlight your verified licenses or certificates',
+      xp: PROFILE_MILESTONES.PROFILE_CERTIFICATION_COMPLETED.points,
+      category: 'CERTIFICATIONS',
+      targetSection: 'certifications',
+      actionLabel: 'Add Certificate',
+      done: Array.isArray(user?.certifications) && user.certifications.length > 0,
+    },
+    {
+      id: 'PUBLIC_PROFILE_SETUP_COMPLETED',
+      title: 'Set up Public Profile',
+      description: 'Ensure photo, headline, about, and skills are ready',
+      xp: PROFILE_MILESTONES.PUBLIC_PROFILE_SETUP_COMPLETED.points,
+      category: 'PUBLIC_PROFILE',
+      targetSection: 'public-profile',
+      actionLabel: 'Setup Public Profile',
+      done: Boolean(hasPhoto && hasHeadline && hasAbout && hasSkills && user?.username),
+    },
+    {
+      id: 'PUBLIC_PROFILE_PUBLISHED',
+      title: 'Publish Public Profile',
+      description: 'Make your student profile live and shareable',
+      xp: PROFILE_MILESTONES.PUBLIC_PROFILE_PUBLISHED.points,
+      category: 'PUBLIC_PROFILE',
+      targetSection: 'public-profile',
+      actionLabel: 'Publish Profile',
+      done: Boolean(user?.publicProfilePublished),
+    },
+    {
+      id: 'PROFILE_COMPLETION_50',
+      title: 'Reach 50% Profile Strength',
+      description: 'Unlock the halfway milestone',
+      xp: PROFILE_MILESTONES.PROFILE_COMPLETION_50.points,
+      category: 'MILESTONE',
+      targetSection: 'introduction',
+      actionLabel: 'Continue Profile',
+      done: completionPercent >= 50,
+    },
+    {
+      id: 'PROFILE_COMPLETION_75',
+      title: 'Reach 75% Profile Strength',
+      description: 'Unlock the advanced profile milestone',
+      xp: PROFILE_MILESTONES.PROFILE_COMPLETION_75.points,
+      category: 'MILESTONE',
+      targetSection: 'introduction',
+      actionLabel: 'Continue Profile',
+      done: completionPercent >= 75,
+    },
+    {
+      id: 'PROFILE_COMPLETION_100',
+      title: 'Reach 100% Profile Strength',
+      description: 'Complete your full professional identity',
+      xp: PROFILE_MILESTONES.PROFILE_COMPLETION_100.points,
+      category: 'MILESTONE',
+      targetSection: 'introduction',
+      actionLabel: 'Complete Profile',
+      done: completionPercent >= 100,
+    },
   ];
 
-  const completedFields = fields.filter((field) => {
-    if (typeof field === 'string') {
-      return field.trim().length > 0;
+  for (const item of milestoneCatalog) {
+    if (rewardedMilestones.includes(item.id)) {
+      earnedProfileXp += item.xp;
+    } else {
+      potentialXp += item.xp;
+      remainingMilestones.push({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        xp: item.xp,
+        category: item.category,
+        targetSection: item.targetSection,
+        actionLabel: item.actionLabel,
+      });
     }
+  }
 
-    return Boolean(field);
-  }).length;
+  const nextBestActions = milestoneCatalog
+    .filter((item) => !item.done && !rewardedMilestones.includes(item.id))
+    .slice(0, 3)
+    .map((item) => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      xp: item.xp,
+      category: item.category,
+      targetSection: item.targetSection,
+      actionLabel: item.actionLabel,
+    }));
 
-  return Math.round((completedFields / fields.length) * 100);
+  const publicProfileReady = Boolean(
+    hasPhoto && hasHeadline && hasAbout && hasSkills && user?.username
+  );
+
+  return {
+    completionPercent,
+    completedMilestones,
+    remainingMilestones,
+    potentialXp,
+    earnedProfileXp,
+    publicProfileReady,
+    publicProfilePublished: Boolean(user?.publicProfilePublished),
+    nextBestActions,
+  };
+}
+
+export function calculateProfileCompletion(user: any) {
+  return calculateAuthoritativeProfileCompletion(user).completionPercent;
+}
+
+export function evaluateProfileMilestones(user: any) {
+  const gamification = ensureGamification(user);
+  if (!Array.isArray(gamification.rewardedMilestones)) {
+    gamification.rewardedMilestones = [];
+  }
+
+  const completion = calculateAuthoritativeProfileCompletion(user);
+  const newlyAwarded: Array<{ id: string; points: number; label: string }> = [];
+
+  const checks: Array<{ id: keyof typeof PROFILE_MILESTONES; condition: boolean }> = [
+    {
+      id: 'PROFILE_PHOTO_COMPLETED',
+      condition: Boolean(user.avatar && user.avatar.trim().length > 0),
+    },
+    {
+      id: 'PROFILE_BACKGROUND_COMPLETED',
+      condition: Boolean(user.backgroundImage && user.backgroundImage.trim().length > 0),
+    },
+    {
+      id: 'PROFILE_HEADLINE_COMPLETED',
+      condition: Boolean(user.headline && user.headline.trim().length > 0),
+    },
+    {
+      id: 'PROFILE_ROLE_COMPLETED',
+      condition: Boolean(user.currentRole && user.currentRole.trim().length > 0),
+    },
+    {
+      id: 'PROFILE_LOCATION_COMPLETED',
+      condition: Boolean(user.location && user.location.trim().length > 0),
+    },
+    {
+      id: 'PROFILE_INDUSTRY_COMPLETED',
+      condition: Boolean(user.industry && user.industry.trim().length > 0),
+    },
+    {
+      id: 'PROFILE_ABOUT_COMPLETED',
+      condition: Boolean(user.bio && user.bio.trim().length >= 10),
+    },
+    {
+      id: 'PROFILE_EXPERIENCE_COMPLETED',
+      condition: Array.isArray(user.experience) && user.experience.length > 0,
+    },
+    {
+      id: 'PROFILE_EDUCATION_COMPLETED',
+      condition: Array.isArray(user.education) && user.education.length > 0,
+    },
+    {
+      id: 'PROFILE_CERTIFICATION_COMPLETED',
+      condition: Array.isArray(user.certifications) && user.certifications.length > 0,
+    },
+    {
+      id: 'PROFILE_SKILLS_COMPLETED',
+      condition: Array.isArray(user.skills) && user.skills.length >= 3,
+    },
+    {
+      id: 'PUBLIC_PROFILE_SETUP_COMPLETED',
+      condition: completion.publicProfileReady,
+    },
+    {
+      id: 'PUBLIC_PROFILE_PUBLISHED',
+      condition: Boolean(user.publicProfilePublished),
+    },
+    {
+      id: 'PROFILE_COMPLETION_50',
+      condition: completion.completionPercent >= 50,
+    },
+    {
+      id: 'PROFILE_COMPLETION_75',
+      condition: completion.completionPercent >= 75,
+    },
+    {
+      id: 'PROFILE_COMPLETION_100',
+      condition: completion.completionPercent >= 100,
+    },
+  ];
+
+  for (const check of checks) {
+    if (check.condition && !gamification.rewardedMilestones.includes(check.id)) {
+      gamification.rewardedMilestones.push(check.id);
+      const milestoneDef = PROFILE_MILESTONES[check.id];
+      awardPoints(
+        user,
+        milestoneDef.points,
+        milestoneDef.label,
+        'profile_milestone',
+        { milestone: check.id },
+      );
+      newlyAwarded.push({
+        id: check.id,
+        points: milestoneDef.points,
+        label: milestoneDef.label,
+      });
+
+      // Maintain backward compatibility with profileCompletionRewards
+      if (check.id === 'PROFILE_COMPLETION_50' && !gamification.profileCompletionRewards.includes(50)) {
+        gamification.profileCompletionRewards.push(50);
+      } else if (check.id === 'PROFILE_COMPLETION_75' && !gamification.profileCompletionRewards.includes(75)) {
+        gamification.profileCompletionRewards.push(75);
+      } else if (check.id === 'PROFILE_COMPLETION_100' && !gamification.profileCompletionRewards.includes(100)) {
+        gamification.profileCompletionRewards.push(100);
+      }
+    }
+  }
+
+  gamification.profileCompletion = completion.completionPercent;
+
+  return {
+    newlyAwarded,
+    completion,
+  };
 }
 
 export function calculateStreak(activityDates: string[] = []) {

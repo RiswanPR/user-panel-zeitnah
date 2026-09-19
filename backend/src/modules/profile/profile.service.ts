@@ -8,16 +8,31 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 
 import { User, UserDocument } from '../auth/schemas/user.schema';
 import {
   CommunityProfile,
   CommunityProfileDocument,
 } from '../community/profile/schemas/community-profile.schema';
+import {
+  Recommendation,
+  RecommendationDocument,
+} from './schemas/recommendation.schema';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ExperienceDto } from './dto/experience.dto';
+import { EducationDto } from './dto/education.dto';
+import { CertificationDto } from './dto/certification.dto';
+import {
+  SubmitRecommendationDto,
+  UpdateRecommendationStatusDto,
+} from './dto/recommendation.dto';
+import { PublishProfileDto } from './dto/publish-profile.dto';
 import {
   awardPoints,
   ensureGamification,
+  evaluateProfileMilestones,
+  calculateAuthoritativeProfileCompletion,
   PROFILE_COMPLETION_REWARDS,
   syncGamificationStats,
 } from '../../common/gamification.helpers';
@@ -37,6 +52,8 @@ export class ProfileService {
     private userModel: Model<UserDocument>,
     @InjectModel(CommunityProfile.name)
     private communityProfileModel: Model<CommunityProfileDocument>,
+    @InjectModel(Recommendation.name)
+    private recommendationModel: Model<RecommendationDocument>,
     private uploadService: UploadService,
     private signedUrlService: SignedUrlService,
     private usernameService: UsernameService,
@@ -100,7 +117,6 @@ export class ProfileService {
       };
     }
 
-    // Check if the current user already owns this username
     if (currentUserId) {
       const currentUser = await this.userModel.findById(currentUserId).select('username');
       if (currentUser?.username === sanitized) {
@@ -133,7 +149,6 @@ export class ProfileService {
 
   /**
    * Performs the initial first-time username claim decision.
-   * If already claimed, delegates to changeUsername.
    */
   async claimUsername(userId: string, requestedUsername: string, ipAddress = '') {
     const user = await this.userModel.findById(userId);
@@ -141,7 +156,6 @@ export class ProfileService {
       throw new UnauthorizedException('User not found');
     }
 
-    // If username was already claimed previously, route to changeUsername
     if (user.usernameClaimed) {
       return this.changeUsername(userId, requestedUsername, ipAddress);
     }
@@ -152,7 +166,6 @@ export class ProfileService {
       throw new BadRequestException(validation.reason);
     }
 
-    // Check availability against other users
     const existing = await this.userModel.findOne({
       username: sanitized,
       _id: { $ne: user._id },
@@ -187,18 +200,15 @@ export class ProfileService {
     }
 
     if (!updatedUser) {
-      // Concurrent race condition occurred, user is now claimed
       return this.changeUsername(userId, requestedUsername, ipAddress);
     }
 
-    // Synchronize CommunityProfile username if it exists
     await this.communityProfileModel.updateOne(
       { userId: String(user._id) },
       { $set: { username: sanitized } },
       { upsert: false },
     ).catch(() => {});
 
-    // Record audit log event
     await this.auditLogsService.record({
       actor: user._id,
       action: 'USERNAME_CLAIMED',
@@ -216,6 +226,9 @@ export class ProfileService {
     const userObj = updatedUser.toObject();
     if (userObj.avatar) {
       userObj.avatar = await this.signedUrlService.generateSignedImageUrl(userObj.avatar);
+    }
+    if (userObj.backgroundImage) {
+      userObj.backgroundImage = await this.signedUrlService.generateSignedImageUrl(userObj.backgroundImage);
     }
 
     return {
@@ -242,11 +255,13 @@ export class ProfileService {
 
     const previousUsername = user.username || '';
 
-    // If handle is unchanged, return gracefully
     if (previousUsername && previousUsername.toLowerCase() === sanitized.toLowerCase()) {
       const userObj = user.toObject();
       if (userObj.avatar) {
         userObj.avatar = await this.signedUrlService.generateSignedImageUrl(userObj.avatar);
+      }
+      if (userObj.backgroundImage) {
+        userObj.backgroundImage = await this.signedUrlService.generateSignedImageUrl(userObj.backgroundImage);
       }
       return {
         success: true,
@@ -255,7 +270,6 @@ export class ProfileService {
       };
     }
 
-    // Enforce 14-day cooldown
     if (user.usernameChangedAt) {
       const elapsed = Date.now() - new Date(user.usernameChangedAt).getTime();
       if (elapsed < USERNAME_CHANGE_COOLDOWN_MS) {
@@ -270,7 +284,6 @@ export class ProfileService {
       }
     }
 
-    // Check availability against other users
     const existing = await this.userModel.findOne({
       username: sanitized,
       _id: { $ne: user._id },
@@ -313,14 +326,12 @@ export class ProfileService {
       throw new UnauthorizedException('User not found');
     }
 
-    // Synchronize CommunityProfile username if it exists
     await this.communityProfileModel.updateOne(
       { userId: String(user._id) },
       { $set: { username: sanitized } },
       { upsert: false },
     ).catch(() => {});
 
-    // Record audit log event
     await this.auditLogsService.record({
       actor: user._id,
       action: 'USERNAME_CHANGED',
@@ -340,6 +351,9 @@ export class ProfileService {
     if (userObj.avatar) {
       userObj.avatar = await this.signedUrlService.generateSignedImageUrl(userObj.avatar);
     }
+    if (userObj.backgroundImage) {
+      userObj.backgroundImage = await this.signedUrlService.generateSignedImageUrl(userObj.backgroundImage);
+    }
 
     return {
       success: true,
@@ -355,7 +369,7 @@ export class ProfileService {
     const sanitized = this.usernameService.sanitize(rawUsername);
     const user = await this.userModel
       .findOne({ username: sanitized })
-      .select('name username avatar bio skills role isVerified createdAt gamification');
+      .select('name username avatar backgroundImage headline currentRole location industry bio skills experience education certifications role isVerified createdAt gamification publicProfilePublished');
 
     if (!user) {
       throw new NotFoundException(`Student profile @${sanitized} not found.`);
@@ -365,6 +379,36 @@ export class ProfileService {
     if (userObj.avatar) {
       userObj.avatar = await this.signedUrlService.generateSignedImageUrl(userObj.avatar);
     }
+    if (userObj.backgroundImage) {
+      userObj.backgroundImage = await this.signedUrlService.generateSignedImageUrl(userObj.backgroundImage);
+    }
+
+    // Fetch approved recommendations
+    const recommendations = await this.recommendationModel
+      .find({ recipientId: String(user._id), status: 'approved' })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const signedRecommendations = await Promise.all(
+      recommendations.map(async (rec) => {
+        let authorAvatar = rec.authorAvatar || '';
+        if (authorAvatar) {
+          authorAvatar = await this.signedUrlService.generateSignedImageUrl(authorAvatar);
+        }
+        return {
+          id: rec._id,
+          authorId: rec.authorId,
+          authorName: rec.authorName,
+          authorUsername: rec.authorUsername,
+          authorAvatar,
+          authorHeadline: rec.authorHeadline,
+          authorRole: rec.authorRole,
+          relationship: rec.relationship,
+          content: rec.content,
+          createdAt: rec.createdAt,
+        };
+      }),
+    );
 
     return {
       user: {
@@ -372,8 +416,18 @@ export class ProfileService {
         name: userObj.name,
         username: userObj.username,
         avatar: userObj.avatar,
-        bio: userObj.bio,
+        backgroundImage: userObj.backgroundImage || '',
+        headline: userObj.headline || '',
+        currentRole: userObj.currentRole || '',
+        location: userObj.location || '',
+        industry: userObj.industry || '',
+        bio: userObj.bio || '',
         skills: userObj.skills || [],
+        experience: userObj.experience || [],
+        education: userObj.education || [],
+        certifications: userObj.certifications || [],
+        recommendations: signedRecommendations,
+        publicProfilePublished: Boolean(userObj.publicProfilePublished),
         role: userObj.role,
         isVerified: Boolean(userObj.account_Status?.isVerified),
         createdAt: userObj.createdAt,
@@ -403,7 +457,6 @@ export class ProfileService {
       throw new UnauthorizedException('User not found');
     }
 
-    // Ensure username is present if legacy account hasn't claimed one yet
     if (!user.username) {
       const candidates = this.usernameService.generateCandidates(user.name, user.email);
       for (const cand of candidates) {
@@ -421,89 +474,84 @@ export class ProfileService {
       await user.save();
     }
 
+    const { newlyAwarded, completion } = evaluateProfileMilestones(user);
     syncGamificationStats(user);
     user.markModified('gamification');
     await user.save();
 
-    const userObj = user.toObject();
+    const userObj = user.toObject() as any;
     if (userObj.avatar) {
       userObj.avatar = await this.signedUrlService.generateSignedImageUrl(
         userObj.avatar,
       );
     }
+    if (userObj.backgroundImage) {
+      userObj.backgroundImage = await this.signedUrlService.generateSignedImageUrl(
+        userObj.backgroundImage,
+      );
+    }
+
+    const recommendationsCount = await this.recommendationModel.countDocuments({
+      recipientId: userId,
+      status: 'approved',
+    });
 
     return {
       user: userObj,
+      completion,
+      recommendationsCount,
+      newlyAwarded,
     };
   }
 
   // UPDATE PROFILE
   async updateProfile(userId: string, data: UpdateProfileDto) {
     const user = await this.userModel.findById(userId);
-
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
 
-    if (data.name !== undefined) {
-      user.name = data.name;
-    }
+    if (data.name !== undefined) user.name = data.name;
+    if (data.headline !== undefined) user.headline = data.headline;
+    if (data.currentRole !== undefined) user.currentRole = data.currentRole;
+    if (data.location !== undefined) user.location = data.location;
+    if (data.industry !== undefined) user.industry = data.industry;
+    if (data.bio !== undefined) user.bio = data.bio;
+    if (data.skills !== undefined) user.skills = data.skills;
 
-    if (data.bio !== undefined) {
-      user.bio = data.bio;
-    }
-
-    if (data.skills !== undefined) {
-      user.skills = data.skills;
-    }
-
-    const gamification = ensureGamification(user);
-    syncGamificationStats(user);
-
-    PROFILE_COMPLETION_REWARDS.forEach((reward) => {
-      if (
-        user.gamification.profileCompletion >= reward.milestone &&
-        !gamification.profileCompletionRewards.includes(reward.milestone)
-      ) {
-        gamification.profileCompletionRewards.push(reward.milestone);
-        awardPoints(
-          user,
-          reward.points,
-          `${reward.milestone}% Profile Complete`,
-          'profile_completion',
-          {
-            milestone: reward.milestone,
-          },
-        );
-      }
-    });
-
+    const { newlyAwarded, completion } = evaluateProfileMilestones(user);
     syncGamificationStats(user);
     user.markModified('gamification');
-
     await user.save();
 
-    // Synchronize shared fields to CommunityProfile if present
     await this.communityProfileModel.updateOne(
       { userId: String(user._id) },
       {
         $set: {
+          headline: user.headline || '',
           bio: user.bio || '',
           skills: user.skills || [],
         },
       },
     ).catch(() => {});
 
-    const userObj = user.toObject();
+    const userObj = user.toObject() as any;
     if (userObj.avatar) {
       userObj.avatar = await this.signedUrlService.generateSignedImageUrl(
         userObj.avatar,
+      );
+    }
+    if (userObj.backgroundImage) {
+      userObj.backgroundImage = await this.signedUrlService.generateSignedImageUrl(
+        userObj.backgroundImage,
       );
     }
 
     return {
       message: 'Profile updated successfully',
       user: userObj,
+      newlyAwarded,
+      completion,
     };
   }
 
@@ -513,23 +561,23 @@ export class ProfileService {
     if (!user) throw new UnauthorizedException('User not found');
 
     const extension = file.originalname.split('.').pop() || 'jpg';
-    const key = `profiles/${userId}-${crypto.randomUUID()}.${extension}`;
-
+    const key = `profiles/${userId}-${uuidv4()}.${extension}`;
     const oldAvatarKey = user.avatar;
 
     await this.uploadService.uploadFile(key, file.buffer, file.mimetype);
 
     user.avatar = key;
+    const { newlyAwarded, completion } = evaluateProfileMilestones(user);
+    syncGamificationStats(user);
+    user.markModified('gamification');
     await user.save();
 
-    // Clean up old avatar from storage
     if (oldAvatarKey && oldAvatarKey !== key && oldAvatarKey.startsWith('profiles/')) {
       await Promise.resolve(this.uploadService.deleteFile(oldAvatarKey)).catch(() => {});
     }
 
     const signedUrl = await this.signedUrlService.generateSignedImageUrl(key);
 
-    // Sync to community profile picture
     await this.communityProfileModel.updateOne(
       { userId: String(user._id) },
       { $set: { profilePicture: signedUrl } },
@@ -538,6 +586,522 @@ export class ProfileService {
     return {
       message: 'Avatar uploaded successfully',
       avatar: signedUrl,
+      newlyAwarded,
+      completion,
+    };
+  }
+
+  // UPLOAD BACKGROUND COVER
+  async uploadBackground(userId: string, file: Express.Multer.File) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const extension = file.originalname.split('.').pop() || 'jpg';
+    const key = `profiles/banners/${userId}-${uuidv4()}.${extension}`;
+    const oldBannerKey = user.backgroundImage;
+
+    await this.uploadService.uploadFile(key, file.buffer, file.mimetype);
+
+    user.backgroundImage = key;
+    const { newlyAwarded, completion } = evaluateProfileMilestones(user);
+    syncGamificationStats(user);
+    user.markModified('gamification');
+    await user.save();
+
+    if (oldBannerKey && oldBannerKey !== key && oldBannerKey.startsWith('profiles/banners/')) {
+      await Promise.resolve(this.uploadService.deleteFile(oldBannerKey)).catch(() => {});
+    }
+
+    const signedUrl = await this.signedUrlService.generateSignedImageUrl(key);
+
+    return {
+      message: 'Background image uploaded successfully',
+      backgroundImage: signedUrl,
+      newlyAwarded,
+      completion,
+    };
+  }
+
+  // REMOVE BACKGROUND
+  async removeBackground(userId: string) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const oldBannerKey = user.backgroundImage;
+    user.backgroundImage = '';
+    const { newlyAwarded, completion } = evaluateProfileMilestones(user);
+    syncGamificationStats(user);
+    user.markModified('gamification');
+    await user.save();
+
+    if (oldBannerKey && oldBannerKey.startsWith('profiles/banners/')) {
+      await Promise.resolve(this.uploadService.deleteFile(oldBannerKey)).catch(() => {});
+    }
+
+    return {
+      message: 'Background image removed successfully',
+      success: true,
+      completion,
+    };
+  }
+
+  // =========================================================================
+  // EXPERIENCE SUBDOCUMENT CRUD
+  // =========================================================================
+
+  async addExperience(userId: string, dto: ExperienceDto) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const start = new Date(dto.startDate);
+    const end = dto.endDate ? new Date(dto.endDate) : null;
+    if (end && end < start) {
+      throw new BadRequestException('End date cannot be before start date.');
+    }
+
+    const entry = {
+      id: uuidv4(),
+      organization: dto.organization.trim(),
+      role: dto.role.trim(),
+      employmentType: dto.employmentType || 'Full-time',
+      location: dto.location || '',
+      startDate: start,
+      endDate: dto.currentlyActive ? null : end,
+      currentlyActive: Boolean(dto.currentlyActive),
+      description: dto.description || '',
+    };
+
+    if (!Array.isArray(user.experience)) {
+      user.experience = [];
+    }
+    user.experience.unshift(entry);
+
+    const { newlyAwarded, completion } = evaluateProfileMilestones(user);
+    syncGamificationStats(user);
+    user.markModified('experience');
+    user.markModified('gamification');
+    await user.save();
+
+    return {
+      message: 'Experience added successfully',
+      experience: user.experience,
+      newlyAwarded,
+      completion,
+    };
+  }
+
+  async updateExperience(userId: string, experienceId: string, dto: ExperienceDto) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const idx = (user.experience || []).findIndex((e) => e.id === experienceId);
+    if (idx === -1) throw new NotFoundException('Experience record not found');
+
+    const start = new Date(dto.startDate);
+    const end = dto.endDate ? new Date(dto.endDate) : null;
+    if (end && end < start) {
+      throw new BadRequestException('End date cannot be before start date.');
+    }
+
+    user.experience[idx] = {
+      ...user.experience[idx],
+      organization: dto.organization.trim(),
+      role: dto.role.trim(),
+      employmentType: dto.employmentType || 'Full-time',
+      location: dto.location || '',
+      startDate: start,
+      endDate: dto.currentlyActive ? null : end,
+      currentlyActive: Boolean(dto.currentlyActive),
+      description: dto.description || '',
+    };
+
+    const { newlyAwarded, completion } = evaluateProfileMilestones(user);
+    syncGamificationStats(user);
+    user.markModified('experience');
+    user.markModified('gamification');
+    await user.save();
+
+    return {
+      message: 'Experience updated successfully',
+      experience: user.experience,
+      newlyAwarded,
+      completion,
+    };
+  }
+
+  async deleteExperience(userId: string, experienceId: string) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    user.experience = (user.experience || []).filter((e) => e.id !== experienceId);
+    const { newlyAwarded, completion } = evaluateProfileMilestones(user);
+    syncGamificationStats(user);
+    user.markModified('experience');
+    user.markModified('gamification');
+    await user.save();
+
+    return {
+      message: 'Experience deleted successfully',
+      experience: user.experience,
+      completion,
+    };
+  }
+
+  // =========================================================================
+  // EDUCATION SUBDOCUMENT CRUD
+  // =========================================================================
+
+  async addEducation(userId: string, dto: EducationDto) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const start = new Date(dto.startDate);
+    const end = dto.endDate ? new Date(dto.endDate) : null;
+    if (end && end < start) {
+      throw new BadRequestException('End date cannot be before start date.');
+    }
+
+    const entry = {
+      id: uuidv4(),
+      institution: dto.institution.trim(),
+      qualification: dto.qualification.trim(),
+      fieldOfStudy: dto.fieldOfStudy || '',
+      startDate: start,
+      endDate: dto.currentlyStudying ? null : end,
+      currentlyStudying: Boolean(dto.currentlyStudying),
+      description: dto.description || '',
+    };
+
+    if (!Array.isArray(user.education)) {
+      user.education = [];
+    }
+    user.education.unshift(entry);
+
+    const { newlyAwarded, completion } = evaluateProfileMilestones(user);
+    syncGamificationStats(user);
+    user.markModified('education');
+    user.markModified('gamification');
+    await user.save();
+
+    return {
+      message: 'Education added successfully',
+      education: user.education,
+      newlyAwarded,
+      completion,
+    };
+  }
+
+  async updateEducation(userId: string, educationId: string, dto: EducationDto) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const idx = (user.education || []).findIndex((e) => e.id === educationId);
+    if (idx === -1) throw new NotFoundException('Education record not found');
+
+    const start = new Date(dto.startDate);
+    const end = dto.endDate ? new Date(dto.endDate) : null;
+    if (end && end < start) {
+      throw new BadRequestException('End date cannot be before start date.');
+    }
+
+    user.education[idx] = {
+      ...user.education[idx],
+      institution: dto.institution.trim(),
+      qualification: dto.qualification.trim(),
+      fieldOfStudy: dto.fieldOfStudy || '',
+      startDate: start,
+      endDate: dto.currentlyStudying ? null : end,
+      currentlyStudying: Boolean(dto.currentlyStudying),
+      description: dto.description || '',
+    };
+
+    const { newlyAwarded, completion } = evaluateProfileMilestones(user);
+    syncGamificationStats(user);
+    user.markModified('education');
+    user.markModified('gamification');
+    await user.save();
+
+    return {
+      message: 'Education updated successfully',
+      education: user.education,
+      newlyAwarded,
+      completion,
+    };
+  }
+
+  async deleteEducation(userId: string, educationId: string) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    user.education = (user.education || []).filter((e) => e.id !== educationId);
+    const { newlyAwarded, completion } = evaluateProfileMilestones(user);
+    syncGamificationStats(user);
+    user.markModified('education');
+    user.markModified('gamification');
+    await user.save();
+
+    return {
+      message: 'Education deleted successfully',
+      education: user.education,
+      completion,
+    };
+  }
+
+  // =========================================================================
+  // CERTIFICATIONS SUBDOCUMENT CRUD
+  // =========================================================================
+
+  async addCertification(userId: string, dto: CertificationDto) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const issue = new Date(dto.issueDate);
+    const exp = dto.expirationDate ? new Date(dto.expirationDate) : null;
+    if (exp && exp < issue) {
+      throw new BadRequestException('Expiration date cannot be before issue date.');
+    }
+
+    const entry = {
+      id: uuidv4(),
+      name: dto.name.trim(),
+      issuer: dto.issuer.trim(),
+      issueDate: issue,
+      expirationDate: exp,
+      credentialId: dto.credentialId || '',
+      credentialUrl: dto.credentialUrl || '',
+    };
+
+    if (!Array.isArray(user.certifications)) {
+      user.certifications = [];
+    }
+    user.certifications.unshift(entry);
+
+    const { newlyAwarded, completion } = evaluateProfileMilestones(user);
+    syncGamificationStats(user);
+    user.markModified('certifications');
+    user.markModified('gamification');
+    await user.save();
+
+    return {
+      message: 'Certification added successfully',
+      certifications: user.certifications,
+      newlyAwarded,
+      completion,
+    };
+  }
+
+  async updateCertification(userId: string, certId: string, dto: CertificationDto) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const idx = (user.certifications || []).findIndex((c) => c.id === certId);
+    if (idx === -1) throw new NotFoundException('Certification record not found');
+
+    const issue = new Date(dto.issueDate);
+    const exp = dto.expirationDate ? new Date(dto.expirationDate) : null;
+    if (exp && exp < issue) {
+      throw new BadRequestException('Expiration date cannot be before issue date.');
+    }
+
+    user.certifications[idx] = {
+      ...user.certifications[idx],
+      name: dto.name.trim(),
+      issuer: dto.issuer.trim(),
+      issueDate: issue,
+      expirationDate: exp,
+      credentialId: dto.credentialId || '',
+      credentialUrl: dto.credentialUrl || '',
+    };
+
+    const { newlyAwarded, completion } = evaluateProfileMilestones(user);
+    syncGamificationStats(user);
+    user.markModified('certifications');
+    user.markModified('gamification');
+    await user.save();
+
+    return {
+      message: 'Certification updated successfully',
+      certifications: user.certifications,
+      newlyAwarded,
+      completion,
+    };
+  }
+
+  async deleteCertification(userId: string, certId: string) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    user.certifications = (user.certifications || []).filter((c) => c.id !== certId);
+    const { newlyAwarded, completion } = evaluateProfileMilestones(user);
+    syncGamificationStats(user);
+    user.markModified('certifications');
+    user.markModified('gamification');
+    await user.save();
+
+    return {
+      message: 'Certification deleted successfully',
+      certifications: user.certifications,
+      completion,
+    };
+  }
+
+  // =========================================================================
+  // PUBLIC PROFILE PUBLISH STATE
+  // =========================================================================
+
+  async setPublicProfilePublishState(userId: string, published: boolean) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    if (published) {
+      const completion = calculateAuthoritativeProfileCompletion(user);
+      if (!completion.publicProfileReady) {
+        throw new BadRequestException(
+          'Please complete required items (photo, headline, about, 3+ skills, and username) before publishing.',
+        );
+      }
+    }
+
+    user.publicProfilePublished = Boolean(published);
+    const { newlyAwarded, completion } = evaluateProfileMilestones(user);
+    syncGamificationStats(user);
+    user.markModified('gamification');
+    await user.save();
+
+    return {
+      message: published ? 'Public profile published successfully.' : 'Public profile is now private.',
+      published: user.publicProfilePublished,
+      newlyAwarded,
+      completion,
+    };
+  }
+
+  // =========================================================================
+  // RECOMMENDATIONS
+  // =========================================================================
+
+  async getRecommendations(userId: string) {
+    const recommendations = await this.recommendationModel
+      .find({ recipientId: userId })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const signed = await Promise.all(
+      recommendations.map(async (rec) => {
+        let authorAvatar = rec.authorAvatar || '';
+        if (authorAvatar) {
+          authorAvatar = await this.signedUrlService.generateSignedImageUrl(authorAvatar);
+        }
+        return {
+          id: rec._id,
+          recipientId: rec.recipientId,
+          authorId: rec.authorId,
+          authorName: rec.authorName,
+          authorUsername: rec.authorUsername,
+          authorAvatar,
+          authorHeadline: rec.authorHeadline,
+          authorRole: rec.authorRole,
+          relationship: rec.relationship,
+          content: rec.content,
+          status: rec.status,
+          createdAt: rec.createdAt,
+        };
+      }),
+    );
+
+    return { recommendations: signed };
+  }
+
+  async submitRecommendation(authorId: string, dto: SubmitRecommendationDto) {
+    if (authorId === dto.recipientId) {
+      throw new BadRequestException('You cannot write a recommendation for yourself.');
+    }
+
+    const recipient = await this.userModel.findById(dto.recipientId);
+    if (!recipient) {
+      throw new NotFoundException('Recipient student not found.');
+    }
+
+    const author = await this.userModel.findById(authorId);
+    if (!author) {
+      throw new UnauthorizedException('Author not found.');
+    }
+
+    const sanitizedContent = (dto.content || '').trim().replace(/<[^>]*>?/gm, '');
+    if (sanitizedContent.length < 20 || sanitizedContent.length > 1000) {
+      throw new BadRequestException('Recommendation must be between 20 and 1000 characters.');
+    }
+
+    const existing = await this.recommendationModel.findOne({
+      authorId,
+      recipientId: dto.recipientId,
+    });
+
+    if (existing) {
+      existing.content = sanitizedContent;
+      existing.relationship = dto.relationship;
+      existing.authorName = author.name || 'Anonymous Student';
+      existing.authorUsername = author.username || '';
+      existing.authorAvatar = author.avatar || '';
+      existing.authorHeadline = author.headline || '';
+      existing.authorRole = author.role || 'student';
+      existing.status = 'approved';
+      await existing.save();
+      return {
+        message: 'Recommendation updated successfully.',
+        recommendation: existing,
+      };
+    }
+
+    const recommendation = await this.recommendationModel.create({
+      recipientId: dto.recipientId,
+      authorId,
+      authorName: author.name || 'Anonymous Student',
+      authorUsername: author.username || '',
+      authorAvatar: author.avatar || '',
+      authorHeadline: author.headline || '',
+      authorRole: author.role || 'student',
+      relationship: dto.relationship,
+      content: sanitizedContent,
+      status: 'approved',
+    });
+
+    return {
+      message: 'Recommendation submitted successfully.',
+      recommendation,
+    };
+  }
+
+  async updateRecommendationStatus(userId: string, recommendationId: string, status: string) {
+    const rec = await this.recommendationModel.findById(recommendationId);
+    if (!rec) throw new NotFoundException('Recommendation not found');
+
+    if (rec.recipientId !== userId) {
+      throw new UnauthorizedException('You can only manage recommendations sent to you.');
+    }
+
+    rec.status = status;
+    await rec.save();
+
+    return {
+      message: `Recommendation is now ${status}.`,
+      recommendation: rec,
+    };
+  }
+
+  async deleteRecommendation(userId: string, recommendationId: string) {
+    const rec = await this.recommendationModel.findById(recommendationId);
+    if (!rec) throw new NotFoundException('Recommendation not found');
+
+    if (rec.recipientId !== userId && rec.authorId !== userId) {
+      throw new UnauthorizedException('Not authorized to delete this recommendation.');
+    }
+
+    await this.recommendationModel.findByIdAndDelete(recommendationId);
+
+    return {
+      message: 'Recommendation removed successfully.',
+      success: true,
     };
   }
 }

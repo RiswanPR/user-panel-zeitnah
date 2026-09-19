@@ -83,7 +83,7 @@ export default function ProfileNav({ className = "" }) {
       <div className="gradient-line-top" />
 
       {/* Horizontally scrollable container on mobile, flex on desktop */}
-      <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-0.5 px-0.5 scroll-smooth">
+      <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-0.5 px-0.5 scroll-smooth touch-pan-x overscroll-x-contain">
         {PROFILE_TABS.map((tab) => {
           const active = isTabActive(tab.path);
           const Icon = tab.icon;
@@ -92,7 +92,7 @@ export default function ProfileNav({ className = "" }) {
             <Link
               key={tab.path}
               to={tab.path}
-              className={`relative flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-[13px] font-semibold tracking-wide whitespace-nowrap shrink-0 transition-all duration-200 cursor-pointer ${
+              className={`relative flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-[13px] font-semibold tracking-wide whitespace-nowrap shrink-0 transition-all duration-200 cursor-pointer min-h-[40px] ${
                 active
                   ? "text-white font-bold"
                   : "text-text-muted hover:text-text-secondary hover:bg-white/[0.03]"

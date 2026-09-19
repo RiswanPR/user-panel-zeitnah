@@ -8,18 +8,27 @@ import {
   Param,
   UseGuards,
   Post,
+  Put,
+  Delete,
   UseInterceptors,
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
-import type { Request } from 'express';
 
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { ProfileService } from './profile.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ClaimUsernameDto } from './dto/claim-username.dto';
+import { ExperienceDto } from './dto/experience.dto';
+import { EducationDto } from './dto/education.dto';
+import { CertificationDto } from './dto/certification.dto';
+import {
+  SubmitRecommendationDto,
+  UpdateRecommendationStatusDto,
+} from './dto/recommendation.dto';
+import { PublishProfileDto } from './dto/publish-profile.dto';
 
 @Controller('profile')
 export class ProfileController {
@@ -114,7 +123,7 @@ export class ProfileController {
   }
 
   // =========================================================================
-  // CORE PROFILE CRUD
+  // CORE PROFILE CRUD & MEDIA
   // =========================================================================
 
   // GET PROFILE
@@ -174,5 +183,179 @@ export class ProfileController {
       throw new BadRequestException('No avatar file provided');
     }
     return this.profileService.uploadAvatar(req.user.userId, file);
+  }
+
+  // UPLOAD BACKGROUND / BANNER (Secured with 5MB limit, MIME type verification, and throttling)
+  @Post('background')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({
+    default: {
+      limit: 10,
+      ttl: 60000,
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor('background', {
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) => {
+        const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowedMimes.includes(file.mimetype)) {
+          return cb(
+            new BadRequestException(
+              'Only JPG, PNG, and WebP image files are permitted for background.',
+            ),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  async uploadBackground(
+    @Req() req: any,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('No background file provided');
+    }
+    return this.profileService.uploadBackground(req.user.userId, file);
+  }
+
+  // REMOVE BACKGROUND
+  @Delete('background')
+  @UseGuards(JwtAuthGuard)
+  removeBackground(@Req() req: any) {
+    return this.profileService.removeBackground(req.user.userId);
+  }
+
+  // =========================================================================
+  // EXPERIENCE SUBDOCUMENT ENDPOINTS
+  // =========================================================================
+
+  @Post('experience')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  addExperience(@Req() req: any, @Body() body: ExperienceDto) {
+    return this.profileService.addExperience(req.user.userId, body);
+  }
+
+  @Put('experience/:id')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  updateExperience(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() body: ExperienceDto,
+  ) {
+    return this.profileService.updateExperience(req.user.userId, id, body);
+  }
+
+  @Delete('experience/:id')
+  @UseGuards(JwtAuthGuard)
+  deleteExperience(@Req() req: any, @Param('id') id: string) {
+    return this.profileService.deleteExperience(req.user.userId, id);
+  }
+
+  // =========================================================================
+  // EDUCATION SUBDOCUMENT ENDPOINTS
+  // =========================================================================
+
+  @Post('education')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  addEducation(@Req() req: any, @Body() body: EducationDto) {
+    return this.profileService.addEducation(req.user.userId, body);
+  }
+
+  @Put('education/:id')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  updateEducation(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() body: EducationDto,
+  ) {
+    return this.profileService.updateEducation(req.user.userId, id, body);
+  }
+
+  @Delete('education/:id')
+  @UseGuards(JwtAuthGuard)
+  deleteEducation(@Req() req: any, @Param('id') id: string) {
+    return this.profileService.deleteEducation(req.user.userId, id);
+  }
+
+  // =========================================================================
+  // CERTIFICATIONS SUBDOCUMENT ENDPOINTS
+  // =========================================================================
+
+  @Post('certifications')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  addCertification(@Req() req: any, @Body() body: CertificationDto) {
+    return this.profileService.addCertification(req.user.userId, body);
+  }
+
+  @Put('certifications/:id')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  updateCertification(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() body: CertificationDto,
+  ) {
+    return this.profileService.updateCertification(req.user.userId, id, body);
+  }
+
+  @Delete('certifications/:id')
+  @UseGuards(JwtAuthGuard)
+  deleteCertification(@Req() req: any, @Param('id') id: string) {
+    return this.profileService.deleteCertification(req.user.userId, id);
+  }
+
+  // =========================================================================
+  // PUBLIC PROFILE PUBLISH ENDPOINT
+  // =========================================================================
+
+  @Post('public/publish')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  setPublicProfilePublishState(@Req() req: any, @Body() body: PublishProfileDto) {
+    return this.profileService.setPublicProfilePublishState(req.user.userId, body.published);
+  }
+
+  // =========================================================================
+  // RECOMMENDATIONS ENDPOINTS
+  // =========================================================================
+
+  @Get('recommendations')
+  @UseGuards(JwtAuthGuard)
+  getRecommendations(@Req() req: any) {
+    return this.profileService.getRecommendations(req.user.userId);
+  }
+
+  @Post('recommendations')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  submitRecommendation(
+    @Req() req: any,
+    @Body() body: SubmitRecommendationDto,
+  ) {
+    return this.profileService.submitRecommendation(req.user.userId, body);
+  }
+
+  @Patch('recommendations/:id/status')
+  @UseGuards(JwtAuthGuard)
+  updateRecommendationStatus(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() body: UpdateRecommendationStatusDto,
+  ) {
+    return this.profileService.updateRecommendationStatus(req.user.userId, id, body.status);
+  }
+
+  @Delete('recommendations/:id')
+  @UseGuards(JwtAuthGuard)
+  deleteRecommendation(@Req() req: any, @Param('id') id: string) {
+    return this.profileService.deleteRecommendation(req.user.userId, id);
   }
 }

@@ -45,6 +45,7 @@ export type UserGamification = {
   rewardedClassIds: string[];
   rewardedCourseIds: string[];
   profileCompletionRewards: number[];
+  rewardedMilestones?: string[];
   activityDates: string[];
   recentActivities: UserGamificationActivity[];
 };
@@ -384,6 +385,128 @@ export class User {
   })
   avatar!: string;
 
+  // BACKGROUND / COVER IMAGE
+  @Prop({
+    default: '',
+  })
+  backgroundImage!: string;
+
+  // HEADLINE
+  @Prop({
+    default: '',
+    trim: true,
+  })
+  headline!: string;
+
+  // CURRENT ROLE
+  @Prop({
+    default: '',
+    trim: true,
+  })
+  currentRole!: string;
+
+  // LOCATION
+  @Prop({
+    default: '',
+    trim: true,
+  })
+  location!: string;
+
+  // INDUSTRY
+  @Prop({
+    default: '',
+    trim: true,
+  })
+  industry!: string;
+
+  // PUBLIC PROFILE PUBLISHED STATUS
+  @Prop({
+    default: false,
+    type: Boolean,
+  })
+  publicProfilePublished!: boolean;
+
+  // EXPERIENCE
+  @Prop({
+    type: [
+      {
+        id: { type: String, required: true },
+        organization: { type: String, required: true, trim: true },
+        role: { type: String, required: true, trim: true },
+        employmentType: { type: String, default: 'Full-time' },
+        location: { type: String, default: '' },
+        startDate: { type: Date, required: true },
+        endDate: { type: Date, default: null },
+        currentlyActive: { type: Boolean, default: false },
+        description: { type: String, default: '' },
+      },
+    ],
+    default: [],
+  })
+  experience!: Array<{
+    id: string;
+    organization: string;
+    role: string;
+    employmentType: string;
+    location: string;
+    startDate: Date;
+    endDate: Date | null;
+    currentlyActive: boolean;
+    description: string;
+  }>;
+
+  // EDUCATION
+  @Prop({
+    type: [
+      {
+        id: { type: String, required: true },
+        institution: { type: String, required: true, trim: true },
+        qualification: { type: String, required: true, trim: true },
+        fieldOfStudy: { type: String, default: '' },
+        startDate: { type: Date, required: true },
+        endDate: { type: Date, default: null },
+        currentlyStudying: { type: Boolean, default: false },
+        description: { type: String, default: '' },
+      },
+    ],
+    default: [],
+  })
+  education!: Array<{
+    id: string;
+    institution: string;
+    qualification: string;
+    fieldOfStudy: string;
+    startDate: Date;
+    endDate: Date | null;
+    currentlyStudying: boolean;
+    description: string;
+  }>;
+
+  // CERTIFICATIONS
+  @Prop({
+    type: [
+      {
+        id: { type: String, required: true },
+        name: { type: String, required: true, trim: true },
+        issuer: { type: String, required: true, trim: true },
+        issueDate: { type: Date, required: true },
+        expirationDate: { type: Date, default: null },
+        credentialId: { type: String, default: '' },
+        credentialUrl: { type: String, default: '' },
+      },
+    ],
+    default: [],
+  })
+  certifications!: Array<{
+    id: string;
+    name: string;
+    issuer: string;
+    issueDate: Date;
+    expirationDate: Date | null;
+    credentialId: string;
+    credentialUrl: string;
+  }>;
+
   // BIO
   @Prop({
     default: '',
@@ -441,6 +564,10 @@ export class User {
       },
       profileCompletionRewards: {
         type: [Number],
+        default: [],
+      },
+      rewardedMilestones: {
+        type: [String],
         default: [],
       },
       activityDates: {

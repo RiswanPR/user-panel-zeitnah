@@ -7,6 +7,10 @@ import {
   CommunityProfile,
   CommunityProfileSchema,
 } from '../community/profile/schemas/community-profile.schema';
+import {
+  Recommendation,
+  RecommendationSchema,
+} from './schemas/recommendation.schema';
 import { AwsModule } from '../../common/aws/aws.module';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 import { UsernameModule } from './services/username.module';
@@ -21,6 +25,10 @@ import { UsernameModule } from './services/username.module';
       {
         name: CommunityProfile.name,
         schema: CommunityProfileSchema,
+      },
+      {
+        name: Recommendation.name,
+        schema: RecommendationSchema,
       },
     ]),
     AwsModule,

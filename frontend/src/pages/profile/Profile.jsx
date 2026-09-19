@@ -1,18 +1,30 @@
-import { useContext, useRef, useState } from "react";
+import { useContext, useRef, useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Camera,
   CheckCircle2,
   Edit3,
   ExternalLink,
-  LogOut,
   Pencil,
   Share2,
-  User,
   AlertCircle,
   RefreshCw,
+  MapPin,
+  Briefcase,
+  Sparkles,
+  Award,
+  BookOpen,
+  GraduationCap,
+  Globe,
+  FileText,
+  Check,
+  Circle,
+  ChevronRight,
+  Code2,
+  ShieldCheck,
+  ArrowRight,
 } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
 import { coreProfileService } from "../../services/coreProfileService";
@@ -22,22 +34,62 @@ import ShareProfileModal from "../../components/profile/ShareProfileModal";
 import ChangeUsernameModal from "../../components/username/ChangeUsernameModal";
 import ProfileNav from "../../components/profile/ProfileNav";
 import ProfileCompletionCard from "../../components/profile/ProfileCompletionCard";
-import GamificationSummary from "../../components/profile/GamificationSummary";
 import AchievementsGrid from "../../components/profile/AchievementsGrid";
-import ProfileModulesGrid from "../../components/profile/ProfileModulesGrid";
+
+/**
+ * Animated XP Counter for subtle, elegant point transitions.
+ */
+function XPCountUp({ value = 0, duration = 800 }) {
+  const prefersReducedMotion = useReducedMotion();
+  const [displayValue, setDisplayValue] = useState(value);
+  const prevValueRef = useRef(value);
+
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      setDisplayValue(value);
+      prevValueRef.current = value;
+      return;
+    }
+
+    const start = prevValueRef.current;
+    const end = value;
+    if (start === end) return;
+
+    const startTime = performance.now();
+
+    const update = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(start + (end - start) * ease);
+      setDisplayValue(current);
+
+      if (progress < 1) {
+        requestAnimationFrame(update);
+      } else {
+        prevValueRef.current = end;
+      }
+    };
+
+    requestAnimationFrame(update);
+  }, [value, duration, prefersReducedMotion]);
+
+  return <span>{displayValue}</span>;
+}
 
 export default function Profile() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { setUser, logout } = useContext(AuthContext);
+  const { setUser } = useContext(AuthContext);
   const toast = useToast();
-  const fileRef = useRef(null);
+  const avatarFileRef = useRef(null);
+  const bannerFileRef = useRef(null);
 
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isChangeUsernameOpen, setIsChangeUsernameOpen] = useState(false);
-  const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
 
-  // TanStack Query for Profile data with 5m cache
+  // TanStack Query for authoritative profile data
   const {
     data,
     isLoading,
@@ -50,25 +102,56 @@ export default function Profile() {
   });
 
   const profile = data?.user;
+  const completionData = data?.completion;
 
   // Avatar Upload Mutation
   const avatarMutation = useMutation({
     mutationFn: (file) => coreProfileService.uploadAvatar(file),
     onSuccess: (res) => {
-      // Optimistically update query cache
       queryClient.setQueryData(["profile", "me"], (old) => {
         if (!old?.user) return old;
         return {
           ...old,
           user: { ...old.user, avatar: res.avatar },
+          completion: res.completion || old.completion,
         };
       });
-      // Synchronize central auth context
       setUser((prev) => (prev ? { ...prev, avatar: res.avatar } : prev));
-      toast.success("Avatar updated", "Your profile photo has been updated successfully.");
+      setAvatarError(false);
+      toast.success("Avatar updated", "Your profile photo has been updated.");
+      if (res.newlyAwarded?.length) {
+        res.newlyAwarded.forEach((m) => {
+          toast.success(`+${m.points} XP Earned!`, m.label);
+        });
+      }
     },
     onError: (err) => {
       const msg = err.response?.data?.message || "Could not upload avatar. Please try again.";
+      toast.error("Upload failed", msg);
+    },
+  });
+
+  // Background Banner Upload Mutation
+  const bannerMutation = useMutation({
+    mutationFn: (file) => coreProfileService.uploadBackground(file),
+    onSuccess: (res) => {
+      queryClient.setQueryData(["profile", "me"], (old) => {
+        if (!old?.user) return old;
+        return {
+          ...old,
+          user: { ...old.user, backgroundImage: res.backgroundImage },
+          completion: res.completion || old.completion,
+        };
+      });
+      toast.success("Cover banner updated", "Your background cover has been customized.");
+      if (res.newlyAwarded?.length) {
+        res.newlyAwarded.forEach((m) => {
+          toast.success(`+${m.points} XP Earned!`, m.label);
+        });
+      }
+    },
+    onError: (err) => {
+      const msg = err.response?.data?.message || "Could not upload cover image.";
       toast.error("Upload failed", msg);
     },
   });
@@ -77,13 +160,9 @@ export default function Profile() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Client-side file size guard (5 MB)
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
+    if (file.size > 5 * 1024 * 1024) {
       return toast.error("File too large", "Avatar image must be under 5 MB.");
     }
-
-    // Client-side MIME validation
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
       return toast.error("Invalid format", "Only JPG, PNG, and WebP images are permitted.");
@@ -92,28 +171,60 @@ export default function Profile() {
     avatarMutation.mutate(file);
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
+  const handleBannerUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      return toast.error("File too large", "Banner image must be under 5 MB.");
+    }
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      return toast.error("Invalid format", "Only JPG, PNG, and WebP images are permitted.");
+    }
+
+    bannerMutation.mutate(file);
   };
 
-  // Loading skeleton matching final geometry
+  const handleShare = async () => {
+    if (!profile) return;
+    const shareUrl = `${window.location.origin}/u/${encodeURIComponent(profile.username || "")}`;
+    const shareData = {
+      title: `${profile.name || "Student"} — Zeitnah Student Identity`,
+      text: `Check out ${profile.name || "my"}'s verified student profile on Zeitnah Academy.`,
+      url: shareUrl,
+    };
+
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          setIsShareOpen(true);
+        }
+      }
+    } else {
+      setIsShareOpen(true);
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="space-y-6 sm:space-y-8 animate-pulse max-w-7xl mx-auto">
+      <div className="space-y-6 sm:space-y-8 animate-pulse max-w-7xl mx-auto pb-12">
         <div className="h-14 bg-bg-card rounded-2xl border border-border-default" />
-        <div className="h-72 bg-bg-card rounded-2xl border border-border-default" />
-        <div className="h-44 bg-bg-card rounded-2xl border border-border-default" />
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
-          <div className="h-48 bg-bg-card rounded-2xl border border-border-default" />
-          <div className="h-48 bg-bg-card rounded-2xl border border-border-default" />
-          <div className="h-48 bg-bg-card rounded-2xl border border-border-default" />
+        <div className="h-80 bg-bg-card rounded-3xl border border-border-default" />
+        <div className="h-56 bg-bg-card rounded-3xl border border-border-default" />
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+          <div className="h-28 bg-bg-card rounded-2xl border border-border-default" />
+          <div className="h-28 bg-bg-card rounded-2xl border border-border-default" />
+          <div className="h-28 bg-bg-card rounded-2xl border border-border-default" />
+          <div className="h-28 bg-bg-card rounded-2xl border border-border-default" />
         </div>
       </div>
     );
   }
 
-  // Error state with retry
   if (isError || !profile) {
     return (
       <div className="max-w-2xl mx-auto py-16 px-4 text-center">
@@ -129,7 +240,7 @@ export default function Profile() {
         <button
           type="button"
           onClick={() => refetch()}
-          className="btn-primary inline-flex items-center gap-2 py-2.5 px-6"
+          className="btn-primary inline-flex items-center gap-2 py-2.5 px-6 cursor-pointer"
         >
           <RefreshCw className="w-4 h-4" />
           Try Again
@@ -140,6 +251,7 @@ export default function Profile() {
 
   const gamification = profile.gamification || {};
   const avatarUrl = getUploadUrl(profile.avatar);
+  const bannerUrl = getUploadUrl(profile.backgroundImage);
   const initials = profile.name
     ? profile.name
         .split(" ")
@@ -149,261 +261,527 @@ export default function Profile() {
         .toUpperCase()
     : "ZU";
 
+  // Section completion evaluation
+  const sections = [
+    {
+      id: "introduction",
+      title: "Introduction",
+      desc: "Photo, cover, headline, role, location & industry",
+      done: Boolean(profile.avatar && profile.headline && (profile.location || profile.industry || profile.currentRole)),
+      partDone: Boolean(profile.avatar || profile.headline),
+      to: "/profile/edit?section=introduction",
+    },
+    {
+      id: "about",
+      title: "About",
+      desc: "Your learning journey, goals, and interests",
+      done: Boolean(profile.bio && profile.bio.trim().length >= 20),
+      partDone: Boolean(profile.bio && profile.bio.trim().length > 0),
+      to: "/profile/edit?section=about",
+    },
+    {
+      id: "experience",
+      title: "Experience",
+      desc: "Internships, jobs, projects & leadership roles",
+      done: Boolean(Array.isArray(profile.experience) && profile.experience.length > 0),
+      partDone: false,
+      to: "/profile/edit?section=experience",
+    },
+    {
+      id: "education",
+      title: "Education",
+      desc: "Your academic background and studies",
+      done: Boolean(Array.isArray(profile.education) && profile.education.length > 0),
+      partDone: false,
+      to: "/profile/edit?section=education",
+    },
+    {
+      id: "certifications",
+      title: "Licenses & Certifications",
+      desc: "Verified credentials, certificates & licenses",
+      done: Boolean(Array.isArray(profile.certifications) && profile.certifications.length > 0),
+      partDone: false,
+      to: "/profile/edit?section=certifications",
+    },
+    {
+      id: "skills",
+      title: "Skills",
+      desc: "Technologies and core competencies (3+ for milestone)",
+      done: Boolean(Array.isArray(profile.skills) && profile.skills.length >= 3),
+      partDone: Boolean(Array.isArray(profile.skills) && profile.skills.length > 0),
+      to: "/profile/edit?section=skills",
+    },
+    {
+      id: "recommendations",
+      title: "Recommendations",
+      desc: "Endorsements from mentors, teachers & peers",
+      done: Boolean(data?.recommendationsCount > 0),
+      partDone: false,
+      to: "/profile/edit?section=recommendations",
+    },
+    {
+      id: "public-profile",
+      title: "Public Profile Status",
+      desc: profile.publicProfilePublished ? "Published and shareable at /u/:username" : "Draft preview ready",
+      done: Boolean(profile.publicProfilePublished),
+      partDone: Boolean(completionData?.publicProfileReady),
+      to: "/profile/edit?section=public-profile",
+    },
+  ];
+
+  const publicProfileReady = completionData?.publicProfileReady;
+  const isPublished = profile.publicProfilePublished;
+
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto pb-16">
       {/* ── Sub-Navigation Bar ── */}
       <ProfileNav />
 
-      {/* ── Profile Hero ── */}
+      {/* ── 01. PREMIUM PROFILE HERO ── */}
       <motion.section
-        initial={{ opacity: 0, y: 18 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative overflow-hidden rounded-2xl bg-bg-card border border-border-default shadow-sm"
+        transition={{ duration: 0.45 }}
+        className="relative overflow-hidden rounded-3xl bg-bg-card border border-border-default shadow-sm"
       >
         <div className="gradient-line-top" />
 
-        {/* Ambient brand glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[320px] bg-brand-mint/5 rounded-full blur-[140px] pointer-events-none" />
+        {/* Custom Cover Banner Image with subtle gradient overlay */}
+        <div className="relative h-48 sm:h-60 md:h-72 w-full overflow-hidden">
+          {bannerUrl ? (
+            <img
+              src={bannerUrl}
+              alt="Profile Cover"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            /* Editorial fallback backdrop - no generic stock image */
+            <div className="w-full h-full relative overflow-hidden bg-gradient-to-br from-[#0c1520] via-[#080d14] to-[#04070a] flex items-center justify-center">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(159,213,178,0.12),rgba(255,255,255,0))]" />
+              <div className="absolute right-12 bottom-10 w-48 h-48 rounded-full bg-brand-yellow/[0.04] blur-3xl pointer-events-none" />
+              <div className="text-center opacity-30 select-none">
+                <span className="font-mono text-xs uppercase tracking-[0.25em] text-brand-mint font-semibold">
+                  Zeitnah Learning Identity
+                </span>
+              </div>
+            </div>
+          )}
 
-        {/* Brand Logo Watermark */}
-        <div className="absolute top-4 right-4 sm:top-6 sm:right-6 opacity-35 hover:opacity-100 transition-opacity">
-          <div className="w-10 h-10 rounded-xl border border-brand-mint/30 overflow-hidden shadow-md bg-bg-elevated flex items-center justify-center">
-            <img src="/zeitnah-logo.png" alt="Zeitnah Emblem" className="w-full h-full object-cover" />
-          </div>
+          {/* Subtle dark gradient overlay at bottom for smooth avatar and text transition */}
+          <div className="absolute inset-0 bg-gradient-to-t from-bg-card via-black/35 to-transparent pointer-events-none" />
+
+          {/* Banner Change Trigger */}
+          <button
+            type="button"
+            onClick={() => bannerFileRef.current?.click()}
+            disabled={bannerMutation.isPending}
+            className="absolute top-4 right-4 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/60 hover:bg-black/85 backdrop-blur-md border border-white/10 text-xs font-semibold text-white transition-all cursor-pointer shadow-sm"
+            title="Upload cover banner"
+          >
+            {bannerMutation.isPending ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin text-brand-mint" />
+            ) : (
+              <Camera className="w-3.5 h-3.5 text-brand-mint" />
+            )}
+            <span className="hidden sm:inline">Change Cover</span>
+          </button>
+          <input
+            ref={bannerFileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={handleBannerUpload}
+          />
         </div>
 
-        <div className="relative p-6 sm:p-10 flex flex-col md:flex-row gap-6 md:gap-10 items-center md:items-start w-full">
-          {/* Avatar Container */}
-          <div className="relative group shrink-0">
-            <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden border-2 border-brand-mint/25 bg-bg-elevated ring-4 ring-brand-mint/5 shadow-md flex items-center justify-center">
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt={profile.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-brand-mint/15 to-brand-navy/50 text-brand-mint">
-                  <span className="font-heading font-extrabold text-2xl tracking-tight">
-                    {initials}
-                  </span>
+        {/* Hero Identity Body */}
+        <div className="relative px-6 sm:px-10 pb-8 sm:pb-10 pt-0">
+          <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-6 -mt-16 sm:-mt-20">
+            {/* Avatar & Identifiers */}
+            <div className="flex flex-col md:flex-row items-center md:items-end gap-5 text-center md:text-left">
+              {/* Avatar with Upload Badge & error fallback */}
+              <div className="relative group shrink-0">
+                <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-3xl overflow-hidden border-4 border-bg-card bg-bg-elevated shadow-xl flex items-center justify-center ring-1 ring-white/10">
+                  {avatarUrl && !avatarError ? (
+                    <img
+                      src={avatarUrl}
+                      alt={profile.name}
+                      onError={() => setAvatarError(true)}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-mint/15 to-brand-navy/50 text-brand-mint font-heading font-black text-3xl sm:text-4xl">
+                      {initials}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            {/* Upload Overlay */}
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={avatarMutation.isPending}
-              className="absolute inset-0 bg-black/60 rounded-2xl flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white"
-              title="Upload new avatar"
-            >
-              {avatarMutation.isPending ? (
-                <RefreshCw className="w-6 h-6 animate-spin text-brand-mint" />
-              ) : (
-                <>
-                  <Camera className="w-6 h-6 text-white mb-1" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Change</span>
-                </>
-              )}
-            </button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-              onChange={handleAvatarUpload}
-            />
-          </div>
-
-          {/* Student Identity Information */}
-          <div className="flex-1 text-center md:text-left min-w-0 w-full">
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5 mb-1.5">
-              <h1 className="font-heading font-black text-2xl sm:text-3xl lg:text-4xl text-white tracking-tight leading-none">
-                {profile.name || "Zeitnah Student"}
-              </h1>
-              {profile.isVerified && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-brand-mint/25 bg-brand-mint/10 px-2 py-0.5 text-xs font-bold text-brand-mint">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Verified
-                </span>
-              )}
-            </div>
-
-            {/* Username Handle */}
-            <div className="flex items-center justify-center md:justify-start gap-2 mb-3.5">
-              <span className="font-mono text-sm sm:text-base font-bold text-brand-mint tracking-tight">
-                @{profile.username || "student"}
-              </span>
-              {profile.usernameClaimed && (
-                <span className="rounded-md border border-brand-mint/20 bg-brand-mint/5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-mint/80">
-                  Claimed
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={() => setIsChangeUsernameOpen(true)}
-                className="inline-flex items-center gap-1 text-[11px] font-medium text-text-muted hover:text-brand-mint transition-colors px-2 py-0.5 rounded-md hover:bg-white/[0.04] cursor-pointer"
-                title="Change student handle"
-              >
-                <Pencil className="w-3 h-3" />
-                <span className="hidden sm:inline">Edit</span>
-              </button>
-            </div>
-
-            {/* Bio */}
-            <p className="text-sm font-medium text-text-muted mb-4 leading-relaxed max-w-xl">
-              {profile.bio || "No biography provided yet. Complete your personal details in Edit Profile."}
-            </p>
-
-            {/* Badges */}
-            <div className="flex flex-wrap gap-2 justify-center md:justify-start mb-5">
-              <span className="rounded-lg border border-brand-mint/20 bg-brand-mint/8 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand-mint">
-                {profile.role || "Student"}
-              </span>
-              <span className="rounded-lg border border-brand-yellow/15 bg-brand-yellow/5 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand-yellow">
-                Level {gamification.level || 1}
-              </span>
-              <span className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1 text-xs font-semibold text-text-muted font-mono">
-                {gamification.totalPoints || 0} XP
-              </span>
-            </div>
-
-            {/* Skills Pills */}
-            {profile.skills?.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 justify-center md:justify-start mb-5">
-                {profile.skills.map((skill) => (
-                  <span
-                    key={skill}
-                    className="rounded-md border border-white/[0.06] bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium text-text-secondary tracking-wide"
-                  >
-                    {skill}
-                  </span>
-                ))}
+                <button
+                  type="button"
+                  onClick={() => avatarFileRef.current?.click()}
+                  disabled={avatarMutation.isPending}
+                  className="absolute inset-0 bg-black/60 rounded-3xl flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white"
+                  title="Upload avatar"
+                >
+                  {avatarMutation.isPending ? (
+                    <RefreshCw className="w-6 h-6 animate-spin text-brand-mint" />
+                  ) : (
+                    <>
+                      <Camera className="w-6 h-6 text-brand-mint mb-1" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Change</span>
+                    </>
+                  )}
+                </button>
+                <input
+                  ref={avatarFileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleAvatarUpload}
+                />
               </div>
-            )}
 
-            {/* Action CTAs */}
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
-              <button
-                type="button"
-                onClick={() => navigate("/profile/edit")}
-                className="btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer"
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-                Edit Profile
-              </button>
+              {/* Name, Username, Headline, Role & Location */}
+              <div className="space-y-1.5 pb-1">
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
+                  <h1 className="font-heading font-black text-2xl sm:text-3xl lg:text-4xl text-white tracking-tight leading-tight break-words">
+                    {profile.name || "Student Identity"}
+                  </h1>
+                  {profile.isVerified && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-brand-mint/25 bg-brand-mint/10 px-2 py-0.5 text-xs font-bold text-brand-mint">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Verified
+                    </span>
+                  )}
+                </div>
 
-              <Link
-                to="/public-profile"
-                className="btn-secondary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 hover:text-brand-mint cursor-pointer"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                View Public Profile
-              </Link>
+                {/* Handle and Edit Handle */}
+                <div className="flex items-center justify-center md:justify-start gap-2">
+                  <span className="font-mono text-sm sm:text-base font-bold text-brand-mint">
+                    @{profile.username || "username"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsChangeUsernameOpen(true)}
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-text-muted hover:text-brand-mint transition-colors px-2 py-0.5 rounded-md hover:bg-white/[0.04] cursor-pointer"
+                    title="Change handle"
+                  >
+                    <Pencil className="w-3 h-3" />
+                    <span className="hidden sm:inline">Edit</span>
+                  </button>
+                </div>
 
-              <button
-                type="button"
-                onClick={() => setIsShareOpen(true)}
-                className="btn-secondary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 hover:border-brand-mint/30 cursor-pointer"
-              >
-                <Share2 className="w-3.5 h-3.5 text-brand-mint" />
-                Share
-              </button>
+                {/* Headline / Invitation for empty profile */}
+                {profile.headline ? (
+                  <p className="text-sm sm:text-base font-medium text-white/90 max-w-xl leading-relaxed break-words">
+                    {profile.headline}
+                  </p>
+                ) : !profile.currentRole && !profile.location && !profile.industry ? (
+                  <p className="text-xs sm:text-sm text-text-muted/80 max-w-md leading-relaxed pt-0.5">
+                    Introduce yourself, highlight your focus, and start building your student profile.
+                  </p>
+                ) : null}
+
+                {/* Role, Location, Industry Meta */}
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 text-xs text-text-muted pt-1">
+                  {profile.currentRole && (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Briefcase className="w-3.5 h-3.5 text-text-faint" />
+                      {profile.currentRole}
+                    </span>
+                  )}
+                  {profile.location && (
+                    <span className="inline-flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-text-faint" />
+                      {profile.location}
+                    </span>
+                  )}
+                  {profile.industry && (
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-brand-yellow/60" />
+                      {profile.industry}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Level, Rank, XP Badges and Primary Actions */}
+            <div className="flex flex-col items-center md:items-end gap-4 shrink-0 w-full md:w-auto">
+              {/* Supportive Gamification Badge Line */}
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1.5 rounded-xl border border-brand-yellow/20 bg-brand-yellow/10 text-xs font-bold font-mono text-brand-yellow uppercase tracking-wider">
+                  LEVEL {gamification.level || 1}
+                </span>
+                <span className="px-3 py-1.5 rounded-xl border border-brand-mint/20 bg-brand-mint/10 text-xs font-bold uppercase tracking-wider text-brand-mint">
+                  {gamification.rank || "Beginner"}
+                </span>
+                <span className="px-3 py-1.5 rounded-xl border border-white/10 bg-white/[0.03] text-xs font-bold font-mono text-white">
+                  <XPCountUp value={gamification.totalPoints || 0} /> XP
+                </span>
+              </div>
+
+              {/* Action Buttons with >=44px mobile touch ergonomics */}
+              <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-center">
+                <Link
+                  to="/profile/edit"
+                  className="btn-primary text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 py-3 px-5 min-h-[44px] cursor-pointer shadow-sm flex-1 sm:flex-initial"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  Edit Profile
+                </Link>
+
+                <Link
+                  to="/public-profile"
+                  className="btn-secondary text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 py-3 px-4 min-h-[44px] cursor-pointer flex-1 sm:flex-initial"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Public Profile
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className="p-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl border border-border-default bg-white/[0.02] hover:bg-white/[0.05] text-text-muted hover:text-white transition-colors cursor-pointer shrink-0"
+                  title="Share profile"
+                  aria-label="Share profile"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </motion.section>
 
-      {/* ── Profile Completion Milestone Card ── */}
-      <ProfileCompletionCard
-        profile={profile}
-        onUploadAvatarClick={() => fileRef.current?.click()}
-      />
+      {/* ── 02 & 03. PROFILE STRENGTH + YOUR NEXT STEP ── */}
+      <ProfileCompletionCard completionData={completionData} />
 
-      {/* ── Gamification Telemetry (Personal XP & Metrics Only) ── */}
-      <GamificationSummary profile={profile} />
-
-      {/* ── Achievements Showcase ── */}
-      <AchievementsGrid profile={profile} />
-
-      {/* ── Subsystems Grid ── */}
-      <ProfileModulesGrid username={profile.username} />
-
-      {/* ── Account Security & Sign Out Footer ── */}
-      <div className="pt-6 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p className="text-xs text-text-faint text-center sm:text-left">
-          Zeitnah Learning Platform · Account ID: <span className="font-mono">{profile._id || profile.id}</span>
-        </p>
-
-        <button
-          type="button"
-          onClick={() => setIsSignOutModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-danger hover:bg-danger/10 border border-danger/20 transition-colors cursor-pointer"
+      {/* ── 04. PROFILE SNAPSHOT (COMPACT SUPPORTING TILES) ── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 sm:gap-4">
+        {/* Skills */}
+        <Link
+          to="/profile/edit?section=skills"
+          className="p-4 sm:p-5 rounded-2xl border border-border-default bg-bg-card hover:border-brand-mint/30 transition-all group cursor-pointer"
         >
-          <LogOut className="w-3.5 h-3.5" />
-          Sign Out of Account
-        </button>
+          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-text-muted mb-1.5">
+            <span>Skills</span>
+            <Code2 className="w-4 h-4 text-brand-mint group-hover:scale-110 transition-transform" />
+          </div>
+          <div className="text-2xl font-black font-heading text-white">
+            {profile.skills?.length || 0}
+          </div>
+          <p className="text-[11px] text-text-muted mt-0.5 truncate">
+            {profile.skills?.length > 0
+              ? profile.skills.slice(0, 2).join(", ") + (profile.skills.length > 2 ? "..." : "")
+              : "No skills added"}
+          </p>
+        </Link>
+
+        {/* Learning */}
+        <Link
+          to="/my-learning"
+          className="p-4 sm:p-5 rounded-2xl border border-border-default bg-bg-card hover:border-brand-mint/30 transition-all group cursor-pointer"
+        >
+          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-text-muted mb-1.5">
+            <span>Courses</span>
+            <BookOpen className="w-4 h-4 text-brand-mint group-hover:scale-110 transition-transform" />
+          </div>
+          <div className="text-2xl font-black font-heading text-white">
+            {gamification.completedCourses || 0}
+          </div>
+          <p className="text-[11px] text-text-muted mt-0.5">
+            {gamification.completedClasses || 0} lecture{gamification.completedClasses === 1 ? "" : "s"} finished
+          </p>
+        </Link>
+
+        {/* Achievements */}
+        <Link
+          to="/my-points"
+          className="p-4 sm:p-5 rounded-2xl border border-border-default bg-bg-card hover:border-brand-yellow/30 transition-all group cursor-pointer"
+        >
+          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-text-muted mb-1.5">
+            <span>Achievements</span>
+            <Award className="w-4 h-4 text-brand-yellow group-hover:scale-110 transition-transform" />
+          </div>
+          <div className="text-2xl font-black font-heading text-white">
+            {gamification.achievements?.length || 0}
+          </div>
+          <p className="text-[11px] text-text-muted mt-0.5">Earned milestones</p>
+        </Link>
+
+        {/* Public Status */}
+        <Link
+          to="/public-profile"
+          className="p-4 sm:p-5 rounded-2xl border border-border-default bg-bg-card hover:border-brand-mint/30 transition-all group cursor-pointer"
+        >
+          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-text-muted mb-1.5">
+            <span>Public Status</span>
+            <Globe className="w-4 h-4 text-brand-mint group-hover:scale-110 transition-transform" />
+          </div>
+          <div className="text-xl font-bold font-heading text-white flex items-center gap-1.5">
+            {isPublished ? (
+              <span className="text-brand-mint flex items-center gap-1 text-sm sm:text-base">
+                <CheckCircle2 className="w-4 h-4" /> Published
+              </span>
+            ) : (
+              <span className="text-text-muted text-sm sm:text-base">Draft</span>
+            )}
+          </div>
+          <p className="text-[11px] text-text-muted mt-0.5 truncate">
+            {profile.username ? `@${profile.username}` : "Pending handle"}
+          </p>
+        </Link>
       </div>
 
-      {/* ── Modals ── */}
+      {/* ── 05. SECTION OVERVIEW WITH TRIPARTITE STATES ── */}
+      <div className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-lg sm:text-xl font-heading font-extrabold text-white">
+              Profile Sections Overview
+            </h3>
+            <p className="text-xs sm:text-sm text-text-muted mt-0.5">
+              Keep your personal learning identity up to date across all sections
+            </p>
+          </div>
+          <Link
+            to="/profile/edit"
+            className="text-xs font-semibold text-brand-mint hover:underline inline-flex items-center gap-1"
+          >
+            Manage All
+            <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+          {sections.map((sec) => (
+            <Link
+              key={sec.id}
+              to={sec.to}
+              className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:border-brand-mint/30 hover:bg-white/[0.03] transition-all group cursor-pointer"
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                    sec.done
+                      ? "bg-brand-mint/10 text-brand-mint border border-brand-mint/20"
+                      : sec.partDone
+                      ? "bg-brand-yellow/10 text-brand-yellow border border-brand-yellow/20"
+                      : "bg-white/[0.04] text-text-faint border border-white/[0.06]"
+                  }`}
+                >
+                  {sec.done ? (
+                    <Check className="w-4 h-4" />
+                  ) : sec.partDone ? (
+                    <Circle className="w-4 h-4 fill-brand-yellow/40 text-brand-yellow" />
+                  ) : (
+                    <Circle className="w-4 h-4" />
+                  )}
+                </div>
+
+                <div className="min-w-0">
+                  <h4 className="text-sm font-bold text-white group-hover:text-brand-mint transition-colors truncate">
+                    {sec.title}
+                  </h4>
+                  <p className="text-xs text-text-muted truncate mt-0.5">
+                    {sec.desc}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0 ml-3">
+                <span
+                  className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                    sec.done
+                      ? "text-brand-mint bg-brand-mint/10"
+                      : sec.partDone
+                      ? "text-brand-yellow bg-brand-yellow/10"
+                      : "text-text-muted bg-white/[0.03]"
+                  }`}
+                >
+                  {sec.done ? "✓ Complete" : sec.partDone ? "◐ In Progress" : "○ Not Started"}
+                </span>
+                <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* ── 06. ACHIEVEMENTS SECTION ── */}
+      <AchievementsGrid profile={profile} />
+
+      {/* ── 07. PUBLIC PROFILE STATUS ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-5 shadow-sm"
+      >
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-text-secondary">
+              Public Profile
+            </span>
+            <span
+              className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                isPublished
+                  ? "bg-brand-mint/10 text-brand-mint border border-brand-mint/20"
+                  : "bg-white/[0.04] text-text-muted border border-white/[0.06]"
+              }`}
+            >
+              {isPublished ? "Published ✓" : "Almost Ready"}
+            </span>
+          </div>
+
+          <h3 className="text-lg sm:text-xl font-heading font-extrabold text-white">
+            {isPublished
+              ? "Your profile is ready to share."
+              : publicProfileReady
+              ? "Your public profile is ready to publish."
+              : `${completionData?.remainingMilestones?.length || 2} steps remaining before publish.`}
+          </h3>
+
+          <p className="text-xs sm:text-sm text-text-muted max-w-xl leading-relaxed">
+            {isPublished
+              ? `Live at /u/${profile.username}. Anyone with the link can view your verified learning credentials.`
+              : "Complete your identity essentials to unlock your verified shareable student link."}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5 shrink-0">
+          {isPublished ? (
+            <Link
+              to="/public-profile"
+              className="btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-3 px-5 cursor-pointer shadow-md"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              View Public Profile
+            </Link>
+          ) : (
+            <Link
+              to="/profile/edit?section=public-profile"
+              className="btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-3 px-5 cursor-pointer shadow-md"
+            >
+              <span>Finish Setup</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          )}
+        </div>
+      </motion.div>
+
+      {/* ── Share Modal ── */}
       <ShareProfileModal
         isOpen={isShareOpen}
         onClose={() => setIsShareOpen(false)}
-        username={profile.username}
-        name={profile.name}
+        profile={profile}
       />
 
+      {/* ── Change Username Modal ── */}
       <ChangeUsernameModal
         isOpen={isChangeUsernameOpen}
         onClose={() => setIsChangeUsernameOpen(false)}
-        currentUsername={profile.username}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
-        }}
       />
-
-      {/* Sign Out Confirmation Modal */}
-      {isSignOutModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-md rounded-2xl border border-danger/30 bg-bg-card p-6 shadow-2xl relative overflow-hidden"
-          >
-            <div className="gradient-line-top" />
-            <div className="w-12 h-12 rounded-xl bg-danger/10 border border-danger/20 text-danger flex items-center justify-center mb-4">
-              <LogOut className="w-6 h-6" />
-            </div>
-
-            <h3 className="text-lg font-heading font-bold text-white mb-2">
-              Sign Out of Zeitnah?
-            </h3>
-            <p className="text-xs text-text-muted leading-relaxed mb-6">
-              You will need to sign in again with your credentials or verification code to access your courses and progress.
-            </p>
-
-            <div className="flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setIsSignOutModalOpen(false)}
-                className="btn-secondary py-2 px-4 text-xs uppercase tracking-wider"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="px-4 py-2 rounded-xl bg-danger hover:bg-danger/90 text-white text-xs font-bold uppercase tracking-wider transition-colors"
-              >
-                Sign Out
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
     </div>
   );
 }

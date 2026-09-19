@@ -4,6 +4,7 @@ import { BadRequestException, ConflictException, NotFoundException } from '@nest
 import { ProfileService } from './profile.service';
 import { User } from '../auth/schemas/user.schema';
 import { CommunityProfile } from '../community/profile/schemas/community-profile.schema';
+import { Recommendation } from './schemas/recommendation.schema';
 import { UploadService } from '../../common/aws/upload.service';
 import { SignedUrlService } from '../../common/aws/signed-url.service';
 import { UsernameService } from './services/username.service';
@@ -13,6 +14,7 @@ describe('ProfileService', () => {
   let service: ProfileService;
   let mockUserModel: any;
   let mockCommunityProfileModel: any;
+  let mockRecommendationModel: any;
   let mockAuditLogsService: any;
   let usernameService: UsernameService;
 
@@ -26,6 +28,19 @@ describe('ProfileService', () => {
 
     mockCommunityProfileModel = {
       updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
+    };
+
+    mockRecommendationModel = {
+      find: jest.fn().mockReturnValue({
+        sort: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue([]),
+        }),
+      }),
+      findOne: jest.fn(),
+      countDocuments: jest.fn().mockResolvedValue(0),
+      findById: jest.fn(),
+      findByIdAndDelete: jest.fn().mockResolvedValue(true),
+      create: jest.fn().mockImplementation((doc) => Promise.resolve({ ...doc, _id: 'rec_123' })),
     };
 
     mockAuditLogsService = {
@@ -43,6 +58,10 @@ describe('ProfileService', () => {
         {
           provide: getModelToken(CommunityProfile.name),
           useValue: mockCommunityProfileModel,
+        },
+        {
+          provide: getModelToken(Recommendation.name),
+          useValue: mockRecommendationModel,
         },
         {
           provide: UploadService,
@@ -477,7 +496,9 @@ describe('ProfileService', () => {
       const mockUser: any = {
         _id: 'user_123',
         avatar: 'profiles/old-avatar.png',
+        gamification: { rewardedMilestones: [] },
         save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
       };
 
       mockUserModel.findById.mockResolvedValue(mockUser);
@@ -491,6 +512,207 @@ describe('ProfileService', () => {
       const res = await service.uploadAvatar('user_123', fakeFile);
       expect(res.message).toBe('Avatar uploaded successfully');
       expect(res.avatar).toContain('https://signed.cdn/profiles/user_123-');
+      expect(mockUser.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('uploadBackground', () => {
+    it('should upload background cover to S3 and award milestone', async () => {
+      const mockUser: any = {
+        _id: 'user_123',
+        backgroundImage: '',
+        gamification: { rewardedMilestones: [], totalPoints: 0 },
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      const fakeFile: any = {
+        originalname: 'banner.jpg',
+        buffer: Buffer.from('fake-banner-bytes'),
+        mimetype: 'image/jpeg',
+      };
+
+      const res = await service.uploadBackground('user_123', fakeFile);
+      expect(res.message).toBe('Background image uploaded successfully');
+      expect(res.backgroundImage).toContain('https://signed.cdn/profiles/banners/user_123-');
+      expect(mockUser.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('Experience Subdocument CRUD', () => {
+    it('should add experience record and award milestone', async () => {
+      const mockUser: any = {
+        _id: 'user_123',
+        experience: [],
+        gamification: { rewardedMilestones: [], totalPoints: 0 },
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      const res = await service.addExperience('user_123', {
+        organization: 'Zeitnah Labs',
+        role: 'Full Stack Intern',
+        employmentType: 'Internship',
+        startDate: '2025-01-01',
+        currentlyActive: true,
+        description: 'Building modern student experiences.',
+      });
+
+      expect(res.message).toBe('Experience added successfully');
+      expect(mockUser.experience.length).toBe(1);
+      expect(mockUser.experience[0].organization).toBe('Zeitnah Labs');
+      expect(mockUser.save).toHaveBeenCalled();
+    });
+
+    it('should reject invalid date range where end date is before start date', async () => {
+      const mockUser: any = { _id: 'user_123', experience: [] };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await expect(
+        service.addExperience('user_123', {
+          organization: 'Zeitnah Labs',
+          role: 'Intern',
+          startDate: '2025-05-01',
+          endDate: '2025-01-01',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('Education Subdocument CRUD', () => {
+    it('should add education record and award milestone', async () => {
+      const mockUser: any = {
+        _id: 'user_123',
+        education: [],
+        gamification: { rewardedMilestones: [], totalPoints: 0 },
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      const res = await service.addEducation('user_123', {
+        institution: 'Kerala Institute of Technology',
+        qualification: 'Bachelor of Technology',
+        fieldOfStudy: 'Computer Science',
+        startDate: '2022-09-01',
+        currentlyStudying: true,
+      });
+
+      expect(res.message).toBe('Education added successfully');
+      expect(mockUser.education.length).toBe(1);
+      expect(mockUser.education[0].institution).toBe('Kerala Institute of Technology');
+      expect(mockUser.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('Certifications Subdocument CRUD', () => {
+    it('should add certification record and award milestone', async () => {
+      const mockUser: any = {
+        _id: 'user_123',
+        certifications: [],
+        gamification: { rewardedMilestones: [], totalPoints: 0 },
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      const res = await service.addCertification('user_123', {
+        name: 'AWS Certified Cloud Practitioner',
+        issuer: 'Amazon Web Services',
+        issueDate: '2025-03-15',
+        credentialId: 'AWS-123456',
+        credentialUrl: 'https://aws.amazon.com/verify/123456',
+      });
+
+      expect(res.message).toBe('Certification added successfully');
+      expect(mockUser.certifications.length).toBe(1);
+      expect(mockUser.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('Recommendations', () => {
+    it('should reject self-recommendation', async () => {
+      await expect(
+        service.submitRecommendation('user_123', {
+          recipientId: 'user_123',
+          relationship: 'Peer / Student',
+          content: 'I am writing a great recommendation for myself.',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should submit recommendation from authorized user to recipient', async () => {
+      const mockRecipient = { _id: 'recipient_456', name: 'Recipient Student' };
+      const mockAuthor = {
+        _id: 'author_123',
+        name: 'Author Student',
+        username: 'authorstudent',
+        avatar: 'profiles/author.png',
+        headline: 'Peer Learner',
+        role: 'student',
+      };
+
+      mockUserModel.findById
+        .mockResolvedValueOnce(mockRecipient)
+        .mockResolvedValueOnce(mockAuthor);
+
+      mockRecommendationModel.findOne.mockResolvedValue(null);
+
+      const res = await service.submitRecommendation('author_123', {
+        recipientId: 'recipient_456',
+        relationship: 'Peer / Student',
+        content: 'An exceptional collaborator and passionate learner on Zeitnah.',
+      });
+
+      expect(res.message).toBe('Recommendation submitted successfully.');
+      expect(res.recommendation).toBeDefined();
+    });
+  });
+
+  describe('Public Profile Publish State', () => {
+    it('should prevent publishing if required checklist is incomplete', async () => {
+      const mockUser: any = {
+        _id: 'user_123',
+        name: 'Student',
+        avatar: '', // missing
+        headline: '', // missing
+        bio: '',
+        skills: [],
+      };
+
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await expect(service.setPublicProfilePublishState('user_123', true)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should allow publishing when required checklist is complete', async () => {
+      const mockUser: any = {
+        _id: 'user_123',
+        name: 'Student',
+        username: 'studentuser',
+        avatar: 'profiles/avatar.png',
+        headline: 'Student Developer',
+        bio: 'Passionate about full-stack engineering and learning.',
+        skills: ['JavaScript', 'React', 'Node.js'],
+        publicProfilePublished: false,
+        gamification: { rewardedMilestones: [], totalPoints: 0 },
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      const res = await service.setPublicProfilePublishState('user_123', true);
+      expect(res.published).toBe(true);
+      expect(mockUser.publicProfilePublished).toBe(true);
       expect(mockUser.save).toHaveBeenCalled();
     });
   });

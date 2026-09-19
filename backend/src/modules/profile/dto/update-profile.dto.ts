@@ -14,7 +14,27 @@ export class UpdateProfileDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(500, { message: 'Biography must not exceed 500 characters.' })
+  @MaxLength(120, { message: 'Headline must not exceed 120 characters.' })
+  headline?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100, { message: 'Current role must not exceed 100 characters.' })
+  currentRole?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100, { message: 'Location must not exceed 100 characters.' })
+  location?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100, { message: 'Industry must not exceed 100 characters.' })
+  industry?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000, { message: 'About must not exceed 1000 characters.' })
   bio?: string;
 
   @IsOptional()
@@ -24,4 +44,3 @@ export class UpdateProfileDto {
   @MaxLength(50, { each: true, message: 'Each skill must not exceed 50 characters.' })
   skills?: string[];
 }
-
