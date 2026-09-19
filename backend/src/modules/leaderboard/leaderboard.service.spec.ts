@@ -16,6 +16,7 @@ describe('LeaderboardService', () => {
       find: jest.fn(),
       findById: jest.fn(),
       countDocuments: jest.fn(),
+      aggregate: jest.fn(),
     };
 
     mockCourseModel = {
@@ -73,28 +74,14 @@ describe('LeaderboardService', () => {
         },
       ];
 
-      const queryMock = {
-        select: jest.fn().mockReturnThis(),
-        sort: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
-        lean: jest.fn().mockResolvedValue(mockLearners),
-      };
-
-      const podiumQueryMock = {
-        select: jest.fn().mockReturnThis(),
-        sort: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
-        lean: jest.fn().mockResolvedValue(mockLearners),
-      };
-
-      mockUserModel.find
-        .mockReturnValueOnce(queryMock)
-        .mockReturnValueOnce(podiumQueryMock);
+      // mockUserModel.aggregate is called for learners, rawPodium, and ahead count in getStudentGlobalRank
+      mockUserModel.aggregate
+        .mockResolvedValueOnce(mockLearners) // learners
+        .mockResolvedValueOnce(mockLearners) // rawPodium
+        .mockResolvedValueOnce([{ count: 0 }]); // ahead count in getStudentGlobalRank
 
       mockUserModel.countDocuments
         .mockResolvedValueOnce(2) // total matching
-        .mockResolvedValueOnce(0) // aheadCount
         .mockResolvedValueOnce(2); // total eligible
 
       mockUserModel.findById.mockResolvedValue({

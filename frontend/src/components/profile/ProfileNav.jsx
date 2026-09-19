@@ -13,6 +13,12 @@ import {
 
 export const PROFILE_TABS = [
   {
+    path: "/leaderboard",
+    label: "Leaderboard",
+    icon: Trophy,
+    description: "Global & course rankings",
+  },
+  {
     path: "/profile",
     label: "Overview",
     icon: User,
@@ -41,12 +47,6 @@ export const PROFILE_TABS = [
     label: "My Points",
     icon: Star,
     description: "XP & level roadmap",
-  },
-  {
-    path: "/leaderboard",
-    label: "Leaderboard",
-    icon: Trophy,
-    description: "Global & course rankings",
   },
   {
     path: "/active-sessions",

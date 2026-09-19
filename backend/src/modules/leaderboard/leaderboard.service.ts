@@ -110,7 +110,8 @@ export class LeaderboardService {
   }
 
   /**
-   * Calculates deterministic global rank for a student using fast O(log N) count query.
+   * Calculates deterministic global rank for a student using fast indexed aggregation.
+   * Handles legacy users with missing/null gamification fields gracefully.
    */
   async getStudentGlobalRank(userId: string): Promise<{ rank: number; student: UserDocument } | null> {
     const student = await this.userModel.findById(userId);
@@ -118,37 +119,52 @@ export class LeaderboardService {
 
     syncGamificationStats(student);
 
-    const pts = student.gamification?.totalPoints || 0;
-    const lvl = student.gamification?.level || 1;
-    const cls = student.gamification?.completedClasses || 0;
+    const pts = Number(student.gamification?.totalPoints) || 0;
+    const lvl = Number(student.gamification?.level) || 1;
+    const cls = Number(student.gamification?.completedClasses) || 0;
     const createdAt = (student as any).createdAt || new Date(0);
     const studentId = student._id;
 
-    const aheadCount = await this.userModel.countDocuments({
-      ...this.getEligibleStudentFilter(),
-      $or: [
-        { 'gamification.totalPoints': { $gt: pts } },
-        { 'gamification.totalPoints': pts, 'gamification.level': { $gt: lvl } },
-        {
-          'gamification.totalPoints': pts,
-          'gamification.level': lvl,
-          'gamification.completedClasses': { $gt: cls },
+    const ahead = await this.userModel.aggregate([
+      { $match: this.getEligibleStudentFilter() },
+      {
+        $addFields: {
+          effectivePoints: { $ifNull: ['$gamification.totalPoints', 0] },
+          effectiveLevel: { $ifNull: ['$gamification.level', 1] },
+          effectiveClasses: { $ifNull: ['$gamification.completedClasses', 0] },
+          effectiveCreatedAt: { $ifNull: ['$createdAt', new Date(0)] },
         },
-        {
-          'gamification.totalPoints': pts,
-          'gamification.level': lvl,
-          'gamification.completedClasses': cls,
-          createdAt: { $lt: createdAt },
+      },
+      {
+        $match: {
+          $or: [
+            { effectivePoints: { $gt: pts } },
+            { effectivePoints: pts, effectiveLevel: { $gt: lvl } },
+            {
+              effectivePoints: pts,
+              effectiveLevel: lvl,
+              effectiveClasses: { $gt: cls },
+            },
+            {
+              effectivePoints: pts,
+              effectiveLevel: lvl,
+              effectiveClasses: cls,
+              effectiveCreatedAt: { $lt: createdAt },
+            },
+            {
+              effectivePoints: pts,
+              effectiveLevel: lvl,
+              effectiveClasses: cls,
+              effectiveCreatedAt: createdAt,
+              _id: { $lt: studentId },
+            },
+          ],
         },
-        {
-          'gamification.totalPoints': pts,
-          'gamification.level': lvl,
-          'gamification.completedClasses': cls,
-          createdAt,
-          _id: { $lt: studentId },
-        },
-      ],
-    });
+      },
+      { $count: 'count' },
+    ]);
+
+    const aheadCount = ahead[0]?.count || 0;
 
     return {
       rank: aheadCount + 1,
@@ -161,55 +177,80 @@ export class LeaderboardService {
    * deterministic tie-breaking, and top-3 podium.
    */
   async getGlobalLeaderboard(query: GetLeaderboardDto, currentUserId: string) {
+    const requestedLimit = Number(query.limit) || 20;
+    const limit = Math.min(20, Math.max(1, requestedLimit));
     const page = Math.max(1, Number(query.page) || 1);
-    const limit = Math.min(100, Math.max(1, Number(query.limit) || 25));
     const skip = (page - 1) * limit;
 
-    const filter: Record<string, any> = this.getEligibleStudentFilter();
+    const matchFilter: Record<string, any> = this.getEligibleStudentFilter();
 
     if (query.q && query.q.trim()) {
       const escaped = query.q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const regex = new RegExp(escaped, 'i');
-      filter.$or = [{ name: regex }, { username: regex }];
+      matchFilter.$or = [{ name: regex }, { username: regex }];
     }
 
     if (query.level) {
-      filter['gamification.level'] = Number(query.level);
+      matchFilter['gamification.level'] = Number(query.level);
     }
 
     if (query.rank && query.rank.trim()) {
-      filter['gamification.rank'] = query.rank.trim();
+      matchFilter['gamification.rank'] = query.rank.trim();
     }
 
-    const sortOrder: Record<string, 1 | -1> = {
-      'gamification.totalPoints': -1,
-      'gamification.level': -1,
-      'gamification.completedClasses': -1,
-      createdAt: 1,
-      _id: 1,
+    const baseNormalization = {
+      $addFields: {
+        effectivePoints: { $ifNull: ['$gamification.totalPoints', 0] },
+        effectiveLevel: { $ifNull: ['$gamification.level', 1] },
+        effectiveClasses: { $ifNull: ['$gamification.completedClasses', 0] },
+        effectiveCreatedAt: { $ifNull: ['$createdAt', new Date(0)] },
+      },
     };
 
-    const projection =
-      'name username avatar createdAt gamification.totalPoints gamification.level gamification.rank gamification.completedClasses gamification.completedCourses gamification.activityDates account_Status.isVerified';
+    const sortStage = {
+      $sort: {
+        effectivePoints: -1,
+        effectiveLevel: -1,
+        effectiveClasses: -1,
+        effectiveCreatedAt: 1,
+        _id: 1,
+      } as Record<string, 1 | -1>,
+    };
 
-    const [rawLearners, totalLearners] = await Promise.all([
-      this.userModel
-        .find(filter)
-        .select(projection)
-        .sort(sortOrder)
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      this.userModel.countDocuments(filter),
+    const projectStage = {
+      $project: {
+        name: 1,
+        username: 1,
+        avatar: 1,
+        createdAt: '$effectiveCreatedAt',
+        'gamification.totalPoints': '$effectivePoints',
+        'gamification.level': '$effectiveLevel',
+        'gamification.rank': { $ifNull: ['$gamification.rank', 'Beginner'] },
+        'gamification.completedClasses': '$effectiveClasses',
+        'gamification.completedCourses': { $ifNull: ['$gamification.completedCourses', 0] },
+        'gamification.activityDates': { $ifNull: ['$gamification.activityDates', []] },
+        'account_Status.isVerified': { $ifNull: ['$account_Status.isVerified', false] },
+      },
+    };
+
+    const [rawLearners, totalLearners, rawPodium] = await Promise.all([
+      this.userModel.aggregate([
+        { $match: matchFilter },
+        baseNormalization,
+        sortStage,
+        { $skip: skip },
+        { $limit: limit },
+        projectStage,
+      ]),
+      this.userModel.countDocuments(matchFilter),
+      this.userModel.aggregate([
+        { $match: this.getEligibleStudentFilter() },
+        baseNormalization,
+        sortStage,
+        { $limit: 3 },
+        projectStage,
+      ]),
     ]);
-
-    // Top 3 Podium (Overall top 3 eligible learners)
-    const rawPodium = await this.userModel
-      .find(this.getEligibleStudentFilter())
-      .select(projection)
-      .sort(sortOrder)
-      .limit(3)
-      .lean();
 
     const topPodium = await Promise.all(
       rawPodium.map((user, idx) =>
@@ -247,12 +288,15 @@ export class LeaderboardService {
       };
     }
 
+    // Top 20 Rule: cap visible total to at most 20
+    const visibleTotal = Math.min(20, totalLearners);
+
     return {
       topPodium,
       learners,
-      totalLearners,
-      page,
-      totalPages: Math.ceil(totalLearners / limit) || 1,
+      totalLearners: visibleTotal,
+      page: 1,
+      totalPages: 1,
       currentStudent: currentStudentTelemetry,
     };
   }
@@ -402,9 +446,10 @@ export class LeaderboardService {
               return b.completionPercent - a.completionPercent;
             if (b.completedClasses !== a.completedClasses)
               return b.completedClasses - a.completedClasses;
-            return (
-              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-            );
+            const dateDiff =
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            if (dateDiff !== 0) return dateDiff;
+            return a.userId.localeCompare(b.userId);
           });
 
         const myIndex = rankedStudents.findIndex((s) => s.userId === userId);

@@ -105,7 +105,7 @@ export default function LeaderboardPage() {
     queryFn: () =>
       leaderboardService.getGlobalLeaderboard({
         page,
-        limit: 25,
+        limit: 20,
         q: searchQuery,
         level: levelFilter,
         rank: rankFilter,
@@ -206,7 +206,7 @@ export default function LeaderboardPage() {
                 <div className="flex items-center justify-between gap-3 mb-3">
                   <div>
                     <h2 className="text-base sm:text-lg font-heading font-bold text-white">
-                      All Registered Learners
+                      Top 20 Learners
                     </h2>
                     <p className="text-xs text-text-muted">
                       Deterministic ranking by accumulated XP, tier level, and learning consistency.

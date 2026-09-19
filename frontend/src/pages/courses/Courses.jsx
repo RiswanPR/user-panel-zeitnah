@@ -12,6 +12,7 @@ import FeaturedRecordingCard from "../../components/courses/FeaturedRecordingCar
 import RecordingCourseCard from "../../components/courses/RecordingCourseCard";
 import OnlineCourseCarousel from "../../components/courses/OnlineCourseCarousel";
 import ContinueLearning from "../../components/courses/ContinueLearning";
+import LeaderboardPreview from "../../components/courses/LeaderboardPreview";
 import api from "../../services/api";
 import { useImagePreloader } from "../../hooks/useImagePreloader";
 import { AuthContext } from "../../context/AuthContext";
@@ -342,6 +343,9 @@ function Courses() {
         search={search}
         setSearch={setSearch}
       />
+
+      {/* ── Premium Leaderboard Preview ── */}
+      <LeaderboardPreview />
 
       {/* ══════════════════════════════════════════════════════════
           ERROR STATE WITH RETRY
