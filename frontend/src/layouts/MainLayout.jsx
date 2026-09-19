@@ -11,14 +11,14 @@ import { useQuery } from "@tanstack/react-query";
 import { AuthContext } from "../context/AuthContext";
 import { getUploadUrl } from "../utils/courseUi";
 import leaderboardService from "../services/leaderboardService";
+import LeaderboardSidebarCard from "../components/sidebar/LeaderboardSidebarCard";
 import PageTransition from "../components/ui/PageTransition";
 import CookieConsentBanner from "../components/common/CookieConsentBanner";
 import UsernameClaimModal from "../components/username/UsernameClaimModal";
 
-// ── Desktop Navigation Destinations ──
+// ── Desktop Navigation Destinations (Courses & Profile strictly) ──
 const desktopNavItems = [
   { key: "courses", path: "/courses", label: "Courses", icon: BookOpen },
-  { key: "leaderboard", path: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { key: "profile", path: "/profile", label: "Profile", icon: User },
 ];
 
@@ -43,7 +43,7 @@ export default function MainLayout({ children }) {
   const { user } = useContext(AuthContext);
   const currentUserId = user?._id || user?.userId;
 
-  // Cheaply fetch authenticated student's personal position for subtle rank indicator
+  // Cheaply fetch authenticated student's personal position for mobile trophy rank indicator
   const { data: position } = useQuery({
     queryKey: ["leaderboard", "position"],
     queryFn: () => leaderboardService.getMyLeaderboardPosition(),
@@ -115,7 +115,11 @@ export default function MainLayout({ children }) {
           {/* Dedicated Trophy Quick-Access Button */}
           <Link
             to="/leaderboard"
-            aria-label="Leaderboard"
+            aria-label={
+              position?.rank
+                ? `Leaderboard, current position ${position.rank}`
+                : "Leaderboard"
+            }
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all active:scale-95 ${
               isRouteActive("leaderboard")
                 ? "bg-brand-yellow/15 border-brand-yellow/30 text-brand-yellow"
@@ -150,163 +154,148 @@ export default function MainLayout({ children }) {
           ═══════════════════════════════════════════════ */}
       <aside className="hidden md:flex flex-col w-[260px] h-screen sticky top-0 shrink-0 z-40">
         {/* Floating inner container with margin for "island" effect */}
-        <div className="m-3 flex-1 flex flex-col rounded-2xl bg-gradient-to-b from-bg-surface/90 to-bg-base/60 border border-border-subtle backdrop-blur-xl overflow-hidden">
+        <div className="m-3 flex-1 flex flex-col rounded-2xl bg-gradient-to-b from-bg-surface/90 to-bg-base/60 border border-border-subtle backdrop-blur-xl overflow-hidden justify-between">
 
-          {/* Gradient accent line */}
-          <div className="gradient-line-top" />
+          {/* Top section: Logo + Navigation */}
+          <div className="shrink-0">
+            {/* Gradient accent line */}
+            <div className="gradient-line-top" />
 
-          {/* ── Logo Section ── */}
-          <Link to="/courses" className="px-6 py-6 flex items-center gap-3 select-none group">
-            <div className="relative">
-              <div className="absolute inset-0 bg-brand-mint/30 rounded-xl blur-md group-hover:blur-lg transition-all" />
-              <div className="relative w-10 h-10 rounded-xl border border-brand-mint/30 overflow-hidden shadow-md flex items-center justify-center bg-bg-surface">
-                <img src="/zeitnah-logo.png" alt="Zeitnah Logo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+            {/* ── Logo Section ── */}
+            <Link to="/courses" className="px-6 py-5 flex items-center gap-3 select-none group">
+              <div className="relative">
+                <div className="absolute inset-0 bg-brand-mint/30 rounded-xl blur-md group-hover:blur-lg transition-all" />
+                <div className="relative w-10 h-10 rounded-xl border border-brand-mint/30 overflow-hidden shadow-md flex items-center justify-center bg-bg-surface">
+                  <img src="/zeitnah-logo.png" alt="Zeitnah Logo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                </div>
               </div>
-            </div>
-            <div>
-              <span className="text-base font-heading font-extrabold tracking-wider uppercase text-white group-hover:text-brand-mint transition-colors">
-                Zeitnah
-              </span>
-              <p className="text-[10px] font-medium text-text-muted tracking-wide">Learning Platform</p>
-            </div>
-          </Link>
+              <div>
+                <span className="text-base font-heading font-extrabold tracking-wider uppercase text-white group-hover:text-brand-mint transition-colors">
+                  Zeitnah
+                </span>
+                <p className="text-[10px] font-medium text-text-muted tracking-wide">Learning Platform</p>
+              </div>
+            </Link>
 
-          {/* ── Divider ── */}
-          <div className="mx-5 h-px bg-gradient-to-r from-transparent via-border-accent to-transparent" />
+            {/* ── Divider ── */}
+            <div className="mx-5 h-px bg-gradient-to-r from-transparent via-border-accent to-transparent" />
 
-          {/* ── Navigation Items ── */}
-          <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto" aria-label="Main Navigation">
-            {desktopNavItems.map((item, i) => {
-              const active = isRouteActive(item.key);
-              const Icon = item.icon;
-              const isCourses = item.key === "courses";
-              const isLeaderboard = item.key === "leaderboard";
+            {/* ── Navigation Items (Courses & Profile strictly) ── */}
+            <nav className="px-3 py-3 space-y-1.5" aria-label="Main Navigation">
+              {desktopNavItems.map((item, i) => {
+                const active = isRouteActive(item.key);
+                const Icon = item.icon;
+                const isCourses = item.key === "courses";
 
-              return (
-                <motion.div
-                  key={item.key}
-                  custom={i}
-                  initial="hidden"
-                  animate="visible"
-                  variants={navItemVariants}
-                >
-                  <Link
-                    to={item.path}
-                    aria-current={active ? "page" : undefined}
-                    className={`relative flex items-center gap-3 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 group ${
-                      active
-                        ? "text-white"
-                        : "text-text-muted hover:text-white hover:bg-white/[0.03]"
-                    }`}
+                return (
+                  <motion.div
+                    key={item.key}
+                    custom={i}
+                    initial="hidden"
+                    animate="visible"
+                    variants={navItemVariants}
                   >
-                    {/* Active background treatment */}
-                    {active && (
-                      <motion.div
-                        layoutId="sidebar-active"
-                        className={`absolute inset-0 rounded-xl ${
-                          isCourses
-                            ? "bg-gradient-to-r from-brand-mint/10 to-transparent border border-brand-mint/15"
-                            : isLeaderboard
-                            ? "bg-gradient-to-r from-brand-yellow/10 to-transparent border border-brand-yellow/20"
-                            : "bg-white/[0.06] border border-white/[0.1]"
-                        }`}
-                        transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                      />
-                    )}
-
-                    {/* Active left accent bar */}
-                    {active && (
-                      <motion.div
-                        layoutId="sidebar-accent"
-                        className={`absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full ${
-                          isCourses
-                            ? "bg-brand-mint"
-                            : isLeaderboard
-                            ? "bg-brand-yellow"
-                            : "bg-white/60"
-                        }`}
-                        transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                      />
-                    )}
-
-                    {/* Navigation Icon */}
-                    <Icon
-                      className={`relative z-10 w-[18px] h-[18px] shrink-0 transition-colors duration-200 ${
+                    <Link
+                      to={item.path}
+                      aria-current={active ? "page" : undefined}
+                      className={`relative flex items-center gap-3 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 group ${
                         active
-                          ? isCourses
-                            ? "text-brand-mint"
-                            : isLeaderboard
-                            ? "text-brand-yellow"
-                            : "text-white"
-                          : isLeaderboard
-                          ? "text-text-faint group-hover:text-brand-yellow"
-                          : "text-text-faint group-hover:text-text-muted"
+                          ? "text-white font-bold"
+                          : "text-text-muted hover:text-white hover:bg-white/[0.03]"
                       }`}
+                    >
+                      {/* Active background treatment */}
+                      {active && (
+                        <motion.div
+                          layoutId="sidebar-active"
+                          className={`absolute inset-0 rounded-xl ${
+                            isCourses
+                              ? "bg-gradient-to-r from-brand-mint/10 to-transparent border border-brand-mint/15"
+                              : "bg-white/[0.06] border border-white/[0.1]"
+                          }`}
+                          transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                        />
+                      )}
+
+                      {/* Active left accent bar */}
+                      {active && (
+                        <motion.div
+                          layoutId="sidebar-accent"
+                          className={`absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full ${
+                            isCourses ? "bg-brand-mint" : "bg-white/60"
+                          }`}
+                          transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                        />
+                      )}
+
+                      {/* Navigation Icon */}
+                      <Icon
+                        className={`relative z-10 w-[18px] h-[18px] shrink-0 transition-colors duration-200 ${
+                          active
+                            ? isCourses
+                              ? "text-brand-mint"
+                              : "text-white"
+                            : "text-text-faint group-hover:text-text-muted"
+                        }`}
+                      />
+
+                      {/* Navigation Label */}
+                      <span className="relative z-10">{item.label}</span>
+
+                      {/* Courses: Active Dot Indicator */}
+                      {isCourses && active && (
+                        <span className="relative z-10 ml-auto w-1.5 h-1.5 rounded-full bg-brand-yellow" />
+                      )}
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* ── Signature Leaderboard Capsule Card ── */}
+          <div className="flex-1 flex flex-col justify-center px-1 overflow-y-auto no-scrollbar">
+            <LeaderboardSidebarCard />
+          </div>
+
+          {/* Bottom section: Divider + User Card */}
+          <div className="shrink-0">
+            {/* ── Divider ── */}
+            <div className="mx-5 h-px bg-gradient-to-r from-transparent via-border-accent to-transparent" />
+
+            {/* ── User Card ── */}
+            <Link
+              to="/profile"
+              className="p-3 flex items-center gap-3 select-none hover:bg-white/[0.04] transition-colors rounded-xl mx-2 my-1.5 group"
+            >
+              <div className="relative shrink-0">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-mint/20 to-brand-navy/40 border border-brand-mint/25 flex items-center justify-center overflow-hidden">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt={user?.name || "User"}
+                      className="w-full h-full object-cover"
                     />
-
-                    {/* Navigation Label */}
-                    <span className="relative z-10">{item.label}</span>
-
-                    {/* Courses: Active Dot Indicator */}
-                    {isCourses && active && (
-                      <span className="relative z-10 ml-auto w-1.5 h-1.5 rounded-full bg-brand-yellow" />
-                    )}
-
-                    {/* Leaderboard: Optional Subtle Rank Indicator */}
-                    {isLeaderboard && position?.rank && (
-                      <span className="relative z-10 ml-auto font-mono text-[11px] font-semibold text-text-muted group-hover:text-brand-yellow bg-white/[0.04] border border-white/[0.06] px-1.5 py-0.5 rounded-md transition-colors">
-                        #{position.rank}
-                      </span>
-                    )}
-                  </Link>
-                </motion.div>
-              );
-            })}
-          </nav>
-
-          {/* ── Divider ── */}
-          <div className="mx-5 h-px bg-gradient-to-r from-transparent via-border-accent to-transparent" />
-
-          {/* ── User Card ── */}
-          <Link
-            to="/profile"
-            className="p-3.5 flex items-center gap-3 select-none hover:bg-white/[0.04] transition-colors rounded-xl mx-2 my-1.5 group"
-          >
-            <div className="relative shrink-0">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-mint/20 to-brand-navy/40 border border-brand-mint/25 flex items-center justify-center overflow-hidden">
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt={user?.name || "User"}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="text-xs font-heading font-bold text-brand-mint">
-                    {userInitials}
-                  </span>
-                )}
+                  ) : (
+                    <span className="text-xs font-heading font-bold text-brand-mint">
+                      {userInitials}
+                    </span>
+                  )}
+                </div>
+                {/* Online indicator */}
+                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-success border-2 border-bg-surface" />
               </div>
-              {/* Online indicator */}
-              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-success border-2 border-bg-surface" />
-            </div>
 
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold truncate text-white group-hover:text-brand-mint transition-colors">
-                {user?.name || "Zeitnah User"}
-              </p>
-              {position?.rank ? (
-                <p className="text-[10px] text-text-muted font-mono truncate flex items-center gap-1">
-                  <span className="text-brand-yellow font-bold">#{position.rank}</span>
-                  <span>•</span>
-                  <span>{(position.points || 0).toLocaleString()} XP</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold truncate text-white group-hover:text-brand-mint transition-colors">
+                  {user?.name || "Zeitnah User"}
                 </p>
-              ) : (
-                <p className="text-[10px] text-brand-mint font-mono truncate">
+                <p className="text-[10px] text-text-muted font-mono truncate">
                   @{user?.username || "student"}
                 </p>
-              )}
-            </div>
-          </Link>
+              </div>
+            </Link>
+          </div>
         </div>
       </aside>
 
