@@ -12,7 +12,7 @@ import FeaturedRecordingCard from "../../components/courses/FeaturedRecordingCar
 import RecordingCourseCard from "../../components/courses/RecordingCourseCard";
 import OnlineCourseCarousel from "../../components/courses/OnlineCourseCarousel";
 import ContinueLearning from "../../components/courses/ContinueLearning";
-import LeaderboardPreview from "../../components/courses/LeaderboardPreview";
+import CourseStandingStrip from "../../components/courses/CourseStandingStrip";
 import api from "../../services/api";
 import { useImagePreloader } from "../../hooks/useImagePreloader";
 import { AuthContext } from "../../context/AuthContext";
@@ -344,9 +344,6 @@ function Courses() {
         setSearch={setSearch}
       />
 
-      {/* ── Premium Leaderboard Preview ── */}
-      <LeaderboardPreview />
-
       {/* ══════════════════════════════════════════════════════════
           ERROR STATE WITH RETRY
           ══════════════════════════════════════════════════════════ */}
@@ -451,6 +448,9 @@ function Courses() {
           <OnlineCourseCarousel courses={onlineCourses} />
         </CourseSection>
       )}
+
+      {/* ── Subtle Learning Standing Strip ── */}
+      {!loading && !error && <CourseStandingStrip />}
 
     </div>
   );

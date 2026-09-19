@@ -6,18 +6,11 @@ import {
   Globe,
   BarChart3,
   Star,
-  Trophy,
   Shield,
   FileText,
 } from "lucide-react";
 
 export const PROFILE_TABS = [
-  {
-    path: "/leaderboard",
-    label: "Leaderboard",
-    icon: Trophy,
-    description: "Global & course rankings",
-  },
   {
     path: "/profile",
     label: "Overview",
@@ -64,7 +57,7 @@ export const PROFILE_TABS = [
 
 /**
  * Unified Core Profile Navigation Component.
- * Exactly 8 Core Profile destinations. Strictly NO Community references.
+ * Exactly 7 Core Profile destinations. Strictly NO Community references.
  */
 export default function ProfileNav({ className = "" }) {
   const location = useLocation();
@@ -77,12 +70,6 @@ export default function ProfileNav({ className = "" }) {
       return (
         location.pathname === "/public-profile" ||
         location.pathname.startsWith("/u/")
-      );
-    }
-    if (tabPath === "/leaderboard") {
-      return (
-        location.pathname === "/leaderboard" ||
-        location.pathname.startsWith("/leaderboard/")
       );
     }
     return location.pathname.startsWith(tabPath);

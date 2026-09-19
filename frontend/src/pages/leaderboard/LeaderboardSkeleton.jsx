@@ -1,11 +1,6 @@
-import ProfileNav from "../../components/profile/ProfileNav";
-
 export default function LeaderboardSkeleton() {
   return (
     <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto animate-pulse">
-      {/* ProfileNav */}
-      <ProfileNav />
-
       {/* Hero Skeleton */}
       <div className="h-44 bg-bg-card rounded-2xl border border-border-default p-6 flex flex-col justify-between" />
 

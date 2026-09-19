@@ -3,7 +3,6 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
-import ProfileNav from "../../components/profile/ProfileNav";
 import leaderboardService from "../../services/leaderboardService";
 import LeaderboardHero from "./LeaderboardHero";
 import PersonalPositionCard from "./PersonalPositionCard";
@@ -154,9 +153,6 @@ export default function LeaderboardPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto">
-      {/* ── Sub-Navigation (8 Core Profile destinations) ── */}
-      <ProfileNav />
-
       {/* ── Hero Section ── */}
       <LeaderboardHero
         activeMode={activeMode}
