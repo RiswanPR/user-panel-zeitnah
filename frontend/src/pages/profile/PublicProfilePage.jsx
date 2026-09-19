@@ -377,14 +377,16 @@ export default function PublicProfilePage() {
 
       {/* ── 02. ABOUT SECTION ── */}
       {student.bio ? (
-        <section className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-3 shadow-sm">
-          <h2 className="text-lg font-heading font-extrabold text-white flex items-center gap-2">
-            <span className="w-1.5 h-4 rounded-full bg-brand-mint" />
+        <section className="w-full max-w-full min-w-0 rounded-3xl border border-border-default bg-bg-card p-5 sm:p-6 md:p-8 space-y-3 sm:space-y-4 shadow-sm">
+          <h2 className="text-base sm:text-lg font-heading font-extrabold text-white flex items-center gap-2">
+            <span className="w-1.5 h-4 rounded-full bg-brand-mint shrink-0" />
             About
           </h2>
-          <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">
-            {student.bio}
-          </p>
+          <div className="w-full max-w-[72ch] min-w-0 text-left">
+            <p className="text-sm sm:text-base text-text-secondary leading-relaxed sm:leading-loose whitespace-pre-wrap break-words [overflow-wrap:anywhere] [word-break:break-word] text-left font-normal">
+              {student.bio}
+            </p>
+          </div>
         </section>
       ) : null}
 
