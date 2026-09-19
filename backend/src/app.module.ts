@@ -11,7 +11,6 @@ import { ProfileModule } from './modules/profile/profile.module';
 import { CoursesModule } from './modules/courses/courses.module';
 import { AwsModule } from './common/aws/aws.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
-import { AnnouncementsModule } from './modules/announcements/announcements.module';
 import { CommunityModule } from './modules/community/community.module';
 import { TroubleshootModule } from './modules/troubleshoot/troubleshoot.module';
 import { ErrorReportsModule } from './modules/error-reports/error-reports.module';
@@ -42,7 +41,6 @@ import { WellKnownModule } from './modules/well-known/well-known.module';
     CoursesModule,
     AwsModule,
     NotificationsModule,
-    AnnouncementsModule,
 
     // COMMUNITY
     CommunityModule,

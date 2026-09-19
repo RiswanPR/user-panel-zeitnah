@@ -10,7 +10,6 @@ import { getUploadUrl } from "../utils/courseUi";
 import PageTransition from "../components/ui/PageTransition";
 import CookieConsentBanner from "../components/common/CookieConsentBanner";
 import UsernameClaimModal from "../components/username/UsernameClaimModal";
-import NotificationCenter from "../components/announcements/NotificationCenter";
 
 const navItems = [
   // { path: "/dashboard", label: "Dashboard", icon: Home },
@@ -55,7 +54,7 @@ export default function MainLayout({ children }) {
       {/* Ambient background */}
       <div className="ambient-glow inset-0" />
 
-      {/* Mobile Top Header with Logo & Notifications */}
+      {/* Mobile Top Header with Logo */}
       <header className="md:hidden sticky top-0 z-40 bg-bg-surface/80 backdrop-blur-xl border-b border-border-subtle px-4 py-3 flex items-center justify-between">
         <Link to="/courses" className="flex items-center gap-2.5 select-none">
           <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-brand-mint/30 shadow-sm">
@@ -66,12 +65,9 @@ export default function MainLayout({ children }) {
             <p className="text-[9px] font-medium text-text-muted">Learning Platform</p>
           </div>
         </Link>
-        <div className="flex items-center gap-2.5">
-          <NotificationCenter isMobile />
-          <Link to="/profile" className="w-8 h-8 rounded-full border border-brand-mint/30 overflow-hidden flex items-center justify-center bg-brand-mint/20">
-            {avatarUrl ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" /> : <span className="text-[10px] font-bold text-brand-mint">{userInitials}</span>}
-          </Link>
-        </div>
+        <Link to="/profile" className="w-8 h-8 rounded-full border border-brand-mint/30 overflow-hidden flex items-center justify-center bg-brand-mint/20">
+          {avatarUrl ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" /> : <span className="text-[10px] font-bold text-brand-mint">{userInitials}</span>}
+        </Link>
       </header>
 
       {/* ═══════════════════════════════════════════════
@@ -84,25 +80,21 @@ export default function MainLayout({ children }) {
           {/* Gradient accent line */}
           <div className="gradient-line-top" />
 
-          {/* ── Logo & Notifications Section ── */}
-          <div className="px-5 py-5 flex items-center justify-between gap-2">
-            <Link to="/courses" className="flex items-center gap-2.5 select-none group min-w-0">
-              <div className="relative shrink-0">
-                <div className="absolute inset-0 bg-brand-mint/30 rounded-xl blur-md group-hover:blur-lg transition-all" />
-                <div className="relative w-9 h-9 rounded-xl border border-brand-mint/30 overflow-hidden shadow-md flex items-center justify-center bg-bg-surface">
-                  <img src="/zeitnah-logo.png" alt="Zeitnah Logo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                </div>
+          {/* ── Logo Section ── */}
+          <Link to="/courses" className="px-6 py-6 flex items-center gap-3 select-none group">
+            <div className="relative">
+              <div className="absolute inset-0 bg-brand-mint/30 rounded-xl blur-md group-hover:blur-lg transition-all" />
+              <div className="relative w-10 h-10 rounded-xl border border-brand-mint/30 overflow-hidden shadow-md flex items-center justify-center bg-bg-surface">
+                <img src="/zeitnah-logo.png" alt="Zeitnah Logo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
               </div>
-              <div className="min-w-0">
-                <span className="text-sm font-heading font-extrabold tracking-wider uppercase text-white group-hover:text-brand-mint transition-colors truncate block">
-                  Zeitnah
-                </span>
-                <p className="text-[9px] font-medium text-text-muted tracking-wide truncate">Learning</p>
-              </div>
-            </Link>
-
-            <NotificationCenter />
-          </div>
+            </div>
+            <div>
+              <span className="text-base font-heading font-extrabold tracking-wider uppercase text-white group-hover:text-brand-mint transition-colors">
+                Zeitnah
+              </span>
+              <p className="text-[10px] font-medium text-text-muted tracking-wide">Learning Platform</p>
+            </div>
+          </Link>
 
           {/* ── Divider ── */}
           <div className="mx-5 h-px bg-gradient-to-r from-transparent via-border-accent to-transparent" />

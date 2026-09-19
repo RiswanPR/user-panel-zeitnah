@@ -12,7 +12,6 @@ import FeaturedRecordingCard from "../../components/courses/FeaturedRecordingCar
 import RecordingCourseCard from "../../components/courses/RecordingCourseCard";
 import OnlineCourseCarousel from "../../components/courses/OnlineCourseCarousel";
 import ContinueLearning from "../../components/courses/ContinueLearning";
-import AnnouncementBanner from "../../components/announcements/AnnouncementBanner";
 import api from "../../services/api";
 import { useImagePreloader } from "../../hooks/useImagePreloader";
 import { AuthContext } from "../../context/AuthContext";
@@ -280,11 +279,6 @@ function Courses() {
 
   return (
     <div className="space-y-8 sm:space-y-12 max-w-7xl mx-auto">
-
-      {/* ══════════════════════════════════════════════════════════
-          PREMIUM ANNOUNCEMENT SYSTEM
-          ══════════════════════════════════════════════════════════ */}
-      <AnnouncementBanner />
 
       {/* ══════════════════════════════════════════════════════════
           HERO / GREETING & METRICS AREA
