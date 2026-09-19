@@ -6,6 +6,7 @@ import {
   Trophy,
   User,
   BarChart3,
+  Users,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { AuthContext } from "../context/AuthContext";
@@ -17,15 +18,17 @@ import CookieConsentBanner from "../components/common/CookieConsentBanner";
 import UsernameClaimModal from "../components/username/UsernameClaimModal";
 import FeatureErrorBoundary from "../components/common/FeatureErrorBoundary";
 
-// ── Desktop Navigation Destinations (Courses & Profile strictly) ──
+// ── Desktop Navigation Destinations ──
 const desktopNavItems = [
   { key: "courses", path: "/courses", label: "Courses", icon: BookOpen },
+  { key: "network", path: "/network", label: "Network", icon: Users },
   { key: "profile", path: "/profile", label: "Profile", icon: User },
 ];
 
-// ── Mobile Bottom Navigation Destinations (Strictly NO Leaderboard duplicate) ──
+// ── Mobile Bottom Navigation Destinations ──
 const mobileBottomNavItems = [
   { key: "courses", path: "/courses", label: "Courses", icon: BookOpen },
+  { key: "network", path: "/network", label: "Network", icon: Users },
   { key: "learning", path: "/my-learning", label: "Learning", icon: BarChart3 },
   { key: "profile", path: "/profile", label: "Profile", icon: User },
 ];
@@ -65,6 +68,9 @@ export default function MainLayout({ children }) {
     }
     if (key === "learning") {
       return path === "/my-learning" || path.startsWith("/my-learning/");
+    }
+    if (key === "network") {
+      return path === "/network" || path.startsWith("/network/");
     }
     if (key === "profile") {
       return (

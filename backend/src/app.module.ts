@@ -13,6 +13,7 @@ import { LeaderboardModule } from './modules/leaderboard/leaderboard.module';
 import { AwsModule } from './common/aws/aws.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { CommunityModule } from './modules/community/community.module';
+import { NetworkModule } from './modules/network/network.module';
 import { TroubleshootModule } from './modules/troubleshoot/troubleshoot.module';
 import { ErrorReportsModule } from './modules/error-reports/error-reports.module';
 import { WellKnownModule } from './modules/well-known/well-known.module';
@@ -43,6 +44,7 @@ import { WellKnownModule } from './modules/well-known/well-known.module';
     LeaderboardModule,
     AwsModule,
     NotificationsModule,
+    NetworkModule,
 
     // COMMUNITY
     CommunityModule,

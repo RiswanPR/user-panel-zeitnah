@@ -32,6 +32,10 @@ const MyLearning = React.lazy(() => import("./pages/learning/MyLearning"));
 const Dashboard = React.lazy(() => import("./pages/learning/Dashboard"));
 const MyPoints = React.lazy(() => import("./pages/learning/MyPoints"));
 const Leaderboard = React.lazy(() => import("./pages/leaderboard/LeaderboardPage"));
+const NetworkPage = React.lazy(() => import("./pages/network/NetworkPage"));
+const NetworkProfilePage = React.lazy(() => import("./pages/network/NetworkProfilePage"));
+const CommunityDetailPage = React.lazy(() => import("./pages/network/CommunityDetailPage"));
+const DiscussionDetailPage = React.lazy(() => import("./pages/network/DiscussionDetailPage"));
 const NotFoundPage = React.lazy(() => import("./pages/NotFoundPage"));
 const ErrorReportsDashboard = React.lazy(() => import("./pages/admin/ErrorReportsDashboard"));
 const SessionDiagnostics = React.lazy(() => import("./pages/admin/SessionDiagnostics"));
@@ -139,6 +143,10 @@ function App() {
               <Route path="/my-points" element={<Suspense fallback={<PageLoader />}><MyPoints /></Suspense>} />
               <Route path="/leaderboard" element={<Suspense fallback={<PageLoader />}><Leaderboard /></Suspense>} />
               <Route path="/leaderboard/:courseId" element={<Suspense fallback={<PageLoader />}><Leaderboard /></Suspense>} />
+              <Route path="/network" element={<Suspense fallback={<PageLoader />}><NetworkPage /></Suspense>} />
+              <Route path="/network/profile/:username" element={<Suspense fallback={<PageLoader />}><NetworkProfilePage /></Suspense>} />
+              <Route path="/network/communities/:slug" element={<Suspense fallback={<PageLoader />}><CommunityDetailPage /></Suspense>} />
+              <Route path="/network/communities/:slug/discussions/:discussionId" element={<Suspense fallback={<PageLoader />}><DiscussionDetailPage /></Suspense>} />
               <Route path="/active-sessions" element={<Suspense fallback={<PageLoader />}><ActiveSessions /></Suspense>} />
               <Route path="/audit-logs" element={<Suspense fallback={<PageLoader />}><AuditLogs /></Suspense>} />
               <Route path="/admin/error-reports" element={<Suspense fallback={<PageLoader />}><ErrorReportsDashboard /></Suspense>} />
