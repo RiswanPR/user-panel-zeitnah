@@ -46,7 +46,10 @@ describe('ProfileService', () => {
         },
         {
           provide: UploadService,
-          useValue: { uploadFile: jest.fn(), deleteFile: jest.fn() },
+          useValue: {
+            uploadFile: jest.fn().mockResolvedValue(true),
+            deleteFile: jest.fn().mockResolvedValue(true),
+          },
         },
         {
           provide: SignedUrlService,
@@ -379,6 +382,116 @@ describe('ProfileService', () => {
       await expect(service.getPublicProfile('nonexistent')).rejects.toThrow(
         NotFoundException,
       );
+    });
+  });
+
+  describe('getMe', () => {
+    it('should return current user and signed avatar without sensitive secrets', async () => {
+      const mockUser = {
+        _id: 'user_123',
+        name: 'Test Student',
+        email: 'test@zeitnah.com',
+        username: 'teststudent',
+        usernameClaimed: true,
+        avatar: 'profiles/user_123-avatar.png',
+        bio: 'Aspiring Engineer',
+        skills: ['JavaScript', 'CAD'],
+        gamification: {
+          level: 1,
+          rank: 'Beginner',
+          totalPoints: 50,
+          profileCompletion: 80,
+        },
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+        toObject: () => ({
+          _id: 'user_123',
+          name: 'Test Student',
+          email: 'test@zeitnah.com',
+          username: 'teststudent',
+          avatar: 'profiles/user_123-avatar.png',
+          gamification: { level: 1, totalPoints: 50 },
+        }),
+      };
+
+      mockUserModel.findById.mockReturnValue({
+        select: jest.fn().mockResolvedValue(mockUser),
+      });
+
+      const res = await service.getMe('user_123');
+      expect(res.user).toBeDefined();
+      expect(res.user.name).toBe('Test Student');
+      expect(res.user.avatar).toBe('https://signed.cdn/profiles/user_123-avatar.png');
+      expect(mockUser.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('updateProfile', () => {
+    it('should update name, bio, skills and award milestone rewards', async () => {
+      const mockUser: any = {
+        _id: 'user_123',
+        name: 'Old Name',
+        email: 'test@zeitnah.com',
+        avatar: 'profiles/avatar.png',
+        bio: '',
+        skills: [],
+        gamification: {
+          totalPoints: 0,
+          profileCompletion: 40,
+          profileCompletionRewards: [],
+          level: 1,
+          rank: 'Beginner',
+          achievements: [],
+          recentActivities: [],
+        },
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+        toObject: () => ({
+          _id: 'user_123',
+          name: 'Updated Name',
+          bio: 'New Bio',
+          skills: ['React', 'Node.js'],
+          gamification: mockUser.gamification,
+        }),
+      };
+
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      const res = await service.updateProfile('user_123', {
+        name: 'Updated Name',
+        bio: 'New Bio',
+        skills: ['React', 'Node.js'],
+      });
+
+      expect(res.message).toBe('Profile updated successfully');
+      expect(mockUser.name).toBe('Updated Name');
+      expect(mockUser.bio).toBe('New Bio');
+      expect(mockUser.skills).toEqual(['React', 'Node.js']);
+      expect(mockUser.save).toHaveBeenCalled();
+      expect(mockCommunityProfileModel.updateOne).toHaveBeenCalled();
+    });
+  });
+
+  describe('uploadAvatar', () => {
+    it('should upload avatar to S3, clean up old avatar, and return signed URL', async () => {
+      const mockUser: any = {
+        _id: 'user_123',
+        avatar: 'profiles/old-avatar.png',
+        save: jest.fn().mockResolvedValue(true),
+      };
+
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      const fakeFile: any = {
+        originalname: 'avatar.png',
+        buffer: Buffer.from('fake-image-bytes'),
+        mimetype: 'image/png',
+      };
+
+      const res = await service.uploadAvatar('user_123', fakeFile);
+      expect(res.message).toBe('Avatar uploaded successfully');
+      expect(res.avatar).toContain('https://signed.cdn/profiles/user_123-');
+      expect(mockUser.save).toHaveBeenCalled();
     });
   });
 });

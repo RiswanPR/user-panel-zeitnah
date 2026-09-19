@@ -127,6 +127,12 @@ export class ProfileController {
   // UPDATE PROFILE
   @Patch('update')
   @UseGuards(JwtAuthGuard)
+  @Throttle({
+    default: {
+      limit: 30,
+      ttl: 60000,
+    },
+  })
   updateProfile(
     @Req() req: any,
     @Body() body: UpdateProfileDto,
@@ -134,9 +140,15 @@ export class ProfileController {
     return this.profileService.updateProfile(req.user.userId, body);
   }
 
-  // UPLOAD AVATAR (Secured with 5MB limit and MIME type verification)
+  // UPLOAD AVATAR (Secured with 5MB limit, MIME type verification, and throttling)
   @Post('avatar')
   @UseGuards(JwtAuthGuard)
+  @Throttle({
+    default: {
+      limit: 10,
+      ttl: 60000,
+    },
+  })
   @UseInterceptors(
     FileInterceptor('avatar', {
       limits: { fileSize: 5 * 1024 * 1024 },

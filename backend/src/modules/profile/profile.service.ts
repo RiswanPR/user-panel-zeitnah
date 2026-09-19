@@ -524,7 +524,7 @@ export class ProfileService {
 
     // Clean up old avatar from storage
     if (oldAvatarKey && oldAvatarKey !== key && oldAvatarKey.startsWith('profiles/')) {
-      await this.uploadService.deleteFile(oldAvatarKey).catch(() => {});
+      await Promise.resolve(this.uploadService.deleteFile(oldAvatarKey)).catch(() => {});
     }
 
     const signedUrl = await this.signedUrlService.generateSignedImageUrl(key);
