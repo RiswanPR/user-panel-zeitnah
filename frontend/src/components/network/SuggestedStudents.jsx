@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Users } from "lucide-react";
+import { Users, ArrowRight } from "lucide-react";
 import StudentCard from "./StudentCard";
 import { SkeletonCard } from "../ui/Skeleton";
 import NetworkEmptyState from "./NetworkEmptyState";
@@ -23,7 +23,8 @@ const CATEGORIES = [
  * @param {string} [props.activeFilter='All'] - Current active category filter
  * @param {function(string): void} [props.onFilterChange] - Filter change handler
  * @param {string} [props.searchQuery=''] - Current search term
- * @param {function(): void} [props.onClearSearch] - Callback to clear search query
+ * @param {function(Object): void} [props.onPreview] - Student profile preview modal callback
+ * @param {string[]} [props.courses] - Real available courses from directory
  * @param {string} [props.title='Suggested for you'] - Section title
  * @param {string} [props.description='People you may want to connect with.'] - Section description
  * @param {boolean} [props.showFilterChips=true] - Whether to show category filter chips
@@ -35,10 +36,19 @@ export default function SuggestedStudents({
   onFilterChange,
   searchQuery = "",
   onClearSearch,
+  onPreview,
+  courses = [],
   title = "Suggested for you",
   description = "People you may want to connect with.",
   showFilterChips = true,
 }) {
+  const categoryList = useMemo(() => {
+    if (courses && courses.length > 0) {
+      return ["All", ...courses];
+    }
+    return CATEGORIES;
+  }, [courses]);
+
   const filteredStudents = useMemo(() => {
     if (!activeFilter || activeFilter.toLowerCase() === "all") {
       return students;
@@ -73,31 +83,44 @@ export default function SuggestedStudents({
           </p>
         </div>
 
-        {/* Category Filter Chips */}
-        {showFilterChips && (
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar" role="group" aria-label="Filter students by learning track">
-            {CATEGORIES.map((category) => {
-              const isActive = activeFilter.toLowerCase() === category.toLowerCase();
-              return (
-                <button
-                  key={category}
-                  type="button"
-                  onClick={() => onFilterChange?.(category)}
-                  className={`shrink-0 rounded-xl px-3 py-1.5 text-xs font-semibold transition-all focus-ring ${
-                    isActive
-                      ? "bg-brand-mint text-bg-base font-bold shadow-[0_0_12px_rgba(159,213,178,0.25)]"
-                      : "bg-white/[0.04] text-text-muted border border-white/[0.06] hover:bg-white/[0.08] hover:text-white"
-                  }`}
-                >
-                  {category}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {onExplore && (
+            <button
+              type="button"
+              onClick={onExplore}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-brand-mint hover:underline focus-ring rounded"
+            >
+              <span>Discover All</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          )}
+
+          {/* Category Filter Chips */}
+          {showFilterChips && (
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar" role="group" aria-label="Filter students by learning track">
+              {categoryList.map((category) => {
+                const isActive = activeFilter.toLowerCase() === category.toLowerCase();
+                return (
+                  <button
+                    key={category}
+                    type="button"
+                    onClick={() => onFilterChange?.(category)}
+                    className={`shrink-0 rounded-xl px-3 py-1.5 text-xs font-semibold transition-all focus-ring ${
+                      isActive
+                        ? "bg-brand-mint text-bg-base font-bold shadow-[0_0_12px_rgba(159,213,178,0.25)]"
+                        : "bg-white/[0.04] text-text-muted border border-white/[0.06] hover:bg-white/[0.08] hover:text-white"
+                    }`}
+                  >
+                    {category}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Grid Content */}
+      {/* Grid / Horizontal Track Content */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -105,9 +128,14 @@ export default function SuggestedStudents({
           ))}
         </div>
       ) : filteredStudents.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex sm:grid overflow-x-auto sm:overflow-visible no-scrollbar snap-x snap-mandatory sm:snap-none gap-4 pb-2 sm:pb-0">
           {filteredStudents.map((student) => (
-            <StudentCard key={student.id} student={student} />
+            <div key={student.id} className="min-w-[280px] sm:min-w-0 flex-1 snap-start">
+              <StudentCard
+                student={student}
+                onPreview={onPreview}
+              />
+            </div>
           ))}
         </div>
       ) : (

@@ -10,6 +10,10 @@ import { Model, Types } from 'mongoose';
 import { User, UserDocument } from '../auth/schemas/user.schema';
 import { Course, CourseDocument } from '../courses/schemas/course.schema';
 import { Connection, ConnectionDocument } from './schemas/connection.schema';
+import {
+  CommunityMembership,
+  CommunityMembershipDocument,
+} from './schemas/community-membership.schema';
 import { SignedUrlService } from '../../common/aws/signed-url.service';
 import { GetStudentsDto } from './dto/get-students.dto';
 import {
@@ -152,6 +156,8 @@ export class NetworkService {
     private readonly courseModel: Model<CourseDocument>,
     @InjectModel(Connection.name)
     private readonly connectionModel: Model<ConnectionDocument>,
+    @InjectModel(CommunityMembership.name)
+    private readonly membershipModel: Model<CommunityMembershipDocument>,
     @InjectModel(NetworkActivity.name)
     private readonly activityModel: Model<NetworkActivityDocument>,
     private readonly signedUrlService: SignedUrlService,
@@ -751,10 +757,35 @@ export class NetworkService {
   ): Promise<PaginatedConnectionsResponse> {
     const userObjId = new Types.ObjectId(currentUserId);
 
-    const filter: Record<string, any> = {
+    let filter: Record<string, any> = {
       $or: [{ requesterId: userObjId }, { recipientId: userObjId }],
       status: 'accepted',
     };
+
+    if (query.q && query.q.trim()) {
+      const cleanQ = escapeRegex(query.q.trim());
+      const regex = new RegExp(cleanQ, 'i');
+      const matchingUsers = await this.userModel
+        .find({
+          $or: [
+            { name: regex },
+            { username: regex },
+            { headline: regex },
+            { currentRole: regex },
+            { 'course.courseName': regex },
+          ],
+        })
+        .select('_id')
+        .lean();
+      const matchingIds = matchingUsers.map((u) => u._id);
+      filter = {
+        status: 'accepted',
+        $or: [
+          { requesterId: userObjId, recipientId: { $in: matchingIds } },
+          { recipientId: userObjId, requesterId: { $in: matchingIds } },
+        ],
+      };
+    }
 
     const page = Math.max(1, query.page || 1);
     const limit = Math.min(50, Math.max(1, query.limit || 12));
@@ -954,6 +985,64 @@ export class NetworkService {
       connectionsCount,
       incomingRequestsCount,
       outgoingRequestsCount,
+    };
+  }
+
+  /**
+   * Retrieves real personal network metrics and platform telemetry.
+   */
+  async getNetworkStats(currentUserId?: string): Promise<{
+    activeStudentsCount: number;
+    connectionsCount: number;
+    pendingRequestsCount: number;
+    sentRequestsCount: number;
+    joinedCommunitiesCount: number;
+  }> {
+    const userObjId =
+      currentUserId && Types.ObjectId.isValid(currentUserId)
+        ? new Types.ObjectId(currentUserId)
+        : null;
+
+    const [
+      activeStudentsCount,
+      connectionsCount,
+      pendingRequestsCount,
+      sentRequestsCount,
+      joinedCommunitiesCount,
+    ] = await Promise.all([
+      this.userModel.countDocuments(this.getEligibleStudentFilter()),
+      userObjId
+        ? this.connectionModel.countDocuments({
+            $or: [{ requesterId: userObjId }, { recipientId: userObjId }],
+            status: 'accepted',
+          })
+        : 0,
+      userObjId
+        ? this.connectionModel.countDocuments({
+            recipientId: userObjId,
+            status: 'pending',
+          })
+        : 0,
+      userObjId
+        ? this.connectionModel.countDocuments({
+            requesterId: userObjId,
+            status: 'pending',
+          })
+        : 0,
+      userObjId
+        ? this.membershipModel.countDocuments({
+            userId: userObjId,
+            status: 'active',
+          })
+        : 0,
+    ]);
+
+    return {
+      activeStudentsCount,
+      connectionsCount,
+      pendingRequestsCount,
+      sentRequestsCount,
+      joinedCommunitiesCount,
     };
   }
 

@@ -24,11 +24,25 @@ export default function NetworkSearch({
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef(null);
 
+  const isMac = typeof window !== "undefined" && navigator?.platform?.toUpperCase().indexOf("MAC") >= 0;
+
   // Synchronize internal state when outer value changes externally (React recommended pattern)
   if (value !== prevValue) {
     setPrevValue(value);
     setLocalValue(value);
   }
+
+  // Global ⌘K / Ctrl+K keyboard shortcut listener
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // Debounce propagation to onChange callback
   useEffect(() => {
@@ -57,7 +71,7 @@ export default function NetworkSearch({
         {/* Leading Search Icon */}
         <div className="pointer-events-none pl-4 pr-2 text-text-muted transition-colors">
           <Search
-            className={`h-5 w-5 transition-colors duration-200 ${
+            className={`h-4.5 w-4.5 transition-colors duration-200 ${
               isFocused ? "text-brand-mint" : "text-text-muted"
             }`}
             aria-hidden="true"
@@ -75,8 +89,19 @@ export default function NetworkSearch({
           onChange={(e) => setLocalValue(e.target.value)}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          className="w-full bg-transparent py-3.5 pr-10 text-sm sm:text-base text-white placeholder:text-text-muted/60 focus:outline-none"
+          className="w-full bg-transparent py-3 pr-14 text-sm text-white placeholder:text-text-muted/60 focus:outline-none"
         />
+
+        {/* Keyboard Shortcut Hint Badge */}
+        {!localValue && (
+          <div
+            className="absolute right-3.5 hidden sm:inline-flex items-center gap-0.5 rounded-md border border-white/[0.1] bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-mono font-medium text-text-muted select-none pointer-events-none"
+            aria-hidden="true"
+          >
+            <span>{isMac ? "⌘" : "Ctrl"}</span>
+            <span>K</span>
+          </div>
+        )}
 
         {/* Clear Button */}
         {localValue && (

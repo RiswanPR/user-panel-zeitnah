@@ -33,13 +33,19 @@ export class GetCommunitiesQueryDto {
 
   @IsOptional()
   @IsString()
-  @IsIn(['ALL', 'COURSE', 'SUBJECT', 'INTEREST', 'PROJECT', 'GOAL', 'GENERAL'])
   type?: string = 'ALL';
 
   @IsOptional()
   @IsString()
-  @IsIn(['all', 'featured', 'recommended', 'popular', 'joined'])
   filter?: 'all' | 'featured' | 'recommended' | 'popular' | 'joined' = 'all';
+
+  @IsOptional()
+  @IsString()
+  sort?: string;
+
+  @IsOptional()
+  @IsString()
+  myCommunities?: string;
 
   @IsOptional()
   @Type(() => Number)

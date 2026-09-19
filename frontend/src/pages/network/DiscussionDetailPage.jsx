@@ -101,7 +101,7 @@ export default function DiscussionDetailPage() {
 
   // Delete Reply Mutation
   const deleteReplyMutation = useMutation({
-    mutationFn: (replyId) => communityService.deleteReply(replyId),
+    mutationFn: (replyId) => communityService.deleteReply(discussionId, replyId),
     onSuccess: () => {
       refetchReplies();
       refetchDiscussion();
@@ -121,7 +121,7 @@ export default function DiscussionDetailPage() {
 
   // Toggle Lock Discussion Mutation
   const toggleLockMutation = useMutation({
-    mutationFn: () => communityService.toggleLockDiscussion(discussionId),
+    mutationFn: () => communityService.toggleLockDiscussion(discussionId, !isLocked),
     onSuccess: () => {
       refetchDiscussion();
     },
@@ -129,7 +129,8 @@ export default function DiscussionDetailPage() {
 
   // Toggle Pin Discussion Mutation
   const togglePinMutation = useMutation({
-    mutationFn: () => communityService.togglePinDiscussion(discussionId),
+    mutationFn: () =>
+      communityService.togglePinDiscussion(discussionId, !discussion.isPinned),
     onSuccess: () => {
       refetchDiscussion();
     },

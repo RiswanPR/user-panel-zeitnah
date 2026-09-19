@@ -222,6 +222,23 @@ export class NetworkController {
   }
 
   /**
+   * Retrieves personal network stats (active students, connections, pending requests, spaces).
+   */
+  @Get('stats')
+  @Throttle({
+    default: {
+      limit: 60,
+      ttl: 60000,
+    },
+  })
+  async getNetworkStats(@Req() req: AuthenticatedRequest) {
+    const currentUserId = req.user?.userId || req.user?._id;
+    return this.networkService.getNetworkStats(
+      currentUserId ? String(currentUserId) : undefined,
+    );
+  }
+
+  /**
    * Retrieves relationship state between authenticated user and target student.
    */
   @Get('connections/relationship/:targetUserId')
@@ -562,6 +579,24 @@ export class NetworkController {
     return this.communityService.lockDiscussion(
       id,
       Boolean(body.locked),
+      String(currentUserId),
+    );
+  }
+
+  /**
+   * Pins or unpins a discussion.
+   */
+  @Patch('discussions/:id/pin')
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  async togglePinDiscussion(
+    @Param('id') id: string,
+    @Body() body: { pinned?: boolean },
+    @Req() req: AuthenticatedRequest,
+  ): Promise<{ success: boolean; isPinned: boolean }> {
+    const currentUserId = req.user?.userId || req.user?._id;
+    return this.communityService.togglePinDiscussion(
+      id,
+      body?.pinned,
       String(currentUserId),
     );
   }

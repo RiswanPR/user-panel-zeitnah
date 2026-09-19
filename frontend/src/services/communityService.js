@@ -20,7 +20,7 @@ const communityService = {
   getCommunities: async (params = {}) => {
     const cleanParams = {};
     if (params.q?.trim()) cleanParams.q = params.q.trim();
-    if (params.type && params.type !== "all") cleanParams.type = params.type;
+    if (params.type && params.type !== "all") cleanParams.type = params.type.toUpperCase();
     if (params.sort) cleanParams.sort = params.sort;
     if (params.myCommunities) cleanParams.myCommunities = "true";
     if (params.page) cleanParams.page = params.page;
@@ -167,9 +167,12 @@ const communityService = {
    * Moderation: Toggles lock status on a discussion.
    *
    * @param {string} discussionId
+   * @param {boolean} locked
    */
-  toggleLockDiscussion: async (discussionId) => {
-    const response = await api.post(`/network/discussions/${discussionId}/lock`);
+  toggleLockDiscussion: async (discussionId, locked) => {
+    const response = await api.patch(`/network/discussions/${discussionId}/lock`, {
+      locked: Boolean(locked),
+    });
     return response.data;
   },
 
@@ -177,9 +180,12 @@ const communityService = {
    * Moderation: Toggles pinned status on a discussion.
    *
    * @param {string} discussionId
+   * @param {boolean} [pinned]
    */
-  togglePinDiscussion: async (discussionId) => {
-    const response = await api.post(`/network/discussions/${discussionId}/pin`);
+  togglePinDiscussion: async (discussionId, pinned) => {
+    const response = await api.patch(`/network/discussions/${discussionId}/pin`, {
+      pinned,
+    });
     return response.data;
   },
 
@@ -221,10 +227,13 @@ const communityService = {
   /**
    * Deletes a reply.
    *
+   * @param {string} discussionId
    * @param {string} replyId
    */
-  deleteReply: async (replyId) => {
-    const response = await api.delete(`/network/replies/${replyId}`);
+  deleteReply: async (discussionId, replyId) => {
+    const response = await api.delete(
+      `/network/discussions/${discussionId}/replies/${replyId}`,
+    );
     return response.data;
   },
 
@@ -297,7 +306,7 @@ const communityService = {
    * @param {string} payload.reason
    */
   reportContent: async (payload) => {
-    const response = await api.post("/network/reports", payload);
+    const response = await api.post("/network/communities/report", payload);
     return response.data;
   },
 };

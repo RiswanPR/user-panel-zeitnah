@@ -325,15 +325,21 @@ export const networkService = {
   },
 
   /**
-   * Phase 1: High-level network telemetry stats.
+   * Phase 1: Real personal network telemetry and platform stats.
    */
   getNetworkStats: async () => {
-    await new Promise((resolve) => setTimeout(resolve, 80));
-    return {
-      activeStudentsCount: 284,
-      onlineLearnersCount: 42,
-      weeklyConnectionsCount: 156,
-    };
+    try {
+      const response = await api.get("/network/stats");
+      return response.data;
+    } catch {
+      return {
+        activeStudentsCount: 0,
+        connectionsCount: 0,
+        pendingRequestsCount: 0,
+        sentRequestsCount: 0,
+        joinedCommunitiesCount: 0,
+      };
+    }
   },
 
   /**

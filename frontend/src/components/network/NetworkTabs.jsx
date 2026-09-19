@@ -51,12 +51,12 @@ export default function NetworkTabs({
   };
 
   return (
-    <div className="w-full flex items-center justify-start sm:justify-start">
+    <div className="w-full flex items-center justify-start overflow-x-auto no-scrollbar py-0.5">
       <div
         ref={tabListRef}
         role="tablist"
         aria-label="Network Sections"
-        className="inline-flex items-center gap-1.5 rounded-2xl border border-white/[0.08] bg-bg-surface/80 p-1.5 backdrop-blur-xl shadow-lg"
+        className="inline-flex items-center gap-1.5 rounded-2xl border border-white/[0.08] bg-bg-surface/80 p-1.5 backdrop-blur-xl shadow-lg shrink-0"
       >
         {TABS.map((tab, index) => {
           const isActive = activeTab === tab.id;
@@ -72,7 +72,7 @@ export default function NetworkTabs({
               tabIndex={isActive ? 0 : -1}
               onClick={() => onTabChange?.(tab.id)}
               onKeyDown={(e) => handleKeyDown(e, index)}
-              className={`relative flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-semibold transition-all duration-200 focus-ring select-none ${
+              className={`relative flex items-center gap-2 rounded-xl px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-all duration-200 focus-ring select-none shrink-0 whitespace-nowrap ${
                 isActive
                   ? "text-white font-bold"
                   : "text-text-muted hover:text-white hover:bg-white/[0.03]"

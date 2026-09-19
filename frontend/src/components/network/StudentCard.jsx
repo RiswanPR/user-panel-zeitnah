@@ -52,9 +52,9 @@ export default function StudentCard({ student, onPreview }) {
     <motion.article
       initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={shouldReduceMotion ? undefined : { y: -3 }}
-      transition={{ duration: 0.25, ease: "easeOut" }}
-      className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#111A29]/90 to-[#0A101D]/90 p-5 backdrop-blur-xl shadow-lg transition-all duration-300 hover:border-brand-mint/30 hover:shadow-[0_8px_32px_-8px_rgba(159,213,178,0.12)]"
+      whileHover={shouldReduceMotion ? undefined : { y: -2 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#111A29]/95 to-[#0A101D]/95 p-5 backdrop-blur-xl shadow-lg transition-all duration-300 hover:border-brand-mint/30 hover:shadow-[0_8px_32px_-8px_rgba(159,213,178,0.12)]"
     >
       {/* Subtle Card Top Highlight */}
       <div className="gradient-line-top opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -63,8 +63,8 @@ export default function StudentCard({ student, onPreview }) {
         {/* Header: Avatar + Identity */}
         <div className="flex items-start gap-3.5">
           {/* Avatar */}
-          <div className="relative h-12 w-12 shrink-0">
-            <div className="h-12 w-12 rounded-2xl border border-brand-mint/25 bg-gradient-to-br from-brand-mint/20 via-brand-navy/30 to-bg-card flex items-center justify-center overflow-hidden shadow-inner">
+          <div className="relative h-13 w-13 shrink-0">
+            <div className="h-13 w-13 rounded-2xl border border-brand-mint/25 bg-gradient-to-br from-brand-mint/20 via-brand-navy/30 to-bg-card flex items-center justify-center overflow-hidden shadow-inner group-hover:border-brand-mint/40 transition-colors">
               {avatarSrc ? (
                 <img
                   src={avatarSrc}
@@ -106,7 +106,7 @@ export default function StudentCard({ student, onPreview }) {
               </h3>
             </button>
             {student.username && (
-              <p className="truncate text-xs font-mono text-text-muted">
+              <p className="truncate text-xs font-mono text-text-muted mt-0.5">
                 @{student.username}
               </p>
             )}

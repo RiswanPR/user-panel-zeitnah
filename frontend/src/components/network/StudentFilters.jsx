@@ -24,7 +24,7 @@ export default function StudentFilters({
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null); // 'course' | 'level' | 'sort' | null
 
-  const { course = "", level = "", interest = "", sort = "recommended" } = filters;
+  const { course = "", level = "", interest = "", institution = "", sort = "recommended" } = filters;
 
   const handleSelect = (key, value) => {
     onFilterChange({
@@ -53,7 +53,7 @@ export default function StudentFilters({
     setIsMobileOpen(false);
   };
 
-  const activeFilterCount = [course, level, interest].filter(Boolean).length;
+  const activeFilterCount = [course, level, interest, institution].filter(Boolean).length;
 
   return (
     <div className="space-y-3">
@@ -68,12 +68,7 @@ export default function StudentFilters({
             className="sm:hidden inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2 text-xs font-semibold text-white hover:bg-white/[0.08] transition-colors focus-ring"
           >
             <Filter className="h-3.5 w-3.5 text-brand-mint" aria-hidden="true" />
-            <span>Filters</span>
-            {activeFilterCount > 0 && (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-mint text-[10px] font-bold text-bg-base font-mono">
-                {activeFilterCount}
-              </span>
-            )}
+            <span>Filters{activeFilterCount > 0 ? ` · ${activeFilterCount}` : ""}</span>
           </button>
 
           {/* Desktop Course Dropdown */}
@@ -179,6 +174,114 @@ export default function StudentFilters({
               </>
             )}
           </div>
+
+          {/* Desktop Interest Dropdown */}
+          {availableFilters.interests && availableFilters.interests.length > 0 && (
+            <div className="relative hidden sm:block">
+              <button
+                type="button"
+                onClick={() => setActiveDropdown(activeDropdown === "interest" ? null : "interest")}
+                className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors focus-ring ${
+                  interest
+                    ? "border-brand-mint/40 bg-brand-mint/10 text-white font-bold"
+                    : "border-white/[0.08] bg-white/[0.03] text-text-secondary hover:border-white/[0.14] hover:text-white"
+                }`}
+              >
+                <span>Interest{interest ? `: ${interest}` : ""}</span>
+                <ChevronDown className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
+              </button>
+
+              {activeDropdown === "interest" && (
+                <>
+                  <div
+                    className="fixed inset-0 z-20"
+                    onClick={() => setActiveDropdown(null)}
+                  />
+                  <div className="absolute left-0 top-full z-30 mt-1.5 w-52 rounded-xl border border-white/[0.1] bg-bg-surface/95 p-1.5 backdrop-blur-2xl shadow-xl space-y-0.5 max-h-60 overflow-y-auto no-scrollbar">
+                    <button
+                      type="button"
+                      onClick={() => handleSelect("interest", "")}
+                      className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-left transition-colors ${
+                        !interest ? "bg-brand-mint/15 text-brand-mint font-bold" : "text-text-secondary hover:bg-white/[0.05] hover:text-white"
+                      }`}
+                    >
+                      <span>All Interests</span>
+                      {!interest && <Check className="h-3.5 w-3.5" />}
+                    </button>
+                    {availableFilters.interests.map((item) => (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => handleSelect("interest", item)}
+                        className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-left transition-colors ${
+                          interest.toLowerCase() === item.toLowerCase()
+                            ? "bg-brand-mint/15 text-brand-mint font-bold"
+                            : "text-text-secondary hover:bg-white/[0.05] hover:text-white"
+                        }`}
+                      >
+                        <span className="truncate">{item}</span>
+                        {interest.toLowerCase() === item.toLowerCase() && <Check className="h-3.5 w-3.5 shrink-0" />}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Desktop Institution Dropdown */}
+          {availableFilters.institutions && availableFilters.institutions.length > 0 && (
+            <div className="relative hidden md:block">
+              <button
+                type="button"
+                onClick={() => setActiveDropdown(activeDropdown === "institution" ? null : "institution")}
+                className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors focus-ring ${
+                  institution
+                    ? "border-brand-mint/40 bg-brand-mint/10 text-white font-bold"
+                    : "border-white/[0.08] bg-white/[0.03] text-text-secondary hover:border-white/[0.14] hover:text-white"
+                }`}
+              >
+                <span>Institution{institution ? `: ${institution}` : ""}</span>
+                <ChevronDown className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
+              </button>
+
+              {activeDropdown === "institution" && (
+                <>
+                  <div
+                    className="fixed inset-0 z-20"
+                    onClick={() => setActiveDropdown(null)}
+                  />
+                  <div className="absolute left-0 top-full z-30 mt-1.5 w-56 rounded-xl border border-white/[0.1] bg-bg-surface/95 p-1.5 backdrop-blur-2xl shadow-xl space-y-0.5 max-h-60 overflow-y-auto no-scrollbar">
+                    <button
+                      type="button"
+                      onClick={() => handleSelect("institution", "")}
+                      className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-left transition-colors ${
+                        !institution ? "bg-brand-mint/15 text-brand-mint font-bold" : "text-text-secondary hover:bg-white/[0.05] hover:text-white"
+                      }`}
+                    >
+                      <span>All Institutions</span>
+                      {!institution && <Check className="h-3.5 w-3.5" />}
+                    </button>
+                    {availableFilters.institutions.map((inst) => (
+                      <button
+                        key={inst}
+                        type="button"
+                        onClick={() => handleSelect("institution", inst)}
+                        className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-left transition-colors ${
+                          institution.toLowerCase() === inst.toLowerCase()
+                            ? "bg-brand-mint/15 text-brand-mint font-bold"
+                            : "text-text-secondary hover:bg-white/[0.05] hover:text-white"
+                        }`}
+                      >
+                        <span className="truncate">{inst}</span>
+                        {institution.toLowerCase() === inst.toLowerCase() && <Check className="h-3.5 w-3.5 shrink-0" />}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Right: Sort Selector */}
@@ -274,6 +377,20 @@ export default function StudentFilters({
             </span>
           )}
 
+          {institution && (
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-brand-mint/30 bg-brand-mint/10 px-2.5 py-1 text-xs font-medium text-brand-mint">
+              <span>Institution: {institution}</span>
+              <button
+                type="button"
+                onClick={() => handleRemoveFilter("institution")}
+                aria-label={`Remove institution filter ${institution}`}
+                className="hover:text-white transition-colors"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+
           <button
             type="button"
             onClick={handleClearAll}
@@ -287,7 +404,7 @@ export default function StudentFilters({
       {/* ── Mobile Filter Bottom Sheet Modal ── */}
       {isMobileOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:hidden bg-black/70 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-h-[85vh] overflow-y-auto rounded-t-3xl border-t border-white/[0.1] bg-bg-surface p-6 shadow-2xl space-y-6">
+          <div className="w-full max-h-[85vh] overflow-y-auto rounded-t-3xl border-t border-white/[0.1] bg-bg-surface p-6 pb-safe shadow-2xl space-y-6">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
               <div className="flex items-center gap-2">
@@ -371,6 +488,78 @@ export default function StudentFilters({
                 ))}
               </div>
             </div>
+
+            {/* Interests Options (Mobile) */}
+            {availableFilters.interests && availableFilters.interests.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-xs font-mono uppercase tracking-wider text-text-muted block">
+                  Interests & Topics
+                </label>
+                <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto no-scrollbar">
+                  <button
+                    type="button"
+                    onClick={() => handleSelect("interest", "")}
+                    className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${
+                      !interest
+                        ? "bg-brand-mint text-bg-base font-bold"
+                        : "border border-white/[0.08] bg-white/[0.03] text-text-secondary"
+                    }`}
+                  >
+                    All
+                  </button>
+                  {availableFilters.interests.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => handleSelect("interest", item)}
+                      className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${
+                        interest.toLowerCase() === item.toLowerCase()
+                          ? "bg-brand-mint text-bg-base font-bold"
+                          : "border border-white/[0.08] bg-white/[0.03] text-text-secondary"
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Institutions Options (Mobile) */}
+            {availableFilters.institutions && availableFilters.institutions.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-xs font-mono uppercase tracking-wider text-text-muted block">
+                  Institutions
+                </label>
+                <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto no-scrollbar">
+                  <button
+                    type="button"
+                    onClick={() => handleSelect("institution", "")}
+                    className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${
+                      !institution
+                        ? "bg-brand-mint text-bg-base font-bold"
+                        : "border border-white/[0.08] bg-white/[0.03] text-text-secondary"
+                    }`}
+                  >
+                    All
+                  </button>
+                  {availableFilters.institutions.map((inst) => (
+                    <button
+                      key={inst}
+                      type="button"
+                      onClick={() => handleSelect("institution", inst)}
+                      className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${
+                        institution.toLowerCase() === inst.toLowerCase()
+                          ? "bg-brand-mint text-bg-base font-bold"
+                          : "border border-white/[0.08] bg-white/[0.03] text-text-secondary"
+                      }`}
+                    >
+                      {inst}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Modal Actions */}
             <div className="flex items-center gap-3 pt-4 border-t border-white/[0.08]">

@@ -29,6 +29,15 @@ import { networkConnectionsService } from "../../services/networkConnectionsServ
 export default function ConnectionsList({ onPreview, onSwitchToDiscover }) {
   const [subTab, setSubTab] = useState("connections"); // 'connections' | 'requests' | 'sent'
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Debounce search by 250ms to avoid hammering backend
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 250);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
 
   // 1. Fetch real counts
   const { data: countsData } = useQuery({
@@ -41,17 +50,17 @@ export default function ConnectionsList({ onPreview, onSwitchToDiscover }) {
   const incomingCount = countsData?.incomingRequestsCount ?? 0;
   const outgoingCount = countsData?.outgoingRequestsCount ?? 0;
 
-  // 2. Fetch Active Connections
+  // 2. Fetch Active Connections with debounced query
   const {
     data: connectionsData,
     isLoading: isConnectionsLoading,
   } = useQuery({
-    queryKey: ["network-connections", searchQuery],
+    queryKey: ["network-connections", debouncedSearch],
     queryFn: () =>
       networkConnectionsService.getConnections({
         page: 1,
         limit: 50,
-        q: searchQuery,
+        q: debouncedSearch,
       }),
     enabled: subTab === "connections",
     staleTime: 1000 * 30,
@@ -79,6 +88,20 @@ export default function ConnectionsList({ onPreview, onSwitchToDiscover }) {
     staleTime: 1000 * 30,
   });
 
+  // Instant client-side fallback filtering for active connections
+  const filteredConnections = useMemo(() => {
+    const list = connectionsData?.data || [];
+    if (!searchQuery.trim()) return list;
+    const q = searchQuery.toLowerCase();
+    return list.filter(
+      (item) =>
+        item.user?.name?.toLowerCase().includes(q) ||
+        item.user?.username?.toLowerCase().includes(q) ||
+        item.user?.course?.toLowerCase().includes(q) ||
+        item.user?.headline?.toLowerCase().includes(q),
+    );
+  }, [connectionsData, searchQuery]);
+
   // Filter requests locally if search is typed
   const filteredIncoming = useMemo(() => {
     const list = incomingData?.data || [];
@@ -88,7 +111,8 @@ export default function ConnectionsList({ onPreview, onSwitchToDiscover }) {
       (item) =>
         item.user?.name?.toLowerCase().includes(q) ||
         item.user?.username?.toLowerCase().includes(q) ||
-        item.user?.course?.toLowerCase().includes(q),
+        item.user?.course?.toLowerCase().includes(q) ||
+        item.user?.headline?.toLowerCase().includes(q),
     );
   }, [incomingData, searchQuery]);
 
@@ -100,7 +124,8 @@ export default function ConnectionsList({ onPreview, onSwitchToDiscover }) {
       (item) =>
         item.user?.name?.toLowerCase().includes(q) ||
         item.user?.username?.toLowerCase().includes(q) ||
-        item.user?.course?.toLowerCase().includes(q),
+        item.user?.course?.toLowerCase().includes(q) ||
+        item.user?.headline?.toLowerCase().includes(q),
     );
   }, [outgoingData, searchQuery]);
 
@@ -133,6 +158,18 @@ export default function ConnectionsList({ onPreview, onSwitchToDiscover }) {
 
   return (
     <div className="space-y-6">
+      {/* Editorial Header */}
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-heading font-extrabold text-white tracking-tight">
+            Connections
+          </h2>
+          <p className="text-xs sm:text-sm text-text-secondary mt-0.5">
+            {connectionsCount === 1 ? "1 person" : `${connectionsCount} people`} in your learning network
+          </p>
+        </div>
+      </div>
+
       {/* Sub-Tabs Bar & Search */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-4">
         {/* Navigation Pill Tabs */}
@@ -209,9 +246,9 @@ export default function ConnectionsList({ onPreview, onSwitchToDiscover }) {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              {connectionsData?.data?.length > 0 ? (
+              {filteredConnections.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                  {connectionsData.data.map((conn) => (
+                  {filteredConnections.map((conn) => (
                     <ConnectionCard
                       key={conn.connectionId || conn.user?.id}
                       connection={conn}

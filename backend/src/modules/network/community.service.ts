@@ -296,9 +296,12 @@ export class CommunityService {
       status: 'active',
     };
 
-    // Filter by type
-    if (query.type && query.type !== 'ALL') {
-      filter.type = query.type;
+    // Filter by type (normalize to uppercase, ignore if ALL)
+    if (query.type) {
+      const cleanType = query.type.toUpperCase();
+      if (cleanType !== 'ALL') {
+        filter.type = cleanType;
+      }
     }
 
     // Filter by text search (name, description, topics)
@@ -311,7 +314,7 @@ export class CommunityService {
       ];
     }
 
-    // "joined" filter: only communities current user belongs to
+    // "joined" / "myCommunities" filter: only communities current user belongs to
     let userJoinedCommunityIds: Types.ObjectId[] = [];
     if (currentUserId && Types.ObjectId.isValid(currentUserId)) {
       const userMemberships = await this.membershipModel
@@ -323,10 +326,10 @@ export class CommunityService {
         .lean();
       userJoinedCommunityIds = userMemberships.map((m) => m.communityId);
 
-      if (query.filter === 'joined') {
+      if (query.filter === 'joined' || query.myCommunities === 'true') {
         filter._id = { $in: userJoinedCommunityIds };
       }
-    } else if (query.filter === 'joined') {
+    } else if (query.filter === 'joined' || query.myCommunities === 'true') {
       return {
         data: [],
         page: 1,
@@ -354,9 +357,14 @@ export class CommunityService {
     }
 
     // Sorting
+    const activeSort = query.sort || query.filter;
     let sortObj: Record<string, 1 | -1> = { memberCount: -1, createdAt: -1 };
-    if (query.filter === 'popular') {
+    if (activeSort === 'popular') {
       sortObj = { memberCount: -1, discussionCount: -1 };
+    } else if (activeSort === 'newest') {
+      sortObj = { createdAt: -1 };
+    } else if (activeSort === 'active') {
+      sortObj = { updatedAt: -1 };
     }
 
     const page = Math.max(1, Number(query.page) || 1);
@@ -1235,6 +1243,49 @@ export class CommunityService {
     await discussion.save();
 
     return { success: true, status: discussion.status };
+  }
+
+  /**
+   * Pins or unpins a discussion (moderators/owners only).
+   */
+  async togglePinDiscussion(
+    discussionId: string,
+    pinned?: boolean,
+    currentUserId?: string,
+  ): Promise<{ success: boolean; isPinned: boolean }> {
+    if (!Types.ObjectId.isValid(discussionId)) {
+      throw new BadRequestException('Invalid discussion ID');
+    }
+
+    const discussion = await this.discussionModel.findById(discussionId).exec();
+    if (!discussion || discussion.status === 'removed') {
+      throw new NotFoundException('Discussion not found');
+    }
+
+    if (currentUserId && Types.ObjectId.isValid(currentUserId)) {
+      const membership = await this.membershipModel
+        .findOne({
+          communityId: discussion.communityId,
+          userId: new Types.ObjectId(currentUserId),
+          status: 'active',
+        })
+        .lean();
+
+      if (
+        !membership ||
+        (membership.role !== 'moderator' && membership.role !== 'owner')
+      ) {
+        throw new ForbiddenException(
+          'Only community moderators or owners can pin discussions',
+        );
+      }
+    }
+
+    const nextPinned = typeof pinned === 'boolean' ? pinned : !discussion.isPinned;
+    discussion.isPinned = nextPinned;
+    await discussion.save();
+
+    return { success: true, isPinned: nextPinned };
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

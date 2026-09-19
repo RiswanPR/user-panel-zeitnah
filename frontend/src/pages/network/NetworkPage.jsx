@@ -23,7 +23,7 @@ import ConnectionsList from "../../components/network/ConnectionsList";
 import CommunityCard from "../../components/network/communities/CommunityCard";
 import CommunityEmptyState from "../../components/network/communities/CommunityEmptyState";
 import { CommunityCardSkeleton } from "../../components/network/communities/CommunitySkeleton";
-import { Users, SearchX, FilterX, Loader2, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { Users, SearchX, FilterX, Loader2, ChevronLeft, ChevronRight, Check, ArrowRight } from "lucide-react";
 
 /**
  * NetworkPage Component
@@ -95,7 +95,11 @@ export default function NetworkPage() {
   };
 
   const handleSearchChange = (q) => {
-    updateUrlParams({ q: q || null });
+    if (activeTab === "overview" && q && q.trim().length > 0) {
+      updateUrlParams({ tab: "discover", q });
+    } else {
+      updateUrlParams({ q: q || null });
+    }
   };
 
   const handleFiltersChange = (newFilters) => {
@@ -135,6 +139,14 @@ export default function NetworkPage() {
     queryKey: ["network", "overview-students"],
     queryFn: () => networkService.getSuggestedStudents({ limit: 6 }),
     staleTime: 1000 * 60 * 2,
+  });
+
+  // Featured Learning Spaces for Overview Tab
+  const { data: overviewCommunities } = useQuery({
+    queryKey: ["network", "overview-communities"],
+    queryFn: () => communityService.getCommunities({ limit: 3, sort: "popular" }),
+    staleTime: 1000 * 60 * 5,
+    enabled: activeTab === "overview",
   });
 
 
@@ -250,7 +262,7 @@ export default function NetworkPage() {
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-10 pb-16">
       {/* ═══════════════════════════════════════════════
           1. HERO SECTION (Dynamic based on Tab)
           ═══════════════════════════════════════════════ */}
@@ -277,7 +289,11 @@ export default function NetworkPage() {
             <NetworkSearch
               value={searchQuery}
               onChange={handleSearchChange}
-              placeholder="Search students, usernames, interests..."
+              placeholder={
+                activeTab === "communities"
+                  ? "Search learning spaces, topics, or courses..."
+                  : "Search students, usernames, courses, skills..."
+              }
             />
           </div>
         )}
@@ -287,25 +303,116 @@ export default function NetworkPage() {
           3. TAB CONTENT
           ═══════════════════════════════════════════════ */}
 
-      {/* ── OVERVIEW TAB ── */}
+      {/* ── OVERVIEW TAB (PERSONAL COMMAND CENTER) ── */}
       {activeTab === "overview" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
-          {/* Suggested Students Column */}
-          <div className="lg:col-span-2 space-y-6">
-            <SuggestedStudents
-              students={overviewStudents}
-              loading={isOverviewLoading}
-              title="Suggested for you"
-              description="People you may want to connect with."
-              showFilterChips={false}
-            />
+        <div className="space-y-10">
+          {/* Section 1: People Worth Meeting */}
+          <SuggestedStudents
+            students={overviewStudents}
+            loading={isOverviewLoading}
+            onPreview={setSelectedStudent}
+            onExplore={() => handleTabChange("discover")}
+            title="People worth meeting"
+            description="Students who share your courses, interests, and learning focus."
+            courses={availableFilters?.courses || []}
+            showFilterChips={false}
+          />
+
+          {/* Section 2: What's Happening & Learning Spaces */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            {/* Activity Stream Column (2 cols) */}
+            <div className="lg:col-span-2 space-y-4">
+              <NetworkActivity
+                onExploreDiscover={() => handleTabChange("discover")}
+              />
+            </div>
+
+            {/* Learning Spaces Preview Column (1 col) */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-heading font-extrabold text-white tracking-tight">
+                    Learning Spaces
+                  </h3>
+                  <p className="text-xs text-text-muted">
+                    Active communities and study groups
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleTabChange("communities")}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-brand-mint hover:underline focus-ring rounded"
+                >
+                  <span>All Spaces</span>
+                  <ArrowRight className="h-3 w-3" />
+                </button>
+              </div>
+
+              {overviewCommunities?.data && overviewCommunities.data.length > 0 ? (
+                <div className="space-y-3.5">
+                  {overviewCommunities.data.slice(0, 3).map((community) => (
+                    <CommunityCard
+                      key={community.id}
+                      community={community}
+                      onJoin={(id) => joinCommunityMutation.mutate(id)}
+                      isJoining={
+                        joinCommunityMutation.isPending &&
+                        joinCommunityMutation.variables === community.id
+                      }
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-white/[0.08] bg-bg-surface/50 p-6 text-center text-xs text-text-muted">
+                  Explore available communities to collaborate with peers.
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Network Activity Column */}
-          <div className="lg:col-span-1 space-y-6">
-            <NetworkActivity
-              onExploreDiscover={() => handleTabChange("discover")}
-            />
+          {/* Section 3: Explore Navigation Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            <button
+              type="button"
+              onClick={() => handleTabChange("discover")}
+              className="flex items-center justify-between rounded-2xl border border-white/[0.08] bg-gradient-to-r from-brand-mint/[0.06] via-white/[0.02] to-transparent p-5 text-left transition-all hover:border-brand-mint/30 hover:bg-white/[0.04] focus-ring group"
+            >
+              <div>
+                <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-brand-mint">
+                  STUDENT DIRECTORY
+                </span>
+                <h4 className="text-sm font-heading font-bold text-white mt-1 group-hover:text-brand-mint transition-colors">
+                  Discover Students
+                </h4>
+                <p className="text-xs text-text-secondary mt-0.5">
+                  Find learners across your course, level, and interests.
+                </p>
+              </div>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] text-white group-hover:border-brand-mint/40 group-hover:text-brand-mint transition-all">
+                <ArrowRight className="h-4 w-4" />
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleTabChange("communities")}
+              className="flex items-center justify-between rounded-2xl border border-white/[0.08] bg-gradient-to-r from-[#4928C2]/10 via-white/[0.02] to-transparent p-5 text-left transition-all hover:border-indigo-500/30 hover:bg-white/[0.04] focus-ring group"
+            >
+              <div>
+                <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#E3D9FC]">
+                  COMMUNITIES & GROUPS
+                </span>
+                <h4 className="text-sm font-heading font-bold text-white mt-1 group-hover:text-[#E3D9FC] transition-colors">
+                  Explore Learning Spaces
+                </h4>
+                <p className="text-xs text-text-secondary mt-0.5">
+                  Join subject study groups, project teams, and course hubs.
+                </p>
+              </div>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] text-white group-hover:border-[#E3D9FC]/40 group-hover:text-[#E3D9FC] transition-all">
+                <ArrowRight className="h-4 w-4" />
+              </div>
+            </button>
           </div>
         </div>
       )}

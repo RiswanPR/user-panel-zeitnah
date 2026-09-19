@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   UserPlus,
@@ -40,8 +40,15 @@ export default function RelationshipAction({
   const [activeConnectionId, setActiveConnectionId] = useState(initialConnectionId);
   const [confirmRemove, setConfirmRemove] = useState(false);
 
-  // Sync state if props change (e.g. from parent re-fetch)
-  // We use keying or state comparison in render to avoid effect loops
+  // Sync state if props change (e.g. from parent re-fetch, tab change, or cache update)
+  useEffect(() => {
+    setCurrentState(initialState);
+  }, [initialState]);
+
+  useEffect(() => {
+    setActiveConnectionId(initialConnectionId);
+  }, [initialConnectionId]);
+
   const effectiveState = currentState;
   const effectiveConnectionId = activeConnectionId || initialConnectionId;
 
@@ -53,15 +60,23 @@ export default function RelationshipAction({
     setConfirmRemove(false);
     onStateChange?.(newState, newConnId);
 
-    // Invalidate all relevant network query caches
+    // Invalidate all relevant network query caches across all tabs
     queryClient.invalidateQueries({ queryKey: ["network"] });
     queryClient.invalidateQueries({ queryKey: ["network-connections"] });
     queryClient.invalidateQueries({ queryKey: ["network-connection-counts"] });
+    queryClient.invalidateQueries({ queryKey: ["network-requests"] });
+    queryClient.invalidateQueries({ queryKey: ["network-sent"] });
   };
 
   // 1. Send Connection Request Mutation
   const sendMutation = useMutation({
     mutationFn: () => networkConnectionsService.sendRequest(targetUserId),
+    onMutate: () => {
+      // Optimistic update
+      const prevState = currentState;
+      setCurrentState("outgoing_pending");
+      return { prevState };
+    },
     onSuccess: (res) => {
       updateState(res.state || "outgoing_pending", res.connectionId);
       toast.success(
@@ -69,7 +84,8 @@ export default function RelationshipAction({
         `Connection request sent to ${studentName}.`,
       );
     },
-    onError: (err) => {
+    onError: (err, _variables, context) => {
+      if (context?.prevState) setCurrentState(context.prevState);
       const msg =
         err.response?.data?.message || "Failed to send connection request.";
       toast.error("Unable to Connect", msg);
@@ -79,6 +95,11 @@ export default function RelationshipAction({
   // 2. Accept Request Mutation
   const acceptMutation = useMutation({
     mutationFn: (connId) => networkConnectionsService.acceptRequest(connId),
+    onMutate: () => {
+      const prevState = currentState;
+      setCurrentState("connected");
+      return { prevState };
+    },
     onSuccess: (res) => {
       updateState("connected", res.connectionId || effectiveConnectionId);
       toast.success(
@@ -86,7 +107,8 @@ export default function RelationshipAction({
         `You and ${studentName} are now connected.`,
       );
     },
-    onError: (err) => {
+    onError: (err, _variables, context) => {
+      if (context?.prevState) setCurrentState(context.prevState);
       const msg =
         err.response?.data?.message || "Failed to accept connection request.";
       toast.error("Accept Failed", msg);
@@ -96,11 +118,17 @@ export default function RelationshipAction({
   // 3. Decline Request Mutation
   const declineMutation = useMutation({
     mutationFn: (connId) => networkConnectionsService.declineRequest(connId),
+    onMutate: () => {
+      const prevState = currentState;
+      setCurrentState("none");
+      return { prevState };
+    },
     onSuccess: () => {
       updateState("none", null);
       toast.info("Request Declined", `Declined connection request from ${studentName}.`);
     },
-    onError: (err) => {
+    onError: (err, _variables, context) => {
+      if (context?.prevState) setCurrentState(context.prevState);
       const msg =
         err.response?.data?.message || "Failed to decline connection request.";
       toast.error("Action Failed", msg);
@@ -110,6 +138,11 @@ export default function RelationshipAction({
   // 4. Cancel Outgoing Request Mutation
   const cancelMutation = useMutation({
     mutationFn: (connId) => networkConnectionsService.cancelRequest(connId),
+    onMutate: () => {
+      const prevState = currentState;
+      setCurrentState("none");
+      return { prevState };
+    },
     onSuccess: () => {
       updateState("none", null);
       toast.info(
@@ -117,7 +150,8 @@ export default function RelationshipAction({
         `Cancelled connection request to ${studentName}.`,
       );
     },
-    onError: (err) => {
+    onError: (err, _variables, context) => {
+      if (context?.prevState) setCurrentState(context.prevState);
       const msg =
         err.response?.data?.message || "Failed to cancel connection request.";
       toast.error("Action Failed", msg);
@@ -127,6 +161,11 @@ export default function RelationshipAction({
   // 5. Remove Connection Mutation
   const removeMutation = useMutation({
     mutationFn: (connId) => networkConnectionsService.removeConnection(connId),
+    onMutate: () => {
+      const prevState = currentState;
+      setCurrentState("none");
+      return { prevState };
+    },
     onSuccess: () => {
       updateState("none", null);
       toast.info(
@@ -134,7 +173,8 @@ export default function RelationshipAction({
         `Removed ${studentName} from your connections.`,
       );
     },
-    onError: (err) => {
+    onError: (err, _variables, context) => {
+      if (context?.prevState) setCurrentState(context.prevState);
       const msg =
         err.response?.data?.message || "Failed to remove connection.";
       toast.error("Action Failed", msg);
