@@ -34,6 +34,7 @@ import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../components/ui/Toast";
 import storage, { getDeviceId, getBrowserFingerprint } from "../../services/storage";
 import { getErrorBuffer, getBrowserInfo } from "../../utils/errorCapture";
+import FeatureErrorBoundary from "../../components/common/FeatureErrorBoundary";
 
 function loadVdoCipherApi() {
   if (window.VdoPlayer) return Promise.resolve();
@@ -767,12 +768,29 @@ function ClassView() {
     );
   }
 
-  if (!data) return null;
+  if (!data || !data.class) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center text-center max-w-md mx-auto space-y-4">
+        <p className="text-text-muted text-sm font-medium">
+          The requested lesson is unavailable or does not exist.
+        </p>
+        <button
+          type="button"
+          onClick={() => navigate(data?.course?._id ? `/courses/${data.course._id}/chapters` : "/courses")}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.06] border border-white/10 text-xs font-semibold text-white hover:bg-white/[0.1] transition-all cursor-pointer"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back to Course
+        </button>
+      </div>
+    );
+  }
 
-  const { chapter, class: cls, course } = data;
+  const { chapter = {}, class: cls = {}, course = {} } = data;
   const isS3Video = getClassVideoSource(course?.type, cls?.videoSource) === "s3";
   const videoUrl =
-    getVdoCipherEmbedUrl(cls.vdoCipher) || getBunnyEmbedUrl(cls.videoId);
+    (cls?.vdoCipher ? getVdoCipherEmbedUrl(cls.vdoCipher) : "") ||
+    (cls?.videoId ? getBunnyEmbedUrl(cls.videoId) : "");
   const classProgress =
     progressState?.classProgress || data.progress?.classProgress;
   const learningProgress =
@@ -820,20 +838,28 @@ function ClassView() {
           >
             Courses
           </Link>
-          <ChevronRight className="w-3.5 h-3.5 text-text-faint shrink-0" />
-          <Link
-            to={`/courses/${course._id}/chapters`}
-            className="hover:text-white transition-colors focus-ring rounded truncate max-w-[140px]"
-          >
-            {course.name}
-          </Link>
-          <ChevronRight className="w-3.5 h-3.5 text-text-faint shrink-0" />
-          <Link
-            to={`/courses/${course._id}/chapters/${chapter.uniqueCode}/classes`}
-            className="hover:text-white transition-colors focus-ring rounded truncate max-w-[160px]"
-          >
-            {chapter.title}
-          </Link>
+          {course?._id && (
+            <>
+              <ChevronRight className="w-3.5 h-3.5 text-text-faint shrink-0" />
+              <Link
+                to={`/courses/${course._id}/chapters`}
+                className="hover:text-white transition-colors focus-ring rounded truncate max-w-[140px]"
+              >
+                {course.name || "Course"}
+              </Link>
+            </>
+          )}
+          {chapter?.uniqueCode && course?._id && (
+            <>
+              <ChevronRight className="w-3.5 h-3.5 text-text-faint shrink-0" />
+              <Link
+                to={`/courses/${course._id}/chapters/${chapter.uniqueCode}/classes`}
+                className="hover:text-white transition-colors focus-ring rounded truncate max-w-[160px]"
+              >
+                {chapter.title || "Chapter"}
+              </Link>
+            </>
+          )}
         </nav>
 
         <div className="flex items-center gap-2.5 self-end sm:self-auto shrink-0">
@@ -866,7 +892,8 @@ function ClassView() {
         <div className="gradient-line-top" />
 
         {/* Video Player Box */}
-        <div className="relative aspect-video bg-black overflow-hidden w-full">
+        <FeatureErrorBoundary featureName="Video Player">
+          <div className="relative aspect-video bg-black overflow-hidden w-full">
           {!isS3Video && <VideoWatermark user={user} />}
 
           {isS3Video ? (
@@ -979,6 +1006,7 @@ function ClassView() {
             </div>
           )}
         </div>
+        </FeatureErrorBoundary>
 
         {/* Progress bar directly below player */}
         <div className="h-1 w-full bg-white/[0.06]">

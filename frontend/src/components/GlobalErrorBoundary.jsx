@@ -40,11 +40,17 @@ class GlobalErrorBoundary extends React.Component {
     }
   }
 
+  handleRetry = () => {
+    this.setState({ hasError: false, errorData: null });
+  };
+
   render() {
     if (this.state.hasError) {
       return (
         <ErrorFeedbackModal 
           errorData={this.state.errorData}
+          onRetry={this.handleRetry}
+          onClose={this.handleRetry}
         />
       );
     }

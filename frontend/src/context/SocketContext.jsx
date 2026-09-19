@@ -35,11 +35,19 @@ export const SocketProvider = ({ children }) => {
       // Connect to WebSocket gateway /notifications namespace with JWT
       newSocket = io(`${baseURL}/notifications`, {
         auth: { token },
-        transports: ['websocket'],
+        transports: ['websocket', 'polling'],
+        reconnectionAttempts: 5,
+        reconnectionDelay: 2000,
+        reconnectionDelayMax: 10000,
+        timeout: 10000,
       });
 
       newSocket.on('connect', () => {
         // connected
+      });
+
+      newSocket.on('connect_error', (err) => {
+        console.warn('[Socket:notifications] Connection error:', err.message);
       });
 
       newSocket.on('notification', (notif) => {

@@ -3,25 +3,19 @@ import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Award,
-  BookOpen,
   CheckCircle2,
   Copy,
   Edit3,
   ExternalLink,
   Share2,
   ShieldCheck,
-  Star,
   User,
   ArrowLeft,
-  Sparkles,
   MapPin,
   Briefcase,
-  GraduationCap,
-  Calendar,
   HeartHandshake,
   Check,
   X,
-  Code2,
 } from "lucide-react";
 import api from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";

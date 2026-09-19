@@ -10,6 +10,7 @@ import OptimizedImage from "../ui/OptimizedImage";
 import { getUploadUrl } from "../../utils/courseUi";
 
 function ChapterCard({ chapter, index, onOpen }) {
+  if (!chapter) return null;
   const locked = Boolean(chapter.locked);
   const completed = Boolean(chapter.completed);
   const completedClasses = chapter.completedClasses || 0;

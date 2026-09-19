@@ -15,6 +15,7 @@ import LeaderboardSidebarCard from "../components/sidebar/LeaderboardSidebarCard
 import PageTransition from "../components/ui/PageTransition";
 import CookieConsentBanner from "../components/common/CookieConsentBanner";
 import UsernameClaimModal from "../components/username/UsernameClaimModal";
+import FeatureErrorBoundary from "../components/common/FeatureErrorBoundary";
 
 // ── Desktop Navigation Destinations (Courses & Profile strictly) ──
 const desktopNavItems = [
@@ -367,9 +368,11 @@ export default function MainLayout({ children }) {
           ═══════════════════════════════════════════════ */}
       <main className="flex-1 min-w-0 pb-24 md:pb-0 relative z-10">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          <PageTransition key={location.pathname}>
-            {children || <Outlet />}
-          </PageTransition>
+          <FeatureErrorBoundary featureName="Page Content">
+            <PageTransition key={location.pathname}>
+              {children || <Outlet />}
+            </PageTransition>
+          </FeatureErrorBoundary>
         </div>
       </main>
       <CookieConsentBanner />

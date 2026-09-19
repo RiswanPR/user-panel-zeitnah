@@ -72,7 +72,7 @@ export default function EditProfile() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
-  const { updateUser, setUser } = useContext(AuthContext);
+  const { user: authUser, updateUser, setUser } = useContext(AuthContext);
   const toast = useToast();
 
   const avatarFileRef = useRef(null);
@@ -145,13 +145,14 @@ export default function EditProfile() {
     data,
     isLoading,
     isError,
+    error,
     refetch,
   } = useQuery({
     queryKey: ["profile", "me"],
     queryFn: coreProfileService.getMyProfile,
   });
 
-  const profile = data?.user;
+  const profile = data?.user || authUser;
   const completion = data?.completion;
 
   useEffect(() => {
@@ -612,6 +613,36 @@ export default function EditProfile() {
     updateMutation.mutate({ skills: updated });
   };
 
+  const handleAvatarUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      return toast.error("File too large", "Avatar image must be under 5 MB.");
+    }
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      return toast.error("Invalid format", "Only JPG, PNG, and WebP images are permitted.");
+    }
+
+    avatarMutation.mutate(file);
+  };
+
+  const handleBannerUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      return toast.error("File too large", "Banner image must be under 5 MB.");
+    }
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      return toast.error("Invalid format", "Only JPG, PNG, and WebP images are permitted.");
+    }
+
+    bannerMutation.mutate(file);
+  };
+
   const handleSaveIdentity = (e) => {
     e.preventDefault();
     if (!name.trim()) {
@@ -677,6 +708,30 @@ export default function EditProfile() {
       <div className="space-y-6 max-w-7xl mx-auto animate-pulse pb-16">
         <div className="h-14 bg-bg-card rounded-2xl border border-border-default" />
         <div className="h-96 bg-bg-card rounded-3xl border border-border-default" />
+      </div>
+    );
+  }
+
+  if (isError || !profile) {
+    return (
+      <div className="max-w-2xl mx-auto py-16 px-4 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-danger/10 border border-danger/20 text-danger flex items-center justify-center mx-auto mb-4">
+          <AlertCircle className="w-8 h-8" />
+        </div>
+        <h2 className="text-2xl font-heading font-bold text-white mb-2">
+          Unable to Load Profile
+        </h2>
+        <p className="text-sm text-text-muted mb-6">
+          {error?.response?.data?.message || "We encountered an issue retrieving your identity data."}
+        </p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="btn-primary inline-flex items-center gap-2 py-2.5 px-6 cursor-pointer"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Try Again
+        </button>
       </div>
     );
   }
@@ -2385,6 +2440,7 @@ export default function EditProfile() {
       <ChangeUsernameModal
         isOpen={isChangeUsernameOpen}
         onClose={() => setIsChangeUsernameOpen(false)}
+        currentUsername={profile?.username}
       />
     </div>
   );

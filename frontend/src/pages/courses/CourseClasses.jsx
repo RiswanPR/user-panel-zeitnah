@@ -51,7 +51,7 @@ function CourseClasses() {
   }, [showPopup]);
 
   const stats = useMemo(() => {
-    if (!data) return { totalClasses: 0, totalExercises: 0, unlockedClasses: 0 };
+    if (!data || !Array.isArray(data.classes)) return { totalClasses: 0, totalExercises: 0, unlockedClasses: 0 };
     return {
       totalClasses: data.classes.length,
       totalExercises: data.classes.reduce(
@@ -76,7 +76,7 @@ function CourseClasses() {
     );
   }
 
-  if (!data) {
+  if (!data || !data.chapter) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center text-center max-w-md mx-auto space-y-4">
         <p className="text-text-muted text-sm font-medium">
@@ -94,7 +94,7 @@ function CourseClasses() {
     );
   }
 
-  const { chapter, classes, course, purchased } = data;
+  const { chapter = {}, classes = [], course = {}, purchased } = data;
 
   return (
     <div className="space-y-6 sm:space-y-8 max-w-5xl mx-auto">
@@ -111,11 +111,11 @@ function CourseClasses() {
           to={`/courses/${courseId}/chapters`}
           className="hover:text-white transition-colors focus-ring rounded truncate max-w-[160px] sm:max-w-[220px]"
         >
-          {course.name}
+          {course?.name || "Course"}
         </Link>
         <ChevronRight className="w-3.5 h-3.5 text-text-faint" />
         <span className="text-white truncate max-w-[200px] sm:max-w-xs font-semibold">
-          {chapter.title}
+          {chapter?.title || "Chapter"}
         </span>
       </nav>
 

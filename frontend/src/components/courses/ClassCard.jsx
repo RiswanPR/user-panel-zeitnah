@@ -11,6 +11,7 @@ import { formatDuration, getCourseTypeLabel, getUploadUrl } from "../../utils/co
 import OptimizedImage from "../ui/OptimizedImage";
 
 function ClassCard({ cls, courseType, index, onLockedClick, onOpen }) {
+  if (!cls) return null;
   const thumbnailUrl = getUploadUrl(cls.coverImage) || cls.coverImage;
   const locked = Boolean(cls.locked);
   const completed = Boolean(cls.completed);

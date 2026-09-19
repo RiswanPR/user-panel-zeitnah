@@ -25,8 +25,12 @@ export const CommunitySocketProvider = ({ children }) => {
 
       newSocket = io(`${baseURL}/community`, {
         auth: { token },
-        transports: ['websocket'],
+        transports: ['websocket', 'polling'],
         autoConnect: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 2000,
+        reconnectionDelayMax: 10000,
+        timeout: 10000,
       });
 
       if (active) {
@@ -39,6 +43,10 @@ export const CommunitySocketProvider = ({ children }) => {
       // ── Listeners ──
       newSocket.on('connect', () => {
         // connection successful
+      });
+
+      newSocket.on('connect_error', (err) => {
+        console.warn('[Socket:community] Connection error:', err.message);
       });
 
       newSocket.on('post_created', async (post) => {
@@ -56,10 +64,14 @@ export const CommunitySocketProvider = ({ children }) => {
           return { ...oldData, pages: newPages };
         });
         
-        const rawUser = await storage.getItem('user');
-        const currentUser = rawUser ? JSON.parse(rawUser) : {};
-        if (post.authorId !== currentUser._id) {
-          toast('New post in the community!', { icon: '📣' });
+        try {
+          const rawUser = await storage.getItem('user');
+          const currentUser = rawUser ? JSON.parse(rawUser) : {};
+          if (post.authorId !== currentUser._id) {
+            toast('New post in the community!', { icon: '📣' });
+          }
+        } catch {
+          // Gracefully ignore storage JSON parse failures
         }
       });
 

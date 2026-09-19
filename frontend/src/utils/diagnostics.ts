@@ -50,6 +50,35 @@ const safeParseJwt = (token: string | null) => {
   }
 };
 
+const SENSITIVE_PARAM_PATTERNS = [
+  "token",
+  "otp",
+  "code",
+  "password",
+  "secret",
+  "key",
+  "auth",
+  "access_token",
+  "refresh_token",
+  "jwt",
+];
+
+const sanitizeUrl = (rawUrl: string): string => {
+  if (!rawUrl) return "";
+  try {
+    const url = new URL(rawUrl);
+    for (const key of Array.from(url.searchParams.keys())) {
+      const lowerKey = key.toLowerCase();
+      if (SENSITIVE_PARAM_PATTERNS.some((p) => lowerKey.includes(p))) {
+        url.searchParams.set(key, "[REDACTED]");
+      }
+    }
+    return url.toString();
+  } catch {
+    return rawUrl.split("?")[0]; // Fallback: strip query string entirely
+  }
+};
+
 export const collectDiagnostics = async (
   errorObj?: Error | null,
   componentStack?: string | null
@@ -92,11 +121,13 @@ export const collectDiagnostics = async (
   const performanceObj = window.performance;
   const navTiming = performanceObj?.getEntriesByType("navigation")[0] as PerformanceNavigationTiming;
   
+  const sanitizedUrl = sanitizeUrl(window.location.href);
   const appInfo = {
     frontendVersion: import.meta.env.VITE_APP_VERSION || "1.0.0",
     environment: (import.meta.env as any).MODE,
-    currentUrl: window.location.href,
+    currentUrl: sanitizedUrl,
     pathname: window.location.pathname,
+    search: sanitizedUrl.includes("?") ? sanitizedUrl.split("?")[1] : "",
     timestamp: new Date().toISOString(),
     timeSincePageLoaded: navTiming ? Date.now() - navTiming.startTime : 0,
     sessionDuration: window.sessionStorage.getItem("sessionStart") 

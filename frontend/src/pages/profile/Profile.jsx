@@ -1,5 +1,5 @@
 import { useContext, useRef, useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -18,12 +18,10 @@ import {
   BookOpen,
   GraduationCap,
   Globe,
-  FileText,
   Check,
   Circle,
   ChevronRight,
   Code2,
-  ShieldCheck,
   ArrowRight,
 } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
@@ -78,7 +76,6 @@ function XPCountUp({ value = 0, duration = 800 }) {
 }
 
 export default function Profile() {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { setUser } = useContext(AuthContext);
   const toast = useToast();
