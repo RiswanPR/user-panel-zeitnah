@@ -9,7 +9,6 @@ import Register from "./pages/auth/Register";
 import VerifyRegisterOtp from "./pages/auth/VerifyRegisterOtp";
 
 // Context
-import { SocketProvider } from "./context/SocketContext";
 import { ToastProvider } from "./components/ui/Toast";
 
 // Error Capture & Troubleshoot
@@ -122,9 +121,7 @@ function App() {
             <Route
               element={
                 <ProtectedRoute>
-                  <SocketProvider>
-                    <MainLayout />
-                  </SocketProvider>
+                  <MainLayout />
                 </ProtectedRoute>
               }
             >
@@ -152,11 +149,9 @@ function App() {
             <Route
               element={
                 <ProtectedRoute>
-                  <SocketProvider>
-                    <Suspense fallback={<PageLoader />}>
-                      <CommunityLayout />
-                    </Suspense>
-                  </SocketProvider>
+                  <Suspense fallback={<PageLoader />}>
+                    <CommunityLayout />
+                  </Suspense>
                 </ProtectedRoute>
               }
             >

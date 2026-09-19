@@ -33,6 +33,7 @@ import ChangeUsernameModal from "../../components/username/ChangeUsernameModal";
 import ProfileNav from "../../components/profile/ProfileNav";
 import ProfileCompletionCard from "../../components/profile/ProfileCompletionCard";
 import AchievementsGrid from "../../components/profile/AchievementsGrid";
+import ImageEditorModal from "../../components/common/ImageEditorModal";
 
 /**
  * Animated XP Counter for subtle, elegant point transitions.
@@ -85,6 +86,7 @@ export default function Profile() {
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isChangeUsernameOpen, setIsChangeUsernameOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
+  const [editingImage, setEditingImage] = useState(null); // { file, type: 'avatar' | 'banner' }
 
   // TanStack Query for authoritative profile data
   const {
@@ -123,8 +125,12 @@ export default function Profile() {
       }
     },
     onError: (err) => {
-      const msg = err.response?.data?.message || "Could not upload avatar. Please try again.";
-      toast.error("Upload failed", msg);
+      if (err.response?.status === 413) {
+        toast.error("Upload failed", "That image is too large to upload. Try a smaller crop or lower image quality.");
+      } else {
+        const msg = err.response?.data?.message || "Could not upload avatar. Please try again.";
+        toast.error("Upload failed", msg);
+      }
     },
   });
 
@@ -148,8 +154,12 @@ export default function Profile() {
       }
     },
     onError: (err) => {
-      const msg = err.response?.data?.message || "Could not upload cover image.";
-      toast.error("Upload failed", msg);
+      if (err.response?.status === 413) {
+        toast.error("Upload failed", "That image is too large to upload. Try a smaller crop or lower image quality.");
+      } else {
+        const msg = err.response?.data?.message || "Could not upload cover image.";
+        toast.error("Upload failed", msg);
+      }
     },
   });
 
@@ -157,30 +167,32 @@ export default function Profile() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      return toast.error("File too large", "Avatar image must be under 5 MB.");
+    if (file.size > 25 * 1024 * 1024) {
+      return toast.error("File too large", "Avatar image must be under 25 MB.");
     }
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
       return toast.error("Invalid format", "Only JPG, PNG, and WebP images are permitted.");
     }
 
-    avatarMutation.mutate(file);
+    setEditingImage({ file, type: "avatar" });
+    e.target.value = "";
   };
 
   const handleBannerUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      return toast.error("File too large", "Banner image must be under 5 MB.");
+    if (file.size > 30 * 1024 * 1024) {
+      return toast.error("File too large", "Banner image must be under 30 MB.");
     }
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
       return toast.error("Invalid format", "Only JPG, PNG, and WebP images are permitted.");
     }
 
-    bannerMutation.mutate(file);
+    setEditingImage({ file, type: "banner" });
+    e.target.value = "";
   };
 
   const handleShare = async () => {
@@ -778,6 +790,29 @@ export default function Profile() {
       <ChangeUsernameModal
         isOpen={isChangeUsernameOpen}
         onClose={() => setIsChangeUsernameOpen(false)}
+      />
+
+      {/* ── Image Editor Modal for Avatar & Banner ── */}
+      <ImageEditorModal
+        isOpen={Boolean(editingImage)}
+        onClose={() => setEditingImage(null)}
+        imageFile={editingImage?.file}
+        type={editingImage?.type || "avatar"}
+        onSave={(processedFile) => {
+          if (editingImage?.type === "avatar") {
+            avatarMutation.mutate(processedFile, {
+              onSuccess: () => setEditingImage(null),
+            });
+          } else {
+            bannerMutation.mutate(processedFile, {
+              onSuccess: () => setEditingImage(null),
+            });
+          }
+        }}
+        currentAvatarUrl={avatarUrl}
+        userName={profile?.name || "Student"}
+        userRole={profile?.currentRole || profile?.headline || "Student Developer"}
+        isUploading={avatarMutation.isPending || bannerMutation.isPending}
       />
     </div>
   );

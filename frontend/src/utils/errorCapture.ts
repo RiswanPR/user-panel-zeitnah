@@ -87,6 +87,12 @@ function isConsoleNoise(message: string): boolean {
     /ResizeObserver loop/i,
     // Browser deprecation notices
     /\[Deprecation\]/i,
+    // Socket / WebSocket recoverable connection noise
+    /\[Socket.*\] Connection error/i,
+    /\[Socket.*\] reconnect/i,
+    /websocket error/i,
+    /WebSocket connection to .* failed/i,
+    /socket\.io/i,
   ];
   return noisePatterns.some((pattern) => pattern.test(message));
 }
@@ -194,7 +200,8 @@ export function captureNetworkError({ method, url, status, message }: { method?:
  */
 export function getErrorBuffer() {
   return {
-    consoleErrors: [...consoleErrors, ...consoleWarnings],
+    consoleErrors: [...consoleErrors],
+    consoleWarnings: [...consoleWarnings],
     networkErrors: [...networkErrors],
     unhandledErrors: [...unhandledErrors],
   };

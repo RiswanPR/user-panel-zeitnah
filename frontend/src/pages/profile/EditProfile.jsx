@@ -40,6 +40,7 @@ import { useToast } from "../../components/ui/Toast";
 import ChangeUsernameModal from "../../components/username/ChangeUsernameModal";
 import ProfileNav from "../../components/profile/ProfileNav";
 import { getUploadUrl } from "../../utils/courseUi";
+import ImageEditorModal from "../../components/common/ImageEditorModal";
 
 const MAX_BIO_LENGTH = 1000;
 const MAX_SKILLS = 25;
@@ -139,6 +140,7 @@ export default function EditProfile() {
 
   // Recommendation request state
   const [isReqRecModalOpen, setIsReqRecModalOpen] = useState(false);
+  const [editingImage, setEditingImage] = useState(null); // { file, type: 'avatar' | 'banner' }
 
   // TanStack Query for initial profile data
   const {
@@ -182,7 +184,8 @@ export default function EditProfile() {
       isEduModalOpen ||
       isCertModalOpen ||
       isReqRecModalOpen ||
-      isChangeUsernameOpen;
+      isChangeUsernameOpen ||
+      Boolean(editingImage);
 
     if (isAnyModalOpen) {
       const originalOverflow = document.body.style.overflow;
@@ -198,6 +201,7 @@ export default function EditProfile() {
     isCertModalOpen,
     isReqRecModalOpen,
     isChangeUsernameOpen,
+    editingImage,
   ]);
 
   // Handle section switching with unsaved changes safeguard
@@ -299,7 +303,11 @@ export default function EditProfile() {
       notifyMilestones(res.newlyAwarded);
     },
     onError: (err) => {
-      toast.error("Upload failed", err.response?.data?.message || "Could not upload photo.");
+      if (err.response?.status === 413) {
+        toast.error("Upload failed", "That image is too large to upload. Try a smaller crop or lower image quality.");
+      } else {
+        toast.error("Upload failed", err.response?.data?.message || "Could not upload photo.");
+      }
     },
   });
 
@@ -319,7 +327,11 @@ export default function EditProfile() {
       notifyMilestones(res.newlyAwarded);
     },
     onError: (err) => {
-      toast.error("Upload failed", err.response?.data?.message || "Could not upload cover.");
+      if (err.response?.status === 413) {
+        toast.error("Upload failed", "That image is too large to upload. Try a smaller crop or lower image quality.");
+      } else {
+        toast.error("Upload failed", err.response?.data?.message || "Could not upload cover.");
+      }
     },
   });
 
@@ -617,30 +629,32 @@ export default function EditProfile() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      return toast.error("File too large", "Avatar image must be under 5 MB.");
+    if (file.size > 25 * 1024 * 1024) {
+      return toast.error("File too large", "Avatar image must be under 25 MB.");
     }
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
       return toast.error("Invalid format", "Only JPG, PNG, and WebP images are permitted.");
     }
 
-    avatarMutation.mutate(file);
+    setEditingImage({ file, type: "avatar" });
+    e.target.value = "";
   };
 
   const handleBannerUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      return toast.error("File too large", "Banner image must be under 5 MB.");
+    if (file.size > 30 * 1024 * 1024) {
+      return toast.error("File too large", "Banner image must be under 30 MB.");
     }
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
       return toast.error("Invalid format", "Only JPG, PNG, and WebP images are permitted.");
     }
 
-    bannerMutation.mutate(file);
+    setEditingImage({ file, type: "banner" });
+    e.target.value = "";
   };
 
   const handleSaveIdentity = (e) => {
@@ -2441,6 +2455,29 @@ export default function EditProfile() {
         isOpen={isChangeUsernameOpen}
         onClose={() => setIsChangeUsernameOpen(false)}
         currentUsername={profile?.username}
+      />
+
+      {/* ── Image Editor Modal for Avatar & Banner ── */}
+      <ImageEditorModal
+        isOpen={Boolean(editingImage)}
+        onClose={() => setEditingImage(null)}
+        imageFile={editingImage?.file}
+        type={editingImage?.type || "avatar"}
+        onSave={(processedFile) => {
+          if (editingImage?.type === "avatar") {
+            avatarMutation.mutate(processedFile, {
+              onSuccess: () => setEditingImage(null),
+            });
+          } else {
+            bannerMutation.mutate(processedFile, {
+              onSuccess: () => setEditingImage(null),
+            });
+          }
+        }}
+        currentAvatarUrl={avatarUrl}
+        userName={name || profile?.name || "Student"}
+        userRole={currentRole || headline || profile?.currentRole || profile?.headline || "Student Developer"}
+        isUploading={avatarMutation.isPending || bannerMutation.isPending}
       />
     </div>
   );

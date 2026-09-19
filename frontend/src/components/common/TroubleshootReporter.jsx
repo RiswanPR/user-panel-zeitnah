@@ -6,7 +6,6 @@ import {
   getSignificantErrorCount,
   clearErrorBuffer,
   getBrowserInfo,
-  hasErrors,
 } from '../../utils/errorCapture';
 import { storage } from '../../services/storage';
 
@@ -17,6 +16,22 @@ const SEVERITIES = [
   { value: 'high', label: 'High', color: '#f97316', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.25)' },
   { value: 'critical', label: 'Critical', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.25)' },
 ];
+
+/**
+ * Group identical error entries and track their recurrence count.
+ */
+function groupErrors(items = [], keyFn = (item) => item?.message || JSON.stringify(item)) {
+  const map = new Map();
+  items.forEach((item) => {
+    const key = keyFn(item);
+    if (map.has(key)) {
+      map.get(key).count += 1;
+    } else {
+      map.set(key, { ...item, count: 1 });
+    }
+  });
+  return Array.from(map.values());
+}
 
 /**
  * Global Troubleshoot Error Reporter
@@ -51,11 +66,11 @@ export default function TroubleshootReporter() {
     setSubmitted(false);
     setSubmitError('');
 
-    // Auto-populate title from latest error
+    // Auto-populate title from latest significant error (priority: unhandled > network > console)
     const latestError =
-      buffer.consoleErrors[buffer.consoleErrors.length - 1] ||
+      buffer.unhandledErrors[buffer.unhandledErrors.length - 1] ||
       buffer.networkErrors[buffer.networkErrors.length - 1] ||
-      buffer.unhandledErrors[buffer.unhandledErrors.length - 1];
+      buffer.consoleErrors[buffer.consoleErrors.length - 1];
     if (latestError && !title) {
       setTitle(
         (latestError.message || 'Error occurred')
@@ -382,24 +397,29 @@ export default function TroubleshootReporter() {
                                   <div className="flex items-center gap-2 mb-2">
                                     <Terminal className="w-3.5 h-3.5 text-red-400" />
                                     <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
-                                      Console ({errorData.consoleErrors.length})
+                                      Console Errors ({errorData.consoleErrors.length})
                                     </span>
                                   </div>
                                   <div className="space-y-1 max-h-32 overflow-y-auto custom-scrollbar">
-                                    {errorData.consoleErrors.slice(-10).map((e, i) => (
+                                    {groupErrors(errorData.consoleErrors.slice(-15)).map((e, i) => (
                                       <div key={i} className="flex items-start gap-2 text-[11px] font-mono py-1">
                                         <span
                                           className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase"
                                           style={{
-                                            background: e.type === 'error' ? 'rgba(239,68,68,0.15)' : 'rgba(234,179,8,0.15)',
-                                            color: e.type === 'error' ? '#f87171' : '#facc15',
+                                            background: 'rgba(239,68,68,0.15)',
+                                            color: '#f87171',
                                           }}
                                         >
-                                          {e.type}
+                                          {e.type || 'error'}
                                         </span>
-                                        <span className="text-white/60 break-all leading-relaxed">
+                                        <span className="text-white/60 break-all leading-relaxed flex-1">
                                           {e.message?.substring(0, 150)}
                                         </span>
+                                        {e.count > 1 && (
+                                          <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold bg-white/10 text-white/70">
+                                            × {e.count}
+                                          </span>
+                                        )}
                                       </div>
                                     ))}
                                   </div>
@@ -416,7 +436,7 @@ export default function TroubleshootReporter() {
                                     </span>
                                   </div>
                                   <div className="space-y-1 max-h-32 overflow-y-auto custom-scrollbar">
-                                    {errorData.networkErrors.slice(-8).map((e, i) => (
+                                    {groupErrors(errorData.networkErrors.slice(-15), (e) => `${e.method}:${e.url}:${e.status}`).map((e, i) => (
                                       <div key={i} className="flex items-start gap-2 text-[11px] font-mono py-1">
                                         <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold bg-white/[0.06] text-white/50">
                                           {e.method}
@@ -430,6 +450,11 @@ export default function TroubleshootReporter() {
                                         >
                                           {e.status}
                                         </span>
+                                        {e.count > 1 && (
+                                          <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold bg-white/10 text-white/70">
+                                            × {e.count}
+                                          </span>
+                                        )}
                                       </div>
                                     ))}
                                   </div>
@@ -446,9 +471,40 @@ export default function TroubleshootReporter() {
                                     </span>
                                   </div>
                                   <div className="space-y-1 max-h-32 overflow-y-auto custom-scrollbar">
-                                    {errorData.unhandledErrors.slice(-8).map((e, i) => (
-                                      <div key={i} className="text-[11px] font-mono text-white/60 py-1 break-all">
-                                        [{e.type}] {e.message?.substring(0, 150)}
+                                    {groupErrors(errorData.unhandledErrors.slice(-15)).map((e, i) => (
+                                      <div key={i} className="flex items-start gap-2 text-[11px] font-mono text-white/60 py-1 break-all">
+                                        <span className="flex-1">
+                                          [{e.type}] {e.message?.substring(0, 150)}
+                                        </span>
+                                        {e.count > 1 && (
+                                          <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold bg-white/10 text-white/70">
+                                            × {e.count}
+                                          </span>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Console Warnings (Collapsible / Informational) */}
+                              {errorData.consoleWarnings?.length > 0 && (
+                                <div className="rounded-xl p-3" style={{ background: 'rgba(7,25,42,0.3)', border: '1px solid rgba(255,255,255,0.03)' }}>
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <Terminal className="w-3.5 h-3.5 text-yellow-400/70" />
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                                      Warnings ({errorData.consoleWarnings.length})
+                                    </span>
+                                  </div>
+                                  <div className="space-y-1 max-h-24 overflow-y-auto custom-scrollbar">
+                                    {groupErrors(errorData.consoleWarnings.slice(-10)).map((e, i) => (
+                                      <div key={i} className="flex items-start gap-2 text-[11px] font-mono py-0.5 text-white/40 break-all">
+                                        <span className="flex-1">{e.message?.substring(0, 120)}</span>
+                                        {e.count > 1 && (
+                                          <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold bg-white/5 text-white/50">
+                                            × {e.count}
+                                          </span>
+                                        )}
                                       </div>
                                     ))}
                                   </div>
