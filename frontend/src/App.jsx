@@ -131,6 +131,7 @@ function App() {
               <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
               <Route path="/profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
               <Route path="/profile/edit" element={<Suspense fallback={<PageLoader />}><EditProfile /></Suspense>} />
+              <Route path="/public-profile" element={<Suspense fallback={<PageLoader />}><PublicProfilePage /></Suspense>} />
               <Route path="/courses" element={<Suspense fallback={<PageLoader />}><Courses /></Suspense>} />
               <Route path="/courses/:courseId" element={<Suspense fallback={<PageLoader />}><CourseChapters /></Suspense>} />
               <Route path="/courses/:courseId/chapters" element={<Suspense fallback={<PageLoader />}><CourseChapters /></Suspense>} />

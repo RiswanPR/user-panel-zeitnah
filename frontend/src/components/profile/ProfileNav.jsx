@@ -3,9 +3,9 @@ import { motion } from "framer-motion";
 import {
   User,
   Edit3,
+  Globe,
   BarChart3,
   Star,
-  Globe,
   Shield,
   FileText,
 } from "lucide-react";
@@ -24,6 +24,12 @@ export const PROFILE_TABS = [
     description: "Account details",
   },
   {
+    path: "/public-profile",
+    label: "Public Profile",
+    icon: Globe,
+    description: "Public identity showcase",
+  },
+  {
     path: "/my-learning",
     label: "My Learning",
     icon: BarChart3,
@@ -34,12 +40,6 @@ export const PROFILE_TABS = [
     label: "My Points",
     icon: Star,
     description: "XP & level roadmap",
-  },
-  {
-    path: "/community/profile",
-    label: "Public Profile",
-    icon: Globe,
-    description: "Professional portfolio",
   },
   {
     path: "/active-sessions",
@@ -56,8 +56,8 @@ export const PROFILE_TABS = [
 ];
 
 /**
- * Unified Profile Navigation Component.
- * Provides a responsive, accessible sub-navigation across all 7 profile ecosystem destinations.
+ * Unified Core Profile Navigation Component.
+ * Exactly 7 Core Profile destinations. Strictly NO Community or Leaderboard references.
  */
 export default function ProfileNav({ className = "" }) {
   const location = useLocation();
@@ -65,6 +65,12 @@ export default function ProfileNav({ className = "" }) {
   const isTabActive = (tabPath) => {
     if (tabPath === "/profile") {
       return location.pathname === "/profile";
+    }
+    if (tabPath === "/public-profile") {
+      return (
+        location.pathname === "/public-profile" ||
+        location.pathname.startsWith("/u/")
+      );
     }
     return location.pathname.startsWith(tabPath);
   };

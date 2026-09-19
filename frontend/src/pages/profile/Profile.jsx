@@ -297,11 +297,11 @@ export default function Profile() {
               </button>
 
               <Link
-                to="/community/profile"
+                to="/public-profile"
                 className="btn-secondary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 hover:text-brand-mint cursor-pointer"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
-                Public Portfolio
+                View Public Profile
               </Link>
 
               <button

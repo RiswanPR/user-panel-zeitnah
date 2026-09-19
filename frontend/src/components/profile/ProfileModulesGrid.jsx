@@ -31,14 +31,13 @@ export default function ProfileModulesGrid({ username, className = "" }) {
       accent: "yellow",
     },
     {
-      title: "Public Professional Profile",
+      title: "Public Student Profile",
       description:
-        "Showcase your resume, verified projects, work experience, certificates, and portfolio.",
-      path: "/community/profile",
+        "See how your Zeitnah identity, verified skills, and learning milestones appear publicly.",
+      path: "/public-profile",
       icon: Globe,
-      tag: "Public Portfolio",
+      tag: "Public Profile",
       accent: "mint",
-      external: false,
     },
     {
       title: "Active Sessions & Security",
