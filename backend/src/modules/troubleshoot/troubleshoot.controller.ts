@@ -6,6 +6,7 @@ import {
   Query,
   Req,
   UseGuards,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import type { Request } from 'express';
@@ -41,14 +42,19 @@ export class TroubleshootController {
 
   /**
    * List all troubleshoot reports with pagination and filters.
+   * Restricted to authorized administrators.
    */
   @Get('reports')
   findReports(
+    @Req() req: AuthenticatedRequest,
     @Query('severity') severity?: string,
     @Query('status') status?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
+    if (req.user?.role !== 'admin') {
+      throw new ForbiddenException('Admin access required');
+    }
     return this.troubleshootService.findReports({
       severity,
       status,

@@ -5,23 +5,15 @@ import { AuthContext } from "../../context/AuthContext";
 import { storage } from "../../services/storage";
 
 function Home() {
-  const { user, setUser, logout } = useContext(AuthContext);
+  const { user, setUser, logout, requestLogout } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  // SECURE DISCONNECT PIPELINE
-  const handleLogout = async () => {
-    try {
-      if (logout) {
-        await logout();
-      } else {
-        await api.post("/auth/logout").catch(() => {});
-        await storage.clearAuth();
-        setUser(null);
-      }
-    } catch (error) {
-      console.log(error);
-    } finally {
-      navigate("/login");
+  // SECURE DISCONNECT PIPELINE (Prompts Confirmation Modal)
+  const handleLogout = () => {
+    if (requestLogout) {
+      requestLogout();
+    } else if (logout) {
+      logout();
     }
   };
 

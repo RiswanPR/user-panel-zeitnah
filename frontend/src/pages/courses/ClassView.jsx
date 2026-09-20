@@ -126,6 +126,7 @@ function ClassView() {
     saveInFlight: false,
     sessionElapsed: 0,
     lastTickTime: 0,
+    maxCoveredSeconds: 0,
   });
   const dataRef = useRef(null);
 
@@ -300,21 +301,41 @@ function ClassView() {
           } catch (recoveryErr) {
             isRecovering = false;
             const recoveryStatus = recoveryErr?.response?.status;
+            const recoveryMsg =
+              recoveryErr?.response?.data?.message || recoveryErr?.message || "";
             console.error("[Heartbeat] Stream recovery failed:", recoveryErr);
-            if (recoveryStatus === 401 || recoveryStatus === 403) {
+            if (
+              recoveryStatus === 403 &&
+              recoveryMsg.toLowerCase().includes("device")
+            ) {
               toast.error(
                 "Playback restricted",
                 "Another device may be currently watching this course."
               );
               navigate(-1);
+            } else if (recoveryStatus === 401) {
+              toast.error("Session expired", "Please log in again to continue.");
             }
           }
         } else if (status === 403) {
-          toast.error(
-            "Playback restricted",
-            "Another device may be currently watching this course."
-          );
-          navigate(-1);
+          if (errorMsg.toLowerCase().includes("device")) {
+            toast.error(
+              "Playback restricted",
+              "Another device may be currently watching this course."
+            );
+            navigate(-1);
+          } else if (
+            errorMsg.toLowerCase().includes("purchase") ||
+            errorMsg.toLowerCase().includes("enrolled")
+          ) {
+            toast.error(
+              "Access Restricted",
+              "Please purchase or enroll in this course to access this class."
+            );
+            navigate(-1);
+          } else {
+            toast.error("Access Denied", errorMsg || "Playback not permitted.");
+          }
         }
       }
     };
@@ -345,13 +366,26 @@ function ClassView() {
       } catch (error) {
         if (!isMounted) return;
         const status = error?.response?.status;
+        const errorMsg = error?.response?.data?.message || error?.message || "";
         console.error("[Stream] start-stream failed:", error);
-        if (status === 401 || status === 403) {
+        if (status === 403 && errorMsg.toLowerCase().includes("device")) {
           toast.error(
             "Playback restricted",
             "Another device may be currently watching this course."
           );
           navigate(-1);
+        } else if (
+          status === 403 &&
+          (errorMsg.toLowerCase().includes("purchase") ||
+            errorMsg.toLowerCase().includes("enrolled"))
+        ) {
+          toast.error(
+            "Access Restricted",
+            "Please purchase or enroll in this course to access this class."
+          );
+          navigate(-1);
+        } else if (status === 401) {
+          toast.error("Session expired", "Please log in again to continue.");
         }
       }
     };
@@ -364,7 +398,7 @@ function ClassView() {
         const currentUser = userRef.current;
         const userId = currentUser?.userId || currentUser?._id || currentUser?.id;
         if (deviceId && userId) {
-          await api.post("/courses/stop-stream", { deviceId, userId });
+          await api.post("/courses/stop-stream", { deviceId, userId, classId });
         }
       } catch (error) {
         console.log(error);
@@ -380,7 +414,7 @@ function ClassView() {
       if (navigator.sendBeacon) {
         navigator.sendBeacon(
           `${baseUrl}/courses/stop-stream`,
-          new Blob([JSON.stringify({ deviceId, userId })], {
+          new Blob([JSON.stringify({ deviceId, userId, classId })], {
             type: "application/json",
           })
         );
@@ -412,6 +446,7 @@ function ClassView() {
       coveredSeconds: initial?.coveredSeconds || 0,
       watchedSeconds: initial?.watchedSeconds || 0,
     };
+    s3ProgressRef.current.maxCoveredSeconds = initial?.coveredSeconds || 0;
     latestSnapshotRef.current = initial
       ? {
           completed: Boolean(initial.completed),
@@ -930,16 +965,16 @@ function ClassView() {
                   s3State.saveInFlight = true;
 
                   const savedBase = savedProgressBaseRef.current;
+                  s3State.maxCoveredSeconds = Math.max(
+                    s3State.maxCoveredSeconds || 0,
+                    savedBase.coveredSeconds || 0,
+                    currentTime || 0
+                  );
                   const snapshot = {
                     completed: isEnding,
                     currentTimeSeconds: Math.round(currentTime),
                     durationSeconds: Math.round(duration),
-                    totalCoveredSeconds: Math.round(
-                      Math.max(
-                        savedBase.coveredSeconds || 0,
-                        (savedBase.coveredSeconds || 0) + currentTime
-                      )
-                    ),
+                    totalCoveredSeconds: Math.round(s3State.maxCoveredSeconds),
                     totalPlayedSeconds: Math.round(
                       (savedBase.watchedSeconds || 0) + s3State.sessionElapsed
                     ),

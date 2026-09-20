@@ -7,6 +7,7 @@ import {
 import api from "../services/api";
 import storage from "../services/storage";
 import nativeNotifications from "../native/notifications";
+import LogoutConfirmModal from "../components/common/LogoutConfirmModal";
 
 interface AuthContextType {
   user: any;
@@ -14,6 +15,10 @@ interface AuthContextType {
   updateUser: (fields: Record<string, any>) => void;
   loading: boolean;
   logout: () => void;
+  requestLogout: () => void;
+  cancelLogout: () => void;
+  confirmLogout: () => Promise<void>;
+  isLogoutConfirmOpen: boolean;
 }
 
 interface AuthProviderProps {
@@ -25,6 +30,8 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // AUTO LOGIN
   useEffect(() => {
@@ -74,7 +81,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
   }, []);
 
-  // LOGOUT
+  // LOGOUT (Programmatic / Direct)
   const logout = async () => {
     try {
       await api.post("/auth/logout").catch(() => {});
@@ -84,6 +91,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } finally {
       storage.clearAuth();
       setUser(null);
+    }
+  };
+
+  // User-initiated logout workflow with confirmation
+  const requestLogout = () => {
+    setIsLogoutConfirmOpen(true);
+  };
+
+  const cancelLogout = () => {
+    if (isLoggingOut) return;
+    setIsLogoutConfirmOpen(false);
+  };
+
+  const confirmLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+    } finally {
+      setIsLoggingOut(false);
+      setIsLogoutConfirmOpen(false);
     }
   };
 
@@ -99,9 +126,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         updateUser,
         loading,
         logout,
+        requestLogout,
+        cancelLogout,
+        confirmLogout,
+        isLogoutConfirmOpen,
       }}
     >
       {children}
+      <LogoutConfirmModal
+        isOpen={isLogoutConfirmOpen}
+        onClose={cancelLogout}
+        onConfirm={confirmLogout}
+        isLoggingOut={isLoggingOut}
+        user={user}
+      />
     </AuthContext.Provider>
   );
 };

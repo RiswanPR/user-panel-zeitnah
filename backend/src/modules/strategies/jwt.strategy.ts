@@ -85,19 +85,26 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Session expired');
     }
 
-    // UPDATE LAST SEEN
-    await this.userModel.updateOne(
-      {
-        _id: payload.userId,
-        'devices.deviceId': payload.deviceId,
-      },
-      {
-        $set: {
-          'devices.$.lastSeen': new Date(),
-          'account_Status.lastSeen': new Date(),
+    // UPDATE LAST SEEN (Throttled to once every 5 minutes to prevent DB write contention)
+    const now = Date.now();
+    const lastSeenTime = deviceExists.lastSeen
+      ? new Date(deviceExists.lastSeen).getTime()
+      : 0;
+    const FIVE_MINUTES_MS = 5 * 60 * 1000;
+    if (now - lastSeenTime > FIVE_MINUTES_MS) {
+      await this.userModel.updateOne(
+        {
+          _id: payload.userId,
+          'devices.deviceId': payload.deviceId,
         },
-      },
-    );
+        {
+          $set: {
+            'devices.$.lastSeen': new Date(now),
+            'account_Status.lastSeen': new Date(now),
+          },
+        },
+      );
+    }
 
     return {
       userId: payload.userId,

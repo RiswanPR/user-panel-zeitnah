@@ -14,7 +14,8 @@ const getAlertRecipients = (): string[] => {
   const envEmails =
     process.env.ALERT_EMAIL ||
     process.env.DEV_TEAM_EMAIL ||
-    'riswanpr7amses@gmail.com,riswanpr94@gmail.com,zeitnahpkd@gmail.com';
+    process.env.ENQUIRY_NOTIFICATION_EMAILS ||
+    '';
   return envEmails
     .split(',')
     .map((e) => e.trim())
@@ -123,6 +124,9 @@ export class TroubleshootService {
 
     const html = generateTroubleshootEmailHtml(report, userEmail, sev);
     const recipients = getAlertRecipients();
+    if (recipients.length === 0) {
+      return;
+    }
 
     try {
       await resend.emails.send({

@@ -105,7 +105,7 @@ describe('S3 Video Player Production Validation - Backend Suite', () => {
           {
             deviceId: 'device-456',
             refreshTokenExpiry: new Date(Date.now() + 86400000), // 1 day in future
-            lastSeen: new Date(),
+            lastSeen: new Date(Date.now() - 10 * 60 * 1000), // 10 minutes ago (exceeds 5-minute throttle)
           },
         ],
       };

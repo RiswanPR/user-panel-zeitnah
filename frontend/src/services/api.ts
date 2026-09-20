@@ -70,11 +70,21 @@ api.interceptors.request.use((config) => {
   config.headers["x-correlation-id"] = correlationId;
   (config as any)._correlationId = correlationId;
 
-  // Deduplication logic (prevent double clicking)
-  if (config.method !== "get") {
+  // Deduplication logic (prevent accidental rapid double-clicking on mutations)
+  // Exclude streaming, heartbeat, progress tracking, auth, and error capture
+  const isExcludedFromDeduplication =
+    config.method === "get" ||
+    config.url?.includes("/courses/heartbeat") ||
+    config.url?.includes("/courses/start-stream") ||
+    config.url?.includes("/courses/stop-stream") ||
+    config.url?.includes("/progress") ||
+    config.url?.includes("/auth/") ||
+    config.url?.includes("/troubleshoot/");
+
+  if (!isExcludedFromDeduplication && !(config as any).skipDeduplication) {
     const requestKey = getRequestKey(config);
     if (pendingRequests.has(requestKey)) {
-      // Abort previous request
+      // Abort previous duplicate request
       const controller = pendingRequests.get(requestKey);
       controller?.abort("Duplicate request cancelled");
     }
@@ -193,19 +203,29 @@ api.interceptors.response.use(
     const isTroubleshootRequest = config?.url?.includes('/troubleshoot/');
     const isRefreshRequest = config?.url?.includes('/auth/refresh-token') || config?._isRefreshRequest;
 
-    // Retry once for network failures or 5xx errors (only for non-GET requests)
+    // Retry logic:
+    // Only retry idempotent operations (GET, HEAD, OPTIONS) on network failures or 5xx gateway errors.
+    // NEVER automatically retry non-idempotent operations (POST, PUT, DELETE, PATCH)
+    // such as payments, enrollments, submissions, or orders, unless explicitly marked config.retryable === true
     // Never retry troubleshoot or refresh-token endpoints to prevent infinite cascades / retries
-    if (
+    const method = (config?.method || "get").toLowerCase();
+    const isIdempotentMethod = ["get", "head", "options"].includes(method);
+    const isExplicitlyRetryable =
+      Boolean(config?.retryable) ||
+      config?.url?.includes("/courses/heartbeat");
+
+    const shouldRetry =
       !isOffline &&
       isNetworkOr5xx &&
       config &&
       !config._retried &&
-      config.method !== "get" &&
       !isTroubleshootRequest &&
-      !isRefreshRequest
-    ) {
+      !isRefreshRequest &&
+      (isIdempotentMethod || isExplicitlyRetryable);
+
+    if (shouldRetry) {
       config._retried = true;
-      console.warn(`[API] Retrying request ${config.url} due to ${error.code || error.response?.status}`);
+      console.warn(`[API] Retrying idempotent request ${config.url} due to ${error.code || error.response?.status}`);
       await new Promise((resolve) => setTimeout(resolve, 1500)); // wait 1.5s
       return api(config); // retry
     }

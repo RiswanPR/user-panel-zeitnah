@@ -91,10 +91,7 @@ async function bootstrap(): Promise<void> {
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      return callback(
-        new Error(`CORS blocked: Origin ${origin} is not in the allowlist`),
-        false,
-      );
+      return callback(null, false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

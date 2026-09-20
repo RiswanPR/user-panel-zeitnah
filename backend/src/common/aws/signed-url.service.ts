@@ -63,22 +63,26 @@ export class SignedUrlService {
     expiresIn = 3600,
   ): Promise<string> {
     if (!objectKey) return '';
-    // If it's already a full URL, return it
-    if (/^https?:\/\//i.test(objectKey)) return objectKey;
+    const resolvedObjectKey = this.getConfiguredBucketObjectKey(objectKey);
+
+    // If it's an external URL not belonging to our configured S3 bucket, return as is
+    if (!resolvedObjectKey) {
+      return objectKey;
+    }
 
     try {
       const command = new GetObjectCommand({
         Bucket: this.s3Service.bucketName,
-        Key: objectKey,
+        Key: resolvedObjectKey,
       });
       return await getSignedUrl(this.s3Service.s3Client, command, {
         expiresIn,
       });
     } catch (error) {
       this.logger.warn(
-        `Failed to generate signed URL for image: ${objectKey}. Falling back to public URL.`,
+        `Failed to generate signed URL for image: ${resolvedObjectKey}. Falling back to public URL.`,
       );
-      return `https://${this.s3Service.bucketName}.s3.${this.s3Service.region}.amazonaws.com/${objectKey}`;
+      return `https://${this.s3Service.bucketName}.s3.${this.s3Service.region}.amazonaws.com/${resolvedObjectKey}`;
     }
   }
 

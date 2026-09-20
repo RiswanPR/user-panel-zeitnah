@@ -16,6 +16,7 @@ import {
   getNextLevelProgress,
   syncGamificationStats,
 } from '../../common/gamification.helpers';
+import { escapeRegex } from '../../common/utils/regex.util';
 import { GetLeaderboardDto } from './dto/get-leaderboard.dto';
 
 export interface LeaderboardStudentDto {
@@ -185,8 +186,8 @@ export class LeaderboardService {
     const matchFilter: Record<string, any> = this.getEligibleStudentFilter();
 
     if (query.q && query.q.trim()) {
-      const escaped = query.q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(escaped, 'i');
+      const clean = escapeRegex(query.q.trim());
+      const regex = new RegExp(clean, 'i');
       matchFilter.$or = [{ name: regex }, { username: regex }];
     }
 
@@ -198,6 +199,16 @@ export class LeaderboardService {
       matchFilter['gamification.rank'] = query.rank.trim();
     }
 
+    const sortStage = {
+      $sort: {
+        'gamification.totalPoints': -1,
+        'gamification.level': -1,
+        'gamification.completedClasses': -1,
+        createdAt: 1,
+        _id: 1,
+      } as Record<string, 1 | -1>,
+    };
+
     const baseNormalization = {
       $addFields: {
         effectivePoints: { $ifNull: ['$gamification.totalPoints', 0] },
@@ -205,16 +216,6 @@ export class LeaderboardService {
         effectiveClasses: { $ifNull: ['$gamification.completedClasses', 0] },
         effectiveCreatedAt: { $ifNull: ['$createdAt', new Date(0)] },
       },
-    };
-
-    const sortStage = {
-      $sort: {
-        effectivePoints: -1,
-        effectiveLevel: -1,
-        effectiveClasses: -1,
-        effectiveCreatedAt: 1,
-        _id: 1,
-      } as Record<string, 1 | -1>,
     };
 
     const projectStage = {
@@ -234,22 +235,28 @@ export class LeaderboardService {
     };
 
     const [rawLearners, totalLearners, rawPodium] = await Promise.all([
-      this.userModel.aggregate([
-        { $match: matchFilter },
-        baseNormalization,
-        sortStage,
-        { $skip: skip },
-        { $limit: limit },
-        projectStage,
-      ]),
+      this.userModel.aggregate(
+        [
+          { $match: matchFilter },
+          sortStage,
+          { $skip: skip },
+          { $limit: limit },
+          baseNormalization,
+          projectStage,
+        ],
+        { allowDiskUse: true },
+      ),
       this.userModel.countDocuments(matchFilter),
-      this.userModel.aggregate([
-        { $match: this.getEligibleStudentFilter() },
-        baseNormalization,
-        sortStage,
-        { $limit: 3 },
-        projectStage,
-      ]),
+      this.userModel.aggregate(
+        [
+          { $match: this.getEligibleStudentFilter() },
+          sortStage,
+          { $limit: 3 },
+          baseNormalization,
+          projectStage,
+        ],
+        { allowDiskUse: true },
+      ),
     ]);
 
     const topPodium = await Promise.all(
@@ -489,6 +496,9 @@ export class LeaderboardService {
     query: GetLeaderboardDto,
     currentUserId: string,
   ) {
+    if (!Types.ObjectId.isValid(courseId)) {
+      throw new NotFoundException('Course not found');
+    }
     const course = await this.courseModel.findById(courseId);
     if (!course) {
       throw new NotFoundException('Course not found');
@@ -519,8 +529,8 @@ export class LeaderboardService {
     };
 
     if (query.q && query.q.trim()) {
-      const escaped = query.q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(escaped, 'i');
+      const clean = escapeRegex(query.q.trim());
+      const regex = new RegExp(clean, 'i');
       filter.$or = [{ name: regex }, { username: regex }];
     }
 
@@ -531,6 +541,7 @@ export class LeaderboardService {
     const enrolledStudents = await this.userModel
       .find(filter)
       .select('name username avatar course createdAt gamification.level gamification.rank gamification.activityDates account_Status.isVerified')
+      .limit(1000)
       .lean();
 
     // Map and score each enrolled student for this course

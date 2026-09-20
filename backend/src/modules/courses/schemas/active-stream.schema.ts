@@ -59,3 +59,8 @@ export class ActiveStream {
 }
 
 export const ActiveStreamSchema = SchemaFactory.createForClass(ActiveStream);
+
+// Compound indexes matching actual query patterns
+ActiveStreamSchema.index({ userId: 1, status: 1 });
+ActiveStreamSchema.index({ userId: 1, deviceId: 1, status: 1 });
+ActiveStreamSchema.index({ userId: 1, deviceId: 1, classId: 1, status: 1 });

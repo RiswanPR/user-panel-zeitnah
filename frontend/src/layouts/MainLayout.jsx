@@ -50,7 +50,7 @@ const navItemVariants = {
 
 export default function MainLayout({ children }) {
   const location = useLocation();
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, requestLogout } = useContext(AuthContext);
   const currentUserId = user?._id || user?.userId;
   const shouldReduceMotion = useReducedMotion();
 
@@ -170,7 +170,7 @@ export default function MainLayout({ children }) {
           {/* Logout Shortcut */}
           <button
             type="button"
-            onClick={() => logout?.()}
+            onClick={() => (requestLogout ? requestLogout() : logout?.())}
             aria-label="Log out"
             title="Log out"
             className="w-8 h-8 rounded-full border border-white/[0.08] bg-white/[0.04] hover:bg-red-500/15 hover:border-red-500/30 text-text-muted hover:text-red-400 flex items-center justify-center active:scale-95 transition-all focus-ring cursor-pointer"
@@ -339,7 +339,7 @@ export default function MainLayout({ children }) {
 
               <button
                 type="button"
-                onClick={() => logout?.()}
+                onClick={() => (requestLogout ? requestLogout() : logout?.())}
                 title="Log out"
                 aria-label="Log out"
                 className="p-2.5 rounded-xl border border-transparent hover:border-red-500/20 hover:bg-red-500/10 text-text-faint hover:text-red-400 transition-all duration-200 focus-ring shrink-0 cursor-pointer"

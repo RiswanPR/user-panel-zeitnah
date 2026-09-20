@@ -12,12 +12,15 @@ import { promisify } from 'util';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { pipeline } from 'stream/promises';
+import { Readable } from 'stream';
 
 const execPromise = promisify(exec);
 
 @Injectable()
 export class HlsService {
   private readonly logger = new Logger(HlsService.name);
+  private readonly activeConversions = new Set<string>();
 
   constructor(
     private s3Service: S3Service,
@@ -25,12 +28,43 @@ export class HlsService {
   ) {}
 
   /**
+   * Checks whether FFmpeg is available on the system.
+   */
+  async isFfmpegAvailable(): Promise<boolean> {
+    try {
+      await execPromise('ffmpeg -version');
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Convert an existing MP4 file in S3 to HLS format and upload back to S3.
-   * This is a heavy process and should be called asynchronously.
+   * Uses file-based streaming to ensure multi-GB videos never load into Node.js heap.
    */
   async convertVideoToHls(
     objectKey: string,
   ): Promise<{ success: boolean; hlsPath?: string; error?: any }> {
+    // 0. Concurrency and FFmpeg pre-checks
+    if (this.activeConversions.has(objectKey)) {
+      this.logger.warn(`Conversion already in progress for ${objectKey}`);
+      return {
+        success: false,
+        error: 'A conversion job is already in progress for this video',
+      };
+    }
+
+    const ffmpegReady = await this.isFfmpegAvailable();
+    if (!ffmpegReady) {
+      this.logger.error('FFmpeg is not installed or not available in PATH');
+      return {
+        success: false,
+        error: 'FFmpeg is not installed on the server',
+      };
+    }
+
+    this.activeConversions.add(objectKey);
     this.logger.log(`Starting HLS conversion for ${objectKey}`);
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hls-'));
     const inputFilePath = path.join(tempDir, 'input.mp4');
@@ -38,7 +72,7 @@ export class HlsService {
     fs.mkdirSync(outputDir, { recursive: true });
 
     try {
-      // 1. Download from S3
+      // 1. Download from S3 via streaming pipeline (Zero heap buffering)
       this.logger.log(`Downloading ${objectKey} to ${inputFilePath}`);
       const command = new GetObjectCommand({
         Bucket: this.s3Service.bucketName,
@@ -51,17 +85,13 @@ export class HlsService {
       }
 
       const writeStream = fs.createWriteStream(inputFilePath);
-      // Ensure the body is a stream before piping (Node.js environment)
       if (typeof (response.Body as any).pipe === 'function') {
-        await new Promise((resolve, reject) => {
-          (response.Body as any)
-            .pipe(writeStream)
-            .on('error', reject)
-            .on('finish', resolve);
-        });
+        await pipeline(response.Body as any, writeStream);
+      } else if (typeof (response.Body as any).transformToWebStream === 'function') {
+        const webStream = (response.Body as any).transformToWebStream();
+        await pipeline(Readable.fromWeb(webStream), writeStream);
       } else {
-        const bodyArr = await response.Body.transformToByteArray();
-        fs.writeFileSync(inputFilePath, bodyArr);
+        await pipeline(Readable.from(response.Body as any), writeStream);
       }
 
       // 2. Convert to HLS using FFmpeg
@@ -71,30 +101,28 @@ export class HlsService {
       const m3u8Filename = 'playlist.m3u8';
       const outputM3u8Path = path.join(outputDir, m3u8Filename);
 
-      // Simple FFmpeg command for HLS
-      // In production, you might want multiple resolutions. Here we use source resolution.
       const ffmpegCmd = `ffmpeg -i "${inputFilePath}" -profile:v baseline -level 3.0 -s 1280x720 -start_number 0 -hls_time 10 -hls_list_size 0 -f hls "${outputM3u8Path}"`;
 
       await execPromise(ffmpegCmd);
       this.logger.log(`HLS conversion completed in ${outputDir}`);
 
-      // 3. Upload all generated files back to S3
+      // 3. Upload all generated files back to S3 via streams (Zero heap buffering)
       const files = fs.readdirSync(outputDir);
       for (const file of files) {
         const filePath = path.join(outputDir, file);
         const s3Key = `hls/${hlsPrefix}/${file}`;
 
         let contentType = 'application/octet-stream';
-        if (file.endsWith('.m3u8'))
+        if (file.endsWith('.m3u8')) {
           contentType = 'application/vnd.apple.mpegurl';
-        else if (file.endsWith('.ts')) contentType = 'video/MP2T';
-
-        const fileBuffer = fs.readFileSync(filePath);
+        } else if (file.endsWith('.ts')) {
+          contentType = 'video/MP2T';
+        }
 
         const putCommand = new PutObjectCommand({
           Bucket: this.s3Service.bucketName,
           Key: s3Key,
-          Body: fileBuffer,
+          Body: fs.createReadStream(filePath),
           ContentType: contentType,
         });
 
@@ -108,11 +136,12 @@ export class HlsService {
       return { success: true, hlsPath: `hls/${hlsPrefix}/${m3u8Filename}` };
     } catch (error) {
       this.logger.error(`Error converting ${objectKey} to HLS`, error);
-      // Attempt cleanup
       try {
         fs.rmSync(tempDir, { recursive: true, force: true });
       } catch (e) {}
       return { success: false, error };
+    } finally {
+      this.activeConversions.delete(objectKey);
     }
   }
 

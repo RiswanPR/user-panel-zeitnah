@@ -79,7 +79,7 @@ function XPCountUp({ value = 0, duration = 800 }) {
 
 export default function Profile() {
   const queryClient = useQueryClient();
-  const { setUser, logout } = useContext(AuthContext);
+  const { setUser, logout, requestLogout } = useContext(AuthContext);
   const toast = useToast();
   const avatarFileRef = useRef(null);
   const bannerFileRef = useRef(null);
@@ -561,7 +561,7 @@ export default function Profile() {
 
                 <button
                   type="button"
-                  onClick={() => logout?.()}
+                  onClick={() => (requestLogout ? requestLogout() : logout?.())}
                   className="p-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl border border-red-500/20 bg-red-500/5 hover:bg-red-500/15 text-red-400 hover:text-red-300 transition-colors cursor-pointer shrink-0"
                   title="Log out"
                   aria-label="Log out"
@@ -803,7 +803,7 @@ export default function Profile() {
         </div>
         <button
           type="button"
-          onClick={() => logout?.()}
+          onClick={() => (requestLogout ? requestLogout() : logout?.())}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 text-xs font-semibold tracking-wide transition-all cursor-pointer focus-ring"
         >
           <LogOut className="w-4 h-4" />

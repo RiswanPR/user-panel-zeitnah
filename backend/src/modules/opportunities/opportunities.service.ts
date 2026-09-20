@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
+import { escapeRegex } from '../../common/utils/regex.util';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import {
@@ -87,16 +88,16 @@ export class OpportunitiesService {
       filter.experienceLevel = query.experienceLevel;
     }
     if (query.skill && query.skill.trim()) {
-      filter.skills = new RegExp(query.skill.trim(), 'i');
+      filter.skills = new RegExp(escapeRegex(query.skill.trim()), 'i');
     }
     if (query.location && query.location.trim()) {
-      filter.location = new RegExp(query.location.trim(), 'i');
+      filter.location = new RegExp(escapeRegex(query.location.trim()), 'i');
     }
     if (query.organizationId && Types.ObjectId.isValid(query.organizationId)) {
       filter.organizationId = new Types.ObjectId(query.organizationId);
     }
     if (query.q && query.q.trim()) {
-      const clean = query.q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const clean = escapeRegex(query.q.trim());
       const regex = new RegExp(clean, 'i');
       filter.$or = [{ title: regex }, { description: regex }, { skills: regex }];
     }

@@ -5,6 +5,7 @@ import {
   ConflictException,
   BadRequestException,
 } from '@nestjs/common';
+import { escapeRegex } from '../../common/utils/regex.util';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import {
@@ -109,13 +110,13 @@ export class OrganizationsService {
       filter.type = query.type;
     }
     if (query.industry && query.industry.trim()) {
-      filter.industry = new RegExp(query.industry.trim(), 'i');
+      filter.industry = new RegExp(escapeRegex(query.industry.trim()), 'i');
     }
     if (query.location && query.location.trim()) {
-      filter.location = new RegExp(query.location.trim(), 'i');
+      filter.location = new RegExp(escapeRegex(query.location.trim()), 'i');
     }
     if (query.q && query.q.trim()) {
-      const clean = query.q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const clean = escapeRegex(query.q.trim());
       const regex = new RegExp(clean, 'i');
       filter.$or = [{ name: regex }, { description: regex }, { industry: regex }];
     }

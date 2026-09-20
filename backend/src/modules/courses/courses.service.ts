@@ -40,6 +40,7 @@ import {
   getNextLevelProgress,
   syncGamificationStats,
 } from '../../common/gamification.helpers';
+import { escapeRegex } from '../../common/utils/regex.util';
 import { SignedUrlService } from '../../common/aws/signed-url.service';
 import { HlsService } from './hls.service';
 
@@ -337,7 +338,11 @@ export class CoursesService {
   // ======================
 
   async globalSearch(searchQuery: string) {
-    const regex = new RegExp(searchQuery, 'i');
+    const clean = escapeRegex(searchQuery?.trim() || '');
+    if (!clean) {
+      return { courses: [], total: 0 };
+    }
+    const regex = new RegExp(clean, 'i');
 
     // Search courses matching name or description
     const courses = await this.courseModel
@@ -445,7 +450,7 @@ export class CoursesService {
           ...courseObj,
           learningProgress,
         };
-        return this.signCourseImages(mapped);
+        return this.signCourseImages(mapped, true);
       }),
     );
 
@@ -476,7 +481,9 @@ export class CoursesService {
     }
 
     // USER COURSE IDS
-    const courseIds = user.course?.map((course: any) => course.courseId) || [];
+    const courseIds = (user.course || [])
+      .map((course: any) => course.courseId)
+      .filter((id: any) => id && Types.ObjectId.isValid(id));
 
     const courses = await this.courseModel.find({
       _id: {
@@ -498,7 +505,7 @@ export class CoursesService {
           ...course.toObject(),
           learningProgress,
         };
-        return this.signCourseImages(mapped);
+        return this.signCourseImages(mapped, true);
       }),
     );
 
@@ -514,7 +521,9 @@ export class CoursesService {
       throw new NotFoundException('User not found');
     }
 
-    const courseIds = user.course?.map((course: any) => course.courseId) || [];
+    const courseIds = (user.course || [])
+      .map((course: any) => course.courseId)
+      .filter((id: any) => id && Types.ObjectId.isValid(id));
     const courses = await this.courseModel.find({
       _id: {
         $in: courseIds,
@@ -548,7 +557,7 @@ export class CoursesService {
           type: course.type,
           learningProgress,
         };
-        return this.signCourseImages(mapped);
+        return this.signCourseImages(mapped, true);
       }),
     );
 
@@ -605,6 +614,9 @@ export class CoursesService {
   // ======================
 
   async getCourseById(id: string, userId?: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new NotFoundException('Course not found');
+    }
     const course = await this.courseModel.findById(id);
 
     if (!course) {
@@ -732,6 +744,9 @@ export class CoursesService {
   // ======================
 
   async getCourseChapters(courseId: string, userId?: string) {
+    if (!Types.ObjectId.isValid(courseId)) {
+      throw new NotFoundException('Course not found');
+    }
     const course = await this.courseModel.findById(courseId);
 
     if (!course) {
@@ -967,6 +982,9 @@ export class CoursesService {
   // ======================
 
   async getClassView(classId: string, userId?: string) {
+    if (!Types.ObjectId.isValid(classId)) {
+      throw new NotFoundException('Class not found');
+    }
     const startTime = Date.now();
 
     // Parallelize: fetch course and user concurrently (Fix 2: single user query)
@@ -995,9 +1013,9 @@ export class CoursesService {
     );
     const isUnlocked = purchased || (isRecording && isFreePreviewClass);
 
-    // BLOCK ACCESS
+    // BLOCK ACCESS - Return 403 Forbidden for unenrolled users
     if (!isUnlocked) {
-      throw new NotFoundException('Purchase course to access class');
+      throw new ForbiddenException('Purchase course to access class');
     }
 
     // FIND CHAPTER
@@ -1127,6 +1145,9 @@ export class CoursesService {
     payload: UpdateClassProgressDto,
     attempt = 0,
   ) {
+    if (!Types.ObjectId.isValid(classId)) {
+      throw new BadRequestException('Invalid class ID format');
+    }
     const course = await this.courseModel.findOne({
       'chapters.classes._id': classId,
     });
@@ -1584,13 +1605,17 @@ export class CoursesService {
     return { success: true, recovered: true, recreated: true };
   }
 
-  async stopStream(userId: string, deviceId: string) {
+  async stopStream(userId: string, deviceId: string, classId?: string) {
+    const query: any = {
+      userId,
+      deviceId,
+      status: 'ACTIVE',
+    };
+    if (classId) {
+      query.classId = classId;
+    }
     await this.activeStreamModel.findOneAndUpdate(
-      {
-        userId,
-        deviceId,
-        status: 'ACTIVE',
-      },
+      query,
       {
         status: 'ENDED',
         expiresAt: new Date(Date.now() + 60000), // 60s grace window before TTL purge
@@ -1601,6 +1626,9 @@ export class CoursesService {
   }
 
   async getSecureVideoPlayback(classId: string, userId: string) {
+    if (!Types.ObjectId.isValid(classId)) {
+      throw new NotFoundException('Class not found');
+    }
     const course = await this.courseModel.findOne({
       'chapters.classes._id': classId,
     });
@@ -1675,6 +1703,9 @@ export class CoursesService {
   }
 
   async getSecurePlaylist(classId: string, userId: string): Promise<string> {
+    if (!Types.ObjectId.isValid(classId)) {
+      throw new NotFoundException('Class not found');
+    }
     const course = await this.courseModel.findOne({
       'chapters.classes._id': classId,
     });
@@ -1727,6 +1758,9 @@ export class CoursesService {
   }
 
   async convertVideoToHls(classId: string) {
+    if (!Types.ObjectId.isValid(classId)) {
+      throw new NotFoundException('Class not found');
+    }
     const course = await this.courseModel.findOne({
       'chapters.classes._id': classId,
     });
@@ -1762,7 +1796,7 @@ export class CoursesService {
     return result;
   }
 
-  private async signCourseImages(courseObj: any) {
+  private async signCourseImages(courseObj: any, shallow = false) {
     if (!courseObj) return courseObj;
 
     if (courseObj.image) {
@@ -1779,6 +1813,11 @@ export class CoursesService {
           (url) => { courseObj.coverImage = url; },
         ),
       );
+    }
+
+    if (shallow) {
+      await Promise.all(signingTasks);
+      return courseObj;
     }
 
     if (courseObj.chapters && Array.isArray(courseObj.chapters)) {
@@ -1852,30 +1891,39 @@ export class CoursesService {
       userId: userId ? new Types.ObjectId(userId) : undefined,
     });
 
-    const recipients = [
-      'riswanpr7amses@gmail.com',
-      'riswanpr94@gmail.com',
-      'zeitnahpkd@gmail.com',
-    ];
-    const emailHtml = generateCourseEnquiryNotificationEmailHtml({
-      courseName: dto.courseName,
-      name: dto.name,
-      email: dto.email,
-      phone: dto.phone,
-      message: dto.message,
-    });
+    const envEmails =
+      process.env.ENQUIRY_NOTIFICATION_EMAILS ||
+      process.env.ALERT_EMAIL ||
+      process.env.DEV_TEAM_EMAIL ||
+      '';
+    const recipients = envEmails
+      ? envEmails
+          .split(',')
+          .map((e) => e.trim())
+          .filter((e) => e.includes('@'))
+      : [];
 
-    try {
-      await resend.emails.send({
-        from:
-          process.env.RESEND_FROM_EMAIL ||
-          'Zeitnah Enquiries <onboarding@resend.dev>',
-        to: recipients,
-        subject: `🎓 New Course Enquiry: ${dto.courseName} - ${dto.name}`,
-        html: emailHtml,
+    if (recipients.length > 0) {
+      const emailHtml = generateCourseEnquiryNotificationEmailHtml({
+        courseName: dto.courseName,
+        name: dto.name,
+        email: dto.email,
+        phone: dto.phone,
+        message: dto.message,
       });
-    } catch (err) {
-      console.error('[CoursesService] Failed to send enquiry email:', err);
+
+      try {
+        await resend.emails.send({
+          from:
+            process.env.RESEND_FROM_EMAIL ||
+            'Zeitnah Enquiries <onboarding@resend.dev>',
+          to: recipients,
+          subject: `🎓 New Course Enquiry: ${dto.courseName} - ${dto.name}`,
+          html: emailHtml,
+        });
+      } catch (err) {
+        console.error('[CoursesService] Failed to send enquiry email:', err);
+      }
     }
 
     return {

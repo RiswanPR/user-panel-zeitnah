@@ -8,6 +8,7 @@ import {
   Req,
   UseGuards,
   Header,
+  ForbiddenException,
 } from '@nestjs/common';
 
 import { CoursesService } from './courses.service';
@@ -184,7 +185,9 @@ export class CoursesController {
   @UseGuards(JwtAuthGuard)
   @Post('video/:classId/convert-to-hls')
   async convertVideoToHls(@Param('classId') classId: string, @Req() req: any) {
-    // Ideally add an admin guard here
+    if (req.user?.role !== 'admin') {
+      throw new ForbiddenException('Admin access required');
+    }
     return this.coursesService.convertVideoToHls(classId);
   }
 
@@ -240,7 +243,7 @@ export class CoursesController {
     if (!body.deviceId || !body.userId) {
       return { success: false, message: 'Missing deviceId or userId' };
     }
-    return this.coursesService.stopStream(body.userId, body.deviceId);
+    return this.coursesService.stopStream(body.userId, body.deviceId, body.classId);
   }
 
   // =====================

@@ -753,3 +753,12 @@ export class User {
   };
 }
 export const UserSchema = SchemaFactory.createForClass(User);
+
+// Indexes for high-frequency LMS queries
+UserSchema.index({ 'course.courseId': 1 });
+UserSchema.index({
+  'gamification.totalPoints': -1,
+  'gamification.level': -1,
+  'gamification.completedClasses': -1,
+  createdAt: 1,
+});
