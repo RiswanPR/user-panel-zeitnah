@@ -32,6 +32,58 @@ export class NotificationsService {
   }
 
   /**
+   * Create a notification and dispatch real-time socket event
+   */
+  async createNotification(dto: {
+    recipientId: string | Types.ObjectId;
+    actorId?: string | Types.ObjectId;
+    type: string;
+    category?: string;
+    priority?: string;
+    title: string;
+    message: string;
+    actionUrl?: string;
+    targetUrl?: string;
+    idempotencyKey?: string;
+    [key: string]: any;
+  }) {
+    if (dto.idempotencyKey) {
+      const existing = await this.notificationModel.findOne({
+        idempotencyKey: dto.idempotencyKey,
+      });
+      if (existing) return existing;
+    }
+
+    const recipientId = this.toObjectId(dto.recipientId);
+    const actorId = dto.actorId ? this.toObjectId(dto.actorId) : undefined;
+    const priority = (dto.priority || 'LOW').toUpperCase();
+
+    const notification = await this.notificationModel.create({
+      recipientId,
+      actorId,
+      type: dto.type,
+      category: dto.category || 'general',
+      priority,
+      title: dto.title,
+      message: dto.message,
+      targetUrl: dto.targetUrl || dto.actionUrl || '',
+      idempotencyKey: dto.idempotencyKey,
+      isRead: false,
+    });
+
+    try {
+      this.notificationsGateway.sendNotificationToUser(
+        recipientId.toString(),
+        notification.toObject ? notification.toObject() : notification,
+      );
+    } catch (e) {
+      // Gateway emission is best-effort
+    }
+
+    return notification;
+  }
+
+  /**
    * Get paginated notifications and unread count
    */
   async getUserNotifications(userId: string, query: any = {}) {

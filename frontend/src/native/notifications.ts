@@ -1,10 +1,16 @@
-import {
-  PushNotifications,
-  Token,
-  PushNotificationSchema,
-  ActionPerformed,
-} from '@capacitor/push-notifications';
-import { Capacitor } from '@capacitor/core';
+const Capacitor = {
+  isNativePlatform: () => typeof window !== 'undefined' && Boolean((window as any).Capacitor?.isNativePlatform?.()),
+  getPlatform: () => (typeof window !== 'undefined' && (window as any).Capacitor?.getPlatform?.()) || 'web',
+};
+const PushNotifications = typeof window !== 'undefined' && (window as any).Capacitor?.Plugins?.PushNotifications ? (window as any).Capacitor.Plugins.PushNotifications : {
+  checkPermissions: async () => ({ receive: 'granted' }),
+  requestPermissions: async () => ({ receive: 'granted' }),
+  register: async () => {},
+  addListener: () => Promise.resolve({ remove: () => {} }),
+};
+export interface Token { value: string; }
+export interface PushNotificationSchema { title?: string; body?: string; data?: any; }
+export interface ActionPerformed { actionId: string; notification: PushNotificationSchema; }
 import api from '../services/api';
 import storage from '../services/storage';
 

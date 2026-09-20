@@ -424,6 +424,7 @@ export default function MainLayout({ children }) {
           </FeatureErrorBoundary>
         </div>
       </main>
+      </div>
       <NotificationDrawer />
       <CookieConsentBanner />
       <UsernameClaimModal />

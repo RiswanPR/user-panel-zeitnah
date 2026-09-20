@@ -77,6 +77,12 @@ export class CommunityDiscussion {
   isPinned: boolean;
 
   @Prop({
+    type: Boolean,
+    default: false,
+  })
+  isEdited: boolean;
+
+  @Prop({
     type: Number,
     default: 0,
   })

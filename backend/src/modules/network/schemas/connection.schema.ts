@@ -1,7 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
-export type NetworkConnectionDocument = NetworkConnection & Document;
+export type NetworkConnectionDocument = NetworkConnection &
+  Document & {
+    createdAt: Date;
+    updatedAt: Date;
+  };
 export type ConnectionDocument = NetworkConnectionDocument;
 
 export type ConnectionStatus =

@@ -449,7 +449,7 @@ export class LearningSpacesService {
       authorId: userObjId,
       title: sanitizeText(dto.title),
       body: sanitizeText(dto.body),
-      type: dto.type || 'discussion',
+      type: (dto.type as any) || 'discussion',
       status: 'published',
     });
 
@@ -598,7 +598,7 @@ export class LearningSpacesService {
       communityId,
       title: sanitizeText(dto.title),
       description: sanitizeText(dto.description || ''),
-      type: dto.type || 'link',
+      type: (dto.type as any) || 'link',
       url: dto.url || '',
       targetId: dto.targetId || '',
       createdBy: userObjId,

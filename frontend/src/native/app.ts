@@ -1,7 +1,19 @@
-import { App, URLOpenListenerEvent } from '@capacitor/app';
-import { Capacitor } from '@capacitor/core';
-import { StatusBar, Style } from '@capacitor/status-bar';
-import { SplashScreen } from '@capacitor/splash-screen';
+const Capacitor = {
+  isNativePlatform: () => typeof window !== 'undefined' && Boolean((window as any).Capacitor?.isNativePlatform?.()),
+};
+const App = typeof window !== 'undefined' && (window as any).Capacitor?.Plugins?.App ? (window as any).Capacitor.Plugins.App : {
+  addListener: () => Promise.resolve({ remove: () => {} }),
+  minimizeApp: () => {},
+};
+const StatusBar = typeof window !== 'undefined' && (window as any).Capacitor?.Plugins?.StatusBar ? (window as any).Capacitor.Plugins.StatusBar : {
+  setStyle: async () => {},
+  setBackgroundColor: async () => {},
+};
+export const Style = { Dark: 'DARK', Light: 'LIGHT', Default: 'DEFAULT' };
+const SplashScreen = typeof window !== 'undefined' && (window as any).Capacitor?.Plugins?.SplashScreen ? (window as any).Capacitor.Plugins.SplashScreen : {
+  hide: async () => {},
+};
+export type URLOpenListenerEvent = { url: string };
 
 export type AppLifecycleCallback = (isActive: boolean) => void;
 export type BackButtonHandler = () => boolean | Promise<boolean>; // return true if handled

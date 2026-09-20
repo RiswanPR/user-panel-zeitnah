@@ -7,8 +7,55 @@
  *  2. Native Mobile / Capacitor (WKWebView / Android WebView persistence bridge)
  */
 
-import { Preferences } from '@capacitor/preferences';
-import { Capacitor } from '@capacitor/core';
+// Web-safe Capacitor and Preferences abstractions
+const Capacitor = {
+  isNativePlatform: (): boolean =>
+    typeof window !== 'undefined' && Boolean((window as any).Capacitor?.isNativePlatform?.()),
+};
+
+const Preferences = {
+  get: async ({ key }: { key: string }): Promise<{ value: string | null }> => {
+    if (typeof window !== 'undefined' && (window as any).Capacitor?.Plugins?.Preferences) {
+      return (window as any).Capacitor.Plugins.Preferences.get({ key });
+    }
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return { value: window.localStorage.getItem(key) };
+    }
+    return { value: null };
+  },
+  set: async ({ key, value }: { key: string; value: string }): Promise<void> => {
+    if (typeof window !== 'undefined' && (window as any).Capacitor?.Plugins?.Preferences) {
+      await (window as any).Capacitor.Plugins.Preferences.set({ key, value });
+      return;
+    }
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(key, value);
+    }
+  },
+  remove: async ({ key }: { key: string }): Promise<void> => {
+    if (typeof window !== 'undefined' && (window as any).Capacitor?.Plugins?.Preferences) {
+      await (window as any).Capacitor.Plugins.Preferences.remove({ key });
+      return;
+    }
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem(key);
+    }
+  },
+  keys: async (): Promise<{ keys: string[] }> => {
+    if (typeof window !== 'undefined' && (window as any).Capacitor?.Plugins?.Preferences) {
+      return (window as any).Capacitor.Plugins.Preferences.keys();
+    }
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const keys: string[] = [];
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const k = window.localStorage.key(i);
+        if (k) keys.push(k);
+      }
+      return { keys };
+    }
+    return { keys: [] };
+  },
+};
 
 export interface BrowserFingerprint {
   userAgent: string;

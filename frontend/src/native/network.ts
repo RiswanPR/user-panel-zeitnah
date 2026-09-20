@@ -1,5 +1,11 @@
-import { Network, ConnectionStatus } from '@capacitor/network';
-import { Capacitor } from '@capacitor/core';
+const Capacitor = {
+  isNativePlatform: () => typeof window !== 'undefined' && Boolean((window as any).Capacitor?.isNativePlatform?.()),
+};
+const Network = typeof window !== 'undefined' && (window as any).Capacitor?.Plugins?.Network ? (window as any).Capacitor.Plugins.Network : {
+  addListener: () => Promise.resolve({ remove: () => {} }),
+  getStatus: async () => ({ connected: typeof navigator !== 'undefined' ? navigator.onLine : true, connectionType: 'wifi' }),
+};
+export type ConnectionStatus = { connected: boolean; connectionType: string };
 
 export type NetworkStatusCallback = (isOnline: boolean, connectionType: string) => void;
 
