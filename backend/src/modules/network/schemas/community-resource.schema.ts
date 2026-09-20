@@ -20,7 +20,7 @@ export class CommunityResource {
     required: true,
     index: true,
   })
-  communityId!: Types.ObjectId;
+  communityId: Types.ObjectId;
 
   @Prop({
     type: String,
@@ -28,7 +28,7 @@ export class CommunityResource {
     trim: true,
     maxlength: 200,
   })
-  title!: string;
+  title: string;
 
   @Prop({
     type: String,
@@ -36,7 +36,7 @@ export class CommunityResource {
     trim: true,
     maxlength: 1000,
   })
-  description!: string;
+  description: string;
 
   @Prop({
     type: String,
@@ -44,7 +44,7 @@ export class CommunityResource {
     default: 'link',
     index: true,
   })
-  type!: ResourceType;
+  type: ResourceType;
 
   @Prop({
     type: String,
@@ -64,7 +64,7 @@ export class CommunityResource {
     ref: 'User',
     required: true,
   })
-  createdBy!: Types.ObjectId;
+  createdBy: Types.ObjectId;
 }
 
 export const CommunityResourceSchema =

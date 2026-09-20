@@ -1,57 +1,100 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import {
   PlatformAnnouncement,
   PlatformAnnouncementDocument,
-} from './schemas/announcement.schema';
+} from './platform-announcement.schema';
+import { User, UserDocument } from '../auth/schemas/user.schema';
 
 @Injectable()
 export class AnnouncementsService {
-  private readonly logger = new Logger(AnnouncementsService.name);
-
   constructor(
     @InjectModel(PlatformAnnouncement.name)
-    private readonly announcementModel: Model<PlatformAnnouncementDocument>,
+    private announcementModel: Model<PlatformAnnouncementDocument>,
+    @InjectModel(User.name)
+    private userModel: Model<UserDocument>,
   ) {}
 
+  private toObjectId(id: string | Types.ObjectId): Types.ObjectId {
+    if (id instanceof Types.ObjectId) return id;
+    if (typeof id === 'string' && Types.ObjectId.isValid(id)) {
+      return new Types.ObjectId(id);
+    }
+    throw new BadRequestException('Invalid ID format');
+  }
+
   /**
-   * Retrieves active platform announcements targeted to the user
+   * Get active platform announcements for the current user
    */
-  async getActiveAnnouncements(
-    userId: string,
-  ): Promise<PlatformAnnouncementDocument[]> {
+  async getActivePlatformAnnouncements(userId: string, role: string) {
+    const userObjId = this.toObjectId(userId);
     const now = new Date();
 
-    return this.announcementModel
-      .find({
-        status: 'PUBLISHED',
-        startsAt: { $lte: now },
-        $and: [
-          {
-            $or: [
-              { expiresAt: null },
-              { expiresAt: { $exists: false } },
-              { expiresAt: { $gt: now } },
-            ],
-          },
-          {
-            dismissedBy: { $ne: userId },
-          },
-        ],
-      })
-      .sort({ startsAt: -1, createdAt: -1 })
-      .lean()
-      .exec() as unknown as Promise<PlatformAnnouncementDocument[]>;
+    // Fetch user enrolled course IDs
+    const user = await this.userModel.findById(userObjId, { 'course.courseId': 1 }).lean();
+    const enrolledCourseIds = (user?.course || [])
+      .map((c: any) => String(c.courseId))
+      .filter(Boolean);
+
+    const query: any = {
+      status: 'PUBLISHED',
+      startsAt: { $lte: now },
+      $or: [{ expiresAt: { $exists: false } }, { expiresAt: null }, { expiresAt: { $gt: now } }],
+      dismissedBy: { $ne: userObjId },
+    };
+
+    const announcements = await this.announcementModel.find(query).sort({ createdAt: -1 }).lean();
+
+    // Filter by audience
+    const filtered = announcements.filter((ann) => {
+      if (ann.audience === 'ALL_USERS') return true;
+      if (role === 'admin' || role === 'superuser') return true;
+
+      if (ann.audience === 'STUDENTS' && (role === 'student' || role === 'user')) return true;
+      if (ann.audience === 'TEACHERS' && role === 'teacher') return true;
+
+      if (ann.audience === 'COURSE_STUDENTS') {
+        const targetCourseId = ann.target?.courseId;
+        if (targetCourseId && enrolledCourseIds.includes(String(targetCourseId))) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+
+    // Priority sorting: CRITICAL > HIGH > MEDIUM > LOW
+    const priorityWeight: Record<string, number> = {
+      CRITICAL: 4,
+      HIGH: 3,
+      MEDIUM: 2,
+      LOW: 1,
+    };
+
+    filtered.sort((a, b) => {
+      const wA = priorityWeight[a.priority || 'LOW'] || 1;
+      const wB = priorityWeight[b.priority || 'LOW'] || 1;
+      if (wA !== wB) return wB - wA;
+      return new Date(b.startsAt || b.createdAt).getTime() - new Date(a.startsAt || a.createdAt).getTime();
+    });
+
+    return filtered;
+  }
+
+  /**
+   * Backward-compatible alias for getActivePlatformAnnouncements
+   */
+  async getActiveAnnouncements(userId: string, role = 'student') {
+    return this.getActivePlatformAnnouncements(userId, role);
   }
 
   /**
    * Retrieves single announcement by ID
    */
-  async getAnnouncementById(
-    id: string,
-  ): Promise<PlatformAnnouncementDocument> {
-    const announcement = await this.announcementModel.findById(id).lean().exec();
+  async getAnnouncementById(id: string): Promise<PlatformAnnouncementDocument> {
+    const annObjId = this.toObjectId(id);
+    const announcement = await this.announcementModel.findById(annObjId).lean();
     if (!announcement) {
       throw new NotFoundException('Announcement not found');
     }
@@ -59,16 +102,20 @@ export class AnnouncementsService {
   }
 
   /**
-   * Dismisses an announcement for a user
+   * Dismiss an announcement for the user
    */
-  async dismissAnnouncement(
-    id: string,
-    userId: string,
-  ): Promise<{ success: boolean; message: string }> {
-    await this.announcementModel.updateOne(
-      { _id: id },
-      { $addToSet: { dismissedBy: userId } },
+  async dismissAnnouncement(announcementId: string, userId: string) {
+    const annObjId = this.toObjectId(announcementId);
+    const userObjId = this.toObjectId(userId);
+
+    const result = await this.announcementModel.updateOne(
+      { _id: annObjId },
+      { $addToSet: { dismissedBy: userObjId } },
     );
+
+    if (result.matchedCount === 0) {
+      throw new NotFoundException('Announcement not found');
+    }
 
     return { success: true, message: 'Announcement dismissed' };
   }

@@ -20,7 +20,7 @@ export class CommunityReply {
     required: true,
     index: true,
   })
-  discussionId!: Types.ObjectId;
+  discussionId: Types.ObjectId;
 
   @Prop({
     type: Types.ObjectId,
@@ -28,7 +28,7 @@ export class CommunityReply {
     required: true,
     index: true,
   })
-  communityId!: Types.ObjectId;
+  communityId: Types.ObjectId;
 
   @Prop({
     type: Types.ObjectId,
@@ -36,7 +36,7 @@ export class CommunityReply {
     required: true,
     index: true,
   })
-  authorId!: Types.ObjectId;
+  authorId: Types.ObjectId;
 
   @Prop({
     type: String,
@@ -44,7 +44,7 @@ export class CommunityReply {
     trim: true,
     maxlength: 5000,
   })
-  body!: string;
+  body: string;
 
   @Prop({
     type: String,
@@ -52,18 +52,17 @@ export class CommunityReply {
     default: 'published',
     index: true,
   })
-  status!: ReplyStatus;
+  status: ReplyStatus;
 
   @Prop({
     type: Boolean,
     default: false,
   })
-  isEdited!: boolean;
+  isEdited: boolean;
 }
 
 export const CommunityReplySchema =
   SchemaFactory.createForClass(CommunityReply);
 
-// Query index for flat chronological replies
 CommunityReplySchema.index({ discussionId: 1, status: 1, createdAt: 1 });
 CommunityReplySchema.index({ authorId: 1, createdAt: -1 });

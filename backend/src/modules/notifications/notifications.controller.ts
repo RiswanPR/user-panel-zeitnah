@@ -1,97 +1,100 @@
 import {
   Controller,
-  Post,
-  Delete,
   Get,
+  Post,
   Patch,
+  Delete,
   Body,
   Param,
   Query,
-  UseGuards,
   Req,
+  UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { NotificationsService } from './notifications.service';
-import { RegisterPushTokenDto } from './dto/register-push-token.dto';
-import { GetNotificationsDto } from './dto/get-notifications.dto';
-import { UpdateNotificationPreferencesDto } from './dto/update-preference.dto';
 
-@Controller('notifications')
+@ApiTags('In-App Notifications')
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
+@Controller('notifications')
 export class NotificationsController {
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(private readonly notifService: NotificationsService) {}
+
+  private getUserId(req: any): string {
+    return req.user?.userId || req.user?._id || req.user?.id || req.user?.sub;
+  }
 
   @Get()
-  async getUserNotifications(
-    @Req() req: any,
-    @Query() query: GetNotificationsDto,
-  ) {
-    const userId = req.user.userId || req.user._id || req.user.id;
-    return this.notificationsService.getUserNotifications(String(userId), query);
+  @ApiOperation({ summary: 'Get paginated notifications' })
+  async getNotifications(@Req() req, @Query() query: any) {
+    return this.notifService.getUserNotifications(this.getUserId(req), query);
   }
 
   @Get('unread-count')
-  async getUnreadCount(@Req() req: any) {
-    const userId = req.user.userId || req.user._id || req.user.id;
-    const count = await this.notificationsService.getUnreadCount(String(userId));
+  @ApiOperation({ summary: 'Get unread notification count' })
+  async getUnreadCount(@Req() req) {
+    const count = await this.notifService.getUnreadCount(this.getUserId(req));
     return { unreadCount: count };
   }
 
   @Patch(':id/read')
-  async markAsRead(@Req() req: any, @Param('id') id: string) {
-    const userId = req.user.userId || req.user._id || req.user.id;
-    return this.notificationsService.markAsRead(String(userId), id);
+  @ApiOperation({ summary: 'Mark single notification as read' })
+  async patchMarkAsRead(@Req() req, @Param('id') id: string) {
+    return this.notifService.markAsRead(id, this.getUserId(req));
+  }
+
+  @Post(':id/read')
+  @ApiOperation({ summary: 'Mark single notification as read (POST)' })
+  async postMarkAsRead(@Req() req, @Param('id') id: string) {
+    return this.notifService.markAsRead(id, this.getUserId(req));
   }
 
   @Patch('read-all')
-  async markAllAsRead(@Req() req: any, @Query('category') category?: string) {
-    const userId = req.user.userId || req.user._id || req.user.id;
-    return this.notificationsService.markAllAsRead(String(userId), category);
+  @ApiOperation({ summary: 'Mark all notifications as read' })
+  async patchMarkAllAsRead(@Req() req, @Query('category') category?: string) {
+    return this.notifService.markAllAsRead(this.getUserId(req), category);
+  }
+
+  @Post('read-all')
+  @ApiOperation({ summary: 'Mark all notifications as read (POST)' })
+  async postMarkAllAsRead(@Req() req, @Query('category') category?: string) {
+    return this.notifService.markAllAsRead(this.getUserId(req), category);
   }
 
   @Delete('clear-read')
-  async clearReadNotifications(@Req() req: any) {
-    const userId = req.user.userId || req.user._id || req.user.id;
-    return this.notificationsService.clearNotifications(String(userId));
+  @ApiOperation({ summary: 'Clear read notifications' })
+  async clearReadNotifications(@Req() req) {
+    return this.notifService.clearNotifications(this.getUserId(req));
   }
 
   @Get('preferences')
-  async getPreferences(@Req() req: any) {
-    const userId = req.user.userId || req.user._id || req.user.id;
-    return this.notificationsService.getUserPreferences(String(userId));
+  @ApiOperation({ summary: 'Get notification preferences' })
+  async getPreferences(@Req() req) {
+    return this.notifService.getPreferences(this.getUserId(req));
   }
 
   @Patch('preferences')
-  async updatePreferences(
-    @Req() req: any,
-    @Body() dto: UpdateNotificationPreferencesDto,
-  ) {
-    const userId = req.user.userId || req.user._id || req.user.id;
-    return this.notificationsService.updateUserPreferences(String(userId), dto);
+  @ApiOperation({ summary: 'Update notification preferences' })
+  async updatePreferences(@Req() req, @Body() body: any) {
+    return this.notifService.updatePreferences(this.getUserId(req), body);
   }
 
-  // ── Push Device Registration Endpoints ──
   @Post('push-token')
-  async registerPushToken(
-    @Req() req: any,
-    @Body() dto: RegisterPushTokenDto,
-  ) {
-    const userId = req.user.userId || req.user._id || req.user.id;
-    return this.notificationsService.registerPushToken(String(userId), dto);
+  @ApiOperation({ summary: 'Register push token' })
+  async registerPushToken(@Req() req, @Body() dto: any) {
+    return this.notifService.registerPushToken(this.getUserId(req), dto);
   }
 
   @Delete('push-token/:deviceId')
-  async removePushToken(
-    @Req() req: any,
-    @Param('deviceId') deviceId: string,
-  ) {
-    const userId = req.user.userId || req.user._id || req.user.id;
-    return this.notificationsService.removePushToken(String(userId), deviceId);
+  @ApiOperation({ summary: 'Remove push token' })
+  async removePushToken(@Req() req, @Param('deviceId') deviceId: string) {
+    return this.notifService.removePushToken(this.getUserId(req), deviceId);
   }
 
   @Get('push-devices')
-  async getPushDevices(@Req() req: any) {
-    const userId = req.user.userId || req.user._id || req.user.id;
-    return this.notificationsService.getPushDevices(String(userId));
+  @ApiOperation({ summary: 'Get push devices' })
+  async getPushDevices(@Req() req) {
+    return this.notifService.getPushDevices(this.getUserId(req));
   }
 }

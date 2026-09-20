@@ -1,912 +1,287 @@
-import { useState, useContext, useEffect, useMemo, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
-import { useQuery, useInfiniteQuery, useMutation } from "@tanstack/react-query";
-import { AuthContext } from "../../context/AuthContext";
-import networkService from "../../services/networkService";
-import networkConnectionsService from "../../services/networkConnectionsService";
-import communityService from "../../services/communityService";
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
+import { Users, Briefcase, Building2, Compass, Search } from 'lucide-react';
+import { networkApi } from '../../services/networkApi';
+import LearningSpaceCard from '../../components/network/LearningSpaceCard';
+import NetworkConnections from '../../components/network/NetworkConnections';
+import OrganizationCard from '../../components/network/OrganizationCard';
+import OpportunityCard from '../../components/network/OpportunityCard';
 
-import NetworkHero from "../../components/network/NetworkHero";
-import DiscoverHero from "../../components/network/DiscoverHero";
-import NetworkTabs from "../../components/network/NetworkTabs";
-import NetworkSearch from "../../components/network/NetworkSearch";
-import StudentFilters from "../../components/network/StudentFilters";
-import SuggestedStudents from "../../components/network/SuggestedStudents";
-import StudentCard from "../../components/network/StudentCard";
-import StudentProfilePreviewModal from "../../components/network/StudentProfilePreviewModal";
-import DiscoverSkeleton from "../../components/network/DiscoverSkeleton";
-import NetworkActivity from "../../components/network/NetworkActivity";
-import NetworkEmptyState from "../../components/network/NetworkEmptyState";
-import NetworkSkeleton from "../../components/network/NetworkSkeleton";
-import NetworkErrorState from "../../components/network/NetworkErrorState";
-import ConnectionsList from "../../components/network/ConnectionsList";
-import CommunityCard from "../../components/network/communities/CommunityCard";
-import CommunityEmptyState from "../../components/network/communities/CommunityEmptyState";
-import { CommunityCardSkeleton } from "../../components/network/communities/CommunitySkeleton";
-import organizationService from "../../services/organizationService";
-import opportunityService from "../../services/opportunityService";
-import OrganizationCard from "../../components/network/OrganizationCard";
-import OpportunityCard from "../../components/network/OpportunityCard";
-import OpportunityDetailModal from "../../components/network/OpportunityDetailModal";
-import { Users, SearchX, FilterX, Loader2, ChevronLeft, ChevronRight, Check, ArrowRight, Building2, Briefcase, Sparkles } from "lucide-react";
-
-/**
- * NetworkPage Component
- * Main orchestrator for Zeitnah LMS Network & Student Discovery.
- */
 export default function NetworkPage() {
-  const { user } = useContext(AuthContext);
   const [searchParams, setSearchParams] = useSearchParams();
+  const rawTab = searchParams.get('tab');
+  const tabMap = {
+    overview: 'spaces',
+    communities: 'spaces',
+    discover: 'network',
+    connections: 'network',
+  };
+  const currentTab = tabMap[rawTab] || rawTab || 'spaces'; // 'spaces' | 'network' | 'opportunities' | 'organizations'
+  const spaceFilter = searchParams.get('filter') || 'all'; // 'all' | 'joined' | 'discover'
 
-  // ── URL State Synchronization ──────────────────────────────
-  const activeTab = searchParams.get("tab") || "overview";
-  const searchQuery = searchParams.get("q") || "";
-  const filterCourse = searchParams.get("course") || "";
-  const filterLevel = searchParams.get("level") || "";
-  const filterInterest = searchParams.get("interest") || "";
-  const filterInstitution = searchParams.get("institution") || "";
-  const sortOption = searchParams.get("sort") || "recommended";
+  const [spaceSearch, setSpaceSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [oppSearch, setOppSearch] = useState('');
+  const [oppWorkMode, setOppWorkMode] = useState('');
+  const [orgSearch, setOrgSearch] = useState('');
 
-  // Communities params
-  const commType = searchParams.get("commType") || "all";
-  const commSort = searchParams.get("commSort") || "recommended";
-  const myCommunities = searchParams.get("myCommunities") === "true";
-  const commPage = Number(searchParams.get("commPage")) || 1;
-
-  // Ecosystem Discover Mode ('people' | 'organizations' | 'opportunities')
-  const discoverMode = searchParams.get("discoverMode") || "people";
-
-  const [selectedStudent, setSelectedStudent] = useState(null);
-  const [selectedOpportunity, setSelectedOpportunity] = useState(null);
-
-  // Update SEO Page Title
-  useEffect(() => {
-    document.title =
-      activeTab === "discover"
-        ? "Student Discovery — Zeitnah Network"
-        : activeTab === "communities"
-        ? "Learning Communities — Zeitnah Network"
-        : activeTab === "connections"
-        ? "Connections & Requests — Zeitnah Network"
-        : "Network — Discover & Connect | Zeitnah LMS";
-  }, [activeTab]);
-
-  // Fetch real connection counts
-  const { data: countsData } = useQuery({
-    queryKey: ["network-connection-counts"],
-    queryFn: () => networkConnectionsService.getConnectionCounts(),
-    staleTime: 1000 * 30,
+  // Queries
+  const spacesQuery = useQuery({
+    queryKey: ['learning-spaces', { filter: spaceFilter, q: spaceSearch, category: categoryFilter }],
+    queryFn: () => networkApi.getSpaces({ filter: spaceFilter, q: spaceSearch, category: categoryFilter }),
+    enabled: currentTab === 'spaces',
   });
 
-  // URL state updater helper
-  const updateUrlParams = useCallback(
-    (newParams) => {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          Object.entries(newParams).forEach(([k, v]) => {
-            if (v === "" || v === undefined || v === null) {
-              next.delete(k);
-            } else {
-              next.set(k, String(v));
-            }
-          });
-          return next;
-        },
-        { replace: true },
-      );
-    },
-    [setSearchParams],
-  );
+  const opportunitiesQuery = useQuery({
+    queryKey: ['network-opportunities', { q: oppSearch, workMode: oppWorkMode }],
+    queryFn: () => networkApi.getOpportunities({ q: oppSearch, workMode: oppWorkMode }),
+    enabled: currentTab === 'opportunities',
+  });
 
-  const handleTabChange = (tabId) => {
-    updateUrlParams({ tab: tabId === "overview" ? null : tabId });
+  const organizationsQuery = useQuery({
+    queryKey: ['network-organizations', { q: orgSearch }],
+    queryFn: () => networkApi.getOrganizations({ q: orgSearch }),
+    enabled: currentTab === 'organizations',
+  });
+
+  const setTab = (tab) => {
+    setSearchParams({ tab });
   };
 
-  const handleSearchChange = (q) => {
-    if (activeTab === "overview" && q && q.trim().length > 0) {
-      updateUrlParams({ tab: "discover", q });
-    } else {
-      updateUrlParams({ q: q || null });
-    }
+  const setSubFilter = (filter) => {
+    setSearchParams({ tab: 'spaces', filter });
   };
 
-  const handleFiltersChange = (newFilters) => {
-    updateUrlParams({
-      course: newFilters.course || null,
-      level: newFilters.level || null,
-      interest: newFilters.interest || null,
-      institution: newFilters.institution || null,
-      sort: newFilters.sort === "recommended" ? null : newFilters.sort,
-    });
-  };
-
-  // ── Queries ───────────────────────────────────────────────
-
-  // High-level Network Stats
-  const {
-    data: stats,
-    isLoading: isStatsLoading,
-  } = useQuery({
-    queryKey: ["network", "stats"],
-    queryFn: () => networkService.getNetworkStats(),
-    staleTime: 1000 * 60 * 2,
-  });
-
-  // Available real filters
-  const { data: availableFilters } = useQuery({
-    queryKey: ["network", "filters"],
-    queryFn: () => networkService.getDiscoverFilters(),
-    staleTime: 1000 * 60 * 5,
-  });
-
-  // Suggested Students for Overview
-  const {
-    data: overviewStudents = [],
-    isLoading: isOverviewLoading,
-  } = useQuery({
-    queryKey: ["network", "overview-students"],
-    queryFn: () => networkService.getSuggestedStudents({ limit: 6 }),
-    staleTime: 1000 * 60 * 2,
-  });
-
-  // Featured Learning Spaces for Overview Tab
-  const { data: overviewCommunities } = useQuery({
-    queryKey: ["network", "overview-communities"],
-    queryFn: () => communityService.getCommunities({ limit: 3, sort: "popular" }),
-    staleTime: 1000 * 60 * 5,
-    enabled: activeTab === "overview",
-  });
-
-  // Ecosystem Organizations Query
-  const { data: organizationsData, isLoading: isOrgsLoading } = useQuery({
-    queryKey: ["network-organizations", searchQuery],
-    queryFn: () => organizationService.getOrganizations({ q: searchQuery, limit: 12 }),
-    staleTime: 1000 * 60 * 2,
-    enabled: activeTab === "discover" && discoverMode === "organizations" || activeTab === "overview",
-  });
-
-  // Ecosystem Opportunities Query
-  const { data: opportunitiesData, isLoading: isOppsLoading } = useQuery({
-    queryKey: ["network-opportunities", searchQuery],
-    queryFn: () => opportunityService.getOpportunities({ q: searchQuery, limit: 12 }),
-    staleTime: 1000 * 60 * 2,
-    enabled: activeTab === "discover" && discoverMode === "opportunities" || activeTab === "overview",
-  });
-
-
-  // Discover Students Infinite Query (Server-driven pagination & filtering)
-  const {
-    data: infiniteData,
-    isLoading: isDiscoverLoading,
-    isFetchingNextPage,
-    isError: isDiscoverError,
-    hasNextPage,
-    fetchNextPage,
-    refetch: refetchDiscover,
-  } = useInfiniteQuery({
-    queryKey: [
-      "network",
-      "discover",
-      searchQuery,
-      filterCourse,
-      filterLevel,
-      filterInterest,
-      filterInstitution,
-      sortOption,
-    ],
-    queryFn: ({ pageParam = 1 }) =>
-      networkService.getDiscoverStudents({
-        q: searchQuery,
-        course: filterCourse,
-        level: filterLevel,
-        interest: filterInterest,
-        institution: filterInstitution,
-        sort: sortOption,
-        page: pageParam,
-        limit: 12,
-      }),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) =>
-      lastPage.hasNextPage ? lastPage.page + 1 : undefined,
-    staleTime: 1000 * 60 * 1,
-    enabled: activeTab === "discover",
-  });
-
-  // Communities Query (Phase 6)
-  const {
-    data: communitiesData,
-    isLoading: isCommunitiesLoading,
-    isError: isCommunitiesError,
-    refetch: refetchCommunities,
-  } = useQuery({
-    queryKey: [
-      "network",
-      "communities",
-      searchQuery,
-      commType,
-      commSort,
-      myCommunities,
-      commPage,
-    ],
-    queryFn: () =>
-      communityService.getCommunities({
-        q: searchQuery,
-        type: commType,
-        sort: commSort,
-        myCommunities,
-        page: commPage,
-        limit: 12,
-      }),
-    enabled: activeTab === "communities",
-    staleTime: 1000 * 60 * 1,
-  });
-
-  const joinCommunityMutation = useMutation({
-    mutationFn: (commId) => communityService.joinCommunity(commId),
-    onSuccess: () => {
-      refetchCommunities();
-    },
-  });
-
-  // Flatten pages into a clean list of students
-  const accumulatedStudents = useMemo(() => {
-    return infiniteData?.pages.flatMap((page) => page.data) || [];
-  }, [infiniteData]);
-
-  const totalStudentsCount = infiniteData?.pages?.[0]?.total;
-
-  const handleClearAllFilters = () => {
-    updateUrlParams({
-      q: null,
-      course: null,
-      level: null,
-      interest: null,
-      institution: null,
-      sort: null,
-    });
-  };
-
-  const hasActiveFilters = Boolean(
-    filterCourse || filterLevel || filterInterest || filterInstitution,
-  );
-
-  const filterState = useMemo(
-    () => ({
-      course: filterCourse,
-      level: filterLevel,
-      interest: filterInterest,
-      institution: filterInstitution,
-      sort: sortOption,
-    }),
-    [filterCourse, filterLevel, filterInterest, filterInstitution, sortOption],
-  );
-
-  if (activeTab === "overview" && isStatsLoading && isOverviewLoading) {
-    return <NetworkSkeleton />;
-  }
+  const spaces = spacesQuery.data?.spaces || [];
+  const opportunities = opportunitiesQuery.data?.opportunities || [];
+  const organizations = organizationsQuery.data?.organizations || [];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-10 pb-16">
-      {/* ═══════════════════════════════════════════════
-          1. HERO SECTION (Dynamic based on Tab)
-          ═══════════════════════════════════════════════ */}
-      {activeTab === "discover" ? (
-        <DiscoverHero />
-      ) : (
-        <NetworkHero user={user} stats={stats} loading={isStatsLoading} />
-      )}
-
-      {/* ═══════════════════════════════════════════════
-          2. NAVIGATION CONTROLS (TABS & SEARCH)
-          ═══════════════════════════════════════════════ */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-        {/* Navigation Tabs (Overview, Discover, Connections) */}
-        <NetworkTabs
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          connectionsCount={countsData?.connectionsCount ?? 0}
-        />
-
-        {/* Global Search Input (only for Overview and Discover) */}
-        {activeTab !== "connections" && (
-          <div className="w-full sm:w-80 md:w-96 shrink-0">
-            <NetworkSearch
-              value={searchQuery}
-              onChange={handleSearchChange}
-              placeholder={
-                activeTab === "communities"
-                  ? "Search learning spaces, topics, or courses..."
-                  : "Search students, usernames, courses, skills..."
-              }
-            />
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* ── Page Header ── */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-white/[0.06]">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-mint/15 text-brand-mint border border-brand-mint/30">
+              Ecosystem
+            </span>
           </div>
-        )}
-      </div>
-
-      {/* ═══════════════════════════════════════════════
-          3. TAB CONTENT
-          ═══════════════════════════════════════════════ */}
-
-      {/* ── OVERVIEW TAB (PERSONAL COMMAND CENTER) ── */}
-      {activeTab === "overview" && (
-        <div className="space-y-10">
-          {/* Section 1: People Worth Meeting */}
-          <SuggestedStudents
-            students={overviewStudents}
-            loading={isOverviewLoading}
-            onPreview={setSelectedStudent}
-            onExplore={() => handleTabChange("discover")}
-            title="People worth meeting"
-            description="Students who share your courses, interests, and learning focus."
-            courses={availableFilters?.courses || []}
-            showFilterChips={false}
-          />
-
-          {/* Section 2: What's Happening & Learning Spaces */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            {/* Activity Stream Column (2 cols) */}
-            <div className="lg:col-span-2 space-y-4">
-              <NetworkActivity
-                onExploreDiscover={() => handleTabChange("discover")}
-              />
-            </div>
-
-            {/* Learning Spaces Preview Column (1 col) */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-base font-heading font-extrabold text-white tracking-tight">
-                    Learning Spaces
-                  </h3>
-                  <p className="text-xs text-text-muted">
-                    Active communities and study groups
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleTabChange("communities")}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-brand-mint hover:underline focus-ring rounded"
-                >
-                  <span>All Spaces</span>
-                  <ArrowRight className="h-3 w-3" />
-                </button>
-              </div>
-
-              {overviewCommunities?.data && overviewCommunities.data.length > 0 ? (
-                <div className="space-y-3.5">
-                  {overviewCommunities.data.slice(0, 3).map((community) => (
-                    <CommunityCard
-                      key={community.id}
-                      community={community}
-                      onJoin={(id) => joinCommunityMutation.mutate(id)}
-                      isJoining={
-                        joinCommunityMutation.isPending &&
-                        joinCommunityMutation.variables === community.id
-                      }
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-white/[0.08] bg-bg-surface/50 p-6 text-center text-xs text-text-muted">
-                  Explore available communities to collaborate with peers.
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Section 3: Ecosystem Explore Navigation Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
-            <button
-              type="button"
-              onClick={() => updateUrlParams({ tab: "discover", discoverMode: "people" })}
-              className="flex items-center justify-between rounded-2xl border border-white/[0.08] bg-gradient-to-r from-brand-mint/[0.06] via-white/[0.02] to-transparent p-5 text-left transition-all hover:border-brand-mint/30 hover:bg-white/[0.04] focus-ring group"
-            >
-              <div>
-                <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-brand-mint">
-                  TALENT & LEARNERS
-                </span>
-                <h4 className="text-sm font-heading font-bold text-white mt-1 group-hover:text-brand-mint transition-colors">
-                  Discover People
-                </h4>
-                <p className="text-xs text-text-secondary mt-0.5">
-                  Find students, professionals & mentors.
-                </p>
-              </div>
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] text-white group-hover:border-brand-mint/40 group-hover:text-brand-mint transition-all">
-                <ArrowRight className="h-4 w-4" />
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => updateUrlParams({ tab: "discover", discoverMode: "organizations" })}
-              className="flex items-center justify-between rounded-2xl border border-white/[0.08] bg-gradient-to-r from-purple-500/10 via-white/[0.02] to-transparent p-5 text-left transition-all hover:border-purple-500/30 hover:bg-white/[0.04] focus-ring group"
-            >
-              <div>
-                <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-purple-300">
-                  ECOSYSTEM ENTITIES
-                </span>
-                <h4 className="text-sm font-heading font-bold text-white mt-1 group-hover:text-purple-300 transition-colors">
-                  Organizations
-                </h4>
-                <p className="text-xs text-text-secondary mt-0.5">
-                  Explore companies, schools & universities.
-                </p>
-              </div>
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] text-white group-hover:border-purple-500/40 group-hover:text-purple-300 transition-all">
-                <ArrowRight className="h-4 w-4" />
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => updateUrlParams({ tab: "discover", discoverMode: "opportunities" })}
-              className="flex items-center justify-between rounded-2xl border border-white/[0.08] bg-gradient-to-r from-blue-500/10 via-white/[0.02] to-transparent p-5 text-left transition-all hover:border-blue-500/30 hover:bg-white/[0.04] focus-ring group"
-            >
-              <div>
-                <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-blue-300">
-                  CAREER & PROJECTS
-                </span>
-                <h4 className="text-sm font-heading font-bold text-white mt-1 group-hover:text-blue-300 transition-colors">
-                  Opportunities
-                </h4>
-                <p className="text-xs text-text-secondary mt-0.5">
-                  Internships, jobs & mentorship.
-                </p>
-              </div>
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] text-white group-hover:border-blue-500/40 group-hover:text-blue-300 transition-all">
-                <ArrowRight className="h-4 w-4" />
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleTabChange("communities")}
-              className="flex items-center justify-between rounded-2xl border border-white/[0.08] bg-gradient-to-r from-[#4928C2]/10 via-white/[0.02] to-transparent p-5 text-left transition-all hover:border-indigo-500/30 hover:bg-white/[0.04] focus-ring group"
-            >
-              <div>
-                <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#E3D9FC]">
-                  COMMUNITIES & GROUPS
-                </span>
-                <h4 className="text-sm font-heading font-bold text-white mt-1 group-hover:text-[#E3D9FC] transition-colors">
-                  Learning Spaces
-                </h4>
-                <p className="text-xs text-text-secondary mt-0.5">
-                  Subject study groups & project teams.
-                </p>
-              </div>
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] text-white group-hover:border-[#E3D9FC]/40 group-hover:text-[#E3D9FC] transition-all">
-                <ArrowRight className="h-4 w-4" />
-              </div>
-            </button>
-          </div>
+          <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-white mt-2 tracking-tight">
+            Learning Spaces & Professional Network
+          </h1>
+          <p className="text-sm text-text-muted mt-1 max-w-2xl">
+            Cohort learning spaces, peer connections, verified institutional partners, and career opportunities.
+          </p>
         </div>
-      )}
 
-      {/* ── DISCOVER TAB (PHASE 2 DIRECTORY & ECOSYSTEM) ── */}
-      {activeTab === "discover" && (
-        <div className="space-y-6">
-          {/* Ecosystem Discovery Mode Selector */}
-          <div className="flex flex-wrap items-center gap-2 border-b border-white/5 pb-4">
-            <button
-              type="button"
-              onClick={() => updateUrlParams({ discoverMode: "people" })}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-                discoverMode === "people"
-                  ? "bg-mint text-dark shadow-sm"
-                  : "bg-white/5 text-text-muted hover:text-white hover:bg-white/10"
-              }`}
-            >
-              <Users className="h-3.5 w-3.5" />
-              <span>People & Talent</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => updateUrlParams({ discoverMode: "organizations" })}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-                discoverMode === "organizations"
-                  ? "bg-mint text-dark shadow-sm"
-                  : "bg-white/5 text-text-muted hover:text-white hover:bg-white/10"
-              }`}
-            >
-              <Building2 className="h-3.5 w-3.5" />
-              <span>Organizations</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => updateUrlParams({ discoverMode: "opportunities" })}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-                discoverMode === "opportunities"
-                  ? "bg-mint text-dark shadow-sm"
-                  : "bg-white/5 text-text-muted hover:text-white hover:bg-white/10"
-              }`}
-            >
-              <Briefcase className="h-3.5 w-3.5" />
-              <span>Opportunities</span>
-            </button>
-          </div>
-
-          {/* ORGANIZATIONS VIEW */}
-          {discoverMode === "organizations" ? (
-            isOrgsLoading ? (
-              <DiscoverSkeleton count={6} />
-            ) : organizationsData?.data && organizationsData.data.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {organizationsData.data.map((org) => (
-                  <OrganizationCard key={org._id || org.id} organization={org} />
-                ))}
-              </div>
-            ) : (
-              <NetworkEmptyState
-                icon={Building2}
-                title="No organizations found"
-                description="Try searching with different terms or explore learning communities."
-                action={() => handleSearchChange("")}
-                actionLabel="Clear Search"
-              />
-            )
-          ) : discoverMode === "opportunities" ? (
-            /* OPPORTUNITIES VIEW */
-            isOppsLoading ? (
-              <DiscoverSkeleton count={6} />
-            ) : opportunitiesData?.data && opportunitiesData.data.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {opportunitiesData.data.map((opp) => (
-                  <OpportunityCard
-                    key={opp.id}
-                    opportunity={opp}
-                    onSelect={setSelectedOpportunity}
-                  />
-                ))}
-              </div>
-            ) : (
-              <NetworkEmptyState
-                icon={Briefcase}
-                title="No opportunities found"
-                description="No opportunities match your current filters. Check back soon for new internships and projects."
-                action={() => handleSearchChange("")}
-                actionLabel="Clear Search"
-              />
-            )
-          ) : (
-            /* PEOPLE & TALENT VIEW */
-            <>
-              {/* Filter Toolbar */}
-              <StudentFilters
-                filters={filterState}
-                onFilterChange={handleFiltersChange}
-                availableFilters={
-                  availableFilters || {
-                    courses: [],
-                    interests: [],
-                    institutions: [],
-                    levels: [],
-                  }
-                }
-              />
-
-              {/* Active Search / Result Feedback */}
-              {searchQuery && (
-                <div className="flex items-center justify-between text-xs text-text-muted">
-                  <p>
-                    Results for <span className="text-white font-semibold">"{searchQuery}"</span>
-                    {totalStudentsCount !== undefined && (
-                      <span> • {totalStudentsCount} student{totalStudentsCount === 1 ? "" : "s"} found</span>
-                    )}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => handleSearchChange("")}
-                    className="text-brand-mint hover:underline"
-                  >
-                    Clear query
-                  </button>
-                </div>
-              )}
-
-              {/* Error State */}
-              {isDiscoverError ? (
-                <NetworkErrorState
-                  title="We couldn't load students."
-                  message="Please check your connection or try again."
-                  onRetry={refetchDiscover}
-                />
-              ) : isDiscoverLoading && accumulatedStudents.length === 0 ? (
-                /* Initial / Searching Skeleton */
-                <DiscoverSkeleton count={8} />
-              ) : accumulatedStudents.length > 0 ? (
-                /* Student Discovery Grid */
-                <div className="space-y-8">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {accumulatedStudents.map((student) => (
-                      <StudentCard
-                        key={student.id}
-                        student={student}
-                        onPreview={setSelectedStudent}
-                      />
-                    ))}
-                  </div>
-
-              {/* Load More Pagination */}
-              {hasNextPage && (
-                <div className="flex justify-center pt-2">
-                  <button
-                    type="button"
-                    onClick={() => fetchNextPage()}
-                    disabled={isFetchingNextPage}
-                    className="inline-flex items-center gap-2 rounded-2xl border border-white/[0.1] bg-white/[0.04] px-6 py-3 text-xs font-bold text-white hover:border-brand-mint/40 hover:bg-white/[0.08] transition-all focus-ring disabled:opacity-50"
-                  >
-                    {isFetchingNextPage ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin text-brand-mint" />
-                        <span>Loading...</span>
-                      </>
-                    ) : (
-                      <span>Load More Students</span>
-                    )}
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : searchQuery ? (
-            /* Empty Search Results */
-            <NetworkEmptyState
-              icon={SearchX}
-              title="No students found"
-              description={`No students match "${searchQuery}". Try searching by a different name, username, course, or learning interest.`}
-              action={() => handleSearchChange("")}
-              actionLabel="Clear Search"
-            />
-          ) : hasActiveFilters ? (
-            /* Empty Filtered Results */
-            <NetworkEmptyState
-              icon={FilterX}
-              title="No students match these filters"
-              description="Try adjusting or clearing your filters to discover more students in the network."
-              action={handleClearAllFilters}
-              actionLabel="Clear Filters"
-            />
-          ) : (
-            /* Empty Directory Default */
-            <NetworkEmptyState
-              icon={Users}
-              title="Student directory is quiet"
-              description="Check back soon as more learners join the Zeitnah network."
-            />
-          )}
-        </>
-      )}
-    </div>
-  )}
-
-      {/* ── COMMUNITIES TAB (PHASE 6) ── */}
-      {activeTab === "communities" && (
-        <div className="space-y-6">
-          {/* Category & Filter Toolbar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            {/* Category Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-              {[
-                { id: "all", label: "All Spaces" },
-                { id: "course", label: "Courses" },
-                { id: "subject", label: "Subjects" },
-                { id: "interest", label: "Interests" },
-                { id: "project", label: "Projects" },
-                { id: "general", label: "General" },
-              ].map((c) => {
-                const isSelected = commType === c.id;
-                return (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() =>
-                      updateUrlParams({
-                        commType: c.id === "all" ? null : c.id,
-                        commPage: null,
-                      })
-                    }
-                    className={`rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all focus-ring ${
-                      isSelected
-                        ? "border border-brand-mint/40 bg-brand-mint/15 text-brand-mint shadow-sm"
-                        : "border border-white/[0.08] bg-white/[0.02] text-text-muted hover:text-white hover:bg-white/[0.04]"
-                    }`}
-                  >
-                    {c.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Right Controls: My Communities toggle & Sort */}
-            <div className="flex items-center gap-3 shrink-0">
+        {/* Primary Tab Navigation */}
+        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] overflow-x-auto">
+          {[
+            { id: 'spaces', label: 'Learning Spaces', icon: Users },
+            { id: 'network', label: 'Network', icon: Compass },
+            { id: 'opportunities', label: 'Opportunities', icon: Briefcase },
+            { id: 'organizations', label: 'Organizations', icon: Building2 },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const active = currentTab === tab.id;
+            return (
               <button
-                type="button"
-                onClick={() =>
-                  updateUrlParams({
-                    myCommunities: myCommunities ? null : "true",
-                    commPage: null,
-                  })
-                }
-                className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all focus-ring ${
-                  myCommunities
-                    ? "border-brand-mint/40 bg-brand-mint/15 text-brand-mint shadow-sm"
-                    : "border-white/[0.08] bg-white/[0.02] text-text-muted hover:text-white"
+                key={tab.id}
+                onClick={() => setTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  active
+                    ? 'bg-brand-mint text-black shadow-lg shadow-brand-mint/15 font-bold'
+                    : 'text-text-muted hover:text-white hover:bg-white/[0.04]'
                 }`}
               >
-                {myCommunities && <Check className="h-3.5 w-3.5" />}
-                <span>My Spaces</span>
+                <Icon className="w-3.5 h-3.5" />
+                <span>{tab.label}</span>
               </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── TAB 1: LEARNING SPACES ── */}
+      {currentTab === 'spaces' && (
+        <div className="space-y-6">
+          {/* Sub-filters & Search */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/[0.02] border border-white/[0.06] w-fit">
+              {[
+                { id: 'all', label: 'All Spaces' },
+                { id: 'joined', label: 'My Enrolled Spaces' },
+                { id: 'discover', label: 'Discover Open Spaces' },
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setSubFilter(f.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    spaceFilter === f.id
+                      ? 'bg-white/10 text-white'
+                      : 'text-text-muted hover:text-white'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="relative flex-1 sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                <input
+                  type="text"
+                  value={spaceSearch}
+                  onChange={(e) => setSpaceSearch(e.target.value)}
+                  placeholder="Search spaces by name or code..."
+                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] text-xs text-white placeholder-text-muted focus:outline-none focus:border-brand-mint/40 transition-colors"
+                />
+              </div>
 
               <select
-                value={commSort}
-                onChange={(e) =>
-                  updateUrlParams({
-                    commSort:
-                      e.target.value === "recommended" ? null : e.target.value,
-                    commPage: null,
-                  })
-                }
-                className="rounded-xl border border-white/[0.1] bg-[#111A29] px-3 py-1.5 text-xs font-semibold text-white focus:border-brand-mint/50 focus:outline-none"
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] text-xs text-white focus:outline-none focus:border-brand-mint/40 transition-colors cursor-pointer"
               >
-                <option value="recommended">Recommended</option>
-                <option value="popular">Most Popular</option>
-                <option value="newest">Newest</option>
-                <option value="active">Recently Active</option>
+                <option value="" className="bg-bg-surface text-white">All Categories</option>
+                <option value="Batch" className="bg-bg-surface text-white">Batch</option>
+                <option value="Study Group" className="bg-bg-surface text-white">Study Group</option>
+                <option value="Department" className="bg-bg-surface text-white">Department</option>
+                <option value="Program" className="bg-bg-surface text-white">Program</option>
               </select>
             </div>
           </div>
 
-          {/* Active Search Feedback */}
-          {searchQuery && (
-            <div className="flex items-center justify-between text-xs text-text-muted">
-              <p>
-                Spaces matching{" "}
-                <span className="text-white font-semibold">"{searchQuery}"</span>
-                {communitiesData?.total !== undefined && (
-                  <span> • {communitiesData.total} found</span>
-                )}
-              </p>
-              <button
-                type="button"
-                onClick={() => handleSearchChange("")}
-                className="text-brand-mint hover:underline"
-              >
-                Clear query
-              </button>
-            </div>
-          )}
-
-          {/* Communities Grid */}
-          {isCommunitiesError ? (
-            <NetworkErrorState
-              title="Failed to load learning communities"
-              message="Please check your connection and try again."
-              onRetry={refetchCommunities}
-            />
-          ) : isCommunitiesLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {[1, 2, 3, 4, 5, 6].map((n) => (
-                <CommunityCardSkeleton key={n} />
+          {/* Grid */}
+          {spacesQuery.isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-64 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
               ))}
             </div>
-          ) : communitiesData?.data && communitiesData.data.length > 0 ? (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {communitiesData.data.map((community) => (
-                  <CommunityCard
-                    key={community.id}
-                    community={community}
-                    onJoin={(id) => joinCommunityMutation.mutate(id)}
-                    isJoining={
-                      joinCommunityMutation.isPending &&
-                      joinCommunityMutation.variables === community.id
-                    }
-                  />
-                ))}
+          ) : spaces.length === 0 ? (
+            <div className="p-16 rounded-3xl bg-[#111115]/60 border border-white/[0.06] text-center max-w-lg mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-text-faint">
+                <Users className="w-7 h-7" />
               </div>
-
-              {/* Pagination */}
-              {communitiesData.totalPages > 1 && (
-                <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
-                  <p className="text-xs text-text-muted">
-                    Page{" "}
-                    <span className="font-semibold text-white">
-                      {communitiesData.page}
-                    </span>{" "}
-                    of{" "}
-                    <span className="font-semibold text-white">
-                      {communitiesData.totalPages}
-                    </span>
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        updateUrlParams({
-                          commPage: Math.max(1, communitiesData.page - 1),
-                        })
-                      }
-                      disabled={communitiesData.page <= 1}
-                      className="inline-flex items-center gap-1 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-semibold text-text-muted hover:text-white transition-colors disabled:opacity-40 disabled:pointer-events-none focus-ring"
-                    >
-                      <ChevronLeft className="h-3.5 w-3.5" />
-                      <span>Prev</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        updateUrlParams({
-                          commPage: communitiesData.page + 1,
-                        })
-                      }
-                      disabled={!communitiesData.hasNextPage}
-                      className="inline-flex items-center gap-1 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-semibold text-text-muted hover:text-white transition-colors disabled:opacity-40 disabled:pointer-events-none focus-ring"
-                    >
-                      <span>Next</span>
-                      <ChevronRight className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
-              )}
+              <h3 className="font-heading font-bold text-lg text-white">No Learning Spaces found</h3>
+              <p className="text-xs text-text-muted mt-1 leading-relaxed">
+                {spaceFilter === 'joined'
+                  ? 'You are not currently enrolled in any Learning Spaces. Switch to "All Spaces" to discover and join active cohorts.'
+                  : 'No cohorts match your current search or category filter.'}
+              </p>
             </div>
           ) : (
-            <CommunityEmptyState
-              title={
-                searchQuery
-                  ? "No matching learning spaces"
-                  : myCommunities
-                  ? "You haven't joined any learning spaces yet"
-                  : "No learning spaces found"
-              }
-              description={
-                searchQuery
-                  ? `No spaces match "${searchQuery}". Try different keywords.`
-                  : myCommunities
-                  ? "Explore available communities and join one to learn with peers."
-                  : "Communities will appear here as learning spaces are created."
-              }
-              onReset={
-                searchQuery || commType !== "all" || myCommunities
-                  ? () =>
-                      updateUrlParams({
-                        q: null,
-                        commType: null,
-                        myCommunities: null,
-                        commPage: null,
-                      })
-                  : undefined
-              }
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {spaces.map((space) => (
+                <LearningSpaceCard key={space._id} space={space} />
+              ))}
+            </div>
           )}
         </div>
       )}
 
-      {/* ── CONNECTIONS TAB ── */}
-      {activeTab === "connections" && (
-        <ConnectionsList
-          onPreview={(student) => setSelectedStudent(student)}
-          onSwitchToDiscover={() => handleTabChange("discover")}
-        />
+      {/* ── TAB 2: MY NETWORK & CONNECTIONS ── */}
+      {currentTab === 'network' && <NetworkConnections />}
+
+      {/* ── TAB 3: OPPORTUNITIES ── */}
+      {currentTab === 'opportunities' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+            <div className="relative flex-1 sm:max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+              <input
+                type="text"
+                value={oppSearch}
+                onChange={(e) => setOppSearch(e.target.value)}
+                placeholder="Search by title, required skills, or location..."
+                className="w-full pl-9 pr-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] text-xs text-white placeholder-text-muted focus:outline-none focus:border-brand-mint/40 transition-colors"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              {['', 'REMOTE', 'HYBRID', 'ONSITE'].map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setOppWorkMode(mode)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+                    oppWorkMode === mode
+                      ? 'bg-white/10 text-white'
+                      : 'text-text-muted hover:text-white'
+                  }`}
+                >
+                  {mode === '' ? 'All Modes' : mode}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {opportunitiesQuery.isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-48 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+              ))}
+            </div>
+          ) : opportunities.length === 0 ? (
+            <div className="p-16 rounded-3xl bg-[#111115]/60 border border-white/[0.06] text-center max-w-lg mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-text-faint">
+                <Briefcase className="w-7 h-7" />
+              </div>
+              <h3 className="font-heading font-bold text-lg text-white">No active opportunities found</h3>
+              <p className="text-xs text-text-muted mt-1 leading-relaxed">
+                Opportunities posted by verified institutional partners and recruiters will be displayed here.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {opportunities.map((opp) => (
+                <OpportunityCard key={opp._id} opp={opp} />
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
-      {/* ═══════════════════════════════════════════════
-          4. MODALS (STUDENT PREVIEW & OPPORTUNITY DETAIL)
-          ═══════════════════════════════════════════════ */}
-      {selectedStudent && (
-        <StudentProfilePreviewModal
-          student={selectedStudent}
-          onClose={() => setSelectedStudent(null)}
-        />
-      )}
+      {/* ── TAB 4: ORGANIZATIONS ── */}
+      {currentTab === 'organizations' && (
+        <div className="space-y-6">
+          <div className="relative sm:max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+            <input
+              type="text"
+              value={orgSearch}
+              onChange={(e) => setOrgSearch(e.target.value)}
+              placeholder="Search companies, colleges, and training institutes..."
+              className="w-full pl-9 pr-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] text-xs text-white placeholder-text-muted focus:outline-none focus:border-brand-mint/40 transition-colors"
+            />
+          </div>
 
-      {selectedOpportunity && (
-        <OpportunityDetailModal
-          opportunity={selectedOpportunity}
-          onClose={() => setSelectedOpportunity(null)}
-        />
+          {organizationsQuery.isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-44 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+              ))}
+            </div>
+          ) : organizations.length === 0 ? (
+            <div className="p-16 rounded-3xl bg-[#111115]/60 border border-white/[0.06] text-center max-w-lg mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-text-faint">
+                <Building2 className="w-7 h-7" />
+              </div>
+              <h3 className="font-heading font-bold text-lg text-white">No organizations found</h3>
+              <p className="text-xs text-text-muted mt-1 leading-relaxed">
+                Verified institutional organizations will be displayed here.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {organizations.map((org) => (
+                <OrganizationCard key={org._id} org={org} />
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

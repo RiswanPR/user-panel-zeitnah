@@ -9,6 +9,7 @@ import {
   Users,
   LogOut,
   Bell,
+  Compass,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { AuthContext } from "../context/AuthContext";
@@ -21,12 +22,12 @@ import UsernameClaimModal from "../components/username/UsernameClaimModal";
 import FeatureErrorBoundary from "../components/common/FeatureErrorBoundary";
 import NotificationBell from "../components/notifications/NotificationBell";
 import NotificationDrawer from "../components/notifications/NotificationDrawer";
-import AnnouncementBanner from "../components/announcements/AnnouncementBanner";
+import PlatformAnnouncementBanner from "../components/announcements/PlatformAnnouncementBanner";
 
 // ── Desktop Navigation Destinations ──
 const desktopNavItems = [
   { key: "courses", path: "/courses", label: "Courses", icon: BookOpen },
-  { key: "network", path: "/network", label: "Network", icon: Users },
+  { key: "network", path: "/network", label: "Spaces & Network", icon: Compass },
   { key: "notifications", path: "/notifications", label: "Notifications", icon: Bell },
   { key: "profile", path: "/profile", label: "Profile", icon: User },
 ];
@@ -34,7 +35,7 @@ const desktopNavItems = [
 // ── Mobile Bottom Navigation Destinations ──
 const mobileBottomNavItems = [
   { key: "courses", path: "/courses", label: "Courses", icon: BookOpen },
-  { key: "network", path: "/network", label: "Network", icon: Users },
+  { key: "network", path: "/network", label: "Network", icon: Compass },
   { key: "learning", path: "/my-learning", label: "Learning", icon: BarChart3 },
   { key: "profile", path: "/profile", label: "Profile", icon: User },
 ];
@@ -107,10 +108,13 @@ export default function MainLayout({ children }) {
   const avatarUrl = user?.avatar ? getUploadUrl(user.avatar) : null;
 
   return (
-    <div className="min-h-screen bg-bg-base text-white font-body antialiased flex flex-col md:flex-row">
+    <div className="min-h-screen bg-bg-base text-white font-body antialiased flex flex-col">
+      {/* ── Platform Announcement Banner ── */}
+      <PlatformAnnouncementBanner />
 
-      {/* Ambient background */}
-      <div className="ambient-glow inset-0" />
+      <div className="flex-1 flex flex-col md:flex-row">
+        {/* Ambient background */}
+        <div className="ambient-glow inset-0" />
 
       {/* ═══════════════════════════════════════════════
           MOBILE TOP HEADER with Logo & Trophy Shortcut

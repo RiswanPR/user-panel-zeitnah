@@ -1,27 +1,27 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
-export type ConnectionDocument = Connection &
-  Document & {
-    createdAt: Date;
-    updatedAt: Date;
-  };
+export type NetworkConnectionDocument = NetworkConnection & Document;
+export type ConnectionDocument = NetworkConnectionDocument;
 
 export type ConnectionStatus =
-  'pending' | 'accepted' | 'declined' | 'cancelled';
+  | 'pending'
+  | 'accepted'
+  | 'declined'
+  | 'cancelled';
 
 @Schema({
   timestamps: true,
   collection: 'network_connections',
 })
-export class Connection {
+export class NetworkConnection {
   @Prop({
     type: Types.ObjectId,
     ref: 'User',
     required: true,
     index: true,
   })
-  requesterId!: Types.ObjectId;
+  requesterId: Types.ObjectId;
 
   @Prop({
     type: Types.ObjectId,
@@ -29,21 +29,21 @@ export class Connection {
     required: true,
     index: true,
   })
-  recipientId!: Types.ObjectId;
+  recipientId: Types.ObjectId;
 
   @Prop({
-    type: String,
+    type: Types.ObjectId,
     required: true,
     index: true,
   })
-  userLow!: string;
+  userLow: Types.ObjectId;
 
   @Prop({
-    type: String,
+    type: Types.ObjectId,
     required: true,
     index: true,
   })
-  userHigh!: string;
+  userHigh: Types.ObjectId;
 
   @Prop({
     type: String,
@@ -51,14 +51,14 @@ export class Connection {
     default: 'pending',
     index: true,
   })
-  status!: ConnectionStatus;
+  status: string;
 }
 
-export const ConnectionSchema = SchemaFactory.createForClass(Connection);
+export const NetworkConnectionSchema = SchemaFactory.createForClass(NetworkConnection);
 
-// Unique canonical pair index guarantees no duplicate relationships between any two users
-ConnectionSchema.index({ userLow: 1, userHigh: 1 }, { unique: true });
+// Compound unique index ensuring only one connection pair exists between any two users
+NetworkConnectionSchema.index({ userLow: 1, userHigh: 1 }, { unique: true });
+NetworkConnectionSchema.index({ requesterId: 1, status: 1 });
+NetworkConnectionSchema.index({ recipientId: 1, status: 1 });
 
-// Query indexes for fast request lookups and connection queries
-ConnectionSchema.index({ requesterId: 1, status: 1 });
-ConnectionSchema.index({ recipientId: 1, status: 1 });
+export { NetworkConnection as Connection, NetworkConnectionSchema as ConnectionSchema };

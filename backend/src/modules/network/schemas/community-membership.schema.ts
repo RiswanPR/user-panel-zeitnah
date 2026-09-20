@@ -21,7 +21,7 @@ export class CommunityMembership {
     required: true,
     index: true,
   })
-  communityId!: Types.ObjectId;
+  communityId: Types.ObjectId;
 
   @Prop({
     type: Types.ObjectId,
@@ -29,7 +29,7 @@ export class CommunityMembership {
     required: true,
     index: true,
   })
-  userId!: Types.ObjectId;
+  userId: Types.ObjectId;
 
   @Prop({
     type: String,
@@ -37,7 +37,7 @@ export class CommunityMembership {
     default: 'member',
     index: true,
   })
-  role!: CommunityRole;
+  role: CommunityRole;
 
   @Prop({
     type: String,
@@ -45,19 +45,18 @@ export class CommunityMembership {
     default: 'active',
     index: true,
   })
-  status!: MembershipStatus;
+  status: MembershipStatus;
 
   @Prop({
     type: Date,
     default: Date.now,
   })
-  joinedAt!: Date;
+  joinedAt: Date;
 }
 
 export const CommunityMembershipSchema =
   SchemaFactory.createForClass(CommunityMembership);
 
-// Compound unique index ensuring a user cannot have duplicate memberships in the same community
 CommunityMembershipSchema.index(
   { communityId: 1, userId: 1 },
   { unique: true },

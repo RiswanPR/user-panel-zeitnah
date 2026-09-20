@@ -36,11 +36,12 @@ const Leaderboard = React.lazy(() => import("./pages/leaderboard/LeaderboardPage
 const NetworkPage = React.lazy(() => import("./pages/network/NetworkPage"));
 const NetworkProfilePage = React.lazy(() => import("./pages/network/NetworkProfilePage"));
 const CommunityDetailPage = React.lazy(() => import("./pages/network/CommunityDetailPage"));
+const LearningSpaceDetailPage = React.lazy(() => import("./pages/network/LearningSpaceDetailPage"));
 const DiscussionDetailPage = React.lazy(() => import("./pages/network/DiscussionDetailPage"));
 const NotFoundPage = React.lazy(() => import("./pages/NotFoundPage"));
 const ErrorReportsDashboard = React.lazy(() => import("./pages/admin/ErrorReportsDashboard"));
 const SessionDiagnostics = React.lazy(() => import("./pages/admin/SessionDiagnostics"));
-const NotificationCenterPage = React.lazy(() => import("./pages/notifications/NotificationCenterPage"));
+const NotificationsPage = React.lazy(() => import("./pages/notifications/NotificationsPage"));
 
 // Community Views
 const CommunityLayout = React.lazy(() => import("./layouts/CommunityLayout"));
@@ -150,7 +151,9 @@ function App() {
               <Route path="/network/profile/:username" element={<Suspense fallback={<PageLoader />}><NetworkProfilePage /></Suspense>} />
               <Route path="/network/communities/:slug" element={<Suspense fallback={<PageLoader />}><CommunityDetailPage /></Suspense>} />
               <Route path="/network/communities/:slug/discussions/:discussionId" element={<Suspense fallback={<PageLoader />}><DiscussionDetailPage /></Suspense>} />
-              <Route path="/notifications" element={<Suspense fallback={<PageLoader />}><NotificationCenterPage /></Suspense>} />
+              <Route path="/network/spaces/:slugOrId" element={<Suspense fallback={<PageLoader />}><LearningSpaceDetailPage /></Suspense>} />
+              <Route path="/network/spaces/:slugOrId/discussions/:discussionId" element={<Suspense fallback={<PageLoader />}><DiscussionDetailPage /></Suspense>} />
+              <Route path="/notifications" element={<Suspense fallback={<PageLoader />}><NotificationsPage /></Suspense>} />
               <Route path="/active-sessions" element={<Suspense fallback={<PageLoader />}><ActiveSessions /></Suspense>} />
               <Route path="/audit-logs" element={<Suspense fallback={<PageLoader />}><AuditLogs /></Suspense>} />
               <Route path="/admin/error-reports" element={<Suspense fallback={<PageLoader />}><ErrorReportsDashboard /></Suspense>} />

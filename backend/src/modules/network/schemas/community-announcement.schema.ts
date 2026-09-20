@@ -18,7 +18,7 @@ export class CommunityAnnouncement {
     required: true,
     index: true,
   })
-  communityId!: Types.ObjectId;
+  communityId: Types.ObjectId;
 
   @Prop({
     type: Types.ObjectId,
@@ -26,7 +26,7 @@ export class CommunityAnnouncement {
     required: true,
     index: true,
   })
-  authorId!: Types.ObjectId;
+  authorId: Types.ObjectId;
 
   @Prop({
     type: String,
@@ -34,22 +34,22 @@ export class CommunityAnnouncement {
     trim: true,
     maxlength: 200,
   })
-  title!: string;
+  title: string;
 
   @Prop({
     type: String,
     required: true,
     trim: true,
-    maxlength: 5000,
+    maxlength: 10000,
   })
-  content!: string;
+  content: string;
 
   @Prop({
     type: Boolean,
     default: false,
     index: true,
   })
-  pinned!: boolean;
+  pinned: boolean;
 }
 
 export const CommunityAnnouncementSchema = SchemaFactory.createForClass(

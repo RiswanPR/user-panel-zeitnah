@@ -8,7 +8,12 @@ export type CommunityDocument = Community &
   };
 
 export type CommunityType =
-  'COURSE' | 'SUBJECT' | 'INTEREST' | 'PROJECT' | 'GOAL' | 'GENERAL';
+  | 'COURSE'
+  | 'SUBJECT'
+  | 'INTEREST'
+  | 'PROJECT'
+  | 'GOAL'
+  | 'GENERAL';
 
 export type CommunityVisibility = 'public' | 'restricted' | 'private';
 export type CommunityStatus = 'active' | 'archived';
@@ -24,7 +29,7 @@ export class Community {
     trim: true,
     maxlength: 120,
   })
-  name!: string;
+  name: string;
 
   @Prop({
     type: String,
@@ -35,7 +40,7 @@ export class Community {
     index: true,
     maxlength: 120,
   })
-  slug!: string;
+  slug: string;
 
   @Prop({
     type: String,
@@ -43,7 +48,7 @@ export class Community {
     trim: true,
     maxlength: 2000,
   })
-  description!: string;
+  description: string;
 
   @Prop({
     type: String,
@@ -51,7 +56,7 @@ export class Community {
     default: 'GENERAL',
     index: true,
   })
-  type!: CommunityType;
+  type: CommunityType;
 
   @Prop({
     type: Types.ObjectId,
@@ -65,27 +70,27 @@ export class Community {
     type: String,
     default: '',
   })
-  avatar!: string;
+  avatar: string;
 
   @Prop({
     type: String,
     default: '',
   })
-  coverImage!: string;
+  coverImage: string;
 
   @Prop({
     type: Number,
     default: 0,
     min: 0,
   })
-  memberCount!: number;
+  memberCount: number;
 
   @Prop({
     type: Number,
     default: 0,
     min: 0,
   })
-  discussionCount!: number;
+  discussionCount: number;
 
   @Prop({
     type: String,
@@ -93,7 +98,7 @@ export class Community {
     default: 'public',
     index: true,
   })
-  visibility!: CommunityVisibility;
+  visibility: CommunityVisibility;
 
   @Prop({
     type: String,
@@ -101,15 +106,15 @@ export class Community {
     default: 'active',
     index: true,
   })
-  status!: CommunityStatus;
+  status: CommunityStatus;
 
   @Prop({
     type: Types.ObjectId,
     ref: 'User',
-    required: true,
+    required: false,
     index: true,
   })
-  creatorId!: Types.ObjectId;
+  creatorId?: Types.ObjectId;
 
   @Prop({
     type: [String],
@@ -120,13 +125,13 @@ export class Community {
       'Respect intellectual property and citation standards.',
     ],
   })
-  rules!: string[];
+  rules: string[];
 
   @Prop({
     type: [String],
     default: [],
   })
-  topics!: string[];
+  topics: string[];
 }
 
 export const CommunitySchema = SchemaFactory.createForClass(Community);
@@ -135,6 +140,7 @@ export const CommunitySchema = SchemaFactory.createForClass(Community);
 CommunitySchema.index({ slug: 1 }, { unique: true });
 CommunitySchema.index({ visibility: 1, status: 1 });
 CommunitySchema.index({ type: 1, status: 1 });
+CommunitySchema.index({ courseId: 1 });
 CommunitySchema.index({ createdAt: -1 });
 CommunitySchema.index({ memberCount: -1 });
 CommunitySchema.index(

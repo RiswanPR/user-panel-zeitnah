@@ -8,7 +8,11 @@ export type CommunityDiscussionDocument = CommunityDiscussion &
   };
 
 export type DiscussionType =
-  'question' | 'discussion' | 'project' | 'resource' | 'study_help';
+  | 'question'
+  | 'discussion'
+  | 'project'
+  | 'resource'
+  | 'study_help';
 
 export type DiscussionStatus = 'published' | 'locked' | 'removed';
 
@@ -23,7 +27,7 @@ export class CommunityDiscussion {
     required: true,
     index: true,
   })
-  communityId!: Types.ObjectId;
+  communityId: Types.ObjectId;
 
   @Prop({
     type: Types.ObjectId,
@@ -31,7 +35,7 @@ export class CommunityDiscussion {
     required: true,
     index: true,
   })
-  authorId!: Types.ObjectId;
+  authorId: Types.ObjectId;
 
   @Prop({
     type: String,
@@ -39,7 +43,7 @@ export class CommunityDiscussion {
     trim: true,
     maxlength: 200,
   })
-  title!: string;
+  title: string;
 
   @Prop({
     type: String,
@@ -47,7 +51,7 @@ export class CommunityDiscussion {
     trim: true,
     maxlength: 10000,
   })
-  body!: string;
+  body: string;
 
   @Prop({
     type: String,
@@ -55,7 +59,7 @@ export class CommunityDiscussion {
     default: 'discussion',
     index: true,
   })
-  type!: DiscussionType;
+  type: DiscussionType;
 
   @Prop({
     type: String,
@@ -63,43 +67,41 @@ export class CommunityDiscussion {
     default: 'published',
     index: true,
   })
-  status!: DiscussionStatus;
+  status: DiscussionStatus;
 
   @Prop({
     type: Boolean,
     default: false,
     index: true,
   })
-  isPinned!: boolean;
+  isPinned: boolean;
 
   @Prop({
     type: Number,
     default: 0,
-    min: 0,
   })
-  replyCount!: number;
+  replyCount: number;
 
   @Prop({
-    type: Boolean,
-    default: false,
+    type: Number,
+    default: 0,
   })
-  isEdited!: boolean;
+  viewCount: number;
+
+  @Prop({
+    type: [String],
+    default: [],
+  })
+  tags: string[];
 }
 
-export const CommunityDiscussionSchema =
-  SchemaFactory.createForClass(CommunityDiscussion);
+export const CommunityDiscussionSchema = SchemaFactory.createForClass(
+  CommunityDiscussion,
+);
 
-// Query indexes for listing discussions
 CommunityDiscussionSchema.index({
   communityId: 1,
-  status: 1,
   isPinned: -1,
   createdAt: -1,
 });
-CommunityDiscussionSchema.index({ authorId: 1, createdAt: -1 });
-CommunityDiscussionSchema.index({
-  communityId: 1,
-  type: 1,
-  status: 1,
-  createdAt: -1,
-});
+CommunityDiscussionSchema.index({ communityId: 1, type: 1 });
