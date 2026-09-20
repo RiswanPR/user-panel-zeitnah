@@ -8,6 +8,7 @@ import {
   BarChart3,
   Users,
   LogOut,
+  Bell,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { AuthContext } from "../context/AuthContext";
@@ -18,11 +19,15 @@ import PageTransition from "../components/ui/PageTransition";
 import CookieConsentBanner from "../components/common/CookieConsentBanner";
 import UsernameClaimModal from "../components/username/UsernameClaimModal";
 import FeatureErrorBoundary from "../components/common/FeatureErrorBoundary";
+import NotificationBell from "../components/notifications/NotificationBell";
+import NotificationDrawer from "../components/notifications/NotificationDrawer";
+import AnnouncementBanner from "../components/announcements/AnnouncementBanner";
 
 // ── Desktop Navigation Destinations ──
 const desktopNavItems = [
   { key: "courses", path: "/courses", label: "Courses", icon: BookOpen },
   { key: "network", path: "/network", label: "Network", icon: Users },
+  { key: "notifications", path: "/notifications", label: "Notifications", icon: Bell },
   { key: "profile", path: "/profile", label: "Profile", icon: User },
 ];
 
@@ -73,6 +78,9 @@ export default function MainLayout({ children }) {
     if (key === "network") {
       return path === "/network" || path.startsWith("/network/");
     }
+    if (key === "notifications") {
+      return path === "/notifications" || path.startsWith("/notifications/");
+    }
     if (key === "profile") {
       return (
         path.startsWith("/profile") ||
@@ -119,8 +127,11 @@ export default function MainLayout({ children }) {
           </div>
         </Link>
 
-        {/* Right: Leaderboard Trophy Shortcut & Profile Avatar */}
+        {/* Right: Notification Bell, Leaderboard Trophy Shortcut & Profile Avatar */}
         <div className="flex items-center gap-2">
+          {/* Notification Bell Shortcut */}
+          <NotificationBell />
+
           {/* Dedicated Trophy Quick-Access Button */}
           <Link
             to="/leaderboard"
@@ -184,21 +195,24 @@ export default function MainLayout({ children }) {
             {/* Gradient accent line */}
             <div className="gradient-line-top" />
 
-            {/* ── Logo Section ── */}
-            <Link to="/courses" className="px-3 py-4 flex items-center gap-3 select-none group rounded-xl hover:bg-white/[0.03] transition-colors focus-ring">
-              <div className="relative w-9 h-9 shrink-0">
-                <div className="absolute inset-0 bg-brand-mint/30 rounded-lg blur-md transition-all" />
-                <div className="relative w-9 h-9 rounded-lg border border-brand-mint/30 overflow-hidden shadow-md flex items-center justify-center bg-bg-surface">
-                  <img src="/zeitnah-logo.png" alt="Zeitnah Logo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+            {/* ── Logo Section + Notification Bell ── */}
+            <div className="px-3 py-4 flex items-center justify-between gap-2 select-none">
+              <Link to="/courses" className="flex items-center gap-3 select-none group rounded-xl hover:bg-white/[0.03] transition-colors focus-ring min-w-0 flex-1">
+                <div className="relative w-9 h-9 shrink-0">
+                  <div className="absolute inset-0 bg-brand-mint/30 rounded-lg blur-md transition-all" />
+                  <div className="relative w-9 h-9 rounded-lg border border-brand-mint/30 overflow-hidden shadow-md flex items-center justify-center bg-bg-surface">
+                    <img src="/zeitnah-logo.png" alt="Zeitnah Logo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  </div>
                 </div>
-              </div>
-              <div className="min-w-0 flex-1">
-                <span className="text-base font-heading font-extrabold tracking-wider uppercase text-white group-hover:text-brand-mint transition-colors block leading-tight">
-                  Zeitnah
-                </span>
-                <p className="text-[10px] font-medium text-text-muted tracking-wide leading-tight">Learning Platform</p>
-              </div>
-            </Link>
+                <div className="min-w-0 flex-1">
+                  <span className="text-base font-heading font-extrabold tracking-wider uppercase text-white group-hover:text-brand-mint transition-colors block leading-tight truncate">
+                    Zeitnah
+                  </span>
+                  <p className="text-[10px] font-medium text-text-muted tracking-wide leading-tight truncate">Learning Platform</p>
+                </div>
+              </Link>
+              <NotificationBell className="shrink-0" />
+            </div>
 
             {/* ── Top Divider (edge to edge within island gutter) ── */}
             <div className="w-full h-px bg-gradient-to-r from-transparent via-border-accent to-transparent my-1 shrink-0" />
@@ -398,6 +412,7 @@ export default function MainLayout({ children }) {
           ═══════════════════════════════════════════════ */}
       <main className="flex-1 min-w-0 pb-24 md:pb-0 relative z-10">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <AnnouncementBanner />
           <FeatureErrorBoundary featureName="Page Content">
             <PageTransition key={location.pathname}>
               {children || <Outlet />}
@@ -405,6 +420,7 @@ export default function MainLayout({ children }) {
           </FeatureErrorBoundary>
         </div>
       </main>
+      <NotificationDrawer />
       <CookieConsentBanner />
       <UsernameClaimModal />
     </div>

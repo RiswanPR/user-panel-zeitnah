@@ -14,6 +14,7 @@ import { User, UserSchema } from './schemas/user.schema';
 import { JwtStrategy } from '../strategies/jwt.strategy';
 
 import { UsernameModule } from '../profile/services/username.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { UsernameModule } from '../profile/services/username.module';
     LoginHistoryModule,
     AuditLogsModule,
     UsernameModule,
+    NotificationsModule,
   ],
 
   controllers: [AuthController],

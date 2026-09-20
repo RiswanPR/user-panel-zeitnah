@@ -369,7 +369,7 @@ export class ProfileService {
     const sanitized = this.usernameService.sanitize(rawUsername);
     const user = await this.userModel
       .findOne({ username: sanitized })
-      .select('name username avatar backgroundImage headline currentRole location industry bio skills experience education certifications role isVerified createdAt gamification publicProfilePublished');
+      .select('name username avatar backgroundImage headline currentRole location industry bio skills experience education certifications role isVerified createdAt gamification publicProfilePublished primaryRole capabilities availability professionalInterests discoverableToRecruiters profileVisibility mentorship recruiterContext educatorContext verification account_Status');
 
     if (!user) {
       throw new NotFoundException(`Student profile @${sanitized} not found.`);
@@ -429,7 +429,15 @@ export class ProfileService {
         recommendations: signedRecommendations,
         publicProfilePublished: Boolean(userObj.publicProfilePublished),
         role: userObj.role,
-        isVerified: Boolean(userObj.account_Status?.isVerified),
+        isVerified: Boolean(userObj.account_Status?.isVerified || userObj.verification?.status === 'VERIFIED'),
+        primaryRole: userObj.primaryRole || 'STUDENT',
+        capabilities: userObj.capabilities || ['STUDENT'],
+        availability: userObj.availability || 'NOT_CURRENTLY_AVAILABLE',
+        professionalInterests: userObj.professionalInterests || [],
+        discoverableToRecruiters: Boolean(userObj.discoverableToRecruiters),
+        profileVisibility: userObj.profileVisibility || 'PUBLIC',
+        mentorship: userObj.mentorship || { topics: [], expertise: [], bio: '', available: false },
+        verification: userObj.verification || { status: 'UNVERIFIED', type: 'IDENTITY' },
         createdAt: userObj.createdAt,
         gamification: {
           level: userObj.gamification?.level || 1,
@@ -518,6 +526,16 @@ export class ProfileService {
     if (data.industry !== undefined) user.industry = data.industry;
     if (data.bio !== undefined) user.bio = data.bio;
     if (data.skills !== undefined) user.skills = data.skills;
+
+    if (data.primaryRole !== undefined) user.primaryRole = data.primaryRole;
+    if (data.capabilities !== undefined) user.capabilities = data.capabilities;
+    if (data.availability !== undefined) user.availability = data.availability;
+    if (data.professionalInterests !== undefined) user.professionalInterests = data.professionalInterests;
+    if (data.discoverableToRecruiters !== undefined) user.discoverableToRecruiters = data.discoverableToRecruiters;
+    if (data.profileVisibility !== undefined) user.profileVisibility = data.profileVisibility;
+    if (data.mentorship !== undefined) user.mentorship = { ...user.mentorship, ...data.mentorship };
+    if (data.recruiterContext !== undefined) user.recruiterContext = { ...user.recruiterContext, ...data.recruiterContext };
+    if (data.educatorContext !== undefined) user.educatorContext = { ...user.educatorContext, ...data.educatorContext };
 
     const { newlyAwarded, completion } = evaluateProfileMilestones(user);
     syncGamificationStats(user);

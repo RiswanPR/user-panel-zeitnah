@@ -39,6 +39,15 @@ export interface PublicNetworkProfile {
     bio?: string;
     location?: string;
     isVerified?: boolean;
+    primaryRole?: string;
+    capabilities?: string[];
+    availability?: string;
+    professionalInterests?: string[];
+    verification?: {
+      status: string;
+      type: string;
+      verifiedAt?: string;
+    };
     joinedAt?: string;
   };
   identity?: {
@@ -57,6 +66,18 @@ export interface PublicNetworkProfile {
     };
     courses: PublicCourseItem[];
   };
+  projects?: Array<{
+    id: string;
+    title: string;
+    description: string;
+    skills: string[];
+    role?: string;
+    links?: {
+      githubUrl?: string;
+      liveDemoUrl?: string;
+      externalUrl?: string;
+    };
+  }>;
   achievements?: PublicAchievementItem[];
   activity?: PublicActivityItem[];
   relationship: {

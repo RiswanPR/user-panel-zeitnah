@@ -50,6 +50,16 @@ export class GetStudentsDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(50)
+  role?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  availability?: string;
+
+  @IsOptional()
+  @IsString()
   @IsIn(['recommended', 'recent', 'name'])
   sort?: 'recommended' | 'recent' | 'name' = 'recommended';
 }

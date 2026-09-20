@@ -4,6 +4,8 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ExternalLink, BookOpen, Clock, ShieldCheck } from "lucide-react";
 import { getUploadUrl } from "../../utils/courseUi";
 import RelationshipAction from "./RelationshipAction";
+import EcosystemRoleBadge from "./EcosystemRoleBadge";
+import AvailabilityBadge from "./AvailabilityBadge";
 
 /**
  * Derives user initials from full name.
@@ -110,6 +112,12 @@ export default function StudentCard({ student, onPreview }) {
                 @{student.username}
               </p>
             )}
+
+            {/* Ecosystem Badges */}
+            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+              <EcosystemRoleBadge role={student.primaryRole || "STUDENT"} size="xs" />
+              <AvailabilityBadge availability={student.availability} size="xs" />
+            </div>
           </div>
         </div>
 

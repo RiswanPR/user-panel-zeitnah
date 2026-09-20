@@ -94,6 +94,12 @@ export default function EditProfile() {
   const [skills, setSkills] = useState([]);
   const [skillInput, setSkillInput] = useState("");
 
+  // Network 3.0 Ecosystem Identity & Privacy states
+  const [primaryRole, setPrimaryRole] = useState("STUDENT");
+  const [availability, setAvailability] = useState("NOT_CURRENTLY_AVAILABLE");
+  const [discoverableToRecruiters, setDiscoverableToRecruiters] = useState(false);
+  const [profileVisibility, setProfileVisibility] = useState("PUBLIC");
+
   // Unsaved changes tracking
   const [isDirty, setIsDirty] = useState(false);
   const [pendingSectionSwitch, setPendingSectionSwitch] = useState(null);
@@ -172,6 +178,10 @@ export default function EditProfile() {
       setIndustry(profile.industry || "");
       setBio(profile.bio || "");
       setSkills(Array.isArray(profile.skills) ? profile.skills : []);
+      setPrimaryRole(profile.primaryRole || "STUDENT");
+      setAvailability(profile.availability || "NOT_CURRENTLY_AVAILABLE");
+      setDiscoverableToRecruiters(Boolean(profile.discoverableToRecruiters));
+      setProfileVisibility(profile.profileVisibility || "PUBLIC");
       setIsDirty(false);
     }
   }, [profile]);
@@ -668,6 +678,10 @@ export default function EditProfile() {
       currentRole: currentRole.trim(),
       location: location.trim(),
       industry: industry.trim(),
+      primaryRole,
+      availability,
+      discoverableToRecruiters,
+      profileVisibility,
     });
   };
 
@@ -1121,6 +1135,90 @@ export default function EditProfile() {
                       className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors"
                       placeholder="e.g. Technology"
                     />
+                  </div>
+                </div>
+
+                {/* Ecosystem Role, Availability & Privacy */}
+                <div className="pt-2 border-t border-border-default/50 space-y-4">
+                  <div className="text-xs font-bold uppercase tracking-wider text-brand-mint/90 flex items-center gap-2">
+                    <span>Ecosystem Identity & Privacy</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
+                        Primary Role
+                      </label>
+                      <select
+                        value={primaryRole}
+                        onChange={(e) => {
+                          setPrimaryRole(e.target.value);
+                          setIsDirty(true);
+                        }}
+                        className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors cursor-pointer"
+                      >
+                        <option value="STUDENT">Student</option>
+                        <option value="EDUCATOR">Educator</option>
+                        <option value="PROFESSIONAL">Professional</option>
+                        <option value="MENTOR">Mentor</option>
+                        <option value="RECRUITER">Recruiter</option>
+                        <option value="FOUNDER">Founder</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
+                        Availability Status
+                      </label>
+                      <select
+                        value={availability}
+                        onChange={(e) => {
+                          setAvailability(e.target.value);
+                          setIsDirty(true);
+                        }}
+                        className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors cursor-pointer"
+                      >
+                        <option value="NOT_CURRENTLY_AVAILABLE">Not Currently Available</option>
+                        <option value="OPEN_TO_OPPORTUNITIES">Open to Opportunities</option>
+                        <option value="AVAILABLE_FOR_MENTORSHIP">Available for Mentorship</option>
+                        <option value="AVAILABLE_FOR_COLLABORATION">Available for Collaboration</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
+                        Profile Visibility
+                      </label>
+                      <select
+                        value={profileVisibility}
+                        onChange={(e) => {
+                          setProfileVisibility(e.target.value);
+                          setIsDirty(true);
+                        }}
+                        className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors cursor-pointer"
+                      >
+                        <option value="PUBLIC">Public</option>
+                        <option value="NETWORK">Network Only</option>
+                        <option value="VERIFIED_RECRUITERS">Verified Recruiters Only</option>
+                        <option value="PRIVATE">Private</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-bg-elevated/60 border border-border-default/60">
+                    <input
+                      type="checkbox"
+                      id="discoverableToRecruiters"
+                      checked={discoverableToRecruiters}
+                      onChange={(e) => {
+                        setDiscoverableToRecruiters(e.target.checked);
+                        setIsDirty(true);
+                      }}
+                      className="w-4 h-4 rounded border-border-default text-brand-mint focus:ring-brand-mint bg-bg-elevated cursor-pointer"
+                    />
+                    <label htmlFor="discoverableToRecruiters" className="text-xs text-text-secondary cursor-pointer select-none">
+                      <span className="font-semibold text-white">Recruiter Discovery:</span> Allow verified partner companies, startups, and institutions to discover my profile for internship and job opportunities.
+                    </label>
                   </div>
                 </div>
 

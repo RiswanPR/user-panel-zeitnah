@@ -16,6 +16,8 @@ import {
   HeartHandshake,
   Check,
   X,
+  Flag,
+  FolderGit2,
 } from "lucide-react";
 import api from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
@@ -23,6 +25,10 @@ import { useToast } from "../../components/ui/Toast";
 import ShareProfileModal from "../../components/profile/ShareProfileModal";
 import ProfileNav from "../../components/profile/ProfileNav";
 import { getUploadUrl } from "../../utils/courseUi";
+import EcosystemRoleBadge from "../../components/network/EcosystemRoleBadge";
+import AvailabilityBadge from "../../components/network/AvailabilityBadge";
+import ReportModal from "../../components/network/ReportModal";
+import projectsService from "../../services/projectsService";
 
 export default function PublicProfilePage() {
   const { username: paramUsername } = useParams();
@@ -63,6 +69,9 @@ export default function PublicProfilePage() {
         authUser._id === student.id)
   );
 
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [projects, setProjects] = useState([]);
+
   useEffect(() => {
     let mounted = true;
 
@@ -83,7 +92,17 @@ export default function PublicProfilePage() {
           setStudent(res.data.user);
           setAvatarError(false);
           // SEO / Document title update
-          document.title = `${res.data.user.name} (@${res.data.user.username}) — Zeitnah Student Identity`;
+          document.title = `${res.data.user.name} (@${res.data.user.username}) — Zeitnah Learning & Career Identity`;
+
+          // Load user projects
+          if (res.data.user?.id) {
+            projectsService
+              .getUserProjects(res.data.user.id)
+              .then((data) => {
+                if (mounted && Array.isArray(data)) setProjects(data);
+              })
+              .catch(() => {});
+          }
         }
       } catch {
         if (mounted) {
@@ -288,6 +307,12 @@ export default function PublicProfilePage() {
                   </span>
                 </div>
 
+                {/* Ecosystem Role & Availability Badges */}
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
+                  <EcosystemRoleBadge role={student.primaryRole || "STUDENT"} size="sm" />
+                  <AvailabilityBadge availability={student.availability} size="sm" />
+                </div>
+
                 {student.headline && (
                   <p className="text-sm sm:text-base font-medium text-white/90 max-w-xl leading-relaxed break-words">
                     {student.headline}
@@ -369,6 +394,18 @@ export default function PublicProfilePage() {
                 >
                   <Share2 className="w-4 h-4" />
                 </button>
+
+                {!isOwnProfile && (
+                  <button
+                    type="button"
+                    onClick={() => setIsReportOpen(true)}
+                    className="p-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl border border-border-default bg-white/[0.02] hover:bg-rose-500/10 hover:border-rose-500/20 text-text-muted hover:text-rose-400 transition-colors cursor-pointer shrink-0"
+                    title="Report profile"
+                    aria-label="Report profile"
+                  >
+                    <Flag className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -467,6 +504,102 @@ export default function PublicProfilePage() {
         ) : (
           <div className="py-8 text-center border border-dashed border-white/[0.06] rounded-2xl">
             <p className="text-xs text-text-muted">Show your learning journey.</p>
+          </div>
+        )}
+      </section>
+
+      {/* ── PROJECTS & DEMONSTRATIONS SECTION ── */}
+      <section className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-4 shadow-sm">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-heading font-extrabold text-white flex items-center gap-2">
+            <span className="w-1.5 h-4 rounded-full bg-brand-mint" />
+            Projects & Demonstrations
+          </h2>
+          {isOwnProfile && (
+            <Link
+              to="/profile/edit"
+              className="text-xs font-semibold text-mint hover:underline"
+            >
+              + Add Project
+            </Link>
+          )}
+        </div>
+
+        {projects && projects.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+            {projects.map((proj) => (
+              <div
+                key={proj._id || proj.id}
+                className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.05] space-y-3 flex flex-col justify-between hover:border-mint/30 transition-all shadow-sm"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <h3 className="text-base font-bold text-white leading-snug">{proj.title}</h3>
+                    {proj.featured && (
+                      <span className="text-[10px] uppercase font-bold text-mint bg-mint/10 px-2 py-0.5 rounded border border-mint/20">
+                        Featured
+                      </span>
+                    )}
+                  </div>
+
+                  {proj.role && (
+                    <span className="text-xs font-medium text-purple-300 block mb-2">
+                      {proj.role}
+                    </span>
+                  )}
+
+                  {proj.description && (
+                    <p className="text-xs text-text-secondary line-clamp-3 leading-relaxed">
+                      {proj.description}
+                    </p>
+                  )}
+
+                  {proj.skills && proj.skills.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      {proj.skills.map((s, idx) => (
+                        <span
+                          key={idx}
+                          className="text-[10px] font-medium px-2 py-0.5 rounded bg-white/5 text-text-muted border border-white/5"
+                        >
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-3 border-t border-white/[0.04] flex items-center gap-3">
+                  {proj.links?.githubUrl && (
+                    <a
+                      href={proj.links.githubUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-mint hover:underline"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      <span>Code</span>
+                    </a>
+                  )}
+                  {proj.links?.liveDemoUrl && (
+                    <a
+                      href={proj.links.liveDemoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-mint hover:underline"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      <span>Live Demo</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="py-8 text-center border border-dashed border-white/[0.06] rounded-2xl">
+            <p className="text-xs text-text-muted">
+              Projects demonstrate what you build and provide proof of skills.
+            </p>
           </div>
         )}
       </section>
@@ -729,6 +862,16 @@ export default function PublicProfilePage() {
         onClose={() => setIsShareOpen(false)}
         profile={student}
       />
+
+      {/* ── Report Modal ── */}
+      {isReportOpen && (
+        <ReportModal
+          targetType="USER"
+          targetId={student.id}
+          targetName={student.name}
+          onClose={() => setIsReportOpen(false)}
+        />
+      )}
     </div>
   );
 }

@@ -23,7 +23,12 @@ import ConnectionsList from "../../components/network/ConnectionsList";
 import CommunityCard from "../../components/network/communities/CommunityCard";
 import CommunityEmptyState from "../../components/network/communities/CommunityEmptyState";
 import { CommunityCardSkeleton } from "../../components/network/communities/CommunitySkeleton";
-import { Users, SearchX, FilterX, Loader2, ChevronLeft, ChevronRight, Check, ArrowRight } from "lucide-react";
+import organizationService from "../../services/organizationService";
+import opportunityService from "../../services/opportunityService";
+import OrganizationCard from "../../components/network/OrganizationCard";
+import OpportunityCard from "../../components/network/OpportunityCard";
+import OpportunityDetailModal from "../../components/network/OpportunityDetailModal";
+import { Users, SearchX, FilterX, Loader2, ChevronLeft, ChevronRight, Check, ArrowRight, Building2, Briefcase, Sparkles } from "lucide-react";
 
 /**
  * NetworkPage Component
@@ -48,7 +53,11 @@ export default function NetworkPage() {
   const myCommunities = searchParams.get("myCommunities") === "true";
   const commPage = Number(searchParams.get("commPage")) || 1;
 
+  // Ecosystem Discover Mode ('people' | 'organizations' | 'opportunities')
+  const discoverMode = searchParams.get("discoverMode") || "people";
+
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedOpportunity, setSelectedOpportunity] = useState(null);
 
   // Update SEO Page Title
   useEffect(() => {
@@ -147,6 +156,22 @@ export default function NetworkPage() {
     queryFn: () => communityService.getCommunities({ limit: 3, sort: "popular" }),
     staleTime: 1000 * 60 * 5,
     enabled: activeTab === "overview",
+  });
+
+  // Ecosystem Organizations Query
+  const { data: organizationsData, isLoading: isOrgsLoading } = useQuery({
+    queryKey: ["network-organizations", searchQuery],
+    queryFn: () => organizationService.getOrganizations({ q: searchQuery, limit: 12 }),
+    staleTime: 1000 * 60 * 2,
+    enabled: activeTab === "discover" && discoverMode === "organizations" || activeTab === "overview",
+  });
+
+  // Ecosystem Opportunities Query
+  const { data: opportunitiesData, isLoading: isOppsLoading } = useQuery({
+    queryKey: ["network-opportunities", searchQuery],
+    queryFn: () => opportunityService.getOpportunities({ q: searchQuery, limit: 12 }),
+    staleTime: 1000 * 60 * 2,
+    enabled: activeTab === "discover" && discoverMode === "opportunities" || activeTab === "overview",
   });
 
 
@@ -370,25 +395,67 @@ export default function NetworkPage() {
             </div>
           </div>
 
-          {/* Section 3: Explore Navigation Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          {/* Section 3: Ecosystem Explore Navigation Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
             <button
               type="button"
-              onClick={() => handleTabChange("discover")}
+              onClick={() => updateUrlParams({ tab: "discover", discoverMode: "people" })}
               className="flex items-center justify-between rounded-2xl border border-white/[0.08] bg-gradient-to-r from-brand-mint/[0.06] via-white/[0.02] to-transparent p-5 text-left transition-all hover:border-brand-mint/30 hover:bg-white/[0.04] focus-ring group"
             >
               <div>
                 <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-brand-mint">
-                  STUDENT DIRECTORY
+                  TALENT & LEARNERS
                 </span>
                 <h4 className="text-sm font-heading font-bold text-white mt-1 group-hover:text-brand-mint transition-colors">
-                  Discover Students
+                  Discover People
                 </h4>
                 <p className="text-xs text-text-secondary mt-0.5">
-                  Find learners across your course, level, and interests.
+                  Find students, professionals & mentors.
                 </p>
               </div>
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] text-white group-hover:border-brand-mint/40 group-hover:text-brand-mint transition-all">
+                <ArrowRight className="h-4 w-4" />
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => updateUrlParams({ tab: "discover", discoverMode: "organizations" })}
+              className="flex items-center justify-between rounded-2xl border border-white/[0.08] bg-gradient-to-r from-purple-500/10 via-white/[0.02] to-transparent p-5 text-left transition-all hover:border-purple-500/30 hover:bg-white/[0.04] focus-ring group"
+            >
+              <div>
+                <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-purple-300">
+                  ECOSYSTEM ENTITIES
+                </span>
+                <h4 className="text-sm font-heading font-bold text-white mt-1 group-hover:text-purple-300 transition-colors">
+                  Organizations
+                </h4>
+                <p className="text-xs text-text-secondary mt-0.5">
+                  Explore companies, schools & universities.
+                </p>
+              </div>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] text-white group-hover:border-purple-500/40 group-hover:text-purple-300 transition-all">
+                <ArrowRight className="h-4 w-4" />
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => updateUrlParams({ tab: "discover", discoverMode: "opportunities" })}
+              className="flex items-center justify-between rounded-2xl border border-white/[0.08] bg-gradient-to-r from-blue-500/10 via-white/[0.02] to-transparent p-5 text-left transition-all hover:border-blue-500/30 hover:bg-white/[0.04] focus-ring group"
+            >
+              <div>
+                <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-blue-300">
+                  CAREER & PROJECTS
+                </span>
+                <h4 className="text-sm font-heading font-bold text-white mt-1 group-hover:text-blue-300 transition-colors">
+                  Opportunities
+                </h4>
+                <p className="text-xs text-text-secondary mt-0.5">
+                  Internships, jobs & mentorship.
+                </p>
+              </div>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] text-white group-hover:border-blue-500/40 group-hover:text-blue-300 transition-all">
                 <ArrowRight className="h-4 w-4" />
               </div>
             </button>
@@ -403,10 +470,10 @@ export default function NetworkPage() {
                   COMMUNITIES & GROUPS
                 </span>
                 <h4 className="text-sm font-heading font-bold text-white mt-1 group-hover:text-[#E3D9FC] transition-colors">
-                  Explore Learning Spaces
+                  Learning Spaces
                 </h4>
                 <p className="text-xs text-text-secondary mt-0.5">
-                  Join subject study groups, project teams, and course hubs.
+                  Subject study groups & project teams.
                 </p>
               </div>
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] text-white group-hover:border-[#E3D9FC]/40 group-hover:text-[#E3D9FC] transition-all">
@@ -417,64 +484,151 @@ export default function NetworkPage() {
         </div>
       )}
 
-      {/* ── DISCOVER TAB (PHASE 2 DIRECTORY) ── */}
+      {/* ── DISCOVER TAB (PHASE 2 DIRECTORY & ECOSYSTEM) ── */}
       {activeTab === "discover" && (
         <div className="space-y-6">
-          {/* Filter Toolbar */}
-          <StudentFilters
-            filters={filterState}
-            onFilterChange={handleFiltersChange}
-            availableFilters={
-              availableFilters || {
-                courses: [],
-                interests: [],
-                institutions: [],
-                levels: [],
-              }
-            }
-          />
+          {/* Ecosystem Discovery Mode Selector */}
+          <div className="flex flex-wrap items-center gap-2 border-b border-white/5 pb-4">
+            <button
+              type="button"
+              onClick={() => updateUrlParams({ discoverMode: "people" })}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+                discoverMode === "people"
+                  ? "bg-mint text-dark shadow-sm"
+                  : "bg-white/5 text-text-muted hover:text-white hover:bg-white/10"
+              }`}
+            >
+              <Users className="h-3.5 w-3.5" />
+              <span>People & Talent</span>
+            </button>
 
-          {/* Active Search / Result Feedback */}
-          {searchQuery && (
-            <div className="flex items-center justify-between text-xs text-text-muted">
-              <p>
-                Results for <span className="text-white font-semibold">"{searchQuery}"</span>
-                {totalStudentsCount !== undefined && (
-                  <span> • {totalStudentsCount} student{totalStudentsCount === 1 ? "" : "s"} found</span>
-                )}
-              </p>
-              <button
-                type="button"
-                onClick={() => handleSearchChange("")}
-                className="text-brand-mint hover:underline"
-              >
-                Clear query
-              </button>
-            </div>
-          )}
+            <button
+              type="button"
+              onClick={() => updateUrlParams({ discoverMode: "organizations" })}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+                discoverMode === "organizations"
+                  ? "bg-mint text-dark shadow-sm"
+                  : "bg-white/5 text-text-muted hover:text-white hover:bg-white/10"
+              }`}
+            >
+              <Building2 className="h-3.5 w-3.5" />
+              <span>Organizations</span>
+            </button>
 
-          {/* Error State */}
-          {isDiscoverError ? (
-            <NetworkErrorState
-              title="We couldn't load students."
-              message="Please check your connection or try again."
-              onRetry={refetchDiscover}
-            />
-          ) : isDiscoverLoading && accumulatedStudents.length === 0 ? (
-            /* Initial / Searching Skeleton */
-            <DiscoverSkeleton count={8} />
-          ) : accumulatedStudents.length > 0 ? (
-            /* Student Discovery Grid */
-            <div className="space-y-8">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {accumulatedStudents.map((student) => (
-                  <StudentCard
-                    key={student.id}
-                    student={student}
-                    onPreview={setSelectedStudent}
+            <button
+              type="button"
+              onClick={() => updateUrlParams({ discoverMode: "opportunities" })}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+                discoverMode === "opportunities"
+                  ? "bg-mint text-dark shadow-sm"
+                  : "bg-white/5 text-text-muted hover:text-white hover:bg-white/10"
+              }`}
+            >
+              <Briefcase className="h-3.5 w-3.5" />
+              <span>Opportunities</span>
+            </button>
+          </div>
+
+          {/* ORGANIZATIONS VIEW */}
+          {discoverMode === "organizations" ? (
+            isOrgsLoading ? (
+              <DiscoverSkeleton count={6} />
+            ) : organizationsData?.data && organizationsData.data.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {organizationsData.data.map((org) => (
+                  <OrganizationCard key={org._id || org.id} organization={org} />
+                ))}
+              </div>
+            ) : (
+              <NetworkEmptyState
+                icon={Building2}
+                title="No organizations found"
+                description="Try searching with different terms or explore learning communities."
+                action={() => handleSearchChange("")}
+                actionLabel="Clear Search"
+              />
+            )
+          ) : discoverMode === "opportunities" ? (
+            /* OPPORTUNITIES VIEW */
+            isOppsLoading ? (
+              <DiscoverSkeleton count={6} />
+            ) : opportunitiesData?.data && opportunitiesData.data.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {opportunitiesData.data.map((opp) => (
+                  <OpportunityCard
+                    key={opp.id}
+                    opportunity={opp}
+                    onSelect={setSelectedOpportunity}
                   />
                 ))}
               </div>
+            ) : (
+              <NetworkEmptyState
+                icon={Briefcase}
+                title="No opportunities found"
+                description="No opportunities match your current filters. Check back soon for new internships and projects."
+                action={() => handleSearchChange("")}
+                actionLabel="Clear Search"
+              />
+            )
+          ) : (
+            /* PEOPLE & TALENT VIEW */
+            <>
+              {/* Filter Toolbar */}
+              <StudentFilters
+                filters={filterState}
+                onFilterChange={handleFiltersChange}
+                availableFilters={
+                  availableFilters || {
+                    courses: [],
+                    interests: [],
+                    institutions: [],
+                    levels: [],
+                  }
+                }
+              />
+
+              {/* Active Search / Result Feedback */}
+              {searchQuery && (
+                <div className="flex items-center justify-between text-xs text-text-muted">
+                  <p>
+                    Results for <span className="text-white font-semibold">"{searchQuery}"</span>
+                    {totalStudentsCount !== undefined && (
+                      <span> • {totalStudentsCount} student{totalStudentsCount === 1 ? "" : "s"} found</span>
+                    )}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleSearchChange("")}
+                    className="text-brand-mint hover:underline"
+                  >
+                    Clear query
+                  </button>
+                </div>
+              )}
+
+              {/* Error State */}
+              {isDiscoverError ? (
+                <NetworkErrorState
+                  title="We couldn't load students."
+                  message="Please check your connection or try again."
+                  onRetry={refetchDiscover}
+                />
+              ) : isDiscoverLoading && accumulatedStudents.length === 0 ? (
+                /* Initial / Searching Skeleton */
+                <DiscoverSkeleton count={8} />
+              ) : accumulatedStudents.length > 0 ? (
+                /* Student Discovery Grid */
+                <div className="space-y-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {accumulatedStudents.map((student) => (
+                      <StudentCard
+                        key={student.id}
+                        student={student}
+                        onPreview={setSelectedStudent}
+                      />
+                    ))}
+                  </div>
 
               {/* Load More Pagination */}
               {hasNextPage && (
@@ -523,8 +677,10 @@ export default function NetworkPage() {
               description="Check back soon as more learners join the Zeitnah network."
             />
           )}
-        </div>
+        </>
       )}
+    </div>
+  )}
 
       {/* ── COMMUNITIES TAB (PHASE 6) ── */}
       {activeTab === "communities" && (
@@ -737,12 +893,19 @@ export default function NetworkPage() {
       )}
 
       {/* ═══════════════════════════════════════════════
-          4. STUDENT PROFILE PREVIEW MODAL
+          4. MODALS (STUDENT PREVIEW & OPPORTUNITY DETAIL)
           ═══════════════════════════════════════════════ */}
       {selectedStudent && (
         <StudentProfilePreviewModal
           student={selectedStudent}
           onClose={() => setSelectedStudent(null)}
+        />
+      )}
+
+      {selectedOpportunity && (
+        <OpportunityDetailModal
+          opportunity={selectedOpportunity}
+          onClose={() => setSelectedOpportunity(null)}
         />
       )}
     </div>

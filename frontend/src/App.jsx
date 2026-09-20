@@ -10,6 +10,7 @@ import VerifyRegisterOtp from "./pages/auth/VerifyRegisterOtp";
 
 // Context
 import { ToastProvider } from "./components/ui/Toast";
+import { NotificationProvider } from "./context/NotificationContext";
 
 // Error Capture & Troubleshoot
 import { initErrorCapture } from "./utils/errorCapture";
@@ -39,6 +40,7 @@ const DiscussionDetailPage = React.lazy(() => import("./pages/network/Discussion
 const NotFoundPage = React.lazy(() => import("./pages/NotFoundPage"));
 const ErrorReportsDashboard = React.lazy(() => import("./pages/admin/ErrorReportsDashboard"));
 const SessionDiagnostics = React.lazy(() => import("./pages/admin/SessionDiagnostics"));
+const NotificationCenterPage = React.lazy(() => import("./pages/notifications/NotificationCenterPage"));
 
 // Community Views
 const CommunityLayout = React.lazy(() => import("./layouts/CommunityLayout"));
@@ -103,9 +105,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
-        <BrowserRouter>
-          <NativeBridgeHandler />
-          <Routes>
+        <NotificationProvider>
+          <BrowserRouter>
+            <NativeBridgeHandler />
+            <Routes>
 
             {/* PUBLIC AUTHENTICATION ROUTES */}
             <Route path="/login" element={<Login />} />
@@ -147,6 +150,7 @@ function App() {
               <Route path="/network/profile/:username" element={<Suspense fallback={<PageLoader />}><NetworkProfilePage /></Suspense>} />
               <Route path="/network/communities/:slug" element={<Suspense fallback={<PageLoader />}><CommunityDetailPage /></Suspense>} />
               <Route path="/network/communities/:slug/discussions/:discussionId" element={<Suspense fallback={<PageLoader />}><DiscussionDetailPage /></Suspense>} />
+              <Route path="/notifications" element={<Suspense fallback={<PageLoader />}><NotificationCenterPage /></Suspense>} />
               <Route path="/active-sessions" element={<Suspense fallback={<PageLoader />}><ActiveSessions /></Suspense>} />
               <Route path="/audit-logs" element={<Suspense fallback={<PageLoader />}><AuditLogs /></Suspense>} />
               <Route path="/admin/error-reports" element={<Suspense fallback={<PageLoader />}><ErrorReportsDashboard /></Suspense>} />
@@ -172,19 +176,14 @@ function App() {
             </Route>
 
             {/* 404 — NOT FOUND */}
-            <Route
-              path="*"
-              element={
-                <Suspense fallback={<PageLoader />}>
-                  <NotFoundPage />
-                </Suspense>
-              }
-            />
+            {/* 404 NOT FOUND ROUTE */}
+            <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFoundPage /></Suspense>} />
 
           </Routes>
           {/* Global Troubleshoot Error Reporter */}
           <TroubleshootReporter />
         </BrowserRouter>
+        </NotificationProvider>
       </ToastProvider>
     </QueryClientProvider>
   );

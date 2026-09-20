@@ -15,6 +15,7 @@ import {
   CommunityMembershipDocument,
 } from './schemas/community-membership.schema';
 import { SignedUrlService } from '../../common/aws/signed-url.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { GetStudentsDto } from './dto/get-students.dto';
 import {
   DiscoverableStudent,
@@ -161,6 +162,7 @@ export class NetworkService {
     @InjectModel(NetworkActivity.name)
     private readonly activityModel: Model<NetworkActivityDocument>,
     private readonly signedUrlService: SignedUrlService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /**
@@ -230,7 +232,10 @@ export class NetworkService {
       level,
       isActive: Boolean(user.account_Status?.isActive !== false),
       lastActiveAt,
-      isVerified: Boolean(user.account_Status?.isVerified),
+      isVerified: Boolean(user.account_Status?.isVerified || (user as any).verification?.status === 'VERIFIED'),
+      primaryRole: (user as any).primaryRole || 'STUDENT',
+      capabilities: (user as any).capabilities || ['STUDENT'],
+      availability: (user as any).availability || 'NOT_CURRENTLY_AVAILABLE',
       relationshipState: relationship?.state || 'none',
       connectionId: relationship?.connectionId,
     };
@@ -293,6 +298,16 @@ export class NetworkService {
       }
     }
 
+    // Filter by Role
+    if (dto.role && dto.role.trim()) {
+      query.primaryRole = dto.role.trim().toUpperCase();
+    }
+
+    // Filter by Availability
+    if (dto.availability && dto.availability.trim()) {
+      query.availability = dto.availability.trim();
+    }
+
     // Sorting
     let sortOptions: Record<string, any> = {
       'gamification.totalPoints': -1,
@@ -309,7 +324,7 @@ export class NetworkService {
     const skip = (page - 1) * limit;
 
     const projection =
-      'name username avatar headline currentRole course skills education gamification account_Status createdAt';
+      'name username avatar headline currentRole course skills education gamification account_Status createdAt primaryRole capabilities availability verification';
 
     const [total, students] = await Promise.all([
       this.userModel.countDocuments(query),
@@ -418,12 +433,14 @@ export class NetworkService {
     ).slice(0, 20);
 
     const levels = ['Beginner', 'Scholar', 'Master', 'Grandmaster'];
+    const roles = ['STUDENT', 'PROFESSIONAL', 'EDUCATOR', 'MENTOR', 'RECRUITER', 'FOUNDER'];
 
     return {
       courses: courseNames,
       interests: cleanSkills,
       institutions: cleanInstitutions,
       levels,
+      roles,
     };
   }
 
@@ -599,6 +616,28 @@ export class NetworkService {
       status: 'pending',
     });
 
+    // Dispatch connection.requested notification asynchronously
+    try {
+      const requester = await this.userModel.findById(currentUserId).select('name username avatar').lean();
+      if (requester) {
+        await this.notificationsService.createNotification({
+          recipientId: targetUserId,
+          actorId: currentUserId,
+          type: 'connection.requested',
+          category: 'social',
+          priority: 'important',
+          title: `${requester.name || 'A student'} sent you a connection request`,
+          message: 'You can review their profile and respond.',
+          entityType: 'connection',
+          entityId: String(created._id),
+          actionUrl: '/network?tab=connections&subTab=requests',
+          idempotencyKey: `conn_req_${currentUserId}_${targetUserId}`,
+        });
+      }
+    } catch (err: any) {
+      this.logger.warn(`Failed to dispatch connection.requested notification: ${err.message}`);
+    }
+
     return {
       success: true,
       state: 'outgoing_pending',
@@ -649,6 +688,28 @@ export class NetworkService {
 
     connection.status = 'accepted';
     await connection.save();
+
+    // Dispatch connection.accepted notification asynchronously
+    try {
+      const accepter = await this.userModel.findById(currentUserId).select('name username avatar').lean();
+      if (accepter) {
+        await this.notificationsService.createNotification({
+          recipientId: String(connection.requesterId),
+          actorId: currentUserId,
+          type: 'connection.accepted',
+          category: 'social',
+          priority: 'normal',
+          title: `${accepter.name || 'A student'} accepted your connection request`,
+          message: 'You are now connected.',
+          entityType: 'connection',
+          entityId: String(connection._id),
+          actionUrl: `/network/profile/${encodeURIComponent(accepter.username || '')}`,
+          idempotencyKey: `conn_acc_${String(connection._id)}`,
+        });
+      }
+    } catch (err: any) {
+      this.logger.warn(`Failed to dispatch connection.accepted notification: ${err.message}`);
+    }
 
     return {
       success: true,
@@ -1289,7 +1350,12 @@ export class NetworkService {
         headline: userDoc.headline || '',
         bio: userDoc.bio || '',
         location: userDoc.location || '',
-        isVerified: Boolean(userDoc.account_Status?.isVerified),
+        isVerified: Boolean(userDoc.account_Status?.isVerified || (userDoc as any).verification?.status === 'VERIFIED'),
+        primaryRole: (userDoc as any).primaryRole || 'STUDENT',
+        capabilities: (userDoc as any).capabilities || ['STUDENT'],
+        availability: (userDoc as any).availability || 'NOT_CURRENTLY_AVAILABLE',
+        professionalInterests: (userDoc as any).professionalInterests || [],
+        verification: (userDoc as any).verification || { status: 'UNVERIFIED', type: 'IDENTITY' },
         joinedAt: (userDoc as { createdAt?: Date }).createdAt
           ? new Date((userDoc as { createdAt?: Date }).createdAt).toISOString()
           : undefined,

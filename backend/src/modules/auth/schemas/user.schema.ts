@@ -426,6 +426,119 @@ export class User {
   })
   publicProfilePublished!: boolean;
 
+  // ECOSYSTEM PRIMARY ROLE (Authoritative)
+  @Prop({
+    default: 'STUDENT',
+    enum: ['STUDENT', 'EDUCATOR', 'PROFESSIONAL', 'MENTOR', 'RECRUITER', 'FOUNDER'],
+  })
+  primaryRole!: string;
+
+  // ECOSYSTEM CAPABILITIES
+  @Prop({
+    type: [String],
+    default: ['STUDENT'],
+  })
+  capabilities!: string[];
+
+  // PROFESSIONAL AVAILABILITY
+  @Prop({
+    default: 'NOT_CURRENTLY_AVAILABLE',
+    enum: [
+      'OPEN_TO_OPPORTUNITIES',
+      'AVAILABLE_FOR_MENTORSHIP',
+      'AVAILABLE_FOR_COLLABORATION',
+      'NOT_CURRENTLY_AVAILABLE',
+    ],
+  })
+  availability!: string;
+
+  // PROFESSIONAL INTERESTS
+  @Prop({
+    type: [String],
+    default: [],
+  })
+  professionalInterests!: string[];
+
+  // RECRUITER DISCOVERABILITY (Explicit user control)
+  @Prop({
+    default: false,
+    type: Boolean,
+  })
+  discoverableToRecruiters!: boolean;
+
+  // GRANULAR PROFILE VISIBILITY
+  @Prop({
+    default: 'PUBLIC',
+    enum: ['PUBLIC', 'NETWORK', 'VERIFIED_RECRUITERS', 'PRIVATE'],
+  })
+  profileVisibility!: string;
+
+  // MENTORSHIP CONTEXT
+  @Prop({
+    type: {
+      topics: { type: [String], default: [] },
+      expertise: { type: [String], default: [] },
+      bio: { type: String, default: '' },
+      available: { type: Boolean, default: false },
+    },
+    default: { topics: [], expertise: [], bio: '', available: false },
+  })
+  mentorship!: {
+    topics: string[];
+    expertise: string[];
+    bio: string;
+    available: boolean;
+  };
+
+  // RECRUITER CONTEXT
+  @Prop({
+    type: {
+      organizationId: { type: String, default: '' },
+      hiringInterests: { type: [String], default: [] },
+      opportunityTypes: { type: [String], default: [] },
+    },
+    default: { organizationId: '', hiringInterests: [], opportunityTypes: [] },
+  })
+  recruiterContext!: {
+    organizationId?: string;
+    hiringInterests: string[];
+    opportunityTypes: string[];
+  };
+
+  // EDUCATOR CONTEXT
+  @Prop({
+    type: {
+      subjects: { type: [String], default: [] },
+      expertise: { type: [String], default: [] },
+      institution: { type: String, default: '' },
+    },
+    default: { subjects: [], expertise: [], institution: '' },
+  })
+  educatorContext!: {
+    subjects: string[];
+    expertise: string[];
+    institution?: string;
+  };
+
+  // VERIFICATION CONTEXT (Factual, backend-controlled)
+  @Prop({
+    type: {
+      status: {
+        type: String,
+        enum: ['UNVERIFIED', 'PENDING', 'VERIFIED', 'REVOKED'],
+        default: 'UNVERIFIED',
+      },
+      verificationType: { type: String, default: 'IDENTITY' },
+      verifiedAt: { type: Date, default: null },
+    },
+    default: { status: 'UNVERIFIED', verificationType: 'IDENTITY', verifiedAt: null },
+  })
+  verification!: {
+    status: string;
+    verificationType: string;
+    verifiedAt?: Date | null;
+  };
+
   // EXPERIENCE
   @Prop({
     type: [

@@ -33,6 +33,7 @@ import {
   CommunityReportSchema,
 } from './schemas/community-report.schema';
 import { AwsModule } from '../../common/aws/aws.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { NetworkController } from './network.controller';
 import { NetworkService } from './network.service';
 import { CommunityService } from './community.service';
@@ -53,6 +54,7 @@ import { CommunityService } from './community.service';
       { name: CommunityReport.name, schema: CommunityReportSchema },
     ]),
     AwsModule,
+    NotificationsModule,
   ],
   controllers: [NetworkController],
   providers: [NetworkService, CommunityService],

@@ -11,6 +11,9 @@ export interface DiscoverableStudent {
   isActive: boolean;
   lastActiveAt?: string;
   isVerified: boolean;
+  primaryRole?: string;
+  capabilities?: string[];
+  availability?: string;
   relationshipState?:
     | 'none'
     | 'outgoing_pending'
@@ -35,4 +38,5 @@ export interface NetworkFiltersResponse {
   interests: string[];
   institutions: string[];
   levels: string[];
+  roles?: string[];
 }

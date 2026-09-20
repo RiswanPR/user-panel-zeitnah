@@ -34,6 +34,7 @@ import { RegisterVerifyOtpDto } from './dto/register-verify-otp.dto';
 import { LoginHistoryService } from '../login-history/login-history.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { UsernameService } from '../profile/services/username.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 type LoginDeviceSnapshot = {
   deviceId?: string;
@@ -144,6 +145,7 @@ export class AuthService {
     private auditLogsService: AuditLogsService,
     private jwtService: JwtService,
     private usernameService: UsernameService,
+    private notificationsService: NotificationsService,
   ) {}
 
   private normalizeSecurityValue(value?: string | null) {
@@ -1000,6 +1002,26 @@ export class AuthService {
         },
         suspiciousLogin.reasons,
       );
+    }
+
+    // Dispatch security.new_login / security.suspicious_activity notification
+    try {
+      await this.notificationsService.createNotification({
+        recipientId: user._id.toString(),
+        type: suspiciousLogin.isSuspicious
+          ? 'security.suspicious_activity'
+          : 'security.new_login',
+        category: 'security',
+        priority: 'critical',
+        title: suspiciousLogin.isSuspicious
+          ? 'Suspicious Login Detected'
+          : 'New Login to Your Account',
+        message: `Signed in on ${data.deviceType || 'device'} (${data.browser || 'browser'}) from ${loginLocation || 'Unknown location'}.`,
+        actionUrl: '/active-sessions',
+        idempotencyKey: `login_${user._id.toString()}_${data.deviceId}_${Date.now()}`,
+      });
+    } catch (err: any) {
+      // safe fallback
     }
     // =========================
     // GENERATE JWT

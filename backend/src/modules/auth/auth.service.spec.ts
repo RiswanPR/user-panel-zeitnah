@@ -6,6 +6,7 @@ import { User } from './schemas/user.schema';
 import { LoginHistoryService } from '../login-history/login-history.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { UsernameService } from '../profile/services/username.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -34,6 +35,12 @@ describe('AuthService', () => {
           provide: UsernameService,
           useValue: {
             generateCandidates: jest.fn().mockReturnValue(['testuser']),
+          },
+        },
+        {
+          provide: NotificationsService,
+          useValue: {
+            createNotification: jest.fn(),
           },
         },
       ],

@@ -5,6 +5,14 @@ import { NotificationsGateway } from './notifications.gateway';
 import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
 import { User, UserSchema } from '../auth/schemas/user.schema';
+import {
+  Notification,
+  NotificationSchema,
+} from './schemas/notification.schema';
+import {
+  NotificationPreference,
+  NotificationPreferenceSchema,
+} from './schemas/notification-preference.schema';
 
 @Module({
   imports: [
@@ -15,6 +23,14 @@ import { User, UserSchema } from '../auth/schemas/user.schema';
       {
         name: User.name,
         schema: UserSchema,
+      },
+      {
+        name: Notification.name,
+        schema: NotificationSchema,
+      },
+      {
+        name: NotificationPreference.name,
+        schema: NotificationPreferenceSchema,
       },
     ]),
   ],
