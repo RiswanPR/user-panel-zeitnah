@@ -24,6 +24,7 @@ const CATEGORIES = [
  * @param {function(string): void} [props.onFilterChange] - Filter change handler
  * @param {string} [props.searchQuery=''] - Current search term
  * @param {function(Object): void} [props.onPreview] - Student profile preview modal callback
+ * @param {function(): void} [props.onExplore] - Callback to explore all students
  * @param {string[]} [props.courses] - Real available courses from directory
  * @param {string} [props.title='Suggested for you'] - Section title
  * @param {string} [props.description='People you may want to connect with.'] - Section description
@@ -37,6 +38,7 @@ export default function SuggestedStudents({
   searchQuery = "",
   onClearSearch,
   onPreview,
+  onExplore,
   courses = [],
   title = "Suggested for you",
   description = "People you may want to connect with.",

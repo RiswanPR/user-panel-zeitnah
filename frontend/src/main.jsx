@@ -62,11 +62,16 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 
 // ── Web Vitals Performance Monitoring ──
 if (import.meta.env.DEV) {
-  import("web-vitals").then(({ onCLS, onFID, onFCP, onLCP, onTTFB }) => {
-    onCLS(console.log);
-    onFID(console.log);
-    onFCP(console.log);
-    onLCP(console.log);
-    onTTFB(console.log);
-  });
+  import("web-vitals")
+    .then((vitals) => {
+      const { onCLS, onINP, onFID, onFCP, onLCP, onTTFB } = vitals;
+      onCLS?.(console.log);
+      onINP?.(console.log);
+      onFID?.(console.log);
+      onFCP?.(console.log);
+      onLCP?.(console.log);
+      onTTFB?.(console.log);
+    })
+    .catch(() => {});
 }
+
