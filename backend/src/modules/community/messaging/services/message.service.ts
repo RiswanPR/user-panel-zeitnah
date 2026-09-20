@@ -21,6 +21,7 @@ import { RedisService } from '../../../redis/redis.service';
 import { SendMessageDto } from '../dto/send-message.dto';
 import { EditMessageDto } from '../dto/edit-message.dto';
 import { MarkReadDto } from '../dto/mark-read.dto';
+import { escapeRegex } from '../../../../common/utils/regex.util';
 
 @Injectable()
 export class MessageService {
@@ -246,7 +247,7 @@ export class MessageService {
     const filter: any = {
       conversationId: { $in: convIds },
       deleted: false,
-      content: { $regex: new RegExp(query.trim(), 'i') },
+      content: { $regex: new RegExp(escapeRegex(query.trim()), 'i') },
     };
 
     if (type) {
@@ -404,7 +405,7 @@ export class MessageService {
       .find({
         conversationId,
         deleted: false,
-        content: { $regex: new RegExp(query.trim(), 'i') },
+        content: { $regex: new RegExp(escapeRegex(query.trim()), 'i') },
       })
       .sort({ createdAt: -1 })
       .limit(30)

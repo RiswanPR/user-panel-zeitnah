@@ -6,6 +6,7 @@ import {
 } from "react";
 import api from "../services/api";
 import storage from "../services/storage";
+import queryClient from "../services/queryClient";
 import nativeNotifications from "../native/notifications";
 import LogoutConfirmModal from "../components/common/LogoutConfirmModal";
 
@@ -55,6 +56,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       } catch (error) {
         storage.clearAuth();
+        queryClient.clear();
         if (mounted) {
           setUser(null);
         }
@@ -70,6 +72,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Listen to unified logout events across the application
     const handleAuthLogout = () => {
       nativeNotifications.removePushTokenFromBackend().catch(() => {});
+      queryClient.clear();
       setUser(null);
     };
 
@@ -90,6 +93,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // Ignore background push token cleanup errors
     } finally {
       storage.clearAuth();
+      queryClient.clear();
       setUser(null);
     }
   };

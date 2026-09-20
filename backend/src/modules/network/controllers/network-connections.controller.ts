@@ -7,6 +7,8 @@ import {
   Param,
   Query,
   Req,
+  Body,
+  BadRequestException,
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
@@ -46,6 +48,16 @@ export class NetworkConnectionsController {
   @Post('connections/request/:recipientId')
   @ApiOperation({ summary: 'Send connection request' })
   async sendRequest(@Req() req, @Param('recipientId') recipientId: string) {
+    return this.connService.sendConnectionRequest(this.getUserId(req), recipientId);
+  }
+
+  @Post('connections')
+  @ApiOperation({ summary: 'Send connection request via body' })
+  async sendConnection(@Req() req, @Body() body: { recipientId?: string; targetUserId?: string }) {
+    const recipientId = body?.recipientId || body?.targetUserId;
+    if (!recipientId) {
+      throw new BadRequestException('recipientId is required');
+    }
     return this.connService.sendConnectionRequest(this.getUserId(req), recipientId);
   }
 

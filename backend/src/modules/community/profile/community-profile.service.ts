@@ -23,6 +23,7 @@ import {
   ProfileViewDocument,
 } from './schemas/profile-view.schema';
 import { CreateProfileDto } from './dto/create-profile.dto';
+import { escapeRegex } from '../../../common/utils/regex.util';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { AddSkillDto, UpdateSkillDto } from './dto/add-skill.dto';
 import { AddProjectDto, UpdateProjectDto } from './dto/add-project.dto';
@@ -290,7 +291,7 @@ export class CommunityProfileService {
 
     const existing = await this.skillModel.findOne({
       userId,
-      name: { $regex: new RegExp(`^${dto.name.trim()}$`, 'i') },
+      name: { $regex: new RegExp(`^${escapeRegex(dto.name.trim())}$`, 'i') },
     });
     if (existing) {
       throw new ConflictException(

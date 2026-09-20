@@ -21,6 +21,7 @@ import {
   ProofSourceType,
   ProofStatus,
 } from './schemas/skill-proof.schema';
+import { escapeRegex } from '../../common/utils/regex.util';
 
 const DEFAULT_CURATED_SKILLS = [
   { name: 'JavaScript', category: 'Engineering', aliases: ['JS', 'ES6'] },
@@ -164,7 +165,7 @@ export class SkillsService implements OnModuleInit {
     const slug = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
     let skill = await this.skillModel.findOne({
-      $or: [{ slug }, { name: new RegExp(`^${cleanName}$`, 'i') }],
+      $or: [{ slug }, { name: new RegExp(`^${escapeRegex(cleanName)}$`, 'i') }],
     });
 
     if (!skill) {

@@ -9,7 +9,10 @@ export default function NotificationBell({ className = '' }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
-  const hookNotifs = useNotifications({ limit: 10 });
+  const hookNotifs = useNotifications(
+    { limit: 10 },
+    { enabled: !notifContext?.setIsDrawerOpen && isOpen },
+  );
 
   const unreadCount = notifContext?.unreadCount !== undefined ? notifContext.unreadCount : hookNotifs.unreadCount;
   const notifications = hookNotifs.notifications || [];

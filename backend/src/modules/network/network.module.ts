@@ -7,6 +7,7 @@ import { CommunityDiscussion, CommunityDiscussionSchema } from './schemas/commun
 import { CommunityReply, CommunityReplySchema } from './schemas/community-reply.schema';
 import { CommunityAnnouncement, CommunityAnnouncementSchema } from './schemas/community-announcement.schema';
 import { CommunityResource, CommunityResourceSchema } from './schemas/community-resource.schema';
+import { CommunityReport, CommunityReportSchema } from './schemas/community-report.schema';
 import { NetworkConnection, NetworkConnectionSchema } from './schemas/connection.schema';
 import { NetworkActivity, NetworkActivitySchema } from './schemas/activity.schema';
 import { Organization, OrganizationSchema } from './schemas/organization.schema';
@@ -37,6 +38,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
       { name: CommunityReply.name, schema: CommunityReplySchema },
       { name: CommunityAnnouncement.name, schema: CommunityAnnouncementSchema },
       { name: CommunityResource.name, schema: CommunityResourceSchema },
+      { name: CommunityReport.name, schema: CommunityReportSchema },
       { name: NetworkConnection.name, schema: NetworkConnectionSchema },
       { name: NetworkActivity.name, schema: NetworkActivitySchema },
       { name: Organization.name, schema: OrganizationSchema },

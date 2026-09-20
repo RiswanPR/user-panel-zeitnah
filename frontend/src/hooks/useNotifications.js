@@ -3,7 +3,7 @@ import { useContext, useEffect } from 'react';
 import { notificationsApi } from '../services/notificationsApi';
 import { SocketContext } from '../context/SocketContext';
 
-export function useNotifications(params = {}) {
+export function useNotifications(params = {}, options = {}) {
   const queryClient = useQueryClient();
   const { socket } = useContext(SocketContext) || {};
 
@@ -13,7 +13,7 @@ export function useNotifications(params = {}) {
     queryKey,
     queryFn: () => notificationsApi.getNotifications(params),
     staleTime: 1000 * 30, // 30s
-    refetchInterval: 1000 * 60, // Poll every 60s
+    enabled: options.enabled !== undefined ? options.enabled : true,
   });
 
   // Listen for real-time notifications via socket
