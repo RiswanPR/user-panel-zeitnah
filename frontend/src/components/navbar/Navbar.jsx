@@ -1,12 +1,16 @@
+import { useContext } from "react";
 import {
   NavLink,
 } from "react-router-dom";
+import { LogOut } from "lucide-react";
+import { AuthContext } from "../../context/AuthContext";
 
 import {
   navItems,
 } from "./navItems";
 
 function Navbar() {
+  const { logout } = useContext(AuthContext);
 
   return (
 
@@ -103,6 +107,18 @@ function Navbar() {
 
           }
 
+        </div>
+
+        {/* Logout */}
+        <div className="relative z-10 mt-auto pt-4 border-t border-white/[0.06]">
+          <button
+            type="button"
+            onClick={() => logout?.()}
+            className="w-full group flex items-center gap-4 px-4 py-3 rounded-2xl hover:bg-red-500/10 hover:border hover:border-red-500/20 text-white/60 hover:text-red-400 transition-all duration-300 cursor-pointer"
+          >
+            <LogOut size={20} className="text-white/40 group-hover:text-red-400 transition-colors" />
+            <span className="font-medium text-sm">Logout</span>
+          </button>
         </div>
 
       </div>

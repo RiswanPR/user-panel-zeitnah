@@ -7,6 +7,7 @@ import {
   User,
   BarChart3,
   Users,
+  LogOut,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { AuthContext } from "../context/AuthContext";
@@ -44,7 +45,7 @@ const navItemVariants = {
 
 export default function MainLayout({ children }) {
   const location = useLocation();
-  const { user } = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext);
   const currentUserId = user?._id || user?.userId;
   const shouldReduceMotion = useReducedMotion();
 
@@ -154,6 +155,17 @@ export default function MainLayout({ children }) {
               <span className="text-[10px] font-heading font-bold text-brand-mint">{userInitials}</span>
             )}
           </Link>
+
+          {/* Logout Shortcut */}
+          <button
+            type="button"
+            onClick={() => logout?.()}
+            aria-label="Log out"
+            title="Log out"
+            className="w-8 h-8 rounded-full border border-white/[0.08] bg-white/[0.04] hover:bg-red-500/15 hover:border-red-500/30 text-text-muted hover:text-red-400 flex items-center justify-center active:scale-95 transition-all focus-ring cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
         </div>
       </header>
 
@@ -277,38 +289,50 @@ export default function MainLayout({ children }) {
             {/* ── Bottom Divider (edge to edge within island gutter) ── */}
             <div className="w-full h-px bg-gradient-to-r from-transparent via-border-accent to-transparent my-2" />
 
-            {/* ── User Card ── */}
-            <Link
-              to="/profile"
-              className="px-3 py-2 flex items-center gap-3 select-none hover:bg-white/[0.04] transition-colors rounded-xl group focus-ring w-full"
-            >
-              <div className="relative w-9 h-9 shrink-0">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-mint/20 to-brand-navy/40 border border-brand-mint/25 flex items-center justify-center overflow-hidden">
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt={user?.name || "User"}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-xs font-heading font-bold text-brand-mint">
-                      {userInitials}
-                    </span>
-                  )}
+            {/* ── User Card & Logout ── */}
+            <div className="flex items-center gap-1.5 w-full">
+              <Link
+                to="/profile"
+                className="px-3 py-2 flex items-center gap-3 select-none hover:bg-white/[0.04] transition-colors rounded-xl group focus-ring flex-1 min-w-0"
+              >
+                <div className="relative w-9 h-9 shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-mint/20 to-brand-navy/40 border border-brand-mint/25 flex items-center justify-center overflow-hidden">
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt={user?.name || "User"}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-xs font-heading font-bold text-brand-mint">
+                        {userInitials}
+                      </span>
+                    )}
+                  </div>
+                  {/* Online indicator */}
+                  <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-success border-2 border-bg-surface" />
                 </div>
-                {/* Online indicator */}
-                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-success border-2 border-bg-surface" />
-              </div>
 
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold truncate text-white group-hover:text-brand-mint transition-colors">
-                  {user?.name || "Zeitnah User"}
-                </p>
-                <p className="text-[10px] text-text-muted font-mono truncate">
-                  @{user?.username || "student"}
-                </p>
-              </div>
-            </Link>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold truncate text-white group-hover:text-brand-mint transition-colors">
+                    {user?.name || "Zeitnah User"}
+                  </p>
+                  <p className="text-[10px] text-text-muted font-mono truncate">
+                    @{user?.username || "student"}
+                  </p>
+                </div>
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => logout?.()}
+                title="Log out"
+                aria-label="Log out"
+                className="p-2.5 rounded-xl border border-transparent hover:border-red-500/20 hover:bg-red-500/10 text-text-faint hover:text-red-400 transition-all duration-200 focus-ring shrink-0 cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </aside>

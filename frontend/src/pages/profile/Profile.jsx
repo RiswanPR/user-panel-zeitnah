@@ -23,6 +23,7 @@ import {
   ChevronRight,
   Code2,
   ArrowRight,
+  LogOut,
 } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
 import { coreProfileService } from "../../services/coreProfileService";
@@ -78,7 +79,7 @@ function XPCountUp({ value = 0, duration = 800 }) {
 
 export default function Profile() {
   const queryClient = useQueryClient();
-  const { setUser } = useContext(AuthContext);
+  const { setUser, logout } = useContext(AuthContext);
   const toast = useToast();
   const avatarFileRef = useRef(null);
   const bannerFileRef = useRef(null);
@@ -557,6 +558,16 @@ export default function Profile() {
                 >
                   <Share2 className="w-4 h-4" />
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => logout?.()}
+                  className="p-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl border border-red-500/20 bg-red-500/5 hover:bg-red-500/15 text-red-400 hover:text-red-300 transition-colors cursor-pointer shrink-0"
+                  title="Log out"
+                  aria-label="Log out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>
@@ -777,6 +788,27 @@ export default function Profile() {
             </Link>
           )}
         </div>
+      </motion.div>
+
+      {/* ── 04. ACCOUNT & SIGN OUT SECTION ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+        className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 sm:p-6 rounded-3xl border border-border-default bg-bg-card/50 backdrop-blur-md"
+      >
+        <div>
+          <h3 className="text-sm font-heading font-bold text-white">Sign Out</h3>
+          <p className="text-xs text-text-muted mt-0.5">Securely end your session on this device.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => logout?.()}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 text-xs font-semibold tracking-wide transition-all cursor-pointer focus-ring"
+        >
+          <LogOut className="w-4 h-4" />
+          <span>Sign Out</span>
+        </button>
       </motion.div>
 
       {/* ── Share Modal ── */}
