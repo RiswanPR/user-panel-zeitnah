@@ -58,7 +58,6 @@ export class LearningSpace {
 }
 
 export const LearningSpaceSchema = SchemaFactory.createForClass(LearningSpace);
-LearningSpaceSchema.index({ code: 1 }, { unique: true });
 LearningSpaceSchema.index({ status: 1, accessMode: 1 });
 LearningSpaceSchema.index({ teachers: 1 });
 LearningSpaceSchema.index({ communityId: 1 });

@@ -34,4 +34,4 @@ export class NotificationPreference {
 }
 
 export const NotificationPreferenceSchema = SchemaFactory.createForClass(NotificationPreference);
-NotificationPreferenceSchema.index({ userId: 1 }, { unique: true });
+

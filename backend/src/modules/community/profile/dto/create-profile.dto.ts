@@ -36,7 +36,7 @@ export class CreateProfileDto {
   @ApiProperty({ example: 'john_doe', description: 'Unique username' })
   @IsString()
   @IsNotEmpty()
-  @Length(3, 30)
+  @Length(3, 20)
   @Matches(/^[a-zA-Z0-9_.-]+$/, {
     message:
       'Username can only contain alphanumeric characters, underscores, hyphens, and dots',

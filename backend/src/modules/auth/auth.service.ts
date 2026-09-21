@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   UnauthorizedException,
   BadRequestException,
   NotFoundException,
@@ -123,6 +124,8 @@ function parseDurationToMs(value?: string | number | null): number | null {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   private readonly accessTokenExpiresIn = (process.env.JWT_ACCESS_EXPIRES_IN ||
     '15m') as StringValue;
 
@@ -474,43 +477,43 @@ export class AuthService {
       user.otp = hashedOtp;
       user.otpExpiry = otpExpiry;
       user.name = data.name;
-      if (!user.username) {
-        const candidates = this.usernameService.generateCandidates(
-          data.name,
-          data.email,
-        );
-        for (const cand of candidates) {
-          const exists = await this.userModel.exists({
-            username: cand,
-            _id: { $ne: user._id },
-          });
-          if (!exists) {
-            user.username = cand;
-            break;
-          }
-        }
-        if (!user.username) {
-          user.username = `user_${crypto.randomBytes(4).toString('hex')}`;
+      if (!user.username || !this.usernameService.validate(user.username).valid) {
+        user.username = await this.usernameService.generateUniqueUsername({
+          source: user.username,
+          name: data.name,
+          email: data.email,
+          isTaken: async (cand) => {
+            const exists = await this.userModel.exists({
+              username: cand,
+              _id: { $ne: user._id },
+            });
+            return Boolean(exists);
+          },
+        });
+        if (user.usernameClaimed === undefined || user.usernameClaimed === null) {
+          user.usernameClaimed = false;
         }
       }
-      await user.save();
+      try {
+        await user.save();
+      } catch (error: any) {
+        if (error?.name === 'ValidationError') {
+          throw new BadRequestException(
+            `User validation failed: ${error.message}`,
+          );
+        }
+        throw error;
+      }
     } else {
       // Generate username candidate
-      const candidates = this.usernameService.generateCandidates(
-        data.name,
-        data.email,
-      );
-      let chosenUsername = '';
-      for (const cand of candidates) {
-        const exists = await this.userModel.exists({ username: cand });
-        if (!exists) {
-          chosenUsername = cand;
-          break;
-        }
-      }
-      if (!chosenUsername) {
-        chosenUsername = `user_${crypto.randomBytes(4).toString('hex')}`;
-      }
+      const chosenUsername = await this.usernameService.generateUniqueUsername({
+        name: data.name,
+        email: data.email,
+        isTaken: async (cand) => {
+          const exists = await this.userModel.exists({ username: cand });
+          return Boolean(exists);
+        },
+      });
 
       // Create temporary user
       user = await this.userModel.create({
@@ -773,6 +776,35 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
+    // Ensure user has a valid, compliant username (<= 20 chars, schema compliant) before saving
+    if (!user.username || !this.usernameService.validate(user.username).valid) {
+      try {
+        const safeUsername = await this.usernameService.generateUniqueUsername({
+          source: user.username,
+          name: user.name,
+          email: user.email,
+          isTaken: async (cand) => {
+            const exists = await this.userModel.exists({
+              username: cand,
+              _id: { $ne: user._id },
+            });
+            return Boolean(exists);
+          },
+        });
+        user.username = safeUsername;
+        if (user.usernameClaimed === undefined || user.usernameClaimed === null) {
+          user.usernameClaimed = false;
+        }
+      } catch (err: any) {
+        this.logger.error(
+          `Failed to assign valid username in loginSendOtp for user ${user._id}: ${err?.message}`,
+        );
+        throw new BadRequestException(
+          'Could not assign a valid username to your account. Please contact support.',
+        );
+      }
+    }
+
     // Generate OTP
     const otp = crypto.randomInt(100000, 999999).toString();
 
@@ -787,7 +819,16 @@ export class AuthService {
 
     user.otpExpiry = otpExpiry;
 
-    await user.save();
+    try {
+      await user.save();
+    } catch (error: any) {
+      if (error?.name === 'ValidationError') {
+        throw new BadRequestException(
+          `User validation failed: ${error.message}`,
+        );
+      }
+      throw error;
+    }
 
     await this.auditLogsService.record({
       actor: user._id,

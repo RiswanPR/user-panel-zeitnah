@@ -62,6 +62,5 @@ export class Organization {
 }
 
 export const OrganizationSchema = SchemaFactory.createForClass(Organization);
-OrganizationSchema.index({ slug: 1 }, { unique: true });
 OrganizationSchema.index({ verificationStatus: 1, visibility: 1 });
 OrganizationSchema.index({ name: 'text', industry: 'text', location: 'text' });

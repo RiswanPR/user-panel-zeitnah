@@ -145,27 +145,13 @@ async function runMigration() {
         legacyPlaceholderMigrated++;
       }
 
-      // Generate best readable candidate
-      const candidates = usernameService.generateCandidates(u.name, u.email);
-      let chosen = '';
-      for (const cand of candidates) {
-        if (!takenUsernames.has(cand) && !RESERVED_USERNAMES.has(cand)) {
-          chosen = cand;
-          break;
-        }
-      }
-
-      // If all candidates collide, generate guaranteed numeric suffix
-      if (!chosen) {
-        const base = usernameService.sanitize(u.name) || usernameService.sanitize((u.email || '').split('@')[0]) || 'student';
-        const cleanBase = base.slice(0, 14);
-        let counter = 1001;
-        while (takenUsernames.has(`${cleanBase}${counter}`)) {
-          counter++;
-        }
-        chosen = `${cleanBase}${counter}`;
-        collisionResolutions++;
-      }
+      // Generate best readable, unique candidate <= 20 chars
+      const chosen = await usernameService.generateUniqueUsername({
+        source: rawUser,
+        name: u.name,
+        email: u.email,
+        isTaken: (cand) => takenUsernames.has(cand) || RESERVED_USERNAMES.has(cand),
+      });
 
       takenUsernames.add(chosen);
 

@@ -37,7 +37,6 @@ export class Community {
     unique: true,
     lowercase: true,
     trim: true,
-    index: true,
     maxlength: 120,
   })
   slug: string;
@@ -137,10 +136,8 @@ export class Community {
 export const CommunitySchema = SchemaFactory.createForClass(Community);
 
 // Performance & search indexes
-CommunitySchema.index({ slug: 1 }, { unique: true });
 CommunitySchema.index({ visibility: 1, status: 1 });
 CommunitySchema.index({ type: 1, status: 1 });
-CommunitySchema.index({ courseId: 1 });
 CommunitySchema.index({ createdAt: -1 });
 CommunitySchema.index({ memberCount: -1 });
 CommunitySchema.index(

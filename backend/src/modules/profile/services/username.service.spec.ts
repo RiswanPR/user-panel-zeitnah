@@ -112,4 +112,110 @@ describe('UsernameService', () => {
       expect(candidates.every((c) => !isReservedUsername(c))).toBe(true);
     });
   });
+
+  describe('Suffix Handling & buildWithSuffix', () => {
+    it('should reserve space for numeric suffixes and guarantee <= 20 length', () => {
+      const base = 'muhammedthajchorampatta';
+      const result = service.buildWithSuffix(base, 1, '_');
+      expect(result.length).toBeLessThanOrEqual(20);
+      expect(result).toBe('muhammedthajchoram_1');
+      expect(service.validate(result).valid).toBe(true);
+    });
+
+    it('should handle multi-digit suffixes without exceeding 20 chars', () => {
+      const base = 'muhammedthajchorampatta';
+      const result = service.buildWithSuffix(base, 100, '_');
+      expect(result.length).toBeLessThanOrEqual(20);
+      expect(result).toBe('muhammedthajchor_100');
+      expect(service.validate(result).valid).toBe(true);
+    });
+
+    it('should handle base muhammedthajchor with suffix _1', () => {
+      const base = 'muhammedthajchor';
+      const result = service.buildWithSuffix(base, 1, '_');
+      expect(result).toBe('muhammedthajchor_1');
+      expect(result.length).toBeLessThanOrEqual(20);
+      expect(service.validate(result).valid).toBe(true);
+    });
+
+    it('should never produce consecutive underscores or end with underscore', () => {
+      const base = 'user_name_';
+      const result = service.buildWithSuffix(base, 1, '_');
+      expect(result).not.toContain('__');
+      expect(result.endsWith('_')).toBe(false);
+      expect(service.validate(result).valid).toBe(true);
+    });
+  });
+
+  describe('Unique Username Generation (generateUniqueUsername)', () => {
+    it('should generate normal username when available', async () => {
+      const username = await service.generateUniqueUsername({
+        name: 'muhammed',
+        isTaken: () => false,
+      });
+      expect(username).toBe('muhammed');
+      expect(username.length).toBeLessThanOrEqual(20);
+      expect(service.validate(username).valid).toBe(true);
+    });
+
+    it('should truncate long username to <= 20 chars without error', async () => {
+      const username = await service.generateUniqueUsername({
+        name: 'muhammedthajchorampatta',
+        isTaken: () => false,
+      });
+      expect(username.length).toBeLessThanOrEqual(20);
+      expect(username).toBe('muhammedthajchorampa');
+      expect(service.validate(username).valid).toBe(true);
+    });
+
+    it('should resolve collision safely while reserving suffix space and keeping length <= 20', async () => {
+      const taken = new Set(['muhammedthajchorampa']);
+      const username = await service.generateUniqueUsername({
+        name: 'muhammedthajchorampatta',
+        isTaken: (cand) => taken.has(cand),
+      });
+      expect(username.length).toBeLessThanOrEqual(20);
+      expect(username).not.toBe('muhammedthajchorampa');
+      expect(service.validate(username).valid).toBe(true);
+      expect(username).toBe('muhammedthajchoram_1');
+    });
+
+    it('should resolve collision if muhammedthajchor exists', async () => {
+      const taken = new Set([
+        'muhammedthajchor',
+        'muhammedthajchoramp',
+      ]);
+      const username = await service.generateUniqueUsername({
+        source: 'muhammedthajchor',
+        isTaken: (cand) => taken.has(cand),
+      });
+      expect(username.length).toBeLessThanOrEqual(20);
+      expect(username).toBe('muhammedthajchor_1');
+      expect(service.validate(username).valid).toBe(true);
+    });
+
+    it('should handle very long names (significantly longer than 20 chars)', async () => {
+      const veryLongName = 'Muhammed Thaj Chorampatta Very Long Extraordinary Student Name';
+      const username = await service.generateUniqueUsername({
+        name: veryLongName,
+        isTaken: () => false,
+      });
+      expect(username.length).toBeLessThanOrEqual(20);
+      expect(service.validate(username).valid).toBe(true);
+    });
+
+    it('should clean invalid characters (spaces, special chars, uppercase, multiple separators)', async () => {
+      const messyInput = '  Muhammed @#$ Thaj __ Chorampatta !?* ';
+      const username = await service.generateUniqueUsername({
+        name: messyInput,
+        isTaken: () => false,
+      });
+      expect(username.length).toBeLessThanOrEqual(20);
+      expect(/^[a-z0-9_]+$/.test(username)).toBe(true);
+      expect(username).not.toContain('__');
+      expect(username.startsWith('_')).toBe(false);
+      expect(username.endsWith('_')).toBe(false);
+      expect(service.validate(username).valid).toBe(true);
+    });
+  });
 });

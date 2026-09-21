@@ -465,20 +465,20 @@ export class ProfileService {
       throw new UnauthorizedException('User not found');
     }
 
-    if (!user.username) {
-      const candidates = this.usernameService.generateCandidates(user.name, user.email);
-      for (const cand of candidates) {
-        const exists = await this.userModel.exists({ username: cand });
-        if (!exists) {
-          user.username = cand;
-          user.usernameClaimed = false;
-          break;
-        }
-      }
-      if (!user.username) {
-        user.username = `user_${crypto.randomBytes(4).toString('hex')}`;
-        user.usernameClaimed = false;
-      }
+    if (!user.username || !this.usernameService.validate(user.username).valid) {
+      user.username = await this.usernameService.generateUniqueUsername({
+        source: user.username,
+        name: user.name,
+        email: user.email,
+        isTaken: async (cand) => {
+          const exists = await this.userModel.exists({
+            username: cand,
+            _id: { $ne: user._id },
+          });
+          return Boolean(exists);
+        },
+      });
+      user.usernameClaimed = false;
       await user.save();
     }
 
