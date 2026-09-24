@@ -60,4 +60,16 @@ export class AnnouncementsController {
   async dismissAnnouncement(@Req() req, @Param('id') id: string) {
     return this.announcementsService.dismissAnnouncement(id, this.getUserId(req));
   }
+
+  @Post('platform/:id/acknowledge')
+  @ApiOperation({ summary: 'Acknowledge a platform announcement' })
+  async acknowledgePlatformAnnouncement(@Req() req, @Param('id') id: string) {
+    return this.announcementsService.acknowledgeAnnouncement(id, this.getUserId(req));
+  }
+
+  @Post(':id/acknowledge')
+  @ApiOperation({ summary: 'Acknowledge announcement' })
+  async acknowledgeAnnouncement(@Req() req, @Param('id') id: string) {
+    return this.announcementsService.acknowledgeAnnouncement(id, this.getUserId(req));
+  }
 }

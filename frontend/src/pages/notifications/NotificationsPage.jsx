@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, CheckCheck, Users, MessageSquare, Sparkles } from 'lucide-react';
+import { Bell, CheckCheck, Users, MessageSquare, Sparkles, Megaphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../../hooks/useNotifications';
 
@@ -15,12 +15,24 @@ export default function NotificationsPage() {
     if (!notif.isRead) {
       markAsRead(notif._id);
     }
-    if (notif.targetUrl) {
-      navigate(notif.targetUrl);
+    const target = notif.actionUrl || notif.targetUrl;
+    if (target) {
+      if (target.startsWith('http://') || target.startsWith('https://')) {
+        window.open(target, '_blank', 'noopener,noreferrer');
+      } else {
+        navigate(target);
+      }
     }
   };
 
-  const getCategoryIcon = (category) => {
+  const getCategoryIcon = (category, type, priority) => {
+    const prioUpper = (priority || '').toUpperCase();
+    if (prioUpper === 'CRITICAL') {
+      return <Megaphone className="w-5 h-5 text-rose-400" />;
+    }
+    if (category === 'announcements' || type === 'ANNOUNCEMENT') {
+      return <Megaphone className="w-5 h-5 text-amber-400" />;
+    }
     switch (category) {
       case 'spaces':
         return <Users className="w-5 h-5 text-brand-mint" />;
@@ -47,7 +59,7 @@ export default function NotificationsPage() {
             )}
           </div>
           <p className="text-xs text-text-muted mt-1">
-            Stay updated with space announcements, discussion replies, and connection requests.
+            Stay updated with institutional announcements, course updates, and network activity.
           </p>
         </div>
 
@@ -95,40 +107,68 @@ export default function NotificationsPage() {
         </div>
       ) : (
         <div className="space-y-2.5">
-          {notifications.map((notif) => (
-            <div
-              key={notif._id}
-              onClick={() => handleNotificationClick(notif)}
-              className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 ${
-                notif.isRead
-                  ? 'bg-[#111115]/80 hover:bg-[#14141a] border-white/[0.06]'
-                  : 'bg-gradient-to-r from-brand-mint/[0.04] via-[#111115] to-transparent border-brand-mint/30 shadow-lg shadow-brand-mint/5'
-              }`}
-            >
-              <div className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0 mt-0.5">
-                {getCategoryIcon(notif.category)}
-              </div>
+          {notifications.map((notif) => {
+            const prioUpper = (notif.priority || '').toUpperCase();
+            const isCritical = prioUpper === 'CRITICAL';
+            const isHigh = prioUpper === 'HIGH' || prioUpper === 'IMPORTANT';
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <h4 className={`text-xs sm:text-sm truncate ${notif.isRead ? 'font-semibold text-text-secondary' : 'font-bold text-white'}`}>
-                    {notif.title}
-                  </h4>
-                  <span className="text-[10px] text-text-muted shrink-0">
-                    {new Date(notif.createdAt).toLocaleDateString()} • {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
+            return (
+              <div
+                key={notif._id}
+                onClick={() => handleNotificationClick(notif)}
+                className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 ${
+                  notif.isRead
+                    ? 'bg-[#111115]/80 hover:bg-[#14141a] border-white/[0.06]'
+                    : isCritical
+                    ? 'bg-gradient-to-r from-red-950/20 via-[#111115] to-transparent border-red-500/40 shadow-lg shadow-red-950/20'
+                    : 'bg-gradient-to-r from-brand-mint/[0.04] via-[#111115] to-transparent border-brand-mint/30 shadow-lg shadow-brand-mint/5'
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 mt-0.5 ${
+                  isCritical ? 'bg-red-500/15 border-red-500/30' : 'bg-white/[0.03] border-white/[0.06]'
+                }`}>
+                  {getCategoryIcon(notif.category, notif.type, notif.priority)}
                 </div>
 
-                <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                  {notif.message}
-                </p>
-              </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {isCritical && (
+                        <span className="px-1.5 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                          Critical
+                        </span>
+                      )}
+                      {isHigh && (
+                        <span className="px-1.5 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                          Important
+                        </span>
+                      )}
+                      {notif.allowDismiss === false && (
+                        <span className="px-1.5 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                          Required
+                        </span>
+                      )}
+                      <h4 className={`text-xs sm:text-sm truncate ${notif.isRead ? 'font-semibold text-text-secondary' : 'font-bold text-white'}`}>
+                        {notif.title}
+                      </h4>
+                    </div>
 
-              {!notif.isRead && (
-                <span className="w-2.5 h-2.5 rounded-full bg-brand-mint shrink-0 self-center" />
-              )}
-            </div>
-          ))}
+                    <span className="text-[10px] text-text-muted shrink-0">
+                      {new Date(notif.createdAt).toLocaleDateString()} • {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-text-muted mt-1 leading-relaxed">
+                    {notif.message}
+                  </p>
+                </div>
+
+                {!notif.isRead && (
+                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 self-center ${isCritical ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]' : 'bg-brand-mint'}`} />
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

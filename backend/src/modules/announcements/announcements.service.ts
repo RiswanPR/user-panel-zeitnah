@@ -1,19 +1,42 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  Logger,
+  Optional,
+} from '@nestjs/common';
+import { InjectModel, InjectConnection } from '@nestjs/mongoose';
+import { Model, Types, Connection } from 'mongoose';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import {
   PlatformAnnouncement,
   PlatformAnnouncementDocument,
 } from './platform-announcement.schema';
+import { Announcement, AnnouncementDocument } from './schemas/announcement.schema';
 import { User, UserDocument } from '../auth/schemas/user.schema';
+import { Notification, NotificationDocument } from '../notifications/notification.schema';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 
 @Injectable()
 export class AnnouncementsService {
+  private readonly logger = new Logger(AnnouncementsService.name);
+
   constructor(
     @InjectModel(PlatformAnnouncement.name)
     private announcementModel: Model<PlatformAnnouncementDocument>,
     @InjectModel(User.name)
     private userModel: Model<UserDocument>,
+    @Optional()
+    @InjectModel(Announcement.name)
+    private masterAnnouncementModel?: Model<AnnouncementDocument>,
+    @Optional()
+    @InjectModel(Notification.name)
+    private notificationModel?: Model<NotificationDocument>,
+    @Optional()
+    private readonly notificationsGateway?: NotificationsGateway,
+    @Optional()
+    @InjectConnection()
+    private readonly connection?: Connection,
   ) {}
 
   private toObjectId(id: string | Types.ObjectId): Types.ObjectId {
@@ -25,58 +48,249 @@ export class AnnouncementsService {
   }
 
   /**
-   * Get active platform announcements for the current user
+   * Helper: Determine if user is eligible for announcement based on targeting
    */
-  async getActivePlatformAnnouncements(userId: string, role: string) {
+  /**
+   * Helper: Determine if user is eligible for announcement based on targeting
+   */
+  private checkAudienceEligibility(
+    ann: any,
+    userObjId: Types.ObjectId,
+    userRole: string,
+    enrolledCourses: string[],
+    userSpaceIds: Set<string>,
+  ): boolean {
+    const userIdStr = userObjId.toString();
+    const targetType = (ann.targetType || '').toLowerCase();
+    const audience = (ann.audience || '').toUpperCase();
+
+    // Admins / Superusers can see all announcements
+    if (userRole === 'admin' || userRole === 'superuser') {
+      return true;
+    }
+
+    // 1. Specific Users
+    if (targetType === 'specific_users') {
+      const targetIds = (ann.targetIds || []).map((id: any) => id?.toString());
+      return targetIds.includes(userIdStr);
+    }
+
+    // 2. Role-specific
+    if (targetType === 'role') {
+      const targetRoles = (ann.targetIds || ann.targetRoles || []).map((r: any) =>
+        String(r).toLowerCase(),
+      );
+      if (
+        (userRole === 'student' || userRole === 'user') &&
+        (targetRoles.includes('students') || targetRoles.includes('student'))
+      ) {
+        return true;
+      }
+      if (
+        userRole === 'teacher' &&
+        (targetRoles.includes('teachers') || targetRoles.includes('teacher'))
+      ) {
+        return true;
+      }
+      if (
+        (userRole === 'admin' || userRole === 'superuser') &&
+        targetRoles.includes('admins')
+      ) {
+        return true;
+      }
+      return false;
+    }
+
+    if (audience === 'STUDENTS') {
+      return userRole === 'student' || userRole === 'user' || userRole === 'admin' || userRole === 'superuser';
+    }
+    if (audience === 'TEACHERS') {
+      return userRole === 'teacher' || userRole === 'admin' || userRole === 'superuser';
+    }
+
+    // 3. Course-specific
+    if (targetType === 'course' || audience === 'COURSE_STUDENTS') {
+      const targetCourseId =
+        ann.courseId?.toString() || ann.target?.courseId?.toString();
+      if (!targetCourseId) return false;
+      return enrolledCourses.includes(targetCourseId);
+    }
+
+    // 4. Learning space-specific
+    if (targetType === 'learning_space') {
+      const targetSpaceId =
+        ann.learningSpaceId?.toString() || ann.target?.spaceId?.toString();
+      if (!targetSpaceId) return false;
+      return userSpaceIds.has(targetSpaceId);
+    }
+
+    // 5. Platform-wide / All Users (when explicitly platform or default with no special target)
+    if (targetType === 'platform' || audience === 'ALL_USERS' || (!targetType && !audience)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Helper: Map priority to numerical weight for sorting
+   */
+  private getPriorityWeight(ann: any): number {
+    if (ann.isCritical === true || String(ann.isCritical) === 'true') {
+      return 5;
+    }
+    const prio = String(ann.priority || '').toUpperCase();
+    const type = String(ann.type || '').toUpperCase();
+
+    if (prio === 'CRITICAL' || type === 'CRITICAL') return 5;
+    if (prio === 'HIGH' || prio === 'IMPORTANT' || type === 'IMPORTANT') return 4;
+    if (type === 'MAINTENANCE') return prio === 'CRITICAL' ? 5 : 4;
+    if (prio === 'MEDIUM') return 3;
+    if (prio === 'NORMAL' || prio === 'INFO') return 2;
+    if (prio === 'LOW') return 1;
+    return 2;
+  }
+
+  /**
+   * Get active platform & master announcements for current user
+   */
+  async getActivePlatformAnnouncements(userId: string, role = 'student') {
     const userObjId = this.toObjectId(userId);
+    const userIdStr = userObjId.toString();
+    const userRole = (role || 'student').toLowerCase();
     const now = new Date();
 
     // Fetch user enrolled course IDs
-    const user = await this.userModel.findById(userObjId, { 'course.courseId': 1 }).lean();
+    const user = await this.userModel.findById(userObjId, {
+      role: 1,
+      primaryRole: 1,
+      'course.courseId': 1,
+    }).lean();
+
     const enrolledCourseIds = (user?.course || [])
       .map((c: any) => String(c.courseId))
       .filter(Boolean);
 
+    // Preload user's learning spaces
+    const userSpaceIds = new Set<string>();
+    if (this.connection && this.connection.db) {
+      try {
+        const [spaceMembers, ownedSpaces, commMemberships] = await Promise.all([
+          this.connection.db
+            .collection('learning_space_members')
+            .find({ userId: userObjId, status: { $ne: 'removed' } }, { projection: { spaceId: 1 } })
+            .toArray(),
+          this.connection.db
+            .collection('learning_spaces')
+            .find(
+              {
+                $or: [
+                  { ownerId: userObjId },
+                  { teachers: userObjId },
+                  { teachers: userIdStr },
+                ],
+                status: { $ne: 'archived' },
+              },
+              { projection: { _id: 1 } },
+            )
+            .toArray(),
+          this.connection.db
+            .collection('network_community_memberships')
+            .find({ userId: userObjId, status: 'active' }, { projection: { communityId: 1 } })
+            .toArray(),
+        ]);
+
+        spaceMembers.forEach((m) => m.spaceId && userSpaceIds.add(m.spaceId.toString()));
+        ownedSpaces.forEach((s) => userSpaceIds.add(s._id.toString()));
+
+        if (commMemberships.length > 0) {
+          const commIds = commMemberships.map((c) => c.communityId);
+          const commSpaces = await this.connection.db
+            .collection('learning_spaces')
+            .find({ communityId: { $in: commIds } }, { projection: { _id: 1 } })
+            .toArray();
+          commSpaces.forEach((s) => userSpaceIds.add(s._id.toString()));
+        }
+      } catch (dbErr) {
+        this.logger.debug(`Space membership query note: ${dbErr?.message}`);
+      }
+    }
+
     const query: any = {
-      status: 'PUBLISHED',
-      startsAt: { $lte: now },
-      $or: [{ expiresAt: { $exists: false } }, { expiresAt: null }, { expiresAt: { $gt: now } }],
+      $or: [
+        { status: 'published', isPublished: true },
+        { status: 'PUBLISHED' },
+        { isPublished: true },
+      ],
+      $and: [
+        {
+          $or: [
+            { startsAt: { $lte: now } },
+            { publishedAt: { $lte: now } },
+            { scheduledAt: { $lte: now } },
+            { startsAt: null, publishedAt: null, scheduledAt: null },
+          ],
+        },
+        {
+          $or: [
+            { expiresAt: { $exists: false } },
+            { expiresAt: null },
+            { expiresAt: { $gt: now } },
+          ],
+        },
+      ],
       dismissedBy: { $ne: userObjId },
     };
 
-    const announcements = await this.announcementModel.find(query).sort({ createdAt: -1 }).lean();
+    const [platformAnnouncements, masterAnnouncements] = await Promise.all([
+      this.announcementModel ? this.announcementModel.find(query).sort({ createdAt: -1 }).lean() : [],
+      this.masterAnnouncementModel ? this.masterAnnouncementModel.find(query).sort({ createdAt: -1 }).lean() : [],
+    ]);
 
-    // Filter by audience
-    const filtered = announcements.filter((ann) => {
-      if (ann.audience === 'ALL_USERS') return true;
-      if (role === 'admin' || role === 'superuser') return true;
+    // Deduplicate: If an announcement exists in master and platform, master takes precedence
+    const seenIds = new Set<string>();
+    const combined: any[] = [];
 
-      if (ann.audience === 'STUDENTS' && (role === 'student' || role === 'user')) return true;
-      if (ann.audience === 'TEACHERS' && role === 'teacher') return true;
-
-      if (ann.audience === 'COURSE_STUDENTS') {
-        const targetCourseId = ann.target?.courseId;
-        if (targetCourseId && enrolledCourseIds.includes(String(targetCourseId))) {
-          return true;
-        }
+    for (const ann of masterAnnouncements) {
+      const idStr = ann._id.toString();
+      seenIds.add(idStr);
+      if (ann.platformAnnouncementId) {
+        seenIds.add(ann.platformAnnouncementId.toString());
       }
+      combined.push(ann);
+    }
 
-      return false;
+    for (const pAnn of platformAnnouncements) {
+      const idStr = pAnn._id.toString();
+      if (!seenIds.has(idStr)) {
+        seenIds.add(idStr);
+        combined.push(pAnn);
+      }
+    }
+
+    // Filter by audience eligibility
+    const filtered = combined.filter((ann) => {
+      const dismissedList = (ann.dismissedBy || []).map((id: any) => id?.toString());
+      if (dismissedList.includes(userIdStr)) {
+        return false;
+      }
+      return this.checkAudienceEligibility(
+        ann,
+        userObjId,
+        userRole,
+        enrolledCourseIds,
+        userSpaceIds,
+      );
     });
 
-    // Priority sorting: CRITICAL > HIGH > MEDIUM > LOW
-    const priorityWeight: Record<string, number> = {
-      CRITICAL: 4,
-      HIGH: 3,
-      MEDIUM: 2,
-      LOW: 1,
-    };
-
+    // Priority sorting: CRITICAL > HIGH > MEDIUM/IMPORTANT > NORMAL > LOW, then date
     filtered.sort((a, b) => {
-      const wA = priorityWeight[a.priority || 'LOW'] || 1;
-      const wB = priorityWeight[b.priority || 'LOW'] || 1;
+      const wA = this.getPriorityWeight(a);
+      const wB = this.getPriorityWeight(b);
       if (wA !== wB) return wB - wA;
-      return new Date(b.startsAt || b.createdAt).getTime() - new Date(a.startsAt || a.createdAt).getTime();
+      const dateA = new Date(a.startsAt || a.publishedAt || a.createdAt || 0).getTime();
+      const dateB = new Date(b.startsAt || b.publishedAt || b.createdAt || 0).getTime();
+      return dateB - dateA;
     });
 
     return filtered;
@@ -92,31 +306,189 @@ export class AnnouncementsService {
   /**
    * Retrieves single announcement by ID
    */
-  async getAnnouncementById(id: string): Promise<PlatformAnnouncementDocument> {
+  async getAnnouncementById(id: string): Promise<any> {
     const annObjId = this.toObjectId(id);
-    const announcement = await this.announcementModel.findById(annObjId).lean();
+    let announcement: any = null;
+
+    if (this.masterAnnouncementModel) {
+      announcement = await this.masterAnnouncementModel.findById(annObjId).lean();
+    }
+    if (!announcement && this.announcementModel) {
+      announcement = await this.announcementModel.findById(annObjId).lean();
+    }
+
     if (!announcement) {
       throw new NotFoundException('Announcement not found');
     }
-    return announcement as unknown as PlatformAnnouncementDocument;
+
+    return announcement;
   }
 
   /**
    * Dismiss an announcement for the user
    */
-  async dismissAnnouncement(announcementId: string, userId: string) {
+  async dismissAnnouncement(announcementId: string, userId: string, isAcknowledge = false) {
     const annObjId = this.toObjectId(announcementId);
     const userObjId = this.toObjectId(userId);
 
-    const result = await this.announcementModel.updateOne(
-      { _id: annObjId },
-      { $addToSet: { dismissedBy: userObjId } },
-    );
+    // If findById is available, check allowDismiss
+    let ann: any = null;
+    if (this.masterAnnouncementModel && typeof this.masterAnnouncementModel.findById === 'function') {
+      try {
+        ann = await this.masterAnnouncementModel.findById(annObjId);
+      } catch (e) {
+        // ignore
+      }
+    }
+    if (!ann && this.announcementModel && typeof this.announcementModel.findById === 'function') {
+      try {
+        ann = await this.announcementModel.findById(annObjId);
+      } catch (e) {
+        // ignore
+      }
+    }
 
-    if (result.matchedCount === 0) {
+    // Check acknowledgment requirement (Requirement #13)
+    if (ann && ann.allowDismiss === false && !isAcknowledge) {
+      throw new BadRequestException('This announcement requires explicit acknowledgment.');
+    }
+
+    let matchedCount = 0;
+
+    // Primary update on platform announcement model
+    if (this.announcementModel && typeof this.announcementModel.updateOne === 'function') {
+      const res = await this.announcementModel.updateOne(
+        { _id: annObjId },
+        { $addToSet: { dismissedBy: userObjId } },
+      );
+      if (res && res.matchedCount) matchedCount += res.matchedCount;
+    }
+
+    // Mirror update on master announcement model
+    if (this.masterAnnouncementModel && typeof this.masterAnnouncementModel.updateOne === 'function') {
+      const res = await this.masterAnnouncementModel.updateOne(
+        { _id: annObjId },
+        { $addToSet: { dismissedBy: userObjId, readBy: userObjId } },
+      );
+      if (res && res.matchedCount) matchedCount += res.matchedCount;
+    }
+
+    if (ann?.platformAnnouncementId && this.announcementModel && typeof this.announcementModel.updateOne === 'function') {
+      await this.announcementModel.updateOne(
+        { _id: ann.platformAnnouncementId },
+        { $addToSet: { dismissedBy: userObjId } },
+      );
+    }
+
+    if (matchedCount === 0 && !ann) {
       throw new NotFoundException('Announcement not found');
     }
 
-    return { success: true, message: 'Announcement dismissed' };
+    // Sync notification read state
+    if (this.notificationModel && typeof this.notificationModel.updateMany === 'function') {
+      try {
+        await this.notificationModel.updateMany(
+          {
+            recipientId: userObjId,
+            $or: [
+              { entityId: annObjId },
+              { idempotencyKey: `announcement_${announcementId}_${userId}` },
+              ...(ann?.platformAnnouncementId ? [{ entityId: ann.platformAnnouncementId }] : []),
+            ],
+          },
+          { $set: { isRead: true, readAt: new Date() } },
+        );
+      } catch (notifErr) {
+        this.logger.debug(`Could not mark notification read on dismiss: ${notifErr?.message}`);
+      }
+    }
+
+    return {
+      success: true,
+      message: isAcknowledge ? 'Announcement acknowledged' : 'Announcement dismissed',
+    };
+  }
+
+  /**
+   * Explicitly acknowledge an announcement
+   */
+  async acknowledgeAnnouncement(announcementId: string, userId: string) {
+    return this.dismissAnnouncement(announcementId, userId, true);
+  }
+
+  /**
+   * Scheduled announcements worker - activates scheduled announcements when scheduledAt <= now
+   * Uses atomic findOneAndUpdate to guarantee single-execution safety across multi-instance PM2 clusters.
+   */
+  @Cron(CronExpression.EVERY_MINUTE)
+  async processScheduledAnnouncements() {
+    if (!this.masterAnnouncementModel) return;
+
+    try {
+      const now = new Date();
+      const scheduledList = await this.masterAnnouncementModel
+        .find({
+          status: 'scheduled',
+          scheduledAt: { $lte: now },
+        })
+        .select('_id')
+        .lean();
+
+      if (!scheduledList || scheduledList.length === 0) return;
+
+      let activatedCount = 0;
+
+      for (const item of scheduledList) {
+        // Atomic lock transition: Only ONE PM2 process can change status from 'scheduled' to 'published'
+        const ann = await this.masterAnnouncementModel.findOneAndUpdate(
+          {
+            _id: item._id,
+            status: 'scheduled',
+          },
+          {
+            $set: {
+              status: 'published',
+              isPublished: true,
+              publishedAt: now,
+              updatedAt: now,
+            },
+          },
+          { new: true },
+        );
+
+        if (!ann) {
+          // Another PM2 process claimed and transitioned this scheduled announcement!
+          continue;
+        }
+
+        activatedCount++;
+
+        if (ann.platformAnnouncementId && this.announcementModel) {
+          await this.announcementModel.updateOne(
+            { _id: ann.platformAnnouncementId },
+            { $set: { status: 'PUBLISHED', startsAt: now } },
+          );
+        }
+
+        // Realtime announcement broadcast via socket gateway
+        if (this.notificationsGateway) {
+          this.notificationsGateway.broadcastAnnouncement({
+            _id: ann._id,
+            title: ann.title,
+            message: ann.message,
+            priority: ann.priority,
+            isCritical: ann.isCritical,
+            cta: ann.cta,
+            startsAt: now,
+          });
+        }
+      }
+
+      if (activatedCount > 0) {
+        this.logger.log(`Processed and activated ${activatedCount} scheduled announcements`);
+      }
+    } catch (err) {
+      this.logger.error(`Error processing scheduled announcements: ${err.message}`, err.stack);
+    }
   }
 }

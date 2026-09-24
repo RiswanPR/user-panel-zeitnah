@@ -19,8 +19,8 @@ export class Notification {
 
   @Prop({
     type: String,
-    enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'],
-    default: 'LOW',
+    enum: ['LOW', 'NORMAL', 'MEDIUM', 'IMPORTANT', 'HIGH', 'CRITICAL'],
+    default: 'NORMAL',
   })
   priority: string;
 
@@ -33,13 +33,33 @@ export class Notification {
   @Prop({ type: Boolean, default: false, index: true })
   isRead: boolean;
 
+  @Prop({ type: Date, default: null })
+  readAt?: Date;
+
+  @Prop({ type: String, default: 'general', index: true })
+  entityType?: string; // e.g. 'announcement', 'space', 'course'
+
+  @Prop({ type: Types.ObjectId, default: null, index: true })
+  entityId?: Types.ObjectId;
+
+  @Prop({ type: Boolean, default: true })
+  allowDismiss?: boolean;
+
   @Prop({ type: String, index: true })
   idempotencyKey?: string;
 
   @Prop({ type: String, default: '' })
   targetUrl: string;
+
+  @Prop({ type: String, default: '' })
+  actionUrl?: string;
+
+  @Prop({ type: Object, default: {} })
+  metadata?: Record<string, any>;
 }
 
 export const NotificationSchema = SchemaFactory.createForClass(Notification);
 NotificationSchema.index({ recipientId: 1, isRead: 1, createdAt: -1 });
 NotificationSchema.index({ recipientId: 1, createdAt: -1 });
+NotificationSchema.index({ recipientId: 1, entityType: 1, entityId: 1 });
+NotificationSchema.index({ idempotencyKey: 1 }, { unique: true, sparse: true });

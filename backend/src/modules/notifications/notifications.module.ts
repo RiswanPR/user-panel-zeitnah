@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { NotificationsGateway } from './notifications.gateway';
@@ -8,8 +8,11 @@ import {
   NotificationPreferenceSchema,
 } from './notification-preference.schema';
 import { User, UserSchema } from '../auth/schemas/user.schema';
+import { Announcement, AnnouncementSchema } from '../announcements/schemas/announcement.schema';
+import { PlatformAnnouncement, PlatformAnnouncementSchema } from '../announcements/platform-announcement.schema';
 import { NotificationsService } from './notifications.service';
 import { NotificationsController } from './notifications.controller';
+import { AnnouncementsModule } from '../announcements/announcements.module';
 
 @Module({
   imports: [
@@ -20,7 +23,10 @@ import { NotificationsController } from './notifications.controller';
       { name: User.name, schema: UserSchema },
       { name: Notification.name, schema: NotificationSchema },
       { name: NotificationPreference.name, schema: NotificationPreferenceSchema },
+      { name: Announcement.name, schema: AnnouncementSchema },
+      { name: PlatformAnnouncement.name, schema: PlatformAnnouncementSchema },
     ]),
+    forwardRef(() => AnnouncementsModule),
   ],
   controllers: [NotificationsController],
   providers: [NotificationsGateway, NotificationsService],

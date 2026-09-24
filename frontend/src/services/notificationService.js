@@ -92,6 +92,14 @@ export const notificationService = {
     const response = await api.post(`/announcements/${id}/dismiss`);
     return response.data;
   },
+
+  /**
+   * Explicitly acknowledges an announcement requiring acknowledgment.
+   */
+  acknowledgeAnnouncement: async (id) => {
+    const response = await api.post(`/announcements/${id}/acknowledge`);
+    return response.data;
+  },
 };
 
 export default notificationService;

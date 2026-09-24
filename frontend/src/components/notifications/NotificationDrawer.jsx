@@ -17,6 +17,7 @@ import { SkeletonCard } from '../ui/Skeleton';
 const DRAWER_TABS = [
   { id: 'all', label: 'All' },
   { id: 'unread', label: 'Unread' },
+  { id: 'announcements', label: 'Announcements' },
   { id: 'learning', label: 'Learning' },
   { id: 'social', label: 'Network' },
   { id: 'community', label: 'Communities' },

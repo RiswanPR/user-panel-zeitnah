@@ -86,6 +86,9 @@ export const NotificationProvider = ({ children }) => {
 
       newSocket.on('announcement', () => {
         queryClient.invalidateQueries({ queryKey: ['announcements', 'active'] });
+        queryClient.invalidateQueries({ queryKey: ['platform-announcements'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
       });
 
       newSocket.on('notificationRead', () => {
@@ -136,6 +139,19 @@ export const NotificationProvider = ({ children }) => {
     mutationFn: (id) => notificationService.dismissAnnouncement(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['announcements', 'active'] });
+      queryClient.invalidateQueries({ queryKey: ['platform-announcements'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+    },
+  });
+
+  const acknowledgeAnnouncementMutation = useMutation({
+    mutationFn: (id) => notificationService.acknowledgeAnnouncement(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['announcements', 'active'] });
+      queryClient.invalidateQueries({ queryKey: ['platform-announcements'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
     },
   });
 
@@ -159,6 +175,11 @@ export const NotificationProvider = ({ children }) => {
     [dismissAnnouncementMutation]
   );
 
+  const acknowledgeAnnouncement = useCallback(
+    (id) => acknowledgeAnnouncementMutation.mutate(id),
+    [acknowledgeAnnouncementMutation]
+  );
+
   return (
     <NotificationContext.Provider
       value={{
@@ -171,6 +192,7 @@ export const NotificationProvider = ({ children }) => {
         markAllAsRead,
         clearRead,
         dismissAnnouncement,
+        acknowledgeAnnouncement,
       }}
     >
       {children}

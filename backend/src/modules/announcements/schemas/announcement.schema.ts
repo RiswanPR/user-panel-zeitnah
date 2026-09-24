@@ -1,92 +1,93 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
-export type AnnouncementType = 'INFO' | 'IMPORTANT' | 'HIGH' | 'CRITICAL';
-export type AnnouncementPriority = 'LOW' | 'NORMAL' | 'IMPORTANT' | 'HIGH' | 'CRITICAL';
-export type AnnouncementAudience = 'ALL_USERS' | 'STUDENTS' | 'COURSE_LEARNERS' | 'COMMUNITY_MEMBERS';
-export type AnnouncementStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+export type AnnouncementDocument = Announcement & Document;
 
-export type PlatformAnnouncementDocument = PlatformAnnouncement &
-  Document & {
-    createdAt: Date;
-    updatedAt: Date;
-  };
-
-@Schema({
-  timestamps: true,
-  collection: 'platform_announcements',
-})
-export class PlatformAnnouncement {
+@Schema({ timestamps: true, collection: 'announcements' })
+export class Announcement {
   @Prop({ type: String, required: true, trim: true })
-  title!: string;
+  title: string;
 
   @Prop({ type: String, required: true, trim: true })
-  message!: string;
+  message: string;
 
-  @Prop({
-    type: String,
-    required: true,
-    enum: ['INFO', 'IMPORTANT', 'HIGH', 'CRITICAL'],
-    default: 'INFO',
-    index: true,
-  })
-  type!: AnnouncementType;
+  @Prop({ type: String, default: 'general' })
+  type: string; // 'general' | 'course' | 'learning_space' | 'platform' | 'maintenance' | 'critical'
 
-  @Prop({
-    type: String,
-    required: true,
-    enum: ['LOW', 'NORMAL', 'IMPORTANT', 'HIGH', 'CRITICAL'],
-    default: 'NORMAL',
-    index: true,
-  })
-  priority!: AnnouncementPriority;
+  @Prop({ type: String, default: 'normal' })
+  priority: string; // 'normal' | 'important' | 'critical' | 'high' | 'low'
 
-  @Prop({
-    type: String,
-    required: true,
-    enum: ['ALL_USERS', 'STUDENTS', 'COURSE_LEARNERS', 'COMMUNITY_MEMBERS'],
-    default: 'ALL_USERS',
-    index: true,
-  })
-  audience!: AnnouncementAudience;
+  @Prop({ type: String, default: 'draft', index: true })
+  status: string; // 'draft' | 'scheduled' | 'published' | 'archived'
 
-  @Prop({
-    type: Object,
-    required: false,
-    default: null,
-  })
-  target?: {
-    entityType?: string;
-    entityId?: string;
+  @Prop({ type: Boolean, default: false, index: true })
+  isCritical: boolean;
+
+  @Prop({ type: Boolean, default: false, index: true })
+  isPublished: boolean;
+
+  @Prop({ type: Types.ObjectId, ref: 'PlatformAnnouncement', default: null })
+  platformAnnouncementId?: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, default: null })
+  communityAnnouncementId?: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  createdBy?: Types.ObjectId;
+
+  @Prop({ type: String, default: 'admin' })
+  createdByRole?: string;
+
+  @Prop({ type: String, default: 'Admin' })
+  createdByName?: string;
+
+  @Prop({ type: String, default: 'platform', index: true })
+  targetType: string; // 'platform' | 'specific_users' | 'course' | 'teacher_students' | 'learning_space' | 'role'
+
+  @Prop({ type: [Object], default: [] })
+  targetIds: any[];
+
+  @Prop({ type: Types.ObjectId, ref: 'Course', default: null, index: true })
+  courseId?: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'LearningSpace', default: null, index: true })
+  learningSpaceId?: Types.ObjectId;
+
+  @Prop({ type: Date, default: null })
+  scheduledAt?: Date;
+
+  @Prop({ type: Date, default: null })
+  publishedAt?: Date;
+
+  @Prop({ type: Date, default: null })
+  startsAt?: Date;
+
+  @Prop({ type: Date, default: null })
+  expiresAt?: Date;
+
+  @Prop({ type: Boolean, default: true })
+  allowDismiss: boolean;
+
+  @Prop({ type: Object, default: null })
+  cta?: {
+    label?: string;
+    url?: string;
   };
 
-  @Prop({
-    type: String,
-    required: true,
-    enum: ['DRAFT', 'PUBLISHED', 'ARCHIVED'],
-    default: 'PUBLISHED',
-    index: true,
-  })
-  status!: AnnouncementStatus;
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], default: [] })
+  readBy: Types.ObjectId[];
 
-  @Prop({ type: String, required: false })
-  actionUrl?: string;
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], default: [] })
+  dismissedBy: Types.ObjectId[];
 
-  @Prop({ type: String, required: false })
-  actionLabel?: string;
+  @Prop({ type: String, default: '' })
+  eyebrow?: string;
 
-  @Prop({ type: Date, required: true, default: Date.now })
-  startsAt!: Date;
-
-  @Prop({ type: Date, required: false, default: null })
-  expiresAt?: Date | null;
-
-  @Prop({ type: [String], default: [] })
-  dismissedBy!: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-export const PlatformAnnouncementSchema =
-  SchemaFactory.createForClass(PlatformAnnouncement);
-
-PlatformAnnouncementSchema.index({ status: 1, startsAt: 1, expiresAt: 1 });
-PlatformAnnouncementSchema.index({ audience: 1, status: 1 });
+export const AnnouncementSchema = SchemaFactory.createForClass(Announcement);
+AnnouncementSchema.index({ status: 1, isPublished: 1, scheduledAt: 1, expiresAt: 1 });
+AnnouncementSchema.index({ targetType: 1, courseId: 1, learningSpaceId: 1 });
+AnnouncementSchema.index({ createdAt: -1 });

@@ -14,6 +14,19 @@ export function usePlatformAnnouncements() {
     mutationFn: (id) => announcementsApi.dismissAnnouncement(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['platform-announcements'] });
+      queryClient.invalidateQueries({ queryKey: ['announcements', 'active'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+    },
+  });
+
+  const acknowledgeMutation = useMutation({
+    mutationFn: (id) => announcementsApi.acknowledgeAnnouncement(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['platform-announcements'] });
+      queryClient.invalidateQueries({ queryKey: ['announcements', 'active'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
     },
   });
 
@@ -22,5 +35,9 @@ export function usePlatformAnnouncements() {
     isLoading: query.isLoading,
     dismissAnnouncement: dismissMutation.mutate,
     isDismissing: dismissMutation.isPending,
+    acknowledgeAnnouncement: acknowledgeMutation.mutate,
+    isAcknowledging: acknowledgeMutation.isPending,
   };
 }
+
+export default usePlatformAnnouncements;

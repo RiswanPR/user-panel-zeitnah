@@ -97,6 +97,11 @@ export class NotificationsGateway
     this.server.emit('announcement', announcement);
   }
 
+  // Get active connected user IDs
+  getConnectedUserIds(): string[] {
+    return Array.from(this.userSockets.keys());
+  }
+
   @SubscribeMessage('markAsRead')
   handleMarkAsRead(
     @ConnectedSocket() client: Socket,

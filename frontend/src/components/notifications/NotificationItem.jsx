@@ -5,9 +5,9 @@ import {
   Trophy,
   MessageSquare,
   ShieldAlert,
-  Info,
   Sparkles,
   ArrowRight,
+  Megaphone,
 } from 'lucide-react';
 import { getUploadUrl } from '../../utils/courseUi';
 
@@ -34,18 +34,32 @@ function formatRelativeTime(dateString) {
 }
 
 /**
- * Returns category-tailored icon and color tokens
+ * Returns category & priority tailored icon and color tokens
  */
-function getCategoryIconConfig(category, priority) {
-  if (category === 'security' || priority === 'critical') {
+function getCategoryIconConfig(category, priority, type) {
+  const prioUpper = (priority || '').toUpperCase();
+  const isCritical = prioUpper === 'CRITICAL' || category === 'security';
+  const isHigh = prioUpper === 'HIGH' || prioUpper === 'IMPORTANT';
+
+  if (isCritical) {
     return {
       Icon: ShieldAlert,
       iconColor: 'text-rose-400',
-      bgGlow: 'bg-rose-500/10 border-rose-500/25',
+      bgGlow: 'bg-rose-500/15 border-rose-500/30',
     };
   }
+
+  if (category === 'announcements' || type === 'ANNOUNCEMENT') {
+    return {
+      Icon: Megaphone,
+      iconColor: isHigh ? 'text-amber-400' : 'text-brand-mint',
+      bgGlow: isHigh ? 'bg-amber-500/15 border-amber-500/30' : 'bg-brand-mint/15 border-brand-mint/30',
+    };
+  }
+
   switch (category) {
     case 'social':
+    case 'connections':
       return {
         Icon: Users,
         iconColor: 'text-[#E3D9FC]',
@@ -66,6 +80,7 @@ function getCategoryIconConfig(category, priority) {
         bgGlow: 'bg-brand-yellow/15 border-brand-yellow/30',
       };
     case 'community':
+    case 'spaces':
       return {
         Icon: MessageSquare,
         iconColor: 'text-violet-400',
@@ -86,23 +101,38 @@ export default function NotificationItem({
   onCloseDrawer,
 }) {
   const navigate = useNavigate();
-  const isUnread = !notification.readAt;
+  const isUnread = notification.isRead === false || !notification.readAt;
+  const prioUpper = (notification.priority || 'NORMAL').toUpperCase();
+  const isCritical = prioUpper === 'CRITICAL';
+  const isHigh = prioUpper === 'HIGH' || prioUpper === 'IMPORTANT';
+
   const { Icon, iconColor, bgGlow } = getCategoryIconConfig(
     notification.category,
-    notification.priority
+    notification.priority,
+    notification.type,
   );
 
   const actorAvatar = notification.actor?.avatar
     ? getUploadUrl(notification.actor.avatar)
     : null;
 
+  const targetLink =
+    notification.actionUrl ||
+    notification.targetUrl ||
+    notification.metadata?.cta?.url ||
+    '';
+
   const handleClick = () => {
     if (isUnread && onMarkRead) {
       onMarkRead(notification.id || notification._id);
     }
-    if (notification.actionUrl) {
+    if (targetLink) {
       if (onCloseDrawer) onCloseDrawer();
-      navigate(notification.actionUrl);
+      if (targetLink.startsWith('http://') || targetLink.startsWith('https://')) {
+        window.open(targetLink, '_blank', 'noopener,noreferrer');
+      } else {
+        navigate(targetLink);
+      }
     }
   };
 
@@ -152,19 +182,24 @@ export default function NotificationItem({
 
       {/* Center Content */}
       <div className="flex-1 min-w-0 pr-2">
-        <div className="flex items-center gap-2 mb-1">
-          {notification.priority === 'critical' && (
+        <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
+          {isCritical && (
             <span className="px-1.5 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30">
-              Security
+              Critical
             </span>
           )}
-          {notification.priority === 'high' && (
+          {isHigh && (
             <span className="px-1.5 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
               Important
             </span>
           )}
+          {notification.allowDismiss === false && (
+            <span className="px-1.5 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-violet-500/20 text-violet-300 border border-violet-500/30">
+              Required
+            </span>
+          )}
           <span className="text-[10px] font-mono font-medium text-text-faint uppercase tracking-wider">
-            {notification.category}
+            {notification.category || 'General'}
           </span>
           <span className="text-text-faint text-[10px]">•</span>
           <span className="text-[11px] font-medium text-text-muted">
@@ -184,10 +219,10 @@ export default function NotificationItem({
           {notification.message}
         </p>
 
-        {/* Action Link Indicator if actionUrl exists */}
-        {notification.actionUrl && (
+        {/* Action Link Indicator if link exists */}
+        {targetLink && (
           <div className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-brand-mint group-hover:underline">
-            <span>View</span>
+            <span>View Details</span>
             <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
           </div>
         )}
