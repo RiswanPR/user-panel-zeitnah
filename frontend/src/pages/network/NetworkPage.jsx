@@ -78,8 +78,8 @@ export default function NetworkPage() {
         {/* Primary Tab Navigation */}
         <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] overflow-x-auto">
           {[
-            { id: 'spaces', label: 'Learning Spaces', icon: Users },
             { id: 'network', label: 'Network', icon: Compass },
+            { id: 'spaces', label: 'Learning Spaces', icon: Users },
             { id: 'opportunities', label: 'Opportunities', icon: Briefcase },
             { id: 'organizations', label: 'Organizations', icon: Building2 },
           ].map((tab) => {
@@ -89,11 +89,10 @@ export default function NetworkPage() {
               <button
                 key={tab.id}
                 onClick={() => setTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                  active
-                    ? 'bg-brand-mint text-black shadow-lg shadow-brand-mint/15 font-bold'
-                    : 'text-text-muted hover:text-white hover:bg-white/[0.04]'
-                }`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${active
+                  ? 'bg-brand-mint text-black shadow-lg shadow-brand-mint/15 font-bold'
+                  : 'text-text-muted hover:text-white hover:bg-white/[0.04]'
+                  }`}
               >
                 <Icon className="w-3.5 h-3.5" />
                 <span>{tab.label}</span>
@@ -117,11 +116,10 @@ export default function NetworkPage() {
                 <button
                   key={f.id}
                   onClick={() => setSubFilter(f.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                    spaceFilter === f.id
-                      ? 'bg-white/10 text-white'
-                      : 'text-text-muted hover:text-white'
-                  }`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${spaceFilter === f.id
+                    ? 'bg-white/10 text-white'
+                    : 'text-text-muted hover:text-white'
+                    }`}
                 >
                   {f.label}
                 </button>
@@ -206,11 +204,10 @@ export default function NetworkPage() {
                 <button
                   key={mode}
                   onClick={() => setOppWorkMode(mode)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
-                    oppWorkMode === mode
-                      ? 'bg-white/10 text-white'
-                      : 'text-text-muted hover:text-white'
-                  }`}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${oppWorkMode === mode
+                    ? 'bg-white/10 text-white'
+                    : 'text-text-muted hover:text-white'
+                    }`}
                 >
                   {mode === '' ? 'All Modes' : mode}
                 </button>
