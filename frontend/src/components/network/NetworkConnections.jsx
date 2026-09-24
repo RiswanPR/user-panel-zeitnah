@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Users,
   UserCheck,
@@ -41,13 +41,18 @@ function getInitials(name) {
     .toUpperCase();
 }
 
-export default function NetworkConnections() {
+const VALID_TABS = ['people', 'connections', 'followers', 'following', 'requests'];
+
+export default function NetworkConnections({ defaultTab = 'people' }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const toast = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // Active Tab: 'connections' | 'followers' | 'following' | 'requests' | 'people'
-  const [subTab, setSubTab] = useState('connections');
+  const rawSub = searchParams.get('sub') || searchParams.get('view') || searchParams.get('networkTab');
+  // Active Tab: 'people' (default) | 'connections' | 'followers' | 'following' | 'requests'
+  const subTab = VALID_TABS.includes(rawSub) ? rawSub : (defaultTab || 'people');
+
   const [requestsSubTab, setRequestsSubTab] = useState('incoming'); // 'incoming' | 'outgoing'
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -218,9 +223,19 @@ export default function NetworkConnections() {
   const outgoingRequestsCount = countsData?.outgoingRequestsCount ?? requestsQuery.data?.outgoing?.length ?? 0;
 
   const handleTabChange = (newTab) => {
-    setSubTab(newTab);
     setSearchQuery('');
     setPage(1);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (newTab === 'people') {
+        next.delete('sub');
+        next.delete('networkTab');
+        next.delete('view');
+      } else {
+        next.set('sub', newTab);
+      }
+      return next;
+    }, { replace: true });
   };
 
   return (
@@ -229,11 +244,11 @@ export default function NetworkConnections() {
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.08]">
         <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] overflow-x-auto">
           {[
+            { id: 'people', label: 'Discover People', icon: Compass },
             { id: 'connections', label: 'Connections', count: connectionsCount, icon: UserCheck },
             { id: 'followers', label: 'Followers', count: followersCount, icon: Users },
             { id: 'following', label: 'Following', count: followingCount, icon: UserPlus },
             { id: 'requests', label: 'Requests', count: incomingRequestsCount, icon: Clock, badgeAccent: incomingRequestsCount > 0 },
-            { id: 'people', label: 'Discover People', icon: Compass },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = subTab === tab.id;
@@ -323,7 +338,158 @@ export default function NetworkConnections() {
         </div>
       )}
 
-      {/* ── 1. CONNECTIONS TAB ── */}
+      {/* ── 1. DISCOVER PEOPLE TAB (MAIN) ── */}
+      {subTab === 'people' && (
+        <div className="space-y-4">
+          {peopleQuery.isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-32 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+              ))}
+            </div>
+          ) : peopleQuery.isError ? (
+            <div className="p-8 rounded-2xl bg-danger/5 border border-danger/20 text-center">
+              <AlertCircle className="w-8 h-8 text-danger mx-auto mb-2" />
+              <p className="text-sm font-bold text-white">Failed to load people directory</p>
+              <button
+                type="button"
+                onClick={() => peopleQuery.refetch()}
+                className="btn-secondary mt-3 text-xs py-2 px-4 cursor-pointer"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : (peopleQuery.data?.people || []).length === 0 ? (
+            <div className="p-16 rounded-3xl bg-[#111115]/60 border border-white/[0.06] text-center max-w-lg mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-text-faint">
+                <Compass className="w-7 h-7" />
+              </div>
+              <h3 className="font-heading font-bold text-lg text-white">
+                {searchQuery ? 'No matching people found' : 'No people discoverable yet'}
+              </h3>
+              <p className="text-xs text-text-muted mt-1 leading-relaxed">
+                {searchQuery
+                  ? 'Try searching with a different name or role filter.'
+                  : 'Check back soon as more learners join the Zeitnah platform.'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {(peopleQuery.data?.people || []).map((person) => {
+                const profileLink = `/u/${encodeURIComponent(person.username || person._id || '')}`;
+                return (
+                  <div
+                    key={person._id}
+                    className="p-4 rounded-2xl bg-[#111115]/80 hover:bg-[#15151c] border border-white/[0.08] hover:border-brand-mint/30 transition-all flex flex-col justify-between gap-3 shadow-lg"
+                  >
+                    <div className="flex items-start gap-3 min-w-0">
+                      <Link to={profileLink} className="relative shrink-0 block focus-ring rounded-2xl">
+                        <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden">
+                          {person.avatar ? (
+                            <img src={person.avatar} alt={person.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span>{getInitials(person.name)}</span>
+                          )}
+                        </div>
+                        {person.isVerified && (
+                          <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-bg-base shadow-sm">
+                            <ShieldCheck className="h-3 w-3" />
+                          </span>
+                        )}
+                      </Link>
+
+                      <div className="min-w-0 flex-1">
+                        <Link to={profileLink} className="font-heading font-bold text-sm text-white hover:text-brand-mint transition-colors truncate block focus-ring rounded">
+                          {person.name}
+                        </Link>
+                        {person.username && (
+                          <p className="text-[10px] font-mono text-text-muted truncate">
+                            @{person.username}
+                          </p>
+                        )}
+                        <span className="inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-white/[0.04] text-text-muted">
+                          {person.role || 'Student'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/[0.06]">
+                      <Link
+                        to={profileLink}
+                        className="text-[11px] text-text-muted hover:text-white transition-colors flex items-center gap-1"
+                      >
+                        <span>Profile</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </Link>
+
+                      <div>
+                        {person.connectionStatus === 'connected' ? (
+                          <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 text-[10px] font-semibold flex items-center gap-1">
+                            <Check className="w-3 h-3" />
+                            <span>Connected</span>
+                          </span>
+                        ) : person.connectionStatus === 'pending_sent' || person.connectionStatus === 'pending' ? (
+                          <span className="px-2.5 py-1 rounded-lg bg-white/[0.04] text-text-muted text-[10px] font-semibold">
+                            Pending
+                          </span>
+                        ) : person.connectionStatus === 'pending_received' ? (
+                          <button
+                            type="button"
+                            onClick={() => acceptRequestMutation.mutate(person.connectionId)}
+                            disabled={acceptRequestMutation.isPending}
+                            className="px-2.5 py-1 rounded-lg bg-brand-mint text-black font-semibold text-[10px] cursor-pointer"
+                          >
+                            Accept
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => sendRequestMutation.mutate(person._id)}
+                            disabled={sendRequestMutation.isPending}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-brand-mint/15 hover:bg-brand-mint text-brand-mint hover:text-black font-semibold text-xs transition-colors cursor-pointer"
+                          >
+                            <UserPlus className="w-3.5 h-3.5" />
+                            <span>Connect</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {(peopleQuery.data?.totalPages || 1) > 1 && (
+            <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
+              <span className="text-xs text-text-muted">
+                Page {page} of {peopleQuery.data?.totalPages}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40 cursor-pointer"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={page >= peopleQuery.data?.totalPages}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40 cursor-pointer"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── 2. CONNECTIONS TAB ── */}
       {subTab === 'connections' && (
         <div className="space-y-4">
           {connectionsQuery.isLoading ? (
@@ -360,7 +526,7 @@ export default function NetworkConnections() {
               {!searchQuery && (
                 <button
                   type="button"
-                  onClick={() => setSubTab('people')}
+                  onClick={() => handleTabChange('people')}
                   className="btn-primary mt-4 text-xs py-2.5 px-5 inline-flex items-center gap-2 cursor-pointer"
                 >
                   <Compass className="w-4 h-4" />
@@ -680,7 +846,7 @@ export default function NetworkConnections() {
               {!searchQuery && (
                 <button
                   type="button"
-                  onClick={() => setSubTab('people')}
+                  onClick={() => handleTabChange('people')}
                   className="btn-primary mt-4 text-xs py-2.5 px-5 inline-flex items-center gap-2 cursor-pointer"
                 >
                   <Compass className="w-4 h-4" />
@@ -981,86 +1147,6 @@ export default function NetworkConnections() {
                   })}
                 </div>
               )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── 5. DISCOVER PEOPLE TAB ── */}
-      {subTab === 'people' && (
-        <div className="space-y-4">
-          {peopleQuery.isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="h-28 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
-              ))}
-            </div>
-          ) : (peopleQuery.data?.people || []).length === 0 ? (
-            <div className="p-12 rounded-2xl bg-[#111115]/60 border border-white/[0.06] text-center">
-              <p className="text-xs text-text-muted">No people found matching your search.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {(peopleQuery.data?.people || []).map((person) => {
-                const profileLink = `/u/${encodeURIComponent(person.username || person._id || '')}`;
-                return (
-                  <div
-                    key={person._id}
-                    className="p-4 rounded-2xl bg-[#111115]/80 hover:bg-[#15151c] border border-white/[0.08] hover:border-brand-mint/30 transition-all flex items-center justify-between gap-3 shadow-lg"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Link to={profileLink} className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-brand-mint font-bold text-xs shrink-0 overflow-hidden">
-                        {person.avatar ? (
-                          <img src={person.avatar} alt={person.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <span>{getInitials(person.name)}</span>
-                        )}
-                      </Link>
-
-                      <div className="min-w-0">
-                        <Link to={profileLink} className="text-xs font-bold text-white hover:text-brand-mint transition-colors truncate block">
-                          {person.name}
-                        </Link>
-                        <span className="inline-block mt-0.5 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-white/[0.04] text-text-muted">
-                          {person.role || 'Student'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="shrink-0">
-                      {person.connectionStatus === 'connected' ? (
-                        <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 text-[10px] font-semibold flex items-center gap-1">
-                          <Check className="w-3 h-3" />
-                          <span>Connected</span>
-                        </span>
-                      ) : person.connectionStatus === 'pending_sent' || person.connectionStatus === 'pending' ? (
-                        <span className="px-2.5 py-1 rounded-lg bg-white/[0.04] text-text-muted text-[10px] font-semibold">
-                          Pending
-                        </span>
-                      ) : person.connectionStatus === 'pending_received' ? (
-                        <button
-                          type="button"
-                          onClick={() => acceptRequestMutation.mutate(person.connectionId)}
-                          disabled={acceptRequestMutation.isPending}
-                          className="px-2.5 py-1 rounded-lg bg-brand-mint text-black font-semibold text-[10px] cursor-pointer"
-                        >
-                          Accept
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => sendRequestMutation.mutate(person._id)}
-                          disabled={sendRequestMutation.isPending}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-brand-mint/15 hover:bg-brand-mint text-brand-mint hover:text-black font-semibold text-xs transition-colors cursor-pointer"
-                        >
-                          <UserPlus className="w-3.5 h-3.5" />
-                          <span>Connect</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           )}
         </div>

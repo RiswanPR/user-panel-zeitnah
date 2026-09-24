@@ -83,7 +83,7 @@ export default function NetworkPage() {
         {/* Primary Tab Navigation */}
         <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] overflow-x-auto">
           {[
-            { id: 'network', label: 'Network', icon: Compass },
+            { id: 'network', label: 'Discover People', icon: Compass },
             { id: 'spaces', label: 'Learning Spaces', icon: Users },
             { id: 'opportunities', label: 'Opportunities', icon: Briefcase },
             { id: 'organizations', label: 'Organizations', icon: Building2 },
@@ -107,8 +107,23 @@ export default function NetworkPage() {
         </div>
       </div>
 
-      {/* ── TAB 1: MY NETWORK & CONNECTIONS ── */}
-      {currentTab === 'network' && <NetworkConnections />}
+      {/* ── TAB 1: DISCOVER PEOPLE & NETWORK ── */}
+      {currentTab === 'network' && (
+        <NetworkConnections
+          defaultTab={
+            searchParams.get('sub') ||
+            (rawTab === 'connections'
+              ? 'connections'
+              : rawTab === 'followers'
+              ? 'followers'
+              : rawTab === 'following'
+              ? 'following'
+              : rawTab === 'requests'
+              ? 'requests'
+              : 'people')
+          }
+        />
+      )}
 
       {/* ── TAB 2: LEARNING SPACES ── */}
       {currentTab === 'spaces' && (
