@@ -27,7 +27,7 @@ import PlatformAnnouncementBanner from "../components/announcements/PlatformAnno
 // ── Desktop Navigation Destinations ──
 const desktopNavItems = [
   { key: "courses", path: "/courses", label: "Courses", icon: BookOpen },
-  { key: "network", path: "/network", label: "Spaces & Network", icon: Compass },
+  { key: "network", path: "/network", label: "Network & Spaces", icon: Compass },
   { key: "notifications", path: "/notifications", label: "Notifications", icon: Bell },
   { key: "profile", path: "/profile", label: "Profile", icon: User },
 ];

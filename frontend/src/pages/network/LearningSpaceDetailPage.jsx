@@ -121,7 +121,7 @@ export default function LearningSpaceDetailPage() {
             : 'The requested Learning Space does not exist or has been archived.'}
         </p>
         <Link
-          to="/network"
+          to="/network?tab=spaces"
           className="inline-flex items-center gap-1.5 mt-6 px-5 py-2.5 rounded-xl bg-brand-mint text-black font-semibold text-xs transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />

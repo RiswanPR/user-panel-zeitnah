@@ -12,7 +12,7 @@ export const navItems = [
     icon: BookOpen,
   },
   {
-    name: "Spaces & Network",
+    name: "Network & Spaces",
     path: "/network",
     icon: Compass,
   },

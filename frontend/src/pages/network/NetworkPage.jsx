@@ -12,12 +12,17 @@ export default function NetworkPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const rawTab = searchParams.get('tab');
   const tabMap = {
-    overview: 'spaces',
-    communities: 'spaces',
+    network: 'network',
     discover: 'network',
     connections: 'network',
+    people: 'network',
+    overview: 'network',
+    spaces: 'spaces',
+    communities: 'spaces',
+    opportunities: 'opportunities',
+    organizations: 'organizations',
   };
-  const currentTab = tabMap[rawTab] || rawTab || 'spaces'; // 'spaces' | 'network' | 'opportunities' | 'organizations'
+  const currentTab = tabMap[rawTab] || rawTab || 'network'; // 'network' | 'spaces' | 'opportunities' | 'organizations'
   const spaceFilter = searchParams.get('filter') || 'all'; // 'all' | 'joined' | 'discover'
 
   const [spaceSearch, setSpaceSearch] = useState('');
@@ -68,10 +73,10 @@ export default function NetworkPage() {
             </span>
           </div>
           <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-white mt-2 tracking-tight">
-            Learning Spaces & Professional Network
+            Network & Learning Spaces
           </h1>
           <p className="text-sm text-text-muted mt-1 max-w-2xl">
-            Cohort learning spaces, peer connections, verified institutional partners, and career opportunities.
+            Peer connections, cohort learning spaces, verified institutional partners, and career opportunities.
           </p>
         </div>
 
