@@ -63,6 +63,56 @@ export interface ConnectionCountsResponse {
 
 export interface PaginatedConnectionsResponse {
   data: ConnectionItem[];
+  connections?: ConnectionItem[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+}
+
+export interface ProfileNetworkStatsResponse {
+  userId: string;
+  username: string;
+  followers: number;
+  following: number;
+  connections: number;
+  followersCount: number;
+  followingCount: number;
+  connectionsCount: number;
+  relationship?: {
+    isFollowing: boolean;
+    isFollowedBy: boolean;
+    connectionStatus: string;
+    requestSent: boolean;
+    requestReceived: boolean;
+    connectionId?: string | null;
+  };
+}
+
+export interface NetworkUserItem {
+  _id: string;
+  name: string;
+  username: string;
+  email?: string;
+  avatar?: string;
+  avatarUrl?: string;
+  headline?: string;
+  currentRole?: string;
+  role?: string;
+  isFollowing?: boolean;
+  isFollowedBy?: boolean;
+  connectionStatus?: string;
+  connectionId?: string | null;
+  connectedSince?: string;
+  followedSince?: string;
+}
+
+export interface PaginatedNetworkUsersResponse {
+  data: NetworkUserItem[];
+  followers?: NetworkUserItem[];
+  following?: NetworkUserItem[];
+  connections?: NetworkUserItem[];
   page: number;
   limit: number;
   total: number;

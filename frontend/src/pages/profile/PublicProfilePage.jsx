@@ -29,6 +29,7 @@ import EcosystemRoleBadge from "../../components/network/EcosystemRoleBadge";
 import AvailabilityBadge from "../../components/network/AvailabilityBadge";
 import ReportModal from "../../components/network/ReportModal";
 import projectsService from "../../services/projectsService";
+import ProfileNetworkStats from "../../components/network/ProfileNetworkStats";
 
 export default function PublicProfilePage() {
   const { username: paramUsername } = useParams();
@@ -338,6 +339,14 @@ export default function PublicProfilePage() {
                       {student.industry}
                     </span>
                   )}
+                </div>
+
+                {/* ── Network Statistics (Followers, Following, Connections) ── */}
+                <div className="pt-3 w-full max-w-md">
+                  <ProfileNetworkStats
+                    userIdOrUsername={student.id || student.username}
+                    profileName={student.name}
+                  />
                 </div>
               </div>
             </div>

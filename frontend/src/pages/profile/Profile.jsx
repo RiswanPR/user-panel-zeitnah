@@ -35,6 +35,7 @@ import ProfileNav from "../../components/profile/ProfileNav";
 import ProfileCompletionCard from "../../components/profile/ProfileCompletionCard";
 import AchievementsGrid from "../../components/profile/AchievementsGrid";
 import ImageEditorModal from "../../components/common/ImageEditorModal";
+import ProfileNetworkStats from "../../components/network/ProfileNetworkStats";
 
 /**
  * Animated XP Counter for subtle, elegant point transitions.
@@ -512,6 +513,14 @@ export default function Profile() {
                       {profile.industry}
                     </span>
                   )}
+                </div>
+
+                {/* ── Network Statistics (Followers, Following, Connections) ── */}
+                <div className="pt-3 w-full max-w-md">
+                  <ProfileNetworkStats
+                    userIdOrUsername={profile.id || profile.username}
+                    profileName={profile.name}
+                  />
                 </div>
               </div>
             </div>

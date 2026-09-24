@@ -1,102 +1,284 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Users, UserPlus, Check, X, Search, UserCheck } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  Users,
+  UserCheck,
+  UserPlus,
+  Search,
+  Check,
+  X,
+  MessageSquare,
+  ExternalLink,
+  ShieldCheck,
+  AlertCircle,
+  Briefcase,
+  Clock,
+  Compass,
+} from 'lucide-react';
+import { networkConnectionsService } from '../../services/networkConnectionsService';
 import { networkApi } from '../../services/networkApi';
+import { useToast } from '../ui/Toast';
+
+/**
+ * Format integer count with locale commas
+ */
+function formatNumber(num) {
+  if (num === null || num === undefined) return '0';
+  return Number(num).toLocaleString();
+}
+
+/**
+ * Derives user initials
+ */
+function getInitials(name) {
+  if (!name) return 'ZU';
+  return name
+    .split(' ')
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+}
 
 export default function NetworkConnections() {
   const queryClient = useQueryClient();
-  const [subTab, setSubTab] = useState('people'); // 'people' | 'connections' | 'requests'
+  const navigate = useNavigate();
+  const toast = useToast();
+
+  // Active Tab: 'connections' | 'followers' | 'following' | 'requests' | 'people'
+  const [subTab, setSubTab] = useState('connections');
+  const [requestsSubTab, setRequestsSubTab] = useState('incoming'); // 'incoming' | 'outgoing'
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [page, setPage] = useState(1);
 
-  // Queries
-  const peopleQuery = useQuery({
-    queryKey: ['network-people', { q: searchQuery, role: roleFilter }],
-    queryFn: () => networkApi.getPeople({ q: searchQuery, role: roleFilter }),
-    enabled: subTab === 'people',
+  // Authoritative Network Stats for Tab Badges
+  const { data: statsData } = useQuery({
+    queryKey: ['network-profile-stats', 'me'],
+    queryFn: () => networkConnectionsService.getProfileStats('me'),
+    staleTime: 1000 * 30,
   });
 
+  // Authoritative Requests Count
+  const { data: countsData } = useQuery({
+    queryKey: ['network-connection-counts'],
+    queryFn: () => networkConnectionsService.getConnectionCounts(),
+    staleTime: 1000 * 30,
+  });
+
+  // 1. My Connections Query
   const connectionsQuery = useQuery({
-    queryKey: ['network-connections'],
-    queryFn: () => networkApi.getConnections(),
+    queryKey: ['network-connections-list', page, searchQuery],
+    queryFn: () =>
+      networkConnectionsService.getUserConnections('me', {
+        page,
+        limit: 12,
+        q: searchQuery,
+      }),
     enabled: subTab === 'connections',
+    staleTime: 1000 * 20,
   });
 
+  // 2. Followers Query
+  const followersQuery = useQuery({
+    queryKey: ['network-followers-list', page, searchQuery],
+    queryFn: () =>
+      networkConnectionsService.getUserFollowers('me', {
+        page,
+        limit: 12,
+        q: searchQuery,
+      }),
+    enabled: subTab === 'followers',
+    staleTime: 1000 * 20,
+  });
+
+  // 3. Following Query
+  const followingQuery = useQuery({
+    queryKey: ['network-following-list', page, searchQuery],
+    queryFn: () =>
+      networkConnectionsService.getUserFollowing('me', {
+        page,
+        limit: 12,
+        q: searchQuery,
+      }),
+    enabled: subTab === 'following',
+    staleTime: 1000 * 20,
+  });
+
+  // 4. Requests Query
   const requestsQuery = useQuery({
     queryKey: ['network-requests'],
     queryFn: () => networkApi.getPendingRequests(),
     enabled: subTab === 'requests',
+    staleTime: 1000 * 15,
+  });
+
+  // 5. Discover People Query
+  const peopleQuery = useQuery({
+    queryKey: ['network-people', { q: searchQuery, role: roleFilter, page }],
+    queryFn: () => networkApi.getPeople({ q: searchQuery, role: roleFilter, page }),
+    enabled: subTab === 'people',
+    staleTime: 1000 * 20,
   });
 
   // Mutations
+  const invalidateAllNetwork = () => {
+    queryClient.invalidateQueries({ queryKey: ['network-connections-list'] });
+    queryClient.invalidateQueries({ queryKey: ['network-followers-list'] });
+    queryClient.invalidateQueries({ queryKey: ['network-following-list'] });
+    queryClient.invalidateQueries({ queryKey: ['network-requests'] });
+    queryClient.invalidateQueries({ queryKey: ['network-people'] });
+    queryClient.invalidateQueries({ queryKey: ['network-profile-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['network-connection-counts'] });
+  };
+
+  // Follow / Unfollow Mutation
+  const followMutation = useMutation({
+    mutationFn: async ({ targetId, follow }) => {
+      if (follow) {
+        return networkConnectionsService.followUser(targetId);
+      } else {
+        return networkConnectionsService.unfollowUser(targetId);
+      }
+    },
+    onSuccess: (_data, { follow, name }) => {
+      toast.success(follow ? 'Following' : 'Unfollowed', follow ? `Now following ${name || 'user'}.` : `Unfollowed ${name || 'user'}.`);
+      invalidateAllNetwork();
+    },
+    onError: (err) => {
+      toast.error('Action Failed', err?.response?.data?.message || 'Could not update follow state.');
+    },
+  });
+
+  // Send Connection Request Mutation
   const sendRequestMutation = useMutation({
-    mutationFn: (recipientId) => networkApi.sendConnectionRequest(recipientId),
+    mutationFn: (recipientId) => networkConnectionsService.connectUser(recipientId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['network-people'] });
-      queryClient.invalidateQueries({ queryKey: ['network-requests'] });
+      toast.success('Request Sent', 'Connection request sent successfully.');
+      invalidateAllNetwork();
+    },
+    onError: (err) => {
+      toast.error('Unable to Connect', err?.response?.data?.message || 'Could not send connection request.');
     },
   });
 
+  // Accept Request Mutation
   const acceptRequestMutation = useMutation({
-    mutationFn: (requestId) => networkApi.acceptConnectionRequest(requestId),
+    mutationFn: (requestId) => networkConnectionsService.acceptRequest(requestId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['network-requests'] });
-      queryClient.invalidateQueries({ queryKey: ['network-connections'] });
-      queryClient.invalidateQueries({ queryKey: ['network-people'] });
+      toast.success('Connection Accepted', 'You are now connected!');
+      invalidateAllNetwork();
+    },
+    onError: (err) => {
+      toast.error('Accept Failed', err?.response?.data?.message || 'Could not accept connection request.');
     },
   });
 
+  // Reject / Decline Request Mutation
+  const declineRequestMutation = useMutation({
+    mutationFn: (requestId) => networkConnectionsService.declineRequest(requestId),
+    onSuccess: () => {
+      toast.info('Request Declined', 'Connection request removed.');
+      invalidateAllNetwork();
+    },
+    onError: (err) => {
+      toast.error('Decline Failed', err?.response?.data?.message || 'Could not decline request.');
+    },
+  });
+
+  // Cancel Outgoing Request Mutation
+  const cancelRequestMutation = useMutation({
+    mutationFn: (requestId) => networkConnectionsService.cancelRequest(requestId),
+    onSuccess: () => {
+      toast.info('Request Cancelled', 'Connection request cancelled.');
+      invalidateAllNetwork();
+    },
+    onError: (err) => {
+      toast.error('Cancel Failed', err?.response?.data?.message || 'Could not cancel request.');
+    },
+  });
+
+  // Remove Connection Mutation
   const removeConnectionMutation = useMutation({
-    mutationFn: (connectionId) => networkApi.removeConnection(connectionId),
+    mutationFn: (connectionIdOrUserId) => networkConnectionsService.removeConnection(connectionIdOrUserId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['network-connections'] });
-      queryClient.invalidateQueries({ queryKey: ['network-requests'] });
-      queryClient.invalidateQueries({ queryKey: ['network-people'] });
+      toast.info('Connection Removed', 'Connection removed successfully.');
+      invalidateAllNetwork();
+    },
+    onError: (err) => {
+      toast.error('Remove Failed', err?.response?.data?.message || 'Could not remove connection.');
     },
   });
 
-  const people = peopleQuery.data?.people || [];
-  const connections = connectionsQuery.data?.connections || [];
-  const incomingRequests = requestsQuery.data?.incoming || [];
-  const outgoingRequests = requestsQuery.data?.outgoing || [];
+  const connectionsCount = statsData?.connections ?? countsData?.connectionsCount ?? 0;
+  const followersCount = statsData?.followers ?? 0;
+  const followingCount = statsData?.following ?? 0;
+  const incomingRequestsCount = countsData?.incomingRequestsCount ?? requestsQuery.data?.incoming?.length ?? 0;
+  const outgoingRequestsCount = countsData?.outgoingRequestsCount ?? requestsQuery.data?.outgoing?.length ?? 0;
+
+  const handleTabChange = (newTab) => {
+    setSubTab(newTab);
+    setSearchQuery('');
+    setPage(1);
+  };
 
   return (
     <div className="space-y-6">
-      {/* Sub-tab Navigation */}
-      <div className="flex items-center justify-between flex-wrap gap-4 pb-4 border-b border-white/[0.06]">
-        <div className="flex items-center gap-2">
+      {/* ── Sub-tab Navigation Strip ── */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.08]">
+        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] overflow-x-auto">
           {[
-            { id: 'people', label: 'Find People', icon: Search },
-            { id: 'connections', label: `Connections (${connectionsQuery.data?.total || 0})`, icon: UserCheck },
-            { id: 'requests', label: `Requests (${incomingRequests.length})`, icon: UserPlus },
+            { id: 'connections', label: 'Connections', count: connectionsCount, icon: UserCheck },
+            { id: 'followers', label: 'Followers', count: followersCount, icon: Users },
+            { id: 'following', label: 'Following', count: followingCount, icon: UserPlus },
+            { id: 'requests', label: 'Requests', count: incomingRequestsCount, icon: Clock, badgeAccent: incomingRequestsCount > 0 },
+            { id: 'people', label: 'Discover People', icon: Compass },
           ].map((tab) => {
             const Icon = tab.icon;
+            const isActive = subTab === tab.id;
             return (
               <button
                 key={tab.id}
-                onClick={() => setSubTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  subTab === tab.id
-                    ? 'bg-brand-mint text-black shadow-lg shadow-brand-mint/15'
-                    : 'bg-white/[0.03] text-text-muted hover:text-white hover:bg-white/[0.06]'
+                type="button"
+                onClick={() => handleTabChange(tab.id)}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer focus-ring ${
+                  isActive
+                    ? 'bg-brand-mint text-black font-bold shadow-md shadow-brand-mint/15'
+                    : 'text-text-muted hover:text-white hover:bg-white/[0.04]'
                 }`}
               >
-                <Icon className="w-3.5 h-3.5" />
+                <Icon className="w-3.5 h-3.5 shrink-0" />
                 <span>{tab.label}</span>
+                {tab.count !== undefined && (
+                  <span
+                    className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                      isActive
+                        ? 'bg-black/15 text-black'
+                        : tab.badgeAccent
+                        ? 'bg-brand-mint text-black font-bold'
+                        : 'bg-white/[0.08] text-text-muted'
+                    }`}
+                  >
+                    {formatNumber(tab.count)}
+                  </span>
+                )}
               </button>
             );
           })}
         </div>
 
+        {/* Optional Role Filter for Discover People Tab */}
         {subTab === 'people' && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {['all', 'student', 'teacher'].map((r) => (
               <button
                 key={r}
+                type="button"
                 onClick={() => setRoleFilter(r)}
-                className={`px-3 py-1 rounded-lg text-xs font-medium capitalize transition-colors cursor-pointer ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize transition-colors cursor-pointer ${
                   roleFilter === r
-                    ? 'bg-white/10 text-white'
+                    ? 'bg-white/10 text-white border border-white/10'
                     : 'text-text-muted hover:text-white'
                 }`}
               >
@@ -107,234 +289,780 @@ export default function NetworkConnections() {
         )}
       </div>
 
-      {/* ── TAB 1: FIND PEOPLE ── */}
-      {subTab === 'people' && (
+      {/* ── Search Bar (except for requests tab) ── */}
+      {subTab !== 'requests' && (
+        <div className="relative max-w-md">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setPage(1);
+            }}
+            placeholder={
+              subTab === 'connections'
+                ? 'Search connections by name or handle...'
+                : subTab === 'followers'
+                ? 'Search followers...'
+                : subTab === 'following'
+                ? 'Search people you follow...'
+                : 'Search people in Zeitnah directory...'
+            }
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-brand-mint/40 text-xs text-white placeholder-text-muted focus:outline-none transition-colors"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-text-muted hover:text-white"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ── 1. CONNECTIONS TAB ── */}
+      {subTab === 'connections' && (
         <div className="space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search people by name or email..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] focus:border-brand-mint/40 text-xs text-white placeholder-text-muted focus:outline-none transition-colors"
-            />
+          {connectionsQuery.isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-32 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+              ))}
+            </div>
+          ) : connectionsQuery.isError ? (
+            <div className="p-8 rounded-2xl bg-danger/5 border border-danger/20 text-center">
+              <AlertCircle className="w-8 h-8 text-danger mx-auto mb-2" />
+              <p className="text-sm font-bold text-white">Failed to load connections</p>
+              <button
+                type="button"
+                onClick={() => connectionsQuery.refetch()}
+                className="btn-secondary mt-3 text-xs py-2 px-4"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : (connectionsQuery.data?.data || []).length === 0 ? (
+            <div className="p-16 rounded-3xl bg-[#111115]/60 border border-white/[0.06] text-center max-w-lg mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-text-faint">
+                <UserCheck className="w-7 h-7" />
+              </div>
+              <h3 className="font-heading font-bold text-lg text-white">
+                {searchQuery ? 'No matching connections' : 'No connections yet'}
+              </h3>
+              <p className="text-xs text-text-muted mt-1 leading-relaxed">
+                {searchQuery
+                  ? 'No connections found matching your search.'
+                  : 'Connect with classmates, peers, and mentors to expand your learning network.'}
+              </p>
+              {!searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSubTab('people')}
+                  className="btn-primary mt-4 text-xs py-2.5 px-5 inline-flex items-center gap-2 cursor-pointer"
+                >
+                  <Compass className="w-4 h-4" />
+                  <span>Discover People</span>
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(connectionsQuery.data?.data || []).map((conn) => {
+                const profileLink = `/u/${encodeURIComponent(conn.username || conn.id || '')}`;
+                return (
+                  <div
+                    key={conn.id || conn._id}
+                    className="p-4 rounded-2xl bg-[#111115]/80 hover:bg-[#15151c] border border-white/[0.08] hover:border-brand-mint/30 transition-all duration-200 flex flex-col justify-between gap-3 shadow-lg"
+                  >
+                    <div className="flex items-start gap-3 min-w-0">
+                      <Link to={profileLink} className="relative shrink-0 block focus-ring rounded-2xl">
+                        <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden">
+                          {conn.avatar ? (
+                            <img src={conn.avatar} alt={conn.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span>{getInitials(conn.name)}</span>
+                          )}
+                        </div>
+                        {conn.isVerified && (
+                          <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-bg-base shadow-sm">
+                            <ShieldCheck className="h-3 w-3" />
+                          </span>
+                        )}
+                      </Link>
+
+                      <div className="min-w-0 flex-1">
+                        <Link
+                          to={profileLink}
+                          className="font-heading font-bold text-sm text-white hover:text-brand-mint transition-colors truncate block focus-ring rounded"
+                        >
+                          {conn.name}
+                        </Link>
+                        <p className="text-xs font-mono text-brand-mint/90 truncate">@{conn.username || 'student'}</p>
+                        {conn.headline ? (
+                          <p className="text-xs text-text-muted/80 truncate mt-1">{conn.headline}</p>
+                        ) : conn.currentRole ? (
+                          <p className="text-xs text-text-muted/70 truncate mt-1 flex items-center gap-1">
+                            <Briefcase className="w-3 h-3 shrink-0" />
+                            <span>{conn.currentRole}</span>
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-white/[0.04] gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <Link
+                          to={profileLink}
+                          className="px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs font-semibold inline-flex items-center gap-1 transition-colors"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Profile</span>
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => navigate('/community/messages')}
+                          className="px-2.5 py-1.5 rounded-xl bg-brand-mint/10 hover:bg-brand-mint/20 text-brand-mint text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          <span>Message</span>
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`Remove connection with ${conn.name}?`)) {
+                            removeConnectionMutation.mutate(conn.id || conn._id);
+                          }
+                        }}
+                        disabled={removeConnectionMutation.isPending}
+                        className="p-1.5 rounded-xl text-text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                        title="Remove connection"
+                        aria-label="Remove connection"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {(connectionsQuery.data?.totalPages || 1) > 1 && (
+            <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
+              <span className="text-xs text-text-muted">
+                Page {page} of {connectionsQuery.data?.totalPages}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={!connectionsQuery.data?.hasNextPage}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── 2. FOLLOWERS TAB ── */}
+      {subTab === 'followers' && (
+        <div className="space-y-4">
+          {followersQuery.isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-32 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+              ))}
+            </div>
+          ) : followersQuery.isError ? (
+            <div className="p-8 rounded-2xl bg-danger/5 border border-danger/20 text-center">
+              <AlertCircle className="w-8 h-8 text-danger mx-auto mb-2" />
+              <p className="text-sm font-bold text-white">Failed to load followers</p>
+              <button
+                type="button"
+                onClick={() => followersQuery.refetch()}
+                className="btn-secondary mt-3 text-xs py-2 px-4"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : (followersQuery.data?.data || []).length === 0 ? (
+            <div className="p-16 rounded-3xl bg-[#111115]/60 border border-white/[0.06] text-center max-w-lg mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-text-faint">
+                <Users className="w-7 h-7" />
+              </div>
+              <h3 className="font-heading font-bold text-lg text-white">
+                {searchQuery ? 'No matching followers' : 'No followers yet'}
+              </h3>
+              <p className="text-xs text-text-muted mt-1 leading-relaxed">
+                {searchQuery
+                  ? 'No followers found matching your search.'
+                  : 'When other students and mentors follow your learning journey, they will appear here.'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(followersQuery.data?.data || []).map((user) => {
+                const profileLink = `/u/${encodeURIComponent(user.username || user.id || '')}`;
+                const isFollowing = Boolean(user.isFollowing);
+                return (
+                  <div
+                    key={user.id || user._id}
+                    className="p-4 rounded-2xl bg-[#111115]/80 hover:bg-[#15151c] border border-white/[0.08] hover:border-brand-mint/30 transition-all duration-200 flex flex-col justify-between gap-3 shadow-lg"
+                  >
+                    <div className="flex items-start gap-3 min-w-0">
+                      <Link to={profileLink} className="relative shrink-0 block focus-ring rounded-2xl">
+                        <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden">
+                          {user.avatar ? (
+                            <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span>{getInitials(user.name)}</span>
+                          )}
+                        </div>
+                        {user.isVerified && (
+                          <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-bg-base shadow-sm">
+                            <ShieldCheck className="h-3 w-3" />
+                          </span>
+                        )}
+                      </Link>
+
+                      <div className="min-w-0 flex-1">
+                        <Link
+                          to={profileLink}
+                          className="font-heading font-bold text-sm text-white hover:text-brand-mint transition-colors truncate block focus-ring rounded"
+                        >
+                          {user.name}
+                        </Link>
+                        <p className="text-xs font-mono text-brand-mint/90 truncate">@{user.username || 'student'}</p>
+                        {user.headline ? (
+                          <p className="text-xs text-text-muted/80 truncate mt-1">{user.headline}</p>
+                        ) : user.currentRole ? (
+                          <p className="text-xs text-text-muted/70 truncate mt-1">{user.currentRole}</p>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-white/[0.04] gap-2">
+                      <Link
+                        to={profileLink}
+                        className="px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs font-semibold inline-flex items-center gap-1 transition-colors"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Profile</span>
+                      </Link>
+
+                      <div className="flex items-center gap-1.5">
+                        {user.connectionStatus === 'connected' ? (
+                          <span className="px-2.5 py-1 rounded-xl bg-emerald-500/15 text-emerald-300 text-[10px] font-bold">
+                            Connected
+                          </span>
+                        ) : user.connectionStatus === 'pending' ? (
+                          <span className="px-2.5 py-1 rounded-xl bg-white/[0.05] text-text-muted text-[10px] font-semibold">
+                            Pending
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => sendRequestMutation.mutate(user.id || user._id)}
+                            disabled={sendRequestMutation.isPending}
+                            className="px-2.5 py-1 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-white text-[11px] font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                          >
+                            <UserCheck className="w-3.5 h-3.5 text-brand-mint" />
+                            <span>Connect</span>
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            followMutation.mutate({
+                              targetId: user.id || user._id,
+                              follow: !isFollowing,
+                              name: user.name,
+                            })
+                          }
+                          disabled={followMutation.isPending}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                            isFollowing
+                              ? 'bg-white/[0.08] hover:bg-rose-500/15 text-white hover:text-rose-300 border border-white/10'
+                              : 'bg-brand-mint text-black hover:bg-brand-mint/90'
+                          }`}
+                        >
+                          {isFollowing ? 'Following' : 'Follow Back'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {(followersQuery.data?.totalPages || 1) > 1 && (
+            <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
+              <span className="text-xs text-text-muted">
+                Page {page} of {followersQuery.data?.totalPages}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={!followersQuery.data?.hasNextPage}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── 3. FOLLOWING TAB ── */}
+      {subTab === 'following' && (
+        <div className="space-y-4">
+          {followingQuery.isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-32 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+              ))}
+            </div>
+          ) : followingQuery.isError ? (
+            <div className="p-8 rounded-2xl bg-danger/5 border border-danger/20 text-center">
+              <AlertCircle className="w-8 h-8 text-danger mx-auto mb-2" />
+              <p className="text-sm font-bold text-white">Failed to load following list</p>
+              <button
+                type="button"
+                onClick={() => followingQuery.refetch()}
+                className="btn-secondary mt-3 text-xs py-2 px-4"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : (followingQuery.data?.data || []).length === 0 ? (
+            <div className="p-16 rounded-3xl bg-[#111115]/60 border border-white/[0.06] text-center max-w-lg mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-text-faint">
+                <UserPlus className="w-7 h-7" />
+              </div>
+              <h3 className="font-heading font-bold text-lg text-white">
+                {searchQuery ? 'No matching users' : 'You are not following anyone yet'}
+              </h3>
+              <p className="text-xs text-text-muted mt-1 leading-relaxed">
+                {searchQuery
+                  ? 'No users found matching your search.'
+                  : 'Follow classmates, instructors, and community members to see their learning activity.'}
+              </p>
+              {!searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSubTab('people')}
+                  className="btn-primary mt-4 text-xs py-2.5 px-5 inline-flex items-center gap-2 cursor-pointer"
+                >
+                  <Compass className="w-4 h-4" />
+                  <span>Explore Directory</span>
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(followingQuery.data?.data || []).map((user) => {
+                const profileLink = `/u/${encodeURIComponent(user.username || user.id || '')}`;
+                return (
+                  <div
+                    key={user.id || user._id}
+                    className="p-4 rounded-2xl bg-[#111115]/80 hover:bg-[#15151c] border border-white/[0.08] hover:border-brand-mint/30 transition-all duration-200 flex flex-col justify-between gap-3 shadow-lg"
+                  >
+                    <div className="flex items-start gap-3 min-w-0">
+                      <Link to={profileLink} className="relative shrink-0 block focus-ring rounded-2xl">
+                        <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden">
+                          {user.avatar ? (
+                            <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span>{getInitials(user.name)}</span>
+                          )}
+                        </div>
+                        {user.isVerified && (
+                          <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-bg-base shadow-sm">
+                            <ShieldCheck className="h-3 w-3" />
+                          </span>
+                        )}
+                      </Link>
+
+                      <div className="min-w-0 flex-1">
+                        <Link
+                          to={profileLink}
+                          className="font-heading font-bold text-sm text-white hover:text-brand-mint transition-colors truncate block focus-ring rounded"
+                        >
+                          {user.name}
+                        </Link>
+                        <p className="text-xs font-mono text-brand-mint/90 truncate">@{user.username || 'student'}</p>
+                        {user.headline ? (
+                          <p className="text-xs text-text-muted/80 truncate mt-1">{user.headline}</p>
+                        ) : user.currentRole ? (
+                          <p className="text-xs text-text-muted/70 truncate mt-1">{user.currentRole}</p>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-white/[0.04] gap-2">
+                      <Link
+                        to={profileLink}
+                        className="px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs font-semibold inline-flex items-center gap-1 transition-colors"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Profile</span>
+                      </Link>
+
+                      <div className="flex items-center gap-1.5">
+                        {user.connectionStatus === 'connected' ? (
+                          <span className="px-2.5 py-1 rounded-xl bg-emerald-500/15 text-emerald-300 text-[10px] font-bold">
+                            Connected
+                          </span>
+                        ) : user.connectionStatus === 'pending' ? (
+                          <span className="px-2.5 py-1 rounded-xl bg-white/[0.05] text-text-muted text-[10px] font-semibold">
+                            Pending
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => sendRequestMutation.mutate(user.id || user._id)}
+                            disabled={sendRequestMutation.isPending}
+                            className="px-2.5 py-1 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-white text-[11px] font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                          >
+                            <UserCheck className="w-3.5 h-3.5 text-brand-mint" />
+                            <span>Connect</span>
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            followMutation.mutate({
+                              targetId: user.id || user._id,
+                              follow: false,
+                              name: user.name,
+                            })
+                          }
+                          disabled={followMutation.isPending}
+                          className="px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-rose-500/15 text-white hover:text-rose-300 border border-white/10 text-xs font-bold transition-all cursor-pointer"
+                          title="Unfollow"
+                        >
+                          Unfollow
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {(followingQuery.data?.totalPages || 1) > 1 && (
+            <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
+              <span className="text-xs text-text-muted">
+                Page {page} of {followingQuery.data?.totalPages}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={!followingQuery.data?.hasNextPage}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── 4. CONNECTION REQUESTS TAB ── */}
+      {subTab === 'requests' && (
+        <div className="space-y-6">
+          {/* Sub-selector for Incoming vs Outgoing */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setRequestsSubTab('incoming')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                requestsSubTab === 'incoming'
+                  ? 'bg-brand-mint text-black shadow-md shadow-brand-mint/15'
+                  : 'bg-white/[0.03] text-text-muted hover:text-white hover:bg-white/[0.06]'
+              }`}
+            >
+              <span>Incoming Requests</span>
+              <span className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] bg-black/15 font-mono">
+                {incomingRequestsCount}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setRequestsSubTab('outgoing')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                requestsSubTab === 'outgoing'
+                  ? 'bg-brand-mint text-black shadow-md shadow-brand-mint/15'
+                  : 'bg-white/[0.03] text-text-muted hover:text-white hover:bg-white/[0.06]'
+              }`}
+            >
+              <span>Sent Requests</span>
+              <span className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] bg-white/[0.08] font-mono">
+                {outgoingRequestsCount}
+              </span>
+            </button>
           </div>
 
+          {/* Incoming Requests */}
+          {requestsSubTab === 'incoming' && (
+            <div>
+              {requestsQuery.isLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="h-28 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+                  ))}
+                </div>
+              ) : (requestsQuery.data?.incoming || []).length === 0 ? (
+                <div className="p-12 rounded-2xl bg-[#111115]/60 border border-white/[0.06] text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-3 text-text-faint">
+                    <UserCheck className="w-6 h-6" />
+                  </div>
+                  <h4 className="font-heading font-bold text-sm text-white">No pending incoming requests</h4>
+                  <p className="text-xs text-text-muted mt-1">
+                    When someone sends you a connection request, you'll be able to accept or decline it here.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {(requestsQuery.data?.incoming || []).map((req) => {
+                    const requester = req.requesterId || {};
+                    const profileLink = `/u/${encodeURIComponent(requester.username || requester._id || '')}`;
+                    return (
+                      <div
+                        key={req._id}
+                        className="p-4 rounded-2xl bg-[#111115]/80 border border-white/[0.08] flex items-center justify-between gap-3 shadow-lg"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Link to={profileLink} className="w-10 h-10 rounded-xl bg-brand-mint/15 text-brand-mint font-bold text-xs flex items-center justify-center shrink-0 overflow-hidden">
+                            {requester.avatar ? (
+                              <img src={requester.avatar} alt={requester.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span>{getInitials(requester.name)}</span>
+                            )}
+                          </Link>
+                          <div className="min-w-0">
+                            <Link to={profileLink} className="text-xs font-bold text-white hover:text-brand-mint transition-colors truncate block">
+                              {requester.name || 'Student'}
+                            </Link>
+                            <p className="text-[10px] font-mono text-text-muted truncate">
+                              @{requester.username || 'student'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => acceptRequestMutation.mutate(req._id)}
+                            disabled={acceptRequestMutation.isPending}
+                            className="px-3 py-1.5 rounded-xl bg-brand-mint text-black font-bold text-xs cursor-pointer hover:bg-brand-mint/90 transition-colors"
+                          >
+                            Accept
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => declineRequestMutation.mutate(req._id)}
+                            disabled={declineRequestMutation.isPending}
+                            className="p-1.5 rounded-xl text-text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                            title="Decline request"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Outgoing Requests */}
+          {requestsSubTab === 'outgoing' && (
+            <div>
+              {requestsQuery.isLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="h-28 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+                  ))}
+                </div>
+              ) : (requestsQuery.data?.outgoing || []).length === 0 ? (
+                <div className="p-12 rounded-2xl bg-[#111115]/60 border border-white/[0.06] text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-3 text-text-faint">
+                    <Clock className="w-6 h-6" />
+                  </div>
+                  <h4 className="font-heading font-bold text-sm text-white">No pending sent requests</h4>
+                  <p className="text-xs text-text-muted mt-1">
+                    You have no active outgoing connection requests awaiting response.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {(requestsQuery.data?.outgoing || []).map((req) => {
+                    const recipient = req.recipientId || {};
+                    const profileLink = `/u/${encodeURIComponent(recipient.username || recipient._id || '')}`;
+                    return (
+                      <div
+                        key={req._id}
+                        className="p-4 rounded-2xl bg-[#111115]/80 border border-white/[0.08] flex items-center justify-between gap-3 shadow-lg"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Link to={profileLink} className="w-10 h-10 rounded-xl bg-white/[0.04] text-text-muted font-bold text-xs flex items-center justify-center shrink-0 overflow-hidden">
+                            {recipient.avatar ? (
+                              <img src={recipient.avatar} alt={recipient.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span>{getInitials(recipient.name)}</span>
+                            )}
+                          </Link>
+                          <div className="min-w-0">
+                            <Link to={profileLink} className="text-xs font-bold text-white hover:text-brand-mint transition-colors truncate block">
+                              {recipient.name || 'Student'}
+                            </Link>
+                            <p className="text-[10px] font-mono text-text-muted truncate">
+                              @{recipient.username || 'student'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => cancelRequestMutation.mutate(req._id)}
+                          disabled={cancelRequestMutation.isPending}
+                          className="text-xs text-text-muted hover:text-rose-400 px-3 py-1.5 rounded-xl hover:bg-rose-500/10 transition-colors cursor-pointer border border-white/[0.06]"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── 5. DISCOVER PEOPLE TAB ── */}
+      {subTab === 'people' && (
+        <div className="space-y-4">
           {peopleQuery.isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div key={i} className="h-28 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
               ))}
             </div>
-          ) : people.length === 0 ? (
+          ) : (peopleQuery.data?.people || []).length === 0 ? (
             <div className="p-12 rounded-2xl bg-[#111115]/60 border border-white/[0.06] text-center">
               <p className="text-xs text-text-muted">No people found matching your search.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {people.map((person) => (
-                <div
-                  key={person._id}
-                  className="p-4 rounded-2xl bg-[#111115]/80 border border-white/[0.06] flex items-center justify-between gap-3"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-brand-mint font-bold text-xs shrink-0 overflow-hidden">
-                      {person.avatar ? (
-                        <img src={person.avatar} alt={person.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <span>{(person.name || 'U')[0]}</span>
-                      )}
-                    </div>
-
-                    <div className="min-w-0">
-                      <h4 className="text-xs font-bold text-white truncate">{person.name}</h4>
-                      <span className="inline-block mt-0.5 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-white/[0.04] text-text-muted">
-                        {person.role}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="shrink-0">
-                    {person.connectionStatus === 'connected' ? (
-                      <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 text-[10px] font-semibold flex items-center gap-1">
-                        <Check className="w-3 h-3" />
-                        <span>Connected</span>
-                      </span>
-                    ) : person.connectionStatus === 'pending_sent' ? (
-                      <span className="px-2.5 py-1 rounded-lg bg-white/[0.04] text-text-muted text-[10px] font-semibold">
-                        Pending
-                      </span>
-                    ) : person.connectionStatus === 'pending_received' ? (
-                      <button
-                        onClick={() => acceptRequestMutation.mutate(person.connectionId)}
-                        disabled={acceptRequestMutation.isPending}
-                        className="px-2.5 py-1 rounded-lg bg-brand-mint text-black font-semibold text-[10px] cursor-pointer"
-                      >
-                        Accept
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => sendRequestMutation.mutate(person._id)}
-                        disabled={sendRequestMutation.isPending}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-brand-mint/15 hover:bg-brand-mint text-brand-mint hover:text-black font-semibold text-xs transition-colors cursor-pointer"
-                      >
-                        <UserPlus className="w-3.5 h-3.5" />
-                        <span>Connect</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── TAB 2: MY CONNECTIONS ── */}
-      {subTab === 'connections' && (
-        <div>
-          {connectionsQuery.isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-24 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
-              ))}
-            </div>
-          ) : connections.length === 0 ? (
-            <div className="p-12 rounded-2xl bg-[#111115]/60 border border-white/[0.06] text-center">
-              <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-3 text-text-faint">
-                <Users className="w-6 h-6" />
-              </div>
-              <h3 className="font-heading font-bold text-base text-white">No connections yet</h3>
-              <p className="text-xs text-text-muted mt-1">Discover classmates and faculty to build your network.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {connections.map((conn) => {
-                const peer = conn.peer;
+              {(peopleQuery.data?.people || []).map((person) => {
+                const profileLink = `/u/${encodeURIComponent(person.username || person._id || '')}`;
                 return (
                   <div
-                    key={conn._id}
-                    className="p-4 rounded-2xl bg-[#111115]/80 border border-white/[0.06] flex items-center justify-between gap-3"
+                    key={person._id}
+                    className="p-4 rounded-2xl bg-[#111115]/80 hover:bg-[#15151c] border border-white/[0.08] hover:border-brand-mint/30 transition-all flex items-center justify-between gap-3 shadow-lg"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-brand-mint font-bold text-xs shrink-0 overflow-hidden">
-                        {peer.avatar || peer.profileImage ? (
-                          <img src={peer.avatar || peer.profileImage} alt={peer.name} className="w-full h-full object-cover" />
+                      <Link to={profileLink} className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-brand-mint font-bold text-xs shrink-0 overflow-hidden">
+                        {person.avatar ? (
+                          <img src={person.avatar} alt={person.name} className="w-full h-full object-cover" />
                         ) : (
-                          <span>{(peer.name || 'U')[0]}</span>
+                          <span>{getInitials(person.name)}</span>
                         )}
-                      </div>
+                      </Link>
 
                       <div className="min-w-0">
-                        <h4 className="text-xs font-bold text-white truncate">{peer.name}</h4>
-                        <p className="text-[10px] text-text-muted truncate">{peer.email}</p>
+                        <Link to={profileLink} className="text-xs font-bold text-white hover:text-brand-mint transition-colors truncate block">
+                          {person.name}
+                        </Link>
+                        <span className="inline-block mt-0.5 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-white/[0.04] text-text-muted">
+                          {person.role || 'Student'}
+                        </span>
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => removeConnectionMutation.mutate(conn._id)}
-                      className="text-[11px] text-text-muted hover:text-red-400 p-1.5 rounded-lg hover:bg-red-500/10 transition-colors cursor-pointer"
-                      title="Remove connection"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                    <div className="shrink-0">
+                      {person.connectionStatus === 'connected' ? (
+                        <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 text-[10px] font-semibold flex items-center gap-1">
+                          <Check className="w-3 h-3" />
+                          <span>Connected</span>
+                        </span>
+                      ) : person.connectionStatus === 'pending_sent' || person.connectionStatus === 'pending' ? (
+                        <span className="px-2.5 py-1 rounded-lg bg-white/[0.04] text-text-muted text-[10px] font-semibold">
+                          Pending
+                        </span>
+                      ) : person.connectionStatus === 'pending_received' ? (
+                        <button
+                          type="button"
+                          onClick={() => acceptRequestMutation.mutate(person.connectionId)}
+                          disabled={acceptRequestMutation.isPending}
+                          className="px-2.5 py-1 rounded-lg bg-brand-mint text-black font-semibold text-[10px] cursor-pointer"
+                        >
+                          Accept
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => sendRequestMutation.mutate(person._id)}
+                          disabled={sendRequestMutation.isPending}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-brand-mint/15 hover:bg-brand-mint text-brand-mint hover:text-black font-semibold text-xs transition-colors cursor-pointer"
+                        >
+                          <UserPlus className="w-3.5 h-3.5" />
+                          <span>Connect</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
             </div>
           )}
-        </div>
-      )}
-
-      {/* ── TAB 3: REQUESTS ── */}
-      {subTab === 'requests' && (
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-text-faint mb-3">
-              Incoming Requests ({incomingRequests.length})
-            </h3>
-            {incomingRequests.length === 0 ? (
-              <p className="text-xs text-text-muted">No pending incoming requests.</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {incomingRequests.map((req) => (
-                  <div
-                    key={req._id}
-                    className="p-4 rounded-2xl bg-[#111115]/80 border border-white/[0.06] flex items-center justify-between gap-3"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-xl bg-brand-mint/15 text-brand-mint font-bold text-xs flex items-center justify-center shrink-0 overflow-hidden">
-                        {req.requesterId?.avatar ? (
-                          <img src={req.requesterId.avatar} alt={req.requesterId.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <span>{(req.requesterId?.name || 'U')[0]}</span>
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <h4 className="text-xs font-bold text-white truncate">{req.requesterId?.name || 'User'}</h4>
-                        <p className="text-[10px] text-text-muted truncate">{req.requesterId?.email}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        onClick={() => acceptRequestMutation.mutate(req._id)}
-                        className="px-3 py-1.5 rounded-xl bg-brand-mint text-black font-bold text-xs cursor-pointer"
-                      >
-                        Accept
-                      </button>
-                      <button
-                        onClick={() => removeConnectionMutation.mutate(req._id)}
-                        className="p-1.5 rounded-xl text-text-muted hover:text-red-400 hover:bg-red-500/10 cursor-pointer"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-text-faint mb-3">
-              Sent Requests ({outgoingRequests.length})
-            </h3>
-            {outgoingRequests.length === 0 ? (
-              <p className="text-xs text-text-muted">No pending outgoing requests.</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {outgoingRequests.map((req) => (
-                  <div
-                    key={req._id}
-                    className="p-4 rounded-2xl bg-[#111115]/80 border border-white/[0.06] flex items-center justify-between gap-3"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-xl bg-white/[0.03] text-text-muted font-bold text-xs flex items-center justify-center shrink-0 overflow-hidden">
-                        {req.recipientId?.avatar ? (
-                          <img src={req.recipientId.avatar} alt={req.recipientId.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <span>{(req.recipientId?.name || 'U')[0]}</span>
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <h4 className="text-xs font-bold text-white truncate">{req.recipientId?.name || 'User'}</h4>
-                        <p className="text-[10px] text-text-muted truncate">{req.recipientId?.email}</p>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => removeConnectionMutation.mutate(req._id)}
-                      className="text-xs text-text-muted hover:text-red-400 px-3 py-1 rounded-lg hover:bg-white/[0.04] cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
       )}
     </div>

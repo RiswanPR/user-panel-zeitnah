@@ -107,6 +107,42 @@ export const networkApi = {
     return response.data;
   },
 
+  // ── Network Profile Statistics & Relationships ──
+  getProfileStats: async (userIdOrUsername) => {
+    const response = await api.get(`/network/users/${encodeURIComponent(userIdOrUsername)}/stats`);
+    return response.data;
+  },
+
+  getUserFollowers: async (userIdOrUsername, params = {}) => {
+    const response = await api.get(`/network/users/${encodeURIComponent(userIdOrUsername)}/followers`, { params });
+    return response.data;
+  },
+
+  getUserFollowing: async (userIdOrUsername, params = {}) => {
+    const response = await api.get(`/network/users/${encodeURIComponent(userIdOrUsername)}/following`, { params });
+    return response.data;
+  },
+
+  getUserConnections: async (userIdOrUsername, params = {}) => {
+    const response = await api.get(`/network/users/${encodeURIComponent(userIdOrUsername)}/connections`, { params });
+    return response.data;
+  },
+
+  followUser: async (userIdOrUsername) => {
+    const response = await api.post(`/network/users/${encodeURIComponent(userIdOrUsername)}/follow`);
+    return response.data;
+  },
+
+  unfollowUser: async (userIdOrUsername) => {
+    const response = await api.delete(`/network/users/${encodeURIComponent(userIdOrUsername)}/follow`);
+    return response.data;
+  },
+
+  connectUser: async (userIdOrUsername) => {
+    const response = await api.post(`/network/users/${encodeURIComponent(userIdOrUsername)}/connect`);
+    return response.data;
+  },
+
   // ── Opportunities & Organizations ──
   getOrganizations: async (params = {}) => {
     const response = await api.get('/network/organizations', { params });

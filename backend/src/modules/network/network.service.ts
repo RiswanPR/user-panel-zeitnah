@@ -30,6 +30,9 @@ import {
   ConnectionCountsResponse,
   RelationshipStateResponse,
   RelationshipState,
+  ProfileNetworkStatsResponse,
+  NetworkUserItem,
+  PaginatedNetworkUsersResponse,
 } from './dto/connection-actions.dto';
 import {
   PublicNetworkProfile,
@@ -787,11 +790,18 @@ export class NetworkService {
     currentUserId: string,
     connectionId: string,
   ): Promise<{ success: boolean; state: RelationshipState }> {
-    if (!Types.ObjectId.isValid(connectionId)) {
-      throw new BadRequestException('Invalid connection ID.');
+    let connection: ConnectionDocument | null = null;
+    if (Types.ObjectId.isValid(connectionId)) {
+      connection = await this.connectionModel.findById(connectionId).exec();
     }
 
-    const connection = await this.connectionModel.findById(connectionId).exec();
+    if (!connection) {
+      const targetUser = await this.resolveUser(connectionId);
+      if (targetUser) {
+        const { userLow, userHigh } = getNormalizedPair(currentUserId, String(targetUser._id));
+        connection = await this.connectionModel.findOne({ userLow, userHigh }).exec();
+      }
+    }
 
     if (!connection) {
       throw new NotFoundException('Connection not found.');
@@ -906,6 +916,7 @@ export class NetworkService {
 
     return {
       data,
+      connections: data,
       page,
       limit,
       total,
@@ -1105,6 +1116,682 @@ export class NetworkService {
       sentRequestsCount,
       joinedCommunitiesCount,
     };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROFILE NETWORK STATISTICS & FOLLOWER / RELATIONSHIP ENHANCEMENTS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Helper to resolve a User document by string ID or username.
+   */
+  async resolveUser(userIdOrUsername: string): Promise<UserDocument | null> {
+    if (!userIdOrUsername) return null;
+    const cleanId = String(userIdOrUsername).trim();
+    if (Types.ObjectId.isValid(cleanId)) {
+      return this.userModel.findById(cleanId).exec();
+    }
+    return this.userModel
+      .findOne({ username: cleanId.toLowerCase() })
+      .exec();
+  }
+
+  /**
+   * Helper to enrich a list of user documents with viewer's relationship state and avatar URLs.
+   */
+  private async enrichNetworkUsers(
+    users: any[],
+    viewerUserId?: string,
+    followedDateMap?: Map<string, string>,
+    connDateMap?: Map<string, { date: string; connId: string }>,
+  ): Promise<NetworkUserItem[]> {
+    if (!users || users.length === 0) return [];
+
+    const otherUserIds = users.map((u) => String(u._id));
+    const viewerIdStr = viewerUserId ? String(viewerUserId) : '';
+    const viewerObjId =
+      viewerUserId && Types.ObjectId.isValid(viewerUserId)
+        ? new Types.ObjectId(viewerUserId)
+        : null;
+
+    const viewerFollowsMap = new Set<string>();
+    const viewerFollowedByMap = new Set<string>();
+    const viewerConnMap = new Map<
+      string,
+      { status: string; connId: string; isRequester: boolean }
+    >();
+
+    if (viewerObjId) {
+      const connDocs = await this.connectionModel
+        .find({
+          $or: [
+            {
+              requesterId: viewerObjId,
+              recipientId: {
+                $in: otherUserIds
+                  .filter((id) => Types.ObjectId.isValid(id))
+                  .map((id) => new Types.ObjectId(id)),
+              },
+            },
+            {
+              recipientId: viewerObjId,
+              requesterId: {
+                $in: otherUserIds
+                  .filter((id) => Types.ObjectId.isValid(id))
+                  .map((id) => new Types.ObjectId(id)),
+              },
+            },
+          ],
+        })
+        .lean();
+
+      connDocs.forEach((c) => {
+        const otherId =
+          String(c.requesterId) === viewerIdStr
+            ? String(c.recipientId)
+            : String(c.requesterId);
+        viewerConnMap.set(otherId, {
+          status: c.status,
+          connId: String(c._id),
+          isRequester: String(c.requesterId) === viewerIdStr,
+        });
+      });
+    }
+
+    const items: NetworkUserItem[] = [];
+    for (const u of users) {
+      const uId = String(u._id);
+      const isSelf = uId === viewerIdStr;
+
+      let connectionStatus = 'none';
+      let connectionId: string | null = null;
+      let isFollowing = false;
+      let isFollowedBy = false;
+
+      if (isSelf) {
+        connectionStatus = 'self';
+      } else if (viewerConnMap.has(uId)) {
+        const c = viewerConnMap.get(uId)!;
+        connectionId = c.connId;
+        if (c.status === 'accepted') {
+          connectionStatus = 'connected';
+          isFollowing = true;
+          isFollowedBy = true;
+        } else if (c.status === 'pending') {
+          if (c.isRequester) {
+            connectionStatus = 'pending_sent';
+            isFollowing = true;
+            isFollowedBy = false;
+          } else {
+            connectionStatus = 'pending_received';
+            isFollowing = false;
+            isFollowedBy = true;
+          }
+        }
+      }
+
+      let avatarUrl = '';
+      if (u.avatar) {
+        avatarUrl = await this.signedUrlService.generateSignedImageUrl(
+          u.avatar,
+        );
+      }
+
+      items.push({
+        _id: uId,
+        name: u.name || 'Student',
+        username: u.username || '',
+        email: u.email || '',
+        avatar: u.avatar || '',
+        avatarUrl,
+        headline: u.headline || u.currentRole || '',
+        currentRole: u.currentRole || '',
+        role: u.role || 'student',
+        isFollowing,
+        isFollowedBy,
+        connectionStatus,
+        connectionId: connectionId || connDateMap?.get(uId)?.connId || null,
+        followedSince: followedDateMap?.get(uId) || undefined,
+        connectedSince: connDateMap?.get(uId)?.date || undefined,
+      });
+    }
+
+    return items;
+  }
+
+  /**
+   * Retrieves profile network statistics (followers, following, connections, and relationship with viewer).
+   * Backed purely by authoritative database counting (countDocuments) on network_connections.
+   */
+  async getProfileNetworkStats(
+    userIdOrUsername: string,
+    viewerUserId?: string,
+  ): Promise<ProfileNetworkStatsResponse> {
+    const targetUser = await this.resolveUser(
+      userIdOrUsername === 'me' ? viewerUserId! : userIdOrUsername,
+    );
+    if (!targetUser) {
+      throw new NotFoundException('User not found.');
+    }
+
+    const targetUserIdStr = String(targetUser._id);
+    const targetUserObjId = targetUser._id as Types.ObjectId;
+
+    // Authoritative database-level counting on network_connections
+    const [followersCount, followingCount, connectionsCount] =
+      await Promise.all([
+        this.connectionModel.countDocuments({
+          $or: [
+            { requesterId: targetUserObjId, status: 'accepted' },
+            { recipientId: targetUserObjId, status: { $in: ['accepted', 'pending'] } },
+          ],
+        }),
+        this.connectionModel.countDocuments({
+          $or: [
+            { recipientId: targetUserObjId, status: 'accepted' },
+            { requesterId: targetUserObjId, status: { $in: ['accepted', 'pending'] } },
+          ],
+        }),
+        this.connectionModel.countDocuments({
+          $or: [
+            { requesterId: targetUserObjId },
+            { recipientId: targetUserObjId },
+          ],
+          status: 'accepted',
+        }),
+      ]);
+
+    let relationship: any = undefined;
+    if (viewerUserId && Types.ObjectId.isValid(viewerUserId)) {
+      const viewerIdStr = String(viewerUserId);
+      const isSelf = viewerIdStr === targetUserIdStr;
+      if (isSelf) {
+        relationship = {
+          isFollowing: false,
+          isFollowedBy: false,
+          connectionStatus: 'self',
+          requestSent: false,
+          requestReceived: false,
+          connectionId: null,
+        };
+      } else {
+        const { userLow, userHigh } = getNormalizedPair(
+          viewerUserId,
+          targetUserIdStr,
+        );
+        const connectionDoc = await this.connectionModel
+          .findOne({ userLow, userHigh })
+          .lean();
+
+        let connectionStatus = 'none';
+        let isFollowing = false;
+        let isFollowedBy = false;
+        let requestSent = false;
+        let requestReceived = false;
+
+        if (connectionDoc) {
+          if (connectionDoc.status === 'accepted') {
+            connectionStatus = 'connected';
+            isFollowing = true;
+            isFollowedBy = true;
+          } else if (connectionDoc.status === 'pending') {
+            if (String(connectionDoc.requesterId) === viewerIdStr) {
+              connectionStatus = 'pending_sent';
+              isFollowing = true;
+              isFollowedBy = false;
+              requestSent = true;
+            } else {
+              connectionStatus = 'pending_received';
+              isFollowing = false;
+              isFollowedBy = true;
+              requestReceived = true;
+            }
+          }
+        }
+
+        relationship = {
+          isFollowing,
+          isFollowedBy,
+          connectionStatus,
+          requestSent,
+          requestReceived,
+          connectionId: connectionDoc ? String(connectionDoc._id) : null,
+        };
+      }
+    }
+
+    return {
+      userId: targetUserIdStr,
+      username: targetUser.username || '',
+      followers: followersCount,
+      following: followingCount,
+      connections: connectionsCount,
+      followersCount,
+      followingCount,
+      connectionsCount,
+      relationship,
+    };
+  }
+
+  /**
+   * Retrieves paginated followers of a user with viewer relationship metadata.
+   */
+  async getUserFollowers(
+    userIdOrUsername: string,
+    viewerUserId?: string,
+    query?: GetConnectionsQueryDto,
+  ): Promise<PaginatedNetworkUsersResponse> {
+    const targetUser = await this.resolveUser(
+      userIdOrUsername === 'me' ? viewerUserId! : userIdOrUsername,
+    );
+    if (!targetUser) {
+      throw new NotFoundException('User not found.');
+    }
+    const targetUserIdStr = String(targetUser._id);
+    const targetUserObjId = targetUser._id as Types.ObjectId;
+
+    // Follower connections in network_connections
+    const connFilter = {
+      $or: [
+        { requesterId: targetUserObjId, status: 'accepted' },
+        { recipientId: targetUserObjId, status: { $in: ['accepted', 'pending'] } },
+      ],
+    };
+
+    const connections = await this.connectionModel
+      .find(connFilter)
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    const followerUserIds = connections.map((c) =>
+      String(c.requesterId) === targetUserIdStr
+        ? String(c.recipientId)
+        : String(c.requesterId),
+    );
+    const followDateMap = new Map<string, string>();
+    connections.forEach((c) => {
+      const otherId =
+        String(c.requesterId) === targetUserIdStr
+          ? String(c.recipientId)
+          : String(c.requesterId);
+      followDateMap.set(
+        otherId,
+        c.updatedAt
+          ? new Date(c.updatedAt).toISOString()
+          : new Date().toISOString(),
+      );
+    });
+
+    const userFilter: any = {
+      _id: {
+        $in: followerUserIds
+          .filter((id) => Types.ObjectId.isValid(id))
+          .map((id) => new Types.ObjectId(id)),
+      },
+      'account_Status.isDeleted': { $ne: true },
+      'account_Status.isBlocked': { $ne: true },
+    };
+
+    if (query?.q && query.q.trim()) {
+      const regex = new RegExp(escapeRegex(query.q.trim()), 'i');
+      userFilter.$or = [
+        { name: regex },
+        { username: regex },
+        { headline: regex },
+        { email: regex },
+      ];
+    }
+
+    const page = Math.max(1, Number(query?.page) || 1);
+    const limit = Math.min(50, Math.max(1, Number(query?.limit) || 20));
+    const skip = (page - 1) * limit;
+
+    const [total, userDocs] = await Promise.all([
+      this.userModel.countDocuments(userFilter),
+      this.userModel
+        .find(userFilter)
+        .select(
+          'name username avatar headline currentRole role email account_Status',
+        )
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+    ]);
+
+    const enriched = await this.enrichNetworkUsers(
+      userDocs,
+      viewerUserId,
+      followDateMap,
+    );
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    return {
+      data: enriched,
+      followers: enriched,
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNextPage: page < totalPages,
+    };
+  }
+
+  /**
+   * Retrieves paginated following of a user with viewer relationship metadata.
+   */
+  async getUserFollowing(
+    userIdOrUsername: string,
+    viewerUserId?: string,
+    query?: GetConnectionsQueryDto,
+  ): Promise<PaginatedNetworkUsersResponse> {
+    const targetUser = await this.resolveUser(
+      userIdOrUsername === 'me' ? viewerUserId! : userIdOrUsername,
+    );
+    if (!targetUser) {
+      throw new NotFoundException('User not found.');
+    }
+    const targetUserIdStr = String(targetUser._id);
+    const targetUserObjId = targetUser._id as Types.ObjectId;
+
+    // Following connections in network_connections
+    const connFilter = {
+      $or: [
+        { recipientId: targetUserObjId, status: 'accepted' },
+        { requesterId: targetUserObjId, status: { $in: ['accepted', 'pending'] } },
+      ],
+    };
+
+    const connections = await this.connectionModel
+      .find(connFilter)
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    const followingUserIds = connections.map((c) =>
+      String(c.requesterId) === targetUserIdStr
+        ? String(c.recipientId)
+        : String(c.requesterId),
+    );
+    const followDateMap = new Map<string, string>();
+    connections.forEach((c) => {
+      const otherId =
+        String(c.requesterId) === targetUserIdStr
+          ? String(c.recipientId)
+          : String(c.requesterId);
+      followDateMap.set(
+        otherId,
+        c.updatedAt
+          ? new Date(c.updatedAt).toISOString()
+          : new Date().toISOString(),
+      );
+    });
+
+    const userFilter: any = {
+      _id: {
+        $in: followingUserIds
+          .filter((id) => Types.ObjectId.isValid(id))
+          .map((id) => new Types.ObjectId(id)),
+      },
+      'account_Status.isDeleted': { $ne: true },
+      'account_Status.isBlocked': { $ne: true },
+    };
+
+    if (query?.q && query.q.trim()) {
+      const regex = new RegExp(escapeRegex(query.q.trim()), 'i');
+      userFilter.$or = [
+        { name: regex },
+        { username: regex },
+        { headline: regex },
+        { email: regex },
+      ];
+    }
+
+    const page = Math.max(1, Number(query?.page) || 1);
+    const limit = Math.min(50, Math.max(1, Number(query?.limit) || 20));
+    const skip = (page - 1) * limit;
+
+    const [total, userDocs] = await Promise.all([
+      this.userModel.countDocuments(userFilter),
+      this.userModel
+        .find(userFilter)
+        .select(
+          'name username avatar headline currentRole role email account_Status',
+        )
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+    ]);
+
+    const enriched = await this.enrichNetworkUsers(
+      userDocs,
+      viewerUserId,
+      followDateMap,
+    );
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    return {
+      data: enriched,
+      following: enriched,
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNextPage: page < totalPages,
+    };
+  }
+
+  /**
+   * Retrieves paginated accepted connections of a specific user with viewer relationship metadata.
+   */
+  async getUserConnections(
+    userIdOrUsername: string,
+    viewerUserId?: string,
+    query?: GetConnectionsQueryDto,
+  ): Promise<PaginatedNetworkUsersResponse> {
+    const targetUser = await this.resolveUser(
+      userIdOrUsername === 'me' ? viewerUserId! : userIdOrUsername,
+    );
+    if (!targetUser) {
+      throw new NotFoundException('User not found.');
+    }
+    const targetUserObjId = targetUser._id as Types.ObjectId;
+    const targetUserIdStr = String(targetUser._id);
+
+    const connFilter: any = {
+      $or: [{ requesterId: targetUserObjId }, { recipientId: targetUserObjId }],
+      status: 'accepted',
+    };
+
+    const connections = await this.connectionModel
+      .find(connFilter)
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    const otherUserIds = connections.map((c) =>
+      String(c.requesterId) === targetUserIdStr
+        ? String(c.recipientId)
+        : String(c.requesterId),
+    );
+    const connDateMap = new Map<string, { date: string; connId: string }>();
+    connections.forEach((c) => {
+      const otherId =
+        String(c.requesterId) === targetUserIdStr
+          ? String(c.recipientId)
+          : String(c.requesterId);
+      connDateMap.set(otherId, {
+        date: c.updatedAt
+          ? new Date(c.updatedAt).toISOString()
+          : new Date().toISOString(),
+        connId: String(c._id),
+      });
+    });
+
+    const userFilter: any = {
+      _id: {
+        $in: otherUserIds
+          .filter((id) => Types.ObjectId.isValid(id))
+          .map((id) => new Types.ObjectId(id)),
+      },
+      'account_Status.isDeleted': { $ne: true },
+      'account_Status.isBlocked': { $ne: true },
+    };
+
+    if (query?.q && query.q.trim()) {
+      const regex = new RegExp(escapeRegex(query.q.trim()), 'i');
+      userFilter.$or = [
+        { name: regex },
+        { username: regex },
+        { headline: regex },
+        { email: regex },
+      ];
+    }
+
+    const page = Math.max(1, Number(query?.page) || 1);
+    const limit = Math.min(50, Math.max(1, Number(query?.limit) || 20));
+    const skip = (page - 1) * limit;
+
+    const [total, userDocs] = await Promise.all([
+      this.userModel.countDocuments(userFilter),
+      this.userModel
+        .find(userFilter)
+        .select(
+          'name username avatar headline currentRole role email account_Status',
+        )
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+    ]);
+
+    const enriched = await this.enrichNetworkUsers(
+      userDocs,
+      viewerUserId,
+      undefined,
+      connDateMap,
+    );
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    return {
+      data: enriched,
+      connections: enriched,
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNextPage: page < totalPages,
+    };
+  }
+
+  /**
+   * Follows a user. Creates a pending relationship in network_connections if none exists.
+   */
+  async followUser(
+    currentUserId: string,
+    targetUserIdOrUsername: string,
+  ): Promise<{ success: boolean; isFollowing: boolean; followersCount: number }> {
+    const targetUser = await this.resolveUser(targetUserIdOrUsername);
+    if (!targetUser) {
+      throw new NotFoundException('Target user not found.');
+    }
+    const targetUserIdStr = String(targetUser._id);
+    if (currentUserId === targetUserIdStr) {
+      throw new BadRequestException('You cannot follow yourself.');
+    }
+
+    if (
+      targetUser.account_Status?.isBlocked ||
+      targetUser.account_Status?.isDeleted
+    ) {
+      throw new BadRequestException('This user account is not active.');
+    }
+
+    const { userLow, userHigh } = getNormalizedPair(currentUserId, targetUserIdStr);
+    let connection = await this.connectionModel.findOne({ userLow, userHigh }).exec();
+
+    if (!connection) {
+      connection = await this.connectionModel.create({
+        requesterId: new Types.ObjectId(currentUserId),
+        recipientId: targetUser._id,
+        userLow,
+        userHigh,
+        status: 'pending',
+      });
+
+      try {
+        const follower = await this.userModel
+          .findById(currentUserId)
+          .select('name username avatar')
+          .lean();
+        if (follower) {
+          await this.notificationsService.createNotification({
+            recipientId: targetUserIdStr,
+            actorId: currentUserId,
+            type: 'follow',
+            category: 'social',
+            priority: 'normal',
+            title: 'New Follower',
+            message: `${follower.name || `@${follower.username}`} started following you.`,
+            entityType: 'user',
+            entityId: currentUserId,
+            actionUrl: `/network/profile/${encodeURIComponent(follower.username || '')}`,
+            idempotencyKey: `follow_${currentUserId}_${targetUserIdStr}`,
+          });
+        }
+      } catch (err: any) {
+        this.logger.warn(
+          `Failed to dispatch follow notification: ${err.message}`,
+        );
+      }
+    } else if (connection.status === 'declined' || connection.status === 'cancelled') {
+      connection.status = 'pending';
+      connection.requesterId = new Types.ObjectId(currentUserId);
+      connection.recipientId = targetUser._id;
+      await connection.save();
+    }
+
+    const followersCount = await this.connectionModel.countDocuments({
+      $or: [
+        { requesterId: targetUser._id, status: 'accepted' },
+        { recipientId: targetUser._id, status: { $in: ['accepted', 'pending'] } },
+      ],
+    });
+
+    return { success: true, isFollowing: true, followersCount };
+  }
+
+  /**
+   * Unfollows a user.
+   */
+  async unfollowUser(
+    currentUserId: string,
+    targetUserIdOrUsername: string,
+  ): Promise<{ success: boolean; isFollowing: boolean; followersCount: number }> {
+    const targetUser = await this.resolveUser(targetUserIdOrUsername);
+    if (!targetUser) {
+      throw new NotFoundException('Target user not found.');
+    }
+    const targetUserIdStr = String(targetUser._id);
+    if (currentUserId === targetUserIdStr) {
+      throw new BadRequestException('You cannot unfollow yourself.');
+    }
+
+    const { userLow, userHigh } = getNormalizedPair(currentUserId, targetUserIdStr);
+    const connection = await this.connectionModel.findOne({ userLow, userHigh }).exec();
+
+    if (connection) {
+      if (connection.status === 'pending' && String(connection.requesterId) === currentUserId) {
+        await this.connectionModel.deleteOne({ _id: connection._id }).exec();
+      } else if (connection.status === 'accepted') {
+        await this.connectionModel.deleteOne({ _id: connection._id }).exec();
+      }
+    }
+
+    const followersCount = await this.connectionModel.countDocuments({
+      $or: [
+        { requesterId: targetUser._id, status: 'accepted' },
+        { recipientId: targetUser._id, status: { $in: ['accepted', 'pending'] } },
+      ],
+    });
+
+    return { success: true, isFollowing: false, followersCount };
   }
 
   /**

@@ -27,6 +27,8 @@ import {
   ConnectionCountsResponse,
   RelationshipStateResponse,
   RelationshipState,
+  ProfileNetworkStatsResponse,
+  PaginatedNetworkUsersResponse,
 } from './dto/connection-actions.dto';
 import { PublicNetworkProfile } from './dto/network-profile.dto';
 import {
@@ -235,6 +237,253 @@ export class NetworkController {
     const currentUserId = req.user?.userId || req.user?._id;
     return this.networkService.getNetworkStats(
       currentUserId ? String(currentUserId) : undefined,
+    );
+  }
+
+  /**
+   * Retrieves profile network statistics (followers, following, connections, relationship) for target user.
+   */
+  @Get('stats/:userId')
+  @Throttle({
+    default: {
+      limit: 60,
+      ttl: 60000,
+    },
+  })
+  async getProfileStats(
+    @Param('userId') userId: string,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<ProfileNetworkStatsResponse> {
+    const currentUserId = req.user?.userId || req.user?._id;
+    return this.networkService.getProfileNetworkStats(
+      userId,
+      currentUserId ? String(currentUserId) : undefined,
+    );
+  }
+
+  /**
+   * Alias: Retrieves profile network statistics under /network/users/:userId/stats.
+   */
+  @Get('users/:userId/stats')
+  @Throttle({
+    default: {
+      limit: 60,
+      ttl: 60000,
+    },
+  })
+  async getUserNetworkStats(
+    @Param('userId') userId: string,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<ProfileNetworkStatsResponse> {
+    const currentUserId = req.user?.userId || req.user?._id;
+    return this.networkService.getProfileNetworkStats(
+      userId,
+      currentUserId ? String(currentUserId) : undefined,
+    );
+  }
+
+  /**
+   * Retrieves paginated followers for a specific user.
+   */
+  @Get('users/:userId/followers')
+  @Throttle({
+    default: {
+      limit: 60,
+      ttl: 60000,
+    },
+  })
+  async getUserFollowers(
+    @Param('userId') userId: string,
+    @Query() query: GetConnectionsQueryDto,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<PaginatedNetworkUsersResponse> {
+    const currentUserId = req.user?.userId || req.user?._id;
+    return this.networkService.getUserFollowers(
+      userId,
+      currentUserId ? String(currentUserId) : undefined,
+      query,
+    );
+  }
+
+  /**
+   * Retrieves paginated following for a specific user.
+   */
+  @Get('users/:userId/following')
+  @Throttle({
+    default: {
+      limit: 60,
+      ttl: 60000,
+    },
+  })
+  async getUserFollowing(
+    @Param('userId') userId: string,
+    @Query() query: GetConnectionsQueryDto,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<PaginatedNetworkUsersResponse> {
+    const currentUserId = req.user?.userId || req.user?._id;
+    return this.networkService.getUserFollowing(
+      userId,
+      currentUserId ? String(currentUserId) : undefined,
+      query,
+    );
+  }
+
+  /**
+   * Retrieves paginated accepted connections for a specific user.
+   */
+  @Get('users/:userId/connections')
+  @Throttle({
+    default: {
+      limit: 60,
+      ttl: 60000,
+    },
+  })
+  async getUserConnections(
+    @Param('userId') userId: string,
+    @Query() query: GetConnectionsQueryDto,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<PaginatedNetworkUsersResponse> {
+    const currentUserId = req.user?.userId || req.user?._id;
+    return this.networkService.getUserConnections(
+      userId,
+      currentUserId ? String(currentUserId) : undefined,
+      query,
+    );
+  }
+
+  /**
+   * Follows a target user.
+   */
+  @Post('users/:userId/follow')
+  @Throttle({
+    default: {
+      limit: 30,
+      ttl: 60000,
+    },
+  })
+  async followUser(
+    @Param('userId') userId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const currentUserId = req.user?.userId || req.user?._id;
+    return this.networkService.followUser(String(currentUserId), userId);
+  }
+
+  /**
+   * Unfollows a target user.
+   */
+  @Delete('users/:userId/follow')
+  @Throttle({
+    default: {
+      limit: 30,
+      ttl: 60000,
+    },
+  })
+  async unfollowUser(
+    @Param('userId') userId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const currentUserId = req.user?.userId || req.user?._id;
+    return this.networkService.unfollowUser(String(currentUserId), userId);
+  }
+
+  /**
+   * Connect with a target user (alias).
+   */
+  @Post('users/:userId/connect')
+  @Throttle({
+    default: {
+      limit: 30,
+      ttl: 60000,
+    },
+  })
+  async connectUser(
+    @Param('userId') userId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const currentUserId = req.user?.userId || req.user?._id;
+    return this.networkService.sendRequest(String(currentUserId), userId);
+  }
+
+  /**
+   * Retrieves all pending connection requests (both incoming and outgoing).
+   */
+  @Get('requests')
+  @Throttle({
+    default: {
+      limit: 60,
+      ttl: 60000,
+    },
+  })
+  async getRequests(@Req() req: AuthenticatedRequest) {
+    const currentUserId = req.user?.userId || req.user?._id;
+    const [incoming, outgoing] = await Promise.all([
+      this.networkService.getIncomingRequests(String(currentUserId)),
+      this.networkService.getOutgoingRequests(String(currentUserId)),
+    ]);
+    return {
+      incoming: incoming.data,
+      outgoing: outgoing.data,
+      incomingCount: incoming.total,
+      outgoingCount: outgoing.total,
+      total: incoming.total + outgoing.total,
+    };
+  }
+
+  /**
+   * Accepts a connection request by request ID (alias for POST /network/requests/:requestId/accept).
+   */
+  @Post('requests/:requestId/accept')
+  @Throttle({
+    default: {
+      limit: 30,
+      ttl: 60000,
+    },
+  })
+  async acceptRequestById(
+    @Param('requestId') requestId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const currentUserId = req.user?.userId || req.user?._id;
+    return this.networkService.acceptRequest(String(currentUserId), requestId);
+  }
+
+  /**
+   * Rejects a connection request by request ID (alias for POST /network/requests/:requestId/reject).
+   */
+  @Post('requests/:requestId/reject')
+  @Throttle({
+    default: {
+      limit: 30,
+      ttl: 60000,
+    },
+  })
+  async rejectRequestById(
+    @Param('requestId') requestId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const currentUserId = req.user?.userId || req.user?._id;
+    return this.networkService.declineRequest(String(currentUserId), requestId);
+  }
+
+  /**
+   * Rejects a connection request (alias for PATCH /network/connections/:connectionId/reject).
+   */
+  @Patch('connections/:connectionId/reject')
+  @Throttle({
+    default: {
+      limit: 30,
+      ttl: 60000,
+    },
+  })
+  async rejectRequest(
+    @Param('connectionId') connectionId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const currentUserId = req.user?.userId || req.user?._id;
+    return this.networkService.declineRequest(
+      String(currentUserId),
+      connectionId,
     );
   }
 

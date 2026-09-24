@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useToast } from "../../ui/Toast";
 import RelationshipAction from "../RelationshipAction";
+import ProfileNetworkStats from "../ProfileNetworkStats";
 
 /**
  * Derives user initials from full name.
@@ -250,6 +251,14 @@ export default function ProfileHeader({ profile, isOwnProfile = false }) {
                 <span>{joinedLabel}</span>
               </div>
             )}
+          </div>
+
+          {/* ── Network Statistics (Followers, Following, Connections) ── */}
+          <div className="pt-3 max-w-md w-full">
+            <ProfileNetworkStats
+              userIdOrUsername={user.id || user.username}
+              profileName={user.name}
+            />
           </div>
         </div>
       </div>

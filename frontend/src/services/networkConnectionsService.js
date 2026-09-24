@@ -114,6 +114,85 @@ export const networkConnectionsService = {
     const response = await api.get(`/network/connections/relationship/${targetUserId}`);
     return response.data;
   },
+
+  /**
+   * Retrieves authoritative database-counted network statistics for any profile.
+   * @param {string} userIdOrUsername
+   * @returns {Promise<{ followers: number; following: number; connections: number; relationship: any }>}
+   */
+  getProfileStats: async (userIdOrUsername) => {
+    const response = await api.get(`/network/users/${encodeURIComponent(userIdOrUsername)}/stats`);
+    return response.data;
+  },
+
+  /**
+   * Retrieves paginated followers for a user.
+   * @param {string} userIdOrUsername
+   * @param {Object} [params]
+   * @returns {Promise<{ data: Array<any>; page: number; limit: number; total: number; totalPages: number; hasNextPage: boolean }>}
+   */
+  getUserFollowers: async (userIdOrUsername, { page = 1, limit = 20, q = "" } = {}) => {
+    const response = await api.get(`/network/users/${encodeURIComponent(userIdOrUsername)}/followers`, {
+      params: { page, limit, q: q || undefined },
+    });
+    return response.data;
+  },
+
+  /**
+   * Retrieves paginated following list for a user.
+   * @param {string} userIdOrUsername
+   * @param {Object} [params]
+   * @returns {Promise<{ data: Array<any>; page: number; limit: number; total: number; totalPages: number; hasNextPage: boolean }>}
+   */
+  getUserFollowing: async (userIdOrUsername, { page = 1, limit = 20, q = "" } = {}) => {
+    const response = await api.get(`/network/users/${encodeURIComponent(userIdOrUsername)}/following`, {
+      params: { page, limit, q: q || undefined },
+    });
+    return response.data;
+  },
+
+  /**
+   * Retrieves paginated accepted connections for a user.
+   * @param {string} userIdOrUsername
+   * @param {Object} [params]
+   * @returns {Promise<{ data: Array<any>; page: number; limit: number; total: number; totalPages: number; hasNextPage: boolean }>}
+   */
+  getUserConnections: async (userIdOrUsername, { page = 1, limit = 20, q = "" } = {}) => {
+    const response = await api.get(`/network/users/${encodeURIComponent(userIdOrUsername)}/connections`, {
+      params: { page, limit, q: q || undefined },
+    });
+    return response.data;
+  },
+
+  /**
+   * Follows a user.
+   * @param {string} userIdOrUsername
+   * @returns {Promise<{ success: boolean; following: boolean }>}
+   */
+  followUser: async (userIdOrUsername) => {
+    const response = await api.post(`/network/users/${encodeURIComponent(userIdOrUsername)}/follow`);
+    return response.data;
+  },
+
+  /**
+   * Unfollows a user.
+   * @param {string} userIdOrUsername
+   * @returns {Promise<{ success: boolean; following: boolean }>}
+   */
+  unfollowUser: async (userIdOrUsername) => {
+    const response = await api.delete(`/network/users/${encodeURIComponent(userIdOrUsername)}/follow`);
+    return response.data;
+  },
+
+  /**
+   * Sends connection request by userId or username.
+   * @param {string} userIdOrUsername
+   * @returns {Promise<{ success: boolean; state: string; connectionId: string }>}
+   */
+  connectUser: async (userIdOrUsername) => {
+    const response = await api.post(`/network/users/${encodeURIComponent(userIdOrUsername)}/connect`);
+    return response.data;
+  },
 };
 
 export default networkConnectionsService;
