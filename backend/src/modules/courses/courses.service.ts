@@ -1317,15 +1317,15 @@ export class CoursesService {
       }
     }
 
-    console.log('[LearningProgress]', {
-      userId,
-      courseId: course._id.toString(),
-      classId,
-      coveredSeconds: nextProgress.coveredSeconds,
-      durationSeconds: nextProgress.durationSeconds,
-      progressPercent: nextProgress.progressPercent,
-      completed: nextProgress.completed,
-    });
+    if (process.env.NODE_ENV !== 'production') {
+      console.debug('[LearningProgress]', {
+        userId,
+        courseId: course._id.toString(),
+        classId,
+        progressPercent: nextProgress.progressPercent,
+        completed: nextProgress.completed,
+      });
+    }
 
     if (existing) {
       Object.assign(existing, nextProgress);

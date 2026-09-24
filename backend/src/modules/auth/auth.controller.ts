@@ -37,11 +37,13 @@ export class AuthController {
 
   private setAuthCookies(res: Response, token?: string, refreshToken?: string) {
     const isProduction = process.env.NODE_ENV === 'production';
+    const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
     const cookieOptions = {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? ('none' as const) : ('lax' as const),
       path: '/',
+      ...(isProduction && cookieDomain ? { domain: cookieDomain } : {}),
     };
     const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000;
     const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
@@ -63,11 +65,13 @@ export class AuthController {
 
   private clearAuthCookies(res: Response) {
     const isProduction = process.env.NODE_ENV === 'production';
+    const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
     const cookieOptions = {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? ('none' as const) : ('lax' as const),
       path: '/',
+      ...(isProduction && cookieDomain ? { domain: cookieDomain } : {}),
     };
     res.clearCookie('token', cookieOptions);
     res.clearCookie('refreshToken', cookieOptions);

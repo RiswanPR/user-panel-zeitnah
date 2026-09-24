@@ -24,7 +24,7 @@ import {
 } from './schemas/profile-view.schema';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { escapeRegex } from '../../../common/utils/regex.util';
-import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UpdateCommunityProfileDto } from './dto/update-profile.dto';
 import { AddSkillDto, UpdateSkillDto } from './dto/add-skill.dto';
 import { AddProjectDto, UpdateProjectDto } from './dto/add-project.dto';
 import {
@@ -212,7 +212,7 @@ export class CommunityProfileService {
 
   async updateProfile(
     userId: string,
-    dto: UpdateProfileDto,
+    dto: UpdateCommunityProfileDto,
   ): Promise<CommunityProfileDocument> {
     const profile = await this.getOrCreateProfile(userId);
 

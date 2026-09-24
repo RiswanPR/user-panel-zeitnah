@@ -16,7 +16,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { CommunityGroupService } from '../services/community-group.service';
-import { CreateGroupDto, CreateAnnouncementDto } from '../dto/group.dto';
+import { CreateGroupDto, CreateGroupAnnouncementDto } from '../dto/group.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 
 @ApiTags('Community Groups')
@@ -48,7 +48,7 @@ export class CommunityGroupController {
 
   @Post('announcements')
   @ApiOperation({ summary: 'Create an announcement' })
-  async createAnnouncement(@Req() req, @Body() data: CreateAnnouncementDto) {
+  async createAnnouncement(@Req() req, @Body() data: CreateGroupAnnouncementDto) {
     return this.groupService.createAnnouncement(
       req.user._id || req.user.sub,
       data,

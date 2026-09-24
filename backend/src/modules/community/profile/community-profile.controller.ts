@@ -25,7 +25,7 @@ import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { CommunityProfileService } from './community-profile.service';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { CreateProfileDto } from './dto/create-profile.dto';
-import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UpdateCommunityProfileDto } from './dto/update-profile.dto';
 import { AddSkillDto, UpdateSkillDto } from './dto/add-skill.dto';
 import { AddProjectDto, UpdateProjectDto } from './dto/add-project.dto';
 import {
@@ -75,7 +75,7 @@ export class CommunityProfileController {
   @ApiOperation({ summary: 'Update current user profile' })
   async updateProfile(
     @CurrentUser('id') userId: string,
-    @Body() dto: UpdateProfileDto,
+    @Body() dto: UpdateCommunityProfileDto,
   ) {
     return this.communityProfileService.updateProfile(userId, dto);
   }

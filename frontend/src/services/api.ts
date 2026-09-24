@@ -348,12 +348,9 @@ api.interceptors.response.use(
 
 /** Clear all auth tokens and navigate to login without hard reload */
 function forceLogout() {
-  storage.clearAuth();
+  storage.clearAuth(); // This already dispatches zeitnah:auth:logout
 
   if (typeof window !== "undefined") {
-    // Notify application context
-    window.dispatchEvent(new CustomEvent("zeitnah:auth:logout"));
-
     if (window.location.pathname !== "/login" && !isRedirecting) {
       isRedirecting = true;
       if (window.history && typeof window.history.pushState === "function") {

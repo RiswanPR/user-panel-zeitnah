@@ -4,7 +4,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { CommunityGroupRepository } from '../repositories/community-group.repository';
-import { CreateGroupDto, CreateAnnouncementDto } from '../dto/group.dto';
+import { CreateGroupDto, CreateGroupAnnouncementDto } from '../dto/group.dto';
 import { GroupDocument, AnnouncementDocument } from '../schemas/group.schema';
 
 @Injectable()
@@ -43,7 +43,7 @@ export class CommunityGroupService {
 
   async createAnnouncement(
     userId: string,
-    data: CreateAnnouncementDto,
+    data: CreateGroupAnnouncementDto,
   ): Promise<AnnouncementDocument> {
     // In a full implementation, check if userId has admin/moderator role in the group/course
     return this.groupRepository.createAnnouncement({

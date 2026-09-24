@@ -12,6 +12,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './schemas/user.schema';
 
 import { JwtStrategy } from '../strategies/jwt.strategy';
+import type { StringValue } from 'ms';
 
 import { UsernameModule } from '../profile/services/username.module';
 import { NotificationsModule } from '../notifications/notifications.module';
@@ -31,7 +32,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
       secret: process.env.JWT_SECRET,
 
       signOptions: {
-        expiresIn: '7d',
+        expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || '15m') as StringValue,
       },
     }),
     LoginHistoryModule,

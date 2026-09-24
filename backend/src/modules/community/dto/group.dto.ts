@@ -45,7 +45,7 @@ export class UpdateGroupMemberDto {
   role: string;
 }
 
-export class CreateAnnouncementDto {
+export class CreateGroupAnnouncementDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()

@@ -79,6 +79,21 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       this.logger.debug(
         `[${correlationId}] ${request.method} ${sanitizedUrl} - Status: ${status} - Expected unauthenticated session check`,
       );
+    } else if (status === 401) {
+      // Structured auth failure log for diagnosing unexpected 401s
+      const authUser = (request as any)?.user;
+      const authDiag = {
+        event: 'AUTH_FAILURE',
+        correlationId,
+        method: request.method,
+        endpoint: sanitizedUrl,
+        status,
+        message,
+        userId: authUser?.userId || null,
+        deviceId: authUser?.deviceId || null,
+        timestamp: new Date().toISOString(),
+      };
+      this.logger.warn(JSON.stringify(authDiag));
     } else {
       this.logger.warn(
         `[${correlationId}] ${request.method} ${sanitizedUrl} - Status: ${status} - ${message}`,

@@ -125,6 +125,7 @@ function parseDurationToMs(value?: string | number | null): number | null {
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  private readonly isDev = process.env.NODE_ENV !== 'production';
 
   private readonly accessTokenExpiresIn = (process.env.JWT_ACCESS_EXPIRES_IN ||
     '15m') as StringValue;
@@ -561,7 +562,7 @@ export class AuthService {
           subject: `${otp} is your Registration Code - Zeitnah Academy`,
           html: generateOtpEmailHtml(otp, 'Registration'),
         });
-        console.log(`OTP for ${data.email}: ${otp}`);
+        if (this.isDev) console.log(`OTP for ${data.email}: ${otp}`);
         break; // Success
       } catch (error) {
         attempts++;
@@ -572,6 +573,8 @@ export class AuthService {
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
+
+    this.logAuthEvent('REGISTER_OTP_SENT', { email: data.email });
 
     return {
       message: 'OTP sent successfully',
@@ -679,7 +682,7 @@ export class AuthService {
 
     user.otpExpiry = null;
 
-    user.account_Status.isVerified = false;
+    user.account_Status.isVerified = true;
 
     const device = user.devices.find(
       (currentDevice) => currentDevice.deviceId === data.deviceId,
@@ -732,6 +735,12 @@ export class AuthService {
         os: data.os,
         location: loginLocation,
       },
+    });
+
+    this.logAuthEvent('REGISTER_VERIFY_SUCCESS', {
+      userId: user._id.toString(),
+      deviceId: data.deviceId,
+      deviceType: data.deviceType,
     });
 
     return {
@@ -844,7 +853,7 @@ export class AuthService {
     let attempts = 0;
     while (attempts < 2) {
       try {
-        console.log(`OTP for ${email}: ${otp}`);
+        if (this.isDev) console.log(`OTP for ${email}: ${otp}`);
         await resend.emails.send({
           from:
             process.env.RESEND_FROM_EMAIL ||
@@ -863,6 +872,8 @@ export class AuthService {
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
+
+    this.logAuthEvent('LOGIN_OTP_SENT', { email });
 
     return {
       message: 'OTP sent successfully',
@@ -1096,6 +1107,13 @@ export class AuthService {
 
     await user.save();
 
+    this.logAuthEvent('LOGIN_VERIFY_SUCCESS', {
+      userId: user._id.toString(),
+      deviceId: data.deviceId,
+      deviceType: data.deviceType,
+      isSuspicious: suspiciousLogin.isSuspicious,
+    });
+
     return {
       message: 'Login successful',
 
@@ -1141,6 +1159,7 @@ export class AuthService {
         secret: this.refreshTokenSecret,
       });
     } catch {
+      this.logAuthEvent('REFRESH_TOKEN_INVALID', { reason: 'JWT verification failed' });
       throw new UnauthorizedException('Invalid refresh token');
     }
 
@@ -1160,6 +1179,11 @@ export class AuthService {
     );
 
     if (!device || !device.refreshToken) {
+      this.logAuthEvent('REFRESH_TOKEN_FAILED', {
+        userId: payload.userId,
+        deviceId: payload.deviceId,
+        reason: 'Device not found or no refresh token stored',
+      });
       throw new UnauthorizedException('Device session expired');
     }
 
@@ -1169,6 +1193,11 @@ export class AuthService {
         { $pull: { devices: { deviceId: payload.deviceId } } },
       );
 
+      this.logAuthEvent('REFRESH_TOKEN_EXPIRED', {
+        userId: payload.userId,
+        deviceId: payload.deviceId,
+        reason: 'Session refresh token expiry exceeded',
+      });
       throw new UnauthorizedException('Refresh token expired');
     }
 
@@ -1191,6 +1220,11 @@ export class AuthService {
     }
 
     if (!isCurrentValid && !isPreviousValid) {
+      this.logAuthEvent('REFRESH_TOKEN_MISMATCH', {
+        userId: payload.userId,
+        deviceId: payload.deviceId,
+        reason: 'Refresh token hash does not match current or previous',
+      });
       throw new UnauthorizedException('Invalid refresh token');
     }
 
@@ -1220,6 +1254,12 @@ export class AuthService {
       entityId: user._id.toString(),
       deviceId: payload.deviceId,
       message: 'Session token refreshed',
+    });
+
+    this.logAuthEvent('REFRESH_TOKEN_SUCCESS', {
+      userId: payload.userId,
+      deviceId: payload.deviceId,
+      usedPreviousToken: isPreviousValid && !isCurrentValid,
     });
 
     return {
@@ -1342,10 +1382,31 @@ export class AuthService {
       message: 'User logged out',
     });
 
+    this.logAuthEvent('LOGOUT_SUCCESS', {
+      userId: userData.userId,
+      deviceId: userData.deviceId,
+    });
+
     return {
       message: 'Logout successful',
 
       success: true,
     };
+  }
+
+  // ── Structured Auth Diagnostics ──
+  // Provides structured, non-sensitive auth event logging for operational diagnostics.
+  // MUST NEVER log tokens, OTPs, passwords, cookies, or secrets.
+  private logAuthEvent(
+    stage: string,
+    details: Record<string, unknown> = {},
+  ): void {
+    const entry = {
+      event: 'AUTH',
+      stage,
+      timestamp: new Date().toISOString(),
+      ...details,
+    };
+    this.logger.log(JSON.stringify(entry));
   }
 }

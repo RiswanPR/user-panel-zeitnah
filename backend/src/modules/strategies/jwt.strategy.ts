@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 
 import { PassportStrategy } from '@nestjs/passport';
 
@@ -19,6 +19,8 @@ type JwtPayload = {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
+  private readonly logger = new Logger(JwtStrategy.name);
+
   constructor(
     @InjectModel(User.name)
     private userModel: Model<UserDocument>,
@@ -47,11 +49,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const user = await this.userModel.findById(payload.userId);
 
     if (!user) {
+      this.logAuthEvent('USER_NOT_FOUND', { userId: payload.userId, deviceId: payload.deviceId });
       throw new UnauthorizedException('User not found');
     }
 
     // BLOCKED ACCOUNT
     if (user.account_Status?.isBlocked || user.account_Status?.isDeleted) {
+      this.logAuthEvent('ACCOUNT_RESTRICTED', { userId: payload.userId, deviceId: payload.deviceId });
       throw new UnauthorizedException('Account restricted');
     }
 
@@ -62,6 +66,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     // DEVICE REMOVED
     if (!deviceExists) {
+      this.logAuthEvent('DEVICE_SESSION_EXPIRED', { userId: payload.userId, deviceId: payload.deviceId, reason: 'Device not found in user devices' });
       throw new UnauthorizedException('Device session expired');
     }
 
@@ -82,6 +87,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         },
       );
 
+      this.logAuthEvent('SESSION_EXPIRED', { userId: payload.userId, deviceId: payload.deviceId, reason: 'Refresh token expiry exceeded' });
       throw new UnauthorizedException('Session expired');
     }
 
@@ -119,5 +125,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
       deviceId: payload.deviceId,
     };
+  }
+
+  private logAuthEvent(stage: string, details: Record<string, unknown> = {}): void {
+    const entry = {
+      event: 'AUTH_GUARD',
+      stage,
+      timestamp: new Date().toISOString(),
+      ...details,
+    };
+    this.logger.warn(JSON.stringify(entry));
   }
 }
