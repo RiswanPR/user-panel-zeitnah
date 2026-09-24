@@ -102,7 +102,10 @@ export default function NetworkPage() {
         </div>
       </div>
 
-      {/* ── TAB 1: LEARNING SPACES ── */}
+      {/* ── TAB 1: MY NETWORK & CONNECTIONS ── */}
+      {currentTab === 'network' && <NetworkConnections />}
+
+      {/* ── TAB 2: LEARNING SPACES ── */}
       {currentTab === 'spaces' && (
         <div className="space-y-6">
           {/* Sub-filters & Search */}
@@ -181,8 +184,7 @@ export default function NetworkPage() {
         </div>
       )}
 
-      {/* ── TAB 2: MY NETWORK & CONNECTIONS ── */}
-      {currentTab === 'network' && <NetworkConnections />}
+
 
       {/* ── TAB 3: OPPORTUNITIES ── */}
       {currentTab === 'opportunities' && (
