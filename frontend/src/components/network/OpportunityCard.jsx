@@ -150,7 +150,7 @@ export default function OpportunityCard({ opp, opportunity, onSelect }) {
 
             <div className="pt-4 border-t border-white/[0.06] flex items-center justify-between">
               <span className="text-xs text-text-muted">
-                Posted {new Date(data.publishedAt || data.createdAt || Date.now()).toLocaleDateString()}
+                Posted {data.publishedAt || data.createdAt ? new Date(data.publishedAt || data.createdAt).toLocaleDateString() : 'Recently'}
               </span>
 
               <button

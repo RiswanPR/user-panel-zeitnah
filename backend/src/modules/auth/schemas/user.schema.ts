@@ -76,7 +76,6 @@ export class User {
     trim: true,
     minlength: 3,
     maxlength: 20,
-    index: true,
   })
   username!: string;
 
@@ -766,6 +765,14 @@ export class User {
 export const UserSchema = SchemaFactory.createForClass(User);
 
 // Indexes for high-frequency LMS queries
+UserSchema.index(
+  { username: 1 },
+  {
+    unique: true,
+    sparse: true,
+    collation: { locale: 'en', strength: 2 },
+  },
+);
 UserSchema.index({ 'course.courseId': 1 });
 UserSchema.index({
   'gamification.totalPoints': -1,

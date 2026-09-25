@@ -102,7 +102,7 @@ export default function NetworkHero({ user, stats, loading = false }) {
             transition={{ duration: 0.4, delay: 0.15 }}
             className="text-sm sm:text-base text-text-secondary leading-relaxed max-w-2xl"
           >
-            Connect with peers across your course, exchange knowledge, collaborate in focused learning spaces, and build your professional community.
+            Connect with peers across your course, exchange knowledge, collaborate in focused learning spaces, and build your professional network.
           </motion.p>
         </div>
 

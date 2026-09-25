@@ -20,7 +20,7 @@ const DRAWER_TABS = [
   { id: 'announcements', label: 'Announcements' },
   { id: 'learning', label: 'Learning' },
   { id: 'social', label: 'Network' },
-  { id: 'community', label: 'Communities' },
+  { id: 'community', label: 'Spaces' },
   { id: 'system', label: 'System' },
 ];
 

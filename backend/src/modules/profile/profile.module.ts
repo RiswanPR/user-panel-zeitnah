@@ -4,10 +4,6 @@ import { ProfileController } from './profile.controller';
 import { ProfileService } from './profile.service';
 import { User, UserSchema } from '../auth/schemas/user.schema';
 import {
-  CommunityProfile,
-  CommunityProfileSchema,
-} from '../community/profile/schemas/community-profile.schema';
-import {
   Recommendation,
   RecommendationSchema,
 } from './schemas/recommendation.schema';
@@ -21,10 +17,6 @@ import { UsernameModule } from './services/username.module';
       {
         name: User.name,
         schema: UserSchema,
-      },
-      {
-        name: CommunityProfile.name,
-        schema: CommunityProfileSchema,
       },
       {
         name: Recommendation.name,

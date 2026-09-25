@@ -361,9 +361,9 @@ describe('NetworkService - Profile Network Statistics & Relationships (Strict ne
       await expect(
         service.getStudentProfile(new Types.ObjectId().toHexString()),
       ).rejects.toThrow(NotFoundException);
-      await expect(service.getStudentProfile('unknown_student')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.getStudentProfile('unknown_student'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

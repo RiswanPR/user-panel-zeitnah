@@ -4,6 +4,7 @@ import {
   UnauthorizedException,
   BadRequestException,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 
 import { InjectModel } from '@nestjs/mongoose';
@@ -19,7 +20,8 @@ import axios from 'axios';
 
 import { JwtService } from '@nestjs/jwt';
 
-import { resend } from '../../config/resend.config';
+import { EmailService } from '../../common/email/email.service';
+import { ResendEmailProvider } from '../../common/email/resend-email.provider';
 import {
   generateOtpEmailHtml,
   generateSuspiciousLoginEmailHtml,
@@ -150,7 +152,16 @@ export class AuthService {
     private jwtService: JwtService,
     private usernameService: UsernameService,
     private notificationsService: NotificationsService,
+    @Optional()
+    private emailService?: EmailService,
   ) {}
+
+  private getEmailService(): EmailService {
+    if (!this.emailService) {
+      this.emailService = new EmailService(new ResendEmailProvider());
+    }
+    return this.emailService;
+  }
 
   private normalizeSecurityValue(value?: string | null) {
     return (value || '').trim().toLowerCase();
@@ -260,10 +271,10 @@ export class AuthService {
     }
   }
 
-  private async resolveLoginMetadata(
+  private resolveLoginMetadata(
     data: Pick<LoginVerifyOtpDto | RegisterVerifyOtpDto, 'ip' | 'location'>,
     requestIp: string,
-  ): Promise<LoginRequestMetadata> {
+  ): LoginRequestMetadata {
     const clientIp = (data.ip || '').trim();
     const serverIp = (requestIp || '').trim();
     const publicIpFromServer = !this.isPrivateOrLocalIp(serverIp)
@@ -275,19 +286,43 @@ export class AuthService {
     const ip =
       publicIpFromServer ||
       publicIpFromClient ||
-      (await this.findPublicIp()) ||
       clientIp ||
-      serverIp;
+      serverIp ||
+      '127.0.0.1';
 
-    const location =
-      (await this.findLocationByIp(ip)) ||
-      this.normalizeLocation(data.location) ||
-      'Unknown';
+    const location = this.normalizeLocation(data.location) || 'Unknown';
 
     return {
       ip,
       location,
     };
+  }
+
+  private enrichDeviceMetadataAsync(
+    userId: unknown,
+    deviceId: string,
+    ip: string,
+  ): void {
+    if (!ip || this.isPrivateOrLocalIp(ip)) {
+      return;
+    }
+
+    // Fire asynchronously in background without blocking authentication response
+    (async () => {
+      try {
+        const location = await this.findLocationByIp(ip);
+        if (location) {
+          await this.userModel.updateOne(
+            { _id: userId, 'devices.deviceId': deviceId },
+            { $set: { 'devices.$.location': location } },
+          );
+        }
+      } catch (err: any) {
+        this.logger.debug(
+          `Background geolocation enrichment skipped: ${err?.message || err}`,
+        );
+      }
+    })();
   }
 
   private detectSuspiciousLogin(
@@ -372,33 +407,20 @@ export class AuthService {
     loginDetails: LoginDeviceSnapshot,
     reasons: string[],
   ) {
-    let attempts = 0;
-    while (attempts < 2) {
-      try {
-        await resend.emails.send({
-          from:
-            process.env.RESEND_FROM_EMAIL ||
-            'Zeitnah Academy <onboarding@resend.dev>',
-          to: user.email,
-          subject: 'Security Alert: Suspicious login detected',
-          html: generateSuspiciousLoginEmailHtml(
-            user.email,
-            loginDetails,
-            reasons,
-          ),
-        });
-        break; // Success
-      } catch (error) {
-        attempts++;
-        if (attempts >= 2) {
-          console.error(
-            'Failed to send suspicious login email after retry',
-            error,
-          );
-        } else {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
-      }
+    try {
+      await this.getEmailService().sendEmail({
+        to: user.email,
+        subject: 'Security Alert: Suspicious login detected',
+        html: generateSuspiciousLoginEmailHtml(
+          user.email,
+          loginDetails,
+          reasons,
+        ),
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Failed to send suspicious login email to ${user.email}: ${error instanceof Error ? error.message : error}`,
+      );
     }
   }
 
@@ -434,20 +456,30 @@ export class AuthService {
     };
   }
 
-  private isSessionExpired(device: UserDevice) {
-    return (
-      !device?.refreshTokenExpiry ||
-      new Date() > new Date(device.refreshTokenExpiry)
-    );
+  private isSessionExpired(device: UserDevice): boolean {
+    if (!device) return true;
+    if (!device.refreshTokenExpiry) {
+      if (!device.lastSeen) return true;
+      const lastSeenTime = new Date(device.lastSeen).getTime();
+      return (
+        isNaN(lastSeenTime) ||
+        Date.now() - lastSeenTime > this.refreshTokenExpiryMs
+      );
+    }
+    const expiryTime = new Date(device.refreshTokenExpiry).getTime();
+    if (isNaN(expiryTime)) return true;
+    return Date.now() > expiryTime;
   }
 
-  private removeExpiredSessions(user: UserDocument) {
+  private removeExpiredSessions(user: UserDocument): boolean {
+    if (!Array.isArray(user.devices)) {
+      user.devices = [];
+      return false;
+    }
     const initialSessionCount = user.devices.length;
-
     user.devices = user.devices.filter(
       (device) => !this.isSessionExpired(device),
     );
-
     return user.devices.length !== initialSessionCount;
   }
 
@@ -456,8 +488,9 @@ export class AuthService {
   // ==================================================
 
   async registerSendOtp(data: RegisterSendOtpDto) {
+    const email = (data.email || '').trim().toLowerCase();
     let user = await this.userModel.findOne({
-      email: data.email,
+      email,
     });
 
     if (user && user.account_Status?.isVerified) {
@@ -485,7 +518,7 @@ export class AuthService {
         user.username = await this.usernameService.generateUniqueUsername({
           source: user.username,
           name: data.name,
-          email: data.email,
+          email,
           isTaken: async (cand) => {
             const exists = await this.userModel.exists({
               username: cand,
@@ -501,21 +534,23 @@ export class AuthService {
           user.usernameClaimed = false;
         }
       }
-      try {
-        await user.save();
-      } catch (error: any) {
-        if (error?.name === 'ValidationError') {
-          throw new BadRequestException(
-            `User validation failed: ${error.message}`,
-          );
-        }
-        throw error;
-      }
+      await this.userModel.updateOne(
+        { _id: user._id },
+        {
+          $set: {
+            otp: hashedOtp,
+            otpExpiry,
+            name: data.name,
+            username: user.username,
+            usernameClaimed: user.usernameClaimed,
+          },
+        },
+      );
     } else {
       // Generate username candidate
       const chosenUsername = await this.usernameService.generateUniqueUsername({
         name: data.name,
-        email: data.email,
+        email,
         isTaken: async (cand) => {
           const exists = await this.userModel.exists({ username: cand });
           return Boolean(exists);
@@ -526,7 +561,7 @@ export class AuthService {
       user = await this.userModel.create({
         name: data.name,
 
-        email: data.email,
+        email,
 
         username: chosenUsername,
 
@@ -557,28 +592,11 @@ export class AuthService {
       },
     });
 
-    let attempts = 0;
-    while (attempts < 2) {
-      try {
-        await resend.emails.send({
-          from:
-            process.env.RESEND_FROM_EMAIL ||
-            'Zeitnah Academy <onboarding@resend.dev>',
-          to: data.email,
-          subject: `${otp} is your Registration Code - Zeitnah Academy`,
-          html: generateOtpEmailHtml(otp, 'Registration'),
-        });
-        if (this.isDev) console.log(`OTP for ${data.email}: ${otp}`);
-        break; // Success
-      } catch (error) {
-        attempts++;
-        if (attempts >= 2) {
-          console.error('Failed to send registration OTP email', error);
-          throw new BadRequestException('Failed to send OTP email');
-        }
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-    }
+    await this.getEmailService().sendEmail({
+      to: data.email,
+      subject: `${otp} is your Registration Code - Zeitnah Academy`,
+      html: generateOtpEmailHtml(otp, 'Registration'),
+    });
 
     this.logAuthEvent('REGISTER_OTP_SENT', { email: data.email });
 
@@ -593,8 +611,9 @@ export class AuthService {
   // REGISTER VERIFY OTP
   // ==================================================
   async registerVerifyOtp(data: RegisterVerifyOtpDto, ip: string) {
+    const email = (data.email || '').trim().toLowerCase();
     const user = await this.userModel.findOne({
-      email: data.email,
+      email,
     });
 
     if (!user) {
@@ -625,7 +644,10 @@ export class AuthService {
     // DEVICE LIMIT SYSTEM
     // =========================
 
-    const loginMetadata = await this.resolveLoginMetadata(data, ip);
+    // Clean up expired device sessions first so stale devices never block registration
+    this.removeExpiredSessions(user);
+
+    const loginMetadata = this.resolveLoginMetadata(data, ip);
     const requestIp = loginMetadata.ip;
     const loginLocation = loginMetadata.location;
 
@@ -685,9 +707,7 @@ export class AuthService {
 
     // CLEAR OTP
     user.otp = null;
-
     user.otpExpiry = null;
-
     user.account_Status.isVerified = true;
 
     const device = user.devices.find(
@@ -698,13 +718,28 @@ export class AuthService {
 
     if (device) {
       device.refreshToken = tokens.refreshTokenHash;
-
       device.refreshTokenExpiry = tokens.refreshTokenExpiry;
-
       device.lastSeen = new Date();
+      device.ip = requestIp;
+      device.location = loginLocation;
+      device.browser = data.browser;
+      device.os = data.os;
     }
 
-    await user.save();
+    await this.userModel.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          otp: null,
+          otpExpiry: null,
+          'account_Status.isVerified': true,
+          devices: user.devices,
+          'account_Status.lastSeen': new Date(),
+        },
+      },
+    );
+
+    this.enrichDeviceMetadataAsync(user._id, data.deviceId, requestIp);
 
     await this.loginHistoryService.create({
       user: user._id,
@@ -834,19 +869,19 @@ export class AuthService {
 
     // Save OTP
     user.otp = hashedOtp;
-
     user.otpExpiry = otpExpiry;
 
-    try {
-      await user.save();
-    } catch (error: any) {
-      if (error?.name === 'ValidationError') {
-        throw new BadRequestException(
-          `User validation failed: ${error.message}`,
-        );
-      }
-      throw error;
-    }
+    await this.userModel.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          otp: hashedOtp,
+          otpExpiry,
+          username: user.username,
+          usernameClaimed: user.usernameClaimed,
+        },
+      },
+    );
 
     await this.auditLogsService.record({
       actor: user._id,
@@ -859,28 +894,11 @@ export class AuthService {
       },
     });
 
-    let attempts = 0;
-    while (attempts < 2) {
-      try {
-        if (this.isDev) console.log(`OTP for ${email}: ${otp}`);
-        await resend.emails.send({
-          from:
-            process.env.RESEND_FROM_EMAIL ||
-            'Zeitnah Academy <onboarding@resend.dev>',
-          to: email,
-          subject: `${otp} is your Login Verification Code - Zeitnah Academy`,
-          html: generateOtpEmailHtml(otp, 'Login'),
-        });
-        break; // Success
-      } catch (error) {
-        attempts++;
-        if (attempts >= 2) {
-          console.error('Failed to send login OTP email', error);
-          throw new BadRequestException('Failed to send OTP email');
-        }
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-    }
+    await this.getEmailService().sendEmail({
+      to: cleanEmail,
+      subject: `${otp} is your Login Verification Code - Zeitnah Academy`,
+      html: generateOtpEmailHtml(otp, 'Login'),
+    });
 
     this.logAuthEvent('LOGIN_OTP_SENT', { email });
 
@@ -893,8 +911,9 @@ export class AuthService {
   // LOGIN VERIFY OTP
   // ==================================================
   async loginVerifyOtp(data: LoginVerifyOtpDto, ip: string) {
+    const email = (data.email || '').trim().toLowerCase();
     const user = await this.userModel.findOne({
-      email: data.email,
+      email,
     });
 
     if (!user) {
@@ -919,11 +938,16 @@ export class AuthService {
 
     if (!isOtpValid) {
       throw new UnauthorizedException('Invalid OTP');
-    } // =========================
+    }
+
+    // =========================
     // DEVICE LIMIT SYSTEM
     // =========================
 
-    const loginMetadata = await this.resolveLoginMetadata(data, ip);
+    // Clean up expired device sessions first so stale devices never block login
+    this.removeExpiredSessions(user);
+
+    const loginMetadata = this.resolveLoginMetadata(data, ip);
     const requestIp = loginMetadata.ip;
     const loginLocation = loginMetadata.location;
     const knownDevices = [...user.devices];
@@ -1110,11 +1134,24 @@ export class AuthService {
       device.os = data.os;
     }
 
-    // Clear OTP
+    // Clear OTP and persist state atomically
     user.otp = null;
     user.otpExpiry = null;
 
-    await user.save();
+    await this.userModel.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          devices: user.devices,
+          otp: null,
+          otpExpiry: null,
+          'account_Status.lastSeen': new Date(),
+        },
+      },
+    );
+
+    // Asynchronously enrich IP geolocation metadata without blocking response
+    this.enrichDeviceMetadataAsync(user._id, data.deviceId, requestIp);
 
     this.logAuthEvent('LOGIN_VERIFY_SUCCESS', {
       userId: user._id.toString(),
@@ -1296,7 +1333,10 @@ export class AuthService {
     const removedExpiredSessions = this.removeExpiredSessions(user);
 
     if (removedExpiredSessions) {
-      await user.save();
+      await this.userModel.updateOne(
+        { _id: user._id },
+        { $set: { devices: user.devices } },
+      );
     }
 
     const sessions = user.devices.map((device) => ({
@@ -1345,7 +1385,10 @@ export class AuthService {
       (device) => device.deviceId !== deviceId,
     );
 
-    await user.save();
+    await this.userModel.updateOne(
+      { _id: user._id },
+      { $pull: { devices: { deviceId } } },
+    );
 
     await this.auditLogsService.record({
       actor: user._id,
@@ -1382,7 +1425,10 @@ export class AuthService {
       (device) => device.deviceId !== userData.deviceId,
     );
 
-    await user.save();
+    await this.userModel.updateOne(
+      { _id: user._id },
+      { $pull: { devices: { deviceId: userData.deviceId } } },
+    );
 
     await this.auditLogsService.record({
       actor: user._id,

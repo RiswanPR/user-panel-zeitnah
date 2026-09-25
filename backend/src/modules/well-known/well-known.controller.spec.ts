@@ -35,7 +35,7 @@ describe('WellKnownController', () => {
       expect(result.applinks.details[0].appIDs[0]).toContain(
         'com.zeitnahacademy.app',
       );
-      expect(result.applinks.details[0].components).toHaveLength(4);
+      expect(result.applinks.details[0].components).toHaveLength(3);
     });
   });
 });

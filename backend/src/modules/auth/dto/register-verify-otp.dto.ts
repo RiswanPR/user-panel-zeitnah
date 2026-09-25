@@ -5,6 +5,7 @@ import {
   IsBoolean,
   IsNotEmpty,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class RegisterVerifyOtpDto {
   @IsString()
@@ -13,6 +14,9 @@ export class RegisterVerifyOtpDto {
 
   @IsEmail()
   @IsNotEmpty()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
   email!: string;
 
   @IsString()

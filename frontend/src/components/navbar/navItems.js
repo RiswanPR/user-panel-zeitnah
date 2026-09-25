@@ -17,11 +17,6 @@ export const navItems = [
     icon: Compass,
   },
   {
-    name: "Community",
-    path: "/community",
-    icon: Users,
-  },
-  {
     name: "Profile",
     path: "/profile",
     icon: User,

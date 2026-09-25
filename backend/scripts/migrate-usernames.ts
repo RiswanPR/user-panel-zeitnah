@@ -9,10 +9,12 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const MONGO_URI =
   process.env.MONGO_URL ||
-  'mongodb://zeitnahadmin:Riswan123456@localhost:27017/lms-platform?authSource=admin';
+  'mongodb://localhost:27017/lms-platform';
 const DB_NAME = process.env.MONGO_DB_NAME || 'lms-platform';
 
-const isDryRun = process.argv.includes('--dry-run');
+const hasExplicitLive = process.argv.includes('--live');
+const hasExplicitDryRun = process.argv.includes('--dry-run');
+const isDryRun = !hasExplicitLive || hasExplicitDryRun;
 
 async function runMigration() {
   console.log('\n========================================================');
@@ -20,6 +22,9 @@ async function runMigration() {
   console.log('========================================================');
   console.log(`Target Database: ${DB_NAME}`);
   console.log(`Execution Mode : ${isDryRun ? 'DRY-RUN (Simulated, No Writes)' : 'LIVE EXECUTION'}`);
+  if (isDryRun && !hasExplicitDryRun) {
+    console.log('SAFETY NOTICE  : Defaulting to safe DRY-RUN. Pass --live to commit changes.');
+  }
   console.log('Connecting to MongoDB...\n');
 
   const client = new MongoClient(MONGO_URI);
@@ -221,6 +226,7 @@ async function runMigration() {
           { username: 1 },
           {
             unique: true,
+            sparse: true,
             background: true,
             collation: { locale: 'en', strength: 2 },
           },
@@ -246,8 +252,9 @@ async function runMigration() {
     console.log('========================================================\n');
 
     if (isDryRun) {
-      console.log('Dry-run complete. Run without --dry-run to execute live changes:');
-      console.log('  npm run migrate:usernames\n');
+      console.log('Dry-run audit complete. No database changes were made.');
+      console.log('To apply these changes live to production database:');
+      console.log('  npm run migrate:usernames -- --live\n');
     } else {
       console.log('✓ Username migration completed successfully.\n');
     }

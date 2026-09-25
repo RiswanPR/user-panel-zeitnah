@@ -36,20 +36,12 @@ const MyPoints = React.lazy(() => import("./pages/learning/MyPoints"));
 const Leaderboard = React.lazy(() => import("./pages/leaderboard/LeaderboardPage"));
 const NetworkPage = React.lazy(() => import("./pages/network/NetworkPage"));
 const NetworkProfilePage = React.lazy(() => import("./pages/network/NetworkProfilePage"));
-const CommunityDetailPage = React.lazy(() => import("./pages/network/CommunityDetailPage"));
 const LearningSpaceDetailPage = React.lazy(() => import("./pages/network/LearningSpaceDetailPage"));
 const DiscussionDetailPage = React.lazy(() => import("./pages/network/DiscussionDetailPage"));
 const NotFoundPage = React.lazy(() => import("./pages/NotFoundPage"));
 const ErrorReportsDashboard = React.lazy(() => import("./pages/admin/ErrorReportsDashboard"));
 const SessionDiagnostics = React.lazy(() => import("./pages/admin/SessionDiagnostics"));
 const NotificationsPage = React.lazy(() => import("./pages/notifications/NotificationsPage"));
-
-// Community Views
-const CommunityLayout = React.lazy(() => import("./layouts/CommunityLayout"));
-const CommunityHome = React.lazy(() => import("./pages/community/CommunityHome"));
-const ModeratorDashboard = React.lazy(() => import("./pages/community/ModeratorDashboard"));
-const CommunityProfilePage = React.lazy(() => import("./pages/community/ProfilePage"));
-const CommunityMessagesPage = React.lazy(() => import("./pages/community/MessagesPage"));
 
 import ProtectedRoute from "./components/common/ProtectedRoute/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";
@@ -144,8 +136,6 @@ function App() {
               <Route path="/leaderboard/:courseId" element={<Suspense fallback={<PageLoader />}><Leaderboard /></Suspense>} />
               <Route path="/network" element={<Suspense fallback={<PageLoader />}><NetworkPage /></Suspense>} />
               <Route path="/network/profile/:username" element={<Suspense fallback={<PageLoader />}><NetworkProfilePage /></Suspense>} />
-              <Route path="/network/communities/:slug" element={<Suspense fallback={<PageLoader />}><CommunityDetailPage /></Suspense>} />
-              <Route path="/network/communities/:slug/discussions/:discussionId" element={<Suspense fallback={<PageLoader />}><DiscussionDetailPage /></Suspense>} />
               <Route path="/network/spaces/:slugOrId" element={<Suspense fallback={<PageLoader />}><LearningSpaceDetailPage /></Suspense>} />
               <Route path="/network/spaces/:slugOrId/discussions/:discussionId" element={<Suspense fallback={<PageLoader />}><DiscussionDetailPage /></Suspense>} />
               <Route path="/notifications" element={<Suspense fallback={<PageLoader />}><NotificationsPage /></Suspense>} />
@@ -153,24 +143,6 @@ function App() {
               <Route path="/audit-logs" element={<Suspense fallback={<PageLoader />}><AuditLogs /></Suspense>} />
               <Route path="/admin/error-reports" element={<Suspense fallback={<PageLoader />}><ErrorReportsDashboard /></Suspense>} />
               <Route path="/session-diagnostics" element={<Suspense fallback={<PageLoader />}><SessionDiagnostics /></Suspense>} />
-            </Route>
-
-            {/* SECURE COMMUNITY ROUTING */}
-            <Route
-              element={
-                <ProtectedRoute>
-                  <Suspense fallback={<PageLoader />}>
-                    <CommunityLayout />
-                  </Suspense>
-                </ProtectedRoute>
-              }
-            >
-              <Route path="/community" element={<Suspense fallback={<PageLoader />}><CommunityHome /></Suspense>} />
-              <Route path="/community/profile" element={<Suspense fallback={<PageLoader />}><CommunityProfilePage /></Suspense>} />
-              <Route path="/community/profile/:username" element={<Suspense fallback={<PageLoader />}><CommunityProfilePage /></Suspense>} />
-              <Route path="/community/messages" element={<Suspense fallback={<PageLoader />}><CommunityMessagesPage /></Suspense>} />
-              <Route path="/community/messages/:conversationId" element={<Suspense fallback={<PageLoader />}><CommunityMessagesPage /></Suspense>} />
-              <Route path="/community/moderator" element={<Suspense fallback={<PageLoader />}><ModeratorDashboard /></Suspense>} />
             </Route>
 
             {/* 404 — NOT FOUND */}

@@ -6,7 +6,7 @@ export interface DeepLinkRoute {
 }
 
 /**
- * Parses deep link URLs (e.g. zeitnah://courses/class/123 or https://zeitnahacademy.com/community/messages/456)
+ * Parses deep link URLs (e.g. zeitnah://courses/class/123 or https://zeitnahacademy.com/network/spaces/design-cohort)
  * and returns the internal SPA route.
  */
 export function parseDeepLink(rawUrl: string): string | null {

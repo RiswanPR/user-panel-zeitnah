@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { User } from '../auth/schemas/user.schema';
-import { CommunityProfile } from '../community/profile/schemas/community-profile.schema';
 import { Recommendation } from './schemas/recommendation.schema';
 import { UploadService } from '../../common/aws/upload.service';
 import { SignedUrlService } from '../../common/aws/signed-url.service';
@@ -17,7 +16,6 @@ import { AuditLogsService } from '../audit-logs/audit-logs.service';
 describe('ProfileService', () => {
   let service: ProfileService;
   let mockUserModel: any;
-  let mockCommunityProfileModel: any;
   let mockRecommendationModel: any;
   let mockAuditLogsService: any;
   let usernameService: UsernameService;
@@ -28,10 +26,6 @@ describe('ProfileService', () => {
       findOne: jest.fn(),
       exists: jest.fn(),
       findOneAndUpdate: jest.fn(),
-    };
-
-    mockCommunityProfileModel = {
-      updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
     };
 
     mockRecommendationModel = {
@@ -62,10 +56,6 @@ describe('ProfileService', () => {
         {
           provide: getModelToken(User.name),
           useValue: mockUserModel,
-        },
-        {
-          provide: getModelToken(CommunityProfile.name),
-          useValue: mockCommunityProfileModel,
         },
         {
           provide: getModelToken(Recommendation.name),
@@ -263,11 +253,6 @@ describe('ProfileService', () => {
         expect.objectContaining({
           action: 'USERNAME_CHANGED',
         }),
-      );
-      expect(mockCommunityProfileModel.updateOne).toHaveBeenCalledWith(
-        { userId: 'user_123' },
-        { $set: { username: 'new_handle' } },
-        { upsert: false },
       );
     });
 
@@ -545,7 +530,6 @@ describe('ProfileService', () => {
       expect(mockUser.bio).toBe('New Bio');
       expect(mockUser.skills).toEqual(['React', 'Node.js']);
       expect(mockUser.save).toHaveBeenCalled();
-      expect(mockCommunityProfileModel.updateOne).toHaveBeenCalled();
     });
   });
 

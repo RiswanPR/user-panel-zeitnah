@@ -340,6 +340,7 @@ export class NetworkService {
         .sort(sortOptions)
         .skip(skip)
         .limit(limit)
+        .lean()
         .exec(),
     ]);
 
@@ -356,6 +357,7 @@ export class NetworkService {
           $or: [{ requesterId: userObjId }, { recipientId: userObjId }],
           status: { $in: ['pending', 'accepted'] },
         })
+        .lean()
         .exec();
 
       for (const conn of activeConnections) {
@@ -492,7 +494,9 @@ export class NetworkService {
     }
 
     if (!student) {
-      throw new NotFoundException(`Student profile not found or is no longer available.`);
+      throw new NotFoundException(
+        `Student profile not found or is no longer available.`,
+      );
     }
 
     let rel: { state: RelationshipState; connectionId?: string } = {
@@ -1907,7 +1911,9 @@ export class NetworkService {
     }
 
     if (!userDoc) {
-      throw new NotFoundException(`Student profile not found or is no longer available.`);
+      throw new NotFoundException(
+        `Student profile not found or is no longer available.`,
+      );
     }
 
     const targetUserId = String(userDoc._id);

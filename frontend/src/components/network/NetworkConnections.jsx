@@ -484,7 +484,7 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-heading font-bold text-white">
-                Recommended & Community Learners
+                Recommended & Peer Learners
               </h3>
               <p className="text-xs text-text-muted mt-0.5">
                 Connect with peers across cohorts, exchange insights, and build your Zeitnah network.
@@ -836,19 +836,11 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
                       <div className="flex items-center gap-1.5">
                         <Link
                           to={profileLink}
-                          className="px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors focus-ring"
+                          className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors focus-ring"
                         >
                           <ExternalLink className="w-3.5 h-3.5 text-text-muted" />
-                          <span>Profile</span>
+                          <span>View Profile</span>
                         </Link>
-                        <button
-                          type="button"
-                          onClick={() => navigate('/community/messages')}
-                          className="px-2.5 py-1.5 rounded-xl bg-brand-mint/10 hover:bg-brand-mint/20 text-brand-mint text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
-                        >
-                          <MessageSquare className="w-3.5 h-3.5" />
-                          <span>Message</span>
-                        </button>
                       </div>
 
                       <button
@@ -1127,7 +1119,7 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
               <p className="text-xs text-text-muted mt-1 leading-relaxed">
                 {debouncedSearch
                   ? 'No users found matching your search query.'
-                  : 'Follow classmates, instructors, and community members to see their learning activity.'}
+                  : 'Follow classmates, instructors, and network peers to see their learning activity.'}
               </p>
               {!debouncedSearch && (
                 <button

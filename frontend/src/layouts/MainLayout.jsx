@@ -371,7 +371,7 @@ export default function MainLayout({ children }) {
                   key={item.key}
                   to={item.path}
                   aria-current={active ? "page" : undefined}
-                  className="relative flex flex-col items-center gap-1 py-1.5 px-4 rounded-xl transition-all duration-200 focus-ring"
+                  className="relative flex flex-col items-center justify-center gap-1 py-1.5 px-4 min-h-[44px] rounded-xl transition-all duration-200 focus-ring"
                 >
                   {active && (
                     <motion.div

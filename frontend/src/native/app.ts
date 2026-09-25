@@ -97,7 +97,7 @@ class NativeAppService {
 
       // 4. Standard SPA History Navigation
       const currentPath = window.location.pathname;
-      const rootPaths = ['/', '/courses', '/dashboard', '/login', '/community'];
+      const rootPaths = ['/', '/courses', '/dashboard', '/login', '/network'];
 
       if (canGoBack && !rootPaths.includes(currentPath)) {
         window.history.back();

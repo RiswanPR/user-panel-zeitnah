@@ -8,6 +8,7 @@ import {
   Users,
   UserCheck,
   UserPlus,
+  User,
   MessageSquare,
   ExternalLink,
   ShieldCheck,
@@ -225,19 +226,19 @@ function NetworkUserRow({
               )}
             </button>
 
-            {/* Connection / Message Action */}
+            {/* Connection / Profile Action */}
             {connectionStatus === "connected" ? (
               <button
                 type="button"
                 onClick={() => {
                   onCloseModal?.();
-                  navigate("/community/messages");
+                  navigate(`/network/profile/${userItem.username || userItem._id}`);
                 }}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white/[0.06] hover:bg-white/[0.12] text-white border border-white/10 transition-all cursor-pointer focus-ring min-h-[36px]"
-                title="Send Message"
+                title="View Profile"
               >
-                <MessageSquare className="w-3.5 h-3.5 text-brand-mint" />
-                <span>Message</span>
+                <User className="w-3.5 h-3.5 text-brand-mint" />
+                <span>Profile</span>
               </button>
             ) : connectionStatus === "pending" ? (
               <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] text-text-muted border border-white/[0.06] min-h-[36px]">
@@ -407,7 +408,7 @@ function NetworkListModalContent({
               <span>{profileName}'s Network</span>
             </h2>
             <p className="text-xs text-text-muted mt-0.5">
-              Explore relationships, connections, and community members.
+              Explore relationships, connections, and network peers.
             </p>
           </div>
 

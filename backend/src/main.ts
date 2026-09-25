@@ -8,6 +8,7 @@ import type { Express } from 'express';
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { corsOriginDelegate } from './config/cors.config';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
@@ -55,8 +56,8 @@ async function bootstrap(): Promise<void> {
 
   // SWAGGER
   const config = new DocumentBuilder()
-    .setTitle('Zeitnah LMS Community API')
-    .setDescription('Phase 1 - Community Module API documentation')
+    .setTitle('Zeitnah LMS Platform API')
+    .setDescription('Zeitnah LMS Platform API documentation')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
@@ -64,37 +65,8 @@ async function bootstrap(): Promise<void> {
   SwaggerModule.setup('api/docs', app, document);
 
   // CORS ALLOWLIST (Web + Capacitor Native Mobile + Local Dev)
-  const configuredOrigins = process.env.FRONTEND_URL
-    ? process.env.FRONTEND_URL.split(',').map((origin) => origin.trim())
-    : ['https://zeitnahacademy.com'];
-
-  const defaultMobileAndWebOrigins = [
-    'https://zeitnahacademy.com',
-    'https://zeitnahacademy.com',
-    'capacitor://localhost',
-    'http://localhost',
-    'https://localhost',
-    'http://localhost:5173',
-    'http://localhost:3000',
-  ];
-
-  const allowedOrigins = Array.from(
-    new Set(
-      [...configuredOrigins, ...defaultMobileAndWebOrigins].filter(Boolean),
-    ),
-  );
-
   app.enableCors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (such as mobile native apps, curl, server-to-server)
-      if (!origin) {
-        return callback(null, true);
-      }
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(null, false);
-    },
+    origin: corsOriginDelegate,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-correlation-id'],

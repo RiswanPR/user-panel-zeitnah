@@ -56,7 +56,6 @@ import { LearningSpacesService } from './services/learning-spaces.service';
 import { NetworkConnectionsService } from './services/network-connections.service';
 import { OpportunitiesService } from './services/opportunities.service';
 import { NetworkService } from './network.service';
-import { CommunityService } from './community.service';
 import { LearningSpacesController } from './controllers/learning-spaces.controller';
 import { NetworkConnectionsController } from './controllers/network-connections.controller';
 import { OpportunitiesController } from './controllers/opportunities.controller';
@@ -101,14 +100,12 @@ import { NotificationsModule } from '../notifications/notifications.module';
     NetworkConnectionsService,
     OpportunitiesService,
     NetworkService,
-    CommunityService,
   ],
   exports: [
     LearningSpacesService,
     NetworkConnectionsService,
     OpportunitiesService,
     NetworkService,
-    CommunityService,
     MongooseModule,
   ],
 })

@@ -13,7 +13,6 @@ import { LeaderboardModule } from './modules/leaderboard/leaderboard.module';
 import { AwsModule } from './common/aws/aws.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AnnouncementsModule } from './modules/announcements/announcements.module';
-import { CommunityModule } from './modules/community/community.module';
 import { NetworkModule } from './modules/network/network.module';
 import { SkillsModule } from './modules/skills/skills.module';
 import { ProjectsModule } from './modules/projects/projects.module';
@@ -23,6 +22,7 @@ import { ModerationModule } from './modules/moderation/moderation.module';
 import { TroubleshootModule } from './modules/troubleshoot/troubleshoot.module';
 import { ErrorReportsModule } from './modules/error-reports/error-reports.module';
 import { WellKnownModule } from './modules/well-known/well-known.module';
+import { EmailModule } from './common/email/email.module';
 
 @Module({
   imports: [
@@ -60,14 +60,14 @@ import { WellKnownModule } from './modules/well-known/well-known.module';
     OpportunitiesModule,
     ModerationModule,
 
-    // COMMUNITY
-    CommunityModule,
-
     // TROUBLESHOOT ERROR REPORTING
     TroubleshootModule,
 
     // WELL-KNOWN DEEP LINK DECLARATIONS
     WellKnownModule,
+
+    // RESILIENT EMAIL SERVICE
+    EmailModule,
 
     // RATE LIMITING
     ThrottlerModule.forRoot([

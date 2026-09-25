@@ -101,7 +101,7 @@ export default function NetworkActivity({
               Network Activity
             </h2>
             <p className="text-xs text-text-muted">
-              Authentic learning milestones across your community
+              Authentic learning milestones across your network
             </p>
           </div>
         </div>
@@ -113,7 +113,7 @@ export default function NetworkActivity({
             <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-mint" />
           </span>
           <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-brand-mint">
-            Community Stream
+            Network Stream
           </span>
         </div>
       </div>
@@ -218,7 +218,7 @@ export default function NetworkActivity({
             Unable to load learning activities
           </p>
           <p className="text-xs text-text-muted">
-            There was a problem fetching the community timeline.
+            There was a problem fetching the network activity timeline.
           </p>
           <button
             type="button"

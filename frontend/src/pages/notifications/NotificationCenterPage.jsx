@@ -25,7 +25,7 @@ const CATEGORY_TABS = [
   { id: 'unread', label: 'Unread' },
   { id: 'learning', label: 'Learning & Courses' },
   { id: 'social', label: 'Network & Peers' },
-  { id: 'community', label: 'Communities' },
+  { id: 'community', label: 'Space Discussions' },
   { id: 'system', label: 'System & Security' },
 ];
 
@@ -340,7 +340,7 @@ export default function NotificationCenterPage() {
                     { id: 'learning', label: 'Learning Milestones & Progress' },
                     { id: 'course', label: 'Course Updates & New Lessons' },
                     { id: 'achievement', label: 'Achievements & Badges' },
-                    { id: 'community', label: 'Community Replies & Mentions' },
+                    { id: 'community', label: 'Space Replies & Mentions' },
                     { id: 'announcement', label: 'Platform Announcements' },
                   ].map((cat) => {
                     const pref = preferences?.[cat.id] || { inApp: true, email: false };

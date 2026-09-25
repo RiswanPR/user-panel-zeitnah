@@ -141,6 +141,12 @@ export class AuthController {
     return await this.authService.registerSendOtp(body);
   }
 
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60000,
+    },
+  })
   @Post('register/verify-otp')
   async registerVerifyOtp(
     @Body()
@@ -185,6 +191,12 @@ export class AuthController {
     return await this.authService.loginSendOtp(body.email);
   }
 
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60000,
+    },
+  })
   @Post('login/verify-otp')
   async loginVerifyOtp(
     @Body()
@@ -212,6 +224,12 @@ export class AuthController {
     return result;
   }
 
+  @Throttle({
+    default: {
+      limit: 10,
+      ttl: 60000,
+    },
+  })
   @Post('refresh-token')
   async refreshToken(
     @Body()

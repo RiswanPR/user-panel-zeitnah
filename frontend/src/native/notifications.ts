@@ -53,7 +53,7 @@ class NativeNotificationService {
 
       // Listen for successful token registration
       PushNotifications.addListener('registration', async (token: Token) => {
-        console.log('[NativeNotifications] Push registration token received:', token.value);
+        console.log('[NativeNotifications] Push registration token received successfully');
         this.pushToken = token.value;
         await this.syncPushTokenWithBackend(token.value);
       });

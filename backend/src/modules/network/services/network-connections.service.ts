@@ -58,7 +58,7 @@ export class NetworkConnectionsService {
   async getPeople(userId: string, query: QueryPeopleDto) {
     const userObjId = this.toObjectId(userId);
     const page = Math.max(1, Number(query.page) || 1);
-    const limit = Math.min(Math.max(1, Number(query.limit) || 20), 100);
+    const limit = Math.min(Math.max(1, Number(query.limit) || 20), 50);
     const skip = (page - 1) * limit;
 
     const filter: any = {
@@ -157,7 +157,8 @@ export class NetworkConnectionsService {
         let avatarUrl = u.avatar || u.profileImage || '';
         if (this.signedUrlService && avatarUrl) {
           try {
-            avatarUrl = await this.signedUrlService.generateSignedImageUrl(avatarUrl);
+            avatarUrl =
+              await this.signedUrlService.generateSignedImageUrl(avatarUrl);
           } catch {
             // Keep original if signing fails
           }
@@ -188,10 +189,12 @@ export class NetworkConnectionsService {
           interests: Array.isArray(u.skills) ? u.skills : [],
           level:
             u.gamification?.rank ||
-            (u.gamification?.level ? `Level ${u.gamification.level}` : 'Beginner'),
+            (u.gamification?.level
+              ? `Level ${u.gamification.level}`
+              : 'Beginner'),
           isVerified: Boolean(
             u.account_Status?.isVerified ||
-              u.verification?.status === 'VERIFIED',
+            u.verification?.status === 'VERIFIED',
           ),
           connectionStatus,
           isFollowing,
@@ -226,7 +229,15 @@ export class NetworkConnectionsService {
    * Helper to format populated user document safely.
    */
   private async formatPopulatedUser(raw: any) {
-    if (!raw) return { _id: null, id: '', name: 'User', username: '', email: '', avatar: '' };
+    if (!raw)
+      return {
+        _id: null,
+        id: '',
+        name: 'User',
+        username: '',
+        email: '',
+        avatar: '',
+      };
     const avatar = await this.signAvatar(raw.avatar || raw.profileImage);
     const primaryCourse =
       Array.isArray(raw.course) && raw.course.length > 0
@@ -250,7 +261,8 @@ export class NetworkConnectionsService {
       course: primaryCourse,
       skills: Array.isArray(raw.skills) ? raw.skills : [],
       isVerified: Boolean(
-        raw.account_Status?.isVerified || raw.verification?.status === 'VERIFIED',
+        raw.account_Status?.isVerified ||
+        raw.verification?.status === 'VERIFIED',
       ),
     };
   }
@@ -261,7 +273,7 @@ export class NetworkConnectionsService {
   async getConnections(userId: string, query: any) {
     const userObjId = this.toObjectId(userId);
     const page = Math.max(1, Number(query.page) || 1);
-    const limit = Math.min(Math.max(1, Number(query.limit) || 20), 100);
+    const limit = Math.min(Math.max(1, Number(query.limit) || 20), 50);
     const skip = (page - 1) * limit;
 
     const filter = {
@@ -323,11 +335,13 @@ export class NetworkConnectionsService {
         .find({ recipientId: userObjId, status: 'pending' })
         .populate('requesterId', userFields)
         .sort({ createdAt: -1 })
+        .limit(50)
         .lean(),
       this.connectionModel
         .find({ requesterId: userObjId, status: 'pending' })
         .populate('recipientId', userFields)
         .sort({ createdAt: -1 })
+        .limit(50)
         .lean(),
     ]);
 

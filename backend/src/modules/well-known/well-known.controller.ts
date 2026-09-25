@@ -42,10 +42,6 @@ export class WellKnownController {
                 comment: 'Matches course details and lessons',
               },
               {
-                '/': '/community/*',
-                comment: 'Matches community feed and direct messages',
-              },
-              {
                 '/': '/auth/*',
                 comment: 'Matches authentication and verify OTP',
               },

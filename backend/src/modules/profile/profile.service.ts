@@ -12,10 +12,6 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { User, UserDocument } from '../auth/schemas/user.schema';
 import {
-  CommunityProfile,
-  CommunityProfileDocument,
-} from '../community/profile/schemas/community-profile.schema';
-import {
   Recommendation,
   RecommendationDocument,
 } from './schemas/recommendation.schema';
@@ -50,8 +46,6 @@ export class ProfileService {
   constructor(
     @InjectModel(User.name)
     private userModel: Model<UserDocument>,
-    @InjectModel(CommunityProfile.name)
-    private communityProfileModel: Model<CommunityProfileDocument>,
     @InjectModel(Recommendation.name)
     private recommendationModel: Model<RecommendationDocument>,
     private uploadService: UploadService,
@@ -216,14 +210,6 @@ export class ProfileService {
       return this.changeUsername(userId, requestedUsername, ipAddress);
     }
 
-    await this.communityProfileModel
-      .updateOne(
-        { userId: String(user._id) },
-        { $set: { username: sanitized } },
-        { upsert: false },
-      )
-      .catch(() => {});
-
     await this.auditLogsService.record({
       actor: user._id,
       action: 'USERNAME_CLAIMED',
@@ -363,14 +349,6 @@ export class ProfileService {
       throw new UnauthorizedException('User not found');
     }
 
-    await this.communityProfileModel
-      .updateOne(
-        { userId: String(user._id) },
-        { $set: { username: sanitized } },
-        { upsert: false },
-      )
-      .catch(() => {});
-
     await this.auditLogsService.record({
       actor: user._id,
       action: 'USERNAME_CHANGED',
@@ -410,7 +388,9 @@ export class ProfileService {
    * Retrieves public student profile by username without exposing sensitive account fields.
    */
   async getPublicProfile(rawUsername: string) {
-    const clean = String(rawUsername || '').trim().replace(/^@/, '');
+    const clean = String(rawUsername || '')
+      .trim()
+      .replace(/^@/, '');
     if (!clean) {
       throw new NotFoundException('Student profile not found.');
     }
@@ -446,10 +426,12 @@ export class ProfileService {
     }
 
     if (!user) {
-      throw new NotFoundException(`Student profile not found or is no longer available.`);
+      throw new NotFoundException(
+        `Student profile not found or is no longer available.`,
+      );
     }
 
-    const userObj = user.toObject() as any;
+    const userObj = user.toObject();
     if (userObj.avatar) {
       userObj.avatar = await this.signedUrlService.generateSignedImageUrl(
         userObj.avatar,
@@ -646,19 +628,6 @@ export class ProfileService {
     user.markModified('gamification');
     await user.save();
 
-    await this.communityProfileModel
-      .updateOne(
-        { userId: String(user._id) },
-        {
-          $set: {
-            headline: user.headline || '',
-            bio: user.bio || '',
-            skills: user.skills || [],
-          },
-        },
-      )
-      .catch(() => {});
-
     const userObj = user.toObject() as any;
     if (userObj.avatar) {
       userObj.avatar = await this.signedUrlService.generateSignedImageUrl(
@@ -685,7 +654,12 @@ export class ProfileService {
     const user = await this.userModel.findById(userId);
     if (!user) throw new UnauthorizedException('User not found');
 
-    const extension = file.originalname.split('.').pop() || 'jpg';
+    const extension =
+      file.mimetype === 'image/png'
+        ? 'png'
+        : file.mimetype === 'image/webp'
+          ? 'webp'
+          : 'jpg';
     const key = `profiles/${userId}-${uuidv4()}.${extension}`;
     const oldAvatarKey = user.avatar;
 
@@ -709,13 +683,6 @@ export class ProfileService {
 
     const signedUrl = await this.signedUrlService.generateSignedImageUrl(key);
 
-    await this.communityProfileModel
-      .updateOne(
-        { userId: String(user._id) },
-        { $set: { profilePicture: signedUrl } },
-      )
-      .catch(() => {});
-
     return {
       message: 'Avatar uploaded successfully',
       avatar: signedUrl,
@@ -729,7 +696,12 @@ export class ProfileService {
     const user = await this.userModel.findById(userId);
     if (!user) throw new UnauthorizedException('User not found');
 
-    const extension = file.originalname.split('.').pop() || 'jpg';
+    const extension =
+      file.mimetype === 'image/png'
+        ? 'png'
+        : file.mimetype === 'image/webp'
+          ? 'webp'
+          : 'jpg';
     const key = `profiles/banners/${userId}-${uuidv4()}.${extension}`;
     const oldBannerKey = user.backgroundImage;
 
@@ -1148,6 +1120,7 @@ export class ProfileService {
     const recommendations = await this.recommendationModel
       .find({ recipientId: userId })
       .sort({ createdAt: -1 })
+      .limit(50)
       .lean();
 
     const signed = await Promise.all(
