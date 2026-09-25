@@ -36,10 +36,10 @@ export class CreateDirectConversationDto {
   @IsNotEmpty()
   recipientId!: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @MaxLength(5000)
-  message!: string;
+  message?: string;
 
   @IsOptional()
   @IsArray()

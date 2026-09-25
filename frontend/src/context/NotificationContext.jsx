@@ -57,6 +57,7 @@ export const NotificationProvider = ({ children }) => {
         : 'https://zeitnahacademy.com';
 
       newSocket = io(`${baseURL}/notifications`, {
+        path: '/api/socket.io/',
         // Dynamic auth callback ensures every handshake and reconnect uses the latest token
         auth: (cb) => {
           cb({ token: storage.getAccessToken() });

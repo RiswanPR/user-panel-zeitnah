@@ -15,6 +15,7 @@ import { socketCorsConfig } from '../../config/cors.config';
 @WebSocketGateway({
   cors: socketCorsConfig,
   namespace: '/notifications',
+  path: '/api/socket.io/',
 })
 export class NotificationsGateway
   implements OnGatewayConnection, OnGatewayDisconnect

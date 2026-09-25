@@ -197,7 +197,17 @@ export class MessagingService {
       });
     }
 
-    // 6. Create initial message
+    // 6. If no message provided, this is a "find-or-create" navigation flow
+    //    Return the conversation shell without creating a message.
+    if (!dto.message?.trim()) {
+      return {
+        conversation,
+        message: null,
+        isMessageRequest,
+      };
+    }
+
+    // 7. Create initial message
     const message = await this.messageModel.create({
       conversationId: conversation._id,
       senderId: callerObjId,
@@ -206,7 +216,7 @@ export class MessagingService {
       status: MessageStatus.SENT,
     });
 
-    // 7. Update conversation's lastMessage
+    // 8. Update conversation's lastMessage
     conversation.lastMessage = {
       messageId: message._id as Types.ObjectId,
       senderId: callerObjId,
@@ -224,14 +234,14 @@ export class MessagingService {
     });
     await conversation.save();
 
-    // 8. Real-time WebSocket emission
+    // 9. Real-time WebSocket emission
     this.messagesGateway.notifyNewMessage(
       String(conversation._id),
       message,
       [callerId, dto.recipientId],
     );
 
-    // 9. Send Notification to recipient
+    // 10. Send Notification to recipient
     if (this.notificationsService) {
       try {
         const notifType = isMessageRequest ? 'MESSAGE_REQUEST' : 'MESSAGE';

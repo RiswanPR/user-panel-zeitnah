@@ -72,8 +72,10 @@ export default function TroubleshootReporter() {
       buffer.networkErrors[buffer.networkErrors.length - 1] ||
       buffer.consoleErrors[buffer.consoleErrors.length - 1];
     if (latestError && !title) {
+      const rawMsg = latestError.message;
+      const msgStr = typeof rawMsg === 'string' ? rawMsg : (rawMsg ? String(rawMsg) : 'Error occurred');
       setTitle(
-        (latestError.message || 'Error occurred')
+        msgStr
           .substring(0, 120)
           .replace(/\n/g, ' ')
       );
@@ -413,7 +415,7 @@ export default function TroubleshootReporter() {
                                           {e.type || 'error'}
                                         </span>
                                         <span className="text-white/60 break-all leading-relaxed flex-1">
-                                          {e.message?.substring(0, 150)}
+                                          {String(e.message || '').substring(0, 150)}
                                         </span>
                                         {e.count > 1 && (
                                           <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold bg-white/10 text-white/70">
@@ -474,7 +476,7 @@ export default function TroubleshootReporter() {
                                     {groupErrors(errorData.unhandledErrors.slice(-15)).map((e, i) => (
                                       <div key={i} className="flex items-start gap-2 text-[11px] font-mono text-white/60 py-1 break-all">
                                         <span className="flex-1">
-                                          [{e.type}] {e.message?.substring(0, 150)}
+                                          [{e.type}] {String(e.message || '').substring(0, 150)}
                                         </span>
                                         {e.count > 1 && (
                                           <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold bg-white/10 text-white/70">
@@ -499,7 +501,7 @@ export default function TroubleshootReporter() {
                                   <div className="space-y-1 max-h-24 overflow-y-auto custom-scrollbar">
                                     {groupErrors(errorData.consoleWarnings.slice(-10)).map((e, i) => (
                                       <div key={i} className="flex items-start gap-2 text-[11px] font-mono py-0.5 text-white/40 break-all">
-                                        <span className="flex-1">{e.message?.substring(0, 120)}</span>
+                                        <span className="flex-1">{String(e.message || '').substring(0, 120)}</span>
                                         {e.count > 1 && (
                                           <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold bg-white/5 text-white/50">
                                             × {e.count}

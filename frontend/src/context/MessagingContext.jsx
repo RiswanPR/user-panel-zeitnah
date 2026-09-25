@@ -55,6 +55,7 @@ export const MessagingProvider = ({ children }) => {
         : 'https://zeitnahacademy.com';
 
       newSocket = io(`${baseURL}/messages`, {
+        path: '/api/socket.io/',
         auth: (cb) => {
           cb({ token: storage.getAccessToken() });
         },
@@ -261,6 +262,17 @@ export const MessagingProvider = ({ children }) => {
     return Array.from(map.values());
   }, [typingMap]);
 
+  const markRead = useCallback(async (convId) => {
+    if (!convId) return;
+    try {
+      await messagingService.markAsRead(convId);
+      queryClient.invalidateQueries({ queryKey: ['messages', 'unread-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    } catch {
+      // Silently handle — non-critical
+    }
+  }, [queryClient]);
+
   return (
     <MessagingContext.Provider
       value={{
@@ -268,11 +280,13 @@ export const MessagingProvider = ({ children }) => {
         connectionStatus,
         unreadCounts,
         activeConversationId,
+        currentUserId,
         joinConversation,
         leaveConversation,
         sendTyping,
         isUserOnline,
         getTypingUsers,
+        markRead,
       }}
     >
       {children}
