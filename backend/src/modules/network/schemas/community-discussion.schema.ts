@@ -8,11 +8,7 @@ export type CommunityDiscussionDocument = CommunityDiscussion &
   };
 
 export type DiscussionType =
-  | 'question'
-  | 'discussion'
-  | 'project'
-  | 'resource'
-  | 'study_help';
+  'question' | 'discussion' | 'project' | 'resource' | 'study_help';
 
 export type DiscussionStatus = 'published' | 'locked' | 'removed';
 
@@ -101,9 +97,8 @@ export class CommunityDiscussion {
   tags: string[];
 }
 
-export const CommunityDiscussionSchema = SchemaFactory.createForClass(
-  CommunityDiscussion,
-);
+export const CommunityDiscussionSchema =
+  SchemaFactory.createForClass(CommunityDiscussion);
 
 CommunityDiscussionSchema.index({
   communityId: 1,

@@ -26,7 +26,10 @@ describe('Phase 0 Security & Mobile Compatibility Hardening', () => {
     const corsValidator = (origin: string | undefined): boolean => {
       if (!origin) return true; // server-to-server or curl/mobile non-browser
       if (allowedOrigins.includes(origin)) return true;
-      if (origin.startsWith('http://localhost:') || origin.startsWith('https://localhost:')) {
+      if (
+        origin.startsWith('http://localhost:') ||
+        origin.startsWith('https://localhost:')
+      ) {
         return true;
       }
       return false;
@@ -69,7 +72,10 @@ describe('Phase 0 Security & Mobile Compatibility Hardening', () => {
     });
 
     it('should authenticate client with valid JWT and extract verified userId', async () => {
-      const validToken = jwtService.sign({ userId: 'verified-user-123', email: 'student@test.com' });
+      const validToken = jwtService.sign({
+        userId: 'verified-user-123',
+        email: 'student@test.com',
+      });
       const mockSocket: any = {
         id: 'socket-1',
         handshake: {
@@ -90,7 +96,10 @@ describe('Phase 0 Security & Mobile Compatibility Hardening', () => {
     });
 
     it('should extract token from authorization header if not in auth payload', async () => {
-      const validToken = jwtService.sign({ userId: 'header-user-456', email: 'header@test.com' });
+      const validToken = jwtService.sign({
+        userId: 'header-user-456',
+        email: 'header@test.com',
+      });
       const mockSocket: any = {
         id: 'socket-2',
         handshake: {
@@ -143,7 +152,7 @@ describe('Phase 0 Security & Mobile Compatibility Hardening', () => {
     it('should reject connection when token is expired', async () => {
       const expiredToken = jwtService.sign(
         { userId: 'user-expired' },
-        { expiresIn: '-1s' }
+        { expiresIn: '-1s' },
       );
       const mockSocket: any = {
         id: 'socket-expired',

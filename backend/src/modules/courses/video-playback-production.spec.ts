@@ -18,7 +18,13 @@ import { SignedUrlService } from '../../common/aws/signed-url.service';
 import { S3Service } from '../../common/aws/s3.service';
 import { JwtStrategy } from '../strategies/jwt.strategy';
 import { GlobalExceptionFilter } from '../../common/filters/global-exception.filter';
-import { UnauthorizedException, ForbiddenException, NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  UnauthorizedException,
+  ForbiddenException,
+  NotFoundException,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { User } from '../auth/schemas/user.schema';
 
@@ -65,9 +71,13 @@ describe('S3 Video Player Production Validation - Backend Suite', () => {
   describe('1. S3 Signed URL & Expiration Validation (Fix for 30-Minute Freezing)', () => {
     it('should generate signed video URL with default expiration of 86400 seconds (24 hours)', async () => {
       mockGetSignedUrl.mockReset();
-      mockGetSignedUrl.mockResolvedValue('https://test-lms-bucket.s3.ap-south-1.amazonaws.com/videos/class-123.mp4?X-Amz-Expires=86400&X-Amz-Signature=abc');
+      mockGetSignedUrl.mockResolvedValue(
+        'https://test-lms-bucket.s3.ap-south-1.amazonaws.com/videos/class-123.mp4?X-Amz-Expires=86400&X-Amz-Signature=abc',
+      );
 
-      const result = await signedUrlService.generateSignedVideoUrl('videos/class-123.mp4');
+      const result = await signedUrlService.generateSignedVideoUrl(
+        'videos/class-123.mp4',
+      );
 
       expect(mockGetSignedUrl).toHaveBeenCalledTimes(1);
       const passedOptions = mockGetSignedUrl.mock.calls[0][2];
@@ -77,20 +87,32 @@ describe('S3 Video Player Production Validation - Backend Suite', () => {
 
     it('should accept custom expiration parameter and resolve S3 object keys accurately', async () => {
       mockGetSignedUrl.mockReset();
-      mockGetSignedUrl.mockResolvedValue('https://test-lms-bucket.s3.ap-south-1.amazonaws.com/videos/class-123.mp4?X-Amz-Expires=43200');
+      mockGetSignedUrl.mockResolvedValue(
+        'https://test-lms-bucket.s3.ap-south-1.amazonaws.com/videos/class-123.mp4?X-Amz-Expires=43200',
+      );
 
       // Test S3 URI format
-      const resultS3Uri = await signedUrlService.generateSignedVideoUrl('s3://test-lms-bucket/videos/class-123.mp4', 43200);
+      const resultS3Uri = await signedUrlService.generateSignedVideoUrl(
+        's3://test-lms-bucket/videos/class-123.mp4',
+        43200,
+      );
       expect(resultS3Uri).toContain('X-Amz-Expires=43200');
 
       // Test Virtual-hosted S3 URL format
-      const resultHttpUrl = await signedUrlService.generateSignedVideoUrl('https://test-lms-bucket.s3.amazonaws.com/videos/class-123.mp4', 86400);
+      const resultHttpUrl = await signedUrlService.generateSignedVideoUrl(
+        'https://test-lms-bucket.s3.amazonaws.com/videos/class-123.mp4',
+        86400,
+      );
       expect(resultHttpUrl).toBeDefined();
     });
 
     it('should return empty string or non-S3 URLs safely without failing', async () => {
       expect(await signedUrlService.generateSignedVideoUrl('')).toBe('');
-      expect(await signedUrlService.generateSignedVideoUrl('https://external-cdn.com/video.mp4')).toBe('https://external-cdn.com/video.mp4');
+      expect(
+        await signedUrlService.generateSignedVideoUrl(
+          'https://external-cdn.com/video.mp4',
+        ),
+      ).toBe('https://external-cdn.com/video.mp4');
     });
   });
 
@@ -149,7 +171,11 @@ describe('S3 Video Player Production Validation - Backend Suite', () => {
       mockUserModel.findById.mockResolvedValue(blockedUser);
 
       await expect(
-        jwtStrategy.validate({ userId: 'user-blocked', role: 'student', deviceId: 'device-456' }),
+        jwtStrategy.validate({
+          userId: 'user-blocked',
+          role: 'student',
+          deviceId: 'device-456',
+        }),
       ).rejects.toThrow(UnauthorizedException);
     });
 
@@ -163,7 +189,11 @@ describe('S3 Video Player Production Validation - Backend Suite', () => {
       mockUserModel.findById.mockResolvedValue(userWithoutDevice);
 
       await expect(
-        jwtStrategy.validate({ userId: 'user-123', role: 'student', deviceId: 'device-456' }),
+        jwtStrategy.validate({
+          userId: 'user-123',
+          role: 'student',
+          deviceId: 'device-456',
+        }),
       ).rejects.toThrow(UnauthorizedException);
     });
   });
@@ -185,7 +215,10 @@ describe('S3 Video Player Production Validation - Backend Suite', () => {
         }),
       };
 
-      const testException = new HttpException('Access Denied', HttpStatus.FORBIDDEN);
+      const testException = new HttpException(
+        'Access Denied',
+        HttpStatus.FORBIDDEN,
+      );
       filter.catch(testException, mockHost);
 
       expect(mockStatus).toHaveBeenCalledWith(HttpStatus.FORBIDDEN);

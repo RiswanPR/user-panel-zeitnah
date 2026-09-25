@@ -43,7 +43,12 @@ export enum OpportunityVisibility {
 
 @Schema({ timestamps: true, collection: 'opportunities' })
 export class Opportunity {
-  @Prop({ type: Types.ObjectId, ref: 'Organization', required: true, index: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'Organization',
+    required: true,
+    index: true,
+  })
   organizationId!: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })

@@ -10,7 +10,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { ProjectsService, CreateProjectDto, UpdateProjectDto } from './projects.service';
+import {
+  ProjectsService,
+  CreateProjectDto,
+  UpdateProjectDto,
+} from './projects.service';
 
 @Controller('projects')
 export class ProjectsController {

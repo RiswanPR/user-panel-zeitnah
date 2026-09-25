@@ -6,7 +6,11 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Project, ProjectDocument, ProjectVisibility } from './schemas/project.schema';
+import {
+  Project,
+  ProjectDocument,
+  ProjectVisibility,
+} from './schemas/project.schema';
 import { SkillsService } from '../skills/skills.service';
 import { ProofSourceType } from '../skills/schemas/skill-proof.schema';
 
@@ -81,7 +85,9 @@ export class ProjectsService {
             metadata: { projectTitle: project.title },
           });
         } catch (err: any) {
-          this.logger.warn(`Could not attach skill proof for '${skillName}': ${err.message}`);
+          this.logger.warn(
+            `Could not attach skill proof for '${skillName}': ${err.message}`,
+          );
         }
       }
     }
@@ -89,7 +95,11 @@ export class ProjectsService {
     return project;
   }
 
-  async updateProject(userId: string, projectId: string, dto: UpdateProjectDto) {
+  async updateProject(
+    userId: string,
+    projectId: string,
+    dto: UpdateProjectDto,
+  ) {
     const userObjId = new Types.ObjectId(userId);
     const project = await this.projectModel.findById(projectId);
 
@@ -98,18 +108,25 @@ export class ProjectsService {
     }
 
     if (String(project.ownerId) !== String(userObjId)) {
-      throw new ForbiddenException('You are not authorized to update this project');
+      throw new ForbiddenException(
+        'You are not authorized to update this project',
+      );
     }
 
     if (dto.title !== undefined) project.title = dto.title.trim();
-    if (dto.description !== undefined) project.description = dto.description.trim();
+    if (dto.description !== undefined)
+      project.description = dto.description.trim();
     if (dto.skills !== undefined) project.skills = dto.skills;
     if (dto.role !== undefined) project.role = dto.role.trim();
-    if (dto.startDate !== undefined) project.startDate = new Date(dto.startDate);
-    if (dto.endDate !== undefined) project.endDate = dto.endDate ? new Date(dto.endDate) : null;
-    if (dto.links !== undefined) project.links = { ...project.links, ...dto.links };
+    if (dto.startDate !== undefined)
+      project.startDate = new Date(dto.startDate);
+    if (dto.endDate !== undefined)
+      project.endDate = dto.endDate ? new Date(dto.endDate) : null;
+    if (dto.links !== undefined)
+      project.links = { ...project.links, ...dto.links };
     if (dto.media !== undefined) project.media = dto.media;
-    if (dto.organizationId !== undefined) project.organizationId = dto.organizationId;
+    if (dto.organizationId !== undefined)
+      project.organizationId = dto.organizationId;
     if (dto.featured !== undefined) project.featured = Boolean(dto.featured);
     if (dto.visibility !== undefined) project.visibility = dto.visibility;
 
@@ -125,7 +142,9 @@ export class ProjectsService {
             metadata: { projectTitle: project.title },
           });
         } catch (err: any) {
-          this.logger.warn(`Could not attach skill proof for '${skillName}': ${err.message}`);
+          this.logger.warn(
+            `Could not attach skill proof for '${skillName}': ${err.message}`,
+          );
         }
       }
     }
@@ -142,7 +161,9 @@ export class ProjectsService {
     }
 
     if (String(project.ownerId) !== String(userObjId)) {
-      throw new ForbiddenException('You are not authorized to delete this project');
+      throw new ForbiddenException(
+        'You are not authorized to delete this project',
+      );
     }
 
     await this.projectModel.deleteOne({ _id: project._id });

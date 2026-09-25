@@ -2,8 +2,17 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { SkillsService } from './skills.service';
 import { Skill, SkillStatus } from './schemas/skill.schema';
-import { UserSkill, SkillProficiency, SkillSource, SkillVisibility } from './schemas/user-skill.schema';
-import { SkillProof, ProofSourceType, ProofStatus } from './schemas/skill-proof.schema';
+import {
+  UserSkill,
+  SkillProficiency,
+  SkillSource,
+  SkillVisibility,
+} from './schemas/user-skill.schema';
+import {
+  SkillProof,
+  ProofSourceType,
+  ProofStatus,
+} from './schemas/skill-proof.schema';
 import { Types } from 'mongoose';
 
 describe('SkillsService', () => {
@@ -19,7 +28,12 @@ describe('SkillsService', () => {
         sort: jest.fn().mockReturnValue({
           limit: jest.fn().mockReturnValue({
             lean: jest.fn().mockResolvedValue([
-              { _id: new Types.ObjectId(), name: 'React', slug: 'react', category: 'Engineering' },
+              {
+                _id: new Types.ObjectId(),
+                name: 'React',
+                slug: 'react',
+                category: 'Engineering',
+              },
             ]),
           }),
         }),
@@ -29,7 +43,11 @@ describe('SkillsService', () => {
         name: 'React',
         slug: 'react',
       }),
-      create: jest.fn().mockImplementation((dto) => Promise.resolve({ _id: new Types.ObjectId(), ...dto })),
+      create: jest
+        .fn()
+        .mockImplementation((dto) =>
+          Promise.resolve({ _id: new Types.ObjectId(), ...dto }),
+        ),
     };
 
     mockUserSkillModel = {
@@ -38,7 +56,12 @@ describe('SkillsService', () => {
           lean: jest.fn().mockResolvedValue([
             {
               _id: new Types.ObjectId(),
-              skillId: { _id: new Types.ObjectId(), name: 'React', slug: 'react', category: 'Engineering' },
+              skillId: {
+                _id: new Types.ObjectId(),
+                name: 'React',
+                slug: 'react',
+                category: 'Engineering',
+              },
               proficiency: SkillProficiency.ADVANCED,
               source: SkillSource.CLAIMED,
               visibility: SkillVisibility.PUBLIC,
@@ -47,7 +70,11 @@ describe('SkillsService', () => {
         }),
       }),
       findOne: jest.fn().mockResolvedValue(null),
-      create: jest.fn().mockImplementation((dto) => Promise.resolve({ _id: new Types.ObjectId(), ...dto })),
+      create: jest
+        .fn()
+        .mockImplementation((dto) =>
+          Promise.resolve({ _id: new Types.ObjectId(), ...dto }),
+        ),
       deleteOne: jest.fn().mockResolvedValue({ deletedCount: 1 }),
     };
 
@@ -56,15 +83,25 @@ describe('SkillsService', () => {
         lean: jest.fn().mockResolvedValue([]),
       }),
       findOne: jest.fn().mockResolvedValue(null),
-      create: jest.fn().mockImplementation((dto) => Promise.resolve({ _id: new Types.ObjectId(), ...dto })),
+      create: jest
+        .fn()
+        .mockImplementation((dto) =>
+          Promise.resolve({ _id: new Types.ObjectId(), ...dto }),
+        ),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SkillsService,
         { provide: getModelToken(Skill.name), useValue: mockSkillModel },
-        { provide: getModelToken(UserSkill.name), useValue: mockUserSkillModel },
-        { provide: getModelToken(SkillProof.name), useValue: mockSkillProofModel },
+        {
+          provide: getModelToken(UserSkill.name),
+          useValue: mockUserSkillModel,
+        },
+        {
+          provide: getModelToken(SkillProof.name),
+          useValue: mockSkillProofModel,
+        },
       ],
     }).compile();
 

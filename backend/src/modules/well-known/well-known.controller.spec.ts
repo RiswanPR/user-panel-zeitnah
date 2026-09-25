@@ -21,7 +21,9 @@ describe('WellKnownController', () => {
       const result = controller.getAssetLinks();
       expect(Array.isArray(result)).toBe(true);
       expect(result[0].target.package_name).toBe('com.zeitnahacademy.app');
-      expect(result[0].relation).toContain('delegate_permission/common.handle_all_urls');
+      expect(result[0].relation).toContain(
+        'delegate_permission/common.handle_all_urls',
+      );
       expect(result[0].target.sha256_cert_fingerprints).toBeDefined();
     });
   });
@@ -30,7 +32,9 @@ describe('WellKnownController', () => {
     it('should return valid Apple App Site Association object', () => {
       const result = controller.getAppleAppSiteAssociation();
       expect(result.applinks).toBeDefined();
-      expect(result.applinks.details[0].appIDs[0]).toContain('com.zeitnahacademy.app');
+      expect(result.applinks.details[0].appIDs[0]).toContain(
+        'com.zeitnahacademy.app',
+      );
       expect(result.applinks.details[0].components).toHaveLength(4);
     });
   });

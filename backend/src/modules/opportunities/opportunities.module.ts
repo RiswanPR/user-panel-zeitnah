@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Opportunity, OpportunitySchema } from './schemas/opportunity.schema';
-import { Organization, OrganizationSchema } from '../organizations/schemas/organization.schema';
+import {
+  Organization,
+  OrganizationSchema,
+} from '../organizations/schemas/organization.schema';
 import {
   OrganizationMembership,
   OrganizationMembershipSchema,
@@ -14,7 +17,10 @@ import { OpportunitiesController } from './opportunities.controller';
     MongooseModule.forFeature([
       { name: Opportunity.name, schema: OpportunitySchema },
       { name: Organization.name, schema: OrganizationSchema },
-      { name: OrganizationMembership.name, schema: OrganizationMembershipSchema },
+      {
+        name: OrganizationMembership.name,
+        schema: OrganizationMembershipSchema,
+      },
     ]),
   ],
   providers: [OpportunitiesService],

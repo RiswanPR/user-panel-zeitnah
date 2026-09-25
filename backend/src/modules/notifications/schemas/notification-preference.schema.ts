@@ -32,28 +32,52 @@ export class NotificationPreference {
   })
   userId!: Types.ObjectId;
 
-  @Prop({ type: ChannelPreferences, default: () => ({ inApp: true, email: true, push: true }) })
+  @Prop({
+    type: ChannelPreferences,
+    default: () => ({ inApp: true, email: true, push: true }),
+  })
   social!: ChannelPreferences;
 
-  @Prop({ type: ChannelPreferences, default: () => ({ inApp: true, email: true, push: true }) })
+  @Prop({
+    type: ChannelPreferences,
+    default: () => ({ inApp: true, email: true, push: true }),
+  })
   learning!: ChannelPreferences;
 
-  @Prop({ type: ChannelPreferences, default: () => ({ inApp: true, email: true, push: true }) })
+  @Prop({
+    type: ChannelPreferences,
+    default: () => ({ inApp: true, email: true, push: true }),
+  })
   course!: ChannelPreferences;
 
-  @Prop({ type: ChannelPreferences, default: () => ({ inApp: true, email: false, push: true }) })
+  @Prop({
+    type: ChannelPreferences,
+    default: () => ({ inApp: true, email: false, push: true }),
+  })
   achievement!: ChannelPreferences;
 
-  @Prop({ type: ChannelPreferences, default: () => ({ inApp: true, email: false, push: false }) })
+  @Prop({
+    type: ChannelPreferences,
+    default: () => ({ inApp: true, email: false, push: false }),
+  })
   community!: ChannelPreferences;
 
-  @Prop({ type: ChannelPreferences, default: () => ({ inApp: true, email: true, push: true }) })
+  @Prop({
+    type: ChannelPreferences,
+    default: () => ({ inApp: true, email: true, push: true }),
+  })
   organization!: ChannelPreferences;
 
-  @Prop({ type: ChannelPreferences, default: () => ({ inApp: true, email: true, push: true }) })
+  @Prop({
+    type: ChannelPreferences,
+    default: () => ({ inApp: true, email: true, push: true }),
+  })
   opportunity!: ChannelPreferences;
 
-  @Prop({ type: ChannelPreferences, default: () => ({ inApp: true, email: true, push: true }) })
+  @Prop({
+    type: ChannelPreferences,
+    default: () => ({ inApp: true, email: true, push: true }),
+  })
   announcement!: ChannelPreferences;
 
   // Security preferences are strictly locked to inApp=true, email=true for account safety
@@ -68,5 +92,6 @@ export class NotificationPreference {
   };
 }
 
-export const NotificationPreferenceSchema =
-  SchemaFactory.createForClass(NotificationPreference);
+export const NotificationPreferenceSchema = SchemaFactory.createForClass(
+  NotificationPreference,
+);

@@ -59,6 +59,7 @@ export class Recommendation {
   updatedAt?: Date;
 }
 
-export const RecommendationSchema = SchemaFactory.createForClass(Recommendation);
+export const RecommendationSchema =
+  SchemaFactory.createForClass(Recommendation);
 RecommendationSchema.index({ recipientId: 1, status: 1, createdAt: -1 });
 RecommendationSchema.index({ authorId: 1, recipientId: 1 });

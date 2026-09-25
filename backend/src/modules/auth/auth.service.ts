@@ -478,7 +478,10 @@ export class AuthService {
       user.otp = hashedOtp;
       user.otpExpiry = otpExpiry;
       user.name = data.name;
-      if (!user.username || !this.usernameService.validate(user.username).valid) {
+      if (
+        !user.username ||
+        !this.usernameService.validate(user.username).valid
+      ) {
         user.username = await this.usernameService.generateUniqueUsername({
           source: user.username,
           name: data.name,
@@ -491,7 +494,10 @@ export class AuthService {
             return Boolean(exists);
           },
         });
-        if (user.usernameClaimed === undefined || user.usernameClaimed === null) {
+        if (
+          user.usernameClaimed === undefined ||
+          user.usernameClaimed === null
+        ) {
           user.usernameClaimed = false;
         }
       }
@@ -801,7 +807,10 @@ export class AuthService {
           },
         });
         user.username = safeUsername;
-        if (user.usernameClaimed === undefined || user.usernameClaimed === null) {
+        if (
+          user.usernameClaimed === undefined ||
+          user.usernameClaimed === null
+        ) {
           user.usernameClaimed = false;
         }
       } catch (err: any) {
@@ -1159,7 +1168,9 @@ export class AuthService {
         secret: this.refreshTokenSecret,
       });
     } catch {
-      this.logAuthEvent('REFRESH_TOKEN_INVALID', { reason: 'JWT verification failed' });
+      this.logAuthEvent('REFRESH_TOKEN_INVALID', {
+        reason: 'JWT verification failed',
+      });
       throw new UnauthorizedException('Invalid refresh token');
     }
 

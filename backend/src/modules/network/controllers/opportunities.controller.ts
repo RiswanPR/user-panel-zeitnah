@@ -1,14 +1,11 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { OpportunitiesService } from '../services/opportunities.service';
-import { QueryOpportunitiesDto, QueryOrganizationsDto } from '../dto/opportunity.dto';
+import {
+  QueryOpportunitiesDto,
+  QueryOrganizationsDto,
+} from '../dto/opportunity.dto';
 
 @ApiTags('Opportunities & Organizations')
 @ApiBearerAuth()

@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import * as crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -86,7 +86,8 @@ export class ProfileService {
         const remainingMs = USERNAME_CHANGE_COOLDOWN_MS - elapsed;
         remainingDays = Math.ceil(remainingMs / (24 * 60 * 60 * 1000));
         nextAllowedDate = new Date(
-          new Date(user.usernameChangedAt).getTime() + USERNAME_CHANGE_COOLDOWN_MS,
+          new Date(user.usernameChangedAt).getTime() +
+            USERNAME_CHANGE_COOLDOWN_MS,
         );
       }
     }
@@ -118,7 +119,9 @@ export class ProfileService {
     }
 
     if (currentUserId) {
-      const currentUser = await this.userModel.findById(currentUserId).select('username');
+      const currentUser = await this.userModel
+        .findById(currentUserId)
+        .select('username');
       if (currentUser?.username === sanitized) {
         return {
           username: sanitized,
@@ -128,10 +131,12 @@ export class ProfileService {
       }
     }
 
-    const existingUser = await this.userModel.findOne({
-      username: sanitized,
-      ...(currentUserId ? { _id: { $ne: currentUserId } } : {}),
-    }).select('_id');
+    const existingUser = await this.userModel
+      .findOne({
+        username: sanitized,
+        ...(currentUserId ? { _id: { $ne: currentUserId } } : {}),
+      })
+      .select('_id');
 
     if (existingUser) {
       return {
@@ -150,7 +155,11 @@ export class ProfileService {
   /**
    * Performs the initial first-time username claim decision.
    */
-  async claimUsername(userId: string, requestedUsername: string, ipAddress = '') {
+  async claimUsername(
+    userId: string,
+    requestedUsername: string,
+    ipAddress = '',
+  ) {
     const user = await this.userModel.findById(userId);
     if (!user) {
       throw new UnauthorizedException('User not found');
@@ -172,7 +181,9 @@ export class ProfileService {
     });
 
     if (existing) {
-      throw new ConflictException('Username is already taken. Please choose another.');
+      throw new ConflictException(
+        'Username is already taken. Please choose another.',
+      );
     }
 
     const previousUsername = user.username || '';
@@ -194,7 +205,9 @@ export class ProfileService {
       );
     } catch (err: any) {
       if (err.code === 11000 || err.message?.includes('duplicate key')) {
-        throw new ConflictException('Username is no longer available. Please choose another.');
+        throw new ConflictException(
+          'Username is no longer available. Please choose another.',
+        );
       }
       throw err;
     }
@@ -203,11 +216,13 @@ export class ProfileService {
       return this.changeUsername(userId, requestedUsername, ipAddress);
     }
 
-    await this.communityProfileModel.updateOne(
-      { userId: String(user._id) },
-      { $set: { username: sanitized } },
-      { upsert: false },
-    ).catch(() => {});
+    await this.communityProfileModel
+      .updateOne(
+        { userId: String(user._id) },
+        { $set: { username: sanitized } },
+        { upsert: false },
+      )
+      .catch(() => {});
 
     await this.auditLogsService.record({
       actor: user._id,
@@ -225,10 +240,15 @@ export class ProfileService {
 
     const userObj = updatedUser.toObject();
     if (userObj.avatar) {
-      userObj.avatar = await this.signedUrlService.generateSignedImageUrl(userObj.avatar);
+      userObj.avatar = await this.signedUrlService.generateSignedImageUrl(
+        userObj.avatar,
+      );
     }
     if (userObj.backgroundImage) {
-      userObj.backgroundImage = await this.signedUrlService.generateSignedImageUrl(userObj.backgroundImage);
+      userObj.backgroundImage =
+        await this.signedUrlService.generateSignedImageUrl(
+          userObj.backgroundImage,
+        );
     }
 
     return {
@@ -241,7 +261,11 @@ export class ProfileService {
   /**
    * Modifies an existing user's username subject to 14-day cooldown, validation, and uniqueness.
    */
-  async changeUsername(userId: string, requestedUsername: string, ipAddress = '') {
+  async changeUsername(
+    userId: string,
+    requestedUsername: string,
+    ipAddress = '',
+  ) {
     const user = await this.userModel.findById(userId);
     if (!user) {
       throw new UnauthorizedException('User not found');
@@ -255,13 +279,21 @@ export class ProfileService {
 
     const previousUsername = user.username || '';
 
-    if (previousUsername && previousUsername.toLowerCase() === sanitized.toLowerCase()) {
+    if (
+      previousUsername &&
+      previousUsername.toLowerCase() === sanitized.toLowerCase()
+    ) {
       const userObj = user.toObject();
       if (userObj.avatar) {
-        userObj.avatar = await this.signedUrlService.generateSignedImageUrl(userObj.avatar);
+        userObj.avatar = await this.signedUrlService.generateSignedImageUrl(
+          userObj.avatar,
+        );
       }
       if (userObj.backgroundImage) {
-        userObj.backgroundImage = await this.signedUrlService.generateSignedImageUrl(userObj.backgroundImage);
+        userObj.backgroundImage =
+          await this.signedUrlService.generateSignedImageUrl(
+            userObj.backgroundImage,
+          );
       }
       return {
         success: true,
@@ -276,7 +308,8 @@ export class ProfileService {
         const remainingMs = USERNAME_CHANGE_COOLDOWN_MS - elapsed;
         const remainingDays = Math.ceil(remainingMs / (24 * 60 * 60 * 1000));
         const nextAllowedDate = new Date(
-          new Date(user.usernameChangedAt).getTime() + USERNAME_CHANGE_COOLDOWN_MS,
+          new Date(user.usernameChangedAt).getTime() +
+            USERNAME_CHANGE_COOLDOWN_MS,
         );
         throw new BadRequestException(
           `You can change your username again in ${remainingDays} day${remainingDays === 1 ? '' : 's'} (after ${nextAllowedDate.toISOString().split('T')[0]}).`,
@@ -290,7 +323,9 @@ export class ProfileService {
     });
 
     if (existing) {
-      throw new ConflictException('Username is already taken. Please choose another.');
+      throw new ConflictException(
+        'Username is already taken. Please choose another.',
+      );
     }
 
     const now = new Date();
@@ -317,7 +352,9 @@ export class ProfileService {
       );
     } catch (err: any) {
       if (err.code === 11000 || err.message?.includes('duplicate key')) {
-        throw new ConflictException('Username is no longer available. Please choose another.');
+        throw new ConflictException(
+          'Username is no longer available. Please choose another.',
+        );
       }
       throw err;
     }
@@ -326,11 +363,13 @@ export class ProfileService {
       throw new UnauthorizedException('User not found');
     }
 
-    await this.communityProfileModel.updateOne(
-      { userId: String(user._id) },
-      { $set: { username: sanitized } },
-      { upsert: false },
-    ).catch(() => {});
+    await this.communityProfileModel
+      .updateOne(
+        { userId: String(user._id) },
+        { $set: { username: sanitized } },
+        { upsert: false },
+      )
+      .catch(() => {});
 
     await this.auditLogsService.record({
       actor: user._id,
@@ -349,10 +388,15 @@ export class ProfileService {
 
     const userObj = updatedUser.toObject();
     if (userObj.avatar) {
-      userObj.avatar = await this.signedUrlService.generateSignedImageUrl(userObj.avatar);
+      userObj.avatar = await this.signedUrlService.generateSignedImageUrl(
+        userObj.avatar,
+      );
     }
     if (userObj.backgroundImage) {
-      userObj.backgroundImage = await this.signedUrlService.generateSignedImageUrl(userObj.backgroundImage);
+      userObj.backgroundImage =
+        await this.signedUrlService.generateSignedImageUrl(
+          userObj.backgroundImage,
+        );
     }
 
     return {
@@ -366,21 +410,56 @@ export class ProfileService {
    * Retrieves public student profile by username without exposing sensitive account fields.
    */
   async getPublicProfile(rawUsername: string) {
-    const sanitized = this.usernameService.sanitize(rawUsername);
-    const user = await this.userModel
-      .findOne({ username: sanitized })
-      .select('name username avatar backgroundImage headline currentRole location industry bio skills experience education certifications role isVerified createdAt gamification publicProfilePublished primaryRole capabilities availability professionalInterests discoverableToRecruiters profileVisibility mentorship recruiterContext educatorContext verification account_Status');
+    const clean = String(rawUsername || '').trim().replace(/^@/, '');
+    if (!clean) {
+      throw new NotFoundException('Student profile not found.');
+    }
+
+    const projection =
+      'name username avatar backgroundImage headline currentRole location industry bio skills experience education certifications role isVerified createdAt gamification publicProfilePublished primaryRole capabilities availability professionalInterests discoverableToRecruiters profileVisibility mentorship recruiterContext educatorContext verification account_Status';
+
+    let user: any = null;
+
+    // 1. If valid 24-character hexadecimal MongoDB ObjectId, try lookup by _id first
+    if (Types.ObjectId.isValid(clean)) {
+      user = await this.userModel
+        .findOne({
+          _id: new Types.ObjectId(clean),
+          'account_Status.isDeleted': { $ne: true },
+          'account_Status.isBlocked': { $ne: true },
+        })
+        .select(projection);
+    }
+
+    // 2. If not found by ObjectId, lookup by username
+    if (!user) {
+      const sanitized = this.usernameService.sanitize(clean);
+      if (sanitized) {
+        user = await this.userModel
+          .findOne({
+            username: sanitized,
+            'account_Status.isDeleted': { $ne: true },
+            'account_Status.isBlocked': { $ne: true },
+          })
+          .select(projection);
+      }
+    }
 
     if (!user) {
-      throw new NotFoundException(`Student profile @${sanitized} not found.`);
+      throw new NotFoundException(`Student profile not found or is no longer available.`);
     }
 
     const userObj = user.toObject() as any;
     if (userObj.avatar) {
-      userObj.avatar = await this.signedUrlService.generateSignedImageUrl(userObj.avatar);
+      userObj.avatar = await this.signedUrlService.generateSignedImageUrl(
+        userObj.avatar,
+      );
     }
     if (userObj.backgroundImage) {
-      userObj.backgroundImage = await this.signedUrlService.generateSignedImageUrl(userObj.backgroundImage);
+      userObj.backgroundImage =
+        await this.signedUrlService.generateSignedImageUrl(
+          userObj.backgroundImage,
+        );
     }
 
     // Fetch approved recommendations
@@ -393,7 +472,8 @@ export class ProfileService {
       recommendations.map(async (rec) => {
         let authorAvatar = rec.authorAvatar || '';
         if (authorAvatar) {
-          authorAvatar = await this.signedUrlService.generateSignedImageUrl(authorAvatar);
+          authorAvatar =
+            await this.signedUrlService.generateSignedImageUrl(authorAvatar);
         }
         return {
           id: rec._id,
@@ -429,15 +509,26 @@ export class ProfileService {
         recommendations: signedRecommendations,
         publicProfilePublished: Boolean(userObj.publicProfilePublished),
         role: userObj.role,
-        isVerified: Boolean(userObj.account_Status?.isVerified || userObj.verification?.status === 'VERIFIED'),
+        isVerified: Boolean(
+          userObj.account_Status?.isVerified ||
+          userObj.verification?.status === 'VERIFIED',
+        ),
         primaryRole: userObj.primaryRole || 'STUDENT',
         capabilities: userObj.capabilities || ['STUDENT'],
         availability: userObj.availability || 'NOT_CURRENTLY_AVAILABLE',
         professionalInterests: userObj.professionalInterests || [],
         discoverableToRecruiters: Boolean(userObj.discoverableToRecruiters),
         profileVisibility: userObj.profileVisibility || 'PUBLIC',
-        mentorship: userObj.mentorship || { topics: [], expertise: [], bio: '', available: false },
-        verification: userObj.verification || { status: 'UNVERIFIED', type: 'IDENTITY' },
+        mentorship: userObj.mentorship || {
+          topics: [],
+          expertise: [],
+          bio: '',
+          available: false,
+        },
+        verification: userObj.verification || {
+          status: 'UNVERIFIED',
+          type: 'IDENTITY',
+        },
         createdAt: userObj.createdAt,
         gamification: {
           level: userObj.gamification?.level || 1,
@@ -494,9 +585,10 @@ export class ProfileService {
       );
     }
     if (userObj.backgroundImage) {
-      userObj.backgroundImage = await this.signedUrlService.generateSignedImageUrl(
-        userObj.backgroundImage,
-      );
+      userObj.backgroundImage =
+        await this.signedUrlService.generateSignedImageUrl(
+          userObj.backgroundImage,
+        );
     }
 
     const recommendationsCount = await this.recommendationModel.countDocuments({
@@ -530,28 +622,42 @@ export class ProfileService {
     if (data.primaryRole !== undefined) user.primaryRole = data.primaryRole;
     if (data.capabilities !== undefined) user.capabilities = data.capabilities;
     if (data.availability !== undefined) user.availability = data.availability;
-    if (data.professionalInterests !== undefined) user.professionalInterests = data.professionalInterests;
-    if (data.discoverableToRecruiters !== undefined) user.discoverableToRecruiters = data.discoverableToRecruiters;
-    if (data.profileVisibility !== undefined) user.profileVisibility = data.profileVisibility;
-    if (data.mentorship !== undefined) user.mentorship = { ...user.mentorship, ...data.mentorship };
-    if (data.recruiterContext !== undefined) user.recruiterContext = { ...user.recruiterContext, ...data.recruiterContext };
-    if (data.educatorContext !== undefined) user.educatorContext = { ...user.educatorContext, ...data.educatorContext };
+    if (data.professionalInterests !== undefined)
+      user.professionalInterests = data.professionalInterests;
+    if (data.discoverableToRecruiters !== undefined)
+      user.discoverableToRecruiters = data.discoverableToRecruiters;
+    if (data.profileVisibility !== undefined)
+      user.profileVisibility = data.profileVisibility;
+    if (data.mentorship !== undefined)
+      user.mentorship = { ...user.mentorship, ...data.mentorship };
+    if (data.recruiterContext !== undefined)
+      user.recruiterContext = {
+        ...user.recruiterContext,
+        ...data.recruiterContext,
+      };
+    if (data.educatorContext !== undefined)
+      user.educatorContext = {
+        ...user.educatorContext,
+        ...data.educatorContext,
+      };
 
     const { newlyAwarded, completion } = evaluateProfileMilestones(user);
     syncGamificationStats(user);
     user.markModified('gamification');
     await user.save();
 
-    await this.communityProfileModel.updateOne(
-      { userId: String(user._id) },
-      {
-        $set: {
-          headline: user.headline || '',
-          bio: user.bio || '',
-          skills: user.skills || [],
+    await this.communityProfileModel
+      .updateOne(
+        { userId: String(user._id) },
+        {
+          $set: {
+            headline: user.headline || '',
+            bio: user.bio || '',
+            skills: user.skills || [],
+          },
         },
-      },
-    ).catch(() => {});
+      )
+      .catch(() => {});
 
     const userObj = user.toObject() as any;
     if (userObj.avatar) {
@@ -560,9 +666,10 @@ export class ProfileService {
       );
     }
     if (userObj.backgroundImage) {
-      userObj.backgroundImage = await this.signedUrlService.generateSignedImageUrl(
-        userObj.backgroundImage,
-      );
+      userObj.backgroundImage =
+        await this.signedUrlService.generateSignedImageUrl(
+          userObj.backgroundImage,
+        );
     }
 
     return {
@@ -590,16 +697,24 @@ export class ProfileService {
     user.markModified('gamification');
     await user.save();
 
-    if (oldAvatarKey && oldAvatarKey !== key && oldAvatarKey.startsWith('profiles/')) {
-      await Promise.resolve(this.uploadService.deleteFile(oldAvatarKey)).catch(() => {});
+    if (
+      oldAvatarKey &&
+      oldAvatarKey !== key &&
+      oldAvatarKey.startsWith('profiles/')
+    ) {
+      await Promise.resolve(this.uploadService.deleteFile(oldAvatarKey)).catch(
+        () => {},
+      );
     }
 
     const signedUrl = await this.signedUrlService.generateSignedImageUrl(key);
 
-    await this.communityProfileModel.updateOne(
-      { userId: String(user._id) },
-      { $set: { profilePicture: signedUrl } },
-    ).catch(() => {});
+    await this.communityProfileModel
+      .updateOne(
+        { userId: String(user._id) },
+        { $set: { profilePicture: signedUrl } },
+      )
+      .catch(() => {});
 
     return {
       message: 'Avatar uploaded successfully',
@@ -626,8 +741,14 @@ export class ProfileService {
     user.markModified('gamification');
     await user.save();
 
-    if (oldBannerKey && oldBannerKey !== key && oldBannerKey.startsWith('profiles/banners/')) {
-      await Promise.resolve(this.uploadService.deleteFile(oldBannerKey)).catch(() => {});
+    if (
+      oldBannerKey &&
+      oldBannerKey !== key &&
+      oldBannerKey.startsWith('profiles/banners/')
+    ) {
+      await Promise.resolve(this.uploadService.deleteFile(oldBannerKey)).catch(
+        () => {},
+      );
     }
 
     const signedUrl = await this.signedUrlService.generateSignedImageUrl(key);
@@ -653,7 +774,9 @@ export class ProfileService {
     await user.save();
 
     if (oldBannerKey && oldBannerKey.startsWith('profiles/banners/')) {
-      await Promise.resolve(this.uploadService.deleteFile(oldBannerKey)).catch(() => {});
+      await Promise.resolve(this.uploadService.deleteFile(oldBannerKey)).catch(
+        () => {},
+      );
     }
 
     return {
@@ -708,7 +831,11 @@ export class ProfileService {
     };
   }
 
-  async updateExperience(userId: string, experienceId: string, dto: ExperienceDto) {
+  async updateExperience(
+    userId: string,
+    experienceId: string,
+    dto: ExperienceDto,
+  ) {
     const user = await this.userModel.findById(userId);
     if (!user) throw new UnauthorizedException('User not found');
 
@@ -751,7 +878,9 @@ export class ProfileService {
     const user = await this.userModel.findById(userId);
     if (!user) throw new UnauthorizedException('User not found');
 
-    user.experience = (user.experience || []).filter((e) => e.id !== experienceId);
+    user.experience = (user.experience || []).filter(
+      (e) => e.id !== experienceId,
+    );
     const { newlyAwarded, completion } = evaluateProfileMilestones(user);
     syncGamificationStats(user);
     user.markModified('experience');
@@ -809,7 +938,11 @@ export class ProfileService {
     };
   }
 
-  async updateEducation(userId: string, educationId: string, dto: EducationDto) {
+  async updateEducation(
+    userId: string,
+    educationId: string,
+    dto: EducationDto,
+  ) {
     const user = await this.userModel.findById(userId);
     if (!user) throw new UnauthorizedException('User not found');
 
@@ -876,7 +1009,9 @@ export class ProfileService {
     const issue = new Date(dto.issueDate);
     const exp = dto.expirationDate ? new Date(dto.expirationDate) : null;
     if (exp && exp < issue) {
-      throw new BadRequestException('Expiration date cannot be before issue date.');
+      throw new BadRequestException(
+        'Expiration date cannot be before issue date.',
+      );
     }
 
     const entry = {
@@ -908,17 +1043,24 @@ export class ProfileService {
     };
   }
 
-  async updateCertification(userId: string, certId: string, dto: CertificationDto) {
+  async updateCertification(
+    userId: string,
+    certId: string,
+    dto: CertificationDto,
+  ) {
     const user = await this.userModel.findById(userId);
     if (!user) throw new UnauthorizedException('User not found');
 
     const idx = (user.certifications || []).findIndex((c) => c.id === certId);
-    if (idx === -1) throw new NotFoundException('Certification record not found');
+    if (idx === -1)
+      throw new NotFoundException('Certification record not found');
 
     const issue = new Date(dto.issueDate);
     const exp = dto.expirationDate ? new Date(dto.expirationDate) : null;
     if (exp && exp < issue) {
-      throw new BadRequestException('Expiration date cannot be before issue date.');
+      throw new BadRequestException(
+        'Expiration date cannot be before issue date.',
+      );
     }
 
     user.certifications[idx] = {
@@ -949,7 +1091,9 @@ export class ProfileService {
     const user = await this.userModel.findById(userId);
     if (!user) throw new UnauthorizedException('User not found');
 
-    user.certifications = (user.certifications || []).filter((c) => c.id !== certId);
+    user.certifications = (user.certifications || []).filter(
+      (c) => c.id !== certId,
+    );
     const { newlyAwarded, completion } = evaluateProfileMilestones(user);
     syncGamificationStats(user);
     user.markModified('certifications');
@@ -987,7 +1131,9 @@ export class ProfileService {
     await user.save();
 
     return {
-      message: published ? 'Public profile published successfully.' : 'Public profile is now private.',
+      message: published
+        ? 'Public profile published successfully.'
+        : 'Public profile is now private.',
       published: user.publicProfilePublished,
       newlyAwarded,
       completion,
@@ -1008,7 +1154,8 @@ export class ProfileService {
       recommendations.map(async (rec) => {
         let authorAvatar = rec.authorAvatar || '';
         if (authorAvatar) {
-          authorAvatar = await this.signedUrlService.generateSignedImageUrl(authorAvatar);
+          authorAvatar =
+            await this.signedUrlService.generateSignedImageUrl(authorAvatar);
         }
         return {
           id: rec._id,
@@ -1032,7 +1179,9 @@ export class ProfileService {
 
   async submitRecommendation(authorId: string, dto: SubmitRecommendationDto) {
     if (authorId === dto.recipientId) {
-      throw new BadRequestException('You cannot write a recommendation for yourself.');
+      throw new BadRequestException(
+        'You cannot write a recommendation for yourself.',
+      );
     }
 
     const recipient = await this.userModel.findById(dto.recipientId);
@@ -1045,9 +1194,13 @@ export class ProfileService {
       throw new UnauthorizedException('Author not found.');
     }
 
-    const sanitizedContent = (dto.content || '').trim().replace(/<[^>]*>?/gm, '');
+    const sanitizedContent = (dto.content || '')
+      .trim()
+      .replace(/<[^>]*>?/gm, '');
     if (sanitizedContent.length < 20 || sanitizedContent.length > 1000) {
-      throw new BadRequestException('Recommendation must be between 20 and 1000 characters.');
+      throw new BadRequestException(
+        'Recommendation must be between 20 and 1000 characters.',
+      );
     }
 
     const existing = await this.recommendationModel.findOne({
@@ -1090,12 +1243,18 @@ export class ProfileService {
     };
   }
 
-  async updateRecommendationStatus(userId: string, recommendationId: string, status: string) {
+  async updateRecommendationStatus(
+    userId: string,
+    recommendationId: string,
+    status: string,
+  ) {
     const rec = await this.recommendationModel.findById(recommendationId);
     if (!rec) throw new NotFoundException('Recommendation not found');
 
     if (rec.recipientId !== userId) {
-      throw new UnauthorizedException('You can only manage recommendations sent to you.');
+      throw new UnauthorizedException(
+        'You can only manage recommendations sent to you.',
+      );
     }
 
     rec.status = status;
@@ -1112,7 +1271,9 @@ export class ProfileService {
     if (!rec) throw new NotFoundException('Recommendation not found');
 
     if (rec.recipientId !== userId && rec.authorId !== userId) {
-      throw new UnauthorizedException('Not authorized to delete this recommendation.');
+      throw new UnauthorizedException(
+        'Not authorized to delete this recommendation.',
+      );
     }
 
     await this.recommendationModel.findByIdAndDelete(recommendationId);

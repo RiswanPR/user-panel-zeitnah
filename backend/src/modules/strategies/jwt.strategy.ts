@@ -49,13 +49,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const user = await this.userModel.findById(payload.userId);
 
     if (!user) {
-      this.logAuthEvent('USER_NOT_FOUND', { userId: payload.userId, deviceId: payload.deviceId });
+      this.logAuthEvent('USER_NOT_FOUND', {
+        userId: payload.userId,
+        deviceId: payload.deviceId,
+      });
       throw new UnauthorizedException('User not found');
     }
 
     // BLOCKED ACCOUNT
     if (user.account_Status?.isBlocked || user.account_Status?.isDeleted) {
-      this.logAuthEvent('ACCOUNT_RESTRICTED', { userId: payload.userId, deviceId: payload.deviceId });
+      this.logAuthEvent('ACCOUNT_RESTRICTED', {
+        userId: payload.userId,
+        deviceId: payload.deviceId,
+      });
       throw new UnauthorizedException('Account restricted');
     }
 
@@ -66,7 +72,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     // DEVICE REMOVED
     if (!deviceExists) {
-      this.logAuthEvent('DEVICE_SESSION_EXPIRED', { userId: payload.userId, deviceId: payload.deviceId, reason: 'Device not found in user devices' });
+      this.logAuthEvent('DEVICE_SESSION_EXPIRED', {
+        userId: payload.userId,
+        deviceId: payload.deviceId,
+        reason: 'Device not found in user devices',
+      });
       throw new UnauthorizedException('Device session expired');
     }
 
@@ -87,7 +97,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         },
       );
 
-      this.logAuthEvent('SESSION_EXPIRED', { userId: payload.userId, deviceId: payload.deviceId, reason: 'Refresh token expiry exceeded' });
+      this.logAuthEvent('SESSION_EXPIRED', {
+        userId: payload.userId,
+        deviceId: payload.deviceId,
+        reason: 'Refresh token expiry exceeded',
+      });
       throw new UnauthorizedException('Session expired');
     }
 
@@ -127,7 +141,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     };
   }
 
-  private logAuthEvent(stage: string, details: Record<string, unknown> = {}): void {
+  private logAuthEvent(
+    stage: string,
+    details: Record<string, unknown> = {},
+  ): void {
     const entry = {
       event: 'AUTH_GUARD',
       stage,

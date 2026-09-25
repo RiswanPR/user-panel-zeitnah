@@ -76,7 +76,9 @@ export class CommunityProfileService {
     userId: string,
     defaultData?: Partial<CreateProfileDto>,
   ): Promise<CommunityProfileDocument> {
-    const canonicalUser = await this.userModel.findById(userId).select('username name bio avatar');
+    const canonicalUser = await this.userModel
+      .findById(userId)
+      .select('username name bio avatar');
     let profile = await this.profileModel.findOne({ userId });
 
     if (!profile) {
@@ -103,7 +105,10 @@ export class CommunityProfileService {
       });
 
       await this.recalculateCompletion(userId);
-    } else if (canonicalUser?.username && profile.username !== canonicalUser.username) {
+    } else if (
+      canonicalUser?.username &&
+      profile.username !== canonicalUser.username
+    ) {
       profile.username = canonicalUser.username;
       await profile.save();
     }
@@ -143,7 +148,9 @@ export class CommunityProfileService {
     let profile: any = null;
 
     // Check canonical User collection first to prevent stale identities
-    const canonicalUser = await this.userModel.findOne({ username: normalized });
+    const canonicalUser = await this.userModel.findOne({
+      username: normalized,
+    });
     if (canonicalUser) {
       profile = await this.getOrCreateProfile(String(canonicalUser._id));
     } else {

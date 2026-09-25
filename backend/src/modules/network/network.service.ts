@@ -235,7 +235,10 @@ export class NetworkService {
       level,
       isActive: Boolean(user.account_Status?.isActive !== false),
       lastActiveAt,
-      isVerified: Boolean(user.account_Status?.isVerified || (user as any).verification?.status === 'VERIFIED'),
+      isVerified: Boolean(
+        user.account_Status?.isVerified ||
+        (user as any).verification?.status === 'VERIFIED',
+      ),
       primaryRole: (user as any).primaryRole || 'STUDENT',
       capabilities: (user as any).capabilities || ['STUDENT'],
       availability: (user as any).availability || 'NOT_CURRENTLY_AVAILABLE',
@@ -436,7 +439,14 @@ export class NetworkService {
     ).slice(0, 20);
 
     const levels = ['Beginner', 'Scholar', 'Master', 'Grandmaster'];
-    const roles = ['STUDENT', 'PROFESSIONAL', 'EDUCATOR', 'MENTOR', 'RECRUITER', 'FOUNDER'];
+    const roles = [
+      'STUDENT',
+      'PROFESSIONAL',
+      'EDUCATOR',
+      'MENTOR',
+      'RECRUITER',
+      'FOUNDER',
+    ];
 
     return {
       courses: courseNames,
@@ -454,19 +464,35 @@ export class NetworkService {
     rawUsername: string,
     currentUserId?: string,
   ): Promise<DiscoverableStudent> {
-    const cleanUsername = rawUsername.trim().toLowerCase();
-    const student = await this.userModel
-      .findOne({
-        username: cleanUsername,
-        ...this.getEligibleStudentFilter(),
-      })
-      .select(
-        'name username avatar headline currentRole course skills education gamification account_Status createdAt',
-      )
-      .exec();
+    const clean = rawUsername.trim().replace(/^@/, '');
+    let student: any = null;
+
+    if (Types.ObjectId.isValid(clean)) {
+      student = await this.userModel
+        .findOne({
+          _id: new Types.ObjectId(clean),
+          ...this.getEligibleStudentFilter(),
+        })
+        .select(
+          'name username avatar headline currentRole course skills education gamification account_Status createdAt',
+        )
+        .exec();
+    }
 
     if (!student) {
-      throw new NotFoundException(`Student @${cleanUsername} not found.`);
+      student = await this.userModel
+        .findOne({
+          username: clean.toLowerCase(),
+          ...this.getEligibleStudentFilter(),
+        })
+        .select(
+          'name username avatar headline currentRole course skills education gamification account_Status createdAt',
+        )
+        .exec();
+    }
+
+    if (!student) {
+      throw new NotFoundException(`Student profile not found or is no longer available.`);
     }
 
     let rel: { state: RelationshipState; connectionId?: string } = {
@@ -621,7 +647,10 @@ export class NetworkService {
 
     // Dispatch connection.requested notification asynchronously
     try {
-      const requester = await this.userModel.findById(currentUserId).select('name username avatar').lean();
+      const requester = await this.userModel
+        .findById(currentUserId)
+        .select('name username avatar')
+        .lean();
       if (requester) {
         await this.notificationsService.createNotification({
           recipientId: targetUserId,
@@ -638,7 +667,9 @@ export class NetworkService {
         });
       }
     } catch (err: any) {
-      this.logger.warn(`Failed to dispatch connection.requested notification: ${err.message}`);
+      this.logger.warn(
+        `Failed to dispatch connection.requested notification: ${err.message}`,
+      );
     }
 
     return {
@@ -694,7 +725,10 @@ export class NetworkService {
 
     // Dispatch connection.accepted notification asynchronously
     try {
-      const accepter = await this.userModel.findById(currentUserId).select('name username avatar').lean();
+      const accepter = await this.userModel
+        .findById(currentUserId)
+        .select('name username avatar')
+        .lean();
       if (accepter) {
         await this.notificationsService.createNotification({
           recipientId: String(connection.requesterId),
@@ -711,7 +745,9 @@ export class NetworkService {
         });
       }
     } catch (err: any) {
-      this.logger.warn(`Failed to dispatch connection.accepted notification: ${err.message}`);
+      this.logger.warn(
+        `Failed to dispatch connection.accepted notification: ${err.message}`,
+      );
     }
 
     return {
@@ -798,8 +834,13 @@ export class NetworkService {
     if (!connection) {
       const targetUser = await this.resolveUser(connectionId);
       if (targetUser) {
-        const { userLow, userHigh } = getNormalizedPair(currentUserId, String(targetUser._id));
-        connection = await this.connectionModel.findOne({ userLow, userHigh }).exec();
+        const { userLow, userHigh } = getNormalizedPair(
+          currentUserId,
+          String(targetUser._id),
+        );
+        connection = await this.connectionModel
+          .findOne({ userLow, userHigh })
+          .exec();
       }
     }
 
@@ -1131,9 +1172,7 @@ export class NetworkService {
     if (Types.ObjectId.isValid(cleanId)) {
       return this.userModel.findById(cleanId).exec();
     }
-    return this.userModel
-      .findOne({ username: cleanId.toLowerCase() })
-      .exec();
+    return this.userModel.findOne({ username: cleanId.toLowerCase() }).exec();
   }
 
   /**
@@ -1211,7 +1250,7 @@ export class NetworkService {
       if (isSelf) {
         connectionStatus = 'self';
       } else if (viewerConnMap.has(uId)) {
-        const c = viewerConnMap.get(uId)!;
+        const c = viewerConnMap.get(uId);
         connectionId = c.connId;
         if (c.status === 'accepted') {
           connectionStatus = 'connected';
@@ -1268,14 +1307,14 @@ export class NetworkService {
     viewerUserId?: string,
   ): Promise<ProfileNetworkStatsResponse> {
     const targetUser = await this.resolveUser(
-      userIdOrUsername === 'me' ? viewerUserId! : userIdOrUsername,
+      userIdOrUsername === 'me' ? viewerUserId : userIdOrUsername,
     );
     if (!targetUser) {
       throw new NotFoundException('User not found.');
     }
 
     const targetUserIdStr = String(targetUser._id);
-    const targetUserObjId = targetUser._id as Types.ObjectId;
+    const targetUserObjId = targetUser._id;
 
     // Authoritative database-level counting on network_connections
     const [followersCount, followingCount, connectionsCount] =
@@ -1283,13 +1322,19 @@ export class NetworkService {
         this.connectionModel.countDocuments({
           $or: [
             { requesterId: targetUserObjId, status: 'accepted' },
-            { recipientId: targetUserObjId, status: { $in: ['accepted', 'pending'] } },
+            {
+              recipientId: targetUserObjId,
+              status: { $in: ['accepted', 'pending'] },
+            },
           ],
         }),
         this.connectionModel.countDocuments({
           $or: [
             { recipientId: targetUserObjId, status: 'accepted' },
-            { requesterId: targetUserObjId, status: { $in: ['accepted', 'pending'] } },
+            {
+              requesterId: targetUserObjId,
+              status: { $in: ['accepted', 'pending'] },
+            },
           ],
         }),
         this.connectionModel.countDocuments({
@@ -1382,19 +1427,22 @@ export class NetworkService {
     query?: GetConnectionsQueryDto,
   ): Promise<PaginatedNetworkUsersResponse> {
     const targetUser = await this.resolveUser(
-      userIdOrUsername === 'me' ? viewerUserId! : userIdOrUsername,
+      userIdOrUsername === 'me' ? viewerUserId : userIdOrUsername,
     );
     if (!targetUser) {
       throw new NotFoundException('User not found.');
     }
     const targetUserIdStr = String(targetUser._id);
-    const targetUserObjId = targetUser._id as Types.ObjectId;
+    const targetUserObjId = targetUser._id;
 
     // Follower connections in network_connections
     const connFilter = {
       $or: [
         { requesterId: targetUserObjId, status: 'accepted' },
-        { recipientId: targetUserObjId, status: { $in: ['accepted', 'pending'] } },
+        {
+          recipientId: targetUserObjId,
+          status: { $in: ['accepted', 'pending'] },
+        },
       ],
     };
 
@@ -1485,19 +1533,22 @@ export class NetworkService {
     query?: GetConnectionsQueryDto,
   ): Promise<PaginatedNetworkUsersResponse> {
     const targetUser = await this.resolveUser(
-      userIdOrUsername === 'me' ? viewerUserId! : userIdOrUsername,
+      userIdOrUsername === 'me' ? viewerUserId : userIdOrUsername,
     );
     if (!targetUser) {
       throw new NotFoundException('User not found.');
     }
     const targetUserIdStr = String(targetUser._id);
-    const targetUserObjId = targetUser._id as Types.ObjectId;
+    const targetUserObjId = targetUser._id;
 
     // Following connections in network_connections
     const connFilter = {
       $or: [
         { recipientId: targetUserObjId, status: 'accepted' },
-        { requesterId: targetUserObjId, status: { $in: ['accepted', 'pending'] } },
+        {
+          requesterId: targetUserObjId,
+          status: { $in: ['accepted', 'pending'] },
+        },
       ],
     };
 
@@ -1588,12 +1639,12 @@ export class NetworkService {
     query?: GetConnectionsQueryDto,
   ): Promise<PaginatedNetworkUsersResponse> {
     const targetUser = await this.resolveUser(
-      userIdOrUsername === 'me' ? viewerUserId! : userIdOrUsername,
+      userIdOrUsername === 'me' ? viewerUserId : userIdOrUsername,
     );
     if (!targetUser) {
       throw new NotFoundException('User not found.');
     }
-    const targetUserObjId = targetUser._id as Types.ObjectId;
+    const targetUserObjId = targetUser._id;
     const targetUserIdStr = String(targetUser._id);
 
     const connFilter: any = {
@@ -1686,7 +1737,11 @@ export class NetworkService {
   async followUser(
     currentUserId: string,
     targetUserIdOrUsername: string,
-  ): Promise<{ success: boolean; isFollowing: boolean; followersCount: number }> {
+  ): Promise<{
+    success: boolean;
+    isFollowing: boolean;
+    followersCount: number;
+  }> {
     const targetUser = await this.resolveUser(targetUserIdOrUsername);
     if (!targetUser) {
       throw new NotFoundException('Target user not found.');
@@ -1703,8 +1758,13 @@ export class NetworkService {
       throw new BadRequestException('This user account is not active.');
     }
 
-    const { userLow, userHigh } = getNormalizedPair(currentUserId, targetUserIdStr);
-    let connection = await this.connectionModel.findOne({ userLow, userHigh }).exec();
+    const { userLow, userHigh } = getNormalizedPair(
+      currentUserId,
+      targetUserIdStr,
+    );
+    let connection = await this.connectionModel
+      .findOne({ userLow, userHigh })
+      .exec();
 
     if (!connection) {
       connection = await this.connectionModel.create({
@@ -1740,7 +1800,10 @@ export class NetworkService {
           `Failed to dispatch follow notification: ${err.message}`,
         );
       }
-    } else if (connection.status === 'declined' || connection.status === 'cancelled') {
+    } else if (
+      connection.status === 'declined' ||
+      connection.status === 'cancelled'
+    ) {
       connection.status = 'pending';
       connection.requesterId = new Types.ObjectId(currentUserId);
       connection.recipientId = targetUser._id;
@@ -1750,7 +1813,10 @@ export class NetworkService {
     const followersCount = await this.connectionModel.countDocuments({
       $or: [
         { requesterId: targetUser._id, status: 'accepted' },
-        { recipientId: targetUser._id, status: { $in: ['accepted', 'pending'] } },
+        {
+          recipientId: targetUser._id,
+          status: { $in: ['accepted', 'pending'] },
+        },
       ],
     });
 
@@ -1763,7 +1829,11 @@ export class NetworkService {
   async unfollowUser(
     currentUserId: string,
     targetUserIdOrUsername: string,
-  ): Promise<{ success: boolean; isFollowing: boolean; followersCount: number }> {
+  ): Promise<{
+    success: boolean;
+    isFollowing: boolean;
+    followersCount: number;
+  }> {
     const targetUser = await this.resolveUser(targetUserIdOrUsername);
     if (!targetUser) {
       throw new NotFoundException('Target user not found.');
@@ -1773,11 +1843,19 @@ export class NetworkService {
       throw new BadRequestException('You cannot unfollow yourself.');
     }
 
-    const { userLow, userHigh } = getNormalizedPair(currentUserId, targetUserIdStr);
-    const connection = await this.connectionModel.findOne({ userLow, userHigh }).exec();
+    const { userLow, userHigh } = getNormalizedPair(
+      currentUserId,
+      targetUserIdStr,
+    );
+    const connection = await this.connectionModel
+      .findOne({ userLow, userHigh })
+      .exec();
 
     if (connection) {
-      if (connection.status === 'pending' && String(connection.requesterId) === currentUserId) {
+      if (
+        connection.status === 'pending' &&
+        String(connection.requesterId) === currentUserId
+      ) {
         await this.connectionModel.deleteOne({ _id: connection._id }).exec();
       } else if (connection.status === 'accepted') {
         await this.connectionModel.deleteOne({ _id: connection._id }).exec();
@@ -1787,7 +1865,10 @@ export class NetworkService {
     const followersCount = await this.connectionModel.countDocuments({
       $or: [
         { requesterId: targetUser._id, status: 'accepted' },
-        { recipientId: targetUser._id, status: { $in: ['accepted', 'pending'] } },
+        {
+          recipientId: targetUser._id,
+          status: { $in: ['accepted', 'pending'] },
+        },
       ],
     });
 
@@ -1804,17 +1885,29 @@ export class NetworkService {
     rawUsername: string,
     currentUserId?: string,
   ): Promise<PublicNetworkProfile> {
-    const sanitized = rawUsername.trim().toLowerCase().replace(/^@/, '');
+    const clean = rawUsername.trim().replace(/^@/, '');
+    let userDoc: UserDocument | null = null;
 
-    const userDoc = await this.userModel
-      .findOne({
-        username: sanitized,
-        ...this.getEligibleStudentFilter(),
-      })
-      .exec();
+    if (Types.ObjectId.isValid(clean)) {
+      userDoc = await this.userModel
+        .findOne({
+          _id: new Types.ObjectId(clean),
+          ...this.getEligibleStudentFilter(),
+        })
+        .exec();
+    }
 
     if (!userDoc) {
-      throw new NotFoundException(`Student profile @${sanitized} not found.`);
+      userDoc = await this.userModel
+        .findOne({
+          username: clean.toLowerCase(),
+          ...this.getEligibleStudentFilter(),
+        })
+        .exec();
+    }
+
+    if (!userDoc) {
+      throw new NotFoundException(`Student profile not found or is no longer available.`);
     }
 
     const targetUserId = String(userDoc._id);
@@ -2037,12 +2130,19 @@ export class NetworkService {
         headline: userDoc.headline || '',
         bio: userDoc.bio || '',
         location: userDoc.location || '',
-        isVerified: Boolean(userDoc.account_Status?.isVerified || (userDoc as any).verification?.status === 'VERIFIED'),
+        isVerified: Boolean(
+          userDoc.account_Status?.isVerified ||
+          (userDoc as any).verification?.status === 'VERIFIED',
+        ),
         primaryRole: (userDoc as any).primaryRole || 'STUDENT',
         capabilities: (userDoc as any).capabilities || ['STUDENT'],
-        availability: (userDoc as any).availability || 'NOT_CURRENTLY_AVAILABLE',
+        availability:
+          (userDoc as any).availability || 'NOT_CURRENTLY_AVAILABLE',
         professionalInterests: (userDoc as any).professionalInterests || [],
-        verification: (userDoc as any).verification || { status: 'UNVERIFIED', type: 'IDENTITY' },
+        verification: (userDoc as any).verification || {
+          status: 'UNVERIFIED',
+          type: 'IDENTITY',
+        },
         joinedAt: (userDoc as { createdAt?: Date }).createdAt
           ? new Date((userDoc as { createdAt?: Date }).createdAt).toISOString()
           : undefined,

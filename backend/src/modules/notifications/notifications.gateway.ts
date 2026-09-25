@@ -67,7 +67,9 @@ export class NotificationsGateway
 
       // Join personal room for targeted notification broadcasts
       await client.join(`user_${userId}`);
-      this.logger.log(`User connected to notification socket: ${userId} (${client.id})`);
+      this.logger.log(
+        `User connected to notification socket: ${userId} (${client.id})`,
+      );
     } catch (err) {
       this.logger.warn(
         `JWT verification failed for notification socket ${client.id}: ${err.message}`,
@@ -83,7 +85,9 @@ export class NotificationsGateway
       if (this.userSockets.get(userId as string)?.size === 0) {
         this.userSockets.delete(userId as string);
       }
-      this.logger.log(`User disconnected from notification socket: ${userId} (${client.id})`);
+      this.logger.log(
+        `User disconnected from notification socket: ${userId} (${client.id})`,
+      );
     }
   }
 
@@ -115,4 +119,3 @@ export class NotificationsGateway
     }
   }
 }
-

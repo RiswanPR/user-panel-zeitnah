@@ -1,9 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { OpportunitiesService } from './opportunities.service';
-import { Opportunity, OpportunityType, OpportunityStatus, WorkMode, ExperienceLevel } from './schemas/opportunity.schema';
+import {
+  Opportunity,
+  OpportunityType,
+  OpportunityStatus,
+  WorkMode,
+  ExperienceLevel,
+} from './schemas/opportunity.schema';
 import { Organization } from '../organizations/schemas/organization.schema';
-import { OrganizationMembership, OrganizationRole, MembershipStatus } from '../organizations/schemas/organization-membership.schema';
+import {
+  OrganizationMembership,
+  OrganizationRole,
+  MembershipStatus,
+} from '../organizations/schemas/organization-membership.schema';
 import { Types } from 'mongoose';
 
 describe('OpportunitiesService', () => {
@@ -52,7 +62,11 @@ describe('OpportunitiesService', () => {
           }),
         }),
       }),
-      create: jest.fn().mockImplementation((dto) => Promise.resolve({ _id: new Types.ObjectId(), ...dto })),
+      create: jest
+        .fn()
+        .mockImplementation((dto) =>
+          Promise.resolve({ _id: new Types.ObjectId(), ...dto }),
+        ),
     };
 
     mockOrgModel = {};
@@ -68,7 +82,10 @@ describe('OpportunitiesService', () => {
         OpportunitiesService,
         { provide: getModelToken(Opportunity.name), useValue: mockOppModel },
         { provide: getModelToken(Organization.name), useValue: mockOrgModel },
-        { provide: getModelToken(OrganizationMembership.name), useValue: mockMembershipModel },
+        {
+          provide: getModelToken(OrganizationMembership.name),
+          useValue: mockMembershipModel,
+        },
       ],
     }).compile();
 

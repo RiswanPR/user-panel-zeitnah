@@ -95,7 +95,8 @@ export class TroubleshootReport {
 }
 
 export type ErrorReport = TroubleshootReport;
-export const TroubleshootReportSchema = SchemaFactory.createForClass(TroubleshootReport);
+export const TroubleshootReportSchema =
+  SchemaFactory.createForClass(TroubleshootReport);
 export const ErrorReportSchema = TroubleshootReportSchema;
 
 TroubleshootReportSchema.index({ userId: 1, createdAt: -1 });

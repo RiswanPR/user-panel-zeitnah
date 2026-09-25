@@ -9,10 +9,7 @@ export type NetworkConnectionDocument = NetworkConnection &
 export type ConnectionDocument = NetworkConnectionDocument;
 
 export type ConnectionStatus =
-  | 'pending'
-  | 'accepted'
-  | 'declined'
-  | 'cancelled';
+  'pending' | 'accepted' | 'declined' | 'cancelled';
 
 @Schema({
   timestamps: true,
@@ -58,11 +55,15 @@ export class NetworkConnection {
   status: string;
 }
 
-export const NetworkConnectionSchema = SchemaFactory.createForClass(NetworkConnection);
+export const NetworkConnectionSchema =
+  SchemaFactory.createForClass(NetworkConnection);
 
 // Compound unique index ensuring only one connection pair exists between any two users
 NetworkConnectionSchema.index({ userLow: 1, userHigh: 1 }, { unique: true });
 NetworkConnectionSchema.index({ requesterId: 1, status: 1 });
 NetworkConnectionSchema.index({ recipientId: 1, status: 1 });
 
-export { NetworkConnection as Connection, NetworkConnectionSchema as ConnectionSchema };
+export {
+  NetworkConnection as Connection,
+  NetworkConnectionSchema as ConnectionSchema,
+};

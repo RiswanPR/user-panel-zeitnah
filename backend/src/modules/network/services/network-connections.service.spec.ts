@@ -1,7 +1,11 @@
 /// <reference types="jest" />
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { NetworkConnectionsService } from './network-connections.service';
 import { NetworkConnection } from '../schemas/connection.schema';
 import { User } from '../../auth/schemas/user.schema';
@@ -40,9 +44,15 @@ describe('NetworkConnectionsService - Connections & Canonical Ordering', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NetworkConnectionsService,
-        { provide: getModelToken(NetworkConnection.name), useValue: mockConnectionModel },
+        {
+          provide: getModelToken(NetworkConnection.name),
+          useValue: mockConnectionModel,
+        },
         { provide: getModelToken(User.name), useValue: mockUserModel },
-        { provide: getModelToken(Notification.name), useValue: mockNotificationModel },
+        {
+          provide: getModelToken(Notification.name),
+          useValue: mockNotificationModel,
+        },
       ],
     }).compile();
 
@@ -89,7 +99,10 @@ describe('NetworkConnectionsService - Connections & Canonical Ordering', () => {
       };
       mockConnectionModel.create.mockResolvedValue(createdConn);
 
-      const result = await service.sendConnectionRequest(userA.toHexString(), userB.toHexString());
+      const result = await service.sendConnectionRequest(
+        userA.toHexString(),
+        userB.toHexString(),
+      );
       expect(result).toBe(createdConn);
       expect(mockConnectionModel.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -106,7 +119,10 @@ describe('NetworkConnectionsService - Connections & Canonical Ordering', () => {
       mockConnectionModel.findById.mockResolvedValue(null);
 
       await expect(
-        service.acceptConnectionRequest(new Types.ObjectId().toHexString(), userB.toHexString()),
+        service.acceptConnectionRequest(
+          new Types.ObjectId().toHexString(),
+          userB.toHexString(),
+        ),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -121,7 +137,10 @@ describe('NetworkConnectionsService - Connections & Canonical Ordering', () => {
 
       // userA (requester) tries to accept instead of recipient userB
       await expect(
-        service.acceptConnectionRequest(mockConn._id.toHexString(), userA.toHexString()),
+        service.acceptConnectionRequest(
+          mockConn._id.toHexString(),
+          userA.toHexString(),
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -156,7 +175,10 @@ describe('NetworkConnectionsService - Connections & Canonical Ordering', () => {
       mockConnectionModel.findById.mockResolvedValue(mockConn);
 
       await expect(
-        service.removeConnection(mockConn._id.toHexString(), userC.toHexString()),
+        service.removeConnection(
+          mockConn._id.toHexString(),
+          userC.toHexString(),
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -174,7 +196,9 @@ describe('NetworkConnectionsService - Connections & Canonical Ordering', () => {
         userA.toHexString(),
       );
       expect(result.success).toBe(true);
-      expect(mockConnectionModel.deleteOne).toHaveBeenCalledWith({ _id: mockConn._id });
+      expect(mockConnectionModel.deleteOne).toHaveBeenCalledWith({
+        _id: mockConn._id,
+      });
     });
   });
 });

@@ -8,8 +8,14 @@ import {
   NotificationPreferenceSchema,
 } from './notification-preference.schema';
 import { User, UserSchema } from '../auth/schemas/user.schema';
-import { Announcement, AnnouncementSchema } from '../announcements/schemas/announcement.schema';
-import { PlatformAnnouncement, PlatformAnnouncementSchema } from '../announcements/platform-announcement.schema';
+import {
+  Announcement,
+  AnnouncementSchema,
+} from '../announcements/schemas/announcement.schema';
+import {
+  PlatformAnnouncement,
+  PlatformAnnouncementSchema,
+} from '../announcements/platform-announcement.schema';
 import { NotificationsService } from './notifications.service';
 import { NotificationsController } from './notifications.controller';
 import { AnnouncementsModule } from '../announcements/announcements.module';
@@ -22,7 +28,10 @@ import { AnnouncementsModule } from '../announcements/announcements.module';
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Notification.name, schema: NotificationSchema },
-      { name: NotificationPreference.name, schema: NotificationPreferenceSchema },
+      {
+        name: NotificationPreference.name,
+        schema: NotificationPreferenceSchema,
+      },
       { name: Announcement.name, schema: AnnouncementSchema },
       { name: PlatformAnnouncement.name, schema: PlatformAnnouncementSchema },
     ]),

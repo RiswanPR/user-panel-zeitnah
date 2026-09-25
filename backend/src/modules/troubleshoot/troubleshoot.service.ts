@@ -115,7 +115,10 @@ export class TroubleshootService {
   /**
    * Build and send a rich HTML email alert.
    */
-  private async sendEmailAlert(report: TroubleshootReportDocument, userEmail: string) {
+  private async sendEmailAlert(
+    report: TroubleshootReportDocument,
+    userEmail: string,
+  ) {
     if (process.env.ENABLE_OPERATIONAL_ALERT_EMAILS !== 'true') {
       return;
     }

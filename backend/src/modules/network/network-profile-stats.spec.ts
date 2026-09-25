@@ -51,7 +51,11 @@ describe('NetworkService - Profile Network Statistics & Relationships (Strict ne
   };
 
   const mockSignedUrlService = {
-    generateSignedImageUrl: jest.fn().mockImplementation((key) => Promise.resolve(`https://cdn.example.com/${key}`)),
+    generateSignedImageUrl: jest
+      .fn()
+      .mockImplementation((key) =>
+        Promise.resolve(`https://cdn.example.com/${key}`),
+      ),
   };
 
   const mockNotificationsService = {
@@ -66,9 +70,18 @@ describe('NetworkService - Profile Network Statistics & Relationships (Strict ne
         NetworkService,
         { provide: getModelToken(User.name), useValue: mockUserModel },
         { provide: getModelToken(Course.name), useValue: mockCourseModel },
-        { provide: getModelToken(Connection.name), useValue: mockConnectionModel },
-        { provide: getModelToken(CommunityMembership.name), useValue: mockMembershipModel },
-        { provide: getModelToken(NetworkActivity.name), useValue: mockActivityModel },
+        {
+          provide: getModelToken(Connection.name),
+          useValue: mockConnectionModel,
+        },
+        {
+          provide: getModelToken(CommunityMembership.name),
+          useValue: mockMembershipModel,
+        },
+        {
+          provide: getModelToken(NetworkActivity.name),
+          useValue: mockActivityModel,
+        },
         { provide: SignedUrlService, useValue: mockSignedUrlService },
         { provide: NotificationsService, useValue: mockNotificationsService },
       ],
@@ -79,10 +92,15 @@ describe('NetworkService - Profile Network Statistics & Relationships (Strict ne
 
   describe('getProfileNetworkStats', () => {
     it('should throw NotFoundException if target user is not found', async () => {
-      mockUserModel.findById.mockReturnValue({ exec: jest.fn().mockResolvedValue(null) });
+      mockUserModel.findById.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(null),
+      });
 
       await expect(
-        service.getProfileNetworkStats(userA.toHexString(), userB.toHexString()),
+        service.getProfileNetworkStats(
+          userA.toHexString(),
+          userB.toHexString(),
+        ),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -98,8 +116,8 @@ describe('NetworkService - Profile Network Statistics & Relationships (Strict ne
       // Followers, Following, Connections counts from connectionModel
       mockConnectionModel.countDocuments
         .mockResolvedValueOnce(125) // followers
-        .mockResolvedValueOnce(84)  // following
-        .mockResolvedValueOnce(42);  // connections
+        .mockResolvedValueOnce(84) // following
+        .mockResolvedValueOnce(42); // connections
 
       mockConnectionModel.findOne.mockReturnValue({
         lean: jest.fn().mockResolvedValue({
@@ -199,7 +217,10 @@ describe('NetworkService - Profile Network Statistics & Relationships (Strict ne
 
       mockConnectionModel.countDocuments.mockResolvedValue(10);
 
-      const result = await service.followUser(userA.toHexString(), userB.toHexString());
+      const result = await service.followUser(
+        userA.toHexString(),
+        userB.toHexString(),
+      );
 
       expect(result.success).toBe(true);
       expect(result.isFollowing).toBe(true);
@@ -245,7 +266,10 @@ describe('NetworkService - Profile Network Statistics & Relationships (Strict ne
 
       mockConnectionModel.countDocuments.mockResolvedValue(9);
 
-      const result = await service.unfollowUser(userA.toHexString(), userB.toHexString());
+      const result = await service.unfollowUser(
+        userA.toHexString(),
+        userB.toHexString(),
+      );
 
       expect(result.success).toBe(true);
       expect(result.isFollowing).toBe(false);
@@ -253,6 +277,93 @@ describe('NetworkService - Profile Network Statistics & Relationships (Strict ne
       expect(mockConnectionModel.deleteOne).toHaveBeenCalledWith({
         _id: mockConnDoc._id,
       });
+    });
+  });
+
+  describe('getStudentProfile & getStudentByUsername resolution', () => {
+    beforeEach(() => {
+      mockActivityModel.find.mockReturnValue({
+        sort: jest.fn().mockReturnValue({
+          limit: jest.fn().mockReturnValue({
+            lean: jest.fn().mockResolvedValue([]),
+          }),
+        }),
+      });
+      mockCourseModel.find.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          lean: jest.fn().mockReturnValue({
+            exec: jest.fn().mockResolvedValue([]),
+          }),
+        }),
+      });
+    });
+
+    it('should resolve student profile by ObjectId', async () => {
+      const studentObjId = new Types.ObjectId();
+      const mockStudent = {
+        _id: studentObjId,
+        name: 'Rahul Kumar',
+        username: 'rahulk',
+        role: 'student',
+        publicProfilePublished: true,
+        skills: ['German B2', 'Communication'],
+        toObject: () => ({
+          _id: studentObjId,
+          name: 'Rahul Kumar',
+          username: 'rahulk',
+          role: 'student',
+        }),
+      };
+
+      mockUserModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(mockStudent),
+      });
+
+      const profile = await service.getStudentProfile(
+        studentObjId.toHexString(),
+      );
+      expect(profile.user.name).toBe('Rahul Kumar');
+      expect(profile.user.username).toBe('rahulk');
+      expect(profile.user.id).toBe(studentObjId.toHexString());
+    });
+
+    it('should resolve student profile by username', async () => {
+      const studentObjId = new Types.ObjectId();
+      const mockStudent = {
+        _id: studentObjId,
+        name: 'Jane Doe',
+        username: 'janedoe',
+        role: 'student',
+        publicProfilePublished: true,
+        skills: ['TypeScript', 'React'],
+        toObject: () => ({
+          _id: studentObjId,
+          name: 'Jane Doe',
+          username: 'janedoe',
+          role: 'student',
+        }),
+      };
+
+      mockUserModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(mockStudent),
+      });
+
+      const profile = await service.getStudentProfile('janedoe');
+      expect(profile.user.name).toBe('Jane Doe');
+      expect(profile.user.username).toBe('janedoe');
+    });
+
+    it('should throw NotFoundException if student is not found by ID or username', async () => {
+      mockUserModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(null),
+      });
+
+      await expect(
+        service.getStudentProfile(new Types.ObjectId().toHexString()),
+      ).rejects.toThrow(NotFoundException);
+      await expect(service.getStudentProfile('unknown_student')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

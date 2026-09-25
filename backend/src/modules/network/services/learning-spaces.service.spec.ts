@@ -94,15 +94,39 @@ describe('LearningSpacesService - Access Control & RBAC', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LearningSpacesService,
-        { provide: getModelToken(LearningSpace.name), useValue: mockSpaceModel },
-        { provide: getModelToken(Community.name), useValue: mockCommunityModel },
-        { provide: getModelToken(CommunityMembership.name), useValue: mockMembershipModel },
-        { provide: getModelToken(CommunityAnnouncement.name), useValue: mockAnnouncementModel },
-        { provide: getModelToken(CommunityDiscussion.name), useValue: mockDiscussionModel },
-        { provide: getModelToken(CommunityReply.name), useValue: mockReplyModel },
-        { provide: getModelToken(CommunityResource.name), useValue: mockResourceModel },
+        {
+          provide: getModelToken(LearningSpace.name),
+          useValue: mockSpaceModel,
+        },
+        {
+          provide: getModelToken(Community.name),
+          useValue: mockCommunityModel,
+        },
+        {
+          provide: getModelToken(CommunityMembership.name),
+          useValue: mockMembershipModel,
+        },
+        {
+          provide: getModelToken(CommunityAnnouncement.name),
+          useValue: mockAnnouncementModel,
+        },
+        {
+          provide: getModelToken(CommunityDiscussion.name),
+          useValue: mockDiscussionModel,
+        },
+        {
+          provide: getModelToken(CommunityReply.name),
+          useValue: mockReplyModel,
+        },
+        {
+          provide: getModelToken(CommunityResource.name),
+          useValue: mockResourceModel,
+        },
         { provide: getModelToken(User.name), useValue: mockUserModel },
-        { provide: getModelToken(Notification.name), useValue: mockNotificationModel },
+        {
+          provide: getModelToken(Notification.name),
+          useValue: mockNotificationModel,
+        },
       ],
     }).compile();
 
@@ -111,14 +135,22 @@ describe('LearningSpacesService - Access Control & RBAC', () => {
 
   describe('checkSpaceAccess', () => {
     it('should grant access to platform admins regardless of membership', async () => {
-      const result = await service.checkSpaceAccess(mockSpace, '507f1f77bcf86cd799439011', 'admin');
+      const result = await service.checkSpaceAccess(
+        mockSpace,
+        '507f1f77bcf86cd799439011',
+        'admin',
+      );
       expect(result.isAdmin).toBe(true);
       expect(result.isMember).toBe(true);
       expect(result.userRole).toBe('owner');
     });
 
     it('should grant access to assigned teachers with moderator role', async () => {
-      const result = await service.checkSpaceAccess(mockSpace, teacherId.toHexString(), 'instructor');
+      const result = await service.checkSpaceAccess(
+        mockSpace,
+        teacherId.toHexString(),
+        'instructor',
+      );
       expect(result.isTeacher).toBe(true);
       expect(result.isMember).toBe(true);
       expect(result.userRole).toBe('moderator');
@@ -132,7 +164,11 @@ describe('LearningSpacesService - Access Control & RBAC', () => {
         status: 'active',
       });
 
-      const result = await service.checkSpaceAccess(mockSpace, studentId.toHexString(), 'student');
+      const result = await service.checkSpaceAccess(
+        mockSpace,
+        studentId.toHexString(),
+        'student',
+      );
       expect(result.isMember).toBe(true);
       expect(result.userRole).toBe('member');
     });
@@ -141,7 +177,11 @@ describe('LearningSpacesService - Access Control & RBAC', () => {
       mockMembershipModel.findOne.mockResolvedValue(null);
 
       await expect(
-        service.checkSpaceAccess(mockSpace, outsiderId.toHexString(), 'student'),
+        service.checkSpaceAccess(
+          mockSpace,
+          outsiderId.toHexString(),
+          'student',
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -152,7 +192,9 @@ describe('LearningSpacesService - Access Control & RBAC', () => {
 
       const result = await service.resolveSpace(mockSpaceId.toHexString());
       expect(result).toBe(mockSpace);
-      expect(mockSpaceModel.findById).toHaveBeenCalledWith(mockSpaceId.toHexString());
+      expect(mockSpaceModel.findById).toHaveBeenCalledWith(
+        mockSpaceId.toHexString(),
+      );
     });
 
     it('should throw NotFoundException if space is not found', async () => {
@@ -160,9 +202,9 @@ describe('LearningSpacesService - Access Control & RBAC', () => {
       mockSpaceModel.findOne.mockResolvedValue(null);
       mockCommunityModel.findOne.mockResolvedValue(null);
 
-      await expect(service.resolveSpace(new Types.ObjectId().toHexString())).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.resolveSpace(new Types.ObjectId().toHexString()),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

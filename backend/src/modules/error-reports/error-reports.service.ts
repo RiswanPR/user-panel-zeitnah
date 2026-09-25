@@ -6,7 +6,6 @@ import {
   ErrorReportDocument,
 } from './schemas/error-report.schema';
 
-
 @Injectable()
 export class ErrorReportsService {
   private readonly logger = new Logger(ErrorReportsService.name);
@@ -70,6 +69,4 @@ export class ErrorReportsService {
 
     return JSON.parse(sanitizedStr);
   }
-
-
 }

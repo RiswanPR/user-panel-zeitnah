@@ -41,7 +41,10 @@ export class UpdateProfileDto {
   @IsArray()
   @ArrayMaxSize(25, { message: 'You can specify at most 25 skills.' })
   @IsString({ each: true, message: 'Each skill must be a string.' })
-  @MaxLength(50, { each: true, message: 'Each skill must not exceed 50 characters.' })
+  @MaxLength(50, {
+    each: true,
+    message: 'Each skill must not exceed 50 characters.',
+  })
   skills?: string[];
 
   @IsOptional()

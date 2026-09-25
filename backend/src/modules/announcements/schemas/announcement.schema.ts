@@ -50,7 +50,12 @@ export class Announcement {
   @Prop({ type: Types.ObjectId, ref: 'Course', default: null, index: true })
   courseId?: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'LearningSpace', default: null, index: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'LearningSpace',
+    default: null,
+    index: true,
+  })
   learningSpaceId?: Types.ObjectId;
 
   @Prop({ type: Date, default: null })
@@ -88,6 +93,11 @@ export class Announcement {
 }
 
 export const AnnouncementSchema = SchemaFactory.createForClass(Announcement);
-AnnouncementSchema.index({ status: 1, isPublished: 1, scheduledAt: 1, expiresAt: 1 });
+AnnouncementSchema.index({
+  status: 1,
+  isPublished: 1,
+  scheduledAt: 1,
+  expiresAt: 1,
+});
 AnnouncementSchema.index({ targetType: 1, courseId: 1, learningSpaceId: 1 });
 AnnouncementSchema.index({ createdAt: -1 });

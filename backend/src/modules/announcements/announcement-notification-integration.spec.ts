@@ -38,7 +38,9 @@ describe('Announcement -> Notification Integration & Targeting', () => {
     find: jest.fn().mockImplementation((filter: any) => {
       let results = [...storedNotifications];
       if (filter?.recipientId) {
-        results = results.filter((n) => n.recipientId.toString() === filter.recipientId.toString());
+        results = results.filter(
+          (n) => n.recipientId.toString() === filter.recipientId.toString(),
+        );
       }
       if (filter?.isRead === false) {
         results = results.filter((n) => !n.isRead);
@@ -60,17 +62,25 @@ describe('Announcement -> Notification Integration & Targeting', () => {
     }),
     findOne: jest.fn().mockImplementation((filter: any) => {
       if (filter?.idempotencyKey) {
-        return storedNotifications.find((n) => n.idempotencyKey === filter.idempotencyKey) || null;
+        return (
+          storedNotifications.find(
+            (n) => n.idempotencyKey === filter.idempotencyKey,
+          ) || null
+        );
       }
       if (filter?.$or) {
         for (const cond of filter.$or) {
           if (cond.idempotencyKey) {
-            const found = storedNotifications.find((n) => n.idempotencyKey === cond.idempotencyKey);
+            const found = storedNotifications.find(
+              (n) => n.idempotencyKey === cond.idempotencyKey,
+            );
             if (found) return found;
           }
           if (cond._id && cond.recipientId) {
             const found = storedNotifications.find(
-              (n) => n._id.toString() === cond._id.toString() && n.recipientId.toString() === cond.recipientId.toString(),
+              (n) =>
+                n._id.toString() === cond._id.toString() &&
+                n.recipientId.toString() === cond.recipientId.toString(),
             );
             if (found) return found;
           }
@@ -81,7 +91,9 @@ describe('Announcement -> Notification Integration & Targeting', () => {
     countDocuments: jest.fn().mockImplementation((filter: any) => {
       let count = storedNotifications.length;
       if (filter?.recipientId) {
-        count = storedNotifications.filter((n) => n.recipientId.toString() === filter.recipientId.toString()).length;
+        count = storedNotifications.filter(
+          (n) => n.recipientId.toString() === filter.recipientId.toString(),
+        ).length;
       }
       if (filter?.isRead === false) {
         count = storedNotifications.filter((n) => !n.isRead).length;
@@ -91,12 +103,19 @@ describe('Announcement -> Notification Integration & Targeting', () => {
     updateMany: jest.fn().mockImplementation((filter: any, update: any) => {
       let modified = 0;
       for (const n of storedNotifications) {
-        if (filter.recipientId && n.recipientId.toString() !== filter.recipientId.toString()) continue;
+        if (
+          filter.recipientId &&
+          n.recipientId.toString() !== filter.recipientId.toString()
+        )
+          continue;
         if (filter.isRead === false && n.isRead) continue;
         if (update?.$set?.isRead !== undefined) n.isRead = update.$set.isRead;
         modified++;
       }
-      return Promise.resolve({ matchedCount: modified, modifiedCount: modified });
+      return Promise.resolve({
+        matchedCount: modified,
+        modifiedCount: modified,
+      });
     }),
     updateOne: jest.fn(),
     deleteMany: jest.fn().mockResolvedValue({ deletedCount: 0 }),
@@ -116,7 +135,9 @@ describe('Announcement -> Notification Integration & Targeting', () => {
         _id: studentId,
         role: 'student',
         primaryRole: 'student',
-        course: [{ courseId: enrolledCourseId.toString(), courseName: 'German B1' }],
+        course: [
+          { courseId: enrolledCourseId.toString(), courseName: 'German B1' },
+        ],
       }),
     }),
   };
@@ -127,7 +148,12 @@ describe('Announcement -> Notification Integration & Targeting', () => {
       return {
         lean: jest.fn().mockResolvedValue(
           storedAnnouncements.filter((a) => {
-            if (a.status !== 'published' && a.status !== 'PUBLISHED' && !a.isPublished) return false;
+            if (
+              a.status !== 'published' &&
+              a.status !== 'PUBLISHED' &&
+              !a.isPublished
+            )
+              return false;
             if (a.startsAt && a.startsAt > now) return false;
             if (a.scheduledAt && a.scheduledAt > now) return false;
             if (a.expiresAt && a.expiresAt <= now) return false;
@@ -140,10 +166,15 @@ describe('Announcement -> Notification Integration & Targeting', () => {
       };
     }),
     findById: jest.fn().mockImplementation((id: any) => {
-      return storedAnnouncements.find((a) => a._id.toString() === id.toString()) || null;
+      return (
+        storedAnnouncements.find((a) => a._id.toString() === id.toString()) ||
+        null
+      );
     }),
     updateOne: jest.fn().mockImplementation((filter: any, update: any) => {
-      const ann = storedAnnouncements.find((a) => a._id.toString() === filter._id?.toString());
+      const ann = storedAnnouncements.find(
+        (a) => a._id.toString() === filter._id?.toString(),
+      );
       if (ann && update.$addToSet?.readBy) {
         ann.readBy = ann.readBy || [];
         ann.readBy.push(update.$addToSet.readBy);
@@ -152,9 +183,14 @@ describe('Announcement -> Notification Integration & Targeting', () => {
         ann.dismissedBy = ann.dismissedBy || [];
         ann.dismissedBy.push(update.$addToSet.dismissedBy);
       }
-      return Promise.resolve({ matchedCount: ann ? 1 : 0, modifiedCount: ann ? 1 : 0 });
+      return Promise.resolve({
+        matchedCount: ann ? 1 : 0,
+        modifiedCount: ann ? 1 : 0,
+      });
     }),
-    updateMany: jest.fn().mockResolvedValue({ matchedCount: 1, modifiedCount: 1 }),
+    updateMany: jest
+      .fn()
+      .mockResolvedValue({ matchedCount: 1, modifiedCount: 1 }),
   };
 
   const mockGateway = {
@@ -168,7 +204,10 @@ describe('Announcement -> Notification Integration & Targeting', () => {
         if (name === 'learning_space_members') {
           return {
             find: () => ({
-              toArray: () => Promise.resolve([{ spaceId: memberSpaceId, userId: studentId }]),
+              toArray: () =>
+                Promise.resolve([
+                  { spaceId: memberSpaceId, userId: studentId },
+                ]),
             }),
           };
         }
@@ -209,11 +248,23 @@ describe('Announcement -> Notification Integration & Targeting', () => {
       providers: [
         NotificationsService,
         AnnouncementsService,
-        { provide: getModelToken(Notification.name), useValue: mockNotificationModel },
-        { provide: getModelToken(NotificationPreference.name), useValue: mockPrefModel },
+        {
+          provide: getModelToken(Notification.name),
+          useValue: mockNotificationModel,
+        },
+        {
+          provide: getModelToken(NotificationPreference.name),
+          useValue: mockPrefModel,
+        },
         { provide: getModelToken(User.name), useValue: mockUserModel },
-        { provide: getModelToken(Announcement.name), useValue: mockAnnouncementModel },
-        { provide: getModelToken(PlatformAnnouncement.name), useValue: mockAnnouncementModel },
+        {
+          provide: getModelToken(Announcement.name),
+          useValue: mockAnnouncementModel,
+        },
+        {
+          provide: getModelToken(PlatformAnnouncement.name),
+          useValue: mockAnnouncementModel,
+        },
         { provide: NotificationsGateway, useValue: mockGateway },
         { provide: 'DatabaseConnection', useValue: mockConnection },
       ],
@@ -239,7 +290,8 @@ describe('Announcement -> Notification Integration & Targeting', () => {
       };
       storedAnnouncements.push(ann);
 
-      const created = await notifService.syncUserAnnouncementNotifications(studentId);
+      const created =
+        await notifService.syncUserAnnouncementNotifications(studentId);
       expect(created).toBe(1);
       expect(storedNotifications.length).toBe(1);
       expect(storedNotifications[0].title).toBe('Platform Maintenance Notice');
@@ -278,7 +330,8 @@ describe('Announcement -> Notification Integration & Targeting', () => {
 
       storedAnnouncements.push(enrolledAnn, notEnrolledAnn);
 
-      const created = await notifService.syncUserAnnouncementNotifications(studentId);
+      const created =
+        await notifService.syncUserAnnouncementNotifications(studentId);
       expect(created).toBe(1);
       expect(storedNotifications.length).toBe(1);
       expect(storedNotifications[0].title).toBe('German B1 Class Rescheduled');
@@ -316,7 +369,8 @@ describe('Announcement -> Notification Integration & Targeting', () => {
 
       storedAnnouncements.push(memberSpaceAnn, foreignSpaceAnn);
 
-      const created = await notifService.syncUserAnnouncementNotifications(studentId);
+      const created =
+        await notifService.syncUserAnnouncementNotifications(studentId);
       expect(created).toBe(1);
       expect(storedNotifications[0].title).toBe('Batch Space Meeting');
     });
@@ -337,7 +391,8 @@ describe('Announcement -> Notification Integration & Targeting', () => {
       };
       storedAnnouncements.push(teacherOnlyAnn);
 
-      const created = await notifService.syncUserAnnouncementNotifications(studentId);
+      const created =
+        await notifService.syncUserAnnouncementNotifications(studentId);
       expect(created).toBe(0);
       expect(storedNotifications.length).toBe(0);
     });
@@ -372,7 +427,8 @@ describe('Announcement -> Notification Integration & Targeting', () => {
 
       storedAnnouncements.push(normalAnn, criticalAnn);
 
-      const created = await notifService.syncUserAnnouncementNotifications(studentId);
+      const created =
+        await notifService.syncUserAnnouncementNotifications(studentId);
       // Only the critical announcement is created because preference muted normal announcements
       expect(created).toBe(1);
       expect(storedNotifications[0].title).toBe('Emergency Server Downtime');
@@ -395,12 +451,14 @@ describe('Announcement -> Notification Integration & Targeting', () => {
       storedAnnouncements.push(ann);
 
       // Cycle 1
-      const count1 = await notifService.syncUserAnnouncementNotifications(studentId);
+      const count1 =
+        await notifService.syncUserAnnouncementNotifications(studentId);
       expect(count1).toBe(1);
       expect(storedNotifications.length).toBe(1);
 
       // Cycle 2 (e.g. repeated user fetch or tab refresh)
-      const count2 = await notifService.syncUserAnnouncementNotifications(studentId);
+      const count2 =
+        await notifService.syncUserAnnouncementNotifications(studentId);
       expect(count2).toBe(0);
       expect(storedNotifications.length).toBe(1); // Zero duplicates!
     });
@@ -418,7 +476,8 @@ describe('Announcement -> Notification Integration & Targeting', () => {
       };
       storedAnnouncements.push(futureAnn);
 
-      const created = await notifService.syncUserAnnouncementNotifications(studentId);
+      const created =
+        await notifService.syncUserAnnouncementNotifications(studentId);
       expect(created).toBe(0);
       expect(storedNotifications.length).toBe(0);
     });
@@ -437,7 +496,8 @@ describe('Announcement -> Notification Integration & Targeting', () => {
       };
       storedAnnouncements.push(expiredAnn);
 
-      const created = await notifService.syncUserAnnouncementNotifications(studentId);
+      const created =
+        await notifService.syncUserAnnouncementNotifications(studentId);
       expect(created).toBe(0);
       expect(storedNotifications.length).toBe(0);
     });
@@ -465,7 +525,10 @@ describe('Announcement -> Notification Integration & Targeting', () => {
       expect(notif.isRead).toBe(false);
 
       // Mark notification as read
-      await notifService.markAsRead(notif._id.toHexString(), studentId.toHexString());
+      await notifService.markAsRead(
+        notif._id.toHexString(),
+        studentId.toHexString(),
+      );
 
       expect(notif.isRead).toBe(true);
       expect(mockAnnouncementModel.updateOne).toHaveBeenCalledWith(
@@ -488,11 +551,18 @@ describe('Announcement -> Notification Integration & Targeting', () => {
 
       // Regular dismiss attempt should be rejected
       await expect(
-        annService.dismissAnnouncement(annId.toHexString(), studentId.toHexString(), false),
+        annService.dismissAnnouncement(
+          annId.toHexString(),
+          studentId.toHexString(),
+          false,
+        ),
       ).rejects.toThrow();
 
       // Explicit acknowledgment should succeed
-      const result = await annService.acknowledgeAnnouncement(annId.toHexString(), studentId.toHexString());
+      const result = await annService.acknowledgeAnnouncement(
+        annId.toHexString(),
+        studentId.toHexString(),
+      );
       expect(result.success).toBe(true);
       expect(result.message).toBe('Announcement acknowledged');
     });

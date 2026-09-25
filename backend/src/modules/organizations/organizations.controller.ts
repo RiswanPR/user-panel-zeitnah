@@ -36,7 +36,10 @@ export class OrganizationsController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  async createOrganization(@Req() req: any, @Body() body: CreateOrganizationDto) {
+  async createOrganization(
+    @Req() req: any,
+    @Body() body: CreateOrganizationDto,
+  ) {
     return this.orgService.createOrganization(req.user.userId, body);
   }
 

@@ -1,8 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { OrganizationsService } from './organizations.service';
-import { Organization, OrganizationType, OrganizationVerificationStatus } from './schemas/organization.schema';
-import { OrganizationMembership, OrganizationRole, MembershipStatus } from './schemas/organization-membership.schema';
+import {
+  Organization,
+  OrganizationType,
+  OrganizationVerificationStatus,
+} from './schemas/organization.schema';
+import {
+  OrganizationMembership,
+  OrganizationRole,
+  MembershipStatus,
+} from './schemas/organization-membership.schema';
 import { User } from '../auth/schemas/user.schema';
 import { Types } from 'mongoose';
 
@@ -38,11 +46,19 @@ describe('OrganizationsService', () => {
         }),
       }),
       countDocuments: jest.fn().mockResolvedValue(1),
-      create: jest.fn().mockImplementation((dto) => Promise.resolve({ _id: new Types.ObjectId(), ...dto })),
+      create: jest
+        .fn()
+        .mockImplementation((dto) =>
+          Promise.resolve({ _id: new Types.ObjectId(), ...dto }),
+        ),
     };
 
     mockMembershipModel = {
-      create: jest.fn().mockImplementation((dto) => Promise.resolve({ _id: new Types.ObjectId(), ...dto })),
+      create: jest
+        .fn()
+        .mockImplementation((dto) =>
+          Promise.resolve({ _id: new Types.ObjectId(), ...dto }),
+        ),
       findOne: jest.fn().mockResolvedValue({
         role: OrganizationRole.OWNER,
         status: MembershipStatus.ACTIVE,
@@ -57,7 +73,10 @@ describe('OrganizationsService', () => {
       providers: [
         OrganizationsService,
         { provide: getModelToken(Organization.name), useValue: mockOrgModel },
-        { provide: getModelToken(OrganizationMembership.name), useValue: mockMembershipModel },
+        {
+          provide: getModelToken(OrganizationMembership.name),
+          useValue: mockMembershipModel,
+        },
         { provide: getModelToken(User.name), useValue: mockUserModel },
       ],
     }).compile();

@@ -314,7 +314,9 @@ export class CoursesService {
       );
 
       if (!data?.otp || !data?.playbackInfo) {
-        console.warn('[VdoCipher] Invalid playback response — missing otp or playbackInfo');
+        console.warn(
+          '[VdoCipher] Invalid playback response — missing otp or playbackInfo',
+        );
         return null;
       }
 
@@ -323,7 +325,10 @@ export class CoursesService {
         playbackInfo: data.playbackInfo,
       };
     } catch (error: any) {
-      const isTimeout = error?.code === 'ECONNABORTED' || error?.name === 'AbortError' || error?.message?.includes('timeout');
+      const isTimeout =
+        error?.code === 'ECONNABORTED' ||
+        error?.name === 'AbortError' ||
+        error?.message?.includes('timeout');
       console.error(
         `[VdoCipher] Failed to generate OTP${isTimeout ? ' (TIMEOUT)' : ''}`,
         error?.response?.data || error?.message || error,
@@ -426,9 +431,12 @@ export class CoursesService {
       createdAt: -1,
     });
 
-    let userCourseMap = new Map<string, any>();
+    const userCourseMap = new Map<string, any>();
     if (userId) {
-      const user = await this.userModel.findById(userId).select('course').lean();
+      const user = await this.userModel
+        .findById(userId)
+        .select('course')
+        .lean();
       if (user?.course) {
         user.course.forEach((c: any) => {
           if (c?.courseId) {
@@ -455,8 +463,12 @@ export class CoursesService {
     );
 
     formatted.sort((a, b) => {
-      const typeA = String(a.type || '').trim().toLowerCase();
-      const typeB = String(b.type || '').trim().toLowerCase();
+      const typeA = String(a.type || '')
+        .trim()
+        .toLowerCase();
+      const typeB = String(b.type || '')
+        .trim()
+        .toLowerCase();
       const isRecA = typeA === 'recording';
       const isRecB = typeB === 'recording';
       if (isRecA && !isRecB) return -1;
@@ -1088,7 +1100,9 @@ export class CoursesService {
 
     const duration = Date.now() - startTime;
     if (duration > 3000) {
-      console.warn(`[ClassView] Slow response: ${duration}ms for classId=${classId}`);
+      console.warn(
+        `[ClassView] Slow response: ${duration}ms for classId=${classId}`,
+      );
     }
 
     return {
@@ -1579,9 +1593,11 @@ export class CoursesService {
       throw new UnauthorizedException('Session expired or invalid device');
     }
 
-    const isEnrolled = user.course?.some((c: any) =>
-      c.classProgress?.some((cp: any) => cp.classId?.toString() === targetClassId) ||
-      c.courseId,
+    const isEnrolled = user.course?.some(
+      (c: any) =>
+        c.classProgress?.some(
+          (cp: any) => cp.classId?.toString() === targetClassId,
+        ) || c.courseId,
     );
 
     if (!isEnrolled) {
@@ -1614,13 +1630,10 @@ export class CoursesService {
     if (classId) {
       query.classId = classId;
     }
-    await this.activeStreamModel.findOneAndUpdate(
-      query,
-      {
-        status: 'ENDED',
-        expiresAt: new Date(Date.now() + 60000), // 60s grace window before TTL purge
-      },
-    );
+    await this.activeStreamModel.findOneAndUpdate(query, {
+      status: 'ENDED',
+      expiresAt: new Date(Date.now() + 60000), // 60s grace window before TTL purge
+    });
 
     return { success: true };
   }
@@ -1681,8 +1694,7 @@ export class CoursesService {
     let playbackUrl: string;
 
     if (videoTarget.endsWith('.m3u8')) {
-      const baseUrl =
-        process.env.API_URL || 'https://zeitnahacademy.com/api';
+      const baseUrl = process.env.API_URL || 'https://zeitnahacademy.com/api';
       playbackUrl = `${baseUrl}/courses/video/${classId}/playlist.m3u8`;
     } else {
       // Fallback for MP4 videos that haven't been converted to HLS yet
@@ -1809,9 +1821,11 @@ export class CoursesService {
 
     if (courseObj.coverImage) {
       signingTasks.push(
-        this.signedUrlService.generateSignedImageUrl(courseObj.coverImage).then(
-          (url) => { courseObj.coverImage = url; },
-        ),
+        this.signedUrlService
+          .generateSignedImageUrl(courseObj.coverImage)
+          .then((url) => {
+            courseObj.coverImage = url;
+          }),
       );
     }
 
@@ -1831,9 +1845,11 @@ export class CoursesService {
         }
         if (chapter.coverImage) {
           signingTasks.push(
-            this.signedUrlService.generateSignedImageUrl(chapter.coverImage).then(
-              (url) => { chapter.coverImage = url; },
-            ),
+            this.signedUrlService
+              .generateSignedImageUrl(chapter.coverImage)
+              .then((url) => {
+                chapter.coverImage = url;
+              }),
           );
         }
         if (chapter.classes && Array.isArray(chapter.classes)) {
@@ -1847,9 +1863,11 @@ export class CoursesService {
             }
             if (cls.coverImage) {
               signingTasks.push(
-                this.signedUrlService.generateSignedImageUrl(cls.coverImage).then(
-                  (url) => { cls.coverImage = url; },
-                ),
+                this.signedUrlService
+                  .generateSignedImageUrl(cls.coverImage)
+                  .then((url) => {
+                    cls.coverImage = url;
+                  }),
               );
             }
             if (cls.exercises && Array.isArray(cls.exercises)) {
@@ -1859,9 +1877,11 @@ export class CoursesService {
               for (const exercise of cls.exercises) {
                 if (exercise.file) {
                   signingTasks.push(
-                    this.signedUrlService.generateSignedImageUrl(exercise.file).then(
-                      (url) => { exercise.file = url; },
-                    ),
+                    this.signedUrlService
+                      .generateSignedImageUrl(exercise.file)
+                      .then((url) => {
+                        exercise.file = url;
+                      }),
                   );
                 }
               }

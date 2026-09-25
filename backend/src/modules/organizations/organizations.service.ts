@@ -63,11 +63,16 @@ export class OrganizationsService {
   async createOrganization(userId: string, dto: CreateOrganizationDto) {
     const userObjId = new Types.ObjectId(userId);
     const cleanName = dto.name.trim();
-    const slug = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const slug = cleanName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
 
     const existing = await this.orgModel.findOne({ slug });
     if (existing) {
-      throw new ConflictException(`Organization slug '${slug}' is already registered`);
+      throw new ConflictException(
+        `Organization slug '${slug}' is already registered`,
+      );
     }
 
     const org = await this.orgModel.create({
@@ -104,7 +109,9 @@ export class OrganizationsService {
     const limit = Math.min(50, Math.max(1, Number(query.limit) || 12));
     const skip = (page - 1) * limit;
 
-    const filter: Record<string, any> = { visibility: OrganizationVisibility.PUBLIC };
+    const filter: Record<string, any> = {
+      visibility: OrganizationVisibility.PUBLIC,
+    };
 
     if (query.type) {
       filter.type = query.type;
@@ -118,18 +125,32 @@ export class OrganizationsService {
     if (query.q && query.q.trim()) {
       const clean = escapeRegex(query.q.trim());
       const regex = new RegExp(clean, 'i');
-      filter.$or = [{ name: regex }, { description: regex }, { industry: regex }];
+      filter.$or = [
+        { name: regex },
+        { description: regex },
+        { industry: regex },
+      ];
     }
 
     const [total, docs] = await Promise.all([
       this.orgModel.countDocuments(filter),
-      this.orgModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      this.orgModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
     ]);
 
     // Enhance with member counts
     const orgIds = docs.map((d) => d._id);
     const memberCounts = await this.membershipModel.aggregate([
-      { $match: { organizationId: { $in: orgIds }, status: MembershipStatus.ACTIVE } },
+      {
+        $match: {
+          organizationId: { $in: orgIds },
+          status: MembershipStatus.ACTIVE,
+        },
+      },
       { $group: { _id: '$organizationId', count: { $sum: 1 } } },
     ]);
 
@@ -178,8 +199,15 @@ export class OrganizationsService {
   /**
    * Update organization details (Authorized: OWNER or ADMIN)
    */
-  async updateOrganization(userId: string, orgId: string, dto: UpdateOrganizationDto) {
-    await this.assertMemberRole(userId, orgId, [OrganizationRole.OWNER, OrganizationRole.ADMIN]);
+  async updateOrganization(
+    userId: string,
+    orgId: string,
+    dto: UpdateOrganizationDto,
+  ) {
+    await this.assertMemberRole(userId, orgId, [
+      OrganizationRole.OWNER,
+      OrganizationRole.ADMIN,
+    ]);
 
     const org = await this.orgModel.findById(orgId);
     if (!org) {
@@ -206,7 +234,10 @@ export class OrganizationsService {
     const orgObjId = new Types.ObjectId(orgId);
     const memberships = await this.membershipModel
       .find({ organizationId: orgObjId, status: MembershipStatus.ACTIVE })
-      .populate('userId', 'name username avatar headline currentRole primaryRole')
+      .populate(
+        'userId',
+        'name username avatar headline currentRole primaryRole',
+      )
       .lean();
 
     return memberships.map((m: any) => ({
@@ -262,7 +293,11 @@ export class OrganizationsService {
   /**
    * Helper to verify user has one of the required roles
    */
-  async assertMemberRole(userId: string, orgId: string, allowedRoles: OrganizationRole[]) {
+  async assertMemberRole(
+    userId: string,
+    orgId: string,
+    allowedRoles: OrganizationRole[],
+  ) {
     const orgObjId = new Types.ObjectId(orgId);
     const userObjId = new Types.ObjectId(userId);
 
@@ -273,7 +308,9 @@ export class OrganizationsService {
     });
 
     if (!membership || !allowedRoles.includes(membership.role)) {
-      throw new ForbiddenException('You do not have the required permissions for this organization');
+      throw new ForbiddenException(
+        'You do not have the required permissions for this organization',
+      );
     }
 
     return membership;

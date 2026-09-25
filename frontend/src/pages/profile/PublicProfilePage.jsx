@@ -17,7 +17,6 @@ import {
   Check,
   X,
   Flag,
-  FolderGit2,
 } from "lucide-react";
 import api from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
@@ -204,18 +203,26 @@ export default function PublicProfilePage() {
           <User className="w-8 h-8" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-heading font-black tracking-tight mb-2">
-          Student Profile Not Found
+          Profile Unavailable
         </h1>
         <p className="text-sm text-text-muted max-w-md mb-6 leading-relaxed">
-          The requested student profile @{targetUsername || "unknown"} is private, unpublished, or does not exist.
+          This profile could not be found or is no longer available in the Zeitnah network.
         </p>
-        <Link
-          to="/"
-          className="btn-primary inline-flex items-center gap-2 py-2.5 px-6 text-xs uppercase tracking-wider cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Return to Zeitnah
-        </Link>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Link
+            to="/network"
+            className="btn-primary inline-flex items-center gap-2 py-2.5 px-6 text-xs uppercase tracking-wider cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Network
+          </Link>
+          <Link
+            to="/"
+            className="btn-secondary inline-flex items-center gap-2 py-2.5 px-6 text-xs uppercase tracking-wider cursor-pointer"
+          >
+            Return to Dashboard
+          </Link>
+        </div>
       </div>
     );
   }

@@ -119,7 +119,7 @@ function NetworkUserRow({
     }
   };
 
-  const profileLink = `/u/${encodeURIComponent(userItem.username || userItem.id || "")}`;
+  const profileLink = `/network/profile/${encodeURIComponent(userItem.username || userItem.id || userItem._id || "")}`;
   const initials = getInitials(userItem.name);
 
   return (

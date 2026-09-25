@@ -226,7 +226,11 @@ export class CoursesController {
     req: any,
   ) {
     const deviceId = body?.deviceId || req.user?.deviceId;
-    return this.coursesService.heartbeat(req.user.userId, deviceId, body?.classId);
+    return this.coursesService.heartbeat(
+      req.user.userId,
+      deviceId,
+      body?.classId,
+    );
   }
 
   // =====================
@@ -243,7 +247,11 @@ export class CoursesController {
     if (!body.deviceId || !body.userId) {
       return { success: false, message: 'Missing deviceId or userId' };
     }
-    return this.coursesService.stopStream(body.userId, body.deviceId, body.classId);
+    return this.coursesService.stopStream(
+      body.userId,
+      body.deviceId,
+      body.classId,
+    );
   }
 
   // =====================

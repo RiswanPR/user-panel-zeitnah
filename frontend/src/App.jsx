@@ -111,6 +111,14 @@ function App() {
                 </Suspense>
               }
             />
+            <Route
+              path="/profile/u/:username"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <PublicProfilePage />
+                </Suspense>
+              }
+            />
 
             {/* SECURE APPLICATION ROUTING (Main Layout) */}
             <Route

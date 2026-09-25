@@ -90,7 +90,10 @@ describe('UsernameService', () => {
 
   describe('Candidate Generation', () => {
     it('should generate ranked candidates from full name', () => {
-      const candidates = service.generateCandidates('Riswan PR', 'riswan@example.com');
+      const candidates = service.generateCandidates(
+        'Riswan PR',
+        'riswan@example.com',
+      );
       expect(candidates).toContain('riswan');
       expect(candidates).toContain('riswanpr');
       expect(candidates).toContain('riswan_pr');
@@ -99,14 +102,20 @@ describe('UsernameService', () => {
     });
 
     it('should fall back to email local part when name is missing', () => {
-      const candidates = service.generateCandidates('', 'shahil.ahmed@zeitnah.com');
+      const candidates = service.generateCandidates(
+        '',
+        'shahil.ahmed@zeitnah.com',
+      );
       expect(candidates).toContain('shahil_ahmed');
       expect(candidates.length).toBeGreaterThan(0);
       expect(candidates.every((c) => service.validate(c).valid)).toBe(true);
     });
 
     it('should never include reserved usernames in generated candidates', () => {
-      const candidates = service.generateCandidates('Admin User', 'admin@zeitnah.com');
+      const candidates = service.generateCandidates(
+        'Admin User',
+        'admin@zeitnah.com',
+      );
       expect(candidates).not.toContain('admin');
       expect(candidates).not.toContain('user');
       expect(candidates.every((c) => !isReservedUsername(c))).toBe(true);
@@ -181,10 +190,7 @@ describe('UsernameService', () => {
     });
 
     it('should resolve collision if muhammedthajchor exists', async () => {
-      const taken = new Set([
-        'muhammedthajchor',
-        'muhammedthajchoramp',
-      ]);
+      const taken = new Set(['muhammedthajchor', 'muhammedthajchoramp']);
       const username = await service.generateUniqueUsername({
         source: 'muhammedthajchor',
         isTaken: (cand) => taken.has(cand),
@@ -195,7 +201,8 @@ describe('UsernameService', () => {
     });
 
     it('should handle very long names (significantly longer than 20 chars)', async () => {
-      const veryLongName = 'Muhammed Thaj Chorampatta Very Long Extraordinary Student Name';
+      const veryLongName =
+        'Muhammed Thaj Chorampatta Very Long Extraordinary Student Name';
       const username = await service.generateUniqueUsername({
         name: veryLongName,
         isTaken: () => false,

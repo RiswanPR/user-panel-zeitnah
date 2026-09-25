@@ -32,13 +32,37 @@ const DEFAULT_CURATED_SKILLS = [
   { name: 'Next.js', category: 'Engineering', aliases: ['NextJS'] },
   { name: 'MongoDB', category: 'Engineering', aliases: ['Mongo'] },
   { name: 'PostgreSQL', category: 'Engineering', aliases: ['Postgres', 'SQL'] },
-  { name: 'UI/UX Design', category: 'Design', aliases: ['UI Design', 'UX Design', 'Figma'] },
+  {
+    name: 'UI/UX Design',
+    category: 'Design',
+    aliases: ['UI Design', 'UX Design', 'Figma'],
+  },
   { name: 'Product Design', category: 'Design', aliases: ['Design Systems'] },
-  { name: 'Cloud Architecture', category: 'Engineering', aliases: ['AWS', 'GCP', 'DevOps'] },
-  { name: 'Data Science', category: 'Data', aliases: ['Machine Learning', 'Data Analysis'] },
-  { name: 'Digital Marketing', category: 'Marketing', aliases: ['SEO', 'Content Strategy'] },
-  { name: 'Project Management', category: 'Management', aliases: ['Agile', 'Scrum'] },
-  { name: 'Technical Writing', category: 'General', aliases: ['Documentation'] },
+  {
+    name: 'Cloud Architecture',
+    category: 'Engineering',
+    aliases: ['AWS', 'GCP', 'DevOps'],
+  },
+  {
+    name: 'Data Science',
+    category: 'Data',
+    aliases: ['Machine Learning', 'Data Analysis'],
+  },
+  {
+    name: 'Digital Marketing',
+    category: 'Marketing',
+    aliases: ['SEO', 'Content Strategy'],
+  },
+  {
+    name: 'Project Management',
+    category: 'Management',
+    aliases: ['Agile', 'Scrum'],
+  },
+  {
+    name: 'Technical Writing',
+    category: 'General',
+    aliases: ['Documentation'],
+  },
   { name: 'Public Speaking', category: 'General', aliases: ['Presentations'] },
 ];
 
@@ -61,7 +85,10 @@ export class SkillsService implements OnModuleInit {
       if (count === 0) {
         this.logger.log('Seeding curated skill taxonomy...');
         for (const s of DEFAULT_CURATED_SKILLS) {
-          const slug = s.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          const slug = s.name
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)/g, '');
           await this.skillModel.create({
             name: s.name,
             slug,
@@ -70,7 +97,9 @@ export class SkillsService implements OnModuleInit {
             status: SkillStatus.ACTIVE,
           });
         }
-        this.logger.log(`Seeded ${DEFAULT_CURATED_SKILLS.length} curated skills.`);
+        this.logger.log(
+          `Seeded ${DEFAULT_CURATED_SKILLS.length} curated skills.`,
+        );
       }
     } catch (err: any) {
       this.logger.warn(`Skills seeding notice: ${err.message}`);
@@ -143,7 +172,8 @@ export class SkillsService implements OnModuleInit {
         proficiency: us.proficiency,
         source: us.source,
         visibility: us.visibility,
-        isDemonstrated: skillProofs.length > 0 || us.source !== SkillSource.CLAIMED,
+        isDemonstrated:
+          skillProofs.length > 0 || us.source !== SkillSource.CLAIMED,
         proofs: skillProofs,
       };
     });
@@ -162,7 +192,10 @@ export class SkillsService implements OnModuleInit {
   ) {
     const userObjId = new Types.ObjectId(userId);
     const cleanName = data.skillName.trim();
-    const slug = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const slug = cleanName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
 
     let skill = await this.skillModel.findOne({
       $or: [{ slug }, { name: new RegExp(`^${escapeRegex(cleanName)}$`, 'i') }],
@@ -232,7 +265,10 @@ export class SkillsService implements OnModuleInit {
       skill = await this.skillModel.findById(skillIdOrName);
     }
     if (!skill) {
-      const slug = skillIdOrName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const slug = skillIdOrName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
       skill = await this.skillModel.findOne({ slug });
     }
     if (!skill) {
@@ -274,8 +310,8 @@ export class SkillsService implements OnModuleInit {
           proof.sourceType === ProofSourceType.COURSE_COMPLETION
             ? SkillSource.COURSE_COMPLETION
             : proof.sourceType === ProofSourceType.PROJECT
-            ? SkillSource.PROJECT
-            : SkillSource.ASSESSMENT,
+              ? SkillSource.PROJECT
+              : SkillSource.ASSESSMENT,
         visibility: SkillVisibility.PUBLIC,
       });
     } else if (userSkill.source === SkillSource.CLAIMED) {
@@ -283,8 +319,8 @@ export class SkillsService implements OnModuleInit {
         proof.sourceType === ProofSourceType.COURSE_COMPLETION
           ? SkillSource.COURSE_COMPLETION
           : proof.sourceType === ProofSourceType.PROJECT
-          ? SkillSource.PROJECT
-          : SkillSource.ASSESSMENT;
+            ? SkillSource.PROJECT
+            : SkillSource.ASSESSMENT;
       await userSkill.save();
     }
 

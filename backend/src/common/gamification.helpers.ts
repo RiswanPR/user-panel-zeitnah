@@ -15,22 +15,86 @@ export const PROFILE_COMPLETION_REWARDS = [
 ];
 
 export const PROFILE_MILESTONES = {
-  PROFILE_PHOTO_COMPLETED: { id: 'PROFILE_PHOTO_COMPLETED', points: 15, label: 'Profile Photo Added' },
-  PROFILE_BACKGROUND_COMPLETED: { id: 'PROFILE_BACKGROUND_COMPLETED', points: 10, label: 'Background Image Added' },
-  PROFILE_HEADLINE_COMPLETED: { id: 'PROFILE_HEADLINE_COMPLETED', points: 10, label: 'Headline Added' },
-  PROFILE_ROLE_COMPLETED: { id: 'PROFILE_ROLE_COMPLETED', points: 5, label: 'Current Role Added' },
-  PROFILE_LOCATION_COMPLETED: { id: 'PROFILE_LOCATION_COMPLETED', points: 5, label: 'Location Added' },
-  PROFILE_INDUSTRY_COMPLETED: { id: 'PROFILE_INDUSTRY_COMPLETED', points: 5, label: 'Industry Added' },
-  PROFILE_ABOUT_COMPLETED: { id: 'PROFILE_ABOUT_COMPLETED', points: 15, label: 'About Story Added' },
-  PROFILE_EXPERIENCE_COMPLETED: { id: 'PROFILE_EXPERIENCE_COMPLETED', points: 20, label: 'First Experience Added' },
-  PROFILE_EDUCATION_COMPLETED: { id: 'PROFILE_EDUCATION_COMPLETED', points: 20, label: 'First Education Added' },
-  PROFILE_CERTIFICATION_COMPLETED: { id: 'PROFILE_CERTIFICATION_COMPLETED', points: 15, label: 'First Certification Added' },
-  PROFILE_SKILLS_COMPLETED: { id: 'PROFILE_SKILLS_COMPLETED', points: 15, label: 'Skills Milestone (3+ Skills)' },
-  PUBLIC_PROFILE_SETUP_COMPLETED: { id: 'PUBLIC_PROFILE_SETUP_COMPLETED', points: 30, label: 'Public Profile Setup' },
-  PUBLIC_PROFILE_PUBLISHED: { id: 'PUBLIC_PROFILE_PUBLISHED', points: 20, label: 'Public Profile Published' },
-  PROFILE_COMPLETION_50: { id: 'PROFILE_COMPLETION_50', points: 15, label: '50% Profile Completion' },
-  PROFILE_COMPLETION_75: { id: 'PROFILE_COMPLETION_75', points: 20, label: '75% Profile Completion' },
-  PROFILE_COMPLETION_100: { id: 'PROFILE_COMPLETION_100', points: 50, label: '100% Profile Completion' },
+  PROFILE_PHOTO_COMPLETED: {
+    id: 'PROFILE_PHOTO_COMPLETED',
+    points: 15,
+    label: 'Profile Photo Added',
+  },
+  PROFILE_BACKGROUND_COMPLETED: {
+    id: 'PROFILE_BACKGROUND_COMPLETED',
+    points: 10,
+    label: 'Background Image Added',
+  },
+  PROFILE_HEADLINE_COMPLETED: {
+    id: 'PROFILE_HEADLINE_COMPLETED',
+    points: 10,
+    label: 'Headline Added',
+  },
+  PROFILE_ROLE_COMPLETED: {
+    id: 'PROFILE_ROLE_COMPLETED',
+    points: 5,
+    label: 'Current Role Added',
+  },
+  PROFILE_LOCATION_COMPLETED: {
+    id: 'PROFILE_LOCATION_COMPLETED',
+    points: 5,
+    label: 'Location Added',
+  },
+  PROFILE_INDUSTRY_COMPLETED: {
+    id: 'PROFILE_INDUSTRY_COMPLETED',
+    points: 5,
+    label: 'Industry Added',
+  },
+  PROFILE_ABOUT_COMPLETED: {
+    id: 'PROFILE_ABOUT_COMPLETED',
+    points: 15,
+    label: 'About Story Added',
+  },
+  PROFILE_EXPERIENCE_COMPLETED: {
+    id: 'PROFILE_EXPERIENCE_COMPLETED',
+    points: 20,
+    label: 'First Experience Added',
+  },
+  PROFILE_EDUCATION_COMPLETED: {
+    id: 'PROFILE_EDUCATION_COMPLETED',
+    points: 20,
+    label: 'First Education Added',
+  },
+  PROFILE_CERTIFICATION_COMPLETED: {
+    id: 'PROFILE_CERTIFICATION_COMPLETED',
+    points: 15,
+    label: 'First Certification Added',
+  },
+  PROFILE_SKILLS_COMPLETED: {
+    id: 'PROFILE_SKILLS_COMPLETED',
+    points: 15,
+    label: 'Skills Milestone (3+ Skills)',
+  },
+  PUBLIC_PROFILE_SETUP_COMPLETED: {
+    id: 'PUBLIC_PROFILE_SETUP_COMPLETED',
+    points: 30,
+    label: 'Public Profile Setup',
+  },
+  PUBLIC_PROFILE_PUBLISHED: {
+    id: 'PUBLIC_PROFILE_PUBLISHED',
+    points: 20,
+    label: 'Public Profile Published',
+  },
+  PROFILE_COMPLETION_50: {
+    id: 'PROFILE_COMPLETION_50',
+    points: 15,
+    label: '50% Profile Completion',
+  },
+  PROFILE_COMPLETION_75: {
+    id: 'PROFILE_COMPLETION_75',
+    points: 20,
+    label: '75% Profile Completion',
+  },
+  PROFILE_COMPLETION_100: {
+    id: 'PROFILE_COMPLETION_100',
+    points: 50,
+    label: '100% Profile Completion',
+  },
 } as const;
 
 export function calculateLevel(points = 0) {
@@ -64,19 +128,24 @@ export function calculateRank(points = 0) {
 export function calculateAuthoritativeProfileCompletion(user: any) {
   const hasName = Boolean(user?.name && user.name.trim().length > 0);
   const hasPhoto = Boolean(user?.avatar && user.avatar.trim().length > 0);
-  const hasHeadline = Boolean(user?.headline && user.headline.trim().length > 0);
+  const hasHeadline = Boolean(
+    user?.headline && user.headline.trim().length > 0,
+  );
   const hasRoleOrLocationOrIndustry = Boolean(
     (user?.currentRole && user.currentRole.trim().length > 0) ||
     (user?.location && user.location.trim().length > 0) ||
-    (user?.industry && user.industry.trim().length > 0)
+    (user?.industry && user.industry.trim().length > 0),
   );
   const hasAbout = Boolean(user?.bio && user.bio.trim().length >= 20);
   const hasSkills = Array.isArray(user?.skills) && user.skills.length >= 3;
-  const hasEducation = Array.isArray(user?.education) && user.education.length > 0;
+  const hasEducation =
+    Array.isArray(user?.education) && user.education.length > 0;
   const hasExperienceOrCertOrPortfolio = Boolean(
     (Array.isArray(user?.experience) && user.experience.length > 0) ||
     (Array.isArray(user?.certifications) && user.certifications.length > 0) ||
-    (user?.backgroundImage && Array.isArray(user?.skills) && user.skills.length >= 5)
+    (user?.backgroundImage &&
+      Array.isArray(user?.skills) &&
+      user.skills.length >= 5),
   );
 
   let score = 0;
@@ -91,7 +160,9 @@ export function calculateAuthoritativeProfileCompletion(user: any) {
 
   const completionPercent = Math.min(100, Math.max(0, score));
 
-  const rewardedMilestones = Array.isArray(user?.gamification?.rewardedMilestones)
+  const rewardedMilestones = Array.isArray(
+    user?.gamification?.rewardedMilestones,
+  )
     ? user.gamification.rewardedMilestones
     : [];
 
@@ -133,7 +204,8 @@ export function calculateAuthoritativeProfileCompletion(user: any) {
     {
       id: 'PROFILE_ABOUT_COMPLETED',
       title: 'Write your About',
-      description: 'Tell people what you are learning, building, or working toward',
+      description:
+        'Tell people what you are learning, building, or working toward',
       xp: PROFILE_MILESTONES.PROFILE_ABOUT_COMPLETED.points,
       category: 'ABOUT',
       targetSection: 'about',
@@ -203,7 +275,8 @@ export function calculateAuthoritativeProfileCompletion(user: any) {
     {
       id: 'PROFILE_EXPERIENCE_COMPLETED',
       title: 'Add experience or project',
-      description: 'Work, internships, volunteering, leadership, or personal projects',
+      description:
+        'Work, internships, volunteering, leadership, or personal projects',
       xp: PROFILE_MILESTONES.PROFILE_EXPERIENCE_COMPLETED.points,
       category: 'EXPERIENCE',
       targetSection: 'experience',
@@ -218,7 +291,8 @@ export function calculateAuthoritativeProfileCompletion(user: any) {
       category: 'CERTIFICATIONS',
       targetSection: 'certifications',
       actionLabel: 'Add Certificate',
-      done: Array.isArray(user?.certifications) && user.certifications.length > 0,
+      done:
+        Array.isArray(user?.certifications) && user.certifications.length > 0,
     },
     {
       id: 'PUBLIC_PROFILE_SETUP_COMPLETED',
@@ -228,7 +302,9 @@ export function calculateAuthoritativeProfileCompletion(user: any) {
       category: 'PUBLIC_PROFILE',
       targetSection: 'public-profile',
       actionLabel: 'Setup Public Profile',
-      done: Boolean(hasPhoto && hasHeadline && hasAbout && hasSkills && user?.username),
+      done: Boolean(
+        hasPhoto && hasHeadline && hasAbout && hasSkills && user?.username,
+      ),
     },
     {
       id: 'PUBLIC_PROFILE_PUBLISHED',
@@ -303,7 +379,7 @@ export function calculateAuthoritativeProfileCompletion(user: any) {
     }));
 
   const publicProfileReady = Boolean(
-    hasPhoto && hasHeadline && hasAbout && hasSkills && user?.username
+    hasPhoto && hasHeadline && hasAbout && hasSkills && user?.username,
   );
 
   return {
@@ -331,14 +407,19 @@ export function evaluateProfileMilestones(user: any) {
   const completion = calculateAuthoritativeProfileCompletion(user);
   const newlyAwarded: Array<{ id: string; points: number; label: string }> = [];
 
-  const checks: Array<{ id: keyof typeof PROFILE_MILESTONES; condition: boolean }> = [
+  const checks: Array<{
+    id: keyof typeof PROFILE_MILESTONES;
+    condition: boolean;
+  }> = [
     {
       id: 'PROFILE_PHOTO_COMPLETED',
       condition: Boolean(user.avatar && user.avatar.trim().length > 0),
     },
     {
       id: 'PROFILE_BACKGROUND_COMPLETED',
-      condition: Boolean(user.backgroundImage && user.backgroundImage.trim().length > 0),
+      condition: Boolean(
+        user.backgroundImage && user.backgroundImage.trim().length > 0,
+      ),
     },
     {
       id: 'PROFILE_HEADLINE_COMPLETED',
@@ -346,7 +427,9 @@ export function evaluateProfileMilestones(user: any) {
     },
     {
       id: 'PROFILE_ROLE_COMPLETED',
-      condition: Boolean(user.currentRole && user.currentRole.trim().length > 0),
+      condition: Boolean(
+        user.currentRole && user.currentRole.trim().length > 0,
+      ),
     },
     {
       id: 'PROFILE_LOCATION_COMPLETED',
@@ -370,7 +453,8 @@ export function evaluateProfileMilestones(user: any) {
     },
     {
       id: 'PROFILE_CERTIFICATION_COMPLETED',
-      condition: Array.isArray(user.certifications) && user.certifications.length > 0,
+      condition:
+        Array.isArray(user.certifications) && user.certifications.length > 0,
     },
     {
       id: 'PROFILE_SKILLS_COMPLETED',
@@ -399,7 +483,10 @@ export function evaluateProfileMilestones(user: any) {
   ];
 
   for (const check of checks) {
-    if (check.condition && !gamification.rewardedMilestones.includes(check.id)) {
+    if (
+      check.condition &&
+      !gamification.rewardedMilestones.includes(check.id)
+    ) {
       gamification.rewardedMilestones.push(check.id);
       const milestoneDef = PROFILE_MILESTONES[check.id];
       awardPoints(
@@ -416,11 +503,20 @@ export function evaluateProfileMilestones(user: any) {
       });
 
       // Maintain backward compatibility with profileCompletionRewards
-      if (check.id === 'PROFILE_COMPLETION_50' && !gamification.profileCompletionRewards.includes(50)) {
+      if (
+        check.id === 'PROFILE_COMPLETION_50' &&
+        !gamification.profileCompletionRewards.includes(50)
+      ) {
         gamification.profileCompletionRewards.push(50);
-      } else if (check.id === 'PROFILE_COMPLETION_75' && !gamification.profileCompletionRewards.includes(75)) {
+      } else if (
+        check.id === 'PROFILE_COMPLETION_75' &&
+        !gamification.profileCompletionRewards.includes(75)
+      ) {
         gamification.profileCompletionRewards.push(75);
-      } else if (check.id === 'PROFILE_COMPLETION_100' && !gamification.profileCompletionRewards.includes(100)) {
+      } else if (
+        check.id === 'PROFILE_COMPLETION_100' &&
+        !gamification.profileCompletionRewards.includes(100)
+      ) {
         gamification.profileCompletionRewards.push(100);
       }
     }

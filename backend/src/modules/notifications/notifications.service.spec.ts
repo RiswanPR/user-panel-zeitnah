@@ -44,8 +44,14 @@ describe('NotificationsService - Lifecycle & Preferences', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotificationsService,
-        { provide: getModelToken(Notification.name), useValue: mockNotificationModel },
-        { provide: getModelToken(NotificationPreference.name), useValue: mockPrefModel },
+        {
+          provide: getModelToken(Notification.name),
+          useValue: mockNotificationModel,
+        },
+        {
+          provide: getModelToken(NotificationPreference.name),
+          useValue: mockPrefModel,
+        },
         { provide: getModelToken(User.name), useValue: mockUserModel },
         { provide: NotificationsGateway, useValue: mockGateway },
       ],
@@ -76,7 +82,10 @@ describe('NotificationsService - Lifecycle & Preferences', () => {
         .mockResolvedValueOnce(1) // total
         .mockResolvedValueOnce(1); // unreadCount
 
-      const result = await service.getUserNotifications(userId.toHexString(), { page: 1, limit: 20 });
+      const result = await service.getUserNotifications(userId.toHexString(), {
+        page: 1,
+        limit: 20,
+      });
       expect(result.notifications).toEqual(mockNotifs);
       expect(result.total).toBe(1);
       expect(result.unreadCount).toBe(1);
@@ -95,7 +104,10 @@ describe('NotificationsService - Lifecycle & Preferences', () => {
       mockNotificationModel.findOne.mockResolvedValue(mockDoc);
       mockNotificationModel.countDocuments.mockResolvedValue(0);
 
-      const result = await service.markAsRead(notifId.toHexString(), userId.toHexString());
+      const result = await service.markAsRead(
+        notifId.toHexString(),
+        userId.toHexString(),
+      );
       expect(result.success).toBe(true);
       expect(result.unreadCount).toBe(0);
       expect(mockDoc.isRead).toBe(true);
@@ -113,7 +125,10 @@ describe('NotificationsService - Lifecycle & Preferences', () => {
 
   describe('markAllAsRead', () => {
     it('should mark all user notifications as read and return unreadCount: 0', async () => {
-      mockNotificationModel.updateMany.mockResolvedValue({ matchedCount: 3, modifiedCount: 3 });
+      mockNotificationModel.updateMany.mockResolvedValue({
+        matchedCount: 3,
+        modifiedCount: 3,
+      });
 
       const result = await service.markAllAsRead(userId.toHexString());
       expect(result.success).toBe(true);

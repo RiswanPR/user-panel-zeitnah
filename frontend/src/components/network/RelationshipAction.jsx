@@ -66,6 +66,12 @@ export default function RelationshipAction({
     queryClient.invalidateQueries({ queryKey: ["network-connection-counts"] });
     queryClient.invalidateQueries({ queryKey: ["network-requests"] });
     queryClient.invalidateQueries({ queryKey: ["network-sent"] });
+    queryClient.invalidateQueries({ queryKey: ["network-profile"] });
+    queryClient.invalidateQueries({ queryKey: ["network-profile-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["network-connections-list"] });
+    queryClient.invalidateQueries({ queryKey: ["network-followers-list"] });
+    queryClient.invalidateQueries({ queryKey: ["network-following-list"] });
+    queryClient.invalidateQueries({ queryKey: ["network-people"] });
   };
 
   // 1. Send Connection Request Mutation

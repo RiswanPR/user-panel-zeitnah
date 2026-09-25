@@ -6,15 +6,36 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { LearningSpace, LearningSpaceDocument } from '../schemas/learning-space.schema';
+import {
+  LearningSpace,
+  LearningSpaceDocument,
+} from '../schemas/learning-space.schema';
 import { Community, CommunityDocument } from '../schemas/community.schema';
-import { CommunityMembership, CommunityMembershipDocument } from '../schemas/community-membership.schema';
-import { CommunityDiscussion, CommunityDiscussionDocument } from '../schemas/community-discussion.schema';
-import { CommunityReply, CommunityReplyDocument } from '../schemas/community-reply.schema';
-import { CommunityAnnouncement, CommunityAnnouncementDocument } from '../schemas/community-announcement.schema';
-import { CommunityResource, CommunityResourceDocument } from '../schemas/community-resource.schema';
+import {
+  CommunityMembership,
+  CommunityMembershipDocument,
+} from '../schemas/community-membership.schema';
+import {
+  CommunityDiscussion,
+  CommunityDiscussionDocument,
+} from '../schemas/community-discussion.schema';
+import {
+  CommunityReply,
+  CommunityReplyDocument,
+} from '../schemas/community-reply.schema';
+import {
+  CommunityAnnouncement,
+  CommunityAnnouncementDocument,
+} from '../schemas/community-announcement.schema';
+import {
+  CommunityResource,
+  CommunityResourceDocument,
+} from '../schemas/community-resource.schema';
 import { User, UserDocument } from '../../auth/schemas/user.schema';
-import { Notification, NotificationDocument } from '../../notifications/notification.schema';
+import {
+  Notification,
+  NotificationDocument,
+} from '../../notifications/notification.schema';
 import {
   CreateDiscussionDto,
   CreateReplyDto,
@@ -63,7 +84,9 @@ export class LearningSpacesService {
     if (Types.ObjectId.isValid(idOrSlug)) {
       space = await this.spaceModel.findById(idOrSlug);
       if (!space) {
-        space = await this.spaceModel.findOne({ communityId: new Types.ObjectId(idOrSlug) });
+        space = await this.spaceModel.findOne({
+          communityId: new Types.ObjectId(idOrSlug),
+        });
       }
     }
 
@@ -72,7 +95,9 @@ export class LearningSpacesService {
     }
 
     if (!space) {
-      const community = await this.communityModel.findOne({ slug: idOrSlug.toLowerCase() });
+      const community = await this.communityModel.findOne({
+        slug: idOrSlug.toLowerCase(),
+      });
       if (community) {
         space = await this.spaceModel.findOne({ communityId: community._id });
         if (!space) {
@@ -85,7 +110,8 @@ export class LearningSpacesService {
             category: 'Study Group',
             coverImage: community.coverImage,
             status: community.status,
-            accessMode: community.visibility === 'public' ? 'open' : 'restricted',
+            accessMode:
+              community.visibility === 'public' ? 'open' : 'restricted',
             teachers: [],
             communityId: community._id,
             courseId: community.courseId,
@@ -110,14 +136,21 @@ export class LearningSpacesService {
     space: LearningSpaceDocument,
     userId: string,
     role: string,
-  ): Promise<{ isMember: boolean; userRole: string; isTeacher: boolean; isAdmin: boolean }> {
+  ): Promise<{
+    isMember: boolean;
+    userRole: string;
+    isTeacher: boolean;
+    isAdmin: boolean;
+  }> {
     const isAdmin = role === 'admin' || role === 'superuser';
     const userObjId = this.toObjectId(userId);
 
     const isTeacher =
       Array.isArray(space.teachers) &&
       space.teachers.some((t: any) =>
-        t instanceof Types.ObjectId ? t.equals(userObjId) : String(t) === String(userId),
+        t instanceof Types.ObjectId
+          ? t.equals(userObjId)
+          : String(t) === String(userId),
       );
 
     let isMember = false;
@@ -140,9 +173,12 @@ export class LearningSpacesService {
       userRole = isTeacher ? 'moderator' : 'owner';
     }
 
-    const isRestricted = space.accessMode === 'restricted' || space.accessMode === 'invite_only';
+    const isRestricted =
+      space.accessMode === 'restricted' || space.accessMode === 'invite_only';
     if (isRestricted && !isMember && !isTeacher && !isAdmin) {
-      throw new ForbiddenException('You are not authorized to access this Learning Space.');
+      throw new ForbiddenException(
+        'You are not authorized to access this Learning Space.',
+      );
     }
 
     return { isMember, userRole, isTeacher, isAdmin };
@@ -160,7 +196,10 @@ export class LearningSpacesService {
     const skip = (page - 1) * limit;
 
     const userMemberships = await this.membershipModel
-      .find({ userId: userObjId, status: 'active' }, { communityId: 1, role: 1 })
+      .find(
+        { userId: userObjId, status: 'active' },
+        { communityId: 1, role: 1 },
+      )
       .lean();
     const joinedCommunityIds = userMemberships.map((m) => m.communityId);
 
@@ -168,7 +207,12 @@ export class LearningSpacesService {
 
     if (search) {
       const regex = new RegExp(escapeRegex(search), 'i');
-      matchConditions.$or = [{ name: regex }, { code: regex }, { description: regex }, { tags: regex }];
+      matchConditions.$or = [
+        { name: regex },
+        { code: regex },
+        { description: regex },
+        { tags: regex },
+      ];
     }
 
     if (query.category) {
@@ -212,10 +256,16 @@ export class LearningSpacesService {
       const isAssignedTeacher =
         Array.isArray(space.teachers) &&
         space.teachers.some((t: any) => String(t?._id || t) === String(userId));
-      const roleInComm = space.communityId ? membershipMap.get(String(space.communityId)) : null;
+      const roleInComm = space.communityId
+        ? membershipMap.get(String(space.communityId))
+        : null;
 
-      const isMember = Boolean(roleInComm || isAssignedTeacher || role === 'admin');
-      const userRole = roleInComm || (isAssignedTeacher ? 'moderator' : (role === 'admin' ? 'owner' : 'none'));
+      const isMember = Boolean(
+        roleInComm || isAssignedTeacher || role === 'admin',
+      );
+      const userRole =
+        roleInComm ||
+        (isAssignedTeacher ? 'moderator' : role === 'admin' ? 'owner' : 'none');
 
       return {
         ...space,
@@ -264,7 +314,9 @@ export class LearningSpacesService {
   async joinSpace(idOrSlug: string, userId: string) {
     const space = await this.resolveSpace(idOrSlug);
     if (space.accessMode === 'restricted') {
-      throw new ForbiddenException('This Learning Space is restricted. Request an invitation from faculty or admin.');
+      throw new ForbiddenException(
+        'This Learning Space is restricted. Request an invitation from faculty or admin.',
+      );
     }
 
     const userObjId = this.toObjectId(userId);
@@ -284,9 +336,15 @@ export class LearningSpacesService {
       { upsert: true },
     );
 
-    await this.spaceModel.updateOne({ _id: space._id }, { $inc: { memberCount: 1 } });
+    await this.spaceModel.updateOne(
+      { _id: space._id },
+      { $inc: { memberCount: 1 } },
+    );
     if (space.communityId) {
-      await this.communityModel.updateOne({ _id: space.communityId }, { $inc: { memberCount: 1 } });
+      await this.communityModel.updateOne(
+        { _id: space.communityId },
+        { $inc: { memberCount: 1 } },
+      );
     }
 
     return { success: true, message: 'Successfully joined Learning Space' };
@@ -350,8 +408,15 @@ export class LearningSpacesService {
     const space = await this.resolveSpace(idOrSlug);
     const access = await this.checkSpaceAccess(space, userId, role);
 
-    if (!access.isAdmin && !access.isTeacher && access.userRole !== 'owner' && access.userRole !== 'moderator') {
-      throw new ForbiddenException('Only assigned teachers or moderators can create announcements.');
+    if (
+      !access.isAdmin &&
+      !access.isTeacher &&
+      access.userRole !== 'owner' &&
+      access.userRole !== 'moderator'
+    ) {
+      throw new ForbiddenException(
+        'Only assigned teachers or moderators can create announcements.',
+      );
     }
 
     const communityId = space.communityId || space._id;
@@ -367,7 +432,10 @@ export class LearningSpacesService {
 
     // Send notifications to all active members of this space
     const members = await this.membershipModel
-      .find({ communityId, status: 'active', userId: { $ne: userObjId } }, { userId: 1 })
+      .find(
+        { communityId, status: 'active', userId: { $ne: userObjId } },
+        { userId: 1 },
+      )
       .lean();
 
     if (members.length > 0) {
@@ -382,7 +450,9 @@ export class LearningSpacesService {
         isRead: false,
         targetUrl: `/network/spaces/${space.code || space._id}?tab=announcements`,
       }));
-      await this.notificationModel.insertMany(notifDocs, { ordered: false }).catch(() => {});
+      await this.notificationModel
+        .insertMany(notifDocs, { ordered: false })
+        .catch(() => {});
     }
 
     return announcement;
@@ -391,7 +461,12 @@ export class LearningSpacesService {
   /**
    * Get Space Discussions
    */
-  async getDiscussions(idOrSlug: string, userId: string, role: string, query: any) {
+  async getDiscussions(
+    idOrSlug: string,
+    userId: string,
+    role: string,
+    query: any,
+  ) {
     const space = await this.resolveSpace(idOrSlug);
     await this.checkSpaceAccess(space, userId, role);
 
@@ -454,7 +529,10 @@ export class LearningSpacesService {
     });
 
     if (space.communityId) {
-      await this.communityModel.updateOne({ _id: space.communityId }, { $inc: { discussionCount: 1 } });
+      await this.communityModel.updateOne(
+        { _id: space.communityId },
+        { $inc: { discussionCount: 1 } },
+      );
     }
 
     return discussion;
@@ -463,7 +541,11 @@ export class LearningSpacesService {
   /**
    * Get single discussion detail
    */
-  async getDiscussionDetail(discussionId: string, userId: string, role: string) {
+  async getDiscussionDetail(
+    discussionId: string,
+    userId: string,
+    role: string,
+  ) {
     const discObjId = this.toObjectId(discussionId);
     const discussion = await this.discussionModel
       .findById(discObjId)
@@ -474,7 +556,9 @@ export class LearningSpacesService {
       throw new NotFoundException('Discussion not found');
     }
 
-    const space = await this.spaceModel.findOne({ communityId: discussion.communityId });
+    const space = await this.spaceModel.findOne({
+      communityId: discussion.communityId,
+    });
     if (space) {
       await this.checkSpaceAccess(space, userId, role);
     }
@@ -485,14 +569,21 @@ export class LearningSpacesService {
   /**
    * Get discussion replies
    */
-  async getReplies(discussionId: string, userId: string, role: string, query: any) {
+  async getReplies(
+    discussionId: string,
+    userId: string,
+    role: string,
+    query: any,
+  ) {
     const discObjId = this.toObjectId(discussionId);
     const discussion = await this.discussionModel.findById(discObjId);
     if (!discussion || discussion.status === 'removed') {
       throw new NotFoundException('Discussion not found');
     }
 
-    const space = await this.spaceModel.findOne({ communityId: discussion.communityId });
+    const space = await this.spaceModel.findOne({
+      communityId: discussion.communityId,
+    });
     if (space) {
       await this.checkSpaceAccess(space, userId, role);
     }
@@ -514,23 +605,38 @@ export class LearningSpacesService {
       .limit(limit)
       .lean();
 
-    return { replies, total, page, limit, totalPages: Math.ceil(total / limit) || 1 };
+    return {
+      replies,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+    };
   }
 
   /**
    * Post a reply
    */
-  async createReply(discussionId: string, userId: string, role: string, dto: CreateReplyDto) {
+  async createReply(
+    discussionId: string,
+    userId: string,
+    role: string,
+    dto: CreateReplyDto,
+  ) {
     const discObjId = this.toObjectId(discussionId);
     const discussion = await this.discussionModel.findById(discObjId);
     if (!discussion || discussion.status === 'removed') {
       throw new NotFoundException('Discussion not found');
     }
     if (discussion.status === 'locked') {
-      throw new ForbiddenException('This discussion is locked and cannot receive replies.');
+      throw new ForbiddenException(
+        'This discussion is locked and cannot receive replies.',
+      );
     }
 
-    const space = await this.spaceModel.findOne({ communityId: discussion.communityId });
+    const space = await this.spaceModel.findOne({
+      communityId: discussion.communityId,
+    });
     if (space) {
       await this.checkSpaceAccess(space, userId, role);
     }
@@ -544,21 +650,26 @@ export class LearningSpacesService {
       status: 'published',
     });
 
-    await this.discussionModel.updateOne({ _id: discObjId }, { $inc: { replyCount: 1 } });
+    await this.discussionModel.updateOne(
+      { _id: discObjId },
+      { $inc: { replyCount: 1 } },
+    );
 
     // Notify discussion author if someone else replies
     if (discussion.authorId && !discussion.authorId.equals(userObjId)) {
-      await this.notificationModel.create({
-        recipientId: discussion.authorId,
-        actorId: userObjId,
-        type: 'discussion_reply',
-        category: 'discussions',
-        priority: 'LOW',
-        title: 'New reply on your discussion',
-        message: discussion.title,
-        isRead: false,
-        targetUrl: `/network/spaces/${space?.code || space?._id}/discussions/${discussion._id}`,
-      }).catch(() => {});
+      await this.notificationModel
+        .create({
+          recipientId: discussion.authorId,
+          actorId: userObjId,
+          type: 'discussion_reply',
+          category: 'discussions',
+          priority: 'LOW',
+          title: 'New reply on your discussion',
+          message: discussion.title,
+          isRead: false,
+          targetUrl: `/network/spaces/${space?.code || space?._id}/discussions/${discussion._id}`,
+        })
+        .catch(() => {});
     }
 
     return reply;
@@ -630,6 +741,12 @@ export class LearningSpacesService {
       .limit(limit)
       .lean();
 
-    return { members, total, page, limit, totalPages: Math.ceil(total / limit) || 1 };
+    return {
+      members,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+    };
   }
 }

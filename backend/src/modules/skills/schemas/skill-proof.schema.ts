@@ -54,4 +54,7 @@ export class SkillProof {
 }
 
 export const SkillProofSchema = SchemaFactory.createForClass(SkillProof);
-SkillProofSchema.index({ userId: 1, skillId: 1, sourceType: 1, sourceId: 1 }, { unique: true });
+SkillProofSchema.index(
+  { userId: 1, skillId: 1, sourceType: 1, sourceId: 1 },
+  { unique: true },
+);

@@ -73,17 +73,17 @@ export default function NetworkPage() {
             </span>
           </div>
           <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-white mt-2 tracking-tight">
-            Network & Learning Spaces
+            Network
           </h1>
           <p className="text-sm text-text-muted mt-1 max-w-2xl">
-            Peer connections, cohort learning spaces, verified institutional partners, and career opportunities.
+            Build meaningful connections across Zeitnah — connect with peers, discover cohorts, and collaborate with mentors.
           </p>
         </div>
 
         {/* Primary Tab Navigation */}
         <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] overflow-x-auto">
           {[
-            { id: 'network', label: 'Discover People', icon: Compass },
+            { id: 'network', label: 'People & Network', icon: Compass },
             { id: 'spaces', label: 'Learning Spaces', icon: Users },
             { id: 'opportunities', label: 'Opportunities', icon: Briefcase },
             { id: 'organizations', label: 'Organizations', icon: Building2 },

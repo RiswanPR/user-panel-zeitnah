@@ -87,7 +87,9 @@ export class HlsService {
       const writeStream = fs.createWriteStream(inputFilePath);
       if (typeof (response.Body as any).pipe === 'function') {
         await pipeline(response.Body as any, writeStream);
-      } else if (typeof (response.Body as any).transformToWebStream === 'function') {
+      } else if (
+        typeof (response.Body as any).transformToWebStream === 'function'
+      ) {
         const webStream = (response.Body as any).transformToWebStream();
         await pipeline(Readable.fromWeb(webStream), writeStream);
       } else {

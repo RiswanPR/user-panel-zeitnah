@@ -8,12 +8,7 @@ export type CommunityDocument = Community &
   };
 
 export type CommunityType =
-  | 'COURSE'
-  | 'SUBJECT'
-  | 'INTEREST'
-  | 'PROJECT'
-  | 'GOAL'
-  | 'GENERAL';
+  'COURSE' | 'SUBJECT' | 'INTEREST' | 'PROJECT' | 'GOAL' | 'GENERAL';
 
 export type CommunityVisibility = 'public' | 'restricted' | 'private';
 export type CommunityStatus = 'active' | 'archived';

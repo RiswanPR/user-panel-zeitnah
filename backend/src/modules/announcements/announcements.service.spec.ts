@@ -55,7 +55,10 @@ describe('AnnouncementsService - Filtering & Audience Targeting', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AnnouncementsService,
-        { provide: getModelToken(PlatformAnnouncement.name), useValue: mockAnnouncementModel },
+        {
+          provide: getModelToken(PlatformAnnouncement.name),
+          useValue: mockAnnouncementModel,
+        },
         { provide: getModelToken(User.name), useValue: mockUserModel },
       ],
     }).compile();
@@ -75,11 +78,18 @@ describe('AnnouncementsService - Filtering & Audience Targeting', () => {
         }),
       });
 
-      const results = await service.getActivePlatformAnnouncements(userId.toHexString(), 'student');
+      const results = await service.getActivePlatformAnnouncements(
+        userId.toHexString(),
+        'student',
+      );
       expect(results.length).toBe(2);
-      expect(results.some((a) => a.title === 'Platform Maintenance')).toBe(true);
+      expect(results.some((a) => a.title === 'Platform Maintenance')).toBe(
+        true,
+      );
       expect(results.some((a) => a.title === 'Student Webinar')).toBe(true);
-      expect(results.some((a) => a.title === 'Teacher Faculty Meeting')).toBe(false);
+      expect(results.some((a) => a.title === 'Teacher Faculty Meeting')).toBe(
+        false,
+      );
     });
 
     it('should return ALL_USERS and TEACHERS announcements for a teacher user', async () => {
@@ -93,10 +103,17 @@ describe('AnnouncementsService - Filtering & Audience Targeting', () => {
         }),
       });
 
-      const results = await service.getActivePlatformAnnouncements(userId.toHexString(), 'teacher');
+      const results = await service.getActivePlatformAnnouncements(
+        userId.toHexString(),
+        'teacher',
+      );
       expect(results.length).toBe(2);
-      expect(results.some((a) => a.title === 'Platform Maintenance')).toBe(true);
-      expect(results.some((a) => a.title === 'Teacher Faculty Meeting')).toBe(true);
+      expect(results.some((a) => a.title === 'Platform Maintenance')).toBe(
+        true,
+      );
+      expect(results.some((a) => a.title === 'Teacher Faculty Meeting')).toBe(
+        true,
+      );
       expect(results.some((a) => a.title === 'Student Webinar')).toBe(false);
       // Priority sorting should put CRITICAL above HIGH
       expect(results[0].priority).toBe('CRITICAL');
@@ -113,16 +130,25 @@ describe('AnnouncementsService - Filtering & Audience Targeting', () => {
         }),
       });
 
-      const results = await service.getActivePlatformAnnouncements(userId.toHexString(), 'admin');
+      const results = await service.getActivePlatformAnnouncements(
+        userId.toHexString(),
+        'admin',
+      );
       expect(results.length).toBe(3);
     });
   });
 
   describe('dismissAnnouncement', () => {
     it('should add userId to dismissedBy array', async () => {
-      mockAnnouncementModel.updateOne.mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
+      mockAnnouncementModel.updateOne.mockResolvedValue({
+        matchedCount: 1,
+        modifiedCount: 1,
+      });
 
-      const res = await service.dismissAnnouncement(annId.toHexString(), userId.toHexString());
+      const res = await service.dismissAnnouncement(
+        annId.toHexString(),
+        userId.toHexString(),
+      );
       expect(res.success).toBe(true);
       expect(mockAnnouncementModel.updateOne).toHaveBeenCalledWith(
         { _id: annId },

@@ -68,10 +68,7 @@ export class ProfileController {
       ttl: 60000,
     },
   })
-  async checkUsername(
-    @Query('username') username: string,
-    @Req() req: any,
-  ) {
+  async checkUsername(@Query('username') username: string, @Req() req: any) {
     const currentUserId = req.user?.userId;
     return this.profileService.checkAvailability(username, currentUserId);
   }
@@ -87,12 +84,13 @@ export class ProfileController {
       ttl: 60000,
     },
   })
-  async claimUsername(
-    @Req() req: any,
-    @Body() body: ClaimUsernameDto,
-  ) {
+  async claimUsername(@Req() req: any, @Body() body: ClaimUsernameDto) {
     const ip = this.getClientIp(req);
-    return this.profileService.claimUsername(req.user.userId, body.username, ip);
+    return this.profileService.claimUsername(
+      req.user.userId,
+      body.username,
+      ip,
+    );
   }
 
   /**
@@ -106,12 +104,13 @@ export class ProfileController {
       ttl: 60000,
     },
   })
-  async changeUsername(
-    @Req() req: any,
-    @Body() body: ClaimUsernameDto,
-  ) {
+  async changeUsername(@Req() req: any, @Body() body: ClaimUsernameDto) {
     const ip = this.getClientIp(req);
-    return this.profileService.changeUsername(req.user.userId, body.username, ip);
+    return this.profileService.changeUsername(
+      req.user.userId,
+      body.username,
+      ip,
+    );
   }
 
   /**
@@ -142,10 +141,7 @@ export class ProfileController {
       ttl: 60000,
     },
   })
-  updateProfile(
-    @Req() req: any,
-    @Body() body: UpdateProfileDto,
-  ) {
+  updateProfile(@Req() req: any, @Body() body: UpdateProfileDto) {
     return this.profileService.updateProfile(req.user.userId, body);
   }
 
@@ -319,8 +315,14 @@ export class ProfileController {
   @Post('public/publish')
   @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 20, ttl: 60000 } })
-  setPublicProfilePublishState(@Req() req: any, @Body() body: PublishProfileDto) {
-    return this.profileService.setPublicProfilePublishState(req.user.userId, body.published);
+  setPublicProfilePublishState(
+    @Req() req: any,
+    @Body() body: PublishProfileDto,
+  ) {
+    return this.profileService.setPublicProfilePublishState(
+      req.user.userId,
+      body.published,
+    );
   }
 
   // =========================================================================
@@ -336,10 +338,7 @@ export class ProfileController {
   @Post('recommendations')
   @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  submitRecommendation(
-    @Req() req: any,
-    @Body() body: SubmitRecommendationDto,
-  ) {
+  submitRecommendation(@Req() req: any, @Body() body: SubmitRecommendationDto) {
     return this.profileService.submitRecommendation(req.user.userId, body);
   }
 
@@ -350,7 +349,11 @@ export class ProfileController {
     @Param('id') id: string,
     @Body() body: UpdateRecommendationStatusDto,
   ) {
-    return this.profileService.updateRecommendationStatus(req.user.userId, id, body.status);
+    return this.profileService.updateRecommendationStatus(
+      req.user.userId,
+      id,
+      body.status,
+    );
   }
 
   @Delete('recommendations/:id')

@@ -99,7 +99,11 @@ export class OpportunitiesService {
     if (query.q && query.q.trim()) {
       const clean = escapeRegex(query.q.trim());
       const regex = new RegExp(clean, 'i');
-      filter.$or = [{ title: regex }, { description: regex }, { skills: regex }];
+      filter.$or = [
+        { title: regex },
+        { description: regex },
+        { skills: regex },
+      ];
     }
 
     const [total, docs] = await Promise.all([
@@ -109,7 +113,10 @@ export class OpportunitiesService {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .populate('organizationId', 'name slug logo type industry verificationStatus')
+        .populate(
+          'organizationId',
+          'name slug logo type industry verificationStatus',
+        )
         .lean(),
     ]);
 
@@ -158,7 +165,10 @@ export class OpportunitiesService {
 
     const opp: any = await this.oppModel
       .findById(id)
-      .populate('organizationId', 'name slug logo description website industry location verificationStatus')
+      .populate(
+        'organizationId',
+        'name slug logo description website industry location verificationStatus',
+      )
       .lean();
 
     if (!opp) {
@@ -217,7 +227,11 @@ export class OpportunitiesService {
   /**
    * Update opportunity (Authorized: OWNER, ADMIN, or RECRUITER of owning org)
    */
-  async updateOpportunity(userId: string, id: string, dto: UpdateOpportunityDto) {
+  async updateOpportunity(
+    userId: string,
+    id: string,
+    dto: UpdateOpportunityDto,
+  ) {
     const opp = await this.oppModel.findById(id);
     if (!opp) {
       throw new NotFoundException('Opportunity not found');
@@ -235,9 +249,11 @@ export class OpportunitiesService {
     if (dto.type !== undefined) opp.type = dto.type;
     if (dto.location !== undefined) opp.location = dto.location.trim();
     if (dto.workMode !== undefined) opp.workMode = dto.workMode;
-    if (dto.experienceLevel !== undefined) opp.experienceLevel = dto.experienceLevel;
+    if (dto.experienceLevel !== undefined)
+      opp.experienceLevel = dto.experienceLevel;
     if (dto.visibility !== undefined) opp.visibility = dto.visibility;
-    if (dto.expiresAt !== undefined) opp.expiresAt = dto.expiresAt ? new Date(dto.expiresAt) : null;
+    if (dto.expiresAt !== undefined)
+      opp.expiresAt = dto.expiresAt ? new Date(dto.expiresAt) : null;
 
     await opp.save();
     return opp;
@@ -263,7 +279,11 @@ export class OpportunitiesService {
     return opp;
   }
 
-  private async assertOrgRole(userId: string, orgId: string, allowedRoles: OrganizationRole[]) {
+  private async assertOrgRole(
+    userId: string,
+    orgId: string,
+    allowedRoles: OrganizationRole[],
+  ) {
     const userObjId = new Types.ObjectId(userId);
     const orgObjId = new Types.ObjectId(orgId);
 

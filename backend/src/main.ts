@@ -79,7 +79,9 @@ async function bootstrap(): Promise<void> {
   ];
 
   const allowedOrigins = Array.from(
-    new Set([...configuredOrigins, ...defaultMobileAndWebOrigins].filter(Boolean)),
+    new Set(
+      [...configuredOrigins, ...defaultMobileAndWebOrigins].filter(Boolean),
+    ),
   );
 
   app.enableCors({

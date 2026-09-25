@@ -27,7 +27,9 @@ describe('AuthService', () => {
     };
 
     // Spy on resend email send
-    jest.spyOn(resend.emails, 'send').mockResolvedValue({ data: { id: 'email_123' }, error: null } as any);
+    jest
+      .spyOn(resend.emails, 'send')
+      .mockResolvedValue({ data: { id: 'email_123' }, error: null } as any);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -97,7 +99,9 @@ describe('AuthService', () => {
       userModel.findOne.mockResolvedValue(mockUser);
       userModel.exists.mockResolvedValue(null);
 
-      const result = await service.loginSendOtp('muhammedthajchorampatta@example.com');
+      const result = await service.loginSendOtp(
+        'muhammedthajchorampatta@example.com',
+      );
 
       expect(result).toEqual({ message: 'OTP sent successfully' });
       expect(mockUser.username.length).toBeLessThanOrEqual(20);
@@ -132,7 +136,9 @@ describe('AuthService', () => {
         return Promise.resolve(null);
       });
 
-      const result = await service.loginSendOtp('muhammedthajchorampatta@example.com');
+      const result = await service.loginSendOtp(
+        'muhammedthajchorampatta@example.com',
+      );
 
       expect(result).toEqual({ message: 'OTP sent successfully' });
       expect(mockUser.username.length).toBeLessThanOrEqual(20);

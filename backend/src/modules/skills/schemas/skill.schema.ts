@@ -14,7 +14,13 @@ export class Skill {
   @Prop({ required: true, trim: true, unique: true, index: true })
   name!: string;
 
-  @Prop({ required: true, lowercase: true, trim: true, unique: true, index: true })
+  @Prop({
+    required: true,
+    lowercase: true,
+    trim: true,
+    unique: true,
+    index: true,
+  })
   slug!: string;
 
   @Prop({ required: true, trim: true, default: 'General', index: true })

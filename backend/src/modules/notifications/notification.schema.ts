@@ -45,7 +45,7 @@ export class Notification {
   @Prop({ type: Boolean, default: true })
   allowDismiss?: boolean;
 
-  @Prop({ type: String, index: true })
+  @Prop({ type: String })
   idempotencyKey?: string;
 
   @Prop({ type: String, default: '' })

@@ -21,5 +21,6 @@ export class NetworkActivity {
   metadata: Record<string, any>;
 }
 
-export const NetworkActivitySchema = SchemaFactory.createForClass(NetworkActivity);
+export const NetworkActivitySchema =
+  SchemaFactory.createForClass(NetworkActivity);
 NetworkActivitySchema.index({ userId: 1, createdAt: -1 });

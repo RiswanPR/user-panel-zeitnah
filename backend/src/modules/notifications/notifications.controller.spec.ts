@@ -8,8 +8,12 @@ describe('NotificationsController', () => {
 
   beforeEach(async () => {
     mockService = {
-      registerPushToken: jest.fn().mockResolvedValue({ success: true, message: 'registered' }),
-      removePushToken: jest.fn().mockResolvedValue({ success: true, message: 'removed' }),
+      registerPushToken: jest
+        .fn()
+        .mockResolvedValue({ success: true, message: 'registered' }),
+      removePushToken: jest
+        .fn()
+        .mockResolvedValue({ success: true, message: 'removed' }),
       getPushDevices: jest.fn().mockResolvedValue([]),
     };
 
@@ -32,7 +36,11 @@ describe('NotificationsController', () => {
 
   it('should register push token', async () => {
     const req = { user: { userId: 'user-1' } };
-    const dto = { deviceId: 'dev-1', pushToken: 'token-abc', platform: 'android' as const };
+    const dto = {
+      deviceId: 'dev-1',
+      pushToken: 'token-abc',
+      platform: 'android' as const,
+    };
     const res = await controller.registerPushToken(req, dto);
     expect(mockService.registerPushToken).toHaveBeenCalledWith('user-1', dto);
     expect(res).toEqual({ success: true, message: 'registered' });

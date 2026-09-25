@@ -1,4 +1,10 @@
-import { Injectable, BadRequestException, NotFoundException, Logger, Optional } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  Logger,
+  Optional,
+} from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
 import { Model, Types, Connection } from 'mongoose';
 import { Notification, NotificationDocument } from './notification.schema';
@@ -7,7 +13,10 @@ import {
   NotificationPreferenceDocument,
 } from './notification-preference.schema';
 import { User, UserDocument } from '../auth/schemas/user.schema';
-import { Announcement, AnnouncementDocument } from '../announcements/schemas/announcement.schema';
+import {
+  Announcement,
+  AnnouncementDocument,
+} from '../announcements/schemas/announcement.schema';
 import {
   PlatformAnnouncement,
   PlatformAnnouncementDocument,
@@ -92,8 +101,8 @@ export class NotificationsService {
 
     // 2. Role-specific
     if (targetType === 'role') {
-      const targetRoles = (ann.targetIds || ann.targetRoles || []).map((r: any) =>
-        String(r).toLowerCase(),
+      const targetRoles = (ann.targetIds || ann.targetRoles || []).map(
+        (r: any) => String(r).toLowerCase(),
       );
       if (userRole === 'admin' || userRole === 'superuser') return true;
       if (
@@ -118,10 +127,19 @@ export class NotificationsService {
     }
 
     if (audience === 'STUDENTS') {
-      return userRole === 'student' || userRole === 'user' || userRole === 'admin' || userRole === 'superuser';
+      return (
+        userRole === 'student' ||
+        userRole === 'user' ||
+        userRole === 'admin' ||
+        userRole === 'superuser'
+      );
     }
     if (audience === 'TEACHERS') {
-      return userRole === 'teacher' || userRole === 'admin' || userRole === 'superuser';
+      return (
+        userRole === 'teacher' ||
+        userRole === 'admin' ||
+        userRole === 'superuser'
+      );
     }
 
     // 3. Course-specific
@@ -141,18 +159,23 @@ export class NotificationsService {
     }
 
     // 5. Platform-wide / All Users (when explicitly platform or default with no special target)
-    if (targetType === 'platform' || audience === 'ALL_USERS' || (!targetType && !audience)) {
+    if (
+      targetType === 'platform' ||
+      audience === 'ALL_USERS' ||
+      (!targetType && !audience)
+    ) {
       return true;
     }
 
     return false;
   }
 
-
   /**
    * Synchronize published announcements into the user notification collection lazily & idempotently
    */
-  async syncUserAnnouncementNotifications(userId: string | Types.ObjectId): Promise<number> {
+  async syncUserAnnouncementNotifications(
+    userId: string | Types.ObjectId,
+  ): Promise<number> {
     try {
       const userObjId = this.toObjectId(userId);
       const userIdStr = userObjId.toString();
@@ -173,7 +196,11 @@ export class NotificationsService {
 
       if (!user) return 0;
 
-      const userRole = (user.role || (user as any).primaryRole || 'student').toLowerCase();
+      const userRole = (
+        user.role ||
+        (user as any).primaryRole ||
+        'student'
+      ).toLowerCase();
       const userEnrolledCourses = ((user as any).course || [])
         .map((c: any) => String(c.courseId))
         .filter(Boolean);
@@ -182,39 +209,51 @@ export class NotificationsService {
       const userSpaceIds = new Set<string>();
       if (this.connection && this.connection.db) {
         try {
-          const [spaceMembers, ownedSpaces, commMemberships] = await Promise.all([
-            this.connection.db
-              .collection('learning_space_members')
-              .find({ userId: userObjId, status: { $ne: 'removed' } }, { projection: { spaceId: 1 } })
-              .toArray(),
-            this.connection.db
-              .collection('learning_spaces')
-              .find(
-                {
-                  $or: [
-                    { ownerId: userObjId },
-                    { teachers: userObjId },
-                    { teachers: userIdStr },
-                  ],
-                  status: { $ne: 'archived' },
-                },
-                { projection: { _id: 1 } },
-              )
-              .toArray(),
-            this.connection.db
-              .collection('network_community_memberships')
-              .find({ userId: userObjId, status: 'active' }, { projection: { communityId: 1 } })
-              .toArray(),
-          ]);
+          const [spaceMembers, ownedSpaces, commMemberships] =
+            await Promise.all([
+              this.connection.db
+                .collection('learning_space_members')
+                .find(
+                  { userId: userObjId, status: { $ne: 'removed' } },
+                  { projection: { spaceId: 1 } },
+                )
+                .toArray(),
+              this.connection.db
+                .collection('learning_spaces')
+                .find(
+                  {
+                    $or: [
+                      { ownerId: userObjId },
+                      { teachers: userObjId },
+                      { teachers: userIdStr },
+                    ],
+                    status: { $ne: 'archived' },
+                  },
+                  { projection: { _id: 1 } },
+                )
+                .toArray(),
+              this.connection.db
+                .collection('network_community_memberships')
+                .find(
+                  { userId: userObjId, status: 'active' },
+                  { projection: { communityId: 1 } },
+                )
+                .toArray(),
+            ]);
 
-          spaceMembers.forEach((m) => m.spaceId && userSpaceIds.add(m.spaceId.toString()));
+          spaceMembers.forEach(
+            (m) => m.spaceId && userSpaceIds.add(m.spaceId.toString()),
+          );
           ownedSpaces.forEach((s) => userSpaceIds.add(s._id.toString()));
 
           if (commMemberships.length > 0) {
             const commIds = commMemberships.map((c) => c.communityId);
             const commSpaces = await this.connection.db
               .collection('learning_spaces')
-              .find({ communityId: { $in: commIds } }, { projection: { _id: 1 } })
+              .find(
+                { communityId: { $in: commIds } },
+                { projection: { _id: 1 } },
+              )
               .toArray();
             commSpaces.forEach((s) => userSpaceIds.add(s._id.toString()));
           }
@@ -224,8 +263,11 @@ export class NotificationsService {
       }
 
       // Fetch user preferences
-      const userPrefs = await this.prefModel.findOne({ userId: userObjId }).lean();
-      const allowNonCriticalAnnouncements = userPrefs?.categories?.announcements !== false;
+      const userPrefs = await this.prefModel
+        .findOne({ userId: userObjId })
+        .lean();
+      const allowNonCriticalAnnouncements =
+        userPrefs?.categories?.announcements !== false;
 
       // Query active announcements from canonical `announcements` and `platform_announcements`
       const activeFilter: any = {
@@ -255,8 +297,12 @@ export class NotificationsService {
       };
 
       const [masterAnnouncements, platformAnnouncements] = await Promise.all([
-        this.announcementModel ? this.announcementModel.find(activeFilter).lean() : [],
-        this.platformAnnouncementModel ? this.platformAnnouncementModel.find(activeFilter).lean() : [],
+        this.announcementModel
+          ? this.announcementModel.find(activeFilter).lean()
+          : [],
+        this.platformAnnouncementModel
+          ? this.platformAnnouncementModel.find(activeFilter).lean()
+          : [],
       ]);
 
       // Deduplicate: If an announcement exists in master and platform, master takes precedence
@@ -286,7 +332,9 @@ export class NotificationsService {
         const annIdStr = ann._id.toString();
 
         // 1. Check Dismissal
-        const dismissedList = (ann.dismissedBy || []).map((id: any) => id?.toString());
+        const dismissedList = (ann.dismissedBy || []).map((id: any) =>
+          id?.toString(),
+        );
         if (dismissedList.includes(userIdStr)) {
           continue;
         }
@@ -318,11 +366,17 @@ export class NotificationsService {
         const existing = await this.notificationModel.findOne({
           $or: [
             { idempotencyKey },
-            { recipientId: userObjId, entityType: 'announcement', entityId: ann._id },
+            {
+              recipientId: userObjId,
+              entityType: 'announcement',
+              entityId: ann._id,
+            },
           ],
         });
 
-        const isReadBy = (ann.readBy || []).some((id: any) => id?.toString() === userIdStr);
+        const isReadBy = (ann.readBy || []).some(
+          (id: any) => id?.toString() === userIdStr,
+        );
 
         if (existing) {
           // If read in announcement but unread in notification, reconcile
@@ -342,7 +396,9 @@ export class NotificationsService {
         const actionUrl =
           ann.cta?.url ||
           ann.actionUrl ||
-          (ann.targetType === 'course' && ann.courseId ? `/courses/${ann.courseId}` : '');
+          (ann.targetType === 'course' && ann.courseId
+            ? `/courses/${ann.courseId}`
+            : '');
 
         let newNotification: any = null;
         try {
@@ -350,7 +406,8 @@ export class NotificationsService {
             recipientId: userObjId,
             actorId: ann.createdBy ? this.toObjectId(ann.createdBy) : undefined,
             type: 'ANNOUNCEMENT',
-            category: ann.targetType === 'learning_space' ? 'community' : 'system',
+            category:
+              ann.targetType === 'learning_space' ? 'community' : 'system',
             priority,
             title: ann.title,
             message: plainMessage,
@@ -374,7 +431,9 @@ export class NotificationsService {
         } catch (createErr: any) {
           if (createErr?.code === 11000) {
             // Concurrent request inserted the same notification at the exact same millisecond
-            this.logger.debug(`Idempotent notification collision handled: ${idempotencyKey}`);
+            this.logger.debug(
+              `Idempotent notification collision handled: ${idempotencyKey}`,
+            );
             continue;
           }
           throw createErr;
@@ -385,7 +444,9 @@ export class NotificationsService {
           if (newNotification && !isReadBy && this.notificationsGateway) {
             this.notificationsGateway.sendNotificationToUser(
               userIdStr,
-              newNotification.toObject ? newNotification.toObject() : newNotification,
+              newNotification.toObject
+                ? newNotification.toObject()
+                : newNotification,
             );
           }
         } catch (emitErr) {
@@ -395,7 +456,10 @@ export class NotificationsService {
 
       return createdCount;
     } catch (err) {
-      this.logger.error(`Error syncing announcement notifications for ${userId}: ${err.message}`, err.stack);
+      this.logger.error(
+        `Error syncing announcement notifications for ${userId}: ${err.message}`,
+        err.stack,
+      );
       return 0;
     }
   }
@@ -454,7 +518,9 @@ export class NotificationsService {
       return notification;
     } catch (createErr: any) {
       if (createErr?.code === 11000 && dto.idempotencyKey) {
-        return await this.notificationModel.findOne({ idempotencyKey: dto.idempotencyKey });
+        return await this.notificationModel.findOne({
+          idempotencyKey: dto.idempotencyKey,
+        });
       }
       throw createErr;
     }
@@ -496,7 +562,10 @@ export class NotificationsService {
         .limit(limit)
         .lean(),
       this.notificationModel.countDocuments(filter),
-      this.notificationModel.countDocuments({ recipientId: userObjId, isRead: false }),
+      this.notificationModel.countDocuments({
+        recipientId: userObjId,
+        isRead: false,
+      }),
     ]);
 
     return {
@@ -559,7 +628,9 @@ export class NotificationsService {
           );
         }
       } catch (err) {
-        this.logger.debug(`Could not update announcement readBy: ${err.message}`);
+        this.logger.debug(
+          `Could not update announcement readBy: ${err.message}`,
+        );
       }
     }
 
@@ -583,11 +654,17 @@ export class NotificationsService {
     let unreadAnnouncements: any[] = [];
     try {
       unreadAnnouncements = await this.notificationModel
-        .find({ ...filter, entityType: 'announcement', entityId: { $ne: null } })
+        .find({
+          ...filter,
+          entityType: 'announcement',
+          entityId: { $ne: null },
+        })
         .select('entityId')
         .lean();
     } catch (findErr) {
-      this.logger.debug(`Could not find unread announcements: ${findErr?.message}`);
+      this.logger.debug(
+        `Could not find unread announcements: ${findErr?.message}`,
+      );
     }
 
     await this.notificationModel.updateMany(filter, {
@@ -610,7 +687,9 @@ export class NotificationsService {
           );
         }
       } catch (err) {
-        this.logger.debug(`Could not update readBy in markAllAsRead: ${err.message}`);
+        this.logger.debug(
+          `Could not update readBy in markAllAsRead: ${err.message}`,
+        );
       }
     }
 
@@ -622,7 +701,10 @@ export class NotificationsService {
    */
   async clearNotifications(userId: string) {
     const userObjId = this.toObjectId(userId);
-    await this.notificationModel.deleteMany({ recipientId: userObjId, isRead: true });
+    await this.notificationModel.deleteMany({
+      recipientId: userObjId,
+      isRead: true,
+    });
     return { success: true };
   }
 
@@ -667,7 +749,9 @@ export class NotificationsService {
         $set: {
           emailNotifications: updateData.emailNotifications,
           inAppNotifications: updateData.inAppNotifications,
-          ...(updateData.categories ? { categories: updateData.categories } : {}),
+          ...(updateData.categories
+            ? { categories: updateData.categories }
+            : {}),
         },
       },
       { upsert: true, new: true },
@@ -703,7 +787,9 @@ export class NotificationsService {
 
   async getPushDevices(userId: string) {
     const userObjId = this.toObjectId(userId);
-    const user = await this.userModel.findById(userObjId, { pushTokens: 1 }).lean();
+    const user = await this.userModel
+      .findById(userObjId, { pushTokens: 1 })
+      .lean();
     return (user as any)?.pushTokens || [];
   }
 }

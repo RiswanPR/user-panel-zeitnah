@@ -13,11 +13,11 @@ export default function ProfileNotFound() {
       </div>
 
       <h1 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
-        Profile not found
+        Profile unavailable
       </h1>
 
       <p className="mt-2 text-xs sm:text-sm font-medium text-text-muted leading-relaxed max-w-sm">
-        This student profile may have been removed, changed their username, or is no longer available in the Zeitnah network.
+        This profile could not be found or is no longer available.
       </p>
 
       <div className="mt-6">

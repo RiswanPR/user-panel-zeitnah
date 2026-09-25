@@ -80,4 +80,3 @@ export function isReservedUsername(username: string): boolean {
 export const USERNAME_CHANGE_COOLDOWN_DAYS = 14;
 export const USERNAME_CHANGE_COOLDOWN_MS =
   USERNAME_CHANGE_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
-

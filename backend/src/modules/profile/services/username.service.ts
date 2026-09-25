@@ -56,11 +56,17 @@ export class UsernameService {
     const trimmed = username.toLowerCase().trim();
 
     if (trimmed.length < 3) {
-      return { valid: false, reason: 'Username must be at least 3 characters.' };
+      return {
+        valid: false,
+        reason: 'Username must be at least 3 characters.',
+      };
     }
 
     if (trimmed.length > 20) {
-      return { valid: false, reason: 'Username must be 20 characters or fewer.' };
+      return {
+        valid: false,
+        reason: 'Username must be 20 characters or fewer.',
+      };
     }
 
     if (!/^[a-z0-9_]+$/.test(trimmed)) {
@@ -99,7 +105,11 @@ export class UsernameService {
    * does not exceed 20 characters and all normalization/validation rules are respected.
    * Space is reserved from the base string for the suffix (and separator).
    */
-  buildWithSuffix(base: string, suffix: string | number, separator = '_'): string {
+  buildWithSuffix(
+    base: string,
+    suffix: string | number,
+    separator = '_',
+  ): string {
     const suffixStr = String(suffix);
     const fullSuffix = separator ? `${separator}${suffixStr}` : suffixStr;
     const maxBaseLen = Math.max(1, 20 - fullSuffix.length);
@@ -110,7 +120,8 @@ export class UsernameService {
     }
 
     if (!cleanBase) {
-      cleanBase = 'user'.slice(0, Math.max(1, maxBaseLen)).replace(/_+$/, '') || 'u';
+      cleanBase =
+        'user'.slice(0, Math.max(1, maxBaseLen)).replace(/_+$/, '') || 'u';
     }
 
     const result = `${cleanBase}${fullSuffix}`;
@@ -130,7 +141,9 @@ export class UsernameService {
     if (!cleanFirst) return cleanSecond;
     if (!cleanSecond) return cleanFirst;
 
-    const fullStr = separator ? `${cleanFirst}${separator}${cleanSecond}` : `${cleanFirst}${cleanSecond}`;
+    const fullStr = separator
+      ? `${cleanFirst}${separator}${cleanSecond}`
+      : `${cleanFirst}${cleanSecond}`;
     if (fullStr.length <= 20) {
       return fullStr;
     }
@@ -138,12 +151,16 @@ export class UsernameService {
     if (separator) {
       const maxSecondLen = 20 - cleanFirst.length - separator.length;
       if (maxSecondLen >= 1) {
-        const truncatedSecond = cleanSecond.slice(0, maxSecondLen).replace(/_+$/, '');
+        const truncatedSecond = cleanSecond
+          .slice(0, maxSecondLen)
+          .replace(/_+$/, '');
         return `${cleanFirst}${separator}${truncatedSecond}`;
       }
       const half = 9;
       const firstPart = cleanFirst.slice(0, half).replace(/_+$/, '');
-      const secondPart = cleanSecond.slice(0, 20 - firstPart.length - separator.length).replace(/_+$/, '');
+      const secondPart = cleanSecond
+        .slice(0, 20 - firstPart.length - separator.length)
+        .replace(/_+$/, '');
       return `${firstPart}${separator}${secondPart}`;
     }
 
@@ -208,7 +225,8 @@ export class UsernameService {
         }
 
         // Step 3: Curated suffixes reserving space
-        const base = firstName.length >= 3 ? firstName : (sanitizedName || 'user');
+        const base =
+          firstName.length >= 3 ? firstName : sanitizedName || 'user';
         const prefixes = ['1', '2', '01', '07', '99', '24', '25', '26'];
         for (const num of prefixes) {
           addCandidate(this.buildWithSuffix(base, num, '_'));
@@ -250,7 +268,9 @@ export class UsernameService {
    * If initial candidates collide, systematically generates numbered suffixes
    * while reserving suffix space to ensure <= 20 length.
    */
-  async generateUniqueUsername(options: GenerateUsernameOptions): Promise<string> {
+  async generateUniqueUsername(
+    options: GenerateUsernameOptions,
+  ): Promise<string> {
     const { name, email, source, isTaken } = options;
 
     const candidates = this.generateCandidates(name, email, source);
@@ -295,6 +315,8 @@ export class UsernameService {
       }
     }
 
-    throw new Error('Failed to generate a unique username within allowed character limit.');
+    throw new Error(
+      'Failed to generate a unique username within allowed character limit.',
+    );
   }
 }

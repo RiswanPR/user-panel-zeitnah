@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Param,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Param, Req, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AnnouncementsService } from './announcements.service';
@@ -52,24 +45,36 @@ export class AnnouncementsController {
   @Post('platform/:id/dismiss')
   @ApiOperation({ summary: 'Dismiss a platform announcement' })
   async dismissPlatformAnnouncement(@Req() req, @Param('id') id: string) {
-    return this.announcementsService.dismissAnnouncement(id, this.getUserId(req));
+    return this.announcementsService.dismissAnnouncement(
+      id,
+      this.getUserId(req),
+    );
   }
 
   @Post(':id/dismiss')
   @ApiOperation({ summary: 'Dismiss announcement' })
   async dismissAnnouncement(@Req() req, @Param('id') id: string) {
-    return this.announcementsService.dismissAnnouncement(id, this.getUserId(req));
+    return this.announcementsService.dismissAnnouncement(
+      id,
+      this.getUserId(req),
+    );
   }
 
   @Post('platform/:id/acknowledge')
   @ApiOperation({ summary: 'Acknowledge a platform announcement' })
   async acknowledgePlatformAnnouncement(@Req() req, @Param('id') id: string) {
-    return this.announcementsService.acknowledgeAnnouncement(id, this.getUserId(req));
+    return this.announcementsService.acknowledgeAnnouncement(
+      id,
+      this.getUserId(req),
+    );
   }
 
   @Post(':id/acknowledge')
   @ApiOperation({ summary: 'Acknowledge announcement' })
   async acknowledgeAnnouncement(@Req() req, @Param('id') id: string) {
-    return this.announcementsService.acknowledgeAnnouncement(id, this.getUserId(req));
+    return this.announcementsService.acknowledgeAnnouncement(
+      id,
+      this.getUserId(req),
+    );
   }
 }

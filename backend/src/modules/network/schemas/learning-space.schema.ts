@@ -8,22 +8,40 @@ export class LearningSpace {
   @Prop({ type: String, required: true, trim: true })
   name: string;
 
-  @Prop({ type: String, required: true, unique: true, uppercase: true, trim: true })
+  @Prop({
+    type: String,
+    required: true,
+    unique: true,
+    uppercase: true,
+    trim: true,
+  })
   code: string;
 
   @Prop({ type: String, default: '', trim: true })
   description: string;
 
-  @Prop({ type: String, default: 'Batch', enum: ['Batch', 'Study Group', 'Department', 'Program'] })
+  @Prop({
+    type: String,
+    default: 'Batch',
+    enum: ['Batch', 'Study Group', 'Department', 'Program'],
+  })
   category: string;
 
   @Prop({ type: String, default: '' })
   coverImage: string;
 
-  @Prop({ type: String, default: 'active', enum: ['draft', 'active', 'archived'] })
+  @Prop({
+    type: String,
+    default: 'active',
+    enum: ['draft', 'active', 'archived'],
+  })
   status: string;
 
-  @Prop({ type: String, default: 'invite_only', enum: ['open', 'invite_only', 'restricted'] })
+  @Prop({
+    type: String,
+    default: 'invite_only',
+    enum: ['open', 'invite_only', 'restricted'],
+  })
   accessMode: string;
 
   @Prop({ type: Types.ObjectId, ref: 'User' })

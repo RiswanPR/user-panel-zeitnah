@@ -15,11 +15,7 @@ export type NotificationCategory =
   | 'system';
 
 export type NotificationPriority =
-  | 'critical'
-  | 'high'
-  | 'important'
-  | 'normal'
-  | 'low';
+  'critical' | 'high' | 'important' | 'normal' | 'low';
 
 export type NotificationDocument = Notification &
   Document & {

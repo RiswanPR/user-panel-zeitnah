@@ -3,14 +3,22 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Optional,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { NetworkConnection, NetworkConnectionDocument } from '../schemas/connection.schema';
+import {
+  NetworkConnection,
+  NetworkConnectionDocument,
+} from '../schemas/connection.schema';
 import { User, UserDocument } from '../../auth/schemas/user.schema';
-import { Notification, NotificationDocument } from '../../notifications/notification.schema';
+import {
+  Notification,
+  NotificationDocument,
+} from '../../notifications/notification.schema';
 import { QueryPeopleDto } from '../dto/network.dto';
 import { escapeRegex } from '../../../common/utils/regex.util';
+import { SignedUrlService } from '../../../common/aws/signed-url.service';
 
 @Injectable()
 export class NetworkConnectionsService {
@@ -21,6 +29,8 @@ export class NetworkConnectionsService {
     private userModel: Model<UserDocument>,
     @InjectModel(Notification.name)
     private notificationModel: Model<NotificationDocument>,
+    @Optional()
+    private signedUrlService?: SignedUrlService,
   ) {}
 
   private toObjectId(id: string | Types.ObjectId): Types.ObjectId {
@@ -31,7 +41,10 @@ export class NetworkConnectionsService {
     throw new BadRequestException('Invalid ID format');
   }
 
-  private getOrderedUserIds(idA: string, idB: string): [Types.ObjectId, Types.ObjectId] {
+  private getOrderedUserIds(
+    idA: string,
+    idB: string,
+  ): [Types.ObjectId, Types.ObjectId] {
     const sA = String(idA);
     const sB = String(idB);
     return sA < sB
@@ -59,17 +72,35 @@ export class NetworkConnectionsService {
     }
 
     if (query.q && query.q.trim()) {
-      const regex = new RegExp(escapeRegex(query.q.trim()), 'i');
-      filter.$or = [{ name: regex }, { email: regex }];
+      const cleanQ = escapeRegex(query.q.trim());
+      const regex = new RegExp(cleanQ, 'i');
+      filter.$or = [
+        { name: regex },
+        { username: regex },
+        { headline: regex },
+        { currentRole: regex },
+        { 'course.courseName': regex },
+        { skills: regex },
+        { email: regex },
+      ];
     }
 
     const total = await this.userModel.countDocuments(filter);
     const users = await this.userModel
       .find(filter, {
         name: 1,
+        username: 1,
         email: 1,
         role: 1,
         avatar: 1,
+        profileImage: 1,
+        headline: 1,
+        currentRole: 1,
+        skills: 1,
+        course: 1,
+        gamification: 1,
+        'account_Status.isVerified': 1,
+        'verification.status': 1,
         createdAt: 1,
       })
       .sort({ createdAt: -1 })
@@ -88,9 +119,14 @@ export class NetworkConnectionsService {
       })
       .lean();
 
-    const connMap = new Map<string, { status: string; connectionId: string; isRequester: boolean }>();
+    const connMap = new Map<
+      string,
+      { status: string; connectionId: string; isRequester: boolean }
+    >();
     connections.forEach((c) => {
-      const otherId = c.requesterId.equals(userObjId) ? String(c.recipientId) : String(c.requesterId);
+      const otherId = c.requesterId.equals(userObjId)
+        ? String(c.recipientId)
+        : String(c.requesterId);
       connMap.set(otherId, {
         status: c.status,
         connectionId: String(c._id),
@@ -98,26 +134,71 @@ export class NetworkConnectionsService {
       });
     });
 
-    const enrichedUsers = users.map((u: any) => {
-      const conn = connMap.get(String(u._id));
-      let connectionStatus = 'none';
-      if (conn) {
-        if (conn.status === 'accepted') connectionStatus = 'connected';
-        else if (conn.status === 'pending') {
-          connectionStatus = conn.isRequester ? 'pending_sent' : 'pending_received';
+    const enrichedUsers = await Promise.all(
+      users.map(async (u: any) => {
+        const conn = connMap.get(String(u._id));
+        let connectionStatus = 'none';
+        let isFollowing = false;
+        if (conn) {
+          if (conn.status === 'accepted') {
+            connectionStatus = 'connected';
+            isFollowing = true;
+          } else if (conn.status === 'pending') {
+            if (conn.isRequester) {
+              connectionStatus = 'pending_sent';
+              isFollowing = true;
+            } else {
+              connectionStatus = 'pending_received';
+              isFollowing = false;
+            }
+          }
         }
-      }
 
-      return {
-        _id: u._id,
-        name: u.name || u.email.split('@')[0],
-        email: u.email,
-        role: u.role,
-        avatar: u.avatar || u.profileImage || '',
-        connectionStatus,
-        connectionId: conn?.connectionId || null,
-      };
-    });
+        let avatarUrl = u.avatar || u.profileImage || '';
+        if (this.signedUrlService && avatarUrl) {
+          try {
+            avatarUrl = await this.signedUrlService.generateSignedImageUrl(avatarUrl);
+          } catch {
+            // Keep original if signing fails
+          }
+        }
+
+        const primaryCourse =
+          Array.isArray(u.course) && u.course.length > 0
+            ? u.course[0]?.courseName || ''
+            : '';
+
+        const headline =
+          u.headline ||
+          u.currentRole ||
+          (primaryCourse ? `Student · ${primaryCourse}` : 'Student');
+
+        return {
+          _id: u._id,
+          id: String(u._id),
+          name: u.name || (u.email ? u.email.split('@')[0] : 'Student'),
+          username: u.username || '',
+          email: u.email || '',
+          role: u.role || 'student',
+          avatar: avatarUrl,
+          avatarUrl,
+          headline,
+          course: primaryCourse,
+          skills: Array.isArray(u.skills) ? u.skills : [],
+          interests: Array.isArray(u.skills) ? u.skills : [],
+          level:
+            u.gamification?.rank ||
+            (u.gamification?.level ? `Level ${u.gamification.level}` : 'Beginner'),
+          isVerified: Boolean(
+            u.account_Status?.isVerified ||
+              u.verification?.status === 'VERIFIED',
+          ),
+          connectionStatus,
+          isFollowing,
+          connectionId: conn?.connectionId || null,
+        };
+      }),
+    );
 
     return {
       people: enrichedUsers,
@@ -125,6 +206,52 @@ export class NetworkConnectionsService {
       page,
       limit,
       totalPages: Math.ceil(total / limit) || 1,
+    };
+  }
+
+  /**
+   * Helper to sign an avatar URL for populated user docs.
+   */
+  private async signAvatar(url?: string): Promise<string> {
+    if (!url) return '';
+    if (!this.signedUrlService) return url;
+    try {
+      return await this.signedUrlService.generateSignedImageUrl(url);
+    } catch {
+      return url;
+    }
+  }
+
+  /**
+   * Helper to format populated user document safely.
+   */
+  private async formatPopulatedUser(raw: any) {
+    if (!raw) return { _id: null, id: '', name: 'User', username: '', email: '', avatar: '' };
+    const avatar = await this.signAvatar(raw.avatar || raw.profileImage);
+    const primaryCourse =
+      Array.isArray(raw.course) && raw.course.length > 0
+        ? raw.course[0]?.courseName || ''
+        : '';
+    const headline =
+      raw.headline ||
+      raw.currentRole ||
+      (primaryCourse ? `Student · ${primaryCourse}` : 'Student');
+
+    return {
+      _id: raw._id,
+      id: String(raw._id),
+      name: raw.name || (raw.email ? raw.email.split('@')[0] : 'User'),
+      username: raw.username || '',
+      email: raw.email || '',
+      avatar,
+      avatarUrl: avatar,
+      role: raw.role || 'student',
+      headline,
+      course: primaryCourse,
+      skills: Array.isArray(raw.skills) ? raw.skills : [],
+      isVerified: Boolean(
+        raw.account_Status?.isVerified || raw.verification?.status === 'VERIFIED',
+      ),
     };
   }
 
@@ -142,32 +269,44 @@ export class NetworkConnectionsService {
       status: 'accepted',
     };
 
+    const userFields =
+      'name username email avatar profileImage role headline course skills account_Status verification';
+
     const total = await this.connectionModel.countDocuments(filter);
     const connections = await this.connectionModel
       .find(filter)
-      .populate('requesterId', 'name email avatar profileImage role')
-      .populate('recipientId', 'name email avatar profileImage role')
+      .populate('requesterId', userFields)
+      .populate('recipientId', userFields)
       .sort({ updatedAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
 
-    const formattedConnections = connections.map((c: any) => {
-      const isRequester = String(c.requesterId?._id || c.requesterId) === String(userId);
-      const peer = isRequester ? c.recipientId : c.requesterId;
-      return {
-        _id: c._id,
-        connectedSince: c.updatedAt || c.createdAt,
-        peer: peer || { _id: null, name: 'User', email: '' },
-      };
-    });
+    const formattedConnections = await Promise.all(
+      connections.map(async (c: any) => {
+        const isRequester =
+          String(c.requesterId?._id || c.requesterId) === String(userId);
+        const rawPeer = isRequester ? c.recipientId : c.requesterId;
+        const peer = await this.formatPopulatedUser(rawPeer);
+        return {
+          _id: c._id,
+          id: String(c._id),
+          connectedSince: c.updatedAt || c.createdAt,
+          peer,
+          // Flatten peer properties for components expecting top-level fields
+          ...peer,
+        };
+      }),
+    );
 
     return {
       connections: formattedConnections,
+      data: formattedConnections,
       total,
       page,
       limit,
       totalPages: Math.ceil(total / limit) || 1,
+      hasNextPage: page < (Math.ceil(total / limit) || 1),
     };
   }
 
@@ -176,19 +315,43 @@ export class NetworkConnectionsService {
    */
   async getPendingRequests(userId: string) {
     const userObjId = this.toObjectId(userId);
+    const userFields =
+      'name username email avatar profileImage role headline course skills account_Status verification';
 
-    const [incoming, outgoing] = await Promise.all([
+    const [incomingDocs, outgoingDocs] = await Promise.all([
       this.connectionModel
         .find({ recipientId: userObjId, status: 'pending' })
-        .populate('requesterId', 'name email avatar profileImage role')
+        .populate('requesterId', userFields)
         .sort({ createdAt: -1 })
         .lean(),
       this.connectionModel
         .find({ requesterId: userObjId, status: 'pending' })
-        .populate('recipientId', 'name email avatar profileImage role')
+        .populate('recipientId', userFields)
         .sort({ createdAt: -1 })
         .lean(),
     ]);
+
+    const incoming = await Promise.all(
+      incomingDocs.map(async (req: any) => {
+        const requester = await this.formatPopulatedUser(req.requesterId);
+        return {
+          ...req,
+          requesterId: requester,
+          requester,
+        };
+      }),
+    );
+
+    const outgoing = await Promise.all(
+      outgoingDocs.map(async (req: any) => {
+        const recipient = await this.formatPopulatedUser(req.recipientId);
+        return {
+          ...req,
+          recipientId: recipient,
+          recipient,
+        };
+      }),
+    );
 
     return { incoming, outgoing };
   }
@@ -198,7 +361,9 @@ export class NetworkConnectionsService {
    */
   async sendConnectionRequest(requesterId: string, recipientId: string) {
     if (requesterId === recipientId) {
-      throw new BadRequestException('You cannot send a connection request to yourself.');
+      throw new BadRequestException(
+        'You cannot send a connection request to yourself.',
+      );
     }
 
     const reqObjId = this.toObjectId(requesterId);
@@ -209,15 +374,22 @@ export class NetworkConnectionsService {
       throw new NotFoundException('Target user not found.');
     }
 
-    const [userLow, userHigh] = this.getOrderedUserIds(requesterId, recipientId);
+    const [userLow, userHigh] = this.getOrderedUserIds(
+      requesterId,
+      recipientId,
+    );
 
     const existing = await this.connectionModel.findOne({ userLow, userHigh });
     if (existing) {
       if (existing.status === 'accepted') {
-        throw new BadRequestException('You are already connected with this user.');
+        throw new BadRequestException(
+          'You are already connected with this user.',
+        );
       }
       if (existing.status === 'pending') {
-        throw new BadRequestException('A connection request is already pending.');
+        throw new BadRequestException(
+          'A connection request is already pending.',
+        );
       }
       // If previously declined or cancelled, reset to pending
       existing.status = 'pending';
@@ -235,18 +407,23 @@ export class NetworkConnectionsService {
       status: 'pending',
     });
 
-    const requester = await this.userModel.findById(reqObjId, { name: 1, email: 1 });
-    await this.notificationModel.create({
-      recipientId: recObjId,
-      actorId: reqObjId,
-      type: 'connection_request',
-      category: 'connections',
-      priority: 'LOW',
-      title: 'New Connection Request',
-      message: `${requester?.name || requester?.email || 'Someone'} sent you a connection request.`,
-      isRead: false,
-      targetUrl: '/network?tab=connections',
-    }).catch(() => {});
+    const requester = await this.userModel.findById(reqObjId, {
+      name: 1,
+      email: 1,
+    });
+    await this.notificationModel
+      .create({
+        recipientId: recObjId,
+        actorId: reqObjId,
+        type: 'connection_request',
+        category: 'connections',
+        priority: 'LOW',
+        title: 'New Connection Request',
+        message: `${requester?.name || requester?.email || 'Someone'} sent you a connection request.`,
+        isRead: false,
+        targetUrl: '/network?tab=connections',
+      })
+      .catch(() => {});
 
     return newConnection;
   }
@@ -264,24 +441,31 @@ export class NetworkConnectionsService {
     }
 
     if (!connection.recipientId.equals(userObjId)) {
-      throw new ForbiddenException('Only the recipient can accept this connection request.');
+      throw new ForbiddenException(
+        'Only the recipient can accept this connection request.',
+      );
     }
 
     connection.status = 'accepted';
     await connection.save();
 
-    const user = await this.userModel.findById(userObjId, { name: 1, email: 1 });
-    await this.notificationModel.create({
-      recipientId: connection.requesterId,
-      actorId: userObjId,
-      type: 'connection_accepted',
-      category: 'connections',
-      priority: 'LOW',
-      title: 'Connection Accepted',
-      message: `${user?.name || user?.email || 'A user'} accepted your connection request.`,
-      isRead: false,
-      targetUrl: '/network?tab=connections',
-    }).catch(() => {});
+    const user = await this.userModel.findById(userObjId, {
+      name: 1,
+      email: 1,
+    });
+    await this.notificationModel
+      .create({
+        recipientId: connection.requesterId,
+        actorId: userObjId,
+        type: 'connection_accepted',
+        category: 'connections',
+        priority: 'LOW',
+        title: 'Connection Accepted',
+        message: `${user?.name || user?.email || 'A user'} accepted your connection request.`,
+        isRead: false,
+        targetUrl: '/network?tab=connections',
+      })
+      .catch(() => {});
 
     return { success: true, message: 'Connection accepted.' };
   }
@@ -298,8 +482,13 @@ export class NetworkConnectionsService {
       throw new NotFoundException('Connection not found.');
     }
 
-    if (!connection.requesterId.equals(userObjId) && !connection.recipientId.equals(userObjId)) {
-      throw new ForbiddenException('You do not have permission to modify this connection.');
+    if (
+      !connection.requesterId.equals(userObjId) &&
+      !connection.recipientId.equals(userObjId)
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to modify this connection.',
+      );
     }
 
     await this.connectionModel.deleteOne({ _id: connObjId });

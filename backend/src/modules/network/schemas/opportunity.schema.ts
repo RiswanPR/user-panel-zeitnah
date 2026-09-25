@@ -5,7 +5,12 @@ export type OpportunityDocument = Opportunity & Document;
 
 @Schema({ timestamps: true, collection: 'opportunities' })
 export class Opportunity {
-  @Prop({ type: Types.ObjectId, ref: 'Organization', required: true, index: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'Organization',
+    required: true,
+    index: true,
+  })
   organizationId: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'User' })
@@ -79,5 +84,10 @@ export class Opportunity {
 
 export const OpportunitySchema = SchemaFactory.createForClass(Opportunity);
 OpportunitySchema.index({ organizationId: 1, status: 1 });
-OpportunitySchema.index({ type: 1, workMode: 1, experienceLevel: 1, status: 1 });
+OpportunitySchema.index({
+  type: 1,
+  workMode: 1,
+  experienceLevel: 1,
+  status: 1,
+});
 OpportunitySchema.index({ title: 'text', description: 'text', skills: 'text' });

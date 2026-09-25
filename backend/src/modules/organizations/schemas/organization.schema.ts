@@ -78,5 +78,9 @@ export class Organization {
 }
 
 export const OrganizationSchema = SchemaFactory.createForClass(Organization);
-OrganizationSchema.index({ name: 'text', description: 'text', industry: 'text' });
+OrganizationSchema.index({
+  name: 'text',
+  description: 'text',
+  industry: 'text',
+});
 OrganizationSchema.index({ type: 1, industry: 1, location: 1 });

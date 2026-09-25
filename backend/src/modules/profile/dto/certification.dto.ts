@@ -10,7 +10,9 @@ import {
 export class CertificationDto {
   @IsString()
   @IsNotEmpty({ message: 'Certificate name is required.' })
-  @MaxLength(120, { message: 'Certificate name must not exceed 120 characters.' })
+  @MaxLength(120, {
+    message: 'Certificate name must not exceed 120 characters.',
+  })
   name!: string;
 
   @IsString()

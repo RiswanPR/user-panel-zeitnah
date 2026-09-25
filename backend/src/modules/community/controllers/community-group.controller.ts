@@ -48,7 +48,10 @@ export class CommunityGroupController {
 
   @Post('announcements')
   @ApiOperation({ summary: 'Create an announcement' })
-  async createAnnouncement(@Req() req, @Body() data: CreateGroupAnnouncementDto) {
+  async createAnnouncement(
+    @Req() req,
+    @Body() data: CreateGroupAnnouncementDto,
+  ) {
     return this.groupService.createAnnouncement(
       req.user._id || req.user.sub,
       data,

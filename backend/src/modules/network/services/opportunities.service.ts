@@ -1,10 +1,26 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Organization, OrganizationDocument } from '../schemas/organization.schema';
-import { OrganizationMembership, OrganizationMembershipDocument } from '../schemas/organization-membership.schema';
-import { Opportunity, OpportunityDocument } from '../schemas/opportunity.schema';
-import { QueryOpportunitiesDto, QueryOrganizationsDto } from '../dto/opportunity.dto';
+import {
+  Organization,
+  OrganizationDocument,
+} from '../schemas/organization.schema';
+import {
+  OrganizationMembership,
+  OrganizationMembershipDocument,
+} from '../schemas/organization-membership.schema';
+import {
+  Opportunity,
+  OpportunityDocument,
+} from '../schemas/opportunity.schema';
+import {
+  QueryOpportunitiesDto,
+  QueryOrganizationsDto,
+} from '../dto/opportunity.dto';
 import { escapeRegex } from '../../../common/utils/regex.util';
 
 @Injectable()
@@ -42,7 +58,12 @@ export class OpportunitiesService {
 
     if (query.q && query.q.trim()) {
       const regex = new RegExp(escapeRegex(query.q.trim()), 'i');
-      filter.$or = [{ name: regex }, { industry: regex }, { location: regex }, { description: regex }];
+      filter.$or = [
+        { name: regex },
+        { industry: regex },
+        { location: regex },
+        { description: regex },
+      ];
     }
 
     const total = await this.orgModel.countDocuments(filter);
@@ -82,14 +103,22 @@ export class OpportunitiesService {
    * Get single organization details by slug
    */
   async getOrganizationBySlug(slug: string) {
-    const org = await this.orgModel.findOne({ slug: slug.toLowerCase() }).lean();
+    const org = await this.orgModel
+      .findOne({ slug: slug.toLowerCase() })
+      .lean();
     if (!org) {
       throw new NotFoundException('Organization not found');
     }
 
     const [memberCount, opportunities] = await Promise.all([
-      this.orgMemberModel.countDocuments({ organizationId: org._id, status: 'ACTIVE' }),
-      this.oppModel.find({ organizationId: org._id, status: 'PUBLISHED' }).sort({ publishedAt: -1 }).lean(),
+      this.orgMemberModel.countDocuments({
+        organizationId: org._id,
+        status: 'ACTIVE',
+      }),
+      this.oppModel
+        .find({ organizationId: org._id, status: 'PUBLISHED' })
+        .sort({ publishedAt: -1 })
+        .lean(),
     ]);
 
     return {
@@ -116,13 +145,21 @@ export class OpportunitiesService {
 
     if (query.q && query.q.trim()) {
       const regex = new RegExp(escapeRegex(query.q.trim()), 'i');
-      filter.$or = [{ title: regex }, { description: regex }, { skills: regex }, { location: regex }];
+      filter.$or = [
+        { title: regex },
+        { description: regex },
+        { skills: regex },
+        { location: regex },
+      ];
     }
 
     const total = await this.oppModel.countDocuments(filter);
     const opportunities = await this.oppModel
       .find(filter)
-      .populate('organizationId', 'name slug logo verificationStatus industry location website')
+      .populate(
+        'organizationId',
+        'name slug logo verificationStatus industry location website',
+      )
       .sort({ publishedAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -144,7 +181,10 @@ export class OpportunitiesService {
     const oppObjId = this.toObjectId(id);
     const opp = await this.oppModel
       .findById(oppObjId)
-      .populate('organizationId', 'name slug logo description verificationStatus industry location website')
+      .populate(
+        'organizationId',
+        'name slug logo description verificationStatus industry location website',
+      )
       .lean();
 
     if (!opp) {

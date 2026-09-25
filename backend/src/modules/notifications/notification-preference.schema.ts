@@ -33,5 +33,6 @@ export class NotificationPreference {
   };
 }
 
-export const NotificationPreferenceSchema = SchemaFactory.createForClass(NotificationPreference);
-
+export const NotificationPreferenceSchema = SchemaFactory.createForClass(
+  NotificationPreference,
+);

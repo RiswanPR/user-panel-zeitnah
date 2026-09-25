@@ -25,7 +25,9 @@ describe('LeaderboardService', () => {
     };
 
     mockSignedUrlService = {
-      generateSignedImageUrl: jest.fn().mockImplementation((url) => Promise.resolve(`signed-${url}`)),
+      generateSignedImageUrl: jest
+        .fn()
+        .mockImplementation((url) => Promise.resolve(`signed-${url}`)),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -61,7 +63,13 @@ describe('LeaderboardService', () => {
           name: 'Alice',
           username: 'alice',
           avatar: 'avatars/alice.jpg',
-          gamification: { totalPoints: 5000, level: 7, rank: 'Master', completedClasses: 50, completedCourses: 2 },
+          gamification: {
+            totalPoints: 5000,
+            level: 7,
+            rank: 'Master',
+            completedClasses: 50,
+            completedCourses: 2,
+          },
           account_Status: { isVerified: true },
         },
         {
@@ -69,7 +77,13 @@ describe('LeaderboardService', () => {
           name: 'Bob',
           username: 'bob',
           avatar: 'avatars/bob.jpg',
-          gamification: { totalPoints: 3500, level: 6, rank: 'Expert', completedClasses: 35, completedCourses: 1 },
+          gamification: {
+            totalPoints: 3500,
+            level: 6,
+            rank: 'Expert',
+            completedClasses: 35,
+            completedCourses: 1,
+          },
           account_Status: { isVerified: false },
         },
       ];
@@ -88,7 +102,13 @@ describe('LeaderboardService', () => {
         _id: 'user-1',
         name: 'Alice',
         username: 'alice',
-        gamification: { totalPoints: 5000, level: 7, rank: 'Master', completedClasses: 50, completedCourses: 2 },
+        gamification: {
+          totalPoints: 5000,
+          level: 7,
+          rank: 'Master',
+          completedClasses: 50,
+          completedCourses: 2,
+        },
       });
 
       const result = await service.getGlobalLeaderboard({}, 'user-1');
@@ -110,7 +130,11 @@ describe('LeaderboardService', () => {
         course: [
           {
             courseId: 'course-101',
-            learningProgress: { totalClasses: 10, completedClasses: 5, completionPercent: 50 },
+            learningProgress: {
+              totalClasses: 10,
+              completedClasses: 5,
+              completionPercent: 50,
+            },
             classProgress: [
               { classId: 'cls-1', watchedSeconds: 3600, completed: true },
               { classId: 'cls-2', watchedSeconds: 1800, completed: true },

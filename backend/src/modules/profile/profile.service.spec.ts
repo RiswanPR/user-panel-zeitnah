@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { User } from '../auth/schemas/user.schema';
 import { CommunityProfile } from '../community/profile/schemas/community-profile.schema';
@@ -40,7 +44,11 @@ describe('ProfileService', () => {
       countDocuments: jest.fn().mockResolvedValue(0),
       findById: jest.fn(),
       findByIdAndDelete: jest.fn().mockResolvedValue(true),
-      create: jest.fn().mockImplementation((doc) => Promise.resolve({ ...doc, _id: 'rec_123' })),
+      create: jest
+        .fn()
+        .mockImplementation((doc) =>
+          Promise.resolve({ ...doc, _id: 'rec_123' }),
+        ),
     };
 
     mockAuditLogsService = {
@@ -73,7 +81,9 @@ describe('ProfileService', () => {
         {
           provide: SignedUrlService,
           useValue: {
-            generateSignedImageUrl: jest.fn().mockImplementation((k) => `https://signed.cdn/${k}`),
+            generateSignedImageUrl: jest
+              .fn()
+              .mockImplementation((k) => `https://signed.cdn/${k}`),
           },
         },
         {
@@ -148,7 +158,11 @@ describe('ProfileService', () => {
       mockUserModel.findOne.mockResolvedValue(null);
       mockUserModel.findOneAndUpdate.mockResolvedValue(mockUpdatedUser);
 
-      const result = await service.claimUsername('user_123', 'desired_handle', '127.0.0.1');
+      const result = await service.claimUsername(
+        'user_123',
+        'desired_handle',
+        '127.0.0.1',
+      );
 
       expect(mockUserModel.findOneAndUpdate).toHaveBeenCalledWith(
         { _id: 'user_123', usernameClaimed: false },
@@ -187,7 +201,11 @@ describe('ProfileService', () => {
       mockUserModel.findOne.mockResolvedValue(null);
       mockUserModel.findOneAndUpdate.mockResolvedValue(mockUpdatedUser);
 
-      const result = await service.claimUsername('user_123', 'updated_handle', '127.0.0.1');
+      const result = await service.claimUsername(
+        'user_123',
+        'updated_handle',
+        '127.0.0.1',
+      );
       expect(result.success).toBe(true);
       expect(result.user.username).toBe('updated_handle');
     });
@@ -234,7 +252,11 @@ describe('ProfileService', () => {
       mockUserModel.findOne.mockResolvedValue(null);
       mockUserModel.findOneAndUpdate.mockResolvedValue(mockUpdatedUser);
 
-      const res = await service.changeUsername('user_123', 'new_handle', '127.0.0.1');
+      const res = await service.changeUsername(
+        'user_123',
+        'new_handle',
+        '127.0.0.1',
+      );
       expect(res.success).toBe(true);
       expect(res.user.username).toBe('new_handle');
       expect(mockAuditLogsService.record).toHaveBeenCalledWith(
@@ -289,7 +311,11 @@ describe('ProfileService', () => {
       mockUserModel.findOne.mockResolvedValue(null);
       mockUserModel.findOneAndUpdate.mockResolvedValue(mockUpdatedUser);
 
-      const res = await service.changeUsername('user_123', 'fresh_handle', '127.0.0.1');
+      const res = await service.changeUsername(
+        'user_123',
+        'fresh_handle',
+        '127.0.0.1',
+      );
       expect(res.success).toBe(true);
       expect(res.user.username).toBe('fresh_handle');
     });
@@ -316,9 +342,9 @@ describe('ProfileService', () => {
       };
       mockUserModel.findById.mockResolvedValue(mockUser);
 
-      await expect(
-        service.changeUsername('user_123', 'admin'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.changeUsername('user_123', 'admin')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should return unchanged response if requested handle is current handle', async () => {
@@ -393,7 +419,34 @@ describe('ProfileService', () => {
       expect((profile.user as any).devices).toBeUndefined();
     });
 
-    it('should throw NotFoundException for non-existent student handle', async () => {
+    it('should successfully resolve public profile by MongoDB ObjectId', async () => {
+      const validObjectId = '6ab4efe2f762d65012683bac';
+      const mockDocById = {
+        _id: validObjectId,
+        name: 'Rahul Kumar',
+        username: 'rahulk',
+        role: 'student',
+        toObject: () => ({
+          _id: validObjectId,
+          name: 'Rahul Kumar',
+          username: 'rahulk',
+          role: 'student',
+          account_Status: { isVerified: true },
+          createdAt: new Date(),
+        }),
+      };
+
+      mockUserModel.findOne.mockReturnValue({
+        select: jest.fn().mockResolvedValue(mockDocById),
+      });
+
+      const profile = await service.getPublicProfile(validObjectId);
+      expect(profile.user.name).toBe('Rahul Kumar');
+      expect(profile.user.username).toBe('rahulk');
+      expect(profile.user.id).toBe(validObjectId);
+    });
+
+    it('should throw NotFoundException for non-existent student handle or ObjectId', async () => {
       mockUserModel.findOne.mockReturnValue({
         select: jest.fn().mockResolvedValue(null),
       });
@@ -401,6 +454,9 @@ describe('ProfileService', () => {
       await expect(service.getPublicProfile('nonexistent')).rejects.toThrow(
         NotFoundException,
       );
+      await expect(
+        service.getPublicProfile('6ab4efe2f762d65012683bac'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -440,7 +496,9 @@ describe('ProfileService', () => {
       const res = await service.getMe('user_123');
       expect(res.user).toBeDefined();
       expect(res.user.name).toBe('Test Student');
-      expect(res.user.avatar).toBe('https://signed.cdn/profiles/user_123-avatar.png');
+      expect(res.user.avatar).toBe(
+        'https://signed.cdn/profiles/user_123-avatar.png',
+      );
       expect(mockUser.save).toHaveBeenCalled();
     });
   });
@@ -536,7 +594,9 @@ describe('ProfileService', () => {
 
       const res = await service.uploadBackground('user_123', fakeFile);
       expect(res.message).toBe('Background image uploaded successfully');
-      expect(res.backgroundImage).toContain('https://signed.cdn/profiles/banners/user_123-');
+      expect(res.backgroundImage).toContain(
+        'https://signed.cdn/profiles/banners/user_123-',
+      );
       expect(mockUser.save).toHaveBeenCalled();
     });
   });
@@ -605,7 +665,9 @@ describe('ProfileService', () => {
 
       expect(res.message).toBe('Education added successfully');
       expect(mockUser.education.length).toBe(1);
-      expect(mockUser.education[0].institution).toBe('Kerala Institute of Technology');
+      expect(mockUser.education[0].institution).toBe(
+        'Kerala Institute of Technology',
+      );
       expect(mockUser.save).toHaveBeenCalled();
     });
   });
@@ -667,7 +729,8 @@ describe('ProfileService', () => {
       const res = await service.submitRecommendation('author_123', {
         recipientId: 'recipient_456',
         relationship: 'Peer / Student',
-        content: 'An exceptional collaborator and passionate learner on Zeitnah.',
+        content:
+          'An exceptional collaborator and passionate learner on Zeitnah.',
       });
 
       expect(res.message).toBe('Recommendation submitted successfully.');
@@ -688,9 +751,9 @@ describe('ProfileService', () => {
 
       mockUserModel.findById.mockResolvedValue(mockUser);
 
-      await expect(service.setPublicProfilePublishState('user_123', true)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.setPublicProfilePublishState('user_123', true),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should allow publishing when required checklist is complete', async () => {

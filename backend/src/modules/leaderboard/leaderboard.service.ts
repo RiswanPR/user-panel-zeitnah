@@ -58,7 +58,8 @@ export class LeaderboardService {
 
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-    @InjectModel(Course.name) private readonly courseModel: Model<CourseDocument>,
+    @InjectModel(Course.name)
+    private readonly courseModel: Model<CourseDocument>,
     private readonly signedUrlService: SignedUrlService,
   ) {}
 
@@ -114,7 +115,9 @@ export class LeaderboardService {
    * Calculates deterministic global rank for a student using fast indexed aggregation.
    * Handles legacy users with missing/null gamification fields gracefully.
    */
-  async getStudentGlobalRank(userId: string): Promise<{ rank: number; student: UserDocument } | null> {
+  async getStudentGlobalRank(
+    userId: string,
+  ): Promise<{ rank: number; student: UserDocument } | null> {
     const student = await this.userModel.findById(userId);
     if (!student) return null;
 
@@ -228,9 +231,15 @@ export class LeaderboardService {
         'gamification.level': '$effectiveLevel',
         'gamification.rank': { $ifNull: ['$gamification.rank', 'Beginner'] },
         'gamification.completedClasses': '$effectiveClasses',
-        'gamification.completedCourses': { $ifNull: ['$gamification.completedCourses', 0] },
-        'gamification.activityDates': { $ifNull: ['$gamification.activityDates', []] },
-        'account_Status.isVerified': { $ifNull: ['$account_Status.isVerified', false] },
+        'gamification.completedCourses': {
+          $ifNull: ['$gamification.completedCourses', 0],
+        },
+        'gamification.activityDates': {
+          $ifNull: ['$gamification.activityDates', []],
+        },
+        'account_Status.isVerified': {
+          $ifNull: ['$account_Status.isVerified', false],
+        },
       },
     };
 
@@ -350,7 +359,12 @@ export class LeaderboardService {
     totalClasses: number;
   } {
     if (!enrollment) {
-      return { courseXp: 0, completionPercent: 0, completedClasses: 0, totalClasses: 0 };
+      return {
+        courseXp: 0,
+        completionPercent: 0,
+        completedClasses: 0,
+        totalClasses: 0,
+      };
     }
 
     const learningProgress = enrollment.learningProgress || {};
@@ -429,7 +443,9 @@ export class LeaderboardService {
             ...this.getEligibleStudentFilter(),
             'course.courseId': courseIdStr,
           })
-          .select('name username avatar course createdAt gamification.level gamification.rank account_Status.isVerified')
+          .select(
+            'name username avatar course createdAt gamification.level gamification.rank account_Status.isVerified',
+          )
           .lean();
 
         // Compute rankings for each student in this course
@@ -540,7 +556,9 @@ export class LeaderboardService {
 
     const enrolledStudents = await this.userModel
       .find(filter)
-      .select('name username avatar course createdAt gamification.level gamification.rank gamification.activityDates account_Status.isVerified')
+      .select(
+        'name username avatar course createdAt gamification.level gamification.rank gamification.activityDates account_Status.isVerified',
+      )
       .limit(1000)
       .lean();
 

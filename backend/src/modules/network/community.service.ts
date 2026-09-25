@@ -1281,7 +1281,8 @@ export class CommunityService {
       }
     }
 
-    const nextPinned = typeof pinned === 'boolean' ? pinned : !discussion.isPinned;
+    const nextPinned =
+      typeof pinned === 'boolean' ? pinned : !discussion.isPinned;
     discussion.isPinned = nextPinned;
     await discussion.save();
 

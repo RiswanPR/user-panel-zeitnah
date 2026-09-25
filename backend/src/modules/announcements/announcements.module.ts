@@ -9,7 +9,10 @@ import {
   AnnouncementSchema,
 } from './schemas/announcement.schema';
 import { User, UserSchema } from '../auth/schemas/user.schema';
-import { Notification, NotificationSchema } from '../notifications/notification.schema';
+import {
+  Notification,
+  NotificationSchema,
+} from '../notifications/notification.schema';
 import { AnnouncementsService } from './announcements.service';
 import { AnnouncementsController } from './announcements.controller';
 import { NotificationsModule } from '../notifications/notifications.module';

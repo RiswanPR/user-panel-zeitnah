@@ -59,5 +59,11 @@ export class PlatformAnnouncement {
   updatedAt?: Date;
 }
 
-export const PlatformAnnouncementSchema = SchemaFactory.createForClass(PlatformAnnouncement);
-PlatformAnnouncementSchema.index({ status: 1, audience: 1, startsAt: 1, expiresAt: 1 });
+export const PlatformAnnouncementSchema =
+  SchemaFactory.createForClass(PlatformAnnouncement);
+PlatformAnnouncementSchema.index({
+  status: 1,
+  audience: 1,
+  startsAt: 1,
+  expiresAt: 1,
+});

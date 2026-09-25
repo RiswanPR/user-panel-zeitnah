@@ -21,7 +21,12 @@ export enum MembershipStatus {
 
 @Schema({ timestamps: true, collection: 'organization_memberships' })
 export class OrganizationMembership {
-  @Prop({ type: Types.ObjectId, ref: 'Organization', required: true, index: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'Organization',
+    required: true,
+    index: true,
+  })
   organizationId!: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
@@ -47,6 +52,11 @@ export class OrganizationMembership {
   joinedAt!: Date;
 }
 
-export const OrganizationMembershipSchema = SchemaFactory.createForClass(OrganizationMembership);
-OrganizationMembershipSchema.index({ organizationId: 1, userId: 1 }, { unique: true });
+export const OrganizationMembershipSchema = SchemaFactory.createForClass(
+  OrganizationMembership,
+);
+OrganizationMembershipSchema.index(
+  { organizationId: 1, userId: 1 },
+  { unique: true },
+);
 OrganizationMembershipSchema.index({ userId: 1, role: 1 });

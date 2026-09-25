@@ -429,7 +429,14 @@ export class User {
   // ECOSYSTEM PRIMARY ROLE (Authoritative)
   @Prop({
     default: 'STUDENT',
-    enum: ['STUDENT', 'EDUCATOR', 'PROFESSIONAL', 'MENTOR', 'RECRUITER', 'FOUNDER'],
+    enum: [
+      'STUDENT',
+      'EDUCATOR',
+      'PROFESSIONAL',
+      'MENTOR',
+      'RECRUITER',
+      'FOUNDER',
+    ],
   })
   primaryRole!: string;
 
@@ -531,7 +538,11 @@ export class User {
       verificationType: { type: String, default: 'IDENTITY' },
       verifiedAt: { type: Date, default: null },
     },
-    default: { status: 'UNVERIFIED', verificationType: 'IDENTITY', verifiedAt: null },
+    default: {
+      status: 'UNVERIFIED',
+      verificationType: 'IDENTITY',
+      verifiedAt: null,
+    },
   })
   verification!: {
     status: string;
