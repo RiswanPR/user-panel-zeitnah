@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ShieldCheck,
@@ -10,10 +10,12 @@ import {
   Edit3,
   MoreVertical,
   Check,
+  MessageSquare,
 } from "lucide-react";
 import { useToast } from "../../ui/Toast";
 import RelationshipAction from "../RelationshipAction";
 import ProfileNetworkStats from "../ProfileNetworkStats";
+import SendMessageRequestModal from "../SendMessageRequestModal";
 
 /**
  * Derives user initials from full name.
@@ -58,10 +60,12 @@ export default function ProfileHeader({ profile, isOwnProfile = false }) {
   const user = profile?.user || {};
   const relationship = profile?.relationship || { state: "none" };
   const toast = useToast();
+  const navigate = useNavigate();
 
   const [avatarError, setAvatarError] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [showMessageRequestModal, setShowMessageRequestModal] = useState(false);
   const menuRef = useRef(null);
 
   // Close dropdown menu when clicking outside
@@ -159,13 +163,39 @@ export default function ProfileHeader({ profile, isOwnProfile = false }) {
                 <span>Edit Profile</span>
               </Link>
             ) : (
-              <RelationshipAction
-                targetUserId={user.id}
-                connectionId={relationship.connectionId}
-                initialState={relationship.state || "none"}
-                studentName={user.name}
-                variant="full"
-              />
+              <>
+                <RelationshipAction
+                  targetUserId={user.id}
+                  connectionId={relationship.connectionId}
+                  initialState={relationship.state || "none"}
+                  studentName={user.name}
+                  variant="full"
+                />
+
+                {user.canMessage !== false ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (user.messageAction === "request" || relationship.state !== "connected") {
+                        setShowMessageRequestModal(true);
+                      } else {
+                        navigate(`/messages?user=${user.id}`);
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-brand-mint/40 bg-brand-mint/10 px-4 py-2.5 text-xs font-bold text-brand-mint hover:bg-brand-mint/20 hover:border-brand-mint/60 transition-all focus-ring"
+                  >
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    <span>{relationship.state === "connected" ? "Message" : "Message Request"}</span>
+                  </button>
+                ) : (
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-2.5 text-xs text-text-faint cursor-not-allowed opacity-50"
+                    title="Messaging restricted by user's privacy settings"
+                  >
+                    <MessageSquare className="h-3.5 w-3.5" />
+                  </span>
+                )}
+              </>
             )}
 
             {/* More / Overflow Actions Dropdown */}
@@ -262,6 +292,14 @@ export default function ProfileHeader({ profile, isOwnProfile = false }) {
           </div>
         </div>
       </div>
+
+      {/* Message Request Modal */}
+      {showMessageRequestModal && (
+        <SendMessageRequestModal
+          recipient={user}
+          onClose={() => setShowMessageRequestModal(false)}
+        />
+      )}
     </div>
   );
 }

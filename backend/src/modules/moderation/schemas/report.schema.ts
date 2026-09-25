@@ -10,6 +10,8 @@ export enum ReportTargetType {
   DISCUSSION = 'DISCUSSION',
   OPPORTUNITY = 'OPPORTUNITY',
   PROJECT = 'PROJECT',
+  MESSAGE = 'MESSAGE',
+  CONVERSATION = 'CONVERSATION',
 }
 
 export enum ReportStatus {

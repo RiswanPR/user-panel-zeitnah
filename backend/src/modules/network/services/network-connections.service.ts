@@ -19,6 +19,7 @@ import {
 import { QueryPeopleDto } from '../dto/network.dto';
 import { escapeRegex } from '../../../common/utils/regex.util';
 import { SignedUrlService } from '../../../common/aws/signed-url.service';
+import { ModerationService } from '../../moderation/moderation.service';
 
 @Injectable()
 export class NetworkConnectionsService {
@@ -31,6 +32,8 @@ export class NetworkConnectionsService {
     private notificationModel: Model<NotificationDocument>,
     @Optional()
     private signedUrlService?: SignedUrlService,
+    @Optional()
+    private moderationService?: ModerationService,
   ) {}
 
   private toObjectId(id: string | Types.ObjectId): Types.ObjectId {
@@ -53,7 +56,8 @@ export class NetworkConnectionsService {
   }
 
   /**
-   * People directory discovery with connection status relative to caller
+   * Infrastructure People Directory discovery with search, canonical filters,
+   * mutual connections, and smart discovery signals.
    */
   async getPeople(userId: string, query: QueryPeopleDto) {
     const userObjId = this.toObjectId(userId);
@@ -61,28 +65,150 @@ export class NetworkConnectionsService {
     const limit = Math.min(Math.max(1, Number(query.limit) || 20), 50);
     const skip = (page - 1) * limit;
 
+    // Fetch caller's profile to compute smart recommendation signals
+    const callerUser = await this.userModel.findById(userObjId).lean();
+
+    // Respect Safety & Blocking
+    let excludedUserIds: string[] = [];
+    if (this.moderationService) {
+      excludedUserIds = await this.moderationService.getExcludedUserIds(userId);
+    }
+    const excludedObjIds = excludedUserIds.map((id) => this.toObjectId(id));
+
     const filter: any = {
-      _id: { $ne: userObjId },
+      _id: { $ne: userObjId, $nin: excludedObjIds },
       'account_Status.isDeleted': { $ne: true },
       'account_Status.isBlocked': { $ne: true },
+      profileVisibility: { $ne: 'PRIVATE' },
     };
 
+    // Role filter (Student, Educator, Professional, Mentor, Recruiter, Founder)
     if (query.role && query.role !== 'all') {
-      filter.role = query.role;
+      const upperRole = query.role.trim().toUpperCase();
+      const lowerRole = query.role.trim().toLowerCase();
+      filter.$or = [
+        { primaryRole: upperRole },
+        { role: lowerRole },
+      ];
     }
 
+    // Discipline filter
+    if (query.discipline && query.discipline !== 'all') {
+      const cleanDiscipline = escapeRegex(query.discipline.trim());
+      filter.primaryDiscipline = new RegExp(`^${cleanDiscipline}$`, 'i');
+    }
+
+    // Specialization filter
+    if (query.specialization && query.specialization !== 'all') {
+      const cleanSpec = escapeRegex(query.specialization.trim());
+      filter.specializations = new RegExp(`^${cleanSpec}$`, 'i');
+    }
+
+    // Infrastructure Sector filter
+    if (query.sector && query.sector !== 'all') {
+      const cleanSector = escapeRegex(query.sector.trim());
+      filter.infrastructureSectors = new RegExp(`^${cleanSector}$`, 'i');
+    }
+
+    // Skill filter
+    if (query.skill && query.skill.trim()) {
+      const cleanSkill = escapeRegex(query.skill.trim());
+      const sReg = new RegExp(`^${cleanSkill}$`, 'i');
+      filter.$and = filter.$and || [];
+      filter.$and.push({
+        $or: [
+          { skills: sReg },
+          { 'structuredSkills.technicalSkills': sReg },
+          { 'structuredSkills.industrySkills': sReg },
+        ],
+      });
+    }
+
+    // Software filter
+    if (query.software && query.software.trim()) {
+      const cleanSoftware = escapeRegex(query.software.trim());
+      const swReg = new RegExp(`^${cleanSoftware}$`, 'i');
+      filter.$and = filter.$and || [];
+      filter.$and.push({
+        $or: [
+          { 'structuredSkills.softwareSkills': swReg },
+          { 'experience.softwareUsed': swReg },
+        ],
+      });
+    }
+
+    // Experience filter (numeric parsing)
+    if (query.experience && query.experience !== 'all') {
+      const expStr = query.experience.replace(/years?/gi, '').trim();
+      if (expStr.includes('10+')) {
+        filter.yearsOfExperience = { $gte: 10 };
+      } else if (expStr.includes('5–10') || expStr.includes('5-10')) {
+        filter.yearsOfExperience = { $gte: 5, $lte: 10 };
+      } else if (expStr.includes('3–5') || expStr.includes('3-5')) {
+        filter.yearsOfExperience = { $gte: 3, $lte: 5 };
+      } else if (expStr.includes('1–3') || expStr.includes('1-3')) {
+        filter.yearsOfExperience = { $gte: 1, $lte: 3 };
+      } else if (expStr.includes('0–1') || expStr.includes('0-1')) {
+        filter.yearsOfExperience = { $gte: 0, $lte: 1 };
+      }
+    } else if (query.minExperience !== undefined || query.maxExperience !== undefined) {
+      filter.yearsOfExperience = {};
+      if (query.minExperience !== undefined) filter.yearsOfExperience.$gte = Number(query.minExperience);
+      if (query.maxExperience !== undefined) filter.yearsOfExperience.$lte = Number(query.maxExperience);
+    }
+
+    // Location filter
+    if (query.location && query.location.trim()) {
+      const cleanLoc = escapeRegex(query.location.trim());
+      const locReg = new RegExp(cleanLoc, 'i');
+      filter.$and = filter.$and || [];
+      filter.$and.push({
+        $or: [
+          { location: locReg },
+          { preferredLocations: locReg },
+          { 'experience.location': locReg },
+        ],
+      });
+    }
+
+    // Institution filter
+    if (query.institution && query.institution.trim()) {
+      const cleanInst = escapeRegex(query.institution.trim());
+      filter['education.institution'] = new RegExp(cleanInst, 'i');
+    }
+
+    // Company filter
+    if (query.company && query.company.trim()) {
+      const cleanComp = escapeRegex(query.company.trim());
+      filter['experience.organization'] = new RegExp(cleanComp, 'i');
+    }
+
+    // Full search (q) across public profile data
     if (query.q && query.q.trim()) {
       const cleanQ = escapeRegex(query.q.trim());
       const regex = new RegExp(cleanQ, 'i');
-      filter.$or = [
+      const searchOr = [
         { name: regex },
         { username: regex },
         { headline: regex },
         { currentRole: regex },
-        { 'course.courseName': regex },
+        { primaryDiscipline: regex },
+        { specializations: regex },
+        { infrastructureSectors: regex },
         { skills: regex },
-        { email: regex },
+        { 'structuredSkills.softwareSkills': regex },
+        { 'structuredSkills.technicalSkills': regex },
+        { 'education.institution': regex },
+        { 'experience.organization': regex },
+        { location: regex },
       ];
+      if (filter.$or) {
+        filter.$and = filter.$and || [];
+        filter.$and.push({ $or: filter.$or });
+        delete filter.$or;
+      }
+      filter.$and = filter.$and || [];
+      filter.$and.push({ $or: searchOr });
     }
 
     const total = await this.userModel.countDocuments(filter);
@@ -92,25 +218,52 @@ export class NetworkConnectionsService {
         username: 1,
         email: 1,
         role: 1,
+        primaryRole: 1,
         avatar: 1,
         profileImage: 1,
         headline: 1,
         currentRole: 1,
+        primaryDiscipline: 1,
+        specializations: 1,
+        infrastructureSectors: 1,
+        structuredSkills: 1,
+        yearsOfExperience: 1,
+        location: 1,
+        preferredLocations: 1,
+        education: 1,
+        experience: 1,
         skills: 1,
         course: 1,
         gamification: 1,
+        privacySettings: 1,
         'account_Status.isVerified': 1,
         'verification.status': 1,
         createdAt: 1,
       })
-      .sort({ createdAt: -1 })
+      .sort({ 'gamification.totalPoints': -1, createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
 
-    // Map connection status for each user
+    // 1. Fetch caller's connections for mutual calculations
+    const callerConnections = await this.connectionModel
+      .find({
+        $or: [{ requesterId: userObjId }, { recipientId: userObjId }],
+        status: 'accepted',
+      })
+      .lean();
+
+    const callerConnectionIdSet = new Set(
+      callerConnections.map((c) =>
+        c.requesterId.equals(userObjId)
+          ? String(c.recipientId)
+          : String(c.requesterId),
+      ),
+    );
+
+    // 2. Fetch connection states between caller and returned page users
     const otherUserIds = users.map((u) => u._id);
-    const connections = await this.connectionModel
+    const pageConnections = await this.connectionModel
       .find({
         $or: [
           { requesterId: userObjId, recipientId: { $in: otherUserIds } },
@@ -123,7 +276,7 @@ export class NetworkConnectionsService {
       string,
       { status: string; connectionId: string; isRequester: boolean }
     >();
-    connections.forEach((c) => {
+    pageConnections.forEach((c) => {
       const otherId = c.requesterId.equals(userObjId)
         ? String(c.recipientId)
         : String(c.requesterId);
@@ -133,6 +286,39 @@ export class NetworkConnectionsService {
         isRequester: c.requesterId.equals(userObjId),
       });
     });
+
+    // 3. Fetch mutual connections between page users and caller's network
+    const mutualConnectionsCountMap = new Map<string, number>();
+    if (callerConnectionIdSet.size > 0 && otherUserIds.length > 0) {
+      const callerConnObjIds = Array.from(callerConnectionIdSet).map(
+        (id) => new Types.ObjectId(id),
+      );
+      const mutualRows = await this.connectionModel
+        .find({
+          $or: [
+            {
+              requesterId: { $in: otherUserIds },
+              recipientId: { $in: callerConnObjIds },
+            },
+            {
+              recipientId: { $in: otherUserIds },
+              requesterId: { $in: callerConnObjIds },
+            },
+          ],
+          status: 'accepted',
+        })
+        .lean();
+
+      mutualRows.forEach((row) => {
+        const pageUserId = otherUserIds.some((uid) => uid.equals(row.requesterId))
+          ? String(row.requesterId)
+          : String(row.recipientId);
+        mutualConnectionsCountMap.set(
+          pageUserId,
+          (mutualConnectionsCountMap.get(pageUserId) || 0) + 1,
+        );
+      });
+    }
 
     const enrichedUsers = await Promise.all(
       users.map(async (u: any) => {
@@ -169,24 +355,143 @@ export class NetworkConnectionsService {
             ? u.course[0]?.courseName || ''
             : '';
 
+        const primaryRole = (u.primaryRole || u.role || 'STUDENT').toUpperCase();
+        const primaryDiscipline = u.primaryDiscipline || '';
+        const specializations = Array.isArray(u.specializations)
+          ? u.specializations
+          : [];
+        const infrastructureSectors = Array.isArray(u.infrastructureSectors)
+          ? u.infrastructureSectors
+          : [];
+        const softwareSkills = Array.isArray(u.structuredSkills?.softwareSkills)
+          ? u.structuredSkills.softwareSkills
+          : [];
+        const technicalSkills = Array.isArray(u.structuredSkills?.technicalSkills)
+          ? u.structuredSkills.technicalSkills
+          : [];
+        const combinedSkills = Array.from(
+          new Set([...(u.skills || []), ...softwareSkills, ...technicalSkills]),
+        );
+        const yearsOfExperience = Number(u.yearsOfExperience) || 0;
+        const location =
+          u.location ||
+          (u.preferredLocations && u.preferredLocations[0]) ||
+          '';
+        const currentCompany =
+          Array.isArray(u.experience) && u.experience.length > 0
+            ? u.experience[0]?.organization || ''
+            : '';
+        const institution =
+          Array.isArray(u.education) && u.education.length > 0
+            ? u.education[0]?.institution || ''
+            : '';
+        const mutualConnectionsCount =
+          mutualConnectionsCountMap.get(String(u._id)) || 0;
+
+        // Factual, deterministic smart recommendation signals
+        const reasons: string[] = [];
+        if (mutualConnectionsCount > 0) {
+          reasons.push(
+            `${mutualConnectionsCount} mutual connection${
+              mutualConnectionsCount > 1 ? 's' : ''
+            }`,
+          );
+        }
+        if (
+          callerUser?.primaryDiscipline &&
+          primaryDiscipline &&
+          callerUser.primaryDiscipline.toLowerCase() ===
+            primaryDiscipline.toLowerCase()
+        ) {
+          reasons.push(`Discipline: ${primaryDiscipline}`);
+        }
+        if (Array.isArray(callerUser?.infrastructureSectors)) {
+          const commonSectors = infrastructureSectors.filter((s: string) =>
+            callerUser.infrastructureSectors.some(
+              (cs: string) => cs.toLowerCase() === s.toLowerCase(),
+            ),
+          );
+          if (commonSectors.length > 0) {
+            reasons.push(`Sector: ${commonSectors[0]}`);
+          }
+        }
+        if (Array.isArray(callerUser?.structuredSkills?.softwareSkills)) {
+          const commonSW = softwareSkills.filter((sw: string) =>
+            callerUser.structuredSkills.softwareSkills.some(
+              (csw: string) => csw.toLowerCase() === sw.toLowerCase(),
+            ),
+          );
+          if (commonSW.length > 0) {
+            reasons.push(`Software: ${commonSW[0]}`);
+          }
+        }
+
+        const recommendationReason =
+          reasons.length > 0
+            ? `Because you both work with: ${reasons.slice(0, 2).join(' • ')}`
+            : '';
+
+        // Messaging privacy & capability
+        const messagingPrivacy = u.privacySettings?.messaging || 'ANYONE';
+        let canMessage = true;
+        let messageAction = 'message'; // 'message' | 'request' | 'cannot_message'
+        if (messagingPrivacy === 'NOBODY') {
+          canMessage = false;
+          messageAction = 'cannot_message';
+        } else if (messagingPrivacy === 'CONNECTIONS_ONLY') {
+          if (connectionStatus === 'connected') {
+            canMessage = true;
+            messageAction = 'message';
+          } else {
+            canMessage = false;
+            messageAction = 'cannot_message';
+          }
+        } else {
+          canMessage = true;
+          messageAction =
+            connectionStatus === 'connected' ? 'message' : 'request';
+        }
+
         const headline =
           u.headline ||
           u.currentRole ||
-          (primaryCourse ? `Student · ${primaryCourse}` : 'Student');
+          (primaryDiscipline
+            ? `${primaryRole} · ${primaryDiscipline}`
+            : primaryCourse
+            ? `Student · ${primaryCourse}`
+            : 'Infrastructure Professional');
 
         return {
           _id: u._id,
           id: String(u._id),
-          name: u.name || (u.email ? u.email.split('@')[0] : 'Student'),
+          name: u.name || (u.email ? u.email.split('@')[0] : 'Professional'),
           username: u.username || '',
           email: u.email || '',
           role: u.role || 'student',
+          primaryRole,
+          primaryDiscipline,
+          specializations,
+          infrastructureSectors,
+          structuredSkills: u.structuredSkills || {
+            technicalSkills,
+            softwareSkills,
+            industrySkills: [],
+            professionalSkills: [],
+          },
+          yearsOfExperience,
+          location,
+          company: currentCompany,
+          institution,
           avatar: avatarUrl,
           avatarUrl,
           headline,
           course: primaryCourse,
-          skills: Array.isArray(u.skills) ? u.skills : [],
-          interests: Array.isArray(u.skills) ? u.skills : [],
+          skills: combinedSkills,
+          interests: combinedSkills,
+          mutualConnectionsCount,
+          recommendationReason,
+          canMessage,
+          messageAction,
           level:
             u.gamification?.rank ||
             (u.gamification?.level

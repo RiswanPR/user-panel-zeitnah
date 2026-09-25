@@ -77,6 +77,11 @@ export const networkApi = {
   },
 
   // ── People & Connections ──
+  getFilters: async () => {
+    const response = await api.get('/network/filters');
+    return response.data;
+  },
+
   getPeople: async (params = {}) => {
     const response = await api.get('/network/people', { params });
     return response.data;

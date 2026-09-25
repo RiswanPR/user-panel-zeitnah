@@ -12,6 +12,7 @@ import VerifyRegisterOtp from "./pages/auth/VerifyRegisterOtp";
 // Context
 import { ToastProvider } from "./components/ui/Toast";
 import { NotificationProvider } from "./context/NotificationContext";
+import { MessagingProvider } from "./context/MessagingContext";
 
 // Error Capture & Troubleshoot
 import { initErrorCapture } from "./utils/errorCapture";
@@ -49,6 +50,7 @@ const PublicBusinessProfilePage = React.lazy(() => import("./pages/business/Publ
 const BusinessDiscoveryPage = React.lazy(() => import("./pages/business/BusinessDiscoveryPage"));
 const AdminBusinessReviewPage = React.lazy(() => import("./pages/admin/AdminBusinessReviewPage"));
 const CareerIntelligencePage = React.lazy(() => import("./pages/career/CareerIntelligencePage"));
+const MessagesPage = React.lazy(() => import("./pages/messages/MessagesPage"));
 
 import ProtectedRoute from "./components/common/ProtectedRoute/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";
@@ -93,80 +95,84 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <NotificationProvider>
-          <BrowserRouter>
-            <NativeBridgeHandler />
-            <Routes>
+          <MessagingProvider>
+            <BrowserRouter>
+              <NativeBridgeHandler />
+              <Routes>
 
-            {/* PUBLIC AUTHENTICATION ROUTES */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/verify-login-otp" element={<VerifyOtp />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/verify-register-otp" element={<VerifyRegisterOtp />} />
-            <Route
-              path="/u/:username"
-              element={
-                <Suspense fallback={<PageLoader />}>
-                  <PublicProfilePage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/profile/u/:username"
-              element={
-                <Suspense fallback={<PageLoader />}>
-                  <PublicProfilePage />
-                </Suspense>
-              }
-            />
+              {/* PUBLIC AUTHENTICATION ROUTES */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/verify-login-otp" element={<VerifyOtp />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/verify-register-otp" element={<VerifyRegisterOtp />} />
+              <Route
+                path="/u/:username"
+                element={
+                  <Suspense fallback={<PageLoader />}>
+                    <PublicProfilePage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/profile/u/:username"
+                element={
+                  <Suspense fallback={<PageLoader />}>
+                    <PublicProfilePage />
+                  </Suspense>
+                }
+              />
 
-            {/* SECURE APPLICATION ROUTING (Main Layout) */}
-            <Route
-              element={
-                <ProtectedRoute>
-                  <MainLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="/" element={<Navigate to="/courses" />} />
-              <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
-              <Route path="/profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
-              <Route path="/profile/edit" element={<Suspense fallback={<PageLoader />}><EditProfile /></Suspense>} />
-              <Route path="/public-profile" element={<Suspense fallback={<PageLoader />}><PublicProfilePage /></Suspense>} />
-              <Route path="/courses" element={<Suspense fallback={<PageLoader />}><Courses /></Suspense>} />
-              <Route path="/courses/:courseId" element={<Suspense fallback={<PageLoader />}><CourseChapters /></Suspense>} />
-              <Route path="/courses/:courseId/chapters" element={<Suspense fallback={<PageLoader />}><CourseChapters /></Suspense>} />
-              <Route path="/courses/:courseId/chapters/:chapterCode/classes" element={<Suspense fallback={<PageLoader />}><CourseClasses /></Suspense>} />
-              <Route path="/courses/class/:classId" element={<Suspense fallback={<PageLoader />}><ClassView /></Suspense>} />
-              <Route path="/my-learning" element={<Suspense fallback={<PageLoader />}><MyLearning /></Suspense>} />
-              <Route path="/my-points" element={<Suspense fallback={<PageLoader />}><MyPoints /></Suspense>} />
-              <Route path="/leaderboard" element={<Suspense fallback={<PageLoader />}><Leaderboard /></Suspense>} />
-              <Route path="/leaderboard/:courseId" element={<Suspense fallback={<PageLoader />}><Leaderboard /></Suspense>} />
-              <Route path="/network" element={<Suspense fallback={<PageLoader />}><NetworkPage /></Suspense>} />
-              <Route path="/network/profile/:username" element={<Suspense fallback={<PageLoader />}><NetworkProfilePage /></Suspense>} />
-              <Route path="/network/spaces/:slugOrId" element={<Suspense fallback={<PageLoader />}><LearningSpaceDetailPage /></Suspense>} />
-              <Route path="/network/spaces/:slugOrId/discussions/:discussionId" element={<Suspense fallback={<PageLoader />}><DiscussionDetailPage /></Suspense>} />
-              <Route path="/notifications" element={<Suspense fallback={<PageLoader />}><NotificationsPage /></Suspense>} />
-              <Route path="/jobs" element={<Suspense fallback={<PageLoader />}><JobsPage /></Suspense>} />
-              <Route path="/jobs/:id" element={<Suspense fallback={<PageLoader />}><JobDetailPage /></Suspense>} />
-              <Route path="/career-intelligence" element={<Suspense fallback={<PageLoader />}><CareerIntelligencePage /></Suspense>} />
-              <Route path="/manage-business" element={<Suspense fallback={<PageLoader />}><ManageBusiness /></Suspense>} />
-              <Route path="/businesses" element={<Suspense fallback={<PageLoader />}><BusinessDiscoveryPage /></Suspense>} />
-              <Route path="/businesses/:slug" element={<Suspense fallback={<PageLoader />}><PublicBusinessProfilePage /></Suspense>} />
-              <Route path="/admin/businesses" element={<Suspense fallback={<PageLoader />}><AdminBusinessReviewPage /></Suspense>} />
-              <Route path="/active-sessions" element={<Suspense fallback={<PageLoader />}><ActiveSessions /></Suspense>} />
-              <Route path="/audit-logs" element={<Suspense fallback={<PageLoader />}><AuditLogs /></Suspense>} />
-              <Route path="/admin/error-reports" element={<Suspense fallback={<PageLoader />}><ErrorReportsDashboard /></Suspense>} />
-              <Route path="/session-diagnostics" element={<Suspense fallback={<PageLoader />}><SessionDiagnostics /></Suspense>} />
-            </Route>
+              {/* SECURE APPLICATION ROUTING (Main Layout) */}
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <MainLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/" element={<Navigate to="/courses" />} />
+                <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
+                <Route path="/profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
+                <Route path="/profile/edit" element={<Suspense fallback={<PageLoader />}><EditProfile /></Suspense>} />
+                <Route path="/public-profile" element={<Suspense fallback={<PageLoader />}><PublicProfilePage /></Suspense>} />
+                <Route path="/courses" element={<Suspense fallback={<PageLoader />}><Courses /></Suspense>} />
+                <Route path="/courses/:courseId" element={<Suspense fallback={<PageLoader />}><CourseChapters /></Suspense>} />
+                <Route path="/courses/:courseId/chapters" element={<Suspense fallback={<PageLoader />}><CourseChapters /></Suspense>} />
+                <Route path="/courses/:courseId/chapters/:chapterCode/classes" element={<Suspense fallback={<PageLoader />}><CourseClasses /></Suspense>} />
+                <Route path="/courses/class/:classId" element={<Suspense fallback={<PageLoader />}><ClassView /></Suspense>} />
+                <Route path="/my-learning" element={<Suspense fallback={<PageLoader />}><MyLearning /></Suspense>} />
+                <Route path="/my-points" element={<Suspense fallback={<PageLoader />}><MyPoints /></Suspense>} />
+                <Route path="/leaderboard" element={<Suspense fallback={<PageLoader />}><Leaderboard /></Suspense>} />
+                <Route path="/leaderboard/:courseId" element={<Suspense fallback={<PageLoader />}><Leaderboard /></Suspense>} />
+                <Route path="/network" element={<Suspense fallback={<PageLoader />}><NetworkPage /></Suspense>} />
+                <Route path="/network/profile/:username" element={<Suspense fallback={<PageLoader />}><NetworkProfilePage /></Suspense>} />
+                <Route path="/network/spaces/:slugOrId" element={<Suspense fallback={<PageLoader />}><LearningSpaceDetailPage /></Suspense>} />
+                <Route path="/network/spaces/:slugOrId/discussions/:discussionId" element={<Suspense fallback={<PageLoader />}><DiscussionDetailPage /></Suspense>} />
+                <Route path="/messages" element={<Suspense fallback={<PageLoader />}><MessagesPage /></Suspense>} />
+                <Route path="/messages/:conversationId" element={<Suspense fallback={<PageLoader />}><MessagesPage /></Suspense>} />
+                <Route path="/notifications" element={<Suspense fallback={<PageLoader />}><NotificationsPage /></Suspense>} />
+                <Route path="/jobs" element={<Suspense fallback={<PageLoader />}><JobsPage /></Suspense>} />
+                <Route path="/jobs/:id" element={<Suspense fallback={<PageLoader />}><JobDetailPage /></Suspense>} />
+                <Route path="/career-intelligence" element={<Suspense fallback={<PageLoader />}><CareerIntelligencePage /></Suspense>} />
+                <Route path="/manage-business" element={<Suspense fallback={<PageLoader />}><ManageBusiness /></Suspense>} />
+                <Route path="/businesses" element={<Suspense fallback={<PageLoader />}><BusinessDiscoveryPage /></Suspense>} />
+                <Route path="/businesses/:slug" element={<Suspense fallback={<PageLoader />}><PublicBusinessProfilePage /></Suspense>} />
+                <Route path="/admin/businesses" element={<Suspense fallback={<PageLoader />}><AdminBusinessReviewPage /></Suspense>} />
+                <Route path="/active-sessions" element={<Suspense fallback={<PageLoader />}><ActiveSessions /></Suspense>} />
+                <Route path="/audit-logs" element={<Suspense fallback={<PageLoader />}><AuditLogs /></Suspense>} />
+                <Route path="/admin/error-reports" element={<Suspense fallback={<PageLoader />}><ErrorReportsDashboard /></Suspense>} />
+                <Route path="/session-diagnostics" element={<Suspense fallback={<PageLoader />}><SessionDiagnostics /></Suspense>} />
+              </Route>
 
-            {/* 404 — NOT FOUND */}
-            {/* 404 NOT FOUND ROUTE */}
-            <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFoundPage /></Suspense>} />
+              {/* 404 — NOT FOUND */}
+              {/* 404 NOT FOUND ROUTE */}
+              <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFoundPage /></Suspense>} />
 
-          </Routes>
-          {/* Global Troubleshoot Error Reporter */}
-          <TroubleshootReporter />
-        </BrowserRouter>
+            </Routes>
+            {/* Global Troubleshoot Error Reporter */}
+            <TroubleshootReporter />
+          </BrowserRouter>
+          </MessagingProvider>
         </NotificationProvider>
       </ToastProvider>
     </QueryClientProvider>

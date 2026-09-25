@@ -39,4 +39,8 @@ export interface NetworkFiltersResponse {
   institutions: string[];
   levels: string[];
   roles?: string[];
+  disciplines?: string[];
+  sectors?: string[];
+  software?: string[];
+  experienceRanges?: string[];
 }

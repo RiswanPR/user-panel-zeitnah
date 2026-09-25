@@ -22,6 +22,10 @@ import useDebounce from '../../hooks/useDebounce';
 import { networkConnectionsService } from '../../services/networkConnectionsService';
 import { networkApi } from '../../services/networkApi';
 import { useToast } from '../ui/Toast';
+import InfrastructurePeopleCard from './InfrastructurePeopleCard';
+import InfrastructurePeopleFilters from './InfrastructurePeopleFilters';
+import SendMessageRequestModal from './SendMessageRequestModal';
+import StudentProfilePreviewModal from './StudentProfilePreviewModal';
 
 /**
  * Format integer count with locale commas
@@ -60,6 +64,20 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 300);
   const [roleFilter, setRoleFilter] = useState('all');
+  const [infraFilters, setInfraFilters] = useState({
+    role: '',
+    discipline: '',
+    specialization: '',
+    sector: '',
+    software: '',
+    skill: '',
+    experience: '',
+    location: '',
+    institution: '',
+    company: '',
+  });
+  const [selectedPreviewPerson, setSelectedPreviewPerson] = useState(null);
+  const [messageRequestRecipient, setMessageRequestRecipient] = useState(null);
   const [page, setPage] = useState(1);
 
   // Authoritative Network Stats for Tab Badges & Metric Cards
@@ -125,8 +143,8 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
 
   // 5. Discover People Query
   const peopleQuery = useQuery({
-    queryKey: ['network-people', { q: debouncedSearch, role: roleFilter, page }],
-    queryFn: () => networkApi.getPeople({ q: debouncedSearch, role: roleFilter, page }),
+    queryKey: ['network-people', { q: debouncedSearch, ...infraFilters, page }],
+    queryFn: () => networkApi.getPeople({ q: debouncedSearch, ...infraFilters, page }),
     enabled: subTab === 'people',
     staleTime: 1000 * 20,
   });
@@ -413,32 +431,6 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
           })}
         </div>
 
-        {/* Role Filter for Discover People Tab */}
-        {subTab === 'people' && (
-          <div className="flex items-center gap-1.5 self-start sm:self-auto">
-            {[
-              { id: 'all', label: 'All Roles' },
-              { id: 'student', label: 'Students' },
-              { id: 'teacher', label: 'Instructors' },
-            ].map((r) => (
-              <button
-                key={r.id}
-                type="button"
-                onClick={() => {
-                  setRoleFilter(r.id);
-                  setPage(1);
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
-                  roleFilter === r.id
-                    ? 'bg-white/10 text-white border border-white/10 shadow-sm'
-                    : 'text-text-muted hover:text-white hover:bg-white/[0.03]'
-                }`}
-              >
-                {r.label}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* ── Search Bar (except for requests tab) ── */}
@@ -459,7 +451,7 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
                 ? 'Search followers...'
                 : subTab === 'following'
                 ? 'Search people you follow...'
-                : 'Search students by name, course, skills, or handle...'
+                : 'Search infrastructure professionals by name, discipline, skills, company...'
             }
             className="w-full pl-10 pr-12 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-brand-mint/40 text-xs text-white placeholder-text-muted focus:outline-none transition-colors"
           />
@@ -481,21 +473,45 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
       {/* ── 1. DISCOVER PEOPLE TAB (MAIN) ── */}
       {subTab === 'people' && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h3 className="text-sm font-heading font-bold text-white">
-                Recommended & Peer Learners
+              <h3 className="text-base sm:text-lg font-heading font-bold text-white">
+                Discover Infrastructure Professionals
               </h3>
-              <p className="text-xs text-text-muted mt-0.5">
-                Connect with peers across cohorts, exchange insights, and build your Zeitnah network.
+              <p className="text-xs text-text-muted mt-1">
+                Find engineers, educators, mentors, recruiters, founders and other infrastructure professionals.
               </p>
             </div>
             {peopleQuery.data?.total !== undefined && (
-              <span className="text-xs font-mono text-text-faint">
-                {peopleQuery.data.total} {peopleQuery.data.total === 1 ? 'person' : 'people'}
+              <span className="text-xs font-mono text-text-faint self-start sm:self-auto">
+                {peopleQuery.data.total} {peopleQuery.data.total === 1 ? 'professional' : 'professionals'}
               </span>
             )}
           </div>
+
+          {/* Infrastructure Structured Filters */}
+          <InfrastructurePeopleFilters
+            filters={infraFilters}
+            onChange={(nextFilters) => {
+              setInfraFilters(nextFilters);
+              setPage(1);
+            }}
+            onReset={() => {
+              setInfraFilters({
+                role: '',
+                discipline: '',
+                specialization: '',
+                sector: '',
+                software: '',
+                skill: '',
+                experience: '',
+                location: '',
+                institution: '',
+                company: '',
+              });
+              setPage(1);
+            }}
+          />
 
           {peopleQuery.isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -524,175 +540,46 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
                 <Compass className="w-7 h-7" />
               </div>
               <h3 className="font-heading font-bold text-lg text-white">
-                {debouncedSearch ? 'No people found' : 'No discoverable learners yet'}
+                No professionals found
               </h3>
               <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                {debouncedSearch
-                  ? 'No people found matching your query. Try searching with a different name, skill, or course.'
-                  : 'Check back soon as more learners join the Zeitnah ecosystem.'}
+                Try another skill, discipline, sector or location.
               </p>
-              {debouncedSearch && (
+              {(debouncedSearch || Object.values(infraFilters).some(Boolean)) && (
                 <button
                   type="button"
-                  onClick={() => setSearchQuery('')}
+                  onClick={() => {
+                    setSearchQuery('');
+                    setInfraFilters({
+                      role: '',
+                      discipline: '',
+                      specialization: '',
+                      sector: '',
+                      software: '',
+                      skill: '',
+                      experience: '',
+                      location: '',
+                      institution: '',
+                      company: '',
+                    });
+                    setPage(1);
+                  }}
                   className="mt-4 px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-white transition-colors cursor-pointer"
                 >
-                  Clear Search Filter
+                  Reset All Filters
                 </button>
               )}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {(peopleQuery.data?.people || []).map((person) => {
-                const identifier = person.username || person.id || person._id || '';
-                const profileLink = `/network/profile/${encodeURIComponent(identifier)}`;
-                const isFollowing = Boolean(person.isFollowing);
-
-                return (
-                  <div
-                    key={person._id || person.id}
-                    className="p-5 rounded-2xl bg-[#111115]/80 hover:bg-[#15151c] border border-white/[0.08] hover:border-brand-mint/30 transition-all flex flex-col justify-between gap-4 shadow-lg group"
-                  >
-                    {/* Top Identity Block */}
-                    <div className="flex items-start gap-3.5 min-w-0">
-                      <Link to={profileLink} className="relative shrink-0 block focus-ring rounded-2xl">
-                        <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden group-hover:border-brand-mint/40 transition-colors">
-                          {person.avatar ? (
-                            <img src={person.avatar} alt={person.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <span>{getInitials(person.name)}</span>
-                          )}
-                        </div>
-                        {person.isVerified && (
-                          <span
-                            className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-bg-base shadow-sm"
-                            title="Verified Learner"
-                          >
-                            <ShieldCheck className="h-3 w-3" />
-                          </span>
-                        )}
-                      </Link>
-
-                      <div className="min-w-0 flex-1">
-                        <Link
-                          to={profileLink}
-                          className="font-heading font-bold text-sm text-white hover:text-brand-mint transition-colors truncate block focus-ring rounded"
-                        >
-                          {person.name}
-                        </Link>
-                        {person.username && (
-                          <p className="text-[11px] font-mono text-text-muted truncate">
-                            @{person.username}
-                          </p>
-                        )}
-                        <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                          <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-white/[0.06] text-white">
-                            {person.role || 'Student'}
-                          </span>
-                          {person.course && (
-                            <span className="px-2 py-0.5 rounded text-[9px] font-medium bg-brand-mint/10 text-brand-mint border border-brand-mint/20 truncate max-w-[140px] flex items-center gap-1">
-                              <GraduationCap className="w-2.5 h-2.5 shrink-0" />
-                              <span className="truncate">{person.course}</span>
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Headline / Bio */}
-                    {person.headline && (
-                      <p className="text-xs text-text-muted/90 line-clamp-2 leading-relaxed">
-                        {person.headline}
-                      </p>
-                    )}
-
-                    {/* Skills / Interests Tags */}
-                    {Array.isArray(person.skills) && person.skills.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-1">
-                        {person.skills.slice(0, 3).map((skill, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-white/[0.03] text-text-secondary border border-white/[0.06]"
-                          >
-                            {skill}
-                          </span>
-                        ))}
-                        {person.skills.length > 3 && (
-                          <span className="text-[10px] text-text-faint self-center">
-                            +{person.skills.length - 3}
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Action Row */}
-                    <div className="flex items-center justify-between gap-2 pt-3 border-t border-white/[0.06]">
-                      <Link
-                        to={profileLink}
-                        className="px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors focus-ring"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5 text-text-muted" />
-                        <span>View Profile</span>
-                      </Link>
-
-                      <div className="flex items-center gap-1.5">
-                        {/* Connection State Action */}
-                        {person.connectionStatus === 'connected' ? (
-                          <span className="px-2.5 py-1.5 rounded-xl bg-emerald-500/15 text-emerald-300 text-[11px] font-semibold flex items-center gap-1">
-                            <Check className="w-3 h-3" />
-                            <span>Connected</span>
-                          </span>
-                        ) : person.connectionStatus === 'pending_sent' || person.connectionStatus === 'pending' ? (
-                          <span className="px-2.5 py-1.5 rounded-xl bg-white/[0.05] text-text-muted text-[11px] font-semibold flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            <span>Requested</span>
-                          </span>
-                        ) : person.connectionStatus === 'pending_received' ? (
-                          <button
-                            type="button"
-                            onClick={() => acceptRequestMutation.mutate(person.connectionId)}
-                            disabled={acceptRequestMutation.isPending}
-                            className="px-3 py-1.5 rounded-xl bg-brand-mint text-black font-bold text-xs cursor-pointer hover:bg-brand-mint/90 transition-colors"
-                          >
-                            Accept
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => sendRequestMutation.mutate(person._id || person.id)}
-                            disabled={sendRequestMutation.isPending}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-brand-mint/15 hover:bg-brand-mint text-brand-mint hover:text-black font-bold text-xs transition-colors cursor-pointer"
-                          >
-                            <UserPlus className="w-3.5 h-3.5" />
-                            <span>Connect</span>
-                          </button>
-                        )}
-
-                        {/* Follow / Following Toggle */}
-                        <button
-                          type="button"
-                          onClick={() =>
-                            followMutation.mutate({
-                              targetId: person._id || person.id,
-                              follow: !isFollowing,
-                              name: person.name,
-                            })
-                          }
-                          disabled={followMutation.isPending}
-                          className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                            isFollowing
-                              ? 'bg-white/[0.06] hover:bg-rose-500/15 text-text-muted hover:text-rose-300 border border-white/10'
-                              : 'bg-white/[0.04] hover:bg-white/[0.08] text-white'
-                          }`}
-                          title={isFollowing ? 'Unfollow' : 'Follow'}
-                        >
-                          {isFollowing ? 'Following' : 'Follow'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {(peopleQuery.data?.people || []).map((person) => (
+                <InfrastructurePeopleCard
+                  key={person._id || person.id}
+                  person={person}
+                  onPreview={(p) => setSelectedPreviewPerson(p)}
+                  onMessageRequest={(p) => setMessageRequestRecipient(p)}
+                />
+              ))}
             </div>
           )}
 
@@ -1436,6 +1323,24 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
             </div>
           )}
         </div>
+      )}
+      {/* Modals for profile preview and message request */}
+      {selectedPreviewPerson && (
+        <StudentProfilePreviewModal
+          student={selectedPreviewPerson}
+          onClose={() => setSelectedPreviewPerson(null)}
+          onMessageRequest={(p) => setMessageRequestRecipient(p)}
+        />
+      )}
+
+      {messageRequestRecipient && (
+        <SendMessageRequestModal
+          recipient={messageRequestRecipient}
+          onClose={() => setMessageRequestRecipient(null)}
+          onSuccess={() => {
+            peopleQuery.refetch();
+          }}
+        />
       )}
     </div>
   );

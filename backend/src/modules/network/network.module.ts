@@ -62,6 +62,7 @@ import { OpportunitiesController } from './controllers/opportunities.controller'
 import { NetworkController } from './network.controller';
 import { AwsModule } from '../../common/aws/aws.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { ModerationModule } from '../moderation/moderation.module';
 
 @Module({
   imports: [
@@ -88,6 +89,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     ]),
     AwsModule,
     NotificationsModule,
+    ModerationModule,
   ],
   controllers: [
     LearningSpacesController,

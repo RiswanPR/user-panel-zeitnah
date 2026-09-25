@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   X,
@@ -9,6 +9,7 @@ import {
   ExternalLink,
   ShieldCheck,
   Clock,
+  MessageSquare,
 } from "lucide-react";
 import { getUploadUrl } from "../../utils/courseUi";
 import RelationshipAction from "./RelationshipAction";
@@ -42,8 +43,9 @@ function formatLastActive(lastActiveAt) {
  * @param {import('../../services/networkService').DiscoverableStudent | null} props.student - Student to preview
  * @param {function(): void} props.onClose - Close callback
  */
-export default function StudentProfilePreviewModal({ student, onClose }) {
+export default function StudentProfilePreviewModal({ student, onClose, onMessageRequest }) {
   const shouldReduceMotion = useReducedMotion();
+  const navigate = useNavigate();
 
   // Handle ESC key
   useEffect(() => {
@@ -229,6 +231,32 @@ export default function StudentProfilePreviewModal({ student, onClose }) {
               variant="full"
             />
           </div>
+
+          {/* Message Action */}
+          {student.canMessage !== false ? (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                if (student.messageAction === 'request' && onMessageRequest) {
+                  onMessageRequest(student);
+                } else {
+                  navigate(`/messages?user=${student.id || student._id}`);
+                }
+              }}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-brand-mint/40 bg-brand-mint/10 py-2.5 px-4 text-xs font-semibold text-brand-mint hover:bg-brand-mint/20 transition-all focus-ring"
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+              <span>{student.messageAction === 'request' ? 'Request' : 'Message'}</span>
+            </button>
+          ) : (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.05] bg-white/[0.02] py-2.5 px-3 text-xs text-text-faint cursor-not-allowed opacity-50"
+              title="Messaging restricted by privacy settings"
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+            </span>
+          )}
 
           {/* View Full Profile Link */}
           {student.username && (

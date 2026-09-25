@@ -24,6 +24,7 @@ import { ErrorReportsModule } from './modules/error-reports/error-reports.module
 import { WellKnownModule } from './modules/well-known/well-known.module';
 import { MatchingModule } from './modules/matching/matching.module';
 import { CareerIntelligenceModule } from './modules/career-intelligence/career-intelligence.module';
+import { MessagingModule } from './modules/messaging/messaging.module';
 import { EmailModule } from './common/email/email.module';
 
 @Module({
@@ -63,6 +64,7 @@ import { EmailModule } from './common/email/email.module';
     MatchingModule,
     CareerIntelligenceModule,
     ModerationModule,
+    MessagingModule,
 
     // TROUBLESHOOT ERROR REPORTING
     TroubleshootModule,

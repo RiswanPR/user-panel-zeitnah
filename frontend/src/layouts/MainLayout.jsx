@@ -13,9 +13,11 @@ import {
   Briefcase,
   Building2,
   TrendingUp,
+  MessageSquare,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { AuthContext } from "../context/AuthContext";
+import { useMessaging } from "../context/MessagingContext";
 import { getUploadUrl } from "../utils/courseUi";
 import leaderboardService from "../services/leaderboardService";
 import LeaderboardSidebarCard from "../components/sidebar/LeaderboardSidebarCard";
@@ -47,23 +49,28 @@ export default function MainLayout({ children }) {
   const isBusinessRole =
     normalizedRole === "RECRUITER" || normalizedRole === "FOUNDER" || normalizedRole === "ADMIN";
 
+  const { unreadCounts } = useMessaging();
+  const unreadMessagesCount = unreadCounts?.total || 0;
+
   const desktopNavItems = useMemo(() => [
     { key: "courses", path: "/courses", label: "Courses", icon: BookOpen },
     { key: "network", path: "/network", label: "Network & Spaces", icon: Compass },
+    { key: "messages", path: "/messages", label: "Messages", icon: MessageSquare, badge: unreadMessagesCount },
     { key: "profile", path: "/profile", label: "Profile", icon: User },
     { key: "jobs", path: "/jobs", label: "Jobs", icon: Briefcase },
     { key: "career-intelligence", path: "/career-intelligence", label: "Career Intelligence", icon: TrendingUp },
     ...(isBusinessRole
       ? [{ key: "manage-business", path: "/manage-business", label: "Manage Business", icon: Building2 }]
       : []),
-  ], [isBusinessRole]);
+  ], [isBusinessRole, unreadMessagesCount]);
 
   const mobileBottomNavItems = useMemo(() => [
     { key: "courses", path: "/courses", label: "Courses", icon: BookOpen },
     { key: "network", path: "/network", label: "Network", icon: Compass },
+    { key: "messages", path: "/messages", label: "Messages", icon: MessageSquare, badge: unreadMessagesCount },
     { key: "jobs", path: "/jobs", label: "Jobs", icon: Briefcase },
     { key: "profile", path: "/profile", label: "Profile", icon: User },
-  ], []);
+  ], [unreadMessagesCount]);
 
   // Cheaply fetch authenticated student's personal position for mobile trophy rank indicator
   const { data: position } = useQuery({
@@ -88,6 +95,9 @@ export default function MainLayout({ children }) {
     }
     if (key === "network") {
       return path === "/network" || path.startsWith("/network/");
+    }
+    if (key === "messages") {
+      return path.startsWith("/messages");
     }
     if (key === "notifications") {
       return path === "/notifications" || path.startsWith("/notifications/");
@@ -150,8 +160,24 @@ export default function MainLayout({ children }) {
             </div>
           </Link>
 
-          {/* Right: Notification Bell, Leaderboard Trophy Shortcut & Profile Avatar */}
+          {/* Right: Notification Bell, Messages, Leaderboard Trophy Shortcut & Profile Avatar */}
           <div className="flex items-center gap-2">
+            {/* Messages Shortcut */}
+            <Link
+              to="/messages"
+              aria-label="Messages"
+              className={`relative w-8 h-8 rounded-full border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center transition-all focus-ring ${
+                isRouteActive("messages") ? "border-brand-mint/40 text-brand-mint" : "text-text-muted hover:text-white"
+              }`}
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              {unreadMessagesCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-brand-mint text-black text-[9px] font-bold font-mono flex items-center justify-center shadow-sm">
+                  {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
+                </span>
+              )}
+            </Link>
+
             {/* Notification Bell Shortcut */}
             <NotificationBell />
 
@@ -296,6 +322,13 @@ export default function MainLayout({ children }) {
                         {/* Navigation Label */}
                         <span className="relative z-10">{item.label}</span>
 
+                        {/* Unread Messages / Items Badge */}
+                        {item.badge > 0 && (
+                          <span className="relative z-10 ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold font-mono bg-brand-mint text-black shadow-sm">
+                            {item.badge > 99 ? '99+' : item.badge}
+                          </span>
+                        )}
+
                         {/* Courses: Active Dot Indicator */}
                         {isCourses && active && (
                           <span className="relative z-10 ml-auto w-1.5 h-1.5 rounded-full bg-brand-yellow" />
@@ -394,14 +427,21 @@ export default function MainLayout({ children }) {
                         transition={{ type: "spring", stiffness: 400, damping: 28 }}
                       />
                     )}
-                    <Icon
-                      className={`relative z-10 w-5 h-5 transition-colors duration-200 ${active
-                        ? isCourses
-                          ? "text-brand-mint"
-                          : "text-white font-bold"
-                        : "text-text-faint"
-                        }`}
-                    />
+                    <div className="relative">
+                      <Icon
+                        className={`relative z-10 w-5 h-5 transition-colors duration-200 ${active
+                          ? isCourses
+                            ? "text-brand-mint"
+                            : "text-white font-bold"
+                          : "text-text-faint"
+                          }`}
+                      />
+                      {item.badge > 0 && (
+                        <span className="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full bg-brand-mint text-black font-bold font-mono text-[9px] flex items-center justify-center shadow-sm z-20">
+                          {item.badge > 9 ? '9+' : item.badge}
+                        </span>
+                      )}
+                    </div>
                     <span
                       className={`relative z-10 text-[10px] font-semibold tracking-wide transition-colors duration-200 ${active
                         ? isCourses

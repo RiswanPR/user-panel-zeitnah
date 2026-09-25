@@ -154,5 +154,8 @@ export class UpdateProfileDto {
     certifications?: string;
     careerPreferences?: string;
     contactInfo?: string;
+    messaging?: string;
+    readReceipts?: boolean;
+    onlinePresence?: boolean;
   };
 }

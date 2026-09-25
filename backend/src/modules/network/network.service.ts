@@ -23,6 +23,11 @@ import {
   NetworkFiltersResponse,
 } from './dto/discoverable-student.dto';
 import {
+  INFRASTRUCTURE_DISCIPLINES,
+  INFRASTRUCTURE_SECTORS,
+  INFRASTRUCTURE_SOFTWARE,
+} from '../profile/constants/infrastructure-taxonomy';
+import {
   GetConnectionsQueryDto,
   PaginatedConnectionsResponse,
   ConnectionItem,
@@ -456,6 +461,16 @@ export class NetworkService {
       institutions: cleanInstitutions,
       levels,
       roles,
+      disciplines: [...INFRASTRUCTURE_DISCIPLINES],
+      sectors: [...INFRASTRUCTURE_SECTORS],
+      software: [...INFRASTRUCTURE_SOFTWARE],
+      experienceRanges: [
+        '0–1 years',
+        '1–3 years',
+        '3–5 years',
+        '5–10 years',
+        '10+ years',
+      ],
     };
   }
 

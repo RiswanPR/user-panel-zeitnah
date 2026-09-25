@@ -595,6 +595,13 @@ export class User {
       certifications: { type: String, default: 'PUBLIC' },
       careerPreferences: { type: String, default: 'PRIVATE' },
       contactInfo: { type: String, default: 'NETWORK' },
+      messaging: {
+        type: String,
+        enum: ['ANYONE', 'CONNECTIONS_ONLY', 'NOBODY'],
+        default: 'ANYONE',
+      },
+      readReceipts: { type: Boolean, default: true },
+      onlinePresence: { type: Boolean, default: true },
     },
     default: {
       experience: 'PUBLIC',
@@ -603,6 +610,9 @@ export class User {
       certifications: 'PUBLIC',
       careerPreferences: 'PRIVATE',
       contactInfo: 'NETWORK',
+      messaging: 'ANYONE',
+      readReceipts: true,
+      onlinePresence: true,
     },
   })
   privacySettings!: {
@@ -612,6 +622,9 @@ export class User {
     certifications: string;
     careerPreferences: string;
     contactInfo: string;
+    messaging: string;
+    readReceipts: boolean;
+    onlinePresence: boolean;
   };
 
   // MENTORSHIP CONTEXT
