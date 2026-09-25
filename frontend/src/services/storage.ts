@@ -98,8 +98,21 @@ class StorageService {
             if (val !== null) memoryCache.set(key, val);
           }
         }
+
+        // Cross-tab synchronization: keep memory cache updated when tokens/keys change in other tabs
+        window.addEventListener('storage', (event: StorageEvent) => {
+          if (!event.key) {
+            memoryCache.clear();
+            return;
+          }
+          if (event.newValue === null) {
+            memoryCache.delete(event.key);
+          } else {
+            memoryCache.set(event.key, event.newValue);
+          }
+        });
       } catch (e) {
-        console.warn('[StorageService] LocalStorage pre-warm failed:', e);
+        console.warn('[StorageService] LocalStorage pre-warm/sync setup failed:', e);
       }
     }
 
@@ -126,19 +139,21 @@ class StorageService {
   // ── Generic Key-Value Operations ──
 
   public getItem(key: string): string | null {
-    if (memoryCache.has(key)) {
-      return memoryCache.get(key) || null;
-    }
     if (this.isBrowser) {
       try {
         const val = window.localStorage.getItem(key);
-        if (val !== null) memoryCache.set(key, val);
-        return val;
+        if (val !== null) {
+          memoryCache.set(key, val);
+          return val;
+        } else {
+          memoryCache.delete(key);
+          return null;
+        }
       } catch {
-        return null;
+        return memoryCache.get(key) || null;
       }
     }
-    return null;
+    return memoryCache.get(key) || null;
   }
 
   public setItem(key: string, value: string): void {

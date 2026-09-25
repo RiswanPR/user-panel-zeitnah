@@ -754,7 +754,7 @@ export class NotificationsService {
             : {}),
         },
       },
-      { upsert: true, new: true },
+      { upsert: true, returnDocument: 'after' },
     );
 
     return prefs;

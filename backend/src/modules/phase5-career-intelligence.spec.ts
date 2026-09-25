@@ -46,7 +46,11 @@ function makeCandidateUser(overrides: Record<string, any> = {}) {
     preferredLocations: ['Kerala', 'Karnataka'],
     skills: ['Site Supervision', 'Quality Control'],
     structuredSkills: {
-      technicalSkills: ['Site Supervision', 'Quality Control / QA/QC', 'Bar Bending Schedule (BBS)'],
+      technicalSkills: [
+        'Site Supervision',
+        'Quality Control / QA/QC',
+        'Bar Bending Schedule (BBS)',
+      ],
       softwareSkills: ['AutoCAD'],
       industrySkills: ['Highway Construction', 'Earthwork'],
       professionalSkills: ['Subcontractor Coordination'],
@@ -57,7 +61,8 @@ function makeCandidateUser(overrides: Record<string, any> = {}) {
         organization: 'L&T Construction',
         role: 'Site Engineer',
         location: 'Kerala',
-        description: 'Highway EPC pavement planning and daily progress tracking',
+        description:
+          'Highway EPC pavement planning and daily progress tracking',
         skillsUsed: ['Site Supervision', 'Quality Control / QA/QC'],
         softwareUsed: ['AutoCAD'],
         infrastructureSector: 'Highways',
@@ -99,8 +104,13 @@ function makeCandidateProjects() {
     {
       _id: new Types.ObjectId(),
       title: 'NH-66 Highway Expansion',
-      description: 'Four-lane highway widening project involving daily progress scheduling, pavement QA/QC, and BOQ material reconciliation.',
-      skills: ['Planning & Scheduling', 'Site Supervision', 'Quantity Surveying'],
+      description:
+        'Four-lane highway widening project involving daily progress scheduling, pavement QA/QC, and BOQ material reconciliation.',
+      skills: [
+        'Planning & Scheduling',
+        'Site Supervision',
+        'Quantity Surveying',
+      ],
       softwareUsed: ['AutoCAD', 'Primavera P6'],
       infrastructureSector: 'Highways',
       role: 'Section Site Engineer',
@@ -144,7 +154,11 @@ describe('Phase 5 — Career Intelligence Engine & Taxonomy', () => {
       expect(map['Civil Engineering']).toBeDefined();
       expect(map['Civil Engineering'].roles.length).toBeGreaterThan(0);
       expect(map['Digital Construction & BIM']).toBeDefined();
-      expect(map['Digital Construction & BIM'].roles.some((r) => r.title.includes('BIM'))).toBe(true);
+      expect(
+        map['Digital Construction & BIM'].roles.some((r) =>
+          r.title.includes('BIM'),
+        ),
+      ).toBe(true);
     });
   });
 
@@ -158,7 +172,9 @@ describe('Phase 5 — Career Intelligence Engine & Taxonomy', () => {
       expect(skillNames).toContain('Quality Control / QA/QC');
       expect(skillNames).toContain('Bar Bending Schedule (BBS)');
 
-      const explicitItem = demonstrated.find((d) => d.skill === 'Site Supervision');
+      const explicitItem = demonstrated.find(
+        (d) => d.skill === 'Site Supervision',
+      );
       expect(explicitItem?.evidenceType).toBe(EvidenceType.EXPLICIT_SKILL);
       expect(explicitItem?.confidence).toBe(SkillConfidence.HIGH);
     });
@@ -166,7 +182,12 @@ describe('Phase 5 — Career Intelligence Engine & Taxonomy', () => {
     test('Detects project portfolio evidence and software tools without mutating user document', () => {
       const user = makeCandidateUser({
         skills: ['Site Supervision'],
-        structuredSkills: { technicalSkills: ['Site Supervision'], softwareSkills: [], industrySkills: [], professionalSkills: [] },
+        structuredSkills: {
+          technicalSkills: ['Site Supervision'],
+          softwareSkills: [],
+          industrySkills: [],
+          professionalSkills: [],
+        },
       });
       const originalUserCopy = JSON.parse(JSON.stringify(user));
       const projects = makeCandidateProjects();
@@ -210,7 +231,9 @@ describe('Phase 5 — Career Intelligence Engine & Taxonomy', () => {
 
       expect(strength.level).toBe(ProfileStrengthLevel.STRONG);
       expect(strength.evidence.length).toBe(5);
-      expect(strength.evidence.every((e) => typeof e.verified === 'boolean')).toBe(true);
+      expect(
+        strength.evidence.every((e) => typeof e.verified === 'boolean'),
+      ).toBe(true);
     });
 
     test('Profile with minimal project and skill depth produces EMERGING strength', () => {
@@ -218,13 +241,24 @@ describe('Phase 5 — Career Intelligence Engine & Taxonomy', () => {
         yearsOfExperience: 0,
         experience: [],
         skills: [],
-        structuredSkills: { technicalSkills: [], softwareSkills: [], industrySkills: [], professionalSkills: [] },
-        careerPreferences: { openToOpportunities: false, preferredRoles: [], preferredLocations: [] },
+        structuredSkills: {
+          technicalSkills: [],
+          softwareSkills: [],
+          industrySkills: [],
+          professionalSkills: [],
+        },
+        careerPreferences: {
+          openToOpportunities: false,
+          preferredRoles: [],
+          preferredLocations: [],
+        },
       });
 
       const strength = calculateProfileStrength(emptyUser, [], []);
       expect(strength.level).toBe(ProfileStrengthLevel.EMERGING);
-      expect(strength.evidence.filter((e) => e.verified).length).toBeLessThanOrEqual(1);
+      expect(
+        strength.evidence.filter((e) => e.verified).length,
+      ).toBeLessThanOrEqual(1);
     });
   });
 
@@ -233,21 +267,36 @@ describe('Phase 5 — Career Intelligence Engine & Taxonomy', () => {
       const user = makeCandidateUser();
       const projects = makeCandidateProjects();
       const demonstrated = detectDemonstratedSkills(user, projects);
-      const planningRole = getRoleByTitle('Planning Engineer')!;
+      const planningRole = getRoleByTitle('Planning Engineer');
 
-      const alignment = evaluateRoleAlignment(planningRole, user, projects, demonstrated, 12);
+      const alignment = evaluateRoleAlignment(
+        planningRole,
+        user,
+        projects,
+        demonstrated,
+        12,
+      );
 
       expect(alignment.roleTitle).toBe('Planning Engineer');
       expect(alignment.alignmentScore).toBeGreaterThanOrEqual(60);
-      expect([RoleAlignmentLevel.STRONG, RoleAlignmentLevel.MODERATE]).toContain(alignment.alignmentLevel);
+      expect([
+        RoleAlignmentLevel.STRONG,
+        RoleAlignmentLevel.MODERATE,
+      ]).toContain(alignment.alignmentLevel);
       expect(alignment.demonstratedReasons.length).toBeGreaterThan(0);
-      expect(alignment.demonstratedReasons.some((r) => r.includes('Civil Engineering'))).toBe(true);
+      expect(
+        alignment.demonstratedReasons.some((r) =>
+          r.includes('Civil Engineering'),
+        ),
+      ).toBe(true);
       expect(alignment.relevantJobCount).toBe(12);
     });
 
     test('Discipline mismatch results in lower alignment score without crashing', () => {
-      const user = makeCandidateUser({ primaryDiscipline: 'Environmental Engineering' });
-      const structuralRole = getRoleByTitle('Structural Engineer')!;
+      const user = makeCandidateUser({
+        primaryDiscipline: 'Environmental Engineering',
+      });
+      const structuralRole = getRoleByTitle('Structural Engineer');
 
       const alignment = evaluateRoleAlignment(structuralRole, user, [], [], 0);
       expect(alignment.alignmentScore).toBeLessThan(60);
@@ -261,7 +310,11 @@ describe('Phase 5 — Career Intelligence Engine & Taxonomy', () => {
       const projects = makeCandidateProjects();
       const demonstrated = detectDemonstratedSkills(user, projects);
 
-      const gaps = analyzeTargetRoleSkillGaps('Planning Engineer', demonstrated, projects);
+      const gaps = analyzeTargetRoleSkillGaps(
+        'Planning Engineer',
+        demonstrated,
+        projects,
+      );
 
       expect(gaps.demonstratedSkills.length).toBeGreaterThan(0);
       const demonstratedNames = gaps.demonstratedSkills.map((d) => d.skill);
@@ -269,16 +322,31 @@ describe('Phase 5 — Career Intelligence Engine & Taxonomy', () => {
 
       expect(gaps.gapSkills.length).toBeGreaterThan(0);
       // Missing skill is phrased as NOT_DEMONSTRATED
-      expect(gaps.gapSkills.every((g) => g.status === 'NOT_DEMONSTRATED')).toBe(true);
-      expect(gaps.gapSkills.some((g) => g.recommendedAction.includes('project portfolio'))).toBe(true);
+      expect(gaps.gapSkills.every((g) => g.status === 'NOT_DEMONSTRATED')).toBe(
+        true,
+      );
+      expect(
+        gaps.gapSkills.some((g) =>
+          g.recommendedAction.includes('project portfolio'),
+        ),
+      ).toBe(true);
     });
   });
 
   describe('6. Career Pathways & Profile Improvement Recommendations', () => {
     test('Generates step-by-step career pathway progression towards target role', () => {
-      const steps = generateCareerPathwaySteps('Site Engineer', 'Planning Engineer', [
-        { skill: 'Delay Analysis', status: 'NOT_DEMONSTRATED', importance: 'REQUIRED', recommendedAction: 'Build experience' },
-      ]);
+      const steps = generateCareerPathwaySteps(
+        'Site Engineer',
+        'Planning Engineer',
+        [
+          {
+            skill: 'Delay Analysis',
+            status: 'NOT_DEMONSTRATED',
+            importance: 'REQUIRED',
+            recommendedAction: 'Build experience',
+          },
+        ],
+      );
 
       expect(steps.length).toBeGreaterThanOrEqual(3);
       expect(steps[0].stepNumber).toBe(1);
@@ -288,7 +356,9 @@ describe('Phase 5 — Career Intelligence Engine & Taxonomy', () => {
     });
 
     test('Generates actionable profile recommendations based on missing data', () => {
-      const user = makeCandidateUser({ careerPreferences: { preferredRoles: [], preferredLocations: [] } });
+      const user = makeCandidateUser({
+        careerPreferences: { preferredRoles: [], preferredLocations: [] },
+      });
       const recs = generateProfileRecommendations(user, [], [], []);
 
       expect(recs.length).toBeGreaterThan(0);
@@ -321,11 +391,32 @@ describe('Phase 5 — Career Intelligence Service Integration & Invalidation', (
       findOne: jest.fn().mockReturnValue({
         sort: jest.fn().mockReturnValue({
           lean: jest.fn().mockResolvedValue({
-            observationWindow: 'Observed across 35 active Zeitnah infrastructure jobs in the last 90 days',
+            observationWindow:
+              'Observed across 35 active Zeitnah infrastructure jobs in the last 90 days',
             totalActiveJobs: 35,
-            roleDemand: [{ roleTitle: 'Planning Engineer', activeJobCount: 14, trend: 'UP' }],
-            softwareDemand: [{ softwareName: 'Primavera P6', frequency: 22, percentage: 63, trend: 'UP' }],
-            skillDemand: [{ skillName: 'Planning & Scheduling', frequency: 20, percentage: 57, trend: 'UP' }],
+            roleDemand: [
+              {
+                roleTitle: 'Planning Engineer',
+                activeJobCount: 14,
+                trend: 'UP',
+              },
+            ],
+            softwareDemand: [
+              {
+                softwareName: 'Primavera P6',
+                frequency: 22,
+                percentage: 63,
+                trend: 'UP',
+              },
+            ],
+            skillDemand: [
+              {
+                skillName: 'Planning & Scheduling',
+                frequency: 20,
+                percentage: 57,
+                trend: 'UP',
+              },
+            ],
             sectorDemand: [{ sectorName: 'Highways', count: 18 }],
             locationDemand: [{ location: 'Kerala', count: 15 }],
           }),
@@ -431,7 +522,10 @@ describe('Phase 5 — Career Intelligence Service Integration & Invalidation', (
       userId,
       expect.objectContaining({
         $set: {
-          'careerPreferences.preferredRoles': ['Planning Engineer', 'Project Engineer'],
+          'careerPreferences.preferredRoles': [
+            'Planning Engineer',
+            'Project Engineer',
+          ],
         },
       }),
     );
@@ -446,8 +540,16 @@ describe('Phase 5 — Career Intelligence Service Integration & Invalidation', (
     const benchmarks = await service.getMarketBenchmarks();
     expect(benchmarks.observationWindow).toContain('last 90 days');
     expect(benchmarks.totalActiveJobs).toBe(35);
-    expect(benchmarks.softwareDemand.some((s: any) => s.softwareName === 'Primavera P6')).toBe(true);
-    expect(benchmarks.roleDemand.some((r: any) => r.roleTitle === 'Planning Engineer')).toBe(true);
+    expect(
+      benchmarks.softwareDemand.some(
+        (s: any) => s.softwareName === 'Primavera P6',
+      ),
+    ).toBe(true);
+    expect(
+      benchmarks.roleDemand.some(
+        (r: any) => r.roleTitle === 'Planning Engineer',
+      ),
+    ).toBe(true);
   });
 
   test('askCareerAssistant answers with profile and market grounding without hallucinating', async () => {
@@ -465,8 +567,14 @@ describe('Phase 5 — Career Intelligence Service Integration & Invalidation', (
     expect(response.answer).toBeDefined();
     expect(response.answer.length).toBeGreaterThan(20);
     expect(response.profileReferences.length).toBeGreaterThan(0);
-    expect(response.profileReferences.some((r) => r.includes('Civil Engineering') || r.includes('experience'))).toBe(true);
-    expect(response.marketReferences[0]).toContain('active Zeitnah infrastructure jobs');
+    expect(
+      response.profileReferences.some(
+        (r) => r.includes('Civil Engineering') || r.includes('experience'),
+      ),
+    ).toBe(true);
+    expect(response.marketReferences[0]).toContain(
+      'active Zeitnah infrastructure jobs',
+    );
     expect(response.suggestedActionItems.length).toBeGreaterThan(0);
   });
 

@@ -82,7 +82,10 @@ const SKILL_ALIASES: Record<string, string> = {
 
 export function normalizeSoftware(name: string): string {
   if (!name) return '';
-  const clean = name.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  const clean = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
   return SOFTWARE_ALIASES[clean] || name.trim();
 }
 
@@ -134,51 +137,123 @@ export function detectDemonstratedSkills(
   // A. Explicit Structured Skills
   const structSkills = user.structuredSkills || {};
   for (const sk of structSkills.technicalSkills || []) {
-    registerSkill(sk, EvidenceType.EXPLICIT_SKILL, SkillConfidence.HIGH, 'Profile Technical Skills');
+    registerSkill(
+      sk,
+      EvidenceType.EXPLICIT_SKILL,
+      SkillConfidence.HIGH,
+      'Profile Technical Skills',
+    );
   }
   for (const sk of structSkills.industrySkills || []) {
-    registerSkill(sk, EvidenceType.EXPLICIT_SKILL, SkillConfidence.HIGH, 'Profile Industry Skills');
+    registerSkill(
+      sk,
+      EvidenceType.EXPLICIT_SKILL,
+      SkillConfidence.HIGH,
+      'Profile Industry Skills',
+    );
   }
   for (const sk of structSkills.professionalSkills || []) {
-    registerSkill(sk, EvidenceType.EXPLICIT_SKILL, SkillConfidence.HIGH, 'Profile Professional Skills');
+    registerSkill(
+      sk,
+      EvidenceType.EXPLICIT_SKILL,
+      SkillConfidence.HIGH,
+      'Profile Professional Skills',
+    );
   }
   for (const sk of user.skills || []) {
-    registerSkill(sk, EvidenceType.EXPLICIT_SKILL, SkillConfidence.HIGH, 'Profile Skills');
+    registerSkill(
+      sk,
+      EvidenceType.EXPLICIT_SKILL,
+      SkillConfidence.HIGH,
+      'Profile Skills',
+    );
   }
 
   // B. Software Skills
   for (const sw of structSkills.softwareSkills || []) {
     const normSw = normalizeSoftware(sw);
-    registerSkill(normSw, EvidenceType.SOFTWARE_PROFICIENCY, SkillConfidence.HIGH, 'Profile Software Tools');
+    registerSkill(
+      normSw,
+      EvidenceType.SOFTWARE_PROFICIENCY,
+      SkillConfidence.HIGH,
+      'Profile Software Tools',
+    );
   }
 
   // C. Project Portfolio Evidence
   for (const proj of projects) {
     const projTitle = proj.title || 'Project';
     for (const sk of proj.skills || []) {
-      registerSkill(sk, EvidenceType.PROJECT_EVIDENCE, SkillConfidence.HIGH, `Project: "${projTitle}"`);
+      registerSkill(
+        sk,
+        EvidenceType.PROJECT_EVIDENCE,
+        SkillConfidence.HIGH,
+        `Project: "${projTitle}"`,
+      );
     }
     for (const sw of proj.softwareUsed || []) {
       const normSw = normalizeSoftware(sw);
-      registerSkill(normSw, EvidenceType.PROJECT_EVIDENCE, SkillConfidence.HIGH, `Tools in: "${projTitle}"`);
+      registerSkill(
+        normSw,
+        EvidenceType.PROJECT_EVIDENCE,
+        SkillConfidence.HIGH,
+        `Tools in: "${projTitle}"`,
+      );
     }
 
     // Contextual project description analysis
     const desc = (proj.description || '').toLowerCase();
-    if (desc.includes('planning') || desc.includes('schedule') || desc.includes('scheduling')) {
-      registerSkill('Planning & Scheduling', EvidenceType.PROJECT_EVIDENCE, SkillConfidence.MEDIUM, `Responsibilities in "${projTitle}"`);
+    if (
+      desc.includes('planning') ||
+      desc.includes('schedule') ||
+      desc.includes('scheduling')
+    ) {
+      registerSkill(
+        'Planning & Scheduling',
+        EvidenceType.PROJECT_EVIDENCE,
+        SkillConfidence.MEDIUM,
+        `Responsibilities in "${projTitle}"`,
+      );
     }
-    if (desc.includes('quantity') || desc.includes('boq') || desc.includes('takeoff')) {
-      registerSkill('Quantity Surveying', EvidenceType.PROJECT_EVIDENCE, SkillConfidence.MEDIUM, `Quantity duties in "${projTitle}"`);
+    if (
+      desc.includes('quantity') ||
+      desc.includes('boq') ||
+      desc.includes('takeoff')
+    ) {
+      registerSkill(
+        'Quantity Surveying',
+        EvidenceType.PROJECT_EVIDENCE,
+        SkillConfidence.MEDIUM,
+        `Quantity duties in "${projTitle}"`,
+      );
     }
     if (desc.includes('site supervision') || desc.includes('field execution')) {
-      registerSkill('Site Supervision', EvidenceType.PROJECT_EVIDENCE, SkillConfidence.MEDIUM, `Field execution in "${projTitle}"`);
+      registerSkill(
+        'Site Supervision',
+        EvidenceType.PROJECT_EVIDENCE,
+        SkillConfidence.MEDIUM,
+        `Field execution in "${projTitle}"`,
+      );
     }
     if (desc.includes('bbs') || desc.includes('bar bending')) {
-      registerSkill('Bar Bending Schedule (BBS)', EvidenceType.PROJECT_EVIDENCE, SkillConfidence.MEDIUM, `Reinforcement logs in "${projTitle}"`);
+      registerSkill(
+        'Bar Bending Schedule (BBS)',
+        EvidenceType.PROJECT_EVIDENCE,
+        SkillConfidence.MEDIUM,
+        `Reinforcement logs in "${projTitle}"`,
+      );
     }
-    if (desc.includes('bim') || desc.includes('clash') || desc.includes('revit')) {
-      registerSkill('BIM Modeling', EvidenceType.PROJECT_EVIDENCE, SkillConfidence.MEDIUM, `Digital modeling in "${projTitle}"`);
+    if (
+      desc.includes('bim') ||
+      desc.includes('clash') ||
+      desc.includes('revit')
+    ) {
+      registerSkill(
+        'BIM Modeling',
+        EvidenceType.PROJECT_EVIDENCE,
+        SkillConfidence.MEDIUM,
+        `Digital modeling in "${projTitle}"`,
+      );
     }
   }
 
@@ -186,31 +261,80 @@ export function detectDemonstratedSkills(
   for (const exp of user.experience || []) {
     const roleOrg = `${exp.role || 'Role'} at ${exp.organization || 'Company'}`;
     for (const sk of exp.skillsUsed || []) {
-      registerSkill(sk, EvidenceType.EXPERIENCE_EVIDENCE, SkillConfidence.HIGH, roleOrg);
+      registerSkill(
+        sk,
+        EvidenceType.EXPERIENCE_EVIDENCE,
+        SkillConfidence.HIGH,
+        roleOrg,
+      );
     }
     for (const sw of exp.softwareUsed || []) {
       const normSw = normalizeSoftware(sw);
-      registerSkill(normSw, EvidenceType.EXPERIENCE_EVIDENCE, SkillConfidence.HIGH, `${normSw} used at ${roleOrg}`);
+      registerSkill(
+        normSw,
+        EvidenceType.EXPERIENCE_EVIDENCE,
+        SkillConfidence.HIGH,
+        `${normSw} used at ${roleOrg}`,
+      );
     }
 
     const expDesc = (exp.description || '').toLowerCase();
-    if (expDesc.includes('schedule') || expDesc.includes('primavera') || expDesc.includes('critical path')) {
-      registerSkill('Planning & Scheduling', EvidenceType.EXPERIENCE_EVIDENCE, SkillConfidence.MEDIUM, `Experience: ${roleOrg}`);
+    if (
+      expDesc.includes('schedule') ||
+      expDesc.includes('primavera') ||
+      expDesc.includes('critical path')
+    ) {
+      registerSkill(
+        'Planning & Scheduling',
+        EvidenceType.EXPERIENCE_EVIDENCE,
+        SkillConfidence.MEDIUM,
+        `Experience: ${roleOrg}`,
+      );
     }
-    if (expDesc.includes('quality') || expDesc.includes('qa/qc') || expDesc.includes('inspection')) {
-      registerSkill('Quality Control / QA/QC', EvidenceType.EXPERIENCE_EVIDENCE, SkillConfidence.MEDIUM, `Inspection responsibilities at ${roleOrg}`);
+    if (
+      expDesc.includes('quality') ||
+      expDesc.includes('qa/qc') ||
+      expDesc.includes('inspection')
+    ) {
+      registerSkill(
+        'Quality Control / QA/QC',
+        EvidenceType.EXPERIENCE_EVIDENCE,
+        SkillConfidence.MEDIUM,
+        `Inspection responsibilities at ${roleOrg}`,
+      );
     }
   }
 
   // E. Certifications
   for (const cert of user.certifications || []) {
     const certName = cert.name || '';
-    if (certName.toLowerCase().includes('pmp') || certName.toLowerCase().includes('project management')) {
-      registerSkill('Project Leadership', EvidenceType.CERTIFICATION_EVIDENCE, SkillConfidence.HIGH, `Certification: ${certName}`);
-      registerSkill('Planning & Scheduling', EvidenceType.CERTIFICATION_EVIDENCE, SkillConfidence.MEDIUM, `Certification: ${certName}`);
+    if (
+      certName.toLowerCase().includes('pmp') ||
+      certName.toLowerCase().includes('project management')
+    ) {
+      registerSkill(
+        'Project Leadership',
+        EvidenceType.CERTIFICATION_EVIDENCE,
+        SkillConfidence.HIGH,
+        `Certification: ${certName}`,
+      );
+      registerSkill(
+        'Planning & Scheduling',
+        EvidenceType.CERTIFICATION_EVIDENCE,
+        SkillConfidence.MEDIUM,
+        `Certification: ${certName}`,
+      );
     }
-    if (certName.toLowerCase().includes('revit') || certName.toLowerCase().includes('bim')) {
-      registerSkill('BIM Modeling', EvidenceType.CERTIFICATION_EVIDENCE, SkillConfidence.HIGH, `Certification: ${certName}`);
+    if (
+      certName.toLowerCase().includes('revit') ||
+      certName.toLowerCase().includes('bim')
+    ) {
+      registerSkill(
+        'BIM Modeling',
+        EvidenceType.CERTIFICATION_EVIDENCE,
+        SkillConfidence.HIGH,
+        `Certification: ${certName}`,
+      );
     }
   }
 
@@ -219,23 +343,35 @@ export function detectDemonstratedSkills(
 
 // ── 2. Profile Completeness Calculation ───────────────────────────────────────
 
-export function calculateProfileCompleteness(user: any, projects: any[] = []): number {
+export function calculateProfileCompleteness(
+  user: any,
+  projects: any[] = [],
+): number {
   const checks = [
     Boolean(user.avatar),
     Boolean(user.headline && user.headline.trim().length > 3),
     Boolean(user.bio && user.bio.trim().length > 10),
     Boolean(user.primaryDiscipline),
-    Boolean(user.infrastructureSectors && user.infrastructureSectors.length > 0),
+    Boolean(
+      user.infrastructureSectors && user.infrastructureSectors.length > 0,
+    ),
     Boolean(user.location),
     Boolean(
       (user.skills && user.skills.length > 0) ||
-        (user.structuredSkills?.technicalSkills && user.structuredSkills.technicalSkills.length > 0),
+      (user.structuredSkills?.technicalSkills &&
+        user.structuredSkills.technicalSkills.length > 0),
     ),
-    Boolean(user.structuredSkills?.softwareSkills && user.structuredSkills.softwareSkills.length > 0),
+    Boolean(
+      user.structuredSkills?.softwareSkills &&
+      user.structuredSkills.softwareSkills.length > 0,
+    ),
     Boolean(user.experience && user.experience.length > 0),
     Boolean(user.education && user.education.length > 0),
     Boolean(projects.length > 0),
-    Boolean(user.careerPreferences?.preferredRoles && user.careerPreferences.preferredRoles.length > 0),
+    Boolean(
+      user.careerPreferences?.preferredRoles &&
+      user.careerPreferences.preferredRoles.length > 0,
+    ),
   ];
 
   const completed = checks.filter(Boolean).length;
@@ -261,7 +397,9 @@ export function calculateProfileStrength(
   evidence.push({
     label: 'Relevant Infrastructure Experience',
     verified: hasExp,
-    note: hasExp ? `${yearsExp} years documented across ${expCount} positions` : 'Less than 2 years documented',
+    note: hasExp
+      ? `${yearsExp} years documented across ${expCount} positions`
+      : 'Less than 2 years documented',
     iconType: 'briefcase',
   });
 
@@ -271,17 +409,23 @@ export function calculateProfileStrength(
   evidence.push({
     label: 'Infrastructure Project Portfolio',
     verified: hasProjects,
-    note: hasProjects ? `${projCount} project${projCount > 1 ? 's' : ''} with documented responsibilities` : 'No infrastructure projects added yet',
+    note: hasProjects
+      ? `${projCount} project${projCount > 1 ? 's' : ''} with documented responsibilities`
+      : 'No infrastructure projects added yet',
     iconType: 'folder',
   });
 
   // 3. Technical & Domain Skills
-  const techSkillCount = (user.structuredSkills?.technicalSkills || []).length + (user.skills || []).length;
+  const techSkillCount =
+    (user.structuredSkills?.technicalSkills || []).length +
+    (user.skills || []).length;
   const hasSkills = techSkillCount >= 3 || demonstratedSkills.length >= 4;
   evidence.push({
     label: 'Demonstrated Technical Skills',
     verified: hasSkills,
-    note: hasSkills ? `${demonstratedSkills.length} verifiable technical competencies` : 'Fewer than 3 technical skills listed',
+    note: hasSkills
+      ? `${demonstratedSkills.length} verifiable technical competencies`
+      : 'Fewer than 3 technical skills listed',
     iconType: 'check-circle',
   });
 
@@ -290,24 +434,30 @@ export function calculateProfileStrength(
     ...(user.structuredSkills?.softwareSkills || []),
     ...projects.flatMap((p) => p.softwareUsed || []),
   ];
-  const uniqueSoftware = new Set(softwareList.map(normalizeSoftware).filter(Boolean));
+  const uniqueSoftware = new Set(
+    softwareList.map(normalizeSoftware).filter(Boolean),
+  );
   const hasSoftware = uniqueSoftware.size >= 2;
   evidence.push({
     label: 'Software Tool Proficiencies',
     verified: hasSoftware,
-    note: hasSoftware ? `${uniqueSoftware.size} recognized tools (${Array.from(uniqueSoftware).slice(0, 3).join(', ')})` : 'Fewer than 2 engineering software tools listed',
+    note: hasSoftware
+      ? `${uniqueSoftware.size} recognized tools (${Array.from(uniqueSoftware).slice(0, 3).join(', ')})`
+      : 'Fewer than 2 engineering software tools listed',
     iconType: 'cpu',
   });
 
   // 5. Career Intent Alignment
   const hasCareerPrefs = Boolean(
     user.careerPreferences?.preferredRoles?.length > 0 &&
-      user.careerPreferences?.preferredLocations?.length > 0,
+    user.careerPreferences?.preferredLocations?.length > 0,
   );
   evidence.push({
     label: 'Career Direction & Preferences',
     verified: hasCareerPrefs,
-    note: hasCareerPrefs ? `Targeting ${user.careerPreferences.preferredRoles.slice(0, 2).join(', ')}` : 'Career preferences not yet configured',
+    note: hasCareerPrefs
+      ? `Targeting ${user.careerPreferences.preferredRoles.slice(0, 2).join(', ')}`
+      : 'Career preferences not yet configured',
     iconType: 'target',
   });
 
@@ -339,19 +489,28 @@ export function evaluateRoleAlignment(
   const disciplineMatch =
     candDiscipline.includes(roleDiscipline) ||
     roleDiscipline.includes(candDiscipline) ||
-    (candDiscipline === 'civil engineering' && roleDiscipline.includes('civil'));
+    (candDiscipline === 'civil engineering' &&
+      roleDiscipline.includes('civil'));
 
-  const candSectors = (user.infrastructureSectors || []).map((s: string) => s.toLowerCase());
+  const candSectors = (user.infrastructureSectors || []).map((s: string) =>
+    s.toLowerCase(),
+  );
   const matchedSectors = role.sectors.filter((sec) =>
-    candSectors.some((cs: string) => cs.includes(sec.toLowerCase()) || sec.toLowerCase().includes(cs)),
+    candSectors.some(
+      (cs: string) =>
+        cs.includes(sec.toLowerCase()) || sec.toLowerCase().includes(cs),
+    ),
   );
 
-  const demonstratedSkillNames = new Set(demonstratedSkills.map((d) => d.skill.toLowerCase()));
+  const demonstratedSkillNames = new Set(
+    demonstratedSkills.map((d) => d.skill.toLowerCase()),
+  );
 
   // Required skills evaluation
-  const matchedReqSkills = role.requiredSkills.filter((sk) =>
-    demonstratedSkillNames.has(sk.toLowerCase()) ||
-    demonstratedSkillNames.has(normalizeSkill(sk).toLowerCase()),
+  const matchedReqSkills = role.requiredSkills.filter(
+    (sk) =>
+      demonstratedSkillNames.has(sk.toLowerCase()) ||
+      demonstratedSkillNames.has(normalizeSkill(sk).toLowerCase()),
   );
   const missingReqSkills = role.requiredSkills.filter(
     (sk) =>
@@ -367,7 +526,9 @@ export function evaluateRoleAlignment(
       .filter((d) => d.evidenceType === EvidenceType.SOFTWARE_PROFICIENCY)
       .map((d) => d.skill),
   ];
-  const candNormalizedSoftware = new Set(candSoftwareList.map(normalizeSoftware).map((s) => s.toLowerCase()));
+  const candNormalizedSoftware = new Set(
+    candSoftwareList.map(normalizeSoftware).map((s) => s.toLowerCase()),
+  );
 
   const matchedSoftware = role.requiredSoftware.filter((sw) =>
     candNormalizedSoftware.has(normalizeSoftware(sw).toLowerCase()),
@@ -379,7 +540,10 @@ export function evaluateRoleAlignment(
   // Experience evaluation
   const candYears = user.yearsOfExperience || 0;
   let expScore = 50;
-  if (candYears >= role.experienceRange.min && candYears <= role.experienceRange.max) {
+  if (
+    candYears >= role.experienceRange.min &&
+    candYears <= role.experienceRange.max
+  ) {
     expScore = 100;
   } else if (candYears > role.experienceRange.max) {
     expScore = 80;
@@ -391,9 +555,20 @@ export function evaluateRoleAlignment(
 
   // Weighted calculation (Discipline: 25, Sectors: 15, Skills: 25, Software: 20, Experience: 15)
   const discScore = disciplineMatch ? 100 : 30;
-  const sectorScore = role.sectors.length > 0 ? Math.round((matchedSectors.length / role.sectors.length) * 100) : 50;
-  const skillScore = role.requiredSkills.length > 0 ? Math.round((matchedReqSkills.length / role.requiredSkills.length) * 100) : 50;
-  const swScore = role.requiredSoftware.length > 0 ? Math.round((matchedSoftware.length / role.requiredSoftware.length) * 100) : 50;
+  const sectorScore =
+    role.sectors.length > 0
+      ? Math.round((matchedSectors.length / role.sectors.length) * 100)
+      : 50;
+  const skillScore =
+    role.requiredSkills.length > 0
+      ? Math.round((matchedReqSkills.length / role.requiredSkills.length) * 100)
+      : 50;
+  const swScore =
+    role.requiredSoftware.length > 0
+      ? Math.round(
+          (matchedSoftware.length / role.requiredSoftware.length) * 100,
+        )
+      : 50;
 
   const totalScore = Math.round(
     discScore * 0.25 +
@@ -413,16 +588,38 @@ export function evaluateRoleAlignment(
   }
 
   const demonstratedReasons: string[] = [];
-  if (disciplineMatch) demonstratedReasons.push(`${role.discipline} background`);
-  if (matchedSectors.length > 0) demonstratedReasons.push(`${matchedSectors.slice(0, 2).join(', ')} sector exposure`);
-  if (matchedReqSkills.length > 0) demonstratedReasons.push(`${matchedReqSkills.slice(0, 3).join(', ')} demonstrated`);
-  if (matchedSoftware.length > 0) demonstratedReasons.push(`${matchedSoftware.join(', ')} software proficiency`);
-  if (candYears >= role.experienceRange.min) demonstratedReasons.push(`${candYears} years experience aligns with role tier`);
+  if (disciplineMatch)
+    demonstratedReasons.push(`${role.discipline} background`);
+  if (matchedSectors.length > 0)
+    demonstratedReasons.push(
+      `${matchedSectors.slice(0, 2).join(', ')} sector exposure`,
+    );
+  if (matchedReqSkills.length > 0)
+    demonstratedReasons.push(
+      `${matchedReqSkills.slice(0, 3).join(', ')} demonstrated`,
+    );
+  if (matchedSoftware.length > 0)
+    demonstratedReasons.push(
+      `${matchedSoftware.join(', ')} software proficiency`,
+    );
+  if (candYears >= role.experienceRange.min)
+    demonstratedReasons.push(
+      `${candYears} years experience aligns with role tier`,
+    );
 
   const developmentGaps: string[] = [];
-  if (missingSoftware.length > 0) developmentGaps.push(`Experience with ${missingSoftware.join(', ')} not yet listed`);
-  if (missingReqSkills.length > 0) developmentGaps.push(`${missingReqSkills.slice(0, 2).join(', ')} required but under-documented`);
-  if (candYears < role.experienceRange.min) developmentGaps.push(`Role typically seeks ${role.experienceRange.typical} (${candYears} yrs listed)`);
+  if (missingSoftware.length > 0)
+    developmentGaps.push(
+      `Experience with ${missingSoftware.join(', ')} not yet listed`,
+    );
+  if (missingReqSkills.length > 0)
+    developmentGaps.push(
+      `${missingReqSkills.slice(0, 2).join(', ')} required but under-documented`,
+    );
+  if (candYears < role.experienceRange.min)
+    developmentGaps.push(
+      `Role typically seeks ${role.experienceRange.typical} (${candYears} yrs listed)`,
+    );
 
   return {
     roleId: role.id,
@@ -464,7 +661,9 @@ export function analyzeTargetRoleSkillGaps(
   // Check required skills
   for (const sk of role.requiredSkills) {
     const norm = normalizeSkill(sk);
-    const found = demonstratedMap.get(norm.toLowerCase()) || demonstratedMap.get(sk.toLowerCase());
+    const found =
+      demonstratedMap.get(norm.toLowerCase()) ||
+      demonstratedMap.get(sk.toLowerCase());
     if (found) {
       matchedDemonstrated.push(found);
     } else {
@@ -480,9 +679,15 @@ export function analyzeTargetRoleSkillGaps(
   // Check required software
   for (const sw of role.requiredSoftware) {
     const norm = normalizeSoftware(sw);
-    const found = demonstratedMap.get(norm.toLowerCase()) || demonstratedMap.get(sw.toLowerCase());
+    const found =
+      demonstratedMap.get(norm.toLowerCase()) ||
+      demonstratedMap.get(sw.toLowerCase());
     if (found) {
-      if (!matchedDemonstrated.some((m) => m.skill.toLowerCase() === found.skill.toLowerCase())) {
+      if (
+        !matchedDemonstrated.some(
+          (m) => m.skill.toLowerCase() === found.skill.toLowerCase(),
+        )
+      ) {
         matchedDemonstrated.push(found);
       }
     } else {
@@ -498,9 +703,15 @@ export function analyzeTargetRoleSkillGaps(
   // Check preferred skills
   for (const sk of role.preferredSkills) {
     const norm = normalizeSkill(sk);
-    const found = demonstratedMap.get(norm.toLowerCase()) || demonstratedMap.get(sk.toLowerCase());
+    const found =
+      demonstratedMap.get(norm.toLowerCase()) ||
+      demonstratedMap.get(sk.toLowerCase());
     if (found) {
-      if (!matchedDemonstrated.some((m) => m.skill.toLowerCase() === found.skill.toLowerCase())) {
+      if (
+        !matchedDemonstrated.some(
+          (m) => m.skill.toLowerCase() === found.skill.toLowerCase(),
+        )
+      ) {
         matchedDemonstrated.push(found);
       }
     } else {
@@ -547,7 +758,8 @@ export function generateCareerPathwaySteps(
       title: 'Consolidate Core Competencies',
       description: `Your profile demonstrates the foundational requirements for ${targetRoleTitle}. Ensure achievements are clearly quantified.`,
       skillType: 'CORE_EXECUTION',
-      actionItem: 'Add quantifiable metrics (budget size, lane kilometers, concrete volume) to your experience.',
+      actionItem:
+        'Add quantifiable metrics (budget size, lane kilometers, concrete volume) to your experience.',
     });
   }
 
@@ -569,7 +781,8 @@ export function generateCareerPathwaySteps(
     title: 'Showcase Relevant Project Evidence',
     description: `Connect your skills to real infrastructure deliverables (highways, bridges, structures, or transit corridors).`,
     skillType: 'PROJECT_PORTFOLIO',
-    actionItem: 'Add detailed project responsibilities highlighting budget, schedule, and team interface roles.',
+    actionItem:
+      'Add detailed project responsibilities highlighting budget, schedule, and team interface roles.',
   });
 
   // Step 4: Industry Certification & Professional Body Recognition
@@ -600,15 +813,19 @@ export function generateProfileRecommendations(
   if (projects.length === 0) {
     recs.push({
       title: 'Add an Infrastructure Project',
-      description: 'Your profile has no published projects. Verified project portfolios provide the strongest evidence for recruiters and role matching.',
+      description:
+        'Your profile has no published projects. Verified project portfolios provide the strongest evidence for recruiters and role matching.',
       category: 'PROJECTS',
       priority: 'HIGH',
       actionType: 'add_project',
     });
-  } else if (projects.some((p) => !p.softwareUsed || p.softwareUsed.length === 0)) {
+  } else if (
+    projects.some((p) => !p.softwareUsed || p.softwareUsed.length === 0)
+  ) {
     recs.push({
       title: 'Document Software Used in Projects',
-      description: 'Some of your projects lack software details. Specifying tools like AutoCAD, Primavera P6, or Revit dramatically increases evidence strength.',
+      description:
+        'Some of your projects lack software details. Specifying tools like AutoCAD, Primavera P6, or Revit dramatically increases evidence strength.',
       category: 'SOFTWARE',
       priority: 'MEDIUM',
       actionType: 'edit_project_tools',
@@ -640,7 +857,8 @@ export function generateProfileRecommendations(
   ) {
     recs.push({
       title: 'Set Your Career Preferences',
-      description: 'Specifying your preferred roles, infrastructure sectors, and target locations customizes your Career Intelligence and Jobs For You feeds.',
+      description:
+        'Specifying your preferred roles, infrastructure sectors, and target locations customizes your Career Intelligence and Jobs For You feeds.',
       category: 'CAREER_PREFERENCES',
       priority: 'HIGH',
       actionType: 'set_career_preferences',
@@ -651,7 +869,8 @@ export function generateProfileRecommendations(
   if (demonstratedSkills.length < 4) {
     recs.push({
       title: 'Expand Documented Technical Skills',
-      description: 'Profiles with 5 or more structured skills match up to 3x more infrastructure positions. List your core engineering proficiencies.',
+      description:
+        'Profiles with 5 or more structured skills match up to 3x more infrastructure positions. List your core engineering proficiencies.',
       category: 'SKILLS',
       priority: 'MEDIUM',
       actionType: 'add_skills',
@@ -662,7 +881,8 @@ export function generateProfileRecommendations(
   if (!user.certifications || user.certifications.length === 0) {
     recs.push({
       title: 'Add Certifications if completed',
-      description: 'Industry credentials such as PMP, OSHA, or software certificates unlock higher profile strength tiers.',
+      description:
+        'Industry credentials such as PMP, OSHA, or software certificates unlock higher profile strength tiers.',
       category: 'CERTIFICATIONS',
       priority: 'LOW',
       actionType: 'add_certification',

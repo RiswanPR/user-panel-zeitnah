@@ -15,9 +15,7 @@ import {
   MatchCategory,
   MatchStatus,
 } from './matching/schemas/job-talent-match.schema';
-import {
-  RecommendationFeedback,
-} from './matching/schemas/user-job-recommendation.schema';
+import { RecommendationFeedback } from './matching/schemas/user-job-recommendation.schema';
 import { MatchingService } from './matching/matching.service';
 
 // ─── Test Fixtures ──────────────────────────────────────────────────────────
@@ -46,7 +44,9 @@ function makeJobProfile(overrides: Partial<JobProfile> = {}): JobProfile {
   };
 }
 
-function makeCandidateProfile(overrides: Partial<CandidateProfile> = {}): CandidateProfile {
+function makeCandidateProfile(
+  overrides: Partial<CandidateProfile> = {},
+): CandidateProfile {
   return {
     userId: new Types.ObjectId().toString(),
     name: 'Rahul Kumar',
@@ -140,7 +140,9 @@ describe('Phase 4 — Talent → Job Matching Engine ("Jobs For You")', () => {
       const match = calculateMatch(job, candidate);
       expect(match.passesHardRequirements).toBe(true);
       expect(match.hardRequirementFailures).toHaveLength(0);
-      expect(match.score).toBeGreaterThanOrEqual(MATCH_THRESHOLDS.STRONGLY_COMPATIBLE);
+      expect(match.score).toBeGreaterThanOrEqual(
+        MATCH_THRESHOLDS.STRONGLY_COMPATIBLE,
+      );
     });
 
     test('Candidate failing minimum experience by > 1 year fails hard requirements', () => {
@@ -149,7 +151,9 @@ describe('Phase 4 — Talent → Job Matching Engine ("Jobs For You")', () => {
 
       const match = calculateMatch(job, candidate);
       expect(match.passesHardRequirements).toBe(false);
-      expect(match.hardRequirementFailures.some((f) => f.type === 'experience')).toBe(true);
+      expect(
+        match.hardRequirementFailures.some((f) => f.type === 'experience'),
+      ).toBe(true);
       // Validating that candidate meeting experience scores higher
       const eligibleCandidate = makeCandidateProfile({ yearsOfExperience: 5 });
       const eligibleMatch = calculateMatch(job, eligibleCandidate);
@@ -171,16 +175,24 @@ describe('Phase 4 — Talent → Job Matching Engine ("Jobs For You")', () => {
 
       const match = calculateMatch(job, candidate);
       expect(match.passesHardRequirements).toBe(false);
-      expect(match.hardRequirementFailures.some((f) => f.type === 'software' && String(f.expected).includes('Revit'))).toBe(true);
+      expect(
+        match.hardRequirementFailures.some(
+          (f) => f.type === 'software' && String(f.expected).includes('Revit'),
+        ),
+      ).toBe(true);
     });
 
     test('Candidate missing mandatory certification fails hard requirements', () => {
-      const job = makeJobProfile({ requiredCertifications: ['Chartered Engineer (CEng)'] });
+      const job = makeJobProfile({
+        requiredCertifications: ['Chartered Engineer (CEng)'],
+      });
       const candidate = makeCandidateProfile({ certifications: [] });
 
       const match = calculateMatch(job, candidate);
       expect(match.passesHardRequirements).toBe(false);
-      expect(match.hardRequirementFailures.some((f) => f.type === 'certification')).toBe(true);
+      expect(
+        match.hardRequirementFailures.some((f) => f.type === 'certification'),
+      ).toBe(true);
     });
 
     test('Candidate missing PREFERRED software does NOT fail hard requirements', () => {
@@ -199,7 +211,9 @@ describe('Phase 4 — Talent → Job Matching Engine ("Jobs For You")', () => {
 
       const match = calculateMatch(job, candidate);
       expect(match.passesHardRequirements).toBe(true);
-      expect(match.gapReasons.some((g) => g.includes('Primavera P6'))).toBe(true);
+      expect(match.gapReasons.some((g) => g.includes('Primavera P6'))).toBe(
+        true,
+      );
       expect(match.score).toBeGreaterThan(60);
     });
   });
@@ -236,9 +250,13 @@ describe('Phase 4 — Talent → Job Matching Engine ("Jobs For You")', () => {
       const matchWeak = calculateMatch(job, weakCandidate);
 
       expect(matchStrong.score).toBeGreaterThan(matchWeak.score);
-      const careerDimStrong = matchStrong.dimensionScores.find((d) => d.dimension === 'careerIntent');
-      const careerDimWeak = matchWeak.dimensionScores.find((d) => d.dimension === 'careerIntent');
-      expect(careerDimStrong!.score).toBeGreaterThan(careerDimWeak!.score);
+      const careerDimStrong = matchStrong.dimensionScores.find(
+        (d) => d.dimension === 'careerIntent',
+      );
+      const careerDimWeak = matchWeak.dimensionScores.find(
+        (d) => d.dimension === 'careerIntent',
+      );
+      expect(careerDimStrong.score).toBeGreaterThan(careerDimWeak.score);
     });
 
     test('Infrastructure sector alignment boosts matching score', () => {
@@ -281,9 +299,13 @@ describe('Phase 4 — Talent → Job Matching Engine ("Jobs For You")', () => {
       const matchNoProj = calculateMatch(job, candidateNoProjects);
 
       expect(matchWithProj.matchedProjects.length).toBeGreaterThan(0);
-      const projDimWith = matchWithProj.dimensionScores.find((d) => d.dimension === 'projects');
-      const projDimNo = matchNoProj.dimensionScores.find((d) => d.dimension === 'projects');
-      expect(projDimWith!.score).toBeGreaterThan(projDimNo!.score);
+      const projDimWith = matchWithProj.dimensionScores.find(
+        (d) => d.dimension === 'projects',
+      );
+      const projDimNo = matchNoProj.dimensionScores.find(
+        (d) => d.dimension === 'projects',
+      );
+      expect(projDimWith.score).toBeGreaterThan(projDimNo.score);
     });
 
     test('Match explanation contains specific reasons and identified gaps', () => {
@@ -304,9 +326,15 @@ describe('Phase 4 — Talent → Job Matching Engine ("Jobs For You")', () => {
 
       const match = calculateMatch(job, candidate);
       expect(match.matchReasons.length).toBeGreaterThan(0);
-      expect(match.matchReasons.some((r) => r.includes('Civil Engineering') || r.includes('AutoCAD'))).toBe(true);
+      expect(
+        match.matchReasons.some(
+          (r) => r.includes('Civil Engineering') || r.includes('AutoCAD'),
+        ),
+      ).toBe(true);
       expect(match.gapReasons.length).toBeGreaterThan(0);
-      expect(match.gapReasons.some((g) => g.includes('Primavera P6'))).toBe(true);
+      expect(match.gapReasons.some((g) => g.includes('Primavera P6'))).toBe(
+        true,
+      );
     });
   });
 
@@ -316,7 +344,12 @@ describe('Phase 4 — Talent → Job Matching Engine ("Jobs For You")', () => {
       const candidate = makeCandidateProfile();
       const matchResult = calculateMatch(job, candidate);
 
-      const types = determineRecommendationTypes(matchResult, job, candidate, true);
+      const types = determineRecommendationTypes(
+        matchResult,
+        job,
+        candidate,
+        true,
+      );
       expect(types).toContain('role_match');
       expect(types).toContain('skill_match');
       expect(types).toContain('sector_match');
@@ -332,7 +365,12 @@ describe('Phase 4 — Talent → Job Matching Engine ("Jobs For You")', () => {
         preferredLocations: ['Kerala'],
       });
       const matchResult = calculateMatch(job, candidate);
-      const types = determineRecommendationTypes(matchResult, job, candidate, false);
+      const types = determineRecommendationTypes(
+        matchResult,
+        job,
+        candidate,
+        false,
+      );
 
       expect(types).toContain('location_match');
       expect(types).not.toContain('new_relevant_job');
@@ -416,21 +454,28 @@ describe('Phase 4 — Recommendation Service, Feedback & Cache Invalidation', ()
       mockProjectModel,
       mockJobAppModel,
       mockAuditLogsService,
-      null as any, // notificationsService
+      null, // notificationsService
       mockUserJobRecModel,
     );
   });
 
   test('Candidate profile changes mark candidate recommendations as STALE', async () => {
     const candidateUserId = new Types.ObjectId().toString();
-    const modifiedCount = await matchingService.invalidateCandidateMatches(candidateUserId);
+    const modifiedCount =
+      await matchingService.invalidateCandidateMatches(candidateUserId);
 
     expect(mockMatchModel.updateMany).toHaveBeenCalledWith(
-      { candidateUserId: new Types.ObjectId(candidateUserId), status: MatchStatus.ACTIVE },
+      {
+        candidateUserId: new Types.ObjectId(candidateUserId),
+        status: MatchStatus.ACTIVE,
+      },
       { $set: { status: MatchStatus.STALE } },
     );
     expect(mockUserJobRecModel.updateMany).toHaveBeenCalledWith(
-      { userId: new Types.ObjectId(candidateUserId), status: MatchStatus.ACTIVE },
+      {
+        userId: new Types.ObjectId(candidateUserId),
+        status: MatchStatus.ACTIVE,
+      },
       { $set: { status: MatchStatus.STALE } },
     );
     expect(modifiedCount).toBe(4);
@@ -460,7 +505,7 @@ describe('Phase 4 — Recommendation Service, Feedback & Cache Invalidation', ()
     expect(mockUserJobRecModel.findOneAndUpdate).toHaveBeenCalledWith(
       { userId: new Types.ObjectId(userId), jobId: new Types.ObjectId(jobId) },
       { $set: { isHidden: true } },
-      { upsert: true, new: true },
+      { upsert: true, returnDocument: 'after' },
     );
     expect(mockAuditLogsService.record).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -479,7 +524,7 @@ describe('Phase 4 — Recommendation Service, Feedback & Cache Invalidation', ()
     expect(mockUserJobRecModel.findOneAndUpdate).toHaveBeenCalledWith(
       { userId: new Types.ObjectId(userId), jobId: new Types.ObjectId(jobId) },
       { $set: { isDismissed: true } },
-      { upsert: true, new: true },
+      { upsert: true, returnDocument: 'after' },
     );
   });
 
@@ -487,14 +532,18 @@ describe('Phase 4 — Recommendation Service, Feedback & Cache Invalidation', ()
     const userId = new Types.ObjectId().toString();
     const jobId = new Types.ObjectId().toString();
 
-    const res = await matchingService.recordJobFeedback(userId, jobId, 'INTERESTED');
+    const res = await matchingService.recordJobFeedback(
+      userId,
+      jobId,
+      'INTERESTED',
+    );
     expect(res.success).toBe(true);
     expect(res.feedback).toBe(RecommendationFeedback.INTERESTED);
 
     expect(mockUserJobRecModel.findOneAndUpdate).toHaveBeenCalledWith(
       { userId: new Types.ObjectId(userId), jobId: new Types.ObjectId(jobId) },
       { $set: { feedback: RecommendationFeedback.INTERESTED } },
-      { upsert: true, new: true },
+      { upsert: true, returnDocument: 'after' },
     );
     // Profile is untouched
     expect(mockUserModel.findById).not.toHaveBeenCalled();

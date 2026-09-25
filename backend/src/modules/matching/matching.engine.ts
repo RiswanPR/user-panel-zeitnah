@@ -56,131 +56,131 @@ export const MATCH_THRESHOLDS = {
 // ─── Software Aliases (canonical normalization) ─────────────────────────────
 
 const SOFTWARE_ALIASES: Record<string, string> = {
-  'p6': 'Primavera P6',
-  'primavera': 'Primavera P6',
+  p6: 'Primavera P6',
+  primavera: 'Primavera P6',
   'primavera p6': 'Primavera P6',
   'oracle primavera': 'Primavera P6',
-  'autocad': 'AutoCAD',
+  autocad: 'AutoCAD',
   'auto cad': 'AutoCAD',
-  'civil3d': 'Civil 3D',
+  civil3d: 'Civil 3D',
   'civil 3d': 'Civil 3D',
   'autodesk civil 3d': 'Civil 3D',
-  'revit': 'Revit',
+  revit: 'Revit',
   'autodesk revit': 'Revit',
-  'navisworks': 'Navisworks',
+  navisworks: 'Navisworks',
   'autodesk navisworks': 'Navisworks',
   'ms project': 'MS Project',
   'microsoft project': 'MS Project',
-  'staad': 'STAAD.Pro',
+  staad: 'STAAD.Pro',
   'staad pro': 'STAAD.Pro',
   'staad.pro': 'STAAD.Pro',
-  'etabs': 'ETABS',
-  'sap2000': 'SAP2000',
+  etabs: 'ETABS',
+  sap2000: 'SAP2000',
   'sap 2000': 'SAP2000',
-  'tekla': 'Tekla',
+  tekla: 'Tekla',
   'tekla structures': 'Tekla',
-  'gis': 'GIS',
-  'arcgis': 'GIS',
-  'costx': 'CostX',
+  gis: 'GIS',
+  arcgis: 'GIS',
+  costx: 'CostX',
   'cost x': 'CostX',
-  'synchro': 'Synchro 4D',
+  synchro: 'Synchro 4D',
   'synchro 4d': 'Synchro 4D',
-  'bluebeam': 'Bluebeam Revu',
+  bluebeam: 'Bluebeam Revu',
   'bluebeam revu': 'Bluebeam Revu',
-  'openroads': 'OpenRoads',
-  'infraworks': 'Infraworks',
-  'microstation': 'MicroStation',
+  openroads: 'OpenRoads',
+  infraworks: 'Infraworks',
+  microstation: 'MicroStation',
 };
 
 // ─── Skill Aliases ──────────────────────────────────────────────────────────
 
 const SKILL_ALIASES: Record<string, string> = {
-  'planning': 'Planning & Scheduling',
-  'scheduling': 'Planning & Scheduling',
+  planning: 'Planning & Scheduling',
+  scheduling: 'Planning & Scheduling',
   'planning & scheduling': 'Planning & Scheduling',
   'planning and scheduling': 'Planning & Scheduling',
   'progress tracking': 'Planning & Scheduling',
   'quantity estimation': 'Quantity Surveying',
   'quantity surveying': 'Quantity Surveying',
-  'boq': 'Bill of Quantities (BOQ)',
+  boq: 'Bill of Quantities (BOQ)',
   'bill of quantities': 'Bill of Quantities (BOQ)',
-  'bbs': 'Bar Bending Schedule (BBS)',
+  bbs: 'Bar Bending Schedule (BBS)',
   'bar bending schedule': 'Bar Bending Schedule (BBS)',
   'structural analysis': 'Structural Analysis',
   'structural design': 'Structural Analysis',
   'rc design': 'Reinforced Concrete Design',
   'reinforced concrete': 'Reinforced Concrete Design',
   'rcc design': 'Reinforced Concrete Design',
-  'geotechnical': 'Geotechnical Modeling',
+  geotechnical: 'Geotechnical Modeling',
   'site supervision': 'Site Supervision',
   'qa/qc': 'QA/QC Procedures',
-  'qaqc': 'QA/QC Procedures',
-  'safety': 'Safety / OSHA Standards',
-  'osha': 'Safety / OSHA Standards',
-  'hse': 'Safety / OSHA Standards',
-  'fidic': 'FIDIC Contracts',
+  qaqc: 'QA/QC Procedures',
+  safety: 'Safety / OSHA Standards',
+  osha: 'Safety / OSHA Standards',
+  hse: 'Safety / OSHA Standards',
+  fidic: 'FIDIC Contracts',
   'fidic contracts': 'FIDIC Contracts',
   'bim modeling': 'BIM Modeling',
-  'bim': 'BIM Modeling',
+  bim: 'BIM Modeling',
   'clash detection': 'Clash Detection',
 };
 
 // ─── Discipline Aliases ─────────────────────────────────────────────────────
 
 const DISCIPLINE_ALIASES: Record<string, string> = {
-  'civil': 'Civil Engineering',
+  civil: 'Civil Engineering',
   'civil engineering': 'Civil Engineering',
-  'structural': 'Structural Engineering',
+  structural: 'Structural Engineering',
   'structural engineering': 'Structural Engineering',
-  'architecture': 'Architecture',
-  'construction': 'Construction',
+  architecture: 'Architecture',
+  construction: 'Construction',
   'project management': 'Project Management',
-  'pm': 'Project Management',
+  pm: 'Project Management',
   'quantity surveying': 'Quantity Surveying',
-  'qs': 'Quantity Surveying',
-  'bim': 'BIM',
-  'mep': 'MEP',
-  'geotechnical': 'Geotechnical Engineering',
+  qs: 'Quantity Surveying',
+  bim: 'BIM',
+  mep: 'MEP',
+  geotechnical: 'Geotechnical Engineering',
   'geotechnical engineering': 'Geotechnical Engineering',
-  'transportation': 'Transportation',
-  'surveying': 'Surveying',
-  'planning': 'Planning & Scheduling',
-  'estimation': 'Estimation & Costing',
+  transportation: 'Transportation',
+  surveying: 'Surveying',
+  planning: 'Planning & Scheduling',
+  estimation: 'Estimation & Costing',
   'site engineering': 'Site Engineering',
-  'safety': 'Safety / HSE',
-  'hse': 'Safety / HSE',
-  'contracts': 'Contracts & Procurement',
-  'procurement': 'Contracts & Procurement',
-  'consultancy': 'Infrastructure Consultancy',
+  safety: 'Safety / HSE',
+  hse: 'Safety / HSE',
+  contracts: 'Contracts & Procurement',
+  procurement: 'Contracts & Procurement',
+  consultancy: 'Infrastructure Consultancy',
 };
 
 // ─── Sector Aliases ─────────────────────────────────────────────────────────
 
 const SECTOR_ALIASES: Record<string, string> = {
-  'highway': 'Highways',
-  'highways': 'Highways',
+  highway: 'Highways',
+  highways: 'Highways',
   'highway epc': 'Highways',
-  'roads': 'Roads',
-  'road': 'Roads',
-  'bridges': 'Bridges',
-  'bridge': 'Bridges',
-  'railways': 'Railways',
-  'railway': 'Railways',
-  'rail': 'Railways',
-  'metro': 'Metro',
-  'water': 'Water & Wastewater',
-  'wastewater': 'Water & Wastewater',
+  roads: 'Roads',
+  road: 'Roads',
+  bridges: 'Bridges',
+  bridge: 'Bridges',
+  railways: 'Railways',
+  railway: 'Railways',
+  rail: 'Railways',
+  metro: 'Metro',
+  water: 'Water & Wastewater',
+  wastewater: 'Water & Wastewater',
   'water & wastewater': 'Water & Wastewater',
-  'buildings': 'Buildings',
-  'building': 'Buildings',
-  'urban': 'Urban Infrastructure',
+  buildings: 'Buildings',
+  building: 'Buildings',
+  urban: 'Urban Infrastructure',
   'urban infrastructure': 'Urban Infrastructure',
-  'industrial': 'Industrial Infrastructure',
+  industrial: 'Industrial Infrastructure',
   'industrial infrastructure': 'Industrial Infrastructure',
-  'ports': 'Ports',
-  'airports': 'Airports',
-  'airport': 'Airports',
-  'energy': 'Energy Infrastructure',
+  ports: 'Ports',
+  airports: 'Airports',
+  airport: 'Airports',
+  energy: 'Energy Infrastructure',
   'energy infrastructure': 'Energy Infrastructure',
   'real estate': 'Real Estate Development',
   'real estate development': 'Real Estate Development',
@@ -214,7 +214,10 @@ function normalizeSector(input: string): string {
   return SECTOR_ALIASES[key] || input.trim();
 }
 
-function normalizeList(items: string[], normalizer: (s: string) => string): string[] {
+function normalizeList(
+  items: string[],
+  normalizer: (s: string) => string,
+): string[] {
   const seen = new Set<string>();
   const result: string[] = [];
   for (const item of items) {
@@ -242,10 +245,17 @@ function caseInsensitiveMatch(a: string, b: string): boolean {
   return normalize(a) === normalize(b);
 }
 
-function fuzzyLocationMatch(jobLocation: string, candidateLocations: string[]): boolean {
-  const jobParts = normalize(jobLocation).split(/[,\s]+/).filter(Boolean);
+function fuzzyLocationMatch(
+  jobLocation: string,
+  candidateLocations: string[],
+): boolean {
+  const jobParts = normalize(jobLocation)
+    .split(/[,\s]+/)
+    .filter(Boolean);
   for (const loc of candidateLocations) {
-    const candParts = normalize(loc).split(/[,\s]+/).filter(Boolean);
+    const candParts = normalize(loc)
+      .split(/[,\s]+/)
+      .filter(Boolean);
     for (const jp of jobParts) {
       for (const cp of candParts) {
         if (jp === cp && jp.length > 2) return true;
@@ -374,12 +384,24 @@ export function calculateMatch(
   const candDiscipline = normalizeDiscipline(candidate.primaryDiscipline);
 
   const jobSector = normalizeSector(job.infrastructureSector);
-  const candSectors = normalizeList(candidate.infrastructureSectors || [], normalizeSector);
+  const candSectors = normalizeList(
+    candidate.infrastructureSectors || [],
+    normalizeSector,
+  );
 
   const jobReqSkills = normalizeList(job.requiredSkills || [], normalizeSkill);
-  const jobPrefSkills = normalizeList(job.preferredSkills || [], normalizeSkill);
-  const jobReqSoftware = normalizeList(job.requiredSoftware || [], normalizeSoftware);
-  const jobPrefSoftware = normalizeList(job.preferredSoftware || [], normalizeSoftware);
+  const jobPrefSkills = normalizeList(
+    job.preferredSkills || [],
+    normalizeSkill,
+  );
+  const jobReqSoftware = normalizeList(
+    job.requiredSoftware || [],
+    normalizeSoftware,
+  );
+  const jobPrefSoftware = normalizeList(
+    job.preferredSoftware || [],
+    normalizeSoftware,
+  );
 
   // Gather all candidate skills across profile, experience, and projects
   const allCandSkills = gatherCandidateSkills(candidate);
@@ -387,14 +409,17 @@ export function calculateMatch(
   const allCandSectors = gatherCandidateSectors(candidate, candSectors);
 
   // ── 1. Discipline ────────────────────────────────────────────────
-  const discScore = caseInsensitiveMatch(jobDiscipline, candDiscipline) ? 100 : 0;
+  const discScore = caseInsensitiveMatch(jobDiscipline, candDiscipline)
+    ? 100
+    : 0;
   dimensionScores.push({
     dimension: 'discipline',
     score: discScore,
     weight: MATCH_WEIGHTS.discipline,
-    note: discScore > 0
-      ? `Primary discipline: ${candDiscipline}`
-      : `Job requires ${jobDiscipline}, candidate is ${candDiscipline || 'Not listed'}`,
+    note:
+      discScore > 0
+        ? `Primary discipline: ${candDiscipline}`
+        : `Job requires ${jobDiscipline}, candidate is ${candDiscipline || 'Not listed'}`,
   });
   if (discScore > 0) matchReasons.push(`${candDiscipline} discipline`);
   else if (jobDiscipline) {
@@ -409,18 +434,23 @@ export function calculateMatch(
   // ── 2. Specialization ────────────────────────────────────────────
   const candSpecializations = (candidate.specializations || []).map(normalize);
   const jobSpec = normalize(job.specialization);
-  const specScore = jobSpec && candSpecializations.includes(jobSpec) ? 100 : (jobSpec ? 0 : 50);
+  const specScore =
+    jobSpec && candSpecializations.includes(jobSpec) ? 100 : jobSpec ? 0 : 50;
   dimensionScores.push({
     dimension: 'specialization',
     score: specScore,
     weight: MATCH_WEIGHTS.specialization,
-    note: specScore === 100 ? `Specialization: ${job.specialization}` : undefined,
+    note:
+      specScore === 100 ? `Specialization: ${job.specialization}` : undefined,
   });
-  if (specScore === 100) matchReasons.push(`${job.specialization} specialization`);
+  if (specScore === 100)
+    matchReasons.push(`${job.specialization} specialization`);
 
   // ── 3. Infrastructure Sector ─────────────────────────────────────
-  const sectorMatched = allCandSectors.some((s) => caseInsensitiveMatch(s, jobSector));
-  const sectorScore = !jobSector ? 50 : (sectorMatched ? 100 : 0);
+  const sectorMatched = allCandSectors.some((s) =>
+    caseInsensitiveMatch(s, jobSector),
+  );
+  const sectorScore = !jobSector ? 50 : sectorMatched ? 100 : 0;
   const matchedSectors = sectorMatched && jobSector ? [jobSector] : [];
   dimensionScores.push({
     dimension: 'sector',
@@ -434,9 +464,10 @@ export function calculateMatch(
 
   // ── 4. Required Skills ───────────────────────────────────────────
   const matchedReqSkills = setIntersection(jobReqSkills, allCandSkills);
-  const reqSkillScore = jobReqSkills.length > 0
-    ? Math.round((matchedReqSkills.length / jobReqSkills.length) * 100)
-    : 50;
+  const reqSkillScore =
+    jobReqSkills.length > 0
+      ? Math.round((matchedReqSkills.length / jobReqSkills.length) * 100)
+      : 50;
   const missingReqSkills = setDifference(jobReqSkills, allCandSkills);
   dimensionScores.push({
     dimension: 'requiredSkills',
@@ -446,7 +477,9 @@ export function calculateMatch(
     missingItems: missingReqSkills,
   });
   if (matchedReqSkills.length > 0) {
-    matchReasons.push(`${matchedReqSkills.length}/${jobReqSkills.length} required skills matched`);
+    matchReasons.push(
+      `${matchedReqSkills.length}/${jobReqSkills.length} required skills matched`,
+    );
   }
   if (missingReqSkills.length > 0) {
     gapReasons.push(`Missing required skills: ${missingReqSkills.join(', ')}`);
@@ -461,9 +494,10 @@ export function calculateMatch(
 
   // ── 5. Preferred Skills ──────────────────────────────────────────
   const matchedPrefSkills = setIntersection(jobPrefSkills, allCandSkills);
-  const prefSkillScore = jobPrefSkills.length > 0
-    ? Math.round((matchedPrefSkills.length / jobPrefSkills.length) * 100)
-    : 50;
+  const prefSkillScore =
+    jobPrefSkills.length > 0
+      ? Math.round((matchedPrefSkills.length / jobPrefSkills.length) * 100)
+      : 50;
   const missingPrefSkills = setDifference(jobPrefSkills, allCandSkills);
   dimensionScores.push({
     dimension: 'preferredSkills',
@@ -476,14 +510,17 @@ export function calculateMatch(
     matchReasons.push(`${matchedPrefSkills.length} preferred skills`);
   }
   if (missingPrefSkills.length > 0) {
-    gapReasons.push(`${missingPrefSkills.join(', ')} is preferred but not listed`);
+    gapReasons.push(
+      `${missingPrefSkills.join(', ')} is preferred but not listed`,
+    );
   }
 
   // ── 6. Required Software ─────────────────────────────────────────
   const matchedReqSw = setIntersection(jobReqSoftware, allCandSoftware);
-  const reqSwScore = jobReqSoftware.length > 0
-    ? Math.round((matchedReqSw.length / jobReqSoftware.length) * 100)
-    : 50;
+  const reqSwScore =
+    jobReqSoftware.length > 0
+      ? Math.round((matchedReqSw.length / jobReqSoftware.length) * 100)
+      : 50;
   const missingReqSw = setDifference(jobReqSoftware, allCandSoftware);
   dimensionScores.push({
     dimension: 'requiredSoftware',
@@ -508,9 +545,10 @@ export function calculateMatch(
 
   // ── 7. Preferred Software ────────────────────────────────────────
   const matchedPrefSw = setIntersection(jobPrefSoftware, allCandSoftware);
-  const prefSwScore = jobPrefSoftware.length > 0
-    ? Math.round((matchedPrefSw.length / jobPrefSoftware.length) * 100)
-    : 50;
+  const prefSwScore =
+    jobPrefSoftware.length > 0
+      ? Math.round((matchedPrefSw.length / jobPrefSoftware.length) * 100)
+      : 50;
   const missingPrefSw = setDifference(jobPrefSoftware, allCandSoftware);
   dimensionScores.push({
     dimension: 'preferredSoftware',
@@ -557,7 +595,9 @@ export function calculateMatch(
       expected: minReq,
       actual: candYears,
     });
-    gapReasons.push(`Experience: ${candYears}yr vs required ${minReq}yr minimum`);
+    gapReasons.push(
+      `Experience: ${candYears}yr vs required ${minReq}yr minimum`,
+    );
   }
 
   // ── 9. Project Experience ────────────────────────────────────────
@@ -570,18 +610,23 @@ export function calculateMatch(
     matchedItems: projectMatchResults.matchedProjects,
   });
   if (projectMatchResults.matchedProjects.length > 0) {
-    matchReasons.push(`Relevant project experience: ${projectMatchResults.matchedProjects.join(', ')}`);
+    matchReasons.push(
+      `Relevant project experience: ${projectMatchResults.matchedProjects.join(', ')}`,
+    );
   }
 
   // ── 10. Certifications ───────────────────────────────────────────
-  const candCertNames = (candidate.certifications || []).map((c) => normalize(c.name));
+  const candCertNames = (candidate.certifications || []).map((c) =>
+    normalize(c.name),
+  );
   const reqCerts = (job.requiredCertifications || []).map(normalize);
   const matchedCerts = reqCerts.filter((rc) =>
     candCertNames.some((cn) => cn.includes(rc) || rc.includes(cn)),
   );
-  const certScore = reqCerts.length > 0
-    ? Math.round((matchedCerts.length / reqCerts.length) * 100)
-    : 50;
+  const certScore =
+    reqCerts.length > 0
+      ? Math.round((matchedCerts.length / reqCerts.length) * 100)
+      : 50;
   const missingCerts = reqCerts.filter(
     (rc) => !candCertNames.some((cn) => cn.includes(rc) || rc.includes(cn)),
   );
@@ -605,11 +650,13 @@ export function calculateMatch(
 
   // ── 11. Education ────────────────────────────────────────────────
   const reqEdu = normalize(job.requiredEducation);
-  const candEdus = (candidate.education || []).map((e) =>
-    `${normalize(e.qualification)} ${normalize(e.fieldOfStudy)}`,
+  const candEdus = (candidate.education || []).map(
+    (e) => `${normalize(e.qualification)} ${normalize(e.fieldOfStudy)}`,
   );
-  const eduMatched = !reqEdu || candEdus.some((ce) => ce.includes(reqEdu) || reqEdu.includes(ce));
-  const eduScore = eduMatched ? 100 : (reqEdu ? 20 : 50);
+  const eduMatched =
+    !reqEdu ||
+    candEdus.some((ce) => ce.includes(reqEdu) || reqEdu.includes(ce));
+  const eduScore = eduMatched ? 100 : reqEdu ? 20 : 50;
   dimensionScores.push({
     dimension: 'education',
     score: eduScore,
@@ -625,20 +672,26 @@ export function calculateMatch(
   const candPrefLocs = candidate.preferredLocations || [];
   const allCandLocs = [candLoc, ...candPrefLocs].filter(Boolean);
   const locMatched = !jobLoc || fuzzyLocationMatch(jobLoc, allCandLocs);
-  const locScore = locMatched ? 100 : (jobLoc ? 20 : 50);
+  const locScore = locMatched ? 100 : jobLoc ? 20 : 50;
   dimensionScores.push({
     dimension: 'location',
     score: locScore,
     weight: MATCH_WEIGHTS.location,
-    note: locMatched ? `${candLoc || 'Location matched'}` : `Job: ${jobLoc}, Candidate: ${candLoc || 'Not listed'}`,
+    note: locMatched
+      ? `${candLoc || 'Location matched'}`
+      : `Job: ${jobLoc}, Candidate: ${candLoc || 'Not listed'}`,
   });
   if (locMatched && candLoc) matchReasons.push(`${candLoc} location`);
-  else if (jobLoc && !locMatched) gapReasons.push(`Location: ${jobLoc} not matched`);
+  else if (jobLoc && !locMatched)
+    gapReasons.push(`Location: ${jobLoc} not matched`);
 
   // ── 13. Work Mode ────────────────────────────────────────────────
   const jobWM = normalize(job.workMode);
-  const candWM = normalize(candidate.careerPreferences?.preferredWorkMode || '');
-  const wmMatched = !jobWM || caseInsensitiveMatch(jobWM, candWM) || candWM === '';
+  const candWM = normalize(
+    candidate.careerPreferences?.preferredWorkMode || '',
+  );
+  const wmMatched =
+    !jobWM || caseInsensitiveMatch(jobWM, candWM) || candWM === '';
   const wmScore = wmMatched ? 100 : 40;
   dimensionScores.push({
     dimension: 'workMode',
@@ -647,8 +700,12 @@ export function calculateMatch(
   });
 
   // ── 14. Career Intent ────────────────────────────────────────────
-  const prefRoles = (candidate.careerPreferences?.preferredRoles || []).map(normalize);
-  const prefSectors = (candidate.careerPreferences?.preferredSectors || []).map(normalize);
+  const prefRoles = (candidate.careerPreferences?.preferredRoles || []).map(
+    normalize,
+  );
+  const prefSectors = (candidate.careerPreferences?.preferredSectors || []).map(
+    normalize,
+  );
   const jobTitle = normalize(job.title);
   let careerScore = 50; // neutral if no preferences set
   if (prefRoles.length > 0 || prefSectors.length > 0) {
@@ -656,13 +713,19 @@ export function calculateMatch(
     let checks = 0;
     if (prefRoles.length > 0) {
       checks++;
-      if (prefRoles.some((r) => jobTitle.includes(r) || r.includes(jobTitle.split(' ')[0]))) {
+      if (
+        prefRoles.some(
+          (r) => jobTitle.includes(r) || r.includes(jobTitle.split(' ')[0]),
+        )
+      ) {
         matches++;
       }
     }
     if (prefSectors.length > 0 && jobSector) {
       checks++;
-      if (prefSectors.some((s) => caseInsensitiveMatch(s, normalize(jobSector)))) {
+      if (
+        prefSectors.some((s) => caseInsensitiveMatch(s, normalize(jobSector)))
+      ) {
         matches++;
       }
     }
@@ -675,7 +738,8 @@ export function calculateMatch(
   });
 
   // ── 15. Availability ─────────────────────────────────────────────
-  const isOpen = candidate.careerPreferences?.openToOpportunities ||
+  const isOpen =
+    candidate.careerPreferences?.openToOpportunities ||
     candidate.availability === 'OPEN_TO_OPPORTUNITIES';
   const availScore = isOpen ? 100 : 30;
   dimensionScores.push({
@@ -691,7 +755,7 @@ export function calculateMatch(
   for (const dim of dimensionScores) {
     weightedSum += dim.score * dim.weight;
   }
-  const finalScore = Math.round(Math.min(100, (weightedSum / TOTAL_WEIGHT)));
+  const finalScore = Math.round(Math.min(100, weightedSum / TOTAL_WEIGHT));
 
   // ── Hard Requirement Evaluation ───────────────────────────────────
   const passesHard = hardFailures.length === 0;
@@ -709,7 +773,9 @@ export function calculateMatch(
   }
 
   // All matched skills and software across required + preferred
-  const allMatchedSkills = [...new Set([...matchedReqSkills, ...matchedPrefSkills])];
+  const allMatchedSkills = [
+    ...new Set([...matchedReqSkills, ...matchedPrefSkills]),
+  ];
   const allMatchedSoftware = [...new Set([...matchedReqSw, ...matchedPrefSw])];
 
   return {
@@ -828,7 +894,13 @@ function matchProjects(
     let relevance = 0;
 
     // Sector match
-    if (proj.infrastructureSector && caseInsensitiveMatch(normalizeSector(proj.infrastructureSector), jobSector)) {
+    if (
+      proj.infrastructureSector &&
+      caseInsensitiveMatch(
+        normalizeSector(proj.infrastructureSector),
+        jobSector,
+      )
+    ) {
       relevance += 30;
     }
 
@@ -859,9 +931,10 @@ function matchProjects(
     }
   }
 
-  const score = matched.length > 0
-    ? Math.min(100, Math.round(totalRelevance / Math.max(1, matched.length)))
-    : 20;
+  const score =
+    matched.length > 0
+      ? Math.min(100, Math.round(totalRelevance / Math.max(1, matched.length)))
+      : 20;
 
   return { score, matchedProjects: matched.slice(0, 5) };
 }
@@ -886,17 +959,26 @@ export function determineRecommendationTypes(
   }
 
   // 1. Role match
-  const prefRoles = (candidate.careerPreferences?.preferredRoles || []).map((r) => r.toLowerCase());
+  const prefRoles = (candidate.careerPreferences?.preferredRoles || []).map(
+    (r) => r.toLowerCase(),
+  );
   const jobTitleLower = job.title.toLowerCase();
   if (
-    prefRoles.some((pr) => jobTitleLower.includes(pr) || pr.includes(jobTitleLower.split(' ')[0])) ||
-    (candidate.currentRole && jobTitleLower.includes(candidate.currentRole.toLowerCase()))
+    prefRoles.some(
+      (pr) =>
+        jobTitleLower.includes(pr) || pr.includes(jobTitleLower.split(' ')[0]),
+    ) ||
+    (candidate.currentRole &&
+      jobTitleLower.includes(candidate.currentRole.toLowerCase()))
   ) {
     types.push('role_match');
   }
 
   // 2. Skill match
-  if ((dimMap['requiredSkills'] || 0) >= 70 || (dimMap['preferredSkills'] || 0) >= 70) {
+  if (
+    (dimMap['requiredSkills'] || 0) >= 70 ||
+    (dimMap['preferredSkills'] || 0) >= 70
+  ) {
     types.push('skill_match');
   }
 
@@ -906,12 +988,18 @@ export function determineRecommendationTypes(
   }
 
   // 4. Software match
-  if ((dimMap['requiredSoftware'] || 0) >= 70 || (dimMap['preferredSoftware'] || 0) >= 70) {
+  if (
+    (dimMap['requiredSoftware'] || 0) >= 70 ||
+    (dimMap['preferredSoftware'] || 0) >= 70
+  ) {
     types.push('software_match');
   }
 
   // 5. Project match
-  if ((dimMap['projects'] || 0) >= 60 && matchResult.matchedProjects.length > 0) {
+  if (
+    (dimMap['projects'] || 0) >= 60 &&
+    matchResult.matchedProjects.length > 0
+  ) {
     types.push('project_match');
   }
 
@@ -948,4 +1036,3 @@ export {
   gatherCandidateSkills,
   gatherCandidateSoftware,
 };
-

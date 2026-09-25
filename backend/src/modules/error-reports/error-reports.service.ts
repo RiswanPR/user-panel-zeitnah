@@ -55,7 +55,7 @@ export class ErrorReportsService {
 
   async update(id: string, updateData: any) {
     return this.errorReportModel
-      .findByIdAndUpdate(id, updateData, { new: true })
+      .findByIdAndUpdate(id, updateData, { returnDocument: 'after' })
       .exec();
   }
 

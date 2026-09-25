@@ -104,7 +104,10 @@ export class MatchingService {
    * Trigger matching for a published job.
    * Called asynchronously after job publication.
    */
-  async triggerJobMatching(jobId: string, requesterId?: string): Promise<{
+  async triggerJobMatching(
+    jobId: string,
+    requesterId?: string,
+  ): Promise<{
     status: string;
     candidatesRetrieved: number;
     candidatesScored: number;
@@ -115,7 +118,7 @@ export class MatchingService {
     this.logger.log(`[matchingStarted] jobId=${jobId}`);
 
     // Validate job exists and is published
-    const job = await this.oppModel.findById(jobId).lean() as any;
+    const job = (await this.oppModel.findById(jobId).lean()) as any;
     if (!job) {
       throw new NotFoundException('Job not found');
     }
@@ -124,17 +127,26 @@ export class MatchingService {
     }
 
     // Validate business is approved
-    const business = await this.orgModel.findById(job.organizationId).lean() as any;
+    const business = (await this.orgModel
+      .findById(job.organizationId)
+      .lean()) as any;
     if (!business || business.status !== BusinessStatus.APPROVED) {
-      throw new ForbiddenException('Only approved businesses can run talent matching');
+      throw new ForbiddenException(
+        'Only approved businesses can run talent matching',
+      );
     }
 
     // Build the job profile for matching
     const jobProfile = this.buildJobProfile(job);
 
     // Stage 1: Deterministic eligibility filter — bounded retrieval
-    const eligibleCandidates = await this.retrieveEligibleCandidates(jobProfile, job);
-    this.logger.log(`[candidateCountRetrieved] jobId=${jobId} count=${eligibleCandidates.length}`);
+    const eligibleCandidates = await this.retrieveEligibleCandidates(
+      jobProfile,
+      job,
+    );
+    this.logger.log(
+      `[candidateCountRetrieved] jobId=${jobId} count=${eligibleCandidates.length}`,
+    );
 
     // Stage 2: Score each candidate
     const matchResults: MatchResult[] = [];
@@ -146,11 +158,15 @@ export class MatchingService {
           matchResults.push(result);
         }
       } catch (err) {
-        this.logger.warn(`[matchingError] candidateId=${candidate.userId} error=${err}`);
+        this.logger.warn(
+          `[matchingError] candidateId=${candidate.userId} error=${err}`,
+        );
       }
     }
 
-    this.logger.log(`[candidateCountScored] jobId=${jobId} count=${matchResults.length}`);
+    this.logger.log(
+      `[candidateCountScored] jobId=${jobId} count=${matchResults.length}`,
+    );
 
     // Sort by score descending
     matchResults.sort((a, b) => b.score - a.score);
@@ -289,7 +305,10 @@ export class MatchingService {
       .select('candidateUserId status')
       .lean();
     const inviteMap = new Map(
-      existingInvites.map((inv: any) => [String(inv.candidateUserId), inv.status]),
+      existingInvites.map((inv: any) => [
+        String(inv.candidateUserId),
+        inv.status,
+      ]),
     );
 
     const data = matches.map((match: any) => {
@@ -334,7 +353,12 @@ export class MatchingService {
 
     // Count by category
     const categoryCounts = await this.matchModel.aggregate([
-      { $match: { jobId: new Types.ObjectId(jobId), status: MatchStatus.ACTIVE } },
+      {
+        $match: {
+          jobId: new Types.ObjectId(jobId),
+          status: MatchStatus.ACTIVE,
+        },
+      },
       { $group: { _id: '$category', count: { $sum: 1 } } },
     ]);
     const counts: Record<string, number> = {};
@@ -352,7 +376,8 @@ export class MatchingService {
       categoryCounts: {
         highlyCompatible: counts[MatchCategory.HIGHLY_COMPATIBLE] || 0,
         stronglyCompatible: counts[MatchCategory.STRONGLY_COMPATIBLE] || 0,
-        potentiallyCompatible: counts[MatchCategory.POTENTIALLY_COMPATIBLE] || 0,
+        potentiallyCompatible:
+          counts[MatchCategory.POTENTIALLY_COMPATIBLE] || 0,
       },
       matchingEngineVersion: 'v1',
       isStale: false,
@@ -372,27 +397,28 @@ export class MatchingService {
       OrganizationRole.RECRUITER,
     ]);
 
-    const [totalMatches, invitesSent, savedCount, applicantCount] = await Promise.all([
-      this.matchModel.countDocuments({
-        jobId: new Types.ObjectId(jobId),
-        status: MatchStatus.ACTIVE,
-        isDismissed: { $ne: true },
-      }),
-      this.inviteModel.countDocuments({
-        jobId: new Types.ObjectId(jobId),
-      }),
-      this.matchModel.countDocuments({
-        jobId: new Types.ObjectId(jobId),
-        status: MatchStatus.ACTIVE,
-        isSaved: true,
-      }),
-      this.jobAppModel
-        ? this.jobAppModel.countDocuments({
-            jobId: new Types.ObjectId(jobId),
-            status: { $ne: JobApplicationStatus.WITHDRAWN },
-          })
-        : Promise.resolve(0),
-    ]);
+    const [totalMatches, invitesSent, savedCount, applicantCount] =
+      await Promise.all([
+        this.matchModel.countDocuments({
+          jobId: new Types.ObjectId(jobId),
+          status: MatchStatus.ACTIVE,
+          isDismissed: { $ne: true },
+        }),
+        this.inviteModel.countDocuments({
+          jobId: new Types.ObjectId(jobId),
+        }),
+        this.matchModel.countDocuments({
+          jobId: new Types.ObjectId(jobId),
+          status: MatchStatus.ACTIVE,
+          isSaved: true,
+        }),
+        this.jobAppModel
+          ? this.jobAppModel.countDocuments({
+              jobId: new Types.ObjectId(jobId),
+              status: { $ne: JobApplicationStatus.WITHDRAWN },
+            })
+          : Promise.resolve(0),
+      ]);
 
     return {
       jobId,
@@ -420,13 +446,15 @@ export class MatchingService {
       OrganizationRole.RECRUITER,
     ]);
 
-    let match = await this.matchModel.findOne({
+    const match = await this.matchModel.findOne({
       jobId: new Types.ObjectId(jobId),
       candidateUserId: new Types.ObjectId(candidateUserId),
     });
 
     if (!match) {
-      throw new NotFoundException('Candidate match record not found for this job');
+      throw new NotFoundException(
+        'Candidate match record not found for this job',
+      );
     }
 
     match.isSaved = !match.isSaved;
@@ -469,7 +497,9 @@ export class MatchingService {
     });
 
     if (!match) {
-      throw new NotFoundException('Candidate match record not found for this job');
+      throw new NotFoundException(
+        'Candidate match record not found for this job',
+      );
     }
 
     match.isDismissed = true;
@@ -515,7 +545,9 @@ export class MatchingService {
     ]);
 
     // Verify candidate exists
-    const candidate = await this.userModel.findById(candidateUserId).select('name');
+    const candidate = await this.userModel
+      .findById(candidateUserId)
+      .select('name');
     if (!candidate) throw new NotFoundException('Candidate not found');
 
     // Check for existing invite
@@ -524,7 +556,9 @@ export class MatchingService {
       candidateUserId: new Types.ObjectId(candidateUserId),
     });
     if (existing) {
-      throw new ConflictException('An opportunity invite has already been sent to this candidate for this job');
+      throw new ConflictException(
+        'An opportunity invite has already been sent to this candidate for this job',
+      );
     }
 
     const invite = await this.inviteModel.create({
@@ -588,27 +622,36 @@ export class MatchingService {
 
     if (!invite) throw new NotFoundException('Opportunity invite not found');
 
-    if (invite.status !== InviteStatus.SENT && invite.status !== InviteStatus.VIEWED) {
-      throw new BadRequestException('This invite has already been responded to');
+    if (
+      invite.status !== InviteStatus.SENT &&
+      invite.status !== InviteStatus.VIEWED
+    ) {
+      throw new BadRequestException(
+        'This invite has already been responded to',
+      );
     }
 
-    invite.status = response === 'interested'
-      ? InviteStatus.INTERESTED
-      : InviteStatus.DECLINED;
+    invite.status =
+      response === 'interested'
+        ? InviteStatus.INTERESTED
+        : InviteStatus.DECLINED;
     invite.respondedAt = new Date();
     await invite.save();
 
     // Notify recruiter
     if (this.notificationsService) {
       try {
-        const candidate = await this.userModel.findById(candidateUserId).select('name');
+        const candidate = await this.userModel
+          .findById(candidateUserId)
+          .select('name');
         const job = await this.oppModel.findById(invite.jobId).select('title');
         await (this.notificationsService as any).createNotification?.({
           userId: String(invite.senderUserId),
           type: 'invite_response',
-          title: response === 'interested'
-            ? 'Candidate Interested!'
-            : 'Candidate Declined',
+          title:
+            response === 'interested'
+              ? 'Candidate Interested!'
+              : 'Candidate Declined',
           message: `${candidate?.name || 'A candidate'} ${response === 'interested' ? 'is interested in' : 'declined'} the opportunity for "${job?.title || 'a job'}"`,
           metadata: {
             inviteId: String(invite._id),
@@ -651,7 +694,10 @@ export class MatchingService {
     const invites = await this.inviteModel
       .find({ candidateUserId: new Types.ObjectId(candidateUserId) })
       .sort({ createdAt: -1 })
-      .populate('jobId', 'title discipline location workMode jobType infrastructureSector')
+      .populate(
+        'jobId',
+        'title discipline location workMode jobType infrastructureSector',
+      )
       .populate('businessId', 'name slug logo industry location status')
       .populate('senderUserId', 'name avatar')
       .lean();
@@ -663,24 +709,30 @@ export class MatchingService {
       createdAt: inv.createdAt,
       viewedAt: inv.viewedAt,
       respondedAt: inv.respondedAt,
-      job: inv.jobId ? {
-        id: inv.jobId._id,
-        title: inv.jobId.title,
-        discipline: inv.jobId.discipline,
-        location: inv.jobId.location,
-        workMode: inv.jobId.workMode,
-        jobType: inv.jobId.jobType,
-      } : null,
-      business: inv.businessId ? {
-        id: inv.businessId._id,
-        name: inv.businessId.name,
-        slug: inv.businessId.slug,
-        logo: inv.businessId.logo,
-      } : null,
-      sender: inv.senderUserId ? {
-        name: inv.senderUserId.name,
-        avatar: inv.senderUserId.avatar,
-      } : null,
+      job: inv.jobId
+        ? {
+            id: inv.jobId._id,
+            title: inv.jobId.title,
+            discipline: inv.jobId.discipline,
+            location: inv.jobId.location,
+            workMode: inv.jobId.workMode,
+            jobType: inv.jobId.jobType,
+          }
+        : null,
+      business: inv.businessId
+        ? {
+            id: inv.businessId._id,
+            name: inv.businessId.name,
+            slug: inv.businessId.slug,
+            logo: inv.businessId.logo,
+          }
+        : null,
+      sender: inv.senderUserId
+        ? {
+            name: inv.senderUserId.name,
+            avatar: inv.senderUserId.avatar,
+          }
+        : null,
     }));
   }
 
@@ -696,13 +748,18 @@ export class MatchingService {
       { jobId: new Types.ObjectId(jobId), status: MatchStatus.ACTIVE },
       { $set: { status: MatchStatus.STALE } },
     );
-    if (this.userJobRecModel && typeof this.userJobRecModel.updateMany === 'function') {
+    if (
+      this.userJobRecModel &&
+      typeof this.userJobRecModel.updateMany === 'function'
+    ) {
       await this.userJobRecModel.updateMany(
         { jobId: new Types.ObjectId(jobId), status: MatchStatus.ACTIVE },
         { $set: { status: MatchStatus.STALE } },
       );
     }
-    this.logger.log(`[matchesInvalidated] jobId=${jobId} count=${result.modifiedCount}`);
+    this.logger.log(
+      `[matchesInvalidated] jobId=${jobId} count=${result.modifiedCount}`,
+    );
     return result.modifiedCount;
   }
 
@@ -711,16 +768,27 @@ export class MatchingService {
    */
   async invalidateCandidateMatches(candidateUserId: string) {
     const result = await this.matchModel.updateMany(
-      { candidateUserId: new Types.ObjectId(candidateUserId), status: MatchStatus.ACTIVE },
+      {
+        candidateUserId: new Types.ObjectId(candidateUserId),
+        status: MatchStatus.ACTIVE,
+      },
       { $set: { status: MatchStatus.STALE } },
     );
-    if (this.userJobRecModel && typeof this.userJobRecModel.updateMany === 'function') {
+    if (
+      this.userJobRecModel &&
+      typeof this.userJobRecModel.updateMany === 'function'
+    ) {
       await this.userJobRecModel.updateMany(
-        { userId: new Types.ObjectId(candidateUserId), status: MatchStatus.ACTIVE },
+        {
+          userId: new Types.ObjectId(candidateUserId),
+          status: MatchStatus.ACTIVE,
+        },
         { $set: { status: MatchStatus.STALE } },
       );
     }
-    this.logger.log(`[matchesInvalidated] candidateUserId=${candidateUserId} count=${result.modifiedCount}`);
+    this.logger.log(
+      `[matchesInvalidated] candidateUserId=${candidateUserId} count=${result.modifiedCount}`,
+    );
     return result.modifiedCount;
   }
 
@@ -733,7 +801,9 @@ export class MatchingService {
       { userId: new Types.ObjectId(userId), status: MatchStatus.ACTIVE },
       { $set: { status: MatchStatus.STALE } },
     );
-    this.logger.log(`[userRecommendationsInvalidated] userId=${userId} count=${result.modifiedCount}`);
+    this.logger.log(
+      `[userRecommendationsInvalidated] userId=${userId} count=${result.modifiedCount}`,
+    );
     return result.modifiedCount;
   }
 
@@ -746,7 +816,9 @@ export class MatchingService {
       { jobId: new Types.ObjectId(jobId), status: MatchStatus.ACTIVE },
       { $set: { status: MatchStatus.STALE } },
     );
-    this.logger.log(`[jobRecommendationsInvalidated] jobId=${jobId} count=${result.modifiedCount}`);
+    this.logger.log(
+      `[jobRecommendationsInvalidated] jobId=${jobId} count=${result.modifiedCount}`,
+    );
     return result.modifiedCount;
   }
 
@@ -797,12 +869,25 @@ export class MatchingService {
       filter.infrastructureSectors = new RegExp(searchCriteria.sector, 'i');
     }
     if (searchCriteria.software) {
-      filter['structuredSkills.softwareSkills'] = new RegExp(searchCriteria.software, 'i');
+      filter['structuredSkills.softwareSkills'] = new RegExp(
+        searchCriteria.software,
+        'i',
+      );
     }
     if (searchCriteria.skill) {
       filter.$or = [
-        { 'structuredSkills.technicalSkills': new RegExp(searchCriteria.skill, 'i') },
-        { 'structuredSkills.industrySkills': new RegExp(searchCriteria.skill, 'i') },
+        {
+          'structuredSkills.technicalSkills': new RegExp(
+            searchCriteria.skill,
+            'i',
+          ),
+        },
+        {
+          'structuredSkills.industrySkills': new RegExp(
+            searchCriteria.skill,
+            'i',
+          ),
+        },
         { skills: new RegExp(searchCriteria.skill, 'i') },
       ];
     }
@@ -814,17 +899,25 @@ export class MatchingService {
       ];
     }
     if (searchCriteria.minExperience !== undefined) {
-      filter.yearsOfExperience = { ...(filter.yearsOfExperience || {}), $gte: Number(searchCriteria.minExperience) };
+      filter.yearsOfExperience = {
+        ...(filter.yearsOfExperience || {}),
+        $gte: Number(searchCriteria.minExperience),
+      };
     }
     if (searchCriteria.maxExperience !== undefined) {
-      filter.yearsOfExperience = { ...(filter.yearsOfExperience || {}), $lte: Number(searchCriteria.maxExperience) };
+      filter.yearsOfExperience = {
+        ...(filter.yearsOfExperience || {}),
+        $lte: Number(searchCriteria.maxExperience),
+      };
     }
 
     const [total, candidates] = await Promise.all([
       this.userModel.countDocuments(filter),
       this.userModel
         .find(filter)
-        .select('name username avatar headline currentRole primaryRole primaryDiscipline specializations infrastructureSectors yearsOfExperience location structuredSkills availability')
+        .select(
+          'name username avatar headline currentRole primaryRole primaryDiscipline specializations infrastructureSectors yearsOfExperience location structuredSkills availability',
+        )
         .sort({ yearsOfExperience: -1 })
         .skip(skip)
         .limit(limit)
@@ -895,7 +988,7 @@ export class MatchingService {
       .lean();
 
     // Fetch projects for these candidates
-    let projectMap = new Map<string, any[]>();
+    const projectMap = new Map<string, any[]>();
     if (this.projectModel) {
       const userIds = users.map((u: any) => u._id);
       const projects = await this.projectModel
@@ -903,7 +996,9 @@ export class MatchingService {
           ownerId: { $in: userIds },
           visibility: { $ne: ProjectVisibility.PRIVATE },
         })
-        .select('ownerId title description skills softwareUsed infrastructureSector role')
+        .select(
+          'ownerId title description skills softwareUsed infrastructureSector role',
+        )
         .lean();
 
       for (const proj of projects) {
@@ -911,7 +1006,7 @@ export class MatchingService {
         if (!projectMap.has(ownerId)) {
           projectMap.set(ownerId, []);
         }
-        projectMap.get(ownerId)!.push(proj);
+        projectMap.get(ownerId).push(proj);
       }
     }
 
@@ -945,7 +1040,11 @@ export class MatchingService {
         limit: 10,
         totalPages: 0,
         hasNextPage: false,
-        categoryCounts: { highlyCompatible: 0, stronglyCompatible: 0, potentiallyCompatible: 0 },
+        categoryCounts: {
+          highlyCompatible: 0,
+          stronglyCompatible: 0,
+          potentiallyCompatible: 0,
+        },
         matchingEngineVersion: 'v1',
       };
     }
@@ -1018,9 +1117,12 @@ export class MatchingService {
       potentiallyCompatible: 0,
     };
     for (const c of categoryCountsAgg) {
-      if (c._id === MatchCategory.HIGHLY_COMPATIBLE) categoryCounts.highlyCompatible = c.count;
-      else if (c._id === MatchCategory.STRONGLY_COMPATIBLE) categoryCounts.stronglyCompatible = c.count;
-      else if (c._id === MatchCategory.POTENTIALLY_COMPATIBLE) categoryCounts.potentiallyCompatible = c.count;
+      if (c._id === MatchCategory.HIGHLY_COMPATIBLE)
+        categoryCounts.highlyCompatible = c.count;
+      else if (c._id === MatchCategory.STRONGLY_COMPATIBLE)
+        categoryCounts.stronglyCompatible = c.count;
+      else if (c._id === MatchCategory.POTENTIALLY_COMPATIBLE)
+        categoryCounts.potentiallyCompatible = c.count;
     }
 
     // Check applied jobs for this candidate
@@ -1037,7 +1139,9 @@ export class MatchingService {
     }
 
     const data = recs
-      .filter((r: any) => r.jobId && r.jobId.status === OpportunityStatus.PUBLISHED)
+      .filter(
+        (r: any) => r.jobId && r.jobId.status === OpportunityStatus.PUBLISHED,
+      )
       .map((r: any) => ({
         id: r._id,
         jobId: r.jobId._id,
@@ -1116,7 +1220,9 @@ export class MatchingService {
           ownerId: new Types.ObjectId(userId),
           visibility: { $ne: ProjectVisibility.PRIVATE },
         })
-        .select('ownerId title description skills softwareUsed infrastructureSector role')
+        .select(
+          'ownerId title description skills softwareUsed infrastructureSector role',
+        )
         .lean();
     }
 
@@ -1164,10 +1270,14 @@ export class MatchingService {
       .lean();
 
     const hiddenJobIds = new Set(
-      existingInteractions.filter((e: any) => e.isHidden).map((e: any) => String(e.jobId)),
+      existingInteractions
+        .filter((e: any) => e.isHidden)
+        .map((e: any) => String(e.jobId)),
     );
     const dismissedJobIds = new Set(
-      existingInteractions.filter((e: any) => e.isDismissed).map((e: any) => String(e.jobId)),
+      existingInteractions
+        .filter((e: any) => e.isDismissed)
+        .map((e: any) => String(e.jobId)),
     );
 
     // Cap at 100 eligible jobs for performance
@@ -1198,7 +1308,8 @@ export class MatchingService {
           const jobCreatedAt = (job as any).createdAt;
           const isRecentlyPublished =
             jobCreatedAt &&
-            now.getTime() - new Date(jobCreatedAt).getTime() < 7 * 24 * 3600 * 1000;
+            now.getTime() - new Date(jobCreatedAt).getTime() <
+              7 * 24 * 3600 * 1000;
           const recTypes = determineRecommendationTypes(
             matchResult,
             jobProfile,
@@ -1228,7 +1339,9 @@ export class MatchingService {
           });
         }
       } catch (err) {
-        this.logger.warn(`Error matching job ${jIdStr} for user ${userId}: ${err}`);
+        this.logger.warn(
+          `Error matching job ${jIdStr} for user ${userId}: ${err}`,
+        );
       }
     }
 
@@ -1305,7 +1418,9 @@ export class MatchingService {
             ownerId: new Types.ObjectId(userId),
             visibility: { $ne: ProjectVisibility.PRIVATE },
           })
-          .select('ownerId title description skills softwareUsed infrastructureSector role')
+          .select(
+            'ownerId title description skills softwareUsed infrastructureSector role',
+          )
           .lean();
       }
       const candidateProfile = this.buildCandidateProfile(user, projects);
@@ -1394,12 +1509,18 @@ export class MatchingService {
         isDismissed: { $ne: true },
         passesHardRequirements: true,
       })
-      .select('compatibilityScore category matchedSkills matchedSoftware matchedSectors gapReasons')
+      .select(
+        'compatibilityScore category matchedSkills matchedSoftware matchedSectors gapReasons',
+      )
       .lean();
 
     const totalRecommended = recs.length;
-    const highlyCompatibleCount = recs.filter((r) => r.compatibilityScore >= 80).length;
-    const stronglyCompatibleCount = recs.filter((r) => r.compatibilityScore >= 60).length;
+    const highlyCompatibleCount = recs.filter(
+      (r) => r.compatibilityScore >= 80,
+    ).length;
+    const stronglyCompatibleCount = recs.filter(
+      (r) => r.compatibilityScore >= 60,
+    ).length;
 
     // Aggregate sectors
     const sectorFreq: Record<string, number> = {};
@@ -1470,7 +1591,9 @@ export class MatchingService {
       highlyCompatibleCount,
       stronglyCompatibleCount,
       topMatchingSectors:
-        topMatchingSectors.length > 0 ? topMatchingSectors : ['Highways', 'Civil Infrastructure'],
+        topMatchingSectors.length > 0
+          ? topMatchingSectors
+          : ['Highways', 'Civil Infrastructure'],
       topMatchingSkills,
       commonGaps,
       profileImprovements,
@@ -1488,7 +1611,7 @@ export class MatchingService {
           jobId: new Types.ObjectId(jobId),
         },
         { $set: { isHidden: true } },
-        { upsert: true, new: true },
+        { upsert: true, returnDocument: 'after' },
       );
     }
 
@@ -1517,7 +1640,7 @@ export class MatchingService {
           jobId: new Types.ObjectId(jobId),
         },
         { $set: { isDismissed: true } },
-        { upsert: true, new: true },
+        { upsert: true, returnDocument: 'after' },
       );
     }
 
@@ -1556,7 +1679,7 @@ export class MatchingService {
           jobId: new Types.ObjectId(jobId),
         },
         { $set: { feedback: validFeedback } },
-        { upsert: true, new: true },
+        { upsert: true, returnDocument: 'after' },
       );
     }
 
@@ -1613,7 +1736,8 @@ export class MatchingService {
       primaryDiscipline: u.primaryDiscipline || '',
       specializations: u.specializations || [],
       infrastructureSectors: u.infrastructureSectors || [],
-      yearsOfExperience: u.yearsOfExperience || (u.experience?.length ? u.experience.length : 0),
+      yearsOfExperience:
+        u.yearsOfExperience || (u.experience?.length ? u.experience.length : 0),
       location: u.location || '',
       preferredLocations: u.preferredLocations || [],
       skills: u.skills || [],

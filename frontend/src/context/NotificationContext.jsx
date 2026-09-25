@@ -10,7 +10,7 @@ import { AuthContext } from './AuthContext';
 export const NotificationContext = createContext(null);
 
 export const NotificationProvider = ({ children }) => {
-  const { user } = useContext(AuthContext);
+  const { user, loading } = useContext(AuthContext);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [socket, setSocket] = useState(null);
   const queryClient = useQueryClient();
@@ -22,17 +22,20 @@ export const NotificationProvider = ({ children }) => {
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['notifications', 'unread-count'],
     queryFn: notificationService.getUnreadCount,
-    enabled: Boolean(currentUserId),
+    enabled: Boolean(currentUserId && !loading),
     staleTime: 1000 * 30, // 30 seconds
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
+    retry: false,
   });
 
   // ── 2. Active Platform Announcements Query ──
   const { data: announcements = [] } = useQuery({
     queryKey: ['announcements', 'active'],
     queryFn: notificationService.getActiveAnnouncements,
-    enabled: Boolean(currentUserId),
+    enabled: Boolean(currentUserId && !loading),
     staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false,
+    retry: false,
   });
 
   // ── 3. Real-time WebSocket Connection ──

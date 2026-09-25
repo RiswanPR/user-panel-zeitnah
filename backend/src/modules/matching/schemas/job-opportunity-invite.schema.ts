@@ -13,10 +13,20 @@ export enum InviteStatus {
 
 @Schema({ timestamps: true, collection: 'job_opportunity_invites' })
 export class JobOpportunityInvite {
-  @Prop({ type: Types.ObjectId, ref: 'Opportunity', required: true, index: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'Opportunity',
+    required: true,
+    index: true,
+  })
   jobId!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Organization', required: true, index: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'Organization',
+    required: true,
+    index: true,
+  })
   businessId!: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
@@ -53,7 +63,11 @@ JobOpportunityInviteSchema.index(
 );
 
 // Efficient lookup for candidate's received invites
-JobOpportunityInviteSchema.index({ candidateUserId: 1, status: 1, createdAt: -1 });
+JobOpportunityInviteSchema.index({
+  candidateUserId: 1,
+  status: 1,
+  createdAt: -1,
+});
 
 // Recruiter's sent invites for a job
 JobOpportunityInviteSchema.index({ jobId: 1, senderUserId: 1 });

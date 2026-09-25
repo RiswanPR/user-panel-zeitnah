@@ -38,7 +38,12 @@ const DEFAULT_CURATED_SKILLS = [
   {
     name: 'Revit',
     category: 'Software Skills',
-    aliases: ['Autodesk Revit', 'Revit Architecture', 'Revit Structure', 'Revit MEP'],
+    aliases: [
+      'Autodesk Revit',
+      'Revit Architecture',
+      'Revit Structure',
+      'Revit MEP',
+    ],
   },
   {
     name: 'Navisworks',
@@ -48,7 +53,14 @@ const DEFAULT_CURATED_SKILLS = [
   {
     name: 'Primavera P6',
     category: 'Software Skills',
-    aliases: ['Primavera', 'P6', 'P6 software', 'Primavera-P6', 'Oracle Primavera', 'P6 PPM'],
+    aliases: [
+      'Primavera',
+      'P6',
+      'P6 software',
+      'Primavera-P6',
+      'Oracle Primavera',
+      'P6 PPM',
+    ],
   },
   {
     name: 'MS Project',
@@ -135,7 +147,13 @@ const DEFAULT_CURATED_SKILLS = [
   {
     name: 'Quantity Surveying',
     category: 'Technical Skills',
-    aliases: ['QS', 'Bill of Quantities', 'BOQ', 'Quantity Estimation', 'Take-offs'],
+    aliases: [
+      'QS',
+      'Bill of Quantities',
+      'BOQ',
+      'Quantity Estimation',
+      'Take-offs',
+    ],
   },
   {
     name: 'BIM Coordination',
@@ -177,7 +195,12 @@ const DEFAULT_CURATED_SKILLS = [
   {
     name: 'Quality Control (QA/QC)',
     category: 'Industry Skills',
-    aliases: ['QA/QC', 'Quality Assurance', 'Material Testing', 'Inspection & Testing'],
+    aliases: [
+      'QA/QC',
+      'Quality Assurance',
+      'Material Testing',
+      'Inspection & Testing',
+    ],
   },
   {
     name: 'Health, Safety & Environment (HSE)',

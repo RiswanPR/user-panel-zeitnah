@@ -86,10 +86,7 @@ export class CareerIntelligenceController {
   // ── 8. Configure Target Roles ────────────────────────────────────
   @Post('target-roles')
   @UseGuards(JwtAuthGuard)
-  async setTargetRoles(
-    @Req() req: any,
-    @Body() dto: SetTargetRolesDto,
-  ) {
+  async setTargetRoles(@Req() req: any, @Body() dto: SetTargetRolesDto) {
     const userId = this.extractUserId(req);
     return this.careerIntelligenceService.updateTargetRoles(userId, dto);
   }
@@ -103,7 +100,10 @@ export class CareerIntelligenceController {
     @Body() dto: CareerAssistantQueryDto,
   ) {
     const userId = this.extractUserId(req);
-    return this.careerIntelligenceService.askCareerAssistant(userId, dto.question);
+    return this.careerIntelligenceService.askCareerAssistant(
+      userId,
+      dto.question,
+    );
   }
 
   // ── 10. Force Refresh Career Insight ─────────────────────────────

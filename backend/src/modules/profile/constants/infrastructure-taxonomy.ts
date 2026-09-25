@@ -18,7 +18,8 @@ export const INFRASTRUCTURE_DISCIPLINES = [
   'Infrastructure Consultancy',
 ] as const;
 
-export type InfrastructureDiscipline = typeof INFRASTRUCTURE_DISCIPLINES[number];
+export type InfrastructureDiscipline =
+  (typeof INFRASTRUCTURE_DISCIPLINES)[number];
 
 export const INFRASTRUCTURE_SECTORS = [
   'Buildings',
@@ -36,7 +37,7 @@ export const INFRASTRUCTURE_SECTORS = [
   'Real Estate Development',
 ] as const;
 
-export type InfrastructureSector = typeof INFRASTRUCTURE_SECTORS[number];
+export type InfrastructureSector = (typeof INFRASTRUCTURE_SECTORS)[number];
 
 export const INFRASTRUCTURE_SOFTWARE = [
   'AutoCAD',
@@ -58,7 +59,7 @@ export const INFRASTRUCTURE_SOFTWARE = [
   'MicroStation',
 ] as const;
 
-export type InfrastructureSoftware = typeof INFRASTRUCTURE_SOFTWARE[number];
+export type InfrastructureSoftware = (typeof INFRASTRUCTURE_SOFTWARE)[number];
 
 export const PROFILE_ROLES = [
   'student',
@@ -69,7 +70,7 @@ export const PROFILE_ROLES = [
   'founder',
 ] as const;
 
-export type ProfileRole = typeof PROFILE_ROLES[number];
+export type ProfileRole = (typeof PROFILE_ROLES)[number];
 
 export const USER_SELECTABLE_ROLES: ProfileRole[] = [
   'student',
@@ -80,7 +81,7 @@ export const USER_SELECTABLE_ROLES: ProfileRole[] = [
 ];
 
 export const WORK_MODES = ['On-site', 'Hybrid', 'Remote'] as const;
-export type WorkMode = typeof WORK_MODES[number];
+export type WorkMode = (typeof WORK_MODES)[number];
 
 export const EMPLOYMENT_TYPES = [
   'Full-time',
@@ -89,10 +90,10 @@ export const EMPLOYMENT_TYPES = [
   'Internship',
   'Freelance',
 ] as const;
-export type EmploymentType = typeof EMPLOYMENT_TYPES[number];
+export type EmploymentType = (typeof EMPLOYMENT_TYPES)[number];
 
 export const VISIBILITY_LEVELS = ['PUBLIC', 'NETWORK', 'PRIVATE'] as const;
-export type VisibilityLevel = typeof VISIBILITY_LEVELS[number];
+export type VisibilityLevel = (typeof VISIBILITY_LEVELS)[number];
 
 export const INFRASTRUCTURE_SPECIALIZATIONS = [
   'Construction',
@@ -113,7 +114,7 @@ export const INFRASTRUCTURE_SPECIALIZATIONS = [
   'Energy Infrastructure',
 ] as const;
 export type InfrastructureSpecialization =
-  typeof INFRASTRUCTURE_SPECIALIZATIONS[number];
+  (typeof INFRASTRUCTURE_SPECIALIZATIONS)[number];
 
 export const JOB_TYPES = [
   'Full-time',
@@ -124,5 +125,4 @@ export const JOB_TYPES = [
   'Temporary',
   'Apprenticeship',
 ] as const;
-export type JobType = typeof JOB_TYPES[number];
-
+export type JobType = (typeof JOB_TYPES)[number];

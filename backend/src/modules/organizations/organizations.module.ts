@@ -13,7 +13,10 @@ import { OrganizationsService } from './organizations.service';
 import { OrganizationsController } from './organizations.controller';
 
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
-import { Opportunity, OpportunitySchema } from '../opportunities/schemas/opportunity.schema';
+import {
+  Opportunity,
+  OpportunitySchema,
+} from '../opportunities/schemas/opportunity.schema';
 
 @Module({
   imports: [

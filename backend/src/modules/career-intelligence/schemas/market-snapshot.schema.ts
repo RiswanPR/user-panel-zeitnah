@@ -1,7 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-export type InfrastructureMarketSnapshotDocument = InfrastructureMarketSnapshot & Document;
+export type InfrastructureMarketSnapshotDocument =
+  InfrastructureMarketSnapshot & Document;
 
 export interface RoleDemandItem {
   roleTitle: string;
@@ -40,7 +41,8 @@ export class InfrastructureMarketSnapshot {
 
   @Prop({
     type: String,
-    default: 'Observed across active Zeitnah infrastructure jobs in the last 90 days',
+    default:
+      'Observed across active Zeitnah infrastructure jobs in the last 90 days',
   })
   observationWindow!: string;
 
@@ -85,7 +87,8 @@ export class InfrastructureMarketSnapshot {
   modelVersion!: string;
 }
 
-export const InfrastructureMarketSnapshotSchema =
-  SchemaFactory.createForClass(InfrastructureMarketSnapshot);
+export const InfrastructureMarketSnapshotSchema = SchemaFactory.createForClass(
+  InfrastructureMarketSnapshot,
+);
 
 InfrastructureMarketSnapshotSchema.index({ snapshotDate: -1 });

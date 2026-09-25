@@ -80,8 +80,42 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         `[${correlationId}] ${request.method} ${sanitizedUrl} - Status: ${status} - Expected unauthenticated session check`,
       );
     } else if (status === 401) {
-      // Structured auth failure log for diagnosing unexpected 401s
+      // Structured auth failure log for diagnosing unexpected 401s without leaking raw tokens
       const authUser = (request as any)?.user;
+      const authHeader = request.headers.authorization;
+      const rawToken =
+        typeof authHeader === 'string' && authHeader.startsWith('Bearer ')
+          ? authHeader.slice(7).trim()
+          : (request as any).cookies?.token ||
+            (request as any).cookies?.accessToken;
+
+      let tokenPayload: any = null;
+      let tokenExpiryState: string = 'NO_TOKEN';
+
+      if (rawToken && typeof rawToken === 'string') {
+        try {
+          const parts = rawToken.split('.');
+          if (parts.length === 3) {
+            tokenPayload = JSON.parse(
+              Buffer.from(parts[1], 'base64url').toString('utf8'),
+            );
+            if (tokenPayload?.exp) {
+              const expiresAtMs = tokenPayload.exp * 1000;
+              tokenExpiryState =
+                Date.now() > expiresAtMs
+                  ? `EXPIRED_AT_${new Date(expiresAtMs).toISOString()}`
+                  : `VALID_UNTIL_${new Date(expiresAtMs).toISOString()}`;
+            } else {
+              tokenExpiryState = 'NO_EXP_CLAIM';
+            }
+          } else {
+            tokenExpiryState = 'MALFORMED_JWT';
+          }
+        } catch {
+          tokenExpiryState = 'PARSE_ERROR';
+        }
+      }
+
       const authDiag = {
         event: 'AUTH_FAILURE',
         correlationId,
@@ -89,8 +123,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         endpoint: sanitizedUrl,
         status,
         message,
-        userId: authUser?.userId || null,
-        deviceId: authUser?.deviceId || null,
+        userId: authUser?.userId || tokenPayload?.userId || null,
+        deviceId: authUser?.deviceId || tokenPayload?.deviceId || null,
+        tokenExpiryState,
+        hasAuthHeader: Boolean(authHeader),
         timestamp: new Date().toISOString(),
       };
       this.logger.warn(JSON.stringify(authDiag));

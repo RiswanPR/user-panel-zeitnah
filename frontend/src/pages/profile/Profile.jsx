@@ -109,6 +109,13 @@ export default function Profile() {
   const profile = data?.user;
   const completionData = data?.completion;
 
+  const { data: myProjects } = useQuery({
+    queryKey: ["projects", "my"],
+    queryFn: projectsService.getMyProjects,
+    enabled: Boolean(profile),
+  });
+  const myProjectsCount = Array.isArray(myProjects) ? myProjects.length : 0;
+
   // Avatar Upload Mutation
   const avatarMutation = useMutation({
     mutationFn: (file) => coreProfileService.uploadAvatar(file),
@@ -275,12 +282,6 @@ export default function Profile() {
         .join("")
         .toUpperCase()
     : "ZU";
-
-  const { data: myProjects } = useQuery({
-    queryKey: ["projects", "my"],
-    queryFn: projectsService.getMyProjects,
-  });
-  const myProjectsCount = Array.isArray(myProjects) ? myProjects.length : 0;
 
   // Section completion evaluation
   const sections = [

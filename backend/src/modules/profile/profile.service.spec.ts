@@ -776,7 +776,9 @@ describe('ProfileService', () => {
       };
       mockUserModel.findById.mockResolvedValue(mockUser);
 
-      const res = await service.updateProfile('user_1', { primaryRole: 'student' });
+      const res = await service.updateProfile('user_1', {
+        primaryRole: 'student',
+      });
       expect(mockUser.primaryRole).toBe('STUDENT');
       expect(res.user.primaryRole).toBe('STUDENT');
     });
@@ -893,7 +895,11 @@ describe('ProfileService', () => {
       mockUserModel.findById.mockResolvedValue(mockEducator);
 
       await expect(
-        service.updateProfile('user_edu', { primaryRole: 'student' }, 'teacher'),
+        service.updateProfile(
+          'user_edu',
+          { primaryRole: 'student' },
+          'teacher',
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -935,17 +941,27 @@ describe('ProfileService', () => {
           preferredLocations: ['Dubai'],
           preferredWorkMode: 'On-site',
           preferredEmploymentType: 'Full-time',
-          expectedSalaryRange: { min: 80000, max: 120000, currency: 'USD', period: 'yearly' },
+          expectedSalaryRange: {
+            min: 80000,
+            max: 120000,
+            currency: 'USD',
+            period: 'yearly',
+          },
           availability: '30 Days',
         },
       });
 
       expect(mockUser.primaryDiscipline).toBe('Civil Engineering');
-      expect(mockUser.specializations).toEqual(['Structural Engineering', 'BIM']);
+      expect(mockUser.specializations).toEqual([
+        'Structural Engineering',
+        'BIM',
+      ]);
       expect(mockUser.infrastructureSectors).toEqual(['Highways', 'Bridges']);
       expect(mockUser.yearsOfExperience).toBe(5);
       expect(mockUser.careerPreferences.openToOpportunities).toBe(true);
-      expect(mockUser.careerPreferences.preferredRoles).toEqual(['Bridge Engineer']);
+      expect(mockUser.careerPreferences.preferredRoles).toEqual([
+        'Bridge Engineer',
+      ]);
     });
 
     it('Private fields are not exposed publicly in getPublicProfile', async () => {
@@ -956,8 +972,13 @@ describe('ProfileService', () => {
         avatar: '',
         headline: 'Site Engineer',
         primaryDiscipline: 'Site Engineering',
-        experience: [{ id: 'exp_1', role: 'Site Engineer', organization: 'Secret Co' }],
-        careerPreferences: { openToOpportunities: true, preferredRoles: ['Project Manager'] },
+        experience: [
+          { id: 'exp_1', role: 'Site Engineer', organization: 'Secret Co' },
+        ],
+        careerPreferences: {
+          openToOpportunities: true,
+          preferredRoles: ['Project Manager'],
+        },
         privacySettings: {
           experience: 'PRIVATE',
           education: 'PUBLIC',
@@ -973,10 +994,15 @@ describe('ProfileService', () => {
           avatar: '',
           headline: 'Site Engineer',
           primaryDiscipline: 'Site Engineering',
-          experience: [{ id: 'exp_1', role: 'Site Engineer', organization: 'Secret Co' }],
+          experience: [
+            { id: 'exp_1', role: 'Site Engineer', organization: 'Secret Co' },
+          ],
           education: [],
           certifications: [],
-          careerPreferences: { openToOpportunities: true, preferredRoles: ['Project Manager'] },
+          careerPreferences: {
+            openToOpportunities: true,
+            preferredRoles: ['Project Manager'],
+          },
           privacySettings: {
             experience: 'PRIVATE',
             education: 'PUBLIC',

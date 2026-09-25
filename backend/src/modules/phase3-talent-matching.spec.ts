@@ -18,9 +18,7 @@ import {
   MatchCategory,
   MatchStatus,
 } from './matching/schemas/job-talent-match.schema';
-import {
-  InviteStatus,
-} from './matching/schemas/job-opportunity-invite.schema';
+import { InviteStatus } from './matching/schemas/job-opportunity-invite.schema';
 
 // ─── Test Fixtures ──────────────────────────────────────────────────────────
 
@@ -48,7 +46,9 @@ function makeJobProfile(overrides: Partial<JobProfile> = {}): JobProfile {
   };
 }
 
-function makeCandidateProfile(overrides: Partial<CandidateProfile> = {}): CandidateProfile {
+function makeCandidateProfile(
+  overrides: Partial<CandidateProfile> = {},
+): CandidateProfile {
   return {
     userId: new Types.ObjectId().toString(),
     name: 'Rahul Kumar',
@@ -166,18 +166,24 @@ describe('Phase 3 — Eligibility & Hard Requirements', () => {
     const result = calculateMatch(job, candidate);
 
     expect(result.hardRequirementFailures.length).toBeGreaterThan(0);
-    const expFailure = result.hardRequirementFailures.find((f) => f.type === 'experience');
+    const expFailure = result.hardRequirementFailures.find(
+      (f) => f.type === 'experience',
+    );
     expect(expFailure).toBeDefined();
-    expect(expFailure!.expected).toBe(5);
-    expect(expFailure!.actual).toBe(2);
+    expect(expFailure.expected).toBe(5);
+    expect(expFailure.actual).toBe(2);
   });
 
   test('Discipline mismatch creates hard requirement failure', () => {
     const job = makeJobProfile({ discipline: 'Structural Engineering' });
-    const candidate = makeCandidateProfile({ primaryDiscipline: 'Architecture' });
+    const candidate = makeCandidateProfile({
+      primaryDiscipline: 'Architecture',
+    });
     const result = calculateMatch(job, candidate);
 
-    const discFailure = result.hardRequirementFailures.find((f) => f.type === 'discipline');
+    const discFailure = result.hardRequirementFailures.find(
+      (f) => f.type === 'discipline',
+    );
     expect(discFailure).toBeDefined();
   });
 
@@ -199,7 +205,9 @@ describe('Phase 3 — Eligibility & Hard Requirements', () => {
 describe('Phase 3 — Scoring & Compatibility', () => {
   test('Ideal candidate scores highly compatible', () => {
     const result = calculateMatch(makeJobProfile(), makeCandidateProfile());
-    expect(result.score).toBeGreaterThanOrEqual(MATCH_THRESHOLDS.HIGHLY_COMPATIBLE);
+    expect(result.score).toBeGreaterThanOrEqual(
+      MATCH_THRESHOLDS.HIGHLY_COMPATIBLE,
+    );
     expect(result.category).toBe(MatchCategory.HIGHLY_COMPATIBLE);
   });
 
@@ -231,22 +239,28 @@ describe('Phase 3 — Scoring & Compatibility', () => {
   });
 
   test('Required skills have greater weight than preferred skills', () => {
-    expect(MATCH_WEIGHTS.requiredSkills).toBeGreaterThan(MATCH_WEIGHTS.preferredSkills);
-    expect(MATCH_WEIGHTS.requiredSoftware).toBeGreaterThan(MATCH_WEIGHTS.preferredSoftware);
+    expect(MATCH_WEIGHTS.requiredSkills).toBeGreaterThan(
+      MATCH_WEIGHTS.preferredSkills,
+    );
+    expect(MATCH_WEIGHTS.requiredSoftware).toBeGreaterThan(
+      MATCH_WEIGHTS.preferredSoftware,
+    );
   });
 
   test('Relevant project experience affects matching', () => {
     const withProjects = calculateMatch(
       makeJobProfile(),
       makeCandidateProfile({
-        projects: [{
-          title: 'Highway EPC Planning',
-          description: 'Planned highway construction schedule',
-          skills: ['Planning'],
-          softwareUsed: ['Primavera P6'],
-          infrastructureSector: 'Highways',
-          role: 'Planning Engineer',
-        }],
+        projects: [
+          {
+            title: 'Highway EPC Planning',
+            description: 'Planned highway construction schedule',
+            skills: ['Planning'],
+            softwareUsed: ['Primavera P6'],
+            infrastructureSector: 'Highways',
+            role: 'Planning Engineer',
+          },
+        ],
       }),
     );
     const withoutProjects = calculateMatch(
@@ -259,11 +273,19 @@ describe('Phase 3 — Scoring & Compatibility', () => {
   test('Relevant sector affects matching', () => {
     const matchedSector = calculateMatch(
       makeJobProfile({ infrastructureSector: 'Highways' }),
-      makeCandidateProfile({ infrastructureSectors: ['Highways'], projects: [], experience: [] }),
+      makeCandidateProfile({
+        infrastructureSectors: ['Highways'],
+        projects: [],
+        experience: [],
+      }),
     );
     const unmatchedSector = calculateMatch(
       makeJobProfile({ infrastructureSector: 'Highways' }),
-      makeCandidateProfile({ infrastructureSectors: ['Railways'], projects: [], experience: [] }),
+      makeCandidateProfile({
+        infrastructureSectors: ['Railways'],
+        projects: [],
+        experience: [],
+      }),
     );
     expect(matchedSector.score).toBeGreaterThan(unmatchedSector.score);
   });
@@ -312,12 +334,18 @@ describe('Phase 3 — Scoring & Compatibility', () => {
     );
 
     // In-range should score highest on experience dimension
-    const expDimInRange = inRange.dimensionScores.find((d) => d.dimension === 'experience');
-    const expDimBelow = belowRange.dimensionScores.find((d) => d.dimension === 'experience');
-    const expDimAbove = aboveRange.dimensionScores.find((d) => d.dimension === 'experience');
-    expect(expDimInRange!.score).toBe(100);
-    expect(expDimBelow!.score).toBeLessThan(100);
-    expect(expDimAbove!.score).toBeLessThanOrEqual(100);
+    const expDimInRange = inRange.dimensionScores.find(
+      (d) => d.dimension === 'experience',
+    );
+    const expDimBelow = belowRange.dimensionScores.find(
+      (d) => d.dimension === 'experience',
+    );
+    const expDimAbove = aboveRange.dimensionScores.find(
+      (d) => d.dimension === 'experience',
+    );
+    expect(expDimInRange.score).toBe(100);
+    expect(expDimBelow.score).toBeLessThan(100);
+    expect(expDimAbove.score).toBeLessThanOrEqual(100);
   });
 
   test('Location affects matching when required', () => {
@@ -327,7 +355,10 @@ describe('Phase 3 — Scoring & Compatibility', () => {
     );
     const unmatchedLocation = calculateMatch(
       makeJobProfile({ location: 'Mumbai' }),
-      makeCandidateProfile({ location: 'Delhi', preferredLocations: ['Delhi'] }),
+      makeCandidateProfile({
+        location: 'Delhi',
+        preferredLocations: ['Delhi'],
+      }),
     );
     expect(matchedLocation.score).toBeGreaterThan(unmatchedLocation.score);
   });
@@ -374,7 +405,9 @@ describe('Phase 3 — Match Integrity', () => {
     const result = calculateMatch(makeJobProfile(), makeCandidateProfile());
     expect(result.matchReasons.length).toBeGreaterThan(0);
     // Should mention discipline
-    expect(result.matchReasons.some((r) => r.includes('Civil Engineering'))).toBe(true);
+    expect(
+      result.matchReasons.some((r) => r.includes('Civil Engineering')),
+    ).toBe(true);
   });
 
   test('Match explanation includes gap reasons when applicable', () => {
@@ -382,7 +415,9 @@ describe('Phase 3 — Match Integrity', () => {
       makeJobProfile({ requiredCertifications: ['PMP'] }),
       makeCandidateProfile({ certifications: [] }),
     );
-    expect(result.gapReasons.some((r) => r.toLowerCase().includes('pmp'))).toBe(true);
+    expect(result.gapReasons.some((r) => r.toLowerCase().includes('pmp'))).toBe(
+      true,
+    );
   });
 
   test('Match categories have deterministic thresholds', () => {
@@ -449,9 +484,13 @@ describe('Phase 3 — Alias Edge Cases', () => {
   test('Civil alias resolves to Civil Engineering', () => {
     const job = makeJobProfile({ discipline: 'Civil Engineering' });
     // Candidate has explicit discipline already normalized in profile
-    const candidate = makeCandidateProfile({ primaryDiscipline: 'Civil Engineering' });
+    const candidate = makeCandidateProfile({
+      primaryDiscipline: 'Civil Engineering',
+    });
     const result = calculateMatch(job, candidate);
-    expect(result.matchReasons.some((r) => r.includes('Civil Engineering'))).toBe(true);
+    expect(
+      result.matchReasons.some((r) => r.includes('Civil Engineering')),
+    ).toBe(true);
   });
 
   test('Highway EPC alias resolves to Highways sector', () => {
@@ -490,10 +529,12 @@ describe('Phase 3 — Extended Hard Requirements & Gaps', () => {
     const result = calculateMatch(job, candidate);
 
     expect(result.passesHardRequirements).toBe(false);
-    const certFailure = result.hardRequirementFailures.find((f) => f.type === 'certification');
+    const certFailure = result.hardRequirementFailures.find(
+      (f) => f.type === 'certification',
+    );
     expect(certFailure).toBeDefined();
-    expect(certFailure!.expected).toBe('pmp');
-    expect(certFailure!.actual).toBe('Not listed');
+    expect(certFailure.expected).toBe('pmp');
+    expect(certFailure.actual).toBe('Not listed');
   });
 
   test('Mandatory software failure is structured and prevents hard pass', () => {
@@ -509,13 +550,17 @@ describe('Phase 3 — Extended Hard Requirements & Gaps', () => {
     const result = calculateMatch(job, candidate);
 
     expect(result.passesHardRequirements).toBe(false);
-    const swFailure = result.hardRequirementFailures.find((f) => f.type === 'software');
+    const swFailure = result.hardRequirementFailures.find(
+      (f) => f.type === 'software',
+    );
     expect(swFailure).toBeDefined();
-    expect(swFailure!.expected).toBe('Primavera P6');
+    expect(swFailure.expected).toBe('Primavera P6');
   });
 
   test('Mandatory skills failure is structured and recorded', () => {
-    const job = makeJobProfile({ requiredSkills: ['Planning & Scheduling', 'Quantity Surveying'] });
+    const job = makeJobProfile({
+      requiredSkills: ['Planning & Scheduling', 'Quantity Surveying'],
+    });
     const candidate = makeCandidateProfile({
       skills: [],
       structuredSkills: {
@@ -528,7 +573,9 @@ describe('Phase 3 — Extended Hard Requirements & Gaps', () => {
     const result = calculateMatch(job, candidate);
 
     expect(result.passesHardRequirements).toBe(false);
-    expect(result.hardRequirementFailures.some((f) => f.type === 'skill')).toBe(true);
+    expect(result.hardRequirementFailures.some((f) => f.type === 'skill')).toBe(
+      true,
+    );
   });
 });
 
@@ -541,20 +588,25 @@ describe('Phase 3 — Contextual Project Matching', () => {
       infrastructureSector: 'Highways',
     });
     const candidate = makeCandidateProfile({
-      projects: [{
-        title: 'Four-lane Highway EPC Corridor',
-        description: 'Comprehensive planning and scheduling for NH corridor execution',
-        skills: ['Planning'],
-        softwareUsed: ['Primavera P6'],
-        infrastructureSector: 'Highways',
-        role: 'Planning Engineer',
-      }],
+      projects: [
+        {
+          title: 'Four-lane Highway EPC Corridor',
+          description:
+            'Comprehensive planning and scheduling for NH corridor execution',
+          skills: ['Planning'],
+          softwareUsed: ['Primavera P6'],
+          infrastructureSector: 'Highways',
+          role: 'Planning Engineer',
+        },
+      ],
     });
     const result = calculateMatch(job, candidate);
 
     expect(result.matchedProjects.length).toBeGreaterThan(0);
-    const projDim = result.dimensionScores.find((d) => d.dimension === 'projects');
-    expect(projDim!.score).toBeGreaterThan(0);
+    const projDim = result.dimensionScores.find(
+      (d) => d.dimension === 'projects',
+    );
+    expect(projDim.score).toBeGreaterThan(0);
   });
 });
 
@@ -613,7 +665,9 @@ describe('Phase 3 — MatchingService Unit Tests', () => {
     mockUserModel = {
       find: jest.fn(),
       findById: jest.fn().mockReturnValue({
-        select: jest.fn().mockResolvedValue({ name: 'Rahul Kumar', avatar: '' }),
+        select: jest
+          .fn()
+          .mockResolvedValue({ name: 'Rahul Kumar', avatar: '' }),
       }),
     };
 
@@ -636,7 +690,9 @@ describe('Phase 3 — MatchingService Unit Tests', () => {
     };
 
     // Instantiate MatchingService directly
-    const { MatchingService: ServiceClass } = require('./matching/matching.service');
+    const {
+      MatchingService: ServiceClass,
+    } = require('./matching/matching.service');
     service = new ServiceClass(
       mockMatchModel,
       mockInviteModel,
@@ -662,8 +718,9 @@ describe('Phase 3 — MatchingService Unit Tests', () => {
         }),
       });
 
-      await expect(service.triggerJobMatching(sampleJobId, sampleUserId))
-        .rejects.toThrow('Only published jobs can trigger matching');
+      await expect(
+        service.triggerJobMatching(sampleJobId, sampleUserId),
+      ).rejects.toThrow('Only published jobs can trigger matching');
     });
 
     test('triggerJobMatching throws if business is not approved', async () => {
@@ -683,8 +740,9 @@ describe('Phase 3 — MatchingService Unit Tests', () => {
         }),
       });
 
-      await expect(service.triggerJobMatching(sampleJobId, sampleUserId))
-        .rejects.toThrow('Only approved businesses can run talent matching');
+      await expect(
+        service.triggerJobMatching(sampleJobId, sampleUserId),
+      ).rejects.toThrow('Only approved businesses can run talent matching');
     });
 
     test('triggerJobMatching throws if job not found', async () => {
@@ -692,8 +750,9 @@ describe('Phase 3 — MatchingService Unit Tests', () => {
         lean: jest.fn().mockResolvedValue(null),
       });
 
-      await expect(service.triggerJobMatching(sampleJobId, sampleUserId))
-        .rejects.toThrow('Job not found');
+      await expect(
+        service.triggerJobMatching(sampleJobId, sampleUserId),
+      ).rejects.toThrow('Job not found');
     });
   });
 
@@ -712,7 +771,11 @@ describe('Phase 3 — MatchingService Unit Tests', () => {
       };
       mockMatchModel.findOne.mockResolvedValue(mockMatch);
 
-      const result = await service.toggleSaveCandidate(sampleUserId, sampleJobId, sampleCandidateId);
+      const result = await service.toggleSaveCandidate(
+        sampleUserId,
+        sampleJobId,
+        sampleCandidateId,
+      );
       expect(result.isSaved).toBe(true);
       expect(mockMatch.save).toHaveBeenCalled();
       expect(mockAuditLogsService.record).toHaveBeenCalledWith(
@@ -734,7 +797,11 @@ describe('Phase 3 — MatchingService Unit Tests', () => {
       };
       mockMatchModel.findOne.mockResolvedValue(mockMatch);
 
-      const result = await service.dismissCandidate(sampleUserId, sampleJobId, sampleCandidateId);
+      const result = await service.dismissCandidate(
+        sampleUserId,
+        sampleJobId,
+        sampleCandidateId,
+      );
       expect(result.success).toBe(true);
       expect(mockMatch.isDismissed).toBe(true);
       expect(mockMatch.save).toHaveBeenCalled();
@@ -751,8 +818,13 @@ describe('Phase 3 — MatchingService Unit Tests', () => {
       });
       mockMatchModel.findOne.mockResolvedValue(null);
 
-      await expect(service.toggleSaveCandidate(sampleUserId, sampleJobId, sampleCandidateId))
-        .rejects.toThrow('Candidate match record not found for this job');
+      await expect(
+        service.toggleSaveCandidate(
+          sampleUserId,
+          sampleJobId,
+          sampleCandidateId,
+        ),
+      ).rejects.toThrow('Candidate match record not found for this job');
     });
 
     test('Recruiter action is rejected if user is not in organization', async () => {
@@ -763,8 +835,15 @@ describe('Phase 3 — MatchingService Unit Tests', () => {
       });
       mockMembershipModel.findOne.mockResolvedValue(null); // Not member
 
-      await expect(service.toggleSaveCandidate(sampleUserId, sampleJobId, sampleCandidateId))
-        .rejects.toThrow('You must be an Owner, Admin, or Recruiter of this organization');
+      await expect(
+        service.toggleSaveCandidate(
+          sampleUserId,
+          sampleJobId,
+          sampleCandidateId,
+        ),
+      ).rejects.toThrow(
+        'You must be an Owner, Admin, or Recruiter of this organization',
+      );
     });
   });
 
@@ -778,12 +857,15 @@ describe('Phase 3 — MatchingService Unit Tests', () => {
       // matchModel.countDocuments: first call totalMatches (10), third call savedCount (2)
       mockMatchModel.countDocuments
         .mockResolvedValueOnce(10) // total recommended
-        .mockResolvedValueOnce(2);  // saved
+        .mockResolvedValueOnce(2); // saved
 
       mockInviteModel.countDocuments.mockResolvedValue(4); // offersSent
       mockJobAppModel.countDocuments.mockResolvedValue(18); // applicants
 
-      const summary = await service.getJobMatchSummary(sampleUserId, sampleJobId);
+      const summary = await service.getJobMatchSummary(
+        sampleUserId,
+        sampleJobId,
+      );
 
       expect(summary.jobId).toBe(sampleJobId);
       expect(summary.applicants).toBe(18);
@@ -843,7 +925,12 @@ describe('Phase 3 — MatchingService Unit Tests', () => {
       mockInviteModel.findOne.mockResolvedValue({ _id: new Types.ObjectId() }); // Already exists
 
       await expect(
-        service.sendOpportunityInvite(sampleUserId, sampleJobId, sampleCandidateId, 'Hello'),
+        service.sendOpportunityInvite(
+          sampleUserId,
+          sampleJobId,
+          sampleCandidateId,
+          'Hello',
+        ),
       ).rejects.toThrow('An opportunity invite has already been sent');
     });
 
@@ -862,7 +949,11 @@ describe('Phase 3 — MatchingService Unit Tests', () => {
         select: jest.fn().mockResolvedValue({ title: 'Planning Engineer' }),
       });
 
-      const res = await service.respondToInvite(sampleCandidateId, String(inviteDoc._id), 'interested');
+      const res = await service.respondToInvite(
+        sampleCandidateId,
+        String(inviteDoc._id),
+        'interested',
+      );
 
       expect(res.status).toBe(InviteStatus.INTERESTED);
       expect(res.respondedAt).toBeInstanceOf(Date);
@@ -891,7 +982,11 @@ describe('Phase 3 — MatchingService Unit Tests', () => {
         select: jest.fn().mockResolvedValue({ title: 'Planning Engineer' }),
       });
 
-      const res = await service.respondToInvite(sampleCandidateId, String(inviteDoc._id), 'declined');
+      const res = await service.respondToInvite(
+        sampleCandidateId,
+        String(inviteDoc._id),
+        'declined',
+      );
 
       expect(res.status).toBe(InviteStatus.DECLINED);
       expect(res.respondedAt).toBeInstanceOf(Date);
@@ -912,7 +1007,11 @@ describe('Phase 3 — MatchingService Unit Tests', () => {
       mockInviteModel.findOne.mockResolvedValue(inviteDoc);
 
       await expect(
-        service.respondToInvite(sampleCandidateId, String(inviteDoc._id), 'declined'),
+        service.respondToInvite(
+          sampleCandidateId,
+          String(inviteDoc._id),
+          'declined',
+        ),
       ).rejects.toThrow('This invite has already been responded to');
     });
 
@@ -925,7 +1024,10 @@ describe('Phase 3 — MatchingService Unit Tests', () => {
       };
       mockInviteModel.findOne.mockResolvedValue(inviteDoc);
 
-      const res = await service.markInviteViewed(sampleCandidateId, String(inviteDoc._id));
+      const res = await service.markInviteViewed(
+        sampleCandidateId,
+        String(inviteDoc._id),
+      );
 
       expect(res.status).toBe(InviteStatus.VIEWED);
       expect(res.viewedAt).toBeInstanceOf(Date);
@@ -947,10 +1049,12 @@ describe('Phase 3 — MatchingService Unit Tests', () => {
       const count = await service.invalidateCandidateMatches(sampleCandidateId);
       expect(count).toBe(5);
       expect(mockMatchModel.updateMany).toHaveBeenCalledWith(
-        { candidateUserId: new Types.ObjectId(sampleCandidateId), status: 'ACTIVE' },
+        {
+          candidateUserId: new Types.ObjectId(sampleCandidateId),
+          status: 'ACTIVE',
+        },
         { $set: { status: 'STALE' } },
       );
     });
   });
 });
-

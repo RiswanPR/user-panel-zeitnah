@@ -561,7 +561,12 @@ export class User {
       preferredLocations: [],
       preferredWorkMode: 'On-site',
       preferredEmploymentType: 'Full-time',
-      expectedSalaryRange: { min: 0, max: 0, currency: 'INR', period: 'yearly' },
+      expectedSalaryRange: {
+        min: 0,
+        max: 0,
+        currency: 'INR',
+        period: 'yearly',
+      },
       availability: '',
     },
   })

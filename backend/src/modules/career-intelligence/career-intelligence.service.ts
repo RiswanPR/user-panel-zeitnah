@@ -22,8 +22,16 @@ import {
   InfrastructureMarketSnapshotDocument,
 } from './schemas/market-snapshot.schema';
 import { User, UserDocument } from '../auth/schemas/user.schema';
-import { Opportunity, OpportunityDocument, OpportunityStatus } from '../opportunities/schemas/opportunity.schema';
-import { Project, ProjectDocument, ProjectVisibility } from '../projects/schemas/project.schema';
+import {
+  Opportunity,
+  OpportunityDocument,
+  OpportunityStatus,
+} from '../opportunities/schemas/opportunity.schema';
+import {
+  Project,
+  ProjectDocument,
+  ProjectVisibility,
+} from '../projects/schemas/project.schema';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import {
   INFRASTRUCTURE_ROLE_TAXONOMY,
@@ -80,7 +88,9 @@ export class CareerIntelligenceService {
     }
 
     if (!insight) {
-      throw new NotFoundException('Career profile insight could not be generated');
+      throw new NotFoundException(
+        'Career profile insight could not be generated',
+      );
     }
 
     return {
@@ -142,7 +152,8 @@ export class CareerIntelligenceService {
 
     // Find pre-calculated or compute on the fly
     let skillGaps = (insight?.skillGaps || []).find(
-      (sg: any) => sg.targetRole.toLowerCase() === selectedRoleTitle.toLowerCase(),
+      (sg: any) =>
+        sg.targetRole.toLowerCase() === selectedRoleTitle.toLowerCase(),
     );
 
     if (!skillGaps) {
@@ -151,11 +162,18 @@ export class CareerIntelligenceService {
       let projects: any[] = [];
       if (this.projectModel) {
         projects = await this.projectModel
-          .find({ ownerId: new Types.ObjectId(userId), visibility: { $ne: ProjectVisibility.PRIVATE } })
+          .find({
+            ownerId: new Types.ObjectId(userId),
+            visibility: { $ne: ProjectVisibility.PRIVATE },
+          })
           .lean();
       }
       const demonstrated = detectDemonstratedSkills(user, projects);
-      const computed = analyzeTargetRoleSkillGaps(selectedRoleTitle, demonstrated, projects);
+      const computed = analyzeTargetRoleSkillGaps(
+        selectedRoleTitle,
+        demonstrated,
+        projects,
+      );
       skillGaps = {
         targetRole: selectedRoleTitle,
         demonstratedSkills: computed.demonstratedSkills,
@@ -172,8 +190,12 @@ export class CareerIntelligenceService {
       discipline: roleDef?.discipline || 'Civil Engineering',
       demonstratedSkills: skillGaps.demonstratedSkills || [],
       gapSkills: skillGaps.gapSkills || [],
-      missingRequiredCount: (skillGaps.gapSkills || []).filter((g: any) => g.importance === 'REQUIRED').length,
-      missingPreferredCount: (skillGaps.gapSkills || []).filter((g: any) => g.importance === 'PREFERRED').length,
+      missingRequiredCount: (skillGaps.gapSkills || []).filter(
+        (g: any) => g.importance === 'REQUIRED',
+      ).length,
+      missingPreferredCount: (skillGaps.gapSkills || []).filter(
+        (g: any) => g.importance === 'PREFERRED',
+      ).length,
     };
   }
 
@@ -217,7 +239,10 @@ export class CareerIntelligenceService {
         entityType: 'User',
         entityId: userId,
         message: `Candidate updated target roles: Primary="${dto.primaryTargetRole}"`,
-        metadata: { primary: dto.primaryTargetRole, secondary: dto.secondaryTargetRoles },
+        metadata: {
+          primary: dto.primaryTargetRole,
+          secondary: dto.secondaryTargetRoles,
+        },
       });
     }
 
@@ -242,19 +267,25 @@ export class CareerIntelligenceService {
       insight = (await this.generateCareerInsight(userId)) as any;
     }
 
-    const currentPosition = insight?.careerSummary?.currentPosition || 'Site Engineer';
+    const currentPosition =
+      insight?.careerSummary?.currentPosition || 'Site Engineer';
     const selectedRoleTitle =
       targetRoleTitle || insight?.primaryTargetRole || 'Planning Engineer';
 
     const progression = getCareerProgression(currentPosition);
 
     let pathway = (insight?.skillPathways || []).find(
-      (p: any) => p.targetRole.toLowerCase() === selectedRoleTitle.toLowerCase(),
+      (p: any) =>
+        p.targetRole.toLowerCase() === selectedRoleTitle.toLowerCase(),
     );
 
     if (!pathway) {
       const gaps = await this.getSkillGaps(userId, selectedRoleTitle);
-      const steps = generateCareerPathwaySteps(currentPosition, selectedRoleTitle, gaps.gapSkills as any);
+      const steps = generateCareerPathwaySteps(
+        currentPosition,
+        selectedRoleTitle,
+        gaps.gapSkills,
+      );
       pathway = {
         targetRole: selectedRoleTitle,
         steps,
@@ -305,7 +336,9 @@ export class CareerIntelligenceService {
         status: OpportunityStatus.PUBLISHED,
         createdAt: { $gte: ninetyDaysAgo },
       })
-      .select('title requiredSkills preferredSkills requiredSoftware preferredSoftware infrastructureSector location')
+      .select(
+        'title requiredSkills preferredSkills requiredSoftware preferredSoftware infrastructureSector location',
+      )
       .lean();
 
     const totalActiveJobs = activeJobs.length;
@@ -327,7 +360,8 @@ export class CareerIntelligenceService {
       .map(([softwareName, count]) => ({
         softwareName,
         frequency: count,
-        percentage: totalActiveJobs > 0 ? Math.round((count / totalActiveJobs) * 100) : 0,
+        percentage:
+          totalActiveJobs > 0 ? Math.round((count / totalActiveJobs) * 100) : 0,
         trend: count >= 5 ? ('UP' as const) : ('STABLE' as const),
       }));
 
@@ -348,7 +382,8 @@ export class CareerIntelligenceService {
       .map(([skillName, count]) => ({
         skillName,
         frequency: count,
-        percentage: totalActiveJobs > 0 ? Math.round((count / totalActiveJobs) * 100) : 0,
+        percentage:
+          totalActiveJobs > 0 ? Math.round((count / totalActiveJobs) * 100) : 0,
         trend: count >= 4 ? ('UP' as const) : ('STABLE' as const),
       }));
 
@@ -449,7 +484,10 @@ export class CareerIntelligenceService {
     let projects: any[] = [];
     if (this.projectModel) {
       projects = await this.projectModel
-        .find({ ownerId: new Types.ObjectId(userId), visibility: { $ne: ProjectVisibility.PRIVATE } })
+        .find({
+          ownerId: new Types.ObjectId(userId),
+          visibility: { $ne: ProjectVisibility.PRIVATE },
+        })
         .lean();
     }
 
@@ -457,7 +495,9 @@ export class CareerIntelligenceService {
     const softwareList = demonstratedSkills
       .filter((d) => d.evidenceType === EvidenceType.SOFTWARE_PROFICIENCY)
       .map((d) => d.skill);
-    const yearsExp = user.yearsOfExperience || (user.experience?.length ? user.experience.length : 0);
+    const yearsExp =
+      user.yearsOfExperience ||
+      (user.experience?.length ? user.experience.length : 0);
     const discipline = user.primaryDiscipline || 'Civil Engineering';
     const sectors = user.infrastructureSectors || ['Civil Infrastructure'];
 
@@ -468,7 +508,9 @@ export class CareerIntelligenceService {
       `${yearsExp} years infrastructure experience listed`,
       `${discipline} primary discipline`,
       `${projects.length} project portfolio entries`,
-      softwareList.length > 0 ? `Tools: ${softwareList.join(', ')}` : 'No software tools listed',
+      softwareList.length > 0
+        ? `Tools: ${softwareList.join(', ')}`
+        : 'No software tools listed',
     ];
 
     const marketReferences: string[] = [
@@ -482,26 +524,39 @@ export class CareerIntelligenceService {
 
     // Detect role in question
     for (const role of INFRASTRUCTURE_ROLE_TAXONOMY) {
-      if (lowerQ.includes(role.title.toLowerCase()) || lowerQ.includes(role.id.replace('-', ' '))) {
+      if (
+        lowerQ.includes(role.title.toLowerCase()) ||
+        lowerQ.includes(role.id.replace('-', ' '))
+      ) {
         relatedRole = role.title;
         break;
       }
     }
-    if (!relatedRole && lowerQ.includes('planning')) relatedRole = 'Planning Engineer';
+    if (!relatedRole && lowerQ.includes('planning'))
+      relatedRole = 'Planning Engineer';
     if (!relatedRole && lowerQ.includes('site')) relatedRole = 'Site Engineer';
-    if (!relatedRole && lowerQ.includes('qs')) relatedRole = 'Quantity Surveyor';
+    if (!relatedRole && lowerQ.includes('qs'))
+      relatedRole = 'Quantity Surveyor';
     if (!relatedRole && lowerQ.includes('bim')) relatedRole = 'BIM Engineer';
 
-    if (lowerQ.includes('missing') || lowerQ.includes('improve') || lowerQ.includes('profile')) {
+    if (
+      lowerQ.includes('missing') ||
+      lowerQ.includes('improve') ||
+      lowerQ.includes('profile')
+    ) {
       // Missing profile details query
       answer = `Based on your profile, you have ${yearsExp} years of experience and ${discipline} listed. To strengthen your visibility, consider documenting:`;
       if (projects.length === 0) {
         answer += `\n1. At least one infrastructure project showing your specific site responsibilities.`;
-        suggestedActionItems.push('Add an infrastructure project to your portfolio');
+        suggestedActionItems.push(
+          'Add an infrastructure project to your portfolio',
+        );
       }
       if (softwareList.length === 0) {
         answer += `\n2. Key software tools you use on site (e.g. AutoCAD, Primavera P6, or Revit).`;
-        suggestedActionItems.push('Add software tools to your structured skills');
+        suggestedActionItems.push(
+          'Add software tools to your structured skills',
+        );
       }
       if (!user.careerPreferences?.preferredRoles?.length) {
         answer += `\n3. Your target career roles and locations under Career Preferences.`;
@@ -511,8 +566,14 @@ export class CareerIntelligenceService {
     } else if (relatedRole) {
       // Role-specific query
       const roleDef = getRoleByTitle(relatedRole);
-      const skillGaps = analyzeTargetRoleSkillGaps(relatedRole, demonstratedSkills, projects);
-      const missingRequired = skillGaps.gapSkills.filter((g) => g.importance === 'REQUIRED');
+      const skillGaps = analyzeTargetRoleSkillGaps(
+        relatedRole,
+        demonstratedSkills,
+        projects,
+      );
+      const missingRequired = skillGaps.gapSkills.filter(
+        (g) => g.importance === 'REQUIRED',
+      );
 
       answer = `For ${relatedRole} roles in ${discipline}, Zeitnah market data indicates that employers prioritize:\n`;
       answer += `• Required skills: ${roleDef?.requiredSkills.join(', ')}\n`;
@@ -520,8 +581,12 @@ export class CareerIntelligenceService {
 
       if (missingRequired.length > 0) {
         answer += `In your profile, the following competencies are currently not demonstrated:\n`;
-        answer += missingRequired.map((m) => `• ${m.skill}: ${m.recommendedAction}`).join('\n');
-        suggestedActionItems.push(`Strengthen ${missingRequired[0].skill} through project experience`);
+        answer += missingRequired
+          .map((m) => `• ${m.skill}: ${m.recommendedAction}`)
+          .join('\n');
+        suggestedActionItems.push(
+          `Strengthen ${missingRequired[0].skill} through project experience`,
+        );
       } else {
         answer += `Your profile strongly demonstrates the core technical requirements for ${relatedRole}! Focus on highlighting quantifiable project achievements.`;
       }
@@ -534,7 +599,9 @@ export class CareerIntelligenceService {
           answer += `• "${p.title}" (${p.infrastructureSector || 'Infrastructure'}): Tools: ${pSw}.\n`;
         }
         answer += `\nTo maximize evidence strength, ensure each project specifies your exact responsibilities (e.g., progress scheduling, BOQ preparation, or QA/QC inspections).`;
-        suggestedActionItems.push('Refine project descriptions with quantitative outcomes');
+        suggestedActionItems.push(
+          'Refine project descriptions with quantitative outcomes',
+        );
       } else {
         answer = `You do not currently have any published infrastructure projects. Projects are the single most credible evidence of hands-on field capability.`;
         suggestedActionItems.push('Publish your first infrastructure project');
@@ -542,7 +609,9 @@ export class CareerIntelligenceService {
     } else {
       // General career advice
       answer = `Zeitnah Career Intelligence analyzes your ${discipline} background across ${market.totalActiveJobs} active infrastructure jobs. Your strongest demonstrated tools are ${softwareList.length > 0 ? softwareList.join(', ') : 'field experience'}. You are well-positioned to explore roles in ${sectors.join(', ')}.`;
-      suggestedActionItems.push('Review role alignment for target engineering positions');
+      suggestedActionItems.push(
+        'Review role alignment for target engineering positions',
+      );
     }
 
     return {
@@ -566,7 +635,10 @@ export class CareerIntelligenceService {
     let projects: any[] = [];
     if (this.projectModel) {
       projects = await this.projectModel
-        .find({ ownerId: new Types.ObjectId(userId), visibility: { $ne: ProjectVisibility.PRIVATE } })
+        .find({
+          ownerId: new Types.ObjectId(userId),
+          visibility: { $ne: ProjectVisibility.PRIVATE },
+        })
         .lean();
     }
 
@@ -579,15 +651,18 @@ export class CareerIntelligenceService {
       calculateProfileStrength(user, projects, demonstratedSkills);
 
     // 3. Career summary
-    const yearsOfExperience = user.yearsOfExperience || (user.experience?.length ? user.experience.length : 0);
+    const yearsOfExperience =
+      user.yearsOfExperience ||
+      (user.experience?.length ? user.experience.length : 0);
     const keySoftware = demonstratedSkills
       .filter((d) => d.evidenceType === EvidenceType.SOFTWARE_PROFICIENCY)
       .map((d) => d.skill);
 
     const primaryTargetRole =
       user.careerPreferences?.preferredRoles?.[0] || 'Planning Engineer';
-    const secondaryTargetRoles =
-      (user.careerPreferences?.preferredRoles || []).slice(1, 4);
+    const secondaryTargetRoles = (
+      user.careerPreferences?.preferredRoles || []
+    ).slice(1, 4);
 
     const careerSummary = {
       currentPosition: user.currentRole || user.headline || 'Site Engineer',
@@ -645,7 +720,11 @@ export class CareerIntelligenceService {
     const skillPathways: TargetRolePathway[] = [];
 
     for (const tRole of uniqueTargetRoles) {
-      const gapResult = analyzeTargetRoleSkillGaps(tRole, demonstratedSkills, projects);
+      const gapResult = analyzeTargetRoleSkillGaps(
+        tRole,
+        demonstratedSkills,
+        projects,
+      );
       skillGaps.push({
         targetRole: tRole,
         demonstratedSkills: gapResult.demonstratedSkills,
@@ -677,7 +756,7 @@ export class CareerIntelligenceService {
       { userId: new Types.ObjectId(userId) },
       {
         $set: {
-          profileVersion: (user as any).profileVersion || 1,
+          profileVersion: user.profileVersion || 1,
           analysisVersion: 'v1',
           taxonomyVersion: 'v1',
           status: 'ACTIVE',
@@ -694,7 +773,7 @@ export class CareerIntelligenceService {
           generatedAt: new Date(),
         },
       },
-      { upsert: true, new: true },
+      { upsert: true, returnDocument: 'after' },
     );
 
     return insightDoc.toObject();

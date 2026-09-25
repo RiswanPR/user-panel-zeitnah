@@ -82,13 +82,19 @@ export class ProfileService {
   private triggerCandidateMatchInvalidation(userId: string) {
     if (this.matchingService) {
       this.matchingService.invalidateCandidateMatches(userId).catch((err) => {
-        this.logger.warn(`Failed invalidating candidate matches for ${userId}: ${err.message}`);
+        this.logger.warn(
+          `Failed invalidating candidate matches for ${userId}: ${err.message}`,
+        );
       });
     }
     if (this.careerIntelligenceService) {
-      this.careerIntelligenceService.invalidateUserCareerInsight(userId).catch((err) => {
-        this.logger.warn(`Failed invalidating career insight for ${userId}: ${err.message}`);
-      });
+      this.careerIntelligenceService
+        .invalidateUserCareerInsight(userId)
+        .catch((err) => {
+          this.logger.warn(
+            `Failed invalidating career insight for ${userId}: ${err.message}`,
+          );
+        });
     }
   }
 
@@ -537,9 +543,9 @@ export class ProfileService {
         industry: userObj.industry || '',
         bio: userObj.bio || '',
         skills: userObj.skills || [],
-        experience: isExpVisible ? (userObj.experience || []) : [],
-        education: isEduVisible ? (userObj.education || []) : [],
-        certifications: isCertVisible ? (userObj.certifications || []) : [],
+        experience: isExpVisible ? userObj.experience || [] : [],
+        education: isEduVisible ? userObj.education || [] : [],
+        certifications: isCertVisible ? userObj.certifications || [] : [],
         primaryDiscipline: userObj.primaryDiscipline || '',
         specializations: userObj.specializations || [],
         infrastructureSectors: userObj.infrastructureSectors || [],
@@ -551,7 +557,9 @@ export class ProfileService {
           industrySkills: [],
           professionalSkills: [],
         },
-        careerPreferences: isCareerPrefsVisible ? userObj.careerPreferences : null,
+        careerPreferences: isCareerPrefsVisible
+          ? userObj.careerPreferences
+          : null,
         privacySettings: userObj.privacySettings,
         recommendations: signedRecommendations,
         publicProfilePublished: Boolean(userObj.publicProfilePublished),
@@ -688,7 +696,8 @@ export class ProfileService {
         );
       }
 
-      const isAdmin = requesterRole === 'admin' || requesterRole === 'superuser';
+      const isAdmin =
+        requesterRole === 'admin' || requesterRole === 'superuser';
       const currentRoleNormalized = String(user.primaryRole || 'STUDENT')
         .trim()
         .toUpperCase();
@@ -733,18 +742,18 @@ export class ProfileService {
       user.structuredSkills = {
         technicalSkills: Array.isArray(data.structuredSkills.technicalSkills)
           ? data.structuredSkills.technicalSkills
-          : (user.structuredSkills?.technicalSkills || []),
+          : user.structuredSkills?.technicalSkills || [],
         softwareSkills: Array.isArray(data.structuredSkills.softwareSkills)
           ? data.structuredSkills.softwareSkills
-          : (user.structuredSkills?.softwareSkills || []),
+          : user.structuredSkills?.softwareSkills || [],
         industrySkills: Array.isArray(data.structuredSkills.industrySkills)
           ? data.structuredSkills.industrySkills
-          : (user.structuredSkills?.industrySkills || []),
+          : user.structuredSkills?.industrySkills || [],
         professionalSkills: Array.isArray(
           data.structuredSkills.professionalSkills,
         )
           ? data.structuredSkills.professionalSkills
-          : (user.structuredSkills?.professionalSkills || []),
+          : user.structuredSkills?.professionalSkills || [],
       };
     }
     if (data.careerPreferences !== undefined) {
@@ -755,7 +764,12 @@ export class ProfileService {
         preferredLocations: [],
         preferredWorkMode: 'On-site',
         preferredEmploymentType: 'Full-time',
-        expectedSalaryRange: { min: 0, max: 0, currency: 'INR', period: 'yearly' },
+        expectedSalaryRange: {
+          min: 0,
+          max: 0,
+          currency: 'INR',
+          period: 'yearly',
+        },
         availability: '',
       };
       user.careerPreferences = {
@@ -1054,9 +1068,18 @@ export class ProfileService {
       endDate: dto.currentlyActive ? null : end,
       currentlyActive: Boolean(dto.currentlyActive),
       description: dto.description || '',
-      skillsUsed: dto.skillsUsed !== undefined ? dto.skillsUsed : (user.experience[idx].skillsUsed || []),
-      softwareUsed: dto.softwareUsed !== undefined ? dto.softwareUsed : (user.experience[idx].softwareUsed || []),
-      infrastructureSector: dto.infrastructureSector !== undefined ? dto.infrastructureSector.trim() : (user.experience[idx].infrastructureSector || ''),
+      skillsUsed:
+        dto.skillsUsed !== undefined
+          ? dto.skillsUsed
+          : user.experience[idx].skillsUsed || [],
+      softwareUsed:
+        dto.softwareUsed !== undefined
+          ? dto.softwareUsed
+          : user.experience[idx].softwareUsed || [],
+      infrastructureSector:
+        dto.infrastructureSector !== undefined
+          ? dto.infrastructureSector.trim()
+          : user.experience[idx].infrastructureSector || '',
     };
 
     const { newlyAwarded, completion } = evaluateProfileMilestones(user);
@@ -1521,7 +1544,9 @@ export class ProfileService {
       throw new NotFoundException('Target user not found.');
     }
 
-    const normalizedRole = String(newRole || '').trim().toUpperCase();
+    const normalizedRole = String(newRole || '')
+      .trim()
+      .toUpperCase();
     const validRoles = [
       'STUDENT',
       'EDUCATOR',

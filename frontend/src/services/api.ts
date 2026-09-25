@@ -58,11 +58,25 @@ const getRequestKey = (config: InternalAxiosRequestConfig) => {
 };
 
 /* ── Request Interceptor ── */
-api.interceptors.request.use((config) => {
+api.interceptors.request.use(async (config) => {
+  // If a token refresh is currently in flight, wait for it before dispatching new authenticated requests.
+  // This prevents sending requests with known-expired tokens and causing 401 refresh storms.
+  if (refreshPromise && !(config as any)._isRefreshRequest) {
+    try {
+      await refreshPromise;
+    } catch {
+      // Refresh failed; proceed to let downstream rejection or cancel take effect
+    }
+  }
+
   const token = storage.getAccessToken();
 
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    if (config.headers?.set) {
+      config.headers.set("Authorization", `Bearer ${token}`);
+    } else {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
 
   // Generate and attach correlation ID
@@ -100,24 +114,54 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-/* ── Token Refresh Logic ── */
-
-let isRefreshing = false;
+/* ── Robust Single-Flight Token Refresh Logic ── */
+let refreshPromise: Promise<string | null> | null = null;
 let isRedirecting = false;
-let failedQueue: Array<{
-  resolve: (value?: unknown) => void;
-  reject: (reason?: unknown) => void;
-}> = [];
 
-const processQueue = (error: unknown, token: string | null = null) => {
-  failedQueue.forEach(({ resolve, reject }) => {
-    if (error) {
-      reject(error);
-    } else {
-      resolve(token);
+const getRefreshedToken = async (): Promise<string | null> => {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
+  const refreshToken = storage.getRefreshToken();
+  if (!refreshToken) {
+    forceLogout();
+    return null;
+  }
+
+  refreshPromise = (async () => {
+    try {
+      const res = await api.post(
+        "/auth/refresh-token",
+        { refreshToken },
+        { _isRefreshRequest: true } as any,
+      );
+
+      const newAccessToken = res.data?.accessToken || res.data?.token;
+      const newRefreshToken = res.data?.refreshToken;
+      const newExpiresAt = res.data?.sessionExpiresAt;
+
+      // Persist the new tokens via storage BEFORE releasing waiting requests
+      if (newAccessToken) {
+        storage.setAccessToken(newAccessToken);
+      }
+      if (newRefreshToken) {
+        storage.setRefreshToken(newRefreshToken);
+      }
+      if (newExpiresAt) {
+        storage.setSessionExpiresAt(newExpiresAt);
+      }
+
+      return newAccessToken || null;
+    } catch (refreshError) {
+      forceLogout();
+      throw refreshError;
+    } finally {
+      refreshPromise = null;
     }
-  });
-  failedQueue = [];
+  })();
+
+  return refreshPromise;
 };
 
 /* ── Response Interceptor ── */
@@ -239,64 +283,21 @@ api.interceptors.response.use(
       }
       config._retried401 = true;
 
-      // If we're already refreshing, queue this request
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            config.headers.Authorization = `Bearer ${token}`;
-            return api(config);
-          })
-          .catch((err) => Promise.reject(err));
-      }
-
-      const refreshToken = storage.getRefreshToken();
-
-      // No refresh token available — go straight to logout
-      if (!refreshToken) {
-        forceLogout();
-        return Promise.reject(error);
-      }
-
-      isRefreshing = true;
-
       try {
-        // Call the refresh endpoint
-        const res = await api.post(
-          "/auth/refresh-token",
-          { refreshToken },
-          { _isRefreshRequest: true } as any,
-        );
-
-        const newAccessToken = res.data.accessToken || res.data.token;
-        const newRefreshToken = res.data.refreshToken;
-        const newExpiresAt = res.data.sessionExpiresAt;
-
-        // Persist the new tokens via storage
-        if (newAccessToken) {
-          storage.setAccessToken(newAccessToken);
-        }
-        if (newRefreshToken) {
-          storage.setRefreshToken(newRefreshToken);
-        }
-        if (newExpiresAt) {
-          storage.setSessionExpiresAt(newExpiresAt);
+        const freshToken = await getRefreshedToken();
+        if (!freshToken) {
+          return Promise.reject(error);
         }
 
-        // Process queued requests with the new token
-        processQueue(null, newAccessToken);
+        if (config.headers?.set) {
+          config.headers.set("Authorization", `Bearer ${freshToken}`);
+        } else {
+          config.headers.Authorization = `Bearer ${freshToken}`;
+        }
 
-        // Retry the original failed request with the fresh token
-        config.headers.Authorization = `Bearer ${newAccessToken}`;
         return api(config);
       } catch (refreshError) {
-        // Refresh failed — token is truly expired, force logout
-        processQueue(refreshError, null);
-        forceLogout();
         return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
       }
     }
 

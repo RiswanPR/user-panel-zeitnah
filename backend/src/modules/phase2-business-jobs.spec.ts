@@ -1,7 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
-import { ForbiddenException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { OrganizationsService } from './organizations/organizations.service';
 import {
   Organization,
@@ -22,7 +26,10 @@ import {
   OpportunityType,
 } from './opportunities/schemas/opportunity.schema';
 import { SavedJob } from './opportunities/schemas/saved-job.schema';
-import { JobApplication, JobApplicationStatus } from './opportunities/schemas/job-application.schema';
+import {
+  JobApplication,
+  JobApplicationStatus,
+} from './opportunities/schemas/job-application.schema';
 import { AuditLogsService } from './audit-logs/audit-logs.service';
 
 describe('Phase 2: Business & Job Infrastructure', () => {
@@ -39,7 +46,11 @@ describe('Phase 2: Business & Job Infrastructure', () => {
 
   beforeEach(async () => {
     mockOrgModel = {
-      create: jest.fn().mockImplementation((dto) => Promise.resolve({ _id: new Types.ObjectId(), ...dto })),
+      create: jest
+        .fn()
+        .mockImplementation((dto) =>
+          Promise.resolve({ _id: new Types.ObjectId(), ...dto }),
+        ),
       findOne: jest.fn(),
       findById: jest.fn(),
       find: jest.fn().mockReturnValue({
@@ -58,7 +69,11 @@ describe('Phase 2: Business & Job Infrastructure', () => {
     };
 
     mockMembershipModel = {
-      create: jest.fn().mockImplementation((dto) => Promise.resolve({ _id: new Types.ObjectId(), ...dto })),
+      create: jest
+        .fn()
+        .mockImplementation((dto) =>
+          Promise.resolve({ _id: new Types.ObjectId(), ...dto }),
+        ),
       findOne: jest.fn(),
       find: jest.fn().mockReturnValue({
         populate: jest.fn().mockReturnValue({
@@ -75,7 +90,11 @@ describe('Phase 2: Business & Job Infrastructure', () => {
     };
 
     mockOppModel = {
-      create: jest.fn().mockImplementation((dto) => Promise.resolve({ _id: new Types.ObjectId(), ...dto })),
+      create: jest
+        .fn()
+        .mockImplementation((dto) =>
+          Promise.resolve({ _id: new Types.ObjectId(), ...dto }),
+        ),
       findOne: jest.fn(),
       findById: jest.fn(),
       find: jest.fn().mockReturnValue({
@@ -98,7 +117,11 @@ describe('Phase 2: Business & Job Infrastructure', () => {
     };
 
     mockSavedJobModel = {
-      create: jest.fn().mockImplementation((dto) => Promise.resolve({ _id: new Types.ObjectId(), ...dto })),
+      create: jest
+        .fn()
+        .mockImplementation((dto) =>
+          Promise.resolve({ _id: new Types.ObjectId(), ...dto }),
+        ),
       findOne: jest.fn(),
       find: jest.fn().mockReturnValue({
         sort: jest.fn().mockReturnValue({
@@ -112,7 +135,11 @@ describe('Phase 2: Business & Job Infrastructure', () => {
     };
 
     mockJobAppModel = {
-      create: jest.fn().mockImplementation((dto) => Promise.resolve({ _id: new Types.ObjectId(), ...dto })),
+      create: jest
+        .fn()
+        .mockImplementation((dto) =>
+          Promise.resolve({ _id: new Types.ObjectId(), ...dto }),
+        ),
       findOne: jest.fn(),
       find: jest.fn().mockReturnValue({
         sort: jest.fn().mockReturnValue({
@@ -137,11 +164,17 @@ describe('Phase 2: Business & Job Infrastructure', () => {
         OrganizationsService,
         OpportunitiesService,
         { provide: getModelToken(Organization.name), useValue: mockOrgModel },
-        { provide: getModelToken(OrganizationMembership.name), useValue: mockMembershipModel },
+        {
+          provide: getModelToken(OrganizationMembership.name),
+          useValue: mockMembershipModel,
+        },
         { provide: getModelToken(User.name), useValue: mockUserModel },
         { provide: getModelToken(Opportunity.name), useValue: mockOppModel },
         { provide: getModelToken(SavedJob.name), useValue: mockSavedJobModel },
-        { provide: getModelToken(JobApplication.name), useValue: mockJobAppModel },
+        {
+          provide: getModelToken(JobApplication.name),
+          useValue: mockJobAppModel,
+        },
         { provide: AuditLogsService, useValue: mockAuditLogsService },
       ],
     }).compile();
@@ -269,9 +302,14 @@ describe('Phase 2: Business & Job Infrastructure', () => {
       };
       mockOrgModel.findById.mockResolvedValue(mockOrg);
 
-      const approved = await orgService.approveOrganization(adminId, String(mockOrg._id));
+      const approved = await orgService.approveOrganization(
+        adminId,
+        String(mockOrg._id),
+      );
       expect(approved.status).toBe(BusinessStatus.APPROVED);
-      expect(approved.verificationStatus).toBe(OrganizationVerificationStatus.VERIFIED);
+      expect(approved.verificationStatus).toBe(
+        OrganizationVerificationStatus.VERIFIED,
+      );
       expect(mockAuditLogsService.record).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'BUSINESS_APPROVED' }),
       );
@@ -293,7 +331,9 @@ describe('Phase 2: Business & Job Infrastructure', () => {
         'Invalid business credentials provided',
       );
       expect(rejected.status).toBe(BusinessStatus.REJECTED);
-      expect(rejected.rejectionReason).toBe('Invalid business credentials provided');
+      expect(rejected.rejectionReason).toBe(
+        'Invalid business credentials provided',
+      );
       expect(mockAuditLogsService.record).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'BUSINESS_REJECTED' }),
       );
@@ -349,7 +389,9 @@ describe('Phase 2: Business & Job Infrastructure', () => {
       mockMembershipModel.findOne.mockResolvedValue(null);
 
       await expect(
-        orgService.updateOrganization(intruderId, orgId, { name: 'Hacked Name' }),
+        orgService.updateOrganization(intruderId, orgId, {
+          name: 'Hacked Name',
+        }),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -417,8 +459,10 @@ describe('Phase 2: Business & Job Infrastructure', () => {
         salaryMin: 800000,
         salaryMax: 1500000,
         currency: 'INR',
-        responsibilities: 'Manage baseline schedule and monthly project controls.',
-        requirements: 'Proven experience with FIDIC contracts and Primavera P6.',
+        responsibilities:
+          'Manage baseline schedule and monthly project controls.',
+        requirements:
+          'Proven experience with FIDIC contracts and Primavera P6.',
         status: OpportunityStatus.PUBLISHED,
       });
 
@@ -517,7 +561,10 @@ describe('Phase 2: Business & Job Infrastructure', () => {
     it('✓ Candidate can save and unsave a job preventing duplicates', async () => {
       const candId = new Types.ObjectId().toString();
       const jobId = new Types.ObjectId().toString();
-      mockOppModel.findById.mockResolvedValue({ _id: jobId, status: OpportunityStatus.PUBLISHED });
+      mockOppModel.findById.mockResolvedValue({
+        _id: jobId,
+        status: OpportunityStatus.PUBLISHED,
+      });
 
       // First save
       mockSavedJobModel.findOne.mockResolvedValueOnce(null);
@@ -525,7 +572,9 @@ describe('Phase 2: Business & Job Infrastructure', () => {
       expect(res1.saved).toBe(true);
 
       // Duplicate save returns gracefully
-      mockSavedJobModel.findOne.mockResolvedValueOnce({ _id: new Types.ObjectId() });
+      mockSavedJobModel.findOne.mockResolvedValueOnce({
+        _id: new Types.ObjectId(),
+      });
       const res2 = await oppService.saveJob(candId, jobId);
       expect(res2.saved).toBe(true);
 
@@ -596,7 +645,10 @@ describe('Phase 2: Business & Job Infrastructure', () => {
       };
       mockJobAppModel.findOne.mockResolvedValue(mockApp);
 
-      const withdrawn: any = await oppService.withdrawApplication(candId, appId);
+      const withdrawn: any = await oppService.withdrawApplication(
+        candId,
+        appId,
+      );
       expect(withdrawn.status).toBe(JobApplicationStatus.WITHDRAWN);
       expect(withdrawn.withdrawnAt).toBeDefined();
     });

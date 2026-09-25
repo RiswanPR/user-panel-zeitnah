@@ -195,10 +195,7 @@ export class OpportunitiesService {
   /**
    * List/Search published opportunities with infrastructure filters and pagination
    */
-  async getOpportunities(
-    query: QueryOpportunitiesDto,
-    currentUserId?: string,
-  ) {
+  async getOpportunities(query: QueryOpportunitiesDto, currentUserId?: string) {
     const page = Math.max(1, Number(query.page) || 1);
     const limit = Math.min(50, Math.max(1, Number(query.limit) || 12));
     const skip = (page - 1) * limit;
@@ -231,10 +228,7 @@ export class OpportunitiesService {
     }
     if (query.software && query.software.trim()) {
       const regex = new RegExp(escapeRegex(query.software.trim()), 'i');
-      filter.$or = [
-        { requiredSoftware: regex },
-        { preferredSoftware: regex },
-      ];
+      filter.$or = [{ requiredSoftware: regex }, { preferredSoftware: regex }];
     }
     if (query.experienceLevel) {
       filter.experienceLevel = query.experienceLevel;
@@ -426,7 +420,9 @@ export class OpportunitiesService {
           status: OpportunityStatus.PUBLISHED,
         })
         .limit(4)
-        .select('title jobType location workMode minYearsExperience maxYearsExperience publishedAt')
+        .select(
+          'title jobType location workMode minYearsExperience maxYearsExperience publishedAt',
+        )
         .lean();
     }
 
@@ -593,10 +589,17 @@ export class OpportunitiesService {
       });
     }
 
-    if (this.matchingService && requestedStatus === OpportunityStatus.PUBLISHED) {
-      this.matchingService.triggerJobMatching(String(opp._id), userId).catch((err) => {
-        this.logger.warn(`Async talent matching failed for job ${opp._id}: ${err.message}`);
-      });
+    if (
+      this.matchingService &&
+      requestedStatus === OpportunityStatus.PUBLISHED
+    ) {
+      this.matchingService
+        .triggerJobMatching(String(opp._id), userId)
+        .catch((err) => {
+          this.logger.warn(
+            `Async talent matching failed for job ${opp._id}: ${err.message}`,
+          );
+        });
     }
 
     return opp;
@@ -625,7 +628,8 @@ export class OpportunitiesService {
     if (dto.description !== undefined) opp.description = dto.description.trim();
     if (dto.type !== undefined) opp.type = dto.type;
     if (dto.jobType !== undefined) opp.jobType = dto.jobType;
-    if (dto.employmentType !== undefined) opp.employmentType = dto.employmentType;
+    if (dto.employmentType !== undefined)
+      opp.employmentType = dto.employmentType;
     if (dto.discipline !== undefined) opp.discipline = dto.discipline.trim();
     if (dto.specialization !== undefined)
       opp.specialization = dto.specialization.trim();
@@ -720,13 +724,21 @@ export class OpportunitiesService {
 
     if (this.matchingService) {
       if (dto.status === OpportunityStatus.PUBLISHED) {
-        this.matchingService.triggerJobMatching(String(opp._id), userId).catch((err) => {
-          this.logger.warn(`Async talent matching failed for job ${opp._id}: ${err.message}`);
-        });
+        this.matchingService
+          .triggerJobMatching(String(opp._id), userId)
+          .catch((err) => {
+            this.logger.warn(
+              `Async talent matching failed for job ${opp._id}: ${err.message}`,
+            );
+          });
       } else {
-        this.matchingService.invalidateJobMatches(String(opp._id)).catch((err) => {
-          this.logger.warn(`Failed invalidating matches for job ${opp._id}: ${err.message}`);
-        });
+        this.matchingService
+          .invalidateJobMatches(String(opp._id))
+          .catch((err) => {
+            this.logger.warn(
+              `Failed invalidating matches for job ${opp._id}: ${err.message}`,
+            );
+          });
       }
     }
 
@@ -786,13 +798,21 @@ export class OpportunitiesService {
 
     if (this.matchingService) {
       if (status === OpportunityStatus.PUBLISHED) {
-        this.matchingService.triggerJobMatching(String(opp._id), userId).catch((err) => {
-          this.logger.warn(`Async talent matching failed for job ${opp._id}: ${err.message}`);
-        });
+        this.matchingService
+          .triggerJobMatching(String(opp._id), userId)
+          .catch((err) => {
+            this.logger.warn(
+              `Async talent matching failed for job ${opp._id}: ${err.message}`,
+            );
+          });
       } else if (status === OpportunityStatus.CLOSED) {
-        this.matchingService.invalidateJobMatches(String(opp._id)).catch((err) => {
-          this.logger.warn(`Failed invalidating matches for closed job ${opp._id}: ${err.message}`);
-        });
+        this.matchingService
+          .invalidateJobMatches(String(opp._id))
+          .catch((err) => {
+            this.logger.warn(
+              `Failed invalidating matches for closed job ${opp._id}: ${err.message}`,
+            );
+          });
       }
     }
 
@@ -844,7 +864,7 @@ export class OpportunitiesService {
 
     // Attach application counts
     const jobIds = jobs.map((j) => j._id);
-    let appCounts = new Map<string, number>();
+    const appCounts = new Map<string, number>();
 
     if (this.jobAppModel?.aggregate) {
       const counts = await this.jobAppModel.aggregate([
@@ -933,7 +953,8 @@ export class OpportunitiesService {
         path: 'opportunityId',
         populate: {
           path: 'organizationId',
-          select: 'name slug logo industry infrastructureSpecializations location status verificationStatus',
+          select:
+            'name slug logo industry infrastructureSpecializations location status verificationStatus',
         },
       })
       .lean();
@@ -1082,7 +1103,8 @@ export class OpportunitiesService {
       .sort({ appliedAt: -1 })
       .populate({
         path: 'jobId',
-        select: 'title location workMode jobType discipline infrastructureSector status',
+        select:
+          'title location workMode jobType discipline infrastructureSector status',
       })
       .populate({
         path: 'businessId',
@@ -1192,4 +1214,3 @@ export class OpportunitiesService {
     }
   }
 }
-

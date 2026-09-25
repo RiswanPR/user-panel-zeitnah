@@ -21,10 +21,7 @@ export class MatchingController {
   @Post('jobs/:jobId/trigger')
   @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
-  async triggerMatching(
-    @Req() req: any,
-    @Param('jobId') jobId: string,
-  ) {
+  async triggerMatching(@Req() req: any, @Param('jobId') jobId: string) {
     return this.matchingService.triggerJobMatching(jobId, req.user.userId);
   }
 
@@ -50,10 +47,7 @@ export class MatchingController {
   // ── Get match summary for a job ─────────────────────────────────
   @Get('jobs/:jobId/summary')
   @UseGuards(JwtAuthGuard)
-  async getJobMatchSummary(
-    @Req() req: any,
-    @Param('jobId') jobId: string,
-  ) {
+  async getJobMatchSummary(@Req() req: any, @Param('jobId') jobId: string) {
     return this.matchingService.getJobMatchSummary(req.user.userId, jobId);
   }
 
@@ -113,10 +107,7 @@ export class MatchingController {
   // ── Candidate: View an invite ───────────────────────────────────
   @Patch('invites/:inviteId/view')
   @UseGuards(JwtAuthGuard)
-  async markInviteViewed(
-    @Req() req: any,
-    @Param('inviteId') inviteId: string,
-  ) {
+  async markInviteViewed(@Req() req: any, @Param('inviteId') inviteId: string) {
     return this.matchingService.markInviteViewed(req.user.userId, inviteId);
   }
 
@@ -218,20 +209,14 @@ export class MatchingController {
   // ── Candidate: Hide recommended job ─────────────────────────────
   @Post('recommended-jobs/:jobId/hide')
   @UseGuards(JwtAuthGuard)
-  async hideRecommendedJob(
-    @Req() req: any,
-    @Param('jobId') jobId: string,
-  ) {
+  async hideRecommendedJob(@Req() req: any, @Param('jobId') jobId: string) {
     return this.matchingService.hideRecommendedJob(req.user.userId, jobId);
   }
 
   // ── Candidate: Dismiss recommended job ──────────────────────────
   @Post('recommended-jobs/:jobId/dismiss')
   @UseGuards(JwtAuthGuard)
-  async dismissRecommendedJob(
-    @Req() req: any,
-    @Param('jobId') jobId: string,
-  ) {
+  async dismissRecommendedJob(@Req() req: any, @Param('jobId') jobId: string) {
     return this.matchingService.dismissRecommendedJob(req.user.userId, jobId);
   }
 
@@ -250,4 +235,3 @@ export class MatchingController {
     );
   }
 }
-

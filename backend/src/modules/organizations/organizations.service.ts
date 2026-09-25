@@ -25,7 +25,11 @@ import {
 } from './schemas/organization-membership.schema';
 import { User, UserDocument } from '../auth/schemas/user.schema';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
-import { Opportunity, OpportunityDocument, OpportunityStatus } from '../opportunities/schemas/opportunity.schema';
+import {
+  Opportunity,
+  OpportunityDocument,
+  OpportunityStatus,
+} from '../opportunities/schemas/opportunity.schema';
 
 export interface CreateOrganizationDto {
   name: string;
@@ -454,7 +458,9 @@ export class OrganizationsService {
           ...org,
           userRole:
             roleMap.get(String(org._id)) ||
-            (String(org.createdBy) === userId ? OrganizationRole.OWNER : 'MEMBER'),
+            (String(org.createdBy) === userId
+              ? OrganizationRole.OWNER
+              : 'MEMBER'),
           isVerified: org.status === BusinessStatus.APPROVED,
           activeJobCount: activeJobs,
           draftJobCount: draftJobs,
@@ -653,11 +659,7 @@ export class OrganizationsService {
   /**
    * ADMIN: Reject a business with mandatory reason
    */
-  async rejectOrganization(
-    adminUserId: string,
-    orgId: string,
-    reason: string,
-  ) {
+  async rejectOrganization(adminUserId: string, orgId: string, reason: string) {
     if (!reason || !reason.trim()) {
       throw new BadRequestException('A reason must be provided for rejection');
     }
@@ -825,4 +827,3 @@ export class OrganizationsService {
     return membership;
   }
 }
-

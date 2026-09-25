@@ -193,4 +193,3 @@ OpportunitySchema.index({
   discipline: 'text',
   infrastructureSector: 'text',
 });
-

@@ -63,13 +63,19 @@ export class ProjectsService {
   private triggerCandidateMatchInvalidation(userId: string) {
     if (this.matchingService) {
       this.matchingService.invalidateCandidateMatches(userId).catch((err) => {
-        this.logger.warn(`Failed invalidating candidate matches for ${userId}: ${err.message}`);
+        this.logger.warn(
+          `Failed invalidating candidate matches for ${userId}: ${err.message}`,
+        );
       });
     }
     if (this.careerIntelligenceService) {
-      this.careerIntelligenceService.invalidateUserCareerInsight(userId).catch((err) => {
-        this.logger.warn(`Failed invalidating career insight for ${userId}: ${err.message}`);
-      });
+      this.careerIntelligenceService
+        .invalidateUserCareerInsight(userId)
+        .catch((err) => {
+          this.logger.warn(
+            `Failed invalidating career insight for ${userId}: ${err.message}`,
+          );
+        });
     }
   }
 
@@ -154,7 +160,8 @@ export class ProjectsService {
       project.description = dto.description.trim();
     if (dto.skills !== undefined) project.skills = dto.skills;
     if (dto.role !== undefined) project.role = dto.role.trim();
-    if (dto.projectType !== undefined) project.projectType = dto.projectType.trim();
+    if (dto.projectType !== undefined)
+      project.projectType = dto.projectType.trim();
     if (dto.infrastructureSector !== undefined)
       project.infrastructureSector = dto.infrastructureSector.trim();
     if (dto.location !== undefined) project.location = dto.location.trim();

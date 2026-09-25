@@ -77,7 +77,13 @@ export interface TargetRolePathway {
 export interface ProfileRecommendationItem {
   title: string;
   description: string;
-  category: 'EXPERIENCE' | 'SOFTWARE' | 'PROJECTS' | 'CERTIFICATIONS' | 'CAREER_PREFERENCES' | 'SKILLS';
+  category:
+    | 'EXPERIENCE'
+    | 'SOFTWARE'
+    | 'PROJECTS'
+    | 'CERTIFICATIONS'
+    | 'CAREER_PREFERENCES'
+    | 'SKILLS';
   priority: 'HIGH' | 'MEDIUM' | 'LOW';
   actionType: string;
 }
@@ -91,7 +97,13 @@ export interface ProfileStrengthEvidenceItem {
 
 @Schema({ timestamps: true, collection: 'career_insights' })
 export class CareerInsight {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, unique: true, index: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'User',
+    required: true,
+    unique: true,
+    index: true,
+  })
   userId!: Types.ObjectId;
 
   @Prop({ type: Number, default: 1 })
@@ -103,7 +115,12 @@ export class CareerInsight {
   @Prop({ type: String, default: 'v1' })
   taxonomyVersion!: string;
 
-  @Prop({ type: String, enum: ['ACTIVE', 'STALE'], default: 'ACTIVE', index: true })
+  @Prop({
+    type: String,
+    enum: ['ACTIVE', 'STALE'],
+    default: 'ACTIVE',
+    index: true,
+  })
   status!: 'ACTIVE' | 'STALE';
 
   // Profile Completeness (0–100% of filled fields)

@@ -69,7 +69,11 @@ describe('Phase 6 — Production Hardening & Integration QA Suite', () => {
 
     mockOrgModel = {
       create: jest.fn().mockImplementation((dto) =>
-        Promise.resolve({ _id: new Types.ObjectId(), save: jest.fn(), ...dto }),
+        Promise.resolve({
+          _id: new Types.ObjectId(),
+          save: jest.fn(),
+          ...dto,
+        }),
       ),
       findOne: jest.fn(),
       findById: jest.fn(),
@@ -92,9 +96,11 @@ describe('Phase 6 — Production Hardening & Integration QA Suite', () => {
     };
 
     mockMembershipModel = {
-      create: jest.fn().mockImplementation((dto) =>
-        Promise.resolve({ _id: new Types.ObjectId(), ...dto }),
-      ),
+      create: jest
+        .fn()
+        .mockImplementation((dto) =>
+          Promise.resolve({ _id: new Types.ObjectId(), ...dto }),
+        ),
       findOne: jest.fn(),
       find: jest.fn().mockReturnValue({
         populate: jest.fn().mockReturnValue({
@@ -106,7 +112,11 @@ describe('Phase 6 — Production Hardening & Integration QA Suite', () => {
 
     mockOppModel = {
       create: jest.fn().mockImplementation((dto) =>
-        Promise.resolve({ _id: new Types.ObjectId(), save: jest.fn(), ...dto }),
+        Promise.resolve({
+          _id: new Types.ObjectId(),
+          save: jest.fn(),
+          ...dto,
+        }),
       ),
       findOne: jest.fn(),
       findById: jest.fn(),
@@ -130,9 +140,11 @@ describe('Phase 6 — Production Hardening & Integration QA Suite', () => {
     };
 
     mockSavedJobModel = {
-      create: jest.fn().mockImplementation((dto) =>
-        Promise.resolve({ _id: new Types.ObjectId(), ...dto }),
-      ),
+      create: jest
+        .fn()
+        .mockImplementation((dto) =>
+          Promise.resolve({ _id: new Types.ObjectId(), ...dto }),
+        ),
       findOne: jest.fn(),
       deleteOne: jest.fn(),
       find: jest.fn().mockReturnValue({
@@ -148,7 +160,11 @@ describe('Phase 6 — Production Hardening & Integration QA Suite', () => {
 
     mockJobAppModel = {
       create: jest.fn().mockImplementation((dto) =>
-        Promise.resolve({ _id: new Types.ObjectId(), save: jest.fn(), ...dto }),
+        Promise.resolve({
+          _id: new Types.ObjectId(),
+          save: jest.fn(),
+          ...dto,
+        }),
       ),
       findOne: jest.fn(),
       find: jest.fn().mockReturnValue({
@@ -405,7 +421,7 @@ describe('Phase 6 — Production Hardening & Integration QA Suite', () => {
 
         const org = await orgService.createOrganization(userId, {
           name: `${role} Infrastructure Pvt Ltd`,
-        } as any);
+        });
 
         expect(org).toBeDefined();
         expect(mockMembershipModel.create).toHaveBeenCalledWith(
@@ -666,9 +682,9 @@ describe('Phase 6 — Production Hardening & Integration QA Suite', () => {
 
       // System must not describe the candidate as fully eligible or highly compatible
       expect(match.passesHardRequirements).toBe(false);
-      expect(match.hardRequirementFailures.some((f) => f.type === 'experience')).toBe(
-        true,
-      );
+      expect(
+        match.hardRequirementFailures.some((f) => f.type === 'experience'),
+      ).toBe(true);
       expect(match.category).not.toBe(MatchCategory.HIGHLY_COMPATIBLE);
       expect(match.category).toBe(MatchCategory.POTENTIALLY_COMPATIBLE);
     });
@@ -713,13 +729,13 @@ describe('Phase 6 — Production Hardening & Integration QA Suite', () => {
         (f) => f.type === 'certification',
       );
       expect(certFailure).toBeDefined();
-      expect(certFailure!.actual).toBe('Not listed');
+      expect(certFailure.actual).toBe('Not listed');
 
       const discFailure = match.hardRequirementFailures.find(
         (f) => f.type === 'discipline',
       );
       expect(discFailure).toBeDefined();
-      expect(discFailure!.actual).toBe('Not listed');
+      expect(discFailure.actual).toBe('Not listed');
     });
   });
 
@@ -759,7 +775,9 @@ describe('Phase 6 — Production Hardening & Integration QA Suite', () => {
 
       expect(snapshot.source).toBe('Zeitnah Infrastructure Network Platform');
       expect(snapshot.observationPeriod).toBe('Previous 90 days');
-      expect(snapshot.population).toContain('active published infrastructure jobs');
+      expect(snapshot.population).toContain(
+        'active published infrastructure jobs',
+      );
       expect(snapshot.calculationMethod).toBeDefined();
       expect(snapshot.disclaimer).toContain(
         'This reflects Zeitnah platform demand and is not presented as universal industry truth',

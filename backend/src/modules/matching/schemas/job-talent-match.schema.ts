@@ -32,10 +32,20 @@ export interface MatchDimensionScore {
 
 @Schema({ timestamps: true, collection: 'job_talent_matches' })
 export class JobTalentMatch {
-  @Prop({ type: Types.ObjectId, ref: 'Opportunity', required: true, index: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'Opportunity',
+    required: true,
+    index: true,
+  })
   jobId!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Organization', required: true, index: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'Organization',
+    required: true,
+    index: true,
+  })
   businessId!: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
@@ -111,13 +121,11 @@ export class JobTalentMatch {
   calculatedAt!: Date;
 }
 
-export const JobTalentMatchSchema = SchemaFactory.createForClass(JobTalentMatch);
+export const JobTalentMatchSchema =
+  SchemaFactory.createForClass(JobTalentMatch);
 
 // Compound unique index: one match per candidate per job
-JobTalentMatchSchema.index(
-  { jobId: 1, candidateUserId: 1 },
-  { unique: true },
-);
+JobTalentMatchSchema.index({ jobId: 1, candidateUserId: 1 }, { unique: true });
 
 // Efficient recruiter queries: active matches for a job, sorted by score
 JobTalentMatchSchema.index({ jobId: 1, status: 1, isDismissed: 1, score: -1 });

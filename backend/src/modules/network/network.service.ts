@@ -2226,7 +2226,7 @@ export class NetworkService {
             createdAt: input.createdAt || new Date(),
           },
         },
-        { upsert: true, new: true },
+        { upsert: true, returnDocument: 'after' },
       );
       return doc;
     } catch (err: unknown) {

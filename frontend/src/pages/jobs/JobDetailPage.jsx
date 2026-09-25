@@ -22,6 +22,7 @@ import {
   X,
   AlertCircle,
   FileCheck2,
+  ExternalLink,
 } from 'lucide-react';
 import { opportunityService } from '../../services/opportunityService';
 import { useToast } from '../../components/ui/Toast';

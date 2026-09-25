@@ -50,8 +50,16 @@ export const INFRASTRUCTURE_ROLE_TAXONOMY: InfrastructureRoleDefinition[] = [
     sectors: ['Highways', 'Buildings', 'Civil Infrastructure'],
     tier: 'ENTRY_LEVEL',
     experienceRange: { min: 0, max: 2, typical: '0–2 years' },
-    requiredSkills: ['Planning & Scheduling', 'Quantity Surveying', 'Progress Monitoring'],
-    preferredSkills: ['BOQ Monitoring', 'Site Supervision', 'Bar Bending Schedule (BBS)'],
+    requiredSkills: [
+      'Planning & Scheduling',
+      'Quantity Surveying',
+      'Progress Monitoring',
+    ],
+    preferredSkills: [
+      'BOQ Monitoring',
+      'Site Supervision',
+      'Bar Bending Schedule (BBS)',
+    ],
     requiredSoftware: ['AutoCAD', 'MS Excel'],
     preferredSoftware: ['Primavera P6', 'MS Project'],
     commonCertifications: [],
@@ -60,14 +68,24 @@ export const INFRASTRUCTURE_ROLE_TAXONOMY: InfrastructureRoleDefinition[] = [
       adjacentRoles: ['Junior Site Engineer', 'Junior Quantity Surveyor'],
       successorRoles: ['Planning Engineer', 'Project Controls Engineer'],
     },
-    description: 'Assists senior planning personnel in drafting baseline schedules, updating daily work logs, and tracking equipment and labor productivity on infrastructure sites.',
+    description:
+      'Assists senior planning personnel in drafting baseline schedules, updating daily work logs, and tracking equipment and labor productivity on infrastructure sites.',
   },
   {
     id: 'planning-engineer',
     title: 'Planning Engineer',
     discipline: 'Civil Engineering',
-    specializations: ['Highway Engineering', 'Project Planning', 'Infrastructure EPC'],
-    sectors: ['Highways', 'Roads & Bridges', 'Urban Transit', 'Civil Infrastructure'],
+    specializations: [
+      'Highway Engineering',
+      'Project Planning',
+      'Infrastructure EPC',
+    ],
+    sectors: [
+      'Highways',
+      'Roads & Bridges',
+      'Urban Transit',
+      'Civil Infrastructure',
+    ],
     tier: 'MID_LEVEL',
     experienceRange: { min: 3, max: 7, typical: '3–6 years' },
     requiredSkills: [
@@ -90,15 +108,24 @@ export const INFRASTRUCTURE_ROLE_TAXONOMY: InfrastructureRoleDefinition[] = [
     careerProgression: {
       predecessorRoles: ['Junior Planning Engineer', 'Site Engineer'],
       adjacentRoles: ['Project Engineer', 'Quantity Surveyor'],
-      successorRoles: ['Senior Planning Engineer', 'Planning Manager', 'Project Controls Manager'],
+      successorRoles: [
+        'Senior Planning Engineer',
+        'Planning Manager',
+        'Project Controls Manager',
+      ],
     },
-    description: 'Responsible for master project schedule preparation (WBS, CPM, Resource Loading), critical path monitoring, and progress reporting on complex infrastructure projects.',
+    description:
+      'Responsible for master project schedule preparation (WBS, CPM, Resource Loading), critical path monitoring, and progress reporting on complex infrastructure projects.',
   },
   {
     id: 'senior-planning-engineer',
     title: 'Senior Planning Engineer',
     discipline: 'Civil Engineering',
-    specializations: ['Project Controls', 'Claims & Delay Analysis', 'Mega Infrastructure'],
+    specializations: [
+      'Project Controls',
+      'Claims & Delay Analysis',
+      'Mega Infrastructure',
+    ],
     sectors: ['Highways', 'Airports', 'Metros & Rail', 'Ports & Marine'],
     tier: 'SENIOR_LEVEL',
     experienceRange: { min: 8, max: 14, typical: '8–12 years' },
@@ -110,16 +137,25 @@ export const INFRASTRUCTURE_ROLE_TAXONOMY: InfrastructureRoleDefinition[] = [
       'Contract Administration',
       'FIDIC Contracts',
     ],
-    preferredSkills: ['Arbitration Support', 'Earned Value Management (EVM)', 'Executive Reporting'],
+    preferredSkills: [
+      'Arbitration Support',
+      'Earned Value Management (EVM)',
+      'Executive Reporting',
+    ],
     requiredSoftware: ['Primavera P6', 'MS Project', 'Power BI'],
     preferredSoftware: ['Synchro 4D', 'Acumen Fuse', 'TILOS'],
     commonCertifications: ['PMP', 'PMI-SP', 'AACE PSP', 'FICE / CEng'],
     careerProgression: {
       predecessorRoles: ['Planning Engineer', 'Project Controls Engineer'],
       adjacentRoles: ['Senior Project Engineer', 'Commercial Manager'],
-      successorRoles: ['Planning Manager', 'Head of Project Controls', 'Project Director'],
+      successorRoles: [
+        'Planning Manager',
+        'Head of Project Controls',
+        'Project Director',
+      ],
     },
-    description: 'Oversees multi-package project controls, schedule forensic analysis, delay claim defenses, and earned value performance metrics across major infrastructure assets.',
+    description:
+      'Oversees multi-package project controls, schedule forensic analysis, delay claim defenses, and earned value performance metrics across major infrastructure assets.',
   },
   {
     id: 'planning-manager',
@@ -136,16 +172,31 @@ export const INFRASTRUCTURE_ROLE_TAXONOMY: InfrastructureRoleDefinition[] = [
       'Risk Management',
       'Financial Budgeting',
     ],
-    preferredSkills: ['Strategic Capital Planning', 'Joint Venture Governance', 'Dispute Adjudication'],
+    preferredSkills: [
+      'Strategic Capital Planning',
+      'Joint Venture Governance',
+      'Dispute Adjudication',
+    ],
     requiredSoftware: ['Primavera P6', 'Power BI'],
     preferredSoftware: ['Oracle Primavera Cloud', 'SAP PS'],
-    commonCertifications: ['PMP', 'AACE PSP / CEP', 'Fellow of Institution of Engineers (FIE)'],
+    commonCertifications: [
+      'PMP',
+      'AACE PSP / CEP',
+      'Fellow of Institution of Engineers (FIE)',
+    ],
     careerProgression: {
-      predecessorRoles: ['Senior Planning Engineer', 'Project Controls Manager'],
+      predecessorRoles: [
+        'Senior Planning Engineer',
+        'Project Controls Manager',
+      ],
       adjacentRoles: ['Commercial Director', 'Technical Director'],
-      successorRoles: ['Project Director', 'Chief Operating Officer (Infrastructure)'],
+      successorRoles: [
+        'Project Director',
+        'Chief Operating Officer (Infrastructure)',
+      ],
     },
-    description: 'Directs the overall scheduling and project controls strategy for enterprise infrastructure portfolios, ensuring contractual milestone adherence and delay mitigation.',
+    description:
+      'Directs the overall scheduling and project controls strategy for enterprise infrastructure portfolios, ensuring contractual milestone adherence and delay mitigation.',
   },
 
   // ── 2. Site & Field Construction Track ──────────────────────────────────────
@@ -153,7 +204,11 @@ export const INFRASTRUCTURE_ROLE_TAXONOMY: InfrastructureRoleDefinition[] = [
     id: 'site-engineer',
     title: 'Site Engineer',
     discipline: 'Civil Engineering',
-    specializations: ['Highway Engineering', 'Site Supervision', 'Earthworks & Pavement'],
+    specializations: [
+      'Highway Engineering',
+      'Site Supervision',
+      'Earthworks & Pavement',
+    ],
     sectors: ['Highways', 'Roads & Bridges', 'Industrial Infrastructure'],
     tier: 'MID_LEVEL',
     experienceRange: { min: 2, max: 6, typical: '2–5 years' },
@@ -164,23 +219,45 @@ export const INFRASTRUCTURE_ROLE_TAXONOMY: InfrastructureRoleDefinition[] = [
       'Subcontractor Management',
       'Safety / OSHA Standards',
     ],
-    preferredSkills: ['Quantity Surveying', 'Setting Out & Surveying', 'BOQ Monitoring'],
+    preferredSkills: [
+      'Quantity Surveying',
+      'Setting Out & Surveying',
+      'BOQ Monitoring',
+    ],
     requiredSoftware: ['AutoCAD'],
     preferredSoftware: ['Total Station Software', 'Civil 3D', 'Primavera P6'],
     commonCertifications: ['OSHA Construction Safety', 'ISO 9001 Lead Auditor'],
     careerProgression: {
       predecessorRoles: ['Junior Site Engineer', 'Site Trainee'],
-      adjacentRoles: ['Planning Engineer', 'QA/QC Engineer', 'Quantity Surveyor'],
-      successorRoles: ['Senior Site Engineer', 'Construction Manager', 'Project Engineer'],
+      adjacentRoles: [
+        'Planning Engineer',
+        'QA/QC Engineer',
+        'Quantity Surveyor',
+      ],
+      successorRoles: [
+        'Senior Site Engineer',
+        'Construction Manager',
+        'Project Engineer',
+      ],
     },
-    description: 'Directs field execution, structural shuttering, concrete pouring, setting out, and quality inspections in accordance with approved EPC shop drawings.',
+    description:
+      'Directs field execution, structural shuttering, concrete pouring, setting out, and quality inspections in accordance with approved EPC shop drawings.',
   },
   {
     id: 'construction-manager',
     title: 'Construction Manager',
     discipline: 'Civil Engineering',
-    specializations: ['Heavy Civil Construction', 'EPC Site Delivery', 'Resource Mobilization'],
-    sectors: ['Highways', 'Bridges & Flyovers', 'Ports & Marine', 'Water & Wastewater'],
+    specializations: [
+      'Heavy Civil Construction',
+      'EPC Site Delivery',
+      'Resource Mobilization',
+    ],
+    sectors: [
+      'Highways',
+      'Bridges & Flyovers',
+      'Ports & Marine',
+      'Water & Wastewater',
+    ],
     tier: 'SENIOR_LEVEL',
     experienceRange: { min: 8, max: 15, typical: '8–14 years' },
     requiredSkills: [
@@ -191,16 +268,29 @@ export const INFRASTRUCTURE_ROLE_TAXONOMY: InfrastructureRoleDefinition[] = [
       'Resource Planning',
       'Client Coordination',
     ],
-    preferredSkills: ['Equipment Management', 'Method Statement Formulation', 'Value Engineering'],
+    preferredSkills: [
+      'Equipment Management',
+      'Method Statement Formulation',
+      'Value Engineering',
+    ],
     requiredSoftware: ['AutoCAD', 'MS Excel'],
     preferredSoftware: ['Primavera P6', 'Procore'],
-    commonCertifications: ['PMP', 'NEBOSH IGC', 'Certified Construction Manager (CCM)'],
+    commonCertifications: [
+      'PMP',
+      'NEBOSH IGC',
+      'Certified Construction Manager (CCM)',
+    ],
     careerProgression: {
       predecessorRoles: ['Senior Site Engineer', 'Project Engineer'],
       adjacentRoles: ['Planning Manager', 'Contracts Manager'],
-      successorRoles: ['Project Manager', 'Project Director', 'General Manager (Operations)'],
+      successorRoles: [
+        'Project Manager',
+        'Project Director',
+        'General Manager (Operations)',
+      ],
     },
-    description: 'Oversees on-site heavy construction operations, plant and machinery deployment, subcontractors, safety governance, and handover milestones.',
+    description:
+      'Oversees on-site heavy construction operations, plant and machinery deployment, subcontractors, safety governance, and handover milestones.',
   },
 
   // ── 3. Quantity Surveying & Commercial Track ────────────────────────────────
@@ -209,7 +299,12 @@ export const INFRASTRUCTURE_ROLE_TAXONOMY: InfrastructureRoleDefinition[] = [
     title: 'Quantity Surveyor',
     discipline: 'Civil Engineering',
     specializations: ['Quantity Surveying', 'Cost Estimation', 'BOQ & Billing'],
-    sectors: ['Civil Infrastructure', 'Highways', 'Water & Wastewater', 'Buildings'],
+    sectors: [
+      'Civil Infrastructure',
+      'Highways',
+      'Water & Wastewater',
+      'Buildings',
+    ],
     tier: 'MID_LEVEL',
     experienceRange: { min: 3, max: 7, typical: '3–6 years' },
     requiredSkills: [
@@ -219,22 +314,36 @@ export const INFRASTRUCTURE_ROLE_TAXONOMY: InfrastructureRoleDefinition[] = [
       'Subcontractor Billing',
       'Cost Estimation',
     ],
-    preferredSkills: ['FIDIC Contracts', 'Variation Management', 'Rate Analysis', 'Cost Control'],
+    preferredSkills: [
+      'FIDIC Contracts',
+      'Variation Management',
+      'Rate Analysis',
+      'Cost Control',
+    ],
     requiredSoftware: ['AutoCAD', 'MS Excel'],
     preferredSoftware: ['CostX', 'PlanSwift', 'Candy CCS'],
     commonCertifications: ['MRICS / AssocRICS', 'Chartered Quantity Surveyor'],
     careerProgression: {
       predecessorRoles: ['Junior Quantity Surveyor', 'Site Engineer'],
       adjacentRoles: ['Planning Engineer', 'Estimator'],
-      successorRoles: ['Senior Quantity Surveyor', 'Contracts Manager', 'Commercial Manager'],
+      successorRoles: [
+        'Senior Quantity Surveyor',
+        'Contracts Manager',
+        'Commercial Manager',
+      ],
     },
-    description: 'Prepares comprehensive bills of quantities, interim payment certificates (IPC), sub-contractor measurement reconciliations, and material takeoffs.',
+    description:
+      'Prepares comprehensive bills of quantities, interim payment certificates (IPC), sub-contractor measurement reconciliations, and material takeoffs.',
   },
   {
     id: 'contracts-manager',
     title: 'Contracts Manager',
     discipline: 'Project & Construction Management',
-    specializations: ['FIDIC EPC Contracts', 'Claims & Variations', 'Dispute Resolution'],
+    specializations: [
+      'FIDIC EPC Contracts',
+      'Claims & Variations',
+      'Dispute Resolution',
+    ],
     sectors: ['Transport Infrastructure', 'Power & Energy', 'Urban EPC'],
     tier: 'SENIOR_LEVEL',
     experienceRange: { min: 9, max: 18, typical: '10–16 years' },
@@ -246,16 +355,25 @@ export const INFRASTRUCTURE_ROLE_TAXONOMY: InfrastructureRoleDefinition[] = [
       'Negotiation',
       'Legal & Risk Compliance',
     ],
-    preferredSkills: ['Arbitration Proceedings', 'EOT Claims Defense', 'Joint Venture Agreements'],
+    preferredSkills: [
+      'Arbitration Proceedings',
+      'EOT Claims Defense',
+      'Joint Venture Agreements',
+    ],
     requiredSoftware: ['MS Word / Excel', 'Contract Management Systems'],
     preferredSoftware: ['Aconex', 'Procore'],
-    commonCertifications: ['MRICS', 'LLM in Construction Law', 'Chartered Arbitrator (CIArb)'],
+    commonCertifications: [
+      'MRICS',
+      'LLM in Construction Law',
+      'Chartered Arbitrator (CIArb)',
+    ],
     careerProgression: {
       predecessorRoles: ['Senior Quantity Surveyor', 'Commercial Lead'],
       adjacentRoles: ['Project Manager', 'Claims Consultant'],
       successorRoles: ['Commercial Director', 'Head of Legal & Contracts'],
     },
-    description: 'Drafts, negotiates, and administers contractual terms, subcontractor packages, change orders, extension of time (EOT) claims, and dispute mitigation.',
+    description:
+      'Drafts, negotiates, and administers contractual terms, subcontractor packages, change orders, extension of time (EOT) claims, and dispute mitigation.',
   },
 
   // ── 4. Project Engineering & Delivery Track ─────────────────────────────────
@@ -263,8 +381,17 @@ export const INFRASTRUCTURE_ROLE_TAXONOMY: InfrastructureRoleDefinition[] = [
     id: 'project-engineer',
     title: 'Project Engineer',
     discipline: 'Civil Engineering',
-    specializations: ['EPC Coordination', 'Technical Interface', 'Site Execution'],
-    sectors: ['Highways', 'Bridges & Tunnels', 'Water & Wastewater', 'Railways'],
+    specializations: [
+      'EPC Coordination',
+      'Technical Interface',
+      'Site Execution',
+    ],
+    sectors: [
+      'Highways',
+      'Bridges & Tunnels',
+      'Water & Wastewater',
+      'Railways',
+    ],
     tier: 'MID_LEVEL',
     experienceRange: { min: 4, max: 8, typical: '4–7 years' },
     requiredSkills: [
@@ -274,23 +401,41 @@ export const INFRASTRUCTURE_ROLE_TAXONOMY: InfrastructureRoleDefinition[] = [
       'Subcontractor Management',
       'Progress Monitoring',
     ],
-    preferredSkills: ['Planning & Scheduling', 'Value Engineering', 'Design Coordination'],
+    preferredSkills: [
+      'Planning & Scheduling',
+      'Value Engineering',
+      'Design Coordination',
+    ],
     requiredSoftware: ['AutoCAD'],
     preferredSoftware: ['Primavera P6', 'Civil 3D', 'Navisworks'],
     commonCertifications: ['PMP', 'LEED Green Associate'],
     careerProgression: {
       predecessorRoles: ['Site Engineer', 'Planning Engineer'],
       adjacentRoles: ['BIM Coordinator', 'Quantity Surveyor'],
-      successorRoles: ['Senior Project Engineer', 'Project Manager', 'Construction Manager'],
+      successorRoles: [
+        'Senior Project Engineer',
+        'Project Manager',
+        'Construction Manager',
+      ],
     },
-    description: 'Serves as the key technical bridge between consultant design teams, client representatives, and site execution crews, expediting RFIs and material submittals.',
+    description:
+      'Serves as the key technical bridge between consultant design teams, client representatives, and site execution crews, expediting RFIs and material submittals.',
   },
   {
     id: 'project-manager',
     title: 'Project Manager',
     discipline: 'Project & Construction Management',
-    specializations: ['Full EPC Lifecycle', 'Budget & P&L Ownership', 'Stakeholder Management'],
-    sectors: ['Highways', 'Bridges', 'Metros & Urban Transit', 'Airport Infrastructure'],
+    specializations: [
+      'Full EPC Lifecycle',
+      'Budget & P&L Ownership',
+      'Stakeholder Management',
+    ],
+    sectors: [
+      'Highways',
+      'Bridges',
+      'Metros & Urban Transit',
+      'Airport Infrastructure',
+    ],
     tier: 'SENIOR_LEVEL',
     experienceRange: { min: 10, max: 20, typical: '10–18 years' },
     requiredSkills: [
@@ -301,16 +446,25 @@ export const INFRASTRUCTURE_ROLE_TAXONOMY: InfrastructureRoleDefinition[] = [
       'Risk Management',
       'Client Coordination',
     ],
-    preferredSkills: ['P&L Management', 'Cross-Disciplinary Coordination', 'Government Authority Liaison'],
+    preferredSkills: [
+      'P&L Management',
+      'Cross-Disciplinary Coordination',
+      'Government Authority Liaison',
+    ],
     requiredSoftware: ['MS Project', 'AutoCAD'],
     preferredSoftware: ['Primavera P6', 'Power BI', 'ERP Systems (SAP/Oracle)'],
     commonCertifications: ['PMP', 'PRINCE2 Practitioner', 'FIE / CEng'],
     careerProgression: {
-      predecessorRoles: ['Project Engineer', 'Construction Manager', 'Senior Planning Engineer'],
+      predecessorRoles: [
+        'Project Engineer',
+        'Construction Manager',
+        'Senior Planning Engineer',
+      ],
       adjacentRoles: ['Contracts Manager', 'Technical Director'],
       successorRoles: ['Project Director', 'Vice President (Infrastructure)'],
     },
-    description: 'Holds full profit and loss (P&L), schedule, quality, and contractual responsibility for the turnkey delivery of major infrastructure packages.',
+    description:
+      'Holds full profit and loss (P&L), schedule, quality, and contractual responsibility for the turnkey delivery of major infrastructure packages.',
   },
 
   // ── 5. Digital Construction & BIM Track ─────────────────────────────────────
@@ -318,7 +472,11 @@ export const INFRASTRUCTURE_ROLE_TAXONOMY: InfrastructureRoleDefinition[] = [
     id: 'bim-engineer',
     title: 'BIM Engineer',
     discipline: 'Digital Construction & BIM',
-    specializations: ['Infrastructure BIM', 'Revit Civil Modeling', 'Clash Detection'],
+    specializations: [
+      'Infrastructure BIM',
+      'Revit Civil Modeling',
+      'Clash Detection',
+    ],
     sectors: ['Metros & Rail', 'Bridges', 'Highways', 'Smart Cities'],
     tier: 'MID_LEVEL',
     experienceRange: { min: 2, max: 6, typical: '2–5 years' },
@@ -329,22 +487,37 @@ export const INFRASTRUCTURE_ROLE_TAXONOMY: InfrastructureRoleDefinition[] = [
       'Design Coordination',
       'Level of Detail (LOD 300–400)',
     ],
-    preferredSkills: ['Dynamo Scripting', 'Point Cloud Modeling', '4D BIM Scheduling'],
+    preferredSkills: [
+      'Dynamo Scripting',
+      'Point Cloud Modeling',
+      '4D BIM Scheduling',
+    ],
     requiredSoftware: ['Revit', 'Navisworks', 'AutoCAD'],
     preferredSoftware: ['Civil 3D', 'InfraWorks', 'Synchro 4D'],
-    commonCertifications: ['Autodesk Certified Professional (Revit)', 'buildingSMART BIM Certified'],
+    commonCertifications: [
+      'Autodesk Certified Professional (Revit)',
+      'buildingSMART BIM Certified',
+    ],
     careerProgression: {
       predecessorRoles: ['BIM Modeler', 'Junior CAD Engineer'],
       adjacentRoles: ['Design Engineer', 'Site Engineer'],
-      successorRoles: ['BIM Coordinator', 'BIM Manager', 'Digital Delivery Lead'],
+      successorRoles: [
+        'BIM Coordinator',
+        'BIM Manager',
+        'Digital Delivery Lead',
+      ],
     },
-    description: 'Develops parametric 3D models for bridges, tunnels, transit stations, and utility corridors while executing automated clash detection reports.',
+    description:
+      'Develops parametric 3D models for bridges, tunnels, transit stations, and utility corridors while executing automated clash detection reports.',
   },
   {
     id: 'bim-coordinator',
     title: 'BIM Coordinator',
     discipline: 'Digital Construction & BIM',
-    specializations: ['Multi-Disciplinary Federation', 'Common Data Environment (CDE)'],
+    specializations: [
+      'Multi-Disciplinary Federation',
+      'Common Data Environment (CDE)',
+    ],
     sectors: ['Metros & Rail', 'Airports', 'Complex Infrastructure EPC'],
     tier: 'SENIOR_LEVEL',
     experienceRange: { min: 6, max: 12, typical: '6–10 years' },
@@ -355,16 +528,24 @@ export const INFRASTRUCTURE_ROLE_TAXONOMY: InfrastructureRoleDefinition[] = [
       'ISO 19650 Standards',
       '4D Scheduling Integration',
     ],
-    preferredSkills: ['Python / Dynamo Automation', 'OpenBIM IFC Standards', 'Asset Information Modeling (AIM)'],
+    preferredSkills: [
+      'Python / Dynamo Automation',
+      'OpenBIM IFC Standards',
+      'Asset Information Modeling (AIM)',
+    ],
     requiredSoftware: ['Navisworks', 'Revit', 'BIM 360 / ACC'],
     preferredSoftware: ['Synchro 4D', 'Solibri', 'Civil 3D'],
-    commonCertifications: ['BRE Global BIM Certified', 'Autodesk Certified Professional'],
+    commonCertifications: [
+      'BRE Global BIM Certified',
+      'Autodesk Certified Professional',
+    ],
     careerProgression: {
       predecessorRoles: ['BIM Engineer', 'Senior BIM Modeler'],
       adjacentRoles: ['Project Engineer', 'Design Lead'],
       successorRoles: ['BIM Manager', 'Head of Digital Construction'],
     },
-    description: 'Coordinates model federation across civil, structural, geotechnical, and MEP consultants using ISO 19650 guidelines and common data environments.',
+    description:
+      'Coordinates model federation across civil, structural, geotechnical, and MEP consultants using ISO 19650 guidelines and common data environments.',
   },
 
   // ── 6. Structural & Geotechnical Design Track ───────────────────────────────
@@ -372,7 +553,11 @@ export const INFRASTRUCTURE_ROLE_TAXONOMY: InfrastructureRoleDefinition[] = [
     id: 'structural-engineer',
     title: 'Structural Engineer',
     discipline: 'Structural Engineering',
-    specializations: ['Bridge Design', 'Reinforced Concrete & Steel', 'Seismic Analysis'],
+    specializations: [
+      'Bridge Design',
+      'Reinforced Concrete & Steel',
+      'Seismic Analysis',
+    ],
     sectors: ['Highways', 'Bridges & Flyovers', 'Metros & Rail', 'Industrial'],
     tier: 'MID_LEVEL',
     experienceRange: { min: 3, max: 8, typical: '3–7 years' },
@@ -383,22 +568,38 @@ export const INFRASTRUCTURE_ROLE_TAXONOMY: InfrastructureRoleDefinition[] = [
       'Finite Element Analysis (FEA)',
       'Bar Bending Schedule (BBS)',
     ],
-    preferredSkills: ['Prestressed Concrete Design', 'Seismic Retrofitting', 'Dynamic Analysis'],
+    preferredSkills: [
+      'Prestressed Concrete Design',
+      'Seismic Retrofitting',
+      'Dynamic Analysis',
+    ],
     requiredSoftware: ['STAAD.Pro', 'AutoCAD'],
     preferredSoftware: ['ETABS', 'MIDAS Civil', 'SAFE'],
     commonCertifications: ['Chartered Structural Engineer (IStructE / CEng)'],
     careerProgression: {
-      predecessorRoles: ['Junior Structural Engineer', 'Graduate Design Trainee'],
+      predecessorRoles: [
+        'Junior Structural Engineer',
+        'Graduate Design Trainee',
+      ],
       adjacentRoles: ['Geotechnical Engineer', 'BIM Engineer'],
-      successorRoles: ['Senior Structural Engineer', 'Chief Bridge Engineer', 'Engineering Manager'],
+      successorRoles: [
+        'Senior Structural Engineer',
+        'Chief Bridge Engineer',
+        'Engineering Manager',
+      ],
     },
-    description: 'Carries out rigorous mathematical analysis, foundation stability calculations, and structural detailing for flyovers, retaining walls, and culverts.',
+    description:
+      'Carries out rigorous mathematical analysis, foundation stability calculations, and structural detailing for flyovers, retaining walls, and culverts.',
   },
   {
     id: 'geotechnical-engineer',
     title: 'Geotechnical Engineer',
     discipline: 'Geotechnical Engineering',
-    specializations: ['Slope Stability', 'Deep Foundations', 'Soil Mechanics & Ground Improvement'],
+    specializations: [
+      'Slope Stability',
+      'Deep Foundations',
+      'Soil Mechanics & Ground Improvement',
+    ],
     sectors: ['Highways', 'Tunnels', 'Marine & Ports', 'Dams & Reservoirs'],
     tier: 'MID_LEVEL',
     experienceRange: { min: 3, max: 8, typical: '3–7 years' },
@@ -409,22 +610,32 @@ export const INFRASTRUCTURE_ROLE_TAXONOMY: InfrastructureRoleDefinition[] = [
       'Slope Stability Analysis',
       'Ground Improvement Techniques',
     ],
-    preferredSkills: ['Tunnel Lining Design', 'Geosynthetics Application', 'Groundwater Seepage Modeling'],
+    preferredSkills: [
+      'Tunnel Lining Design',
+      'Geosynthetics Application',
+      'Groundwater Seepage Modeling',
+    ],
     requiredSoftware: ['GeoStudio', 'AutoCAD'],
     preferredSoftware: ['PLAXIS 2D/3D', 'Slide2', 'FLAC'],
     commonCertifications: ['Chartered Geologist / Engineer (CEng)'],
     careerProgression: {
-      predecessorRoles: ['Junior Geotechnical Engineer', 'Site Investigation Engineer'],
+      predecessorRoles: [
+        'Junior Geotechnical Engineer',
+        'Site Investigation Engineer',
+      ],
       adjacentRoles: ['Structural Engineer', 'Materials Engineer'],
       successorRoles: ['Senior Geotechnical Engineer', 'Chief Tunnel Engineer'],
     },
-    description: 'Interprets borehole investigation reports, designs retaining piling systems, and resolves soil liquefaction and embankment settlement challenges.',
+    description:
+      'Interprets borehole investigation reports, designs retaining piling systems, and resolves soil liquefaction and embankment settlement challenges.',
   },
 ];
 
 // ── Helper Lookup Functions ───────────────────────────────────────────────────
 
-export function getRoleByTitle(title: string): InfrastructureRoleDefinition | undefined {
+export function getRoleByTitle(
+  title: string,
+): InfrastructureRoleDefinition | undefined {
   if (!title) return undefined;
   const normalized = title.trim().toLowerCase();
   const slug = normalized.replace(/\s+/g, '-');
@@ -436,8 +647,8 @@ export function getRoleByTitle(title: string): InfrastructureRoleDefinition | un
   if (exact) return exact;
 
   // 2. Starts-with match
-  const startsWith = INFRASTRUCTURE_ROLE_TAXONOMY.find(
-    (r) => r.title.toLowerCase().startsWith(normalized),
+  const startsWith = INFRASTRUCTURE_ROLE_TAXONOMY.find((r) =>
+    r.title.toLowerCase().startsWith(normalized),
   );
   if (startsWith) return startsWith;
 
@@ -453,7 +664,9 @@ export function getAllRoles(): InfrastructureRoleDefinition[] {
   return [...INFRASTRUCTURE_ROLE_TAXONOMY];
 }
 
-export function getRolesByDiscipline(discipline: string): InfrastructureRoleDefinition[] {
+export function getRolesByDiscipline(
+  discipline: string,
+): InfrastructureRoleDefinition[] {
   if (!discipline) return [];
   const normalized = discipline.trim().toLowerCase();
   return INFRASTRUCTURE_ROLE_TAXONOMY.filter(
@@ -469,7 +682,11 @@ export function getCareerProgression(currentRoleTitle: string) {
     return {
       currentRole: currentRoleTitle,
       predecessorRoles: [],
-      adjacentRoles: ['Site Engineer', 'Planning Engineer', 'Quantity Surveyor'],
+      adjacentRoles: [
+        'Site Engineer',
+        'Planning Engineer',
+        'Quantity Surveyor',
+      ],
       successorRoles: ['Project Engineer', 'Construction Manager'],
     };
   }
@@ -484,11 +701,16 @@ export function getCareerProgression(currentRoleTitle: string) {
 }
 
 export function getInfrastructureCareerMap() {
-  const map: Record<string, { discipline: string; roles: InfrastructureRoleDefinition[] }> = {};
+  const map: Record<
+    string,
+    { discipline: string; roles: InfrastructureRoleDefinition[] }
+  > = {};
   for (const discipline of INFRASTRUCTURE_DISCIPLINES) {
     map[discipline] = {
       discipline,
-      roles: INFRASTRUCTURE_ROLE_TAXONOMY.filter((r) => r.discipline === discipline),
+      roles: INFRASTRUCTURE_ROLE_TAXONOMY.filter(
+        (r) => r.discipline === discipline,
+      ),
     };
   }
   return map;

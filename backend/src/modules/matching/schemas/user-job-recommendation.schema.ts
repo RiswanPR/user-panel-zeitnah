@@ -31,10 +31,20 @@ export class UserJobRecommendation {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
   userId!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Opportunity', required: true, index: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'Opportunity',
+    required: true,
+    index: true,
+  })
   jobId!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Organization', required: true, index: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'Organization',
+    required: true,
+    index: true,
+  })
   businessId!: Types.ObjectId;
 
   // Compatibility score (0–100)
@@ -127,21 +137,16 @@ export const UserJobRecommendationSchema = SchemaFactory.createForClass(
 );
 
 // Compound uniqueness: one recommendation per (user, job) pair
-UserJobRecommendationSchema.index(
-  { userId: 1, jobId: 1 },
-  { unique: true },
-);
+UserJobRecommendationSchema.index({ userId: 1, jobId: 1 }, { unique: true });
 
 // High performance index for candidate feed queries
-UserJobRecommendationSchema.index(
-  {
-    userId: 1,
-    status: 1,
-    isHidden: 1,
-    isDismissed: 1,
-    passesHardRequirements: 1,
-    compatibilityScore: -1,
-  },
-);
+UserJobRecommendationSchema.index({
+  userId: 1,
+  status: 1,
+  isHidden: 1,
+  isDismissed: 1,
+  passesHardRequirements: 1,
+  compatibilityScore: -1,
+});
 
 UserJobRecommendationSchema.index({ jobId: 1, status: 1 });

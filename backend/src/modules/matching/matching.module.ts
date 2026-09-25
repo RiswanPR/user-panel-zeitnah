@@ -45,7 +45,10 @@ import { MatchingController } from './matching.controller';
       { name: UserJobRecommendation.name, schema: UserJobRecommendationSchema },
       { name: Opportunity.name, schema: OpportunitySchema },
       { name: Organization.name, schema: OrganizationSchema },
-      { name: OrganizationMembership.name, schema: OrganizationMembershipSchema },
+      {
+        name: OrganizationMembership.name,
+        schema: OrganizationMembershipSchema,
+      },
       { name: User.name, schema: UserSchema },
       { name: Project.name, schema: ProjectSchema },
       { name: JobApplication.name, schema: JobApplicationSchema },

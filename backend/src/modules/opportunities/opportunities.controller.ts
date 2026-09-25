@@ -82,10 +82,7 @@ export class OpportunitiesController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  async createOpportunity(
-    @Req() req: any,
-    @Body() body: CreateOpportunityDto,
-  ) {
+  async createOpportunity(@Req() req: any, @Body() body: CreateOpportunityDto) {
     return this.oppService.createOpportunity(req.user.userId, body);
   }
 
@@ -131,4 +128,3 @@ export class OpportunitiesController {
     return this.oppService.applyToJob(req.user.userId, id, body);
   }
 }
-

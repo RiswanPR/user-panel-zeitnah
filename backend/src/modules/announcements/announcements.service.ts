@@ -530,7 +530,7 @@ export class AnnouncementsService {
               updatedAt: now,
             },
           },
-          { new: true },
+          { returnDocument: 'after' },
         );
 
         if (!ann) {
