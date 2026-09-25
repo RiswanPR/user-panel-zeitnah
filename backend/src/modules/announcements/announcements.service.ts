@@ -50,7 +50,11 @@ export class AnnouncementsService {
     if (typeof id === 'string' && Types.ObjectId.isValid(id)) {
       return new Types.ObjectId(id);
     }
-    throw new BadRequestException('Invalid ID format');
+    throw new BadRequestException({
+      statusCode: 400,
+      code: 'INVALID_ANNOUNCEMENT_ID',
+      message: 'Invalid ID format',
+    });
   }
 
   /**
@@ -377,38 +381,79 @@ export class AnnouncementsService {
     userId: string,
     isAcknowledge = false,
   ) {
-    const annObjId = this.toObjectId(announcementId);
-    const userObjId = this.toObjectId(userId);
+    if (!announcementId || announcementId === 'undefined' || announcementId === 'null') {
+      throw new BadRequestException({
+        statusCode: 400,
+        code: 'INVALID_ANNOUNCEMENT_ID',
+        message: 'Invalid or missing announcement ID',
+      });
+    }
 
-    // If findById is available, check allowDismiss
+    if (!userId || userId === 'undefined' || userId === 'null') {
+      throw new BadRequestException({
+        statusCode: 400,
+        code: 'INVALID_USER_ID',
+        message: 'Invalid or missing user ID',
+      });
+    }
+
+    const isAnnObjectId = Types.ObjectId.isValid(announcementId);
+    const annObjId = isAnnObjectId ? new Types.ObjectId(announcementId) : null;
+    const isUserObjectId = Types.ObjectId.isValid(userId);
+    const userObjId = isUserObjectId ? new Types.ObjectId(userId) : null;
+    const userIdVal = userObjId || userId;
+
+    // Search query supporting both ObjectId and string ID
+    const idQuery: any = annObjId
+      ? { $or: [{ _id: annObjId }, { _id: announcementId }] }
+      : { _id: announcementId };
+
+    // If findById/findOne is available, check allowDismiss
     let ann: any = null;
-    if (
-      this.masterAnnouncementModel &&
-      typeof this.masterAnnouncementModel.findById === 'function'
-    ) {
+    if (this.masterAnnouncementModel) {
       try {
-        ann = await this.masterAnnouncementModel.findById(annObjId);
+        if (annObjId && typeof (this.masterAnnouncementModel as any).findById === 'function') {
+          ann = await (this.masterAnnouncementModel as any).findById(annObjId);
+        } else if (typeof (this.masterAnnouncementModel as any).findOne === 'function') {
+          ann = await (this.masterAnnouncementModel as any).findOne(idQuery);
+        }
       } catch (e) {
         // ignore
       }
     }
-    if (
-      !ann &&
-      this.announcementModel &&
-      typeof this.announcementModel.findById === 'function'
-    ) {
+    if (!ann && this.announcementModel) {
       try {
-        ann = await this.announcementModel.findById(annObjId);
+        if (annObjId && typeof (this.announcementModel as any).findById === 'function') {
+          ann = await (this.announcementModel as any).findById(annObjId);
+        } else if (typeof (this.announcementModel as any).findOne === 'function') {
+          ann = await (this.announcementModel as any).findOne(idQuery);
+        }
       } catch (e) {
         // ignore
       }
+    }
+
+    // Idempotent: If user already dismissed, return success immediately
+    const alreadyDismissed = ann?.dismissedBy?.some(
+      (d: any) => String(d) === String(userIdVal),
+    );
+    if (alreadyDismissed) {
+      return {
+        success: true,
+        message: isAcknowledge
+          ? 'Announcement already acknowledged'
+          : 'Announcement already dismissed',
+        alreadyDismissed: true,
+      };
     }
 
     // Check acknowledgment requirement (Requirement #13)
     if (ann && ann.allowDismiss === false && !isAcknowledge) {
-      throw new BadRequestException(
-        'This announcement requires explicit acknowledgment.',
-      );
+      throw new BadRequestException({
+        statusCode: 400,
+        code: 'ACKNOWLEDGMENT_REQUIRED',
+        message: 'This announcement requires explicit acknowledgment.',
+      });
     }
 
     let matchedCount = 0;
@@ -418,9 +463,10 @@ export class AnnouncementsService {
       this.announcementModel &&
       typeof this.announcementModel.updateOne === 'function'
     ) {
+      const updateQuery: any = annObjId ? { _id: annObjId } : { _id: announcementId };
       const res = await this.announcementModel.updateOne(
-        { _id: annObjId },
-        { $addToSet: { dismissedBy: userObjId } },
+        updateQuery,
+        { $addToSet: { dismissedBy: userIdVal } },
       );
       if (res && res.matchedCount) matchedCount += res.matchedCount;
     }
@@ -430,9 +476,10 @@ export class AnnouncementsService {
       this.masterAnnouncementModel &&
       typeof this.masterAnnouncementModel.updateOne === 'function'
     ) {
+      const updateQuery: any = annObjId ? { _id: annObjId } : { _id: announcementId };
       const res = await this.masterAnnouncementModel.updateOne(
-        { _id: annObjId },
-        { $addToSet: { dismissedBy: userObjId, readBy: userObjId } },
+        updateQuery,
+        { $addToSet: { dismissedBy: userIdVal, readBy: userIdVal } },
       );
       if (res && res.matchedCount) matchedCount += res.matchedCount;
     }
@@ -444,12 +491,16 @@ export class AnnouncementsService {
     ) {
       await this.announcementModel.updateOne(
         { _id: ann.platformAnnouncementId },
-        { $addToSet: { dismissedBy: userObjId } },
+        { $addToSet: { dismissedBy: userIdVal } },
       );
     }
 
     if (matchedCount === 0 && !ann) {
-      throw new NotFoundException('Announcement not found');
+      throw new NotFoundException({
+        statusCode: 404,
+        code: 'ANNOUNCEMENT_NOT_FOUND',
+        message: 'Announcement not found',
+      });
     }
 
     // Sync notification read state
@@ -460,9 +511,10 @@ export class AnnouncementsService {
       try {
         await this.notificationModel.updateMany(
           {
-            recipientId: userObjId,
+            recipientId: userIdVal,
             $or: [
-              { entityId: annObjId },
+              ...(annObjId ? [{ entityId: annObjId }] : []),
+              { entityId: announcementId },
               { idempotencyKey: `announcement_${announcementId}_${userId}` },
               ...(ann?.platformAnnouncementId
                 ? [{ entityId: ann.platformAnnouncementId }]

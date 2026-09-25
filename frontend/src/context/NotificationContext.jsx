@@ -62,7 +62,7 @@ export const NotificationProvider = ({ children }) => {
         auth: (cb) => {
           cb({ token: storage.getAccessToken() });
         },
-        transports: ['websocket', 'polling'],
+        transports: ['polling', 'websocket'],
         autoConnect: true,
         reconnection: true,
         reconnectionAttempts: 8,
@@ -78,8 +78,25 @@ export const NotificationProvider = ({ children }) => {
 
       setSocket(newSocket);
 
+      // Handle upgrade probe errors gracefully without disconnecting active polling session
+      newSocket.io.engine.on('upgradeError', (err) => {
+        if (import.meta.env.DEV) {
+          console.debug('[Socket:notifications] Upgrade probe error (polling remains healthy):', err?.message);
+        }
+      });
+
       newSocket.on('connect', () => {
         // Connected to /notifications socket
+      });
+
+      newSocket.on('disconnect', (reason) => {
+        if (import.meta.env.DEV) {
+          console.debug('[Socket:notifications] Disconnected, reason:', reason);
+        }
+      });
+
+      newSocket.on('reconnect_failed', () => {
+        console.warn('[Socket:notifications] Reconnection failed after maximum attempts');
       });
 
       newSocket.on('notification', (newNotif) => {
@@ -105,8 +122,15 @@ export const NotificationProvider = ({ children }) => {
         queryClient.invalidateQueries({ queryKey: ['notifications'] });
       });
 
+      let lastLogTime = 0;
       newSocket.on('connect_error', async (err) => {
-        console.warn('[Socket:notifications] Connection error:', err.message);
+        const now = Date.now();
+        if (now - lastLogTime > 6000) {
+          lastLogTime = now;
+          const transport = newSocket?.io?.engine?.transport?.name || 'unknown';
+          const readyState = newSocket?.io?.engine?.readyState || 'unknown';
+          console.warn(`[Socket:notifications] Connection note (${transport}, readyState: ${readyState}):`, err.message);
+        }
 
         // If error indicates an authentication rejection or expired JWT, attempt token refresh
         const isAuthError =

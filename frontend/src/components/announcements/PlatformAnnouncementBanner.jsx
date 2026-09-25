@@ -1,8 +1,10 @@
+import { useState, useCallback } from 'react';
 import { AlertTriangle, Info, X, ExternalLink, ArrowRight, Check } from 'lucide-react';
 import { usePlatformAnnouncements } from '../../hooks/usePlatformAnnouncements';
 import { Link } from 'react-router-dom';
 
 export default function PlatformAnnouncementBanner() {
+  const [actionPendingId, setActionPendingId] = useState(null);
   const {
     announcements,
     dismissAnnouncement,
@@ -129,9 +131,16 @@ export default function PlatformAnnouncementBanner() {
           {allowDismiss ? (
             <button
               type="button"
-              disabled={isDismissing}
-              onClick={() => dismissAnnouncement(topAnnouncement._id)}
-              className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              disabled={isDismissing || Boolean(actionPendingId)}
+              onClick={() => {
+                const targetId = topAnnouncement._id || topAnnouncement.id || topAnnouncement.platformAnnouncementId;
+                if (!targetId || isDismissing || actionPendingId) return;
+                setActionPendingId(targetId);
+                dismissAnnouncement(targetId, {
+                  onSettled: () => setActionPendingId(null),
+                });
+              }}
+              className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
               title="Dismiss announcement"
               aria-label="Dismiss announcement"
             >
@@ -140,9 +149,16 @@ export default function PlatformAnnouncementBanner() {
           ) : (
             <button
               type="button"
-              disabled={isAcknowledging}
-              onClick={() => acknowledgeAnnouncement(topAnnouncement._id)}
-              className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-white border border-white/20 transition-all cursor-pointer shadow-sm"
+              disabled={isAcknowledging || Boolean(actionPendingId)}
+              onClick={() => {
+                const targetId = topAnnouncement._id || topAnnouncement.id || topAnnouncement.platformAnnouncementId;
+                if (!targetId || isAcknowledging || actionPendingId) return;
+                setActionPendingId(targetId);
+                acknowledgeAnnouncement(targetId, {
+                  onSettled: () => setActionPendingId(null),
+                });
+              }}
+              className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-white border border-white/20 transition-all cursor-pointer shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
               title="Acknowledge mandatory announcement"
             >
               <Check className="w-3 h-3" />

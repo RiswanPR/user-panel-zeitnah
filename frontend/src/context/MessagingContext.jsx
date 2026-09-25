@@ -59,7 +59,7 @@ export const MessagingProvider = ({ children }) => {
         auth: (cb) => {
           cb({ token: storage.getAccessToken() });
         },
-        transports: ['websocket', 'polling'],
+        transports: ['polling', 'websocket'],
         autoConnect: true,
         reconnection: true,
         reconnectionAttempts: 8,
@@ -75,6 +75,13 @@ export const MessagingProvider = ({ children }) => {
 
       setSocket(newSocket);
 
+      // Handle upgrade probe errors gracefully without disconnecting active polling session
+      newSocket.io.engine.on('upgradeError', (err) => {
+        if (import.meta.env.DEV) {
+          console.debug('[Socket:messages] Upgrade probe error (polling remains healthy):', err?.message);
+        }
+      });
+
       newSocket.on('connect', () => {
         setConnectionStatus('connected');
         // Re-join active conversation if currently open
@@ -85,12 +92,20 @@ export const MessagingProvider = ({ children }) => {
         }
       });
 
-      newSocket.on('disconnect', () => {
+      newSocket.on('disconnect', (reason) => {
         setConnectionStatus('disconnected');
+        if (import.meta.env.DEV) {
+          console.debug('[Socket:messages] Disconnected, reason:', reason);
+        }
       });
 
       newSocket.on('reconnect_attempt', () => {
         setConnectionStatus('reconnecting');
+      });
+
+      newSocket.on('reconnect_failed', () => {
+        setConnectionStatus('failed');
+        console.warn('[Socket:messages] Reconnection failed after maximum attempts');
       });
 
       // Presence
@@ -178,8 +193,15 @@ export const MessagingProvider = ({ children }) => {
         queryClient.invalidateQueries({ queryKey: ['messages', 'unread-counts'] });
       });
 
+      let lastLogTime = 0;
       newSocket.on('connect_error', async (err) => {
-        console.warn('[Socket:messages] Connection error:', err.message);
+        const now = Date.now();
+        if (now - lastLogTime > 6000) {
+          lastLogTime = now;
+          const transport = newSocket?.io?.engine?.transport?.name || 'unknown';
+          const readyState = newSocket?.io?.engine?.readyState || 'unknown';
+          console.warn(`[Socket:messages] Connection note (${transport}, readyState: ${readyState}):`, err.message);
+        }
         setConnectionStatus('reconnecting');
 
         const isAuthError =

@@ -18,7 +18,8 @@ export const queryClient = new QueryClient({
     mutations: {
       retry: (failureCount, error: any) => {
         const status = error?.response?.status || error?.status;
-        if (status === 401 || status === 403 || status === 404) {
+        // Never retry client errors (4xx: 400 Bad Request, 401, 403, 404, 409, 422, etc.)
+        if (!status || (status >= 400 && status < 500)) {
           return false;
         }
         return failureCount < 1;

@@ -30,8 +30,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     if (exception instanceof HttpException) {
       const responseBody = exception.getResponse() as any;
-      message = responseBody?.message || exception.message;
-      code = responseBody?.error || 'HTTP_EXCEPTION';
+      const rawMsg = responseBody?.message || exception.message;
+      message = Array.isArray(rawMsg) ? rawMsg.join(', ') : (typeof rawMsg === 'string' ? rawMsg : JSON.stringify(rawMsg));
+      code = responseBody?.code || responseBody?.error || 'HTTP_EXCEPTION';
 
       // Keep it somewhat generic if it's a 500
       if (status >= 500) {

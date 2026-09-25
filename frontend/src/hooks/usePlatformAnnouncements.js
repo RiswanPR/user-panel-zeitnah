@@ -11,7 +11,14 @@ export function usePlatformAnnouncements() {
   });
 
   const dismissMutation = useMutation({
-    mutationFn: (id) => announcementsApi.dismissAnnouncement(id),
+    mutationFn: (id) => {
+      const cleanId = String(id || '').trim();
+      if (!cleanId || cleanId === 'undefined' || cleanId === 'null') {
+        return Promise.reject(new Error('Invalid announcement identifier'));
+      }
+      return announcementsApi.dismissAnnouncement(cleanId);
+    },
+    retry: false,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['platform-announcements'] });
       queryClient.invalidateQueries({ queryKey: ['announcements', 'active'] });
@@ -21,7 +28,14 @@ export function usePlatformAnnouncements() {
   });
 
   const acknowledgeMutation = useMutation({
-    mutationFn: (id) => announcementsApi.acknowledgeAnnouncement(id),
+    mutationFn: (id) => {
+      const cleanId = String(id || '').trim();
+      if (!cleanId || cleanId === 'undefined' || cleanId === 'null') {
+        return Promise.reject(new Error('Invalid announcement identifier'));
+      }
+      return announcementsApi.acknowledgeAnnouncement(cleanId);
+    },
+    retry: false,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['platform-announcements'] });
       queryClient.invalidateQueries({ queryKey: ['announcements', 'active'] });
