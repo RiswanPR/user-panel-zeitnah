@@ -57,16 +57,61 @@ export class Opportunity {
   @Prop({
     type: String,
     enum: Object.values(OpportunityType),
-    required: true,
+    default: OpportunityType.JOB,
     index: true,
   })
   type!: OpportunityType;
+
+  @Prop({ default: 'Full-time', trim: true, index: true })
+  jobType!: string;
+
+  @Prop({ default: 'Full-time', trim: true })
+  employmentType!: string;
 
   @Prop({ required: true, trim: true })
   title!: string;
 
   @Prop({ default: '', trim: true })
   description!: string;
+
+  @Prop({ default: '', trim: true, index: true })
+  discipline!: string;
+
+  @Prop({ default: '', trim: true })
+  specialization!: string;
+
+  @Prop({ default: '', trim: true, index: true })
+  infrastructureSector!: string;
+
+  @Prop({ type: Number, default: 0, index: true })
+  minYearsExperience!: number;
+
+  @Prop({ type: Number, default: 0, index: true })
+  maxYearsExperience!: number;
+
+  @Prop({ type: [String], default: [], index: true })
+  requiredSkills!: string[];
+
+  @Prop({ type: [String], default: [] })
+  preferredSkills!: string[];
+
+  @Prop({ type: [String], default: [], index: true })
+  requiredSoftware!: string[];
+
+  @Prop({ type: [String], default: [] })
+  preferredSoftware!: string[];
+
+  @Prop({ default: '', trim: true })
+  requiredEducation!: string;
+
+  @Prop({ default: '', trim: true })
+  preferredEducation!: string;
+
+  @Prop({ type: [String], default: [] })
+  requiredCertifications!: string[];
+
+  @Prop({ type: [String], default: [] })
+  preferredCertifications!: string[];
 
   @Prop({ type: [String], default: [], index: true })
   skills!: string[];
@@ -76,11 +121,10 @@ export class Opportunity {
 
   @Prop({
     type: String,
-    enum: Object.values(WorkMode),
-    default: WorkMode.REMOTE,
+    default: 'On-site',
     index: true,
   })
-  workMode!: WorkMode;
+  workMode!: string;
 
   @Prop({
     type: String,
@@ -89,6 +133,27 @@ export class Opportunity {
     index: true,
   })
   experienceLevel!: ExperienceLevel;
+
+  @Prop({ type: Number, default: null })
+  salaryMin!: number | null;
+
+  @Prop({ type: Number, default: null })
+  salaryMax!: number | null;
+
+  @Prop({ default: 'INR', trim: true })
+  currency!: string;
+
+  @Prop({ default: '', trim: true })
+  responsibilities!: string;
+
+  @Prop({ default: '', trim: true })
+  requirements!: string;
+
+  @Prop({ default: '', trim: true })
+  benefits!: string;
+
+  @Prop({ type: Date, default: null })
+  applicationDeadline!: Date | null;
 
   @Prop({
     type: String,
@@ -113,5 +178,19 @@ export class Opportunity {
 }
 
 export const OpportunitySchema = SchemaFactory.createForClass(Opportunity);
-OpportunitySchema.index({ status: 1, type: 1, workMode: 1, createdAt: -1 });
-OpportunitySchema.index({ title: 'text', description: 'text', skills: 'text' });
+OpportunitySchema.index({
+  status: 1,
+  type: 1,
+  discipline: 1,
+  infrastructureSector: 1,
+  createdAt: -1,
+});
+OpportunitySchema.index({
+  title: 'text',
+  description: 'text',
+  requiredSkills: 'text',
+  requiredSoftware: 'text',
+  discipline: 'text',
+  infrastructureSector: 'text',
+});
+

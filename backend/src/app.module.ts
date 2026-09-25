@@ -22,6 +22,8 @@ import { ModerationModule } from './modules/moderation/moderation.module';
 import { TroubleshootModule } from './modules/troubleshoot/troubleshoot.module';
 import { ErrorReportsModule } from './modules/error-reports/error-reports.module';
 import { WellKnownModule } from './modules/well-known/well-known.module';
+import { MatchingModule } from './modules/matching/matching.module';
+import { CareerIntelligenceModule } from './modules/career-intelligence/career-intelligence.module';
 import { EmailModule } from './common/email/email.module';
 
 @Module({
@@ -58,6 +60,8 @@ import { EmailModule } from './common/email/email.module';
     ProjectsModule,
     OrganizationsModule,
     OpportunitiesModule,
+    MatchingModule,
+    CareerIntelligenceModule,
     ModerationModule,
 
     // TROUBLESHOOT ERROR REPORTING

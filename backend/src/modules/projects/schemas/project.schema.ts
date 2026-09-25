@@ -23,6 +23,21 @@ export class Project {
   @Prop({ type: [String], default: [], index: true })
   skills!: string[];
 
+  @Prop({ default: 'Infrastructure', trim: true })
+  projectType!: string;
+
+  @Prop({ default: '', trim: true, index: true })
+  infrastructureSector!: string;
+
+  @Prop({ default: '', trim: true })
+  location!: string;
+
+  @Prop({ default: '', trim: true })
+  responsibilities!: string;
+
+  @Prop({ type: [String], default: [] })
+  softwareUsed!: string[];
+
   @Prop({ default: '', trim: true })
   role!: string;
 

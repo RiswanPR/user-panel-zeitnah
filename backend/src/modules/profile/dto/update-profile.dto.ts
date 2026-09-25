@@ -52,6 +52,10 @@ export class UpdateProfileDto {
   primaryRole?: string;
 
   @IsOptional()
+  @IsString()
+  role?: string;
+
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   capabilities?: string[];
@@ -92,5 +96,63 @@ export class UpdateProfileDto {
     subjects?: string[];
     expertise?: string[];
     institution?: string;
+  };
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  primaryDiscipline?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  specializations?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  infrastructureSectors?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  preferredLocations?: string[];
+
+  @IsOptional()
+  yearsOfExperience?: number;
+
+  @IsOptional()
+  structuredSkills?: {
+    technicalSkills?: string[];
+    softwareSkills?: string[];
+    industrySkills?: string[];
+    professionalSkills?: string[];
+  };
+
+  @IsOptional()
+  careerPreferences?: {
+    openToOpportunities?: boolean;
+    preferredRoles?: string[];
+    preferredSectors?: string[];
+    preferredLocations?: string[];
+    preferredWorkMode?: string;
+    preferredEmploymentType?: string;
+    expectedSalaryRange?: {
+      min?: number;
+      max?: number;
+      currency?: string;
+      period?: string;
+    };
+    availability?: string;
+  };
+
+  @IsOptional()
+  privacySettings?: {
+    experience?: string;
+    education?: string;
+    projects?: string;
+    certifications?: string;
+    careerPreferences?: string;
+    contactInfo?: string;
   };
 }

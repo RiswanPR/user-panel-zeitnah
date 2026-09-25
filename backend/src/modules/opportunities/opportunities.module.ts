@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Opportunity, OpportunitySchema } from './schemas/opportunity.schema';
 import {
@@ -9,11 +9,20 @@ import {
   OrganizationMembership,
   OrganizationMembershipSchema,
 } from '../organizations/schemas/organization-membership.schema';
+import { SavedJob, SavedJobSchema } from './schemas/saved-job.schema';
+import {
+  JobApplication,
+  JobApplicationSchema,
+} from './schemas/job-application.schema';
+import { AuditLogsModule } from '../audit-logs/audit-logs.module';
+import { MatchingModule } from '../matching/matching.module';
 import { OpportunitiesService } from './opportunities.service';
 import { OpportunitiesController } from './opportunities.controller';
 
 @Module({
   imports: [
+    AuditLogsModule,
+    forwardRef(() => MatchingModule),
     MongooseModule.forFeature([
       { name: Opportunity.name, schema: OpportunitySchema },
       { name: Organization.name, schema: OrganizationSchema },
@@ -21,6 +30,8 @@ import { OpportunitiesController } from './opportunities.controller';
         name: OrganizationMembership.name,
         schema: OrganizationMembershipSchema,
       },
+      { name: SavedJob.name, schema: SavedJobSchema },
+      { name: JobApplication.name, schema: JobApplicationSchema },
     ]),
   ],
   providers: [OpportunitiesService],
@@ -28,3 +39,4 @@ import { OpportunitiesController } from './opportunities.controller';
   exports: [OpportunitiesService],
 })
 export class OpportunitiesModule {}
+

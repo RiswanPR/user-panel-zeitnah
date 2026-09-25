@@ -25,6 +25,14 @@ export const coreProfileService = {
   },
 
   /**
+   * Fetches infrastructure taxonomy (disciplines, sectors, software, roles, work modes).
+   */
+  getInfrastructureTaxonomy: async () => {
+    const response = await api.get("/profile/taxonomy");
+    return response.data;
+  },
+
+  /**
    * Uploads avatar image file (max 5MB, JPG/PNG/WebP).
    */
   uploadAvatar: async (file) => {

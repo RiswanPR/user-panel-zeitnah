@@ -3,6 +3,9 @@ import {
   NotFoundException,
   ForbiddenException,
   Logger,
+  Optional,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -13,12 +16,19 @@ import {
 } from './schemas/project.schema';
 import { SkillsService } from '../skills/skills.service';
 import { ProofSourceType } from '../skills/schemas/skill-proof.schema';
+import { MatchingService } from '../matching/matching.service';
+import { CareerIntelligenceService } from '../career-intelligence/career-intelligence.service';
 
 export interface CreateProjectDto {
   title: string;
   description?: string;
   skills?: string[];
   role?: string;
+  projectType?: string;
+  infrastructureSector?: string;
+  location?: string;
+  responsibilities?: string;
+  softwareUsed?: string[];
   startDate: string | Date;
   endDate?: string | Date | null;
   links?: {
@@ -42,7 +52,26 @@ export class ProjectsService {
     @InjectModel(Project.name)
     private readonly projectModel: Model<ProjectDocument>,
     private readonly skillsService: SkillsService,
+    @Optional()
+    @Inject(forwardRef(() => MatchingService))
+    private readonly matchingService?: MatchingService,
+    @Optional()
+    @Inject(forwardRef(() => CareerIntelligenceService))
+    private readonly careerIntelligenceService?: CareerIntelligenceService,
   ) {}
+
+  private triggerCandidateMatchInvalidation(userId: string) {
+    if (this.matchingService) {
+      this.matchingService.invalidateCandidateMatches(userId).catch((err) => {
+        this.logger.warn(`Failed invalidating candidate matches for ${userId}: ${err.message}`);
+      });
+    }
+    if (this.careerIntelligenceService) {
+      this.careerIntelligenceService.invalidateUserCareerInsight(userId).catch((err) => {
+        this.logger.warn(`Failed invalidating career insight for ${userId}: ${err.message}`);
+      });
+    }
+  }
 
   async getUserProjects(userId: string, isOwner = false) {
     const userObjId = new Types.ObjectId(userId);
@@ -66,6 +95,11 @@ export class ProjectsService {
       description: dto.description?.trim() || '',
       skills: dto.skills || [],
       role: dto.role?.trim() || '',
+      projectType: dto.projectType?.trim() || 'Infrastructure',
+      infrastructureSector: dto.infrastructureSector?.trim() || '',
+      location: dto.location?.trim() || '',
+      responsibilities: dto.responsibilities?.trim() || '',
+      softwareUsed: dto.softwareUsed || [],
       startDate: new Date(dto.startDate),
       endDate: dto.endDate ? new Date(dto.endDate) : null,
       links: dto.links || {},
@@ -91,6 +125,8 @@ export class ProjectsService {
         }
       }
     }
+
+    this.triggerCandidateMatchInvalidation(userId);
 
     return project;
   }
@@ -118,6 +154,13 @@ export class ProjectsService {
       project.description = dto.description.trim();
     if (dto.skills !== undefined) project.skills = dto.skills;
     if (dto.role !== undefined) project.role = dto.role.trim();
+    if (dto.projectType !== undefined) project.projectType = dto.projectType.trim();
+    if (dto.infrastructureSector !== undefined)
+      project.infrastructureSector = dto.infrastructureSector.trim();
+    if (dto.location !== undefined) project.location = dto.location.trim();
+    if (dto.responsibilities !== undefined)
+      project.responsibilities = dto.responsibilities.trim();
+    if (dto.softwareUsed !== undefined) project.softwareUsed = dto.softwareUsed;
     if (dto.startDate !== undefined)
       project.startDate = new Date(dto.startDate);
     if (dto.endDate !== undefined)
@@ -149,6 +192,8 @@ export class ProjectsService {
       }
     }
 
+    this.triggerCandidateMatchInvalidation(userId);
+
     return project;
   }
 
@@ -167,6 +212,7 @@ export class ProjectsService {
     }
 
     await this.projectModel.deleteOne({ _id: project._id });
+    this.triggerCandidateMatchInvalidation(userId);
     return { success: true };
   }
 }

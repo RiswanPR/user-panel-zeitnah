@@ -111,8 +111,15 @@ describe('OpportunitiesService', () => {
       organizationId: orgId,
       title: 'Full Stack Engineer',
       type: OpportunityType.JOB,
-      workMode: WorkMode.REMOTE,
+      description: 'Infrastructure web platform development',
+      discipline: 'Civil Engineering',
+      infrastructureSector: 'Buildings',
+      location: 'Kochi, Kerala',
+      workMode: 'Remote',
+      jobType: 'Full-time',
+      requiredSkills: ['AutoCAD', 'Node.js'],
       experienceLevel: ExperienceLevel.MID,
+      status: OpportunityStatus.PUBLISHED,
     });
 
     expect(res).toBeDefined();

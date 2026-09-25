@@ -479,6 +479,136 @@ export class User {
   })
   profileVisibility!: string;
 
+  // PRIMARY INFRASTRUCTURE DISCIPLINE
+  @Prop({
+    default: '',
+    trim: true,
+  })
+  primaryDiscipline!: string;
+
+  // INFRASTRUCTURE SPECIALIZATIONS
+  @Prop({
+    type: [String],
+    default: [],
+  })
+  specializations!: string[];
+
+  // INFRASTRUCTURE SECTORS
+  @Prop({
+    type: [String],
+    default: [],
+  })
+  infrastructureSectors!: string[];
+
+  // PREFERRED WORK LOCATIONS
+  @Prop({
+    type: [String],
+    default: [],
+  })
+  preferredLocations!: string[];
+
+  // YEARS OF EXPERIENCE IN INFRASTRUCTURE
+  @Prop({
+    type: Number,
+    default: 0,
+    min: 0,
+  })
+  yearsOfExperience!: number;
+
+  // STRUCTURED SKILLS TAXONOMY
+  @Prop({
+    type: {
+      technicalSkills: { type: [String], default: [] },
+      softwareSkills: { type: [String], default: [] },
+      industrySkills: { type: [String], default: [] },
+      professionalSkills: { type: [String], default: [] },
+    },
+    default: {
+      technicalSkills: [],
+      softwareSkills: [],
+      industrySkills: [],
+      professionalSkills: [],
+    },
+  })
+  structuredSkills!: {
+    technicalSkills: string[];
+    softwareSkills: string[];
+    industrySkills: string[];
+    professionalSkills: string[];
+  };
+
+  // CAREER PREFERENCES FOR AI MATCHING
+  @Prop({
+    type: {
+      openToOpportunities: { type: Boolean, default: false },
+      preferredRoles: { type: [String], default: [] },
+      preferredSectors: { type: [String], default: [] },
+      preferredLocations: { type: [String], default: [] },
+      preferredWorkMode: { type: String, default: 'On-site' },
+      preferredEmploymentType: { type: String, default: 'Full-time' },
+      expectedSalaryRange: {
+        min: { type: Number, default: 0 },
+        max: { type: Number, default: 0 },
+        currency: { type: String, default: 'INR' },
+        period: { type: String, default: 'yearly' },
+      },
+      availability: { type: String, default: '' },
+    },
+    default: {
+      openToOpportunities: false,
+      preferredRoles: [],
+      preferredSectors: [],
+      preferredLocations: [],
+      preferredWorkMode: 'On-site',
+      preferredEmploymentType: 'Full-time',
+      expectedSalaryRange: { min: 0, max: 0, currency: 'INR', period: 'yearly' },
+      availability: '',
+    },
+  })
+  careerPreferences!: {
+    openToOpportunities: boolean;
+    preferredRoles: string[];
+    preferredSectors: string[];
+    preferredLocations: string[];
+    preferredWorkMode: string;
+    preferredEmploymentType: string;
+    expectedSalaryRange: {
+      min: number;
+      max: number;
+      currency: string;
+      period: string;
+    };
+    availability: string;
+  };
+
+  // GRANULAR PRIVACY SETTINGS
+  @Prop({
+    type: {
+      experience: { type: String, default: 'PUBLIC' },
+      education: { type: String, default: 'PUBLIC' },
+      projects: { type: String, default: 'PUBLIC' },
+      certifications: { type: String, default: 'PUBLIC' },
+      careerPreferences: { type: String, default: 'PRIVATE' },
+      contactInfo: { type: String, default: 'NETWORK' },
+    },
+    default: {
+      experience: 'PUBLIC',
+      education: 'PUBLIC',
+      projects: 'PUBLIC',
+      certifications: 'PUBLIC',
+      careerPreferences: 'PRIVATE',
+      contactInfo: 'NETWORK',
+    },
+  })
+  privacySettings!: {
+    experience: string;
+    education: string;
+    projects: string;
+    certifications: string;
+    careerPreferences: string;
+    contactInfo: string;
+  };
+
   // MENTORSHIP CONTEXT
   @Prop({
     type: {
@@ -562,6 +692,9 @@ export class User {
         endDate: { type: Date, default: null },
         currentlyActive: { type: Boolean, default: false },
         description: { type: String, default: '' },
+        skillsUsed: { type: [String], default: [] },
+        softwareUsed: { type: [String], default: [] },
+        infrastructureSector: { type: String, default: '' },
       },
     ],
     default: [],
@@ -576,6 +709,9 @@ export class User {
     endDate: Date | null;
     currentlyActive: boolean;
     description: string;
+    skillsUsed?: string[];
+    softwareUsed?: string[];
+    infrastructureSector?: string;
   }>;
 
   // EDUCATION
@@ -616,6 +752,11 @@ export class User {
         expirationDate: { type: Date, default: null },
         credentialId: { type: String, default: '' },
         credentialUrl: { type: String, default: '' },
+        status: {
+          type: String,
+          enum: ['UNVERIFIED', 'VERIFIED'],
+          default: 'UNVERIFIED',
+        },
       },
     ],
     default: [],
@@ -628,6 +769,7 @@ export class User {
     expirationDate: Date | null;
     credentialId: string;
     credentialUrl: string;
+    status?: string;
   }>;
 
   // BIO
@@ -780,3 +922,7 @@ UserSchema.index({
   'gamification.completedClasses': -1,
   createdAt: 1,
 });
+UserSchema.index({ primaryRole: 1 });
+UserSchema.index({ primaryDiscipline: 1 });
+UserSchema.index({ infrastructureSectors: 1 });
+UserSchema.index({ yearsOfExperience: 1 });

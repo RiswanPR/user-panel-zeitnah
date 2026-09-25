@@ -24,46 +24,198 @@ import {
 import { escapeRegex } from '../../common/utils/regex.util';
 
 const DEFAULT_CURATED_SKILLS = [
-  { name: 'JavaScript', category: 'Engineering', aliases: ['JS', 'ES6'] },
-  { name: 'TypeScript', category: 'Engineering', aliases: ['TS'] },
-  { name: 'React', category: 'Engineering', aliases: ['ReactJS', 'React.js'] },
-  { name: 'Node.js', category: 'Engineering', aliases: ['Node', 'NodeJS'] },
-  { name: 'Python', category: 'Engineering', aliases: ['Py'] },
-  { name: 'Next.js', category: 'Engineering', aliases: ['NextJS'] },
-  { name: 'MongoDB', category: 'Engineering', aliases: ['Mongo'] },
-  { name: 'PostgreSQL', category: 'Engineering', aliases: ['Postgres', 'SQL'] },
+  // Infrastructure Software Skills (Canonical + Aliases)
   {
-    name: 'UI/UX Design',
-    category: 'Design',
-    aliases: ['UI Design', 'UX Design', 'Figma'],
-  },
-  { name: 'Product Design', category: 'Design', aliases: ['Design Systems'] },
-  {
-    name: 'Cloud Architecture',
-    category: 'Engineering',
-    aliases: ['AWS', 'GCP', 'DevOps'],
+    name: 'AutoCAD',
+    category: 'Software Skills',
+    aliases: ['CAD', 'Auto CAD', 'Autodesk AutoCAD', '2D CAD'],
   },
   {
-    name: 'Data Science',
-    category: 'Data',
-    aliases: ['Machine Learning', 'Data Analysis'],
+    name: 'Civil 3D',
+    category: 'Software Skills',
+    aliases: ['AutoCAD Civil 3D', 'Civil3D', 'C3D'],
   },
   {
-    name: 'Digital Marketing',
-    category: 'Marketing',
-    aliases: ['SEO', 'Content Strategy'],
+    name: 'Revit',
+    category: 'Software Skills',
+    aliases: ['Autodesk Revit', 'Revit Architecture', 'Revit Structure', 'Revit MEP'],
   },
   {
-    name: 'Project Management',
-    category: 'Management',
-    aliases: ['Agile', 'Scrum'],
+    name: 'Navisworks',
+    category: 'Software Skills',
+    aliases: ['Navisworks Manage', 'Navis', 'Navisworks Freedom'],
   },
   {
-    name: 'Technical Writing',
-    category: 'General',
-    aliases: ['Documentation'],
+    name: 'Primavera P6',
+    category: 'Software Skills',
+    aliases: ['Primavera', 'P6', 'P6 software', 'Primavera-P6', 'Oracle Primavera', 'P6 PPM'],
   },
-  { name: 'Public Speaking', category: 'General', aliases: ['Presentations'] },
+  {
+    name: 'MS Project',
+    category: 'Software Skills',
+    aliases: ['Microsoft Project', 'MSP', 'MS-Project'],
+  },
+  {
+    name: 'STAAD.Pro',
+    category: 'Software Skills',
+    aliases: ['STAAD', 'STAAD Pro', 'StaadPro', 'Bentley STAAD'],
+  },
+  {
+    name: 'ETABS',
+    category: 'Software Skills',
+    aliases: ['CSI ETABS', 'Etabs'],
+  },
+  {
+    name: 'SAP2000',
+    category: 'Software Skills',
+    aliases: ['SAP 2000', 'CSI SAP2000'],
+  },
+  {
+    name: 'Tekla Structures',
+    category: 'Software Skills',
+    aliases: ['Tekla', 'Tekla Structure', 'Trimble Tekla'],
+  },
+  {
+    name: 'GIS',
+    category: 'Software Skills',
+    aliases: ['ArcGIS', 'QGIS', 'Geographic Information Systems'],
+  },
+  {
+    name: 'CostX',
+    category: 'Software Skills',
+    aliases: ['Exactal CostX', 'Cost-X'],
+  },
+  {
+    name: 'Synchro 4D',
+    category: 'Software Skills',
+    aliases: ['Synchro', 'Bentley Synchro', '4D BIM'],
+  },
+  {
+    name: 'Bluebeam Revu',
+    category: 'Software Skills',
+    aliases: ['Bluebeam', 'Revu'],
+  },
+  {
+    name: 'OpenRoads',
+    category: 'Software Skills',
+    aliases: ['Bentley OpenRoads', 'OpenRoads Designer'],
+  },
+  {
+    name: 'Infraworks',
+    category: 'Software Skills',
+    aliases: ['Autodesk Infraworks'],
+  },
+  {
+    name: 'MicroStation',
+    category: 'Software Skills',
+    aliases: ['Bentley MicroStation'],
+  },
+
+  // Technical Skills
+  {
+    name: 'Structural Analysis',
+    category: 'Technical Skills',
+    aliases: ['Structural Design', 'Finite Element Analysis', 'FEA'],
+  },
+  {
+    name: 'Reinforced Concrete Design',
+    category: 'Technical Skills',
+    aliases: ['Concrete Design', 'RCC Design', 'Concrete Technology'],
+  },
+  {
+    name: 'Steel Structure Design',
+    category: 'Technical Skills',
+    aliases: ['Structural Steel', 'Steel Detailing'],
+  },
+  {
+    name: 'Geotechnical Investigation',
+    category: 'Technical Skills',
+    aliases: ['Soil Mechanics', 'Foundation Design', 'Geotech'],
+  },
+  {
+    name: 'Quantity Surveying',
+    category: 'Technical Skills',
+    aliases: ['QS', 'Bill of Quantities', 'BOQ', 'Quantity Estimation', 'Take-offs'],
+  },
+  {
+    name: 'BIM Coordination',
+    category: 'Technical Skills',
+    aliases: ['BIM', 'Clash Detection', 'Building Information Modeling'],
+  },
+  {
+    name: 'MEP Engineering',
+    category: 'Technical Skills',
+    aliases: ['MEP Coordination', 'HVAC Design', 'Plumbing Design'],
+  },
+  {
+    name: 'Highway Alignment & Design',
+    category: 'Technical Skills',
+    aliases: ['Road Design', 'Pavement Design', 'Geometric Design'],
+  },
+  {
+    name: 'Hydraulic Modeling',
+    category: 'Technical Skills',
+    aliases: ['Drainage Design', 'Hydrology', 'Water Network Modeling'],
+  },
+  {
+    name: 'Land & Topographic Surveying',
+    category: 'Technical Skills',
+    aliases: ['Total Station', 'GPS Surveying', 'Leveling'],
+  },
+
+  // Industry Skills
+  {
+    name: 'Site Supervision',
+    category: 'Industry Skills',
+    aliases: ['Site Engineering', 'Site Execution', 'Site Management'],
+  },
+  {
+    name: 'Construction Management',
+    category: 'Industry Skills',
+    aliases: ['Project Execution', 'Site Operations'],
+  },
+  {
+    name: 'Quality Control (QA/QC)',
+    category: 'Industry Skills',
+    aliases: ['QA/QC', 'Quality Assurance', 'Material Testing', 'Inspection & Testing'],
+  },
+  {
+    name: 'Health, Safety & Environment (HSE)',
+    category: 'Industry Skills',
+    aliases: ['Safety / HSE', 'Site Safety', 'OSHA', 'EHS'],
+  },
+  {
+    name: 'Contracts & Procurement',
+    category: 'Industry Skills',
+    aliases: ['FIDIC Contracts', 'Subcontract Management', 'Tender Estimation'],
+  },
+  {
+    name: 'Planning & Scheduling',
+    category: 'Industry Skills',
+    aliases: ['Construction Scheduling', 'Critical Path Method', 'CPM'],
+  },
+
+  // Professional Skills
+  {
+    name: 'Infrastructure Project Management',
+    category: 'Professional Skills',
+    aliases: ['Project Delivery', 'Milestone Management'],
+  },
+  {
+    name: 'Stakeholder Coordination',
+    category: 'Professional Skills',
+    aliases: ['Client Management', 'Inter-disciplinary Coordination'],
+  },
+  {
+    name: 'Vendor & Subcontractor Management',
+    category: 'Professional Skills',
+    aliases: ['Supplier Management', 'Subcontractor Coordination'],
+  },
+  {
+    name: 'Technical Reporting & Documentation',
+    category: 'Professional Skills',
+    aliases: ['Daily Progress Reports', 'DPR', 'Technical Documentation'],
+  },
 ];
 
 @Injectable()
@@ -198,7 +350,11 @@ export class SkillsService implements OnModuleInit {
       .replace(/(^-|-$)/g, '');
 
     let skill = await this.skillModel.findOne({
-      $or: [{ slug }, { name: new RegExp(`^${escapeRegex(cleanName)}$`, 'i') }],
+      $or: [
+        { slug },
+        { name: new RegExp(`^${escapeRegex(cleanName)}$`, 'i') },
+        { aliases: new RegExp(`^${escapeRegex(cleanName)}$`, 'i') },
+      ],
     });
 
     if (!skill) {

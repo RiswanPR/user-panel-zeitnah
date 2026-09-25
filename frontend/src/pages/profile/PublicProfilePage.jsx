@@ -17,6 +17,15 @@ import {
   Check,
   X,
   Flag,
+  Building,
+  Hammer,
+  Cpu,
+  Code2,
+  GraduationCap,
+  Calendar,
+  Lock,
+  BookOpen,
+  Sparkles,
 } from "lucide-react";
 import api from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
@@ -50,16 +59,20 @@ export default function PublicProfilePage() {
   const [recContent, setRecContent] = useState("");
   const [isSubmittingRec, setIsSubmittingRec] = useState(false);
 
+  // Report modal state
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [projects, setProjects] = useState([]);
+
   // Background scroll lock when modal is open
   useEffect(() => {
-    if (isWriteRecOpen || isShareOpen) {
+    if (isWriteRecOpen || isShareOpen || isReportOpen) {
       const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = "hidden";
       return () => {
         document.body.style.overflow = originalOverflow;
       };
     }
-  }, [isWriteRecOpen, isShareOpen]);
+  }, [isWriteRecOpen, isShareOpen, isReportOpen]);
 
   const isOwnProfile = Boolean(
     authUser &&
@@ -68,9 +81,6 @@ export default function PublicProfilePage() {
         authUser.id === student.id ||
         authUser._id === student.id)
   );
-
-  const [isReportOpen, setIsReportOpen] = useState(false);
-  const [projects, setProjects] = useState([]);
 
   useEffect(() => {
     let mounted = true;
@@ -89,15 +99,17 @@ export default function PublicProfilePage() {
         setNotFound(false);
         const res = await api.get(`/profile/u/${encodeURIComponent(targetUsername)}`);
         if (mounted) {
-          setStudent(res.data.user);
+          const userObj = res.data.user;
+          setStudent(userObj);
           setAvatarError(false);
-          // SEO / Document title update
-          document.title = `${res.data.user.name} (@${res.data.user.username}) — Zeitnah Learning & Career Identity`;
+
+          document.title = `${userObj.name} (@${userObj.username}) — Zeitnah Infrastructure Profile`;
 
           // Load user projects
-          if (res.data.user?.id) {
+          const userId = userObj.id || userObj._id;
+          if (userId) {
             projectsService
-              .getUserProjects(res.data.user.id)
+              .getUserProjects(userId)
               .then((data) => {
                 if (mounted && Array.isArray(data)) setProjects(data);
               })
@@ -134,8 +146,8 @@ export default function PublicProfilePage() {
     if (!student) return;
     const shareUrl = `${window.location.origin}/u/${encodeURIComponent(student.username)}`;
     const shareData = {
-      title: `${student.name} — Zeitnah Student Identity`,
-      text: `Check out ${student.name}'s verified student profile on Zeitnah Academy.`,
+      title: `${student.name} — Zeitnah Infrastructure Identity`,
+      text: `View ${student.name}'s verified infrastructure profile on Zeitnah LMS Network.`,
       url: shareUrl,
     };
 
@@ -156,27 +168,23 @@ export default function PublicProfilePage() {
   const handleSubmitRecommendation = async (e) => {
     e.preventDefault();
     if (!recContent.trim() || recContent.trim().length < 20) {
-      return toast.error("Too short", "Recommendation must be at least 20 characters.");
-    }
-    if (!authUser) {
-      return toast.error("Sign in required", "Please sign in to write an endorsement.");
+      return toast.error("Too short", "Endorsement must be at least 20 characters.");
     }
 
     try {
       setIsSubmittingRec(true);
-      const res = await api.post("/profile/recommendations", {
-        recipientId: student.id,
+      await api.post(`/profile/u/${encodeURIComponent(student.username)}/recommend`, {
         relationship: recRelationship,
         content: recContent.trim(),
       });
-      toast.success("Endorsement submitted", res.data.message || "Recommendation submitted for review.");
+      toast.success(
+        "Endorsement submitted",
+        `Your recommendation was sent to ${student.name} for review.`
+      );
       setIsWriteRecOpen(false);
       setRecContent("");
-      // Refresh public profile to include new recommendation if approved
-      const refresh = await api.get(`/profile/u/${encodeURIComponent(targetUsername)}`);
-      setStudent(refresh.data.user);
     } catch (err) {
-      toast.error("Submission failed", err.response?.data?.message || "Could not submit endorsement.");
+      toast.error("Failed to submit", err.response?.data?.message || "Could not submit endorsement.");
     } finally {
       setIsSubmittingRec(false);
     }
@@ -184,50 +192,39 @@ export default function PublicProfilePage() {
 
   if (loading) {
     return (
-      <div className="space-y-6 sm:space-y-8 max-w-5xl mx-auto py-8 px-4 animate-pulse">
-        {authUser && <div className="h-14 bg-bg-card rounded-2xl border border-border-default" />}
-        <div className="h-80 bg-bg-card rounded-3xl border border-border-default" />
-        <div className="h-44 bg-bg-card rounded-2xl border border-border-default" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="h-48 bg-bg-card rounded-2xl border border-border-default" />
-          <div className="h-48 bg-bg-card rounded-2xl border border-border-default" />
-        </div>
+      <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto pb-16 animate-pulse">
+        <div className="h-64 sm:h-80 rounded-3xl bg-bg-card border border-border-default" />
+        <div className="h-44 rounded-3xl bg-bg-card border border-border-default" />
+        <div className="h-64 rounded-3xl bg-bg-card border border-border-default" />
       </div>
     );
   }
 
   if (notFound || !student) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center text-center p-6 bg-bg-base text-white max-w-4xl mx-auto">
-        <div className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-4 text-text-muted">
+      <div className="max-w-2xl mx-auto py-20 px-4 text-center space-y-4">
+        <div className="w-16 h-16 rounded-2xl bg-danger/10 border border-danger/20 text-danger flex items-center justify-center mx-auto">
           <User className="w-8 h-8" />
         </div>
-        <h1 className="text-2xl sm:text-3xl font-heading font-black tracking-tight mb-2">
-          Profile Unavailable
-        </h1>
-        <p className="text-sm text-text-muted max-w-md mb-6 leading-relaxed">
-          This profile could not be found or is no longer available in the Zeitnah network.
+        <h2 className="text-2xl font-heading font-extrabold text-white">
+          Infrastructure Profile Not Found
+        </h2>
+        <p className="text-sm text-text-muted leading-relaxed max-w-md mx-auto">
+          The requested profile @{targetUsername} either does not exist, has changed handle, or has not been published.
         </p>
-        <div className="flex flex-wrap items-center justify-center gap-3">
+        <div className="pt-2">
           <Link
-            to="/network"
-            className="btn-primary inline-flex items-center gap-2 py-2.5 px-6 text-xs uppercase tracking-wider cursor-pointer"
+            to="/profile"
+            className="btn-primary inline-flex items-center gap-2 py-3 px-6 text-xs uppercase tracking-wider cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Network
-          </Link>
-          <Link
-            to="/"
-            className="btn-secondary inline-flex items-center gap-2 py-2.5 px-6 text-xs uppercase tracking-wider cursor-pointer"
-          >
-            Return to Dashboard
+            Return to My Profile
           </Link>
         </div>
       </div>
     );
   }
 
-  const gamification = student.gamification || {};
   const avatarUrl = getUploadUrl(student.avatar);
   const bannerUrl = getUploadUrl(student.backgroundImage);
   const initials = student.name
@@ -237,14 +234,28 @@ export default function PublicProfilePage() {
         .slice(0, 2)
         .join("")
         .toUpperCase()
-    : "ZU";
+    : "U";
+
+  const gamification = student.gamification || {};
+  const structuredSkills = student.structuredSkills || {};
+  const hasStructuredSkills =
+    structuredSkills.software?.length > 0 ||
+    structuredSkills.technical?.length > 0 ||
+    structuredSkills.industry?.length > 0 ||
+    structuredSkills.professional?.length > 0;
+
+  // Privacy filters (respect user's privacySettings unless it's own profile)
+  const isExpVisible = isOwnProfile || student.privacySettings?.experienceVisibility !== "PRIVATE";
+  const isEduVisible = isOwnProfile || student.privacySettings?.educationVisibility !== "PRIVATE";
+  const isProjectsVisible = isOwnProfile || student.privacySettings?.projectsVisibility !== "PRIVATE";
+  const isCertVisible = isOwnProfile || student.privacySettings?.certificationsVisibility !== "PRIVATE";
 
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-5xl mx-auto py-4 sm:py-8 px-4 pb-16">
-      {/* If authenticated user is browsing, show the core profile navigation */}
-      {authUser && <ProfileNav />}
+    <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto pb-16">
+      {/* ── Sub-Navigation Bar ── */}
+      <ProfileNav />
 
-      {/* ── 01. PUBLIC PROFILE HERO ── */}
+      {/* ── 01. PROFILE HEADER: HERO, ROLE & HEADLINE ── */}
       <motion.section
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -253,7 +264,7 @@ export default function PublicProfilePage() {
       >
         <div className="gradient-line-top" />
 
-        {/* Background Cover Image with subtle gradient overlay */}
+        {/* Cover Banner */}
         <div className="relative h-48 sm:h-60 md:h-72 w-full overflow-hidden">
           {bannerUrl ? (
             <img
@@ -266,7 +277,7 @@ export default function PublicProfilePage() {
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(159,213,178,0.12),rgba(255,255,255,0))]" />
               <div className="text-center opacity-30 select-none">
                 <span className="font-mono text-xs uppercase tracking-[0.25em] text-brand-mint font-semibold">
-                  Zeitnah Learning Identity
+                  Zeitnah Infrastructure Network
                 </span>
               </div>
             </div>
@@ -302,7 +313,7 @@ export default function PublicProfilePage() {
                     {student.name}
                   </h1>
                   {student.isVerified && (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-brand-mint/25 bg-brand-mint/10 px-2 py-0.5 text-xs font-bold text-brand-mint">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-brand-mint/25 bg-brand-mint/10 px-2.5 py-0.5 text-xs font-bold text-brand-mint">
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       Verified
                     </span>
@@ -319,10 +330,16 @@ export default function PublicProfilePage() {
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
                   <EcosystemRoleBadge role={student.primaryRole || "STUDENT"} size="sm" />
                   <AvailabilityBadge availability={student.availability} size="sm" />
+                  {student.yearsOfExperience > 0 && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-white/10 bg-white/[0.04] text-[11px] font-mono font-medium text-white/90">
+                      {student.yearsOfExperience}+ Years Exp
+                    </span>
+                  )}
                 </div>
 
+                {/* Professional Headline */}
                 {student.headline && (
-                  <p className="text-sm sm:text-base font-medium text-white/90 max-w-xl leading-relaxed break-words">
+                  <p className="text-sm sm:text-base font-medium text-white/90 max-w-xl leading-relaxed break-words pt-0.5">
                     {student.headline}
                   </p>
                 )}
@@ -340,32 +357,26 @@ export default function PublicProfilePage() {
                       {student.location}
                     </span>
                   )}
-                  {student.industry && (
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-yellow/60" />
-                      {student.industry}
-                    </span>
-                  )}
                 </div>
 
-                {/* ── Network Statistics (Followers, Following, Connections) ── */}
+                {/* Network Statistics */}
                 <div className="pt-3 w-full max-w-md">
                   <ProfileNetworkStats
-                    userIdOrUsername={student.id || student.username}
+                    userIdOrUsername={student.id || student._id || student.username}
                     profileName={student.name}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Level, Rank, XP Badges and Action CTAs */}
+            {/* Level, Rank, XP Badges and CTAs */}
             <div className="flex flex-col items-center md:items-end gap-4 shrink-0 w-full md:w-auto">
               <div className="flex items-center gap-2">
                 <span className="px-3 py-1.5 rounded-xl border border-brand-yellow/20 bg-brand-yellow/10 text-xs font-bold font-mono text-brand-yellow uppercase tracking-wider">
                   LEVEL {gamification.level || 1}
                 </span>
                 <span className="px-3 py-1.5 rounded-xl border border-brand-mint/20 bg-brand-mint/10 text-xs font-bold uppercase tracking-wider text-brand-mint">
-                  {gamification.rank || "Beginner"}
+                  {gamification.rank || "Explorer"}
                 </span>
                 <span className="px-3 py-1.5 rounded-xl border border-white/10 bg-white/[0.03] text-xs font-bold font-mono text-white">
                   {gamification.totalPoints || 0} XP
@@ -388,7 +399,7 @@ export default function PublicProfilePage() {
                     className="btn-primary text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 py-3 px-5 min-h-[44px] cursor-pointer shadow-md flex-1 sm:flex-initial"
                   >
                     <HeartHandshake className="w-4 h-4" />
-                    Write Endorsement
+                    Endorse
                   </button>
                 ) : null}
 
@@ -430,262 +441,188 @@ export default function PublicProfilePage() {
 
       {/* ── 02. ABOUT SECTION ── */}
       {student.bio ? (
-        <section className="w-full max-w-full min-w-0 rounded-3xl border border-border-default bg-bg-card p-5 sm:p-6 md:p-8 space-y-3 sm:space-y-4 shadow-sm">
+        <section className="w-full rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-3 shadow-sm">
           <h2 className="text-base sm:text-lg font-heading font-extrabold text-white flex items-center gap-2">
             <span className="w-1.5 h-4 rounded-full bg-brand-mint shrink-0" />
             About
           </h2>
-          <div className="w-full max-w-[72ch] min-w-0 text-left">
-            <p className="text-sm sm:text-base text-text-secondary leading-relaxed sm:leading-loose whitespace-pre-wrap break-words [overflow-wrap:anywhere] [word-break:break-word] text-left font-normal">
+          <div className="w-full max-w-[72ch] text-left">
+            <p className="text-sm sm:text-base text-text-secondary leading-relaxed sm:leading-loose whitespace-pre-wrap break-words font-normal">
               {student.bio}
             </p>
           </div>
         </section>
       ) : null}
 
-      {/* ── 03. EXPERIENCE SECTION ── */}
-      <section className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-4 shadow-sm">
-        <h2 className="text-lg font-heading font-extrabold text-white flex items-center gap-2">
-          <span className="w-1.5 h-4 rounded-full bg-brand-mint" />
-          Experience
-        </h2>
+      {/* ── 03. INFRASTRUCTURE EXPERTISE ── */}
+      {(student.primaryDiscipline || student.infrastructureSectors?.length > 0 || student.specializations?.length > 0) && (
+        <section className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base sm:text-lg font-heading font-extrabold text-white flex items-center gap-2">
+              <span className="w-1.5 h-4 rounded-full bg-brand-mint shrink-0" />
+              Infrastructure Expertise
+            </h2>
+            {student.primaryDiscipline && (
+              <span className="px-3 py-1 rounded-xl bg-brand-mint/15 border border-brand-mint/30 text-brand-mint text-xs font-bold">
+                {student.primaryDiscipline}
+              </span>
+            )}
+          </div>
 
-        {student.experience?.length > 0 ? (
-          <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-white/[0.08]">
-            {student.experience.map((exp) => (
-              <div key={exp.id} className="relative group">
-                <div className="absolute -left-6 top-1.5 w-3 h-3 rounded-full bg-brand-mint border-2 border-bg-card shadow-sm ring-2 ring-brand-mint/20" />
-
-                <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/[0.05] space-y-1.5">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <span className="text-xs font-mono font-bold text-brand-mint uppercase tracking-wider">
-                      {new Date(exp.startDate).getFullYear()} — {exp.currentlyActive ? "Present" : exp.endDate ? new Date(exp.endDate).getFullYear() : "Present"}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-1">
+            {/* Sectors */}
+            {student.infrastructureSectors?.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-text-secondary block">
+                  Infrastructure Sectors
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {student.infrastructureSectors.map((sector) => (
+                    <span
+                      key={sector}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/[0.03] border border-white/[0.08] text-xs font-medium text-white shadow-sm"
+                    >
+                      <Building className="w-3.5 h-3.5 text-brand-mint" />
+                      <span>{sector}</span>
                     </span>
-                    <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white/[0.04] text-text-muted">
-                      {exp.employmentType}
-                    </span>
-                  </div>
-                  <h3 className="text-base font-bold text-white leading-snug">{exp.role}</h3>
-                  <div className="text-sm font-semibold text-text-secondary">
-                    {exp.organization} {exp.location && `• ${exp.location}`}
-                  </div>
-                  {exp.description && (
-                    <p className="text-xs text-text-secondary leading-relaxed pt-1 whitespace-pre-line">
-                      {exp.description}
-                    </p>
-                  )}
+                  ))}
                 </div>
               </div>
-            ))}
+            )}
+
+            {/* Specializations */}
+            {student.specializations?.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-text-secondary block">
+                  Engineering Specializations
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {student.specializations.map((spec) => (
+                    <span
+                      key={spec}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-brand-mint/10 border border-brand-mint/20 text-xs font-medium text-brand-mint"
+                    >
+                      <Sparkles className="w-3 h-3 text-brand-yellow" />
+                      <span>{spec}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="py-8 text-center border border-dashed border-white/[0.06] rounded-2xl">
-            <p className="text-xs text-text-muted">
-              Add work, internships, projects, or leadership when you're ready.
-            </p>
-          </div>
-        )}
-      </section>
 
-      {/* ── 04. EDUCATION SECTION ── */}
-      <section className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-4 shadow-sm">
-        <h2 className="text-lg font-heading font-extrabold text-white flex items-center gap-2">
-          <span className="w-1.5 h-4 rounded-full bg-brand-mint" />
-          Education
-        </h2>
-
-        {student.education?.length > 0 ? (
-          <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-white/[0.08]">
-            {student.education.map((edu) => (
-              <div key={edu.id} className="relative group">
-                <div className="absolute -left-6 top-1.5 w-3 h-3 rounded-full bg-brand-mint border-2 border-bg-card shadow-sm ring-2 ring-brand-mint/20" />
-
-                <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/[0.05] space-y-1.5">
-                  <span className="text-xs font-mono font-bold text-brand-mint uppercase tracking-wider">
-                    {new Date(edu.startDate).getFullYear()} — {edu.currentlyStudying ? "Present" : edu.endDate ? new Date(edu.endDate).getFullYear() : "Present"}
+          {/* Preferred Locations */}
+          {student.preferredLocations?.length > 0 && (
+            <div className="pt-3 border-t border-white/[0.04] space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-text-secondary block">
+                Target Project / Work Locations
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {student.preferredLocations.map((loc) => (
+                  <span
+                    key={loc}
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-white/[0.02] border border-white/[0.06] text-xs text-text-muted"
+                  >
+                    <MapPin className="w-3 h-3 text-brand-mint" />
+                    <span>{loc}</span>
                   </span>
-                  <h3 className="text-base font-bold text-white leading-snug">{edu.institution}</h3>
-                  <div className="text-sm font-semibold text-text-secondary">
-                    {edu.qualification} {edu.fieldOfStudy && `• ${edu.fieldOfStudy}`}
-                  </div>
-                  {edu.description && (
-                    <p className="text-xs text-text-secondary leading-relaxed pt-1">
-                      {edu.description}
-                    </p>
-                  )}
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="py-8 text-center border border-dashed border-white/[0.06] rounded-2xl">
-            <p className="text-xs text-text-muted">Show your learning journey.</p>
-          </div>
-        )}
-      </section>
-
-      {/* ── PROJECTS & DEMONSTRATIONS SECTION ── */}
-      <section className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-4 shadow-sm">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-heading font-extrabold text-white flex items-center gap-2">
-            <span className="w-1.5 h-4 rounded-full bg-brand-mint" />
-            Projects & Demonstrations
-          </h2>
-          {isOwnProfile && (
-            <Link
-              to="/profile/edit"
-              className="text-xs font-semibold text-mint hover:underline"
-            >
-              + Add Project
-            </Link>
+            </div>
           )}
-        </div>
+        </section>
+      )}
 
-        {projects && projects.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-            {projects.map((proj) => (
-              <div
-                key={proj._id || proj.id}
-                className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.05] space-y-3 flex flex-col justify-between hover:border-mint/30 transition-all shadow-sm"
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <h3 className="text-base font-bold text-white leading-snug">{proj.title}</h3>
-                    {proj.featured && (
-                      <span className="text-[10px] uppercase font-bold text-mint bg-mint/10 px-2 py-0.5 rounded border border-mint/20">
-                        Featured
-                      </span>
-                    )}
-                  </div>
-
-                  {proj.role && (
-                    <span className="text-xs font-medium text-purple-300 block mb-2">
-                      {proj.role}
-                    </span>
-                  )}
-
-                  {proj.description && (
-                    <p className="text-xs text-text-secondary line-clamp-3 leading-relaxed">
-                      {proj.description}
-                    </p>
-                  )}
-
-                  {proj.skills && proj.skills.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      {proj.skills.map((s, idx) => (
-                        <span
-                          key={idx}
-                          className="text-[10px] font-medium px-2 py-0.5 rounded bg-white/5 text-text-muted border border-white/5"
-                        >
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="pt-3 border-t border-white/[0.04] flex items-center gap-3">
-                  {proj.links?.githubUrl && (
-                    <a
-                      href={proj.links.githubUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-mint hover:underline"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                      <span>Code</span>
-                    </a>
-                  )}
-                  {proj.links?.liveDemoUrl && (
-                    <a
-                      href={proj.links.liveDemoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-mint hover:underline"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                      <span>Live Demo</span>
-                    </a>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="py-8 text-center border border-dashed border-white/[0.06] rounded-2xl">
-            <p className="text-xs text-text-muted">
-              Projects demonstrate what you build and provide proof of skills.
-            </p>
-          </div>
-        )}
-      </section>
-
-      {/* ── 05. LICENSES & CERTIFICATIONS ── */}
-      <section className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-4 shadow-sm">
-        <h2 className="text-lg font-heading font-extrabold text-white flex items-center gap-2">
-          <span className="w-1.5 h-4 rounded-full bg-brand-mint" />
-          Licenses & Certifications
+      {/* ── 04. SKILLS & SOFTWARE ── */}
+      <section className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-5 shadow-sm">
+        <h2 className="text-base sm:text-lg font-heading font-extrabold text-white flex items-center gap-2">
+          <span className="w-1.5 h-4 rounded-full bg-brand-mint shrink-0" />
+          Skills & Software Competencies
         </h2>
 
-        {student.certifications?.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-            {student.certifications.map((cert) => (
-              <div
-                key={cert.id}
-                className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/[0.05] space-y-2 flex flex-col justify-between shadow-sm"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold">
-                    {cert.isVerified || cert.issuer?.toLowerCase().includes("zeitnah") ? (
-                      <>
-                        <ShieldCheck className="w-3.5 h-3.5 text-brand-mint" />
-                        <span className="text-brand-mint">Verified by Zeitnah</span>
-                      </>
-                    ) : (
-                      <>
-                        <Award className="w-3.5 h-3.5 text-text-muted" />
-                        <span className="text-text-muted">Credential Record</span>
-                      </>
-                    )}
-                  </div>
-                  <h3 className="text-base font-bold text-white leading-snug break-words">{cert.name}</h3>
-                  <div className="text-xs font-semibold text-text-secondary break-words">{cert.issuer}</div>
-                  <div className="text-[11px] text-text-muted">
-                    Issued {new Date(cert.issueDate).toLocaleDateString(undefined, { month: "short", year: "numeric" })}
-                    {cert.expirationDate && ` • Expires ${new Date(cert.expirationDate).toLocaleDateString(undefined, { month: "short", year: "numeric" })}`}
-                  </div>
-                </div>
-
-                {cert.credentialUrl && (
-                  <div className="pt-2 border-t border-white/[0.04]">
-                    <a
-                      href={cert.credentialUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-brand-mint hover:underline font-semibold cursor-pointer"
+        {hasStructuredSkills ? (
+          <div className="space-y-4">
+            {/* Software Tools */}
+            {structuredSkills.software?.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+                  <Cpu className="w-3.5 h-3.5 text-brand-mint" />
+                  Software & BIM Tools
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {structuredSkills.software.map((tool) => (
+                    <span
+                      key={tool}
+                      className="px-3 py-1.5 rounded-xl bg-brand-mint/10 border border-brand-mint/25 text-xs font-bold text-brand-mint"
                     >
-                      <span>Verify Credential</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-                )}
+                      {tool}
+                    </span>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="py-8 text-center border border-dashed border-white/[0.06] rounded-2xl">
-            <p className="text-xs text-text-muted">Showcase credentials as you earn them.</p>
-          </div>
-        )}
-      </section>
+            )}
 
-      {/* ── 06. SKILLS & COMPETENCIES ── */}
-      {student.skills?.length > 0 && (
-        <section className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-3 shadow-sm">
-          <h2 className="text-lg font-heading font-extrabold text-white flex items-center gap-2">
-            <span className="w-1.5 h-4 rounded-full bg-brand-mint" />
-            Skills & Competencies
-          </h2>
+            {/* Technical Skills */}
+            {structuredSkills.technical?.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+                  <Code2 className="w-3.5 h-3.5 text-brand-yellow" />
+                  Technical & Engineering Calculations
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {structuredSkills.technical.map((sk) => (
+                    <span
+                      key={sk}
+                      className="px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-xs font-medium text-white"
+                    >
+                      {sk}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Industry Standards */}
+            {structuredSkills.industry?.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+                  <Hammer className="w-3.5 h-3.5 text-purple-300" />
+                  Industry Frameworks & Codes
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {structuredSkills.industry.map((ind) => (
+                    <span
+                      key={ind}
+                      className="px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-xs font-medium text-text-secondary"
+                    >
+                      {ind}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Professional Leadership */}
+            {structuredSkills.professional?.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-blue-300" />
+                  Professional & Management
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {structuredSkills.professional.map((p) => (
+                    <span
+                      key={p}
+                      className="px-3 py-1.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs font-medium text-text-muted"
+                    >
+                      {p}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : student.skills?.length > 0 ? (
           <div className="flex flex-wrap gap-2 pt-1">
             {student.skills.map((skill) => (
               <span
@@ -696,13 +633,326 @@ export default function PublicProfilePage() {
               </span>
             ))}
           </div>
+        ) : (
+          <p className="text-xs text-text-muted">No skills listed yet.</p>
+        )}
+      </section>
+
+      {/* ── 05. EXPERIENCE ── */}
+      {isExpVisible ? (
+        <section className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-4 shadow-sm">
+          <h2 className="text-base sm:text-lg font-heading font-extrabold text-white flex items-center gap-2">
+            <span className="w-1.5 h-4 rounded-full bg-brand-mint" />
+            Professional Experience
+          </h2>
+
+          {student.experience?.length > 0 ? (
+            <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-white/[0.08]">
+              {student.experience.map((exp) => (
+                <div key={exp.id} className="relative group">
+                  <div className="absolute -left-6 top-1.5 w-3 h-3 rounded-full bg-brand-mint border-2 border-bg-card shadow-sm ring-2 ring-brand-mint/20" />
+
+                  <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/[0.05] space-y-2">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono font-bold text-brand-mint uppercase tracking-wider">
+                          {new Date(exp.startDate).getFullYear()} — {exp.currentlyActive ? "Present" : exp.endDate ? new Date(exp.endDate).getFullYear() : "Present"}
+                        </span>
+                        <span className="text-xs text-text-faint">•</span>
+                        <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white/[0.04] text-text-muted">
+                          {exp.employmentType}
+                        </span>
+                      </div>
+
+                      {exp.infrastructureSector && (
+                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-brand-mint/10 border border-brand-mint/20 text-brand-mint font-medium">
+                          {exp.infrastructureSector}
+                        </span>
+                      )}
+                    </div>
+
+                    <h3 className="text-base font-bold text-white leading-snug">{exp.role}</h3>
+                    <div className="text-sm font-semibold text-text-secondary">
+                      {exp.organization} {exp.location && `• ${exp.location}`}
+                    </div>
+
+                    {exp.description && (
+                      <p className="text-xs text-text-secondary leading-relaxed pt-1 whitespace-pre-line">
+                        {exp.description}
+                      </p>
+                    )}
+
+                    {(exp.softwareUsed?.length > 0 || exp.skillsUsed?.length > 0) && (
+                      <div className="flex flex-wrap gap-1.5 pt-2">
+                        {exp.softwareUsed?.map((sw) => (
+                          <span key={sw} className="px-2 py-0.5 rounded-md bg-brand-mint/10 text-[11px] text-brand-mint font-medium">
+                            {sw}
+                          </span>
+                        ))}
+                        {exp.skillsUsed?.map((sk) => (
+                          <span key={sk} className="px-2 py-0.5 rounded-md bg-white/[0.04] text-[11px] text-text-secondary">
+                            {sk}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-8 text-center border border-dashed border-white/[0.06] rounded-2xl">
+              <p className="text-xs text-text-muted">
+                No professional experience shared on this profile.
+              </p>
+            </div>
+          )}
+        </section>
+      ) : null}
+
+      {/* ── 06. PROJECTS ── */}
+      {isProjectsVisible ? (
+        <section className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base sm:text-lg font-heading font-extrabold text-white flex items-center gap-2">
+              <span className="w-1.5 h-4 rounded-full bg-brand-mint" />
+              Infrastructure Projects
+            </h2>
+            {isOwnProfile && (
+              <Link
+                to="/profile/edit?section=projects"
+                className="text-xs font-semibold text-brand-mint hover:underline"
+              >
+                + Add Project
+              </Link>
+            )}
+          </div>
+
+          {projects && projects.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+              {projects.map((proj) => (
+                <div
+                  key={proj._id || proj.id}
+                  className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.05] space-y-3 flex flex-col justify-between hover:border-brand-mint/30 transition-all shadow-sm"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-mono font-bold text-brand-mint uppercase tracking-wider">
+                        {proj.infrastructureSector || "Infrastructure"}
+                      </span>
+                      {proj.projectType && (
+                        <span className="text-[10px] uppercase font-bold text-white/80 bg-white/[0.04] px-2 py-0.5 rounded">
+                          {proj.projectType}
+                        </span>
+                      )}
+                    </div>
+
+                    <h3 className="text-base font-bold text-white leading-snug">{proj.title}</h3>
+
+                    {proj.role && (
+                      <span className="text-xs font-medium text-text-secondary block">
+                        Role: {proj.role} {proj.location && `• ${proj.location}`}
+                      </span>
+                    )}
+
+                    {proj.description && (
+                      <p className="text-xs text-text-secondary line-clamp-3 leading-relaxed">
+                        {proj.description}
+                      </p>
+                    )}
+
+                    {proj.responsibilities && (
+                      <p className="text-[11px] text-text-muted line-clamp-2 italic">
+                        {proj.responsibilities}
+                      </p>
+                    )}
+
+                    {/* Software & Skills Used */}
+                    {(proj.softwareUsed?.length > 0 || proj.skills?.length > 0) && (
+                      <div className="flex flex-wrap gap-1.5 pt-2">
+                        {proj.softwareUsed?.map((sw) => (
+                          <span key={sw} className="px-2 py-0.5 rounded bg-brand-mint/10 text-[10px] text-brand-mint font-medium">
+                            {sw}
+                          </span>
+                        ))}
+                        {proj.skills?.map((sk, idx) => (
+                          <span key={idx} className="px-2 py-0.5 rounded bg-white/[0.04] text-[10px] text-text-muted">
+                            {sk}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {(proj.links?.githubUrl || proj.links?.liveDemoUrl) && (
+                    <div className="pt-3 border-t border-white/[0.04] flex items-center gap-3">
+                      {proj.links?.githubUrl && (
+                        <a
+                          href={proj.links.githubUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-brand-mint hover:underline"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          <span>Code</span>
+                        </a>
+                      )}
+                      {proj.links?.liveDemoUrl && (
+                        <a
+                          href={proj.links.liveDemoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-brand-mint hover:underline"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          <span>Case Study</span>
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-8 text-center border border-dashed border-white/[0.06] rounded-2xl">
+              <p className="text-xs text-text-muted">
+                No infrastructure projects listed yet.
+              </p>
+            </div>
+          )}
+        </section>
+      ) : null}
+
+      {/* ── 07. EDUCATION ── */}
+      {isEduVisible ? (
+        <section className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-4 shadow-sm">
+          <h2 className="text-base sm:text-lg font-heading font-extrabold text-white flex items-center gap-2">
+            <span className="w-1.5 h-4 rounded-full bg-brand-mint" />
+            Education & Degrees
+          </h2>
+
+          {student.education?.length > 0 ? (
+            <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-white/[0.08]">
+              {student.education.map((edu) => (
+                <div key={edu.id} className="relative group">
+                  <div className="absolute -left-6 top-1.5 w-3 h-3 rounded-full bg-brand-mint border-2 border-bg-card shadow-sm ring-2 ring-brand-mint/20" />
+
+                  <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/[0.05] space-y-1.5">
+                    <span className="text-xs font-mono font-bold text-brand-mint uppercase tracking-wider">
+                      {new Date(edu.startDate).getFullYear()} — {edu.currentlyStudying ? "Present" : edu.endDate ? new Date(edu.endDate).getFullYear() : "Present"}
+                    </span>
+                    <h3 className="text-base font-bold text-white leading-snug">{edu.institution}</h3>
+                    <div className="text-sm font-semibold text-text-secondary">
+                      {edu.qualification} {edu.fieldOfStudy && `• ${edu.fieldOfStudy}`}
+                    </div>
+                    {edu.description && (
+                      <p className="text-xs text-text-secondary leading-relaxed pt-1">
+                        {edu.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-8 text-center border border-dashed border-white/[0.06] rounded-2xl">
+              <p className="text-xs text-text-muted">No education credentials shared.</p>
+            </div>
+          )}
+        </section>
+      ) : null}
+
+      {/* ── 08. LICENSES & CERTIFICATIONS ── */}
+      {isCertVisible ? (
+        <section className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-4 shadow-sm">
+          <h2 className="text-base sm:text-lg font-heading font-extrabold text-white flex items-center gap-2">
+            <span className="w-1.5 h-4 rounded-full bg-brand-mint" />
+            Licenses & Certifications
+          </h2>
+
+          {student.certifications?.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+              {student.certifications.map((cert) => (
+                <div
+                  key={cert.id}
+                  className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/[0.05] space-y-2 flex flex-col justify-between shadow-sm"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold">
+                      {cert.isVerified || cert.issuer?.toLowerCase().includes("zeitnah") ? (
+                        <>
+                          <ShieldCheck className="w-3.5 h-3.5 text-brand-mint" />
+                          <span className="text-brand-mint">Verified by Zeitnah</span>
+                        </>
+                      ) : (
+                        <>
+                          <Award className="w-3.5 h-3.5 text-text-muted" />
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white/[0.04] text-text-muted border border-white/[0.08]">
+                            Unverified
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    <h3 className="text-base font-bold text-white leading-snug break-words">{cert.name}</h3>
+                    <div className="text-xs font-semibold text-text-secondary break-words">{cert.issuer}</div>
+                    <div className="text-[11px] text-text-muted">
+                      Issued {new Date(cert.issueDate).toLocaleDateString(undefined, { month: "short", year: "numeric" })}
+                      {cert.expirationDate && ` • Expires ${new Date(cert.expirationDate).toLocaleDateString(undefined, { month: "short", year: "numeric" })}`}
+                    </div>
+                  </div>
+
+                  {cert.credentialUrl && (
+                    <div className="pt-2 border-t border-white/[0.04]">
+                      <a
+                        href={cert.credentialUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-brand-mint hover:underline font-semibold cursor-pointer"
+                      >
+                        <span>Verify Credential</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-8 text-center border border-dashed border-white/[0.06] rounded-2xl">
+              <p className="text-xs text-text-muted">No licenses or certifications shared.</p>
+            </div>
+          )}
+        </section>
+      ) : null}
+
+      {/* ── 09. COURSES & ACADEMY LEARNING ── */}
+      {student.courses?.length > 0 && (
+        <section className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-4 shadow-sm">
+          <h2 className="text-base sm:text-lg font-heading font-extrabold text-white flex items-center gap-2">
+            <span className="w-1.5 h-4 rounded-full bg-brand-mint" />
+            Academy Courses & Credentials
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
+            {student.courses.map((course, idx) => (
+              <div
+                key={idx}
+                className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] space-y-1.5 shadow-sm"
+              >
+                <div className="w-8 h-8 rounded-xl bg-brand-mint/15 flex items-center justify-center text-brand-mint mb-2">
+                  <BookOpen className="w-4 h-4" />
+                </div>
+                <h4 className="text-sm font-bold text-white line-clamp-2">{course.title || course.name}</h4>
+                <p className="text-xs text-text-muted">{course.category || "Infrastructure Course"}</p>
+              </div>
+            ))}
+          </div>
         </section>
       )}
 
-      {/* ── 07. VERIFIED ACHIEVEMENTS ── */}
+      {/* ── 10. ACHIEVEMENTS & GAMIFICATION ── */}
       {gamification.achievements?.length > 0 && (
         <section className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-4 shadow-sm">
-          <h2 className="text-lg font-heading font-extrabold text-white flex items-center gap-2">
+          <h2 className="text-base sm:text-lg font-heading font-extrabold text-white flex items-center gap-2">
             <span className="w-1.5 h-4 rounded-full bg-brand-yellow" />
             Verified Achievements
           </h2>
@@ -725,12 +975,12 @@ export default function PublicProfilePage() {
         </section>
       )}
 
-      {/* ── 08. RECOMMENDATIONS ── */}
+      {/* ── 11. RECOMMENDATIONS & ACTIVITY ── */}
       <section className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-4 shadow-sm">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-heading font-extrabold text-white flex items-center gap-2">
+          <h2 className="text-base sm:text-lg font-heading font-extrabold text-white flex items-center gap-2">
             <span className="w-1.5 h-4 rounded-full bg-brand-mint" />
-            Recommendations
+            Peer & Mentor Endorsements
           </h2>
 
           {!isOwnProfile && authUser && (
@@ -740,7 +990,7 @@ export default function PublicProfilePage() {
               className="btn-secondary text-xs uppercase tracking-wider flex items-center gap-1.5 py-1.5 px-3 cursor-pointer shadow-sm"
             >
               <HeartHandshake className="w-3.5 h-3.5" />
-              Write Recommendation
+              Write Endorsement
             </button>
           )}
         </div>
@@ -785,13 +1035,13 @@ export default function PublicProfilePage() {
         ) : (
           <div className="py-8 text-center border border-dashed border-white/[0.06] rounded-2xl">
             <p className="text-xs text-text-muted">
-              Recommendations will appear here when others write one for {student.name}.
+              Endorsements will appear here when mentors, instructors, or peers write one for {student.name}.
             </p>
           </div>
         )}
       </section>
 
-      {/* ── Write Recommendation Modal ── */}
+      {/* ── Endorsement Submission Modal ── */}
       {isWriteRecOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
           <div className="relative w-full max-w-lg rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90dvh] sm:max-h-[85vh] overflow-y-auto overscroll-contain">
@@ -810,22 +1060,23 @@ export default function PublicProfilePage() {
             </div>
 
             <p className="text-xs text-text-muted leading-relaxed">
-              Submit a professional endorsement highlighting {student.name}'s collaboration, technical skills, or learning dedication.
+              Submit a professional endorsement highlighting {student.name}'s infrastructure expertise, project collaboration, or technical problem-solving.
             </p>
 
             <form onSubmit={handleSubmitRecommendation} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
-                  Your Relationship
+                  Your Professional Relationship
                 </label>
                 <select
                   value={recRelationship}
                   onChange={(e) => setRecRelationship(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
                 >
-                  <option value="Peer / Student">Peer / Fellow Student</option>
-                  <option value="Mentor">Mentor</option>
-                  <option value="Instructor">Instructor / Teacher</option>
+                  <option value="Peer / Colleague">Colleague / Peer Engineer</option>
+                  <option value="Mentor">Senior Mentor / Lead</option>
+                  <option value="Project Director">Project Director / Client</option>
+                  <option value="Instructor">Instructor / Professor</option>
                   <option value="Collaborator">Project Collaborator</option>
                   <option value="Other">Other</option>
                 </select>
@@ -833,7 +1084,7 @@ export default function PublicProfilePage() {
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
-                  Recommendation Content (20 - 1000 characters) <span className="text-brand-mint">*</span>
+                  Endorsement Content (20 - 1000 characters) <span className="text-brand-mint">*</span>
                 </label>
                 <textarea
                   rows={5}
@@ -842,7 +1093,7 @@ export default function PublicProfilePage() {
                   required
                   minLength={20}
                   maxLength={1000}
-                  placeholder={`Share specific examples of how ${student.name} excels, collaborates, or solves problems...`}
+                  placeholder={`Share specific examples of ${student.name}'s engineering capabilities, attention to detail, or deliverables...`}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none resize-none"
                 />
                 <div className="flex justify-between text-[11px] text-text-muted mt-1">
@@ -883,7 +1134,7 @@ export default function PublicProfilePage() {
       {isReportOpen && (
         <ReportModal
           targetType="USER"
-          targetId={student.id}
+          targetId={student.id || student._id}
           targetName={student.name}
           onClose={() => setIsReportOpen(false)}
         />

@@ -3,6 +3,7 @@ import { getModelToken } from '@nestjs/mongoose';
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
 import { ProfileService } from './profile.service';
@@ -761,6 +762,243 @@ describe('ProfileService', () => {
       expect(res.published).toBe(true);
       expect(mockUser.publicProfilePublished).toBe(true);
       expect(mockUser.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('Phase 1: Infrastructure Profile & Role System', () => {
+    it('Student can select student role', async () => {
+      const mockUser: any = {
+        _id: 'user_1',
+        primaryRole: 'STUDENT',
+        toObject: () => ({ ...mockUser }),
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      const res = await service.updateProfile('user_1', { primaryRole: 'student' });
+      expect(mockUser.primaryRole).toBe('STUDENT');
+      expect(res.user.primaryRole).toBe('STUDENT');
+    });
+
+    it('Professional can select professional role', async () => {
+      const mockUser: any = {
+        _id: 'user_1',
+        primaryRole: 'STUDENT',
+        toObject: () => ({ ...mockUser }),
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await service.updateProfile('user_1', { primaryRole: 'professional' });
+      expect(mockUser.primaryRole).toBe('PROFESSIONAL');
+    });
+
+    it('Mentor can select mentor role', async () => {
+      const mockUser: any = {
+        _id: 'user_1',
+        primaryRole: 'STUDENT',
+        toObject: () => ({ ...mockUser }),
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await service.updateProfile('user_1', { primaryRole: 'mentor' });
+      expect(mockUser.primaryRole).toBe('MENTOR');
+    });
+
+    it('Recruiter can select recruiter role', async () => {
+      const mockUser: any = {
+        _id: 'user_1',
+        primaryRole: 'STUDENT',
+        toObject: () => ({ ...mockUser }),
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await service.updateProfile('user_1', { primaryRole: 'recruiter' });
+      expect(mockUser.primaryRole).toBe('RECRUITER');
+    });
+
+    it('Founder can select founder role', async () => {
+      const mockUser: any = {
+        _id: 'user_1',
+        primaryRole: 'STUDENT',
+        toObject: () => ({ ...mockUser }),
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await service.updateProfile('user_1', { primaryRole: 'founder' });
+      expect(mockUser.primaryRole).toBe('FOUNDER');
+    });
+
+    it('User cannot assign themselves educator role (rejected with 403 Forbidden)', async () => {
+      const mockUser: any = {
+        _id: 'user_1',
+        primaryRole: 'STUDENT',
+        toObject: () => ({ ...mockUser }),
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await expect(
+        service.updateProfile('user_1', { primaryRole: 'educator' }, 'student'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('Admin can assign educator role to user', async () => {
+      const mockAdmin: any = {
+        _id: 'admin_1',
+        role: 'admin',
+      };
+      const mockTargetUser: any = {
+        _id: 'user_target',
+        username: 'profjohn',
+        primaryRole: 'STUDENT',
+        role: 'student',
+        save: jest.fn().mockResolvedValue(true),
+      };
+
+      mockUserModel.findById
+        .mockResolvedValueOnce(mockAdmin)
+        .mockResolvedValueOnce(mockTargetUser);
+
+      const res = await service.adminAssignRole(
+        'admin_1',
+        'user_target',
+        'educator',
+      );
+
+      expect(res.success).toBe(true);
+      expect(mockTargetUser.primaryRole).toBe('EDUCATOR');
+      expect(mockTargetUser.role).toBe('teacher');
+      expect(mockTargetUser.save).toHaveBeenCalled();
+      expect(mockAuditLogsService.record).toHaveBeenCalled();
+    });
+
+    it('Educator cannot remove or change administrator-assigned role', async () => {
+      const mockEducator: any = {
+        _id: 'user_edu',
+        primaryRole: 'EDUCATOR',
+        toObject: () => ({ ...mockEducator }),
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockEducator);
+
+      await expect(
+        service.updateProfile('user_edu', { primaryRole: 'student' }, 'teacher'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('Invalid role rejected with BadRequestException', async () => {
+      const mockUser: any = {
+        _id: 'user_1',
+        primaryRole: 'STUDENT',
+        toObject: () => ({ ...mockUser }),
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await expect(
+        service.updateProfile('user_1', { primaryRole: 'superman' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('Infrastructure profile fields and career preferences save correctly', async () => {
+      const mockUser: any = {
+        _id: 'user_1',
+        primaryRole: 'STUDENT',
+        toObject: () => ({ ...mockUser }),
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      const res = await service.updateProfile('user_1', {
+        primaryDiscipline: 'Civil Engineering',
+        specializations: ['Structural Engineering', 'BIM'],
+        infrastructureSectors: ['Highways', 'Bridges'],
+        preferredLocations: ['Dubai', 'Mumbai'],
+        yearsOfExperience: 5,
+        careerPreferences: {
+          openToOpportunities: true,
+          preferredRoles: ['Bridge Engineer'],
+          preferredSectors: ['Bridges'],
+          preferredLocations: ['Dubai'],
+          preferredWorkMode: 'On-site',
+          preferredEmploymentType: 'Full-time',
+          expectedSalaryRange: { min: 80000, max: 120000, currency: 'USD', period: 'yearly' },
+          availability: '30 Days',
+        },
+      });
+
+      expect(mockUser.primaryDiscipline).toBe('Civil Engineering');
+      expect(mockUser.specializations).toEqual(['Structural Engineering', 'BIM']);
+      expect(mockUser.infrastructureSectors).toEqual(['Highways', 'Bridges']);
+      expect(mockUser.yearsOfExperience).toBe(5);
+      expect(mockUser.careerPreferences.openToOpportunities).toBe(true);
+      expect(mockUser.careerPreferences.preferredRoles).toEqual(['Bridge Engineer']);
+    });
+
+    it('Private fields are not exposed publicly in getPublicProfile', async () => {
+      const mockUserDoc: any = {
+        _id: 'user_priv',
+        name: 'Private Engineer',
+        username: 'priveng',
+        avatar: '',
+        headline: 'Site Engineer',
+        primaryDiscipline: 'Site Engineering',
+        experience: [{ id: 'exp_1', role: 'Site Engineer', organization: 'Secret Co' }],
+        careerPreferences: { openToOpportunities: true, preferredRoles: ['Project Manager'] },
+        privacySettings: {
+          experience: 'PRIVATE',
+          education: 'PUBLIC',
+          projects: 'PUBLIC',
+          certifications: 'PUBLIC',
+          careerPreferences: 'PRIVATE',
+          contactInfo: 'PRIVATE',
+        },
+        toObject: () => ({
+          _id: 'user_priv',
+          name: 'Private Engineer',
+          username: 'priveng',
+          avatar: '',
+          headline: 'Site Engineer',
+          primaryDiscipline: 'Site Engineering',
+          experience: [{ id: 'exp_1', role: 'Site Engineer', organization: 'Secret Co' }],
+          education: [],
+          certifications: [],
+          careerPreferences: { openToOpportunities: true, preferredRoles: ['Project Manager'] },
+          privacySettings: {
+            experience: 'PRIVATE',
+            education: 'PUBLIC',
+            projects: 'PUBLIC',
+            certifications: 'PUBLIC',
+            careerPreferences: 'PRIVATE',
+            contactInfo: 'PRIVATE',
+          },
+        }),
+      };
+
+      mockUserModel.findOne.mockReturnValue({
+        select: jest.fn().mockResolvedValue(mockUserDoc),
+      });
+
+      const res = await service.getPublicProfile('priveng');
+      // Private experience should not be exposed
+      expect(res.user.experience).toEqual([]);
+      // Private career preferences should not be exposed
+      expect(res.user.careerPreferences).toBeNull();
+      // Public discipline should be present
+      expect(res.user.primaryDiscipline).toBe('Site Engineering');
     });
   });
 });

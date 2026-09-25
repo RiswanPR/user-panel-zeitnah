@@ -33,38 +33,40 @@ import {
   ShieldCheck,
   ChevronRight,
   AlertTriangle,
+  Hammer,
+  Cpu,
+  Lock,
 } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
 import { coreProfileService } from "../../services/coreProfileService";
+import { projectsService } from "../../services/projectsService";
 import { useToast } from "../../components/ui/Toast";
 import ChangeUsernameModal from "../../components/username/ChangeUsernameModal";
 import ProfileNav from "../../components/profile/ProfileNav";
 import { getUploadUrl } from "../../utils/courseUi";
 import ImageEditorModal from "../../components/common/ImageEditorModal";
+import RoleSelector from "../../components/profile/RoleSelector";
+import InfrastructureExpertiseSection from "../../components/profile/InfrastructureExpertiseSection";
+import StructuredSkillsEditor from "../../components/profile/StructuredSkillsEditor";
+import CareerPreferencesSection from "../../components/profile/CareerPreferencesSection";
+import ProjectEditorModal from "../../components/profile/ProjectEditorModal";
+import {
+  INFRASTRUCTURE_SECTORS,
+  INFRASTRUCTURE_SOFTWARE,
+} from "../../constants/infrastructureTaxonomy";
 
 const MAX_BIO_LENGTH = 1000;
-const MAX_SKILLS = 25;
-
-const POPULAR_SKILLS = [
-  "JavaScript",
-  "TypeScript",
-  "React",
-  "Node.js",
-  "Python",
-  "Tailwind CSS",
-  "Docker",
-  "SQL",
-  "Git",
-  "Figma",
-];
 
 const SECTION_CONFIG = [
-  { id: "introduction", label: "Identity & Cover", icon: User, xp: 45 },
-  { id: "about", label: "About Story", icon: FileText, xp: 15 },
+  { id: "basic-info", label: "Basic Information", icon: User, xp: 45 },
+  { id: "professional-identity", label: "Professional Identity", icon: Briefcase, xp: 25 },
+  { id: "infrastructure-expertise", label: "Infrastructure Expertise", icon: Building, xp: 30 },
+  { id: "skills", label: "Skills & Software", icon: Code2, xp: 20 },
   { id: "experience", label: "Experience", icon: Briefcase, xp: 20 },
+  { id: "projects", label: "Projects", icon: Hammer, xp: 25 },
   { id: "education", label: "Education", icon: GraduationCap, xp: 20 },
   { id: "certifications", label: "Certifications", icon: Award, xp: 15 },
-  { id: "skills", label: "Skills", icon: Code2, xp: 15 },
+  { id: "career-preferences", label: "Career & Privacy", icon: ShieldCheck, xp: 20 },
   { id: "recommendations", label: "Recommendations", icon: HeartHandshake, xp: 0 },
   { id: "public-profile", label: "Public Profile Setup", icon: Globe, xp: 50 },
 ];
@@ -79,26 +81,66 @@ export default function EditProfile() {
   const avatarFileRef = useRef(null);
   const bannerFileRef = useRef(null);
 
-  const currentSectionParam = searchParams.get("section") || "introduction";
-  const [activeSection, setActiveSection] = useState(currentSectionParam);
+  // Normalize section parameter with legacy aliases
+  const rawSectionParam = searchParams.get("section") || "basic-info";
+  const normalizedSection =
+    rawSectionParam === "introduction" || rawSectionParam === "about"
+      ? "basic-info"
+      : rawSectionParam;
+
+  const [activeSection, setActiveSection] = useState(normalizedSection);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isChangeUsernameOpen, setIsChangeUsernameOpen] = useState(false);
 
-  // Form states
+  // Form states: Basic & Identity
   const [name, setName] = useState("");
   const [headline, setHeadline] = useState("");
   const [currentRole, setCurrentRole] = useState("");
   const [location, setLocation] = useState("");
   const [industry, setIndustry] = useState("");
   const [bio, setBio] = useState("");
-  const [skills, setSkills] = useState([]);
-  const [skillInput, setSkillInput] = useState("");
 
-  // Network 3.0 Ecosystem Identity & Privacy states
+  // Role & Infrastructure states
   const [primaryRole, setPrimaryRole] = useState("STUDENT");
   const [availability, setAvailability] = useState("NOT_CURRENTLY_AVAILABLE");
   const [discoverableToRecruiters, setDiscoverableToRecruiters] = useState(false);
   const [profileVisibility, setProfileVisibility] = useState("PUBLIC");
+
+  const [primaryDiscipline, setPrimaryDiscipline] = useState("");
+  const [specializations, setSpecializations] = useState([]);
+  const [infrastructureSectors, setInfrastructureSectors] = useState([]);
+  const [preferredLocations, setPreferredLocations] = useState([]);
+  const [yearsOfExperience, setYearsOfExperience] = useState(0);
+
+  // Structured Skills states
+  const [structuredSkills, setStructuredSkills] = useState({
+    technical: [],
+    software: [],
+    industry: [],
+    professional: [],
+  });
+  const [flatSkills, setFlatSkills] = useState([]);
+
+  // Career Preferences & Privacy
+  const [careerPreferences, setCareerPreferences] = useState({
+    openToOpportunities: false,
+    preferredRoles: [],
+    preferredInfrastructureSectors: [],
+    preferredLocations: [],
+    preferredWorkMode: "Hybrid",
+    preferredEmploymentType: "Full-time",
+    expectedSalaryRange: { min: 0, max: 0, currency: "USD" },
+    availability: "Immediate",
+  });
+
+  const [privacySettings, setPrivacySettings] = useState({
+    experienceVisibility: "PUBLIC",
+    educationVisibility: "PUBLIC",
+    projectsVisibility: "PUBLIC",
+    certificationsVisibility: "PUBLIC",
+    careerPreferencesVisibility: "PRIVATE",
+    contactInfoVisibility: "PRIVATE",
+  });
 
   // Unsaved changes tracking
   const [isDirty, setIsDirty] = useState(false);
@@ -117,7 +159,16 @@ export default function EditProfile() {
     endDate: "",
     currentlyActive: false,
     description: "",
+    infrastructureSector: "Buildings",
+    skillsUsed: [],
+    softwareUsed: [],
   });
+  const [expSkillInput, setExpSkillInput] = useState("");
+  const [expSoftwareInput, setExpSoftwareInput] = useState("");
+
+  // Projects modal state
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
 
   // Education modal state
   const [isEduModalOpen, setIsEduModalOpen] = useState(false);
@@ -144,9 +195,9 @@ export default function EditProfile() {
     credentialUrl: "",
   });
 
-  // Recommendation request state
+  // Recommendation & Image editor state
   const [isReqRecModalOpen, setIsReqRecModalOpen] = useState(false);
-  const [editingImage, setEditingImage] = useState(null); // { file, type: 'avatar' | 'banner' }
+  const [editingImage, setEditingImage] = useState(null);
 
   // TanStack Query for initial profile data
   const {
@@ -160,12 +211,23 @@ export default function EditProfile() {
     queryFn: coreProfileService.getMyProfile,
   });
 
+  // Query for user's projects
+  const {
+    data: projectsData,
+    refetch: refetchProjects,
+  } = useQuery({
+    queryKey: ["projects", "my"],
+    queryFn: projectsService.getMyProjects,
+  });
+
+  const myProjects = Array.isArray(projectsData) ? projectsData : [];
   const profile = data?.user || authUser;
   const completion = data?.completion;
 
   useEffect(() => {
     if (searchParams.get("section")) {
-      setActiveSection(searchParams.get("section"));
+      const s = searchParams.get("section");
+      setActiveSection(s === "introduction" || s === "about" ? "basic-info" : s);
     }
   }, [searchParams]);
 
@@ -177,16 +239,56 @@ export default function EditProfile() {
       setLocation(profile.location || "");
       setIndustry(profile.industry || "");
       setBio(profile.bio || "");
-      setSkills(Array.isArray(profile.skills) ? profile.skills : []);
       setPrimaryRole(profile.primaryRole || "STUDENT");
       setAvailability(profile.availability || "NOT_CURRENTLY_AVAILABLE");
       setDiscoverableToRecruiters(Boolean(profile.discoverableToRecruiters));
       setProfileVisibility(profile.profileVisibility || "PUBLIC");
+
+      setPrimaryDiscipline(profile.primaryDiscipline || "");
+      setSpecializations(Array.isArray(profile.specializations) ? profile.specializations : []);
+      setInfrastructureSectors(Array.isArray(profile.infrastructureSectors) ? profile.infrastructureSectors : []);
+      setPreferredLocations(Array.isArray(profile.preferredLocations) ? profile.preferredLocations : []);
+      setYearsOfExperience(profile.yearsOfExperience || 0);
+
+      if (profile.structuredSkills) {
+        setStructuredSkills({
+          technical: Array.isArray(profile.structuredSkills.technical) ? profile.structuredSkills.technical : [],
+          software: Array.isArray(profile.structuredSkills.software) ? profile.structuredSkills.software : [],
+          industry: Array.isArray(profile.structuredSkills.industry) ? profile.structuredSkills.industry : [],
+          professional: Array.isArray(profile.structuredSkills.professional) ? profile.structuredSkills.professional : [],
+        });
+      }
+      setFlatSkills(Array.isArray(profile.skills) ? profile.skills : []);
+
+      if (profile.careerPreferences) {
+        setCareerPreferences({
+          openToOpportunities: Boolean(profile.careerPreferences.openToOpportunities),
+          preferredRoles: Array.isArray(profile.careerPreferences.preferredRoles) ? profile.careerPreferences.preferredRoles : [],
+          preferredInfrastructureSectors: Array.isArray(profile.careerPreferences.preferredInfrastructureSectors) ? profile.careerPreferences.preferredInfrastructureSectors : [],
+          preferredLocations: Array.isArray(profile.careerPreferences.preferredLocations) ? profile.careerPreferences.preferredLocations : [],
+          preferredWorkMode: profile.careerPreferences.preferredWorkMode || "Hybrid",
+          preferredEmploymentType: profile.careerPreferences.preferredEmploymentType || "Full-time",
+          expectedSalaryRange: profile.careerPreferences.expectedSalaryRange || { min: 0, max: 0, currency: "USD" },
+          availability: profile.careerPreferences.availability || "Immediate",
+        });
+      }
+
+      if (profile.privacySettings) {
+        setPrivacySettings({
+          experienceVisibility: profile.privacySettings.experienceVisibility || "PUBLIC",
+          educationVisibility: profile.privacySettings.educationVisibility || "PUBLIC",
+          projectsVisibility: profile.privacySettings.projectsVisibility || "PUBLIC",
+          certificationsVisibility: profile.privacySettings.certificationsVisibility || "PUBLIC",
+          careerPreferencesVisibility: profile.privacySettings.careerPreferencesVisibility || "PRIVATE",
+          contactInfoVisibility: profile.privacySettings.contactInfoVisibility || "PRIVATE",
+        });
+      }
+
       setIsDirty(false);
     }
   }, [profile]);
 
-  // Mobile ergonomics & background scroll lock when any modal is open
+  // Modal scroll lock
   useEffect(() => {
     const isAnyModalOpen =
       isUnsavedModalOpen ||
@@ -195,6 +297,7 @@ export default function EditProfile() {
       isCertModalOpen ||
       isReqRecModalOpen ||
       isChangeUsernameOpen ||
+      isProjectModalOpen ||
       Boolean(editingImage);
 
     if (isAnyModalOpen) {
@@ -211,10 +314,10 @@ export default function EditProfile() {
     isCertModalOpen,
     isReqRecModalOpen,
     isChangeUsernameOpen,
+    isProjectModalOpen,
     editingImage,
   ]);
 
-  // Handle section switching with unsaved changes safeguard
   const handleSelectSection = (id) => {
     if (id === activeSection) return;
     if (isDirty) {
@@ -227,16 +330,7 @@ export default function EditProfile() {
   };
 
   const handleConfirmDiscard = () => {
-    // Reset dirty fields back to original profile data
-    if (profile) {
-      setName(profile.name || "");
-      setHeadline(profile.headline || "");
-      setCurrentRole(profile.currentRole || "");
-      setLocation(profile.location || "");
-      setIndustry(profile.industry || "");
-      setBio(profile.bio || "");
-      setSkills(Array.isArray(profile.skills) ? profile.skills : []);
-    }
+    refetch();
     setIsDirty(false);
     setIsUnsavedModalOpen(false);
     if (pendingSectionSwitch === "navigate-back") {
@@ -257,7 +351,6 @@ export default function EditProfile() {
     navigate("/profile");
   };
 
-  // Helper for celebrating newly awarded milestones
   const notifyMilestones = (newlyAwarded) => {
     if (newlyAwarded?.length) {
       newlyAwarded.forEach((m) => {
@@ -266,7 +359,7 @@ export default function EditProfile() {
     }
   };
 
-  // Profile Update Mutation (Identity, About, Skills)
+  // Comprehensive profile mutation
   const updateMutation = useMutation({
     mutationFn: (payload) => coreProfileService.updateMyProfile(payload),
     onSuccess: (res) => {
@@ -284,6 +377,7 @@ export default function EditProfile() {
         headline: res.user?.headline,
         bio: res.user?.bio,
         skills: res.user?.skills,
+        primaryRole: res.user?.primaryRole,
       });
 
       setIsDirty(false);
@@ -313,11 +407,7 @@ export default function EditProfile() {
       notifyMilestones(res.newlyAwarded);
     },
     onError: (err) => {
-      if (err.response?.status === 413) {
-        toast.error("Upload failed", "That image is too large to upload. Try a smaller crop or lower image quality.");
-      } else {
-        toast.error("Upload failed", err.response?.data?.message || "Could not upload photo.");
-      }
+      toast.error("Upload failed", err.response?.data?.message || "Could not upload photo.");
     },
   });
 
@@ -337,24 +427,19 @@ export default function EditProfile() {
       notifyMilestones(res.newlyAwarded);
     },
     onError: (err) => {
-      if (err.response?.status === 413) {
-        toast.error("Upload failed", "That image is too large to upload. Try a smaller crop or lower image quality.");
-      } else {
-        toast.error("Upload failed", err.response?.data?.message || "Could not upload cover.");
-      }
+      toast.error("Upload failed", err.response?.data?.message || "Could not upload cover.");
     },
   });
 
   // Remove Banner Mutation
   const removeBannerMutation = useMutation({
     mutationFn: () => coreProfileService.removeBackground(),
-    onSuccess: (res) => {
+    onSuccess: () => {
       queryClient.setQueryData(["profile", "me"], (old) => {
         if (!old?.user) return old;
         return {
           ...old,
           user: { ...old.user, backgroundImage: "" },
-          completion: res.completion || old.completion,
         };
       });
       toast.success("Cover removed", "Background cover has been reset.");
@@ -416,6 +501,34 @@ export default function EditProfile() {
       toast.success("Experience deleted", res.message);
     },
     onError: (err) => toast.error("Failed to delete", err.response?.data?.message),
+  });
+
+  // Project Mutations
+  const saveProjectMutation = useMutation({
+    mutationFn: (payload) => {
+      if (editingProject?.id || editingProject?._id) {
+        return projectsService.updateProject(editingProject.id || editingProject._id, payload);
+      }
+      return projectsService.createProject(payload);
+    },
+    onSuccess: () => {
+      toast.success("Project saved", "Infrastructure project updated successfully.");
+      refetchProjects();
+      refetch();
+      setIsProjectModalOpen(false);
+      setEditingProject(null);
+    },
+    onError: (err) => toast.error("Project error", err.response?.data?.message || "Failed to save project."),
+  });
+
+  const deleteProjectMutation = useMutation({
+    mutationFn: (id) => projectsService.deleteProject(id),
+    onSuccess: () => {
+      toast.success("Project removed", "Infrastructure project deleted.");
+      refetchProjects();
+      refetch();
+    },
+    onError: (err) => toast.error("Failed to delete project", err.response?.data?.message),
   });
 
   // Education Mutations
@@ -526,25 +639,7 @@ export default function EditProfile() {
     onError: (err) => toast.error("Failed to delete", err.response?.data?.message),
   });
 
-  // Public Profile Publish State Mutation
-  const publishMutation = useMutation({
-    mutationFn: (published) => coreProfileService.setPublicProfilePublishState(published),
-    onSuccess: (res) => {
-      queryClient.setQueryData(["profile", "me"], (old) => {
-        if (!old?.user) return old;
-        return {
-          ...old,
-          user: { ...old.user, publicProfilePublished: res.published },
-          completion: res.completion || old.completion,
-        };
-      });
-      toast.success(res.published ? "Profile published!" : "Profile unpublished", res.message);
-      notifyMilestones(res.newlyAwarded);
-    },
-    onError: (err) => toast.error("Action failed", err.response?.data?.message),
-  });
-
-  // Recommendations Query
+  // Recommendations query
   const { data: recData, refetch: refetchRecs } = useQuery({
     queryKey: ["profile", "recommendations"],
     queryFn: coreProfileService.getRecommendations,
@@ -572,6 +667,24 @@ export default function EditProfile() {
     onError: (err) => toast.error("Failed", err.response?.data?.message),
   });
 
+  // Public Profile Publish State Mutation
+  const publishMutation = useMutation({
+    mutationFn: (published) => coreProfileService.setPublicProfilePublishState(published),
+    onSuccess: (res) => {
+      queryClient.setQueryData(["profile", "me"], (old) => {
+        if (!old?.user) return old;
+        return {
+          ...old,
+          user: { ...old.user, publicProfilePublished: res.published },
+          completion: res.completion || old.completion,
+        };
+      });
+      toast.success(res.published ? "Profile published!" : "Profile unpublished", res.message);
+      notifyMilestones(res.newlyAwarded);
+    },
+    onError: (err) => toast.error("Action failed", err.response?.data?.message),
+  });
+
   const resetExpForm = () => {
     setExpForm({
       organization: "",
@@ -582,7 +695,12 @@ export default function EditProfile() {
       endDate: "",
       currentlyActive: false,
       description: "",
+      infrastructureSector: "Buildings",
+      skillsUsed: [],
+      softwareUsed: [],
     });
+    setExpSkillInput("");
+    setExpSoftwareInput("");
     setEditingExpId(null);
   };
 
@@ -611,34 +729,10 @@ export default function EditProfile() {
     setEditingCertId(null);
   };
 
-  const handleAddSkill = (skillToAdd) => {
-    const trimmed = (skillToAdd || skillInput).trim();
-    if (!trimmed) return;
-
-    if (skills.length >= MAX_SKILLS) {
-      return toast.error("Limit reached", `You can add at most ${MAX_SKILLS} skills.`);
-    }
-
-    if (skills.some((s) => s.toLowerCase() === trimmed.toLowerCase())) {
-      return toast.error("Duplicate skill", "This skill has already been added.");
-    }
-
-    const updated = [...skills, trimmed];
-    setSkills(updated);
-    setSkillInput("");
-    updateMutation.mutate({ skills: updated });
-  };
-
-  const handleRemoveSkill = (skillToRemove) => {
-    const updated = skills.filter((s) => s !== skillToRemove);
-    setSkills(updated);
-    updateMutation.mutate({ skills: updated });
-  };
-
+  // Image Upload Handlers
   const handleAvatarUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (file.size > 25 * 1024 * 1024) {
       return toast.error("File too large", "Avatar image must be under 25 MB.");
     }
@@ -646,7 +740,6 @@ export default function EditProfile() {
     if (!allowedTypes.includes(file.type)) {
       return toast.error("Invalid format", "Only JPG, PNG, and WebP images are permitted.");
     }
-
     setEditingImage({ file, type: "avatar" });
     e.target.value = "";
   };
@@ -654,7 +747,6 @@ export default function EditProfile() {
   const handleBannerUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (file.size > 30 * 1024 * 1024) {
       return toast.error("File too large", "Banner image must be under 30 MB.");
     }
@@ -662,36 +754,67 @@ export default function EditProfile() {
     if (!allowedTypes.includes(file.type)) {
       return toast.error("Invalid format", "Only JPG, PNG, and WebP images are permitted.");
     }
-
     setEditingImage({ file, type: "banner" });
     e.target.value = "";
   };
 
-  const handleSaveIdentity = (e) => {
+  // Save Handlers for sections
+  const handleSaveBasicInfo = (e) => {
     e.preventDefault();
     if (!name.trim()) {
       return toast.error("Name required", "Please enter your full name.");
     }
+    if (bio.length > MAX_BIO_LENGTH) {
+      return toast.error("Too long", `About story must not exceed ${MAX_BIO_LENGTH} characters.`);
+    }
+
     updateMutation.mutate({
       name: name.trim(),
+      location: location.trim(),
+      bio: bio.trim(),
+    });
+  };
+
+  const handleSaveProfessionalIdentity = (e) => {
+    e.preventDefault();
+    updateMutation.mutate({
       headline: headline.trim(),
       currentRole: currentRole.trim(),
-      location: location.trim(),
-      industry: industry.trim(),
       primaryRole,
       availability,
+      yearsOfExperience: Number(yearsOfExperience) || 0,
+      preferredLocations,
       discoverableToRecruiters,
       profileVisibility,
     });
   };
 
-  const handleSaveAbout = (e) => {
+  const handleSaveInfrastructure = (e) => {
     e.preventDefault();
-    if (bio.length > MAX_BIO_LENGTH) {
-      return toast.error("Too long", `About story must not exceed ${MAX_BIO_LENGTH} characters.`);
-    }
     updateMutation.mutate({
-      bio: bio.trim(),
+      primaryDiscipline,
+      specializations,
+      infrastructureSectors,
+      preferredLocations,
+      yearsOfExperience: Number(yearsOfExperience) || 0,
+    });
+  };
+
+  const handleSaveSkills = (e) => {
+    e.preventDefault();
+    updateMutation.mutate({
+      structuredSkills,
+      skills: flatSkills,
+    });
+  };
+
+  const handleSaveCareerPreferences = (e) => {
+    e.preventDefault();
+    updateMutation.mutate({
+      careerPreferences,
+      privacySettings,
+      discoverableToRecruiters,
+      profileVisibility,
     });
   };
 
@@ -766,30 +889,38 @@ export default function EditProfile() {
 
   const avatarUrl = getUploadUrl(profile?.avatar);
   const bannerUrl = getUploadUrl(profile?.backgroundImage);
+  const isAssignedEducator = profile?.primaryRole === "EDUCATOR" || profile?.role === "educator";
 
-  // Section completion status helpers
+  // Section completion status helper
   const getSectionStatus = (secId) => {
     if (!profile) return "not-started";
     switch (secId) {
-      case "introduction":
-        if (profile.avatar && profile.headline && (profile.location || profile.industry || profile.currentRole)) {
-          return "complete";
-        }
-        if (profile.avatar || profile.headline) return "in-progress";
+      case "basic-info":
+        if (profile.name && profile.avatar && profile.bio) return "complete";
+        if (profile.name || profile.avatar) return "in-progress";
         return "not-started";
-      case "about":
-        if (profile.bio && profile.bio.trim().length >= 20) return "complete";
-        if (profile.bio && profile.bio.trim().length > 0) return "in-progress";
+      case "professional-identity":
+        if (profile.headline && profile.primaryRole) return "complete";
+        if (profile.headline || profile.primaryRole) return "in-progress";
+        return "not-started";
+      case "infrastructure-expertise":
+        if (profile.primaryDiscipline && (profile.infrastructureSectors?.length > 0 || profile.specializations?.length > 0)) return "complete";
+        if (profile.primaryDiscipline) return "in-progress";
+        return "not-started";
+      case "skills":
+        if (flatSkills.length >= 3) return "complete";
+        if (flatSkills.length > 0) return "in-progress";
         return "not-started";
       case "experience":
         return Array.isArray(profile.experience) && profile.experience.length > 0 ? "complete" : "not-started";
+      case "projects":
+        return myProjects.length > 0 ? "complete" : "not-started";
       case "education":
         return Array.isArray(profile.education) && profile.education.length > 0 ? "complete" : "not-started";
       case "certifications":
         return Array.isArray(profile.certifications) && profile.certifications.length > 0 ? "complete" : "not-started";
-      case "skills":
-        if (Array.isArray(profile.skills) && profile.skills.length >= 3) return "complete";
-        if (Array.isArray(profile.skills) && profile.skills.length > 0) return "in-progress";
+      case "career-preferences":
+        if (profile.careerPreferences?.preferredRoles?.length > 0) return "complete";
         return "not-started";
       case "recommendations":
         return recommendations.length > 0 ? "complete" : "not-started";
@@ -813,17 +944,17 @@ export default function EditProfile() {
           <button
             type="button"
             onClick={handleReturnToOverview}
-            className="p-2.5 rounded-xl border border-border-default bg-bg-card hover:bg-white/[0.04] text-text-muted hover:text-white transition-colors cursor-pointer shadow-sm"
+            className="p-2.5 rounded-xl border border-border-default bg-bg-card hover:bg-white/[0.04] text-text-muted hover:text-white transition-colors cursor-pointer shadow-sm min-h-[44px] min-w-[44px] flex items-center justify-center"
             title="Return to Profile Overview"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
             <h1 className="font-heading font-black text-2xl sm:text-3xl text-white tracking-tight leading-none">
-              Guided Profile Editor
+              Infrastructure Profile Editor
             </h1>
             <p className="text-xs sm:text-sm text-text-muted mt-1">
-              Build your verified personal learning identity through guided sections
+              Curate your professional engineering, construction, and infrastructure identity
             </p>
           </div>
         </div>
@@ -832,19 +963,19 @@ export default function EditProfile() {
           <button
             type="button"
             onClick={() => setIsPreviewOpen(!isPreviewOpen)}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer min-h-[44px] ${
               isPreviewOpen
                 ? "bg-brand-mint/15 border border-brand-mint text-brand-mint shadow-[0_0_15px_rgba(159,213,178,0.15)]"
                 : "bg-bg-card border border-border-default text-text-muted hover:text-white"
             }`}
           >
             <Eye className="w-3.5 h-3.5" />
-            {isPreviewOpen ? "Hide Live Preview" : "Show Live Preview"}
+            {isPreviewOpen ? "Hide Preview" : "Live Preview"}
           </button>
 
           <Link
             to="/public-profile"
-            className="btn-secondary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer"
+            className="btn-secondary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer min-h-[44px]"
           >
             <ExternalLink className="w-3.5 h-3.5" />
             View Public
@@ -858,7 +989,7 @@ export default function EditProfile() {
         <div className="lg:col-span-4 space-y-3">
           <div className="rounded-3xl border border-border-default bg-bg-card p-3 sm:p-4 space-y-1 shadow-sm">
             <div className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-text-faint">
-              Identity Sections
+              Profile Sections
             </div>
 
             {SECTION_CONFIG.map((sec) => {
@@ -871,7 +1002,7 @@ export default function EditProfile() {
                   key={sec.id}
                   type="button"
                   onClick={() => handleSelectSection(sec.id)}
-                  className={`w-full flex items-center justify-between p-3 rounded-2xl text-left transition-all cursor-pointer ${
+                  className={`w-full flex items-center justify-between p-3 rounded-2xl text-left transition-all cursor-pointer min-h-[44px] ${
                     isActive
                       ? "bg-brand-mint/10 border border-brand-mint/25 text-white font-bold shadow-sm"
                       : "text-text-muted hover:text-white hover:bg-white/[0.03] border border-transparent"
@@ -891,7 +1022,6 @@ export default function EditProfile() {
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    {/* Tripartite status badge */}
                     <span
                       className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
                         status === "complete"
@@ -937,8 +1067,8 @@ export default function EditProfile() {
 
         {/* Center / Main Editing Area */}
         <div className={isPreviewOpen ? "lg:col-span-4" : "lg:col-span-8"}>
-          {/* SECTION 1: IDENTITY & INTRODUCTION */}
-          {activeSection === "introduction" && (
+          {/* SECTION 1: BASIC INFORMATION */}
+          {activeSection === "basic-info" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -947,14 +1077,14 @@ export default function EditProfile() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <h2 className="text-xl font-heading font-extrabold text-white">
-                    Identity & Cover
+                    Basic Information
                   </h2>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
-                    +45 Potential XP
+                    +45 XP
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
-                  Upload your recognizable profile photo, cover banner, and specify your current focus.
+                  Set your profile photo, cover banner, full name, base location, and professional biography.
                 </p>
               </div>
 
@@ -978,7 +1108,7 @@ export default function EditProfile() {
                       type="button"
                       onClick={() => bannerFileRef.current?.click()}
                       disabled={bannerMutation.isPending}
-                      className="btn-secondary text-xs py-2 px-3.5 flex items-center gap-1.5 cursor-pointer shadow-md"
+                      className="btn-secondary text-xs py-2 px-3.5 flex items-center gap-1.5 cursor-pointer shadow-md min-h-[44px]"
                     >
                       <Camera className="w-3.5 h-3.5 text-brand-mint" />
                       Upload Banner
@@ -988,7 +1118,7 @@ export default function EditProfile() {
                         type="button"
                         onClick={() => removeBannerMutation.mutate()}
                         disabled={removeBannerMutation.isPending}
-                        className="btn-danger text-xs py-2 px-3.5 flex items-center gap-1.5 cursor-pointer shadow-md"
+                        className="btn-danger text-xs py-2 px-3.5 flex items-center gap-1.5 cursor-pointer shadow-md min-h-[44px]"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         Remove
@@ -1036,7 +1166,7 @@ export default function EditProfile() {
                 <div>
                   <h4 className="text-sm font-bold text-white">Profile Photo</h4>
                   <p className="text-xs text-text-muted mt-0.5 leading-relaxed">
-                    JPG, PNG, or WebP under 5 MB. Make your identity recognizable to peers and mentors.
+                    JPG, PNG, or WebP under 25 MB. Represents your verified infrastructure identity.
                   </p>
                   <button
                     type="button"
@@ -1049,8 +1179,7 @@ export default function EditProfile() {
                 </div>
               </div>
 
-              {/* Form Fields */}
-              <form onSubmit={handleSaveIdentity} className="space-y-4 pt-2">
+              <form onSubmit={handleSaveBasicInfo} className="space-y-4 pt-2">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
                     Full Name <span className="text-brand-mint">*</span>
@@ -1070,7 +1199,97 @@ export default function EditProfile() {
 
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
-                    Headline
+                    Current Location
+                  </label>
+                  <input
+                    type="text"
+                    value={location}
+                    onChange={(e) => {
+                      setLocation(e.target.value);
+                      setIsDirty(true);
+                    }}
+                    className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors"
+                    placeholder="e.g. Dubai, United Arab Emirates"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
+                    About / Bio Summary
+                  </label>
+                  <textarea
+                    value={bio}
+                    onChange={(e) => {
+                      setBio(e.target.value);
+                      setIsDirty(true);
+                    }}
+                    rows={6}
+                    maxLength={MAX_BIO_LENGTH}
+                    className="w-full px-4 py-3 rounded-2xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors resize-none leading-relaxed"
+                    placeholder="Tell your professional infrastructure story: your background, major projects, technical focus, and areas of engineering passion..."
+                  />
+                  <div className="flex justify-between text-xs text-text-muted mt-1 px-1">
+                    <span>Authentic overview of your engineering trajectory.</span>
+                    <span className={bio.length > MAX_BIO_LENGTH - 50 ? "text-danger font-bold" : ""}>
+                      {bio.length} / {MAX_BIO_LENGTH}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-3 flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={updateMutation.isPending}
+                    className="btn-primary text-xs uppercase tracking-wider flex items-center gap-2 py-3 px-6 cursor-pointer shadow-md min-h-[44px]"
+                  >
+                    {updateMutation.isPending ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    Save Basic Information
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          )}
+
+          {/* SECTION 2: PROFESSIONAL IDENTITY */}
+          {activeSection === "professional-identity" && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-6 shadow-sm"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <h2 className="text-xl font-heading font-extrabold text-white">
+                    Professional Identity & Role
+                  </h2>
+                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
+                    +25 XP
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
+                  Establish your infrastructure ecosystem role, headline, availability, and job title.
+                </p>
+              </div>
+
+              <form onSubmit={handleSaveProfessionalIdentity} className="space-y-6">
+                {/* Controlled Role Selector */}
+                <RoleSelector
+                  value={primaryRole}
+                  onChange={(newRole) => {
+                    setPrimaryRole(newRole);
+                    setIsDirty(true);
+                  }}
+                  isAssignedEducator={isAssignedEducator}
+                />
+
+                {/* Headline */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
+                    Professional Headline <span className="text-brand-mint">*</span>
                   </label>
                   <input
                     type="text"
@@ -1079,19 +1298,19 @@ export default function EditProfile() {
                       setHeadline(e.target.value);
                       setIsDirty(true);
                     }}
-                    maxLength={120}
+                    maxLength={140}
                     className="w-full px-4 py-3 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors"
-                    placeholder="e.g. Student Developer | Passionate about Full Stack & Cloud"
+                    placeholder="e.g. Planning Engineer | Primavera P6 & BIM Specialist | Metro & Rail Infrastructure"
                   />
                   <span className="text-[11px] text-text-muted mt-1 block">
-                    A short, memorable sentence summarizing who you are.
+                    Concise summary displayed in network search and profile hero.
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
-                      Current Role <span className="text-text-faint font-normal">(Optional)</span>
+                      Current Position / Title
                     </label>
                     <input
                       type="text"
@@ -1101,124 +1320,27 @@ export default function EditProfile() {
                         setIsDirty(true);
                       }}
                       className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors"
-                      placeholder="e.g. Student / Intern"
+                      placeholder="e.g. Senior Structural Engineer"
                     />
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
-                      Location <span className="text-text-faint font-normal">(Optional)</span>
+                      Availability Status
                     </label>
-                    <input
-                      type="text"
-                      value={location}
+                    <select
+                      value={availability}
                       onChange={(e) => {
-                        setLocation(e.target.value);
+                        setAvailability(e.target.value);
                         setIsDirty(true);
                       }}
-                      className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors"
-                      placeholder="e.g. Kerala, India"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
-                      Industry <span className="text-text-faint font-normal">(Optional)</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={industry}
-                      onChange={(e) => {
-                        setIndustry(e.target.value);
-                        setIsDirty(true);
-                      }}
-                      className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors"
-                      placeholder="e.g. Technology"
-                    />
-                  </div>
-                </div>
-
-                {/* Ecosystem Role, Availability & Privacy */}
-                <div className="pt-2 border-t border-border-default/50 space-y-4">
-                  <div className="text-xs font-bold uppercase tracking-wider text-brand-mint/90 flex items-center gap-2">
-                    <span>Ecosystem Identity & Privacy</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
-                        Primary Role
-                      </label>
-                      <select
-                        value={primaryRole}
-                        onChange={(e) => {
-                          setPrimaryRole(e.target.value);
-                          setIsDirty(true);
-                        }}
-                        className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors cursor-pointer"
-                      >
-                        <option value="STUDENT">Student</option>
-                        <option value="EDUCATOR">Educator</option>
-                        <option value="PROFESSIONAL">Professional</option>
-                        <option value="MENTOR">Mentor</option>
-                        <option value="RECRUITER">Recruiter</option>
-                        <option value="FOUNDER">Founder</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
-                        Availability Status
-                      </label>
-                      <select
-                        value={availability}
-                        onChange={(e) => {
-                          setAvailability(e.target.value);
-                          setIsDirty(true);
-                        }}
-                        className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors cursor-pointer"
-                      >
-                        <option value="NOT_CURRENTLY_AVAILABLE">Not Currently Available</option>
-                        <option value="OPEN_TO_OPPORTUNITIES">Open to Opportunities</option>
-                        <option value="AVAILABLE_FOR_MENTORSHIP">Available for Mentorship</option>
-                        <option value="AVAILABLE_FOR_COLLABORATION">Available for Collaboration</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
-                        Profile Visibility
-                      </label>
-                      <select
-                        value={profileVisibility}
-                        onChange={(e) => {
-                          setProfileVisibility(e.target.value);
-                          setIsDirty(true);
-                        }}
-                        className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors cursor-pointer"
-                      >
-                        <option value="PUBLIC">Public</option>
-                        <option value="NETWORK">Network Only</option>
-                        <option value="VERIFIED_RECRUITERS">Verified Recruiters Only</option>
-                        <option value="PRIVATE">Private</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 p-3 rounded-xl bg-bg-elevated/60 border border-border-default/60">
-                    <input
-                      type="checkbox"
-                      id="discoverableToRecruiters"
-                      checked={discoverableToRecruiters}
-                      onChange={(e) => {
-                        setDiscoverableToRecruiters(e.target.checked);
-                        setIsDirty(true);
-                      }}
-                      className="w-4 h-4 rounded border-border-default text-brand-mint focus:ring-brand-mint bg-bg-elevated cursor-pointer"
-                    />
-                    <label htmlFor="discoverableToRecruiters" className="text-xs text-text-secondary cursor-pointer select-none">
-                      <span className="font-semibold text-white">Recruiter Discovery:</span> Allow verified partner companies, startups, and institutions to discover my profile for internship and job opportunities.
-                    </label>
+                      className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors cursor-pointer"
+                    >
+                      <option value="NOT_CURRENTLY_AVAILABLE">Not Currently Available</option>
+                      <option value="OPEN_TO_OPPORTUNITIES">Open to Opportunities</option>
+                      <option value="AVAILABLE_FOR_MENTORSHIP">Available for Mentorship</option>
+                      <option value="AVAILABLE_FOR_COLLABORATION">Available for Collaboration</option>
+                    </select>
                   </div>
                 </div>
 
@@ -1226,22 +1348,22 @@ export default function EditProfile() {
                   <button
                     type="submit"
                     disabled={updateMutation.isPending}
-                    className="btn-primary text-xs uppercase tracking-wider flex items-center gap-2 py-3 px-6 cursor-pointer shadow-md"
+                    className="btn-primary text-xs uppercase tracking-wider flex items-center gap-2 py-3 px-6 cursor-pointer shadow-md min-h-[44px]"
                   >
                     {updateMutation.isPending ? (
                       <RefreshCw className="w-4 h-4 animate-spin" />
                     ) : (
                       <Save className="w-4 h-4" />
                     )}
-                    Save Identity Details
+                    Save Professional Identity
                   </button>
                 </div>
               </form>
             </motion.div>
           )}
 
-          {/* SECTION 2: ABOUT STORY */}
-          {activeSection === "about" && (
+          {/* SECTION 3: INFRASTRUCTURE EXPERTISE */}
+          {activeSection === "infrastructure-expertise" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1250,57 +1372,99 @@ export default function EditProfile() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <h2 className="text-xl font-heading font-extrabold text-white">
-                    About Story
+                    Infrastructure Expertise & Taxonomy
                   </h2>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
-                    +15 XP
+                    +30 XP
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
-                  Tell people what you are learning, building, or working toward. Avoid corporate jargon.
+                  Specify your primary engineering discipline, specialized niches, and targeted infrastructure sectors.
                 </p>
               </div>
 
-              <form onSubmit={handleSaveAbout} className="space-y-4">
-                <div className="relative">
-                  <textarea
-                    value={bio}
-                    onChange={(e) => {
-                      setBio(e.target.value);
-                      setIsDirty(true);
-                    }}
-                    rows={8}
-                    maxLength={MAX_BIO_LENGTH}
-                    className="w-full px-4 py-3.5 rounded-2xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors resize-none leading-relaxed"
-                    placeholder="Tell people what you're learning, building, or working toward. E.g. I am a student developer learning full-stack development on Zeitnah Academy. Passionate about React, cloud systems, and building tools that make a real difference..."
-                  />
-                  <div className="flex justify-between text-xs text-text-muted mt-1.5 px-1">
-                    <span>Write from your own authentic perspective.</span>
-                    <span className={bio.length > MAX_BIO_LENGTH - 50 ? "text-danger font-bold" : ""}>
-                      {bio.length} / {MAX_BIO_LENGTH}
-                    </span>
-                  </div>
-                </div>
+              <form onSubmit={handleSaveInfrastructure} className="space-y-6">
+                <InfrastructureExpertiseSection
+                  primaryDiscipline={primaryDiscipline}
+                  setPrimaryDiscipline={setPrimaryDiscipline}
+                  specializations={specializations}
+                  setSpecializations={setSpecializations}
+                  infrastructureSectors={infrastructureSectors}
+                  setInfrastructureSectors={setInfrastructureSectors}
+                  yearsOfExperience={yearsOfExperience}
+                  setYearsOfExperience={setYearsOfExperience}
+                  preferredLocations={preferredLocations}
+                  setPreferredLocations={setPreferredLocations}
+                  onChangeDirty={() => setIsDirty(true)}
+                />
 
-                <div className="pt-2 flex justify-end">
+                <div className="pt-3 flex justify-end">
                   <button
                     type="submit"
                     disabled={updateMutation.isPending}
-                    className="btn-primary text-xs uppercase tracking-wider flex items-center gap-2 py-3 px-6 cursor-pointer shadow-md"
+                    className="btn-primary text-xs uppercase tracking-wider flex items-center gap-2 py-3 px-6 cursor-pointer shadow-md min-h-[44px]"
                   >
                     {updateMutation.isPending ? (
                       <RefreshCw className="w-4 h-4 animate-spin" />
                     ) : (
                       <Save className="w-4 h-4" />
                     )}
-                    Save About Story
+                    Save Infrastructure Expertise
                   </button>
                 </div>
               </form>
             </motion.div>
           )}
 
-          {/* SECTION 3: EXPERIENCE */}
+          {/* SECTION 4: SKILLS & SOFTWARE */}
+          {activeSection === "skills" && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-6 shadow-sm"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <h2 className="text-xl font-heading font-extrabold text-white">
+                    Structured Skills & Software
+                  </h2>
+                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
+                    +20 XP (3+ Skills)
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
+                  Organized across Software Tools, Technical Calculations, Industry Standards, and Professional Leadership.
+                </p>
+              </div>
+
+              <form onSubmit={handleSaveSkills} className="space-y-6">
+                <StructuredSkillsEditor
+                  structuredSkills={structuredSkills}
+                  setStructuredSkills={setStructuredSkills}
+                  flatSkills={flatSkills}
+                  setFlatSkills={setFlatSkills}
+                  onChangeDirty={() => setIsDirty(true)}
+                />
+
+                <div className="pt-3 flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={updateMutation.isPending}
+                    className="btn-primary text-xs uppercase tracking-wider flex items-center gap-2 py-3 px-6 cursor-pointer shadow-md min-h-[44px]"
+                  >
+                    {updateMutation.isPending ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    Save Skills & Software
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          )}
+
+          {/* SECTION 5: EXPERIENCE */}
           {activeSection === "experience" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -1310,10 +1474,10 @@ export default function EditProfile() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-heading font-extrabold text-white">
-                    Experience
+                    Professional Experience
                   </h2>
                   <p className="text-xs sm:text-sm text-text-muted mt-0.5">
-                    Add work, internships, freelance, volunteering, projects, or leadership roles.
+                    Engineering, site supervision, consultancy, internship, and project management roles.
                   </p>
                 </div>
                 <button
@@ -1322,23 +1486,21 @@ export default function EditProfile() {
                     resetExpForm();
                     setIsExpModalOpen(true);
                   }}
-                  className="btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer shadow-sm"
+                  className="btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer shadow-sm min-h-[44px]"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add Experience
                 </button>
               </div>
 
-              {/* Polished Timeline Cards */}
               {profile?.experience?.length > 0 ? (
                 <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-white/[0.08]">
                   {profile.experience.map((exp) => (
                     <div key={exp.id} className="relative group">
-                      {/* Timeline Bullet Node */}
                       <div className="absolute -left-6 top-1.5 w-3 h-3 rounded-full bg-brand-mint border-2 border-bg-card shadow-sm ring-2 ring-brand-mint/20" />
 
                       <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/25 transition-all flex items-start justify-between gap-4">
-                        <div className="space-y-1 min-w-0">
+                        <div className="space-y-1.5 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs font-mono font-bold text-brand-mint uppercase tracking-wider">
                               {new Date(exp.startDate).getFullYear()} — {exp.currentlyActive ? "Present" : exp.endDate ? new Date(exp.endDate).getFullYear() : "Present"}
@@ -1347,6 +1509,11 @@ export default function EditProfile() {
                             <span className="text-xs px-2 py-0.5 rounded bg-white/[0.04] text-text-muted uppercase font-bold">
                               {exp.employmentType}
                             </span>
+                            {exp.infrastructureSector && (
+                              <span className="text-xs px-2 py-0.5 rounded bg-brand-mint/10 text-brand-mint border border-brand-mint/20 font-medium">
+                                {exp.infrastructureSector}
+                              </span>
+                            )}
                           </div>
 
                           <h4 className="text-base font-bold text-white leading-snug">{exp.role}</h4>
@@ -1359,6 +1526,22 @@ export default function EditProfile() {
                               {exp.description}
                             </p>
                           )}
+
+                          {/* Software & Skills Used Chips */}
+                          {(exp.softwareUsed?.length > 0 || exp.skillsUsed?.length > 0) && (
+                            <div className="flex flex-wrap gap-1.5 pt-2">
+                              {exp.softwareUsed?.map((sw) => (
+                                <span key={sw} className="px-2 py-0.5 rounded-md bg-white/[0.04] text-[11px] text-brand-mint font-medium">
+                                  {sw}
+                                </span>
+                              ))}
+                              {exp.skillsUsed?.map((sk) => (
+                                <span key={sk} className="px-2 py-0.5 rounded-md bg-white/[0.02] text-[11px] text-text-secondary">
+                                  {sk}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-1 shrink-0">
@@ -1367,18 +1550,21 @@ export default function EditProfile() {
                             onClick={() => {
                               setEditingExpId(exp.id);
                               setExpForm({
-                                organization: exp.organization,
-                                role: exp.role,
+                                organization: exp.organization || "",
+                                role: exp.role || "",
                                 employmentType: exp.employmentType || "Full-time",
                                 location: exp.location || "",
                                 startDate: exp.startDate ? new Date(exp.startDate).toISOString().split("T")[0] : "",
                                 endDate: exp.endDate ? new Date(exp.endDate).toISOString().split("T")[0] : "",
                                 currentlyActive: Boolean(exp.currentlyActive),
                                 description: exp.description || "",
+                                infrastructureSector: exp.infrastructureSector || "Buildings",
+                                skillsUsed: Array.isArray(exp.skillsUsed) ? exp.skillsUsed : [],
+                                softwareUsed: Array.isArray(exp.softwareUsed) ? exp.softwareUsed : [],
                               });
                               setIsExpModalOpen(true);
                             }}
-                            className="p-2 rounded-lg text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer"
+                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer"
                             title="Edit"
                           >
                             <Pencil className="w-3.5 h-3.5" />
@@ -1386,7 +1572,7 @@ export default function EditProfile() {
                           <button
                             type="button"
                             onClick={() => deleteExpMutation.mutate(exp.id)}
-                            className="p-2 rounded-lg text-text-muted hover:text-danger hover:bg-white/[0.04] transition-colors cursor-pointer"
+                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-danger hover:bg-white/[0.04] transition-colors cursor-pointer"
                             title="Delete"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1397,18 +1583,169 @@ export default function EditProfile() {
                   ))}
                 </div>
               ) : (
-                <div className="py-12 px-4 rounded-2xl border border-dashed border-white/[0.08] text-center">
-                  <Briefcase className="w-8 h-8 text-text-faint mx-auto mb-2" />
-                  <h4 className="text-sm font-bold text-white">No experience added yet</h4>
-                  <p className="text-xs text-text-muted max-w-sm mx-auto mt-1">
-                    Add work, internships, volunteering, projects, or leadership experience when you are ready.
+                <div className="py-12 px-4 rounded-2xl border border-dashed border-white/[0.08] text-center space-y-3">
+                  <Briefcase className="w-8 h-8 text-text-faint mx-auto mb-1" />
+                  <h4 className="text-sm font-bold text-white">No experience added yet.</h4>
+                  <p className="text-xs text-text-muted max-w-sm mx-auto">
+                    Add your professional experience so your infrastructure profile is more complete.
                   </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      resetExpForm();
+                      setIsExpModalOpen(true);
+                    }}
+                    className="btn-primary text-xs uppercase tracking-wider inline-flex items-center gap-1.5 py-2.5 px-4 cursor-pointer min-h-[44px]"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add Experience
+                  </button>
                 </div>
               )}
             </motion.div>
           )}
 
-          {/* SECTION 4: EDUCATION */}
+          {/* SECTION 6: PROJECTS */}
+          {activeSection === "projects" && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-6 shadow-sm"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-heading font-extrabold text-white">
+                    Infrastructure Projects
+                  </h2>
+                  <p className="text-xs sm:text-sm text-text-muted mt-0.5">
+                    Civil structures, highways, bridges, metro rails, water treatment, and mega-projects.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingProject(null);
+                    setIsProjectModalOpen(true);
+                  }}
+                  className="btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer shadow-sm min-h-[44px]"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Project
+                </button>
+              </div>
+
+              {myProjects.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4">
+                  {myProjects.map((proj) => {
+                    const pId = proj.id || proj._id;
+                    return (
+                      <div
+                        key={pId}
+                        className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/25 transition-all flex flex-col justify-between gap-3 shadow-sm"
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-mono font-bold text-brand-mint uppercase tracking-wider">
+                                {proj.infrastructureSector || "Infrastructure"}
+                              </span>
+                              <span className="text-xs text-text-faint">•</span>
+                              <span className="text-xs px-2 py-0.5 rounded bg-white/[0.04] text-text-muted font-bold">
+                                {proj.projectType || "Infrastructure"}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingProject(proj);
+                                  setIsProjectModalOpen(true);
+                                }}
+                                className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-brand-mint cursor-pointer"
+                                title="Edit project"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => deleteProjectMutation.mutate(pId)}
+                                className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-danger cursor-pointer"
+                                title="Delete project"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <h4 className="text-base font-bold text-white">{proj.title}</h4>
+                          {proj.role && (
+                            <div className="text-sm font-semibold text-text-secondary">
+                              Role: {proj.role} {proj.location && `• ${proj.location}`}
+                            </div>
+                          )}
+
+                          {proj.description && (
+                            <p className="text-xs text-text-muted leading-relaxed whitespace-pre-line">
+                              {proj.description}
+                            </p>
+                          )}
+
+                          {proj.responsibilities && (
+                            <div className="pt-1">
+                              <span className="text-[11px] font-bold uppercase tracking-wider text-text-faint block mb-1">
+                                Deliverables & Responsibilities:
+                              </span>
+                              <p className="text-xs text-text-secondary leading-relaxed whitespace-pre-line">
+                                {proj.responsibilities}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Software & Skills Used */}
+                          {(proj.softwareUsed?.length > 0 || proj.skills?.length > 0) && (
+                            <div className="flex flex-wrap gap-1.5 pt-2">
+                              {proj.softwareUsed?.map((sw) => (
+                                <span key={sw} className="px-2 py-0.5 rounded-md bg-brand-mint/10 border border-brand-mint/20 text-[11px] text-brand-mint font-medium">
+                                  {sw}
+                                </span>
+                              ))}
+                              {proj.skills?.map((sk) => (
+                                <span key={sk} className="px-2 py-0.5 rounded-md bg-white/[0.04] text-[11px] text-text-secondary">
+                                  {sk}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="py-12 px-4 rounded-2xl border border-dashed border-white/[0.08] text-center space-y-3">
+                  <Hammer className="w-8 h-8 text-text-faint mx-auto mb-1" />
+                  <h4 className="text-sm font-bold text-white">No projects yet.</h4>
+                  <p className="text-xs text-text-muted max-w-sm mx-auto">
+                    Show the infrastructure projects you've worked on.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingProject(null);
+                      setIsProjectModalOpen(true);
+                    }}
+                    className="btn-primary text-xs uppercase tracking-wider inline-flex items-center gap-1.5 py-2.5 px-4 cursor-pointer min-h-[44px]"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add Project
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {/* SECTION 7: EDUCATION */}
           {activeSection === "education" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -1421,7 +1758,7 @@ export default function EditProfile() {
                     Education
                   </h2>
                   <p className="text-xs sm:text-sm text-text-muted mt-0.5">
-                    Showcase your academic journey, degrees, bootcamps, and studies.
+                    Degrees, diplomas, and engineering academic qualifications.
                   </p>
                 </div>
                 <button
@@ -1430,7 +1767,7 @@ export default function EditProfile() {
                     resetEduForm();
                     setIsEduModalOpen(true);
                   }}
-                  className="btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer shadow-sm"
+                  className="btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer shadow-sm min-h-[44px]"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add Education
@@ -1441,7 +1778,6 @@ export default function EditProfile() {
                 <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-white/[0.08]">
                   {profile.education.map((edu) => (
                     <div key={edu.id} className="relative group">
-                      {/* Timeline Bullet Node */}
                       <div className="absolute -left-6 top-1.5 w-3 h-3 rounded-full bg-brand-mint border-2 border-bg-card shadow-sm ring-2 ring-brand-mint/20" />
 
                       <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/25 transition-all flex items-start justify-between gap-4">
@@ -1478,7 +1814,7 @@ export default function EditProfile() {
                               });
                               setIsEduModalOpen(true);
                             }}
-                            className="p-2 rounded-lg text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer"
+                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer"
                             title="Edit"
                           >
                             <Pencil className="w-3.5 h-3.5" />
@@ -1486,7 +1822,7 @@ export default function EditProfile() {
                           <button
                             type="button"
                             onClick={() => deleteEduMutation.mutate(edu.id)}
-                            className="p-2 rounded-lg text-text-muted hover:text-danger hover:bg-white/[0.04] transition-colors cursor-pointer"
+                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-danger hover:bg-white/[0.04] transition-colors cursor-pointer"
                             title="Delete"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1499,16 +1835,16 @@ export default function EditProfile() {
               ) : (
                 <div className="py-12 px-4 rounded-2xl border border-dashed border-white/[0.08] text-center">
                   <GraduationCap className="w-8 h-8 text-text-faint mx-auto mb-2" />
-                  <h4 className="text-sm font-bold text-white">Show your learning journey</h4>
+                  <h4 className="text-sm font-bold text-white">Show your engineering education</h4>
                   <p className="text-xs text-text-muted max-w-sm mx-auto mt-1">
-                    Add your school, college, or academy education credentials.
+                    Add your university, engineering college, or polytechnic credentials.
                   </p>
                 </div>
               )}
             </motion.div>
           )}
 
-          {/* SECTION 5: LICENSES & CERTIFICATIONS */}
+          {/* SECTION 8: CERTIFICATIONS */}
           {activeSection === "certifications" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -1521,7 +1857,7 @@ export default function EditProfile() {
                     Licenses & Certifications
                   </h2>
                   <p className="text-xs sm:text-sm text-text-muted mt-0.5">
-                    Highlight your verified certifications, professional badges, or credentials.
+                    PE, PMP, Autodesk Certified Professional, Primavera P6, and safety certifications.
                   </p>
                 </div>
                 <button
@@ -1530,7 +1866,7 @@ export default function EditProfile() {
                     resetCertForm();
                     setIsCertModalOpen(true);
                   }}
-                  className="btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer shadow-sm"
+                  className="btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer shadow-sm min-h-[44px]"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add Certificate
@@ -1554,7 +1890,9 @@ export default function EditProfile() {
                           ) : (
                             <>
                               <Award className="w-3.5 h-3.5 text-text-muted" />
-                              <span className="text-text-muted">Credential Record</span>
+                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white/[0.04] text-text-muted border border-white/[0.08]">
+                                Unverified
+                              </span>
                             </>
                           )}
                         </div>
@@ -1601,7 +1939,7 @@ export default function EditProfile() {
                               });
                               setIsCertModalOpen(true);
                             }}
-                            className="p-1.5 rounded-lg text-text-muted hover:text-brand-mint cursor-pointer"
+                            className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-brand-mint cursor-pointer"
                             title="Edit"
                           >
                             <Pencil className="w-3.5 h-3.5" />
@@ -1609,7 +1947,7 @@ export default function EditProfile() {
                           <button
                             type="button"
                             onClick={() => deleteCertMutation.mutate(cert.id)}
-                            className="p-1.5 rounded-lg text-text-muted hover:text-danger cursor-pointer"
+                            className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-danger cursor-pointer"
                             title="Delete"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1620,19 +1958,30 @@ export default function EditProfile() {
                   ))}
                 </div>
               ) : (
-                <div className="py-12 px-4 rounded-2xl border border-dashed border-white/[0.08] text-center">
-                  <Award className="w-8 h-8 text-text-faint mx-auto mb-2" />
-                  <h4 className="text-sm font-bold text-white">Showcase your credentials</h4>
-                  <p className="text-xs text-text-muted max-w-sm mx-auto mt-1">
-                    Add certificates from Zeitnah Academy, cloud providers, or professional organizations.
+                <div className="py-12 px-4 rounded-2xl border border-dashed border-white/[0.08] text-center space-y-3">
+                  <Award className="w-8 h-8 text-text-faint mx-auto mb-1" />
+                  <h4 className="text-sm font-bold text-white">No certifications yet.</h4>
+                  <p className="text-xs text-text-muted max-w-sm mx-auto">
+                    Add certifications to strengthen your professional profile.
                   </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      resetCertForm();
+                      setIsCertModalOpen(true);
+                    }}
+                    className="btn-primary text-xs uppercase tracking-wider inline-flex items-center gap-1.5 py-2.5 px-4 cursor-pointer min-h-[44px]"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add Certification
+                  </button>
                 </div>
               )}
             </motion.div>
           )}
 
-          {/* SECTION 6: SKILLS */}
-          {activeSection === "skills" && (
+          {/* SECTION 9: CAREER PREFERENCES & PRIVACY */}
+          {activeSection === "career-preferences" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1641,109 +1990,49 @@ export default function EditProfile() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <h2 className="text-xl font-heading font-extrabold text-white">
-                    Skills & Competencies
+                    Career Preferences & Privacy
                   </h2>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
-                    +15 XP (3+ Skills)
+                    +20 XP
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
-                  Add technologies, frameworks, and tools you are actively learning and practicing.
+                  Configure employment targets for future matchmaking and establish granular visibility controls.
                 </p>
               </div>
 
-              {/* Skill Input Form */}
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleAddSkill();
-                }}
-                className="flex gap-2"
-              >
-                <input
-                  type="text"
-                  value={skillInput}
-                  onChange={(e) => setSkillInput(e.target.value)}
-                  placeholder="Type to search or enter a skill (e.g. TypeScript, React)..."
-                  className="flex-1 px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors"
+              <form onSubmit={handleSaveCareerPreferences} className="space-y-6">
+                <CareerPreferencesSection
+                  careerPreferences={careerPreferences}
+                  setCareerPreferences={setCareerPreferences}
+                  privacySettings={privacySettings}
+                  setPrivacySettings={setPrivacySettings}
+                  discoverableToRecruiters={discoverableToRecruiters}
+                  setDiscoverableToRecruiters={setDiscoverableToRecruiters}
+                  profileVisibility={profileVisibility}
+                  setProfileVisibility={setProfileVisibility}
+                  onChangeDirty={() => setIsDirty(true)}
                 />
-                <button
-                  type="submit"
-                  className="btn-primary text-xs uppercase tracking-wider px-4 py-2.5 flex items-center gap-1 cursor-pointer shadow-sm"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Add Skill
-                </button>
+
+                <div className="pt-3 flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={updateMutation.isPending}
+                    className="btn-primary text-xs uppercase tracking-wider flex items-center gap-2 py-3 px-6 cursor-pointer shadow-md min-h-[44px]"
+                  >
+                    {updateMutation.isPending ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    Save Career Preferences & Privacy
+                  </button>
+                </div>
               </form>
-
-              {/* Instant Search Suggestions */}
-              {POPULAR_SKILLS.filter(
-                (ps) =>
-                  !skills.includes(ps) &&
-                  (!skillInput.trim() || ps.toLowerCase().includes(skillInput.trim().toLowerCase()))
-              ).length > 0 && (
-                <div className="space-y-1.5 pt-1">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-text-faint">
-                    {skillInput.trim() ? "Matching Suggestions:" : "Suggested for Students:"}
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {POPULAR_SKILLS.filter(
-                      (ps) =>
-                        !skills.includes(ps) &&
-                        (!skillInput.trim() || ps.toLowerCase().includes(skillInput.trim().toLowerCase()))
-                    ).map((ps) => (
-                      <button
-                        key={ps}
-                        type="button"
-                        onClick={() => handleAddSkill(ps)}
-                        className="px-2.5 py-1 rounded-lg text-xs bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.06] hover:border-brand-mint/30 text-text-muted hover:text-white transition-all cursor-pointer inline-flex items-center gap-1"
-                      >
-                        <Plus className="w-3 h-3 text-brand-mint" />
-                        <span>{ps}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Current Skills Chips */}
-              <div className="space-y-2 pt-2 border-t border-white/[0.05]">
-                <div className="flex justify-between text-xs text-text-muted">
-                  <span>Your skills ({skills.length} / {MAX_SKILLS})</span>
-                  {skills.length >= 3 ? (
-                    <span className="text-brand-mint font-semibold flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> 3+ Skills Milestone Complete (+15 XP)
-                    </span>
-                  ) : (
-                    <span className="text-brand-yellow font-medium">
-                      Add {3 - skills.length} more to earn +15 XP
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-xs font-semibold text-white group hover:border-brand-mint/30 transition-all max-w-full"
-                    >
-                      <span className="break-all">{skill}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveSkill(skill)}
-                        className="text-text-muted hover:text-danger transition-colors cursor-pointer shrink-0"
-                        title={`Remove ${skill}`}
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              </div>
             </motion.div>
           )}
 
-          {/* SECTION 7: RECOMMENDATIONS */}
+          {/* SECTION 10: RECOMMENDATIONS */}
           {activeSection === "recommendations" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -1756,13 +2045,13 @@ export default function EditProfile() {
                     Recommendations
                   </h2>
                   <p className="text-xs sm:text-sm text-text-muted mt-0.5">
-                    Manage endorsements and testimonials received from mentors and peers.
+                    Endorsements from mentors, site leads, and engineering peers.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsReqRecModalOpen(true)}
-                  className="btn-secondary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2 px-3.5 cursor-pointer shadow-sm"
+                  className="btn-secondary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2 px-3.5 cursor-pointer shadow-sm min-h-[44px]"
                 >
                   <Share2 className="w-3.5 h-3.5" />
                   Request Endorsement
@@ -1841,14 +2130,14 @@ export default function EditProfile() {
                   <HeartHandshake className="w-8 h-8 text-text-faint mx-auto mb-2" />
                   <h4 className="text-sm font-bold text-white">No recommendations yet</h4>
                   <p className="text-xs text-text-muted max-w-sm mx-auto mt-1">
-                    Recommendations from teachers, mentors, or collaborators will appear here for your moderation.
+                    Recommendations from instructors, mentors, or collaborators will appear here.
                   </p>
                 </div>
               )}
             </motion.div>
           )}
 
-          {/* SECTION 8: PUBLIC PROFILE SETUP */}
+          {/* SECTION 11: PUBLIC PROFILE SETUP */}
           {activeSection === "public-profile" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -1865,7 +2154,7 @@ export default function EditProfile() {
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
-                  Ensure required identity elements are ready before publishing your verified presence at /u/:username.
+                  Ensure required infrastructure identity elements are ready before publishing your public presence at /u/:username.
                 </p>
               </div>
 
@@ -1899,24 +2188,24 @@ export default function EditProfile() {
                   </div>
 
                   <div className="flex items-center gap-2.5">
-                    {profile?.bio && profile.bio.trim().length >= 20 ? (
+                    {profile?.primaryDiscipline ? (
                       <CheckCircle2 className="w-4 h-4 text-brand-mint" />
                     ) : (
                       <Circle className="w-4 h-4 text-brand-yellow" />
                     )}
-                    <span className={profile?.bio ? "text-white" : "text-text-muted"}>
-                      About story written (min 20 characters)
+                    <span className={profile?.primaryDiscipline ? "text-white" : "text-text-muted"}>
+                      Primary infrastructure discipline selected ({profile?.primaryDiscipline || "Not selected"})
                     </span>
                   </div>
 
                   <div className="flex items-center gap-2.5">
-                    {Array.isArray(profile?.skills) && profile.skills.length >= 3 ? (
+                    {flatSkills.length >= 3 ? (
                       <CheckCircle2 className="w-4 h-4 text-brand-mint" />
                     ) : (
                       <Circle className="w-4 h-4 text-brand-yellow" />
                     )}
-                    <span className={profile?.skills?.length >= 3 ? "text-white" : "text-text-muted"}>
-                      At least 3 skills added ({profile?.skills?.length || 0}/3)
+                    <span className={flatSkills.length >= 3 ? "text-white" : "text-text-muted"}>
+                      At least 3 skills added ({flatSkills.length}/3)
                     </span>
                   </div>
 
@@ -1927,7 +2216,7 @@ export default function EditProfile() {
                       <Circle className="w-4 h-4 text-brand-yellow" />
                     )}
                     <span className={profile?.username ? "text-white" : "text-text-muted"}>
-                      Student handle claimed (@{profile?.username})
+                      Handle claimed (@{profile?.username})
                     </span>
                   </div>
                 </div>
@@ -1950,8 +2239,8 @@ export default function EditProfile() {
                   </div>
                   <p className="text-xs text-text-muted mt-1 leading-relaxed">
                     {profile?.publicProfilePublished
-                      ? `Your public profile is live at /u/${profile?.username}. Anyone with the link can view your learning journey.`
-                      : "Publishing awards +20 XP and makes your verified identity shareable with peers and recruiters."}
+                      ? `Your public profile is live at /u/${profile?.username}. Anyone with the link can view your infrastructure identity.`
+                      : "Publishing awards +20 XP and makes your profile discoverable to peers, mentors, and employers."}
                   </p>
                 </div>
 
@@ -1959,8 +2248,8 @@ export default function EditProfile() {
                   <button
                     type="button"
                     onClick={() => publishMutation.mutate(!profile?.publicProfilePublished)}
-                    disabled={publishMutation.isPending || (!profile?.publicProfilePublished && !completion?.publicProfileReady)}
-                    className={`text-xs uppercase tracking-wider py-2.5 px-5 rounded-xl font-bold transition-all cursor-pointer shadow-md ${
+                    disabled={publishMutation.isPending}
+                    className={`text-xs uppercase tracking-wider py-2.5 px-5 rounded-xl font-bold transition-all cursor-pointer shadow-md min-h-[44px] ${
                       profile?.publicProfilePublished
                         ? "bg-white/[0.04] border border-white/10 text-white hover:bg-white/[0.08]"
                         : "btn-primary"
@@ -1980,7 +2269,7 @@ export default function EditProfile() {
           )}
         </div>
 
-        {/* SECTION PREVIEW: Desktop Side-by-Side Live Preview */}
+        {/* Live Preview Aside */}
         {isPreviewOpen && (
           <div className="lg:col-span-4 sticky top-24 rounded-3xl border border-border-default bg-bg-card p-5 space-y-4 shadow-xl overflow-hidden">
             <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
@@ -1990,7 +2279,6 @@ export default function EditProfile() {
               <span className="text-[10px] text-text-muted font-mono">/u/{profile?.username}</span>
             </div>
 
-            {/* Mini preview card reflecting live changes */}
             <div className="rounded-2xl border border-white/[0.06] bg-bg-base overflow-hidden shadow-inner">
               <div className="h-20 w-full bg-gradient-to-r from-bg-elevated to-brand-navy/50 relative">
                 {bannerUrl && <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" />}
@@ -2004,25 +2292,30 @@ export default function EditProfile() {
                   )}
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-white">{name || "Student Name"}</h4>
+                  <h4 className="text-sm font-bold text-white">{name || "Your Name"}</h4>
                   <div className="text-[11px] font-mono text-brand-mint">@{profile?.username}</div>
+                  <div className="mt-1">
+                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-brand-mint/15 text-brand-mint border border-brand-mint/25">
+                      {primaryRole}
+                    </span>
+                  </div>
                   {headline && <p className="text-xs text-white/85 mt-1 line-clamp-2 leading-relaxed">{headline}</p>}
                 </div>
-                {bio && (
-                  <p className="text-xs text-text-muted mt-2 line-clamp-3 italic leading-relaxed">
-                    "{bio}"
+                {primaryDiscipline && (
+                  <p className="text-xs text-brand-yellow font-medium mt-1">
+                    {primaryDiscipline}
                   </p>
                 )}
-                {skills.length > 0 && (
+                {flatSkills.length > 0 && (
                   <div className="flex flex-wrap gap-1 pt-1">
-                    {skills.slice(0, 4).map((s) => (
+                    {flatSkills.slice(0, 4).map((s) => (
                       <span key={s} className="px-2 py-0.5 rounded bg-white/[0.04] text-[10px] text-text-secondary">
                         {s}
                       </span>
                     ))}
-                    {skills.length > 4 && (
+                    {flatSkills.length > 4 && (
                       <span className="px-1.5 py-0.5 rounded bg-white/[0.02] text-[10px] text-text-faint">
-                        +{skills.length - 4}
+                        +{flatSkills.length - 4}
                       </span>
                     )}
                   </div>
@@ -2033,7 +2326,7 @@ export default function EditProfile() {
         )}
       </div>
 
-      {/* ── Unsaved Changes Warning Modal ── */}
+      {/* Unsaved Changes Modal */}
       <AnimatePresence>
         {isUnsavedModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
@@ -2077,7 +2370,7 @@ export default function EditProfile() {
         )}
       </AnimatePresence>
 
-      {/* ── Experience Modal ── */}
+      {/* Experience Modal */}
       {isExpModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
           <div className="relative w-full max-w-lg rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90dvh] sm:max-h-[85vh] overflow-y-auto overscroll-contain">
@@ -2096,7 +2389,6 @@ export default function EditProfile() {
             </div>
 
             <form onSubmit={handleSaveExp} className="space-y-4">
-              {/* Primary Fields */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
                   Organization / Company <span className="text-brand-mint">*</span>
@@ -2106,7 +2398,7 @@ export default function EditProfile() {
                   value={expForm.organization}
                   onChange={(e) => setExpForm({ ...expForm, organization: e.target.value })}
                   required
-                  placeholder="e.g. Zeitnah Labs, Google Developer Club"
+                  placeholder="e.g. Larsen & Toubro, AECOM, Bechtel"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
                 />
               </div>
@@ -2121,7 +2413,7 @@ export default function EditProfile() {
                     value={expForm.role}
                     onChange={(e) => setExpForm({ ...expForm, role: e.target.value })}
                     required
-                    placeholder="e.g. Intern, Lead Developer"
+                    placeholder="e.g. Site Engineer, BIM Lead"
                     className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
                   />
                 </div>
@@ -2135,29 +2427,45 @@ export default function EditProfile() {
                     onChange={(e) => setExpForm({ ...expForm, employmentType: e.target.value })}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
                   >
-                    <option value="Internship">Internship</option>
                     <option value="Full-time">Full-time</option>
                     <option value="Part-time">Part-time</option>
+                    <option value="Contract">Contract</option>
+                    <option value="Internship">Internship</option>
                     <option value="Freelance">Freelance</option>
-                    <option value="Volunteering">Volunteering</option>
-                    <option value="Student Project">Student Project</option>
-                    <option value="Leadership">Leadership</option>
                   </select>
                 </div>
               </div>
 
-              {/* Secondary Fields */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
-                  Location <span className="text-text-faint font-normal">(Optional)</span>
-                </label>
-                <input
-                  type="text"
-                  value={expForm.location}
-                  onChange={(e) => setExpForm({ ...expForm, location: e.target.value })}
-                  placeholder="e.g. Remote / Kochi, India"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
+                    Infrastructure Sector
+                  </label>
+                  <select
+                    value={expForm.infrastructureSector}
+                    onChange={(e) => setExpForm({ ...expForm, infrastructureSector: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+                  >
+                    {INFRASTRUCTURE_SECTORS.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    value={expForm.location}
+                    onChange={(e) => setExpForm({ ...expForm, location: e.target.value })}
+                    placeholder="e.g. Riyadh, KSA"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -2191,12 +2499,12 @@ export default function EditProfile() {
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
-                  id="currentlyActive"
+                  id="currentlyActiveExp"
                   checked={expForm.currentlyActive}
                   onChange={(e) => setExpForm({ ...expForm, currentlyActive: e.target.checked })}
-                  className="rounded border-border-default text-brand-mint focus:ring-0"
+                  className="rounded border-border-default text-brand-mint focus:ring-0 cursor-pointer"
                 />
-                <label htmlFor="currentlyActive" className="text-xs text-text-secondary cursor-pointer">
+                <label htmlFor="currentlyActiveExp" className="text-xs text-text-secondary cursor-pointer">
                   I currently work / lead here
                 </label>
               </div>
@@ -2209,9 +2517,119 @@ export default function EditProfile() {
                   rows={3}
                   value={expForm.description}
                   onChange={(e) => setExpForm({ ...expForm, description: e.target.value })}
-                  placeholder="Key responsibilities, achievements, technologies used..."
+                  placeholder="Key responsibilities, project scale, engineering challenges..."
                   className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none resize-none"
                 />
+              </div>
+
+              {/* Software Used */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary">
+                  Software Used
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={expSoftwareInput}
+                    onChange={(e) => setExpSoftwareInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const val = expSoftwareInput.trim();
+                        if (val && !expForm.softwareUsed.includes(val)) {
+                          setExpForm({ ...expForm, softwareUsed: [...expForm.softwareUsed, val] });
+                          setExpSoftwareInput("");
+                        }
+                      }
+                    }}
+                    placeholder="e.g. AutoCAD, Primavera P6..."
+                    className="flex-1 px-3 py-2 rounded-xl bg-bg-elevated border border-border-default text-xs text-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const val = expSoftwareInput.trim();
+                      if (val && !expForm.softwareUsed.includes(val)) {
+                        setExpForm({ ...expForm, softwareUsed: [...expForm.softwareUsed, val] });
+                        setExpSoftwareInput("");
+                      }
+                    }}
+                    className="btn-secondary text-xs px-3 py-2 cursor-pointer"
+                  >
+                    Add
+                  </button>
+                </div>
+                {expForm.softwareUsed?.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {expForm.softwareUsed.map((sw) => (
+                      <span key={sw} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-brand-mint/10 border border-brand-mint/20 text-xs text-brand-mint">
+                        {sw}
+                        <button
+                          type="button"
+                          onClick={() => setExpForm({ ...expForm, softwareUsed: expForm.softwareUsed.filter((s) => s !== sw) })}
+                          className="hover:text-danger ml-0.5"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Skills Used */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary">
+                  Skills Used
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={expSkillInput}
+                    onChange={(e) => setExpSkillInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const val = expSkillInput.trim();
+                        if (val && !expForm.skillsUsed.includes(val)) {
+                          setExpForm({ ...expForm, skillsUsed: [...expForm.skillsUsed, val] });
+                          setExpSkillInput("");
+                        }
+                      }
+                    }}
+                    placeholder="e.g. Site supervision, Quantity estimation..."
+                    className="flex-1 px-3 py-2 rounded-xl bg-bg-elevated border border-border-default text-xs text-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const val = expSkillInput.trim();
+                      if (val && !expForm.skillsUsed.includes(val)) {
+                        setExpForm({ ...expForm, skillsUsed: [...expForm.skillsUsed, val] });
+                        setExpSkillInput("");
+                      }
+                    }}
+                    className="btn-secondary text-xs px-3 py-2 cursor-pointer"
+                  >
+                    Add
+                  </button>
+                </div>
+                {expForm.skillsUsed?.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {expForm.skillsUsed.map((sk) => (
+                      <span key={sk} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.08] text-xs text-white">
+                        {sk}
+                        <button
+                          type="button"
+                          onClick={() => setExpForm({ ...expForm, skillsUsed: expForm.skillsUsed.filter((s) => s !== sk) })}
+                          className="hover:text-danger ml-0.5"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
@@ -2235,7 +2653,19 @@ export default function EditProfile() {
         </div>
       )}
 
-      {/* ── Education Modal ── */}
+      {/* Projects Modal */}
+      <ProjectEditorModal
+        isOpen={isProjectModalOpen}
+        onClose={() => {
+          setIsProjectModalOpen(false);
+          setEditingProject(null);
+        }}
+        onSave={(payload) => saveProjectMutation.mutate(payload)}
+        initialData={editingProject}
+        isPending={saveProjectMutation.isPending}
+      />
+
+      {/* Education Modal */}
       {isEduModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
           <div className="relative w-full max-w-lg rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90dvh] sm:max-h-[85vh] overflow-y-auto overscroll-contain">
@@ -2254,7 +2684,6 @@ export default function EditProfile() {
             </div>
 
             <form onSubmit={handleSaveEdu} className="space-y-4">
-              {/* Primary Fields */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
                   Institution / School <span className="text-brand-mint">*</span>
@@ -2264,7 +2693,7 @@ export default function EditProfile() {
                   value={eduForm.institution}
                   onChange={(e) => setEduForm({ ...eduForm, institution: e.target.value })}
                   required
-                  placeholder="e.g. University of Calicut, Zeitnah Academy"
+                  placeholder="e.g. University of Calicut, IIT Madras, Zeitnah Academy"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
                 />
               </div>
@@ -2279,26 +2708,25 @@ export default function EditProfile() {
                     value={eduForm.qualification}
                     onChange={(e) => setEduForm({ ...eduForm, qualification: e.target.value })}
                     required
-                    placeholder="e.g. Bachelor of Technology, High School"
+                    placeholder="e.g. B.Tech, M.S, Diploma"
                     className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
-                    Field of Study <span className="text-text-faint font-normal">(Optional)</span>
+                    Field of Study
                   </label>
                   <input
                     type="text"
                     value={eduForm.fieldOfStudy}
                     onChange={(e) => setEduForm({ ...eduForm, fieldOfStudy: e.target.value })}
-                    placeholder="e.g. Computer Science"
+                    placeholder="e.g. Civil Engineering"
                     className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
                   />
                 </div>
               </div>
 
-              {/* Secondary Fields */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
@@ -2330,25 +2758,25 @@ export default function EditProfile() {
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
-                  id="currentlyStudying"
+                  id="currentlyStudyingEdu"
                   checked={eduForm.currentlyStudying}
                   onChange={(e) => setEduForm({ ...eduForm, currentlyStudying: e.target.checked })}
-                  className="rounded border-border-default text-brand-mint focus:ring-0"
+                  className="rounded border-border-default text-brand-mint focus:ring-0 cursor-pointer"
                 />
-                <label htmlFor="currentlyStudying" className="text-xs text-text-secondary cursor-pointer">
+                <label htmlFor="currentlyStudyingEdu" className="text-xs text-text-secondary cursor-pointer">
                   I currently study here
                 </label>
               </div>
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
-                  Description / Activities <span className="text-text-faint font-normal">(Optional)</span>
+                  Description / Honors <span className="text-text-faint font-normal">(Optional)</span>
                 </label>
                 <textarea
                   rows={2}
                   value={eduForm.description}
                   onChange={(e) => setEduForm({ ...eduForm, description: e.target.value })}
-                  placeholder="Notable clubs, focus areas, honors..."
+                  placeholder="Academic clubs, honors, capstone thesis title..."
                   className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none resize-none"
                 />
               </div>
@@ -2374,7 +2802,7 @@ export default function EditProfile() {
         </div>
       )}
 
-      {/* ── Certification Modal ── */}
+      {/* Certification Modal */}
       {isCertModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
           <div className="relative w-full max-w-lg rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90dvh] sm:max-h-[85vh] overflow-y-auto overscroll-contain">
@@ -2393,7 +2821,6 @@ export default function EditProfile() {
             </div>
 
             <form onSubmit={handleSaveCert} className="space-y-4">
-              {/* Primary Fields */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
                   Certificate Name <span className="text-brand-mint">*</span>
@@ -2403,7 +2830,7 @@ export default function EditProfile() {
                   value={certForm.name}
                   onChange={(e) => setCertForm({ ...certForm, name: e.target.value })}
                   required
-                  placeholder="e.g. AWS Certified Cloud Practitioner"
+                  placeholder="e.g. Autodesk Certified Professional: Revit for Structural Design"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
                 />
               </div>
@@ -2417,12 +2844,11 @@ export default function EditProfile() {
                   value={certForm.issuer}
                   onChange={(e) => setCertForm({ ...certForm, issuer: e.target.value })}
                   required
-                  placeholder="e.g. Amazon Web Services, Meta, Coursera"
+                  placeholder="e.g. Autodesk, PMI, Oracle, ASCE, Zeitnah Academy"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
                 />
               </div>
 
-              {/* Secondary Fields */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
@@ -2439,7 +2865,7 @@ export default function EditProfile() {
 
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
-                    Expiration Date <span className="text-text-faint font-normal">(Optional)</span>
+                    Expiration Date
                   </label>
                   <input
                     type="date"
@@ -2458,7 +2884,7 @@ export default function EditProfile() {
                   type="text"
                   value={certForm.credentialId}
                   onChange={(e) => setCertForm({ ...certForm, credentialId: e.target.value })}
-                  placeholder="e.g. AWS-12345678"
+                  placeholder="e.g. CERT-REV-9874"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
                 />
               </div>
@@ -2474,6 +2900,13 @@ export default function EditProfile() {
                   placeholder="https://..."
                   className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
                 />
+              </div>
+
+              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs text-text-muted flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-text-faint shrink-0" />
+                <span>
+                  Certifications are marked as <strong className="text-text-secondary">Unverified</strong> unless directly issued by Zeitnah Academy or verified via credential link.
+                </span>
               </div>
 
               <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
@@ -2497,10 +2930,10 @@ export default function EditProfile() {
         </div>
       )}
 
-      {/* ── Request Recommendation Modal ── */}
+      {/* Endorsement Request Modal */}
       {isReqRecModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
-          <div className="relative w-full max-w-md rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-4 shadow-2xl max-h-[90dvh] sm:max-h-[85vh] overflow-y-auto overscroll-contain">
+          <div className="relative w-full max-w-md rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-4 shadow-2xl max-h-[90dvh] overflow-y-auto overscroll-contain">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-heading font-extrabold text-white">
                 Request an Endorsement
@@ -2516,7 +2949,7 @@ export default function EditProfile() {
             </div>
 
             <p className="text-xs text-text-muted leading-relaxed">
-              Share your public profile link with instructors, mentors, or collaborators so they can submit a verified recommendation for your student profile.
+              Share your public profile link with project directors, consultants, or senior engineers to receive verified endorsements.
             </p>
 
             <div className="p-3 rounded-xl bg-bg-elevated border border-border-default flex items-center justify-between gap-2">
@@ -2548,14 +2981,14 @@ export default function EditProfile() {
         </div>
       )}
 
-      {/* ── Change Username Modal ── */}
+      {/* Change Username Modal */}
       <ChangeUsernameModal
         isOpen={isChangeUsernameOpen}
         onClose={() => setIsChangeUsernameOpen(false)}
         currentUsername={profile?.username}
       />
 
-      {/* ── Image Editor Modal for Avatar & Banner ── */}
+      {/* Image Editor Modal for Avatar & Banner */}
       <ImageEditorModal
         isOpen={Boolean(editingImage)}
         onClose={() => setEditingImage(null)}
@@ -2573,8 +3006,8 @@ export default function EditProfile() {
           }
         }}
         currentAvatarUrl={avatarUrl}
-        userName={name || profile?.name || "Student"}
-        userRole={currentRole || headline || profile?.currentRole || profile?.headline || "Student Developer"}
+        userName={name || profile?.name || "Professional"}
+        userRole={currentRole || headline || profile?.currentRole || profile?.headline || "Infrastructure Professional"}
         isUploading={avatarMutation.isPending || bannerMutation.isPending}
       />
     </div>

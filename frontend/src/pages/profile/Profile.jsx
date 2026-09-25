@@ -36,9 +36,13 @@ import ProfileCompletionCard from "../../components/profile/ProfileCompletionCar
 import AchievementsGrid from "../../components/profile/AchievementsGrid";
 import ImageEditorModal from "../../components/common/ImageEditorModal";
 import ProfileNetworkStats from "../../components/network/ProfileNetworkStats";
+import EcosystemRoleBadge from "../../components/network/EcosystemRoleBadge";
+import AvailabilityBadge from "../../components/network/AvailabilityBadge";
+import { projectsService } from "../../services/projectsService";
 
 /**
  * Animated XP Counter for subtle, elegant point transitions.
+ * Respects prefers-reduced-motion and animates smoothly only on value change.
  */
 function XPCountUp({ value = 0, duration = 800 }) {
   const prefersReducedMotion = useReducedMotion();
@@ -272,36 +276,66 @@ export default function Profile() {
         .toUpperCase()
     : "ZU";
 
+  const { data: myProjects } = useQuery({
+    queryKey: ["projects", "my"],
+    queryFn: projectsService.getMyProjects,
+  });
+  const myProjectsCount = Array.isArray(myProjects) ? myProjects.length : 0;
+
   // Section completion evaluation
   const sections = [
     {
-      id: "introduction",
-      title: "Introduction",
-      desc: "Photo, cover, headline, role, location & industry",
-      done: Boolean(profile.avatar && profile.headline && (profile.location || profile.industry || profile.currentRole)),
-      partDone: Boolean(profile.avatar || profile.headline),
-      to: "/profile/edit?section=introduction",
+      id: "basic-info",
+      title: "Basic Information",
+      desc: "Photo, cover, name, location & biography",
+      done: Boolean(profile.name && profile.avatar && profile.bio),
+      partDone: Boolean(profile.name || profile.avatar),
+      to: "/profile/edit?section=basic-info",
     },
     {
-      id: "about",
-      title: "About",
-      desc: "Your learning journey, goals, and interests",
-      done: Boolean(profile.bio && profile.bio.trim().length >= 20),
-      partDone: Boolean(profile.bio && profile.bio.trim().length > 0),
-      to: "/profile/edit?section=about",
+      id: "professional-identity",
+      title: "Professional Identity",
+      desc: "Ecosystem role, headline, position & availability",
+      done: Boolean(profile.headline && profile.primaryRole),
+      partDone: Boolean(profile.headline || profile.primaryRole),
+      to: "/profile/edit?section=professional-identity",
+    },
+    {
+      id: "infrastructure-expertise",
+      title: "Infrastructure Expertise",
+      desc: "Primary discipline, specializations & sector focus",
+      done: Boolean(profile.primaryDiscipline && (profile.infrastructureSectors?.length > 0 || profile.specializations?.length > 0)),
+      partDone: Boolean(profile.primaryDiscipline),
+      to: "/profile/edit?section=infrastructure-expertise",
+    },
+    {
+      id: "skills",
+      title: "Skills & Software",
+      desc: "BIM tools, calculation software, and technical competencies",
+      done: Boolean(Array.isArray(profile.skills) && profile.skills.length >= 3),
+      partDone: Boolean(Array.isArray(profile.skills) && profile.skills.length > 0),
+      to: "/profile/edit?section=skills",
     },
     {
       id: "experience",
       title: "Experience",
-      desc: "Internships, jobs, projects & leadership roles",
+      desc: "Civil & engineering career history",
       done: Boolean(Array.isArray(profile.experience) && profile.experience.length > 0),
       partDone: false,
       to: "/profile/edit?section=experience",
     },
     {
+      id: "projects",
+      title: "Projects",
+      desc: "Infrastructure deliverables, scope & responsibilities",
+      done: Boolean(myProjectsCount > 0),
+      partDone: false,
+      to: "/profile/edit?section=projects",
+    },
+    {
       id: "education",
       title: "Education",
-      desc: "Your academic background and studies",
+      desc: "Degrees, engineering institutions & qualifications",
       done: Boolean(Array.isArray(profile.education) && profile.education.length > 0),
       partDone: false,
       to: "/profile/edit?section=education",
@@ -309,23 +343,23 @@ export default function Profile() {
     {
       id: "certifications",
       title: "Licenses & Certifications",
-      desc: "Verified credentials, certificates & licenses",
+      desc: "Professional licenses and accredited credentials",
       done: Boolean(Array.isArray(profile.certifications) && profile.certifications.length > 0),
       partDone: false,
       to: "/profile/edit?section=certifications",
     },
     {
-      id: "skills",
-      title: "Skills",
-      desc: "Technologies and core competencies (3+ for milestone)",
-      done: Boolean(Array.isArray(profile.skills) && profile.skills.length >= 3),
-      partDone: Boolean(Array.isArray(profile.skills) && profile.skills.length > 0),
-      to: "/profile/edit?section=skills",
+      id: "career-preferences",
+      title: "Career & Privacy",
+      desc: "Target roles, salary preferences & visibility controls",
+      done: Boolean(profile.careerPreferences?.preferredRoles?.length > 0),
+      partDone: false,
+      to: "/profile/edit?section=career-preferences",
     },
     {
       id: "recommendations",
       title: "Recommendations",
-      desc: "Endorsements from mentors, teachers & peers",
+      desc: "Endorsements from mentors, site leads & peers",
       done: Boolean(data?.recommendationsCount > 0),
       partDone: false,
       to: "/profile/edit?section=recommendations",
@@ -480,6 +514,22 @@ export default function Profile() {
                     <Pencil className="w-3 h-3" />
                     <span className="hidden sm:inline">Edit</span>
                   </button>
+                </div>
+
+                {/* Ecosystem Role, Availability & Discipline Badges */}
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
+                  <EcosystemRoleBadge role={profile.primaryRole || "STUDENT"} size="sm" />
+                  <AvailabilityBadge availability={profile.availability} size="sm" />
+                  {profile.primaryDiscipline && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-brand-mint/25 bg-brand-mint/10 px-2.5 py-0.5 text-xs font-bold text-brand-mint">
+                      {profile.primaryDiscipline}
+                    </span>
+                  )}
+                  {profile.yearsOfExperience > 0 && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-xs font-mono font-medium text-white/90">
+                      {profile.yearsOfExperience}+ Years Exp
+                    </span>
+                  )}
                 </div>
 
                 {/* Headline / Invitation for empty profile */}

@@ -42,6 +42,13 @@ const NotFoundPage = React.lazy(() => import("./pages/NotFoundPage"));
 const ErrorReportsDashboard = React.lazy(() => import("./pages/admin/ErrorReportsDashboard"));
 const SessionDiagnostics = React.lazy(() => import("./pages/admin/SessionDiagnostics"));
 const NotificationsPage = React.lazy(() => import("./pages/notifications/NotificationsPage"));
+const JobsPage = React.lazy(() => import("./pages/jobs/JobsPage"));
+const JobDetailPage = React.lazy(() => import("./pages/jobs/JobDetailPage"));
+const ManageBusiness = React.lazy(() => import("./pages/business/ManageBusiness"));
+const PublicBusinessProfilePage = React.lazy(() => import("./pages/business/PublicBusinessProfilePage"));
+const BusinessDiscoveryPage = React.lazy(() => import("./pages/business/BusinessDiscoveryPage"));
+const AdminBusinessReviewPage = React.lazy(() => import("./pages/admin/AdminBusinessReviewPage"));
+const CareerIntelligencePage = React.lazy(() => import("./pages/career/CareerIntelligencePage"));
 
 import ProtectedRoute from "./components/common/ProtectedRoute/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";
@@ -139,6 +146,13 @@ function App() {
               <Route path="/network/spaces/:slugOrId" element={<Suspense fallback={<PageLoader />}><LearningSpaceDetailPage /></Suspense>} />
               <Route path="/network/spaces/:slugOrId/discussions/:discussionId" element={<Suspense fallback={<PageLoader />}><DiscussionDetailPage /></Suspense>} />
               <Route path="/notifications" element={<Suspense fallback={<PageLoader />}><NotificationsPage /></Suspense>} />
+              <Route path="/jobs" element={<Suspense fallback={<PageLoader />}><JobsPage /></Suspense>} />
+              <Route path="/jobs/:id" element={<Suspense fallback={<PageLoader />}><JobDetailPage /></Suspense>} />
+              <Route path="/career-intelligence" element={<Suspense fallback={<PageLoader />}><CareerIntelligencePage /></Suspense>} />
+              <Route path="/manage-business" element={<Suspense fallback={<PageLoader />}><ManageBusiness /></Suspense>} />
+              <Route path="/businesses" element={<Suspense fallback={<PageLoader />}><BusinessDiscoveryPage /></Suspense>} />
+              <Route path="/businesses/:slug" element={<Suspense fallback={<PageLoader />}><PublicBusinessProfilePage /></Suspense>} />
+              <Route path="/admin/businesses" element={<Suspense fallback={<PageLoader />}><AdminBusinessReviewPage /></Suspense>} />
               <Route path="/active-sessions" element={<Suspense fallback={<PageLoader />}><ActiveSessions /></Suspense>} />
               <Route path="/audit-logs" element={<Suspense fallback={<PageLoader />}><AuditLogs /></Suspense>} />
               <Route path="/admin/error-reports" element={<Suspense fallback={<PageLoader />}><ErrorReportsDashboard /></Suspense>} />

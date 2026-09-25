@@ -11,6 +11,8 @@ export enum OrganizationType {
   UNIVERSITY = 'UNIVERSITY',
   TRAINING_INSTITUTE = 'TRAINING_INSTITUTE',
   NONPROFIT = 'NONPROFIT',
+  CONSULTANCY = 'CONSULTANCY',
+  CONTRACTOR = 'CONTRACTOR',
   OTHER = 'OTHER',
 }
 
@@ -19,6 +21,14 @@ export enum OrganizationVerificationStatus {
   PENDING = 'PENDING',
   VERIFIED = 'VERIFIED',
   REVOKED = 'REVOKED',
+}
+
+export enum BusinessStatus {
+  DRAFT = 'DRAFT',
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  SUSPENDED = 'SUSPENDED',
 }
 
 export enum OrganizationVisibility {
@@ -54,13 +64,54 @@ export class Organization {
   @Prop({ default: '', trim: true, index: true })
   industry!: string;
 
+  @Prop({ type: [String], default: [], index: true })
+  infrastructureSpecializations!: string[];
+
+  @Prop({ default: '', trim: true })
+  businessEmail!: string;
+
+  @Prop({ default: '', trim: true })
+  businessPhone!: string;
+
+  @Prop({ default: '', trim: true })
+  country!: string;
+
+  @Prop({ default: '', trim: true })
+  state!: string;
+
+  @Prop({ default: '', trim: true })
+  city!: string;
+
+  @Prop({ default: '', trim: true })
+  officeLocation!: string;
+
   @Prop({ default: '', trim: true, index: true })
   location!: string;
+
+  @Prop({ default: '', trim: true })
+  companySize!: string;
+
+  @Prop({ type: Number, default: null })
+  foundedYear!: number | null;
+
+  @Prop({ default: '', trim: true })
+  linkedin!: string;
+
+  @Prop({ type: Object, default: {} })
+  socialLinks!: Record<string, string>;
+
+  @Prop({
+    type: String,
+    enum: Object.values(BusinessStatus),
+    default: BusinessStatus.PENDING,
+    index: true,
+  })
+  status!: BusinessStatus;
 
   @Prop({
     type: String,
     enum: Object.values(OrganizationVerificationStatus),
-    default: OrganizationVerificationStatus.UNVERIFIED,
+    default: OrganizationVerificationStatus.PENDING,
     index: true,
   })
   verificationStatus!: OrganizationVerificationStatus;
@@ -73,6 +124,18 @@ export class Organization {
   })
   visibility!: OrganizationVisibility;
 
+  @Prop({ default: '', trim: true })
+  rejectionReason!: string;
+
+  @Prop({ default: '', trim: true })
+  suspensionReason!: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  reviewedBy!: Types.ObjectId | null;
+
+  @Prop({ type: Date, default: null })
+  reviewedAt!: Date | null;
+
   @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
   createdBy!: Types.ObjectId;
 }
@@ -82,5 +145,7 @@ OrganizationSchema.index({
   name: 'text',
   description: 'text',
   industry: 'text',
+  infrastructureSpecializations: 'text',
 });
+OrganizationSchema.index({ status: 1, visibility: 1, createdAt: -1 });
 OrganizationSchema.index({ type: 1, industry: 1, location: 1 });

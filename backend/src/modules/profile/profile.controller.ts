@@ -13,6 +13,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -132,6 +133,12 @@ export class ProfileController {
     return this.profileService.getMe(req.user.userId);
   }
 
+  // INFRASTRUCTURE TAXONOMY
+  @Get('taxonomy')
+  getTaxonomy() {
+    return this.profileService.getInfrastructureTaxonomy();
+  }
+
   // UPDATE PROFILE
   @Patch('update')
   @UseGuards(JwtAuthGuard)
@@ -142,7 +149,29 @@ export class ProfileController {
     },
   })
   updateProfile(@Req() req: any, @Body() body: UpdateProfileDto) {
-    return this.profileService.updateProfile(req.user.userId, body);
+    return this.profileService.updateProfile(
+      req.user.userId,
+      body,
+      req.user?.role,
+    );
+  }
+
+  // ADMIN ASSIGN ROLE (Administrator only)
+  @Patch('admin/user/:userId/role')
+  @UseGuards(JwtAuthGuard)
+  async adminAssignRole(
+    @Req() req: any,
+    @Param('userId') targetUserId: string,
+    @Body('role') role: string,
+  ) {
+    if (req.user?.role !== 'admin' && req.user?.role !== 'superuser') {
+      throw new ForbiddenException('Only administrators can assign roles.');
+    }
+    return this.profileService.adminAssignRole(
+      req.user.userId,
+      targetUserId,
+      role,
+    );
   }
 
   // UPLOAD AVATAR (Secured with 5MB limit, MIME type verification, and throttling)

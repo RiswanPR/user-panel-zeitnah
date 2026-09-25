@@ -6,6 +6,11 @@ export const organizationService = {
     return res.data;
   },
 
+  async getMyOrganizations() {
+    const res = await api.get('/organizations/my');
+    return res.data;
+  },
+
   async getOrganizationBySlug(slug) {
     const res = await api.get(`/organizations/${slug}`);
     return res.data;
@@ -21,6 +26,31 @@ export const organizationService = {
     return res.data;
   },
 
+  async resubmitOrganization(id) {
+    const res = await api.patch(`/organizations/${id}/resubmit`);
+    return res.data;
+  },
+
+  async getOrganizationsForAdmin(params = {}) {
+    const res = await api.get('/organizations/admin/review', { params });
+    return res.data;
+  },
+
+  async approveOrganization(id) {
+    const res = await api.patch(`/organizations/admin/${id}/approve`);
+    return res.data;
+  },
+
+  async rejectOrganization(id, reason) {
+    const res = await api.patch(`/organizations/admin/${id}/reject`, { reason });
+    return res.data;
+  },
+
+  async suspendOrganization(id, reason) {
+    const res = await api.patch(`/organizations/admin/${id}/suspend`, { reason });
+    return res.data;
+  },
+
   async getMembers(id) {
     const res = await api.get(`/organizations/${id}/members`);
     return res.data;
@@ -33,3 +63,4 @@ export const organizationService = {
 };
 
 export default organizationService;
+

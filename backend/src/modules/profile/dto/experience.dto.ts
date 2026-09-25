@@ -43,4 +43,15 @@ export class ExperienceDto {
   @IsString()
   @MaxLength(1000, { message: 'Description must not exceed 1000 characters.' })
   description?: string;
+
+  @IsOptional()
+  skillsUsed?: string[];
+
+  @IsOptional()
+  softwareUsed?: string[];
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  infrastructureSector?: string;
 }
