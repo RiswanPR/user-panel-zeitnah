@@ -54,7 +54,7 @@ class NativeAppService {
     }
 
     // App state change (background / foreground)
-    App.addListener('appStateChange', ({ isActive }) => {
+    App.addListener('appStateChange', ({ isActive }: any) => {
       console.log(`[NativeApp] App state changed: ${isActive ? 'active' : 'background'}`);
       this.lifecycleListeners.forEach((cb) => {
         try {
@@ -66,7 +66,7 @@ class NativeAppService {
     });
 
     // Intelligent Hierarchical Hardware Back Button for Android
-    App.addListener('backButton', async ({ canGoBack }) => {
+    App.addListener('backButton', async ({ canGoBack }: any) => {
       // 1. Check custom registered high-priority handlers (e.g. video player, modals)
       for (const item of [...this.backHandlers].sort((a, b) => b.priority - a.priority)) {
         try {
@@ -141,7 +141,7 @@ class NativeAppService {
     });
 
     return () => {
-      handle.then((h) => h.remove());
+      handle.then((h: any) => h.remove());
     };
   }
 }

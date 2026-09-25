@@ -13,10 +13,8 @@ import {
   RefreshCw,
   MapPin,
   Briefcase,
-  Sparkles,
   Award,
   BookOpen,
-  GraduationCap,
   Globe,
   Check,
   Circle,
@@ -51,7 +49,6 @@ function XPCountUp({ value = 0, duration = 800 }) {
 
   useEffect(() => {
     if (prefersReducedMotion) {
-      setDisplayValue(value);
       prevValueRef.current = value;
       return;
     }
@@ -61,6 +58,7 @@ function XPCountUp({ value = 0, duration = 800 }) {
     if (start === end) return;
 
     const startTime = performance.now();
+    let frameId;
 
     const update = (now) => {
       const elapsed = now - startTime;
@@ -70,16 +68,19 @@ function XPCountUp({ value = 0, duration = 800 }) {
       setDisplayValue(current);
 
       if (progress < 1) {
-        requestAnimationFrame(update);
+        frameId = requestAnimationFrame(update);
       } else {
         prevValueRef.current = end;
       }
     };
 
-    requestAnimationFrame(update);
+    frameId = requestAnimationFrame(update);
+    return () => {
+      if (frameId) cancelAnimationFrame(frameId);
+    };
   }, [value, duration, prefersReducedMotion]);
 
-  return <span>{displayValue}</span>;
+  return <span>{prefersReducedMotion ? value : displayValue}</span>;
 }
 
 export default function Profile() {

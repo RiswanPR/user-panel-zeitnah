@@ -6,6 +6,7 @@ import { storage } from '../services/storage';
 import notificationService from '../services/notificationService';
 import { useToast } from '../components/ui/Toast';
 import { AuthContext } from './AuthContext';
+import { getRefreshedToken } from '../services/api';
 
 export const NotificationContext = createContext(null);
 
@@ -25,7 +26,7 @@ export const NotificationProvider = ({ children }) => {
     enabled: Boolean(currentUserId && !loading),
     staleTime: 1000 * 30, // 30 seconds
     refetchOnWindowFocus: false,
-    retry: false,
+    retry: 1, // Allow 1 retry after interceptor refresh
   });
 
   // ── 2. Active Platform Announcements Query ──
@@ -35,7 +36,7 @@ export const NotificationProvider = ({ children }) => {
     enabled: Boolean(currentUserId && !loading),
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
-    retry: false,
+    retry: 1,
   });
 
   // ── 3. Real-time WebSocket Connection ──
@@ -56,10 +57,14 @@ export const NotificationProvider = ({ children }) => {
         : 'https://zeitnahacademy.com';
 
       newSocket = io(`${baseURL}/notifications`, {
-        auth: { token },
+        // Dynamic auth callback ensures every handshake and reconnect uses the latest token
+        auth: (cb) => {
+          cb({ token: storage.getAccessToken() });
+        },
         transports: ['websocket', 'polling'],
         autoConnect: true,
-        reconnectionAttempts: 5,
+        reconnection: true,
+        reconnectionAttempts: 8,
         reconnectionDelay: 2000,
         reconnectionDelayMax: 10000,
         timeout: 10000,
@@ -99,15 +104,51 @@ export const NotificationProvider = ({ children }) => {
         queryClient.invalidateQueries({ queryKey: ['notifications'] });
       });
 
-      newSocket.on('connect_error', (err) => {
+      newSocket.on('connect_error', async (err) => {
         console.warn('[Socket:notifications] Connection error:', err.message);
+
+        // If error indicates an authentication rejection or expired JWT, attempt token refresh
+        const isAuthError =
+          err.message?.includes('jwt') ||
+          err.message?.includes('unauthorized') ||
+          err.message?.includes('Unauthorized') ||
+          err.message?.includes('authentication');
+
+        if (isAuthError && active) {
+          try {
+            const freshToken = await getRefreshedToken();
+            if (freshToken && active && newSocket) {
+              newSocket.auth = { token: freshToken };
+              newSocket.connect();
+            }
+          } catch {
+            // Token refresh failed permanently; halt reconnection attempts
+            if (newSocket) {
+              newSocket.disconnect();
+            }
+          }
+        }
       });
     };
 
     connectNotifications();
 
+    // Cross-component/tab auth refresh listener: update socket credentials dynamically
+    const handleTokenRefreshed = (event) => {
+      const freshToken = event.detail?.token || storage.getAccessToken();
+      if (newSocket && freshToken) {
+        newSocket.auth = { token: freshToken };
+        if (!newSocket.connected) {
+          newSocket.connect();
+        }
+      }
+    };
+
+    window.addEventListener('zeitnah:auth:token-refreshed', handleTokenRefreshed);
+
     return () => {
       active = false;
+      window.removeEventListener('zeitnah:auth:token-refreshed', handleTokenRefreshed);
       if (newSocket) {
         newSocket.disconnect();
       }

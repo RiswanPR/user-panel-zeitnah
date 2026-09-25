@@ -28,7 +28,7 @@ class NativeNetworkService {
       Network.addListener('networkStatusChange', (status: ConnectionStatus) => {
         this.notify(status.connected, status.connectionType);
       });
-      Network.getStatus().then((status) => {
+      Network.getStatus().then((status: any) => {
         this.isOnline = status.connected;
         this.connectionType = status.connectionType;
       });

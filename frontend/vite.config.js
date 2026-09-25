@@ -76,7 +76,7 @@ export default defineConfig({
   // Build optimization
   build: {
     target: 'es2020',
-    sourcemap: false,
+    sourcemap: true,
     cssMinify: true,
     assetsInlineLimit: 4096,
     chunkSizeWarningLimit: 600,
@@ -86,12 +86,32 @@ export default defineConfig({
         // Intelligent code splitting
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) return 'vendor-react';
-            if (id.includes('framer-motion')) return 'vendor-motion';
-            if (id.includes('hls.js')) return 'vendor-video';
-            if (id.includes('lucide-react')) return 'vendor-icons';
-            if (id.includes('axios') || id.includes('socket.io-client')) return 'vendor-network';
-            if (id.includes('@fingerprintjs')) return 'vendor-utils';
+            if (
+              id.includes('/react/') ||
+              id.includes('/react-dom/') ||
+              id.includes('/scheduler/') ||
+              id.includes('react-router')
+            ) {
+              return 'vendor-react';
+            }
+            if (id.includes('framer-motion') || id.includes('motion-dom') || id.includes('motion-utils')) {
+              return 'vendor-motion';
+            }
+            if (id.includes('hls.js') || id.includes('video.js') || id.includes('@videojs')) {
+              return 'vendor-video';
+            }
+            if (id.includes('lucide-react') || id.includes('react-icons')) {
+              return 'vendor-icons';
+            }
+            if (id.includes('axios') || id.includes('socket.io-client')) {
+              return 'vendor-network';
+            }
+            if (id.includes('@tanstack/react-query')) {
+              return 'vendor-query';
+            }
+            if (id.includes('@fingerprintjs')) {
+              return 'vendor-utils';
+            }
             return 'vendor';
           }
         },

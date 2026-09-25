@@ -84,7 +84,7 @@ export default function ChangeUsernameModal({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  });
+  }, [isOpen, isSubmitting]);
 
   // Client-side synchronous validation
   const trimmed = desiredHandle.trim().toLowerCase();

@@ -119,7 +119,7 @@ class NativeNotificationService {
     if (!accessToken) return true;
 
     try {
-      const deviceId = storage.getDeviceId();
+      const deviceId = await storage.getDeviceId();
       await api.delete(`/notifications/push-token/${encodeURIComponent(deviceId)}`);
       console.log('[NativeNotifications] Push token unregistered from backend.');
       return true;

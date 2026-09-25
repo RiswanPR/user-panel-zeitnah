@@ -118,7 +118,7 @@ api.interceptors.request.use(async (config) => {
 let refreshPromise: Promise<string | null> | null = null;
 let isRedirecting = false;
 
-const getRefreshedToken = async (): Promise<string | null> => {
+export const getRefreshedToken = async (): Promise<string | null> => {
   if (refreshPromise) {
     return refreshPromise;
   }
@@ -144,6 +144,15 @@ const getRefreshedToken = async (): Promise<string | null> => {
       // Persist the new tokens via storage BEFORE releasing waiting requests
       if (newAccessToken) {
         storage.setAccessToken(newAccessToken);
+
+        // Notify socket and other real-time consumers that a fresh token is available
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("zeitnah:auth:token-refreshed", {
+              detail: { token: newAccessToken },
+            })
+          );
+        }
       }
       if (newRefreshToken) {
         storage.setRefreshToken(newRefreshToken);
