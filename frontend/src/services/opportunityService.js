@@ -67,7 +67,47 @@ export const opportunityService = {
     const res = await api.get(`/opportunities/${jobId}/applications`);
     return res.data;
   },
+
+  // =========================================================================
+  // PHASE 8: CANDIDATE OPPORTUNITY INBOX & OUTREACH
+  // =========================================================================
+
+  async getInbox(params = {}) {
+    const res = await api.get('/opportunities/inbox', { params });
+    return res.data;
+  },
+
+  async getInboxUnreadCount() {
+    const res = await api.get('/opportunities/inbox/unread-count');
+    return res.data;
+  },
+
+  async getInboxDetail(id) {
+    const res = await api.get(`/opportunities/inbox/${id}`);
+    return res.data;
+  },
+
+  async markInterested(id) {
+    const res = await api.post(`/opportunities/inbox/${id}/interested`);
+    return res.data;
+  },
+
+  async declineOpportunity(id, data = {}) {
+    const res = await api.post(`/opportunities/inbox/${id}/decline`, data);
+    return res.data;
+  },
+
+  async archiveOpportunity(id) {
+    const res = await api.post(`/opportunities/inbox/${id}/archive`);
+    return res.data;
+  },
+
+  async sendOpportunity(data) {
+    const res = await api.post('/opportunities/send', data);
+    return res.data;
+  },
 };
 
 export default opportunityService;
+
 

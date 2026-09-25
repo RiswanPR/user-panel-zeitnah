@@ -57,6 +57,23 @@ import {
 } from '../../common/constants/reserved-usernames';
 import { MatchingService } from '../matching/matching.service';
 import { CareerIntelligenceService } from '../career-intelligence/career-intelligence.service';
+import {
+  VerificationRequest,
+  VerificationRequestDocument,
+  VerificationCategory,
+  VerificationStatus,
+} from './schemas/verification-request.schema';
+import {
+  Project,
+  ProjectDocument,
+  ProjectVisibility,
+} from '../projects/schemas/project.schema';
+import { UpdatePortfolioDto } from './dto/portfolio.dto';
+import {
+  CreateVerificationRequestDto,
+  ReviewVerificationRequestDto,
+} from './dto/verification.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class ProfileService {
@@ -72,11 +89,20 @@ export class ProfileService {
     private usernameService: UsernameService,
     private auditLogsService: AuditLogsService,
     @Optional()
+    @InjectModel(VerificationRequest.name)
+    private verificationRequestModel?: Model<VerificationRequestDocument>,
+    @Optional()
+    @InjectModel(Project.name)
+    private projectModel?: Model<ProjectDocument>,
+    @Optional()
     @Inject(forwardRef(() => MatchingService))
     private readonly matchingService?: MatchingService,
     @Optional()
     @Inject(forwardRef(() => CareerIntelligenceService))
     private readonly careerIntelligenceService?: CareerIntelligenceService,
+    @Optional()
+    @Inject(forwardRef(() => NotificationsService))
+    private readonly notificationsService?: NotificationsService,
   ) {}
 
   private triggerCandidateMatchInvalidation(userId: string) {
@@ -821,6 +847,10 @@ export class ProfileService {
           data.careerPreferences.availability ||
           existingPrefs.availability ||
           '',
+        recruiterDiscovery:
+          data.careerPreferences.recruiterDiscovery ||
+          (existingPrefs as any).recruiterDiscovery ||
+          'VISIBLE_ALL_RECRUITERS',
       };
     }
     if (data.privacySettings !== undefined) {
@@ -1590,6 +1620,951 @@ export class ProfileService {
         username: targetUser.username,
         primaryRole: targetUser.primaryRole,
       },
+    };
+  }
+
+  // =========================================================================
+  // PHASE 8: PROFESSIONAL INFRASTRUCTURE PORTFOLIO
+  // =========================================================================
+
+  /**
+   * Calculate portfolio completeness distinct from profile completeness.
+   */
+  calculatePortfolioCompleteness(
+    user: any,
+    projects: any[] = [],
+  ): { completeness: number; missingItems: string[] } {
+    let score = 0;
+    const missingItems: string[] = [];
+
+    // 1. Featured Project (20%)
+    const hasFeatured =
+      (user.portfolio?.featuredProjectIds &&
+        user.portfolio.featuredProjectIds.length > 0) ||
+      projects.some((p) => p.featured);
+    if (hasFeatured) {
+      score += 20;
+    } else {
+      missingItems.push('Featured project');
+    }
+
+    // 2. Project Media (15%)
+    const hasMedia = projects.some(
+      (p) =>
+        (p.media && p.media.length > 0) ||
+        (p.portfolioMedia && p.portfolioMedia.length > 0),
+    );
+    if (hasMedia) {
+      score += 15;
+    } else {
+      missingItems.push('Project media attachments');
+    }
+
+    // 3. Featured Skills (15%)
+    if (
+      user.portfolio?.featuredSkills &&
+      user.portfolio.featuredSkills.length >= 3
+    ) {
+      score += 15;
+    } else {
+      missingItems.push('At least 3 featured skills');
+    }
+
+    // 4. Featured Software (15%)
+    if (
+      user.portfolio?.featuredSoftware &&
+      user.portfolio.featuredSoftware.length >= 2
+    ) {
+      score += 15;
+    } else {
+      missingItems.push('At least 2 featured software');
+    }
+
+    // 5. Professional Resume / CV (15%)
+    if (user.portfolio?.resume?.url || user.portfolio?.resume?.fileKey) {
+      score += 15;
+    } else {
+      missingItems.push('Professional resume / CV');
+    }
+
+    // 6. Experience Highlights (10%)
+    const hasExp =
+      (user.experience && user.experience.length > 0) ||
+      (user.portfolio?.highlightedExperienceIds &&
+        user.portfolio.highlightedExperienceIds.length > 0);
+    if (hasExp) {
+      score += 10;
+    } else {
+      missingItems.push('Experience highlights');
+    }
+
+    // 7. Portfolio Bio / Headline (10%)
+    const bioText = user.portfolio?.customBio || user.bio || '';
+    if (bioText.trim().length >= 10) {
+      score += 10;
+    } else {
+      missingItems.push('Portfolio bio or summary');
+    }
+
+    return { completeness: Math.min(100, score), missingItems };
+  }
+
+  /**
+   * Get professional portfolio for a user with privacy rules applied.
+   */
+  async getPortfolio(
+    userId: string,
+    isOwner = true,
+    requesterUserId?: string,
+    requesterRole?: string,
+  ) {
+    const user = await this.userModel.findById(userId).lean();
+    if (!user) {
+      throw new NotFoundException('User profile not found');
+    }
+
+    // Fetch projects
+    const allUserProjects = await this.projectModel
+      .find({ ownerId: new Types.ObjectId(userId) })
+      .sort({ featured: -1, createdAt: -1 })
+      .lean();
+
+    const { completeness, missingItems } =
+      this.calculatePortfolioCompleteness(user, allUserProjects);
+
+    // Apply privacy filtering if not owner
+    let visibleProjects: any[] = allUserProjects;
+    if (!isOwner) {
+      visibleProjects = allUserProjects
+        .filter((p) => p.visibility !== ProjectVisibility.PRIVATE)
+        .map((p) => ({
+          ...p,
+          portfolioMedia: (p.portfolioMedia || []).filter(
+            (m) => m.visibility !== 'PRIVATE',
+          ),
+        }));
+    }
+
+    // Featured projects selection
+    const featuredProjectIds = new Set(
+      user.portfolio?.featuredProjectIds?.map((id: any) => String(id)) || [],
+    );
+    const featuredProjects = visibleProjects.filter(
+      (p) => featuredProjectIds.has(String(p._id)) || p.featured,
+    );
+
+    // Resume visibility rules
+    let allowedResume: any = null;
+    const rawResume = user.portfolio?.resume;
+    if (rawResume && (rawResume.url || rawResume.fileKey)) {
+      if (isOwner) {
+        allowedResume = rawResume;
+      } else {
+        const vis = rawResume.visibility || 'PRIVATE';
+        const isRecruiterRole = ['recruiter', 'founder', 'admin'].includes(
+          (requesterRole || '').toLowerCase(),
+        );
+
+        if (vis === 'PUBLIC') {
+          allowedResume = {
+            url: rawResume.url,
+            filename: rawResume.filename,
+            sizeBytes: rawResume.sizeBytes,
+            uploadedAt: rawResume.uploadedAt,
+            visibility: vis,
+          };
+        } else if (vis === 'RECRUITERS' && isRecruiterRole) {
+          allowedResume = {
+            url: rawResume.url,
+            filename: rawResume.filename,
+            sizeBytes: rawResume.sizeBytes,
+            uploadedAt: rawResume.uploadedAt,
+            visibility: vis,
+          };
+        }
+      }
+    }
+
+    // Highlighted experience
+    const highlightedExpIds = new Set(
+      user.portfolio?.highlightedExperienceIds || [],
+    );
+    const highlightedExperience = (user.experience || []).filter(
+      (e: any) =>
+        highlightedExpIds.has(String(e.id)) || highlightedExpIds.size === 0,
+    );
+
+    // Safe public verification badges (NO private evidence leaked!)
+    const verificationsSummary = {
+      identity: user.verifications?.identity?.status === 'VERIFIED',
+      professional: user.verifications?.professional?.status === 'VERIFIED',
+      educator: user.verifications?.educator?.status === 'VERIFIED',
+      businessAffiliation:
+        user.verifications?.businessAffiliation?.status === 'VERIFIED',
+      certification: user.verifications?.certification?.status === 'VERIFIED',
+      details: {
+        identity: user.verifications?.identity || { status: 'UNVERIFIED' },
+        professional:
+          user.verifications?.professional || { status: 'UNVERIFIED' },
+        educator: user.verifications?.educator || { status: 'UNVERIFIED' },
+        businessAffiliation:
+          user.verifications?.businessAffiliation || { status: 'UNVERIFIED' },
+        certification:
+          user.verifications?.certification || { status: 'UNVERIFIED' },
+      },
+    };
+
+    return {
+      hero: {
+        userId: user._id,
+        name: user.name,
+        username: user.username,
+        avatar: user.avatar,
+        headline: user.portfolio?.customHeadline || user.headline,
+        currentRole: user.currentRole,
+        primaryRole: user.primaryRole,
+        primaryDiscipline: user.primaryDiscipline,
+        infrastructureSectors: user.infrastructureSectors || [],
+        specializations: user.specializations || [],
+        location: user.location,
+        yearsOfExperience: user.yearsOfExperience || 0,
+        badges: verificationsSummary,
+        availability: user.availability,
+      },
+      about: user.portfolio?.customBio || user.bio || '',
+      featuredProjects,
+      allProjects: visibleProjects,
+      featuredSkills: user.portfolio?.featuredSkills || [],
+      featuredSoftware: user.portfolio?.featuredSoftware || [],
+      allSkills: user.skills || [],
+      structuredSkills: user.structuredSkills || {},
+      highlightedExperience,
+      allExperience: user.experience || [],
+      education: user.education || [],
+      certifications: user.certifications || [],
+      resume: allowedResume,
+      sectionsVisibility: user.portfolio?.sectionsVisibility || {
+        about: true,
+        skills: true,
+        experience: true,
+        projects: true,
+        certifications: true,
+        education: true,
+        courses: true,
+        contact: true,
+      },
+      completeness,
+      missingItems: isOwner ? missingItems : [],
+      published: Boolean(user.portfolio?.published),
+      verifications: verificationsSummary,
+      isOwner,
+    };
+  }
+
+  /**
+   * Get public portfolio by username.
+   */
+  async getPublicPortfolio(
+    username: string,
+    requesterUserId?: string,
+    requesterRole?: string,
+  ) {
+    const user = await this.userModel.findOne({
+      username: username.toLowerCase().trim(),
+    });
+    if (!user) {
+      throw new NotFoundException(`User @${username} not found`);
+    }
+
+    const isOwner = Boolean(
+      requesterUserId && String(requesterUserId) === String(user._id),
+    );
+
+    return this.getPortfolio(
+      String(user._id),
+      isOwner,
+      requesterUserId,
+      requesterRole,
+    );
+  }
+
+  /**
+   * Update portfolio curation settings.
+   */
+  async updatePortfolio(userId: string, dto: UpdatePortfolioDto) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    if (!user.portfolio) {
+      user.portfolio = {
+        published: false,
+        customHeadline: '',
+        customBio: '',
+        featuredProjectIds: [],
+        featuredSkills: [],
+        featuredSoftware: [],
+        highlightedExperienceIds: [],
+        sectionsVisibility: {
+          about: true,
+          skills: true,
+          experience: true,
+          projects: true,
+          certifications: true,
+          education: true,
+          courses: true,
+          contact: true,
+        },
+        resume: {
+          url: '',
+          fileKey: '',
+          filename: '',
+          sizeBytes: 0,
+          uploadedAt: null,
+          visibility: 'PRIVATE',
+        },
+        portfolioCompleteness: 0,
+      };
+    }
+
+    if (dto.published !== undefined) user.portfolio.published = dto.published;
+    if (dto.customHeadline !== undefined)
+      user.portfolio.customHeadline = dto.customHeadline.trim();
+    if (dto.customBio !== undefined)
+      user.portfolio.customBio = dto.customBio.trim();
+    if (dto.featuredProjectIds !== undefined) {
+      user.portfolio.featuredProjectIds = dto.featuredProjectIds;
+      // Synchronize featured state on project documents
+      await this.projectModel.updateMany(
+        { ownerId: user._id },
+        { $set: { featured: false } },
+      );
+      if (dto.featuredProjectIds.length > 0) {
+        const validObjIds = dto.featuredProjectIds
+          .filter((id) => Types.ObjectId.isValid(id))
+          .map((id) => new Types.ObjectId(id));
+        if (validObjIds.length > 0) {
+          await this.projectModel.updateMany(
+            {
+              ownerId: user._id,
+              _id: { $in: validObjIds },
+            },
+            { $set: { featured: true } },
+          );
+        }
+      }
+    }
+    if (dto.featuredSkills !== undefined)
+      user.portfolio.featuredSkills = dto.featuredSkills;
+    if (dto.featuredSoftware !== undefined)
+      user.portfolio.featuredSoftware = dto.featuredSoftware;
+    if (dto.highlightedExperienceIds !== undefined)
+      user.portfolio.highlightedExperienceIds = dto.highlightedExperienceIds;
+    if (dto.sectionsVisibility !== undefined) {
+      user.portfolio.sectionsVisibility = {
+        ...user.portfolio.sectionsVisibility,
+        ...dto.sectionsVisibility,
+      };
+    }
+    if (dto.resumeVisibility !== undefined && user.portfolio.resume) {
+      user.portfolio.resume.visibility = dto.resumeVisibility;
+    }
+
+    const projects = await this.projectModel
+      .find({ ownerId: user._id })
+      .lean();
+    const { completeness } = this.calculatePortfolioCompleteness(
+      user,
+      projects,
+    );
+    user.portfolio.portfolioCompleteness = completeness;
+
+    user.markModified('portfolio');
+    await user.save();
+
+    this.triggerCandidateMatchInvalidation(userId);
+
+    return {
+      success: true,
+      message: 'Portfolio updated successfully',
+      portfolio: user.portfolio,
+    };
+  }
+
+  /**
+   * Upload resume / CV (PDF format, max 10MB).
+   */
+  async uploadResume(userId: string, file: Express.Multer.File) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    if (!file) throw new BadRequestException('No resume file provided');
+
+    if (file.mimetype !== 'application/pdf') {
+      throw new BadRequestException('Only PDF files are permitted for resumes');
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      throw new BadRequestException('Resume file size must not exceed 10MB');
+    }
+
+    const key = `resumes/${userId}-${uuidv4()}.pdf`;
+    const oldKey = user.portfolio?.resume?.fileKey;
+
+    await this.uploadService.uploadFile(key, file.buffer, file.mimetype);
+
+    const signedUrl = await this.signedUrlService.generateSignedImageUrl(key);
+
+    if (!user.portfolio) {
+      user.portfolio = {
+        published: false,
+        customHeadline: '',
+        customBio: '',
+        featuredProjectIds: [],
+        featuredSkills: [],
+        featuredSoftware: [],
+        highlightedExperienceIds: [],
+        sectionsVisibility: {
+          about: true,
+          skills: true,
+          experience: true,
+          projects: true,
+          certifications: true,
+          education: true,
+          courses: true,
+          contact: true,
+        },
+        resume: {
+          url: '',
+          fileKey: '',
+          filename: '',
+          sizeBytes: 0,
+          uploadedAt: null,
+          visibility: 'PRIVATE',
+        },
+        portfolioCompleteness: 0,
+      };
+    }
+
+    user.portfolio.resume = {
+      url: signedUrl,
+      fileKey: key,
+      filename: file.originalname,
+      sizeBytes: file.size,
+      uploadedAt: new Date(),
+      visibility: user.portfolio.resume?.visibility || 'PRIVATE',
+    };
+
+    const projects = await this.projectModel
+      .find({ ownerId: user._id })
+      .lean();
+    const { completeness } = this.calculatePortfolioCompleteness(
+      user,
+      projects,
+    );
+    user.portfolio.portfolioCompleteness = completeness;
+
+    user.markModified('portfolio');
+    await user.save();
+
+    if (oldKey && oldKey !== key && oldKey.startsWith('resumes/')) {
+      await Promise.resolve(this.uploadService.deleteFile(oldKey)).catch(
+        () => {},
+      );
+    }
+
+    return {
+      success: true,
+      message: 'Resume uploaded successfully',
+      resume: user.portfolio.resume,
+      completeness,
+    };
+  }
+
+  /**
+   * Delete resume / CV.
+   */
+  async deleteResume(userId: string) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    const key = user.portfolio?.resume?.fileKey;
+    if (key && key.startsWith('resumes/')) {
+      await Promise.resolve(this.uploadService.deleteFile(key)).catch(
+        () => {},
+      );
+    }
+
+    if (user.portfolio?.resume) {
+      user.portfolio.resume = {
+        url: '',
+        fileKey: '',
+        filename: '',
+        sizeBytes: 0,
+        uploadedAt: null,
+        visibility: 'PRIVATE',
+      };
+    }
+
+    const projects = await this.projectModel
+      .find({ ownerId: user._id })
+      .lean();
+    const { completeness } = this.calculatePortfolioCompleteness(
+      user,
+      projects,
+    );
+    if (user.portfolio) {
+      user.portfolio.portfolioCompleteness = completeness;
+    }
+
+    user.markModified('portfolio');
+    await user.save();
+
+    return {
+      success: true,
+      message: 'Resume removed successfully',
+      completeness,
+    };
+  }
+
+  /**
+   * Secure authorized download URL for candidate resume.
+   */
+  async getResumeDownloadUrl(
+    targetUserId: string,
+    requesterUserId?: string,
+    requesterRole?: string,
+  ) {
+    const user = await this.userModel.findById(targetUserId);
+    if (!user) throw new NotFoundException('User not found');
+
+    const resume = user.portfolio?.resume;
+    if (!resume || !resume.fileKey) {
+      throw new NotFoundException('Candidate has not uploaded a resume');
+    }
+
+    const isOwner = Boolean(
+      requesterUserId && String(requesterUserId) === String(user._id),
+    );
+    const isRecruiterRole = ['recruiter', 'founder', 'admin'].includes(
+      (requesterRole || '').toLowerCase(),
+    );
+
+    if (isOwner) {
+      // Owner always allowed
+    } else if (resume.visibility === 'PUBLIC') {
+      // Public allowed
+    } else if (resume.visibility === 'RECRUITERS' && isRecruiterRole) {
+      // Recruiter allowed
+    } else {
+      throw new ForbiddenException(
+        'This resume is private and not accessible to your account.',
+      );
+    }
+
+    const signedUrl = await this.signedUrlService.generateSignedImageUrl(
+      resume.fileKey,
+    );
+    return {
+      success: true,
+      downloadUrl: signedUrl,
+      filename: resume.filename,
+    };
+  }
+
+  /**
+   * Upload media for project / portfolio (Site photographs, Drawings, BOQ samples, Presentations).
+   */
+  async uploadPortfolioMedia(
+    userId: string,
+    file: Express.Multer.File,
+    metadata: {
+      projectId?: string;
+      name?: string;
+      caption?: string;
+      visibility?: string;
+    },
+  ) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    if (!file) throw new BadRequestException('No file provided');
+
+    const allowedMimes = [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'application/pdf',
+    ];
+    if (!allowedMimes.includes(file.mimetype)) {
+      throw new BadRequestException(
+        'Only JPG, PNG, WebP, or PDF files are permitted for project media.',
+      );
+    }
+
+    if (file.size > 15 * 1024 * 1024) {
+      throw new BadRequestException('Media file size must not exceed 15MB');
+    }
+
+    const ext = file.originalname.split('.').pop() || 'dat';
+    const key = `projects/media/${userId}-${uuidv4()}.${ext}`;
+
+    await this.uploadService.uploadFile(key, file.buffer, file.mimetype);
+    const signedUrl = await this.signedUrlService.generateSignedImageUrl(key);
+
+    const mediaItem = {
+      id: uuidv4(),
+      name: metadata.name || file.originalname,
+      mediaType: file.mimetype === 'application/pdf' ? 'pdf' : 'image',
+      url: signedUrl,
+      fileKey: key,
+      caption: metadata.caption || '',
+      visibility: metadata.visibility || 'PUBLIC',
+    };
+
+    if (metadata.projectId) {
+      const project = await this.projectModel.findOne({
+        _id: new Types.ObjectId(metadata.projectId),
+        ownerId: user._id,
+      });
+      if (project) {
+        if (!project.portfolioMedia) project.portfolioMedia = [];
+        project.portfolioMedia.push(mediaItem);
+        await project.save();
+      }
+    }
+
+    // Refresh user's portfolio completeness
+    const projects = await this.projectModel
+      .find({ ownerId: user._id })
+      .lean();
+    const { completeness } = this.calculatePortfolioCompleteness(
+      user,
+      projects,
+    );
+    if (user.portfolio) {
+      user.portfolio.portfolioCompleteness = completeness;
+      user.markModified('portfolio');
+      await user.save();
+    }
+
+    return {
+      success: true,
+      mediaItem,
+      completeness,
+    };
+  }
+
+  /**
+   * Delete media from a project.
+   */
+  async deletePortfolioMedia(
+    userId: string,
+    mediaId: string,
+    projectId?: string,
+  ) {
+    if (projectId) {
+      const project = await this.projectModel.findOne({
+        _id: new Types.ObjectId(projectId),
+        ownerId: new Types.ObjectId(userId),
+      });
+      if (!project) throw new NotFoundException('Project not found');
+
+      const item = (project.portfolioMedia || []).find((m) => m.id === mediaId);
+      if (item && item.fileKey && item.fileKey.startsWith('projects/media/')) {
+        await Promise.resolve(this.uploadService.deleteFile(item.fileKey)).catch(
+          () => {},
+        );
+      }
+
+      project.portfolioMedia = (project.portfolioMedia || []).filter(
+        (m) => m.id !== mediaId,
+      );
+      await project.save();
+    }
+
+    return { success: true, message: 'Media removed successfully' };
+  }
+
+  // =========================================================================
+  // PHASE 8: VERIFICATION SYSTEM
+  // =========================================================================
+
+  /**
+   * Get verification center overview for current user.
+   */
+  async getVerificationCenter(userId: string) {
+    const user = await this.userModel.findById(userId).lean();
+    if (!user) throw new NotFoundException('User not found');
+
+    const requests = await this.verificationRequestModel
+      .find({ userId: new Types.ObjectId(userId) })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Check expiring credentials
+    const now = new Date();
+    const categories: Record<string, any> = {
+      identity: {
+        status: user.verifications?.identity?.status || 'UNVERIFIED',
+        verifiedAt: user.verifications?.identity?.verifiedAt || null,
+        validUntil: user.verifications?.identity?.validUntil || null,
+        badgeName: 'Identity Verified',
+        isExpired:
+          Boolean(user.verifications?.identity?.validUntil) &&
+          new Date(user.verifications.identity.validUntil) < now,
+      },
+      professional: {
+        status: user.verifications?.professional?.status || 'UNVERIFIED',
+        verifiedAt: user.verifications?.professional?.verifiedAt || null,
+        validUntil: user.verifications?.professional?.validUntil || null,
+        badgeName: 'Professional Verified',
+        title: user.verifications?.professional?.title || '',
+        affiliation: user.verifications?.professional?.affiliation || '',
+        isExpired:
+          Boolean(user.verifications?.professional?.validUntil) &&
+          new Date(user.verifications.professional.validUntil) < now,
+      },
+      educator: {
+        status: user.verifications?.educator?.status || 'UNVERIFIED',
+        verifiedAt: user.verifications?.educator?.verifiedAt || null,
+        badgeName: 'Educator Verified',
+        note: 'Administrator controlled',
+      },
+      businessAffiliation: {
+        status: user.verifications?.businessAffiliation?.status || 'UNVERIFIED',
+        verifiedAt: user.verifications?.businessAffiliation?.verifiedAt || null,
+        badgeName: 'Business Affiliation Verified',
+        organizationName:
+          user.verifications?.businessAffiliation?.organizationName || '',
+      },
+      certification: {
+        status: user.verifications?.certification?.status || 'UNVERIFIED',
+        verifiedAt: user.verifications?.certification?.verifiedAt || null,
+        badgeName: 'Certification Verified',
+      },
+    };
+
+    return {
+      categories,
+      requests,
+      activeRequests: requests.filter((r) => r.status === 'PENDING'),
+      history: requests.filter((r) => r.status !== 'PENDING'),
+    };
+  }
+
+  /**
+   * Submit verification request with private evidence files.
+   */
+  async submitVerificationRequest(
+    userId: string,
+    dto: CreateVerificationRequestDto,
+    files?: Express.Multer.File[],
+  ) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    // Rule 18: Educator verification is strictly administrator controlled
+    if (dto.category === VerificationCategory.EDUCATOR) {
+      throw new BadRequestException(
+        'Educator role is administrator controlled and cannot be requested by users.',
+      );
+    }
+
+    // Check for duplicate pending requests
+    const existingPending = await this.verificationRequestModel.findOne({
+      userId: user._id,
+      category: dto.category,
+      status: VerificationStatus.PENDING,
+    });
+    if (existingPending) {
+      throw new BadRequestException(
+        `A verification request for ${dto.category} is already pending review.`,
+      );
+    }
+
+    // Process secure private evidence files
+    const evidenceFiles: Array<{
+      id: string;
+      name: string;
+      mimeType: string;
+      sizeBytes: number;
+      fileKey: string;
+      url: string;
+      uploadedAt: Date;
+    }> = [];
+
+    if (files && files.length > 0) {
+      for (const f of files) {
+        const ext = f.originalname.split('.').pop() || 'dat';
+        const fileKey = `evidence/private/${userId}-${uuidv4()}.${ext}`;
+        await this.uploadService.uploadFile(fileKey, f.buffer, f.mimetype);
+
+        evidenceFiles.push({
+          id: uuidv4(),
+          name: f.originalname,
+          mimeType: f.mimetype,
+          sizeBytes: f.size,
+          fileKey,
+          url: '', // Evidence URLs are strictly private and served via authenticated signed tokens
+          uploadedAt: new Date(),
+        });
+      }
+    }
+
+    const request = await this.verificationRequestModel.create({
+      userId: user._id,
+      category: dto.category,
+      status: VerificationStatus.PENDING,
+      documentType: dto.documentType?.trim() || '',
+      documentNumber: dto.documentNumber?.trim() || '',
+      organizationName: dto.organizationName?.trim() || '',
+      notes: dto.notes?.trim() || '',
+      evidenceFiles,
+      auditLog: [
+        {
+          status: VerificationStatus.PENDING,
+          changedAt: new Date(),
+          changedBy: user._id,
+          note: 'Verification request submitted by candidate',
+        },
+      ],
+    });
+
+    // Update user verifications state to PENDING
+    const catKey =
+      dto.category === VerificationCategory.BUSINESS_AFFILIATION
+        ? 'businessAffiliation'
+        : (dto.category.toLowerCase() as keyof typeof user.verifications);
+
+    if (user.verifications && (user.verifications as any)[catKey]) {
+      (user.verifications as any)[catKey].status = 'PENDING';
+      user.markModified('verifications');
+      await user.save();
+    }
+
+    return {
+      success: true,
+      message: 'Verification request submitted successfully',
+      request,
+    };
+  }
+
+  /**
+   * Secure authorized access to private verification evidence files.
+   */
+  async getVerificationEvidenceUrl(
+    requesterUserId: string,
+    requesterRole: string,
+    requestId: string,
+    fileId: string,
+  ) {
+    const request = await this.verificationRequestModel.findById(requestId);
+    if (!request) throw new NotFoundException('Verification request not found');
+
+    const isCandidateOwner = String(request.userId) === String(requesterUserId);
+    const isAdmin = requesterRole === 'admin' || requesterRole === 'superuser';
+
+    if (!isCandidateOwner && !isAdmin) {
+      throw new ForbiddenException(
+        'Private verification evidence can only be accessed by the candidate or platform administrators.',
+      );
+    }
+
+    const file = (request.evidenceFiles || []).find((f) => f.id === fileId);
+    if (!file || !file.fileKey) {
+      throw new NotFoundException('Evidence file not found');
+    }
+
+    const signedUrl = await this.signedUrlService.generateSignedImageUrl(
+      file.fileKey,
+    );
+    return {
+      success: true,
+      downloadUrl: signedUrl,
+      filename: file.name,
+    };
+  }
+
+  /**
+   * Admin review of verification request.
+   */
+  async adminReviewVerificationRequest(
+    adminUserId: string,
+    requestId: string,
+    dto: ReviewVerificationRequestDto,
+  ) {
+    const request = await this.verificationRequestModel.findById(requestId);
+    if (!request) throw new NotFoundException('Verification request not found');
+
+    const user = await this.userModel.findById(request.userId);
+    if (!user) throw new NotFoundException('Candidate user not found');
+
+    request.status = dto.status;
+    request.reviewedBy = new Types.ObjectId(adminUserId);
+    request.reviewedAt = new Date();
+    if (dto.rejectionReason)
+      request.rejectionReason = dto.rejectionReason.trim();
+    if (dto.adminNotes) request.adminNotes = dto.adminNotes.trim();
+    if (dto.validUntil) request.validUntil = new Date(dto.validUntil);
+
+    request.auditLog.push({
+      status: dto.status,
+      changedAt: new Date(),
+      changedBy: new Types.ObjectId(adminUserId),
+      note: dto.adminNotes || `Review completed with status ${dto.status}`,
+    });
+    await request.save();
+
+    // Update user verifications record
+    const catKey =
+      request.category === VerificationCategory.BUSINESS_AFFILIATION
+        ? 'businessAffiliation'
+        : (request.category.toLowerCase() as keyof typeof user.verifications);
+
+    if (user.verifications && (user.verifications as any)[catKey]) {
+      const targetCat = (user.verifications as any)[catKey];
+      targetCat.status = dto.status;
+      if (dto.status === VerificationStatus.VERIFIED) {
+        targetCat.verifiedAt = new Date();
+        targetCat.validUntil = dto.validUntil ? new Date(dto.validUntil) : null;
+        if (dto.title) targetCat.title = dto.title.trim();
+        if (dto.affiliation) targetCat.affiliation = dto.affiliation.trim();
+
+        // Also sync legacy verification status for Identity/Professional
+        if (
+          request.category === VerificationCategory.IDENTITY ||
+          request.category === VerificationCategory.PROFESSIONAL
+        ) {
+          user.verification = {
+            status: 'VERIFIED',
+            verificationType: request.category,
+            verifiedAt: new Date(),
+          };
+        }
+      }
+      user.markModified('verifications');
+      await user.save();
+    }
+
+    // Send notification to user
+    if (this.notificationsService) {
+      await this.notificationsService.createNotification({
+        recipientId: user._id,
+        actorId: adminUserId,
+        type: 'verification_update',
+        category: 'general',
+        priority: 'HIGH',
+        title: 'Verification Request Update',
+        message: `Your ${request.category.toLowerCase().replace('_', ' ')} verification request has been ${dto.status.toLowerCase()}.`,
+        actionUrl: '/profile/verification',
+        targetUrl: '/profile/verification',
+      });
+    }
+
+    return {
+      success: true,
+      message: `Verification request successfully ${dto.status.toLowerCase()}`,
+      request,
     };
   }
 }

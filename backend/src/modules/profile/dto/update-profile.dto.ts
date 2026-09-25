@@ -144,6 +144,7 @@ export class UpdateProfileDto {
       period?: string;
     };
     availability?: string;
+    recruiterDiscovery?: string;
   };
 
   @IsOptional()

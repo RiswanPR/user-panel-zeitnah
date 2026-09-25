@@ -48,9 +48,11 @@ const JobDetailPage = React.lazy(() => import("./pages/jobs/JobDetailPage"));
 const ManageBusiness = React.lazy(() => import("./pages/business/ManageBusiness"));
 const PublicBusinessProfilePage = React.lazy(() => import("./pages/business/PublicBusinessProfilePage"));
 const BusinessDiscoveryPage = React.lazy(() => import("./pages/business/BusinessDiscoveryPage"));
-const AdminBusinessReviewPage = React.lazy(() => import("./pages/admin/AdminBusinessReviewPage"));
 const CareerIntelligencePage = React.lazy(() => import("./pages/career/CareerIntelligencePage"));
 const MessagesPage = React.lazy(() => import("./pages/messages/MessagesPage"));
+const PortfolioPage = React.lazy(() => import("./pages/profile/PortfolioPage"));
+const VerificationCenterPage = React.lazy(() => import("./pages/profile/VerificationCenterPage"));
+const OpportunityInboxPage = React.lazy(() => import("./pages/opportunities/OpportunityInboxPage"));
 
 import ProtectedRoute from "./components/common/ProtectedRoute/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";
@@ -114,10 +116,26 @@ function App() {
                 }
               />
               <Route
+                path="/u/:username/portfolio"
+                element={
+                  <Suspense fallback={<PageLoader />}>
+                    <PortfolioPage isPublic={true} />
+                  </Suspense>
+                }
+              />
+              <Route
                 path="/profile/u/:username"
                 element={
                   <Suspense fallback={<PageLoader />}>
                     <PublicProfilePage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/profile/u/:username/portfolio"
+                element={
+                  <Suspense fallback={<PageLoader />}>
+                    <PortfolioPage isPublic={true} />
                   </Suspense>
                 }
               />
@@ -133,6 +151,8 @@ function App() {
                 <Route path="/" element={<Navigate to="/courses" />} />
                 <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
                 <Route path="/profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
+                <Route path="/profile/portfolio" element={<Suspense fallback={<PageLoader />}><PortfolioPage /></Suspense>} />
+                <Route path="/profile/verification" element={<Suspense fallback={<PageLoader />}><VerificationCenterPage /></Suspense>} />
                 <Route path="/profile/edit" element={<Suspense fallback={<PageLoader />}><EditProfile /></Suspense>} />
                 <Route path="/public-profile" element={<Suspense fallback={<PageLoader />}><PublicProfilePage /></Suspense>} />
                 <Route path="/courses" element={<Suspense fallback={<PageLoader />}><Courses /></Suspense>} />
@@ -153,6 +173,9 @@ function App() {
                 <Route path="/notifications" element={<Suspense fallback={<PageLoader />}><NotificationsPage /></Suspense>} />
                 <Route path="/jobs" element={<Suspense fallback={<PageLoader />}><JobsPage /></Suspense>} />
                 <Route path="/jobs/:id" element={<Suspense fallback={<PageLoader />}><JobDetailPage /></Suspense>} />
+                <Route path="/opportunities" element={<Navigate to="/opportunities/inbox" replace />} />
+                <Route path="/opportunities/inbox" element={<Suspense fallback={<PageLoader />}><OpportunityInboxPage /></Suspense>} />
+                <Route path="/career/opportunities" element={<Navigate to="/opportunities/inbox" replace />} />
                 <Route path="/career-intelligence" element={<Suspense fallback={<PageLoader />}><CareerIntelligencePage /></Suspense>} />
                 <Route path="/manage-business" element={<Suspense fallback={<PageLoader />}><ManageBusiness /></Suspense>} />
                 <Route path="/businesses" element={<Suspense fallback={<PageLoader />}><BusinessDiscoveryPage /></Suspense>} />

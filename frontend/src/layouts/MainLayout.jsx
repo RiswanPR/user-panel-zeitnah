@@ -14,12 +14,15 @@ import {
   Building2,
   TrendingUp,
   MessageSquare,
+  Layers,
+  Inbox,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { AuthContext } from "../context/AuthContext";
 import { useMessaging } from "../context/MessagingContext";
 import { getUploadUrl } from "../utils/courseUi";
 import leaderboardService from "../services/leaderboardService";
+import opportunityService from "../services/opportunityService";
 import LeaderboardSidebarCard from "../components/sidebar/LeaderboardSidebarCard";
 import PageTransition from "../components/ui/PageTransition";
 import CookieConsentBanner from "../components/common/CookieConsentBanner";
@@ -52,25 +55,37 @@ export default function MainLayout({ children }) {
   const { unreadCounts } = useMessaging();
   const unreadMessagesCount = unreadCounts?.total || 0;
 
+  // Unread opportunities count for candidate
+  const { data: oppUnreadData } = useQuery({
+    queryKey: ["opportunities", "unread-count"],
+    queryFn: () => opportunityService.getInboxUnreadCount(),
+    staleTime: 1000 * 60, // 1 minute
+    enabled: Boolean(currentUserId),
+    retry: 1,
+  });
+  const unreadOpportunitiesCount = oppUnreadData?.unreadCount || 0;
+
   const desktopNavItems = useMemo(() => [
     { key: "courses", path: "/courses", label: "Courses", icon: BookOpen },
     { key: "network", path: "/network", label: "Network & Spaces", icon: Compass },
     { key: "messages", path: "/messages", label: "Messages", icon: MessageSquare, badge: unreadMessagesCount },
     { key: "profile", path: "/profile", label: "Profile", icon: User },
+    { key: "portfolio", path: "/profile/portfolio", label: "Portfolio", icon: Layers },
     { key: "jobs", path: "/jobs", label: "Jobs", icon: Briefcase },
+    { key: "opportunities", path: "/opportunities/inbox", label: "Opportunities", icon: Inbox, badge: unreadOpportunitiesCount },
     { key: "career-intelligence", path: "/career-intelligence", label: "Career Intelligence", icon: TrendingUp },
     ...(isBusinessRole
       ? [{ key: "manage-business", path: "/manage-business", label: "Manage Business", icon: Building2 }]
       : []),
-  ], [isBusinessRole, unreadMessagesCount]);
+  ], [isBusinessRole, unreadMessagesCount, unreadOpportunitiesCount]);
 
   const mobileBottomNavItems = useMemo(() => [
     { key: "courses", path: "/courses", label: "Courses", icon: BookOpen },
-    { key: "network", path: "/network", label: "Network", icon: Compass },
+    { key: "portfolio", path: "/profile/portfolio", label: "Portfolio", icon: Layers },
     { key: "messages", path: "/messages", label: "Messages", icon: MessageSquare, badge: unreadMessagesCount },
-    { key: "jobs", path: "/jobs", label: "Jobs", icon: Briefcase },
+    { key: "opportunities", path: "/opportunities/inbox", label: "Inbox", icon: Inbox, badge: unreadOpportunitiesCount },
     { key: "profile", path: "/profile", label: "Profile", icon: User },
-  ], [unreadMessagesCount]);
+  ], [unreadMessagesCount, unreadOpportunitiesCount]);
 
   // Cheaply fetch authenticated student's personal position for mobile trophy rank indicator
   const { data: position } = useQuery({
@@ -105,6 +120,12 @@ export default function MainLayout({ children }) {
     if (key === "jobs") {
       return path.startsWith("/jobs");
     }
+    if (key === "portfolio") {
+      return path === "/profile/portfolio" || path.endsWith("/portfolio");
+    }
+    if (key === "opportunities") {
+      return path.startsWith("/opportunities") || path.startsWith("/career/opportunities");
+    }
     if (key === "career-intelligence") {
       return path.startsWith("/career-intelligence");
     }
@@ -112,6 +133,7 @@ export default function MainLayout({ children }) {
       return path.startsWith("/manage-business");
     }
     if (key === "profile") {
+      if (path === "/profile/portfolio" || path.endsWith("/portfolio")) return false;
       return (
         path.startsWith("/profile") ||
         path === "/public-profile" ||

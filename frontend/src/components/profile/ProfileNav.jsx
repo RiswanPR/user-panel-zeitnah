@@ -8,6 +8,8 @@ import {
   Star,
   Shield,
   FileText,
+  Layers,
+  ShieldCheck,
 } from "lucide-react";
 
 export const PROFILE_TABS = [
@@ -16,6 +18,18 @@ export const PROFILE_TABS = [
     label: "Overview",
     icon: User,
     description: "Identity & stats",
+  },
+  {
+    path: "/profile/portfolio",
+    label: "Portfolio",
+    icon: Layers,
+    description: "Curated work & artifacts",
+  },
+  {
+    path: "/profile/verification",
+    label: "Verification",
+    icon: ShieldCheck,
+    description: "Credentials & trust badges",
   },
   {
     path: "/profile/edit",

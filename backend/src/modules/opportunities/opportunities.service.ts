@@ -39,6 +39,17 @@ import {
   JobApplicationDocument,
   JobApplicationStatus,
 } from './schemas/job-application.schema';
+import {
+  EmployerOpportunity,
+  EmployerOpportunityDocument,
+  OpportunityInboxStatus,
+  OpportunityDeclineReason,
+} from './schemas/employer-opportunity.schema';
+import { User, UserDocument } from '../auth/schemas/user.schema';
+import { SendOpportunityDto } from './dto/send-opportunity.dto';
+import { DeclineOpportunityDto } from './dto/opportunity-response.dto';
+import { NotificationsService } from '../notifications/notifications.service';
+import { ModerationService } from '../moderation/moderation.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { MatchingService } from '../matching/matching.service';
 
@@ -116,10 +127,22 @@ export class OpportunitiesService {
     @InjectModel(JobApplication.name)
     private readonly jobAppModel?: Model<JobApplicationDocument>,
     @Optional()
+    @InjectModel(EmployerOpportunity.name)
+    private readonly employerOpportunityModel?: Model<EmployerOpportunityDocument>,
+    @Optional()
+    @InjectModel(User.name)
+    private readonly userModel?: Model<UserDocument>,
+    @Optional()
     private readonly auditLogsService?: AuditLogsService,
     @Optional()
     @Inject(forwardRef(() => MatchingService))
     private readonly matchingService?: MatchingService,
+    @Optional()
+    @Inject(forwardRef(() => NotificationsService))
+    private readonly notificationsService?: NotificationsService,
+    @Optional()
+    @Inject(forwardRef(() => ModerationService))
+    private readonly moderationService?: ModerationService,
   ) {}
 
   /**
@@ -1212,5 +1235,525 @@ export class OpportunitiesService {
         'You must be an Owner, Admin, or Recruiter of this organization to manage opportunities',
       );
     }
+  }
+
+  // =========================================================================
+  // PHASE 8: OPPORTUNITY OUTREACH & CANDIDATE INBOX
+  // =========================================================================
+
+  /**
+   * Recruiter sends a structured opportunity to a candidate.
+   */
+  async sendEmployerOpportunity(
+    recruiterUserId: string,
+    dto: SendOpportunityDto,
+  ) {
+    if (!this.employerOpportunityModel || !this.userModel) {
+      throw new BadRequestException(
+        'Employer opportunity service unavailable',
+      );
+    }
+
+    // 1. Verify Recruiter
+    const recruiter = await this.userModel.findById(recruiterUserId);
+    if (!recruiter || recruiter.account_Status?.isBlocked) {
+      throw new ForbiddenException('Recruiter account is not authorized.');
+    }
+
+    // 2. Verify Candidate
+    const candidate = await this.userModel.findById(dto.candidateUserId);
+    if (
+      !candidate ||
+      candidate.account_Status?.isBlocked ||
+      candidate.account_Status?.isDeleted
+    ) {
+      throw new NotFoundException('Candidate not found or inactive.');
+    }
+
+    // 3. Block Check
+    if (this.moderationService) {
+      const isBlocked = await this.moderationService.hasBlockRelationship(
+        recruiterUserId,
+        dto.candidateUserId,
+      );
+      if (isBlocked) {
+        throw new ForbiddenException(
+          'Cannot send opportunities to this candidate due to privacy/blocking restrictions.',
+        );
+      }
+    }
+
+    // 4. Candidate Discovery Settings
+    const discovery =
+      candidate.careerPreferences?.recruiterDiscovery ||
+      (candidate.discoverableToRecruiters !== false
+        ? 'VISIBLE_ALL_RECRUITERS'
+        : 'NOT_DISCOVERABLE');
+
+    if (discovery === 'NOT_DISCOVERABLE') {
+      throw new ForbiddenException(
+        'Candidate is not discoverable for employer opportunities.',
+      );
+    }
+
+    // 5. Verify Business
+    const business = await this.orgModel.findById(dto.businessId);
+    if (!business) {
+      throw new NotFoundException('Business not found.');
+    }
+
+    if (
+      business.status !== BusinessStatus.APPROVED ||
+      business.verificationStatus !== OrganizationVerificationStatus.VERIFIED
+    ) {
+      throw new ForbiddenException(
+        'Only active and verified businesses can send candidate opportunities.',
+      );
+    }
+
+    // 6. Verify Recruiter Authorization for Business
+    await this.assertOrgRole(recruiterUserId, dto.businessId, [
+      OrganizationRole.OWNER,
+      OrganizationRole.ADMIN,
+      OrganizationRole.RECRUITER,
+    ]);
+
+    // 7. Verify Job
+    const job = await this.oppModel.findById(dto.jobId);
+    if (!job) {
+      throw new NotFoundException('Job not found.');
+    }
+
+    if (String(job.organizationId) !== String(business._id)) {
+      throw new BadRequestException(
+        'Job does not belong to the specified business.',
+      );
+    }
+
+    if (job.status !== OpportunityStatus.PUBLISHED) {
+      throw new BadRequestException(
+        'Opportunities can only be sent for active, published jobs.',
+      );
+    }
+
+    // 8. Prevent duplicate active opportunities
+    const existingActive = await this.employerOpportunityModel.findOne({
+      businessId: business._id,
+      jobId: job._id,
+      candidateUserId: candidate._id,
+      status: {
+        $in: [
+          OpportunityInboxStatus.SENT,
+          OpportunityInboxStatus.VIEWED,
+          OpportunityInboxStatus.INTERESTED,
+        ],
+      },
+    });
+
+    if (existingActive) {
+      throw new ConflictException(
+        'An active opportunity for this position has already been sent to this candidate.',
+      );
+    }
+
+    // 9. Create Opportunity
+    const opportunity = await this.employerOpportunityModel.create({
+      businessId: business._id,
+      jobId: job._id,
+      candidateUserId: candidate._id,
+      recruiterUserId: new Types.ObjectId(recruiterUserId),
+      roleTitle: job.title,
+      message: dto.message?.trim() || '',
+      status: OpportunityInboxStatus.SENT,
+      auditLog: [
+        {
+          status: OpportunityInboxStatus.SENT,
+          changedAt: new Date(),
+          changedBy: new Types.ObjectId(recruiterUserId),
+          note: 'Opportunity sent by employer recruiter',
+        },
+      ],
+    });
+
+    // 10. Real-time Notification to Candidate
+    if (this.notificationsService) {
+      await this.notificationsService.createNotification({
+        recipientId: candidate._id,
+        actorId: recruiterUserId,
+        type: 'opportunity',
+        category: 'opportunity',
+        priority: 'HIGH',
+        title: 'New Career Opportunity',
+        message: `${business.name} sent you an opportunity for ${job.title}`,
+        actionUrl: '/opportunities/inbox',
+        targetUrl: '/opportunities/inbox',
+        metadata: {
+          opportunityId: opportunity._id,
+          businessId: business._id,
+          jobId: job._id,
+        },
+      });
+    }
+
+    return {
+      success: true,
+      message: 'Opportunity sent successfully to candidate',
+      opportunity,
+    };
+  }
+
+  /**
+   * Candidate Opportunity Inbox with tabs: new, interested, declined, archived.
+   */
+  async getCandidateInbox(
+    candidateUserId: string,
+    tab = 'new',
+    page = 1,
+    limit = 20,
+  ) {
+    if (!this.employerOpportunityModel) {
+      return {
+        items: [],
+        pagination: { page, limit, total: 0, totalPages: 0 },
+        counts: { new: 0, interested: 0, declined: 0, archived: 0 },
+      };
+    }
+
+    const userObjId = new Types.ObjectId(candidateUserId);
+    const normalizedTab = (tab || 'new').toLowerCase();
+
+    const query: Record<string, any> = { candidateUserId: userObjId };
+    if (normalizedTab === 'new') {
+      query.status = {
+        $in: [OpportunityInboxStatus.SENT, OpportunityInboxStatus.VIEWED],
+      };
+    } else if (normalizedTab === 'interested') {
+      query.status = OpportunityInboxStatus.INTERESTED;
+    } else if (normalizedTab === 'declined') {
+      query.status = OpportunityInboxStatus.DECLINED;
+    } else if (normalizedTab === 'archived') {
+      query.status = OpportunityInboxStatus.ARCHIVED;
+    }
+
+    const skip = (Math.max(1, page) - 1) * limit;
+
+    const [
+      items,
+      total,
+      countNew,
+      countInterested,
+      countDeclined,
+      countArchived,
+    ] = await Promise.all([
+      this.employerOpportunityModel
+        .find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate(
+          'businessId',
+          'name slug logo location industry verificationStatus status',
+        )
+        .populate(
+          'jobId',
+          'title discipline specialization infrastructureSector location workMode employmentType minYearsExperience maxYearsExperience salaryMin salaryMax currency requiredSkills requiredSoftware status applicationDeadline',
+        )
+        .populate('recruiterUserId', 'name avatar headline currentRole')
+        .lean(),
+      this.employerOpportunityModel.countDocuments(query),
+      this.employerOpportunityModel.countDocuments({
+        candidateUserId: userObjId,
+        status: {
+          $in: [OpportunityInboxStatus.SENT, OpportunityInboxStatus.VIEWED],
+        },
+      }),
+      this.employerOpportunityModel.countDocuments({
+        candidateUserId: userObjId,
+        status: OpportunityInboxStatus.INTERESTED,
+      }),
+      this.employerOpportunityModel.countDocuments({
+        candidateUserId: userObjId,
+        status: OpportunityInboxStatus.DECLINED,
+      }),
+      this.employerOpportunityModel.countDocuments({
+        candidateUserId: userObjId,
+        status: OpportunityInboxStatus.ARCHIVED,
+      }),
+    ]);
+
+    // Check expiration if job is closed or deadline passed
+    const now = new Date();
+    const processedItems = items.map((item: any) => {
+      const job = item.jobId;
+      const isJobClosed =
+        job &&
+        (job.status === OpportunityStatus.CLOSED ||
+          job.status === OpportunityStatus.ARCHIVED ||
+          (job.applicationDeadline &&
+            new Date(job.applicationDeadline) < now));
+
+      if (
+        isJobClosed &&
+        (item.status === OpportunityInboxStatus.SENT ||
+          item.status === OpportunityInboxStatus.VIEWED)
+      ) {
+        return {
+          ...item,
+          status: OpportunityInboxStatus.EXPIRED,
+          isExpired: true,
+        };
+      }
+      return item;
+    });
+
+    return {
+      items: processedItems,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+      counts: {
+        new: countNew,
+        interested: countInterested,
+        declined: countDeclined,
+        archived: countArchived,
+      },
+    };
+  }
+
+  /**
+   * Get unread (newly sent) opportunity count for badges.
+   */
+  async getInboxUnreadCount(candidateUserId: string) {
+    if (!this.employerOpportunityModel) return { unreadCount: 0 };
+
+    const count = await this.employerOpportunityModel.countDocuments({
+      candidateUserId: new Types.ObjectId(candidateUserId),
+      status: OpportunityInboxStatus.SENT,
+    });
+    return { unreadCount: count };
+  }
+
+  /**
+   * Get single opportunity detail by candidate.
+   * Automatically marks as VIEWED if previously SENT.
+   */
+  async getCandidateOpportunityById(
+    candidateUserId: string,
+    opportunityId: string,
+  ) {
+    if (!this.employerOpportunityModel) {
+      throw new NotFoundException('Opportunity not found');
+    }
+
+    const opp = await this.employerOpportunityModel
+      .findById(opportunityId)
+      .populate(
+        'businessId',
+        'name slug logo location industry verificationStatus status description websiteUrl employeeCountRange',
+      )
+      .populate(
+        'jobId',
+        'title description discipline specialization infrastructureSector location workMode employmentType minYearsExperience maxYearsExperience salaryMin salaryMax currency requiredSkills preferredSkills requiredSoftware preferredSoftware responsibilities requirements benefits status applicationDeadline',
+      )
+      .populate('recruiterUserId', 'name avatar headline currentRole');
+
+    if (!opp) {
+      throw new NotFoundException('Opportunity not found');
+    }
+
+    const isCandidate =
+      String(opp.candidateUserId) === String(candidateUserId);
+    const isRecruiter =
+      String(opp.recruiterUserId) === String(candidateUserId);
+
+    if (!isCandidate && !isRecruiter) {
+      throw new ForbiddenException(
+        'You are not authorized to view this opportunity.',
+      );
+    }
+
+    // Auto mark as viewed when candidate views for the first time
+    if (isCandidate && opp.status === OpportunityInboxStatus.SENT) {
+      opp.status = OpportunityInboxStatus.VIEWED;
+      opp.viewedAt = new Date();
+      opp.auditLog.push({
+        status: OpportunityInboxStatus.VIEWED,
+        changedAt: new Date(),
+        changedBy: new Types.ObjectId(candidateUserId),
+        note: 'Candidate opened and viewed opportunity',
+      });
+      await opp.save();
+    }
+
+    return opp;
+  }
+
+  /**
+   * Candidate marks opportunity as INTERESTED.
+   * Strictly does NOT automatically create an application.
+   */
+  async markOpportunityInterested(
+    candidateUserId: string,
+    opportunityId: string,
+  ) {
+    if (!this.employerOpportunityModel) {
+      throw new NotFoundException('Opportunity not found');
+    }
+
+    const opp = await this.employerOpportunityModel.findById(opportunityId);
+    if (!opp) throw new NotFoundException('Opportunity not found');
+
+    if (String(opp.candidateUserId) !== String(candidateUserId)) {
+      throw new ForbiddenException(
+        'You are not authorized to respond to this opportunity.',
+      );
+    }
+
+    if (opp.status === OpportunityInboxStatus.EXPIRED) {
+      throw new BadRequestException(
+        'This opportunity has expired and cannot be accepted.',
+      );
+    }
+
+    opp.status = OpportunityInboxStatus.INTERESTED;
+    opp.respondedAt = new Date();
+    opp.auditLog.push({
+      status: OpportunityInboxStatus.INTERESTED,
+      changedAt: new Date(),
+      changedBy: new Types.ObjectId(candidateUserId),
+      note: 'Candidate marked interested',
+    });
+    await opp.save();
+
+    // Notify recruiter
+    if (this.notificationsService) {
+      await this.notificationsService.createNotification({
+        recipientId: opp.recruiterUserId,
+        actorId: candidateUserId,
+        type: 'opportunity_interested',
+        category: 'opportunity',
+        priority: 'HIGH',
+        title: 'Candidate Expressed Interest',
+        message: `Candidate expressed interest in your opportunity for ${opp.roleTitle}`,
+        actionUrl: `/manage-business`,
+        targetUrl: `/manage-business`,
+        metadata: {
+          opportunityId: opp._id,
+          jobId: opp.jobId,
+          candidateUserId,
+        },
+      });
+    }
+
+    return {
+      success: true,
+      message: 'You have expressed interest in this opportunity.',
+      opportunity: opp,
+      actions: {
+        canApply: true,
+        canMessage: true,
+        jobId: opp.jobId,
+        recruiterUserId: opp.recruiterUserId,
+      },
+    };
+  }
+
+  /**
+   * Candidate declines opportunity with optional structured reason.
+   */
+  async declineOpportunity(
+    candidateUserId: string,
+    opportunityId: string,
+    dto: DeclineOpportunityDto,
+  ) {
+    if (!this.employerOpportunityModel) {
+      throw new NotFoundException('Opportunity not found');
+    }
+
+    const opp = await this.employerOpportunityModel.findById(opportunityId);
+    if (!opp) throw new NotFoundException('Opportunity not found');
+
+    if (String(opp.candidateUserId) !== String(candidateUserId)) {
+      throw new ForbiddenException(
+        'You are not authorized to respond to this opportunity.',
+      );
+    }
+
+    opp.status = OpportunityInboxStatus.DECLINED;
+    opp.declineReason =
+      dto.reason || OpportunityDeclineReason.NOT_INTERESTED;
+    opp.declineNote = dto.note?.trim() || '';
+    opp.respondedAt = new Date();
+    opp.auditLog.push({
+      status: OpportunityInboxStatus.DECLINED,
+      changedAt: new Date(),
+      changedBy: new Types.ObjectId(candidateUserId),
+      note: `Declined: ${dto.reason || 'Not interested'}`,
+    });
+    await opp.save();
+
+    // Notify recruiter politely
+    if (this.notificationsService) {
+      await this.notificationsService.createNotification({
+        recipientId: opp.recruiterUserId,
+        actorId: candidateUserId,
+        type: 'opportunity_declined',
+        category: 'opportunity',
+        priority: 'NORMAL',
+        title: 'Opportunity Response',
+        message: `A candidate declined the opportunity for ${opp.roleTitle}`,
+        actionUrl: `/manage-business`,
+        targetUrl: `/manage-business`,
+        metadata: {
+          opportunityId: opp._id,
+          jobId: opp.jobId,
+        },
+      });
+    }
+
+    return {
+      success: true,
+      message: 'Opportunity declined.',
+      opportunity: opp,
+    };
+  }
+
+  /**
+   * Candidate archives opportunity from their inbox.
+   */
+  async archiveOpportunity(
+    candidateUserId: string,
+    opportunityId: string,
+  ) {
+    if (!this.employerOpportunityModel) {
+      throw new NotFoundException('Opportunity not found');
+    }
+
+    const opp = await this.employerOpportunityModel.findById(opportunityId);
+    if (!opp) throw new NotFoundException('Opportunity not found');
+
+    if (String(opp.candidateUserId) !== String(candidateUserId)) {
+      throw new ForbiddenException(
+        'You are not authorized to archive this opportunity.',
+      );
+    }
+
+    opp.status = OpportunityInboxStatus.ARCHIVED;
+    opp.auditLog.push({
+      status: OpportunityInboxStatus.ARCHIVED,
+      changedAt: new Date(),
+      changedBy: new Types.ObjectId(candidateUserId),
+      note: 'Candidate archived opportunity',
+    });
+    await opp.save();
+
+    return {
+      success: true,
+      message: 'Opportunity archived.',
+      opportunity: opp,
+    };
   }
 }

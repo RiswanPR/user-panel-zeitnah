@@ -6,13 +6,15 @@ import {
   Building2,
   TrendingUp,
   MessageSquare,
+  Layers,
+  Inbox,
 } from "lucide-react";
 
 /**
  * Role-aware navigation builder.
- * Phase 7 active navigation:
- * - Student / Educator / Professional / Mentor: Profile, Messages, Jobs, Career Intelligence
- * - Recruiter / Founder: Profile, Messages, Jobs, Manage Business
+ * Phase 8 active navigation:
+ * - Student / Educator / Professional / Mentor: Courses, Network & Spaces, Messages, Profile, Portfolio, Jobs, Opportunities, Career Intelligence
+ * - Recruiter / Founder: Courses, Network & Spaces, Messages, Profile, Portfolio, Jobs, Opportunities, Manage Business
  */
 export const getNavItems = (userRole) => {
   const normalized = (userRole || "STUDENT").toUpperCase();
@@ -41,9 +43,19 @@ export const getNavItems = (userRole) => {
       icon: User,
     },
     {
+      name: "Portfolio",
+      path: "/profile/portfolio",
+      icon: Layers,
+    },
+    {
       name: "Jobs",
       path: "/jobs",
       icon: Briefcase,
+    },
+    {
+      name: "Opportunities",
+      path: "/opportunities/inbox",
+      icon: Inbox,
     },
     {
       name: "Career Intelligence",

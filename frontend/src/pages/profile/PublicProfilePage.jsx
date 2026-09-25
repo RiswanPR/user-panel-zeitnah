@@ -26,6 +26,8 @@ import {
   Lock,
   BookOpen,
   Sparkles,
+  Layers,
+  Send,
 } from "lucide-react";
 import api from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
@@ -38,11 +40,13 @@ import AvailabilityBadge from "../../components/network/AvailabilityBadge";
 import ReportModal from "../../components/network/ReportModal";
 import projectsService from "../../services/projectsService";
 import ProfileNetworkStats from "../../components/network/ProfileNetworkStats";
+import SendOpportunityModal from "../../components/opportunities/SendOpportunityModal";
 
 export default function PublicProfilePage() {
   const { username: paramUsername } = useParams();
   const { user: authUser } = useContext(AuthContext);
   const toast = useToast();
+  const [isSendOpportunityOpen, setIsSendOpportunityOpen] = useState(false);
 
   const targetUsername = paramUsername || authUser?.username;
 
@@ -318,6 +322,18 @@ export default function PublicProfilePage() {
                       Verified
                     </span>
                   )}
+                  {student.verifications?.professional?.status === "VERIFIED" && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-brand-yellow/30 bg-brand-yellow/10 px-2.5 py-0.5 text-xs font-bold text-brand-yellow font-mono">
+                      <Award className="w-3.5 h-3.5" />
+                      Professional Verified
+                    </span>
+                  )}
+                  {student.verifications?.identity?.status === "VERIFIED" && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-brand-mint/30 bg-brand-mint/10 px-2.5 py-0.5 text-xs font-bold text-brand-mint font-mono">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      ID Verified
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-center md:justify-start gap-2">
@@ -384,6 +400,30 @@ export default function PublicProfilePage() {
               </div>
 
               <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-center">
+                {/* View Portfolio Button */}
+                <Link
+                  to={isOwnProfile ? "/profile/portfolio" : `/u/${student.username}/portfolio`}
+                  className="btn-secondary text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 py-3 px-4 min-h-[44px] cursor-pointer flex-1 sm:flex-initial"
+                >
+                  <Layers className="w-4 h-4 text-brand-mint" />
+                  Portfolio
+                </Link>
+
+                {/* Recruiter Send Opportunity Button */}
+                {!isOwnProfile &&
+                  ["RECRUITER", "FOUNDER", "ADMIN"].includes(
+                    authUser?.primaryRole?.toUpperCase()
+                  ) && (
+                    <button
+                      type="button"
+                      onClick={() => setIsSendOpportunityOpen(true)}
+                      className="btn-primary text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 py-3 px-5 min-h-[44px] cursor-pointer shadow-md bg-brand-mint text-black font-bold hover:bg-brand-mint/90 flex-1 sm:flex-initial"
+                    >
+                      <Send className="w-4 h-4" />
+                      Send Opportunity
+                    </button>
+                  )}
+
                 {isOwnProfile ? (
                   <Link
                     to="/profile/edit"
@@ -1139,6 +1179,16 @@ export default function PublicProfilePage() {
           onClose={() => setIsReportOpen(false)}
         />
       )}
+
+      {/* ── Send Opportunity Modal (Recruiters / Founders) ── */}
+      <SendOpportunityModal
+        isOpen={isSendOpportunityOpen}
+        onClose={() => setIsSendOpportunityOpen(false)}
+        candidate={student}
+        onSuccess={() => {
+          toast?.success?.("Opportunity sent successfully to candidate inbox!");
+        }}
+      />
     </div>
   );
 }

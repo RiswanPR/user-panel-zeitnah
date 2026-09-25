@@ -12,13 +12,15 @@ import {
   Delete,
   UseInterceptors,
   UploadedFile,
+  UploadedFiles,
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
 import { ProfileService } from './profile.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ClaimUsernameDto } from './dto/claim-username.dto';
@@ -30,6 +32,11 @@ import {
   UpdateRecommendationStatusDto,
 } from './dto/recommendation.dto';
 import { PublishProfileDto } from './dto/publish-profile.dto';
+import { UpdatePortfolioDto } from './dto/portfolio.dto';
+import {
+  CreateVerificationRequestDto,
+  ReviewVerificationRequestDto,
+} from './dto/verification.dto';
 
 @Controller('profile')
 export class ProfileController {
@@ -389,5 +396,249 @@ export class ProfileController {
   @UseGuards(JwtAuthGuard)
   deleteRecommendation(@Req() req: any, @Param('id') id: string) {
     return this.profileService.deleteRecommendation(req.user.userId, id);
+  }
+
+  // =========================================================================
+  // PHASE 8: PROFESSIONAL PORTFOLIO ENDPOINTS
+  // =========================================================================
+
+  /**
+   * Get current authenticated user's portfolio.
+   */
+  @Get('portfolio')
+  @UseGuards(JwtAuthGuard)
+  getMyPortfolio(@Req() req: any) {
+    return this.profileService.getPortfolio(
+      req.user.userId,
+      true,
+      req.user.userId,
+      req.user?.role,
+    );
+  }
+
+  /**
+   * Get public portfolio of any user by username.
+   */
+  @Get('portfolio/u/:username')
+  @UseGuards(OptionalJwtAuthGuard)
+  getPublicPortfolioByUsername(
+    @Param('username') username: string,
+    @Req() req: any,
+  ) {
+    const currentUserId = req.user?.userId;
+    const currentRole = req.user?.role;
+    return this.profileService.getPublicPortfolio(
+      username,
+      currentUserId,
+      currentRole,
+    );
+  }
+
+  /**
+   * Update portfolio curation settings.
+   */
+  @Patch('portfolio')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  updatePortfolio(@Req() req: any, @Body() body: UpdatePortfolioDto) {
+    return this.profileService.updatePortfolio(req.user.userId, body);
+  }
+
+  /**
+   * Upload resume / CV (PDF max 10MB).
+   */
+  @Post('portfolio/resume')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @UseInterceptors(
+    FileInterceptor('resume', {
+      limits: { fileSize: 10 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) => {
+        if (file.mimetype !== 'application/pdf') {
+          return cb(
+            new BadRequestException('Only PDF files are permitted for resumes.'),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  uploadResume(
+    @Req() req: any,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.profileService.uploadResume(req.user.userId, file);
+  }
+
+  /**
+   * Delete resume / CV.
+   */
+  @Delete('portfolio/resume')
+  @UseGuards(JwtAuthGuard)
+  deleteResume(@Req() req: any) {
+    return this.profileService.deleteResume(req.user.userId);
+  }
+
+  /**
+   * Authorized download URL for candidate resume.
+   */
+  @Get('portfolio/resume/:userId/download')
+  @UseGuards(JwtAuthGuard)
+  getResumeDownloadUrl(
+    @Param('userId') targetUserId: string,
+    @Req() req: any,
+  ) {
+    return this.profileService.getResumeDownloadUrl(
+      targetUserId,
+      req.user.userId,
+      req.user?.role,
+    );
+  }
+
+  /**
+   * Upload media for portfolio project.
+   */
+  @Post('portfolio/media')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 15 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) => {
+        const allowed = [
+          'image/jpeg',
+          'image/png',
+          'image/webp',
+          'application/pdf',
+        ];
+        if (!allowed.includes(file.mimetype)) {
+          return cb(
+            new BadRequestException(
+              'Only JPG, PNG, WebP, and PDF files are permitted.',
+            ),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  uploadPortfolioMedia(
+    @Req() req: any,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: { projectId?: string; name?: string; caption?: string; visibility?: string },
+  ) {
+    return this.profileService.uploadPortfolioMedia(req.user.userId, file, body);
+  }
+
+  /**
+   * Delete media from project.
+   */
+  @Delete('portfolio/media/:id')
+  @UseGuards(JwtAuthGuard)
+  deletePortfolioMedia(
+    @Req() req: any,
+    @Param('id') mediaId: string,
+    @Query('projectId') projectId?: string,
+  ) {
+    return this.profileService.deletePortfolioMedia(
+      req.user.userId,
+      mediaId,
+      projectId,
+    );
+  }
+
+  // =========================================================================
+  // PHASE 8: VERIFICATION CENTER ENDPOINTS
+  // =========================================================================
+
+  /**
+   * Get verification center overview and history.
+   */
+  @Get('verification')
+  @UseGuards(JwtAuthGuard)
+  getVerificationCenter(@Req() req: any) {
+    return this.profileService.getVerificationCenter(req.user.userId);
+  }
+
+  /**
+   * Submit a verification request with private evidence documents.
+   */
+  @Post('verification/request')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @UseInterceptors(
+    FilesInterceptor('evidence', 5, {
+      limits: { fileSize: 15 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) => {
+        const allowed = [
+          'image/jpeg',
+          'image/png',
+          'image/webp',
+          'application/pdf',
+        ];
+        if (!allowed.includes(file.mimetype)) {
+          return cb(
+            new BadRequestException(
+              'Evidence files must be JPG, PNG, WebP, or PDF format.',
+            ),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  submitVerificationRequest(
+    @Req() req: any,
+    @Body() body: CreateVerificationRequestDto,
+    @UploadedFiles() files?: Express.Multer.File[],
+  ) {
+    return this.profileService.submitVerificationRequest(
+      req.user.userId,
+      body,
+      files,
+    );
+  }
+
+  /**
+   * Authorized download for private verification evidence.
+   */
+  @Get('verification/evidence/:requestId/:fileId')
+  @UseGuards(JwtAuthGuard)
+  getVerificationEvidenceUrl(
+    @Req() req: any,
+    @Param('requestId') requestId: string,
+    @Param('fileId') fileId: string,
+  ) {
+    return this.profileService.getVerificationEvidenceUrl(
+      req.user.userId,
+      req.user?.role,
+      requestId,
+      fileId,
+    );
+  }
+
+  /**
+   * Administrator review for verification requests.
+   */
+  @Post('verification/admin/review/:requestId')
+  @UseGuards(JwtAuthGuard)
+  adminReviewVerification(
+    @Req() req: any,
+    @Param('requestId') requestId: string,
+    @Body() body: ReviewVerificationRequestDto,
+  ) {
+    if (req.user?.role !== 'admin' && req.user?.role !== 'superuser') {
+      throw new ForbiddenException(
+        'Only platform administrators can review verification requests.',
+      );
+    }
+    return this.profileService.adminReviewVerificationRequest(
+      req.user.userId,
+      requestId,
+      body,
+    );
   }
 }

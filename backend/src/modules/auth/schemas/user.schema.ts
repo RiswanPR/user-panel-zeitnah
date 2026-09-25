@@ -553,6 +553,15 @@ export class User {
         period: { type: String, default: 'yearly' },
       },
       availability: { type: String, default: '' },
+      recruiterDiscovery: {
+        type: String,
+        enum: [
+          'VISIBLE_ALL_RECRUITERS',
+          'VISIBLE_MATCHED_ONLY',
+          'NOT_DISCOVERABLE',
+        ],
+        default: 'VISIBLE_ALL_RECRUITERS',
+      },
     },
     default: {
       openToOpportunities: false,
@@ -568,6 +577,7 @@ export class User {
         period: 'yearly',
       },
       availability: '',
+      recruiterDiscovery: 'VISIBLE_ALL_RECRUITERS',
     },
   })
   careerPreferences!: {
@@ -584,6 +594,7 @@ export class User {
       period: string;
     };
     availability: string;
+    recruiterDiscovery?: string;
   };
 
   // GRANULAR PRIVACY SETTINGS
@@ -695,6 +706,172 @@ export class User {
     status: string;
     verificationType: string;
     verifiedAt?: Date | null;
+  };
+
+  // MULTI-CATEGORY VERIFICATIONS (Phase 8)
+  @Prop({
+    type: {
+      identity: {
+        status: { type: String, default: 'UNVERIFIED' },
+        verifiedAt: { type: Date, default: null },
+        validUntil: { type: Date, default: null },
+        badgeName: { type: String, default: 'Identity Verified' },
+      },
+      professional: {
+        status: { type: String, default: 'UNVERIFIED' },
+        verifiedAt: { type: Date, default: null },
+        validUntil: { type: Date, default: null },
+        title: { type: String, default: '' },
+        affiliation: { type: String, default: '' },
+      },
+      educator: {
+        status: { type: String, default: 'UNVERIFIED' },
+        verifiedAt: { type: Date, default: null },
+        validUntil: { type: Date, default: null },
+        assignedByAdmin: { type: Boolean, default: false },
+      },
+      businessAffiliation: {
+        status: { type: String, default: 'UNVERIFIED' },
+        verifiedAt: { type: Date, default: null },
+        validUntil: { type: Date, default: null },
+        organizationId: { type: String, default: '' },
+        organizationName: { type: String, default: '' },
+      },
+      certification: {
+        status: { type: String, default: 'UNVERIFIED' },
+        verifiedAt: { type: Date, default: null },
+        validUntil: { type: Date, default: null },
+        certificationCount: { type: Number, default: 0 },
+      },
+    },
+    default: {
+      identity: { status: 'UNVERIFIED', verifiedAt: null, validUntil: null, badgeName: 'Identity Verified' },
+      professional: { status: 'UNVERIFIED', verifiedAt: null, validUntil: null, title: '', affiliation: '' },
+      educator: { status: 'UNVERIFIED', verifiedAt: null, validUntil: null, assignedByAdmin: false },
+      businessAffiliation: { status: 'UNVERIFIED', verifiedAt: null, validUntil: null, organizationId: '', organizationName: '' },
+      certification: { status: 'UNVERIFIED', verifiedAt: null, validUntil: null, certificationCount: 0 },
+    },
+  })
+  verifications!: {
+    identity: { status: string; verifiedAt: Date | null; validUntil: Date | null; badgeName?: string };
+    professional: { status: string; verifiedAt: Date | null; validUntil: Date | null; title?: string; affiliation?: string };
+    educator: { status: string; verifiedAt: Date | null; validUntil: Date | null; assignedByAdmin?: boolean };
+    businessAffiliation: { status: string; verifiedAt: Date | null; validUntil: Date | null; organizationId?: string; organizationName?: string };
+    certification: { status: string; verifiedAt: Date | null; validUntil: Date | null; certificationCount?: number };
+  };
+
+  // PROFESSIONAL PORTFOLIO (Phase 8)
+  @Prop({
+    type: {
+      published: { type: Boolean, default: false },
+      customHeadline: { type: String, default: '' },
+      customBio: { type: String, default: '' },
+      featuredProjectIds: { type: [String], default: [] },
+      featuredSkills: { type: [String], default: [] },
+      featuredSoftware: { type: [String], default: [] },
+      highlightedExperienceIds: { type: [String], default: [] },
+      sectionsVisibility: {
+        type: {
+          about: { type: Boolean, default: true },
+          skills: { type: Boolean, default: true },
+          experience: { type: Boolean, default: true },
+          projects: { type: Boolean, default: true },
+          certifications: { type: Boolean, default: true },
+          education: { type: Boolean, default: true },
+          courses: { type: Boolean, default: true },
+          contact: { type: Boolean, default: true },
+        },
+        default: {
+          about: true,
+          skills: true,
+          experience: true,
+          projects: true,
+          certifications: true,
+          education: true,
+          courses: true,
+          contact: true,
+        },
+      },
+      resume: {
+        type: {
+          url: { type: String, default: '' },
+          fileKey: { type: String, default: '' },
+          filename: { type: String, default: '' },
+          sizeBytes: { type: Number, default: 0 },
+          uploadedAt: { type: Date, default: null },
+          visibility: {
+            type: String,
+            enum: ['PRIVATE', 'RECRUITERS', 'PUBLIC'],
+            default: 'PRIVATE',
+          },
+        },
+        default: {
+          url: '',
+          fileKey: '',
+          filename: '',
+          sizeBytes: 0,
+          uploadedAt: null,
+          visibility: 'PRIVATE',
+        },
+      },
+      portfolioCompleteness: { type: Number, default: 0 },
+    },
+    default: {
+      published: false,
+      customHeadline: '',
+      customBio: '',
+      featuredProjectIds: [],
+      featuredSkills: [],
+      featuredSoftware: [],
+      highlightedExperienceIds: [],
+      sectionsVisibility: {
+        about: true,
+        skills: true,
+        experience: true,
+        projects: true,
+        certifications: true,
+        education: true,
+        courses: true,
+        contact: true,
+      },
+      resume: {
+        url: '',
+        fileKey: '',
+        filename: '',
+        sizeBytes: 0,
+        uploadedAt: null,
+        visibility: 'PRIVATE',
+      },
+      portfolioCompleteness: 0,
+    },
+  })
+  portfolio!: {
+    published: boolean;
+    customHeadline?: string;
+    customBio?: string;
+    featuredProjectIds: string[];
+    featuredSkills: string[];
+    featuredSoftware: string[];
+    highlightedExperienceIds: string[];
+    sectionsVisibility: {
+      about: boolean;
+      skills: boolean;
+      experience: boolean;
+      projects: boolean;
+      certifications: boolean;
+      education: boolean;
+      courses: boolean;
+      contact: boolean;
+    };
+    resume: {
+      url: string;
+      fileKey: string;
+      filename: string;
+      sizeBytes: number;
+      uploadedAt: Date | null;
+      visibility: string;
+    };
+    portfolioCompleteness: number;
   };
 
   // EXPERIENCE

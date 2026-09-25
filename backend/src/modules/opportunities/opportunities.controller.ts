@@ -21,6 +21,9 @@ import {
 } from './opportunities.service';
 import { OpportunityStatus } from './schemas/opportunity.schema';
 
+import { SendOpportunityDto } from './dto/send-opportunity.dto';
+import { DeclineOpportunityDto } from './dto/opportunity-response.dto';
+
 @Controller('opportunities')
 export class OpportunitiesController {
   constructor(private readonly oppService: OpportunitiesService) {}
@@ -65,6 +68,108 @@ export class OpportunitiesController {
     @Param('applicationId') applicationId: string,
   ) {
     return this.oppService.withdrawApplication(req.user.userId, applicationId);
+  }
+
+  // =========================================================================
+  // PHASE 8: OPPORTUNITY OUTREACH & CANDIDATE INBOX ENDPOINTS
+  // =========================================================================
+
+  @Get('inbox/unread-count')
+  @UseGuards(JwtAuthGuard)
+  async getInboxUnreadCount(@Req() req: any) {
+    return this.oppService.getInboxUnreadCount(req.user.userId);
+  }
+
+  @Get('inbox')
+  @UseGuards(JwtAuthGuard)
+  async getCandidateInbox(
+    @Req() req: any,
+    @Query('tab') tab?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.oppService.getCandidateInbox(
+      req.user.userId,
+      tab,
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+    );
+  }
+
+  @Get('inbox/:id')
+  @UseGuards(JwtAuthGuard)
+  async getCandidateOpportunityById(
+    @Req() req: any,
+    @Param('id') id: string,
+  ) {
+    return this.oppService.getCandidateOpportunityById(req.user.userId, id);
+  }
+
+  @Post('inbox/:id/interested')
+  @UseGuards(JwtAuthGuard)
+  async markOpportunityInterested(
+    @Req() req: any,
+    @Param('id') id: string,
+  ) {
+    return this.oppService.markOpportunityInterested(req.user.userId, id);
+  }
+
+  @Post('inbox/:id/decline')
+  @UseGuards(JwtAuthGuard)
+  async declineOpportunity(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() body: DeclineOpportunityDto,
+  ) {
+    return this.oppService.declineOpportunity(req.user.userId, id, body);
+  }
+
+  @Post('inbox/:id/archive')
+  @UseGuards(JwtAuthGuard)
+  async archiveOpportunity(
+    @Req() req: any,
+    @Param('id') id: string,
+  ) {
+    return this.oppService.archiveOpportunity(req.user.userId, id);
+  }
+
+  @Post('send')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  async sendEmployerOpportunity(
+    @Req() req: any,
+    @Body() body: SendOpportunityDto,
+  ) {
+    return this.oppService.sendEmployerOpportunity(req.user.userId, body);
+  }
+
+  // Fallback aliases for direct :id paths
+  @Post(':id/interested')
+  @UseGuards(JwtAuthGuard)
+  async markOpportunityInterestedAlias(
+    @Req() req: any,
+    @Param('id') id: string,
+  ) {
+    return this.oppService.markOpportunityInterested(req.user.userId, id);
+  }
+
+  @Post(':id/decline')
+  @UseGuards(JwtAuthGuard)
+  async declineOpportunityAlias(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() body: DeclineOpportunityDto,
+  ) {
+    return this.oppService.declineOpportunity(req.user.userId, id, body);
+  }
+
+  @Post(':id/archive')
+  @UseGuards(JwtAuthGuard)
+  async archiveOpportunityAlias(
+    @Req() req: any,
+    @Param('id') id: string,
+  ) {
+    return this.oppService.archiveOpportunity(req.user.userId, id);
   }
 
   @Get(':id')

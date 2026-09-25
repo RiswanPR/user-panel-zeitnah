@@ -14,8 +14,15 @@ import {
   JobApplication,
   JobApplicationSchema,
 } from './schemas/job-application.schema';
+import {
+  EmployerOpportunity,
+  EmployerOpportunitySchema,
+} from './schemas/employer-opportunity.schema';
+import { User, UserSchema } from '../auth/schemas/user.schema';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 import { MatchingModule } from '../matching/matching.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { ModerationModule } from '../moderation/moderation.module';
 import { OpportunitiesService } from './opportunities.service';
 import { OpportunitiesController } from './opportunities.controller';
 
@@ -23,6 +30,8 @@ import { OpportunitiesController } from './opportunities.controller';
   imports: [
     AuditLogsModule,
     forwardRef(() => MatchingModule),
+    forwardRef(() => NotificationsModule),
+    forwardRef(() => ModerationModule),
     MongooseModule.forFeature([
       { name: Opportunity.name, schema: OpportunitySchema },
       { name: Organization.name, schema: OrganizationSchema },
@@ -32,6 +41,8 @@ import { OpportunitiesController } from './opportunities.controller';
       },
       { name: SavedJob.name, schema: SavedJobSchema },
       { name: JobApplication.name, schema: JobApplicationSchema },
+      { name: EmployerOpportunity.name, schema: EmployerOpportunitySchema },
+      { name: User.name, schema: UserSchema },
     ]),
   ],
   providers: [OpportunitiesService],

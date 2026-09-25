@@ -64,6 +64,34 @@ export class Project {
   @Prop({ type: [String], default: [] })
   media!: string[];
 
+  @Prop({
+    type: [
+      {
+        id: { type: String, default: '' },
+        name: { type: String, default: '' },
+        mediaType: { type: String, default: 'image' },
+        url: { type: String, required: true },
+        fileKey: { type: String, default: '' },
+        caption: { type: String, default: '' },
+        visibility: {
+          type: String,
+          enum: ['PUBLIC', 'NETWORK', 'PRIVATE'],
+          default: 'PUBLIC',
+        },
+      },
+    ],
+    default: [],
+  })
+  portfolioMedia!: Array<{
+    id: string;
+    name: string;
+    mediaType: string;
+    url: string;
+    fileKey?: string;
+    caption?: string;
+    visibility: string;
+  }>;
+
   @Prop({ type: String, default: '', index: true })
   organizationId!: string;
 
