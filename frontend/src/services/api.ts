@@ -63,9 +63,13 @@ api.interceptors.request.use(async (config) => {
   // This prevents sending requests with known-expired tokens and causing 401 refresh storms.
   if (refreshPromise && !(config as any)._isRefreshRequest) {
     try {
-      await refreshPromise;
+      const freshToken = await refreshPromise;
+      if (!freshToken && !config.url?.includes('/auth/')) {
+        return Promise.reject(new axios.Cancel("Authentication session expired"));
+      }
     } catch {
-      // Refresh failed; proceed to let downstream rejection or cancel take effect
+      // Refresh failed permanently; reject immediately without making guaranteed-401 network call
+      return Promise.reject(new axios.Cancel("Authentication session expired"));
     }
   }
 
@@ -335,7 +339,8 @@ api.interceptors.response.use(
       error.response?.status === 401 &&
       (config?.url?.includes('/auth/me') ||
         config?.url?.includes('/auth/refresh-token') ||
-        config?.url?.includes('/auth/login'));
+        config?.url?.includes('/auth/login') ||
+        config?.url?.includes('/notifications/push-token'));
 
     const shouldLogTelemetry =
       !isExpectedAuth401 &&

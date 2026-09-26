@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import {
   ErrorReport,
   ErrorReportDocument,
@@ -19,10 +19,28 @@ export class ErrorReportsService {
     // 1. Sanitize Data (Prevent secrets from being saved)
     const sanitizedData = this.sanitizePayload(data);
 
+    // Validate userId to prevent Mongoose CastError on invalid or placeholder values (e.g. 'Unknown')
+    let validUserId: Types.ObjectId | undefined;
+    const candidateUserId = userId || sanitizedData?.userId || sanitizedData?.authentication?.userId;
+    if (
+      candidateUserId &&
+      typeof candidateUserId === 'string' &&
+      candidateUserId !== 'Unknown' &&
+      candidateUserId.length === 24 &&
+      Types.ObjectId.isValid(candidateUserId)
+    ) {
+      try {
+        validUserId = new Types.ObjectId(candidateUserId);
+      } catch {
+        validUserId = undefined;
+      }
+    }
+
     // 2. Save to DB
     const report = new this.errorReportModel({
       ...sanitizedData,
-      userId: userId || undefined,
+      userId: validUserId,
+      isSilent: Boolean(sanitizedData?.isSilent ?? true),
     });
 
     await report.save();

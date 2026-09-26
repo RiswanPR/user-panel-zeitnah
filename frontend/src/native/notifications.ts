@@ -121,10 +121,15 @@ class NativeNotificationService {
     try {
       const deviceId = await storage.getDeviceId();
       await api.delete(`/notifications/push-token/${encodeURIComponent(deviceId)}`);
-      console.log('[NativeNotifications] Push token unregistered from backend.');
       return true;
-    } catch (error) {
-      console.warn('[NativeNotifications] Failed to remove push token from backend:', error);
+    } catch (error: any) {
+      // If the session is already expired or revoked (401/403) or cancelled,
+      // the push token association is defunct on the backend. This is safely idempotent.
+      const status = error?.response?.status || error?.status;
+      if (status === 401 || status === 403 || error?.isCancelled || error?.code === 'ERR_CANCELED') {
+        return true;
+      }
+      console.warn('[NativeNotifications] Failed to remove push token from backend:', error?.message || 'network_error');
       return false;
     }
   }

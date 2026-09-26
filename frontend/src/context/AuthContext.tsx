@@ -87,8 +87,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // LOGOUT (Programmatic / Direct)
   const logout = async () => {
     try {
-      await api.post("/auth/logout").catch(() => {});
+      // Unregister push token while access token is still authenticated
       await nativeNotifications.removePushTokenFromBackend().catch(() => {});
+      await api.post("/auth/logout").catch(() => {});
     } catch {
       // Ignore background push token cleanup errors
     } finally {

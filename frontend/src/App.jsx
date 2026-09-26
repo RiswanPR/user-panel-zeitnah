@@ -17,43 +17,44 @@ import { MessagingProvider } from "./context/MessagingContext";
 // Error Capture & Troubleshoot
 import { initErrorCapture } from "./utils/errorCapture";
 import TroubleshootReporter from "./components/common/TroubleshootReporter";
+import { lazyWithRetry } from "./utils/lazyWithRetry";
 
 // Initialize global error capture as early as possible
 initErrorCapture();
 
-// Lazy Loaded Application Views
-const ActiveSessions = React.lazy(() => import("./pages/sessions/ActiveSessions"));
-const AuditLogs = React.lazy(() => import("./pages/audit/AuditLogs"));
-const Profile = React.lazy(() => import("./pages/profile/Profile"));
-const EditProfile = React.lazy(() => import("./pages/profile/EditProfile"));
-const PublicProfilePage = React.lazy(() => import("./pages/profile/PublicProfilePage"));
-const Courses = React.lazy(() => import("./pages/courses/Courses"));
-const CourseChapters = React.lazy(() => import("./pages/courses/CourseChapters"));
-const CourseClasses = React.lazy(() => import("./pages/courses/CourseClasses"));
-const ClassView = React.lazy(() => import("./pages/courses/ClassView"));
-const MyLearning = React.lazy(() => import("./pages/learning/MyLearning"));
-const Dashboard = React.lazy(() => import("./pages/learning/Dashboard"));
-const MyPoints = React.lazy(() => import("./pages/learning/MyPoints"));
-const Leaderboard = React.lazy(() => import("./pages/leaderboard/LeaderboardPage"));
-const NetworkPage = React.lazy(() => import("./pages/network/NetworkPage"));
-const NetworkProfilePage = React.lazy(() => import("./pages/network/NetworkProfilePage"));
-const LearningSpaceDetailPage = React.lazy(() => import("./pages/network/LearningSpaceDetailPage"));
-const DiscussionDetailPage = React.lazy(() => import("./pages/network/DiscussionDetailPage"));
-const NotFoundPage = React.lazy(() => import("./pages/NotFoundPage"));
-const ErrorReportsDashboard = React.lazy(() => import("./pages/admin/ErrorReportsDashboard"));
-const SessionDiagnostics = React.lazy(() => import("./pages/admin/SessionDiagnostics"));
-const NotificationsPage = React.lazy(() => import("./pages/notifications/NotificationsPage"));
-const JobsPage = React.lazy(() => import("./pages/jobs/JobsPage"));
-const JobDetailPage = React.lazy(() => import("./pages/jobs/JobDetailPage"));
-const ManageBusiness = React.lazy(() => import("./pages/business/ManageBusiness"));
-const PublicBusinessProfilePage = React.lazy(() => import("./pages/business/PublicBusinessProfilePage"));
-const BusinessDiscoveryPage = React.lazy(() => import("./pages/business/BusinessDiscoveryPage"));
+// Lazy Loaded Application Views with automatic stale-chunk recovery
+const ActiveSessions = lazyWithRetry(() => import("./pages/sessions/ActiveSessions"));
+const AuditLogs = lazyWithRetry(() => import("./pages/audit/AuditLogs"));
+const Profile = lazyWithRetry(() => import("./pages/profile/Profile"));
+const EditProfile = lazyWithRetry(() => import("./pages/profile/EditProfile"));
+const PublicProfilePage = lazyWithRetry(() => import("./pages/profile/PublicProfilePage"));
+const Courses = lazyWithRetry(() => import("./pages/courses/Courses"));
+const CourseChapters = lazyWithRetry(() => import("./pages/courses/CourseChapters"));
+const CourseClasses = lazyWithRetry(() => import("./pages/courses/CourseClasses"));
+const ClassView = lazyWithRetry(() => import("./pages/courses/ClassView"));
+const MyLearning = lazyWithRetry(() => import("./pages/learning/MyLearning"));
+const Dashboard = lazyWithRetry(() => import("./pages/learning/Dashboard"));
+const MyPoints = lazyWithRetry(() => import("./pages/learning/MyPoints"));
+const Leaderboard = lazyWithRetry(() => import("./pages/leaderboard/LeaderboardPage"));
+const NetworkPage = lazyWithRetry(() => import("./pages/network/NetworkPage"));
+const NetworkProfilePage = lazyWithRetry(() => import("./pages/network/NetworkProfilePage"));
+const LearningSpaceDetailPage = lazyWithRetry(() => import("./pages/network/LearningSpaceDetailPage"));
+const DiscussionDetailPage = lazyWithRetry(() => import("./pages/network/DiscussionDetailPage"));
+const NotFoundPage = lazyWithRetry(() => import("./pages/NotFoundPage"));
+const ErrorReportsDashboard = lazyWithRetry(() => import("./pages/admin/ErrorReportsDashboard"));
+const SessionDiagnostics = lazyWithRetry(() => import("./pages/admin/SessionDiagnostics"));
+const NotificationsPage = lazyWithRetry(() => import("./pages/notifications/NotificationsPage"));
+const JobsPage = lazyWithRetry(() => import("./pages/jobs/JobsPage"));
+const JobDetailPage = lazyWithRetry(() => import("./pages/jobs/JobDetailPage"));
+const ManageBusiness = lazyWithRetry(() => import("./pages/business/ManageBusiness"));
+const PublicBusinessProfilePage = lazyWithRetry(() => import("./pages/business/PublicBusinessProfilePage"));
+const BusinessDiscoveryPage = lazyWithRetry(() => import("./pages/business/BusinessDiscoveryPage"));
 const AdminBusinessReviewPage = React.lazy(() => import("./pages/admin/AdminBusinessReviewPage"));
-const CareerIntelligencePage = React.lazy(() => import("./pages/career/CareerIntelligencePage"));
-const MessagesPage = React.lazy(() => import("./pages/messages/MessagesPage"));
-const PortfolioPage = React.lazy(() => import("./pages/profile/PortfolioPage"));
-const VerificationCenterPage = React.lazy(() => import("./pages/profile/VerificationCenterPage"));
-const OpportunityInboxPage = React.lazy(() => import("./pages/opportunities/OpportunityInboxPage"));
+const CareerIntelligencePage = lazyWithRetry(() => import("./pages/career/CareerIntelligencePage"));
+const MessagesPage = lazyWithRetry(() => import("./pages/messages/MessagesPage"));
+const PortfolioPage = lazyWithRetry(() => import("./pages/profile/PortfolioPage"));
+const VerificationCenterPage = lazyWithRetry(() => import("./pages/profile/VerificationCenterPage"));
+const OpportunityInboxPage = lazyWithRetry(() => import("./pages/opportunities/OpportunityInboxPage"));
 
 import ProtectedRoute from "./components/common/ProtectedRoute/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";

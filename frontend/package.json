@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "verify:assets": "node scripts/verify-build-assets.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "cap:sync": "cap sync",

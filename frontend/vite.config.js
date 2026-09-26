@@ -37,6 +37,10 @@ export default defineConfig({
       ],
       manifest: false, // Using our custom public/manifest.json
       workbox: {
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        dontCacheBustURLsMatching: /-[a-zA-Z0-9_-]{8,}\.(js|css)$/,
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         // Exclude API, video segments, playlists, and .well-known deep-link files from SW navigate fallback
         navigateFallbackDenylist: [/^\/api\//, /^\/hls\//, /^\/\.well-known\//, /\.m3u8$/, /\.ts$/],

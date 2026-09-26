@@ -48,7 +48,7 @@ export const logClientError = async (errorData: {
       },
       body: JSON.stringify(payload),
     });
-  } catch (e) {
-    console.error("Failed to log client error", e);
+  } catch {
+    // Silent catch — avoid console.error to prevent error capture loops
   }
 };

@@ -47,6 +47,9 @@ export class ErrorReport {
   @Prop({ default: 'medium' })
   priority: string; // 'low', 'medium', 'high', 'critical'
 
+  @Prop({ default: false })
+  isSilent?: boolean;
+
   @Prop({ type: Types.ObjectId, ref: 'User', required: false })
   assignedTo?: Types.ObjectId;
 }

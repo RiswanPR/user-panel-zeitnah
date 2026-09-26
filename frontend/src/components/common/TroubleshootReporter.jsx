@@ -34,8 +34,36 @@ function groupErrors(items = [], keyFn = (item) => item?.message || JSON.stringi
 }
 
 /**
+ * Determine if current user is an authorized admin or debug mode is active.
+ * Non-critical error captures are saved silently to the database and must
+ * NEVER be displayed to regular users in the UI.
+ */
+function isTroubleshootAuthorized() {
+  if (typeof window === 'undefined') return false;
+  // Explicit debug flags for engineers/testers
+  if (window.__ZEITNAH_ENABLE_TROUBLESHOOT__) return true;
+  try {
+    if (localStorage.getItem('zeitnah_debug_troubleshoot') === 'true') return true;
+  } catch {}
+  // Admin role check from token
+  try {
+    const token = storage.getItem('token');
+    if (token) {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const role = String(payload?.role || payload?.primaryRole || '').toLowerCase();
+      if (role === 'admin') return true;
+    }
+  } catch {}
+  return false;
+}
+
+/**
  * Global Troubleshoot Error Reporter
  * Floating badge + modal for submitting error reports.
+ * 
+ * Non-critical error captures are saved in DB silently and DO NOT show
+ * to regular users. The floating badge is only visible to authorized
+ * admins or when debug mode is enabled.
  */
 export default function TroubleshootReporter() {
   const [errorCount, setErrorCount] = useState(0);
@@ -56,6 +84,23 @@ export default function TroubleshootReporter() {
       setErrorCount(getSignificantErrorCount());
     }, 3000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Keyboard shortcut (Ctrl+Shift+E / Cmd+Shift+E) and custom event to toggle reporter for authorized personnel
+  useEffect(() => {
+    const keyHandler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'E' || e.key === 'e')) {
+        e.preventDefault();
+        setIsOpen((prev) => !prev);
+      }
+    };
+    const eventHandler = () => setIsOpen(true);
+    window.addEventListener('keydown', keyHandler);
+    window.addEventListener('zeitnah:open-troubleshoot', eventHandler);
+    return () => {
+      window.removeEventListener('keydown', keyHandler);
+      window.removeEventListener('zeitnah:open-troubleshoot', eventHandler);
+    };
   }, []);
 
   // When modal opens, snapshot the error data & auto-populate title
@@ -169,16 +214,19 @@ export default function TroubleshootReporter() {
     }
   };
 
-  // Don't render badge if no errors and modal is closed
+  // Non-critical error captures don't show to regular users — only save in DB
+  const isAuthorized = isTroubleshootAuthorized();
+  if (!isAuthorized && !isOpen) return null;
+
   const isLoggedIn = !!storage.getItem('token');
   if (!isLoggedIn && !isOpen) return null;
   if (errorCount === 0 && !isOpen) return null;
 
   return (
     <>
-      {/* ── Floating Error Badge ── */}
+      {/* ── Floating Error Badge (Authorized Admins & Debug Mode Only) ── */}
       <AnimatePresence>
-        {errorCount > 0 && !isOpen && (
+        {isAuthorized && errorCount > 0 && !isOpen && (
           <motion.button
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -191,7 +239,7 @@ export default function TroubleshootReporter() {
               borderColor: 'rgba(239,68,68,0.3)',
               backdropFilter: 'blur(16px)',
             }}
-            title="Submit troubleshoot report"
+            title="Submit troubleshoot report (Admin/Debug)"
           >
             {/* Pulse ring */}
             <span className="absolute -top-1 -right-1 flex h-4 w-4">

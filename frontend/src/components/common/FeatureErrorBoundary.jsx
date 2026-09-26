@@ -3,6 +3,8 @@ import { AlertCircle, RefreshCw, MessageSquare } from "lucide-react";
 import ErrorFeedbackModal from "../ErrorFeedbackModal";
 import { collectDiagnostics } from "../../utils/diagnostics";
 import { storage } from "../../services/storage";
+import { isChunkLoadError } from "../../utils/lazyWithRetry";
+import ChunkLoadRecoveryFallback from "./ChunkLoadRecoveryFallback";
 
 class FeatureErrorBoundary extends React.Component {
   constructor(props) {
@@ -11,18 +13,60 @@ class FeatureErrorBoundary extends React.Component {
       hasError: false,
       errorData: null,
       showModal: false,
+      isChunkError: false,
     };
   }
 
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  static getDerivedStateFromError(error) {
+    const chunkError = isChunkLoadError(error);
+    return { 
+      hasError: true,
+      isChunkError: chunkError,
+    };
   }
 
   async componentDidCatch(error, errorInfo) {
+    if (isChunkLoadError(error)) {
+      const CHUNK_RELOAD_STORAGE_KEY = 'zeitnah_chunk_reload_state';
+      let reloadState = null;
+      try {
+        const raw = sessionStorage.getItem(CHUNK_RELOAD_STORAGE_KEY);
+        if (raw) reloadState = JSON.parse(raw);
+      } catch {
+        // ignore
+      }
+
+      const now = Date.now();
+      const hasRecentReload =
+        reloadState &&
+        now - reloadState.timestamp < 20000 &&
+        reloadState.path === window.location.pathname;
+
+      if (!hasRecentReload) {
+        try {
+          sessionStorage.setItem(
+            CHUNK_RELOAD_STORAGE_KEY,
+            JSON.stringify({
+              timestamp: now,
+              path: window.location.pathname,
+              message: error.message || 'feature_chunk_error',
+            })
+          );
+        } catch {
+          // ignore
+        }
+        window.location.reload();
+        return;
+      }
+
+      this.setState({ isChunkError: true });
+      return;
+    }
+
     try {
       const diagnostics = await collectDiagnostics(error, errorInfo.componentStack);
       diagnostics.correlationId = crypto.randomUUID?.() || `feature-${Date.now()}`;
-      this.setState({ errorData: diagnostics });
+      this.setState({ errorData: diagnostics, isChunkError: false });
 
       // Silent telemetry dispatch
       const token = await storage.getAccessToken();
@@ -46,7 +90,7 @@ class FeatureErrorBoundary extends React.Component {
   }
 
   handleRetry = () => {
-    this.setState({ hasError: false, errorData: null, showModal: false });
+    this.setState({ hasError: false, errorData: null, showModal: false, isChunkError: false });
     if (this.props.onRetry) {
       this.props.onRetry();
     }
@@ -54,6 +98,15 @@ class FeatureErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
+      if (this.state.isChunkError) {
+        return (
+          <ChunkLoadRecoveryFallback 
+            onReload={() => window.location.reload()}
+            onHome={() => window.location.assign('/courses')}
+          />
+        );
+      }
+
       if (this.state.showModal) {
         return (
           <ErrorFeedbackModal

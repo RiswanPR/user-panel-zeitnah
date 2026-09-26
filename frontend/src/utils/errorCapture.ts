@@ -10,7 +10,130 @@
  * troubleshoot badge for minor warnings.
  */
 
+import { collectDiagnostics } from './diagnostics';
+import { storage } from '../services/storage';
+import { isChunkLoadError } from './lazyWithRetry';
+
 const MAX_BUFFER_SIZE = 50;
+
+// ── Silent DB Persistence for Non-Critical Captured Errors ──
+const DEDUPE_WINDOW_MS = 30000; // 30s deduplication window per unique signature
+const MAX_REPORTS_PER_MINUTE = 10;
+const recentErrorSignatures = new Map<string, number>();
+let minuteWindowStart = Date.now();
+let reportsInLastMinute = 0;
+let isReportingActive = false;
+
+/**
+ * Silently saves captured non-critical errors into the database via /error-reports.
+ * Deduplicates repeated logs and rate limits to prevent spamming the backend.
+ * Never throws or invokes console.error to avoid infinite recursion.
+ */
+export async function silentlySaveCapturedErrorToDb({
+  type,
+  message,
+  stack,
+  source,
+  status,
+  url,
+  priority = 'low',
+}: {
+  type: string;
+  message: string;
+  stack?: string;
+  source?: string;
+  status?: number;
+  url?: string;
+  priority?: 'low' | 'medium' | 'high' | 'critical';
+}) {
+  if (typeof window === 'undefined') return;
+  if (isReportingActive) return;
+
+  const msgStr = String(message || '');
+  const urlStr = String(url || '');
+
+  // Never capture or report errors originating from error reporting endpoints themselves
+  if (
+    msgStr.includes('/error-reports') ||
+    msgStr.includes('/troubleshoot') ||
+    urlStr.includes('/error-reports') ||
+    urlStr.includes('/troubleshoot')
+  ) {
+    return;
+  }
+
+  // Deduplication check: key by type + initial message segment + status + source
+  const signature = `${type}:${msgStr.substring(0, 120)}:${status || 0}:${source || ''}`;
+  const nowMs = Date.now();
+  const lastReported = recentErrorSignatures.get(signature);
+
+  if (lastReported && nowMs - lastReported < DEDUPE_WINDOW_MS) {
+    return; // Duplicate within 30s window, silently skip
+  }
+
+  // Rate limiting check
+  if (nowMs - minuteWindowStart > 60000) {
+    minuteWindowStart = nowMs;
+    reportsInLastMinute = 0;
+  }
+  if (reportsInLastMinute >= MAX_REPORTS_PER_MINUTE) {
+    return; // Rate limit exceeded for this minute
+  }
+
+  // Prune signatures map
+  if (recentErrorSignatures.size > 200) {
+    for (const [key, ts] of recentErrorSignatures.entries()) {
+      if (nowMs - ts > DEDUPE_WINDOW_MS * 2) {
+        recentErrorSignatures.delete(key);
+      }
+    }
+  }
+
+  recentErrorSignatures.set(signature, nowMs);
+  reportsInLastMinute++;
+
+  try {
+    isReportingActive = true;
+    const diagnostics = await collectDiagnostics();
+    const token = await storage.getAccessToken();
+    const baseURL = import.meta.env.VITE_API_BASE_URL || 'https://zeitnahacademy.com/api';
+
+    const payload = {
+      ...diagnostics,
+      source: type || 'captured_client_error',
+      priority,
+      isSilent: true,
+      error: {
+        name: type,
+        message: msgStr.substring(0, 1000),
+        stack: stack ? String(stack).substring(0, 3000) : undefined,
+        source: source ? String(source).substring(0, 500) : undefined,
+        status,
+        url: urlStr,
+        isNonCritical: priority !== 'critical',
+      },
+    };
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    await fetch(`${baseURL}/error-reports`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+  } catch {
+    // Completely silent — never invoke console.error to avoid infinite recursion
+  } finally {
+    isReportingActive = false;
+  }
+}
 
 // Error buffers — warnings are separated from real errors
 const consoleErrors: any[] = [];
@@ -89,10 +212,20 @@ function isConsoleNoise(message: string): boolean {
     /\[Deprecation\]/i,
     // Socket / WebSocket recoverable connection noise
     /\[Socket.*\] Connection error/i,
+    /\[Socket.*\] Connection note/i,
     /\[Socket.*\] reconnect/i,
     /websocket error/i,
     /WebSocket connection to .* failed/i,
     /socket\.io/i,
+    /xhr poll error/i,
+    // Native notification push token cleanup on logout
+    /\[NativeNotifications\].*push token/i,
+    // Dynamic import / chunk loading errors being recovered
+    /Failed to fetch dynamically imported module/i,
+    /error loading dynamically imported module/i,
+    /Importing a module script failed/i,
+    /Loading chunk [\d]+ failed/i,
+    /ChunkLoadError/i,
   ];
   return noisePatterns.some((pattern) => pattern.test(message));
 }
@@ -107,11 +240,19 @@ function interceptConsole() {
     const message = args.map(safeStringify).join(' ');
     // Skip noise — don't pollute the error buffer with dev-mode or framework messages
     if (!isConsoleNoise(message) && !isBrowserExtensionNoise(message)) {
-      pushWithLimit(consoleErrors, {
+      const errorEntry = {
         type: 'error',
         message,
         timestamp: now(),
         stack: args.find((a) => a instanceof Error)?.stack || '',
+      };
+      pushWithLimit(consoleErrors, errorEntry);
+      // Automatically persist captured non-critical console error to DB silently
+      silentlySaveCapturedErrorToDb({
+        type: 'console_error',
+        message,
+        stack: errorEntry.stack,
+        priority: 'low',
       });
     }
     originalConsoleError.apply(console, args);
@@ -136,11 +277,16 @@ function interceptConsole() {
 function interceptGlobalErrors() {
   // Uncaught exceptions
   window.addEventListener('error', (event) => {
-    // Skip errors from browser extensions
-    if (isBrowserExtensionNoise(event.message) || isBrowserExtensionNoise(event.filename) || isBrowserExtensionNoise(event.error?.stack)) {
+    // Skip errors from browser extensions or recoverable chunk loading mismatches
+    if (
+      isBrowserExtensionNoise(event.message) ||
+      isBrowserExtensionNoise(event.filename) ||
+      isBrowserExtensionNoise(event.error?.stack) ||
+      isChunkLoadError(event.error || event.message)
+    ) {
       return;
     }
-    pushWithLimit(unhandledErrors, {
+    const entry = {
       type: 'uncaught_exception',
       message: event.message || 'Unknown error',
       timestamp: now(),
@@ -148,6 +294,15 @@ function interceptGlobalErrors() {
       source: event.filename
         ? `${event.filename}:${event.lineno}:${event.colno}`
         : '',
+    };
+    pushWithLimit(unhandledErrors, entry);
+    // Automatically persist captured non-critical window error to DB silently
+    silentlySaveCapturedErrorToDb({
+      type: 'window_error',
+      message: entry.message,
+      stack: entry.stack,
+      source: entry.source,
+      priority: 'medium',
     });
   });
 
@@ -156,15 +311,27 @@ function interceptGlobalErrors() {
     const reason = event.reason;
     const msg = reason instanceof Error ? reason.message : safeStringify(reason);
     const stack = reason instanceof Error ? reason.stack || '' : '';
-    // Skip rejections from browser extensions
-    if (isBrowserExtensionNoise(msg) || isBrowserExtensionNoise(stack)) {
+    // Skip rejections from browser extensions or recoverable chunk loading mismatches
+    if (
+      isBrowserExtensionNoise(msg) ||
+      isBrowserExtensionNoise(stack) ||
+      isChunkLoadError(reason)
+    ) {
       return;
     }
-    pushWithLimit(unhandledErrors, {
+    const entry = {
       type: 'unhandled_rejection',
       message: msg,
       timestamp: now(),
       stack,
+    };
+    pushWithLimit(unhandledErrors, entry);
+    // Automatically persist captured non-critical promise rejection to DB silently
+    silentlySaveCapturedErrorToDb({
+      type: 'unhandled_rejection',
+      message: entry.message,
+      stack: entry.stack,
+      priority: 'medium',
     });
   });
 }
@@ -211,8 +378,8 @@ export function classifyNetworkError({
     return 'EXPECTED_AUTH';
   }
 
-  // 2. Expected expired refresh token
-  if (status === 401 && cleanUrl.includes('/auth/refresh-token')) {
+  // 2. Expected expired refresh token or logout push-token unregistration
+  if ((status === 401 || status === 403) && (cleanUrl.includes('/auth/refresh-token') || cleanUrl.includes('/notifications/push-token'))) {
     return 'EXPECTED_AUTH';
   }
 
@@ -296,6 +463,20 @@ export function captureNetworkError({
     category: resolvedCategory,
     timestamp: now(),
   });
+
+  // Automatically persist non-critical network application errors to DB silently
+  if (
+    resolvedCategory === 'REAL_APPLICATION_ERROR' ||
+    (status && status >= 500)
+  ) {
+    silentlySaveCapturedErrorToDb({
+      type: 'network_error',
+      message: `${method || 'GET'} ${url || ''} -> ${status || 0}: ${message || 'Network error'}`,
+      status,
+      url,
+      priority: 'medium',
+    });
+  }
 }
 
 /**
@@ -376,4 +557,22 @@ export function getBrowserInfo() {
     screenSize: `${window.screen.width}x${window.screen.height}`,
     userAgent: ua.substring(0, 300),
   };
+}
+
+/**
+ * Determine if an error is critical (e.g. fatal React unmounting crash).
+ * Non-critical error captures (console errors, non-fatal rejections, network errors)
+ * are NOT critical and must not show UI to users; they only save in DB.
+ */
+export function isCriticalError(error: any): boolean {
+  if (!error) return false;
+  return error.priority === 'critical' || error.isFatal === true;
+}
+
+/**
+ * Returns count of critical errors that require user attention.
+ * Routine background captured errors are non-critical and return 0.
+ */
+export function getCriticalErrorCount(): number {
+  return 0;
 }

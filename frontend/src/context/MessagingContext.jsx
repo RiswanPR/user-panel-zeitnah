@@ -195,20 +195,22 @@ export const MessagingProvider = ({ children }) => {
 
       let lastLogTime = 0;
       newSocket.on('connect_error', async (err) => {
-        const now = Date.now();
-        if (now - lastLogTime > 6000) {
-          lastLogTime = now;
-          const transport = newSocket?.io?.engine?.transport?.name || 'unknown';
-          const readyState = newSocket?.io?.engine?.readyState || 'unknown';
-          console.warn(`[Socket:messages] Connection note (${transport}, readyState: ${readyState}):`, err.message);
+        // If user is already logged out or token is gone, disconnect immediately without noise
+        if (!storage.getAccessToken() || !active) {
+          if (newSocket) newSocket.disconnect();
+          setConnectionStatus('disconnected');
+          return;
         }
+
         setConnectionStatus('reconnecting');
 
+        // Check if error is an auth failure (including 401 wrapped by Engine.IO as xhr poll error)
         const isAuthError =
           err.message?.includes('jwt') ||
           err.message?.includes('unauthorized') ||
           err.message?.includes('Unauthorized') ||
-          err.message?.includes('authentication');
+          err.message?.includes('authentication') ||
+          (err.message === 'xhr poll error' && (err.description === 401 || (err.context && err.context.status === 401)));
 
         if (isAuthError && active) {
           try {
@@ -216,10 +218,21 @@ export const MessagingProvider = ({ children }) => {
             if (freshToken && active && newSocket) {
               newSocket.auth = { token: freshToken };
               newSocket.connect();
+            } else if (newSocket) {
+              newSocket.disconnect();
             }
           } catch {
             if (newSocket) newSocket.disconnect();
           }
+          return;
+        }
+
+        const now = Date.now();
+        if (now - lastLogTime > 15000) {
+          lastLogTime = now;
+          const transport = newSocket?.io?.engine?.transport?.name || 'unknown';
+          const readyState = newSocket?.io?.engine?.readyState || 'unknown';
+          console.warn(`[Socket:messages] Connection note (${transport}, readyState: ${readyState}):`, err.message);
         }
       });
     };
@@ -236,11 +249,22 @@ export const MessagingProvider = ({ children }) => {
       }
     };
 
+    // Cleanly disconnect messaging socket upon application logout
+    const handleAuthLogout = () => {
+      if (newSocket) {
+        newSocket.disconnect();
+      }
+      setSocket(null);
+      setConnectionStatus('disconnected');
+    };
+
     window.addEventListener('zeitnah:auth:token-refreshed', handleTokenRefreshed);
+    window.addEventListener('zeitnah:auth:logout', handleAuthLogout);
 
     return () => {
       active = false;
       window.removeEventListener('zeitnah:auth:token-refreshed', handleTokenRefreshed);
+      window.removeEventListener('zeitnah:auth:logout', handleAuthLogout);
       if (newSocket) {
         newSocket.disconnect();
       }

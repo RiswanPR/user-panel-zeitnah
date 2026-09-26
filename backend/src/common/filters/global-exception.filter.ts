@@ -134,12 +134,15 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
 
       const isRoutineTokenExpiry =
-        tokenExpiryState.startsWith('EXPIRED_AT_') &&
-        Boolean(authHeader) &&
-        !sanitizedUrl?.includes('/auth/refresh-token');
+        (tokenExpiryState.startsWith('EXPIRED_AT_') && Boolean(authHeader)) ||
+        sanitizedUrl?.includes('/auth/refresh-token');
 
       const authDiag = {
-        event: isRoutineTokenExpiry ? 'TOKEN_EXPIRED' : 'AUTH_FAILURE',
+        event: sanitizedUrl?.includes('/auth/refresh-token')
+          ? 'SESSION_EXPIRED'
+          : isRoutineTokenExpiry
+          ? 'TOKEN_EXPIRED'
+          : 'AUTH_FAILURE',
         correlationId,
         method: request.method,
         endpoint: sanitizedUrl,
