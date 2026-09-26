@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, RefreshCw } from "lucide-react";
@@ -79,7 +79,7 @@ export default function LeaderboardPage() {
     enabled: Boolean(currentUserId),
   });
 
-  const enrolledCourses = myCoursesData?.courses || [];
+  const enrolledCourses = useMemo(() => myCoursesData?.courses || [], [myCoursesData?.courses]);
 
   // Default to first enrolled course if none selected yet
   useEffect(() => {

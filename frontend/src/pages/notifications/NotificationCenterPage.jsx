@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Bell,
   CheckCheck,
   Trash2,
   Settings,
@@ -60,7 +59,7 @@ export default function NotificationCenterPage() {
     staleTime: 1000 * 20,
   });
 
-  const notifications = data?.data || [];
+  const notifications = useMemo(() => data?.data || [], [data?.data]);
   const totalPages = data?.totalPages || 1;
   const total = data?.total || 0;
 

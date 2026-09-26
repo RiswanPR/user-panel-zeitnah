@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useRef, useMemo } from "react";
+import { useState, useEffect, useContext, useRef, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AtSign,
@@ -40,13 +40,13 @@ export default function ChangeUsernameModal({
   const activeQueryRef = useRef("");
 
   // Reset helper
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (isSubmitting) return;
     setDesiredHandle("");
     setServerResult(null);
     setErrorMessage("");
     onClose();
-  };
+  }, [isSubmitting, onClose]);
 
   // Fetch server status when modal opens
   useEffect(() => {
@@ -84,7 +84,7 @@ export default function ChangeUsernameModal({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, isSubmitting]);
+  }, [isOpen, isSubmitting, handleClose]);
 
   // Client-side synchronous validation
   const trimmed = desiredHandle.trim().toLowerCase();

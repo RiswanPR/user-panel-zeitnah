@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import api from "../../services/api";
 import dayjs from "dayjs";
 import { useToast } from "../../components/ui/Toast";
@@ -10,7 +10,7 @@ export default function ErrorReportsDashboard() {
   const [statusFilter, setStatusFilter] = useState("");
   const toast = useToast();
 
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     try {
       setLoading(true);
       const res = await api.get("/error-reports", { params: { status: statusFilter } });
@@ -20,11 +20,11 @@ export default function ErrorReportsDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter]);
 
   useEffect(() => {
     fetchReports();
-  }, [statusFilter]);
+  }, [fetchReports]);
 
   const updateStatus = async (id, status) => {
     try {

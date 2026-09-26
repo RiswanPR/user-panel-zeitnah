@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -55,11 +55,7 @@ export default function OpportunityInboxPage() {
   // Success / Next steps modal after marking Interested
   const [interestedSuccessData, setInterestedSuccessData] = useState(null);
 
-  useEffect(() => {
-    loadInbox(activeTab);
-  }, [activeTab]);
-
-  const loadInbox = async (tab) => {
+  const loadInbox = useCallback(async (tab) => {
     setLoading(true);
     try {
       const data = await opportunityService.getCandidateInbox(tab);
@@ -75,7 +71,11 @@ export default function OpportunityInboxPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    loadInbox(activeTab);
+  }, [activeTab, loadInbox]);
 
   const handleOpenDetail = async (opp) => {
     setSelectedOpportunity(opp);

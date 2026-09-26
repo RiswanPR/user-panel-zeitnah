@@ -139,7 +139,7 @@ export default function ChatArea({ conversationId, onBack }) {
     refetchOnWindowFocus: false,
   });
 
-  const rawMessages = messagesData?.messages || [];
+  const rawMessages = useMemo(() => messagesData?.messages || [], [messagesData?.messages]);
 
   // Filter messages if in-chat search active
   const messages = useMemo(() => {

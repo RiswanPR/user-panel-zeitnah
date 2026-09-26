@@ -69,7 +69,7 @@ export default function ConversationList({
     refetchOnWindowFocus: false,
   });
 
-  const rawConversations = data?.conversations || [];
+  const rawConversations = useMemo(() => data?.conversations || [], [data?.conversations]);
 
   // Client-side quick filter for instant keyboard feedback while debouncing
   const conversations = useMemo(() => {

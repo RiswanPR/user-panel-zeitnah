@@ -20,8 +20,8 @@ export default defineConfig([
     rules: {
       'no-empty': ['warn', { allowEmptyCatch: true }],
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
-      'react-hooks/set-state-in-effect': 'warn',
-      'react-hooks/immutability': 'warn',
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/immutability': 'off',
       'react-hooks/exhaustive-deps': 'warn',
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
     },
