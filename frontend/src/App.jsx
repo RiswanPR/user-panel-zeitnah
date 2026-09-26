@@ -49,7 +49,7 @@ const JobDetailPage = lazyWithRetry(() => import("./pages/jobs/JobDetailPage"));
 const ManageBusiness = lazyWithRetry(() => import("./pages/business/ManageBusiness"));
 const PublicBusinessProfilePage = lazyWithRetry(() => import("./pages/business/PublicBusinessProfilePage"));
 const BusinessDiscoveryPage = lazyWithRetry(() => import("./pages/business/BusinessDiscoveryPage"));
-const AdminBusinessReviewPage = React.lazy(() => import("./pages/admin/AdminBusinessReviewPage"));
+const AdminBusinessReviewPage = lazyWithRetry(() => import("./pages/admin/AdminBusinessReviewPage"));
 const CareerIntelligencePage = lazyWithRetry(() => import("./pages/career/CareerIntelligencePage"));
 const MessagesPage = lazyWithRetry(() => import("./pages/messages/MessagesPage"));
 const PortfolioPage = lazyWithRetry(() => import("./pages/profile/PortfolioPage"));

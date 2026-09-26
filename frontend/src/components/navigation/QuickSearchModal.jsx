@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -159,6 +159,14 @@ export default function QuickSearchModal({ isOpen, onClose }) {
     });
   }, [query]);
 
+  const handleSelect = useCallback(
+    (item) => {
+      navigate(item.path);
+      onClose();
+    },
+    [navigate, onClose]
+  );
+
   // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -181,12 +189,7 @@ export default function QuickSearchModal({ isOpen, onClose }) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, filteredItems, selectedIndex]);
-
-  const handleSelect = (item) => {
-    navigate(item.path);
-    onClose();
-  };
+  }, [isOpen, filteredItems, selectedIndex, handleSelect, onClose]);
 
   return (
     <AnimatePresence>

@@ -61,7 +61,8 @@ const getRequestKey = (config: InternalAxiosRequestConfig) => {
 api.interceptors.request.use(async (config) => {
   // If a token refresh is currently in flight, wait for it before dispatching new authenticated requests.
   // This prevents sending requests with known-expired tokens and causing 401 refresh storms.
-  if (refreshPromise && !(config as any)._isRefreshRequest) {
+  // Exclude auth routes (especially logout) from waiting on token refresh
+  if (refreshPromise && !(config as any)._isRefreshRequest && !config.url?.includes('/auth/')) {
     try {
       const freshToken = await refreshPromise;
       if (!freshToken && !config.url?.includes('/auth/')) {
@@ -288,8 +289,15 @@ api.interceptors.response.use(
     }
 
     // Handle 401 — attempt token refresh before logging out
-    // Guard against infinite 401 retry storms: never refresh if this request already attempted a 401 retry
-    if (error.response?.status === 401 && config && !config._isRefreshRequest) {
+    // Guard against infinite 401 retry storms: never refresh if this request already attempted a 401 retry,
+    // or if the request was an auth action (logout, login, register, refresh)
+    const isAuthRoute =
+      config?.url?.includes('/auth/logout') ||
+      config?.url?.includes('/auth/login') ||
+      config?.url?.includes('/auth/register') ||
+      config?.url?.includes('/auth/refresh-token');
+
+    if (error.response?.status === 401 && config && !config._isRefreshRequest && !isAuthRoute) {
       if (config._retried401) {
         console.warn(`[API] 401 persisted after token refresh for ${config.url}. Rejecting without further retries.`);
         return Promise.reject(error);
@@ -375,19 +383,25 @@ api.interceptors.response.use(
   },
 );
 
-/** Clear all auth tokens and navigate to login without hard reload */
+/** Clear all auth tokens and navigate to login safely without state desync */
 function forceLogout() {
   storage.clearAuth(); // This already dispatches zeitnah:auth:logout
 
   if (typeof window !== "undefined") {
-    if (window.location.pathname !== "/login" && !isRedirecting) {
+    const publicPaths = [
+      "/login",
+      "/register",
+      "/verify-login-otp",
+      "/verify-register-otp",
+    ];
+    const isPublic = publicPaths.some((p) =>
+      window.location.pathname.startsWith(p),
+    );
+
+    if (!isPublic && !isRedirecting) {
       isRedirecting = true;
-      if (window.history && typeof window.history.pushState === "function") {
-        window.history.pushState(null, "", "/login");
-        window.dispatchEvent(new PopStateEvent("popstate"));
-      } else {
-        window.location.assign("/login");
-      }
+      // Cleanly replace window location to avoid React Router context desync
+      window.location.replace("/login");
 
       // Reset after navigation
       setTimeout(() => {

@@ -67,14 +67,17 @@ export default function MobileMoreDrawer({
     normalizedRole === "RECRUITER" || normalizedRole === "FOUNDER" || normalizedRole === "ADMIN";
 
   const avatarUrl = user?.avatar ? getUploadUrl(user.avatar) : null;
-  const userInitials = user?.name
-    ? user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase()
-    : "Z";
+  const userInitials =
+    user?.name?.trim()
+      ? user.name
+          .trim()
+          .split(/\s+/)
+          .map((n) => n[0])
+          .filter(Boolean)
+          .join("")
+          .slice(0, 2)
+          .toUpperCase() || "Z"
+      : "Z";
 
   const navigationGroups = [
     {

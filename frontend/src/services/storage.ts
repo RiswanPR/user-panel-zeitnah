@@ -226,6 +226,21 @@ class StorageService {
     this.removeItem(STORAGE_KEYS.SESSION_EXPIRES_AT);
   }
 
+  /** Checks if the current stored access token is expired or within buffer seconds of expiry */
+  public isAccessTokenExpired(bufferSeconds = 30): boolean {
+    const token = this.getAccessToken();
+    if (!token) return true;
+    try {
+      const parts = token.split('.');
+      if (parts.length < 2) return true;
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+      if (!payload.exp) return false;
+      return Date.now() >= (payload.exp - bufferSeconds) * 1000;
+    } catch {
+      return true;
+    }
+  }
+
   /** Clear all session authentication tokens safely */
   public clearAuth(): void {
     this.removeAccessToken();

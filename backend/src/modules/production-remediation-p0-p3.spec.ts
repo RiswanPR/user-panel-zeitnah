@@ -29,9 +29,9 @@ describe('Production Remediation P0–P3 Verification Suite', () => {
       expect(fs.existsSync(appJsxPath)).toBe(true);
       const appJsxContent = fs.readFileSync(appJsxPath, 'utf8');
 
-      // Verify the import exists and is lazy loaded
+      // Verify the import exists and is lazy loaded (via React.lazy or lazyWithRetry)
       expect(appJsxContent).toMatch(
-        /const AdminBusinessReviewPage\s*=\s*React\.lazy\(\s*\(\)\s*=>\s*import\(["']\.\/pages\/admin\/AdminBusinessReviewPage["']\)\s*\);/,
+        /const AdminBusinessReviewPage\s*=\s*(?:React\.lazy|lazyWithRetry)\(\s*\(\)\s*=>\s*import\(["']\.\/pages\/admin\/AdminBusinessReviewPage["']\)\s*\);/,
       );
 
       // Verify the route references AdminBusinessReviewPage

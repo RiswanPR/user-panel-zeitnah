@@ -204,8 +204,10 @@ export const MessagingProvider = ({ children }) => {
 
         setConnectionStatus('reconnecting');
 
-        // Check if error is an auth failure (including 401 wrapped by Engine.IO as xhr poll error)
+        // Check if error is an auth failure (including expired JWT or Engine.IO disconnect)
+        const isTokenExpired = Boolean(storage.isAccessTokenExpired && storage.isAccessTokenExpired(15));
         const isAuthError =
+          isTokenExpired ||
           err.message?.includes('jwt') ||
           err.message?.includes('unauthorized') ||
           err.message?.includes('Unauthorized') ||
