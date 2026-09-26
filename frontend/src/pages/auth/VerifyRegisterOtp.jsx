@@ -6,6 +6,7 @@ import { getDeviceId } from "../../utils/device";
 import storage from "../../services/storage";
 import { isMobile } from "react-device-detect";
 import { UAParser } from "ua-parser-js";
+import AuthPremiumBackground from "../../components/ui/AuthPremiumBackground";
 
 function VerifyRegisterOtp() {
   const navigate = useNavigate();
@@ -124,31 +125,35 @@ function VerifyRegisterOtp() {
   };
 
   return (
-    <div className="min-h-screen bg-[#07192a] flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden text-white">
+    <div className="auth-page selection:bg-[#f6ed4a] selection:text-[#07192a] text-white flex flex-col items-center justify-center px-4 py-12">
 
-      {/* WORKSTATION ACCUMULATION LIMIT OVERFLOW MODAL */}
+      {/* Premium Background */}
+      <AuthPremiumBackground />
+
+      {/* DEVICE REPLACE CONFIRM MODAL */}
       {showConfirm && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4">
-          <div className="bg-[#0d2035] border border-[rgba(159,213,178,0.15)] rounded-2xl p-7 max-w-sm w-full shadow-2xl flex flex-col">
+        <div className="auth-modal-overlay">
+          <div className="auth-modal-card flex flex-col">
             <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4 text-amber-400">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
               </svg>
             </div>
-            <h3 className="text-white font-heading font-bold text-base mb-2">Replace existing device?</h3>
-            <p className="text-[rgba(255,255,255,0.45)] text-xs font-medium mb-6 leading-relaxed">
-              You've reached your device limit. Continuing will sign out your oldest registered device profile layout.
+            <h3 className="text-white font-heading font-black text-base mb-2">Replace existing device?</h3>
+            <p className="text-white/40 text-xs font-medium mb-6 leading-relaxed">
+              You've reached your device limit. Continuing will sign out your oldest registered device profile.
             </p>
             <div className="flex gap-3 w-full">
               <button
                 onClick={() => handleConfirmReplace(false)}
-                className="flex-1 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider text-white/60 border border-white/[0.08] hover:border-white/20 hover:text-white transition-all duration-200 cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider text-white/55 border border-white/[0.08] hover:border-white/20 hover:text-white transition-all duration-200 cursor-pointer bg-transparent"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleConfirmReplace(true)}
-                className="flex-1 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider text-[#07192a] bg-[#f6ed4a] hover:shadow-[0_0_15px_rgba(246,237,74,0.2)] transition-all duration-200 cursor-pointer"
+                className="auth-premium-btn"
+                style={{ flex: 1, padding: "0.625rem" }}
               >
                 Replace
               </button>
@@ -157,34 +162,40 @@ function VerifyRegisterOtp() {
         </div>
       )}
 
-      {/* CORE FRAMEWORK CARD */}
+      {/* CORE FORM CARD */}
       <div className="relative w-full max-w-md z-10 flex flex-col items-center">
-        <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[rgba(159,213,178,0.25)] to-transparent z-20" />
+        <div className="w-full auth-glass-card px-6 sm:px-8 py-10 auth-animate-in-scale overflow-hidden flex flex-col">
 
-        <div className="w-full glass-card px-8 py-10 shadow-2xl flex flex-col relative overflow-hidden">
-
-          {/* Logo Header */}
-          <div className="w-14 h-14 rounded-2xl border border-[rgba(159,213,178,0.3)] overflow-hidden shadow-xl bg-[#07192a] flex items-center justify-center mx-auto mb-6 select-none">
+          {/* Logo */}
+          <div className="auth-logo-container mx-auto mb-7 auth-animate-in auth-stagger-1">
             <img src="/zeitnah-logo.png" alt="Zeitnah Logo" className="w-full h-full object-cover" />
           </div>
 
-          {/* Descriptive Messaging */}
-          <div className="text-center mb-8 w-full flex flex-col items-center">
-            <h1 className="text-2xl font-heading font-bold text-white tracking-tight mb-2">
+          {/* Verification Icon + Heading */}
+          <div className="text-center mb-8 w-full flex flex-col items-center auth-animate-in auth-stagger-2">
+            <div className="w-12 h-12 rounded-2xl bg-[#9fd5b2]/8 border border-[#9fd5b2]/15 flex items-center justify-center mb-4">
+              <svg className="w-5 h-5 text-[#9fd5b2]" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-heading font-black text-white tracking-tight mb-2">
               Verify your email
             </h1>
-            <p className="text-sm text-[rgba(255,255,255,0.45)] font-medium">
-              Almost there,{name ? <> <span className="text-white/70 font-semibold">{name.split(" ")[0]}</span>!</> : "!"} We sent a code to
+            <p className="text-sm text-white/40 font-medium">
+              Almost there{name ? <>, <span className="text-white/60 font-semibold">{name.split(" ")[0]}</span>!</> : "!"}  We sent a code to
             </p>
-            <p className="text-sm text-[#9fd5b2] font-semibold mt-0.5 tracking-wide">
+            <p className="text-sm text-[#9fd5b2] font-semibold mt-1 tracking-wide break-all px-2">
               {maskedEmail}
             </p>
           </div>
 
           <form onSubmit={handleVerifyOtp} className="w-full flex flex-col">
 
-            {/* 6-Box Discrete Key Tokens */}
-            <div className="flex gap-2 justify-center mb-6 w-full" onPaste={handleBoxPaste}>
+            {/* OTP Input Grid */}
+            <div
+              className="flex gap-2 sm:gap-2.5 justify-center mb-7 w-full auth-animate-in auth-stagger-3"
+              onPaste={handleBoxPaste}
+            >
               {otp.map((digit, i) => (
                 <input
                   key={i}
@@ -195,45 +206,45 @@ function VerifyRegisterOtp() {
                   value={digit}
                   onChange={(e) => handleBoxChange(i, e.target.value)}
                   onKeyDown={(e) => handleBoxKeyDown(i, e)}
-                  className={`w-11 h-13 text-center text-xl font-bold text-white bg-[rgba(7,25,42,0.6)] border rounded-xl outline-none transition-all duration-150 focus:ring-2 block ${error
-                    ? "border-red-500/50 focus:border-red-400 focus:ring-red-400/10"
-                    : digit
-                      ? "border-[#9fd5b2] focus:border-[#9fd5b2] focus:ring-[#9fd5b2]/10"
-                      : "border-[rgba(159,213,178,0.15)] focus:border-[#9fd5b2] focus:ring-[#9fd5b2]/10"
-                    }`}
-                  style={{ height: "52px" }}
+                  className={`auth-otp-box ${error ? "has-error" : digit ? "has-value" : ""}`}
+                  style={{
+                    animationName: "authOtpBoxIn",
+                    animationDuration: "0.4s",
+                    animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+                    animationFillMode: "both",
+                    animationDelay: `${0.15 + i * 0.06}s`,
+                  }}
                 />
               ))}
             </div>
 
-            {/* Error Alert Box */}
+            {/* Error Alert */}
             {error && (
-              <div className="mb-5 flex items-center gap-1.5 text-red-400 text-xs font-medium bg-red-500/10 border border-red-500/20 px-3 py-2.5 rounded-lg w-full">
-                <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+              <div className="mb-5 auth-error-alert w-full">
+                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                 </svg>
                 <p className="leading-tight">{error}</p>
               </div>
             )}
 
-            {/* Success Banner Box */}
+            {/* Success Alert */}
             {success && (
-              <div className="mb-5 flex items-center gap-1.5 text-emerald-400 text-xs font-medium bg-emerald-500/10 border border-emerald-500/20 px-3 py-2.5 rounded-lg w-full">
-                <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+              <div className="mb-5 auth-success-alert w-full">
+                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <p className="leading-tight">{success}</p>
               </div>
             )}
 
-            {/* Complete Execution Button */}
-            <button
-              type="submit"
-              disabled={loading || otpString.length < 6}
-              className="w-full relative group overflow-hidden rounded-xl py-3.5 text-xs font-extrabold uppercase tracking-wider text-[#07192a] bg-[#f6ed4a] hover:shadow-[0_0_20px_rgba(246,237,74,0.2)] disabled:opacity-40 disabled:pointer-events-none transition-all duration-200 active:scale-[0.98] cursor-pointer block"
-            >
-              <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-              <span className="relative flex items-center justify-center gap-2">
+            {/* Verify Button */}
+            <div className="auth-animate-in auth-stagger-4">
+              <button
+                type="submit"
+                disabled={loading || otpString.length < 6}
+                className="auth-premium-btn"
+              >
                 {loading ? (
                   <>
                     <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
@@ -245,29 +256,32 @@ function VerifyRegisterOtp() {
                 ) : (
                   <>
                     Complete Registration
-                    <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                     </svg>
                   </>
                 )}
-              </span>
-            </button>
+              </button>
+            </div>
           </form>
 
-          {/* Sequential Step Matrix Pill Progress Indicator */}
-          <div className="flex items-center justify-center gap-2 mt-6 w-full">
-            <div className="w-6 h-1 rounded-full bg-[rgba(159,213,178,0.2)]" />
-            <div className="w-6 h-1 rounded-full bg-[#9fd5b2]" />
+          {/* Step Progress Indicator */}
+          <div className="flex items-center justify-center gap-2 mt-7 auth-animate-in auth-stagger-5">
+            <div className="auth-step-dot auth-step-dot-inactive" />
+            <div className="auth-step-dot auth-step-dot-active" />
           </div>
-          <p className="text-center text-[10px] uppercase font-bold tracking-widest text-[rgba(255,255,255,0.35)] mt-2.5 w-full">
+          <p className="text-center text-[10px] uppercase font-bold tracking-widest text-white/25 mt-2.5 auth-animate-in auth-stagger-5">
             Step 2 of 2 — Email verification
           </p>
 
-          {/* Back Redirect Link */}
-          <div className="text-center mt-5 w-full">
+          {/* Divider */}
+          <div className="auth-divider mt-6 mb-5 auth-animate-in auth-stagger-6" />
+
+          {/* Back Link */}
+          <div className="text-center w-full auth-animate-in auth-stagger-7">
             <button
               onClick={() => navigate("/register")}
-              className="text-xs font-semibold tracking-wider uppercase text-[rgba(255,255,255,0.35)] hover:text-[#9fd5b2] transition-colors duration-200 flex items-center gap-1.5 mx-auto cursor-pointer"
+              className="auth-link-btn mx-auto"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />

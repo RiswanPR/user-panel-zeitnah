@@ -6,6 +6,7 @@ import { getDeviceId } from "../../utils/device";
 import storage from "../../services/storage";
 import { isMobile } from "react-device-detect";
 import { UAParser } from "ua-parser-js";
+import AuthPremiumBackground from "../../components/ui/AuthPremiumBackground";
 
 function VerifyOtp() {
   const { setUser } = useContext(AuthContext);
@@ -147,33 +148,37 @@ function VerifyOtp() {
   };
 
   return (
-    <div className="min-h-screen bg-[#07192a] flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden text-white font-body antialiased selection:bg-[#f6ed4a] selection:text-[#07192a]">
+    <div className="auth-page selection:bg-[#f6ed4a] selection:text-[#07192a] text-white flex flex-col items-center justify-center px-4 py-12">
+
+      {/* Premium Background */}
+      <AuthPremiumBackground />
 
       {/* DEVICE REPLACE CONFIRM MODAL */}
       {showConfirm && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4">
-          <div className="bg-[#0d2035] border border-[rgba(159,213,178,0.15)] rounded-2xl p-6 sm:p-7 max-w-sm w-full shadow-2xl flex flex-col">
+        <div className="auth-modal-overlay">
+          <div className="auth-modal-card flex flex-col">
             <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4 text-amber-400">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
               </svg>
             </div>
             <h3 className="text-white font-heading font-black text-base mb-2">Replace existing device?</h3>
-            <p className="text-[rgba(255,255,255,0.45)] text-xs font-medium mb-6 leading-relaxed">
+            <p className="text-white/40 text-xs font-medium mb-6 leading-relaxed">
               You've reached your device limit. Continuing will sign out your oldest active registered workstation session.
             </p>
             <div className="flex gap-3 w-full">
               <button
                 type="button"
                 onClick={() => handleConfirmReplace(false)}
-                className="flex-1 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider text-white/60 border border-white/[0.08] hover:border-white/20 hover:text-white transition-all duration-200 cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider text-white/55 border border-white/[0.08] hover:border-white/20 hover:text-white transition-all duration-200 cursor-pointer bg-transparent"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={() => handleConfirmReplace(true)}
-                className="flex-1 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider text-[#07192a] bg-[#f6ed4a] hover:shadow-[0_0_15px_rgba(246,237,74,0.2)] transition-all duration-200 cursor-pointer"
+                className="auth-premium-btn"
+                style={{ flex: 1, padding: "0.625rem" }}
               >
                 Replace
               </button>
@@ -182,32 +187,38 @@ function VerifyOtp() {
         </div>
       )}
 
-      {/* CORE FORM WRAPPER */}
+      {/* CORE FORM */}
       <div className="relative w-full max-w-md z-10 flex flex-col items-center">
-        <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[rgba(159,213,178,0.25)] to-transparent z-20" />
+        <div className="w-full auth-glass-card px-5 sm:px-8 py-10 auth-animate-in-scale overflow-hidden flex flex-col">
 
-        <div className="w-full glass-card px-5 sm:px-8 py-10 shadow-2xl flex flex-col relative overflow-hidden">
-
-          {/* Logo Header */}
-          <div className="w-14 h-14 rounded-2xl border border-[rgba(159,213,178,0.3)] overflow-hidden shadow-xl bg-[#07192a] flex items-center justify-center mx-auto mb-6 select-none">
+          {/* Logo */}
+          <div className="auth-logo-container mx-auto mb-7 auth-animate-in auth-stagger-1">
             <img src="/zeitnah-logo.png" alt="Zeitnah Logo" className="w-full h-full object-cover" />
           </div>
 
-          {/* Context Headings */}
-          <div className="text-center mb-8 w-full flex flex-col items-center">
+          {/* Email Icon + Heading */}
+          <div className="text-center mb-8 w-full flex flex-col items-center auth-animate-in auth-stagger-2">
+            <div className="w-12 h-12 rounded-2xl bg-[#9fd5b2]/8 border border-[#9fd5b2]/15 flex items-center justify-center mb-4">
+              <svg className="w-5 h-5 text-[#9fd5b2]" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+              </svg>
+            </div>
             <h1 className="text-2xl font-heading font-black text-white tracking-tight mb-2">
               Check your email
             </h1>
-            <p className="text-sm text-[rgba(255,255,255,0.45)] font-medium">
-              We sent a 6-digit verification metric to
+            <p className="text-sm text-white/40 font-medium">
+              We sent a 6-digit verification code to
             </p>
-            <p className="text-sm text-[#9fd5b2] font-semibold mt-0.5 tracking-wide break-all px-2">
+            <p className="text-sm text-[#9fd5b2] font-semibold mt-1 tracking-wide break-all px-2">
               {maskedEmail}
             </p>
           </div>
 
-          {/* 6-Box Discrete Digital Matrix Input Grid - Upgraded for multi-viewport compatibility */}
-          <div className="flex gap-1.5 sm:gap-2 justify-center mb-6 w-full max-w-full overflow-hidden" onPaste={handleBoxPaste}>
+          {/* OTP Input Grid */}
+          <div
+            className="flex gap-2 sm:gap-2.5 justify-center mb-7 w-full max-w-full auth-animate-in auth-stagger-3"
+            onPaste={handleBoxPaste}
+          >
             {otp.map((digit, i) => (
               <input
                 key={i}
@@ -218,45 +229,46 @@ function VerifyOtp() {
                 value={digit}
                 onChange={(e) => handleBoxChange(i, e.target.value)}
                 onKeyDown={(e) => handleBoxKeyDown(i, e)}
-                className={`w-9 sm:w-11 h-12 sm:h-13 text-center text-lg sm:text-xl font-bold text-white bg-[rgba(7,25,42,0.6)] border rounded-lg sm:rounded-xl outline-none transition-all duration-150 focus:ring-2 block shrink ${error
-                  ? "border-red-500/50 focus:border-red-400 focus:ring-red-400/10"
-                  : digit
-                    ? "border-[#9fd5b2] focus:border-[#9fd5b2] focus:ring-[#9fd5b2]/10"
-                    : "border-[rgba(159,213,178,0.15)] focus:border-[#9fd5b2] focus:ring-[#9fd5b2]/10"
-                  }`}
+                className={`auth-otp-box ${error ? "has-error" : digit ? "has-value" : ""}`}
+                style={{
+                  animationName: "authOtpBoxIn",
+                  animationDuration: "0.4s",
+                  animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+                  animationFillMode: "both",
+                  animationDelay: `${0.15 + i * 0.06}s`,
+                }}
               />
             ))}
           </div>
 
-          {/* Error Alert Box */}
+          {/* Error Alert */}
           {error && (
-            <div className="mb-5 flex items-center gap-1.5 text-red-400 text-xs font-medium bg-red-500/10 border border-red-500/20 px-3 py-2.5 rounded-lg w-full">
-              <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+            <div className="mb-5 auth-error-alert w-full">
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
               </svg>
               <p className="leading-tight">{error}</p>
             </div>
           )}
 
-          {/* Success Banner Box */}
+          {/* Success Alert */}
           {success && (
-            <div className="mb-5 flex items-center gap-1.5 text-emerald-400 text-xs font-medium bg-emerald-500/10 border border-emerald-500/20 px-3 py-2.5 rounded-lg w-full">
-              <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+            <div className="mb-5 auth-success-alert w-full">
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <p className="leading-tight">{success}</p>
             </div>
           )}
 
-          {/* Verification Submit Button */}
-          <button
-            type="button"
-            onClick={handleVerifyOtp}
-            disabled={loading || otpString.length < 6}
-            className="w-full relative group overflow-hidden rounded-xl py-3.5 text-xs font-extrabold uppercase tracking-wider text-[#07192a] bg-[#f6ed4a] hover:shadow-[0_0_20px_rgba(246,237,74,0.2)] disabled:opacity-40 disabled:pointer-events-none transition-all duration-200 active:scale-[0.98] cursor-pointer block"
-          >
-            <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-            <span className="relative flex items-center justify-center gap-2">
+          {/* Verify Button */}
+          <div className="auth-animate-in auth-stagger-4">
+            <button
+              type="button"
+              onClick={handleVerifyOtp}
+              disabled={loading || otpString.length < 6}
+              className="auth-premium-btn"
+            >
               {loading ? (
                 <>
                   <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
@@ -267,31 +279,32 @@ function VerifyOtp() {
                 </>
               ) : (
                 <>
-                  Verify & Sign in
-                  <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  Verify & Sign In
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                   </svg>
                 </>
               )}
-            </span>
-          </button>
+            </button>
+          </div>
 
-          {/* Resend Code Interface */}
-          <div className="text-center mt-6 w-full flex justify-center">
+          {/* Resend Code Section */}
+          <div className="text-center mt-7 w-full flex justify-center auth-animate-in auth-stagger-5">
             {timer > 0 ? (
-              <div className="flex items-center justify-center gap-2">
-                <div className="relative w-4 h-4">
-                  <svg className="w-4 h-4 -rotate-90" viewBox="0 0 20 20">
-                    <circle cx="10" cy="10" r="8" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="2" />
+              <div className="flex items-center justify-center gap-2.5">
+                <div className="relative w-5 h-5">
+                  <svg className="w-5 h-5 -rotate-90" viewBox="0 0 20 20">
+                    <circle cx="10" cy="10" r="8" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1.5" />
                     <circle
                       cx="10" cy="10" r="8" fill="none"
-                      stroke="#9fd5b2" strokeWidth="2"
+                      stroke="#9fd5b2" strokeWidth="1.5"
                       strokeDasharray={`${(50.27 * (30 - timer)) / 30} 50.27`}
                       strokeLinecap="round"
+                      style={{ transition: "stroke-dasharray 1s linear" }}
                     />
                   </svg>
                 </div>
-                <span className="text-xs text-[rgba(255,255,255,0.45)] font-semibold uppercase tracking-wider">
+                <span className="text-xs text-white/35 font-semibold uppercase tracking-wider">
                   Resend code in <span className="text-white font-bold">{timer}s</span>
                 </span>
               </div>
@@ -300,19 +313,23 @@ function VerifyOtp() {
                 type="button"
                 onClick={handleResendOtp}
                 disabled={resendLoading}
-                className="text-xs font-bold uppercase tracking-wider text-[#9fd5b2] hover:text-white disabled:opacity-40 transition-colors duration-200 underline underline-offset-4 decoration-[rgba(159,213,178,0.3)] cursor-pointer inline-block"
+                className="auth-link-btn"
+                style={{ textDecoration: "underline", textUnderlineOffset: "4px", textDecorationColor: "rgba(159, 213, 178, 0.3)" }}
               >
-                {resendLoading ? "Sending…" : "Resend OTP"}
+                {resendLoading ? "Sending…" : "Resend OTP Code"}
               </button>
             )}
           </div>
 
-          {/* Back Redirect Anchor */}
-          <div className="text-center mt-5 w-full">
+          {/* Divider */}
+          <div className="auth-divider mt-6 mb-5 auth-animate-in auth-stagger-6" />
+
+          {/* Back Link */}
+          <div className="text-center w-full auth-animate-in auth-stagger-7">
             <button
               type="button"
               onClick={() => navigate("/login")}
-              className="text-xs font-semibold tracking-wider uppercase text-[rgba(255,255,255,0.35)] hover:text-[#9fd5b2] transition-colors duration-200 flex items-center gap-1.5 mx-auto cursor-pointer"
+              className="auth-link-btn mx-auto"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
