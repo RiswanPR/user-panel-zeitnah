@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   ShieldCheck,
-  ShieldAlert,
   Shield,
   Clock,
   CheckCircle2,
@@ -13,11 +12,9 @@ import {
   FileText,
   Lock,
   ArrowRight,
-  ExternalLink,
   Award,
   Building2,
   GraduationCap,
-  Sparkles,
   Info,
 } from 'lucide-react';
 import { portfolioService } from '../../services/portfolioService';
@@ -78,7 +75,21 @@ export default function VerificationCenterPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    loadVerificationCenter();
+    let active = true;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await portfolioService.getVerificationCenter();
+        if (active) setData(res);
+      } catch (err) {
+        console.error('Failed to load verification center:', err);
+        if (active) toast?.error?.('Could not load verification records.');
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadVerificationCenter = async () => {

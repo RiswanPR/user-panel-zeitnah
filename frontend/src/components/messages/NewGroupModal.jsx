@@ -7,15 +7,7 @@ import { messagingService } from '../../services/messagingService';
 import { getUploadUrl } from '../../utils/courseUi';
 import { useToast } from '../ui/Toast';
 
-function getInitials(name) {
-  if (!name) return 'Z';
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-}
+import { getUserDisplayName, getInitials } from '../../utils/messagingIdentity';
 
 export default function NewGroupModal({ onClose, onSelectConversation }) {
   const [title, setTitle] = useState('');
@@ -51,8 +43,9 @@ export default function NewGroupModal({ onClose, onSelectConversation }) {
     onSuccess: (res) => {
       toast.success('Group Created', `Group "${title.trim()}" created successfully.`);
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      if (res?.conversation) {
-        onSelectConversation(res.conversation);
+      const conv = res?.conversation || res;
+      if (conv) {
+        onSelectConversation(conv);
       }
       onClose();
     },
@@ -150,7 +143,7 @@ export default function NewGroupModal({ onClose, onSelectConversation }) {
                   const peer = conn.peer || conn;
                   const userId = peer.id || peer._id;
                   const isSelected = selectedUserIds.includes(userId);
-                  const name = peer.name || 'Professional';
+                  const name = getUserDisplayName(peer);
                   const avatar = peer.avatar ? getUploadUrl(peer.avatar) : null;
 
                   return (

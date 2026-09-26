@@ -64,6 +64,158 @@ export class MessagingService {
     throw new BadRequestException('Invalid ID format');
   }
 
+  /**
+   * Safely sanitize participant profile data ensuring no sensitive fields are exposed.
+   */
+  sanitizeParticipant(p: any, isOnline = false) {
+    if (!p) return null;
+    const pId = String(p._id || p.id || p);
+    if (typeof p === 'string' || p instanceof Types.ObjectId) {
+      return {
+        id: pId,
+        _id: pId,
+        name: '',
+        username: '',
+        avatar: '',
+        avatarUrl: '',
+        role: 'STUDENT',
+        primaryRole: 'STUDENT',
+        currentRole: '',
+        headline: '',
+        primaryDiscipline: '',
+        specializations: [],
+        online: isOnline,
+      };
+    }
+    return {
+      id: pId,
+      _id: pId,
+      name: p.name || '',
+      username: p.username || '',
+      avatar: p.avatar || '',
+      avatarUrl: p.avatar || '',
+      role: p.primaryRole || p.role || 'STUDENT',
+      primaryRole: p.primaryRole || 'STUDENT',
+      currentRole: p.currentRole || '',
+      headline: p.headline || '',
+      primaryDiscipline: p.primaryDiscipline || '',
+      specializations: p.specializations || [],
+      account_Status: p.account_Status || 'ACTIVE',
+      online: isOnline,
+    };
+  }
+
+  /**
+   * Formats a conversation object with complete identity resolution for direct and group chats.
+   * Resolves the OTHER participant for direct chats, deterministic group titles, and unified keys.
+   */
+  formatConversation(conv: any, callerUserId: string, unreadCount = 0) {
+    if (!conv) return null;
+    const isDirect =
+      conv.type === ConversationType.DIRECT ||
+      conv.type === ConversationType.MESSAGE_REQUEST;
+
+    const participants = (conv.participants || []).map((p: any) =>
+      this.sanitizeParticipant(p),
+    );
+
+    let partner: any = null;
+    let isPartnerOnline = false;
+
+    if (isDirect) {
+      const rawPartner = (conv.participants || []).find(
+        (p: any) => String(p._id || p.id || p) !== String(callerUserId),
+      );
+      if (rawPartner) {
+        const presenceAllowed =
+          rawPartner.privacySettings?.onlinePresence !== false;
+        isPartnerOnline =
+          presenceAllowed &&
+          typeof this.messagesGateway?.isUserOnline === 'function'
+            ? Boolean(
+                this.messagesGateway.isUserOnline(
+                  String(rawPartner._id || rawPartner.id || rawPartner),
+                ),
+              )
+            : false;
+        partner = this.sanitizeParticipant(rawPartner, isPartnerOnline);
+      }
+    }
+
+    // Deterministic Display Name
+    let computedName = '';
+    if (isDirect) {
+      if (partner?.name?.trim()) {
+        computedName = partner.name.trim();
+      } else if (partner?.username?.trim()) {
+        computedName = `@${partner.username.trim()}`;
+      } else if (conv.name && conv.name !== 'Direct Message') {
+        computedName = conv.name.trim();
+      } else {
+        computedName = 'Zeitnah Member';
+      }
+    } else {
+      // GROUP
+      if (conv.name?.trim()) {
+        computedName = conv.name.trim();
+      } else {
+        const otherParticipants = (conv.participants || []).filter(
+          (p: any) => String(p._id || p.id || p) !== String(callerUserId),
+        );
+        const names = otherParticipants
+          .map(
+            (p: any) =>
+              p.name?.trim() || (p.username ? `@${p.username}` : null),
+          )
+          .filter(Boolean);
+
+        if (names.length === 1) {
+          computedName = names[0];
+        } else if (names.length === 2) {
+          computedName = `${names[0]}, ${names[1]}`;
+        } else if (names.length > 2) {
+          computedName = `${names[0]}, ${names[1]} + ${otherParticipants.length - 2} others`;
+        } else {
+          computedName = 'Infrastructure Group';
+        }
+      }
+    }
+
+    const computedAvatar = conv.avatar || partner?.avatar || '';
+    const memberCount = conv.participants?.length || conv.members?.length || 0;
+
+    const myMember = (conv.members || []).find(
+      (m: any) => String(m.userId) === String(callerUserId),
+    );
+
+    return {
+      id: String(conv._id || conv.id),
+      _id: conv._id || conv.id,
+      type: conv.type,
+      name: computedName,
+      title: computedName, // Alias for frontend compatibility
+      avatar: computedAvatar,
+      avatarUrl: computedAvatar, // Alias for frontend compatibility
+      memberCount,
+      partner,
+      otherParticipant: partner, // Alias for frontend compatibility
+      isPartnerOnline,
+      participants,
+      lastMessage: conv.lastMessage,
+      lastMessageAt: conv.lastMessageAt,
+      requestStatus: conv.requestStatus,
+      isRequestRecipient:
+        String(conv.requestRecipientId) === String(callerUserId),
+      unreadCount,
+      isMuted: Boolean(
+        myMember?.mutedUntil && new Date(myMember.mutedUntil) > new Date(),
+      ),
+      isArchived: Boolean(myMember?.isArchived),
+      createdAt: conv.createdAt,
+      updatedAt: conv.updatedAt,
+    };
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
   // 1. CONVERSATIONS MANAGEMENT
   // ═══════════════════════════════════════════════════════════════════════════
@@ -76,7 +228,9 @@ export class MessagingService {
     dto: CreateDirectConversationDto,
   ) {
     if (callerId === dto.recipientId) {
-      throw new BadRequestException('You cannot start a conversation with yourself.');
+      throw new BadRequestException(
+        'You cannot start a conversation with yourself.',
+      );
     }
 
     const callerObjId = this.toObjectId(callerId);
@@ -114,9 +268,12 @@ export class MessagingService {
     const isConnected = Boolean(connection);
 
     // 4. Check recipient messaging privacy settings
-    const messagingPrivacy = recipientUser.privacySettings?.messaging || 'ANYONE';
+    const messagingPrivacy =
+      recipientUser.privacySettings?.messaging || 'ANYONE';
     if (messagingPrivacy === 'NOBODY') {
-      throw new ForbiddenException('This user does not accept direct messages.');
+      throw new ForbiddenException(
+        'This user does not accept direct messages.',
+      );
     }
     if (messagingPrivacy === 'CONNECTIONS_ONLY' && !isConnected) {
       throw new ForbiddenException(
@@ -235,11 +392,10 @@ export class MessagingService {
     await conversation.save();
 
     // 9. Real-time WebSocket emission
-    this.messagesGateway.notifyNewMessage(
-      String(conversation._id),
-      message,
-      [callerId, dto.recipientId],
-    );
+    this.messagesGateway.notifyNewMessage(String(conversation._id), message, [
+      callerId,
+      dto.recipientId,
+    ]);
 
     // 10. Send Notification to recipient
     if (this.notificationsService) {
@@ -268,10 +424,38 @@ export class MessagingService {
       }
     }
 
+    // Return populated and formatted conversation
+    let populated: any = null;
+    try {
+      const q: any = this.conversationModel.findById(conversation._id);
+      if (q && typeof q.populate === 'function') {
+        const p1 = q.populate(
+          'participants',
+          'name username avatar primaryRole currentRole headline primaryDiscipline specializations privacySettings account_Status',
+        );
+        if (p1 && typeof p1.populate === 'function') {
+          populated = await p1
+            .populate('createdBy', 'name username avatar')
+            .lean();
+        } else if (p1 && typeof p1.lean === 'function') {
+          populated = await p1.lean();
+        }
+      }
+    } catch {
+      populated = null;
+    }
+
+    const formatted = this.formatConversation(
+      populated || conversation,
+      callerId,
+      0,
+    );
+
     return {
-      conversation,
+      conversation: formatted,
       message,
       isMessageRequest,
+      ...formatted,
     };
   }
 
@@ -366,7 +550,37 @@ export class MessagingService {
       conversation,
     );
 
-    return { conversation, message };
+    let populated: any = null;
+    try {
+      const q: any = this.conversationModel.findById(conversation._id);
+      if (q && typeof q.populate === 'function') {
+        const p1 = q.populate(
+          'participants',
+          'name username avatar primaryRole currentRole headline primaryDiscipline specializations privacySettings',
+        );
+        if (p1 && typeof p1.populate === 'function') {
+          populated = await p1
+            .populate('createdBy', 'name username avatar')
+            .lean();
+        } else if (p1 && typeof p1.lean === 'function') {
+          populated = await p1.lean();
+        }
+      }
+    } catch {
+      populated = null;
+    }
+
+    const formatted = this.formatConversation(
+      populated || conversation,
+      creatorId,
+      0,
+    );
+
+    return {
+      conversation: formatted,
+      message,
+      ...formatted,
+    };
   }
 
   /**
@@ -401,21 +615,43 @@ export class MessagingService {
       };
     }
 
+    if (query.q && query.q.trim()) {
+      const escaped = query.q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const searchRegex = new RegExp(escaped, 'i');
+      const matchingUsers = await this.userModel
+        .find({
+          $or: [{ name: searchRegex }, { username: searchRegex }],
+        })
+        .select('_id')
+        .limit(50)
+        .lean();
+      const matchingUserIds = matchingUsers.map((u) => u._id);
+
+      baseFilter.$or = [
+        { name: searchRegex },
+        { participants: { $in: matchingUserIds } },
+        { 'lastMessage.body': searchRegex },
+      ];
+    }
+
     const [total, rawConversations] = await Promise.all([
       this.conversationModel.countDocuments(baseFilter),
       this.conversationModel
         .find(baseFilter)
-        .populate('participants', 'name username avatar primaryRole headline primaryDiscipline privacySettings account_Status')
+        .populate(
+          'participants',
+          'name username avatar primaryRole currentRole headline primaryDiscipline specializations privacySettings account_Status',
+        )
         .sort({ lastMessageAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
     ]);
 
-    // Enrich with unread counts and online presence
+    // Enrich with unread counts and formatted identity
     const conversations = await Promise.all(
       rawConversations.map(async (conv: any) => {
-        const myMember = conv.members.find(
+        const myMember = (conv.members || []).find(
           (m: any) => String(m.userId) === userId,
         );
         const lastReadAt = myMember?.lastReadAt || new Date(0);
@@ -428,41 +664,7 @@ export class MessagingService {
           deletedFor: { $ne: userObjId },
         });
 
-        // Find partner info for direct chat
-        let partner: any = null;
-        let isPartnerOnline = false;
-        if (conv.type === ConversationType.DIRECT) {
-          partner = conv.participants.find((p: any) => String(p._id) !== userId);
-          if (partner) {
-            // Respect partner's online presence privacy setting
-            const presenceAllowed = partner.privacySettings?.onlinePresence !== false;
-            isPartnerOnline = presenceAllowed
-              ? this.messagesGateway.isUserOnline(String(partner._id))
-              : false;
-          }
-        }
-
-        return {
-          id: String(conv._id),
-          _id: conv._id,
-          type: conv.type,
-          name: conv.name || partner?.name || 'Direct Message',
-          avatar: conv.avatar || partner?.avatar || '',
-          partner,
-          isPartnerOnline,
-          participants: conv.participants,
-          lastMessage: conv.lastMessage,
-          lastMessageAt: conv.lastMessageAt,
-          requestStatus: conv.requestStatus,
-          isRequestRecipient:
-            String(conv.requestRecipientId) === userId,
-          unreadCount,
-          isMuted: Boolean(
-            myMember?.mutedUntil && new Date(myMember.mutedUntil) > new Date(),
-          ),
-          isArchived: Boolean(myMember?.isArchived),
-          createdAt: conv.createdAt,
-        };
+        return this.formatConversation(conv, userId, unreadCount);
       }),
     );
 
@@ -531,7 +733,10 @@ export class MessagingService {
 
     const conversation = await this.conversationModel
       .findById(convObjId)
-      .populate('participants', 'name username avatar primaryRole headline primaryDiscipline privacySettings')
+      .populate(
+        'participants',
+        'name username avatar primaryRole currentRole headline primaryDiscipline specializations privacySettings account_Status',
+      )
       .populate('createdBy', 'name username avatar')
       .lean();
 
@@ -539,8 +744,8 @@ export class MessagingService {
       throw new NotFoundException('Conversation not found.');
     }
 
-    const isMember = conversation.participants.some(
-      (p: any) => String(p._id) === userId,
+    const isMember = (conversation.participants || []).some(
+      (p: any) => String(p._id || p.id || p) === userId,
     );
     if (!isMember) {
       throw new ForbiddenException(
@@ -548,34 +753,16 @@ export class MessagingService {
       );
     }
 
-    const myMember = conversation.members.find(
+    const myMember = (conversation.members || []).find(
       (m: any) => String(m.userId) === userId,
     );
 
-    let partner: any = null;
-    let isPartnerOnline = false;
-    if (conversation.type === ConversationType.DIRECT) {
-      partner = conversation.participants.find(
-        (p: any) => String(p._id) !== userId,
-      );
-      if (partner) {
-        const presenceAllowed = partner.privacySettings?.onlinePresence !== false;
-        isPartnerOnline = presenceAllowed
-          ? this.messagesGateway.isUserOnline(String(partner._id))
-          : false;
-      }
-    }
+    const formatted = this.formatConversation(conversation, userId, 0);
 
     return {
-      ...conversation,
-      id: String(conversation._id),
-      partner,
-      isPartnerOnline,
+      ...formatted,
+      conversation: formatted, // Ensures both res.conversation and direct read work
       myMember,
-      isMuted: Boolean(
-        myMember?.mutedUntil && new Date(myMember.mutedUntil) > new Date(),
-      ),
-      isArchived: Boolean(myMember?.isArchived),
     };
   }
 
@@ -594,7 +781,9 @@ export class MessagingService {
     const convObjId = this.toObjectId(conversationId);
     const userObjId = this.toObjectId(userId);
 
-    const conversation = await this.conversationModel.findById(convObjId).lean();
+    const conversation = await this.conversationModel
+      .findById(convObjId)
+      .lean();
     if (!conversation) {
       throw new NotFoundException('Conversation not found.');
     }
@@ -661,7 +850,11 @@ export class MessagingService {
   /**
    * Send a message in an existing conversation
    */
-  async sendMessage(userId: string, conversationId: string, dto: SendMessageDto) {
+  async sendMessage(
+    userId: string,
+    conversationId: string,
+    dto: SendMessageDto,
+  ) {
     const convObjId = this.toObjectId(conversationId);
     const userObjId = this.toObjectId(userId);
 
@@ -688,7 +881,9 @@ export class MessagingService {
       // If recipient replies, automatically accept request!
       conversation.requestStatus = RequestStatus.ACCEPTED;
     } else if (conversation.requestStatus === RequestStatus.DECLINED) {
-      throw new ForbiddenException('Cannot send messages to a declined conversation.');
+      throw new ForbiddenException(
+        'Cannot send messages to a declined conversation.',
+      );
     }
 
     // Safety & block verification for all participants
@@ -711,13 +906,17 @@ export class MessagingService {
     if (dto.replyToId && Types.ObjectId.isValid(dto.replyToId)) {
       const replyMsg = await this.messageModel
         .findById(dto.replyToId)
-        .populate('senderId', 'name')
+        .populate('senderId', 'name username')
         .lean();
       if (replyMsg && String(replyMsg.conversationId) === conversationId) {
+        const sender = replyMsg.senderId as any;
+        const senderName =
+          sender?.name?.trim() ||
+          (sender?.username ? `@${sender.username}` : 'Zeitnah Member');
         replyToObj = {
           messageId: replyMsg._id,
-          senderId: (replyMsg.senderId as any)?._id || replyMsg.senderId,
-          senderName: (replyMsg.senderId as any)?.name || 'User',
+          senderId: sender?._id || replyMsg.senderId,
+          senderName,
           bodySnippet: replyMsg.body ? replyMsg.body.slice(0, 80) : '',
         };
       }
@@ -768,6 +967,9 @@ export class MessagingService {
     // Notify other unmuted participants
     if (this.notificationsService) {
       const senderUser = await this.userModel.findById(userObjId).lean();
+      const senderDisplayName =
+        senderUser?.name?.trim() ||
+        (senderUser?.username ? `@${senderUser.username}` : 'Zeitnah Member');
       for (const m of conversation.members) {
         if (!m.userId.equals(userObjId)) {
           const isMuted = m.mutedUntil && new Date(m.mutedUntil) > new Date();
@@ -778,7 +980,7 @@ export class MessagingService {
                 actorId: userId,
                 type: 'MESSAGE',
                 category: 'network',
-                title: senderUser?.name || 'New message',
+                title: senderDisplayName,
                 message: dto.body.slice(0, 100),
                 targetUrl: `/messages?c=${conversationId}`,
                 actionUrl: `/messages?c=${conversationId}`,
@@ -850,7 +1052,9 @@ export class MessagingService {
       !conversation.requestRecipientId?.equals(userObjId) ||
       conversation.requestStatus !== RequestStatus.PENDING
     ) {
-      throw new ForbiddenException('No pending request for this user to accept.');
+      throw new ForbiddenException(
+        'No pending request for this user to accept.',
+      );
     }
 
     conversation.requestStatus = RequestStatus.ACCEPTED;
@@ -866,13 +1070,16 @@ export class MessagingService {
     if (this.notificationsService) {
       try {
         const accepter = await this.userModel.findById(userObjId).lean();
+        const accepterName =
+          accepter?.name?.trim() ||
+          (accepter?.username ? `@${accepter.username}` : 'Zeitnah Member');
         await this.notificationsService.createNotification({
           recipientId: String(conversation.createdBy),
           actorId: userId,
           type: 'MESSAGE_REQUEST_ACCEPTED',
           category: 'network',
           title: 'Message Request Accepted',
-          message: `${accepter?.name || 'User'} accepted your message request.`,
+          message: `${accepterName} accepted your message request.`,
           targetUrl: `/messages?c=${conversationId}`,
           actionUrl: `/messages?c=${conversationId}`,
           metadata: { conversationId },
@@ -882,7 +1089,33 @@ export class MessagingService {
       }
     }
 
-    return { success: true, conversation };
+    let populated: any = null;
+    try {
+      const q: any = this.conversationModel.findById(conversation._id);
+      if (q && typeof q.populate === 'function') {
+        const p1 = q.populate(
+          'participants',
+          'name username avatar primaryRole currentRole headline primaryDiscipline specializations privacySettings account_Status',
+        );
+        if (p1 && typeof p1.populate === 'function') {
+          populated = await p1
+            .populate('createdBy', 'name username avatar')
+            .lean();
+        } else if (p1 && typeof p1.lean === 'function') {
+          populated = await p1.lean();
+        }
+      }
+    } catch {
+      populated = null;
+    }
+
+    const formatted = this.formatConversation(
+      populated || conversation,
+      userId,
+      0,
+    );
+
+    return { success: true, conversation: formatted, ...formatted };
   }
 
   /**
@@ -901,7 +1134,9 @@ export class MessagingService {
       !conversation.requestRecipientId?.equals(userObjId) ||
       conversation.requestStatus !== RequestStatus.PENDING
     ) {
-      throw new ForbiddenException('No pending request for this user to decline.');
+      throw new ForbiddenException(
+        'No pending request for this user to decline.',
+      );
     }
 
     conversation.requestStatus = RequestStatus.DECLINED;
@@ -1004,7 +1239,9 @@ export class MessagingService {
 
     if (mode === 'everyone') {
       const isSender = message.senderId.equals(userObjId);
-      const member = conversation.members.find((m) => m.userId.equals(userObjId));
+      const member = conversation.members.find((m) =>
+        m.userId.equals(userObjId),
+      );
       const isAdmin = member?.role === 'ADMIN';
 
       if (!isSender && !isAdmin) {

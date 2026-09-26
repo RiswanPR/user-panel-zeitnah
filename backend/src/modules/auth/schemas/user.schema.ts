@@ -745,19 +745,73 @@ export class User {
       },
     },
     default: {
-      identity: { status: 'UNVERIFIED', verifiedAt: null, validUntil: null, badgeName: 'Identity Verified' },
-      professional: { status: 'UNVERIFIED', verifiedAt: null, validUntil: null, title: '', affiliation: '' },
-      educator: { status: 'UNVERIFIED', verifiedAt: null, validUntil: null, assignedByAdmin: false },
-      businessAffiliation: { status: 'UNVERIFIED', verifiedAt: null, validUntil: null, organizationId: '', organizationName: '' },
-      certification: { status: 'UNVERIFIED', verifiedAt: null, validUntil: null, certificationCount: 0 },
+      identity: {
+        status: 'UNVERIFIED',
+        verifiedAt: null,
+        validUntil: null,
+        badgeName: 'Identity Verified',
+      },
+      professional: {
+        status: 'UNVERIFIED',
+        verifiedAt: null,
+        validUntil: null,
+        title: '',
+        affiliation: '',
+      },
+      educator: {
+        status: 'UNVERIFIED',
+        verifiedAt: null,
+        validUntil: null,
+        assignedByAdmin: false,
+      },
+      businessAffiliation: {
+        status: 'UNVERIFIED',
+        verifiedAt: null,
+        validUntil: null,
+        organizationId: '',
+        organizationName: '',
+      },
+      certification: {
+        status: 'UNVERIFIED',
+        verifiedAt: null,
+        validUntil: null,
+        certificationCount: 0,
+      },
     },
   })
   verifications!: {
-    identity: { status: string; verifiedAt: Date | null; validUntil: Date | null; badgeName?: string };
-    professional: { status: string; verifiedAt: Date | null; validUntil: Date | null; title?: string; affiliation?: string };
-    educator: { status: string; verifiedAt: Date | null; validUntil: Date | null; assignedByAdmin?: boolean };
-    businessAffiliation: { status: string; verifiedAt: Date | null; validUntil: Date | null; organizationId?: string; organizationName?: string };
-    certification: { status: string; verifiedAt: Date | null; validUntil: Date | null; certificationCount?: number };
+    identity: {
+      status: string;
+      verifiedAt: Date | null;
+      validUntil: Date | null;
+      badgeName?: string;
+    };
+    professional: {
+      status: string;
+      verifiedAt: Date | null;
+      validUntil: Date | null;
+      title?: string;
+      affiliation?: string;
+    };
+    educator: {
+      status: string;
+      verifiedAt: Date | null;
+      validUntil: Date | null;
+      assignedByAdmin?: boolean;
+    };
+    businessAffiliation: {
+      status: string;
+      verifiedAt: Date | null;
+      validUntil: Date | null;
+      organizationId?: string;
+      organizationName?: string;
+    };
+    certification: {
+      status: string;
+      verifiedAt: Date | null;
+      validUntil: Date | null;
+      certificationCount?: number;
+    };
   };
 
   // PROFESSIONAL PORTFOLIO (Phase 8)

@@ -41,7 +41,8 @@ export class ResendEmailProvider implements EmailProvider {
         resend.emails.send(payload),
         new Promise((_, reject) => {
           timer = setTimeout(
-            () => reject(new Error(`Resend API timed out after ${timeoutMs}ms`)),
+            () =>
+              reject(new Error(`Resend API timed out after ${timeoutMs}ms`)),
             timeoutMs,
           );
           if (timer && typeof timer.unref === 'function') {

@@ -16,10 +16,7 @@ import {
   VerificationCategory,
   VerificationStatus,
 } from './profile/schemas/verification-request.schema';
-import {
-  Project,
-  ProjectVisibility,
-} from './projects/schemas/project.schema';
+import { Project, ProjectVisibility } from './projects/schemas/project.schema';
 import {
   Opportunity,
   OpportunityStatus,
@@ -165,11 +162,15 @@ describe('Phase 8 — Portfolio + Verification + Opportunity Inbox QA Suite', ()
     mockSignedUrlService = {
       generateSignedImageUrl: jest
         .fn()
-        .mockImplementation((k) => Promise.resolve(`https://cdn.zeitnah.com/${k}`)),
+        .mockImplementation((k) =>
+          Promise.resolve(`https://cdn.zeitnah.com/${k}`),
+        ),
     };
 
     mockNotificationsService = {
-      createNotification: jest.fn().mockResolvedValue({ _id: new Types.ObjectId() }),
+      createNotification: jest
+        .fn()
+        .mockResolvedValue({ _id: new Types.ObjectId() }),
     };
 
     mockModerationService = {
@@ -191,7 +192,10 @@ describe('Phase 8 — Portfolio + Verification + Opportunity Inbox QA Suite', ()
           useValue: mockVerificationRequestModel,
         },
         { provide: getModelToken(Project.name), useValue: mockProjectModel },
-        { provide: getModelToken(Opportunity.name), useValue: mockOpportunityModel },
+        {
+          provide: getModelToken(Opportunity.name),
+          useValue: mockOpportunityModel,
+        },
         {
           provide: getModelToken(Organization.name),
           useValue: mockOrganizationModel,
@@ -201,7 +205,10 @@ describe('Phase 8 — Portfolio + Verification + Opportunity Inbox QA Suite', ()
           useValue: mockMembershipModel,
         },
         { provide: getModelToken(SavedJob.name), useValue: {} },
-        { provide: getModelToken(JobApplication.name), useValue: mockJobAppModel },
+        {
+          provide: getModelToken(JobApplication.name),
+          useValue: mockJobAppModel,
+        },
         {
           provide: getModelToken(EmployerOpportunity.name),
           useValue: mockEmployerOpportunityModel,
@@ -333,7 +340,9 @@ describe('Phase 8 — Portfolio + Verification + Opportunity Inbox QA Suite', ()
       expect(portfolio.allProjects).toHaveLength(1);
       expect(portfolio.allProjects[0].title).toBe('Public Metro Project');
       expect(portfolio.allProjects[0].portfolioMedia).toHaveLength(1);
-      expect(portfolio.allProjects[0].portfolioMedia[0].name).toBe('Site Photo');
+      expect(portfolio.allProjects[0].portfolioMedia[0].name).toBe(
+        'Site Photo',
+      );
       expect(portfolio.resume).toBeNull(); // Private resume is hidden!
     });
 
@@ -439,7 +448,10 @@ describe('Phase 8 — Portfolio + Verification + Opportunity Inbox QA Suite', ()
       };
       mockUserModel.findById.mockResolvedValue(candidateUser);
       mockVerificationRequestModel.findOne.mockReturnValue(
-        makeQuery({ _id: new Types.ObjectId(), status: VerificationStatus.PENDING }),
+        makeQuery({
+          _id: new Types.ObjectId(),
+          status: VerificationStatus.PENDING,
+        }),
       );
 
       await expect(
@@ -665,7 +677,10 @@ describe('Phase 8 — Portfolio + Verification + Opportunity Inbox QA Suite', ()
       );
 
       mockMembershipModel.findOne.mockReturnValue(
-        makeQuery({ role: OrganizationRole.OWNER, status: MembershipStatus.ACTIVE }),
+        makeQuery({
+          role: OrganizationRole.OWNER,
+          status: MembershipStatus.ACTIVE,
+        }),
       );
 
       mockOpportunityModel.findById.mockReturnValue(
@@ -716,7 +731,10 @@ describe('Phase 8 — Portfolio + Verification + Opportunity Inbox QA Suite', ()
         }),
       );
       mockMembershipModel.findOne.mockReturnValue(
-        makeQuery({ role: OrganizationRole.OWNER, status: MembershipStatus.ACTIVE }),
+        makeQuery({
+          role: OrganizationRole.OWNER,
+          status: MembershipStatus.ACTIVE,
+        }),
       );
 
       // Closed job
@@ -752,7 +770,10 @@ describe('Phase 8 — Portfolio + Verification + Opportunity Inbox QA Suite', ()
       };
       mockEmployerOpportunityModel.findById.mockResolvedValue(mockOpp);
 
-      const res = await oppService.markOpportunityInterested(candidateId, oppId);
+      const res = await oppService.markOpportunityInterested(
+        candidateId,
+        oppId,
+      );
 
       expect(res.success).toBe(true);
       expect(mockOpp.status).toBe(OpportunityInboxStatus.INTERESTED);
@@ -824,14 +845,18 @@ describe('Phase 8 — Portfolio + Verification + Opportunity Inbox QA Suite', ()
         name: 'Arun Varma',
         username: 'arunv',
         verifications: {
-          professional: { status: 'VERIFIED', title: 'Chartered Highway Engineer' },
+          professional: {
+            status: 'VERIFIED',
+            title: 'Chartered Highway Engineer',
+          },
         },
         careerPreferences: { recruiterDiscovery: 'VISIBLE_ALL_RECRUITERS' },
         portfolio: { published: true },
       };
       mockUserModel.findById.mockImplementation((id: string) => {
         if (id === candidateId) return makeQuery(candidateUser);
-        if (id === recruiterId) return makeQuery({ _id: new Types.ObjectId(recruiterId) });
+        if (id === recruiterId)
+          return makeQuery({ _id: new Types.ObjectId(recruiterId) });
         return makeQuery(null);
       });
       mockProjectModel.find.mockReturnValue(makeQuery([]));
@@ -854,7 +879,10 @@ describe('Phase 8 — Portfolio + Verification + Opportunity Inbox QA Suite', ()
         }),
       );
       mockMembershipModel.findOne.mockReturnValue(
-        makeQuery({ role: OrganizationRole.RECRUITER, status: MembershipStatus.ACTIVE }),
+        makeQuery({
+          role: OrganizationRole.RECRUITER,
+          status: MembershipStatus.ACTIVE,
+        }),
       );
       mockOpportunityModel.findById.mockReturnValue(
         makeQuery({
@@ -886,7 +914,9 @@ describe('Phase 8 — Portfolio + Verification + Opportunity Inbox QA Suite', ()
         auditLog: [],
         save: jest.fn().mockResolvedValue(true),
       };
-      mockEmployerOpportunityModel.findById.mockReturnValue(makeQuery(mockSavedOpp));
+      mockEmployerOpportunityModel.findById.mockReturnValue(
+        makeQuery(mockSavedOpp),
+      );
 
       const openedOpp = await oppService.getCandidateOpportunityById(
         candidateId,
@@ -900,7 +930,9 @@ describe('Phase 8 — Portfolio + Verification + Opportunity Inbox QA Suite', ()
         sentOppId,
       );
       expect(interestRes.success).toBe(true);
-      expect(interestRes.opportunity.status).toBe(OpportunityInboxStatus.INTERESTED);
+      expect(interestRes.opportunity.status).toBe(
+        OpportunityInboxStatus.INTERESTED,
+      );
 
       // 5. Candidate explicitly applies to job (and ONLY now is application created)
       mockOpportunityModel.findById.mockReturnValue(

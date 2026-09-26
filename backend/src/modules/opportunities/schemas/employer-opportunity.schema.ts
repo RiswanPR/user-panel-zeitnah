@@ -101,6 +101,10 @@ EmployerOpportunitySchema.index(
   { businessId: 1, jobId: 1, candidateUserId: 1 },
   { unique: false },
 );
-EmployerOpportunitySchema.index({ candidateUserId: 1, status: 1, createdAt: -1 });
+EmployerOpportunitySchema.index({
+  candidateUserId: 1,
+  status: 1,
+  createdAt: -1,
+});
 EmployerOpportunitySchema.index({ businessId: 1, status: 1 });
 EmployerOpportunitySchema.index({ jobId: 1, status: 1 });

@@ -423,7 +423,13 @@ export class AnnouncementsService {
     userId: string,
     isAcknowledge = false,
   ) {
-    if (!announcementId || typeof announcementId !== 'string' || !announcementId.trim() || announcementId.trim() === 'undefined' || announcementId.trim() === 'null') {
+    if (
+      !announcementId ||
+      typeof announcementId !== 'string' ||
+      !announcementId.trim() ||
+      announcementId.trim() === 'undefined' ||
+      announcementId.trim() === 'null'
+    ) {
       throw new BadRequestException({
         statusCode: 400,
         code: 'INVALID_ANNOUNCEMENT_ID',
@@ -431,7 +437,13 @@ export class AnnouncementsService {
       });
     }
 
-    if (!userId || typeof userId !== 'string' || !userId.trim() || userId.trim() === 'undefined' || userId.trim() === 'null') {
+    if (
+      !userId ||
+      typeof userId !== 'string' ||
+      !userId.trim() ||
+      userId.trim() === 'undefined' ||
+      userId.trim() === 'null'
+    ) {
       throw new BadRequestException({
         statusCode: 400,
         code: 'INVALID_USER_ID',
@@ -441,7 +453,9 @@ export class AnnouncementsService {
 
     const trimmedAnnouncementId = announcementId.trim();
     const isAnnObjectId = Types.ObjectId.isValid(trimmedAnnouncementId);
-    const annObjId = isAnnObjectId ? new Types.ObjectId(trimmedAnnouncementId) : null;
+    const annObjId = isAnnObjectId
+      ? new Types.ObjectId(trimmedAnnouncementId)
+      : null;
     const isUserObjectId = Types.ObjectId.isValid(userId.trim());
     const userObjId = isUserObjectId ? new Types.ObjectId(userId.trim()) : null;
     const userIdVal = userObjId || userId.trim();
@@ -455,10 +469,15 @@ export class AnnouncementsService {
     let ann: any = null;
     if (this.masterAnnouncementModel) {
       try {
-        if (annObjId && typeof (this.masterAnnouncementModel as any).findById === 'function') {
+        if (
+          annObjId &&
+          typeof (this.masterAnnouncementModel as any).findById === 'function'
+        ) {
           const res = (this.masterAnnouncementModel as any).findById(annObjId);
           ann = typeof res?.lean === 'function' ? await res.lean() : await res;
-        } else if (typeof (this.masterAnnouncementModel as any).findOne === 'function') {
+        } else if (
+          typeof (this.masterAnnouncementModel as any).findOne === 'function'
+        ) {
           const res = (this.masterAnnouncementModel as any).findOne(idQuery);
           ann = typeof res?.lean === 'function' ? await res.lean() : await res;
         }
@@ -468,10 +487,15 @@ export class AnnouncementsService {
     }
     if (!ann && this.announcementModel) {
       try {
-        if (annObjId && typeof (this.announcementModel as any).findById === 'function') {
+        if (
+          annObjId &&
+          typeof (this.announcementModel as any).findById === 'function'
+        ) {
           const res = (this.announcementModel as any).findById(annObjId);
           ann = typeof res?.lean === 'function' ? await res.lean() : await res;
-        } else if (typeof (this.announcementModel as any).findOne === 'function') {
+        } else if (
+          typeof (this.announcementModel as any).findOne === 'function'
+        ) {
           const res = (this.announcementModel as any).findOne(idQuery);
           ann = typeof res?.lean === 'function' ? await res.lean() : await res;
         }
@@ -530,10 +554,9 @@ export class AnnouncementsService {
       typeof this.announcementModel.updateOne === 'function'
     ) {
       try {
-        const res = await this.announcementModel.updateOne(
-          idQuery,
-          { $addToSet: { dismissedBy: userIdVal } },
-        );
+        const res = await this.announcementModel.updateOne(idQuery, {
+          $addToSet: { dismissedBy: userIdVal },
+        });
         if (res && res.matchedCount) matchedCount += res.matchedCount;
       } catch (err) {
         if (this.connection && this.connection.db) {
@@ -558,10 +581,9 @@ export class AnnouncementsService {
       typeof this.masterAnnouncementModel.updateOne === 'function'
     ) {
       try {
-        const res = await this.masterAnnouncementModel.updateOne(
-          idQuery,
-          { $addToSet: { dismissedBy: userIdVal, readBy: userIdVal } },
-        );
+        const res = await this.masterAnnouncementModel.updateOne(idQuery, {
+          $addToSet: { dismissedBy: userIdVal, readBy: userIdVal },
+        });
         if (res && res.matchedCount) matchedCount += res.matchedCount;
       } catch (err) {
         if (this.connection && this.connection.db) {
@@ -570,7 +592,9 @@ export class AnnouncementsService {
               .collection('announcements')
               .updateOne(
                 { _id: announcementId } as any,
-                { $addToSet: { dismissedBy: userIdVal, readBy: userIdVal } } as any,
+                {
+                  $addToSet: { dismissedBy: userIdVal, readBy: userIdVal },
+                } as any,
               );
             if (res && res.matchedCount) matchedCount += res.matchedCount;
           } catch (e) {
@@ -592,10 +616,9 @@ export class AnnouncementsService {
         const pQuery: any = pObjId
           ? { $or: [{ _id: pObjId }, { _id: pId }] }
           : { _id: pId };
-        await this.announcementModel.updateOne(
-          pQuery,
-          { $addToSet: { dismissedBy: userIdVal } },
-        );
+        await this.announcementModel.updateOne(pQuery, {
+          $addToSet: { dismissedBy: userIdVal },
+        });
       } catch (e) {
         // ignore
       }

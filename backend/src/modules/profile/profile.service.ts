@@ -592,7 +592,7 @@ export class ProfileService {
         role: userObj.role,
         isVerified: Boolean(
           userObj.account_Status?.isVerified ||
-          userObj.verification?.status === 'VERIFIED',
+          userObj.verification?.status === VerificationStatus.VERIFIED,
         ),
         primaryRole: userObj.primaryRole || 'STUDENT',
         capabilities: userObj.capabilities || ['STUDENT'],
@@ -607,7 +607,7 @@ export class ProfileService {
           available: false,
         },
         verification: userObj.verification || {
-          status: 'UNVERIFIED',
+          status: VerificationStatus.UNVERIFIED,
           type: 'IDENTITY',
         },
         createdAt: userObj.createdAt,
@@ -1729,8 +1729,10 @@ export class ProfileService {
       .sort({ featured: -1, createdAt: -1 })
       .lean();
 
-    const { completeness, missingItems } =
-      this.calculatePortfolioCompleteness(user, allUserProjects);
+    const { completeness, missingItems } = this.calculatePortfolioCompleteness(
+      user,
+      allUserProjects,
+    );
 
     // Apply privacy filtering if not owner
     let visibleProjects: any[] = allUserProjects;
@@ -1796,21 +1798,35 @@ export class ProfileService {
 
     // Safe public verification badges (NO private evidence leaked!)
     const verificationsSummary = {
-      identity: user.verifications?.identity?.status === 'VERIFIED',
-      professional: user.verifications?.professional?.status === 'VERIFIED',
-      educator: user.verifications?.educator?.status === 'VERIFIED',
+      identity:
+        user.verifications?.identity?.status === VerificationStatus.VERIFIED,
+      professional:
+        user.verifications?.professional?.status ===
+        VerificationStatus.VERIFIED,
+      educator:
+        user.verifications?.educator?.status === VerificationStatus.VERIFIED,
       businessAffiliation:
-        user.verifications?.businessAffiliation?.status === 'VERIFIED',
-      certification: user.verifications?.certification?.status === 'VERIFIED',
+        user.verifications?.businessAffiliation?.status ===
+        VerificationStatus.VERIFIED,
+      certification:
+        user.verifications?.certification?.status ===
+        VerificationStatus.VERIFIED,
       details: {
-        identity: user.verifications?.identity || { status: 'UNVERIFIED' },
-        professional:
-          user.verifications?.professional || { status: 'UNVERIFIED' },
-        educator: user.verifications?.educator || { status: 'UNVERIFIED' },
-        businessAffiliation:
-          user.verifications?.businessAffiliation || { status: 'UNVERIFIED' },
-        certification:
-          user.verifications?.certification || { status: 'UNVERIFIED' },
+        identity: user.verifications?.identity || {
+          status: VerificationStatus.UNVERIFIED,
+        },
+        professional: user.verifications?.professional || {
+          status: VerificationStatus.UNVERIFIED,
+        },
+        educator: user.verifications?.educator || {
+          status: VerificationStatus.UNVERIFIED,
+        },
+        businessAffiliation: user.verifications?.businessAffiliation || {
+          status: VerificationStatus.UNVERIFIED,
+        },
+        certification: user.verifications?.certification || {
+          status: VerificationStatus.UNVERIFIED,
+        },
       },
     };
 
@@ -1969,9 +1985,7 @@ export class ProfileService {
       user.portfolio.resume.visibility = dto.resumeVisibility;
     }
 
-    const projects = await this.projectModel
-      .find({ ownerId: user._id })
-      .lean();
+    const projects = await this.projectModel.find({ ownerId: user._id }).lean();
     const { completeness } = this.calculatePortfolioCompleteness(
       user,
       projects,
@@ -2054,9 +2068,7 @@ export class ProfileService {
       visibility: user.portfolio.resume?.visibility || 'PRIVATE',
     };
 
-    const projects = await this.projectModel
-      .find({ ownerId: user._id })
-      .lean();
+    const projects = await this.projectModel.find({ ownerId: user._id }).lean();
     const { completeness } = this.calculatePortfolioCompleteness(
       user,
       projects,
@@ -2089,9 +2101,7 @@ export class ProfileService {
 
     const key = user.portfolio?.resume?.fileKey;
     if (key && key.startsWith('resumes/')) {
-      await Promise.resolve(this.uploadService.deleteFile(key)).catch(
-        () => {},
-      );
+      await Promise.resolve(this.uploadService.deleteFile(key)).catch(() => {});
     }
 
     if (user.portfolio?.resume) {
@@ -2105,9 +2115,7 @@ export class ProfileService {
       };
     }
 
-    const projects = await this.projectModel
-      .find({ ownerId: user._id })
-      .lean();
+    const projects = await this.projectModel.find({ ownerId: user._id }).lean();
     const { completeness } = this.calculatePortfolioCompleteness(
       user,
       projects,
@@ -2234,9 +2242,7 @@ export class ProfileService {
     }
 
     // Refresh user's portfolio completeness
-    const projects = await this.projectModel
-      .find({ ownerId: user._id })
-      .lean();
+    const projects = await this.projectModel.find({ ownerId: user._id }).lean();
     const { completeness } = this.calculatePortfolioCompleteness(
       user,
       projects,
@@ -2271,9 +2277,9 @@ export class ProfileService {
 
       const item = (project.portfolioMedia || []).find((m) => m.id === mediaId);
       if (item && item.fileKey && item.fileKey.startsWith('projects/media/')) {
-        await Promise.resolve(this.uploadService.deleteFile(item.fileKey)).catch(
-          () => {},
-        );
+        await Promise.resolve(
+          this.uploadService.deleteFile(item.fileKey),
+        ).catch(() => {});
       }
 
       project.portfolioMedia = (project.portfolioMedia || []).filter(
@@ -2305,7 +2311,8 @@ export class ProfileService {
     const now = new Date();
     const categories: Record<string, any> = {
       identity: {
-        status: user.verifications?.identity?.status || 'UNVERIFIED',
+        status:
+          user.verifications?.identity?.status || VerificationStatus.UNVERIFIED,
         verifiedAt: user.verifications?.identity?.verifiedAt || null,
         validUntil: user.verifications?.identity?.validUntil || null,
         badgeName: 'Identity Verified',
@@ -2314,7 +2321,9 @@ export class ProfileService {
           new Date(user.verifications.identity.validUntil) < now,
       },
       professional: {
-        status: user.verifications?.professional?.status || 'UNVERIFIED',
+        status:
+          user.verifications?.professional?.status ||
+          VerificationStatus.UNVERIFIED,
         verifiedAt: user.verifications?.professional?.verifiedAt || null,
         validUntil: user.verifications?.professional?.validUntil || null,
         badgeName: 'Professional Verified',
@@ -2325,20 +2334,25 @@ export class ProfileService {
           new Date(user.verifications.professional.validUntil) < now,
       },
       educator: {
-        status: user.verifications?.educator?.status || 'UNVERIFIED',
+        status:
+          user.verifications?.educator?.status || VerificationStatus.UNVERIFIED,
         verifiedAt: user.verifications?.educator?.verifiedAt || null,
         badgeName: 'Educator Verified',
         note: 'Administrator controlled',
       },
       businessAffiliation: {
-        status: user.verifications?.businessAffiliation?.status || 'UNVERIFIED',
+        status:
+          user.verifications?.businessAffiliation?.status ||
+          VerificationStatus.UNVERIFIED,
         verifiedAt: user.verifications?.businessAffiliation?.verifiedAt || null,
         badgeName: 'Business Affiliation Verified',
         organizationName:
           user.verifications?.businessAffiliation?.organizationName || '',
       },
       certification: {
-        status: user.verifications?.certification?.status || 'UNVERIFIED',
+        status:
+          user.verifications?.certification?.status ||
+          VerificationStatus.UNVERIFIED,
         verifiedAt: user.verifications?.certification?.verifiedAt || null,
         badgeName: 'Certification Verified',
       },
@@ -2347,8 +2361,10 @@ export class ProfileService {
     return {
       categories,
       requests,
-      activeRequests: requests.filter((r) => r.status === 'PENDING'),
-      history: requests.filter((r) => r.status !== 'PENDING'),
+      activeRequests: requests.filter(
+        (r) => r.status === VerificationStatus.PENDING,
+      ),
+      history: requests.filter((r) => r.status !== VerificationStatus.PENDING),
     };
   }
 

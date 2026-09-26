@@ -1249,9 +1249,7 @@ export class OpportunitiesService {
     dto: SendOpportunityDto,
   ) {
     if (!this.employerOpportunityModel || !this.userModel) {
-      throw new BadRequestException(
-        'Employer opportunity service unavailable',
-      );
+      throw new BadRequestException('Employer opportunity service unavailable');
     }
 
     // 1. Verify Recruiter
@@ -1489,8 +1487,7 @@ export class OpportunitiesService {
         job &&
         (job.status === OpportunityStatus.CLOSED ||
           job.status === OpportunityStatus.ARCHIVED ||
-          (job.applicationDeadline &&
-            new Date(job.applicationDeadline) < now));
+          (job.applicationDeadline && new Date(job.applicationDeadline) < now));
 
       if (
         isJobClosed &&
@@ -1564,10 +1561,8 @@ export class OpportunitiesService {
       throw new NotFoundException('Opportunity not found');
     }
 
-    const isCandidate =
-      String(opp.candidateUserId) === String(candidateUserId);
-    const isRecruiter =
-      String(opp.recruiterUserId) === String(candidateUserId);
+    const isCandidate = String(opp.candidateUserId) === String(candidateUserId);
+    const isRecruiter = String(opp.recruiterUserId) === String(candidateUserId);
 
     if (!isCandidate && !isRecruiter) {
       throw new ForbiddenException(
@@ -1683,8 +1678,7 @@ export class OpportunitiesService {
     }
 
     opp.status = OpportunityInboxStatus.DECLINED;
-    opp.declineReason =
-      dto.reason || OpportunityDeclineReason.NOT_INTERESTED;
+    opp.declineReason = dto.reason || OpportunityDeclineReason.NOT_INTERESTED;
     opp.declineNote = dto.note?.trim() || '';
     opp.respondedAt = new Date();
     opp.auditLog.push({
@@ -1724,10 +1718,7 @@ export class OpportunitiesService {
   /**
    * Candidate archives opportunity from their inbox.
    */
-  async archiveOpportunity(
-    candidateUserId: string,
-    opportunityId: string,
-  ) {
+  async archiveOpportunity(candidateUserId: string, opportunityId: string) {
     if (!this.employerOpportunityModel) {
       throw new NotFoundException('Opportunity not found');
     }

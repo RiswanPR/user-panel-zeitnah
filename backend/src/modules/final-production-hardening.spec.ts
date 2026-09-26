@@ -165,7 +165,9 @@ describe('Final Production Hardening Verification Suite', () => {
       expect(content).toContain("'REAL_APPLICATION_ERROR'");
 
       // Verify /auth/me 401 is classified as EXPECTED_AUTH and not a failure
-      expect(content).toMatch(/status === 401 && cleanUrl\.includes\('\/auth\/me'\)/);
+      expect(content).toMatch(
+        /status === 401 && cleanUrl\.includes\('\/auth\/me'\)/,
+      );
 
       // Verify getSignificantErrorCount filters out recoverable and transient errors
       expect(content).toContain('getSignificantErrorCount');
@@ -252,7 +254,10 @@ describe('Final Production Hardening Verification Suite', () => {
           dismissedBy: [],
         }),
       });
-      mockPlatformModel.updateOne.mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
+      mockPlatformModel.updateOne.mockResolvedValue({
+        matchedCount: 1,
+        modifiedCount: 1,
+      });
 
       const result = await service.dismissAnnouncement(uuid, mockUserId);
       expect(result.success).toBe(true);
@@ -273,7 +278,10 @@ describe('Final Production Hardening Verification Suite', () => {
           dismissedBy: [],
         }),
       });
-      mockPlatformModel.updateOne.mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
+      mockPlatformModel.updateOne.mockResolvedValue({
+        matchedCount: 1,
+        modifiedCount: 1,
+      });
 
       const result = await service.dismissAnnouncement(objId, mockUserId);
       expect(result.success).toBe(true);
@@ -327,9 +335,9 @@ describe('Final Production Hardening Verification Suite', () => {
       await expect(service.dismissAnnouncement('', mockUserId)).rejects.toThrow(
         BadRequestException,
       );
-      await expect(service.dismissAnnouncement('   ', mockUserId)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.dismissAnnouncement('   ', mockUserId),
+      ).rejects.toThrow(BadRequestException);
       await expect(
         service.dismissAnnouncement('undefined', mockUserId),
       ).rejects.toThrow(BadRequestException);
@@ -337,8 +345,12 @@ describe('Final Production Hardening Verification Suite', () => {
 
     it('✓ Case F: Missing announcement throws structured 404 ANNOUNCEMENT_NOT_FOUND', async () => {
       const nonExistentId = '550e8400-e29b-41d4-a716-446655449999';
-      mockPlatformModel.findOne.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
-      mockMasterModel.findOne.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
+      mockPlatformModel.findOne.mockReturnValue({
+        lean: jest.fn().mockResolvedValue(null),
+      });
+      mockMasterModel.findOne.mockReturnValue({
+        lean: jest.fn().mockResolvedValue(null),
+      });
       mockPlatformModel.updateOne.mockResolvedValue({ matchedCount: 0 });
       mockMasterModel.updateOne.mockResolvedValue({ matchedCount: 0 });
 
@@ -364,8 +376,15 @@ describe('Final Production Hardening Verification Suite', () => {
       ).rejects.toThrow(BadRequestException);
 
       // Acknowledgment (isAcknowledge = true) should succeed
-      mockPlatformModel.updateOne.mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
-      const ackResult = await service.dismissAnnouncement(uuid, mockUserId, true);
+      mockPlatformModel.updateOne.mockResolvedValue({
+        matchedCount: 1,
+        modifiedCount: 1,
+      });
+      const ackResult = await service.dismissAnnouncement(
+        uuid,
+        mockUserId,
+        true,
+      );
       expect(ackResult.success).toBe(true);
     });
   });
@@ -382,7 +401,9 @@ describe('Final Production Hardening Verification Suite', () => {
       const content = fs.readFileSync(apiTsPath, 'utf8');
 
       // Verify single-flight refresh lock variable
-      expect(content).toContain('let refreshPromise: Promise<string | null> | null = null;');
+      expect(content).toContain(
+        'let refreshPromise: Promise<string | null> | null = null;',
+      );
       expect(content).toContain('if (refreshPromise) {');
       expect(content).toContain('return refreshPromise;');
 
@@ -418,7 +439,9 @@ describe('Final Production Hardening Verification Suite', () => {
 
       // Interceptor-aware API used for background visibility change and unmount
       expect(content).toContain('void persistProgress({ force: true })');
-      expect(content).toMatch(/document\.visibilityState\s*===\s*["']hidden["']/);
+      expect(content).toMatch(
+        /document\.visibilityState\s*===\s*["']hidden["']/,
+      );
 
       // saveInFlightRef lock preventing overlapping duplicate progress requests
       expect(content).toContain('saveInFlightRef');

@@ -98,19 +98,13 @@ export class OpportunitiesController {
 
   @Get('inbox/:id')
   @UseGuards(JwtAuthGuard)
-  async getCandidateOpportunityById(
-    @Req() req: any,
-    @Param('id') id: string,
-  ) {
+  async getCandidateOpportunityById(@Req() req: any, @Param('id') id: string) {
     return this.oppService.getCandidateOpportunityById(req.user.userId, id);
   }
 
   @Post('inbox/:id/interested')
   @UseGuards(JwtAuthGuard)
-  async markOpportunityInterested(
-    @Req() req: any,
-    @Param('id') id: string,
-  ) {
+  async markOpportunityInterested(@Req() req: any, @Param('id') id: string) {
     return this.oppService.markOpportunityInterested(req.user.userId, id);
   }
 
@@ -126,10 +120,7 @@ export class OpportunitiesController {
 
   @Post('inbox/:id/archive')
   @UseGuards(JwtAuthGuard)
-  async archiveOpportunity(
-    @Req() req: any,
-    @Param('id') id: string,
-  ) {
+  async archiveOpportunity(@Req() req: any, @Param('id') id: string) {
     return this.oppService.archiveOpportunity(req.user.userId, id);
   }
 
@@ -165,10 +156,7 @@ export class OpportunitiesController {
 
   @Post(':id/archive')
   @UseGuards(JwtAuthGuard)
-  async archiveOpportunityAlias(
-    @Req() req: any,
-    @Param('id') id: string,
-  ) {
+  async archiveOpportunityAlias(@Req() req: any, @Param('id') id: string) {
     return this.oppService.archiveOpportunity(req.user.userId, id);
   }
 

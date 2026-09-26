@@ -38,7 +38,9 @@ export class MessagesGateway
         client.handshake.query?.token;
 
       if (!token || typeof token !== 'string') {
-        this.logger.warn(`Rejected unauthenticated messages socket: ${client.id}`);
+        this.logger.warn(
+          `Rejected unauthenticated messages socket: ${client.id}`,
+        );
         client.disconnect();
         return;
       }
@@ -47,7 +49,9 @@ export class MessagesGateway
       const userId = payload.userId || payload._id || payload.id || payload.sub;
 
       if (!userId) {
-        this.logger.warn(`Invalid token payload for messages socket: ${client.id}`);
+        this.logger.warn(
+          `Invalid token payload for messages socket: ${client.id}`,
+        );
         client.disconnect();
         return;
       }
@@ -63,7 +67,9 @@ export class MessagesGateway
 
       // Join individual user room for targeted updates and unread count badges
       await client.join(`user_${sUserId}`);
-      this.logger.log(`User connected to messages socket: ${sUserId} (${client.id})`);
+      this.logger.log(
+        `User connected to messages socket: ${sUserId} (${client.id})`,
+      );
 
       // Broadcast online status to any listeners
       this.server.emit('presence_change', {
@@ -91,13 +97,17 @@ export class MessagesGateway
           timestamp: new Date(),
         });
       }
-      this.logger.log(`User disconnected from messages socket: ${userId} (${client.id})`);
+      this.logger.log(
+        `User disconnected from messages socket: ${userId} (${client.id})`,
+      );
     }
   }
 
   isUserOnline(userId: string): boolean {
     const sId = String(userId);
-    return Boolean(this.userSockets.get(sId)?.size && this.userSockets.get(sId)!.size > 0);
+    return Boolean(
+      this.userSockets.get(sId)?.size && this.userSockets.get(sId)!.size > 0,
+    );
   }
 
   getOnlineUserIds(): string[] {
@@ -144,7 +154,11 @@ export class MessagesGateway
 
   // ── Helper methods called from MessagingService ──
 
-  notifyNewMessage(conversationId: string, message: any, participantIds: string[]) {
+  notifyNewMessage(
+    conversationId: string,
+    message: any,
+    participantIds: string[],
+  ) {
     // 1. Broadcast to the active conversation room
     this.server.to(`conversation_${conversationId}`).emit('new_message', {
       conversationId,
@@ -167,7 +181,11 @@ export class MessagesGateway
     });
   }
 
-  notifyMessageDeleted(conversationId: string, messageId: string, isDeletedForEveryone: boolean) {
+  notifyMessageDeleted(
+    conversationId: string,
+    messageId: string,
+    isDeletedForEveryone: boolean,
+  ) {
     this.server.to(`conversation_${conversationId}`).emit('message_deleted', {
       conversationId,
       messageId,

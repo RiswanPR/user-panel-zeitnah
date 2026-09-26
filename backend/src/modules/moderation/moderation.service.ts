@@ -34,7 +34,10 @@ export class ModerationService {
    * Block a user
    */
   async blockUser(blockerId: string, blockedUserId: string) {
-    if (!Types.ObjectId.isValid(blockerId) || !Types.ObjectId.isValid(blockedUserId)) {
+    if (
+      !Types.ObjectId.isValid(blockerId) ||
+      !Types.ObjectId.isValid(blockedUserId)
+    ) {
       throw new BadRequestException({
         statusCode: 400,
         code: 'INVALID_ID_FORMAT',
@@ -71,7 +74,10 @@ export class ModerationService {
    * Unblock a user
    */
   async unblockUser(blockerId: string, blockedUserId: string) {
-    if (!Types.ObjectId.isValid(blockerId) || !Types.ObjectId.isValid(blockedUserId)) {
+    if (
+      !Types.ObjectId.isValid(blockerId) ||
+      !Types.ObjectId.isValid(blockedUserId)
+    ) {
       throw new BadRequestException({
         statusCode: 400,
         code: 'INVALID_ID_FORMAT',
@@ -155,7 +161,11 @@ export class ModerationService {
       });
     }
 
-    if (!dto.targetId || typeof dto.targetId !== 'string' || !dto.targetId.trim()) {
+    if (
+      !dto.targetId ||
+      typeof dto.targetId !== 'string' ||
+      !dto.targetId.trim()
+    ) {
       throw new BadRequestException({
         statusCode: 400,
         code: 'INVALID_TARGET_ID',
@@ -163,7 +173,10 @@ export class ModerationService {
       });
     }
 
-    if (dto.targetType === ReportTargetType.USER && !Types.ObjectId.isValid(dto.targetId.trim())) {
+    if (
+      dto.targetType === ReportTargetType.USER &&
+      !Types.ObjectId.isValid(dto.targetId.trim())
+    ) {
       throw new BadRequestException({
         statusCode: 400,
         code: 'INVALID_TARGET_ID',

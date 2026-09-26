@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { MessageSquare, Users, Sparkles, Inbox } from 'lucide-react';
+import {
+  MessageSquare,
+  Users,
+  Sparkles,
+  Inbox,
+  ShieldCheck,
+  Zap,
+} from 'lucide-react';
 import ConversationList from '../../components/messages/ConversationList';
 import ChatArea from '../../components/messages/ChatArea';
 import MessageRequestsView from '../../components/messages/MessageRequestsView';
@@ -19,7 +25,9 @@ export default function MessagesPage() {
   const queryTab = searchParams.get('tab') || 'chats';
 
   const [activeTab, setActiveTab] = useState(queryTab);
-  const [selectedConversationId, setSelectedConversationId] = useState(routeConvId || queryConvId || null);
+  const [selectedConversationId, setSelectedConversationId] = useState(
+    routeConvId || queryConvId || null,
+  );
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [showNewGroupModal, setShowNewGroupModal] = useState(false);
 
@@ -38,9 +46,10 @@ export default function MessagesPage() {
       messagingService
         .startDirectConversation({ recipientId: targetUserId })
         .then((res) => {
-          if (res?.conversation?._id) {
-            setSelectedConversationId(res.conversation._id);
-            navigate(`/messages?c=${res.conversation._id}`, { replace: true });
+          const convId = res?.conversation?._id || res?.conversation?.id || res?._id || res?.id;
+          if (convId) {
+            setSelectedConversationId(convId);
+            navigate(`/messages?c=${convId}`, { replace: true });
           }
         })
         .catch((err) => {
@@ -50,8 +59,11 @@ export default function MessagesPage() {
   }, [targetUserId, navigate]);
 
   const handleSelectConversation = (conv) => {
-    setSelectedConversationId(conv._id);
-    navigate(`/messages?c=${conv._id}`, { replace: true });
+    const convId = conv?._id || conv?.id;
+    if (convId) {
+      setSelectedConversationId(convId);
+      navigate(`/messages?c=${convId}`, { replace: true });
+    }
   };
 
   const handleTabChange = (newTab) => {
@@ -61,11 +73,11 @@ export default function MessagesPage() {
 
   return (
     <div className="h-[calc(100vh-4.25rem)] -m-4 sm:-m-6 lg:-m-8 flex overflow-hidden bg-[#0A0E17]">
-      {/* ── Left Sidebar: Conversations / Tabs ── */}
+      {/* ── Left Center-Left Pane: Conversations / Tabs ── */}
       <div
         className={`${
           selectedConversationId ? 'hidden md:flex' : 'flex'
-        } w-full md:w-80 lg:w-96 flex-col shrink-0 h-full`}
+        } w-full md:w-80 lg:w-[380px] flex-col shrink-0 h-full`}
       >
         <ConversationList
           activeTab={activeTab}
@@ -77,11 +89,11 @@ export default function MessagesPage() {
         />
       </div>
 
-      {/* ── Right Pane: Active Chat / Requests View / Placeholder ── */}
+      {/* ── Right Pane: Active Chat / Requests View / Intentional Empty State ── */}
       <div
         className={`${
           !selectedConversationId ? 'hidden md:flex' : 'flex'
-        } flex-1 flex-col h-full overflow-hidden`}
+        } flex-1 flex-col h-full overflow-hidden bg-[#0A0E17]`}
       >
         {activeTab === 'requests' && !selectedConversationId ? (
           <MessageRequestsView onSelectConversation={handleSelectConversation} />
@@ -94,32 +106,66 @@ export default function MessagesPage() {
             }}
           />
         ) : (
-          /* Empty placeholder for desktop */
-          <div className="flex-1 hidden md:flex flex-col items-center justify-center text-center p-8 bg-[#0A0E17]">
-            <div className="w-16 h-16 rounded-3xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-brand-mint mb-4 shadow-xl">
-              <MessageSquare className="w-8 h-8" />
-            </div>
-            <h3 className="text-base font-heading font-bold text-white mb-1.5">
-              Select a conversation
-            </h3>
-            <p className="text-xs text-text-muted max-w-sm leading-relaxed mb-6">
-              Connect with engineers, educators, mentors, recruiters, and founders across the infrastructure ecosystem.
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setShowNewChatModal(true)}
-                className="px-4 py-2 rounded-xl bg-brand-mint text-bg-base text-xs font-bold hover:bg-brand-mint/90 transition-all cursor-pointer shadow-md"
-              >
-                Start Direct Message
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowNewGroupModal(true)}
-                className="px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-text-secondary hover:text-white text-xs font-semibold transition-all cursor-pointer"
-              >
-                Create Group
-              </button>
+          /* High-end Intentional Empty State */
+          <div className="flex-1 hidden md:flex flex-col items-center justify-center text-center p-8 lg:p-12 relative overflow-hidden">
+            {/* Subtle background ambient glow */}
+            <div className="absolute w-96 h-96 rounded-full bg-brand-mint/5 blur-3xl pointer-events-none -top-12 -right-12" />
+            <div className="absolute w-80 h-80 rounded-full bg-brand-gold/5 blur-3xl pointer-events-none -bottom-12 -left-12" />
+
+            <div className="relative z-10 max-w-md mx-auto space-y-6">
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-brand-mint/20 via-brand-mint/10 to-transparent border border-brand-mint/30 flex items-center justify-center text-brand-mint mx-auto shadow-2xl">
+                <MessageSquare className="w-10 h-10" />
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-xl font-heading font-black text-white tracking-tight">
+                  Your professional conversations
+                </h3>
+                <p className="text-xs text-text-muted leading-relaxed max-w-sm mx-auto">
+                  Connect with engineers, educators, mentors, recruiters, and founders across the infrastructure ecosystem.
+                </p>
+              </div>
+
+              {/* Ecosystem Highlights */}
+              <div className="grid grid-cols-2 gap-2 text-left pt-2">
+                <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-white">
+                    <ShieldCheck className="w-3.5 h-3.5 text-brand-mint" />
+                    <span>Verified Network</span>
+                  </div>
+                  <p className="text-[11px] text-text-muted">
+                    End-to-end messaging with verified infrastructure talent.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-white">
+                    <Zap className="w-3.5 h-3.5 text-brand-gold" />
+                    <span>Real-time Collab</span>
+                  </div>
+                  <p className="text-[11px] text-text-muted">
+                    Instant delivery, rich replies, reactions, and group spaces.
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowNewChatModal(true)}
+                  className="px-5 py-2.5 rounded-xl bg-brand-mint text-bg-base text-xs font-bold hover:bg-brand-mint/90 transition-all cursor-pointer shadow-lg shadow-brand-mint/10 focus-ring"
+                >
+                  Start Direct Message
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowNewGroupModal(true)}
+                  className="px-4 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] text-text-secondary hover:text-white text-xs font-semibold border border-white/[0.08] transition-all cursor-pointer focus-ring"
+                >
+                  Create Group
+                </button>
+              </div>
             </div>
           </div>
         )}

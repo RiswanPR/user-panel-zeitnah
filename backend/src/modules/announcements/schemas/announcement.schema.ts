@@ -5,7 +5,10 @@ export type AnnouncementDocument = Announcement & Document;
 
 @Schema({ timestamps: true, collection: 'announcements' })
 export class Announcement {
-  @Prop({ type: MongooseSchema.Types.Mixed, default: () => new Types.ObjectId() })
+  @Prop({
+    type: MongooseSchema.Types.Mixed,
+    default: () => new Types.ObjectId(),
+  })
   _id?: any;
 
   @Prop({ type: String, required: true, trim: true })
@@ -29,7 +32,11 @@ export class Announcement {
   @Prop({ type: Boolean, default: false, index: true })
   isPublished: boolean;
 
-  @Prop({ type: MongooseSchema.Types.Mixed, ref: 'PlatformAnnouncement', default: null })
+  @Prop({
+    type: MongooseSchema.Types.Mixed,
+    ref: 'PlatformAnnouncement',
+    default: null,
+  })
   platformAnnouncementId?: any;
 
   @Prop({ type: Types.ObjectId, default: null })

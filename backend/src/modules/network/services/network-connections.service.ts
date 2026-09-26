@@ -86,10 +86,7 @@ export class NetworkConnectionsService {
     if (query.role && query.role !== 'all') {
       const upperRole = query.role.trim().toUpperCase();
       const lowerRole = query.role.trim().toLowerCase();
-      filter.$or = [
-        { primaryRole: upperRole },
-        { role: lowerRole },
-      ];
+      filter.$or = [{ primaryRole: upperRole }, { role: lowerRole }];
     }
 
     // Discipline filter
@@ -151,10 +148,15 @@ export class NetworkConnectionsService {
       } else if (expStr.includes('0–1') || expStr.includes('0-1')) {
         filter.yearsOfExperience = { $gte: 0, $lte: 1 };
       }
-    } else if (query.minExperience !== undefined || query.maxExperience !== undefined) {
+    } else if (
+      query.minExperience !== undefined ||
+      query.maxExperience !== undefined
+    ) {
       filter.yearsOfExperience = {};
-      if (query.minExperience !== undefined) filter.yearsOfExperience.$gte = Number(query.minExperience);
-      if (query.maxExperience !== undefined) filter.yearsOfExperience.$lte = Number(query.maxExperience);
+      if (query.minExperience !== undefined)
+        filter.yearsOfExperience.$gte = Number(query.minExperience);
+      if (query.maxExperience !== undefined)
+        filter.yearsOfExperience.$lte = Number(query.maxExperience);
     }
 
     // Location filter
@@ -310,7 +312,9 @@ export class NetworkConnectionsService {
         .lean();
 
       mutualRows.forEach((row) => {
-        const pageUserId = otherUserIds.some((uid) => uid.equals(row.requesterId))
+        const pageUserId = otherUserIds.some((uid) =>
+          uid.equals(row.requesterId),
+        )
           ? String(row.requesterId)
           : String(row.recipientId);
         mutualConnectionsCountMap.set(
@@ -355,7 +359,11 @@ export class NetworkConnectionsService {
             ? u.course[0]?.courseName || ''
             : '';
 
-        const primaryRole = (u.primaryRole || u.role || 'STUDENT').toUpperCase();
+        const primaryRole = (
+          u.primaryRole ||
+          u.role ||
+          'STUDENT'
+        ).toUpperCase();
         const primaryDiscipline = u.primaryDiscipline || '';
         const specializations = Array.isArray(u.specializations)
           ? u.specializations
@@ -366,7 +374,9 @@ export class NetworkConnectionsService {
         const softwareSkills = Array.isArray(u.structuredSkills?.softwareSkills)
           ? u.structuredSkills.softwareSkills
           : [];
-        const technicalSkills = Array.isArray(u.structuredSkills?.technicalSkills)
+        const technicalSkills = Array.isArray(
+          u.structuredSkills?.technicalSkills,
+        )
           ? u.structuredSkills.technicalSkills
           : [];
         const combinedSkills = Array.from(
@@ -374,9 +384,7 @@ export class NetworkConnectionsService {
         );
         const yearsOfExperience = Number(u.yearsOfExperience) || 0;
         const location =
-          u.location ||
-          (u.preferredLocations && u.preferredLocations[0]) ||
-          '';
+          u.location || (u.preferredLocations && u.preferredLocations[0]) || '';
         const currentCompany =
           Array.isArray(u.experience) && u.experience.length > 0
             ? u.experience[0]?.organization || ''
@@ -458,8 +466,8 @@ export class NetworkConnectionsService {
           (primaryDiscipline
             ? `${primaryRole} · ${primaryDiscipline}`
             : primaryCourse
-            ? `Student · ${primaryCourse}`
-            : 'Infrastructure Professional');
+              ? `Student · ${primaryCourse}`
+              : 'Infrastructure Professional');
 
         return {
           _id: u._id,

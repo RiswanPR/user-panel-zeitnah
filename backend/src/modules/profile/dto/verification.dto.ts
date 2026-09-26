@@ -1,9 +1,4 @@
-import {
-  IsEnum,
-  IsOptional,
-  IsString,
-  IsArray,
-} from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsArray } from 'class-validator';
 import {
   VerificationCategory,
   VerificationStatus,

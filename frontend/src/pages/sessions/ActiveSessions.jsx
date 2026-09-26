@@ -1,8 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  ArrowLeft,
   Monitor,
   RefreshCw,
   Shield,
@@ -64,8 +63,21 @@ export default function ActiveSessions() {
   }, []);
 
   useEffect(() => {
-    void loadSessions();
-  }, [loadSessions]);
+    let active = true;
+    (async () => {
+      try {
+        setLoading(true);
+        setError("");
+        const res = await api.get("/auth/sessions");
+        if (active) setSessions(res.data.sessions || []);
+      } catch (err) {
+        if (active) setError(err.response?.data?.message || "Unable to load active sessions.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; };
+  }, []);
 
   const confirmRevoke = async () => {
     if (!sessionToRevoke) return;

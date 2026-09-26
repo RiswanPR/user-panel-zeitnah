@@ -22,7 +22,10 @@ describe('Production Remediation P0–P3 Verification Suite', () => {
   // ─────────────────────────────────────────────────────────────
   describe('P0: Universal Error Popup & AdminBusinessReviewPage Import', () => {
     it('✓ App.jsx must import AdminBusinessReviewPage using React.lazy', () => {
-      const appJsxPath = path.resolve(__dirname, '../../../frontend/src/App.jsx');
+      const appJsxPath = path.resolve(
+        __dirname,
+        '../../../frontend/src/App.jsx',
+      );
       expect(fs.existsSync(appJsxPath)).toBe(true);
       const appJsxContent = fs.readFileSync(appJsxPath, 'utf8');
 
@@ -101,7 +104,8 @@ describe('Production Remediation P0–P3 Verification Suite', () => {
         ],
       }).compile();
 
-      announcementsService = module.get<AnnouncementsService>(AnnouncementsService);
+      announcementsService =
+        module.get<AnnouncementsService>(AnnouncementsService);
     });
 
     it('✓ UUID-string announcement can be dismissed safely without CastError', async () => {
@@ -183,7 +187,10 @@ describe('Production Remediation P0–P3 Verification Suite', () => {
         }),
       });
 
-      const result = await announcementsService.dismissAnnouncement(uuidId, userId);
+      const result = await announcementsService.dismissAnnouncement(
+        uuidId,
+        userId,
+      );
 
       expect(result.success).toBe(true);
       expect(result.alreadyDismissed).toBe(true);
@@ -251,8 +258,12 @@ describe('Production Remediation P0–P3 Verification Suite', () => {
   describe('P2: Error Capture Policy & Telemetry Severity', () => {
     it('✓ Routine token expiry is logged as DEBUG TOKEN_EXPIRED, not WARN AUTH_FAILURE', () => {
       const filter = new GlobalExceptionFilter();
-      const loggerSpyDebug = jest.spyOn((filter as any).logger, 'debug').mockImplementation();
-      const loggerSpyWarn = jest.spyOn((filter as any).logger, 'warn').mockImplementation();
+      const loggerSpyDebug = jest
+        .spyOn((filter as any).logger, 'debug')
+        .mockImplementation();
+      const loggerSpyWarn = jest
+        .spyOn((filter as any).logger, 'warn')
+        .mockImplementation();
 
       const expiredTime = Math.floor(Date.now() / 1000) - 300; // expired 5 mins ago
       const payload = Buffer.from(
@@ -295,7 +306,9 @@ describe('Production Remediation P0–P3 Verification Suite', () => {
 
     it('✓ Missing token on protected endpoint is logged as WARN AUTH_FAILURE', () => {
       const filter = new GlobalExceptionFilter();
-      const loggerSpyWarn = jest.spyOn((filter as any).logger, 'warn').mockImplementation();
+      const loggerSpyWarn = jest
+        .spyOn((filter as any).logger, 'warn')
+        .mockImplementation();
 
       const mockRequest: any = {
         method: 'POST',
@@ -328,8 +341,12 @@ describe('Production Remediation P0–P3 Verification Suite', () => {
 
     it('✓ Expected /auth/me 401 check is logged at DEBUG severity', () => {
       const filter = new GlobalExceptionFilter();
-      const loggerSpyDebug = jest.spyOn((filter as any).logger, 'debug').mockImplementation();
-      const loggerSpyWarn = jest.spyOn((filter as any).logger, 'warn').mockImplementation();
+      const loggerSpyDebug = jest
+        .spyOn((filter as any).logger, 'debug')
+        .mockImplementation();
+      const loggerSpyWarn = jest
+        .spyOn((filter as any).logger, 'warn')
+        .mockImplementation();
 
       const mockRequest: any = {
         method: 'GET',
@@ -401,7 +418,9 @@ describe('Production Remediation P0–P3 Verification Suite', () => {
       // Proactive token refresh during playback
       expect(content).toContain('getRefreshedToken');
       // Token-aware guard before keepalive fetch
-      expect(content).toContain('Token already expired; do not send expired token beacon');
+      expect(content).toContain(
+        'Token already expired; do not send expired token beacon',
+      );
       // Visibility and unmount use interceptor-aware persistProgress
       expect(content).toContain('void persistProgress({ force: true });');
     });
@@ -549,11 +568,13 @@ describe('Production Remediation P0–P3 Verification Suite', () => {
       }).compile();
 
       messagesGateway = module.get<MessagesGateway>(MessagesGateway);
-      notificationsGateway = module.get<NotificationsGateway>(NotificationsGateway);
+      notificationsGateway =
+        module.get<NotificationsGateway>(NotificationsGateway);
     });
 
     it('✓ MessagesGateway is configured on /messages namespace with path /api/socket.io/', () => {
-      const metadata = Reflect.getMetadata('websockets:gateway_options', MessagesGateway) ||
+      const metadata =
+        Reflect.getMetadata('websockets:gateway_options', MessagesGateway) ||
         Reflect.getMetadata('websockets:namespace', MessagesGateway);
       expect(messagesGateway).toBeDefined();
 

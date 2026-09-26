@@ -8,15 +8,7 @@ import { getUploadUrl } from '../../utils/courseUi';
 import EcosystemRoleBadge from '../network/EcosystemRoleBadge';
 import { useToast } from '../ui/Toast';
 
-function getInitials(name) {
-  if (!name) return 'Z';
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-}
+import { getUserDisplayName, getInitials } from '../../utils/messagingIdentity';
 
 export default function NewConversationModal({ onClose, onSelectConversation }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,8 +31,9 @@ export default function NewConversationModal({ onClose, onSelectConversation }) 
       const res = await messagingService.startDirectConversation({
         recipientId: user.id || user._id,
       });
-      if (res?.conversation) {
-        onSelectConversation(res.conversation);
+      const conv = res?.conversation || res;
+      if (conv) {
+        onSelectConversation(conv);
       }
       onClose();
     } catch (err) {
@@ -109,7 +102,7 @@ export default function NewConversationModal({ onClose, onSelectConversation }) 
           ) : (
             connections.map((conn) => {
               const peer = conn.peer || conn;
-              const name = peer.name || 'Professional';
+              const name = getUserDisplayName(peer);
               const headline = peer.headline || '';
               const avatar = peer.avatar ? getUploadUrl(peer.avatar) : null;
 

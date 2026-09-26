@@ -126,10 +126,7 @@ export class MessagingController {
   @Patch('conversations/:id/read')
   @ApiOperation({ summary: 'Mark conversation read' })
   @Throttle({ default: { limit: 60, ttl: 60000 } })
-  async markRead(
-    @Req() req: AuthenticatedRequest,
-    @Param('id') id: string,
-  ) {
+  async markRead(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.messagingService.markConversationRead(this.getUserId(req), id);
   }
 
@@ -193,10 +190,7 @@ export class MessagingController {
 
   @Post('conversations/:id/leave')
   @ApiOperation({ summary: 'Leave group conversation' })
-  async leaveGroup(
-    @Req() req: AuthenticatedRequest,
-    @Param('id') id: string,
-  ) {
+  async leaveGroup(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.messagingService.leaveGroup(this.getUserId(req), id);
   }
 

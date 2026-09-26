@@ -19,10 +19,12 @@ import { Notification } from './notifications/schemas/notification.schema';
 
 const makeQuery = (val: any) => {
   const p: any = Promise.resolve(val);
-  p.populate = jest.fn().mockReturnValue({
+  const chain: any = {
     lean: jest.fn().mockResolvedValue(val),
     exec: jest.fn().mockResolvedValue(val),
-  });
+  };
+  chain.populate = jest.fn().mockReturnValue(chain);
+  p.populate = jest.fn().mockReturnValue(chain);
   p.lean = jest.fn().mockResolvedValue(val);
   p.exec = jest.fn().mockResolvedValue(val);
   return p;
@@ -111,7 +113,9 @@ describe('Phase 7 — Messaging + Infrastructure People Discovery QA Suite', () 
       getBlockedUserIds: jest.fn().mockResolvedValue([]),
       getExcludedUserIds: jest.fn().mockResolvedValue([]),
       blockUser: jest.fn().mockResolvedValue({ success: true }),
-      createReport: jest.fn().mockResolvedValue({ success: true, _id: new Types.ObjectId() }),
+      createReport: jest
+        .fn()
+        .mockResolvedValue({ success: true, _id: new Types.ObjectId() }),
     };
 
     mockNotificationsService = {
@@ -168,7 +172,9 @@ describe('Phase 7 — Messaging + Infrastructure People Discovery QA Suite', () 
     }).compile();
 
     messagingService = module.get<MessagingService>(MessagingService);
-    networkService = module.get<NetworkConnectionsService>(NetworkConnectionsService);
+    networkService = module.get<NetworkConnectionsService>(
+      NetworkConnectionsService,
+    );
   });
 
   afterEach(() => {
@@ -255,7 +261,9 @@ describe('Phase 7 — Messaging + Infrastructure People Discovery QA Suite', () 
 
       const result = await networkService.getPeople(userAId, {});
       expect(result.people).toHaveLength(0);
-      expect(mockModerationService.getExcludedUserIds).toHaveBeenCalledWith(userAId);
+      expect(mockModerationService.getExcludedUserIds).toHaveBeenCalledWith(
+        userAId,
+      );
     });
   });
 
@@ -344,7 +352,10 @@ describe('Phase 7 — Messaging + Infrastructure People Discovery QA Suite', () 
       mockConversationModel.findById.mockImplementation(() =>
         makeQuery({
           _id: new Types.ObjectId(convId),
-          participants: [new Types.ObjectId(userBId), new Types.ObjectId(userCId)],
+          participants: [
+            new Types.ObjectId(userBId),
+            new Types.ObjectId(userCId),
+          ],
           members: [
             { userId: new Types.ObjectId(userBId), status: 'ACTIVE' },
             { userId: new Types.ObjectId(userCId), status: 'ACTIVE' },
@@ -362,7 +373,10 @@ describe('Phase 7 — Messaging + Infrastructure People Discovery QA Suite', () 
       mockConversationModel.findById.mockImplementation(() =>
         makeQuery({
           _id: new Types.ObjectId(convId),
-          participants: [new Types.ObjectId(userBId), new Types.ObjectId(userCId)],
+          participants: [
+            new Types.ObjectId(userBId),
+            new Types.ObjectId(userCId),
+          ],
           members: [
             { userId: new Types.ObjectId(userBId), status: 'ACTIVE' },
             { userId: new Types.ObjectId(userCId), status: 'ACTIVE' },
@@ -371,7 +385,9 @@ describe('Phase 7 — Messaging + Infrastructure People Discovery QA Suite', () 
       );
 
       await expect(
-        messagingService.sendMessage(userAId, convId, { body: 'Unauthorized message' }),
+        messagingService.sendMessage(userAId, convId, {
+          body: 'Unauthorized message',
+        }),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -380,14 +396,27 @@ describe('Phase 7 — Messaging + Infrastructure People Discovery QA Suite', () 
       const mockConv = {
         _id: new Types.ObjectId(convId),
         type: 'DIRECT',
-        participants: [new Types.ObjectId(userAId), new Types.ObjectId(userBId)],
+        participants: [
+          new Types.ObjectId(userAId),
+          new Types.ObjectId(userBId),
+        ],
         members: [
-          { userId: new Types.ObjectId(userAId), status: 'ACTIVE', lastReadAt: new Date() },
-          { userId: new Types.ObjectId(userBId), status: 'ACTIVE', lastReadAt: new Date() },
+          {
+            userId: new Types.ObjectId(userAId),
+            status: 'ACTIVE',
+            lastReadAt: new Date(),
+          },
+          {
+            userId: new Types.ObjectId(userBId),
+            status: 'ACTIVE',
+            lastReadAt: new Date(),
+          },
         ],
         save: jest.fn().mockResolvedValue(true),
       };
-      mockConversationModel.findById.mockImplementation(() => makeQuery(mockConv));
+      mockConversationModel.findById.mockImplementation(() =>
+        makeQuery(mockConv),
+      );
 
       const mockPopulatedMsg = {
         _id: new Types.ObjectId(),
@@ -396,7 +425,9 @@ describe('Phase 7 — Messaging + Infrastructure People Discovery QA Suite', () 
         body: 'Authenticated message',
         status: 'sent',
       };
-      mockMessageModel.findById.mockImplementation(() => makeQuery(mockPopulatedMsg));
+      mockMessageModel.findById.mockImplementation(() =>
+        makeQuery(mockPopulatedMsg),
+      );
 
       await messagingService.sendMessage(userAId, convId, {
         body: 'Authenticated message',
@@ -445,14 +476,19 @@ describe('Phase 7 — Messaging + Infrastructure People Discovery QA Suite', () 
         _id: new Types.ObjectId(convId),
         requestStatus: 'PENDING',
         requestRecipientId: new Types.ObjectId(userBId),
-        participants: [new Types.ObjectId(userAId), new Types.ObjectId(userBId)],
+        participants: [
+          new Types.ObjectId(userAId),
+          new Types.ObjectId(userBId),
+        ],
         members: [
           { userId: new Types.ObjectId(userAId), status: 'ACTIVE' },
           { userId: new Types.ObjectId(userBId), status: 'ACTIVE' },
         ],
         save: jest.fn().mockResolvedValue(true),
       };
-      mockConversationModel.findById.mockImplementation(() => makeQuery(mockConv));
+      mockConversationModel.findById.mockImplementation(() =>
+        makeQuery(mockConv),
+      );
 
       const res = await messagingService.acceptMessageRequest(userBId, convId);
       expect(res.success).toBe(true);
@@ -467,7 +503,10 @@ describe('Phase 7 — Messaging + Infrastructure People Discovery QA Suite', () 
           _id: new Types.ObjectId(convId),
           requestStatus: 'PENDING',
           requestRecipientId: new Types.ObjectId(userBId),
-          participants: [new Types.ObjectId(userAId), new Types.ObjectId(userBId)],
+          participants: [
+            new Types.ObjectId(userAId),
+            new Types.ObjectId(userBId),
+          ],
         }),
       );
 
@@ -482,7 +521,10 @@ describe('Phase 7 — Messaging + Infrastructure People Discovery QA Suite', () 
         _id: new Types.ObjectId(convId),
         requestStatus: 'PENDING',
         requestRecipientId: new Types.ObjectId(userBId),
-        participants: [new Types.ObjectId(userAId), new Types.ObjectId(userBId)],
+        participants: [
+          new Types.ObjectId(userAId),
+          new Types.ObjectId(userBId),
+        ],
         createdBy: new Types.ObjectId(userAId),
         members: [
           { userId: new Types.ObjectId(userAId), status: 'ACTIVE' },
@@ -490,7 +532,9 @@ describe('Phase 7 — Messaging + Infrastructure People Discovery QA Suite', () 
         ],
         save: jest.fn().mockResolvedValue(true),
       };
-      mockConversationModel.findById.mockImplementation(() => makeQuery(mockConv));
+      mockConversationModel.findById.mockImplementation(() =>
+        makeQuery(mockConv),
+      );
 
       const res = await messagingService.declineMessageRequest(userBId, convId);
       expect(res.success).toBe(true);
@@ -567,7 +611,10 @@ describe('Phase 7 — Messaging + Infrastructure People Discovery QA Suite', () 
       mockConversationModel.findById.mockImplementation(() =>
         makeQuery({
           _id: new Types.ObjectId(convId),
-          participants: [new Types.ObjectId(userAId), new Types.ObjectId(userBId)],
+          participants: [
+            new Types.ObjectId(userAId),
+            new Types.ObjectId(userBId),
+          ],
           members: [{ userId: new Types.ObjectId(userAId), status: 'ACTIVE' }],
         }),
       );
@@ -576,7 +623,9 @@ describe('Phase 7 — Messaging + Infrastructure People Discovery QA Suite', () 
       await messagingService.toggleReaction(userAId, msgId, '👍');
       expect(mockMsg.reactions).toHaveLength(1);
       expect(mockMsg.reactions[0].emoji).toBe('👍');
-      expect(mockMsg.reactions[0].userId.equals(new Types.ObjectId(userAId))).toBe(true);
+      expect(
+        mockMsg.reactions[0].userId.equals(new Types.ObjectId(userAId)),
+      ).toBe(true);
 
       // Toggle off same reaction
       await messagingService.toggleReaction(userAId, msgId, '👍');
@@ -598,7 +647,10 @@ describe('Phase 7 — Messaging + Infrastructure People Discovery QA Suite', () 
       mockConversationModel.findById.mockImplementation(() =>
         makeQuery({
           _id: new Types.ObjectId(convId),
-          participants: [new Types.ObjectId(userAId), new Types.ObjectId(userBId)],
+          participants: [
+            new Types.ObjectId(userAId),
+            new Types.ObjectId(userBId),
+          ],
           members: [
             { userId: new Types.ObjectId(userAId), role: 'MEMBER' },
             { userId: new Types.ObjectId(userBId), role: 'MEMBER' },
@@ -612,7 +664,11 @@ describe('Phase 7 — Messaging + Infrastructure People Discovery QA Suite', () 
       ).rejects.toThrow(ForbiddenException);
 
       // Author delete for everyone succeeds
-      const res = await messagingService.deleteMessage(userAId, msgId, 'everyone');
+      const res = await messagingService.deleteMessage(
+        userAId,
+        msgId,
+        'everyone',
+      );
       expect(res.success).toBe(true);
       expect(mockMsg.isDeleted).toBe(true);
     });
@@ -643,19 +699,32 @@ describe('Phase 7 — Messaging + Infrastructure People Discovery QA Suite', () 
       const mockConv = {
         _id: new Types.ObjectId(convId),
         type: 'GROUP',
-        participants: [new Types.ObjectId(userAId), new Types.ObjectId(userBId)],
+        participants: [
+          new Types.ObjectId(userAId),
+          new Types.ObjectId(userBId),
+        ],
         members: [
           { userId: new Types.ObjectId(userAId), status: 'ACTIVE' },
           { userId: new Types.ObjectId(userBId), status: 'ACTIVE' },
         ],
         save: jest.fn().mockResolvedValue(true),
       };
-      mockConversationModel.findById.mockImplementation(() => makeQuery(mockConv));
+      mockConversationModel.findById.mockImplementation(() =>
+        makeQuery(mockConv),
+      );
 
       const res = await messagingService.leaveGroup(userAId, convId);
       expect(res.success).toBe(true);
-      expect(mockConv.members.some((m: any) => m.userId.equals(new Types.ObjectId(userAId)))).toBe(false);
-      expect(mockConv.participants.some((p: any) => p.equals(new Types.ObjectId(userAId)))).toBe(false);
+      expect(
+        mockConv.members.some((m: any) =>
+          m.userId.equals(new Types.ObjectId(userAId)),
+        ),
+      ).toBe(false);
+      expect(
+        mockConv.participants.some((p: any) =>
+          p.equals(new Types.ObjectId(userAId)),
+        ),
+      ).toBe(false);
     });
 
     it('mutes and unarchives conversation for member correctly', async () => {
@@ -664,16 +733,24 @@ describe('Phase 7 — Messaging + Infrastructure People Discovery QA Suite', () 
         _id: new Types.ObjectId(convId),
         participants: [new Types.ObjectId(userAId)],
         members: [
-          { userId: new Types.ObjectId(userAId), mutedUntil: null, isArchived: true },
+          {
+            userId: new Types.ObjectId(userAId),
+            mutedUntil: null,
+            isArchived: true,
+          },
         ],
         save: jest.fn().mockResolvedValue(true),
       };
-      mockConversationModel.findById.mockImplementation(() => makeQuery(mockConv));
+      mockConversationModel.findById.mockImplementation(() =>
+        makeQuery(mockConv),
+      );
 
       await messagingService.muteConversation(userAId, convId, { muted: true });
       expect(mockConv.members[0].mutedUntil).toBeDefined();
 
-      await messagingService.archiveConversation(userAId, convId, { archived: false });
+      await messagingService.archiveConversation(userAId, convId, {
+        archived: false,
+      });
       expect(mockConv.members[0].isArchived).toBe(false);
     });
   });

@@ -11,10 +11,7 @@ import {
   VerificationRequest,
   VerificationRequestSchema,
 } from './schemas/verification-request.schema';
-import {
-  Project,
-  ProjectSchema,
-} from '../projects/schemas/project.schema';
+import { Project, ProjectSchema } from '../projects/schemas/project.schema';
 import { AwsModule } from '../../common/aws/aws.module';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 import { UsernameModule } from './services/username.module';

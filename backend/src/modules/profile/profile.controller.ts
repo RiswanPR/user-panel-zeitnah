@@ -456,7 +456,9 @@ export class ProfileController {
       fileFilter: (_req, file, cb) => {
         if (file.mimetype !== 'application/pdf') {
           return cb(
-            new BadRequestException('Only PDF files are permitted for resumes.'),
+            new BadRequestException(
+              'Only PDF files are permitted for resumes.',
+            ),
             false,
           );
         }
@@ -464,10 +466,7 @@ export class ProfileController {
       },
     }),
   )
-  uploadResume(
-    @Req() req: any,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
+  uploadResume(@Req() req: any, @UploadedFile() file: Express.Multer.File) {
     return this.profileService.uploadResume(req.user.userId, file);
   }
 
@@ -485,10 +484,7 @@ export class ProfileController {
    */
   @Get('portfolio/resume/:userId/download')
   @UseGuards(JwtAuthGuard)
-  getResumeDownloadUrl(
-    @Param('userId') targetUserId: string,
-    @Req() req: any,
-  ) {
+  getResumeDownloadUrl(@Param('userId') targetUserId: string, @Req() req: any) {
     return this.profileService.getResumeDownloadUrl(
       targetUserId,
       req.user.userId,
@@ -527,9 +523,19 @@ export class ProfileController {
   uploadPortfolioMedia(
     @Req() req: any,
     @UploadedFile() file: Express.Multer.File,
-    @Body() body: { projectId?: string; name?: string; caption?: string; visibility?: string },
+    @Body()
+    body: {
+      projectId?: string;
+      name?: string;
+      caption?: string;
+      visibility?: string;
+    },
   ) {
-    return this.profileService.uploadPortfolioMedia(req.user.userId, file, body);
+    return this.profileService.uploadPortfolioMedia(
+      req.user.userId,
+      file,
+      body,
+    );
   }
 
   /**
