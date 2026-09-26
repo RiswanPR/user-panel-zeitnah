@@ -25,6 +25,7 @@ import {
 import { opportunityService } from '../../services/opportunityService';
 import { matchingService } from '../../services/matchingService';
 import { useToast } from '../../components/ui/Toast';
+import PageHeader from '../../components/ui/PageHeader';
 import {
   INFRASTRUCTURE_DISCIPLINES,
   INFRASTRUCTURE_SECTORS,
@@ -267,56 +268,46 @@ export default function JobsPage() {
       : rawJobs;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      {/* ── Page Header ── */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-white/[0.06]">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-mint/15 text-brand-mint border border-brand-mint/30">
-              Infrastructure Careers
-            </span>
+    <div className="max-w-[1440px] mx-auto space-y-6 sm:space-y-8">
+      {/* ── Zeitnah 2.0 Page Header ── */}
+      <PageHeader
+        eyebrow="CAREER MARKETPLACE"
+        title="Infrastructure Jobs"
+        description="Discover verified engineering, BIM, construction management, and energy infrastructure roles matched with your profile."
+        actions={
+          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md overflow-x-auto max-w-full no-scrollbar">
+            {[
+              { id: 'forYou', label: 'For You', icon: Sparkles },
+              { id: 'all', label: 'All Jobs', icon: Briefcase },
+              { id: 'recent', label: 'Recent', icon: Clock },
+              { id: 'saved', label: 'Saved Jobs', icon: Bookmark },
+              { id: 'applications', label: 'Applications', icon: FileCheck2 },
+              {
+                id: 'invites',
+                label: invites.length > 0 ? `Invitations (${invites.length})` : 'Invitations',
+                icon: Mail,
+              },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const active = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer min-h-[38px] touch-manipulation ${
+                    active
+                      ? 'bg-brand-mint text-black font-bold shadow-md shadow-brand-mint/15'
+                      : 'text-text-muted hover:text-white hover:bg-white/[0.04]'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5 shrink-0" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
-          <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-white mt-2 tracking-tight">
-            Infrastructure Job Board
-          </h1>
-          <p className="text-sm text-text-muted mt-1 max-w-2xl leading-relaxed">
-            Discover verified career opportunities across Civil, Structural, BIM, MEP, Highways, and Energy infrastructure.
-          </p>
-        </div>
-
-        {/* Primary Tabs */}
-        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] overflow-x-auto shrink-0">
-          {[
-            { id: 'forYou', label: 'For You', icon: Sparkles },
-            { id: 'all', label: 'All Jobs', icon: Briefcase },
-            { id: 'recent', label: 'Recent', icon: Clock },
-            { id: 'saved', label: 'Saved Jobs', icon: Bookmark },
-            { id: 'applications', label: 'My Applications', icon: FileCheck2 },
-            {
-              id: 'invites',
-              label: invites.length > 0 ? `Invitations (${invites.length})` : 'Invitations',
-              icon: Mail,
-            },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const active = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                  active
-                    ? 'bg-brand-mint text-black font-bold shadow-md shadow-brand-mint/20'
-                    : 'text-text-muted hover:text-white hover:bg-white/[0.04]'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+        }
+      />
 
       {/* ── Search & Filter Controls (For Explore & Recent tabs) ── */}
       {(activeTab === 'all' || activeTab === 'recent') && (

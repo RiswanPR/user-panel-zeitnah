@@ -82,10 +82,6 @@ export default function PortfolioPage({ isPublic = false }) {
   // Resume upload input ref
   const resumeInputRef = useRef(null);
 
-  useEffect(() => {
-    loadPortfolio();
-  }, [targetUsername, isOwner]);
-
   const loadPortfolio = async () => {
     setLoading(true);
     try {
@@ -112,7 +108,7 @@ export default function PortfolioPage({ isPublic = false }) {
         try {
           const prjRes = await projectsService.getMyProjects();
           setAllProjects(Array.isArray(prjRes) ? prjRes : prjRes?.items || []);
-        } catch (e) {
+        } catch {
           // silent
         }
       } else {
@@ -127,6 +123,11 @@ export default function PortfolioPage({ isPublic = false }) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadPortfolio();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetUsername, isOwner]);
 
   const handleSavePortfolio = async (e) => {
     e.preventDefault();

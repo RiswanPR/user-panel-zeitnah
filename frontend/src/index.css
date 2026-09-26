@@ -58,10 +58,41 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SIDEBAR DESIGN TOKENS
-   Single source of truth for sidebar geometry & accent colors.
+   SIDEBAR & ZEITNAH 2.0 DESIGN TOKENS
+   Single source of truth for global geometry, surfaces & accents.
    ═══════════════════════════════════════════════════════════════ */
 :root {
+  /* ── Zeitnah 2.0 Surfaces & Foundation ── */
+  --zn-bg: #070B14;
+  --zn-surface-1: #0B111E;
+  --zn-surface-2: #0F1728;
+  --zn-surface-3: #152033;
+  --zn-surface-card: #0D1625;
+
+  /* ── Borders & Outlines ── */
+  --zn-border: rgba(255, 255, 255, 0.07);
+  --zn-border-subtle: rgba(159, 213, 178, 0.08);
+  --zn-border-accent: rgba(159, 213, 178, 0.22);
+  --zn-border-gold: rgba(246, 237, 74, 0.25);
+
+  /* ── Text Hierarchy ── */
+  --zn-text: #FFFFFF;
+  --zn-text-muted: #94A3B8;
+  --zn-text-faint: #64748B;
+
+  /* ── Brand & Semantic Accents ── */
+  --zn-accent: #9FD5B2;
+  --zn-accent-soft: rgba(159, 213, 178, 0.12);
+  --zn-accent-glow: rgba(159, 213, 178, 0.25);
+  --zn-gold: #F6ED4A;
+  --zn-gold-soft: rgba(246, 237, 74, 0.12);
+  --zn-navy: #12314C;
+  --zn-success: #10B981;
+  --zn-warning: #F59E0B;
+  --zn-danger: #EF4444;
+  --zn-info: #38BDF8;
+
+  /* ── Sidebar Tokens ── */
   --sidebar-width: 260px;
   --sidebar-inset: 0.75rem;     /* 12px island margin */
   --sidebar-radius: 1rem;       /* 16px */
@@ -73,6 +104,9 @@
   --sidebar-glow: 6rem;         /* 96px */
   --leaderboard-active-border: rgba(246, 237, 74, 0.35);
   --leaderboard-active-bg: rgba(246, 237, 74, 0.04);
+
+  /* ── Ergonomics & Mobile ── */
+  --touch-target-min: 44px;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -362,6 +396,336 @@ html, body {
 .btn-danger:hover {
   background: rgba(239, 68, 68, 0.12);
   border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ZEITNAH 2.0 COMPONENT DESIGN SYSTEM
+   Editorial, technical, calm, layered surfaces & touch ergonomics.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Surface Cards ── */
+.zn-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(13, 22, 37, 0.75) 0%, rgba(9, 15, 27, 0.85) 100%);
+  border: 1px solid var(--zn-border);
+  border-radius: 18px;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: all 0.25s var(--ease-smooth);
+}
+
+.zn-card-elevated {
+  position: relative;
+  background: linear-gradient(135deg, rgba(16, 26, 44, 0.92) 0%, rgba(11, 18, 32, 0.96) 100%);
+  border: 1px solid rgba(159, 213, 178, 0.14);
+  border-radius: 20px;
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.zn-card-interactive {
+  cursor: pointer;
+  transition: transform 0.22s var(--ease-smooth), border-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+.zn-card-interactive:hover {
+  transform: translateY(-2px);
+  border-color: rgba(159, 213, 178, 0.22);
+  box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.45), 0 0 20px rgba(159, 213, 178, 0.04);
+}
+
+.zn-card-interactive:active {
+  transform: translateY(0);
+}
+
+.zn-panel {
+  background: rgba(11, 17, 30, 0.65);
+  border: 1px solid var(--zn-border);
+  border-radius: 16px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* ── Zeitnah 2.0 Buttons ── */
+.zn-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  min-height: 44px;
+  border-radius: 12px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  letter-spacing: 0.03em;
+  background: var(--zn-gold);
+  color: #070B14;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-smooth);
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.zn-btn-primary:hover {
+  box-shadow: 0 4px 20px rgba(246, 237, 74, 0.25);
+  transform: translateY(-1px);
+}
+
+.zn-btn-primary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.zn-btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.zn-btn-accent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  min-height: 44px;
+  border-radius: 12px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  letter-spacing: 0.03em;
+  background: var(--zn-accent);
+  color: #070B14;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-smooth);
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.zn-btn-accent:hover {
+  box-shadow: 0 4px 20px rgba(159, 213, 178, 0.25);
+  transform: translateY(-1px);
+}
+
+.zn-btn-accent:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.zn-btn-accent:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.zn-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  min-height: 44px;
+  border-radius: 12px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  background: rgba(255, 255, 255, 0.04);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.zn-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(159, 213, 178, 0.25);
+}
+
+.zn-btn-secondary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.zn-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  min-height: 40px;
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.8125rem;
+  background: transparent;
+  color: var(--zn-text-muted);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.zn-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--zn-text);
+}
+
+.zn-btn-ghost:active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.zn-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  min-height: 44px;
+  border-radius: 12px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  background: rgba(239, 68, 68, 0.08);
+  color: #EF4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.zn-btn-danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+/* ── Badges ── */
+.zn-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 100px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.zn-badge-mint {
+  background: rgba(159, 213, 178, 0.1);
+  border: 1px solid rgba(159, 213, 178, 0.2);
+  color: var(--zn-accent);
+}
+
+.zn-badge-gold {
+  background: rgba(246, 237, 74, 0.1);
+  border: 1px solid rgba(246, 237, 74, 0.22);
+  color: var(--zn-gold);
+}
+
+.zn-badge-navy {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--zn-text-muted);
+}
+
+.zn-badge-danger {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: var(--zn-danger);
+}
+
+/* ── Interactive Chips ── */
+.zn-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.875rem;
+  min-height: 36px;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--zn-text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.zn-chip:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--zn-text);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.zn-chip.active {
+  background: rgba(159, 213, 178, 0.12);
+  border-color: rgba(159, 213, 178, 0.3);
+  color: var(--zn-accent);
+  font-weight: 600;
+}
+
+/* ── Inputs ── */
+.zn-input {
+  width: 100%;
+  background: rgba(7, 11, 20, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  color: var(--zn-text);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  padding: 0.65rem 0.875rem;
+  min-height: 44px;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.zn-input:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.zn-input:focus {
+  border-color: rgba(159, 213, 178, 0.4);
+  box-shadow: 0 0 0 3px rgba(159, 213, 178, 0.08);
+  background: rgba(7, 11, 20, 0.85);
+}
+
+.zn-input::placeholder {
+  color: var(--zn-text-faint);
+}
+
+/* ── Typography Utilities ── */
+.zn-heading-display {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.zn-heading-section {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.zn-meta {
+  font-size: 0.75rem;
+  color: var(--zn-text-faint);
+  letter-spacing: 0.01em;
+}
+
+/* ── Mobile Ergonomics ── */
+.touch-min {
+  min-width: 44px;
+  min-height: 44px;
 }
 
 /* ═══════════════════════════════════════════════════════════════

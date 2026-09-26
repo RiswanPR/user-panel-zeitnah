@@ -2,9 +2,6 @@ import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   MessageSquare,
-  Users,
-  Sparkles,
-  Inbox,
   ShieldCheck,
   Zap,
 } from 'lucide-react';

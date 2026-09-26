@@ -589,6 +589,38 @@ export default function JobDetailPage() {
           </div>
         </div>
       )}
+
+      {/* ── Mobile Sticky Bottom Action Bar ── */}
+      <div className="sm:hidden fixed bottom-[calc(env(safe-area-inset-bottom,0px)+58px)] inset-x-0 z-30 p-3 bg-[#0B111E]/95 backdrop-blur-xl border-t border-white/[0.1] shadow-2xl flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => toggleSaveMutation.mutate()}
+          aria-label={job.isSaved ? "Saved" : "Save job"}
+          className="p-3 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white flex items-center justify-center min-w-[44px] min-h-[44px] touch-manipulation cursor-pointer"
+        >
+          {job.isSaved ? (
+            <BookmarkCheck className="w-5 h-5 text-brand-mint" />
+          ) : (
+            <Bookmark className="w-5 h-5 text-white/70" />
+          )}
+        </button>
+
+        {hasApplied ? (
+          <div className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-bold text-xs min-h-[44px]">
+            <FileCheck2 className="w-4 h-4" />
+            <span>Application Submitted</span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsApplyModalOpen(true)}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl zn-btn-primary font-bold text-xs min-h-[44px] touch-manipulation cursor-pointer"
+          >
+            <Send className="w-4 h-4" />
+            <span>Apply for this Role</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }

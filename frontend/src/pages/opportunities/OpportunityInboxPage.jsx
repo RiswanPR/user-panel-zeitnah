@@ -87,7 +87,7 @@ export default function OpportunityInboxPage() {
         setOpportunities((prev) =>
           prev.map((item) => (item._id === opp._id ? { ...item, status: 'VIEWED' } : item))
         );
-      } catch (e) {
+      } catch {
         // silent
       }
     }
