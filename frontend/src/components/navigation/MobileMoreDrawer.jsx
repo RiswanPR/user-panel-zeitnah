@@ -16,6 +16,7 @@ import {
   LogOut,
   ChevronRight,
   User,
+  Bell,
 } from "lucide-react";
 import { getUploadUrl } from "../../utils/courseUi";
 
@@ -29,6 +30,7 @@ export default function MobileMoreDrawer({
   user,
   onRequestLogout,
   unreadOpportunitiesCount = 0,
+  unreadNotificationsCount = 0,
 }) {
   const location = useLocation();
 
@@ -127,6 +129,13 @@ export default function MobileMoreDrawer({
               },
             ]
           : []),
+        {
+          label: "Notifications",
+          path: "/notifications",
+          icon: Bell,
+          desc: "Updates, alerts & activities",
+          badge: unreadNotificationsCount,
+        },
         {
           label: "Active Sessions",
           path: "/active-sessions",
