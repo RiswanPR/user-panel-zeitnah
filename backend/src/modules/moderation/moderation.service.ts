@@ -34,6 +34,14 @@ export class ModerationService {
    * Block a user
    */
   async blockUser(blockerId: string, blockedUserId: string) {
+    if (!Types.ObjectId.isValid(blockerId) || !Types.ObjectId.isValid(blockedUserId)) {
+      throw new BadRequestException({
+        statusCode: 400,
+        code: 'INVALID_ID_FORMAT',
+        message: 'Invalid user identifier format',
+      });
+    }
+
     if (blockerId === blockedUserId) {
       throw new BadRequestException('You cannot block yourself');
     }
@@ -63,6 +71,14 @@ export class ModerationService {
    * Unblock a user
    */
   async unblockUser(blockerId: string, blockedUserId: string) {
+    if (!Types.ObjectId.isValid(blockerId) || !Types.ObjectId.isValid(blockedUserId)) {
+      throw new BadRequestException({
+        statusCode: 400,
+        code: 'INVALID_ID_FORMAT',
+        message: 'Invalid user identifier format',
+      });
+    }
+
     const blockerObjId = new Types.ObjectId(blockerId);
     const blockedObjId = new Types.ObjectId(blockedUserId);
 
@@ -78,6 +94,14 @@ export class ModerationService {
    * Get all user IDs blocked by this user or who blocked this user
    */
   async getExcludedUserIds(userId: string): Promise<string[]> {
+    if (!Types.ObjectId.isValid(userId)) {
+      throw new BadRequestException({
+        statusCode: 400,
+        code: 'INVALID_ID_FORMAT',
+        message: 'Invalid user identifier format',
+      });
+    }
+
     const userObjId = new Types.ObjectId(userId);
 
     const blocks = await this.blockModel
@@ -102,6 +126,10 @@ export class ModerationService {
    * Check if a block relationship exists between two users
    */
   async hasBlockRelationship(userA: string, userB: string): Promise<boolean> {
+    if (!Types.ObjectId.isValid(userA) || !Types.ObjectId.isValid(userB)) {
+      return false;
+    }
+
     const objA = new Types.ObjectId(userA);
     const objB = new Types.ObjectId(userB);
 
@@ -119,6 +147,30 @@ export class ModerationService {
    * Create a factual report
    */
   async createReport(reporterId: string, dto: CreateReportDto) {
+    if (!Types.ObjectId.isValid(reporterId)) {
+      throw new BadRequestException({
+        statusCode: 400,
+        code: 'INVALID_ID_FORMAT',
+        message: 'Invalid reporter identifier format',
+      });
+    }
+
+    if (!dto.targetId || typeof dto.targetId !== 'string' || !dto.targetId.trim()) {
+      throw new BadRequestException({
+        statusCode: 400,
+        code: 'INVALID_TARGET_ID',
+        message: 'Target identifier is required',
+      });
+    }
+
+    if (dto.targetType === ReportTargetType.USER && !Types.ObjectId.isValid(dto.targetId.trim())) {
+      throw new BadRequestException({
+        statusCode: 400,
+        code: 'INVALID_TARGET_ID',
+        message: 'Target user identifier must be a valid ObjectId',
+      });
+    }
+
     const reporterObjId = new Types.ObjectId(reporterId);
 
     return this.reportModel.create({

@@ -35,15 +35,25 @@ export class ResendEmailProvider implements EmailProvider {
    * Send with strict timeout to prevent hanging connections
    */
   private async sendWithTimeout(payload: any, timeoutMs: number): Promise<any> {
-    return Promise.race([
-      resend.emails.send(payload),
-      new Promise((_, reject) =>
-        setTimeout(
-          () => reject(new Error(`Resend API timed out after ${timeoutMs}ms`)),
-          timeoutMs,
-        ),
-      ),
-    ]);
+    let timer: NodeJS.Timeout | undefined;
+    try {
+      return await Promise.race([
+        resend.emails.send(payload),
+        new Promise((_, reject) => {
+          timer = setTimeout(
+            () => reject(new Error(`Resend API timed out after ${timeoutMs}ms`)),
+            timeoutMs,
+          );
+          if (timer && typeof timer.unref === 'function') {
+            timer.unref();
+          }
+        }),
+      ]);
+    } finally {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    }
   }
 
   async sendEmail(options: SendEmailOptions): Promise<EmailSendResult> {
@@ -91,7 +101,12 @@ export class ResendEmailProvider implements EmailProvider {
 
         if (attempt < maxAttempts) {
           const delay = 1000 * Math.pow(2, attempt - 1); // 1000ms, then 2000ms
-          await new Promise((resolve) => setTimeout(resolve, delay));
+          await new Promise((resolve) => {
+            const retryTimer = setTimeout(resolve, delay);
+            if (retryTimer && typeof retryTimer.unref === 'function') {
+              retryTimer.unref();
+            }
+          });
         }
       }
     }

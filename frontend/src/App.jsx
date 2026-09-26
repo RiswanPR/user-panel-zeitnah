@@ -48,6 +48,7 @@ const JobDetailPage = React.lazy(() => import("./pages/jobs/JobDetailPage"));
 const ManageBusiness = React.lazy(() => import("./pages/business/ManageBusiness"));
 const PublicBusinessProfilePage = React.lazy(() => import("./pages/business/PublicBusinessProfilePage"));
 const BusinessDiscoveryPage = React.lazy(() => import("./pages/business/BusinessDiscoveryPage"));
+const AdminBusinessReviewPage = React.lazy(() => import("./pages/admin/AdminBusinessReviewPage"));
 const CareerIntelligencePage = React.lazy(() => import("./pages/career/CareerIntelligencePage"));
 const MessagesPage = React.lazy(() => import("./pages/messages/MessagesPage"));
 const PortfolioPage = React.lazy(() => import("./pages/profile/PortfolioPage"));

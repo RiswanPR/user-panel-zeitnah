@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { AlertTriangle, Info, X, ArrowRight } from 'lucide-react';
 import { useNotifications } from '../../context/NotificationContext';
 import { Link } from 'react-router-dom';
 
 export default function AnnouncementBanner() {
+  const [isDismissing, setIsDismissing] = useState(false);
   const { announcements, dismissAnnouncement } = useNotifications();
 
   // Pick the highest priority active announcement to display as banner
@@ -68,13 +70,19 @@ export default function AnnouncementBanner() {
 
           <button
             type="button"
-            onClick={() =>
-              dismissAnnouncement(
-                activeAnnouncement._id || activeAnnouncement.id
-              )
-            }
+            disabled={isDismissing}
+            onClick={() => {
+              const targetId = activeAnnouncement._id || activeAnnouncement.id;
+              if (!targetId || isDismissing) return;
+              setIsDismissing(true);
+              try {
+                dismissAnnouncement(targetId);
+              } finally {
+                setTimeout(() => setIsDismissing(false), 1500);
+              }
+            }}
             aria-label="Dismiss announcement"
-            className="p-1.5 rounded-lg opacity-60 hover:opacity-100 hover:bg-white/[0.08] transition-all"
+            className="p-1.5 rounded-lg opacity-60 hover:opacity-100 hover:bg-white/[0.08] transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>

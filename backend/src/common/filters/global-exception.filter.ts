@@ -18,8 +18,16 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    const status =
-      exception instanceof HttpException
+    // Detect Mongoose CastError (invalid ObjectId) before status determination
+    const isCastError =
+      exception instanceof Error &&
+      (exception.name === 'CastError' ||
+        (exception.name === 'BSONError' &&
+          /invalid.*objectid|must be.*24 character/i.test(exception.message)));
+
+    const status = isCastError
+      ? HttpStatus.BAD_REQUEST
+      : exception instanceof HttpException
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
@@ -28,7 +36,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let code = 'INTERNAL_SERVER_ERROR';
     let message = 'Something went wrong on our end. Please try again later.';
 
-    if (exception instanceof HttpException) {
+    if (isCastError) {
+      // Mongoose/BSON invalid ID — client sent a malformed identifier
+      code = 'INVALID_ID_FORMAT';
+      message = 'The provided ID format is invalid.';
+    } else if (exception instanceof HttpException) {
       const responseBody = exception.getResponse() as any;
       const rawMsg = responseBody?.message || exception.message;
       message = Array.isArray(rawMsg) ? rawMsg.join(', ') : (typeof rawMsg === 'string' ? rawMsg : JSON.stringify(rawMsg));
@@ -117,8 +129,13 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         }
       }
 
+      const isRoutineTokenExpiry =
+        tokenExpiryState.startsWith('EXPIRED_AT_') &&
+        Boolean(authHeader) &&
+        !sanitizedUrl?.includes('/auth/refresh-token');
+
       const authDiag = {
-        event: 'AUTH_FAILURE',
+        event: isRoutineTokenExpiry ? 'TOKEN_EXPIRED' : 'AUTH_FAILURE',
         correlationId,
         method: request.method,
         endpoint: sanitizedUrl,
@@ -130,7 +147,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         hasAuthHeader: Boolean(authHeader),
         timestamp: new Date().toISOString(),
       };
-      this.logger.warn(JSON.stringify(authDiag));
+
+      if (isRoutineTokenExpiry) {
+        this.logger.debug(JSON.stringify(authDiag));
+      } else {
+        this.logger.warn(JSON.stringify(authDiag));
+      }
     } else {
       this.logger.warn(
         `[${correlationId}] ${request.method} ${sanitizedUrl} - Status: ${status} - ${message}`,

@@ -205,7 +205,14 @@ export const NotificationProvider = ({ children }) => {
   });
 
   const dismissAnnouncementMutation = useMutation({
-    mutationFn: (id) => notificationService.dismissAnnouncement(id),
+    mutationFn: (id) => {
+      const cleanId = String(id || '').trim();
+      if (!cleanId || cleanId === 'undefined' || cleanId === 'null') {
+        return Promise.reject(new Error('Invalid announcement identifier'));
+      }
+      return notificationService.dismissAnnouncement(cleanId);
+    },
+    retry: false,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['announcements', 'active'] });
       queryClient.invalidateQueries({ queryKey: ['platform-announcements'] });
@@ -215,7 +222,14 @@ export const NotificationProvider = ({ children }) => {
   });
 
   const acknowledgeAnnouncementMutation = useMutation({
-    mutationFn: (id) => notificationService.acknowledgeAnnouncement(id),
+    mutationFn: (id) => {
+      const cleanId = String(id || '').trim();
+      if (!cleanId || cleanId === 'undefined' || cleanId === 'null') {
+        return Promise.reject(new Error('Invalid announcement identifier'));
+      }
+      return notificationService.acknowledgeAnnouncement(cleanId);
+    },
+    retry: false,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['announcements', 'active'] });
       queryClient.invalidateQueries({ queryKey: ['platform-announcements'] });

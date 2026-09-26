@@ -20,7 +20,7 @@ import {
   Lock,
   Play,
 } from "lucide-react";
-import api from "../../services/api";
+import api, { getRefreshedToken } from "../../services/api";
 import {
   formatDuration,
   getBunnyEmbedUrl,
@@ -578,13 +578,44 @@ function ClassView() {
         const onEnded = () => {
           void persistProgress({ completed: true, force: true });
         };
-        const progressInterval = window.setInterval(() => {
+        const progressInterval = window.setInterval(async () => {
+          // Proactively refresh token if expiring within 60s during video playback
+          const token = storage.getAccessToken();
+          if (token) {
+            try {
+              const parts = token.split('.');
+              if (parts.length === 3) {
+                const payload = JSON.parse(atob(parts[1]));
+                if (payload?.exp && payload.exp * 1000 - Date.now() < 60000) {
+                  await getRefreshedToken().catch(() => {});
+                }
+              }
+            } catch {
+              // Ignore JWT decode errors
+            }
+          }
           void persistProgress({ force: true });
         }, 15000);
+
         const flushLatestProgress = () => {
           const snapshot = latestSnapshotRef.current;
           const token = storage.getAccessToken();
           if (!snapshot || !token) return;
+
+          // Token-aware guard: verify token is not expired before firing keepalive fetch
+          try {
+            const parts = token.split('.');
+            if (parts.length === 3) {
+              const payload = JSON.parse(atob(parts[1]));
+              if (payload?.exp && payload.exp * 1000 < Date.now()) {
+                // Token already expired; do not send expired token beacon
+                return;
+              }
+            }
+          } catch {
+            // Proceed if unparseable
+          }
+
           const baseUrl =
             api.defaults.baseURL || "https://zeitnahacademy.com/api";
           void fetch(`${baseUrl}/courses/class/${classId}/progress`, {
@@ -597,11 +628,16 @@ function ClassView() {
             keepalive: true,
           });
         };
+
         const onPageHide = () => {
           flushLatestProgress();
         };
+
         const onVisibilityChange = () => {
-          if (document.visibilityState === "hidden") flushLatestProgress();
+          // Tab backgrounded or hidden: use interceptor-aware API
+          if (document.visibilityState === "hidden") {
+            void persistProgress({ force: true });
+          }
         };
         player.video.addEventListener("loadedmetadata", onLoadedMetadata);
         player.video.addEventListener("play", onPlay);
@@ -663,7 +699,7 @@ function ClassView() {
           if (vdoStallTimer) clearTimeout(vdoStallTimer);
           window.removeEventListener("pagehide", onPageHide);
           document.removeEventListener("visibilitychange", onVisibilityChange);
-          flushLatestProgress();
+          void persistProgress({ force: true });
         };
       } catch (error) {
         console.log(error);

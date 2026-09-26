@@ -329,9 +329,23 @@ api.interceptors.response.use(
     const requestDuration = config?._startTime ? Date.now() - config._startTime : undefined;
     const isTimeout = error.code === "ECONNABORTED" || error.message?.includes("timeout");
 
-    // Only log to backend if it's an auth route, or maybe log all 5xx / Network errors
-    // Skip troubleshoot endpoints to prevent error cascades
-    if ((config?.url?.includes("/auth/") || (error.response && error.response.status >= 500) || !error.response) && !isOffline && !isTroubleshootRequest) {
+    // Only log genuine server/network errors to the backend telemetry
+    // Do NOT log expected unauthenticated session checks (/auth/me) or normal token expirations
+    const isExpectedAuth401 =
+      error.response?.status === 401 &&
+      (config?.url?.includes('/auth/me') ||
+        config?.url?.includes('/auth/refresh-token') ||
+        config?.url?.includes('/auth/login'));
+
+    const shouldLogTelemetry =
+      !isExpectedAuth401 &&
+      !isOffline &&
+      !isTroubleshootRequest &&
+      ((error.response && error.response.status >= 500) ||
+        !error.response ||
+        (config?.url?.includes('/auth/') && error.response?.status !== 401));
+
+    if (shouldLogTelemetry) {
       // Fire and forget logging
       logClientError({
         message: error.message,

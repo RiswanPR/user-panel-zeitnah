@@ -1,10 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Types, Schema as MongooseSchema } from 'mongoose';
 
 export type PlatformAnnouncementDocument = PlatformAnnouncement & Document;
 
 @Schema({ timestamps: true, collection: 'platform_announcements' })
 export class PlatformAnnouncement {
+  @Prop({ type: MongooseSchema.Types.Mixed, default: () => new Types.ObjectId() })
+  _id?: any;
+
   @Prop({ type: String, required: true, trim: true })
   title: string;
 

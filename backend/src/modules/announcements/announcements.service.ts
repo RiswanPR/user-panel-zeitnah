@@ -53,7 +53,7 @@ export class AnnouncementsService {
     throw new BadRequestException({
       statusCode: 400,
       code: 'INVALID_ANNOUNCEMENT_ID',
-      message: 'Invalid ID format',
+      message: 'Invalid announcement identifier',
     });
   }
 
@@ -354,20 +354,62 @@ export class AnnouncementsService {
    * Retrieves single announcement by ID
    */
   async getAnnouncementById(id: string): Promise<any> {
-    const annObjId = this.toObjectId(id);
+    if (!id || id === 'undefined' || id === 'null') {
+      throw new BadRequestException({
+        statusCode: 400,
+        code: 'INVALID_ANNOUNCEMENT_ID',
+        message: 'Invalid announcement identifier',
+      });
+    }
+
+    const isAnnObjectId = Types.ObjectId.isValid(id);
+    const annObjId = isAnnObjectId ? new Types.ObjectId(id) : null;
+    const query: any = annObjId
+      ? { $or: [{ _id: annObjId }, { _id: id }] }
+      : { _id: id };
+
     let announcement: any = null;
 
     if (this.masterAnnouncementModel) {
-      announcement = await this.masterAnnouncementModel
-        .findById(annObjId)
-        .lean();
+      try {
+        announcement = await this.masterAnnouncementModel.findOne(query).lean();
+      } catch (e) {
+        // ignore
+      }
     }
     if (!announcement && this.announcementModel) {
-      announcement = await this.announcementModel.findById(annObjId).lean();
+      try {
+        announcement = await this.announcementModel.findOne(query).lean();
+      } catch (e) {
+        // ignore
+      }
+    }
+    if (!announcement && this.connection && this.connection.db) {
+      try {
+        announcement = await this.connection.db
+          .collection('platform_announcements')
+          .findOne({ _id: id } as any);
+        if (!announcement && annObjId) {
+          announcement = await this.connection.db
+            .collection('platform_announcements')
+            .findOne({ _id: annObjId } as any);
+        }
+        if (!announcement) {
+          announcement = await this.connection.db
+            .collection('announcements')
+            .findOne({ _id: id } as any);
+        }
+      } catch (e) {
+        // ignore
+      }
     }
 
     if (!announcement) {
-      throw new NotFoundException('Announcement not found');
+      throw new NotFoundException({
+        statusCode: 404,
+        code: 'ANNOUNCEMENT_NOT_FOUND',
+        message: 'Announcement not found',
+      });
     }
 
     return announcement;
@@ -381,15 +423,15 @@ export class AnnouncementsService {
     userId: string,
     isAcknowledge = false,
   ) {
-    if (!announcementId || announcementId === 'undefined' || announcementId === 'null') {
+    if (!announcementId || typeof announcementId !== 'string' || !announcementId.trim() || announcementId.trim() === 'undefined' || announcementId.trim() === 'null') {
       throw new BadRequestException({
         statusCode: 400,
         code: 'INVALID_ANNOUNCEMENT_ID',
-        message: 'Invalid or missing announcement ID',
+        message: 'Invalid announcement identifier',
       });
     }
 
-    if (!userId || userId === 'undefined' || userId === 'null') {
+    if (!userId || typeof userId !== 'string' || !userId.trim() || userId.trim() === 'undefined' || userId.trim() === 'null') {
       throw new BadRequestException({
         statusCode: 400,
         code: 'INVALID_USER_ID',
@@ -397,25 +439,28 @@ export class AnnouncementsService {
       });
     }
 
-    const isAnnObjectId = Types.ObjectId.isValid(announcementId);
-    const annObjId = isAnnObjectId ? new Types.ObjectId(announcementId) : null;
-    const isUserObjectId = Types.ObjectId.isValid(userId);
-    const userObjId = isUserObjectId ? new Types.ObjectId(userId) : null;
-    const userIdVal = userObjId || userId;
+    const trimmedAnnouncementId = announcementId.trim();
+    const isAnnObjectId = Types.ObjectId.isValid(trimmedAnnouncementId);
+    const annObjId = isAnnObjectId ? new Types.ObjectId(trimmedAnnouncementId) : null;
+    const isUserObjectId = Types.ObjectId.isValid(userId.trim());
+    const userObjId = isUserObjectId ? new Types.ObjectId(userId.trim()) : null;
+    const userIdVal = userObjId || userId.trim();
 
     // Search query supporting both ObjectId and string ID
     const idQuery: any = annObjId
-      ? { $or: [{ _id: annObjId }, { _id: announcementId }] }
-      : { _id: announcementId };
+      ? { _id: annObjId }
+      : { _id: trimmedAnnouncementId };
 
     // If findById/findOne is available, check allowDismiss
     let ann: any = null;
     if (this.masterAnnouncementModel) {
       try {
         if (annObjId && typeof (this.masterAnnouncementModel as any).findById === 'function') {
-          ann = await (this.masterAnnouncementModel as any).findById(annObjId);
+          const res = (this.masterAnnouncementModel as any).findById(annObjId);
+          ann = typeof res?.lean === 'function' ? await res.lean() : await res;
         } else if (typeof (this.masterAnnouncementModel as any).findOne === 'function') {
-          ann = await (this.masterAnnouncementModel as any).findOne(idQuery);
+          const res = (this.masterAnnouncementModel as any).findOne(idQuery);
+          ann = typeof res?.lean === 'function' ? await res.lean() : await res;
         }
       } catch (e) {
         // ignore
@@ -424,9 +469,30 @@ export class AnnouncementsService {
     if (!ann && this.announcementModel) {
       try {
         if (annObjId && typeof (this.announcementModel as any).findById === 'function') {
-          ann = await (this.announcementModel as any).findById(annObjId);
+          const res = (this.announcementModel as any).findById(annObjId);
+          ann = typeof res?.lean === 'function' ? await res.lean() : await res;
         } else if (typeof (this.announcementModel as any).findOne === 'function') {
-          ann = await (this.announcementModel as any).findOne(idQuery);
+          const res = (this.announcementModel as any).findOne(idQuery);
+          ann = typeof res?.lean === 'function' ? await res.lean() : await res;
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    if (!ann && this.connection && this.connection.db) {
+      try {
+        ann = await this.connection.db
+          .collection('platform_announcements')
+          .findOne({ _id: announcementId } as any);
+        if (!ann && annObjId) {
+          ann = await this.connection.db
+            .collection('platform_announcements')
+            .findOne({ _id: annObjId } as any);
+        }
+        if (!ann) {
+          ann = await this.connection.db
+            .collection('announcements')
+            .findOne({ _id: announcementId } as any);
         }
       } catch (e) {
         // ignore
@@ -463,12 +529,27 @@ export class AnnouncementsService {
       this.announcementModel &&
       typeof this.announcementModel.updateOne === 'function'
     ) {
-      const updateQuery: any = annObjId ? { _id: annObjId } : { _id: announcementId };
-      const res = await this.announcementModel.updateOne(
-        updateQuery,
-        { $addToSet: { dismissedBy: userIdVal } },
-      );
-      if (res && res.matchedCount) matchedCount += res.matchedCount;
+      try {
+        const res = await this.announcementModel.updateOne(
+          idQuery,
+          { $addToSet: { dismissedBy: userIdVal } },
+        );
+        if (res && res.matchedCount) matchedCount += res.matchedCount;
+      } catch (err) {
+        if (this.connection && this.connection.db) {
+          try {
+            const res = await this.connection.db
+              .collection('platform_announcements')
+              .updateOne(
+                { _id: announcementId } as any,
+                { $addToSet: { dismissedBy: userIdVal } } as any,
+              );
+            if (res && res.matchedCount) matchedCount += res.matchedCount;
+          } catch (e) {
+            // ignore
+          }
+        }
+      }
     }
 
     // Mirror update on master announcement model
@@ -476,12 +557,27 @@ export class AnnouncementsService {
       this.masterAnnouncementModel &&
       typeof this.masterAnnouncementModel.updateOne === 'function'
     ) {
-      const updateQuery: any = annObjId ? { _id: annObjId } : { _id: announcementId };
-      const res = await this.masterAnnouncementModel.updateOne(
-        updateQuery,
-        { $addToSet: { dismissedBy: userIdVal, readBy: userIdVal } },
-      );
-      if (res && res.matchedCount) matchedCount += res.matchedCount;
+      try {
+        const res = await this.masterAnnouncementModel.updateOne(
+          idQuery,
+          { $addToSet: { dismissedBy: userIdVal, readBy: userIdVal } },
+        );
+        if (res && res.matchedCount) matchedCount += res.matchedCount;
+      } catch (err) {
+        if (this.connection && this.connection.db) {
+          try {
+            const res = await this.connection.db
+              .collection('announcements')
+              .updateOne(
+                { _id: announcementId } as any,
+                { $addToSet: { dismissedBy: userIdVal, readBy: userIdVal } } as any,
+              );
+            if (res && res.matchedCount) matchedCount += res.matchedCount;
+          } catch (e) {
+            // ignore
+          }
+        }
+      }
     }
 
     if (
@@ -489,10 +585,20 @@ export class AnnouncementsService {
       this.announcementModel &&
       typeof this.announcementModel.updateOne === 'function'
     ) {
-      await this.announcementModel.updateOne(
-        { _id: ann.platformAnnouncementId },
-        { $addToSet: { dismissedBy: userIdVal } },
-      );
+      try {
+        const pId = ann.platformAnnouncementId;
+        const isPObjId = Types.ObjectId.isValid(pId);
+        const pObjId = isPObjId ? new Types.ObjectId(pId) : null;
+        const pQuery: any = pObjId
+          ? { $or: [{ _id: pObjId }, { _id: pId }] }
+          : { _id: pId };
+        await this.announcementModel.updateOne(
+          pQuery,
+          { $addToSet: { dismissedBy: userIdVal } },
+        );
+      } catch (e) {
+        // ignore
+      }
     }
 
     if (matchedCount === 0 && !ann) {

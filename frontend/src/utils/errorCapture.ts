@@ -171,6 +171,88 @@ function interceptGlobalErrors() {
 
 // ── Public API ──
 
+export type ErrorCategory =
+  | 'EXPECTED_AUTH'
+  | 'RECOVERABLE_AUTH'
+  | 'USER_ACTION_ERROR'
+  | 'REAL_APPLICATION_ERROR'
+  | 'NETWORK_TRANSIENT'
+  | 'WEBSOCKET_TRANSIENT'
+  | 'EXTERNAL_BROWSER_NOISE';
+
+export interface CapturedNetworkError {
+  method: string;
+  url: string;
+  status: number;
+  message: string;
+  category: ErrorCategory;
+  timestamp: string;
+}
+
+/**
+ * Explicit classification for network responses to avoid false alerts
+ */
+export function classifyNetworkError({
+  method,
+  url,
+  status,
+  message,
+}: {
+  method?: string;
+  url?: string;
+  status?: number;
+  message?: string;
+}): ErrorCategory {
+  const cleanUrl = url || '';
+  const msg = message || '';
+
+  // 1. Expected auth checks: /auth/me when unauthenticated or session check
+  if (status === 401 && cleanUrl.includes('/auth/me')) {
+    return 'EXPECTED_AUTH';
+  }
+
+  // 2. Expected expired refresh token
+  if (status === 401 && cleanUrl.includes('/auth/refresh-token')) {
+    return 'EXPECTED_AUTH';
+  }
+
+  // 3. Recoverable auth: 401 on regular endpoints (refreshed by Axios interceptor)
+  if (status === 401) {
+    return 'RECOVERABLE_AUTH';
+  }
+
+  // 4. User action errors: validation, duplicate entry, client input
+  if (status === 400 || status === 409 || status === 422) {
+    return 'USER_ACTION_ERROR';
+  }
+
+  // 5. Expected 404s (e.g., username availability checks)
+  if (status === 404 && (cleanUrl.includes('/availability') || cleanUrl.includes('/check-username'))) {
+    return 'USER_ACTION_ERROR';
+  }
+
+  // 6. WebSocket transient connection/upgrade probe noise
+  if (cleanUrl.includes('/socket.io/') || msg.includes('websocket') || msg.includes('Socket.IO')) {
+    return 'WEBSOCKET_TRANSIENT';
+  }
+
+  // 7. Network transients: timeout, aborts, offline
+  if (
+    status === 0 ||
+    status === 408 ||
+    status === 504 ||
+    msg.includes('timeout') ||
+    msg.includes('Network Error') ||
+    msg.includes('ERR_NETWORK') ||
+    msg.includes('ECONNABORTED')
+  ) {
+    return 'NETWORK_TRANSIENT';
+  }
+
+  // 8. Real application failure: 5xx, or unexpected server responses
+  return 'REAL_APPLICATION_ERROR';
+}
+
 /**
  * Initialize global error capture. Call once at app startup.
  */
@@ -184,12 +266,34 @@ export function initErrorCapture() {
 /**
  * Push a network error (called from api.ts interceptor).
  */
-export function captureNetworkError({ method, url, status, message }: { method?: string; url?: string; status?: number; message?: string }) {
+export function captureNetworkError({
+  method,
+  url,
+  status,
+  message,
+  category,
+}: {
+  method?: string;
+  url?: string;
+  status?: number;
+  message?: string;
+  category?: ErrorCategory;
+}) {
+  const resolvedCategory =
+    category ||
+    classifyNetworkError({
+      method,
+      url,
+      status,
+      message,
+    });
+
   pushWithLimit(networkErrors, {
     method: method || 'UNKNOWN',
     url: url || '',
     status: status || 0,
     message: message || 'Network error',
+    category: resolvedCategory,
     timestamp: now(),
   });
 }
@@ -215,15 +319,20 @@ export function getErrorCount() {
 }
 
 /**
- * Get count of significant errors only (excludes console warnings).
+ * Get count of significant errors only.
+ * Excludes console warnings, routine expected auth events, recovered 401s,
+ * user validation errors, and transient websocket probes.
  * Use this to determine whether to show the troubleshoot badge.
  */
 export function getSignificantErrorCount() {
-  return consoleErrors.length + networkErrors.length + unhandledErrors.length;
+  const significantNetworkErrors = networkErrors.filter(
+    (e) => !e.category || e.category === 'REAL_APPLICATION_ERROR'
+  );
+  return consoleErrors.length + significantNetworkErrors.length + unhandledErrors.length;
 }
 
 /**
- * Check if there are any significant errors captured (excludes warnings).
+ * Check if there are any significant errors captured (excludes warnings and benign auth).
  */
 export function hasErrors() {
   return getSignificantErrorCount() > 0;
