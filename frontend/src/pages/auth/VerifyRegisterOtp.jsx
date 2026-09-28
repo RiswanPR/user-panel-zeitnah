@@ -1,4 +1,4 @@
-import { useContext, useState, useRef } from "react";
+import { useContext, useEffect, useState, useRef } from "react";
 import api from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -18,20 +18,64 @@ function VerifyRegisterOtp() {
   const [success, setSuccess] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingPayload, setPendingPayload] = useState(null);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [pageReady, setPageReady] = useState(false);
 
   const inputsRef = useRef([]);
+  const stageRef = useRef(null);
+
   const name = storage.getItem("register_name") || "";
   const email = storage.getItem("register_email") || "";
-  const maskedEmail = email.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + "*".repeat(b.length) + c);
+
+  const maskedEmail = email.replace(
+    /(.{2})(.*)(@.*)/,
+    (_, a, b, c) => a + "*".repeat(b.length) + c
+  );
+
+  // Subtle cursor-reactive atmosphere
+  useEffect(() => {
+    setPageReady(true);
+  }, []);
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const handlePointerMove = (event) => {
+      const rect = stage.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 100;
+      const y = ((event.clientY - rect.top) / rect.height) * 100;
+
+      stage.style.setProperty("--mouse-x", `${x}%`);
+      stage.style.setProperty("--mouse-y", `${y}%`);
+    };
+
+    const resetPointer = () => {
+      stage.style.setProperty("--mouse-x", "56%");
+      stage.style.setProperty("--mouse-y", "35%");
+    };
+
+    stage.addEventListener("pointermove", handlePointerMove);
+    stage.addEventListener("pointerleave", resetPointer);
+
+    return () => {
+      stage.removeEventListener("pointermove", handlePointerMove);
+      stage.removeEventListener("pointerleave", resetPointer);
+    };
+  }, []);
 
   // Per-box OTP input focus matrix
   const handleBoxChange = (index, value) => {
     if (!/^\d*$/.test(value)) return;
+
     const updated = [...otp];
     updated[index] = value.slice(-1);
     setOtp(updated);
     setError("");
-    if (value && index < 5) inputsRef.current[index + 1]?.focus();
+
+    if (value && index < 5) {
+      inputsRef.current[index + 1]?.focus();
+    }
   };
 
   const handleBoxKeyDown = (index, e) => {
@@ -42,19 +86,34 @@ function VerifyRegisterOtp() {
 
   const handleBoxPaste = (e) => {
     e.preventDefault();
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+
+    const pasted = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, 6);
+
     if (!pasted) return;
+
     const updated = [...otp];
-    pasted.split("").forEach((char, i) => { if (i < 6) updated[i] = char; });
+
+    pasted.split("").forEach((char, i) => {
+      if (i < 6) updated[i] = char;
+    });
+
     setOtp(updated);
-    inputsRef.current[Math.min(pasted.length, 5)]?.focus();
+    setError("");
+    inputsRef.current[Math.min(pasted.length - 1, 5)]?.focus();
   };
 
   const otpString = otp.join("");
+  const isComplete = otpString.length === 6;
+  const completedCount = otp.filter(Boolean).length;
+  const progress = (completedCount / 6) * 100;
 
   const buildPayload = async (force = false) => {
     const deviceId = await getDeviceId();
     const parser = new UAParser();
+
     return {
       name,
       email,
@@ -69,28 +128,36 @@ function VerifyRegisterOtp() {
 
   const finalizeRegister = (res) => {
     storage.setAccessToken(res.data.token);
+
     if (res.data.refreshToken) {
       storage.setRefreshToken(res.data.refreshToken);
     }
+
     if (res.data.sessionExpiresAt) {
       storage.setSessionExpiresAt(res.data.sessionExpiresAt);
     }
+
     setUser(res.data.user);
     storage.removeItem("register_name");
     storage.removeItem("register_email");
-    setSuccess("Account created! Redirecting…");
+
+    setSuccess("Your identity is verified. Welcome to Zeitnah.");
+
     setTimeout(() => navigate("/courses"), 1200);
   };
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
+
     if (otpString.length < 6) {
       setError("Please enter the complete 6-digit OTP.");
       return;
     }
+
     try {
       setLoading(true);
       setError("");
+
       const payload = await buildPayload();
       const res = await api.post("/auth/register/verify-otp", payload);
 
@@ -100,6 +167,7 @@ function VerifyRegisterOtp() {
         setLoading(false);
         return;
       }
+
       finalizeRegister(res);
     } catch (err) {
       if (err.isCancelled) return;
@@ -111,10 +179,17 @@ function VerifyRegisterOtp() {
 
   const handleConfirmReplace = async (confirmed) => {
     setShowConfirm(false);
+
     if (!confirmed) return;
+
     try {
       setLoading(true);
-      const res = await api.post("/auth/register/verify-otp", { ...pendingPayload, forceLogin: true });
+
+      const res = await api.post("/auth/register/verify-otp", {
+        ...pendingPayload,
+        forceLogin: true,
+      });
+
       finalizeRegister(res);
     } catch (err) {
       if (err.isCancelled) return;
@@ -125,172 +200,730 @@ function VerifyRegisterOtp() {
   };
 
   return (
-    <div className="auth-page selection:bg-[#f6ed4a] selection:text-[#07192a] text-white flex flex-col items-center justify-center px-4 py-12">
-
-      {/* Premium Background */}
+    <div
+      ref={stageRef}
+      className="relative min-h-screen overflow-hidden bg-[#050811] text-white selection:bg-[#f6ed4a] selection:text-[#07192a]"
+      style={{
+        "--mouse-x": "56%",
+        "--mouse-y": "35%",
+      }}
+    >
       <AuthPremiumBackground />
 
-      {/* DEVICE REPLACE CONFIRM MODAL */}
+      {/* Cinematic atmosphere */}
+      <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden">
+        <div
+          className="absolute -inset-[18%] opacity-80 transition-[background] duration-300"
+          style={{
+            background:
+              "radial-gradient(650px circle at var(--mouse-x) var(--mouse-y), rgba(246,237,74,0.08), transparent 57%)",
+          }}
+        />
+
+        <div className="absolute right-[3%] top-[-10%] h-[35rem] w-[35rem] rounded-full bg-[#9fd5b2]/[0.065] blur-[140px] animate-[pulse_10s_ease-in-out_infinite]" />
+        <div className="absolute left-[-10%] bottom-[-12%] h-[39rem] w-[39rem] rounded-full bg-[#7c6cff]/[0.095] blur-[155px] animate-[pulse_12s_ease-in-out_infinite]" />
+        <div className="absolute left-[34%] top-[18%] h-[20rem] w-[20rem] rounded-full bg-[#38bdf8]/[0.035] blur-[115px]" />
+
+        <div
+          className="absolute inset-0 opacity-[0.05]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.18) 1px, transparent 1px)",
+            backgroundSize: "72px 72px",
+            maskImage:
+              "radial-gradient(circle at center, black 8%, transparent 80%)",
+            WebkitMaskImage:
+              "radial-gradient(circle at center, black 8%, transparent 80%)",
+          }}
+        />
+
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_8%,rgba(2,6,12,0.18)_54%,rgba(2,6,12,0.80)_100%)]" />
+
+        <div
+          className="absolute inset-0 opacity-[0.03] mix-blend-screen"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.65'/%3E%3C/svg%3E\")",
+          }}
+        />
+      </div>
+
+      {/* Device replacement modal */}
       {showConfirm && (
-        <div className="auth-modal-overlay">
-          <div className="auth-modal-card flex flex-col">
-            <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4 text-amber-400">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-              </svg>
-            </div>
-            <h3 className="text-white font-heading font-black text-base mb-2">Replace existing device?</h3>
-            <p className="text-white/40 text-xs font-medium mb-6 leading-relaxed">
-              You've reached your device limit. Continuing will sign out your oldest registered device profile.
-            </p>
-            <div className="flex gap-3 w-full">
-              <button
-                onClick={() => handleConfirmReplace(false)}
-                className="flex-1 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider text-white/55 border border-white/[0.08] hover:border-white/20 hover:text-white transition-all duration-200 cursor-pointer bg-transparent"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleConfirmReplace(true)}
-                className="auth-premium-btn"
-                style={{ flex: 1, padding: "0.625rem" }}
-              >
-                Replace
-              </button>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#02050a]/78 px-5 backdrop-blur-xl">
+          <div
+            className="relative w-full max-w-[420px] overflow-hidden rounded-[28px] border border-amber-300/15 bg-[linear-gradient(145deg,rgba(255,255,255,0.09),rgba(255,255,255,0.025))] p-[1px] shadow-[0_35px_120px_rgba(0,0,0,0.65)]"
+            style={{
+              animation:
+                "authModalIn 0.45s cubic-bezier(0.16,1,0.3,1)",
+            }}
+          >
+            <div className="relative overflow-hidden rounded-[27px] bg-[#080f17]/95 px-6 py-7 sm:px-8">
+              <div className="absolute right-0 top-0 h-36 w-36 rounded-full bg-amber-400/[0.06] blur-[70px]" />
+
+              <div className="relative">
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-[15px] border border-amber-400/20 bg-amber-400/[0.07] text-amber-300">
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                    />
+                  </svg>
+                </div>
+
+                <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.26em] text-amber-300/65">
+                  Device security
+                </p>
+
+                <h3 className="font-heading text-[1.55rem] font-black leading-tight tracking-[-0.03em] text-white">
+                  Replace existing device?
+                </h3>
+
+                <p className="mt-3 text-[12px] font-medium leading-5 text-white/38">
+                  You've reached your device limit. Continuing will sign out
+                  your oldest registered device profile.
+                </p>
+
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleConfirmReplace(false)}
+                    className="h-11 rounded-[14px] border border-white/[0.08] bg-white/[0.02] text-[9px] font-black uppercase tracking-[0.18em] text-white/45 transition-all duration-300 hover:border-white/15 hover:bg-white/[0.04] hover:text-white"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleConfirmReplace(true)}
+                    disabled={loading}
+                    className="h-11 rounded-[14px] border border-[#f6ed4a]/25 bg-[#f6ed4a] text-[9px] font-black uppercase tracking-[0.18em] text-[#07111a] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_15px_35px_rgba(246,237,74,0.14)] disabled:opacity-70"
+                  >
+                    Replace device
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* CORE FORM CARD */}
-      <div className="relative w-full max-w-md z-10 flex flex-col items-center">
-        <div className="w-full auth-glass-card px-6 sm:px-8 py-10 auth-animate-in-scale overflow-hidden flex flex-col">
-
-          {/* Logo */}
-          <div className="auth-logo-container mx-auto mb-7 auth-animate-in auth-stagger-1">
-            <img src="/zeitnah-logo.png" alt="Zeitnah Logo" className="w-full h-full object-cover" />
-          </div>
-
-          {/* Verification Icon + Heading */}
-          <div className="text-center mb-8 w-full flex flex-col items-center auth-animate-in auth-stagger-2">
-            <div className="w-12 h-12 rounded-2xl bg-[#9fd5b2]/8 border border-[#9fd5b2]/15 flex items-center justify-center mb-4">
-              <svg className="w-5 h-5 text-[#9fd5b2]" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-heading font-black text-white tracking-tight mb-2">
-              Verify your email
-            </h1>
-            <p className="text-sm text-white/40 font-medium">
-              Almost there{name ? <>, <span className="text-white/60 font-semibold">{name.split(" ")[0]}</span>!</> : "!"}  We sent a code to
-            </p>
-            <p className="text-sm text-[#9fd5b2] font-semibold mt-1 tracking-wide break-all px-2">
-              {maskedEmail}
-            </p>
-          </div>
-
-          <form onSubmit={handleVerifyOtp} className="w-full flex flex-col">
-
-            {/* OTP Input Grid */}
-            <div
-              className="flex gap-2 sm:gap-2.5 justify-center mb-7 w-full auth-animate-in auth-stagger-3"
-              onPaste={handleBoxPaste}
-            >
-              {otp.map((digit, i) => (
-                <input
-                  key={i}
-                  ref={(el) => (inputsRef.current[i] = el)}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handleBoxChange(i, e.target.value)}
-                  onKeyDown={(e) => handleBoxKeyDown(i, e)}
-                  className={`auth-otp-box ${error ? "has-error" : digit ? "has-value" : ""}`}
-                  style={{
-                    animationName: "authOtpBoxIn",
-                    animationDuration: "0.4s",
-                    animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
-                    animationFillMode: "both",
-                    animationDelay: `${0.15 + i * 0.06}s`,
-                  }}
-                />
-              ))}
-            </div>
-
-            {/* Error Alert */}
-            {error && (
-              <div className="mb-5 auth-error-alert w-full">
-                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                </svg>
-                <p className="leading-tight">{error}</p>
-              </div>
-            )}
-
-            {/* Success Alert */}
-            {success && (
-              <div className="mb-5 auth-success-alert w-full">
-                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p className="leading-tight">{success}</p>
-              </div>
-            )}
-
-            {/* Verify Button */}
-            <div className="auth-animate-in auth-stagger-4">
-              <button
-                type="submit"
-                disabled={loading || otpString.length < 6}
-                className="auth-premium-btn"
-              >
-                {loading ? (
-                  <>
-                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Verifying…
-                  </>
-                ) : (
-                  <>
-                    Complete Registration
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                    </svg>
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-
-          {/* Step Progress Indicator */}
-          <div className="flex items-center justify-center gap-2 mt-7 auth-animate-in auth-stagger-5">
-            <div className="auth-step-dot auth-step-dot-inactive" />
-            <div className="auth-step-dot auth-step-dot-active" />
-          </div>
-          <p className="text-center text-[10px] uppercase font-bold tracking-widest text-white/25 mt-2.5 auth-animate-in auth-stagger-5">
-            Step 2 of 2 — Email verification
-          </p>
-
-          {/* Divider */}
-          <div className="auth-divider mt-6 mb-5 auth-animate-in auth-stagger-6" />
-
-          {/* Back Link */}
-          <div className="text-center w-full auth-animate-in auth-stagger-7">
+      <main className="relative z-10 flex min-h-screen w-full items-center justify-center px-5 py-8 sm:px-8">
+        <div
+          className={`w-full max-w-[980px] transition-all duration-1000 ${pageReady
+              ? "translate-y-0 opacity-100"
+              : "translate-y-4 opacity-0"
+            }`}
+        >
+          {/* Desktop top rail */}
+          <div className="mb-4 hidden items-center justify-between px-1 lg:flex">
             <button
+              type="button"
               onClick={() => navigate("/register")}
-              className="auth-link-btn mx-auto"
+              className="group flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.2em] text-white/24 transition-colors duration-300 hover:text-white/60"
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-              </svg>
-              Back to register
+              <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.07] bg-white/[0.02] transition-transform duration-300 group-hover:-translate-x-0.5">
+                <svg
+                  className="h-3 w-3"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+                  />
+                </svg>
+              </span>
+              Back to registration
             </button>
+
+            <div className="flex items-center gap-2 rounded-full border border-white/[0.07] bg-white/[0.025] px-3 py-1.5 backdrop-blur-xl">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#9fd5b2] shadow-[0_0_10px_rgba(159,213,178,0.8)]" />
+              <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-white/25">
+                Secure identity verification
+              </span>
+            </div>
+          </div>
+
+          {/* Main shell */}
+          <div className="relative overflow-hidden rounded-[32px] border border-white/[0.10] bg-[linear-gradient(145deg,rgba(255,255,255,0.085),rgba(255,255,255,0.025))] p-[1px] shadow-[0_35px_120px_rgba(0,0,0,0.5)] backdrop-blur-2xl">
+            <div
+              className="pointer-events-none absolute inset-0 rounded-[32px]"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(255,255,255,0.20), transparent 30%, transparent 68%, rgba(246,237,74,0.12))",
+              }}
+            />
+
+            <div className="relative overflow-hidden rounded-[31px] bg-[#071019]/89">
+              <div className="grid lg:grid-cols-[0.85fr_1.15fr]">
+                {/* Registration progress / context rail */}
+                <aside className="relative hidden overflow-hidden border-r border-white/[0.07] bg-white/[0.018] px-8 py-9 lg:flex lg:flex-col lg:justify-between xl:px-10">
+                  <div>
+                    <div className="mb-8 flex items-center gap-3">
+                      <div className="relative h-10 w-10 overflow-hidden rounded-[13px] border border-white/10 bg-white/[0.06]">
+                        <img
+                          src="/zeitnah-logo.png"
+                          alt="Zeitnah Logo"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="font-heading text-[13px] font-black uppercase tracking-[0.2em]">
+                          Zeitnah
+                        </div>
+                        <div className="mt-1 text-[8px] font-bold uppercase tracking-[0.22em] text-[#9fd5b2]/65">
+                          Learning platform
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-[20px] border border-[#f6ed4a]/10 bg-[#f6ed4a]/[0.025] p-5">
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-[9px] bg-[#f6ed4a]/10 text-[#f6ed4a]">
+                          <svg
+                            className="h-3.5 w-3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 3l7 3v5c0 4.4-2.8 8-7 10-4.2-2-7-5.6-7-10V6l7-3z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M9 12.5l2 2 4-4"
+                            />
+                          </svg>
+                        </span>
+                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[#f6ed4a]/75">
+                          Final checkpoint
+                        </span>
+                      </div>
+
+                      <div className="mt-5">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/24">
+                          Creating identity for
+                        </div>
+                        <div className="mt-2 truncate text-sm font-semibold text-white/70">
+                          {name || "New learner"}
+                        </div>
+                        <div className="mt-1 truncate text-[10px] font-medium text-white/25">
+                          {maskedEmail || "your email"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-7">
+                      {[
+                        {
+                          title: "Your details",
+                          text: "Profile information received",
+                          done: true,
+                        },
+                        {
+                          title: "Email verification",
+                          text: "Confirm your email address",
+                          active: true,
+                        },
+                        {
+                          title: "Welcome to Zeitnah",
+                          text: "Open your learning space",
+                          done: false,
+                        },
+                      ].map((item, index) => (
+                        <div key={item.title} className="relative flex gap-3">
+                          <div className="relative flex flex-col items-center">
+                            <div
+                              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[9px] font-black ${item.done
+                                  ? "border-[#9fd5b2]/20 bg-[#9fd5b2]/10 text-[#9fd5b2]"
+                                  : item.active
+                                    ? "border-[#f6ed4a]/30 bg-[#f6ed4a]/10 text-[#f6ed4a]"
+                                    : "border-white/[0.08] bg-white/[0.025] text-white/20"
+                                }`}
+                            >
+                              {item.done ? (
+                                <svg
+                                  className="h-3 w-3"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.5"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M5 12.5l4 4L19 7.5"
+                                  />
+                                </svg>
+                              ) : (
+                                index + 1
+                              )}
+                            </div>
+
+                            {index !== 2 && (
+                              <div className="my-1 h-8 w-px bg-white/[0.07]" />
+                            )}
+                          </div>
+
+                          <div className="pb-4 pt-0.5">
+                            <div className="text-[10px] font-black uppercase tracking-[0.14em] text-white/48">
+                              {item.title}
+                            </div>
+                            <div className="mt-1 text-[9px] font-medium text-white/22">
+                              {item.text}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-[16px] border border-white/[0.06] bg-white/[0.018] px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <svg
+                        className="h-3.5 w-3.5 text-[#38bdf8]/55"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 21a9 9 0 100-18 9 9 0 000 18z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 8v4l2.5 2.5"
+                        />
+                      </svg>
+                      <span className="text-[8px] font-bold uppercase tracking-[0.16em] text-white/25">
+                        One final step
+                      </span>
+                    </div>
+                  </div>
+                </aside>
+
+                {/* Main verification panel */}
+                <section className="flex flex-col items-center px-5 py-8 sm:px-10 sm:py-10 xl:px-14 xl:py-12">
+                  {/* Mobile brand */}
+                  <div className="mb-6 flex items-center gap-3 lg:hidden">
+                    <div className="relative h-10 w-10 overflow-hidden rounded-[13px] border border-white/10 bg-white/[0.06]">
+                      <img
+                        src="/zeitnah-logo.png"
+                        alt="Zeitnah Logo"
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="font-heading text-[13px] font-black uppercase tracking-[0.2em]">
+                        Zeitnah
+                      </div>
+                      <div className="mt-1 text-[8px] font-bold uppercase tracking-[0.22em] text-[#9fd5b2]/65">
+                        Learning platform
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mb-7 flex w-full max-w-[470px] items-center justify-between">
+                    <div className="flex items-center gap-2 rounded-full border border-[#f6ed4a]/10 bg-[#f6ed4a]/[0.035] px-3 py-1.5">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#f6ed4a] shadow-[0_0_10px_rgba(246,237,74,0.75)]" />
+                      <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[#f6ed4a]/65">
+                        Almost there
+                      </span>
+                    </div>
+
+                    <span className="text-[8px] font-mono tracking-[0.14em] text-white/18">
+                      ZH / ONBOARD / 04
+                    </span>
+                  </div>
+
+                  {/* Verification icon */}
+                  <div className="relative mb-6 flex h-[78px] w-[78px] items-center justify-center">
+                    <div className="absolute inset-0 animate-[pulse_3s_ease-in-out_infinite] rounded-full border border-[#f6ed4a]/10 bg-[#f6ed4a]/[0.025]" />
+                    <div className="absolute inset-2 rounded-full border border-[#9fd5b2]/12" />
+                    <div className="absolute inset-[14px] rounded-[16px] border border-[#9fd5b2]/15 bg-[#9fd5b2]/[0.07] text-[#9fd5b2] shadow-[0_0_38px_rgba(159,213,178,0.08)] flex items-center justify-center">
+                      <svg
+                        className="h-6 w-6"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+
+                  <div className="w-full max-w-[470px] text-center">
+                    <p className="mb-3 text-[9px] font-bold uppercase tracking-[0.28em] text-[#9fd5b2]/70">
+                      Confirm your identity
+                    </p>
+
+                    <h1 className="font-heading text-[2.25rem] font-black leading-none tracking-[-0.05em] text-white sm:text-[2.75rem]">
+                      One last step.
+                      <span className="block text-white/40">
+                        Make it official.
+                      </span>
+                    </h1>
+
+                    <p className="mx-auto mt-5 max-w-[390px] text-[12px] font-medium leading-5 text-white/34 sm:text-[13px]">
+                      Almost there
+                      {name ? (
+                        <>
+                          ,{" "}
+                          <span className="font-semibold text-white/62">
+                            {name.split(" ")[0]}
+                          </span>
+                        </>
+                      ) : null}
+                      . Enter the six-digit code sent to your email.
+                    </p>
+
+                    <div className="mx-auto mt-3 inline-flex max-w-full items-center gap-2 rounded-full border border-white/[0.07] bg-white/[0.025] px-3.5 py-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#9fd5b2]/80" />
+                      <span className="max-w-[270px] truncate text-[11px] font-semibold tracking-wide text-[#9fd5b2]/85">
+                        {maskedEmail || "your email"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <form
+                    onSubmit={handleVerifyOtp}
+                    className="mt-8 flex w-full flex-col items-center"
+                  >
+                    <div className="w-full max-w-[470px]">
+                      <div className="mb-3 flex items-center justify-between px-1">
+                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/22">
+                          Verification code
+                        </span>
+                        <span className="text-[8px] font-bold tracking-[0.16em] text-white/22">
+                          {completedCount}/6 complete
+                        </span>
+                      </div>
+
+                      <div
+                        className={`relative rounded-[24px] border p-3 sm:p-4 ${error
+                            ? "border-red-400/20 bg-red-400/[0.025]"
+                            : isComplete
+                              ? "border-[#9fd5b2]/18 bg-[#9fd5b2]/[0.025]"
+                              : "border-white/[0.07] bg-white/[0.018]"
+                          }`}
+                      >
+                        <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.11] to-transparent" />
+
+                        <div
+                          className="flex w-full justify-between gap-2 sm:gap-3"
+                          onPaste={handleBoxPaste}
+                        >
+                          {otp.map((digit, i) => (
+                            <div
+                              key={i}
+                              className="relative flex-1"
+                              style={{
+                                animation:
+                                  "authOtpBoxIn 0.55s cubic-bezier(0.16,1,0.3,1) both",
+                                animationDelay: `${0.1 + i * 0.055}s`,
+                              }}
+                            >
+                              <input
+                                ref={(el) => (inputsRef.current[i] = el)}
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={1}
+                                value={digit}
+                                aria-label={`OTP digit ${i + 1}`}
+                                onChange={(e) =>
+                                  handleBoxChange(i, e.target.value)
+                                }
+                                onKeyDown={(e) => handleBoxKeyDown(i, e)}
+                                onFocus={() => setFocusedIndex(i)}
+                                onBlur={() => setFocusedIndex(-1)}
+                                className={`h-[64px] w-full rounded-[16px] border bg-white/[0.025] text-center font-mono text-xl font-black outline-none transition-all duration-300 sm:h-[72px] sm:rounded-[18px] sm:text-2xl ${error
+                                    ? "border-red-400/25 text-red-100"
+                                    : focusedIndex === i
+                                      ? "border-[#f6ed4a]/45 bg-[#f6ed4a]/[0.045] text-white shadow-[0_0_0_4px_rgba(246,237,74,0.03),0_12px_35px_rgba(0,0,0,0.13)]"
+                                      : digit
+                                        ? "border-[#9fd5b2]/20 bg-[#9fd5b2]/[0.04] text-white"
+                                        : "border-white/[0.07] text-white"
+                                  }`}
+                              />
+
+                              {focusedIndex === i && (
+                                <span className="pointer-events-none absolute inset-x-3 bottom-1.5 h-px rounded-full bg-[#f6ed4a] shadow-[0_0_10px_rgba(246,237,74,0.7)]" />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="mt-4 h-1 overflow-hidden rounded-full bg-white/[0.05]">
+                          <div
+                            className="h-full rounded-full bg-[#9fd5b2] transition-all duration-500"
+                            style={{
+                              width: `${progress}%`,
+                              boxShadow:
+                                "0 0 14px rgba(159,213,178,0.45)",
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {error && (
+                        <div className="mt-3 flex items-start gap-2.5 rounded-[14px] border border-red-400/15 bg-red-400/[0.045] px-3.5 py-3 text-[10px] font-medium leading-4 text-red-200/75">
+                          <svg
+                            className="mt-0.5 h-3.5 w-3.5 shrink-0"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+                            />
+                          </svg>
+                          <p>{error}</p>
+                        </div>
+                      )}
+
+                      {success && (
+                        <div className="mt-3 flex items-start gap-2.5 rounded-[14px] border border-[#9fd5b2]/15 bg-[#9fd5b2]/[0.045] px-3.5 py-3 text-[10px] font-medium leading-4 text-[#c9efda]/80">
+                          <svg
+                            className="mt-0.5 h-3.5 w-3.5 shrink-0"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          <p>{success}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* CTA */}
+                    <div className="mt-6 w-full max-w-[470px]">
+                      <button
+                        type="submit"
+                        disabled={loading || otpString.length < 6}
+                        className="group relative h-[60px] w-full overflow-hidden rounded-[18px] border border-[#f6ed4a]/25 bg-[#f6ed4a] text-[#07111a] shadow-[0_18px_50px_rgba(246,237,74,0.12)] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_25px_65px_rgba(246,237,74,0.2)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
+                      >
+                        <span className="absolute inset-y-0 left-[-30%] w-[35%] -skew-x-[18deg] bg-white/45 blur-md transition-all duration-700 group-hover:left-[105%]" />
+
+                        <span className="relative flex h-full items-center justify-center gap-3 text-[10px] font-black uppercase tracking-[0.2em]">
+                          {loading ? (
+                            <>
+                              <svg
+                                className="h-4 w-4 animate-spin"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                />
+                                <path
+                                  className="opacity-80"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                                />
+                              </svg>
+                              Creating your account…
+                            </>
+                          ) : (
+                            <>
+                              Complete registration
+                              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#07111a]/8 transition-transform duration-500 group-hover:translate-x-0.5">
+                                <svg
+                                  className="h-3.5 w-3.5"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.5"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                                  />
+                                </svg>
+                              </span>
+                            </>
+                          )}
+                        </span>
+                      </button>
+                    </div>
+                  </form>
+
+                  {/* Final-step status */}
+                  <div className="mt-6 grid w-full max-w-[470px] grid-cols-3 gap-2">
+                    {[
+                      {
+                        icon: "check",
+                        title: "Details",
+                        done: true,
+                      },
+                      {
+                        icon: "shield",
+                        title: "Verified",
+                        done: isComplete,
+                      },
+                      {
+                        icon: "spark",
+                        title: "Welcome",
+                        done: false,
+                      },
+                    ].map((item) => (
+                      <div
+                        key={item.title}
+                        className={`min-h-[52px] rounded-[14px] border px-2 flex items-center justify-center gap-2 ${item.done
+                            ? "border-[#9fd5b2]/12 bg-[#9fd5b2]/[0.035]"
+                            : "border-white/[0.055] bg-white/[0.018]"
+                          }`}
+                      >
+                        <span
+                          className={`flex h-6 w-6 items-center justify-center rounded-[8px] ${item.done
+                              ? "bg-[#9fd5b2]/10 text-[#9fd5b2]"
+                              : "bg-white/[0.03] text-white/20"
+                            }`}
+                        >
+                          {item.icon === "check" && (
+                            <svg
+                              className="h-3 w-3"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.5"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M5 12.5l4 4L19 7.5"
+                              />
+                            </svg>
+                          )}
+
+                          {item.icon === "shield" && (
+                            <svg
+                              className="h-3 w-3"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.8"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M12 3l7 3v5c0 4.4-2.8 8-7 10-4.2-2-7-5.6-7-10V6l7-3z"
+                              />
+                            </svg>
+                          )}
+
+                          {item.icon === "spark" && (
+                            <svg
+                              className="h-3 w-3"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.8"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"
+                              />
+                            </svg>
+                          )}
+                        </span>
+
+                        <span className="text-[8px] font-black uppercase tracking-[0.12em] text-white/25">
+                          {item.title}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Step indicator */}
+                  <div className="mt-7 flex items-center justify-center gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-[#9fd5b2]" />
+                    <div className="h-1.5 w-7 rounded-full bg-[#f6ed4a] shadow-[0_0_10px_rgba(246,237,74,0.28)]" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-white/10" />
+                  </div>
+
+                  <p className="mt-3 text-center text-[8px] font-bold uppercase tracking-[0.2em] text-white/18">
+                    Step 2 of 3 • Email verification
+                  </p>
+
+                  <div className="mt-6 flex w-full max-w-[470px] items-center gap-3">
+                    <div className="h-px flex-1 bg-white/[0.06]" />
+                    <span className="text-[8px] font-bold uppercase tracking-[0.22em] text-white/14">
+                      Your code is private & one-time
+                    </span>
+                    <div className="h-px flex-1 bg-white/[0.06]" />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => navigate("/register")}
+                    className="group mt-5 flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.18em] text-white/28 transition-colors duration-300 hover:text-white/65"
+                  >
+                    <svg
+                      className="h-3 w-3 transition-transform duration-300 group-hover:-translate-x-0.5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+                      />
+                    </svg>
+                    Change details
+                  </button>
+                </section>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 text-center text-[8px] font-bold uppercase tracking-[0.2em] text-white/12">
+            Zeitnah secure onboarding
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
