@@ -47,13 +47,13 @@ export default function MainNavbar({
   const userInitials =
     user?.name?.trim()
       ? user.name
-          .trim()
-          .split(/\s+/)
-          .map((n) => n[0])
-          .filter(Boolean)
-          .join("")
-          .slice(0, 2)
-          .toUpperCase() || "Z"
+        .trim()
+        .split(/\s+/)
+        .map((n) => n[0])
+        .filter(Boolean)
+        .join("")
+        .slice(0, 2)
+        .toUpperCase() || "Z"
       : "Z";
 
   // Global Cmd+K / Ctrl+K shortcut to open Quick Search
@@ -126,12 +126,12 @@ export default function MainNavbar({
         icon: BookOpen,
         highlight: true,
       },
-      {
-        key: "learning",
-        path: "/my-learning",
-        label: "My Learning",
-        icon: GraduationCap,
-      },
+      // {
+      //   key: "learning",
+      //   path: "/my-learning",
+      //   label: "My Learning",
+      //   icon: GraduationCap,
+      // },
       {
         key: "network",
         path: "/network",
@@ -196,14 +196,14 @@ export default function MainNavbar({
       },
       ...(isBusinessRole
         ? [
-            {
-              key: "manage-business",
-              path: "/manage-business",
-              label: "Manage Business",
-              icon: Building2,
-              desc: "Hiring dashboard, team management",
-            },
-          ]
+          {
+            key: "manage-business",
+            path: "/manage-business",
+            label: "Manage Business",
+            icon: Building2,
+            desc: "Hiring dashboard, team management",
+          },
+        ]
         : []),
     ],
     [isBusinessRole, unreadOpportunitiesCount]
@@ -270,11 +270,10 @@ export default function MainNavbar({
                       key={item.key}
                       to={item.path}
                       aria-current={active ? "page" : undefined}
-                      className={`relative flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 select-none group focus-ring ${
-                        active
+                      className={`relative flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 select-none group focus-ring ${active
                           ? "text-white font-bold"
                           : "text-text-muted hover:text-white hover:bg-white/[0.04]"
-                      }`}
+                        }`}
                     >
                       {/* Active Indicator Background */}
                       {active && (
@@ -286,11 +285,10 @@ export default function MainNavbar({
                       )}
 
                       <Icon
-                        className={`w-4 h-4 relative z-10 transition-colors ${
-                          active
+                        className={`w-4 h-4 relative z-10 transition-colors ${active
                             ? "text-brand-mint"
                             : "text-text-faint group-hover:text-brand-mint/80"
-                        }`}
+                          }`}
                       />
 
                       <span className="relative z-10">{item.label}</span>
@@ -312,20 +310,18 @@ export default function MainNavbar({
                     onClick={() => setIsMoreOpen((prev) => !prev)}
                     aria-expanded={isMoreOpen}
                     aria-haspopup="true"
-                    className={`relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200 select-none group cursor-pointer focus-ring ${
-                      isMoreOpen || isAnyMoreLinkActive
+                    className={`relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200 select-none group cursor-pointer focus-ring ${isMoreOpen || isAnyMoreLinkActive
                         ? "text-white bg-white/[0.06] border border-white/[0.1]"
                         : "text-text-muted hover:text-white hover:bg-white/[0.04]"
-                    }`}
+                      }`}
                   >
                     <span>More</span>
                     {unreadOpportunitiesCount > 0 && (
                       <span className="w-2 h-2 rounded-full bg-brand-mint shadow-sm" />
                     )}
                     <ChevronDown
-                      className={`w-3.5 h-3.5 transition-transform duration-200 text-text-faint group-hover:text-white ${
-                        isMoreOpen ? "rotate-180 text-brand-mint" : ""
-                      }`}
+                      className={`w-3.5 h-3.5 transition-transform duration-200 text-text-faint group-hover:text-white ${isMoreOpen ? "rotate-180 text-brand-mint" : ""
+                        }`}
                     />
                   </button>
 
@@ -349,18 +345,16 @@ export default function MainNavbar({
                                 key={item.key}
                                 to={item.path}
                                 onClick={() => setIsMoreOpen(false)}
-                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
-                                  active
+                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${active
                                     ? "bg-brand-mint/12 text-white font-semibold"
                                     : "text-text-secondary hover:text-white hover:bg-white/[0.04]"
-                                }`}
+                                  }`}
                               >
                                 <div
-                                  className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
-                                    active
+                                  className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${active
                                       ? "bg-brand-mint/20 text-brand-mint"
                                       : "bg-white/[0.03] text-text-muted"
-                                  }`}
+                                    }`}
                                 >
                                   <Icon className="w-3.5 h-3.5" />
                                 </div>
@@ -415,11 +409,10 @@ export default function MainNavbar({
                   position?.rank ? `Leaderboard rank #${position.rank}` : "Global Leaderboard"
                 }
                 title="View Leaderboard"
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all active:scale-95 touch-manipulation focus-ring select-none ${
-                  isRouteActive("leaderboard")
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all active:scale-95 touch-manipulation focus-ring select-none ${isRouteActive("leaderboard")
                     ? "bg-brand-yellow/[0.15] border-brand-yellow/40 text-brand-yellow"
                     : "bg-white/[0.03] border-white/[0.08] hover:border-brand-yellow/30 text-white"
-                }`}
+                  }`}
               >
                 <Trophy className="w-3.5 h-3.5 text-brand-yellow shrink-0" />
                 {position?.rank ? (
@@ -462,9 +455,8 @@ export default function MainNavbar({
                   </span>
 
                   <ChevronDown
-                    className={`hidden lg:block w-3.5 h-3.5 text-text-faint group-hover:text-white transition-transform ${
-                      isProfileOpen ? "rotate-180 text-brand-mint" : ""
-                    }`}
+                    className={`hidden lg:block w-3.5 h-3.5 text-text-faint group-hover:text-white transition-transform ${isProfileOpen ? "rotate-180 text-brand-mint" : ""
+                      }`}
                   />
                 </button>
 
