@@ -1,16 +1,19 @@
-import { useContext } from "react";
+import { useContext, memo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, ArrowRight, Star } from "lucide-react";
+import { Trophy, ArrowRight, Award } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
 import leaderboardService from "../../services/leaderboardService";
+import ZeitnahZMotif from "./ZeitnahZMotif";
 
 /**
- * Compact horizontal standing strip for the Courses page.
- * Placed at the bottom of the page (after all learning content) to provide
- * subtle progress visibility and motivation without dominating course discovery.
+ * CourseStandingStrip
+ *
+ * Achievement and learning standing strip.
+ * Designed with deep navy #12314C, brand mint, and yellow accents.
+ * Minimal typography, oversized rank numerals, clean editorial presence.
  */
-export default function CourseStandingStrip() {
+const CourseStandingStrip = memo(function CourseStandingStrip() {
   const { user } = useContext(AuthContext);
   const currentUserId = user?._id || user?.userId;
 
@@ -31,43 +34,57 @@ export default function CourseStandingStrip() {
   const xpNeeded = position.levelProgress?.pointsNeededForNextLevel;
 
   return (
-    <section aria-label="Your Learning Standing" className="pt-4">
-      <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-r from-bg-card via-bg-surface/80 to-bg-card p-4 sm:p-5 shadow-sm">
-        <div className="gradient-line-top" />
-        <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-brand-yellow/5 blur-2xl" />
+    <section aria-label="Learning Standing & Standings" className="pt-2">
+      <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-r from-[#12314C]/80 via-[#0A0F14] to-[#07090B] p-5 sm:p-7 shadow-xl">
+        {/* Subtle accent hairline */}
+        <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-brand-yellow/30 to-transparent pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          {/* Left: Standing Telemetry */}
-          <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-brand-yellow/10 border border-brand-yellow/25 flex items-center justify-center text-brand-yellow shrink-0 shadow-sm">
-              <Trophy className="w-5 h-5" />
+        {/* Ambient subtle glow */}
+        <div className="pointer-events-none absolute -right-16 -top-16 w-56 h-56 rounded-full bg-brand-yellow/6 blur-[70px]" />
+        <div className="pointer-events-none absolute -left-16 -bottom-16 w-56 h-56 rounded-full bg-brand-mint/6 blur-[70px]" />
+
+        {/* Subtle Z Motif Watermark */}
+        <div className="pointer-events-none absolute right-16 top-1/2 -translate-y-1/2 w-48 h-48 select-none opacity-[0.035]">
+          <ZeitnahZMotif variant="yellow" className="w-full h-full rotate-6" />
+        </div>
+
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          {/* ── Left: Standing Telemetry & Rank ── */}
+          <div className="flex items-center gap-4 sm:gap-5 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-[#12314C] border border-brand-yellow/30 flex items-center justify-center text-brand-yellow shrink-0 shadow-md">
+              <Trophy className="w-6 h-6" />
             </div>
 
-            <div className="min-w-0">
+            <div className="min-w-0 space-y-1">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">
-                  Your Standing
+                <span className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-text-muted">
+                  GLOBAL STANDING
                 </span>
-                <span className="inline-flex items-center gap-0.5 rounded-md bg-brand-mint/10 border border-brand-mint/20 px-1.5 py-0.2 text-[9px] font-mono font-bold text-brand-mint">
-                  <Star className="w-2.5 h-2.5 text-brand-yellow" />
-                  Level {position.level || 1}
+                <span className="inline-flex items-center gap-1 rounded-md bg-brand-mint/10 border border-brand-mint/25 px-2 py-0.5 text-[9px] font-mono font-bold text-brand-mint">
+                  <Award className="w-2.5 h-2.5 text-brand-mint" />
+                  LEVEL {position.level || 1}
                 </span>
               </div>
 
-              <div className="flex items-center gap-2 sm:gap-3 flex-wrap mt-0.5">
-                <span className="font-heading font-black text-base sm:text-lg text-white font-mono">
+              <div className="flex items-baseline gap-3 flex-wrap">
+                <span className="font-heading font-extrabold text-2xl sm:text-3xl text-white font-mono tracking-tight">
                   #{position.rank}
                 </span>
-                <span className="text-white/[0.2] text-xs">•</span>
-                <span className="text-xs font-mono font-bold text-text-secondary">
+                <span className="text-white/20 text-sm">•</span>
+                <span className="text-xs sm:text-sm font-mono font-bold text-text-secondary">
                   {(position.points || 0).toLocaleString()}{" "}
-                  <span className="text-[10px] text-text-muted font-normal">XP</span>
+                  <span className="text-[10px] text-text-muted font-normal uppercase">
+                    XP Telemetry
+                  </span>
                 </span>
                 {xpNeeded && xpNeeded > 0 ? (
                   <>
-                    <span className="text-white/[0.2] text-xs hidden xs:inline">•</span>
-                    <span className="text-xs text-text-muted hidden xs:inline">
-                      <span className="font-semibold text-text-secondary font-mono">{xpNeeded.toLocaleString()} XP</span> to Level {nextLevel}
+                    <span className="text-white/20 text-xs hidden md:inline">•</span>
+                    <span className="text-xs text-text-muted font-mono hidden md:inline">
+                      <span className="text-white font-semibold">
+                        {xpNeeded.toLocaleString()} XP
+                      </span>{" "}
+                      to Level {nextLevel}
                     </span>
                   </>
                 ) : null}
@@ -75,16 +92,18 @@ export default function CourseStandingStrip() {
             </div>
           </div>
 
-          {/* Right: Action CTA */}
+          {/* ── Right: Direct Action CTA ── */}
           <Link
             to="/leaderboard"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs font-semibold text-white hover:bg-white/[0.08] hover:border-white/[0.15] transition-all cursor-pointer shrink-0 self-start sm:self-auto group"
+            className="inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl bg-white/[0.04] border border-white/[0.1] text-xs font-mono font-bold uppercase tracking-wider text-white hover:bg-white/[0.08] hover:border-brand-mint/35 transition-all cursor-pointer shrink-0 self-start sm:self-auto group active:scale-[0.98] shadow-sm"
           >
-            <span>View Leaderboard</span>
-            <ArrowRight className="w-3.5 h-3.5 text-text-muted group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+            <span>View Standings</span>
+            <ArrowRight className="w-3.5 h-3.5 text-text-muted group-hover:text-brand-mint group-hover:translate-x-1 transition-all" />
           </Link>
         </div>
       </div>
     </section>
   );
-}
+});
+
+export default CourseStandingStrip;

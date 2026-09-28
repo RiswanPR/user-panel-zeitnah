@@ -4,9 +4,9 @@ import { Play, Video, CheckCircle2, Lock } from "lucide-react";
  * CourseTypeBadge
  *
  * Renders a visually distinct, restrained badge for course types and statuses.
- * Follows "Calm Premium Technology" design tokens:
- * - "Recording" → Warm amber accent with playback glyph
- * - "Online" / "Live" → Clean mint accent with video glyph
+ * Follows official Zeitnah brand tokens:
+ * - "Recording" → Brand yellow (#F6ED4A) accent with playback glyph
+ * - "Online" / "Live" → Clean mint (#9FD5B2) accent with video glyph
  * - Status states: completed, enrolled, locked
  *
  * @param {string} type        – Course type ("recording" | "online")
@@ -28,7 +28,7 @@ export default function CourseTypeBadge({
     if (s === "completed") {
       return (
         <span
-          className={`inline-flex items-center font-bold uppercase tracking-wider rounded-lg border backdrop-blur-md border-success/25 bg-success/10 text-success ${
+          className={`inline-flex items-center font-mono font-bold uppercase tracking-wider rounded-lg border backdrop-blur-md border-brand-mint/30 bg-brand-mint/15 text-brand-mint ${
             size === "sm"
               ? "px-2 py-0.5 text-[9px] gap-1"
               : size === "lg"
@@ -44,7 +44,7 @@ export default function CourseTypeBadge({
     if (s === "locked") {
       return (
         <span
-          className={`inline-flex items-center font-bold uppercase tracking-wider rounded-lg border backdrop-blur-md border-warning/20 bg-warning/8 text-warning ${
+          className={`inline-flex items-center font-mono font-bold uppercase tracking-wider rounded-lg border backdrop-blur-md border-white/15 bg-white/5 text-text-muted ${
             size === "sm"
               ? "px-2 py-0.5 text-[9px] gap-1"
               : size === "lg"
@@ -60,7 +60,7 @@ export default function CourseTypeBadge({
     if (s === "enrolled") {
       return (
         <span
-          className={`inline-flex items-center font-bold uppercase tracking-wider rounded-lg border backdrop-blur-md border-brand-mint/20 bg-brand-mint/8 text-brand-mint ${
+          className={`inline-flex items-center font-mono font-bold uppercase tracking-wider rounded-lg border backdrop-blur-md border-brand-yellow/30 bg-brand-yellow/15 text-brand-yellow ${
             size === "sm"
               ? "px-2 py-0.5 text-[9px] gap-1"
               : size === "lg"
@@ -74,7 +74,7 @@ export default function CourseTypeBadge({
     }
   }
 
-  const label = isRecording ? "Recorded Class" : "Online Class";
+  const label = isRecording ? "Recorded" : "Online";
   const Icon = isRecording ? Play : Video;
 
   /* ── Size scales ── */
@@ -92,23 +92,23 @@ export default function CourseTypeBadge({
 
   /* ── Colour tokens per type ── */
   const baseClasses = isRecording
-    ? "border-warning/25 bg-warning/10 text-warning"
-    : "border-brand-mint/20 bg-brand-mint/8 text-brand-mint";
+    ? "border-brand-yellow/30 bg-brand-yellow/10 text-brand-yellow"
+    : "border-brand-mint/30 bg-brand-mint/10 text-brand-mint";
 
   const prominentClasses = isRecording
-    ? "border-warning/35 bg-warning/15 text-warning shadow-[0_0_12px_rgba(245,158,11,0.12)]"
-    : "border-brand-mint/30 bg-brand-mint/12 text-brand-mint shadow-[0_0_12px_rgba(159,213,178,0.1)]";
+    ? "border-brand-yellow/40 bg-brand-yellow/15 text-brand-yellow shadow-[0_0_12px_rgba(246,237,74,0.15)]"
+    : "border-brand-mint/40 bg-brand-mint/15 text-brand-mint shadow-[0_0_12px_rgba(159,213,178,0.15)]";
 
   return (
     <span
       className={`
-        inline-flex items-center font-bold uppercase tracking-wider
+        inline-flex items-center font-mono font-bold uppercase tracking-wider
         rounded-lg border backdrop-blur-md
         ${sizeClasses[size]}
         ${prominent ? prominentClasses : baseClasses}
       `}
     >
-      <Icon className={`${iconSizes[size]} shrink-0 ${isRecording ? "fill-current opacity-80" : ""}`} />
+      <Icon className={`${iconSizes[size]} shrink-0 ${isRecording ? "fill-current opacity-90" : ""}`} />
       {label}
     </span>
   );

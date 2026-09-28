@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback, useEffect, memo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import OnlineCourseCard from "./OnlineCourseCard";
@@ -6,14 +6,14 @@ import OnlineCourseCard from "./OnlineCourseCard";
 /**
  * OnlineCourseCarousel
  *
- * Native CSS scroll-snap horizontal carousel for Online Courses.
+ * Native CSS scroll-snap horizontal carousel for Online Classes.
  * - Snap scrolling with partial card peek
  * - Mouse drag + touch swipe + trackpad
  * - Prev/Next accessible buttons with ARIA labels
  * - Keyboard navigation (ArrowLeft / ArrowRight)
  * - Safe from horizontal page overflow
  */
-export default function OnlineCourseCarousel({ courses }) {
+const OnlineCourseCarousel = memo(function OnlineCourseCarousel({ courses }) {
   const trackRef = useRef(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(true);
@@ -29,7 +29,7 @@ export default function OnlineCourseCarousel({ courses }) {
     const firstCard = track.querySelector(".carousel-card");
     if (!firstCard) return 320;
     const style = getComputedStyle(track);
-    const gap = parseFloat(style.gap) || 16;
+    const gap = parseFloat(style.gap) || 20;
     return firstCard.getBoundingClientRect().width + gap;
   }, []);
 
@@ -113,7 +113,7 @@ export default function OnlineCourseCarousel({ courses }) {
 
   return (
     <div className="relative w-full">
-      {/* ── Carousel Header Controls (Desktop) ── */}
+      {/* ── Carousel Header Controls ── */}
       {courses.length > 1 && (
         <div
           className="flex items-center justify-end gap-2 mb-4"
@@ -131,7 +131,7 @@ export default function OnlineCourseCarousel({ courses }) {
             aria-label="Previous online classes"
             disabled={!canPrev}
             onClick={() => scrollBy(-1)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-bg-card border border-white/[0.08] text-white hover:bg-bg-elevated hover:border-brand-mint/30 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer focus-ring"
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0A0F14] border border-white/[0.08] text-white hover:bg-[#101820] hover:border-brand-mint/30 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer focus-ring shadow-sm"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -140,7 +140,7 @@ export default function OnlineCourseCarousel({ courses }) {
             aria-label="Next online classes"
             disabled={!canNext}
             onClick={() => scrollBy(1)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-bg-card border border-white/[0.08] text-white hover:bg-bg-elevated hover:border-brand-mint/30 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer focus-ring"
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0A0F14] border border-white/[0.08] text-white hover:bg-[#101820] hover:border-brand-mint/30 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer focus-ring shadow-sm"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -163,12 +163,12 @@ export default function OnlineCourseCarousel({ courses }) {
         {courses.map((course, i) => (
           <div
             key={course._id}
-            className="carousel-card flex-none w-[calc(85vw-1rem)] sm:w-[320px] md:w-[340px] snap-start"
+            className="carousel-card flex-none w-[calc(85vw-1rem)] sm:w-[320px] md:w-[360px] snap-start"
           >
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.45, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
               className="h-full"
             >
               <OnlineCourseCard course={course} compact />
@@ -202,4 +202,6 @@ export default function OnlineCourseCarousel({ courses }) {
       )}
     </div>
   );
-}
+});
+
+export default OnlineCourseCarousel;

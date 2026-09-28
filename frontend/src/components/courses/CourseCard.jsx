@@ -1,196 +1,193 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { motion } from "framer-motion";
 import {
   BookOpen,
   CheckCircle2,
   HelpCircle,
   Play,
-  TrendingUp,
-  Video,
+  ArrowRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { getCourseTypeLabel, getUploadUrl } from "../../utils/courseUi";
-import CourseEnquiryModal from "./CourseEnquiryModal";
 import OptimizedImage from "../ui/OptimizedImage";
+import CourseTypeBadge from "./CourseTypeBadge";
+import CourseEnquiryModal from "./CourseEnquiryModal";
+import ZeitnahZMotif from "./ZeitnahZMotif";
+import { getUploadUrl } from "../../utils/courseUi";
 
-function CourseCard({ course }) {
+/**
+ * CourseCard
+ *
+ * Reusable editorial course card component.
+ * Ensures consistent design language across all course views.
+ */
+const CourseCard = memo(function CourseCard({ course }) {
   const navigate = useNavigate();
   const [enquiryModalOpen, setEnquiryModalOpen] = useState(false);
 
-  const progress = course.learningProgress?.completionPercent || 0;
-  const purchased = !!course.learningProgress || !!course.purchased || !!course.isPurchased || !!course.isEnrolled;
+  if (!course) return null;
+
+  const progress = Math.min(
+    100,
+    Math.max(0, Math.round(course.learningProgress?.completionPercent ?? 0))
+  );
+  const purchased =
+    !!course.learningProgress ||
+    !!course.purchased ||
+    !!course.isPurchased ||
+    !!course.isEnrolled;
   const completed = purchased && progress >= 100;
-  const isRecording = course.type === "Recording";
-  const imageUrl = getUploadUrl(course.coverImage) || course.coverImage || "https://placehold.co/1920x1080/0A0D14/FFFFFF?text=Course+Cover";
-  const chapterCount = course.chapters?.length || 0;
+  const chapterCount = course.chapters?.length ?? 0;
+
+  const imageUrl =
+    getUploadUrl(course.coverImage) ||
+    course.coverImage ||
+    "https://placehold.co/1920x1080/07090B/FFFFFF?text=Course";
+
+  const handleCardClick = () => navigate(`/courses/${course._id}/chapters`);
+
+  const easePremium = [0.16, 1, 0.3, 1];
 
   return (
     <>
       <motion.article
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className={`group overflow-hidden rounded-2xl border transition-all duration-300 hover:-translate-y-1 flex flex-col relative w-full cursor-pointer ${
-          completed
-            ? "bg-gradient-to-b from-bg-card to-bg-surface border-success/20 hover:border-success/35 hover:shadow-[0_20px_60px_rgba(16,185,129,0.1)]"
-            : "bg-gradient-to-b from-bg-card to-bg-surface border-border-default hover:border-brand-mint/25 hover:shadow-[0_20px_60px_rgba(159,213,178,0.06)]"
-        }`}
-        onClick={() => navigate(`/courses/${course._id}/chapters`)}
+        transition={{ duration: 0.45, ease: easePremium }}
+        onClick={handleCardClick}
+        tabIndex={0}
+        role="button"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleCardClick();
+          }
+        }}
+        aria-label={`Course: ${course.name}`}
+        className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/[0.08] hover:border-brand-mint/40 bg-gradient-to-b from-[#0D141A] to-[#0A0F14] cursor-pointer w-full transition-all duration-300 shadow-md hover:-translate-y-1 hover:shadow-2xl focus-ring"
       >
-        {/* Gradient accent line */}
-        <div className="gradient-line-top" />
+        <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-brand-mint/20 to-transparent pointer-events-none" />
 
-        {/* ── Cover Image (16:9 - 1920x1080) ── */}
+        <div className="pointer-events-none absolute -right-6 -bottom-6 w-32 h-32 select-none opacity-[0.03] group-hover:opacity-[0.06] transition-opacity duration-300">
+          <ZeitnahZMotif variant="white" className="w-full h-full rotate-6" />
+        </div>
+
+        {/* ── 16:9 Media Cover ── */}
         <div
-          className="relative aspect-video w-full overflow-hidden bg-bg-elevated shrink-0 select-none"
+          className="relative aspect-video w-full shrink-0 overflow-hidden bg-bg-elevated"
           style={{ aspectRatio: "16 / 9" }}
         >
           <OptimizedImage
             src={imageUrl}
             alt={course.name}
-            eager
             containerClassName="h-full w-full"
             className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0D141A] via-transparent to-transparent pointer-events-none" />
 
-          {/* Gradient overlays */}
-          <div className="absolute inset-0 bg-gradient-to-t from-bg-card via-bg-card/40 to-transparent" />
-
-          {/* Badges */}
-          <div className="absolute left-4 top-4 flex flex-wrap gap-1.5 z-10">
-            <span
-              className={`rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border ${
-                isRecording
-                  ? "border-warning/25 bg-warning/10 text-warning"
-                  : "border-brand-mint/20 bg-brand-mint/8 text-brand-mint"
-              }`}
-            >
-              {getCourseTypeLabel(course.type)}
-            </span>
-
-            <span
-              className={`rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border ${
-                completed
-                  ? "border-success/25 bg-success/10 text-success"
-                  : purchased
-                  ? "border-brand-mint/20 bg-brand-mint/8 text-brand-mint"
-                  : "border-white/8 bg-white/5 text-text-secondary"
-              }`}
-            >
-              {completed ? "Completed" : purchased ? "Enrolled" : "Available"}
-            </span>
-          </div>
-
-          {/* Course name on image */}
-          <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 z-10">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted mb-1">
-              Course
-            </p>
-            <h2 className="font-heading font-extrabold text-lg sm:text-xl text-white tracking-tight leading-tight line-clamp-2">
-              {course.name}
-            </h2>
+          <div className="absolute left-3 top-3 z-10 flex flex-wrap gap-1.5">
+            <CourseTypeBadge type={course.type} size="sm" prominent />
+            {purchased && (
+              <span
+                className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider border backdrop-blur-md ${
+                  completed
+                    ? "border-brand-mint/30 bg-brand-mint/15 text-brand-mint"
+                    : "border-brand-yellow/30 bg-brand-yellow/15 text-brand-yellow"
+                }`}
+              >
+                {completed ? "Completed" : "Enrolled"}
+              </span>
+            )}
           </div>
         </div>
 
-        {/* ── Card Body ── */}
-        <div className="p-4 sm:p-5 flex flex-col flex-1 justify-between w-full">
-          <p className="text-sm font-medium text-text-muted leading-relaxed line-clamp-2">
-            {course.description || "Explore this course to discover structured learning modules and content."}
-          </p>
-
-          {/* Info pills */}
-          <div className="mt-4 flex items-center gap-3 text-text-muted">
-            <div className="flex items-center gap-1.5 text-xs font-medium">
-              <BookOpen className="w-3.5 h-3.5 text-brand-mint" />
-              <span>{chapterCount} {chapterCount === 1 ? "chapter" : "chapters"}</span>
-            </div>
-            <div className="w-px h-3 bg-border-default" />
-            <div className="flex items-center gap-1.5 text-xs font-medium">
-              {isRecording ? <Play className="w-3.5 h-3.5 text-brand-mint" /> : <Video className="w-3.5 h-3.5 text-brand-mint" />}
-              <span>{getCourseTypeLabel(course.type)}</span>
-            </div>
-          </div>
-
-          {/* Progress bar */}
-          <div
-            className={`mt-4 rounded-xl p-3.5 flex flex-col w-full border ${
-              completed
-                ? "border-success/15 bg-success/5"
-                : "border-white/[0.04] bg-white/[0.02]"
-            }`}
-          >
-            <div className="mb-2 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-              <span className="inline-flex items-center gap-1.5">
-                {completed ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-success" />
-                ) : (
-                  <TrendingUp className="w-3.5 h-3.5 text-brand-mint" />
-                )}
-                {completed ? "Course Completed" : purchased ? "Your Progress" : "Start Progress"}
+        {/* ── Editorial Content Body ── */}
+        <div className="flex flex-1 flex-col justify-between p-5 gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-[10px] font-mono text-text-muted uppercase">
+              <BookOpen className="w-3 h-3 text-brand-mint" />
+              <span>
+                {chapterCount} {chapterCount === 1 ? "Chapter" : "Chapters"}
               </span>
-              <span className="font-bold text-white">{progress}%</span>
             </div>
 
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                className={`h-full rounded-full ${
-                  completed
-                    ? "bg-gradient-to-r from-success to-brand-mint"
-                    : "bg-gradient-to-r from-brand-mint to-brand-yellow"
-                }`}
-              />
-            </div>
+            <h3 className="font-heading text-lg font-extrabold text-white tracking-tight leading-snug line-clamp-2 group-hover:text-brand-mint transition-colors">
+              {course.name}
+            </h3>
+
+            {course.description && (
+              <p className="text-xs text-text-secondary leading-relaxed line-clamp-2">
+                {course.description}
+              </p>
+            )}
           </div>
 
-          {/* CTA */}
-          {purchased ? (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/courses/${course._id}/chapters`);
-              }}
-              className={`mt-4 inline-flex w-full items-center justify-center rounded-xl py-3 text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer select-none border ${
-                completed
-                  ? "border-success/25 bg-success/8 text-success hover:bg-success/12"
-                  : "bg-white/[0.03] border-border-default text-white hover:bg-white/[0.06] hover:border-brand-mint/25"
-              }`}
-            >
-              {completed ? "Review Course" : "Continue Learning"}
-            </button>
-          ) : (
-            <div className="mt-4 grid grid-cols-2 gap-2">
+          <div className="space-y-3 pt-2 border-t border-white/[0.06]">
+            {purchased && (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-[10px] font-mono text-text-muted uppercase">
+                  <span>{completed ? "Status" : "Progress"}</span>
+                  <span className="font-bold text-white">{progress}%</span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                  <div
+                    className="h-full rounded-full bg-brand-mint transition-all duration-500"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {purchased ? (
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   navigate(`/courses/${course._id}/chapters`);
                 }}
-                className="inline-flex w-full items-center justify-center rounded-xl py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer select-none border bg-brand-yellow border-brand-yellow text-bg-base hover:shadow-[0_4px_20px_rgba(246,237,74,0.2)] active:scale-[0.98]"
+                className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-brand-mint/10 border border-brand-mint/30 text-brand-mint hover:bg-brand-mint hover:text-black transition-all cursor-pointer shadow-sm"
               >
-                Explore
+                {completed ? (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Review
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    Continue
+                    <ArrowRight className="w-3.5 h-3.5 ml-auto" />
+                  </>
+                )}
               </button>
-
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setEnquiryModalOpen(true);
-                }}
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer select-none border border-border-default bg-white/[0.03] text-white hover:bg-white/[0.08] hover:border-brand-mint/25 active:scale-[0.98]"
-              >
-                <HelpCircle className="w-3.5 h-3.5 text-brand-mint" />
-                Enquire
-              </button>
-            </div>
-          )}
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/courses/${course._id}/chapters`);
+                  }}
+                  className="w-full inline-flex items-center justify-center py-2.5 rounded-xl text-xs font-heading font-extrabold uppercase tracking-wider bg-brand-yellow text-black hover:bg-brand-yellow/90 shadow-sm transition-all cursor-pointer active:scale-[0.98]"
+                >
+                  View
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEnquiryModalOpen(true);
+                  }}
+                  className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider border border-white/[0.08] bg-white/[0.03] text-white hover:bg-white/[0.07] hover:border-brand-mint/30 transition-all cursor-pointer active:scale-[0.98]"
+                >
+                  <HelpCircle className="w-3 h-3 text-brand-mint" />
+                  Enquire
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </motion.article>
 
-      {/* Enquiry Modal */}
       <CourseEnquiryModal
         isOpen={enquiryModalOpen}
         onClose={() => setEnquiryModalOpen(false)}
@@ -198,6 +195,6 @@ function CourseCard({ course }) {
       />
     </>
   );
-}
+});
 
 export default CourseCard;
