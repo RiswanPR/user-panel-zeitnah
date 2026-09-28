@@ -158,14 +158,14 @@ export default function MainNavbar({
   // Secondary "More" links
   const secondaryLinks = useMemo(
     () => [
-      {
-        key: "opportunities",
-        path: "/opportunities/inbox",
-        label: "Opportunities",
-        icon: Inbox,
-        desc: "Employer inquiries & recruiter messages",
-        badge: unreadOpportunitiesCount,
-      },
+      // {
+      //   key: "opportunities",
+      //   path: "/opportunities/inbox",
+      //   label: "Opportunities",
+      //   icon: Inbox,
+      //   desc: "Employer inquiries & recruiter messages",
+      //   badge: unreadOpportunitiesCount,
+      // },
       {
         key: "career-intelligence",
         path: "/career-intelligence",
@@ -271,8 +271,8 @@ export default function MainNavbar({
                       to={item.path}
                       aria-current={active ? "page" : undefined}
                       className={`relative flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 select-none group focus-ring ${active
-                          ? "text-white font-bold"
-                          : "text-text-muted hover:text-white hover:bg-white/[0.04]"
+                        ? "text-white font-bold"
+                        : "text-text-muted hover:text-white hover:bg-white/[0.04]"
                         }`}
                     >
                       {/* Active Indicator Background */}
@@ -286,8 +286,8 @@ export default function MainNavbar({
 
                       <Icon
                         className={`w-4 h-4 relative z-10 transition-colors ${active
-                            ? "text-brand-mint"
-                            : "text-text-faint group-hover:text-brand-mint/80"
+                          ? "text-brand-mint"
+                          : "text-text-faint group-hover:text-brand-mint/80"
                           }`}
                       />
 
@@ -311,8 +311,8 @@ export default function MainNavbar({
                     aria-expanded={isMoreOpen}
                     aria-haspopup="true"
                     className={`relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200 select-none group cursor-pointer focus-ring ${isMoreOpen || isAnyMoreLinkActive
-                        ? "text-white bg-white/[0.06] border border-white/[0.1]"
-                        : "text-text-muted hover:text-white hover:bg-white/[0.04]"
+                      ? "text-white bg-white/[0.06] border border-white/[0.1]"
+                      : "text-text-muted hover:text-white hover:bg-white/[0.04]"
                       }`}
                   >
                     <span>More</span>
@@ -346,14 +346,14 @@ export default function MainNavbar({
                                 to={item.path}
                                 onClick={() => setIsMoreOpen(false)}
                                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${active
-                                    ? "bg-brand-mint/12 text-white font-semibold"
-                                    : "text-text-secondary hover:text-white hover:bg-white/[0.04]"
+                                  ? "bg-brand-mint/12 text-white font-semibold"
+                                  : "text-text-secondary hover:text-white hover:bg-white/[0.04]"
                                   }`}
                               >
                                 <div
                                   className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${active
-                                      ? "bg-brand-mint/20 text-brand-mint"
-                                      : "bg-white/[0.03] text-text-muted"
+                                    ? "bg-brand-mint/20 text-brand-mint"
+                                    : "bg-white/[0.03] text-text-muted"
                                     }`}
                                 >
                                   <Icon className="w-3.5 h-3.5" />
@@ -410,8 +410,8 @@ export default function MainNavbar({
                 }
                 title="View Leaderboard"
                 className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all active:scale-95 touch-manipulation focus-ring select-none ${isRouteActive("leaderboard")
-                    ? "bg-brand-yellow/[0.15] border-brand-yellow/40 text-brand-yellow"
-                    : "bg-white/[0.03] border-white/[0.08] hover:border-brand-yellow/30 text-white"
+                  ? "bg-brand-yellow/[0.15] border-brand-yellow/40 text-brand-yellow"
+                  : "bg-white/[0.03] border-white/[0.08] hover:border-brand-yellow/30 text-white"
                   }`}
               >
                 <Trophy className="w-3.5 h-3.5 text-brand-yellow shrink-0" />
