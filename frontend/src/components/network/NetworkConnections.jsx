@@ -1,37 +1,35 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Users,
   UserCheck,
   UserPlus,
-  Search,
-  Check,
-  X,
-  MessageSquare,
+  Clock,
+  Compass,
+  Briefcase,
   ExternalLink,
   ShieldCheck,
   AlertCircle,
-  Briefcase,
-  Clock,
-  Compass,
-  GraduationCap,
   Sparkles,
-} from 'lucide-react';
-import useDebounce from '../../hooks/useDebounce';
-import { networkConnectionsService } from '../../services/networkConnectionsService';
-import { networkApi } from '../../services/networkApi';
-import { useToast } from '../ui/Toast';
-import InfrastructurePeopleCard from './InfrastructurePeopleCard';
-import InfrastructurePeopleFilters from './InfrastructurePeopleFilters';
-import SendMessageRequestModal from './SendMessageRequestModal';
-import StudentProfilePreviewModal from './StudentProfilePreviewModal';
+  X,
+  Check,
+} from "lucide-react";
+import useDebounce from "../../hooks/useDebounce";
+import { networkConnectionsService } from "../../services/networkConnectionsService";
+import { networkApi } from "../../services/networkApi";
+import { useToast } from "../ui/Toast";
+import InfrastructurePeopleCard from "./InfrastructurePeopleCard";
+import InfrastructurePeopleFilters from "./InfrastructurePeopleFilters";
+import SendMessageRequestModal from "./SendMessageRequestModal";
+import StudentProfilePreviewModal from "./StudentProfilePreviewModal";
+import NetworkSearch from "./NetworkSearch";
 
 /**
  * Format integer count with locale commas
  */
 function formatNumber(num) {
-  if (num === null || num === undefined) return '0';
+  if (num === null || num === undefined) return "0";
   return Number(num).toLocaleString();
 }
 
@@ -39,126 +37,145 @@ function formatNumber(num) {
  * Derives user initials
  */
 function getInitials(name) {
-  if (!name) return 'ZU';
+  if (!name) return "ZU";
   return name
-    .split(' ')
+    .split(" ")
     .map((p) => p[0])
     .slice(0, 2)
-    .join('')
+    .join("")
     .toUpperCase();
 }
 
-const VALID_TABS = ['people', 'connections', 'followers', 'following', 'requests'];
+const VALID_TABS = ["people", "discover", "connections", "followers", "following", "requests"];
 
-export default function NetworkConnections({ defaultTab = 'people' }) {
+/**
+ * NetworkConnections Component
+ * Contextual People management view inside the Zeitnah Network Command Center.
+ *
+ * Requirements Met:
+ * - Clear secondary navigation clearly distinct from the top primary navigation.
+ * - Deep-link support for subTab, sub, view, and networkTab.
+ * - Clean optimistic mutations with zero native confirm() / alert().
+ * - Requests inbox view with Accept/Decline and Pending/Cancel.
+ * - Integrated standardized NetworkSearch and InfrastructurePeopleFilters.
+ */
+export default function NetworkConnections({ defaultTab = "people" }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const rawSub = searchParams.get('sub') || searchParams.get('view') || searchParams.get('networkTab');
-  // Active Tab: 'people' (default) | 'connections' | 'followers' | 'following' | 'requests'
-  const subTab = VALID_TABS.includes(rawSub) ? rawSub : (defaultTab || 'people');
+  // Support subTab, sub, view, networkTab
+  const rawSub =
+    searchParams.get("subTab") ||
+    searchParams.get("sub") ||
+    searchParams.get("view") ||
+    searchParams.get("networkTab");
 
-  const [requestsSubTab, setRequestsSubTab] = useState('incoming'); // 'incoming' | 'outgoing'
-  const [searchQuery, setSearchQuery] = useState('');
+  const resolvedSub = VALID_TABS.includes(rawSub) ? rawSub : defaultTab || "people";
+  const subTab = resolvedSub === "discover" ? "people" : resolvedSub;
+
+  const [requestsSubTab, setRequestsSubTab] = useState("incoming"); // 'incoming' | 'outgoing'
+  const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
-  const [roleFilter, setRoleFilter] = useState('all');
+  const [confirmRemoveId, setConfirmRemoveId] = useState(null);
+
   const [infraFilters, setInfraFilters] = useState({
-    role: '',
-    discipline: '',
-    specialization: '',
-    sector: '',
-    software: '',
-    skill: '',
-    experience: '',
-    location: '',
-    institution: '',
-    company: '',
+    role: "all",
+    discipline: "",
+    specialization: "",
+    sector: "",
+    software: "",
+    skill: "",
+    experience: "",
+    location: "",
+    institution: "",
+    company: "",
   });
+
   const [selectedPreviewPerson, setSelectedPreviewPerson] = useState(null);
   const [messageRequestRecipient, setMessageRequestRecipient] = useState(null);
   const [page, setPage] = useState(1);
 
   // Authoritative Network Stats for Tab Badges & Metric Cards
   const { data: statsData } = useQuery({
-    queryKey: ['network-profile-stats', 'me'],
-    queryFn: () => networkConnectionsService.getProfileStats('me'),
+    queryKey: ["network-profile-stats", "me"],
+    queryFn: () => networkConnectionsService.getProfileStats("me"),
     staleTime: 1000 * 30,
   });
 
   // Authoritative Requests Count
   const { data: countsData } = useQuery({
-    queryKey: ['network-connection-counts'],
+    queryKey: ["network-connection-counts"],
     queryFn: () => networkConnectionsService.getConnectionCounts(),
     staleTime: 1000 * 30,
   });
 
   // 1. My Connections Query
   const connectionsQuery = useQuery({
-    queryKey: ['network-connections-list', page, debouncedSearch],
+    queryKey: ["network-connections-list", page, debouncedSearch],
     queryFn: () =>
-      networkConnectionsService.getUserConnections('me', {
+      networkConnectionsService.getUserConnections("me", {
         page,
         limit: 12,
         q: debouncedSearch,
       }),
-    enabled: subTab === 'connections',
+    enabled: subTab === "connections",
     staleTime: 1000 * 20,
   });
 
   // 2. Followers Query
   const followersQuery = useQuery({
-    queryKey: ['network-followers-list', page, debouncedSearch],
+    queryKey: ["network-followers-list", page, debouncedSearch],
     queryFn: () =>
-      networkConnectionsService.getUserFollowers('me', {
+      networkConnectionsService.getUserFollowers("me", {
         page,
         limit: 12,
         q: debouncedSearch,
       }),
-    enabled: subTab === 'followers',
+    enabled: subTab === "followers",
     staleTime: 1000 * 20,
   });
 
   // 3. Following Query
   const followingQuery = useQuery({
-    queryKey: ['network-following-list', page, debouncedSearch],
+    queryKey: ["network-following-list", page, debouncedSearch],
     queryFn: () =>
-      networkConnectionsService.getUserFollowing('me', {
+      networkConnectionsService.getUserFollowing("me", {
         page,
         limit: 12,
         q: debouncedSearch,
       }),
-    enabled: subTab === 'following',
+    enabled: subTab === "following",
     staleTime: 1000 * 20,
   });
 
   // 4. Requests Query
   const requestsQuery = useQuery({
-    queryKey: ['network-requests'],
+    queryKey: ["network-requests"],
     queryFn: () => networkApi.getPendingRequests(),
-    enabled: subTab === 'requests',
+    enabled: subTab === "requests",
     staleTime: 1000 * 15,
   });
 
   // 5. Discover People Query
   const peopleQuery = useQuery({
-    queryKey: ['network-people', { q: debouncedSearch, ...infraFilters, page }],
+    queryKey: ["network-people", { q: debouncedSearch, ...infraFilters, page }],
     queryFn: () => networkApi.getPeople({ q: debouncedSearch, ...infraFilters, page }),
-    enabled: subTab === 'people',
+    enabled: subTab === "people",
     staleTime: 1000 * 20,
   });
 
-  // Mutations
+  // Cache Invalidation
   const invalidateAllNetwork = () => {
-    queryClient.invalidateQueries({ queryKey: ['network-connections-list'] });
-    queryClient.invalidateQueries({ queryKey: ['network-followers-list'] });
-    queryClient.invalidateQueries({ queryKey: ['network-following-list'] });
-    queryClient.invalidateQueries({ queryKey: ['network-requests'] });
-    queryClient.invalidateQueries({ queryKey: ['network-people'] });
-    queryClient.invalidateQueries({ queryKey: ['network-profile-stats'] });
-    queryClient.invalidateQueries({ queryKey: ['network-connection-counts'] });
-    queryClient.invalidateQueries({ queryKey: ['network-profile'] });
+    queryClient.invalidateQueries({ queryKey: ["network-connections-list"] });
+    queryClient.invalidateQueries({ queryKey: ["network-followers-list"] });
+    queryClient.invalidateQueries({ queryKey: ["network-following-list"] });
+    queryClient.invalidateQueries({ queryKey: ["network-requests"] });
+    queryClient.invalidateQueries({ queryKey: ["network-people"] });
+    queryClient.invalidateQueries({ queryKey: ["network-profile-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["network-connection-counts"] });
+    queryClient.invalidateQueries({ queryKey: ["network-profile"] });
   };
 
   // Follow / Unfollow Mutation
@@ -171,11 +188,14 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
       }
     },
     onSuccess: (_data, { follow, name }) => {
-      toast.success(follow ? 'Following' : 'Unfollowed', follow ? `Now following ${name || 'user'}.` : `Unfollowed ${name || 'user'}.`);
+      toast.success(
+        follow ? "Following" : "Unfollowed",
+        follow ? `Now following ${name || "user"}.` : `Unfollowed ${name || "user"}.`
+      );
       invalidateAllNetwork();
     },
     onError: (err) => {
-      toast.error('Action Failed', err?.response?.data?.message || 'Could not update follow state.');
+      toast.error("Action Failed", err?.response?.data?.message || "Could not update follow state.");
     },
   });
 
@@ -183,11 +203,11 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
   const sendRequestMutation = useMutation({
     mutationFn: (recipientId) => networkConnectionsService.connectUser(recipientId),
     onSuccess: () => {
-      toast.success('Request Sent', 'Connection request sent successfully.');
+      toast.success("Request Sent", "Connection request sent successfully.");
       invalidateAllNetwork();
     },
     onError: (err) => {
-      toast.error('Unable to Connect', err?.response?.data?.message || 'Could not send connection request.');
+      toast.error("Unable to Connect", err?.response?.data?.message || "Could not send connection request.");
     },
   });
 
@@ -195,11 +215,11 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
   const acceptRequestMutation = useMutation({
     mutationFn: (requestId) => networkConnectionsService.acceptRequest(requestId),
     onSuccess: () => {
-      toast.success('Connection Accepted', 'You are now connected!');
+      toast.success("Connection Accepted", "You are now connected!");
       invalidateAllNetwork();
     },
     onError: (err) => {
-      toast.error('Accept Failed', err?.response?.data?.message || 'Could not accept connection request.');
+      toast.error("Accept Failed", err?.response?.data?.message || "Could not accept connection request.");
     },
   });
 
@@ -207,11 +227,11 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
   const declineRequestMutation = useMutation({
     mutationFn: (requestId) => networkConnectionsService.declineRequest(requestId),
     onSuccess: () => {
-      toast.info('Request Declined', 'Connection request removed.');
+      toast.info("Request Declined", "Connection request removed.");
       invalidateAllNetwork();
     },
     onError: (err) => {
-      toast.error('Decline Failed', err?.response?.data?.message || 'Could not decline request.');
+      toast.error("Decline Failed", err?.response?.data?.message || "Could not decline request.");
     },
   });
 
@@ -219,64 +239,74 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
   const cancelRequestMutation = useMutation({
     mutationFn: (requestId) => networkConnectionsService.cancelRequest(requestId),
     onSuccess: () => {
-      toast.info('Request Cancelled', 'Connection request cancelled.');
+      toast.info("Request Cancelled", "Connection request cancelled.");
       invalidateAllNetwork();
     },
     onError: (err) => {
-      toast.error('Cancel Failed', err?.response?.data?.message || 'Could not cancel request.');
+      toast.error("Cancel Failed", err?.response?.data?.message || "Could not cancel request.");
     },
   });
 
-  // Remove Connection Mutation
+  // Remove Connection Mutation (Zero native confirm)
   const removeConnectionMutation = useMutation({
-    mutationFn: (connectionIdOrUserId) => networkConnectionsService.removeConnection(connectionIdOrUserId),
+    mutationFn: (connectionIdOrUserId) =>
+      networkConnectionsService.removeConnection(connectionIdOrUserId),
     onSuccess: () => {
-      toast.info('Connection Removed', 'Connection removed successfully.');
+      setConfirmRemoveId(null);
+      toast.info("Connection Removed", "Connection removed successfully.");
       invalidateAllNetwork();
     },
     onError: (err) => {
-      toast.error('Remove Failed', err?.response?.data?.message || 'Could not remove connection.');
+      toast.error("Remove Failed", err?.response?.data?.message || "Could not remove connection.");
     },
   });
 
   const connectionsCount = statsData?.connections ?? countsData?.connectionsCount ?? 0;
   const followersCount = statsData?.followers ?? 0;
   const followingCount = statsData?.following ?? 0;
-  const incomingRequestsCount = countsData?.incomingRequestsCount ?? requestsQuery.data?.incoming?.length ?? 0;
-  const outgoingRequestsCount = countsData?.outgoingRequestsCount ?? requestsQuery.data?.outgoing?.length ?? 0;
+  const incomingRequestsCount =
+    countsData?.incomingRequestsCount ?? requestsQuery.data?.incoming?.length ?? 0;
+  const outgoingRequestsCount =
+    countsData?.outgoingRequestsCount ?? requestsQuery.data?.outgoing?.length ?? 0;
 
   const handleTabChange = (newTab) => {
-    setSearchQuery('');
+    setSearchQuery("");
     setPage(1);
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      if (newTab === 'people') {
-        next.delete('sub');
-        next.delete('networkTab');
-        next.delete('view');
-      } else {
-        next.set('sub', newTab);
-      }
-      return next;
-    }, { replace: true });
+    setConfirmRemoveId(null);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (newTab === "people") {
+          next.delete("sub");
+          next.delete("subTab");
+          next.delete("networkTab");
+          next.delete("view");
+        } else {
+          next.set("sub", newTab);
+          next.delete("subTab");
+        }
+        return next;
+      },
+      { replace: true }
+    );
   };
 
   return (
     <div className="space-y-8">
-      {/* ── Section 10: "Your Network" Statistics Strip ── */}
+      {/* ── 1. "Your Network" Interactive Telemetry Cards ── */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-text-muted">
-              Your Network
+            <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-text-muted">
+              Live Network Metrics
             </h2>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-mint/10 text-brand-mint border border-brand-mint/20">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-brand-mint/10 text-brand-mint border border-brand-mint/20">
               <Sparkles className="w-2.5 h-2.5" />
-              Live Metrics
+              Real-time
             </span>
           </div>
-          <span className="text-[11px] text-text-faint hidden sm:inline-block">
-            Click any metric to manage connections & requests
+          <span className="text-[11px] text-text-muted font-medium hidden sm:inline-block">
+            Select any metric to filter members & manage requests
           </span>
         </div>
 
@@ -284,90 +314,116 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
           {/* 1. Connections Metric Card */}
           <button
             type="button"
-            onClick={() => handleTabChange('connections')}
+            onClick={() => handleTabChange("connections")}
             className={`p-4 rounded-2xl border text-left transition-all cursor-pointer group ${
-              subTab === 'connections'
-                ? 'bg-brand-mint/10 border-brand-mint/50 shadow-lg shadow-brand-mint/10'
-                : 'bg-white/[0.02] border-white/[0.08] hover:bg-white/[0.05] hover:border-white/[0.15]'
+              subTab === "connections"
+                ? "bg-[#0A0F14] border-brand-mint/60 shadow-[0_4px_24px_rgba(159,213,178,0.12)] ring-1 ring-brand-mint/30"
+                : "bg-[#070B14] border-white/[0.08] hover:bg-[#0A0F14] hover:border-white/[0.16]"
             }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-text-muted group-hover:text-white transition-colors">
                 Connections
               </span>
-              <div className={`p-2 rounded-xl transition-colors ${subTab === 'connections' ? 'bg-brand-mint/20 text-brand-mint' : 'bg-white/[0.04] text-text-muted'}`}>
+              <div
+                className={`p-2 rounded-xl transition-colors ${
+                  subTab === "connections"
+                    ? "bg-brand-mint/20 text-brand-mint"
+                    : "bg-white/[0.04] text-text-muted"
+                }`}
+              >
                 <UserCheck className="w-4 h-4" />
               </div>
             </div>
             <p className="mt-2 text-2xl font-heading font-black text-white">
               {formatNumber(connectionsCount)}
             </p>
-            <p className="text-[10px] text-text-faint mt-0.5">Verified peer bonds</p>
+            <p className="text-[10px] text-text-muted mt-0.5 font-medium">Verified peer bonds</p>
           </button>
 
           {/* 2. Followers Metric Card */}
           <button
             type="button"
-            onClick={() => handleTabChange('followers')}
+            onClick={() => handleTabChange("followers")}
             className={`p-4 rounded-2xl border text-left transition-all cursor-pointer group ${
-              subTab === 'followers'
-                ? 'bg-brand-mint/10 border-brand-mint/50 shadow-lg shadow-brand-mint/10'
-                : 'bg-white/[0.02] border-white/[0.08] hover:bg-white/[0.05] hover:border-white/[0.15]'
+              subTab === "followers"
+                ? "bg-[#0A0F14] border-brand-mint/60 shadow-[0_4px_24px_rgba(159,213,178,0.12)] ring-1 ring-brand-mint/30"
+                : "bg-[#070B14] border-white/[0.08] hover:bg-[#0A0F14] hover:border-white/[0.16]"
             }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-text-muted group-hover:text-white transition-colors">
                 Followers
               </span>
-              <div className={`p-2 rounded-xl transition-colors ${subTab === 'followers' ? 'bg-brand-mint/20 text-brand-mint' : 'bg-white/[0.04] text-text-muted'}`}>
+              <div
+                className={`p-2 rounded-xl transition-colors ${
+                  subTab === "followers"
+                    ? "bg-brand-mint/20 text-brand-mint"
+                    : "bg-white/[0.04] text-text-muted"
+                }`}
+              >
                 <Users className="w-4 h-4" />
               </div>
             </div>
             <p className="mt-2 text-2xl font-heading font-black text-white">
               {formatNumber(followersCount)}
             </p>
-            <p className="text-[10px] text-text-faint mt-0.5">Learners following you</p>
+            <p className="text-[10px] text-text-muted mt-0.5 font-medium">Following your work</p>
           </button>
 
           {/* 3. Following Metric Card */}
           <button
             type="button"
-            onClick={() => handleTabChange('following')}
+            onClick={() => handleTabChange("following")}
             className={`p-4 rounded-2xl border text-left transition-all cursor-pointer group ${
-              subTab === 'following'
-                ? 'bg-brand-mint/10 border-brand-mint/50 shadow-lg shadow-brand-mint/10'
-                : 'bg-white/[0.02] border-white/[0.08] hover:bg-white/[0.05] hover:border-white/[0.15]'
+              subTab === "following"
+                ? "bg-[#0A0F14] border-brand-mint/60 shadow-[0_4px_24px_rgba(159,213,178,0.12)] ring-1 ring-brand-mint/30"
+                : "bg-[#070B14] border-white/[0.08] hover:bg-[#0A0F14] hover:border-white/[0.16]"
             }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-text-muted group-hover:text-white transition-colors">
                 Following
               </span>
-              <div className={`p-2 rounded-xl transition-colors ${subTab === 'following' ? 'bg-brand-mint/20 text-brand-mint' : 'bg-white/[0.04] text-text-muted'}`}>
+              <div
+                className={`p-2 rounded-xl transition-colors ${
+                  subTab === "following"
+                    ? "bg-brand-mint/20 text-brand-mint"
+                    : "bg-white/[0.04] text-text-muted"
+                }`}
+              >
                 <UserPlus className="w-4 h-4" />
               </div>
             </div>
             <p className="mt-2 text-2xl font-heading font-black text-white">
               {formatNumber(followingCount)}
             </p>
-            <p className="text-[10px] text-text-faint mt-0.5">Learners you follow</p>
+            <p className="text-[10px] text-text-muted mt-0.5 font-medium">Engineers you track</p>
           </button>
 
           {/* 4. Requests Metric Card */}
           <button
             type="button"
-            onClick={() => handleTabChange('requests')}
+            onClick={() => handleTabChange("requests")}
             className={`p-4 rounded-2xl border text-left transition-all cursor-pointer group ${
-              subTab === 'requests'
-                ? 'bg-brand-mint/10 border-brand-mint/50 shadow-lg shadow-brand-mint/10'
-                : 'bg-white/[0.02] border-white/[0.08] hover:bg-white/[0.05] hover:border-white/[0.15]'
+              subTab === "requests"
+                ? "bg-[#0A0F14] border-brand-mint/60 shadow-[0_4px_24px_rgba(159,213,178,0.12)] ring-1 ring-brand-mint/30"
+                : "bg-[#070B14] border-white/[0.08] hover:bg-[#0A0F14] hover:border-white/[0.16]"
             }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-text-muted group-hover:text-white transition-colors">
-                Requests
+                Requests Inbox
               </span>
-              <div className={`p-2 rounded-xl transition-colors ${subTab === 'requests' ? 'bg-brand-mint/20 text-brand-mint' : incomingRequestsCount > 0 ? 'bg-brand-mint/15 text-brand-mint' : 'bg-white/[0.04] text-text-muted'}`}>
+              <div
+                className={`p-2 rounded-xl transition-colors ${
+                  subTab === "requests"
+                    ? "bg-brand-mint/20 text-brand-mint"
+                    : incomingRequestsCount > 0
+                    ? "bg-[#F6ED4A]/15 text-[#F6ED4A]"
+                    : "bg-white/[0.04] text-text-muted"
+                }`}
+              >
                 <Clock className="w-4 h-4" />
               </div>
             </div>
@@ -381,22 +437,29 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
                 </span>
               )}
             </div>
-            <p className="text-[10px] text-text-faint mt-0.5">
-              {incomingRequestsCount > 0 ? 'Awaiting your review' : 'No pending requests'}
+            <p className="text-[10px] text-text-muted mt-0.5 font-medium">
+              {incomingRequestsCount > 0 ? "Awaiting review" : "Inbox zero"}
             </p>
           </button>
         </div>
       </div>
 
-      {/* ── Sub-tab Navigation Strip ── */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.08]">
-        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] overflow-x-auto">
+      {/* ── 2. Contextual Secondary Navigation Bar (Distinct & Subordinate) ── */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pb-2 border-b border-white/[0.06]">
+        {/* Sub-tab segmented bar */}
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-[#0A0F14] border border-white/[0.08] overflow-x-auto no-scrollbar">
           {[
-            { id: 'people', label: 'Discover People', icon: Compass },
-            { id: 'connections', label: 'Connections', count: connectionsCount, icon: UserCheck },
-            { id: 'followers', label: 'Followers', count: followersCount, icon: Users },
-            { id: 'following', label: 'Following', count: followingCount, icon: UserPlus },
-            { id: 'requests', label: 'Requests', count: incomingRequestsCount, icon: Clock, badgeAccent: incomingRequestsCount > 0 },
+            { id: "people", label: "Discover", icon: Compass },
+            { id: "connections", label: "Connections", count: connectionsCount, icon: UserCheck },
+            { id: "followers", label: "Followers", count: followersCount, icon: Users },
+            { id: "following", label: "Following", count: followingCount, icon: UserPlus },
+            {
+              id: "requests",
+              label: "Requests",
+              count: incomingRequestsCount,
+              icon: Clock,
+              hasAttention: incomingRequestsCount > 0,
+            },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = subTab === tab.id;
@@ -405,22 +468,22 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
                 key={tab.id}
                 type="button"
                 onClick={() => handleTabChange(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer focus-ring ${
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-brand-mint text-black font-bold shadow-md shadow-brand-mint/15'
-                    : 'text-text-muted hover:text-white hover:bg-white/[0.04]'
+                    ? "bg-white/10 text-white font-bold shadow-sm border border-white/10"
+                    : "text-text-muted hover:text-white hover:bg-white/[0.03]"
                 }`}
               >
                 <Icon className="w-3.5 h-3.5 shrink-0" />
                 <span>{tab.label}</span>
-                {tab.count !== undefined && (
+                {tab.count !== undefined && tab.count > 0 && (
                   <span
-                    className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                    className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
                       isActive
-                        ? 'bg-black/15 text-black'
-                        : tab.badgeAccent
-                        ? 'bg-brand-mint text-black font-bold'
-                        : 'bg-white/[0.08] text-text-muted'
+                        ? "bg-white/20 text-white"
+                        : tab.hasAttention
+                        ? "bg-[#F6ED4A]/20 text-[#F6ED4A] font-bold"
+                        : "bg-white/[0.06] text-text-muted"
                     }`}
                   >
                     {formatNumber(tab.count)}
@@ -431,64 +494,25 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
           })}
         </div>
 
-      </div>
-
-      {/* ── Search Bar (except for requests tab) ── */}
-      {subTab !== 'requests' && (
-        <div className="relative max-w-md">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setPage(1);
-            }}
-            placeholder={
-              subTab === 'connections'
-                ? 'Search connections by name, handle, or course...'
-                : subTab === 'followers'
-                ? 'Search followers...'
-                : subTab === 'following'
-                ? 'Search people you follow...'
-                : 'Search infrastructure professionals by name, discipline, skills, company...'
-            }
-            className="w-full pl-10 pr-12 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-brand-mint/40 text-xs text-white placeholder-text-muted focus:outline-none transition-colors"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => {
-                setSearchQuery('');
+        {/* Search for connections / followers / following */}
+        {subTab !== "requests" && subTab !== "people" && (
+          <div className="w-full sm:w-72">
+            <NetworkSearch
+              value={searchQuery}
+              onChange={(val) => {
+                setSearchQuery(val);
                 setPage(1);
               }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-text-muted hover:text-white px-1.5 py-0.5 rounded cursor-pointer"
-            >
-              Clear
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* ── 1. DISCOVER PEOPLE TAB (MAIN) ── */}
-      {subTab === 'people' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <h3 className="text-base sm:text-lg font-heading font-bold text-white">
-                Discover Infrastructure Professionals
-              </h3>
-              <p className="text-xs text-text-muted mt-1">
-                Find engineers, educators, mentors, recruiters, founders and other infrastructure professionals.
-              </p>
-            </div>
-            {peopleQuery.data?.total !== undefined && (
-              <span className="text-xs font-mono text-text-faint self-start sm:self-auto">
-                {peopleQuery.data.total} {peopleQuery.data.total === 1 ? 'professional' : 'professionals'}
-              </span>
-            )}
+              placeholder={`Search ${subTab}...`}
+              size="sm"
+            />
           </div>
+        )}
+      </div>
 
+      {/* ── 3. DISCOVER PEOPLE (PRIMARY TAB) ── */}
+      {subTab === "people" && (
+        <div className="space-y-6">
           {/* Infrastructure Structured Filters */}
           <InfrastructurePeopleFilters
             filters={infraFilters}
@@ -496,82 +520,98 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
               setInfraFilters(nextFilters);
               setPage(1);
             }}
+            onFilterChange={(nextFilters) => {
+              setInfraFilters(nextFilters);
+              setPage(1);
+            }}
             onReset={() => {
               setInfraFilters({
-                role: '',
-                discipline: '',
-                specialization: '',
-                sector: '',
-                software: '',
-                skill: '',
-                experience: '',
-                location: '',
-                institution: '',
-                company: '',
+                role: "all",
+                discipline: "",
+                specialization: "",
+                sector: "",
+                software: "",
+                skill: "",
+                experience: "",
+                location: "",
+                institution: "",
+                company: "",
               });
               setPage(1);
             }}
           />
 
+          {/* Directory Count Header */}
+          <div className="flex items-center justify-between text-xs text-text-muted pt-1">
+            <span>Verified infrastructure candidates, mentors, and engineers</span>
+            {peopleQuery.data?.total !== undefined && (
+              <span className="font-mono text-white/80">
+                {peopleQuery.data.total} {peopleQuery.data.total === 1 ? "profile" : "profiles"}
+              </span>
+            )}
+          </div>
+
+          {/* People Grid */}
           {peopleQuery.isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="h-48 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+                <div
+                  key={i}
+                  className="h-64 rounded-2xl bg-[#0A0F14] border border-white/[0.04] animate-pulse"
+                />
               ))}
             </div>
           ) : peopleQuery.isError ? (
-            <div className="p-8 rounded-2xl bg-danger/5 border border-danger/20 text-center">
+            <div className="p-10 rounded-2xl bg-danger/5 border border-danger/20 text-center">
               <AlertCircle className="w-8 h-8 text-danger mx-auto mb-2" />
-              <p className="text-sm font-bold text-white">Failed to load student directory</p>
+              <p className="text-sm font-bold text-white">Failed to load directory</p>
               <p className="text-xs text-text-muted mt-1 max-w-sm mx-auto">
-                Could not retrieve learners at this time. Please check your connection and try again.
+                Could not retrieve candidates at this time. Please check your connection.
               </p>
               <button
                 type="button"
                 onClick={() => peopleQuery.refetch()}
                 className="btn-secondary mt-3 text-xs py-2 px-4 cursor-pointer inline-flex items-center gap-1.5"
               >
-                <span>Try Again</span>
+                Try Again
               </button>
             </div>
           ) : (peopleQuery.data?.people || []).length === 0 ? (
-            <div className="p-16 rounded-3xl bg-[#111115]/60 border border-white/[0.06] text-center max-w-lg mx-auto">
-              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-text-faint">
+            <div className="p-16 rounded-3xl bg-[#0A0F14] border border-white/[0.06] text-center max-w-lg mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-text-muted">
                 <Compass className="w-7 h-7" />
               </div>
               <h3 className="font-heading font-bold text-lg text-white">
-                No professionals found
+                No matching infrastructure candidates
               </h3>
               <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                Try another skill, discipline, sector or location.
+                Try clearing or adjusting disciplines, sectors, or software tags.
               </p>
-              {(debouncedSearch || Object.values(infraFilters).some(Boolean)) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchQuery('');
-                    setInfraFilters({
-                      role: '',
-                      discipline: '',
-                      specialization: '',
-                      sector: '',
-                      software: '',
-                      skill: '',
-                      experience: '',
-                      location: '',
-                      institution: '',
-                      company: '',
-                    });
-                    setPage(1);
-                  }}
-                  className="mt-4 px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-white transition-colors cursor-pointer"
-                >
-                  Reset All Filters
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  setInfraFilters({
+                    role: "all",
+                    discipline: "",
+                    specialization: "",
+                    sector: "",
+                    software: "",
+                    skill: "",
+                    experience: "",
+                    location: "",
+                    institution: "",
+                    company: "",
+                  });
+                  setPage(1);
+                }}
+                className="mt-4 px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-white transition-colors cursor-pointer"
+              >
+                Reset All Filters
+              </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {(peopleQuery.data?.people || []).map((person) => (
                 <InfrastructurePeopleCard
                   key={person._id || person.id}
@@ -612,19 +652,19 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
         </div>
       )}
 
-      {/* ── 2. CONNECTIONS TAB ── */}
-      {subTab === 'connections' && (
+      {/* ── 4. CONNECTIONS TAB ── */}
+      {subTab === "connections" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-heading font-bold text-white">Your Peer Connections</h3>
               <p className="text-xs text-text-muted mt-0.5">
-                Mutual connections with fellow learners and instructors on Zeitnah.
+                Mutual connections with fellow infrastructure engineers and faculty mentors.
               </p>
             </div>
             {connectionsCount > 0 && (
-              <span className="text-xs font-mono text-text-faint">
-                {connectionsCount} {connectionsCount === 1 ? 'connection' : 'connections'}
+              <span className="text-xs font-mono text-text-muted">
+                {connectionsCount} {connectionsCount === 1 ? "connection" : "connections"}
               </span>
             )}
           </div>
@@ -632,7 +672,10 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
           {connectionsQuery.isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="h-36 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+                <div
+                  key={i}
+                  className="h-36 rounded-2xl bg-[#0A0F14] border border-white/[0.04] animate-pulse"
+                />
               ))}
             </div>
           ) : connectionsQuery.isError ? (
@@ -648,22 +691,22 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
               </button>
             </div>
           ) : (connectionsQuery.data?.data || []).length === 0 ? (
-            <div className="p-16 rounded-3xl bg-[#111115]/60 border border-white/[0.06] text-center max-w-lg mx-auto">
-              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-text-faint">
+            <div className="p-16 rounded-3xl bg-[#0A0F14] border border-white/[0.06] text-center max-w-lg mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-text-muted">
                 <UserCheck className="w-7 h-7" />
               </div>
               <h3 className="font-heading font-bold text-lg text-white">
-                {debouncedSearch ? 'No matching connections' : 'No connections yet'}
+                {debouncedSearch ? "No matching connections" : "No connections yet"}
               </h3>
               <p className="text-xs text-text-muted mt-1 leading-relaxed">
                 {debouncedSearch
-                  ? 'No connections found matching your search. Try another name or handle.'
-                  : 'Connect with classmates, peers, and mentors to expand your learning network.'}
+                  ? "No connections found matching your search."
+                  : "Connect with classmates, peers, and mentors to expand your learning network."}
               </p>
               {!debouncedSearch && (
                 <button
                   type="button"
-                  onClick={() => handleTabChange('people')}
+                  onClick={() => handleTabChange("people")}
                   className="btn-primary mt-4 text-xs py-2.5 px-5 inline-flex items-center gap-2 cursor-pointer"
                 >
                   <Compass className="w-4 h-4" />
@@ -674,17 +717,18 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {(connectionsQuery.data?.data || []).map((conn) => {
-                const identifier = conn.username || conn.id || conn._id || '';
+                const connId = conn.id || conn._id;
+                const identifier = conn.username || connId || "";
                 const profileLink = `/network/profile/${encodeURIComponent(identifier)}`;
 
                 return (
                   <div
-                    key={conn.id || conn._id}
-                    className="p-5 rounded-2xl bg-[#111115]/80 hover:bg-[#15151c] border border-white/[0.08] hover:border-brand-mint/30 transition-all flex flex-col justify-between gap-3 shadow-lg"
+                    key={connId}
+                    className="p-5 rounded-2xl bg-[#0A0F14] hover:bg-[#0D141F] border border-white/[0.08] hover:border-brand-mint/30 transition-all flex flex-col justify-between gap-3 shadow-lg"
                   >
                     <div className="flex items-start gap-3.5 min-w-0">
                       <Link to={profileLink} className="relative shrink-0 block focus-ring rounded-2xl">
-                        <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden">
+                        <div className="w-12 h-12 rounded-2xl bg-[#070B14] border border-white/[0.08] flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden">
                           {conn.avatar ? (
                             <img src={conn.avatar} alt={conn.name} className="w-full h-full object-cover" />
                           ) : (
@@ -692,7 +736,7 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
                           )}
                         </div>
                         {conn.isVerified && (
-                          <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-bg-base shadow-sm">
+                          <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-black shadow-sm">
                             <ShieldCheck className="h-3 w-3" />
                           </span>
                         )}
@@ -709,9 +753,9 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
                           <p className="text-xs font-mono text-brand-mint/90 truncate">@{conn.username}</p>
                         )}
                         {conn.headline ? (
-                          <p className="text-xs text-text-muted/80 truncate mt-1">{conn.headline}</p>
+                          <p className="text-xs text-text-muted truncate mt-1">{conn.headline}</p>
                         ) : conn.currentRole ? (
-                          <p className="text-xs text-text-muted/70 truncate mt-1 flex items-center gap-1">
+                          <p className="text-xs text-text-muted truncate mt-1 flex items-center gap-1">
                             <Briefcase className="w-3 h-3 shrink-0" />
                             <span>{conn.currentRole}</span>
                           </p>
@@ -720,30 +764,45 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
                     </div>
 
                     <div className="flex items-center justify-between pt-3 border-t border-white/[0.04] gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <Link
-                          to={profileLink}
-                          className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors focus-ring"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5 text-text-muted" />
-                          <span>View Profile</span>
-                        </Link>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (window.confirm(`Remove connection with ${conn.name}?`)) {
-                            removeConnectionMutation.mutate(conn.id || conn._id);
-                          }
-                        }}
-                        disabled={removeConnectionMutation.isPending}
-                        className="p-1.5 rounded-xl text-text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                        title="Remove connection"
-                        aria-label="Remove connection"
+                      <Link
+                        to={profileLink}
+                        className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors focus-ring"
                       >
-                        <X className="w-4 h-4" />
-                      </button>
+                        <ExternalLink className="w-3.5 h-3.5 text-text-muted" />
+                        <span>View Profile</span>
+                      </Link>
+
+                      {/* Zero native confirm: Inline stateful confirmation */}
+                      {confirmRemoveId === connId ? (
+                        <div className="flex items-center gap-1.5 animate-fade-in">
+                          <span className="text-[11px] font-medium text-text-muted">Remove?</span>
+                          <button
+                            type="button"
+                            disabled={removeConnectionMutation.isPending}
+                            onClick={() => removeConnectionMutation.mutate(connId)}
+                            className="px-2 py-1 rounded-lg bg-rose-500/20 border border-rose-500/30 text-rose-300 text-[11px] font-bold hover:bg-rose-500/30 transition-colors cursor-pointer"
+                          >
+                            Yes
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmRemoveId(null)}
+                            className="px-2 py-1 rounded-lg border border-white/[0.1] bg-white/[0.04] text-text-muted hover:text-white text-[11px] font-medium transition-colors cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmRemoveId(connId)}
+                          className="p-1.5 rounded-xl text-text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                          title="Remove connection"
+                          aria-label="Remove connection"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -780,19 +839,19 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
         </div>
       )}
 
-      {/* ── 3. FOLLOWERS TAB ── */}
-      {subTab === 'followers' && (
+      {/* ── 5. FOLLOWERS TAB ── */}
+      {subTab === "followers" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-heading font-bold text-white">Your Followers</h3>
               <p className="text-xs text-text-muted mt-0.5">
-                Learners and peers following your learning progress and updates.
+                Engineers and students following your projects and progress.
               </p>
             </div>
             {followersCount > 0 && (
-              <span className="text-xs font-mono text-text-faint">
-                {followersCount} {followersCount === 1 ? 'follower' : 'followers'}
+              <span className="text-xs font-mono text-text-muted">
+                {followersCount} {followersCount === 1 ? "follower" : "followers"}
               </span>
             )}
           </div>
@@ -800,7 +859,10 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
           {followersQuery.isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="h-36 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+                <div
+                  key={i}
+                  className="h-36 rounded-2xl bg-[#0A0F14] border border-white/[0.04] animate-pulse"
+                />
               ))}
             </div>
           ) : followersQuery.isError ? (
@@ -816,34 +878,32 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
               </button>
             </div>
           ) : (followersQuery.data?.data || []).length === 0 ? (
-            <div className="p-16 rounded-3xl bg-[#111115]/60 border border-white/[0.06] text-center max-w-lg mx-auto">
-              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-text-faint">
+            <div className="p-16 rounded-3xl bg-[#0A0F14] border border-white/[0.06] text-center max-w-lg mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-text-muted">
                 <Users className="w-7 h-7" />
               </div>
               <h3 className="font-heading font-bold text-lg text-white">
-                {debouncedSearch ? 'No matching followers' : 'No followers yet'}
+                {debouncedSearch ? "No matching followers" : "No followers yet"}
               </h3>
               <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                {debouncedSearch
-                  ? 'No followers found matching your search.'
-                  : 'When other students and mentors follow your learning journey, they will appear here.'}
+                When fellow students and mentors follow your learning journey, they appear here.
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {(followersQuery.data?.data || []).map((user) => {
-                const identifier = user.username || user.id || user._id || '';
+                const identifier = user.username || user.id || user._id || "";
                 const profileLink = `/network/profile/${encodeURIComponent(identifier)}`;
                 const isFollowing = Boolean(user.isFollowing);
 
                 return (
                   <div
                     key={user.id || user._id}
-                    className="p-5 rounded-2xl bg-[#111115]/80 hover:bg-[#15151c] border border-white/[0.08] hover:border-brand-mint/30 transition-all flex flex-col justify-between gap-3 shadow-lg"
+                    className="p-5 rounded-2xl bg-[#0A0F14] hover:bg-[#0D141F] border border-white/[0.08] hover:border-brand-mint/30 transition-all flex flex-col justify-between gap-3 shadow-lg"
                   >
                     <div className="flex items-start gap-3.5 min-w-0">
                       <Link to={profileLink} className="relative shrink-0 block focus-ring rounded-2xl">
-                        <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden">
+                        <div className="w-12 h-12 rounded-2xl bg-[#070B14] border border-white/[0.08] flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden">
                           {user.avatar ? (
                             <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                           ) : (
@@ -851,7 +911,7 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
                           )}
                         </div>
                         {user.isVerified && (
-                          <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-bg-base shadow-sm">
+                          <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-black shadow-sm">
                             <ShieldCheck className="h-3 w-3" />
                           </span>
                         )}
@@ -867,11 +927,9 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
                         {user.username && (
                           <p className="text-xs font-mono text-brand-mint/90 truncate">@{user.username}</p>
                         )}
-                        {user.headline ? (
-                          <p className="text-xs text-text-muted/80 truncate mt-1">{user.headline}</p>
-                        ) : user.currentRole ? (
-                          <p className="text-xs text-text-muted/70 truncate mt-1">{user.currentRole}</p>
-                        ) : null}
+                        {user.headline && (
+                          <p className="text-xs text-text-muted truncate mt-1">{user.headline}</p>
+                        )}
                       </div>
                     </div>
 
@@ -885,26 +943,6 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
                       </Link>
 
                       <div className="flex items-center gap-1.5">
-                        {user.connectionStatus === 'connected' ? (
-                          <span className="px-2.5 py-1.5 rounded-xl bg-emerald-500/15 text-emerald-300 text-[10px] font-bold">
-                            Connected
-                          </span>
-                        ) : user.connectionStatus === 'pending' ? (
-                          <span className="px-2.5 py-1.5 rounded-xl bg-white/[0.05] text-text-muted text-[10px] font-semibold">
-                            Pending
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => sendRequestMutation.mutate(user.id || user._id)}
-                            disabled={sendRequestMutation.isPending}
-                            className="px-2.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-white text-[11px] font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
-                          >
-                            <UserCheck className="w-3.5 h-3.5 text-brand-mint" />
-                            <span>Connect</span>
-                          </button>
-                        )}
-
                         <button
                           type="button"
                           onClick={() =>
@@ -917,11 +955,11 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
                           disabled={followMutation.isPending}
                           className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                             isFollowing
-                              ? 'bg-white/[0.08] hover:bg-rose-500/15 text-white hover:text-rose-300 border border-white/10'
-                              : 'bg-brand-mint text-black hover:bg-brand-mint/90'
+                              ? "bg-white/[0.08] hover:bg-rose-500/15 text-white hover:text-rose-300 border border-white/10"
+                              : "bg-brand-mint text-black hover:bg-brand-mint/90"
                           }`}
                         >
-                          {isFollowing ? 'Following' : 'Follow Back'}
+                          {isFollowing ? "Following" : "Follow Back"}
                         </button>
                       </div>
                     </div>
@@ -930,49 +968,22 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
               })}
             </div>
           )}
-
-          {/* Pagination */}
-          {(followersQuery.data?.totalPages || 1) > 1 && (
-            <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
-              <span className="text-xs text-text-muted font-mono">
-                Page {page} of {followersQuery.data?.totalPages}
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
-                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40 cursor-pointer"
-                >
-                  Previous
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPage((p) => p + 1)}
-                  disabled={!followersQuery.data?.hasNextPage}
-                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40 cursor-pointer"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
-      {/* ── 4. FOLLOWING TAB ── */}
-      {subTab === 'following' && (
+      {/* ── 6. FOLLOWING TAB ── */}
+      {subTab === "following" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-heading font-bold text-white">People You Follow</h3>
               <p className="text-xs text-text-muted mt-0.5">
-                Stay updated on activities and projects from learners and mentors you follow.
+                Stay updated on activities and designs from peers you follow.
               </p>
             </div>
             {followingCount > 0 && (
-              <span className="text-xs font-mono text-text-faint">
-                {followingCount} {followingCount === 1 ? 'person' : 'people'}
+              <span className="text-xs font-mono text-text-muted">
+                {followingCount} {followingCount === 1 ? "person" : "people"}
               </span>
             )}
           </div>
@@ -980,7 +991,10 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
           {followingQuery.isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="h-36 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+                <div
+                  key={i}
+                  className="h-36 rounded-2xl bg-[#0A0F14] border border-white/[0.04] animate-pulse"
+                />
               ))}
             </div>
           ) : followingQuery.isError ? (
@@ -996,22 +1010,20 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
               </button>
             </div>
           ) : (followingQuery.data?.data || []).length === 0 ? (
-            <div className="p-16 rounded-3xl bg-[#111115]/60 border border-white/[0.06] text-center max-w-lg mx-auto">
-              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-text-faint">
+            <div className="p-16 rounded-3xl bg-[#0A0F14] border border-white/[0.06] text-center max-w-lg mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-text-muted">
                 <UserPlus className="w-7 h-7" />
               </div>
               <h3 className="font-heading font-bold text-lg text-white">
-                {debouncedSearch ? 'No matching users' : 'You are not following anyone yet'}
+                {debouncedSearch ? "No matching users" : "You are not following anyone yet"}
               </h3>
               <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                {debouncedSearch
-                  ? 'No users found matching your search query.'
-                  : 'Follow classmates, instructors, and network peers to see their learning activity.'}
+                Follow peers, faculty, and industry leaders to see their contributions.
               </p>
               {!debouncedSearch && (
                 <button
                   type="button"
-                  onClick={() => handleTabChange('people')}
+                  onClick={() => handleTabChange("people")}
                   className="btn-primary mt-4 text-xs py-2.5 px-5 inline-flex items-center gap-2 cursor-pointer"
                 >
                   <Compass className="w-4 h-4" />
@@ -1022,17 +1034,17 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {(followingQuery.data?.data || []).map((user) => {
-                const identifier = user.username || user.id || user._id || '';
+                const identifier = user.username || user.id || user._id || "";
                 const profileLink = `/network/profile/${encodeURIComponent(identifier)}`;
 
                 return (
                   <div
                     key={user.id || user._id}
-                    className="p-5 rounded-2xl bg-[#111115]/80 hover:bg-[#15151c] border border-white/[0.08] hover:border-brand-mint/30 transition-all flex flex-col justify-between gap-3 shadow-lg"
+                    className="p-5 rounded-2xl bg-[#0A0F14] hover:bg-[#0D141F] border border-white/[0.08] hover:border-brand-mint/30 transition-all flex flex-col justify-between gap-3 shadow-lg"
                   >
                     <div className="flex items-start gap-3.5 min-w-0">
                       <Link to={profileLink} className="relative shrink-0 block focus-ring rounded-2xl">
-                        <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden">
+                        <div className="w-12 h-12 rounded-2xl bg-[#070B14] border border-white/[0.08] flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden">
                           {user.avatar ? (
                             <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                           ) : (
@@ -1040,7 +1052,7 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
                           )}
                         </div>
                         {user.isVerified && (
-                          <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-bg-base shadow-sm">
+                          <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-black shadow-sm">
                             <ShieldCheck className="h-3 w-3" />
                           </span>
                         )}
@@ -1056,11 +1068,9 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
                         {user.username && (
                           <p className="text-xs font-mono text-brand-mint/90 truncate">@{user.username}</p>
                         )}
-                        {user.headline ? (
-                          <p className="text-xs text-text-muted/80 truncate mt-1">{user.headline}</p>
-                        ) : user.currentRole ? (
-                          <p className="text-xs text-text-muted/70 truncate mt-1">{user.currentRole}</p>
-                        ) : null}
+                        {user.headline && (
+                          <p className="text-xs text-text-muted truncate mt-1">{user.headline}</p>
+                        )}
                       </div>
                     </div>
 
@@ -1073,91 +1083,41 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
                         <span>Profile</span>
                       </Link>
 
-                      <div className="flex items-center gap-1.5">
-                        {user.connectionStatus === 'connected' ? (
-                          <span className="px-2.5 py-1.5 rounded-xl bg-emerald-500/15 text-emerald-300 text-[10px] font-bold">
-                            Connected
-                          </span>
-                        ) : user.connectionStatus === 'pending' ? (
-                          <span className="px-2.5 py-1.5 rounded-xl bg-white/[0.05] text-text-muted text-[10px] font-semibold">
-                            Pending
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => sendRequestMutation.mutate(user.id || user._id)}
-                            disabled={sendRequestMutation.isPending}
-                            className="px-2.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-white text-[11px] font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
-                          >
-                            <UserCheck className="w-3.5 h-3.5 text-brand-mint" />
-                            <span>Connect</span>
-                          </button>
-                        )}
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            followMutation.mutate({
-                              targetId: user.id || user._id,
-                              follow: false,
-                              name: user.name,
-                            })
-                          }
-                          disabled={followMutation.isPending}
-                          className="px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-rose-500/15 text-white hover:text-rose-300 border border-white/10 text-xs font-bold transition-all cursor-pointer"
-                          title="Unfollow"
-                        >
-                          Unfollow
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          followMutation.mutate({
+                            targetId: user.id || user._id,
+                            follow: false,
+                            name: user.name,
+                          })
+                        }
+                        disabled={followMutation.isPending}
+                        className="px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-rose-500/15 text-white hover:text-rose-300 border border-white/10 text-xs font-bold transition-all cursor-pointer"
+                      >
+                        Unfollow
+                      </button>
                     </div>
                   </div>
                 );
               })}
             </div>
           )}
-
-          {/* Pagination */}
-          {(followingQuery.data?.totalPages || 1) > 1 && (
-            <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
-              <span className="text-xs text-text-muted font-mono">
-                Page {page} of {followingQuery.data?.totalPages}
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
-                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40 cursor-pointer"
-                >
-                  Previous
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPage((p) => p + 1)}
-                  disabled={!followingQuery.data?.hasNextPage}
-                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40 cursor-pointer"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
-      {/* ── 5. CONNECTION REQUESTS TAB ── */}
-      {subTab === 'requests' && (
+      {/* ── 7. CONNECTION REQUESTS INBOX (INBOX FEEL) ── */}
+      {subTab === "requests" && (
         <div className="space-y-6">
           {/* Sub-selector for Incoming vs Outgoing */}
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setRequestsSubTab('incoming')}
+              onClick={() => setRequestsSubTab("incoming")}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                requestsSubTab === 'incoming'
-                  ? 'bg-brand-mint text-black shadow-md shadow-brand-mint/15'
-                  : 'bg-white/[0.03] text-text-muted hover:text-white hover:bg-white/[0.06]'
+                requestsSubTab === "incoming"
+                  ? "bg-brand-mint text-black shadow-md shadow-brand-mint/15 font-bold"
+                  : "bg-[#0A0F14] text-text-muted hover:text-white border border-white/[0.08]"
               }`}
             >
               <span>Incoming Requests</span>
@@ -1168,11 +1128,11 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
 
             <button
               type="button"
-              onClick={() => setRequestsSubTab('outgoing')}
+              onClick={() => setRequestsSubTab("outgoing")}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                requestsSubTab === 'outgoing'
-                  ? 'bg-brand-mint text-black shadow-md shadow-brand-mint/15'
-                  : 'bg-white/[0.03] text-text-muted hover:text-white hover:bg-white/[0.06]'
+                requestsSubTab === "outgoing"
+                  ? "bg-brand-mint text-black shadow-md shadow-brand-mint/15 font-bold"
+                  : "bg-[#0A0F14] text-text-muted hover:text-white border border-white/[0.08]"
               }`}
             >
               <span>Sent Requests</span>
@@ -1182,61 +1142,81 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
             </button>
           </div>
 
-          {/* Incoming Requests */}
-          {requestsSubTab === 'incoming' && (
+          {/* Incoming Requests List */}
+          {requestsSubTab === "incoming" && (
             <div>
               {requestsQuery.isLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[1, 2].map((i) => (
-                    <div key={i} className="h-28 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+                    <div
+                      key={i}
+                      className="h-28 rounded-2xl bg-[#0A0F14] border border-white/[0.04] animate-pulse"
+                    />
                   ))}
                 </div>
               ) : (requestsQuery.data?.incoming || []).length === 0 ? (
-                <div className="p-12 rounded-2xl bg-[#111115]/60 border border-white/[0.06] text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-3 text-text-faint">
-                    <UserCheck className="w-6 h-6" />
+                <div className="p-12 rounded-2xl bg-[#0A0F14] border border-white/[0.06] text-center max-w-md mx-auto">
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-3 text-text-muted">
+                    <UserCheck className="w-6 h-6 text-brand-mint" />
                   </div>
-                  <h4 className="font-heading font-bold text-sm text-white">No pending incoming requests</h4>
-                  <p className="text-xs text-text-muted mt-1">
-                    When someone sends you a connection request, you'll be able to accept or decline it here.
+                  <h4 className="font-heading font-bold text-sm text-white">
+                    No pending incoming requests
+                  </h4>
+                  <p className="text-xs text-text-muted mt-1 leading-relaxed">
+                    When someone sends you a connection request, review and accept them here.
                   </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {(requestsQuery.data?.incoming || []).map((req) => {
                     const requester = req.requesterId || {};
-                    const identifier = requester.username || requester.id || requester._id || '';
+                    const identifier = requester.username || requester.id || requester._id || "";
                     const profileLink = `/network/profile/${encodeURIComponent(identifier)}`;
 
                     return (
                       <div
                         key={req._id}
-                        className="p-4 rounded-2xl bg-[#111115]/80 border border-white/[0.08] flex items-center justify-between gap-3 shadow-lg"
+                        className="p-4 rounded-2xl bg-[#0A0F14] border border-white/[0.08] flex items-center justify-between gap-3 shadow-lg"
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <Link to={profileLink} className="w-10 h-10 rounded-xl bg-brand-mint/15 text-brand-mint font-bold text-xs flex items-center justify-center shrink-0 overflow-hidden">
+                          <Link
+                            to={profileLink}
+                            className="w-11 h-11 rounded-xl bg-[#070B14] border border-white/[0.08] text-brand-mint font-bold text-xs flex items-center justify-center shrink-0 overflow-hidden"
+                          >
                             {requester.avatar ? (
-                              <img src={requester.avatar} alt={requester.name} className="w-full h-full object-cover" />
+                              <img
+                                src={requester.avatar}
+                                alt={requester.name}
+                                className="w-full h-full object-cover"
+                              />
                             ) : (
                               <span>{getInitials(requester.name)}</span>
                             )}
                           </Link>
                           <div className="min-w-0">
-                            <Link to={profileLink} className="text-xs font-bold text-white hover:text-brand-mint transition-colors truncate block">
-                              {requester.name || 'Student'}
+                            <Link
+                              to={profileLink}
+                              className="text-xs font-bold text-white hover:text-brand-mint transition-colors truncate block"
+                            >
+                              {requester.name || "Member"}
                             </Link>
                             <p className="text-[10px] font-mono text-text-muted truncate">
-                              @{requester.username || 'student'}
+                              @{requester.username || "user"}
                             </p>
+                            {requester.headline && (
+                              <p className="text-[11px] text-text-muted truncate mt-0.5">
+                                {requester.headline}
+                              </p>
+                            )}
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1.5 shrink-0">
+                        <div className="flex items-center gap-2 shrink-0">
                           <button
                             type="button"
                             onClick={() => acceptRequestMutation.mutate(req._id)}
                             disabled={acceptRequestMutation.isPending}
-                            className="px-3 py-1.5 rounded-xl bg-brand-mint text-black font-bold text-xs cursor-pointer hover:bg-brand-mint/90 transition-colors"
+                            className="px-3.5 py-1.5 rounded-xl bg-brand-mint text-black font-bold text-xs cursor-pointer hover:bg-brand-mint/90 transition-all shadow-md shadow-brand-mint/15"
                           >
                             Accept
                           </button>
@@ -1258,22 +1238,27 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
             </div>
           )}
 
-          {/* Outgoing Requests */}
-          {requestsSubTab === 'outgoing' && (
+          {/* Outgoing Requests List */}
+          {requestsSubTab === "outgoing" && (
             <div>
               {requestsQuery.isLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[1, 2].map((i) => (
-                    <div key={i} className="h-28 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+                    <div
+                      key={i}
+                      className="h-28 rounded-2xl bg-[#0A0F14] border border-white/[0.04] animate-pulse"
+                    />
                   ))}
                 </div>
               ) : (requestsQuery.data?.outgoing || []).length === 0 ? (
-                <div className="p-12 rounded-2xl bg-[#111115]/60 border border-white/[0.06] text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-3 text-text-faint">
-                    <Clock className="w-6 h-6" />
+                <div className="p-12 rounded-2xl bg-[#0A0F14] border border-white/[0.06] text-center max-w-md mx-auto">
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-3 text-text-muted">
+                    <Clock className="w-6 h-6 text-text-muted" />
                   </div>
-                  <h4 className="font-heading font-bold text-sm text-white">No pending sent requests</h4>
-                  <p className="text-xs text-text-muted mt-1">
+                  <h4 className="font-heading font-bold text-sm text-white">
+                    No pending sent requests
+                  </h4>
+                  <p className="text-xs text-text-muted mt-1 leading-relaxed">
                     You have no active outgoing connection requests awaiting response.
                   </p>
                 </div>
@@ -1281,28 +1266,38 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {(requestsQuery.data?.outgoing || []).map((req) => {
                     const recipient = req.recipientId || {};
-                    const identifier = recipient.username || recipient.id || recipient._id || '';
+                    const identifier = recipient.username || recipient.id || recipient._id || "";
                     const profileLink = `/network/profile/${encodeURIComponent(identifier)}`;
 
                     return (
                       <div
                         key={req._id}
-                        className="p-4 rounded-2xl bg-[#111115]/80 border border-white/[0.08] flex items-center justify-between gap-3 shadow-lg"
+                        className="p-4 rounded-2xl bg-[#0A0F14] border border-white/[0.08] flex items-center justify-between gap-3 shadow-lg"
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <Link to={profileLink} className="w-10 h-10 rounded-xl bg-white/[0.04] text-text-muted font-bold text-xs flex items-center justify-center shrink-0 overflow-hidden">
+                          <Link
+                            to={profileLink}
+                            className="w-11 h-11 rounded-xl bg-[#070B14] border border-white/[0.08] text-text-muted font-bold text-xs flex items-center justify-center shrink-0 overflow-hidden"
+                          >
                             {recipient.avatar ? (
-                              <img src={recipient.avatar} alt={recipient.name} className="w-full h-full object-cover" />
+                              <img
+                                src={recipient.avatar}
+                                alt={recipient.name}
+                                className="w-full h-full object-cover"
+                              />
                             ) : (
                               <span>{getInitials(recipient.name)}</span>
                             )}
                           </Link>
                           <div className="min-w-0">
-                            <Link to={profileLink} className="text-xs font-bold text-white hover:text-brand-mint transition-colors truncate block">
-                              {recipient.name || 'Student'}
+                            <Link
+                              to={profileLink}
+                              className="text-xs font-bold text-white hover:text-brand-mint transition-colors truncate block"
+                            >
+                              {recipient.name || "Member"}
                             </Link>
                             <p className="text-[10px] font-mono text-text-muted truncate">
-                              @{recipient.username || 'student'}
+                              @{recipient.username || "user"}
                             </p>
                           </div>
                         </div>
@@ -1324,6 +1319,7 @@ export default function NetworkConnections({ defaultTab = 'people' }) {
           )}
         </div>
       )}
+
       {/* Modals for profile preview and message request */}
       {selectedPreviewPerson && (
         <StudentProfilePreviewModal

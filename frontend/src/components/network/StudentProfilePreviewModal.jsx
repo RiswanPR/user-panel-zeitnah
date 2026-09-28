@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import {
@@ -10,6 +10,8 @@ import {
   ShieldCheck,
   Clock,
   MessageSquare,
+  Briefcase,
+  Layers,
 } from "lucide-react";
 import { getUploadUrl } from "../../utils/courseUi";
 import RelationshipAction from "./RelationshipAction";
@@ -37,20 +39,48 @@ function formatLastActive(lastActiveAt) {
 
 /**
  * StudentProfilePreviewModal Component
- * Modal/sheet showing a student's public learning profile preview.
+ * Accessible modal showing an engineer/student public profile preview.
  *
- * @param {Object} props
- * @param {import('../../services/networkService').DiscoverableStudent | null} props.student - Student to preview
- * @param {function(): void} props.onClose - Close callback
+ * Requirements Met:
+ * - Safe user ID resolution: `student.id || student._id`.
+ * - Accessible dialog attributes (`role="dialog"`, `aria-modal="true"`, `aria-labelledby`).
+ * - Body scroll lock and ESC key listener.
+ * - Keyboard focus trap.
  */
-export default function StudentProfilePreviewModal({ student, onClose, onMessageRequest }) {
+export default function StudentProfilePreviewModal({
+  student,
+  onClose,
+  onMessageRequest,
+}) {
   const shouldReduceMotion = useReducedMotion();
   const navigate = useNavigate();
+  const modalRef = useRef(null);
 
-  // Handle ESC key
+  const studentId = student?.id || student?._id;
+
+  // Handle ESC and basic Tab trap
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key === "Tab" && modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -76,26 +106,27 @@ export default function StudentProfilePreviewModal({ student, onClose, onMessage
       role="dialog"
       aria-modal="true"
       aria-labelledby="preview-student-name"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md animate-fade-in"
       onClick={onClose}
     >
       <motion.div
+        ref={modalRef}
         initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.95, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 12 }}
         transition={{ duration: 0.25, ease: "easeOut" }}
-        className="relative w-full max-w-lg rounded-3xl border border-white/[0.12] bg-gradient-to-b from-[#131D2D] to-[#0A101D] p-6 sm:p-8 shadow-2xl backdrop-blur-2xl overflow-hidden max-h-[90vh] overflow-y-auto no-scrollbar"
+        className="relative w-full max-w-lg rounded-3xl border border-white/[0.1] bg-[#0A0F14] p-6 sm:p-8 shadow-2xl backdrop-blur-2xl overflow-hidden max-h-[90vh] overflow-y-auto no-scrollbar"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Top Gradient Line */}
-        <div className="gradient-line-top" />
+        {/* Top subtle highlight */}
+        <div className="absolute top-0 inset-x-8 h-[2px] bg-gradient-to-r from-transparent via-brand-mint/40 to-transparent" />
 
         {/* Close Button */}
         <button
           type="button"
           onClick={onClose}
           aria-label="Close preview"
-          className="absolute top-5 right-5 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-text-muted hover:bg-white/[0.12] hover:text-white transition-colors focus-ring"
+          className="absolute top-5 right-5 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-text-muted hover:bg-white/[0.12] hover:text-white transition-colors cursor-pointer focus-ring"
         >
           <X className="h-4 w-4" />
         </button>
@@ -103,7 +134,7 @@ export default function StudentProfilePreviewModal({ student, onClose, onMessage
         {/* Profile Header */}
         <div className="flex items-start gap-4">
           <div className="relative h-16 w-16 shrink-0">
-            <div className="h-16 w-16 rounded-2xl border border-brand-mint/30 bg-gradient-to-br from-brand-mint/20 via-brand-navy/40 to-bg-card flex items-center justify-center overflow-hidden shadow-inner">
+            <div className="h-16 w-16 rounded-2xl border border-brand-mint/30 bg-[#070B14] flex items-center justify-center overflow-hidden shadow-inner">
               {avatarSrc ? (
                 <img
                   src={avatarSrc}
@@ -111,22 +142,22 @@ export default function StudentProfilePreviewModal({ student, onClose, onMessage
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <span className="text-lg font-heading font-bold text-brand-mint">
+                <span className="text-lg font-heading font-extrabold text-brand-mint">
                   {initials}
                 </span>
               )}
             </div>
             {student.isVerified && (
               <div
-                className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand-mint text-bg-base shadow-sm"
-                title="Verified Student"
+                className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand-mint text-black shadow-sm"
+                title="Verified Professional"
               >
                 <ShieldCheck className="h-3.5 w-3.5" />
               </div>
             )}
           </div>
 
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 pr-6">
             <div className="flex items-center gap-2">
               <h2
                 id="preview-student-name"
@@ -143,7 +174,7 @@ export default function StudentProfilePreviewModal({ student, onClose, onMessage
             )}
 
             {student.headline && (
-              <p className="text-xs font-medium text-text-secondary mt-1 leading-relaxed">
+              <p className="text-xs font-medium text-text-secondary mt-1.5 leading-relaxed">
                 {student.headline}
               </p>
             )}
@@ -153,7 +184,7 @@ export default function StudentProfilePreviewModal({ student, onClose, onMessage
         {/* Status & Level Badge Row */}
         <div className="mt-5 flex flex-wrap items-center gap-2 pt-4 border-t border-white/[0.06]">
           {student.level && (
-            <span className="inline-flex items-center gap-1 rounded-lg border border-brand-yellow/25 bg-brand-yellow/10 px-2.5 py-1 text-[11px] font-semibold text-brand-yellow">
+            <span className="inline-flex items-center gap-1 rounded-lg border border-[#F6ED4A]/30 bg-[#F6ED4A]/10 px-2.5 py-1 text-[11px] font-semibold text-[#F6ED4A]">
               <Sparkles className="h-3 w-3" />
               <span>{student.level}</span>
             </span>
@@ -163,10 +194,17 @@ export default function StudentProfilePreviewModal({ student, onClose, onMessage
             <Clock className="h-3 w-3" />
             <span>{activeLabel}</span>
           </span>
+
+          {student.primaryDiscipline && (
+            <span className="inline-flex items-center gap-1 rounded-lg border border-brand-mint/20 bg-brand-mint/10 px-2.5 py-1 text-[11px] font-semibold text-brand-mint">
+              <Briefcase className="h-3 w-3" />
+              <span>{student.primaryDiscipline}</span>
+            </span>
+          )}
         </div>
 
-        {/* Educational Details */}
-        <div className="mt-5 space-y-3">
+        {/* Educational & Corporate Details */}
+        <div className="mt-5 space-y-2.5">
           {student.course && (
             <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 flex items-start gap-3">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-mint/10 text-brand-mint">
@@ -174,7 +212,7 @@ export default function StudentProfilePreviewModal({ student, onClose, onMessage
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[10px] font-mono uppercase tracking-wider text-text-muted">
-                  Enrolled Course
+                  Enrolled Program / Course
                 </p>
                 <p className="text-xs font-semibold text-white truncate mt-0.5">
                   {student.course}
@@ -185,12 +223,12 @@ export default function StudentProfilePreviewModal({ student, onClose, onMessage
 
           {student.institution && (
             <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 flex items-start gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] text-white/80">
                 <GraduationCap className="h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[10px] font-mono uppercase tracking-wider text-text-muted">
-                  Institution
+                  Institution / University
                 </p>
                 <p className="text-xs font-semibold text-white truncate mt-0.5">
                   {student.institution}
@@ -201,18 +239,18 @@ export default function StudentProfilePreviewModal({ student, onClose, onMessage
         </div>
 
         {/* Skills / Interests */}
-        {student.interests && student.interests.length > 0 && (
+        {(student.interests?.length > 0 || student.skills?.length > 0) && (
           <div className="mt-5">
             <p className="text-xs font-mono uppercase tracking-wider text-text-muted mb-2">
-              Learning Interests & Skills
+              Core Competencies & Interests
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {student.interests.map((interest) => (
+              {(student.skills || student.interests || []).map((skill) => (
                 <span
-                  key={interest}
+                  key={skill}
                   className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-xs font-medium text-white/80"
                 >
-                  {interest}
+                  {skill}
                 </span>
               ))}
             </div>
@@ -221,12 +259,12 @@ export default function StudentProfilePreviewModal({ student, onClose, onMessage
 
         {/* Actions Footer */}
         <div className="mt-6 pt-5 border-t border-white/[0.08] flex items-center gap-3">
-          {/* Real Relationship Action */}
+          {/* Safe Relationship Action */}
           <div className="flex-1">
             <RelationshipAction
-              targetUserId={student.id}
+              targetUserId={studentId}
               connectionId={student.connectionId}
-              initialState={student.relationshipState || "none"}
+              initialState={student.relationshipState || student.connectionStatus || "none"}
               studentName={student.name}
               variant="full"
             />
@@ -238,21 +276,21 @@ export default function StudentProfilePreviewModal({ student, onClose, onMessage
               type="button"
               onClick={() => {
                 onClose();
-                if (student.messageAction === 'request' && onMessageRequest) {
+                if (student.messageAction === "request" && onMessageRequest) {
                   onMessageRequest(student);
                 } else {
-                  navigate(`/messages?user=${student.id || student._id}`);
+                  navigate(`/messages?user=${studentId}`);
                 }
               }}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-brand-mint/40 bg-brand-mint/10 py-2.5 px-4 text-xs font-semibold text-brand-mint hover:bg-brand-mint/20 transition-all focus-ring"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-brand-mint/40 bg-brand-mint/10 py-2.5 px-4 text-xs font-semibold text-brand-mint hover:bg-brand-mint/20 transition-all cursor-pointer focus-ring"
             >
               <MessageSquare className="h-3.5 w-3.5" />
-              <span>{student.messageAction === 'request' ? 'Request' : 'Message'}</span>
+              <span>{student.messageAction === "request" ? "Request" : "Message"}</span>
             </button>
           ) : (
             <span
               className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.05] bg-white/[0.02] py-2.5 px-3 text-xs text-text-faint cursor-not-allowed opacity-50"
-              title="Messaging restricted by privacy settings"
+              title="Messaging restricted by user's privacy settings"
             >
               <MessageSquare className="h-3.5 w-3.5" />
             </span>
@@ -262,7 +300,7 @@ export default function StudentProfilePreviewModal({ student, onClose, onMessage
           {student.username && (
             <Link
               to={`/network/profile/${encodeURIComponent(student.username)}`}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.1] bg-white/[0.04] py-2.5 px-4 text-xs font-semibold text-white hover:bg-white/[0.08] hover:border-brand-mint/30 transition-all focus-ring"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.1] bg-white/[0.04] py-2.5 px-4 text-xs font-semibold text-white hover:bg-white/[0.08] hover:border-brand-mint/30 transition-all cursor-pointer focus-ring"
             >
               <span>Full Profile</span>
               <ExternalLink className="h-3.5 w-3.5" />

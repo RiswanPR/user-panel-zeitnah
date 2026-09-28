@@ -40,7 +40,8 @@
   --color-info: #38BDF8;
 
   /* ── Typography ── */
-  --font-heading: "Sora", "Inter", system-ui, -apple-system, sans-serif;
+  --font-degular: "Degular", "Sora", "Inter", system-ui, -apple-system, sans-serif;
+  --font-heading: "Degular", "Sora", "Inter", system-ui, -apple-system, sans-serif;
   --font-body: "Inter", "Sora", system-ui, -apple-system, sans-serif;
 
   /* ── Shadows ── */
@@ -1719,6 +1720,32 @@ html, body {
   border-color: rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.03);
   transform: translateY(-2px);
+}
+
+/* ── Technical Grid & Degular Display Utilities ── */
+.font-degular-display {
+  font-family: var(--font-degular);
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+}
+
+.font-degular-black {
+  font-family: var(--font-degular);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.bg-tech-grid {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
+
+.bg-tech-dots {
+  background-size: 24px 24px;
+  background-image: radial-gradient(rgba(159, 213, 178, 0.15) 1px, transparent 1px);
 }
 
 /* Respect reduced motion */
