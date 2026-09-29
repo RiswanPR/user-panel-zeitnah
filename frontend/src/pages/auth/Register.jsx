@@ -138,7 +138,7 @@ function Register() {
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.22),transparent_35%)]" />
                   <img
                     src="/zeitnah-logo.png"
-                    alt="Zeitnah Group of Institutions Logo"
+                    alt="Zeitnah Academy  Logo"
                     className="relative h-full w-full object-cover"
                   />
                 </div>
@@ -148,7 +148,7 @@ function Register() {
                     Zeitnah
                   </div>
                   <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.24em] text-[#9fd5b2]/70">
-                    Group of Institutions
+                    Academy
                   </div>
                 </div>
               </div>
@@ -225,8 +225,8 @@ function Register() {
                     <div key={item.number} className="relative">
                       <div
                         className={`mb-3 flex h-8 w-8 items-center justify-center rounded-[10px] border text-[9px] font-black ${item.active
-                            ? "border-[#f6ed4a]/25 bg-[#f6ed4a]/10 text-[#f6ed4a]"
-                            : "border-white/[0.08] bg-white/[0.025] text-white/25"
+                          ? "border-[#f6ed4a]/25 bg-[#f6ed4a]/10 text-[#f6ed4a]"
+                          : "border-white/[0.08] bg-white/[0.025] text-white/25"
                           }`}
                       >
                         {item.number}
@@ -290,7 +290,7 @@ function Register() {
               <div className="relative h-11 w-11 overflow-hidden rounded-[14px] border border-white/10 bg-white/[0.06] shadow-xl">
                 <img
                   src="/zeitnah-logo.png"
-                  alt="Zeitnah Group of Institutions Logo"
+                  alt="Zeitnah Academy  Logo"
                   className="h-full w-full object-cover"
                 />
               </div>
@@ -351,8 +351,8 @@ function Register() {
                     type="button"
                     onClick={() => switchTab("register")}
                     className={`rounded-[11px] px-3 py-2.5 text-[9px] font-black uppercase tracking-[0.18em] transition-all duration-300 ${activeTab === "register"
-                        ? "border border-white/[0.08] bg-white/[0.06] text-white shadow-[0_8px_25px_rgba(0,0,0,0.14)]"
-                        : "border border-transparent text-white/25"
+                      ? "border border-white/[0.08] bg-white/[0.06] text-white shadow-[0_8px_25px_rgba(0,0,0,0.14)]"
+                      : "border border-transparent text-white/25"
                       }`}
                   >
                     Create account
@@ -402,8 +402,8 @@ function Register() {
 
                       <div
                         className={`group relative rounded-[18px] border transition-all duration-500 ${focusedField === "name"
-                            ? "border-[#9fd5b2]/35 bg-[#9fd5b2]/[0.055] shadow-[0_0_0_4px_rgba(159,213,178,0.035)]"
-                            : "border-white/[0.09] bg-white/[0.025] hover:border-white/[0.15]"
+                          ? "border-[#9fd5b2]/35 bg-[#9fd5b2]/[0.055] shadow-[0_0_0_4px_rgba(159,213,178,0.035)]"
+                          : "border-white/[0.09] bg-white/[0.025] hover:border-white/[0.15]"
                           }`}
                       >
                         <div
@@ -474,10 +474,10 @@ function Register() {
 
                       <div
                         className={`group relative rounded-[18px] border transition-all duration-500 ${error
-                            ? "border-red-400/35 bg-red-400/[0.045]"
-                            : focusedField === "email"
-                              ? "border-[#9fd5b2]/35 bg-[#9fd5b2]/[0.055] shadow-[0_0_0_4px_rgba(159,213,178,0.035)]"
-                              : "border-white/[0.09] bg-white/[0.025] hover:border-white/[0.15]"
+                          ? "border-red-400/35 bg-red-400/[0.045]"
+                          : focusedField === "email"
+                            ? "border-[#9fd5b2]/35 bg-[#9fd5b2]/[0.055] shadow-[0_0_0_4px_rgba(159,213,178,0.035)]"
+                            : "border-white/[0.09] bg-white/[0.025] hover:border-white/[0.15]"
                           }`}
                       >
                         <div

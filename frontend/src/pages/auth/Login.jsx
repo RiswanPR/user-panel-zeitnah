@@ -136,7 +136,7 @@ function Login() {
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.22),transparent_35%)]" />
                   <img
                     src="/zeitnah-logo.png"
-                    alt="Zeitnah Group of Institutions Logo"
+                    alt="Zeitnah Academy  Logo"
                     className="relative h-full w-full object-cover"
                   />
                 </div>
@@ -146,7 +146,7 @@ function Login() {
                     Zeitnah
                   </div>
                   <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.24em] text-[#9fd5b2]/70">
-                    Group of Institutions
+                    Academy
                   </div>
                 </div>
               </div>
@@ -277,7 +277,7 @@ function Login() {
               <div className="relative h-11 w-11 overflow-hidden rounded-[14px] border border-white/10 bg-white/[0.06] shadow-xl">
                 <img
                   src="/zeitnah-logo.png"
-                  alt="Zeitnah Group of Institutions Logo"
+                  alt="Zeitnah Academy  Logo"
                   className="h-full w-full object-cover"
                 />
               </div>
@@ -355,10 +355,10 @@ function Login() {
 
                     <div
                       className={`group relative rounded-[18px] border transition-all duration-500 ${error
-                          ? "border-red-400/35 bg-red-400/[0.045]"
-                          : isFocused
-                            ? "border-[#9fd5b2]/35 bg-[#9fd5b2]/[0.055] shadow-[0_0_0_4px_rgba(159,213,178,0.035),0_18px_50px_rgba(0,0,0,0.12)]"
-                            : "border-white/[0.09] bg-white/[0.025] hover:border-white/[0.15]"
+                        ? "border-red-400/35 bg-red-400/[0.045]"
+                        : isFocused
+                          ? "border-[#9fd5b2]/35 bg-[#9fd5b2]/[0.055] shadow-[0_0_0_4px_rgba(159,213,178,0.035),0_18px_50px_rgba(0,0,0,0.12)]"
+                          : "border-white/[0.09] bg-white/[0.025] hover:border-white/[0.15]"
                         }`}
                     >
                       {/* Focus rail */}
