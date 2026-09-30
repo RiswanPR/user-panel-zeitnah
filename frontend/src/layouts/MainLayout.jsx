@@ -22,6 +22,7 @@ import NotificationDrawer from "../components/notifications/NotificationDrawer";
 import PlatformAnnouncementBanner from "../components/announcements/PlatformAnnouncementBanner";
 import MobileMoreDrawer from "../components/navigation/MobileMoreDrawer";
 import MainNavbar from "../components/navigation/MainNavbar";
+import { getPrimaryCareerNavigation } from "../utils/roleNavigation";
 
 export default function MainLayout({ children }) {
   const location = useLocation();
@@ -63,8 +64,13 @@ export default function MainLayout({ children }) {
     if (key === "network") return path === "/network" || path.startsWith("/network/");
     if (key === "messages") return path.startsWith("/messages");
     if (key === "jobs") return path.startsWith("/jobs");
+    if (key === "manage-business") return path.startsWith("/manage-business");
     return false;
   };
+
+  // Authoritative career item based on role (Manage Business for Recruiter/Founder, Jobs for others)
+  const careerItem = getPrimaryCareerNavigation(user);
+  const CareerIcon = careerItem.icon;
 
   return (
     <div className="min-h-screen bg-bg-base text-white font-body antialiased flex flex-col selection:bg-brand-mint/30 selection:text-white">
@@ -179,30 +185,31 @@ export default function MainLayout({ children }) {
                 </span>
               </Link>
 
-              {/* 4. Jobs */}
+              {/* 4. Role-Aware Career Item (Manage Business for Recruiter/Founder, Jobs for others) */}
               <Link
-                to="/jobs"
-                aria-current={isRouteActive("jobs") ? "page" : undefined}
+                to={careerItem.path}
+                aria-current={isRouteActive(careerItem.key) ? "page" : undefined}
                 className="relative flex flex-col items-center justify-center py-1 px-3 min-h-[46px] min-w-[54px] rounded-xl transition-all focus-ring touch-manipulation"
               >
-                {isRouteActive("jobs") && (
+                {isRouteActive(careerItem.key) && (
                   <motion.div
                     layoutId={shouldReduceMotion ? undefined : "mobile-nav-active"}
                     className="absolute inset-0 rounded-xl bg-brand-mint/12 border border-brand-mint/25"
                     transition={{ type: "spring", stiffness: 400, damping: 28 }}
                   />
                 )}
-                <Briefcase
+                <CareerIcon
                   className={`w-5 h-5 relative z-10 transition-colors ${
-                    isRouteActive("jobs") ? "text-brand-mint" : "text-text-muted"
+                    isRouteActive(careerItem.key) ? "text-brand-mint" : "text-text-muted"
                   }`}
+                  aria-hidden="true"
                 />
                 <span
                   className={`text-[10px] mt-0.5 relative z-10 font-semibold tracking-tight ${
-                    isRouteActive("jobs") ? "text-brand-mint" : "text-text-faint"
+                    isRouteActive(careerItem.key) ? "text-brand-mint" : "text-text-faint"
                   }`}
                 >
-                  Jobs
+                  {careerItem.mobileLabel || careerItem.label}
                 </span>
               </Link>
 
@@ -210,13 +217,15 @@ export default function MainLayout({ children }) {
               <button
                 type="button"
                 onClick={() => setIsMobileMoreOpen(true)}
+                aria-expanded={isMobileMoreOpen}
+                aria-haspopup="dialog"
                 aria-label="More navigation options"
                 className={`relative flex flex-col items-center justify-center py-1 px-3 min-h-[46px] min-w-[54px] rounded-xl transition-all focus-ring touch-manipulation cursor-pointer ${
                   isMobileMoreOpen ? "text-brand-mint" : "text-text-muted"
                 }`}
               >
                 <div className="relative z-10">
-                  <MoreHorizontal className="w-5 h-5" />
+                  <MoreHorizontal className="w-5 h-5" aria-hidden="true" />
                   {(unreadOpportunitiesCount > 0 || unreadNotifCount > 0) && (
                     <span className="absolute -top-1 -right-1.5 w-2 h-2 rounded-full bg-brand-mint shadow-sm" />
                   )}

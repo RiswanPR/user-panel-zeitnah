@@ -159,7 +159,7 @@ export class ProfileController {
     return this.profileService.updateProfile(
       req.user.userId,
       body,
-      req.user?.role,
+      req.user?.primaryRole || req.user?.role,
     );
   }
 
@@ -412,7 +412,7 @@ export class ProfileController {
       req.user.userId,
       true,
       req.user.userId,
-      req.user?.role,
+      req.user?.primaryRole || req.user?.role,
     );
   }
 
@@ -426,7 +426,7 @@ export class ProfileController {
     @Req() req: any,
   ) {
     const currentUserId = req.user?.userId;
-    const currentRole = req.user?.role;
+    const currentRole = req.user?.primaryRole || req.user?.role;
     return this.profileService.getPublicPortfolio(
       username,
       currentUserId,
@@ -488,7 +488,7 @@ export class ProfileController {
     return this.profileService.getResumeDownloadUrl(
       targetUserId,
       req.user.userId,
-      req.user?.role,
+      req.user?.primaryRole || req.user?.role,
     );
   }
 
@@ -620,7 +620,7 @@ export class ProfileController {
   ) {
     return this.profileService.getVerificationEvidenceUrl(
       req.user.userId,
-      req.user?.role,
+      req.user?.primaryRole || req.user?.role,
       requestId,
       fileId,
     );

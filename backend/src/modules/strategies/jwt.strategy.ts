@@ -13,7 +13,8 @@ import { User, UserDocument } from '../../modules/auth/schemas/user.schema';
 
 type JwtPayload = {
   userId: string;
-  role: string;
+  primaryRole?: string;
+  role?: string;
   deviceId: string;
 };
 
@@ -126,8 +127,24 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       );
     }
 
+    // Canonical primary platform identity: Authoritative MongoDB primaryRole
+    const canonicalPrimaryRole = (
+      user.primaryRole ||
+      payload.primaryRole ||
+      (user.role === 'teacher'
+        ? 'EDUCATOR'
+        : user.role === 'recruiter'
+          ? 'RECRUITER'
+          : user.role === 'admin'
+            ? 'ADMIN'
+            : 'STUDENT')
+    )
+      .trim()
+      .toUpperCase();
+
     return {
       userId: payload.userId,
+      id: payload.userId,
 
       name: user.name,
       email: user.email,
@@ -135,7 +152,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       usernameClaimed: user.usernameClaimed ?? false,
       usernameChangedAt: user.usernameChangedAt || null,
 
-      role: payload.role,
+      primaryRole: canonicalPrimaryRole,
+      role: user.role || payload.role || 'student',
 
       deviceId: payload.deviceId,
     };

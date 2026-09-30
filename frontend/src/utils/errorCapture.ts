@@ -360,7 +360,7 @@ export interface CapturedNetworkError {
  * Explicit classification for network responses to avoid false alerts
  */
 export function classifyNetworkError({
-  method,
+  method: _method,
   url,
   status,
   message,

@@ -60,18 +60,21 @@ type LoginRequestMetadata = {
 
 export type AuthenticatedUser = {
   userId: string;
+  id?: string;
   name?: string;
   email: string;
   username?: string;
   usernameClaimed?: boolean;
   usernameChangedAt?: Date | null;
+  primaryRole: string;
   role: string;
   deviceId: string;
 };
 
 type RefreshTokenPayload = {
   userId: string;
-  role: string;
+  primaryRole?: string;
+  role?: string;
   deviceId: string;
 };
 
@@ -425,8 +428,23 @@ export class AuthService {
   }
 
   private async generateAuthTokens(user: UserDocument, deviceId: string) {
+    const canonicalPrimaryRole = (
+      user.primaryRole ||
+      (user.role === 'teacher'
+        ? 'EDUCATOR'
+        : user.role === 'recruiter'
+          ? 'RECRUITER'
+          : user.role === 'admin'
+            ? 'ADMIN'
+            : 'STUDENT')
+    )
+      .trim()
+      .toUpperCase();
+
     const payload = {
       userId: user._id.toString(),
+
+      primaryRole: canonicalPrimaryRole,
 
       role: user.role,
 
@@ -805,6 +823,19 @@ export class AuthService {
         username: user.username,
 
         usernameClaimed: Boolean(user.usernameClaimed),
+
+        primaryRole: (
+          user.primaryRole ||
+          (user.role === 'teacher'
+            ? 'EDUCATOR'
+            : user.role === 'recruiter'
+              ? 'RECRUITER'
+              : user.role === 'admin'
+                ? 'ADMIN'
+                : 'STUDENT')
+        )
+          .trim()
+          .toUpperCase(),
 
         role: user.role,
 
@@ -1192,6 +1223,19 @@ export class AuthService {
 
         usernameClaimed: Boolean(user.usernameClaimed),
 
+        primaryRole: (
+          user.primaryRole ||
+          (user.role === 'teacher'
+            ? 'EDUCATOR'
+            : user.role === 'recruiter'
+              ? 'RECRUITER'
+              : user.role === 'admin'
+                ? 'ADMIN'
+                : 'STUDENT')
+        )
+          .trim()
+          .toUpperCase(),
+
         role: user.role,
       },
     };
@@ -1320,6 +1364,33 @@ export class AuthService {
       refreshToken: tokens.refreshToken,
 
       sessionExpiresAt: tokens.refreshTokenExpiry,
+
+      user: {
+        id: user._id,
+
+        name: user.name,
+
+        email: user.email,
+
+        username: user.username,
+
+        usernameClaimed: Boolean(user.usernameClaimed),
+
+        primaryRole: (
+          user.primaryRole ||
+          (user.role === 'teacher'
+            ? 'EDUCATOR'
+            : user.role === 'recruiter'
+              ? 'RECRUITER'
+              : user.role === 'admin'
+                ? 'ADMIN'
+                : 'STUDENT')
+        )
+          .trim()
+          .toUpperCase(),
+
+        role: user.role,
+      },
     };
   }
 

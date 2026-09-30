@@ -180,7 +180,10 @@ export class NetworkService {
     currentUserId?: string,
   ): Record<string, any> {
     const filter: Record<string, any> = {
-      role: 'student',
+      $or: [
+        { primaryRole: 'STUDENT' },
+        { primaryRole: { $exists: false }, role: 'student' },
+      ],
       'account_Status.isBlocked': { $ne: true },
       'account_Status.isDeleted': { $ne: true },
     };
@@ -311,6 +314,7 @@ export class NetworkService {
 
     // Filter by Role
     if (dto.role && dto.role.trim()) {
+      delete query.$or;
       query.primaryRole = dto.role.trim().toUpperCase();
     }
 
@@ -2442,7 +2446,10 @@ export class NetworkService {
       if (count < 20) {
         const sampleStudents = await this.userModel
           .find({
-            role: 'student',
+            $or: [
+              { primaryRole: 'STUDENT' },
+              { primaryRole: { $exists: false }, role: 'student' },
+            ],
             'account_Status.isBlocked': { $ne: true },
             'account_Status.isDeleted': { $ne: true },
           })

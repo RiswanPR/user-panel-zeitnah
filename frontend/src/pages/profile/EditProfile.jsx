@@ -54,6 +54,7 @@ import {
   INFRASTRUCTURE_SECTORS,
   INFRASTRUCTURE_SOFTWARE,
 } from "../../constants/infrastructureTaxonomy";
+import { normalizeUserRole } from "../../utils/roleNavigation";
 
 const MAX_BIO_LENGTH = 1000;
 
@@ -889,7 +890,7 @@ export default function EditProfile() {
 
   const avatarUrl = getUploadUrl(profile?.avatar);
   const bannerUrl = getUploadUrl(profile?.backgroundImage);
-  const isAssignedEducator = profile?.primaryRole === "EDUCATOR" || profile?.role === "educator";
+  const isAssignedEducator = normalizeUserRole(profile) === "EDUCATOR";
 
   // Section completion status helper
   const getSectionStatus = (secId) => {

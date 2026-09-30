@@ -38,6 +38,7 @@ import { portfolioService } from '../../services/portfolioService';
 import { AuthContext } from '../../context/AuthContext';
 import { useToast } from '../../components/ui/Toast';
 import ProfileNav from '../../components/profile/ProfileNav';
+import { isRecruiterOrFounder, isAdmin } from '../../utils/roleNavigation';
 import SendOpportunityModal from '../../components/opportunities/SendOpportunityModal';
 import { getUploadUrl } from '../../utils/courseUi';
 import projectsService from '../../services/projectsService';
@@ -251,7 +252,7 @@ export default function PortfolioPage({ isPublic = false }) {
   const missingItems = portfolioData?.missingItems || [];
   const projects = portfolioData?.projects || [];
   const isBusinessViewer =
-    ['RECRUITER', 'FOUNDER', 'ADMIN'].includes(authUser?.primaryRole?.toUpperCase()) && !isOwner;
+    (isRecruiterOrFounder(authUser) || isAdmin(authUser)) && !isOwner;
 
   return (
     <div className="space-y-8 animate-fadeIn max-w-6xl mx-auto pb-16 print:p-0 print:m-0 print:space-y-4">

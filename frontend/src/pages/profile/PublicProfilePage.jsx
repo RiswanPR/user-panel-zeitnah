@@ -38,6 +38,7 @@ import ReportModal from "../../components/network/ReportModal";
 import projectsService from "../../services/projectsService";
 import ProfileNetworkStats from "../../components/network/ProfileNetworkStats";
 import SendOpportunityModal from "../../components/opportunities/SendOpportunityModal";
+import { isRecruiterOrFounder, isAdmin } from "../../utils/roleNavigation";
 
 export default function PublicProfilePage() {
   const { username: paramUsername } = useParams();
@@ -408,9 +409,7 @@ export default function PublicProfilePage() {
 
                 {/* Recruiter Send Opportunity Button */}
                 {!isOwnProfile &&
-                  ["RECRUITER", "FOUNDER", "ADMIN"].includes(
-                    authUser?.primaryRole?.toUpperCase()
-                  ) && (
+                  (isRecruiterOrFounder(authUser) || isAdmin(authUser)) && (
                     <button
                       type="button"
                       onClick={() => setIsSendOpportunityOpen(true)}

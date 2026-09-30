@@ -156,6 +156,7 @@ function App() {
                 <Route path="/profile/portfolio" element={<Suspense fallback={<PageLoader />}><PortfolioPage /></Suspense>} />
                 <Route path="/profile/verification" element={<Suspense fallback={<PageLoader />}><VerificationCenterPage /></Suspense>} />
                 <Route path="/profile/edit" element={<Suspense fallback={<PageLoader />}><EditProfile /></Suspense>} />
+                <Route path="/settings" element={<Navigate to="/profile/edit" replace />} />
                 <Route path="/public-profile" element={<Suspense fallback={<PageLoader />}><PublicProfilePage /></Suspense>} />
                 <Route path="/courses" element={<Suspense fallback={<PageLoader />}><Courses /></Suspense>} />
                 <Route path="/courses/:courseId" element={<Suspense fallback={<PageLoader />}><CourseChapters /></Suspense>} />
@@ -179,13 +180,40 @@ function App() {
                 <Route path="/opportunities/inbox" element={<Suspense fallback={<PageLoader />}><OpportunityInboxPage /></Suspense>} />
                 <Route path="/career/opportunities" element={<Navigate to="/opportunities/inbox" replace />} />
                 <Route path="/career-intelligence" element={<Suspense fallback={<PageLoader />}><CareerIntelligencePage /></Suspense>} />
-                <Route path="/manage-business" element={<Suspense fallback={<PageLoader />}><ManageBusiness /></Suspense>} />
+                <Route
+                  path="/manage-business"
+                  element={
+                    <ProtectedRoute allowedRoles={["RECRUITER", "FOUNDER", "ADMIN"]} redirectTo="/jobs">
+                      <Suspense fallback={<PageLoader />}>
+                        <ManageBusiness />
+                      </Suspense>
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="/businesses" element={<Suspense fallback={<PageLoader />}><BusinessDiscoveryPage /></Suspense>} />
                 <Route path="/businesses/:slug" element={<Suspense fallback={<PageLoader />}><PublicBusinessProfilePage /></Suspense>} />
-                <Route path="/admin/businesses" element={<Suspense fallback={<PageLoader />}><AdminBusinessReviewPage /></Suspense>} />
+                <Route
+                  path="/admin/businesses"
+                  element={
+                    <ProtectedRoute allowedRoles={["ADMIN"]} redirectTo="/jobs">
+                      <Suspense fallback={<PageLoader />}>
+                        <AdminBusinessReviewPage />
+                      </Suspense>
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="/active-sessions" element={<Suspense fallback={<PageLoader />}><ActiveSessions /></Suspense>} />
                 <Route path="/audit-logs" element={<Suspense fallback={<PageLoader />}><AuditLogs /></Suspense>} />
-                <Route path="/admin/error-reports" element={<Suspense fallback={<PageLoader />}><ErrorReportsDashboard /></Suspense>} />
+                <Route
+                  path="/admin/error-reports"
+                  element={
+                    <ProtectedRoute allowedRoles={["ADMIN"]} redirectTo="/jobs">
+                      <Suspense fallback={<PageLoader />}>
+                        <ErrorReportsDashboard />
+                      </Suspense>
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="/session-diagnostics" element={<Suspense fallback={<PageLoader />}><SessionDiagnostics /></Suspense>} />
               </Route>
 

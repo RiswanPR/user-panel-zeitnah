@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { getUploadUrl } from "../../utils/courseUi";
 import RelationshipAction from "./RelationshipAction";
+import EcosystemRoleBadge from "./EcosystemRoleBadge";
+import { normalizeUserRole } from "../../utils/roleNavigation";
 
 function getInitials(name) {
   if (!name) return "Z";
@@ -183,6 +185,7 @@ export default function StudentProfilePreviewModal({
 
         {/* Status & Level Badge Row */}
         <div className="mt-5 flex flex-wrap items-center gap-2 pt-4 border-t border-white/[0.06]">
+          <EcosystemRoleBadge role={normalizeUserRole(student)} size="xs" />
           {student.level && (
             <span className="inline-flex items-center gap-1 rounded-lg border border-[#F6ED4A]/30 bg-[#F6ED4A]/10 px-2.5 py-1 text-[11px] font-semibold text-[#F6ED4A]">
               <Sparkles className="h-3 w-3" />

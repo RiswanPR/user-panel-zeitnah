@@ -9,10 +9,26 @@ import storage from "../services/storage";
 import queryClient from "../services/queryClient";
 import nativeNotifications from "../native/notifications";
 import LogoutConfirmModal from "../components/common/LogoutConfirmModal";
+import { normalizeUserRole } from "../utils/roleNavigation";
+
+export interface AuthUser {
+  id?: string;
+  userId?: string;
+  name?: string;
+  email: string;
+  username?: string;
+  usernameClaimed?: boolean;
+  usernameChangedAt?: Date | string | null;
+  primaryRole: string;
+  role: string;
+  deviceId?: string;
+  userVerification?: boolean;
+  [key: string]: any;
+}
 
 interface AuthContextType {
-  user: any;
-  setUser: React.Dispatch<React.SetStateAction<any>>;
+  user: AuthUser | null;
+  setUser: React.Dispatch<React.SetStateAction<AuthUser | null>>;
   updateUser: (fields: Record<string, any>) => void;
   loading: boolean;
   logout: () => void;
@@ -28,8 +44,37 @@ interface AuthProviderProps {
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
+function parseJwtPayload(token: string): Record<string, any> | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2) return null;
+    return JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+  } catch {
+    return null;
+  }
+}
+
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    // Fast synchronous initial hydration from JWT access token if available
+    try {
+      const token = storage.getAccessToken();
+      if (!token) return null;
+      const payload = parseJwtPayload(token);
+      if (!payload || !payload.userId) return null;
+      const primaryRole = normalizeUserRole(payload.primaryRole || payload.role);
+      return {
+        id: payload.userId,
+        userId: payload.userId,
+        email: payload.email || "",
+        primaryRole,
+        role: payload.role || "student",
+        deviceId: payload.deviceId,
+      };
+    } catch {
+      return null;
+    }
+  });
   const [loading, setLoading] = useState(true);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -43,14 +88,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const token = storage.getAccessToken();
 
         if (!token) {
-          if (mounted) setLoading(false);
+          if (mounted) {
+            setUser(null);
+            setLoading(false);
+          }
           return;
         }
 
-        // TOKEN automatically added by interceptor
+        // Authoritative user profile hydration via /auth/me
         const res = await api.get("/auth/me");
         if (mounted) {
-          setUser(res.data.user);
+          const authUser = res.data?.user;
+          if (authUser) {
+            authUser.primaryRole = normalizeUserRole(authUser);
+            setUser(authUser);
+          } else {
+            setUser(null);
+          }
           // Sync push token with backend if device is registered
           nativeNotifications.registerForPushNotifications().catch(() => {});
         }
@@ -120,7 +174,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const updateUser = (fields: Record<string, any>) => {
-    setUser((prev: any) => (prev ? { ...prev, ...fields } : prev));
+    setUser((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...fields };
+      if (updated.primaryRole) {
+        updated.primaryRole = normalizeUserRole(updated);
+      }
+      return updated;
+    });
   };
 
   return (

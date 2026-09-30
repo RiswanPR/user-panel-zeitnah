@@ -266,7 +266,17 @@ export class AuthController {
     return {
       success: true,
 
-      user: req.user,
+      user: {
+        id: req.user.userId || (req.user as any).id,
+        userId: req.user.userId,
+        name: req.user.name,
+        email: req.user.email,
+        username: req.user.username,
+        usernameClaimed: req.user.usernameClaimed ?? false,
+        primaryRole: req.user.primaryRole,
+        role: req.user.role,
+        deviceId: req.user.deviceId,
+      },
     };
   }
 

@@ -6,6 +6,7 @@ import { getUploadUrl } from "../../utils/courseUi";
 import RelationshipAction from "./RelationshipAction";
 import EcosystemRoleBadge from "./EcosystemRoleBadge";
 import AvailabilityBadge from "./AvailabilityBadge";
+import { normalizeUserRole } from "../../utils/roleNavigation";
 
 /**
  * Derives user initials from full name.
@@ -115,7 +116,7 @@ export default function StudentCard({ student, onPreview }) {
 
             {/* Ecosystem Badges */}
             <div className="flex flex-wrap items-center gap-1.5 mt-2">
-              <EcosystemRoleBadge role={student.primaryRole || "STUDENT"} size="xs" />
+              <EcosystemRoleBadge role={normalizeUserRole(student)} size="xs" />
               <AvailabilityBadge availability={student.availability} size="xs" />
             </div>
           </div>

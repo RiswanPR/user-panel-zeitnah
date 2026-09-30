@@ -144,12 +144,14 @@ describe('S3 Video Player Production Validation - Backend Suite', () => {
       const result = await jwtStrategy.validate(payload);
 
       expect(result).toEqual({
+        id: 'user-123',
         userId: 'user-123',
         name: 'Student Test',
         email: 'student@example.com',
         username: undefined,
         usernameClaimed: false,
         usernameChangedAt: null,
+        primaryRole: 'STUDENT',
         role: 'student',
         deviceId: 'device-456',
       });

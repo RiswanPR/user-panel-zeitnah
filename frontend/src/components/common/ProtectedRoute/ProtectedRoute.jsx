@@ -1,11 +1,12 @@
 import { useContext } from "react";
 import { Navigate } from "react-router-dom";
 import { AuthContext } from "../../../context/AuthContext";
+import { normalizeUserRole } from "../../../utils/roleNavigation";
 
 /**
- * Premium loading screen for protected route authentication check.
+ * Premium loading screen for protected route authentication and role-restricted checks.
  */
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, allowedRoles, redirectTo = "/jobs" }) {
   const { user, loading } = useContext(AuthContext);
 
   if (loading) {
@@ -40,7 +41,14 @@ function ProtectedRoute({ children }) {
   }
 
   if (!user) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
+  }
+
+  if (allowedRoles && allowedRoles.length > 0) {
+    const userRole = normalizeUserRole(user);
+    if (!allowedRoles.includes(userRole)) {
+      return <Navigate to={redirectTo} replace />;
+    }
   }
 
   return children;

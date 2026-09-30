@@ -75,6 +75,34 @@ import {
 } from './dto/verification.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 
+/**
+ * Canonical to legacy role compatibility mapping.
+ * primaryRole is the single authoritative source of truth for platform identity.
+ * Legacy `role` exists strictly for backward compatibility with legacy consumers and LMS.
+ * User schema role enum: ['student', 'teacher', 'admin', 'recruiter'].
+ */
+export function mapPrimaryRoleToLegacyRole(
+  primaryRole: string,
+  currentLegacyRole?: string,
+): string {
+  if (currentLegacyRole === 'admin' || currentLegacyRole === 'superuser') {
+    return currentLegacyRole;
+  }
+  const normalized = (primaryRole || 'STUDENT').trim().toUpperCase();
+  switch (normalized) {
+    case 'EDUCATOR':
+      return 'teacher';
+    case 'RECRUITER':
+    case 'FOUNDER':
+      return 'recruiter';
+    case 'STUDENT':
+    case 'PROFESSIONAL':
+    case 'MENTOR':
+    default:
+      return 'student';
+  }
+}
+
 @Injectable()
 export class ProfileService {
   private readonly logger = new Logger(ProfileService.name);
@@ -747,6 +775,7 @@ export class ProfileService {
       }
 
       user.primaryRole = normalizedRole;
+      user.role = mapPrimaryRoleToLegacyRole(normalizedRole, user.role);
     }
 
     if (data.primaryDiscipline !== undefined) {
@@ -1593,9 +1622,7 @@ export class ProfileService {
 
     const previousRole = targetUser.primaryRole;
     targetUser.primaryRole = normalizedRole;
-    if (normalizedRole === 'EDUCATOR') {
-      targetUser.role = 'teacher';
-    }
+    targetUser.role = mapPrimaryRoleToLegacyRole(normalizedRole, targetUser.role);
     await targetUser.save();
 
     await this.auditLogsService.record({

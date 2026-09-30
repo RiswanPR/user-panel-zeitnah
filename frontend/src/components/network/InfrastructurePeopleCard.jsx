@@ -18,6 +18,7 @@ import { getUploadUrl } from "../../utils/courseUi";
 import RelationshipAction from "./RelationshipAction";
 import EcosystemRoleBadge from "./EcosystemRoleBadge";
 import { useToast } from "../ui/Toast";
+import { normalizeUserRole } from "../../utils/roleNavigation";
 
 function getInitials(name) {
   if (!name) return "Z";
@@ -188,7 +189,7 @@ export default function InfrastructurePeopleCard({
             {/* Ecosystem Persona Badge */}
             <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
               <EcosystemRoleBadge
-                role={person.primaryRole || person.role || "PROFESSIONAL"}
+                role={normalizeUserRole(person)}
                 size="xs"
               />
             </div>
