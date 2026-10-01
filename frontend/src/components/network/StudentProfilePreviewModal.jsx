@@ -139,7 +139,7 @@ export default function StudentProfilePreviewModal({
             <Link
               to={getCanonicalProfileUrl(student)}
               onClick={onClose}
-              className="h-16 w-16 rounded-2xl border border-brand-mint/30 bg-[#070B14] flex items-center justify-center overflow-hidden shadow-inner hover:border-brand-mint/60 transition-colors block"
+              className="h-16 w-16 rounded-full border border-white/[0.1] bg-[#070B14] flex items-center justify-center overflow-hidden shadow-inner hover:border-brand-mint/40 transition-transform duration-200 ease-out hover:scale-[1.02] block"
             >
               {avatarSrc ? (
                 <img
@@ -155,10 +155,10 @@ export default function StudentProfilePreviewModal({
             </Link>
             {student.isVerified && (
               <div
-                className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand-mint text-black shadow-sm"
+                className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-black shadow-sm"
                 title="Verified Professional"
               >
-                <ShieldCheck className="h-3.5 w-3.5" />
+                <ShieldCheck className="h-2.5 w-2.5" />
               </div>
             )}
           </div>
@@ -192,6 +192,12 @@ export default function StudentProfilePreviewModal({
             {student.headline && (
               <p className="text-xs font-medium text-text-secondary mt-1.5 leading-relaxed">
                 {student.headline}
+              </p>
+            )}
+
+            {(student.location || student.city) && (
+              <p className="text-[11px] text-text-muted/80 mt-1">
+                {student.location || `${student.city}${student.country ? ` · ${student.country}` : ""}`}
               </p>
             )}
           </div>

@@ -76,6 +76,18 @@ export class NetworkConnectionsController {
     return this.connService.acceptConnectionRequest(id, this.getUserId(req));
   }
 
+  @Patch('connections/:id/decline')
+  @ApiOperation({ summary: 'Decline connection request' })
+  async declineRequest(@Req() req, @Param('id') id: string) {
+    return this.connService.declineConnectionRequest(id, this.getUserId(req));
+  }
+
+  @Delete('connections/:id/cancel')
+  @ApiOperation({ summary: 'Cancel outgoing connection request' })
+  async cancelRequest(@Req() req, @Param('id') id: string) {
+    return this.connService.cancelConnectionRequest(id, this.getUserId(req));
+  }
+
   @Delete('connections/:id')
   @ApiOperation({ summary: 'Remove connection or cancel request' })
   async removeConnection(@Req() req, @Param('id') id: string) {

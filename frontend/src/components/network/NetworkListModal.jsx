@@ -21,6 +21,7 @@ import {
 import { networkConnectionsService } from "../../services/networkConnectionsService";
 import { useToast } from "../ui/Toast";
 import { getCanonicalProfileUrl } from "../../utils/roleNavigation";
+import { AuthContext } from "../../context/AuthContext";
 
 /**
  * Format integer count with locale commas

@@ -328,17 +328,21 @@ export class NetworkConnectionsService {
       users.map(async (u: any) => {
         const conn = connMap.get(String(u._id));
         let connectionStatus = 'none';
+        let relationshipState = 'none';
         let isFollowing = false;
         if (conn) {
           if (conn.status === 'accepted') {
             connectionStatus = 'connected';
+            relationshipState = 'connected';
             isFollowing = true;
           } else if (conn.status === 'pending') {
             if (conn.isRequester) {
               connectionStatus = 'pending_sent';
+              relationshipState = 'outgoing_pending';
               isFollowing = true;
             } else {
               connectionStatus = 'pending_received';
+              relationshipState = 'incoming_pending';
               isFollowing = false;
             }
           }
@@ -510,6 +514,7 @@ export class NetworkConnectionsService {
             u.verification?.status === 'VERIFIED',
           ),
           connectionStatus,
+          relationshipState,
           isFollowing,
           connectionId: conn?.connectionId || null,
         };
@@ -730,8 +735,19 @@ export class NetworkConnectionsService {
       Object.assign(existing, {
         connectionId: String(existing._id),
         state: 'outgoing_pending',
+        connectionStatus: 'pending_sent',
         success: true,
       });
+      if (typeof (existing as any).toJSON === 'function') {
+        const orig = (existing as any).toJSON.bind(existing);
+        (existing as any).toJSON = () => ({
+          ...orig(),
+          connectionId: String(existing._id),
+          state: 'outgoing_pending',
+          connectionStatus: 'pending_sent',
+          success: true,
+        });
+      }
       return existing;
     }
 
@@ -764,8 +780,19 @@ export class NetworkConnectionsService {
     Object.assign(newConnection, {
       connectionId: String(newConnection._id),
       state: 'outgoing_pending',
+      connectionStatus: 'pending_sent',
       success: true,
     });
+    if (typeof (newConnection as any).toJSON === 'function') {
+      const orig = (newConnection as any).toJSON.bind(newConnection);
+      (newConnection as any).toJSON = () => ({
+        ...orig(),
+        connectionId: String(newConnection._id),
+        state: 'outgoing_pending',
+        connectionStatus: 'pending_sent',
+        success: true,
+      });
+    }
     return newConnection;
   }
 
@@ -808,7 +835,79 @@ export class NetworkConnectionsService {
       })
       .catch(() => {});
 
-    return { success: true, message: 'Connection accepted.' };
+    return {
+      success: true,
+      message: 'Connection accepted.',
+      state: 'connected',
+      connectionStatus: 'connected',
+      connectionId: String(connection._id),
+    };
+  }
+
+  /**
+   * Decline incoming connection request
+   */
+  async declineConnectionRequest(connectionIdOrUserId: string, userId: string) {
+    const userObjId = this.toObjectId(userId);
+    let connection: any = null;
+
+    if (Types.ObjectId.isValid(connectionIdOrUserId)) {
+      connection = await this.connectionModel.findById(connectionIdOrUserId);
+    }
+
+    if (!connection) {
+      const [uLow, uHigh] = this.getOrderedUserIds(connectionIdOrUserId, userId);
+      connection = await this.connectionModel.findOne({ userLow: uLow, userHigh: uHigh });
+    }
+
+    if (!connection) {
+      throw new NotFoundException('Connection request not found.');
+    }
+
+    if (!connection.recipientId.equals(userObjId)) {
+      throw new ForbiddenException('Only the recipient can decline this connection request.');
+    }
+
+    await this.connectionModel.deleteOne({ _id: connection._id });
+    return {
+      success: true,
+      message: 'Connection request declined.',
+      state: 'none',
+      connectionStatus: 'none',
+    };
+  }
+
+  /**
+   * Cancel outgoing connection request
+   */
+  async cancelConnectionRequest(connectionIdOrUserId: string, userId: string) {
+    const userObjId = this.toObjectId(userId);
+    let connection: any = null;
+
+    if (Types.ObjectId.isValid(connectionIdOrUserId)) {
+      connection = await this.connectionModel.findById(connectionIdOrUserId);
+    }
+
+    if (!connection) {
+      const [uLow, uHigh] = this.getOrderedUserIds(connectionIdOrUserId, userId);
+      connection = await this.connectionModel.findOne({ userLow: uLow, userHigh: uHigh });
+    }
+
+    if (!connection) {
+      throw new NotFoundException('Connection request not found.');
+    }
+
+    if (!connection.requesterId.equals(userObjId)) {
+      throw new ForbiddenException('Only the requester can cancel this connection request.');
+    }
+
+    await this.connectionModel.deleteOne({ _id: connection._id });
+    return {
+      success: true,
+      message: 'Connection request cancelled.',
+      state: 'none',
+      connectionStatus: 'none',
+    };
   }
 
   /**
@@ -842,6 +941,11 @@ export class NetworkConnectionsService {
     }
 
     await this.connectionModel.deleteOne({ _id: connection._id });
-    return { success: true, message: 'Connection removed.' };
+    return {
+      success: true,
+      message: 'Connection removed.',
+      state: 'none',
+      connectionStatus: 'none',
+    };
   }
 }

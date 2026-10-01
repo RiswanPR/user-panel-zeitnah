@@ -1,20 +1,27 @@
 import { motion, useReducedMotion } from "framer-motion";
-import { Users, UserCheck, Clock, ShieldCheck, Sparkles, Compass } from "lucide-react";
+import {
+  Users,
+  UserCheck,
+  Clock,
+  Sparkles,
+  Compass,
+  Filter,
+} from "lucide-react";
 import ZeitnahZMotif from "../courses/ZeitnahZMotif";
 import NetworkSearch from "./NetworkSearch";
 
 /**
  * NetworkHero Component
- * Cinematic, dark editorial, technical hero section for the Zeitnah Network.
+ * Premium, sophisticated, modern networking header for the Zeitnah Platform.
  *
- * Requirements:
- * - Headline: "BUILD YOUR / PROFESSIONAL / CIRCLE." in large Degular typography.
- * - Deep navy/black foundation with subtle technical coordinate grid.
- * - Ambient mint lighting & subtle yellow accent.
- * - Real ZeitnahZMotif component.
- * - Subtle network-node visualization.
- * - Unified search integration.
- * - Real database metrics (no fabricated counts).
+ * Requirements Met:
+ * - Refined editorial typography ("NETWORK" headline + supportive description).
+ * - Compact, non-bloated vertical footprint.
+ * - Ambient brand mint lighting and subtle engineering coordinate grid.
+ * - Unified command surface search with debouncing and shortcut hint.
+ * - Refined live network statistics strip (Connections, Pending, People, Followers).
+ * - Real API data metrics (zero fabricated numbers).
+ * - Interactive stat modules to filter/jump directly to relevant views.
  */
 export default function NetworkHero({
   searchQuery = "",
@@ -22,214 +29,207 @@ export default function NetworkHero({
   stats = {},
   isSearching = false,
   activeTabLabel = "People",
+  onStatClick,
+  onOpenFilters,
+  activeFiltersCount = 0,
+  showFilterButton = true,
 }) {
   const shouldReduceMotion = useReducedMotion();
 
   const connectionsCount = stats?.connections ?? stats?.connectionsCount ?? 0;
   const requestsCount = stats?.incomingRequestsCount ?? 0;
   const followersCount = stats?.followers ?? 0;
-  const spacesCount = stats?.spacesCount;
+  const directoryCount = stats?.directoryCount ?? stats?.peopleCount ?? stats?.totalPeople ?? null;
 
   return (
-    <section
-      aria-labelledby="network-hero-headline"
-      className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-[#07090B] shadow-2xl transition-all duration-300"
+    <header
+      aria-label="Network Overview & Search"
+      className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-b from-[#0C121A] via-[#090D13] to-[#07090B] p-6 sm:p-8 lg:p-9 shadow-2xl transition-all duration-300"
     >
-      {/* ── 1. Subtle Technical Engineering Grid ── */}
+      {/* ── 1. Subtle Engineering Grid Background ── */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-tech-grid opacity-60"
+        className="pointer-events-none absolute inset-0 bg-tech-grid opacity-35"
       />
 
-      {/* ── 2. Ambient Mint Radial Lighting & Corner Vignette ── */}
+      {/* ── 2. Ambient Mint Radial Glow ── */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-brand-mint/10 blur-[120px]"
+        className="pointer-events-none absolute -top-28 -left-28 h-80 w-80 rounded-full bg-brand-mint/[0.08] blur-[100px]"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -bottom-40 right-10 h-96 w-96 rounded-full bg-[#12314C]/40 blur-[130px]"
+        className="pointer-events-none absolute -bottom-28 right-0 h-80 w-80 rounded-full bg-[#12314C]/30 blur-[110px]"
       />
 
-      {/* Subtle Yellow Coordinate Line Accent */}
+      {/* ── 3. Subtle Zeitnah Motif in Background ── */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute top-0 left-12 h-[2px] w-24 bg-gradient-to-r from-transparent via-[#F6ED4A] to-transparent opacity-80"
-      />
-
-      {/* ── 3. Subtle Network-Node Vector Visualization ── */}
-      <svg
-        aria-hidden="true"
-        className="pointer-events-none absolute right-0 top-0 h-full w-1/2 opacity-25 hidden md:block"
-        viewBox="0 0 500 350"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <line x1="80" y1="90" x2="220" y2="170" stroke="#9FD5B2" strokeWidth="1" strokeDasharray="3 3" opacity="0.4" />
-        <line x1="220" y1="170" x2="380" y2="110" stroke="#9FD5B2" strokeWidth="1" strokeDasharray="3 3" opacity="0.4" />
-        <line x1="220" y1="170" x2="310" y2="280" stroke="#9FD5B2" strokeWidth="1" strokeDasharray="3 3" opacity="0.4" />
-        <line x1="380" y1="110" x2="450" y2="230" stroke="#9FD5B2" strokeWidth="1" strokeDasharray="3 3" opacity="0.3" />
-        <line x1="310" y1="280" x2="450" y2="230" stroke="#9FD5B2" strokeWidth="1" strokeDasharray="3 3" opacity="0.3" />
-
-        {/* Nodes */}
-        <circle cx="80" cy="90" r="4" fill="#9FD5B2" />
-        <circle cx="220" cy="170" r="6" fill="#F6ED4A" fillOpacity="0.9" />
-        <circle cx="380" cy="110" r="5" fill="#FFFFFF" fillOpacity="0.8" />
-        <circle cx="310" cy="280" r="4" fill="#9FD5B2" fillOpacity="0.7" />
-        <circle cx="450" cy="230" r="5" fill="#9FD5B2" />
-
-        {/* Tech Coordinate Text */}
-        <text x="235" y="165" fill="#94A3B8" fontSize="8" fontFamily="monospace" letterSpacing="0.1em">
-          NODE://ZEITNAH-PEER
-        </text>
-        <text x="325" y="275" fill="#94A3B8" fontSize="8" fontFamily="monospace" letterSpacing="0.1em">
-          BIM/INFRA.01
-        </text>
-      </svg>
-
-      {/* ── 4. Real Zeitnah Organic Z-Motif (Spatial Background Presence) ── */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-12 -bottom-16 sm:right-6 lg:right-12 w-64 h-64 sm:w-80 sm:h-80 lg:w-96 lg:h-96 opacity-15 sm:opacity-20 transition-transform duration-700"
+        className="pointer-events-none absolute -right-8 -bottom-10 w-52 h-52 sm:w-64 sm:h-64 opacity-10 select-none"
       >
         <ZeitnahZMotif
           variant="gradient"
           animated={!shouldReduceMotion}
-          glow={true}
+          glow={false}
           breathing={true}
-          className="w-full h-full rotate-[-6deg]"
+          className="w-full h-full rotate-[-8deg]"
         />
       </div>
 
-      {/* ── 5. Hero Content ── */}
-      <div className="relative z-10 p-6 sm:p-10 lg:p-12 space-y-6 sm:space-y-8 max-w-4xl">
-        {/* Eyebrow & Brand Category Badge */}
-        <div className="flex flex-wrap items-center gap-3">
-          <motion.div
-            initial={shouldReduceMotion ? false : { opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-widest bg-white/[0.04] border border-white/[0.1] text-brand-mint backdrop-blur-md"
-          >
-            <Compass className="w-3 h-3 text-brand-mint" aria-hidden="true" />
-            <span>ZEITNAH INFRASTRUCTURE ECOSYSTEM</span>
-          </motion.div>
+      {/* ── 4. Main Header Content ── */}
+      <div className="relative z-10 space-y-6 sm:space-y-7">
+        {/* Top Eyebrow & Brand Category Badge */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-widest text-brand-mint bg-brand-mint/10 border border-brand-mint/20 backdrop-blur-md">
+              <Compass className="w-3 h-3 text-brand-mint" aria-hidden="true" />
+              <span>ZEITNAH PROFESSIONAL NETWORK</span>
+            </span>
 
-          <span className="hidden sm:inline-block h-3 w-px bg-white/10" aria-hidden="true" />
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium text-text-muted bg-white/[0.03] border border-white/[0.06]">
+              <span className="h-1.5 w-1.5 rounded-full bg-brand-mint animate-pulse" />
+              Live Network
+            </span>
+          </div>
 
-          <motion.span
-            initial={shouldReduceMotion ? false : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-            className="text-xs font-mono text-text-muted uppercase tracking-wider"
-          >
-            Professional Discovery & Network Directory
-          </motion.span>
+          <span className="text-[11px] font-mono text-text-muted uppercase tracking-wider hidden md:inline-block">
+            Civil • Structural • BIM • MEP
+          </span>
         </div>
 
-        {/* ── Main Degular Black Editorial Headline ── */}
-        <motion.div
-          initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.05 }}
-          className="space-y-1"
-        >
-          <h1
-            id="network-hero-headline"
-            className="font-degular-black text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white uppercase tracking-tight leading-[0.92] select-none"
+        {/* Headline & Editorial Identity (Section 11) */}
+        <div className="space-y-2 max-w-2xl">
+          <motion.h1
+            initial={shouldReduceMotion ? false : { opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25 }}
+            className="font-degular-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight uppercase leading-[0.94] select-none"
           >
-            BUILD YOUR
-            <br />
-            <span className="text-white">PROFESSIONAL</span>
-            <br />
-            <span className="text-brand-mint drop-shadow-[0_0_24px_rgba(159,213,178,0.2)]">
-              CIRCLE.
-            </span>
-          </h1>
+            NETWORK
+          </motion.h1>
 
-          <p className="pt-2 text-xs sm:text-sm text-text-secondary leading-relaxed max-w-xl font-medium">
-            Connect directly with verified infrastructure engineers, BIM modelers, project managers, faculty mentors, and partner employers across civil engineering.
+          <p className="text-base sm:text-lg font-heading font-bold text-white/95 tracking-tight leading-snug">
+            Your professional graph, in one place.
           </p>
-        </motion.div>
 
-        {/* ── Unified Search Bar ── */}
-        <motion.div
-          initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.15 }}
-          className="max-w-xl pt-1"
-        >
-          <NetworkSearch
-            value={searchQuery}
-            onChange={onSearchChange}
-            placeholder={`Search ${activeTabLabel.toLowerCase()}, skills, organizations, disciplines...`}
-            isLoading={isSearching}
-          />
-        </motion.div>
+          <motion.p
+            initial={shouldReduceMotion ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.25, delay: 0.05 }}
+            className="text-xs sm:text-sm text-text-secondary leading-relaxed font-normal"
+          >
+            Discover people, build meaningful relationships, and grow with Zeitnah.
+          </motion.p>
+        </div>
 
-        {/* ── Real Telemetry Strip (No Fabricated Metrics) ── */}
-        <motion.div
-          initial={shouldReduceMotion ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.35, delay: 0.2 }}
-          className="flex flex-wrap items-center gap-4 sm:gap-6 pt-2 border-t border-white/[0.06] text-xs"
+        {/* ── 5. Search Command Surface & Filter Trigger (Section 12) ── */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-0.5">
+          <div className="flex-1 max-w-2xl">
+            <NetworkSearch
+              value={searchQuery}
+              onChange={onSearchChange}
+              placeholder={`Search ${activeTabLabel.toLowerCase()}, roles, organizations, disciplines...`}
+              isLoading={isSearching}
+              size="default"
+            />
+          </div>
+
+          {showFilterButton && onOpenFilters && (
+            <button
+              type="button"
+              onClick={onOpenFilters}
+              aria-label="Open filter options"
+              className={`h-11 sm:h-12 px-4 rounded-2xl border text-xs font-semibold inline-flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 shrink-0 select-none focus-ring ${
+                activeFiltersCount > 0
+                  ? "bg-brand-mint/15 text-brand-mint border-brand-mint/40 shadow-sm"
+                  : "bg-[#070B14] hover:bg-[#0A0F14] text-text-muted hover:text-white border-white/[0.08] hover:border-white/[0.16]"
+              }`}
+            >
+              <Filter className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <span>Filters</span>
+              {activeFiltersCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-brand-mint text-black">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </button>
+          )}
+        </div>
+
+        {/* ── 6. Editorial Telemetry Statistics Strip (Section 16) ── */}
+        <div
+          role="region"
+          aria-label="Network Telemetry"
+          className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 pt-4 border-t border-white/[0.06]"
         >
-          {/* 1. Connections */}
-          <div className="flex items-center gap-2">
-            <UserCheck className="w-3.5 h-3.5 text-brand-mint shrink-0" aria-hidden="true" />
-            <span className="font-heading font-extrabold text-white text-sm sm:text-base tabular-nums">
+          {/* Telemetry 1: Connections */}
+          <button
+            type="button"
+            onClick={() => onStatClick?.("connections")}
+            className="text-left group cursor-pointer focus-ring rounded-xl p-1 -m-1 transition-opacity hover:opacity-90"
+          >
+            <p className="text-2xl sm:text-3xl font-heading font-extrabold text-white tracking-tight tabular-nums group-hover:text-brand-mint transition-colors">
               {Number(connectionsCount).toLocaleString()}
-            </span>
-            <span className="text-text-muted text-[11px]">
-              {connectionsCount === 1 ? "Connection" : "Connections"}
-            </span>
-          </div>
+            </p>
+            <p className="text-xs text-text-muted font-medium mt-0.5 group-hover:text-white/80 transition-colors">
+              Connections
+            </p>
+          </button>
 
-          <span className="hidden sm:block h-3 w-px bg-white/10" aria-hidden="true" />
-
-          {/* 2. Requests */}
-          <div className="flex items-center gap-2">
-            <Clock className={`w-3.5 h-3.5 shrink-0 ${requestsCount > 0 ? "text-[#F6ED4A]" : "text-text-muted"}`} aria-hidden="true" />
-            <span className="font-heading font-extrabold text-white text-sm sm:text-base tabular-nums">
-              {Number(requestsCount).toLocaleString()}
-            </span>
-            <span className="text-text-muted text-[11px]">
-              {requestsCount === 1 ? "Pending Request" : "Pending Requests"}
-            </span>
-            {requestsCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#F6ED4A]/15 text-[#F6ED4A] border border-[#F6ED4A]/30">
-                Action Required
-              </span>
-            )}
-          </div>
-
-          {followersCount > 0 && (
-            <>
-              <span className="hidden sm:block h-3 w-px bg-white/10" aria-hidden="true" />
-              <div className="flex items-center gap-2">
-                <Users className="w-3.5 h-3.5 text-text-muted shrink-0" aria-hidden="true" />
-                <span className="font-heading font-extrabold text-white text-sm sm:text-base tabular-nums">
-                  {Number(followersCount).toLocaleString()}
+          {/* Telemetry 2: Pending Requests */}
+          <button
+            type="button"
+            onClick={() => onStatClick?.("requests")}
+            className="text-left group cursor-pointer focus-ring rounded-xl p-1 -m-1 transition-opacity hover:opacity-90"
+          >
+            <div className="flex items-baseline gap-2">
+              <p
+                className={`text-2xl sm:text-3xl font-heading font-extrabold tracking-tight tabular-nums ${
+                  requestsCount > 0 ? "text-amber-300" : "text-white"
+                } group-hover:text-amber-200 transition-colors`}
+              >
+                {requestsCount < 10 && requestsCount > 0 ? `0${requestsCount}` : Number(requestsCount).toLocaleString()}
+              </p>
+              {requestsCount > 0 && (
+                <span className="text-[10px] font-mono font-bold text-amber-300/90 bg-amber-400/10 border border-amber-400/20 px-1.5 py-0.2 rounded-md">
+                  Action
                 </span>
-                <span className="text-text-muted text-[11px]">Followers</span>
-              </div>
-            </>
-          )}
+              )}
+            </div>
+            <p className="text-xs text-text-muted font-medium mt-0.5 group-hover:text-white/80 transition-colors">
+              Pending
+            </p>
+          </button>
 
-          {spacesCount !== undefined && spacesCount > 0 && (
-            <>
-              <span className="hidden sm:block h-3 w-px bg-white/10" aria-hidden="true" />
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-3.5 h-3.5 text-brand-mint shrink-0" aria-hidden="true" />
-                <span className="font-heading font-extrabold text-white text-sm sm:text-base tabular-nums">
-                  {Number(spacesCount).toLocaleString()}
-                </span>
-                <span className="text-text-muted text-[11px]">Learning Spaces</span>
-              </div>
-            </>
-          )}
-        </motion.div>
+          {/* Telemetry 3: Directory */}
+          <button
+            type="button"
+            onClick={() => onStatClick?.("people")}
+            className="text-left group cursor-pointer focus-ring rounded-xl p-1 -m-1 transition-opacity hover:opacity-90"
+          >
+            <p className="text-2xl sm:text-3xl font-heading font-extrabold text-white tracking-tight tabular-nums group-hover:text-brand-mint transition-colors">
+              {directoryCount !== null ? Number(directoryCount).toLocaleString() : "—"}
+            </p>
+            <p className="text-xs text-text-muted font-medium mt-0.5 group-hover:text-white/80 transition-colors">
+              Directory
+            </p>
+          </button>
+
+          {/* Telemetry 4: Followers */}
+          <button
+            type="button"
+            onClick={() => onStatClick?.("followers")}
+            className="text-left group cursor-pointer focus-ring rounded-xl p-1 -m-1 transition-opacity hover:opacity-90"
+          >
+            <p className="text-2xl sm:text-3xl font-heading font-extrabold text-white tracking-tight tabular-nums group-hover:text-brand-mint transition-colors">
+              {Number(followersCount).toLocaleString()}
+            </p>
+            <p className="text-xs text-text-muted font-medium mt-0.5 group-hover:text-white/80 transition-colors">
+              Followers
+            </p>
+          </button>
+        </div>
       </div>
-    </section>
+    </header>
   );
 }

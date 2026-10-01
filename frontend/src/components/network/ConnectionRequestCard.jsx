@@ -1,21 +1,19 @@
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
-  BookOpen,
-  ExternalLink,
   ShieldCheck,
   Clock,
   ArrowUpRight,
   ArrowDownLeft,
+  Check,
+  X,
+  Loader2,
+  ExternalLink,
 } from "lucide-react";
-import RelationshipAction from "./RelationshipAction";
-import { getCanonicalProfileUrl, getProfileIdentifier } from "../../utils/roleNavigation";
+import { getUploadUrl } from "../../utils/courseUi";
+import { getCanonicalProfileUrl, normalizeUserRole } from "../../utils/roleNavigation";
+import EcosystemRoleBadge from "./EcosystemRoleBadge";
 
-/**
- * Formats ISO date into relative time (e.g. "2 hours ago", "Yesterday").
- * @param {string} dateStr
- * @returns {string}
- */
 function formatRelativeTime(dateStr) {
   if (!dateStr) return "Recently";
   const date = new Date(dateStr);
@@ -38,173 +36,245 @@ function formatRelativeTime(dateStr) {
   });
 }
 
+function getInitials(name) {
+  if (!name) return "ZU";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
 /**
  * ConnectionRequestCard Component
- * Displays incoming or outgoing connection request items with contextual controls.
+ * Elegant, compact relationship card for Connection Requests.
  *
- * @param {Object} props
- * @param {Object} props.request - Request item containing user and timestamp
- * @param {string} props.request.connectionId
- * @param {Object} props.request.user - DiscoverableStudent
- * @param {string} props.request.createdAt
- * @param {'incoming' | 'outgoing'} [props.type='incoming']
- * @param {function(Object): void} [props.onPreview]
+ * Implements Section 8:
+ * - Avatar (48px) with status & canonical profile link.
+ * - Name + Role / Org.
+ * - Context: "Wants to connect with you" (incoming) or "Request sent" (outgoing).
+ * - Fast, accessible, visually differentiated actions:
+ *   - Accept (brand mint)
+ *   - Decline (neutral non-destructive styling)
+ * - Safe canonical profile URLs.
  */
 export default function ConnectionRequestCard({
   request,
   type = "incoming",
+  onAccept,
+  onDecline,
+  onCancel,
+  isAccepting = false,
+  isDeclining = false,
+  isCancelling = false,
   onPreview,
 }) {
-  const student = request?.user || {};
-  const connectionId = request?.connectionId;
-  const createdAt = request?.createdAt;
+  const shouldReduceMotion = useReducedMotion();
 
-  const initials = student.name
-    ? student.name
-        .split(" ")
-        .slice(0, 2)
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-    : "ST";
+  // Safely unpack member from user or requester wrapper
+  const member =
+    request?.user ||
+    request?.requester ||
+    request?.requesterId ||
+    request?.recipient ||
+    request?.recipientId ||
+    {};
+
+  const connectionId = request?.connectionId || request?._id || request?.id;
+  const createdAt = request?.createdAt;
+  const note = request?.note || request?.message;
 
   const isIncoming = type === "incoming";
+  const avatarSrc = member?.avatarUrl || member?.avatar ? getUploadUrl(member.avatarUrl || member.avatar) : null;
+  const initials = getInitials(member?.name);
+  const canonicalUrl = getCanonicalProfileUrl(member);
 
   return (
     <motion.article
       layout
-      initial={{ opacity: 0, y: 16 }}
+      initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
+      exit={{ opacity: 0, scale: 0.96 }}
       transition={{ duration: 0.2 }}
-      className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-bg-surface/90 p-5 shadow-lg backdrop-blur-xl transition-all duration-300 hover:border-brand-mint/30 hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
+      className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-[#0A0F14]/95 p-4 sm:p-5 shadow-lg backdrop-blur-xl transition-all duration-200 hover:border-brand-mint/30 hover:shadow-[0_8px_30px_rgba(0,0,0,0.45)]"
     >
       <div>
-        {/* Direction Tag & Timestamp */}
+        {/* Direction Tag & Time Elapsed */}
         <div className="flex items-center justify-between gap-2 mb-3">
           <span
-            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider ${
               isIncoming
                 ? "bg-brand-mint/10 text-brand-mint border border-brand-mint/20"
-                : "bg-brand-yellow/10 text-brand-yellow border border-brand-yellow/20"
+                : "bg-white/[0.04] text-text-muted border border-white/[0.08]"
             }`}
           >
             {isIncoming ? (
               <>
                 <ArrowDownLeft className="h-3 w-3" />
-                <span>Received</span>
+                <span>Incoming</span>
               </>
             ) : (
               <>
                 <ArrowUpRight className="h-3 w-3" />
-                <span>Sent</span>
+                <span>Outgoing</span>
               </>
             )}
           </span>
 
-          <div className="flex items-center gap-1 text-[11px] text-text-muted">
-            <Clock className="h-3 w-3 text-text-faint" />
+          <div className="flex items-center gap-1 text-[11px] text-text-muted font-mono">
+            <Clock className="h-3 w-3 text-text-muted/70" />
             <span>{formatRelativeTime(createdAt)}</span>
           </div>
         </div>
 
-        {/* Header: Avatar, Name & Handles */}
+        {/* Member Identity: Avatar, Name & Context */}
         <div className="flex items-start gap-3.5">
-          {/* Avatar with fallback */}
+          {/* Avatar (48px) */}
           <div className="relative shrink-0">
-            {student.avatarUrl ? (
-              <img
-                src={student.avatarUrl}
-                alt={`${student.name}'s profile avatar`}
-                className="h-13 w-13 rounded-2xl object-cover border-2 border-white/[0.08] group-hover:border-brand-mint/40 transition-colors"
-                loading="lazy"
-              />
-            ) : (
-              <div
-                className="flex h-13 w-13 items-center justify-center rounded-2xl border-2 border-white/[0.08] bg-gradient-to-br from-brand-mint/20 via-white/[0.06] to-brand-mint/5 font-heading font-bold text-white text-base group-hover:border-brand-mint/40 transition-colors"
-                aria-hidden="true"
-              >
-                {initials}
-              </div>
-            )}
+            <Link
+              to={canonicalUrl}
+              aria-label={`View ${member.name || "Member"}'s profile`}
+              className="h-12 w-12 rounded-xl overflow-hidden border border-white/[0.08] bg-[#070B14] flex items-center justify-center group-hover:border-brand-mint/40 transition-colors block focus-ring"
+            >
+              {avatarSrc ? (
+                <img
+                  src={avatarSrc}
+                  alt={member.name || "Member"}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-sm font-heading font-extrabold text-brand-mint tracking-wider select-none">
+                  {initials}
+                </span>
+              )}
+            </Link>
 
-            {student.isVerified && (
+            {member.isVerified && (
               <span
-                className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-bg-base shadow-sm"
-                title="Verified Student"
+                className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-black shadow-sm"
+                title="Verified Member"
               >
-                <ShieldCheck className="h-3 w-3" />
+                <ShieldCheck className="h-2.5 w-2.5" />
               </span>
             )}
           </div>
 
-          {/* Name & Username */}
+          {/* Name & Headline */}
           <div className="min-w-0 flex-1">
             <Link
-              to={getCanonicalProfileUrl(student)}
-              className="block text-left group/link focus-ring rounded w-full"
+              to={canonicalUrl}
+              className="font-heading font-bold text-sm sm:text-base text-white hover:text-brand-mint transition-colors truncate block focus-ring rounded"
             >
-              <h3 className="truncate text-base font-heading font-bold text-white group-hover/link:text-brand-mint transition-colors">
-                {student.name}
-              </h3>
+              {member.name || "Zeitnah Member"}
             </Link>
-            {student.username && (
+
+            {member.username && (
               <Link
-                to={getCanonicalProfileUrl(student)}
-                className="truncate text-xs font-mono text-text-muted hover:text-brand-mint transition-colors block"
+                to={canonicalUrl}
+                className="text-xs font-mono text-text-muted hover:text-brand-mint/80 transition-colors truncate block"
               >
-                @{student.username}
+                @{member.username}
               </Link>
             )}
+
+            <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+              <EcosystemRoleBadge role={normalizeUserRole(member)} size="xs" />
+              {member.currentRole && (
+                <span className="text-[11px] text-text-muted truncate">
+                  • {member.currentRole}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Headline */}
-        {student.headline && (
-          <p className="mt-3 line-clamp-2 text-xs font-medium text-text-secondary leading-relaxed">
-            {student.headline}
+        {/* Relationship Intent Headline */}
+        <div className="mt-3.5 p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+          <p className="text-xs font-medium text-text-secondary leading-relaxed">
+            {note ? (
+              <span className="italic">"{note}"</span>
+            ) : isIncoming ? (
+              <span className="text-white/80">Wants to connect with you on Zeitnah</span>
+            ) : (
+              <span className="text-text-muted">Awaiting recipient response</span>
+            )}
           </p>
-        )}
-
-        {/* Course */}
-        {student.course && (
-          <div className="mt-3 flex items-center gap-1.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-xs text-text-muted">
-            <BookOpen className="h-3.5 w-3.5 text-brand-mint/80 shrink-0" aria-hidden="true" />
-            <span className="truncate font-medium text-white/80">{student.course}</span>
-          </div>
-        )}
+        </div>
       </div>
 
       {/* Action Footer */}
-      <div className="mt-5 pt-4 border-t border-white/[0.06] flex items-center justify-between gap-2">
-        {/* View Profile Action */}
-        <button
-          type="button"
-          onClick={() => onPreview?.(student)}
-          className="flex items-center justify-center gap-1.5 rounded-xl border border-white/[0.1] bg-white/[0.04] py-2 px-3 text-xs font-semibold text-white hover:bg-white/[0.08] hover:border-brand-mint/30 transition-all focus-ring"
-        >
-          <span>View Profile</span>
-        </button>
+      <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between gap-2">
+        {/* Secondary: Preview or Canonical Link */}
+        {onPreview ? (
+          <button
+            type="button"
+            onClick={() => onPreview(member)}
+            className="px-3 py-2 rounded-xl text-xs font-semibold text-text-muted hover:text-white hover:bg-white/[0.04] transition-colors cursor-pointer"
+          >
+            Preview
+          </button>
+        ) : (
+          <Link
+            to={canonicalUrl}
+            className="px-3 py-2 rounded-xl text-xs font-semibold text-text-muted hover:text-white hover:bg-white/[0.04] transition-colors inline-flex items-center gap-1"
+          >
+            <span>Profile</span>
+            <ExternalLink className="w-3 h-3 text-text-muted" />
+          </Link>
+        )}
 
-        <div className="flex items-center gap-1.5">
-          {/* Relationship Actions (Accept / Decline OR Pending / Cancel) */}
-          <RelationshipAction
-            targetUserId={student.id}
-            connectionId={connectionId}
-            initialState={isIncoming ? "incoming_pending" : "outgoing_pending"}
-            studentName={student.name}
-            variant="compact"
-          />
+        {/* Relationship Action Buttons */}
+        <div className="flex items-center gap-2">
+          {isIncoming ? (
+            <>
+              {/* Decline: Restrained, non-destructive neutral surface */}
+              <button
+                type="button"
+                onClick={() => onDecline?.(connectionId)}
+                disabled={isDeclining || isAccepting}
+                aria-label={`Decline request from ${member.name}`}
+                className="px-3.5 py-2 rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.07] text-text-muted hover:text-white text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 min-h-[38px] inline-flex items-center gap-1.5 focus-ring"
+              >
+                {isDeclining ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <X className="w-3.5 h-3.5" />
+                )}
+                <span>Decline</span>
+              </button>
 
-          {getProfileIdentifier(student) && (
-            <Link
-              to={getCanonicalProfileUrl(student)}
-              aria-label={`Open ${student.name}'s profile`}
-              className="flex items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] p-2 text-text-muted hover:border-brand-mint/30 hover:bg-white/[0.06] hover:text-white transition-all focus-ring"
-              title="Open full profile"
+              {/* Accept: Primary brand-mint */}
+              <button
+                type="button"
+                onClick={() => onAccept?.(connectionId)}
+                disabled={isAccepting || isDeclining}
+                aria-label={`Accept request from ${member.name}`}
+                className="px-4 py-2 rounded-xl bg-brand-mint hover:bg-brand-mint/90 text-black text-xs font-bold transition-all cursor-pointer shadow-md shadow-brand-mint/15 disabled:opacity-50 min-h-[38px] inline-flex items-center gap-1.5 focus-ring"
+              >
+                {isAccepting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Check className="w-3.5 h-3.5" />
+                )}
+                <span>Accept</span>
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onCancel?.(connectionId)}
+              disabled={isCancelling}
+              aria-label={`Cancel request sent to ${member.name}`}
+              className="px-3.5 py-2 rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-rose-500/10 hover:border-rose-500/30 text-text-muted hover:text-rose-300 text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 min-h-[38px] inline-flex items-center gap-1.5 focus-ring"
             >
-              <ExternalLink className="h-4 w-4" aria-hidden="true" />
-            </Link>
+              {isCancelling ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <X className="w-3.5 h-3.5" />
+              )}
+              <span>Cancel Request</span>
+            </button>
           )}
         </div>
       </div>

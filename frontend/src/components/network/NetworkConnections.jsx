@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   Users,
   UserCheck,
@@ -11,9 +11,7 @@ import {
   ExternalLink,
   ShieldCheck,
   AlertCircle,
-  Sparkles,
   X,
-  Check,
 } from "lucide-react";
 import useDebounce from "../../hooks/useDebounce";
 import { networkConnectionsService } from "../../services/networkConnectionsService";
@@ -21,6 +19,7 @@ import { networkApi } from "../../services/networkApi";
 import { useToast } from "../ui/Toast";
 import InfrastructurePeopleCard from "./InfrastructurePeopleCard";
 import InfrastructurePeopleFilters from "./InfrastructurePeopleFilters";
+import ConnectionRequestCard from "./ConnectionRequestCard";
 import SendMessageRequestModal from "./SendMessageRequestModal";
 import StudentProfilePreviewModal from "./StudentProfilePreviewModal";
 import NetworkSearch from "./NetworkSearch";
@@ -31,11 +30,11 @@ import { getCanonicalProfileUrl } from "../../utils/roleNavigation";
  */
 function PeopleCardSkeleton() {
   return (
-    <div className="relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-[#0A0F14]/90 p-5 shadow-xl animate-pulse">
+    <div className="relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-[#0A0F14]/90 p-5 shadow-xl animate-pulse min-h-[290px]">
       <div>
         {/* Header: Avatar + Identity */}
         <div className="flex items-start gap-3.5">
-          <div className="h-13 w-13 rounded-2xl bg-white/[0.06] shrink-0" />
+          <div className="h-14 w-14 rounded-2xl bg-white/[0.06] shrink-0" />
           <div className="min-w-0 flex-1 space-y-2 pt-0.5">
             <div className="h-4 w-3/5 rounded bg-white/[0.08]" />
             <div className="h-3 w-2/5 rounded bg-white/[0.04]" />
@@ -59,8 +58,8 @@ function PeopleCardSkeleton() {
 
       {/* Footer Actions */}
       <div className="mt-6 flex items-center gap-2 pt-4 border-t border-white/[0.06]">
-        <div className="h-8 flex-1 rounded-xl bg-white/[0.06]" />
-        <div className="h-8 w-24 rounded-xl bg-white/[0.04]" />
+        <div className="h-9 flex-1 rounded-xl bg-white/[0.06]" />
+        <div className="h-9 flex-1 rounded-xl bg-white/[0.04]" />
       </div>
     </div>
   );
@@ -71,13 +70,13 @@ function PeopleCardSkeleton() {
  */
 function ConnectionCardSkeleton() {
   return (
-    <div className="p-5 rounded-2xl bg-[#0A0F14] border border-white/[0.08] flex flex-col justify-between gap-3 animate-pulse">
+    <div className="p-5 rounded-2xl bg-[#0A0F14] border border-white/[0.08] flex flex-col justify-between gap-3 animate-pulse min-h-[140px]">
       <div className="flex items-start gap-3.5 min-w-0">
-        <div className="w-12 h-12 rounded-2xl bg-white/[0.06] shrink-0" />
+        <div className="w-13 h-13 rounded-2xl bg-white/[0.06] shrink-0" />
         <div className="min-w-0 flex-1 space-y-2 pt-0.5">
-          <div className="h-3.5 w-3/4 rounded bg-white/[0.08]" />
-          <div className="h-2.5 w-1/2 rounded bg-white/[0.04]" />
-          <div className="h-2.5 w-2/3 rounded bg-white/[0.04]" />
+          <div className="h-4 w-3/4 rounded bg-white/[0.08]" />
+          <div className="h-3 w-1/2 rounded bg-white/[0.04]" />
+          <div className="h-3 w-2/3 rounded bg-white/[0.04]" />
         </div>
       </div>
       <div className="pt-3 border-t border-white/[0.04] flex items-center justify-between">
@@ -94,6 +93,27 @@ function ConnectionCardSkeleton() {
 function formatNumber(num) {
   if (num === null || num === undefined) return "0";
   return Number(num).toLocaleString();
+}
+
+/**
+ * Format connection duration relative to now (Section 15)
+ */
+function formatConnectedSince(dateStr) {
+  if (!dateStr) return "Connected recently";
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return "Connected recently";
+
+  const diffMs = Date.now() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 1) return "Connected today";
+  if (diffDays === 1) return "Connected yesterday";
+  if (diffDays < 30) return `Connected ${diffDays} days ago`;
+  const diffMonths = Math.floor(diffDays / 30);
+  if (diffMonths === 1) return "Connected 1 month ago";
+  if (diffMonths < 12) return `Connected ${diffMonths} months ago`;
+  const diffYears = Math.floor(diffDays / 365);
+  return `Connected ${diffYears > 1 ? `${diffYears} years` : "1 year"} ago`;
 }
 
 /**
@@ -115,12 +135,14 @@ const VALID_TABS = ["people", "discover", "connections", "followers", "following
  * NetworkConnections Component
  * Contextual People management view inside the Zeitnah Network Command Center.
  *
- * Requirements Met:
- * - Clear secondary navigation clearly distinct from the top primary navigation.
- * - Deep-link support for subTab, sub, view, and networkTab.
- * - Clean optimistic mutations with zero native confirm() / alert().
- * - Requests inbox view with Accept/Decline and Pending/Cancel.
- * - Integrated standardized NetworkSearch and InfrastructurePeopleFilters.
+ * Implements:
+ * - Section 5: People You May Know discovery grid
+ * - Section 6: Restrained card interactions
+ * - Section 8: Dedicated, compact connection requests inbox
+ * - Section 9: My Network connections view
+ * - Section 10: Standardized search and skeletal states
+ * - Section 11: Structured infrastructure filters
+ * - Section 25: Canonical profile routing safety
  */
 export default function NetworkConnections({
   defaultTab = "people",
@@ -128,7 +150,6 @@ export default function NetworkConnections({
   onSearchChange: externalOnSearchChange,
 }) {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -172,7 +193,7 @@ export default function NetworkConnections({
   const [messageRequestRecipient, setMessageRequestRecipient] = useState(null);
   const [page, setPage] = useState(1);
 
-  // Authoritative Network Stats for Tab Badges & Metric Cards
+  // Authoritative Network Stats for Tab Badges
   const { data: statsData } = useQuery({
     queryKey: ["network-profile-stats", "me"],
     queryFn: () => networkConnectionsService.getProfileStats("me"),
@@ -247,10 +268,14 @@ export default function NetworkConnections({
     queryClient.invalidateQueries({ queryKey: ["network-followers-list"] });
     queryClient.invalidateQueries({ queryKey: ["network-following-list"] });
     queryClient.invalidateQueries({ queryKey: ["network-requests"] });
+    queryClient.invalidateQueries({ queryKey: ["network-sent"] });
     queryClient.invalidateQueries({ queryKey: ["network-people"] });
+    queryClient.invalidateQueries({ queryKey: ["network-connections"] });
     queryClient.invalidateQueries({ queryKey: ["network-profile-stats"] });
     queryClient.invalidateQueries({ queryKey: ["network-connection-counts"] });
     queryClient.invalidateQueries({ queryKey: ["network-profile"] });
+    queryClient.invalidateQueries({ queryKey: ["network-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["network-people-summary-count"] });
   };
 
   // Follow / Unfollow Mutation
@@ -271,18 +296,6 @@ export default function NetworkConnections({
     },
     onError: (err) => {
       toast.error("Action Failed", err?.response?.data?.message || "Could not update follow state.");
-    },
-  });
-
-  // Send Connection Request Mutation
-  const sendRequestMutation = useMutation({
-    mutationFn: (recipientId) => networkConnectionsService.connectUser(recipientId),
-    onSuccess: () => {
-      toast.success("Request Sent", "Connection request sent successfully.");
-      invalidateAllNetwork();
-    },
-    onError: (err) => {
-      toast.error("Unable to Connect", err?.response?.data?.message || "Could not send connection request.");
     },
   });
 
@@ -322,7 +335,7 @@ export default function NetworkConnections({
     },
   });
 
-  // Remove Connection Mutation (Zero native confirm)
+  // Remove Connection Mutation (Inline confirmation)
   const removeConnectionMutation = useMutation({
     mutationFn: (connectionIdOrUserId) =>
       networkConnectionsService.removeConnection(connectionIdOrUserId),
@@ -367,167 +380,14 @@ export default function NetworkConnections({
   };
 
   return (
-    <div className="space-y-8">
-      {/* ── 1. "Your Network" Interactive Telemetry Cards ── */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-text-muted">
-              Live Network Metrics
-            </h2>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-brand-mint/10 text-brand-mint border border-brand-mint/20">
-              <Sparkles className="w-2.5 h-2.5" />
-              Real-time
-            </span>
-          </div>
-          <span className="text-[11px] text-text-muted font-medium hidden sm:inline-block">
-            Select any metric to filter members & manage requests
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          {/* 1. Connections Metric Card */}
-          <button
-            type="button"
-            onClick={() => handleTabChange("connections")}
-            className={`p-4 rounded-2xl border text-left transition-all cursor-pointer group ${
-              subTab === "connections"
-                ? "bg-[#0A0F14] border-brand-mint/60 shadow-[0_4px_24px_rgba(159,213,178,0.12)] ring-1 ring-brand-mint/30"
-                : "bg-[#070B14] border-white/[0.08] hover:bg-[#0A0F14] hover:border-white/[0.16]"
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-text-muted group-hover:text-white transition-colors">
-                Connections
-              </span>
-              <div
-                className={`p-2 rounded-xl transition-colors ${
-                  subTab === "connections"
-                    ? "bg-brand-mint/20 text-brand-mint"
-                    : "bg-white/[0.04] text-text-muted"
-                }`}
-              >
-                <UserCheck className="w-4 h-4" />
-              </div>
-            </div>
-            <p className="mt-2 text-2xl font-heading font-black text-white">
-              {formatNumber(connectionsCount)}
-            </p>
-            <p className="text-[10px] text-text-muted mt-0.5 font-medium">Verified peer bonds</p>
-          </button>
-
-          {/* 2. Followers Metric Card */}
-          <button
-            type="button"
-            onClick={() => handleTabChange("followers")}
-            className={`p-4 rounded-2xl border text-left transition-all cursor-pointer group ${
-              subTab === "followers"
-                ? "bg-[#0A0F14] border-brand-mint/60 shadow-[0_4px_24px_rgba(159,213,178,0.12)] ring-1 ring-brand-mint/30"
-                : "bg-[#070B14] border-white/[0.08] hover:bg-[#0A0F14] hover:border-white/[0.16]"
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-text-muted group-hover:text-white transition-colors">
-                Followers
-              </span>
-              <div
-                className={`p-2 rounded-xl transition-colors ${
-                  subTab === "followers"
-                    ? "bg-brand-mint/20 text-brand-mint"
-                    : "bg-white/[0.04] text-text-muted"
-                }`}
-              >
-                <Users className="w-4 h-4" />
-              </div>
-            </div>
-            <p className="mt-2 text-2xl font-heading font-black text-white">
-              {formatNumber(followersCount)}
-            </p>
-            <p className="text-[10px] text-text-muted mt-0.5 font-medium">Following your work</p>
-          </button>
-
-          {/* 3. Following Metric Card */}
-          <button
-            type="button"
-            onClick={() => handleTabChange("following")}
-            className={`p-4 rounded-2xl border text-left transition-all cursor-pointer group ${
-              subTab === "following"
-                ? "bg-[#0A0F14] border-brand-mint/60 shadow-[0_4px_24px_rgba(159,213,178,0.12)] ring-1 ring-brand-mint/30"
-                : "bg-[#070B14] border-white/[0.08] hover:bg-[#0A0F14] hover:border-white/[0.16]"
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-text-muted group-hover:text-white transition-colors">
-                Following
-              </span>
-              <div
-                className={`p-2 rounded-xl transition-colors ${
-                  subTab === "following"
-                    ? "bg-brand-mint/20 text-brand-mint"
-                    : "bg-white/[0.04] text-text-muted"
-                }`}
-              >
-                <UserPlus className="w-4 h-4" />
-              </div>
-            </div>
-            <p className="mt-2 text-2xl font-heading font-black text-white">
-              {formatNumber(followingCount)}
-            </p>
-            <p className="text-[10px] text-text-muted mt-0.5 font-medium">Engineers you track</p>
-          </button>
-
-          {/* 4. Requests Metric Card */}
-          <button
-            type="button"
-            onClick={() => handleTabChange("requests")}
-            className={`p-4 rounded-2xl border text-left transition-all cursor-pointer group ${
-              subTab === "requests"
-                ? "bg-[#0A0F14] border-brand-mint/60 shadow-[0_4px_24px_rgba(159,213,178,0.12)] ring-1 ring-brand-mint/30"
-                : "bg-[#070B14] border-white/[0.08] hover:bg-[#0A0F14] hover:border-white/[0.16]"
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-text-muted group-hover:text-white transition-colors">
-                Requests Inbox
-              </span>
-              <div
-                className={`p-2 rounded-xl transition-colors ${
-                  subTab === "requests"
-                    ? "bg-brand-mint/20 text-brand-mint"
-                    : incomingRequestsCount > 0
-                    ? "bg-[#F6ED4A]/15 text-[#F6ED4A]"
-                    : "bg-white/[0.04] text-text-muted"
-                }`}
-              >
-                <Clock className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="flex items-baseline gap-2 mt-2">
-              <p className="text-2xl font-heading font-black text-white">
-                {formatNumber(incomingRequestsCount)}
-              </p>
-              {outgoingRequestsCount > 0 && (
-                <span className="text-[10px] font-mono text-text-muted">
-                  ({outgoingRequestsCount} sent)
-                </span>
-              )}
-            </div>
-            <p className="text-[10px] text-text-muted mt-0.5 font-medium">
-              {incomingRequestsCount > 0 ? "Awaiting review" : "Inbox zero"}
-            </p>
-          </button>
-        </div>
-      </div>
-
-      {/* ── 2. Contextual Secondary Navigation Bar (Distinct & Subordinate) ── */}
+    <div className="space-y-6">
+      {/* ── 1. Contextual Secondary Segmented Navigation Strip (Section 13) ── */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pb-2 border-b border-white/[0.06]">
         {/* Sub-tab segmented bar */}
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-[#0A0F14] border border-white/[0.08] overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.02] border border-white/[0.06] overflow-x-auto no-scrollbar scroll-smooth">
           {[
             { id: "people", label: "Discover", icon: Compass },
             { id: "connections", label: "Connections", count: connectionsCount, icon: UserCheck },
-            { id: "followers", label: "Followers", count: followersCount, icon: Users },
-            { id: "following", label: "Following", count: followingCount, icon: UserPlus },
             {
               id: "requests",
               label: "Requests",
@@ -535,6 +395,8 @@ export default function NetworkConnections({
               icon: Clock,
               hasAttention: incomingRequestsCount > 0,
             },
+            { id: "followers", label: "Followers", count: followersCount, icon: Users },
+            { id: "following", label: "Following", count: followingCount, icon: UserPlus },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = subTab === tab.id;
@@ -543,21 +405,21 @@ export default function NetworkConnections({
                 key={tab.id}
                 type="button"
                 onClick={() => handleTabChange(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer min-h-[36px] focus-ring ${
                   isActive
-                    ? "bg-white/10 text-white font-bold shadow-sm border border-white/10"
+                    ? "bg-white/[0.08] text-white font-bold border border-white/[0.08] shadow-sm"
                     : "text-text-muted hover:text-white hover:bg-white/[0.03]"
                 }`}
               >
-                <Icon className="w-3.5 h-3.5 shrink-0" />
+                <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-brand-mint" : "text-text-muted"}`} />
                 <span>{tab.label}</span>
                 {tab.count !== undefined && tab.count > 0 && (
                   <span
-                    className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                    className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full font-bold ${
                       isActive
                         ? "bg-white/20 text-white"
                         : tab.hasAttention
-                        ? "bg-[#F6ED4A]/20 text-[#F6ED4A] font-bold"
+                        ? "bg-amber-400/15 text-amber-200 border border-amber-400/25"
                         : "bg-white/[0.06] text-text-muted"
                     }`}
                   >
@@ -569,26 +431,41 @@ export default function NetworkConnections({
           })}
         </div>
 
-        {/* Search for people / connections / followers / following */}
-        {subTab !== "requests" && (
-          <div className="w-full sm:w-80">
+        {/* Local Search for Connections / Followers / Following */}
+        {subTab !== "people" && subTab !== "requests" && (
+          <div className="w-full sm:w-72">
             <NetworkSearch
               value={activeSearch}
               onChange={handleSearchChange}
-              placeholder={
-                subTab === "people"
-                  ? "Search by name, role, skill, or company..."
-                  : `Search ${subTab}...`
-              }
+              placeholder={`Filter ${subTab}...`}
               size="sm"
             />
           </div>
         )}
       </div>
 
-      {/* ── 3. DISCOVER PEOPLE (PRIMARY TAB) ── */}
+      {/* ── 2. TAB 1: PEOPLE DISCOVERY ("PEOPLE YOU MAY KNOW") ── */}
       {subTab === "people" && (
-        <div className="space-y-6">
+        <section aria-labelledby="people-discovery-heading" className="space-y-6">
+          {/* Section Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h2 id="people-discovery-heading" className="text-xl sm:text-2xl font-heading font-extrabold text-white tracking-tight">
+                People You May Know
+              </h2>
+              <p className="text-xs text-text-muted mt-0.5 font-medium">
+                Verified infrastructure engineers, faculty mentors, and peers across civil disciplines.
+              </p>
+            </div>
+
+            {peopleQuery.data?.total !== undefined && (
+              <span className="text-xs font-mono text-text-muted bg-white/[0.03] border border-white/[0.06] px-3 py-1 rounded-xl shrink-0 self-start sm:self-auto">
+                <span className="text-white font-bold">{formatNumber(peopleQuery.data.total)}</span>{" "}
+                {peopleQuery.data.total === 1 ? "profile available" : "profiles available"}
+              </span>
+            )}
+          </div>
+
           {/* Infrastructure Structured Filters */}
           <InfrastructurePeopleFilters
             filters={infraFilters}
@@ -617,16 +494,6 @@ export default function NetworkConnections({
             }}
           />
 
-          {/* Directory Count Header */}
-          <div className="flex items-center justify-between text-xs text-text-muted pt-1">
-            <span>Verified infrastructure candidates, mentors, and engineers</span>
-            {peopleQuery.data?.total !== undefined && (
-              <span className="font-mono text-white/80">
-                {peopleQuery.data.total} {peopleQuery.data.total === 1 ? "profile" : "profiles"}
-              </span>
-            )}
-          </div>
-
           {/* People Grid */}
           {peopleQuery.isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -635,36 +502,34 @@ export default function NetworkConnections({
               ))}
             </div>
           ) : peopleQuery.isError ? (
-            <div className="p-10 rounded-2xl bg-danger/5 border border-danger/20 text-center">
-              <AlertCircle className="w-8 h-8 text-danger mx-auto mb-2" />
+            <div className="p-10 rounded-3xl bg-rose-500/5 border border-rose-500/20 text-center max-w-md mx-auto">
+              <AlertCircle className="w-8 h-8 text-rose-400 mx-auto mb-2" />
               <p className="text-sm font-bold text-white">Failed to load directory</p>
-              <p className="text-xs text-text-muted mt-1 max-w-sm mx-auto">
+              <p className="text-xs text-text-muted mt-1 leading-relaxed">
                 Could not retrieve candidates at this time. Please check your connection.
               </p>
               <button
                 type="button"
                 onClick={() => peopleQuery.refetch()}
-                className="btn-secondary mt-3 text-xs py-2 px-4 cursor-pointer inline-flex items-center gap-1.5"
+                className="btn-secondary mt-4 text-xs py-2 px-4 cursor-pointer inline-flex items-center gap-1.5 focus-ring"
               >
                 Try Again
               </button>
             </div>
           ) : (peopleQuery.data?.people || []).length === 0 ? (
-            <div className="p-16 rounded-3xl bg-[#0A0F14] border border-white/[0.06] text-center max-w-lg mx-auto">
+            <div className="p-14 sm:p-16 rounded-3xl bg-[#0A0F14] border border-white/[0.06] text-center max-w-lg mx-auto">
               <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-text-muted">
-                <Compass className="w-7 h-7" />
+                <Compass className="w-7 h-7 text-brand-mint/80" />
               </div>
               <h3 className="font-heading font-bold text-lg text-white">
-                {debouncedSearch
-                  ? "No candidates matching your search"
-                  : "No matching infrastructure candidates"}
+                {debouncedSearch ? "No people found" : "No matching professionals"}
               </h3>
-              <p className="text-xs text-text-muted mt-1 leading-relaxed">
+              <p className="text-xs text-text-muted mt-1 leading-relaxed max-w-sm mx-auto">
                 {debouncedSearch
-                  ? `No members found matching "${debouncedSearch}". Try resetting search or adjusting filters.`
+                  ? `No members found matching "${debouncedSearch}". Try a different name, role, or search term.`
                   : "Try clearing or adjusting disciplines, sectors, or software tags."}
               </p>
-              <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
                 <button
                   type="button"
                   onClick={() => {
@@ -683,7 +548,7 @@ export default function NetworkConnections({
                     });
                     setPage(1);
                   }}
-                  className="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-white transition-colors cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-white transition-colors cursor-pointer focus-ring"
                 >
                   Reset All Filters
                 </button>
@@ -691,7 +556,7 @@ export default function NetworkConnections({
                   <button
                     type="button"
                     onClick={() => handleSearchChange("")}
-                    className="px-4 py-2 rounded-xl bg-brand-mint/10 text-brand-mint border border-brand-mint/30 hover:bg-brand-mint/20 text-xs font-bold transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                    className="px-4 py-2.5 rounded-xl bg-brand-mint/10 text-brand-mint border border-brand-mint/30 hover:bg-brand-mint/20 text-xs font-bold transition-colors cursor-pointer inline-flex items-center gap-1.5 focus-ring"
                   >
                     <X className="w-3.5 h-3.5" />
                     <span>Clear Search</span>
@@ -723,7 +588,7 @@ export default function NetworkConnections({
                   type="button"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40 cursor-pointer min-h-[36px] focus-ring"
                 >
                   Previous
                 </button>
@@ -731,29 +596,32 @@ export default function NetworkConnections({
                   type="button"
                   onClick={() => setPage((p) => p + 1)}
                   disabled={page >= peopleQuery.data?.totalPages}
-                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40 cursor-pointer min-h-[36px] focus-ring"
                 >
                   Next
                 </button>
               </div>
             </div>
           )}
-        </div>
+        </section>
       )}
 
-      {/* ── 4. CONNECTIONS TAB ── */}
+      {/* ── 3. TAB 2: MY NETWORK (EXISTING CONNECTIONS) ── */}
       {subTab === "connections" && (
-        <div className="space-y-4">
+        <section aria-labelledby="connections-heading" className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-heading font-bold text-white">Your Peer Connections</h3>
-              <p className="text-xs text-text-muted mt-0.5">
-                Mutual connections with fellow infrastructure engineers and faculty mentors.
+              <h2 id="connections-heading" className="text-xl sm:text-2xl font-heading font-extrabold text-white tracking-tight">
+                My Network
+              </h2>
+              <p className="text-xs text-text-muted mt-0.5 font-medium">
+                Verified peer connections with fellow infrastructure engineers and faculty mentors.
               </p>
             </div>
             {connectionsCount > 0 && (
-              <span className="text-xs font-mono text-text-muted">
-                {connectionsCount} {connectionsCount === 1 ? "connection" : "connections"}
+              <span className="text-xs font-mono text-text-muted bg-white/[0.03] border border-white/[0.06] px-3 py-1 rounded-xl">
+                <span className="text-white font-bold">{connectionsCount}</span>{" "}
+                {connectionsCount === 1 ? "connection" : "connections"}
               </span>
             )}
           </div>
@@ -765,35 +633,32 @@ export default function NetworkConnections({
               ))}
             </div>
           ) : connectionsQuery.isError ? (
-            <div className="p-8 rounded-2xl bg-danger/5 border border-danger/20 text-center">
-              <AlertCircle className="w-8 h-8 text-danger mx-auto mb-2" />
+            <div className="p-8 rounded-3xl bg-rose-500/5 border border-rose-500/20 text-center max-w-md mx-auto">
+              <AlertCircle className="w-8 h-8 text-rose-400 mx-auto mb-2" />
               <p className="text-sm font-bold text-white">Failed to load connections</p>
               <button
                 type="button"
                 onClick={() => connectionsQuery.refetch()}
-                className="btn-secondary mt-3 text-xs py-2 px-4 cursor-pointer"
+                className="btn-secondary mt-3 text-xs py-2 px-4 cursor-pointer focus-ring"
               >
                 Try Again
               </button>
             </div>
           ) : (connectionsQuery.data?.data || []).length === 0 ? (
-            <div className="p-16 rounded-3xl bg-[#0A0F14] border border-white/[0.06] text-center max-w-lg mx-auto">
-              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-text-muted">
-                <UserCheck className="w-7 h-7" />
-              </div>
-              <h3 className="font-heading font-bold text-lg text-white">
-                {debouncedSearch ? "No matching connections" : "No connections yet"}
+            <div className="py-20 px-6 rounded-2xl border border-white/[0.06] bg-white/[0.01] text-center max-w-md mx-auto">
+              <h3 className="font-heading font-bold text-xl text-white">
+                {debouncedSearch ? "No matching connections" : "Your network starts here"}
               </h3>
-              <p className="text-xs text-text-muted mt-1 leading-relaxed">
+              <p className="text-xs text-text-muted mt-2 leading-relaxed max-w-xs mx-auto">
                 {debouncedSearch
                   ? "No connections found matching your search."
-                  : "Connect with classmates, peers, and mentors to expand your learning network."}
+                  : "Discover people across the Zeitnah community and build meaningful professional relationships."}
               </p>
               {debouncedSearch ? (
                 <button
                   type="button"
                   onClick={() => handleSearchChange("")}
-                  className="mt-4 px-4 py-2 rounded-xl bg-brand-mint/10 text-brand-mint border border-brand-mint/30 hover:bg-brand-mint/20 text-xs font-bold transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                  className="mt-5 px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-white transition-colors cursor-pointer inline-flex items-center gap-1.5 focus-ring"
                 >
                   <X className="w-3.5 h-3.5" />
                   <span>Clear Search</span>
@@ -802,7 +667,7 @@ export default function NetworkConnections({
                 <button
                   type="button"
                   onClick={() => handleTabChange("people")}
-                  className="btn-primary mt-4 text-xs py-2.5 px-5 inline-flex items-center gap-2 cursor-pointer"
+                  className="mt-6 px-5 py-2.5 rounded-xl bg-brand-mint text-black font-bold text-xs hover:bg-brand-mint/90 transition-all shadow-sm cursor-pointer inline-flex items-center gap-2 focus-ring"
                 >
                   <Compass className="w-4 h-4" />
                   <span>Discover People</span>
@@ -814,89 +679,118 @@ export default function NetworkConnections({
               {(connectionsQuery.data?.data || []).map((conn) => {
                 const connId = conn.id || conn._id;
                 const profileLink = getCanonicalProfileUrl(conn);
+                const role = conn.currentRole || conn.headline || "Infrastructure Professional";
+                const org = conn.organization || conn.company || conn.institution || "Zeitnah Academy";
+                const location =
+                  conn.location ||
+                  (conn.city ? `${conn.city}${conn.country ? ` · ${conn.country}` : ""}` : null);
+                const connectedTime = formatConnectedSince(conn.connectedAt || conn.createdAt);
 
                 return (
                   <div
                     key={connId}
-                    className="p-5 rounded-2xl bg-[#0A0F14] hover:bg-[#0D141F] border border-white/[0.08] hover:border-brand-mint/30 transition-all flex flex-col justify-between gap-3 shadow-lg"
+                    className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-[#0A0F14]/95 p-5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-white/[0.16] shadow-sm hover:shadow-lg"
                   >
-                    <div className="flex items-start gap-3.5 min-w-0">
-                      <Link to={profileLink} className="relative shrink-0 block focus-ring rounded-2xl">
-                        <div className="w-12 h-12 rounded-2xl bg-[#070B14] border border-white/[0.08] flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden">
-                          {conn.avatar ? (
-                            <img src={conn.avatar} alt={conn.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <span>{getInitials(conn.name)}</span>
+                    <div>
+                      <div className="flex items-start justify-between gap-3">
+                        {/* Avatar (56px circular) */}
+                        <Link to={profileLink} className="relative shrink-0 block focus-ring rounded-full">
+                          <div className="w-14 h-14 rounded-full bg-[#070B14] border border-white/[0.08] flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden transition-transform duration-200 ease-out group-hover:scale-[1.02]">
+                            {conn.avatar ? (
+                              <img src={conn.avatar} alt={conn.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span>{getInitials(conn.name)}</span>
+                            )}
+                          </div>
+                          {conn.isVerified && (
+                            <span
+                              className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-black shadow-sm"
+                              title="Verified Member"
+                            >
+                              <ShieldCheck className="h-2.5 w-2.5" />
+                            </span>
                           )}
-                        </div>
-                        {conn.isVerified && (
-                          <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-black shadow-sm">
-                            <ShieldCheck className="h-3 w-3" />
-                          </span>
-                        )}
-                      </Link>
+                        </Link>
 
-                      <div className="min-w-0 flex-1">
+                        {/* Secondary Remove Trigger */}
+                        {confirmRemoveId === connId ? (
+                          <div className="flex items-center gap-1.5 animate-fade-in bg-white/[0.04] p-1 rounded-xl border border-white/[0.08]">
+                            <span className="text-[11px] font-medium text-text-muted px-1">Remove?</span>
+                            <button
+                              type="button"
+                              disabled={removeConnectionMutation.isPending}
+                              onClick={() => removeConnectionMutation.mutate(connId)}
+                              className="px-2 py-0.5 rounded-lg bg-rose-500/20 text-rose-300 text-[11px] font-bold hover:bg-rose-500/30 transition-colors cursor-pointer"
+                            >
+                              Yes
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmRemoveId(null)}
+                              className="px-2 py-0.5 rounded-lg bg-white/[0.06] text-text-muted hover:text-white text-[11px] font-medium transition-colors cursor-pointer"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmRemoveId(connId)}
+                            className="p-1.5 rounded-lg text-text-muted/60 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer focus-ring opacity-60 group-hover:opacity-100"
+                            title="Remove connection"
+                            aria-label={`Remove connection with ${conn.name}`}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Identity */}
+                      <div className="mt-3.5 space-y-1">
                         <Link
                           to={profileLink}
-                          className="font-heading font-bold text-sm text-white hover:text-brand-mint transition-colors truncate block focus-ring rounded"
+                          className="font-heading font-bold text-base text-white hover:text-brand-mint transition-colors truncate block focus-ring rounded"
                         >
                           {conn.name}
                         </Link>
                         {conn.username && (
-                          <p className="text-xs font-mono text-brand-mint/90 truncate">@{conn.username}</p>
+                          <p className="text-xs font-mono text-text-muted truncate">@{conn.username}</p>
                         )}
-                        {conn.headline ? (
-                          <p className="text-xs text-text-muted truncate mt-1">{conn.headline}</p>
-                        ) : conn.currentRole ? (
-                          <p className="text-xs text-text-muted truncate mt-1 flex items-center gap-1">
-                            <Briefcase className="w-3 h-3 shrink-0" />
-                            <span>{conn.currentRole}</span>
-                          </p>
-                        ) : null}
+
+                        {/* Role & Org */}
+                        <div className="pt-1.5 text-xs text-text-secondary leading-snug">
+                          <p className="font-medium text-white/90 truncate">{role}</p>
+                          {org && <p className="text-text-muted truncate mt-0.5">{org}</p>}
+                        </div>
+
+                        {/* Location */}
+                        {location && (
+                          <p className="text-[11px] text-text-muted/80 truncate pt-1">{location}</p>
+                        )}
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-white/[0.04] gap-2">
-                      <Link
-                        to={profileLink}
-                        className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors focus-ring"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5 text-text-muted" />
-                        <span>View Profile</span>
-                      </Link>
+                    {/* Footer: Connected time + Quiet Connected badge & View Profile */}
+                    <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-mono text-text-muted/70 truncate">
+                        {connectedTime}
+                      </span>
 
-                      {/* Zero native confirm: Inline stateful confirmation */}
-                      {confirmRemoveId === connId ? (
-                        <div className="flex items-center gap-1.5 animate-fade-in">
-                          <span className="text-[11px] font-medium text-text-muted">Remove?</span>
-                          <button
-                            type="button"
-                            disabled={removeConnectionMutation.isPending}
-                            onClick={() => removeConnectionMutation.mutate(connId)}
-                            className="px-2 py-1 rounded-lg bg-rose-500/20 border border-rose-500/30 text-rose-300 text-[11px] font-bold hover:bg-rose-500/30 transition-colors cursor-pointer"
-                          >
-                            Yes
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfirmRemoveId(null)}
-                            className="px-2 py-1 rounded-lg border border-white/[0.1] bg-white/[0.04] text-text-muted hover:text-white text-[11px] font-medium transition-colors cursor-pointer"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setConfirmRemoveId(connId)}
-                          className="p-1.5 rounded-xl text-text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                          title="Remove connection"
-                          aria-label="Remove connection"
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-white/[0.08] bg-white/[0.03] text-text-secondary text-xs font-medium tracking-tight">
+                          <UserCheck className="w-3 h-3 text-brand-mint" />
+                          <span>Connected</span>
+                        </span>
+
+                        <Link
+                          to={profileLink}
+                          className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.04] transition-colors focus-ring"
+                          title="View Profile"
+                          aria-label={`View ${conn.name}'s profile`}
                         >
-                          <X className="w-4 h-4" />
-                        </button>
-                      )}
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 );
@@ -915,7 +809,7 @@ export default function NetworkConnections({
                   type="button"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40 cursor-pointer min-h-[36px] focus-ring"
                 >
                   Previous
                 </button>
@@ -923,29 +817,176 @@ export default function NetworkConnections({
                   type="button"
                   onClick={() => setPage((p) => p + 1)}
                   disabled={!connectionsQuery.data?.hasNextPage}
-                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40 cursor-pointer min-h-[36px] focus-ring"
                 >
                   Next
                 </button>
               </div>
             </div>
           )}
-        </div>
+        </section>
       )}
 
-      {/* ── 5. FOLLOWERS TAB ── */}
+      {/* ── 4. TAB 3: DEDICATED CONNECTION REQUESTS INBOX (SECTION 14) ── */}
+      {subTab === "requests" && (
+        <section aria-labelledby="requests-heading" className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/[0.06]">
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h2 id="requests-heading" className="text-sm font-mono uppercase tracking-widest text-text-muted font-bold">
+                  Connection Requests
+                </h2>
+                {incomingRequestsCount > 0 && (
+                  <span className="text-xs font-mono font-bold text-amber-200 bg-amber-400/15 border border-amber-400/25 px-2 py-0.5 rounded-full">
+                    {incomingRequestsCount < 10 ? `0${incomingRequestsCount}` : incomingRequestsCount}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-text-secondary mt-1">
+                Manage incoming networking inquiries and track invitations you have dispatched.
+              </p>
+            </div>
+
+            {/* Sub-selector for Incoming vs Outgoing */}
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.03] border border-white/[0.06] self-start sm:self-auto shrink-0">
+              <button
+                type="button"
+                onClick={() => setRequestsSubTab("incoming")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer min-h-[34px] focus-ring ${
+                  requestsSubTab === "incoming"
+                    ? "bg-white/[0.1] text-white font-bold border border-white/[0.08]"
+                    : "text-text-muted hover:text-white"
+                }`}
+              >
+                <span>Incoming</span>
+                {incomingRequestsCount > 0 && (
+                  <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-white/[0.08] text-white">
+                    {incomingRequestsCount}
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRequestsSubTab("outgoing")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer min-h-[34px] focus-ring ${
+                  requestsSubTab === "outgoing"
+                    ? "bg-white/[0.1] text-white font-bold border border-white/[0.08]"
+                    : "text-text-muted hover:text-white"
+                }`}
+              >
+                <span>Sent</span>
+                {outgoingRequestsCount > 0 && (
+                  <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-white/[0.08] text-white">
+                    {outgoingRequestsCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Incoming Requests View */}
+          {requestsSubTab === "incoming" && (
+            <div>
+              {requestsQuery.isLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="h-32 rounded-2xl bg-[#0A0F14] border border-white/[0.04] animate-pulse"
+                    />
+                  ))}
+                </div>
+              ) : (requestsQuery.data?.incoming || []).length === 0 ? (
+                <div className="py-16 px-6 rounded-2xl border border-white/[0.06] bg-white/[0.01] text-center max-w-sm mx-auto">
+                  <h4 className="font-heading font-bold text-base text-white">
+                    You're all caught up
+                  </h4>
+                  <p className="text-xs text-text-muted mt-1.5 leading-relaxed">
+                    New connection requests will appear here when peers invite you to connect.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {(requestsQuery.data?.incoming || []).map((req) => {
+                    const reqId = req.connectionId || req._id;
+                    return (
+                      <ConnectionRequestCard
+                        key={reqId}
+                        request={req}
+                        type="incoming"
+                        onAccept={(id) => acceptRequestMutation.mutate(id)}
+                        onDecline={(id) => declineRequestMutation.mutate(id)}
+                        isAccepting={acceptRequestMutation.isPending && acceptRequestMutation.variables === reqId}
+                        isDeclining={declineRequestMutation.isPending && declineRequestMutation.variables === reqId}
+                        onPreview={(m) => setSelectedPreviewPerson(m)}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Outgoing Requests View */}
+          {requestsSubTab === "outgoing" && (
+            <div>
+              {requestsQuery.isLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="h-32 rounded-2xl bg-[#0A0F14] border border-white/[0.04] animate-pulse"
+                    />
+                  ))}
+                </div>
+              ) : (requestsQuery.data?.outgoing || []).length === 0 ? (
+                <div className="py-16 px-6 rounded-2xl border border-white/[0.06] bg-white/[0.01] text-center max-w-sm mx-auto">
+                  <h4 className="font-heading font-bold text-base text-white">
+                    No pending sent requests
+                  </h4>
+                  <p className="text-xs text-text-muted mt-1.5 leading-relaxed">
+                    When you send connection requests, you can review and track their status here.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {(requestsQuery.data?.outgoing || []).map((req) => {
+                    const reqId = req.connectionId || req._id;
+                    return (
+                      <ConnectionRequestCard
+                        key={reqId}
+                        request={req}
+                        type="outgoing"
+                        onCancel={(id) => cancelRequestMutation.mutate(id)}
+                        isCancelling={cancelRequestMutation.isPending && cancelRequestMutation.variables === reqId}
+                        onPreview={(m) => setSelectedPreviewPerson(m)}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* ── 5. TAB 4: FOLLOWERS ── */}
       {subTab === "followers" && (
-        <div className="space-y-4">
+        <section aria-labelledby="followers-heading" className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-heading font-bold text-white">Your Followers</h3>
-              <p className="text-xs text-text-muted mt-0.5">
+              <h2 id="followers-heading" className="text-xl sm:text-2xl font-heading font-extrabold text-white tracking-tight">
+                Your Followers
+              </h2>
+              <p className="text-xs text-text-muted mt-0.5 font-medium">
                 Engineers and students following your projects and progress.
               </p>
             </div>
             {followersCount > 0 && (
-              <span className="text-xs font-mono text-text-muted">
-                {followersCount} {followersCount === 1 ? "follower" : "followers"}
+              <span className="text-xs font-mono text-text-muted bg-white/[0.03] border border-white/[0.06] px-3 py-1 rounded-xl">
+                <span className="text-white font-bold">{followersCount}</span>{" "}
+                {followersCount === 1 ? "follower" : "followers"}
               </span>
             )}
           </div>
@@ -957,26 +998,23 @@ export default function NetworkConnections({
               ))}
             </div>
           ) : followersQuery.isError ? (
-            <div className="p-8 rounded-2xl bg-danger/5 border border-danger/20 text-center">
-              <AlertCircle className="w-8 h-8 text-danger mx-auto mb-2" />
+            <div className="p-8 rounded-3xl bg-rose-500/5 border border-rose-500/20 text-center max-w-md mx-auto">
+              <AlertCircle className="w-8 h-8 text-rose-400 mx-auto mb-2" />
               <p className="text-sm font-bold text-white">Failed to load followers</p>
               <button
                 type="button"
                 onClick={() => followersQuery.refetch()}
-                className="btn-secondary mt-3 text-xs py-2 px-4 cursor-pointer"
+                className="btn-secondary mt-3 text-xs py-2 px-4 cursor-pointer focus-ring"
               >
                 Try Again
               </button>
             </div>
           ) : (followersQuery.data?.data || []).length === 0 ? (
-            <div className="p-16 rounded-3xl bg-[#0A0F14] border border-white/[0.06] text-center max-w-lg mx-auto">
-              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-text-muted">
-                <Users className="w-7 h-7" />
-              </div>
-              <h3 className="font-heading font-bold text-lg text-white">
+            <div className="py-20 px-6 rounded-2xl border border-white/[0.06] bg-white/[0.01] text-center max-w-md mx-auto">
+              <h3 className="font-heading font-bold text-xl text-white">
                 {debouncedSearch ? "No matching followers" : "No followers yet"}
               </h3>
-              <p className="text-xs text-text-muted mt-1 leading-relaxed">
+              <p className="text-xs text-text-muted mt-2 leading-relaxed max-w-xs mx-auto">
                 {debouncedSearch
                   ? "No followers found matching your search."
                   : "When fellow students and mentors follow your learning journey, they appear here."}
@@ -985,7 +1023,7 @@ export default function NetworkConnections({
                 <button
                   type="button"
                   onClick={() => handleSearchChange("")}
-                  className="mt-4 px-4 py-2 rounded-xl bg-brand-mint/10 text-brand-mint border border-brand-mint/30 hover:bg-brand-mint/20 text-xs font-bold transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                  className="mt-5 px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-white transition-colors cursor-pointer inline-flex items-center gap-1.5 focus-ring"
                 >
                   <X className="w-3.5 h-3.5" />
                   <span>Clear Search</span>
@@ -1001,11 +1039,11 @@ export default function NetworkConnections({
                 return (
                   <div
                     key={user.id || user._id}
-                    className="p-5 rounded-2xl bg-[#0A0F14] hover:bg-[#0D141F] border border-white/[0.08] hover:border-brand-mint/30 transition-all flex flex-col justify-between gap-3 shadow-lg"
+                    className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-[#0A0F14]/95 p-5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-white/[0.16] shadow-sm hover:shadow-lg"
                   >
                     <div className="flex items-start gap-3.5 min-w-0">
-                      <Link to={profileLink} className="relative shrink-0 block focus-ring rounded-2xl">
-                        <div className="w-12 h-12 rounded-2xl bg-[#070B14] border border-white/[0.08] flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden">
+                      <Link to={profileLink} className="relative shrink-0 block focus-ring rounded-full">
+                        <div className="w-14 h-14 rounded-full bg-[#070B14] border border-white/[0.08] flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden transition-transform duration-200 ease-out group-hover:scale-[1.02]">
                           {user.avatar ? (
                             <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                           ) : (
@@ -1013,8 +1051,11 @@ export default function NetworkConnections({
                           )}
                         </div>
                         {user.isVerified && (
-                          <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-black shadow-sm">
-                            <ShieldCheck className="h-3 w-3" />
+                          <span
+                            className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-black shadow-sm"
+                            title="Verified Member"
+                          >
+                            <ShieldCheck className="h-2.5 w-2.5" />
                           </span>
                         )}
                       </Link>
@@ -1022,12 +1063,12 @@ export default function NetworkConnections({
                       <div className="min-w-0 flex-1">
                         <Link
                           to={profileLink}
-                          className="font-heading font-bold text-sm text-white hover:text-brand-mint transition-colors truncate block focus-ring rounded"
+                          className="font-heading font-bold text-base text-white hover:text-brand-mint transition-colors truncate block focus-ring rounded"
                         >
                           {user.name}
                         </Link>
                         {user.username && (
-                          <p className="text-xs font-mono text-brand-mint/90 truncate">@{user.username}</p>
+                          <p className="text-xs font-mono text-text-muted truncate">@{user.username}</p>
                         )}
                         {user.headline && (
                           <p className="text-xs text-text-muted truncate mt-1">{user.headline}</p>
@@ -1035,57 +1076,58 @@ export default function NetworkConnections({
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-white/[0.04] gap-2">
+                    <div className="flex items-center justify-between pt-3 border-t border-white/[0.06] gap-2 mt-4">
                       <Link
                         to={profileLink}
-                        className="px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors focus-ring"
+                        className="px-3 py-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.04] text-xs font-semibold inline-flex items-center gap-1.5 transition-colors focus-ring"
                       >
                         <ExternalLink className="w-3.5 h-3.5 text-text-muted" />
                         <span>Profile</span>
                       </Link>
 
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            followMutation.mutate({
-                              targetId: user.id || user._id,
-                              follow: !isFollowing,
-                              name: user.name,
-                            })
-                          }
-                          disabled={followMutation.isPending}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                            isFollowing
-                              ? "bg-white/[0.08] hover:bg-rose-500/15 text-white hover:text-rose-300 border border-white/10"
-                              : "bg-brand-mint text-black hover:bg-brand-mint/90"
-                          }`}
-                        >
-                          {isFollowing ? "Following" : "Follow Back"}
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          followMutation.mutate({
+                            targetId: user.id || user._id,
+                            follow: !isFollowing,
+                            name: user.name,
+                          })
+                        }
+                        disabled={followMutation.isPending}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[34px] focus-ring ${
+                          isFollowing
+                            ? "bg-white/[0.08] hover:bg-rose-500/15 text-white hover:text-rose-300 border border-white/10"
+                            : "bg-brand-mint text-black hover:bg-brand-mint/90 shadow-sm shadow-brand-mint/20"
+                        }`}
+                      >
+                        {isFollowing ? "Following" : "Follow Back"}
+                      </button>
                     </div>
                   </div>
                 );
               })}
             </div>
           )}
-        </div>
+        </section>
       )}
 
-      {/* ── 6. FOLLOWING TAB ── */}
+      {/* ── 6. TAB 5: FOLLOWING ── */}
       {subTab === "following" && (
-        <div className="space-y-4">
+        <section aria-labelledby="following-heading" className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-heading font-bold text-white">People You Follow</h3>
-              <p className="text-xs text-text-muted mt-0.5">
-                Stay updated on activities and designs from peers you follow.
+              <h2 id="following-heading" className="text-xl sm:text-2xl font-heading font-extrabold text-white tracking-tight">
+                People You Follow
+              </h2>
+              <p className="text-xs text-text-muted mt-0.5 font-medium">
+                Stay updated on designs, contributions, and updates from peers you track.
               </p>
             </div>
             {followingCount > 0 && (
-              <span className="text-xs font-mono text-text-muted">
-                {followingCount} {followingCount === 1 ? "person" : "people"}
+              <span className="text-xs font-mono text-text-muted bg-white/[0.03] border border-white/[0.06] px-3 py-1 rounded-xl">
+                <span className="text-white font-bold">{followingCount}</span>{" "}
+                {followingCount === 1 ? "person" : "people"}
               </span>
             )}
           </div>
@@ -1097,33 +1139,30 @@ export default function NetworkConnections({
               ))}
             </div>
           ) : followingQuery.isError ? (
-            <div className="p-8 rounded-2xl bg-danger/5 border border-danger/20 text-center">
-              <AlertCircle className="w-8 h-8 text-danger mx-auto mb-2" />
+            <div className="p-8 rounded-3xl bg-rose-500/5 border border-rose-500/20 text-center max-w-md mx-auto">
+              <AlertCircle className="w-8 h-8 text-rose-400 mx-auto mb-2" />
               <p className="text-sm font-bold text-white">Failed to load following list</p>
               <button
                 type="button"
                 onClick={() => followingQuery.refetch()}
-                className="btn-secondary mt-3 text-xs py-2 px-4 cursor-pointer"
+                className="btn-secondary mt-3 text-xs py-2 px-4 cursor-pointer focus-ring"
               >
                 Try Again
               </button>
             </div>
           ) : (followingQuery.data?.data || []).length === 0 ? (
-            <div className="p-16 rounded-3xl bg-[#0A0F14] border border-white/[0.06] text-center max-w-lg mx-auto">
-              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-text-muted">
-                <UserPlus className="w-7 h-7" />
-              </div>
-              <h3 className="font-heading font-bold text-lg text-white">
+            <div className="py-20 px-6 rounded-2xl border border-white/[0.06] bg-white/[0.01] text-center max-w-md mx-auto">
+              <h3 className="font-heading font-bold text-xl text-white">
                 {debouncedSearch ? "No matching users" : "You are not following anyone yet"}
               </h3>
-              <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                Follow peers, faculty, and industry leaders to see their contributions.
+              <p className="text-xs text-text-muted mt-2 leading-relaxed max-w-xs mx-auto">
+                Follow peers, faculty mentors, and industry practitioners to see their contributions.
               </p>
               {debouncedSearch ? (
                 <button
                   type="button"
                   onClick={() => handleSearchChange("")}
-                  className="mt-4 px-4 py-2 rounded-xl bg-brand-mint/10 text-brand-mint border border-brand-mint/30 hover:bg-brand-mint/20 text-xs font-bold transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                  className="mt-5 px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-white transition-colors cursor-pointer inline-flex items-center gap-1.5 focus-ring"
                 >
                   <X className="w-3.5 h-3.5" />
                   <span>Clear Search</span>
@@ -1132,7 +1171,7 @@ export default function NetworkConnections({
                 <button
                   type="button"
                   onClick={() => handleTabChange("people")}
-                  className="btn-primary mt-4 text-xs py-2.5 px-5 inline-flex items-center gap-2 cursor-pointer"
+                  className="mt-6 px-5 py-2.5 rounded-xl bg-brand-mint text-black font-bold text-xs hover:bg-brand-mint/90 transition-all shadow-sm cursor-pointer inline-flex items-center gap-2 focus-ring"
                 >
                   <Compass className="w-4 h-4" />
                   <span>Explore Directory</span>
@@ -1147,11 +1186,11 @@ export default function NetworkConnections({
                 return (
                   <div
                     key={user.id || user._id}
-                    className="p-5 rounded-2xl bg-[#0A0F14] hover:bg-[#0D141F] border border-white/[0.08] hover:border-brand-mint/30 transition-all flex flex-col justify-between gap-3 shadow-lg"
+                    className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-[#0A0F14]/95 p-5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-white/[0.16] shadow-sm hover:shadow-lg"
                   >
                     <div className="flex items-start gap-3.5 min-w-0">
-                      <Link to={profileLink} className="relative shrink-0 block focus-ring rounded-2xl">
-                        <div className="w-12 h-12 rounded-2xl bg-[#070B14] border border-white/[0.08] flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden">
+                      <Link to={profileLink} className="relative shrink-0 block focus-ring rounded-full">
+                        <div className="w-14 h-14 rounded-full bg-[#070B14] border border-white/[0.08] flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden transition-transform duration-200 ease-out group-hover:scale-[1.02]">
                           {user.avatar ? (
                             <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                           ) : (
@@ -1159,8 +1198,11 @@ export default function NetworkConnections({
                           )}
                         </div>
                         {user.isVerified && (
-                          <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-black shadow-sm">
-                            <ShieldCheck className="h-3 w-3" />
+                          <span
+                            className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-black shadow-sm"
+                            title="Verified Member"
+                          >
+                            <ShieldCheck className="h-2.5 w-2.5" />
                           </span>
                         )}
                       </Link>
@@ -1168,12 +1210,12 @@ export default function NetworkConnections({
                       <div className="min-w-0 flex-1">
                         <Link
                           to={profileLink}
-                          className="font-heading font-bold text-sm text-white hover:text-brand-mint transition-colors truncate block focus-ring rounded"
+                          className="font-heading font-bold text-base text-white hover:text-brand-mint transition-colors truncate block focus-ring rounded"
                         >
                           {user.name}
                         </Link>
                         {user.username && (
-                          <p className="text-xs font-mono text-brand-mint/90 truncate">@{user.username}</p>
+                          <p className="text-xs font-mono text-text-muted truncate">@{user.username}</p>
                         )}
                         {user.headline && (
                           <p className="text-xs text-text-muted truncate mt-1">{user.headline}</p>
@@ -1181,10 +1223,10 @@ export default function NetworkConnections({
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-white/[0.04] gap-2">
+                    <div className="flex items-center justify-between pt-3 border-t border-white/[0.06] gap-2 mt-4">
                       <Link
                         to={profileLink}
-                        className="px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors focus-ring"
+                        className="px-3 py-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.04] text-xs font-semibold inline-flex items-center gap-1.5 transition-colors focus-ring"
                       >
                         <ExternalLink className="w-3.5 h-3.5 text-text-muted" />
                         <span>Profile</span>
@@ -1200,7 +1242,7 @@ export default function NetworkConnections({
                           })
                         }
                         disabled={followMutation.isPending}
-                        className="px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-rose-500/15 text-white hover:text-rose-300 border border-white/10 text-xs font-bold transition-all cursor-pointer"
+                        className="px-3.5 py-1.5 rounded-xl bg-white/[0.08] hover:bg-rose-500/15 text-white hover:text-rose-300 border border-white/10 text-xs font-bold transition-all cursor-pointer min-h-[34px] focus-ring"
                       >
                         Unfollow
                       </button>
@@ -1210,222 +1252,10 @@ export default function NetworkConnections({
               })}
             </div>
           )}
-        </div>
+        </section>
       )}
 
-      {/* ── 7. CONNECTION REQUESTS INBOX (INBOX FEEL) ── */}
-      {subTab === "requests" && (
-        <div className="space-y-6">
-          {/* Sub-selector for Incoming vs Outgoing */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setRequestsSubTab("incoming")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                requestsSubTab === "incoming"
-                  ? "bg-brand-mint text-black shadow-md shadow-brand-mint/15 font-bold"
-                  : "bg-[#0A0F14] text-text-muted hover:text-white border border-white/[0.08]"
-              }`}
-            >
-              <span>Incoming Requests</span>
-              <span className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] bg-black/15 font-mono">
-                {incomingRequestsCount}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setRequestsSubTab("outgoing")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                requestsSubTab === "outgoing"
-                  ? "bg-brand-mint text-black shadow-md shadow-brand-mint/15 font-bold"
-                  : "bg-[#0A0F14] text-text-muted hover:text-white border border-white/[0.08]"
-              }`}
-            >
-              <span>Sent Requests</span>
-              <span className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] bg-white/[0.08] font-mono">
-                {outgoingRequestsCount}
-              </span>
-            </button>
-          </div>
-
-          {/* Incoming Requests List */}
-          {requestsSubTab === "incoming" && (
-            <div>
-              {requestsQuery.isLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {[1, 2].map((i) => (
-                    <div
-                      key={i}
-                      className="h-28 rounded-2xl bg-[#0A0F14] border border-white/[0.04] animate-pulse"
-                    />
-                  ))}
-                </div>
-              ) : (requestsQuery.data?.incoming || []).length === 0 ? (
-                <div className="p-12 rounded-2xl bg-[#0A0F14] border border-white/[0.06] text-center max-w-md mx-auto">
-                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-3 text-text-muted">
-                    <UserCheck className="w-6 h-6 text-brand-mint" />
-                  </div>
-                  <h4 className="font-heading font-bold text-sm text-white">
-                    No pending incoming requests
-                  </h4>
-                  <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                    When someone sends you a connection request, review and accept them here.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {(requestsQuery.data?.incoming || []).map((req) => {
-                    const requester = req.requester || req.requesterId || {};
-                    const profileLink = getCanonicalProfileUrl(requester);
-
-                    return (
-                      <div
-                        key={req._id}
-                        className="p-4 rounded-2xl bg-[#0A0F14] border border-white/[0.08] flex items-center justify-between gap-3 shadow-lg"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <Link
-                            to={profileLink}
-                            className="w-11 h-11 rounded-xl bg-[#070B14] border border-white/[0.08] text-brand-mint font-bold text-xs flex items-center justify-center shrink-0 overflow-hidden"
-                          >
-                            {requester.avatar ? (
-                              <img
-                                src={requester.avatar}
-                                alt={requester.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <span>{getInitials(requester.name)}</span>
-                            )}
-                          </Link>
-                          <div className="min-w-0">
-                            <Link
-                              to={profileLink}
-                              className="text-xs font-bold text-white hover:text-brand-mint transition-colors truncate block"
-                            >
-                              {requester.name || "Member"}
-                            </Link>
-                            <p className="text-[10px] font-mono text-text-muted truncate">
-                              @{requester.username || "user"}
-                            </p>
-                            {requester.headline && (
-                              <p className="text-[11px] text-text-muted truncate mt-0.5">
-                                {requester.headline}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => acceptRequestMutation.mutate(req._id)}
-                            disabled={acceptRequestMutation.isPending}
-                            className="px-3.5 py-1.5 rounded-xl bg-brand-mint text-black font-bold text-xs cursor-pointer hover:bg-brand-mint/90 transition-all shadow-md shadow-brand-mint/15"
-                          >
-                            Accept
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => declineRequestMutation.mutate(req._id)}
-                            disabled={declineRequestMutation.isPending}
-                            className="p-1.5 rounded-xl text-text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                            title="Decline request"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Outgoing Requests List */}
-          {requestsSubTab === "outgoing" && (
-            <div>
-              {requestsQuery.isLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {[1, 2].map((i) => (
-                    <div
-                      key={i}
-                      className="h-28 rounded-2xl bg-[#0A0F14] border border-white/[0.04] animate-pulse"
-                    />
-                  ))}
-                </div>
-              ) : (requestsQuery.data?.outgoing || []).length === 0 ? (
-                <div className="p-12 rounded-2xl bg-[#0A0F14] border border-white/[0.06] text-center max-w-md mx-auto">
-                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-3 text-text-muted">
-                    <Clock className="w-6 h-6 text-text-muted" />
-                  </div>
-                  <h4 className="font-heading font-bold text-sm text-white">
-                    No pending sent requests
-                  </h4>
-                  <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                    You have no active outgoing connection requests awaiting response.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {(requestsQuery.data?.outgoing || []).map((req) => {
-                    const recipient = req.recipient || req.recipientId || {};
-                    const profileLink = getCanonicalProfileUrl(recipient);
-
-                    return (
-                      <div
-                        key={req._id}
-                        className="p-4 rounded-2xl bg-[#0A0F14] border border-white/[0.08] flex items-center justify-between gap-3 shadow-lg"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <Link
-                            to={profileLink}
-                            className="w-11 h-11 rounded-xl bg-[#070B14] border border-white/[0.08] text-text-muted font-bold text-xs flex items-center justify-center shrink-0 overflow-hidden"
-                          >
-                            {recipient.avatar ? (
-                              <img
-                                src={recipient.avatar}
-                                alt={recipient.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <span>{getInitials(recipient.name)}</span>
-                            )}
-                          </Link>
-                          <div className="min-w-0">
-                            <Link
-                              to={profileLink}
-                              className="text-xs font-bold text-white hover:text-brand-mint transition-colors truncate block"
-                            >
-                              {recipient.name || "Member"}
-                            </Link>
-                            <p className="text-[10px] font-mono text-text-muted truncate">
-                              @{recipient.username || "user"}
-                            </p>
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => cancelRequestMutation.mutate(req._id)}
-                          disabled={cancelRequestMutation.isPending}
-                          className="text-xs text-text-muted hover:text-rose-400 px-3 py-1.5 rounded-xl hover:bg-rose-500/10 transition-colors cursor-pointer border border-white/[0.06]"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Modals for profile preview and message request */}
+      {/* ── Modals: Lightweight Profile Preview & Message Request ── */}
       {selectedPreviewPerson && (
         <StudentProfilePreviewModal
           student={selectedPreviewPerson}

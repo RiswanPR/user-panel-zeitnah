@@ -182,7 +182,7 @@ export default function StudentCard({ student, onPreview }) {
         <RelationshipAction
           targetUserId={student.id}
           connectionId={student.connectionId}
-          initialState={student.relationshipState || "none"}
+          initialState={student.relationshipState || student.connectionStatus || "none"}
           studentName={student.name}
           variant="compact"
         />
