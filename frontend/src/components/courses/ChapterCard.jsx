@@ -3,23 +3,39 @@ import {
   ArrowRight,
   BookOpen,
   CheckCircle2,
+  Clock,
   Lock,
   PlayCircle,
 } from "lucide-react";
 import OptimizedImage from "../ui/OptimizedImage";
-import { getUploadUrl } from "../../utils/courseUi";
+import { formatDuration, parseDurationToSeconds, getUploadUrl } from "../../utils/courseUi";
 
 function ChapterCard({ chapter, index, onOpen }) {
   if (!chapter) return null;
-  const locked = Boolean(chapter.locked);
-  const completed = Boolean(chapter.completed);
-  const completedClasses = chapter.completedClasses || 0;
-  const totalClasses = chapter.totalClasses || 0;
-  const inProgress = !completed && !locked && completedClasses > 0;
-  const progressPercent =
-    totalClasses > 0
-      ? Math.min(100, Math.round((completedClasses / totalClasses) * 100))
-      : 0;
+  const locked = Boolean(chapter.locked ?? chapter.isLocked);
+  const completed = Boolean(chapter.completed ?? chapter.isCompleted);
+  const completedClasses = Number(chapter.completedClasses ?? chapter.completedLessonsCount ?? 0);
+  const totalClasses = Number(chapter.totalClasses ?? chapter.lessonsCount ?? chapter.lessons?.length ?? chapter.classes?.length ?? 0);
+  const inProgress = !completed && !locked && (completedClasses > 0 || (chapter.progressPercent || 0) > 0);
+  const progressPercent = Math.min(
+    100,
+    Math.max(
+      0,
+      Number(
+        chapter.progressPercent !== undefined
+          ? chapter.progressPercent
+          : totalClasses > 0
+          ? Math.round((completedClasses / totalClasses) * 100)
+          : 0
+      )
+    )
+  );
+
+  const totalDurationSeconds = (chapter.lessons || chapter.classes || []).reduce(
+    (sum, l) => sum + (l.durationSeconds || parseDurationToSeconds(l.duration)),
+    0
+  );
+  const formattedDuration = totalDurationSeconds > 0 ? formatDuration(totalDurationSeconds) : null;
 
   return (
     <motion.div
@@ -35,7 +51,7 @@ function ChapterCard({ chapter, index, onOpen }) {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: index * 0.05, ease: "easeOut" }}
-      aria-label={`Chapter ${index + 1}: ${chapter.title}. ${
+      aria-label={`Module ${index + 1}: ${chapter.title}. ${
         completed
           ? "Completed"
           : locked
@@ -74,7 +90,7 @@ function ChapterCard({ chapter, index, onOpen }) {
         <div className="flex items-start gap-3 min-w-0 flex-1">
           {/* Index badge */}
           <div
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-heading font-extrabold border ${
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-mono font-bold border ${
               completed
                 ? "bg-success/10 border-success/20 text-success"
                 : inProgress
@@ -89,11 +105,11 @@ function ChapterCard({ chapter, index, onOpen }) {
 
           <div className="min-w-0 flex-1">
             <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
-              <span className="rounded-md bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-text-muted">
-                Chapter
+              <span className="rounded-md bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider text-text-muted">
+                MODULE {String(index + 1).padStart(2, "0")}
               </span>
               <span
-                className={`rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border ${
+                className={`rounded-md px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider border ${
                   completed
                     ? "border-success/20 bg-success/10 text-success"
                     : inProgress
@@ -109,7 +125,7 @@ function ChapterCard({ chapter, index, onOpen }) {
                   ? "In Progress"
                   : locked
                   ? "Locked"
-                  : "Open"}
+                  : "Available"}
               </span>
             </div>
 
@@ -165,14 +181,25 @@ function ChapterCard({ chapter, index, onOpen }) {
       )}
 
       {/* ── Footer ── */}
-      <div className="flex items-center justify-between gap-2 text-[10px] font-semibold uppercase tracking-wider w-full border-t border-white/[0.06] pt-3.5 mt-auto relative z-10">
-        <span className="inline-flex items-center gap-1.5 text-text-muted">
-          <BookOpen className="w-3.5 h-3.5 text-brand-mint" />
-          {completedClasses} / {totalClasses} classes
-        </span>
+      <div className="flex items-center justify-between gap-2 text-[10px] font-mono font-semibold uppercase tracking-wider w-full border-t border-white/[0.06] pt-3.5 mt-auto relative z-10">
+        <div className="flex items-center gap-2 text-text-muted truncate">
+          <span className="inline-flex items-center gap-1.5">
+            <BookOpen className="w-3.5 h-3.5 text-brand-mint" />
+            {completedClasses} / {totalClasses} classes
+          </span>
+          {formattedDuration && (
+            <>
+              <span>•</span>
+              <span className="inline-flex items-center gap-1">
+                <Clock className="w-3 h-3 text-text-faint" />
+                {formattedDuration}
+              </span>
+            </>
+          )}
+        </div>
 
-        <span className="inline-flex items-center gap-1 text-brand-mint group-hover:text-white transition-colors">
-          <span>{locked ? "View" : "Open"}</span>
+        <span className="inline-flex items-center gap-1 text-brand-mint group-hover:text-white transition-colors shrink-0">
+          <span>{locked ? "View" : inProgress ? "Resume" : "Explore"}</span>
           <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
         </span>
       </div>

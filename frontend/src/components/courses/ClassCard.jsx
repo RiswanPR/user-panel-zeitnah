@@ -39,15 +39,8 @@ function ClassCard({ cls, courseType, index, onLockedClick, onOpen }) {
           {/* ── Thumbnail (16:9 on mobile/tablet) ── */}
           <div
             onClick={locked ? onLockedClick : onOpen}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                locked ? onLockedClick() : onOpen();
-              }
-            }}
-            className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/[0.06] bg-bg-elevated sm:w-44 shrink-0 select-none flex items-center justify-center cursor-pointer focus-ring"
+            aria-hidden="true"
+            className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/[0.06] bg-bg-elevated sm:w-44 shrink-0 select-none flex items-center justify-center cursor-pointer"
             style={{ aspectRatio: "16 / 9" }}
           >
             {thumbnailUrl ? (
@@ -162,6 +155,7 @@ function ClassCard({ cls, courseType, index, onLockedClick, onOpen }) {
           <button
             type="button"
             onClick={locked ? onLockedClick : onOpen}
+            aria-label={`${locked ? 'Locked lesson' : completed ? 'Rewatch lesson' : inProgress ? 'Continue lesson' : 'Watch lesson'}: ${cls.title}`}
             className={`w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-xl py-2.5 px-5 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer border focus-ring ${
               locked
                 ? "border-white/[0.08] bg-white/[0.03] text-text-muted hover:text-white"

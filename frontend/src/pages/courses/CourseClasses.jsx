@@ -4,12 +4,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
   BookOpen,
+  Clock,
   FileText,
   Lock,
+  Play,
+  CheckCircle2,
   ChevronRight,
 } from "lucide-react";
 import ClassCard from "../../components/courses/ClassCard";
 import api from "../../services/api";
+import { formatDuration, parseDurationToSeconds } from "../../utils/courseUi";
 
 function CourseClasses() {
   const { chapterCode, courseId } = useParams();
@@ -51,22 +55,59 @@ function CourseClasses() {
   }, [showPopup]);
 
   const stats = useMemo(() => {
-    if (!data || !Array.isArray(data.classes)) return { totalClasses: 0, totalExercises: 0, unlockedClasses: 0 };
+    if (!data || !Array.isArray(data.classes)) {
+      return {
+        totalClasses: 0,
+        completedClasses: 0,
+        unlockedClasses: 0,
+        totalExercises: 0,
+        progressPercent: 0,
+        formattedDuration: null,
+        resumeClass: null,
+      };
+    }
+    const totalClasses = data.classes.length;
+    const completedClasses = data.classes.filter((cls) => cls.completed).length;
+    const unlockedClasses = data.classes.filter((cls) => !cls.locked).length;
+    const totalExercises = data.classes.reduce(
+      (sum, cls) => sum + (cls.exerciseCount || 0),
+      0
+    );
+    const progressPercent =
+      totalClasses > 0
+        ? Math.min(100, Math.round((completedClasses / totalClasses) * 100))
+        : 0;
+
+    const totalSeconds = data.classes.reduce(
+      (sum, cls) => sum + parseDurationToSeconds(cls.duration),
+      0
+    );
+    const formattedDuration =
+      totalSeconds > 0 ? formatDuration(totalSeconds) : null;
+
+    // Find first actionable lesson to resume/play
+    const resumeClass =
+      data.classes.find((c) => !c.completed && !c.locked) ||
+      data.classes.find((c) => !c.locked) ||
+      data.classes[0] ||
+      null;
+
     return {
-      totalClasses: data.classes.length,
-      totalExercises: data.classes.reduce(
-        (sum, cls) => sum + (cls.exerciseCount || 0),
-        0
-      ),
-      unlockedClasses: data.classes.filter((cls) => !cls.locked).length,
+      totalClasses,
+      completedClasses,
+      unlockedClasses,
+      totalExercises,
+      progressPercent,
+      formattedDuration,
+      resumeClass,
     };
   }, [data]);
 
   if (loading) {
     return (
-      <div className="space-y-6 max-w-5xl mx-auto">
+      <div className="space-y-6 max-w-7xl mx-auto">
         <div className="h-4 w-48 shimmer rounded" />
-        <div className="h-40 shimmer rounded-2xl" />
+        <div className="h-44 shimmer rounded-2xl" />
         <div className="space-y-4">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="h-32 shimmer rounded-2xl" />
@@ -97,7 +138,7 @@ function CourseClasses() {
   const { chapter = {}, classes = [], course = {}, purchased } = data;
 
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-5xl mx-auto">
+    <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto">
       {/* ── Breadcrumbs ── */}
       <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-medium text-text-muted">
         <Link
@@ -124,42 +165,51 @@ function CourseClasses() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-bg-card via-bg-surface to-bg-card border border-white/[0.08] p-5 sm:p-7"
+        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-bg-card via-bg-surface to-bg-card border border-white/[0.08] p-5 sm:p-7 lg:p-8"
       >
         <div className="gradient-line-top" />
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="flex flex-wrap gap-2 items-center">
-            <span className="rounded-md border border-brand-mint/20 bg-brand-mint/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-brand-mint">
-              Chapter Module
+            <span className="rounded-md border border-brand-mint/20 bg-brand-mint/10 px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-brand-mint">
+              MODULE {String(chapter?.order || chapterCode || "01").replace(/\D/g, "") || "01"}
             </span>
             <span
-              className={`rounded-md border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
+              className={`rounded-md border px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider ${
                 purchased
                   ? "border-success/20 bg-success/10 text-success"
                   : "border-warning/20 bg-warning/8 text-warning"
               }`}
             >
-              {purchased ? "Unlocked" : "Preview Mode"}
+              {purchased ? "Enrolled Access" : "Preview Mode"}
             </span>
           </div>
 
-          <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-white tracking-tight leading-tight">
+          <h1 className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl text-white tracking-tight leading-tight">
             {chapter.title}
           </h1>
 
           {chapter.description && (
-            <p className="max-w-2xl text-xs sm:text-sm font-medium text-text-muted leading-relaxed">
+            <p className="max-w-3xl text-xs sm:text-sm font-medium text-text-muted leading-relaxed">
               {chapter.description}
             </p>
           )}
 
           {/* Quick stats pills */}
-          <div className="flex flex-wrap items-center gap-3 pt-2 text-xs font-semibold text-text-secondary">
+          <div className="flex flex-wrap items-center gap-3 pt-1 text-xs font-semibold text-text-secondary">
             <span className="inline-flex items-center gap-1.5">
               <BookOpen className="w-3.5 h-3.5 text-brand-mint" />
               {stats.totalClasses} {stats.totalClasses === 1 ? "Lesson" : "Lessons"}
             </span>
+            {stats.formattedDuration && (
+              <>
+                <span className="w-1 h-1 rounded-full bg-border-default" />
+                <span className="inline-flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-brand-mint" />
+                  {stats.formattedDuration}
+                </span>
+              </>
+            )}
             {stats.totalExercises > 0 && (
               <>
                 <span className="w-1 h-1 rounded-full bg-border-default" />
@@ -170,6 +220,51 @@ function CourseClasses() {
               </>
             )}
           </div>
+
+          {/* Progress bar if enrolled */}
+          {purchased && stats.totalClasses > 0 && (
+            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 space-y-2 max-w-xl">
+              <div className="flex items-center justify-between text-xs font-mono font-medium text-text-secondary">
+                <span>
+                  {stats.progressPercent >= 100 ? "Module Completed" : "Module Progress"}
+                </span>
+                <span className="font-bold text-white">{stats.progressPercent}%</span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                <div
+                  className={`h-full rounded-full transition-all duration-700 ${
+                    stats.progressPercent >= 100
+                      ? "bg-success"
+                      : "bg-gradient-to-r from-brand-mint to-brand-yellow"
+                  }`}
+                  style={{ width: `${stats.progressPercent}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-text-muted pt-1">
+                <span>{stats.completedClasses} of {stats.totalClasses} lessons completed</span>
+              </div>
+            </div>
+          )}
+
+          {/* Primary Action Button (Direct Lesson Launch) */}
+          {stats.resumeClass && !stats.resumeClass.locked && (
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => navigate(`/courses/class/${stats.resumeClass._id}`)}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-brand-mint text-bg-base font-bold text-xs uppercase tracking-wider shadow-md hover:bg-brand-mint/90 transition-all cursor-pointer focus-ring"
+              >
+                <Play className="w-4 h-4 fill-current" />
+                <span>
+                  {stats.completedClasses >= stats.totalClasses
+                    ? "Review First Lesson"
+                    : stats.completedClasses > 0
+                    ? `Continue: ${stats.resumeClass.title}`
+                    : "Start Chapter"}
+                </span>
+              </button>
+            </div>
+          )}
         </div>
       </motion.section>
 

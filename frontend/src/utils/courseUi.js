@@ -1,8 +1,8 @@
 const apiBaseUrl =
-  import.meta.env.VITE_API_BASE_URL || "https://zeitnahacademy.com/api";
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE_URL) || "https://zeitnahacademy.com/api";
 
 const uploadBaseUrl = apiBaseUrl.replace(/\/api\/?$/, "");
-const bunnyLibraryId = import.meta.env.VITE_BUNNY_LIBRARY_ID?.trim();
+const bunnyLibraryId = (typeof import.meta !== "undefined" && import.meta.env?.VITE_BUNNY_LIBRARY_ID)?.trim();
 
 export function getUploadUrl(path) {
   if (!path) {
@@ -43,6 +43,33 @@ export function formatDuration(duration) {
   }
 
   return value;
+}
+
+export function parseDurationToSeconds(duration) {
+  if (!duration) return 0;
+  if (typeof duration === "number") return duration;
+  const value = String(duration).trim();
+  if (/^\d+$/.test(value)) return Number.parseInt(value, 10);
+
+  const parts = value.split(":").map((p) => Number.parseInt(p, 10) || 0);
+  if (parts.length === 2) {
+    return parts[0] * 60 + parts[1];
+  }
+  if (parts.length === 3) {
+    return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  }
+
+  const hourMatch = value.match(/(\d+)\s*h/i);
+  const minMatch = value.match(/(\d+)\s*m/i);
+  const secMatch = value.match(/(\d+)\s*s/i);
+  if (hourMatch || minMatch || secMatch) {
+    const hours = hourMatch ? Number.parseInt(hourMatch[1], 10) : 0;
+    const mins = minMatch ? Number.parseInt(minMatch[1], 10) : 0;
+    const secs = secMatch ? Number.parseInt(secMatch[1], 10) : 0;
+    return hours * 3600 + mins * 60 + secs;
+  }
+
+  return 0;
 }
 
 export function getCourseTypeLabel(type) {

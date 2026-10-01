@@ -14,6 +14,7 @@ import CourseTypeBadge from "../../components/courses/CourseTypeBadge";
 import CourseEnquiryModal from "../../components/courses/CourseEnquiryModal";
 import api from "../../services/api";
 import { useImagePreloader } from "../../hooks/useImagePreloader";
+import { normalizeCurriculum } from "../../utils/courseCurriculum";
 
 function CourseChapters() {
   const { courseId } = useParams();
@@ -41,10 +42,22 @@ function CourseChapters() {
     };
   }, [courseId]);
 
-  const totalClasses = useMemo(
-    () => data?.chapters?.reduce((sum, ch) => sum + (ch.totalClasses || 0), 0) || 0,
-    [data]
-  );
+  // Unified authoritative curriculum model
+  const curriculum = useMemo(() => {
+    if (!data) return null;
+    return normalizeCurriculum({
+      course: data.course,
+      rawChapters: data.chapters || [],
+      purchased: data.purchased,
+    });
+  }, [data]);
+
+  const totalClasses = useMemo(() => {
+    if (curriculum?.overallProgress?.totalClasses) {
+      return curriculum.overallProgress.totalClasses;
+    }
+    return data?.chapters?.reduce((sum, ch) => sum + (ch.totalClasses || 0), 0) || 0;
+  }, [curriculum, data]);
 
   // Preload chapter cover images in background
   const chapterImageUrls = useMemo(
@@ -102,20 +115,29 @@ function CourseChapters() {
     !!course?.learningProgress ||
     !!course?.purchased ||
     !!course?.isPurchased ||
-    !!course?.isEnrolled;
+    !!course?.isEnrolled ||
+    !!curriculum?.course?.isEnrolled;
   const learningProgress = course?.learningProgress;
-  const completionPercent = Math.min(100, Math.max(0, Math.round(learningProgress?.completionPercent || 0)));
-  const completedClasses = learningProgress?.completedClasses || 0;
+  const completionPercent = curriculum?.overallProgress?.completionPercent ??
+    Math.min(100, Math.max(0, Math.round(learningProgress?.completionPercent || 0)));
+  const completedClasses = curriculum?.overallProgress?.completedClasses ??
+    (learningProgress?.completedClasses || 0);
   const imageUrl =
     course?.coverImage ||
     "https://placehold.co/1920x1080/0A0D14/FFFFFF?text=Course+Cover";
 
-  // Find next actionable chapter for the Continue button
-  const nextChapter = chapters.find((ch) => !ch.completed && !ch.locked) || chapters[0];
+  // Find next actionable chapter / resume lesson for Continue button
+  const nextChapter = (curriculum?.chapters || chapters).find((ch) => !ch.completed && !ch.locked) || chapters[0];
 
   const handleContinueLearning = () => {
+    // 1. Direct jump to resume lesson if available (Requirement 7)
+    if (curriculum?.resumeLesson?.id) {
+      navigate(`/courses/class/${curriculum.resumeLesson.id}`);
+      return;
+    }
+    // 2. Fallback to chapter classes
     if (nextChapter) {
-      const code = nextChapter.uniqueCode || nextChapter._id;
+      const code = nextChapter.uniqueCode || nextChapter._id || nextChapter.id;
       navigate(`/courses/${courseId}/chapters/${code}/classes`);
     }
   };
@@ -322,8 +344,8 @@ function CourseChapters() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 w-full">
-            {chapters.map((chapter, index) => {
-              const code = chapter.uniqueCode || chapter._id;
+            {(curriculum?.chapters || chapters).map((chapter, index) => {
+              const code = chapter.uniqueCode || chapter._id || chapter.id;
               return (
                 <ChapterCard
                   key={code || index}

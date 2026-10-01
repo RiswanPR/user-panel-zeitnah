@@ -1,5 +1,7 @@
 import test, { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { normalizeLesson, normalizeCurriculum, getContinueLearningUrl } from './courseCurriculum.js';
+import { formatDuration, parseDurationToSeconds } from './courseUi.js';
 
 /**
  * Pure helper functions mirroring the LMS logic for comprehensive unit testing
@@ -66,6 +68,228 @@ export function getResponsiveLayoutRules(width) {
 }
 
 describe('ZEITNAH LMS — Premium Learning Workspace Unit Tests', () => {
+  describe('Authoritative normalizeLesson Unit Tests', () => {
+    it('normalizes raw lesson with default values and parses duration', () => {
+      const lesson = normalizeLesson({
+        _id: 'cls-101',
+        title: 'Introduction to Systems',
+        duration: '12:30',
+        order: 1,
+      });
+
+      assert.strictEqual(lesson.id, 'cls-101');
+      assert.strictEqual(lesson.title, 'Introduction to Systems');
+      assert.strictEqual(lesson.duration, '12:30');
+      assert.strictEqual(lesson.durationSeconds, 750);
+      assert.strictEqual(lesson.completed, false);
+      assert.strictEqual(lesson.progressPercent, 0);
+      assert.strictEqual(lesson.isActive, false);
+    });
+
+    it('marks lesson completed automatically when progress >= 90%', () => {
+      const lesson = normalizeLesson({
+        _id: 'cls-102',
+        title: 'Core Algorithms',
+        progressPercent: 91,
+      });
+
+      assert.strictEqual(lesson.completed, true);
+      assert.strictEqual(lesson.progressPercent, 100);
+    });
+
+    it('recognizes active class id correctly', () => {
+      const lesson = normalizeLesson(
+        { _id: 'cls-active', title: 'Active Lesson' },
+        { uniqueCode: 'CH01' },
+        'cls-active'
+      );
+
+      assert.strictEqual(lesson.isActive, true);
+      assert.strictEqual(lesson.chapterCode, 'CH01');
+    });
+
+    it('inherits lock state from chapter if not specified on class', () => {
+      const lockedLesson = normalizeLesson(
+        { _id: 'cls-locked', title: 'Locked Lesson' },
+        { locked: true }
+      );
+      assert.strictEqual(lockedLesson.locked, true);
+
+      const unlockedLesson = normalizeLesson(
+        { _id: 'cls-unlocked', title: 'Unlocked Lesson' },
+        { locked: false }
+      );
+      assert.strictEqual(unlockedLesson.locked, false);
+    });
+  });
+
+  describe('Authoritative normalizeCurriculum & Cross-Chapter Traversal', () => {
+    const rawChapters = [
+      {
+        _id: 'ch-1',
+        uniqueCode: 'CH01',
+        title: 'Module 1: Fundamentals',
+        order: 1,
+        locked: false,
+        classes: [
+          { _id: 'cls-101', title: 'Lesson 1.1: Getting Started', duration: '10:00', order: 1, completed: true, progressPercent: 100 },
+          { _id: 'cls-102', title: 'Lesson 1.2: Architecture Overview', duration: '15:00', order: 2, completed: true, progressPercent: 100 },
+        ],
+      },
+      {
+        _id: 'ch-2',
+        uniqueCode: 'CH02',
+        title: 'Module 2: Advanced Topics',
+        order: 2,
+        locked: false,
+        classes: [
+          { _id: 'cls-201', title: 'Lesson 2.1: Data Pipeline', duration: '20:00', order: 1, completed: false, progressPercent: 20 },
+          { _id: 'cls-202', title: 'Lesson 2.2: Production Deployment', duration: '25:00', order: 2, completed: false, progressPercent: 0 },
+        ],
+      },
+    ];
+
+    it('flattens lessons course-wide into chronological flatLessons array', () => {
+      const curriculum = normalizeCurriculum({
+        course: { _id: 'course-1', name: 'Full-Stack Mastery' },
+        rawChapters,
+        purchased: true,
+      });
+
+      assert.strictEqual(curriculum.flatLessons.length, 4);
+      assert.strictEqual(curriculum.flatLessons[0].id, 'cls-101');
+      assert.strictEqual(curriculum.flatLessons[1].id, 'cls-102');
+      assert.strictEqual(curriculum.flatLessons[2].id, 'cls-201');
+      assert.strictEqual(curriculum.flatLessons[3].id, 'cls-202');
+    });
+
+    it('CROSS-CHAPTER TRAVERSAL: Lesson 2.1 previous points to Lesson 1.2 across chapter boundary', () => {
+      const curriculum = normalizeCurriculum({
+        course: { _id: 'course-1', name: 'Full-Stack Mastery' },
+        rawChapters,
+        activeClassId: 'cls-201', // First lesson of Chapter 2
+        purchased: true,
+      });
+
+      assert.strictEqual(curriculum.activeLesson?.id, 'cls-201');
+      assert.strictEqual(curriculum.isFirstLessonInChapter, true);
+      assert.notStrictEqual(curriculum.prevLesson, null);
+      assert.strictEqual(curriculum.prevLesson?.id, 'cls-102'); // Final lesson of Chapter 1!
+      assert.strictEqual(curriculum.prevLesson?.chapterCode, 'CH01');
+      assert.strictEqual(curriculum.nextLesson?.id, 'cls-202');
+    });
+
+    it('CROSS-CHAPTER TRAVERSAL: Lesson 1.2 next points to Lesson 2.1 across chapter boundary', () => {
+      const curriculum = normalizeCurriculum({
+        course: { _id: 'course-1', name: 'Full-Stack Mastery' },
+        rawChapters,
+        activeClassId: 'cls-102', // Final lesson of Chapter 1
+        purchased: true,
+      });
+
+      assert.strictEqual(curriculum.activeLesson?.id, 'cls-102');
+      assert.strictEqual(curriculum.isLastLessonInChapter, true);
+      assert.notStrictEqual(curriculum.nextLesson, null);
+      assert.strictEqual(curriculum.nextLesson?.id, 'cls-201'); // First lesson of Chapter 2!
+      assert.strictEqual(curriculum.nextLesson?.chapterCode, 'CH02');
+      assert.strictEqual(curriculum.nextChapter?.title, 'Module 2: Advanced Topics');
+    });
+
+    it('BOUNDARY CHECKS: Course beginning has null prevLesson and course finale has null nextLesson', () => {
+      const startCurriculum = normalizeCurriculum({
+        course: { _id: 'course-1' },
+        rawChapters,
+        activeClassId: 'cls-101',
+        purchased: true,
+      });
+      assert.strictEqual(startCurriculum.prevLesson, null);
+      assert.strictEqual(startCurriculum.isFirstLessonInChapter, true);
+      assert.strictEqual(startCurriculum.isLastLessonInCourse, false);
+
+      const endCurriculum = normalizeCurriculum({
+        course: { _id: 'course-1' },
+        rawChapters,
+        activeClassId: 'cls-202',
+        purchased: true,
+      });
+      assert.strictEqual(endCurriculum.nextLesson, null);
+      assert.strictEqual(endCurriculum.isLastLessonInChapter, true);
+      assert.strictEqual(endCurriculum.isLastLessonInCourse, true);
+    });
+
+    it('AUTHORITATIVE RESUME: Accurately identifies first incomplete unlocked lesson', () => {
+      const curriculum = normalizeCurriculum({
+        course: { _id: 'course-1' },
+        rawChapters,
+        purchased: true,
+      });
+
+      // cls-101 and cls-102 are complete; cls-201 is incomplete and unlocked
+      assert.strictEqual(curriculum.resumeLesson?.id, 'cls-201');
+      assert.strictEqual(curriculum.resumeLesson?.title, 'Lesson 2.1: Data Pipeline');
+    });
+
+    it('OVERALL PROGRESS: Computes aggregate completed counts and percent', () => {
+      const curriculum = normalizeCurriculum({
+        course: { _id: 'course-1' },
+        rawChapters,
+        purchased: true,
+      });
+
+      assert.strictEqual(curriculum.overallProgress.totalClasses, 4);
+      assert.strictEqual(curriculum.overallProgress.completedClasses, 2);
+      assert.strictEqual(curriculum.overallProgress.completionPercent, 50);
+      assert.strictEqual(curriculum.chapters[0].isCompleted, true);
+      assert.strictEqual(curriculum.chapters[1].isCompleted, false);
+    });
+  });
+
+  describe('getContinueLearningUrl Helper Tests', () => {
+    it('returns direct player class URL when resumeLesson is available', () => {
+      const course = { _id: 'course-123' };
+      const curriculum = {
+        resumeLesson: { id: 'cls-resume-99' },
+      };
+      const url = getContinueLearningUrl(course, curriculum);
+      assert.strictEqual(url, '/courses/class/cls-resume-99');
+    });
+
+    it('falls back to course chapters when resumeLesson is null', () => {
+      const course = { _id: 'course-123' };
+      const curriculum = { resumeLesson: null };
+      const url = getContinueLearningUrl(course, curriculum);
+      assert.strictEqual(url, '/courses/course-123/chapters');
+    });
+
+    it('returns /courses when course is missing', () => {
+      const url = getContinueLearningUrl(null);
+      assert.strictEqual(url, '/courses');
+    });
+  });
+
+  describe('Duration Parsing & Formatting Utilities', () => {
+    it('parses various duration string formats into seconds', () => {
+      assert.strictEqual(parseDurationToSeconds(45), 45);
+      assert.strictEqual(parseDurationToSeconds('90'), 90);
+      assert.strictEqual(parseDurationToSeconds('01:30'), 90);
+      assert.strictEqual(parseDurationToSeconds('1:02:15'), 3735);
+      assert.strictEqual(parseDurationToSeconds('45m'), 2700);
+      assert.strictEqual(parseDurationToSeconds('1h 15m'), 4500);
+      assert.strictEqual(parseDurationToSeconds(''), 0);
+      assert.strictEqual(parseDurationToSeconds(null), 0);
+    });
+
+    it('formats duration nicely for human display', () => {
+      assert.strictEqual(formatDuration(null), 'Self paced');
+      assert.strictEqual(formatDuration(''), 'Self paced');
+      assert.strictEqual(formatDuration(45), '45 sec');
+      assert.strictEqual(formatDuration(90), '1 min');
+      assert.strictEqual(formatDuration(3600), '1 hr');
+      assert.strictEqual(formatDuration(3900), '1 hr 5 min');
+      assert.strictEqual(formatDuration('12:30'), '12:30');
+    });
+  });
+
   describe('Completion Logic Preservation', () => {
     it('marks completed if existing.completed is true', () => {
       const res = calculateLessonCompletion({

@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import OptimizedImage from "../ui/OptimizedImage";
 import ZeitnahZMotif from "./ZeitnahZMotif";
 import { getUploadUrl } from "../../utils/courseUi";
+import { normalizeCurriculum } from "../../utils/courseCurriculum";
 
 /**
  * ContinueLearning
@@ -43,7 +44,27 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
     coverImage ||
     "https://placehold.co/1920x1080/07090B/FFFFFF?text=Course";
 
-  const handleContinue = () => navigate(`/courses/${_id}/chapters`);
+  const handleContinue = () => {
+    // 1. Direct class jump if chapters/classes are available
+    if (chapters && chapters.length > 0) {
+      const curriculum = normalizeCurriculum({
+        course,
+        rawChapters: chapters,
+        purchased: true,
+      });
+      if (curriculum.resumeLesson?.id) {
+        navigate(`/courses/class/${curriculum.resumeLesson.id}`);
+        return;
+      }
+    }
+    // 2. Direct jump if lastAccessedClassId is present on enrollment
+    if (learningProgress?.lastAccessedClassId) {
+      navigate(`/courses/class/${learningProgress.lastAccessedClassId}`);
+      return;
+    }
+    // 3. Fallback to course syllabus
+    navigate(`/courses/${_id}/chapters`);
+  };
 
   const easePremium = [0.16, 1, 0.3, 1];
 

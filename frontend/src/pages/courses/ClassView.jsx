@@ -30,12 +30,13 @@ import { getErrorBuffer, getBrowserInfo } from "../../utils/errorCapture";
 // Modular Classroom Components
 import LearningHeader from "../../components/classroom/LearningHeader";
 import VideoStage from "../../components/classroom/VideoStage";
-import CurriculumSidebar from "../../components/classroom/CurriculumSidebar";
+import CurriculumSidebar, { CurriculumDrawer } from "../../components/classroom/CurriculumSidebar";
 import LessonTabs from "../../components/classroom/LessonTabs";
 import LessonNavigation from "../../components/classroom/LessonNavigation";
 import ChapterCompleteModal from "../../components/classroom/ChapterCompleteModal";
 import KeyboardShortcutsModal from "../../components/classroom/KeyboardShortcutsModal";
 import ResourcePreviewModal from "../../components/classroom/ResourcePreviewModal";
+import useCourseCurriculum from "../../hooks/useCourseCurriculum";
 
 function loadVdoCipherApi() {
   if (window.VdoPlayer) return Promise.resolve();
@@ -751,6 +752,31 @@ function ClassView() {
   }, [activeClassId, toast]);
 
   // ══════════════════════════════════════════════════════════
+  // UNIFIED AUTHORITATIVE CURRICULUM MODEL (Single Source of Truth)
+  // ══════════════════════════════════════════════════════════
+  const unifiedCurriculum = useCourseCurriculum({
+    course: data?.course,
+    rawChapters: courseChapters,
+    activeClassId,
+    activeChapterClasses: chapterClasses,
+    activeClassProgress: classProgress,
+    purchased: data?.purchased,
+  });
+
+  const unifiedCurriculumRef = useRef(unifiedCurriculum);
+  useEffect(() => {
+    unifiedCurriculumRef.current = unifiedCurriculum;
+  }, [unifiedCurriculum]);
+
+  const {
+    prevLesson,
+    nextLesson,
+    nextChapter,
+    isLastLessonInChapter,
+    isLastLessonInCourse,
+  } = unifiedCurriculum;
+
+  // ══════════════════════════════════════════════════════════
   // S3 HLS PROGRESS & VIDEO COMPLETION (Fixes VR-003 & PERF-001)
   // Double-save race guarded, throttled state updates
   // ══════════════════════════════════════════════════════════
@@ -805,25 +831,21 @@ function ClassView() {
           setProgressState(res.data);
           setSyncState("saved");
 
-          // Chapter Completion Trigger
+          // Chapter Completion & Autoplay Trigger (Cross-Chapter Enabled)
           if (isEnding && !s3State.hasTriggeredCompletionModal) {
             s3State.hasTriggeredCompletionModal = true;
-
-            // Check if current class is the last class of current chapter
-            const currentIdx = chapterClasses.findIndex((c) => c._id === activeClassId);
-            const isLast = currentIdx >= 0 && currentIdx === chapterClasses.length - 1;
+            const currentCurriculum = unifiedCurriculumRef.current;
+            const isLast = currentCurriculum?.isLastLessonInChapter;
+            const nextOne = currentCurriculum?.nextLesson;
 
             if (isLast) {
               setChapterCompleteModalOpen(true);
-            } else if (autoPlayNext && currentIdx >= 0 && currentIdx < chapterClasses.length - 1) {
-              const nextOne = chapterClasses[currentIdx + 1];
-              if (nextOne && !nextOne.locked) {
-                toast.info("Autoplay", `Loading next lesson: ${nextOne.title}`);
-                setTimeout(() => {
-                  setActiveClassId(nextOne._id);
-                  navigate(`/courses/class/${nextOne._id}`);
-                }, 1500);
-              }
+            } else if (autoPlayNext && nextOne && nextOne.id && !nextOne.locked && !nextOne.isLocked) {
+              toast.info("Autoplay", `Loading next lesson: ${nextOne.title}`);
+              setTimeout(() => {
+                setActiveClassId(nextOne.id);
+                navigate(`/courses/class/${nextOne.id}`);
+              }, 1500);
             }
           }
         })
@@ -832,37 +854,13 @@ function ClassView() {
           s3State.saveInFlight = false;
         });
     },
-    [activeClassId, autoPlayNext, chapterClasses, navigate, toast]
+    [activeClassId, autoPlayNext, navigate, toast]
   );
-
-  // ══════════════════════════════════════════════════════════
-  // NAVIGATION & SIBLING LESSON RESOLUTION
-  // ══════════════════════════════════════════════════════════
-  const currentClassIdx = chapterClasses.findIndex((c) => c._id === activeClassId);
-  const prevLesson = currentClassIdx > 0 ? chapterClasses[currentClassIdx - 1] : null;
-  const nextLesson =
-    currentClassIdx >= 0 && currentClassIdx < chapterClasses.length - 1
-      ? chapterClasses[currentClassIdx + 1]
-      : null;
-  const isLastLessonInChapter =
-    currentClassIdx >= 0 && currentClassIdx === chapterClasses.length - 1;
-
-  // Next Chapter Resolution across full course curriculum
-  const currentChapterCode = data?.chapter?.uniqueCode;
-  const currentChapterIdx = courseChapters.findIndex(
-    (ch) => ch.uniqueCode === currentChapterCode || ch._id === data?.chapter?._id
-  );
-  const nextChapter =
-    currentChapterIdx >= 0 && currentChapterIdx < courseChapters.length - 1
-      ? courseChapters[currentChapterIdx + 1]
-      : null;
-  const isLastLessonInCourse =
-    isLastLessonInChapter && (currentChapterIdx === -1 || currentChapterIdx === courseChapters.length - 1);
 
   // Switch to selected lesson seamlessly
   const handleSelectLesson = (lesson) => {
     if (!lesson) return;
-    if (lesson.locked) {
+    if (lesson.locked || lesson.isLocked) {
       toast.error("Lesson Locked", "Please complete preceding lessons to unlock this session.");
       return;
     }
@@ -874,17 +872,21 @@ function ClassView() {
     }
   };
 
-  // Chapter completion transition
+  // Chapter completion transition (Unified cross-chapter support)
   const handleContinueToNextChapter = () => {
     setChapterCompleteModalOpen(false);
+    if (nextLesson && nextLesson.id && !nextLesson.locked && !nextLesson.isLocked) {
+      handleSelectLesson(nextLesson);
+      return;
+    }
     if (!nextChapter) return;
     if (nextChapter.locked) {
       toast.error("Chapter Locked", "Please complete prior curriculum modules to unlock.");
       return;
     }
-    const nextChapterClasses = nextChapter.classes || [];
-    if (nextChapterClasses.length > 0) {
-      const firstLesson = nextChapterClasses[0];
+    const nextChapterLessons = nextChapter.lessons || nextChapter.classes || [];
+    if (nextChapterLessons.length > 0) {
+      const firstLesson = nextChapterLessons[0];
       handleSelectLesson(firstLesson);
     } else {
       navigate(`/courses/${data?.course?._id}/chapters`);
@@ -1109,19 +1111,15 @@ function ClassView() {
             />
           </div>
 
-          {/* ── RIGHT / PERSISTENT CURRICULUM SIDEBAR (Desktop 340-380px) ── */}
+          {/* ── RIGHT / PERSISTENT CURRICULUM SIDEBAR (Desktop >= 1280px) ── */}
           <div className="hidden xl:block xl:col-span-4 sticky top-20">
-            <div className="h-[calc(100vh-6.5rem)] rounded-3xl border border-white/[0.08] bg-bg-card/70 backdrop-blur-md overflow-hidden shadow-2xl flex flex-col">
+            <div className="h-[calc(100vh-6.5rem)] rounded-3xl overflow-hidden shadow-2xl flex flex-col">
               <CurriculumSidebar
-                isOpen={true}
-                onClose={() => {}}
-                course={course}
-                chapters={courseChapters.length > 0 ? courseChapters : [chapter]}
+                curriculum={unifiedCurriculum}
                 currentChapterCode={chapter?.uniqueCode}
                 currentClassId={activeClassId}
-                learningProgress={learningProgress}
                 onSelectClass={handleSelectLesson}
-                onLockedClick={(item) =>
+                onLockedClick={() =>
                   toast.error("Lesson Locked", "Please complete preceding lessons to unlock.")
                 }
               />
@@ -1131,18 +1129,17 @@ function ClassView() {
       </div>
 
       {/* ══════════════════════════════════════════════════════════
-          3. MOBILE / TABLET CURRICULUM SLIDE-OVER DRAWER (<1280px)
+          3. MOBILE / TABLET CURRICULUM SLIDE-OVER DRAWER (< 1280px)
+          Rendered ONLY when opened. Exactly ONE curriculum model.
           ══════════════════════════════════════════════════════════ */}
-      <CurriculumSidebar
+      <CurriculumDrawer
         isOpen={curriculumOpen}
         onClose={() => setCurriculumOpen(false)}
-        course={course}
-        chapters={courseChapters.length > 0 ? courseChapters : [chapter]}
+        curriculum={unifiedCurriculum}
         currentChapterCode={chapter?.uniqueCode}
         currentClassId={activeClassId}
-        learningProgress={learningProgress}
         onSelectClass={handleSelectLesson}
-        onLockedClick={(item) =>
+        onLockedClick={() =>
           toast.error("Lesson Locked", "Please complete preceding lessons to unlock.")
         }
       />
@@ -1156,12 +1153,15 @@ function ClassView() {
         onClose={() => setChapterCompleteModalOpen(false)}
         chapter={chapter}
         nextChapter={nextChapter}
-        completedLessonCount={chapterClasses.filter((c) => c.completed).length}
-        totalLessonCount={chapterClasses.length}
+        completedLessonCount={unifiedCurriculum.activeChapter?.completedLessonsCount ?? chapterClasses.filter((c) => c.completed).length}
+        totalLessonCount={unifiedCurriculum.activeChapter?.lessonsCount ?? chapterClasses.length}
         onContinueToNextChapter={handleContinueToNextChapter}
         onReviewChapter={() => {
           setChapterCompleteModalOpen(false);
-          if (chapterClasses.length > 0) {
+          const firstInChapter = unifiedCurriculum.activeChapter?.lessons?.[0];
+          if (firstInChapter) {
+            handleSelectLesson(firstInChapter);
+          } else if (chapterClasses.length > 0) {
             handleSelectLesson(chapterClasses[0]);
           }
         }}
