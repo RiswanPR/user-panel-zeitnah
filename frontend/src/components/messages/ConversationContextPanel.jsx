@@ -865,7 +865,15 @@ export default function ConversationContextPanel({
 
           <button
             type="button"
-            onClick={onReport}
+            onClick={() =>
+              onReport?.({
+                type: 'CONVERSATION',
+                id: convId,
+                name: isDirect
+                  ? otherUser?.name || 'Conversation'
+                  : conversation?.title || 'Group Conversation',
+              })
+            }
             className="w-full flex items-center gap-2.5 p-2.5 rounded-xl text-xs text-text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer text-left"
           >
             <Flag className="w-4 h-4" />
@@ -875,7 +883,7 @@ export default function ConversationContextPanel({
           {isDirect && otherId && (
             <button
               type="button"
-              onClick={onBlockUser}
+              onClick={() => onBlockUser?.(otherId)}
               className="w-full flex items-center gap-2.5 p-2.5 rounded-xl text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors cursor-pointer text-left"
             >
               <Ban className="w-4 h-4" />
