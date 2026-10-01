@@ -206,7 +206,7 @@ export default function MainNavbar({
                     Zeitnah
                   </span>
                   <span className="text-[8.5px] font-mono tracking-[0.18em] text-text-faint/80 uppercase leading-none mt-1">
-                    Infrastructure Platform
+                    AEC HUB
                   </span>
                 </div>
               </Link>
@@ -225,31 +225,28 @@ export default function MainNavbar({
                       key={item.key}
                       to={item.path}
                       aria-current={active ? "page" : undefined}
-                      className={`relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 select-none group focus-ring ${
-                        active
+                      className={`relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 select-none group focus-ring ${active
                           ? "text-white font-semibold"
                           : "text-text-secondary hover:text-white hover:bg-white/[0.04]"
-                      }`}
+                        }`}
                     >
                       {/* Active Background Pill */}
                       {active && (
                         <motion.div
                           layoutId={shouldReduceMotion ? undefined : "desktop-navbar-active-pill"}
-                          className={`absolute inset-0 rounded-lg ${
-                            item.isBusiness
+                          className={`absolute inset-0 rounded-lg ${item.isBusiness
                               ? "bg-brand-mint/15 border border-brand-mint/30 shadow-sm"
                               : "bg-white/[0.07] border border-white/[0.12] shadow-sm"
-                          }`}
+                            }`}
                           transition={{ type: "spring", stiffness: 450, damping: 32 }}
                         />
                       )}
 
                       <Icon
-                        className={`w-3.5 h-3.5 relative z-10 transition-all duration-200 ${
-                          active
+                        className={`w-3.5 h-3.5 relative z-10 transition-all duration-200 ${active
                             ? "text-brand-mint"
                             : "text-text-muted group-hover:text-white group-hover:-translate-y-0.5"
-                        }`}
+                          }`}
                         aria-hidden="true"
                       />
 
@@ -274,11 +271,10 @@ export default function MainNavbar({
                     aria-expanded={isMoreOpen}
                     aria-haspopup="true"
                     aria-label="More platform navigation"
-                    className={`relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 select-none group cursor-pointer focus-ring ${
-                      isMoreOpen || isAnyMoreLinkActive
+                    className={`relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 select-none group cursor-pointer focus-ring ${isMoreOpen || isAnyMoreLinkActive
                         ? "text-white bg-white/[0.06] border border-white/[0.1]"
                         : "text-text-secondary hover:text-white hover:bg-white/[0.04]"
-                    }`}
+                      }`}
                   >
                     <span className="leading-none">More</span>
                     {unreadOpportunitiesCount > 0 && (
@@ -288,9 +284,8 @@ export default function MainNavbar({
                       />
                     )}
                     <ChevronDown
-                      className={`w-3 h-3 text-text-faint group-hover:text-white transition-transform duration-200 ${
-                        isMoreOpen ? "rotate-180 text-brand-mint" : ""
-                      }`}
+                      className={`w-3 h-3 text-text-faint group-hover:text-white transition-transform duration-200 ${isMoreOpen ? "rotate-180 text-brand-mint" : ""
+                        }`}
                       aria-hidden="true"
                     />
                   </button>
@@ -321,18 +316,16 @@ export default function MainNavbar({
                                     to={item.path}
                                     onClick={() => setIsMoreOpen(false)}
                                     aria-current={active ? "page" : undefined}
-                                    className={`flex items-center gap-3 px-2.5 py-2 rounded-xl transition-all duration-150 group ${
-                                      active
+                                    className={`flex items-center gap-3 px-2.5 py-2 rounded-xl transition-all duration-150 group ${active
                                         ? "bg-brand-mint/12 text-white font-semibold"
                                         : "text-text-secondary hover:text-white hover:bg-white/[0.04]"
-                                    }`}
+                                      }`}
                                   >
                                     <div
-                                      className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
-                                        active
+                                      className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${active
                                           ? "bg-brand-mint/20 text-brand-mint"
                                           : "bg-white/[0.03] text-text-muted group-hover:text-brand-mint"
-                                      }`}
+                                        }`}
                                     >
                                       <Icon className="w-3.5 h-3.5" aria-hidden="true" />
                                     </div>
@@ -382,11 +375,10 @@ export default function MainNavbar({
                   position?.rank ? `Leaderboard rank #${position.rank}` : "Global Leaderboard"
                 }
                 title="View Leaderboard"
-                className={`flex items-center gap-1.5 h-8 px-2.5 rounded-lg border transition-all active:scale-95 touch-manipulation focus-ring select-none text-xs ${
-                  isRouteActive("leaderboard")
+                className={`flex items-center gap-1.5 h-8 px-2.5 rounded-lg border transition-all active:scale-95 touch-manipulation focus-ring select-none text-xs ${isRouteActive("leaderboard")
                     ? "bg-amber-400/[0.12] border-amber-400/35 text-amber-300"
                     : "bg-white/[0.03] border-white/[0.08] hover:border-amber-400/30 text-white/90"
-                }`}
+                  }`}
               >
                 <Trophy
                   className="w-3.5 h-3.5 text-amber-400 shrink-0"
@@ -432,9 +424,8 @@ export default function MainNavbar({
                   </span>
 
                   <ChevronDown
-                    className={`hidden xl:block w-3 h-3 text-text-faint group-hover:text-white transition-transform duration-200 ${
-                      isProfileOpen ? "rotate-180 text-brand-mint" : ""
-                    }`}
+                    className={`hidden xl:block w-3 h-3 text-text-faint group-hover:text-white transition-transform duration-200 ${isProfileOpen ? "rotate-180 text-brand-mint" : ""
+                      }`}
                     aria-hidden="true"
                   />
                 </button>

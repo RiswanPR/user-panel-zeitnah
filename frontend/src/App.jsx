@@ -172,6 +172,8 @@ function App() {
                 <Route path="/courses/:courseId/chapters" element={<Suspense fallback={<PageLoader />}><CourseChapters /></Suspense>} />
                 <Route path="/courses/:courseId/chapters/:chapterCode/classes" element={<Suspense fallback={<PageLoader />}><CourseClasses /></Suspense>} />
                 <Route path="/courses/class/:classId" element={<Suspense fallback={<PageLoader />}><ClassView /></Suspense>} />
+                <Route path="/course/:chapter_id" element={<Suspense fallback={<PageLoader />}><ClassView /></Suspense>} />
+                <Route path="/course/:chapterId" element={<Suspense fallback={<PageLoader />}><ClassView /></Suspense>} />
                 <Route path="/my-learning" element={<Suspense fallback={<PageLoader />}><MyLearning /></Suspense>} />
                 <Route path="/my-points" element={<Suspense fallback={<PageLoader />}><MyPoints /></Suspense>} />
                 <Route path="/leaderboard" element={<Suspense fallback={<PageLoader />}><Leaderboard /></Suspense>} />

@@ -1868,18 +1868,20 @@ export class ProfileService {
     // Safe public verification badges (NO private evidence leaked!)
     const verificationsSummary = {
       identity:
-        user.verifications?.identity?.status === VerificationStatus.VERIFIED,
+        user.verifications?.identity?.status ===
+        (VerificationStatus.VERIFIED as string),
       professional:
         user.verifications?.professional?.status ===
-        VerificationStatus.VERIFIED,
+        (VerificationStatus.VERIFIED as string),
       educator:
-        user.verifications?.educator?.status === VerificationStatus.VERIFIED,
+        user.verifications?.educator?.status ===
+        (VerificationStatus.VERIFIED as string),
       businessAffiliation:
         user.verifications?.businessAffiliation?.status ===
-        VerificationStatus.VERIFIED,
+        (VerificationStatus.VERIFIED as string),
       certification:
         user.verifications?.certification?.status ===
-        VerificationStatus.VERIFIED,
+        (VerificationStatus.VERIFIED as string),
       details: {
         identity: user.verifications?.identity || {
           status: VerificationStatus.UNVERIFIED,

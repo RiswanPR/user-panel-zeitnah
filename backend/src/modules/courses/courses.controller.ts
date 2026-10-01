@@ -135,6 +135,22 @@ export class CoursesController {
   }
 
   // =====================
+  // CHAPTER RESOLVER / VIEWER
+  // =====================
+
+  @UseGuards(JwtAuthGuard)
+  @Get('chapter/:chapterId')
+  getChapterById(
+    @Param('chapterId')
+    chapterId: string,
+
+    @Req()
+    req: any,
+  ) {
+    return this.coursesService.getChapterById(chapterId, req.user.userId);
+  }
+
+  // =====================
   // UPDATE PROGRESS
   // =====================
 

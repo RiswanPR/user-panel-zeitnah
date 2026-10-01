@@ -270,4 +270,44 @@ describe('CoursesService — My Learning & Role Resilience', () => {
       );
     });
   });
+
+  describe('getChapterById()', () => {
+    it('resolves chapter by uniqueCode and returns chapter details with classes', async () => {
+      const courseId = new Types.ObjectId();
+      const mockCourse = {
+        _id: courseId,
+        name: 'Infrastructure Modeling with Revit',
+        type: 'Recording',
+        chapters: [
+          {
+            uniqueCode: 'CH-FOUNDATIONS',
+            title: 'Foundations',
+            classes: [
+              {
+                _id: new Types.ObjectId(),
+                title: 'Introduction to Foundations',
+                duration: '10:00',
+              },
+            ],
+          },
+        ],
+      };
+
+      mockCourseModel.findOne.mockResolvedValue(mockCourse);
+      mockCourseModel.findById.mockResolvedValue(mockCourse);
+      mockUserModel.findById.mockResolvedValue(null);
+
+      const res = await service.getChapterById('CH-FOUNDATIONS');
+      expect(res).toBeDefined();
+      expect(res.chapter.title).toBe('Foundations');
+      expect(res.classes.length).toBe(1);
+    });
+
+    it('throws NotFoundException when chapter does not exist', async () => {
+      mockCourseModel.findOne.mockResolvedValue(null);
+      await expect(service.getChapterById('NON-EXISTENT')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
 });

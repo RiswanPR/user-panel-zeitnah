@@ -988,6 +988,8 @@ export class CoursesService {
       type: course.type,
       chapters: [
         {
+          _id: (chapter as any)._id,
+          uniqueCode: chapter.uniqueCode,
           title: chapter.title,
           description: chapter.description,
           totalClasses: chapter.classes.length,
@@ -1003,6 +1005,38 @@ export class CoursesService {
       classes: formattedCourse.chapters[0].classes,
     };
   }
+
+  // ======================
+  // CHAPTER RESOLVER
+  // ======================
+
+  async getChapterById(chapterId: string, userId?: string) {
+    const query: any = {
+      $or: [{ 'chapters.uniqueCode': chapterId }],
+    };
+    if (Types.ObjectId.isValid(chapterId)) {
+      query.$or.push({ 'chapters._id': new Types.ObjectId(chapterId) });
+    }
+
+    const course = await this.courseModel.findOne(query);
+    if (!course) {
+      throw new NotFoundException('Chapter not found');
+    }
+
+    const chapter = course.chapters.find(
+      (c: any) => c.uniqueCode === chapterId || c._id?.toString() === chapterId,
+    );
+    if (!chapter) {
+      throw new NotFoundException('Chapter not found');
+    }
+
+    return this.getChapterClasses(
+      course._id.toString(),
+      chapter.uniqueCode || chapterId,
+      userId,
+    );
+  }
+
   // ======================
   // CLASS VIEWER
   // ======================

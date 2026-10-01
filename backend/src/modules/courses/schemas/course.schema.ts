@@ -171,3 +171,4 @@ export const CourseSchema = SchemaFactory.createForClass(Course);
 // Index for fast lookup by nested class ID — queried in getClassView,
 // updateClassProgress, getSecureVideoPlayback, getSecurePlaylist, convertVideoToHls
 CourseSchema.index({ 'chapters.classes._id': 1 });
+CourseSchema.index({ 'chapters.uniqueCode': 1 });

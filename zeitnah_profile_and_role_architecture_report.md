@@ -1,7 +1,7 @@
 # ZEITNAH — PROFILE & ROLE ARCHITECTURE REPORT
 
 **Document ID:** `ZEITNAH-PROFILE-ROLE-AUDIT-2026`  
-**Platform:** Zeitnah Infrastructure Platform  
+**Platform:** Zeitnah AEC HUB
 **Subsystems:** Identity, Role Taxonomy, Profile Engine, Privacy Matrix & Verification Center  
 **Date:** September 30, 2026  
 **Status:** FULL PRODUCTION SPECIFICATION  
@@ -10,7 +10,7 @@
 
 ## 1. Executive Summary
 
-In the **Zeitnah Infrastructure Platform**, **Profile** and **Role** represent the foundational pillars of identity, access control, and user experience. Unlike generic social or enterprise platforms, Zeitnah is an **engineered infrastructure network** built specifically for Civil, Structural, BIM, MEP, Architecture, and Construction disciplines.
+In the **Zeitnah AEC HUB**, **Profile** and **Role** represent the foundational pillars of identity, access control, and user experience. Unlike generic social or enterprise platforms, Zeitnah is an **engineered infrastructure network** built specifically for Civil, Structural, BIM, MEP, Architecture, and Construction disciplines.
 
 This report provides an in-depth breakdown of:
 1. **The Role Taxonomy & Authorization Matrix** (Student, Professional, Mentor, Recruiter, Founder, Educator, Admin).
@@ -188,7 +188,7 @@ As implemented in our recent update:
 
 ## 9. Conclusion
 
-The Profile and Role systems in Zeitnah reflect a production-grade infrastructure platform where:
+The Profile and Role systems in Zeitnah reflect a production-grade AEC HUB where:
 - Identity is specialized around technical infrastructure disciplines.
 - Roles are safely normalized, strictly enforced, and directly govern user navigation.
 - Privacy controls give candidates complete authority over their career visibility.

@@ -1,7 +1,7 @@
 # ZEITNAH — PREMIUM NAVBAR 2.0 REDESIGN & ROLE-AWARE NAVIGATION REPORT
 
 **Document ID:** `ZEITNAH-NAV-2.0-AUDIT`  
-**Platform:** Zeitnah Infrastructure Platform  
+**Platform:** Zeitnah AEC HUB
 **Architecture Version:** 2.0 (Role-Aware Unified Navigation Matrix)  
 **Date:** September 30, 2026  
 **Status:** ALL ACCEPTANCE GATES PASSED (`ROLE_NAVIGATION = PASS`, `PREMIUM_DESIGN = PASS`, `TESTS = PASS`, `BUILD = PASS`)
@@ -138,7 +138,7 @@ The desktop navigation in [`MainNavbar.jsx`](file:///Users/riyas/Desktop/richuuu
 - **Height & Spacing:** Adjusted from 64px to an optimal `58px` (`h-[58px]`) with seamless vertical alignment and hairline top accent (`from-transparent via-brand-mint/35 to-transparent`).
 - **Brand Identity:**
   - Compact 32x32 rounded-lg logo container with subtle `border-white/[0.12] bg-[#0E1726]/80`.
-  - Typography: Monospace `ZEITNAH` (`tracking-[0.14em] font-bold text-[13px]`) paired with uppercase micro-meta `INFRASTRUCTURE PLATFORM` (`text-[8.5px] font-mono tracking-[0.18em]`).
+  - Typography: Monospace `ZEITNAH` (`tracking-[0.14em] font-bold text-[13px]`) paired with uppercase micro-meta `AEC HUB` (`text-[8.5px] font-mono tracking-[0.18em]`).
   - Removed decorative pulsing blobs in favor of confident architectural stillness.
 - **Active Navigation Indicator:**
   - Restrained Framer Motion background pill (`layoutId="desktop-navbar-active-pill"`) using `bg-white/[0.07] border border-white/[0.12]` (or `bg-brand-mint/15 border-brand-mint/30` for business workspaces).
