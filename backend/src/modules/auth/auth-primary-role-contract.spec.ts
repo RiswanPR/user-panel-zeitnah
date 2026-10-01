@@ -1,7 +1,12 @@
+import mongoose from 'mongoose';
 import { JwtStrategy } from '../strategies/jwt.strategy';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { mapPrimaryRoleToLegacyRole } from '../profile/profile.service';
+import {
+  UserSchema,
+  normalizeLegacyRoleValue,
+} from './schemas/user.schema';
 
 describe('Auth Primary Role Contract & Identity Regression Tests', () => {
   let jwtStrategy: JwtStrategy;
@@ -252,5 +257,33 @@ describe('Auth Primary Role Contract & Identity Regression Tests', () => {
 
     expect(result.primaryRole).toBe('EDUCATOR');
     expect(result.role).toBe('teacher');
+  });
+
+  it('TEST 13: normalizeLegacyRoleValue correctly maps non-canonical role strings to valid schema enum', () => {
+    expect(normalizeLegacyRoleValue('educator')).toBe('teacher');
+    expect(normalizeLegacyRoleValue('EDUCATOR')).toBe('teacher');
+    expect(normalizeLegacyRoleValue('professional')).toBe('student');
+    expect(normalizeLegacyRoleValue('PROFESSIONAL')).toBe('student');
+    expect(normalizeLegacyRoleValue('mentor')).toBe('student');
+    expect(normalizeLegacyRoleValue('founder')).toBe('recruiter');
+    expect(normalizeLegacyRoleValue('student')).toBe('student');
+    expect(normalizeLegacyRoleValue('teacher')).toBe('teacher');
+    expect(normalizeLegacyRoleValue('admin')).toBe('admin');
+    expect(normalizeLegacyRoleValue('recruiter')).toBe('recruiter');
+  });
+
+  it('TEST 14: UserSchema pre-validate hook normalizes role: "educator" to "teacher" preventing ValidationError', async () => {
+    const UserModel = mongoose.model('TestUserValidation', UserSchema);
+    const doc = new UserModel({
+      name: 'Elena Rostova',
+      email: 'elena@zeitnah.test',
+      username: 'erostova_test',
+      role: 'educator',
+      primaryRole: 'EDUCATOR',
+    });
+
+    await doc.validate();
+    expect(doc.role).toBe('teacher');
+    expect(doc.primaryRole).toBe('EDUCATOR');
   });
 });

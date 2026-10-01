@@ -22,6 +22,7 @@ import { JwtService } from '@nestjs/jwt';
 
 import { EmailService } from '../../common/email/email.service';
 import { ResendEmailProvider } from '../../common/email/resend-email.provider';
+import { isReservedDocumentationDomain } from '../../common/utils/email-validation.util';
 import {
   generateOtpEmailHtml,
   generateSuspiciousLoginEmailHtml,
@@ -507,6 +508,15 @@ export class AuthService {
 
   async registerSendOtp(data: RegisterSendOtpDto) {
     const email = (data.email || '').trim().toLowerCase();
+    if (
+      isReservedDocumentationDomain(email) &&
+      process.env.NODE_ENV !== 'test' &&
+      process.env.EMAIL_DEV_MODE !== 'true'
+    ) {
+      throw new BadRequestException(
+        'Email address cannot use reserved example or documentation domains (e.g. example.com). Please provide a valid active email address.',
+      );
+    }
     let user = await this.userModel.findOne({
       email,
     });
@@ -849,6 +859,15 @@ export class AuthService {
 
   async loginSendOtp(email: string) {
     const cleanEmail = email ? email.trim().toLowerCase() : email;
+    if (
+      isReservedDocumentationDomain(cleanEmail) &&
+      process.env.NODE_ENV !== 'test' &&
+      process.env.EMAIL_DEV_MODE !== 'true'
+    ) {
+      throw new BadRequestException(
+        'Email address cannot use reserved example or documentation domains (e.g. example.com). Please provide a valid active email address.',
+      );
+    }
     const user = await this.userModel.findOne({
       email: cleanEmail,
     });

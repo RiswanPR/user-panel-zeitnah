@@ -5,6 +5,7 @@ import {
   EmailSendResult,
   SendEmailOptions,
 } from './email-provider.interface';
+import { isReservedDocumentationDomain } from '../utils/email-validation.util';
 
 @Injectable()
 export class ResendEmailProvider implements EmailProvider {
@@ -29,6 +30,27 @@ export class ResendEmailProvider implements EmailProvider {
         ? `${user[0]}***${user[user.length - 1]}`
         : `${user[0]}***`;
     return `${maskedUser}@${domain}`;
+  }
+
+  /**
+   * Checks whether an error is transient (network/timeout/rate limit)
+   * or permanent (invalid recipient, unverified domain, bad parameters).
+   */
+  private isTransientError(err: any): boolean {
+    const msg = (err?.message || String(err)).toLowerCase();
+    if (
+      msg.includes('invalid `to`') ||
+      msg.includes('invalid to') ||
+      msg.includes('domain is not verified') ||
+      msg.includes('domain not verified') ||
+      msg.includes('validation_error') ||
+      msg.includes('missing_required_field') ||
+      msg.includes('reserved') ||
+      msg.includes('not a valid email')
+    ) {
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -58,6 +80,34 @@ export class ResendEmailProvider implements EmailProvider {
   }
 
   async sendEmail(options: SendEmailOptions): Promise<EmailSendResult> {
+    const masked = this.maskEmail(options.to);
+
+    // 1. Guard against reserved example/documentation domains (RFC 2606)
+    const recipients = Array.isArray(options.to) ? options.to : [options.to];
+    const hasReservedDomain = recipients.some((r) =>
+      isReservedDocumentationDomain(r),
+    );
+    if (hasReservedDomain) {
+      if (
+        process.env.NODE_ENV === 'test' ||
+        process.env.EMAIL_DEV_MODE === 'true'
+      ) {
+        this.logger.log(
+          `[Test Mode] Simulated email delivery for reserved domain recipient: ${masked}`,
+        );
+        return {
+          success: true,
+          messageId: `simulated-test-${Date.now()}`,
+          provider: `${this.name} (Simulated)`,
+        };
+      }
+      return {
+        success: false,
+        provider: this.name,
+        error: `Cannot send real email to reserved documentation/testing domain (RFC 2606) for recipient: ${masked}`,
+      };
+    }
+
     const timeoutMs = options.timeoutMs || 7000;
     const defaultFrom =
       process.env.RESEND_FROM_EMAIL ||
@@ -69,7 +119,6 @@ export class ResendEmailProvider implements EmailProvider {
       html: options.html,
     };
 
-    const masked = this.maskEmail(options.to);
     const maxAttempts = 2;
     let lastError: any = null;
 
@@ -100,8 +149,19 @@ export class ResendEmailProvider implements EmailProvider {
           `Resend attempt ${attempt}/${maxAttempts} failed for ${masked}: ${err?.message || err}`,
         );
 
+        if (err?.message?.includes('domain is not verified')) {
+          this.logger.warn(
+            `Resend sender domain is not verified. To send in testing mode, set RESEND_FROM_EMAIL to 'Zeitnah Academy <onboarding@resend.dev>' and send to your registered Resend account address or delivered@resend.dev.`,
+          );
+        }
+
+        // Do not retry permanent validation or configuration errors
+        if (!this.isTransientError(err)) {
+          break;
+        }
+
         if (attempt < maxAttempts) {
-          const delay = 1000 * Math.pow(2, attempt - 1); // 1000ms, then 2000ms
+          const delay = 1000 * Math.pow(2, attempt - 1); // 1000ms
           await new Promise((resolve) => {
             const retryTimer = setTimeout(resolve, delay);
             if (retryTimer && typeof retryTimer.unref === 'function') {

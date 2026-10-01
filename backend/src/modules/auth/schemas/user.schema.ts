@@ -1155,6 +1155,73 @@ export class User {
 }
 export const UserSchema = SchemaFactory.createForClass(User);
 
+/**
+ * CANONICAL ROLE CONTRACT & LIFECYCLE NORMALIZATION HOOKS
+ *
+ * Platform taxonomy (authoritative):
+ *   primaryRole: ['STUDENT', 'EDUCATOR', 'PROFESSIONAL', 'MENTOR', 'RECRUITER', 'FOUNDER']
+ *
+ * Legacy LMS backwards compatibility:
+ *   role: ['student', 'teacher', 'admin', 'recruiter']
+ *
+ * Normalization Rules:
+ *   - 'educator' -> 'teacher'
+ *   - 'professional' / 'mentor' -> 'student'
+ *   - 'founder' -> 'recruiter'
+ *   - primaryRole is trimmed and uppercased
+ *   - Inferred primaryRole if missing
+ */
+export function normalizeLegacyRoleValue(roleValue?: string): string | undefined {
+  if (!roleValue || typeof roleValue !== 'string') return roleValue;
+  const raw = roleValue.trim().toLowerCase();
+  switch (raw) {
+    case 'educator':
+      return 'teacher';
+    case 'professional':
+    case 'mentor':
+      return 'student';
+    case 'founder':
+      return 'recruiter';
+    default:
+      return raw;
+  }
+}
+
+UserSchema.pre('validate', function () {
+  if (this.role) {
+    const normalized = normalizeLegacyRoleValue(this.role);
+    if (normalized) {
+      this.role = normalized;
+    }
+  }
+
+  if (this.primaryRole) {
+    this.primaryRole = String(this.primaryRole).trim().toUpperCase();
+  } else if (this.role) {
+    const cleanRole = String(this.role).trim().toLowerCase();
+    if (cleanRole === 'teacher') this.primaryRole = 'EDUCATOR';
+    else if (cleanRole === 'recruiter') this.primaryRole = 'RECRUITER';
+    else if (cleanRole === 'admin' || cleanRole === 'superuser') this.primaryRole = 'ADMIN';
+    else this.primaryRole = 'STUDENT';
+  }
+});
+
+UserSchema.pre(['findOneAndUpdate', 'updateOne'], function () {
+  const update: any = this.getUpdate();
+  if (!update) return;
+
+  const target = update.$set || update;
+  if (target.role) {
+    const normalized = normalizeLegacyRoleValue(target.role);
+    if (normalized) {
+      target.role = normalized;
+    }
+  }
+  if (target.primaryRole) {
+    target.primaryRole = String(target.primaryRole).trim().toUpperCase();
+  }
+});
+
 // Indexes for high-frequency LMS queries
 UserSchema.index(
   { username: 1 },

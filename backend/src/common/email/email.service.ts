@@ -29,6 +29,10 @@ export class EmailService {
    * timeout protection, and friendly user-facing exceptions.
    */
   async sendEmail(options: SendEmailOptions): Promise<EmailSendResult> {
+    if (!options?.to || (Array.isArray(options.to) && options.to.length === 0)) {
+      throw new BadRequestException('Recipient email address is required.');
+    }
+
     // 1. Try Primary Provider
     const primaryResult = await this.primaryProvider.sendEmail(options);
     if (primaryResult.success) {

@@ -185,7 +185,7 @@ export class CoursesService {
   }
 
   private getCourseTotalClasses(course: any) {
-    return course.chapters.reduce(
+    return (course.chapters || []).reduce(
       (sum: number, chapter: any) => sum + (chapter.classes?.length || 0),
       0,
     );
@@ -195,9 +195,9 @@ export class CoursesService {
     const classIds = new Set<string>();
     const durationByClassId = new Map<string, number>();
 
-    course.chapters.forEach((chapter: any) => {
+    (course.chapters || []).forEach((chapter: any) => {
       chapter.classes?.forEach((cls: any) => {
-        const classId = cls._id.toString();
+        const classId = cls._id ? cls._id.toString() : String(cls.classId || '');
 
         classIds.add(classId);
         durationByClassId.set(
@@ -574,9 +574,15 @@ export class CoursesService {
     );
 
     syncGamificationStats(user);
-    user.markModified('course');
-    user.markModified('gamification');
-    await user.save();
+    await this.userModel.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          course: user.course,
+          gamification: user.gamification,
+        },
+      },
+    );
 
     const completedCourses = user.gamification.completedCourses;
     const totalCourses = courseIds.length;
@@ -611,8 +617,14 @@ export class CoursesService {
     }
 
     syncGamificationStats(user);
-    user.markModified('gamification');
-    await user.save();
+    await this.userModel.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          gamification: user.gamification,
+        },
+      },
+    );
 
     return {
       gamification: user.gamification,

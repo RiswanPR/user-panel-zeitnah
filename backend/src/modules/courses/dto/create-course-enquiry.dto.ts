@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
+import { IsNotReservedEmailDomain } from '../../../common/utils/email-validation.util';
 
 export class CreateCourseEnquiryDto {
   @IsMongoId()
@@ -20,6 +21,7 @@ export class CreateCourseEnquiryDto {
   name!: string;
 
   @IsEmail()
+  @IsNotReservedEmailDomain()
   @IsNotEmpty()
   email!: string;
 
