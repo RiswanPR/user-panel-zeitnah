@@ -227,3 +227,90 @@ test('Messaging Mobile Overhaul — Microcopy Sanitization', async (t) => {
     assert.equal(handleEnterKey(false, true), 'insert_newline');
   });
 });
+
+test('Messaging Signature Social — Pure Emoji Message Detection', async (t) => {
+  function isPureEmojiMessage(text) {
+    if (!text) return false;
+    const trimmed = text.trim();
+    if (!trimmed || trimmed.length > 12) return false;
+    const emojiRegex = /^(\p{Extended_Pictographic}|\p{Emoji_Presentation}|\u200d|\ufe0f){1,3}$/u;
+    return emojiRegex.test(trimmed);
+  }
+
+  await t.test('detects single emoji messages', () => {
+    assert.equal(isPureEmojiMessage('👍'), true);
+    assert.equal(isPureEmojiMessage('❤️'), true);
+    assert.equal(isPureEmojiMessage('🔥'), true);
+    assert.equal(isPureEmojiMessage('🎉'), true);
+  });
+
+  await t.test('detects 2 and 3 emoji messages', () => {
+    assert.equal(isPureEmojiMessage('👍👍'), true);
+    assert.equal(isPureEmojiMessage('🔥🚀💡'), true);
+  });
+
+  await t.test('rejects messages with text or more than 3 emojis', () => {
+    assert.equal(isPureEmojiMessage('Great! 👍'), false);
+    assert.equal(isPureEmojiMessage('hello world'), false);
+    assert.equal(isPureEmojiMessage('👍👍👍👍'), false);
+    assert.equal(isPureEmojiMessage(''), false);
+  });
+});
+
+test('Messaging Signature Social — Double-Tap Reaction & Long-Press Model', async (t) => {
+  function evaluateTapAction(lastTapTime, lastTapMsgId, currentTapTime, currentMsgId) {
+    const isDoubleTap =
+      lastTapMsgId === currentMsgId &&
+      currentTapTime - lastTapTime < 320;
+
+    if (isDoubleTap) {
+      return { action: 'QUICK_REACTION_HEART', emoji: '❤️' };
+    }
+    return { action: 'START_LONG_PRESS_TIMER', durationMs: 420 };
+  }
+
+  await t.test('triggers quick heart reaction on fast double tap (<320ms)', () => {
+    const res = evaluateTapAction(1000, 'msg_1', 1200, 'msg_1');
+    assert.equal(res.action, 'QUICK_REACTION_HEART');
+    assert.equal(res.emoji, '❤️');
+  });
+
+  await t.test('initiates long press timer on single or separated taps', () => {
+    const res = evaluateTapAction(1000, 'msg_1', 1500, 'msg_1'); // 500ms apart
+    assert.equal(res.action, 'START_LONG_PRESS_TIMER');
+    assert.equal(res.durationMs, 420);
+  });
+
+  await t.test('initiates long press timer when tapping different messages in rapid succession', () => {
+    const res = evaluateTapAction(1000, 'msg_1', 1100, 'msg_2'); // different message
+    assert.equal(res.action, 'START_LONG_PRESS_TIMER');
+  });
+});
+
+test('Messaging Signature Social — Multi-Image Grid Presentation Layouts', async (t) => {
+  function getImageGridLayout(imageCount) {
+    if (imageCount <= 0) return null;
+    if (imageCount === 1) return { layout: 'SINGLE_FULL_ASPECT', maxCols: 1, hasOverflowCount: false };
+    if (imageCount === 2) return { layout: 'TWO_COL_EQUAL', maxCols: 2, hasOverflowCount: false };
+    if (imageCount === 3) return { layout: 'THREE_COL_EQUAL', maxCols: 3, hasOverflowCount: false };
+    return {
+      layout: 'TWO_BY_TWO_GRID',
+      maxCols: 2,
+      hasOverflowCount: imageCount > 4,
+      overflowNumber: imageCount > 4 ? imageCount - 3 : 0,
+    };
+  }
+
+  await t.test('resolves correct visual grid layout based on attachment count', () => {
+    assert.equal(getImageGridLayout(1).layout, 'SINGLE_FULL_ASPECT');
+    assert.equal(getImageGridLayout(2).layout, 'TWO_COL_EQUAL');
+    assert.equal(getImageGridLayout(3).layout, 'THREE_COL_EQUAL');
+    assert.equal(getImageGridLayout(4).layout, 'TWO_BY_TWO_GRID');
+    assert.equal(getImageGridLayout(4).hasOverflowCount, false);
+
+    const sixImages = getImageGridLayout(6);
+    assert.equal(sixImages.layout, 'TWO_BY_TWO_GRID');
+    assert.equal(sixImages.hasOverflowCount, true);
+    assert.equal(sixImages.overflowNumber, 3); // +3 overlay on 4th tile
+  });
+});

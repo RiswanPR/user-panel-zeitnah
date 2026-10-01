@@ -190,18 +190,31 @@ export default function ConversationList({
       {/* ── Top Header & Actions ── */}
       <div className="p-3.5 sm:p-4 border-b border-white/[0.08] space-y-3 shrink-0 bg-[#0C121E]/95 backdrop-blur-md pt-[max(0.875rem,env(safe-area-inset-top))]">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-[10px] font-mono tracking-widest uppercase text-text-muted/80">
+              Zeitnah
+            </span>
+            <span className="text-white/20 font-light text-xs">/</span>
             <h2 className="text-base sm:text-lg font-heading font-black text-white tracking-tight">
               Messages
             </h2>
             {unreadCounts?.unreadMessages > 0 && (
-              <span className="px-2 py-0.5 rounded-full bg-brand-mint/15 text-brand-mint border border-brand-mint/30 text-[11px] font-mono font-bold tracking-tight">
-                {unreadCounts.unreadMessages} new
+              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-brand-mint/15 text-brand-mint border border-brand-mint/30 text-[10px] font-mono font-bold tracking-tight">
+                {unreadCounts.unreadMessages}
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={onOpenCommandPalette}
+              className="rounded-xl text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors focus-ring cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
+              title="Search Messages (⌘K)"
+              aria-label="Search messages"
+            >
+              <Search className="w-4 h-4" />
+            </button>
             <button
               type="button"
               onClick={onNewGroup}
@@ -503,9 +516,19 @@ export default function ConversationList({
                   unreadCount > 0 ? `, ${unreadCount} unread messages` : ''
                 }`}
               >
-                {/* Avatar with Presence Indicator */}
+                {/* Avatar with Subtle Active Ring System */}
                 <div className="relative shrink-0 mt-0.5">
-                  <div className="w-11 h-11 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center overflow-hidden text-brand-mint font-heading font-bold text-xs shadow-sm">
+                  <div
+                    className={`w-11 h-11 rounded-full flex items-center justify-center overflow-hidden font-heading font-bold text-xs transition-all ${
+                      isOnline
+                        ? 'ring-2 ring-brand-mint/70 ring-offset-2 ring-offset-[#080C14]'
+                        : 'border border-white/[0.08]'
+                    } ${
+                      avatarUrl
+                        ? 'bg-white/[0.05]'
+                        : 'bg-gradient-to-br from-[#1A2333] to-[#0D1424] text-brand-mint shadow-inner'
+                    }`}
+                  >
                     {avatarUrl ? (
                       <img
                         src={getUploadUrl(avatarUrl)}
@@ -521,7 +544,7 @@ export default function ConversationList({
                   </div>
                   {isOnline && (
                     <span
-                      className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#080C14] bg-brand-mint shadow-sm"
+                      className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#080C14] bg-brand-mint shadow-sm"
                       title={presenceTooltip}
                       aria-label={presenceTooltip}
                     />

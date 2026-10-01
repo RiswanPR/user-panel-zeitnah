@@ -262,7 +262,17 @@ export default function ConversationContextPanel({
         {/* ── Identity Profile Card ── */}
         <div className="flex flex-col items-center text-center space-y-3">
           <div className="relative">
-            <div className="w-20 h-20 rounded-full bg-white/[0.05] border-2 border-white/[0.1] flex items-center justify-center overflow-hidden text-brand-mint font-heading font-black text-xl shadow-xl">
+            <div
+              className={`w-20 h-20 rounded-full flex items-center justify-center overflow-hidden font-heading font-black text-xl shadow-xl transition-all ${
+                isOnline
+                  ? 'ring-2 ring-brand-mint/70 ring-offset-4 ring-offset-[#0A0F1A]'
+                  : 'border-2 border-white/[0.1]'
+              } ${
+                avatarUrl
+                  ? 'bg-white/[0.05]'
+                  : 'bg-gradient-to-br from-[#1C2638] to-[#0E1524] text-brand-mint shadow-inner'
+              }`}
+            >
               {avatarUrl ? (
                 <img
                   src={getUploadUrl(avatarUrl)}
@@ -277,7 +287,7 @@ export default function ConversationContextPanel({
             </div>
             {isOnline && (
               <span
-                className="absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-[#0A0F1A] bg-brand-mint shadow-sm"
+                className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full border-2 border-[#0A0F1A] bg-brand-mint shadow-sm"
                 title="Online"
                 aria-label="Active now"
               />

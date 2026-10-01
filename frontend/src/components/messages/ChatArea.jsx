@@ -40,6 +40,8 @@ import {
   MessageSquare,
   Share2,
   CornerUpRight,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { messagingService } from '../../services/messagingService';
 import moderationService from '../../services/moderationService';
@@ -118,6 +120,15 @@ function extractUrlMetadata(text) {
   }
 }
 
+// Pure emoji-only message detection (1-3 emojis without extra text)
+function isPureEmojiMessage(text) {
+  if (!text) return false;
+  const trimmed = text.trim();
+  if (!trimmed || trimmed.length > 12) return false;
+  const emojiRegex = /^(\p{Extended_Pictographic}|\p{Emoji_Presentation}|\u200d|\ufe0f){1,3}$/u;
+  return emojiRegex.test(trimmed);
+}
+
 // Structured mention rendering with canonical profile routing
 function renderBodyWithMentions(body, _mentions = [], isMe = false) {
   if (!body) return null;
@@ -194,13 +205,14 @@ export default function ChatArea({ conversationId, onBack }) {
   const [showContextPanel, setShowContextPanel] = useState(false);
   const [activeMobileMessage, setActiveMobileMessage] = useState(null);
   const [reportTarget, setReportTarget] = useState(null); // { type, id, name }
-  const [lightboxImage, setLightboxImage] = useState(null);
+  const [lightboxMedia, setLightboxMedia] = useState(null);
   const [highlightedMessageId, setHighlightedMessageId] = useState(null);
   const [focusedMessage, setFocusedMessage] = useState(null);
   const [showPinnedModal, setShowPinnedModal] = useState(false);
   const [pressedMessageId, setPressedMessageId] = useState(null);
   const touchStartPos = useRef({ x: 0, y: 0 });
   const longPressTimer = useRef(null);
+  const lastTapRef = useRef({ time: 0, msgId: null });
 
   // Close active mobile message on Android back or Escape
   useEffect(() => {
@@ -221,10 +233,35 @@ export default function ChatArea({ conversationId, onBack }) {
 
   const handleTouchStart = (e, msg) => {
     if (!e.touches || e.touches.length === 0) return;
+    const now = e.timeStamp || 0;
+    const msgId = msg._id || msg.id;
+
+    // Check for quick double tap on the same message (Section 16: quick ❤️ reaction)
+    if (
+      lastTapRef.current.msgId === msgId &&
+      now - lastTapRef.current.time < 320
+    ) {
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
+      }
+      setPressedMessageId(null);
+      lastTapRef.current = { time: 0, msgId: null };
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try {
+          navigator.vibrate(30);
+        } catch {
+          // Ignore vibration permission errors
+        }
+      }
+      reactionMutation.mutate({ messageId: msgId, emoji: '❤️' });
+      return;
+    }
+
+    lastTapRef.current = { time: now, msgId };
     const touch = e.touches[0];
     touchStartPos.current = { x: touch.clientX, y: touch.clientY };
     if (longPressTimer.current) clearTimeout(longPressTimer.current);
-    const msgId = msg._id || msg.id;
     setPressedMessageId(msgId);
     longPressTimer.current = setTimeout(() => {
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
@@ -1392,6 +1429,16 @@ export default function ChatArea({ conversationId, onBack }) {
                   !msg.isSaved &&
                   Boolean(msg.body && msg.body.trim().length <= 35 && !msg.body.includes('\n'));
 
+                // Pure emoji-only message detection (Section 11)
+                const isEmojiOnly =
+                  !msg.replyTo &&
+                  (!msg.attachments || msg.attachments.length === 0) &&
+                  !urlMetadata &&
+                  !msg.threadReplyCount &&
+                  !msg.isPinned &&
+                  !msg.isSaved &&
+                  isPureEmojiMessage(msg.body);
+
                 // Connected border-radius styling for message grouping (Phase 6)
                 const bubbleCornerRadius = isMe
                   ? isSameSenderAsNext && isSameSenderAsPrev
@@ -1418,6 +1465,8 @@ export default function ChatArea({ conversationId, onBack }) {
                     } ${
                       highlightedMessageId === (msg._id || msg.id)
                         ? 'p-2 ring-2 ring-brand-mint/60 bg-brand-mint/10 shadow-lg shadow-brand-mint/15'
+                        : activeMobileMessage?._id === (msg._id || msg.id)
+                        ? 'z-40 relative scale-[1.01] ring-2 ring-brand-mint/60 shadow-2xl'
                         : ''
                     }`}
                   >
@@ -1668,26 +1717,41 @@ export default function ChatArea({ conversationId, onBack }) {
                             }
                           }}
                           onDoubleClick={(e) => {
-                            e.preventDefault();
-                            setActiveMobileMessage(msg);
+                            e.stopPropagation();
+                            reactionMutation.mutate({ messageId: msg._id || msg.id, emoji: '❤️' });
                           }}
                           onTouchStart={(e) => handleTouchStart(e, msg)}
                           onTouchMove={handleTouchMove}
                           onTouchEnd={handleTouchEnd}
                           onTouchCancel={handleTouchCancel}
                           className={`transition-all duration-150 select-text outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/60 ${bubbleCornerRadius} ${
-                            isShortMessage ? 'px-3.5 py-1.5' : 'p-3 sm:p-3.5'
-                          } text-xs leading-relaxed cursor-default ${
+                            isEmojiOnly
+                              ? 'p-1.5 bg-transparent shadow-none cursor-pointer'
+                              : isShortMessage
+                              ? 'px-3.5 py-1.5 text-xs leading-relaxed shadow-xs cursor-default'
+                              : 'p-3 sm:p-3.5 text-xs leading-relaxed shadow-xs cursor-default'
+                          } ${
                             pressedMessageId === (msg._id || msg.id)
                               ? 'scale-[0.98] ring-2 ring-brand-mint/50 opacity-90'
                               : ''
                           } ${
-                            isMe
-                              ? 'bg-gradient-to-br from-[#9FD5B2] via-[#94CFAB] to-[#80BF98] text-[#07130E] font-medium shadow-xs border border-white/10'
-                              : 'bg-[#0E1524] border border-white/[0.07] text-[#F3F4F6] shadow-xs'
+                            isEmojiOnly
+                              ? ''
+                              : isMe
+                              ? 'bg-gradient-to-br from-[#9FD5B2] via-[#94CFAB] to-[#80BF98] text-[#07130E] font-medium border border-white/10'
+                              : 'bg-[#0E1524] border border-white/[0.07] text-[#F3F4F6]'
                           }`}
                         >
-                          {isShortMessage ? (
+                          {isEmojiOnly ? (
+                            <div className="flex items-end gap-2 py-0.5">
+                              <span className="text-3xl sm:text-4xl leading-none select-none">
+                                {msg.body.trim()}
+                              </span>
+                              <span className="text-[9px] font-mono text-text-faint/80 shrink-0 mb-0.5">
+                                {formatTime(msg.createdAt)}
+                              </span>
+                            </div>
+                          ) : isShortMessage ? (
                             <div className="flex items-baseline gap-2">
                               {renderBodyWithMentions(msg.body, msg.mentions, isMe)}
                               <span
@@ -1778,36 +1842,55 @@ export default function ChatArea({ conversationId, onBack }) {
                             </div>
                           )}
 
-                          {/* Image Attachments (Multi-Image Grid) */}
+                          {/* Image Attachments (Multi-Image Social Grid) */}
                           {imageAttachments.length > 0 && (
                             <div
-                              className={`grid gap-1.5 rounded-xl overflow-hidden mb-2 ${
+                              className={`rounded-2xl overflow-hidden mb-2 ${
                                 imageAttachments.length === 1
-                                  ? 'grid-cols-1'
+                                  ? 'max-w-md'
                                   : imageAttachments.length === 2
-                                  ? 'grid-cols-2'
+                                  ? 'grid grid-cols-2 gap-1.5 max-w-sm'
                                   : imageAttachments.length === 3
-                                  ? 'grid-cols-3'
-                                  : 'grid-cols-2'
+                                  ? 'grid grid-cols-3 gap-1.5 max-w-sm'
+                                  : 'grid grid-cols-2 gap-1.5 max-w-sm'
                               }`}
                             >
-                              {imageAttachments.map((att, aIdx) => (
-                                <div
-                                  key={aIdx}
-                                  className="relative group/att overflow-hidden rounded-lg bg-black/20 aspect-video max-h-60"
-                                >
-                                  <img
-                                    src={getUploadUrl(att.url)}
-                                    alt={att.name || 'Attachment'}
-                                    className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-200"
-                                    loading="lazy"
+                              {imageAttachments.slice(0, 4).map((att, aIdx) => {
+                                const isFourth = aIdx === 3;
+                                const remainingCount = imageAttachments.length - 4;
+                                return (
+                                  <div
+                                    key={aIdx}
+                                    className={`relative group/att overflow-hidden bg-black/30 cursor-pointer ${
+                                      imageAttachments.length === 1
+                                        ? 'max-h-80 rounded-2xl'
+                                        : 'aspect-square rounded-xl'
+                                    }`}
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setLightboxImage(getUploadUrl(att.url));
+                                      setLightboxMedia({
+                                        items: imageAttachments.map((a) => ({
+                                          url: getUploadUrl(a.url),
+                                          name: a.name || 'Attachment',
+                                        })),
+                                        index: aIdx,
+                                      });
                                     }}
-                                  />
-                                </div>
-                              ))}
+                                  >
+                                    <img
+                                      src={getUploadUrl(att.url)}
+                                      alt={att.name || 'Attachment'}
+                                      className="w-full h-full object-cover hover:scale-[1.03] transition-transform duration-300"
+                                      loading="lazy"
+                                    />
+                                    {isFourth && remainingCount > 0 && (
+                                      <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center text-white font-heading font-black text-lg">
+                                        +{remainingCount + 1}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
 
@@ -2221,7 +2304,7 @@ export default function ChatArea({ conversationId, onBack }) {
                 />
               </div>
 
-              {/* Send Button */}
+              {/* Send Button with Dynamic Active States */}
               <button
                 type="submit"
                 disabled={
@@ -2230,13 +2313,17 @@ export default function ChatArea({ conversationId, onBack }) {
                   editMutation.isPending ||
                   isUploadingAttachment
                 }
-                className="p-2.5 rounded-xl bg-brand-mint text-bg-base font-bold hover:bg-brand-mint/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed focus-ring cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0 shadow-md shadow-brand-mint/10"
+                className={`p-2.5 rounded-xl font-bold transition-all focus-ring cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0 ${
+                  inputText.trim() || attachments.length > 0
+                    ? 'bg-gradient-to-br from-[#9FD5B2] via-[#94CFAB] to-[#80BF98] text-[#07130E] shadow-md shadow-brand-mint/20 scale-100 active:scale-95'
+                    : 'bg-white/[0.04] text-text-muted/40 cursor-not-allowed'
+                }`}
                 aria-label="Send message"
               >
                 {sendMutation.isPending || editMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-bg-base" />
+                  <Loader2 className="w-4 h-4 animate-spin text-current" />
                 ) : (
-                  <Send className="w-4 h-4 text-bg-base" />
+                  <Send className="w-4 h-4" />
                 )}
               </button>
             </form>
@@ -2285,7 +2372,7 @@ export default function ChatArea({ conversationId, onBack }) {
                 onReport={(target) => setReportTarget(target)}
                 onBlockUser={(uId) => blockUserMutation.mutate(uId)}
                 onLeaveGroup={() => leaveGroupMutation.mutate()}
-                onSelectImage={(url) => setLightboxImage(url)}
+                onSelectImage={(url) => setLightboxMedia({ items: [{ url }], index: 0 })}
                 onJumpToMessage={handleJumpToMessage}
               />
             </div>
@@ -2323,7 +2410,7 @@ export default function ChatArea({ conversationId, onBack }) {
                   }}
                   onSelectImage={(url) => {
                     setShowContextPanel(false);
-                    setLightboxImage(url);
+                    setLightboxMedia({ items: [{ url }], index: 0 });
                   }}
                   onJumpToMessage={(msgId) => {
                     setShowContextPanel(false);
@@ -2410,169 +2497,181 @@ export default function ChatArea({ conversationId, onBack }) {
               })}
             </div>
 
-            {/* Action buttons */}
-            <div className="space-y-1.5 overflow-y-auto pr-0.5">
-              <button
-                type="button"
-                onClick={() => {
-                  setReplyingTo(activeMobileMessage);
-                  setActiveMobileMessage(null);
-                }}
-                className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
-              >
-                <Reply className="w-4 h-4 text-brand-mint shrink-0" />
-                <span className="flex-1 text-left">Reply</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  openThread(activeMobileMessage);
-                  setActiveMobileMessage(null);
-                }}
-                className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
-              >
-                <MessageSquare className="w-4 h-4 text-brand-mint shrink-0" />
-                <span className="flex-1 text-left">Reply in Thread</span>
-                {activeMobileMessage.threadReplyCount > 0 && (
-                  <span className="text-[11px] font-mono text-brand-mint bg-brand-mint/10 px-2 py-0.5 rounded-full border border-brand-mint/20">
-                    {activeMobileMessage.threadReplyCount}
-                  </span>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  openForwardModal(activeMobileMessage);
-                  setActiveMobileMessage(null);
-                }}
-                className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
-              >
-                <Share2 className="w-4 h-4 text-cyan-400 shrink-0" />
-                <span className="flex-1 text-left">Forward Message</span>
-              </button>
-
-              {activeMobileMessage.body && (
+            {/* Action buttons categorized by priority */}
+            <div className="space-y-3 overflow-y-auto pr-0.5">
+              {/* Primary Actions */}
+              <div className="space-y-1">
+                <div className="px-2 pb-1 text-[10px] font-mono uppercase tracking-wider text-text-muted/70 font-semibold">
+                  Primary Actions
+                </div>
                 <button
                   type="button"
                   onClick={() => {
-                    navigator.clipboard.writeText(activeMobileMessage.body);
-                    toast.success('Copied to clipboard');
+                    setReplyingTo(activeMobileMessage);
                     setActiveMobileMessage(null);
                   }}
                   className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
                 >
-                  <Copy className="w-4 h-4 text-brand-gold shrink-0" />
-                  <span className="flex-1 text-left">Copy Text</span>
+                  <Reply className="w-4 h-4 text-brand-mint shrink-0" />
+                  <span className="flex-1 text-left">Reply</span>
                 </button>
-              )}
 
-              {/* Save / Unsave Mobile Button */}
-              <button
-                type="button"
-                onClick={() => {
-                  if (activeMobileMessage.isSaved) {
-                    unsaveMessage(activeMobileMessage._id);
-                  } else {
-                    saveMessage(activeMobileMessage._id);
-                  }
-                  setActiveMobileMessage(null);
-                }}
-                className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
-              >
-                {activeMobileMessage.isSaved ? (
-                  <BookmarkCheck className="w-4 h-4 text-brand-gold fill-brand-gold/20 shrink-0" />
-                ) : (
-                  <Bookmark className="w-4 h-4 text-brand-gold shrink-0" />
-                )}
-                <span className="flex-1 text-left">
-                  {activeMobileMessage.isSaved ? 'Unsave Message' : 'Save Message'}
-                </span>
-              </button>
-
-              {/* Pin / Unpin Mobile Button */}
-              {canPinMsg(activeMobileMessage) && (
                 <button
                   type="button"
                   onClick={() => {
-                    if (activeMobileMessage.isPinned) {
-                      unpinMessage(conversationId, activeMobileMessage._id);
+                    openThread(activeMobileMessage);
+                    setActiveMobileMessage(null);
+                  }}
+                  className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
+                >
+                  <MessageSquare className="w-4 h-4 text-brand-mint shrink-0" />
+                  <span className="flex-1 text-left">Reply in Thread</span>
+                  {activeMobileMessage.threadReplyCount > 0 && (
+                    <span className="text-[11px] font-mono text-brand-mint bg-brand-mint/10 px-2 py-0.5 rounded-full border border-brand-mint/20">
+                      {activeMobileMessage.threadReplyCount}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    openForwardModal(activeMobileMessage);
+                    setActiveMobileMessage(null);
+                  }}
+                  className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
+                >
+                  <Share2 className="w-4 h-4 text-cyan-400 shrink-0" />
+                  <span className="flex-1 text-left">Forward Message</span>
+                </button>
+              </div>
+
+              {/* Organization Actions */}
+              <div className="space-y-1 pt-1 border-t border-white/[0.04]">
+                <div className="px-2 pb-1 text-[10px] font-mono uppercase tracking-wider text-text-muted/70 font-semibold">
+                  Organization
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (activeMobileMessage.isSaved) {
+                      unsaveMessage(activeMobileMessage._id);
                     } else {
-                      pinMessage(conversationId, activeMobileMessage._id);
+                      saveMessage(activeMobileMessage._id);
                     }
                     setActiveMobileMessage(null);
                   }}
                   className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
                 >
-                  {activeMobileMessage.isPinned ? (
-                    <PinOff className="w-4 h-4 text-brand-mint shrink-0" />
+                  {activeMobileMessage.isSaved ? (
+                    <BookmarkCheck className="w-4 h-4 text-brand-gold fill-brand-gold/20 shrink-0" />
                   ) : (
-                    <Pin className="w-4 h-4 text-brand-mint shrink-0" />
+                    <Bookmark className="w-4 h-4 text-brand-gold shrink-0" />
                   )}
                   <span className="flex-1 text-left">
-                    {activeMobileMessage.isPinned ? 'Unpin Message' : 'Pin Message'}
+                    {activeMobileMessage.isSaved ? 'Unsave Message' : 'Save Message'}
                   </span>
                 </button>
-              )}
 
-              {/* Focus Message Mode */}
-              <button
-                type="button"
-                onClick={() => {
-                  setFocusedMessage(activeMobileMessage);
-                  setActiveMobileMessage(null);
-                }}
-                className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
-              >
-                <Maximize2 className="w-4 h-4 text-brand-mint shrink-0" />
-                <span className="flex-1 text-left">Focus Message</span>
-              </button>
-
-              {/* Copy Message Link */}
-              <button
-                type="button"
-                onClick={() => {
-                  handleCopyMessageLink(activeMobileMessage._id);
-                  setActiveMobileMessage(null);
-                }}
-                className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
-              >
-                <Link2 className="w-4 h-4 text-cyan-400 shrink-0" />
-                <span className="flex-1 text-left">Copy Message Link</span>
-              </button>
-
-              {String(activeMobileMessage.senderId?._id || activeMobileMessage.senderId) === String(currentUserId) ? (
-                <div className="pt-2 border-t border-white/[0.06] space-y-1.5">
+                {canPinMsg(activeMobileMessage) && (
                   <button
                     type="button"
                     onClick={() => {
-                      setEditingMessage(activeMobileMessage);
-                      setInputText(activeMobileMessage.body);
+                      if (activeMobileMessage.isPinned) {
+                        unpinMessage(conversationId, activeMobileMessage._id);
+                      } else {
+                        pinMessage(conversationId, activeMobileMessage._id);
+                      }
                       setActiveMobileMessage(null);
                     }}
                     className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
                   >
-                    <Edit2 className="w-4 h-4 text-cyan-400 shrink-0" />
-                    <span className="flex-1 text-left">Edit Message</span>
+                    {activeMobileMessage.isPinned ? (
+                      <PinOff className="w-4 h-4 text-brand-mint shrink-0" />
+                    ) : (
+                      <Pin className="w-4 h-4 text-brand-mint shrink-0" />
+                    )}
+                    <span className="flex-1 text-left">
+                      {activeMobileMessage.isPinned ? 'Unpin Message' : 'Pin Message'}
+                    </span>
                   </button>
+                )}
+
+                {activeMobileMessage.body && (
                   <button
                     type="button"
                     onClick={() => {
-                      deleteMutation.mutate({
-                        messageId: activeMobileMessage._id,
-                        mode: 'me',
-                      });
+                      navigator.clipboard.writeText(activeMobileMessage.body);
+                      toast.success('Copied to clipboard');
                       setActiveMobileMessage(null);
                     }}
-                    className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-rose-400 bg-rose-500/[0.04] hover:bg-rose-500/10 active:bg-rose-500/20 border border-rose-500/20 transition-colors"
+                    className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
                   >
-                    <Trash2 className="w-4 h-4 shrink-0" />
-                    <span className="flex-1 text-left">Delete Message</span>
+                    <Copy className="w-4 h-4 text-brand-gold shrink-0" />
+                    <span className="flex-1 text-left">Copy Text</span>
                   </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleCopyMessageLink(activeMobileMessage._id);
+                    setActiveMobileMessage(null);
+                  }}
+                  className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
+                >
+                  <Link2 className="w-4 h-4 text-cyan-400 shrink-0" />
+                  <span className="flex-1 text-left">Copy Message Link</span>
+                </button>
+              </div>
+
+              {/* Advanced Actions */}
+              <div className="space-y-1 pt-1 border-t border-white/[0.04]">
+                <div className="px-2 pb-1 text-[10px] font-mono uppercase tracking-wider text-text-muted/70 font-semibold">
+                  Advanced
                 </div>
-              ) : (
-                <div className="pt-2 border-t border-white/[0.06]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFocusedMessage(activeMobileMessage);
+                    setActiveMobileMessage(null);
+                  }}
+                  className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
+                >
+                  <Maximize2 className="w-4 h-4 text-brand-mint shrink-0" />
+                  <span className="flex-1 text-left">Focus Mode</span>
+                </button>
+
+                {String(activeMobileMessage.senderId?._id || activeMobileMessage.senderId) === String(currentUserId) ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingMessage(activeMobileMessage);
+                        setInputText(activeMobileMessage.body);
+                        setActiveMobileMessage(null);
+                      }}
+                      className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
+                    >
+                      <Edit2 className="w-4 h-4 text-cyan-400 shrink-0" />
+                      <span className="flex-1 text-left">Edit Message</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        deleteMutation.mutate({
+                          messageId: activeMobileMessage._id,
+                          mode: 'me',
+                        });
+                        setActiveMobileMessage(null);
+                      }}
+                      className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-rose-400 bg-rose-500/[0.04] hover:bg-rose-500/10 active:bg-rose-500/20 border border-rose-500/20 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4 shrink-0" />
+                      <span className="flex-1 text-left">Delete Message</span>
+                    </button>
+                  </>
+                ) : (
                   <button
                     type="button"
                     onClick={() => {
@@ -2588,8 +2687,8 @@ export default function ChatArea({ conversationId, onBack }) {
                     <Flag className="w-4 h-4 shrink-0" />
                     <span className="flex-1 text-left">Report Message</span>
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -2909,25 +3008,101 @@ export default function ChatArea({ conversationId, onBack }) {
         />
       )}
 
-      {/* Lightbox Modal for Images */}
-      {lightboxImage && (
+      {/* Immersive Lightbox Modal for Media (Section 19) */}
+      {lightboxMedia && (
         <div
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer"
-          onClick={() => setLightboxImage(null)}
+          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col justify-between p-4 sm:p-6"
+          onClick={() => setLightboxMedia(null)}
         >
-          <div className="relative max-w-4xl max-h-[90vh]">
-            <button
-              type="button"
-              onClick={() => setLightboxImage(null)}
-              className="absolute -top-10 right-0 p-2 text-white hover:text-brand-mint cursor-pointer"
-            >
-              <X className="w-6 h-6" />
-            </button>
+          {/* Top Controls */}
+          <div
+            className="flex items-center justify-between text-white shrink-0 z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setLightboxMedia(null)}
+                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                aria-label="Close image viewer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              {lightboxMedia.items?.length > 1 && (
+                <span className="text-xs font-mono text-white/80">
+                  {lightboxMedia.index + 1} / {lightboxMedia.items.length}
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <a
+                href={lightboxMedia.items[lightboxMedia.index]?.url}
+                download
+                target="_blank"
+                rel="noreferrer"
+                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-medium"
+                aria-label="Download image"
+              >
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">Save</span>
+              </a>
+            </div>
+          </div>
+
+          {/* Center Image with Prev / Next Navigation */}
+          <div
+            className="flex-1 flex items-center justify-center relative min-h-0 py-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {lightboxMedia.items?.length > 1 && (
+              <button
+                type="button"
+                onClick={() =>
+                  setLightboxMedia((prev) => ({
+                    ...prev,
+                    index:
+                      prev.index > 0
+                        ? prev.index - 1
+                        : prev.items.length - 1,
+                  }))
+                }
+                className="absolute left-2 sm:left-4 z-10 p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-sm cursor-pointer"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+            )}
+
             <img
-              src={lightboxImage}
-              alt="Enlarged view"
-              className="max-h-[85vh] max-w-full rounded-2xl object-contain shadow-2xl"
+              src={lightboxMedia.items[lightboxMedia.index]?.url}
+              alt={lightboxMedia.items[lightboxMedia.index]?.name || 'Media view'}
+              className="max-h-[82vh] max-w-[90vw] object-contain rounded-2xl shadow-2xl transition-all duration-200 select-none"
             />
+
+            {lightboxMedia.items?.length > 1 && (
+              <button
+                type="button"
+                onClick={() =>
+                  setLightboxMedia((prev) => ({
+                    ...prev,
+                    index:
+                      prev.index < prev.items.length - 1
+                        ? prev.index + 1
+                        : 0,
+                  }))
+                }
+                className="absolute right-2 sm:right-4 z-10 p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-sm cursor-pointer"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+
+          {/* Bottom Caption */}
+          <div className="text-center text-xs text-white/60 shrink-0 font-medium pb-2">
+            {lightboxMedia.items[lightboxMedia.index]?.name || ''}
           </div>
         </div>
       )}
