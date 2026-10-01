@@ -4,7 +4,6 @@ import { motion, useReducedMotion } from "framer-motion";
 import {
   BookOpen,
   Compass,
-  Briefcase,
   MessageSquare,
   MoreHorizontal,
 } from "lucide-react";

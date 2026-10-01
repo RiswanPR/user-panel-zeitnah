@@ -74,7 +74,7 @@ export default function AddGroupMemberModal({
   const addMembersMutation = useMutation({
     mutationFn: () =>
       messagingService.addGroupMembers(convId, selectedUserIds),
-    onSuccess: (res) => {
+    onSuccess: () => {
       toast.success(
         'Members Added',
         `Added ${selectedUserIds.length} member${

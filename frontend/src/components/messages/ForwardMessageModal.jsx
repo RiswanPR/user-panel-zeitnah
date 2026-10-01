@@ -7,7 +7,6 @@ import {
   Check,
   Share2,
   Loader2,
-  FileText,
   User,
   Users,
 } from 'lucide-react';

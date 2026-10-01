@@ -1,11 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
   Send,
   Paperclip,
-  Smile,
   CornerDownRight,
   Loader2,
   FileText,
@@ -32,7 +30,6 @@ export default function ThreadPanel({
   const [replyText, setReplyText] = useState('');
   const [attachments, setAttachments] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   // Mention state
   const [mentionVisible, setMentionVisible] = useState(false);
@@ -82,7 +79,7 @@ export default function ThreadPanel({
     mutationFn: async (payload) => {
       return messagingService.createThreadReply(conversationId, rootId, payload);
     },
-    onSuccess: (newReply) => {
+    onSuccess: () => {
       setReplyText('');
       setAttachments([]);
       setCollectedMentions([]);
@@ -437,7 +434,11 @@ export default function ThreadPanel({
                     </span>
                   </div>
 
-                  <div className="p-2.5 rounded-xl bg-white/[0.025] border border-white/5 text-xs text-slate-200 leading-relaxed break-words whitespace-pre-wrap">
+                  <div className={`p-2.5 rounded-xl border text-xs leading-relaxed break-words whitespace-pre-wrap ${
+                    isOwn
+                      ? 'bg-brand-mint/10 border-brand-mint/20 text-white'
+                      : 'bg-white/[0.025] border-white/5 text-slate-200'
+                  }`}>
                     {renderBodyWithMentions(reply.body)}
 
                     {reply.attachments?.length > 0 && (

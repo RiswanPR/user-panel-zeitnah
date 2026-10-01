@@ -35,7 +35,7 @@ export default function MentionAutocomplete({
           setSuggestions(results || []);
           setSelectedIndex(0);
         }
-      } catch (err) {
+      } catch {
         if (isMounted) {
           setSuggestions([]);
         }

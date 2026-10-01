@@ -39,7 +39,6 @@ import {
   Link2,
   MessageSquare,
   Share2,
-  AtSign,
   CornerUpRight,
 } from 'lucide-react';
 import { messagingService } from '../../services/messagingService';
@@ -120,7 +119,7 @@ function extractUrlMetadata(text) {
 }
 
 // Structured mention rendering with canonical profile routing
-function renderBodyWithMentions(body, mentions = [], isMe = false) {
+function renderBodyWithMentions(body, _mentions = [], isMe = false) {
   if (!body) return null;
   const parts = body.split(/(@[a-zA-Z0-9_]+)/g);
   return (
@@ -231,7 +230,9 @@ export default function ChatArea({ conversationId, onBack }) {
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
         try {
           navigator.vibrate(40);
-        } catch (_) {}
+        } catch {
+          // Ignore vibration permission errors
+        }
       }
       setActiveMobileMessage(msg);
       setPressedMessageId(null);
@@ -980,6 +981,11 @@ export default function ChatArea({ conversationId, onBack }) {
                 <h3 className="text-sm sm:text-base font-bold text-white truncate tracking-tight">
                   {displayName}
                 </h3>
+                {username && (
+                  <span className="hidden lg:inline text-[11px] font-mono text-text-muted/70 truncate">
+                    {username}
+                  </span>
+                )}
                 {isDirect && otherUser?.role && (
                   <span className="hidden sm:inline-flex">
                     <EcosystemRoleBadge role={otherUser.role} size="xs" />
@@ -1450,22 +1456,8 @@ export default function ChatArea({ conversationId, onBack }) {
                         </span>
                       )}
 
-                      {/* Message Bubble Container with Mobile Touch & Long-Press Action Support */}
-                      <div className={`relative max-w-[88%] sm:max-w-[75%] flex items-end gap-1 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                        {/* Mobile 3-Dots Action Button (Accessible Alternative to Long-Press) */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveMobileMessage(msg);
-                          }}
-                          className="sm:hidden p-1.5 rounded-lg text-text-muted/60 hover:text-white active:bg-white/10 shrink-0 min-w-[28px] min-h-[28px] flex items-center justify-center opacity-60 active:opacity-100 touch-manipulation cursor-pointer"
-                          aria-label="Message options"
-                          title="Message options"
-                        >
-                          <MoreVertical className="w-3.5 h-3.5" />
-                        </button>
-
+                      {/* Message Bubble Container with Contextual Action Support */}
+                      <div className={`relative max-w-[88%] sm:max-w-[75%] flex items-end ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                         <div className="relative min-w-0">
                           {/* Hover Floating Actions Menu (Desktop) */}
                           <div
@@ -1666,20 +1658,33 @@ export default function ChatArea({ conversationId, onBack }) {
 
                         {/* Actual Message Bubble */}
                         <div
+                          role="article"
+                          tabIndex={0}
+                          aria-label={`Message: ${msg.body || 'attachment'}. Press Enter or long-press for options.`}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              setActiveMobileMessage(msg);
+                            }
+                          }}
+                          onDoubleClick={(e) => {
+                            e.preventDefault();
+                            setActiveMobileMessage(msg);
+                          }}
                           onTouchStart={(e) => handleTouchStart(e, msg)}
                           onTouchMove={handleTouchMove}
                           onTouchEnd={handleTouchEnd}
                           onTouchCancel={handleTouchCancel}
-                          className={`transition-all duration-150 select-text ${bubbleCornerRadius} ${
-                            isShortMessage ? 'px-3 py-1.5' : 'p-3 sm:p-3.5'
-                          } text-xs leading-relaxed shadow-md cursor-default ${
+                          className={`transition-all duration-150 select-text outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/60 ${bubbleCornerRadius} ${
+                            isShortMessage ? 'px-3.5 py-1.5' : 'p-3 sm:p-3.5'
+                          } text-xs leading-relaxed cursor-default ${
                             pressedMessageId === (msg._id || msg.id)
                               ? 'scale-[0.98] ring-2 ring-brand-mint/50 opacity-90'
                               : ''
                           } ${
                             isMe
-                              ? 'bg-brand-mint text-bg-base font-medium'
-                              : 'bg-[#121826] border border-white/[0.08] text-white/95'
+                              ? 'bg-gradient-to-br from-[#9FD5B2] via-[#94CFAB] to-[#80BF98] text-[#07130E] font-medium shadow-xs border border-white/10'
+                              : 'bg-[#0E1524] border border-white/[0.07] text-[#F3F4F6] shadow-xs'
                           }`}
                         >
                           {isShortMessage ? (
@@ -1687,7 +1692,7 @@ export default function ChatArea({ conversationId, onBack }) {
                               {renderBodyWithMentions(msg.body, msg.mentions, isMe)}
                               <span
                                 className={`inline-flex items-center gap-0.5 text-[9px] font-mono shrink-0 whitespace-nowrap ml-1 ${
-                                  isMe ? 'text-bg-base/70' : 'text-text-faint'
+                                  isMe ? 'text-[#07130E]/70' : 'text-text-faint'
                                 }`}
                               >
                                 {msg.isEdited && <span className="mr-0.5">(edited)</span>}
@@ -1695,7 +1700,7 @@ export default function ChatArea({ conversationId, onBack }) {
                                 {isMe && (
                                   <span title={msg.status}>
                                     {msg.status === 'read' ? (
-                                      <CheckCheck className="w-2.5 h-2.5 text-bg-base inline ml-0.5" />
+                                      <CheckCheck className="w-2.5 h-2.5 text-[#07130E] inline ml-0.5" />
                                     ) : msg.status === 'delivered' ? (
                                       <CheckCheck className="w-2.5 h-2.5 opacity-70 inline ml-0.5" />
                                     ) : (
@@ -1919,7 +1924,7 @@ export default function ChatArea({ conversationId, onBack }) {
                           {/* Timestamp & Delivery Meta */}
                           <div
                             className={`flex items-center justify-end gap-1 mt-1 text-[10px] ${
-                              isMe ? 'text-bg-base/70' : 'text-text-faint'
+                              isMe ? 'text-[#07130E]/70' : 'text-text-faint'
                             }`}
                           >
                             {msg.isEdited && <span>(edited)</span>}
@@ -1927,7 +1932,7 @@ export default function ChatArea({ conversationId, onBack }) {
                             {isMe && (
                               <span title={msg.status}>
                                 {msg.status === 'read' ? (
-                                  <CheckCheck className="w-3 h-3 text-bg-base inline" />
+                                  <CheckCheck className="w-3 h-3 text-[#07130E] inline" />
                                 ) : msg.status === 'delivered' ? (
                                   <CheckCheck className="w-3 h-3 opacity-70 inline" />
                                 ) : (
