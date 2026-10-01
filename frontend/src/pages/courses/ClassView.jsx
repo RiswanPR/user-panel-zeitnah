@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useContext, useCallback, useMemo } from "react";
+import React, { Component, useEffect, useRef, useState, useContext, useCallback, useMemo } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -13,6 +13,8 @@ import {
   X,
   Keyboard,
   List,
+  Sparkles,
+  BookOpen,
 } from "lucide-react";
 import api, { getRefreshedToken } from "../../services/api";
 import {
@@ -86,6 +88,117 @@ function loadVdoCipherApi() {
     script.onerror = reject;
     document.body.appendChild(script);
   });
+}
+
+/**
+ * Ultra-Premium Classroom Recovery Card
+ * Replaces generic error boundary screens with a private luxury learning recovery state.
+ */
+function ClassroomRecoveryCard({
+  title,
+  message,
+  onRetry,
+  onBack,
+  onReport,
+  isTimeout,
+}) {
+  return (
+    <div className="min-h-[70vh] flex items-center justify-center p-4 sm:p-6">
+      <motion.div
+        initial={{ opacity: 0, y: 12, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        className="w-full max-w-lg rounded-3xl border border-white/[0.08] bg-bg-card/90 backdrop-blur-xl p-8 sm:p-10 text-center shadow-2xl relative overflow-hidden"
+      >
+        {/* Subtle ambient lighting */}
+        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-64 h-32 bg-brand-mint/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center mx-auto mb-5 text-brand-mint shadow-inner">
+          {isTimeout ? (
+            <Clock className="w-7 h-7 text-brand-yellow" />
+          ) : (
+            <Sparkles className="w-7 h-7 text-brand-mint" />
+          )}
+        </div>
+
+        <div className="space-y-2 mb-8">
+          <h2 className="text-xl sm:text-2xl font-heading font-extrabold text-white tracking-tight">
+            {title || "Something interrupted your lesson"}
+          </h2>
+          <p className="text-xs sm:text-sm text-text-muted max-w-sm mx-auto leading-relaxed">
+            {message || "We couldn't load this learning session. Please try again or return to your course syllabus."}
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-brand-mint text-bg-base font-bold text-xs uppercase tracking-wider hover:bg-brand-mint/90 transition-all cursor-pointer shadow-lg shadow-brand-mint/10 focus-ring"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Try Again
+            </button>
+          )}
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer focus-ring"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Course Syllabus
+            </button>
+          )}
+        </div>
+
+        {onReport && (
+          <div className="mt-6 pt-5 border-t border-white/[0.06]">
+            <button
+              type="button"
+              onClick={onReport}
+              className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-white transition-colors cursor-pointer"
+            >
+              <AlertTriangle className="w-3.5 h-3.5 text-brand-yellow/80" />
+              <span>Report playback issue</span>
+            </button>
+          </div>
+        )}
+      </motion.div>
+    </div>
+  );
+}
+
+class ClassViewErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("[ClassView ErrorBoundary Caught]:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-bg-base text-white flex flex-col">
+          <ClassroomRecoveryCard
+            title="Something interrupted your lesson"
+            message="We couldn't initialize this learning session. Click below to reload your workspace."
+            onRetry={() => window.location.reload()}
+            onBack={() => (window.location.href = "/courses")}
+          />
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 function ClassView() {
@@ -752,6 +865,27 @@ function ClassView() {
   }, [activeClassId, toast]);
 
   // ══════════════════════════════════════════════════════════
+  // DERIVED PROGRESS & COMPLETION METRICS
+  // Memoized before hooks to eliminate Temporal Dead Zone (TDZ)
+  // ══════════════════════════════════════════════════════════
+  const classProgress = useMemo(
+    () => progressState?.classProgress || data?.progress?.classProgress || null,
+    [progressState?.classProgress, data?.progress?.classProgress]
+  );
+  const learningProgress = useMemo(
+    () => progressState?.learningProgress || data?.progress?.learningProgress || null,
+    [progressState?.learningProgress, data?.progress?.learningProgress]
+  );
+  const classProgressPercent = useMemo(
+    () => Math.min(100, Math.max(0, Math.round(classProgress?.progressPercent || 0))),
+    [classProgress?.progressPercent]
+  );
+  const isClassCompleted = useMemo(
+    () => Boolean(classProgress?.completed) || classProgressPercent >= 90,
+    [classProgress?.completed, classProgressPercent]
+  );
+
+  // ══════════════════════════════════════════════════════════
   // UNIFIED AUTHORITATIVE CURRICULUM MODEL (Single Source of Truth)
   // ══════════════════════════════════════════════════════════
   const unifiedCurriculum = useCourseCurriculum({
@@ -944,16 +1078,61 @@ function ClassView() {
   // ══════════════════════════════════════════════════════════
   if (loading) {
     return (
-      <div className="min-h-screen bg-bg-base text-white pb-20">
-        <div className="max-w-[1680px] mx-auto px-4 sm:px-6 py-4 space-y-6">
-          <div className="h-12 w-full max-w-sm shimmer rounded-2xl" />
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-            <div className="xl:col-span-8 space-y-6">
-              <div className="aspect-video w-full shimmer rounded-3xl" />
-              <div className="h-40 w-full shimmer rounded-3xl" />
+      <div className="min-h-screen bg-bg-base text-white flex flex-col selection:bg-brand-mint/30 selection:text-white pb-20">
+        {/* Top Header Skeleton */}
+        <header className="sticky top-0 z-30 w-full bg-bg-base/95 backdrop-blur-xl border-b border-white/[0.08]">
+          <div className="max-w-[1680px] mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-xl bg-white/[0.04] shimmer" />
+              <div className="h-4 w-36 sm:w-56 rounded-lg bg-white/[0.04] shimmer" />
             </div>
-            <div className="hidden xl:block xl:col-span-4">
-              <div className="h-[600px] w-full shimmer rounded-3xl" />
+            <div className="flex items-center gap-3">
+              <div className="h-7 w-20 rounded-full bg-white/[0.04] shimmer" />
+              <div className="hidden md:block h-7 w-24 rounded-xl bg-white/[0.04] shimmer" />
+              <div className="xl:hidden h-9 w-28 rounded-xl bg-white/[0.04] shimmer" />
+            </div>
+          </div>
+        </header>
+
+        {/* Studio Body Skeleton */}
+        <div className="flex-1 max-w-[1680px] w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+            <div className="xl:col-span-8 space-y-6">
+              {/* 16:9 Cinematic Video Player Shimmer */}
+              <div className="relative aspect-video w-full rounded-2xl sm:rounded-3xl bg-neutral-950/80 border border-white/[0.08] overflow-hidden shadow-2xl flex items-center justify-center">
+                <div className="absolute inset-0 shimmer" />
+                <div className="relative z-10 flex flex-col items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 text-brand-mint animate-spin" />
+                  </div>
+                  <span className="text-xs font-mono font-medium text-white/50 tracking-wider">
+                    Preparing studio workspace...
+                  </span>
+                </div>
+              </div>
+
+              {/* Lesson Nav Skeleton */}
+              <div className="h-28 w-full rounded-2xl sm:rounded-3xl bg-white/[0.02] border border-white/[0.06] p-4 shimmer" />
+
+              {/* Tabs Skeleton */}
+              <div className="space-y-4">
+                <div className="h-10 w-80 rounded-xl bg-white/[0.03] shimmer" />
+                <div className="h-44 w-full rounded-2xl bg-white/[0.02] border border-white/[0.06] p-6 shimmer" />
+              </div>
+            </div>
+
+            {/* Persistent Sidebar Skeleton on Desktop */}
+            <div className="hidden xl:block xl:col-span-4 sticky top-20">
+              <div className="h-[calc(100vh-6.5rem)] rounded-3xl bg-white/[0.02] border border-white/[0.08] p-5 space-y-4 shimmer overflow-hidden">
+                <div className="h-5 w-32 rounded-lg bg-white/[0.05]" />
+                <div className="h-4 w-48 rounded-lg bg-white/[0.03]" />
+                <div className="h-2 w-full rounded-full bg-white/[0.05] mt-4" />
+                <div className="pt-4 space-y-3">
+                  <div className="h-16 rounded-2xl bg-white/[0.04]" />
+                  <div className="h-16 rounded-2xl bg-white/[0.04]" />
+                  <div className="h-16 rounded-2xl bg-white/[0.04]" />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -963,80 +1142,36 @@ function ClassView() {
 
   if (loadError) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center gap-4 text-center max-w-md bg-bg-card p-8 rounded-3xl border border-white/[0.08] shadow-2xl"
-        >
-          {loadError.isTimeout ? (
-            <Clock className="w-12 h-12 text-warning" />
-          ) : (
-            <WifiOff className="w-12 h-12 text-rose-500" />
-          )}
-          <h3 className="font-heading font-extrabold text-xl text-white">
-            Playback Studio Unavailable
-          </h3>
-          <p className="text-text-secondary text-xs sm:text-sm leading-relaxed">
-            {loadError.message}
-          </p>
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => activeClassId && loadWorkspace(activeClassId)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-mint text-bg-base font-bold text-xs uppercase tracking-wider hover:bg-brand-mint/90 transition-all cursor-pointer focus-ring"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              Retry
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/courses")}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] text-xs font-semibold text-white hover:bg-white/[0.08] transition-all cursor-pointer focus-ring"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              Courses
-            </button>
-          </div>
-        </motion.div>
+      <div className="min-h-screen bg-bg-base text-white flex flex-col">
+        <ClassroomRecoveryCard
+          title={loadError.isTimeout ? "Connection Timed Out" : "Something interrupted your lesson"}
+          message={loadError.message || "We couldn't load this learning session. Please check your network connection and retry."}
+          isTimeout={loadError.isTimeout}
+          onRetry={() => activeClassId && loadWorkspace(activeClassId)}
+          onBack={() => navigate(data?.course?._id ? `/courses/${data.course._id}/chapters` : "/courses")}
+          onReport={() => setIssueModalOpen(true)}
+        />
       </div>
     );
   }
 
   if (!data || !data.class) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center max-w-md mx-auto space-y-4 p-4">
-        <p className="text-text-muted text-sm font-medium">
-          The requested lesson is unavailable or does not exist.
-        </p>
-        <button
-          type="button"
-          onClick={() =>
-            navigate(data?.course?._id ? `/courses/${data.course._id}/chapters` : "/courses")
-          }
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.06] border border-white/10 text-xs font-semibold text-white hover:bg-white/[0.1] transition-all cursor-pointer focus-ring"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          Back to Course
-        </button>
+      <div className="min-h-screen bg-bg-base text-white flex flex-col">
+        <ClassroomRecoveryCard
+          title="Lesson Not Found"
+          message="The requested lesson is unavailable or may have been updated. Return to the course syllabus to continue learning."
+          onBack={() => navigate(data?.course?._id ? `/courses/${data.course._id}/chapters` : "/courses")}
+        />
       </div>
     );
   }
 
-  const { chapter = {}, class: cls = {}, course = {} } = data;
+  const { chapter = {}, class: cls = {}, course = {} } = data || {};
   const isS3Video = getClassVideoSource(course?.type, cls?.videoSource) === "s3";
   const videoUrl =
     (cls?.vdoCipher ? getVdoCipherEmbedUrl(cls.vdoCipher) : "") ||
     (cls?.videoId ? getBunnyEmbedUrl(cls.videoId) : "");
-
-  const classProgress = progressState?.classProgress || data.progress?.classProgress;
-  const learningProgress = progressState?.learningProgress || data.progress?.learningProgress;
-  const classProgressPercent = Math.min(
-    100,
-    Math.max(0, Math.round(classProgress?.progressPercent || 0))
-  );
-  const isClassCompleted =
-    Boolean(classProgress?.completed) || classProgressPercent >= 90;
 
   return (
     <div className="min-h-screen bg-bg-base text-white flex flex-col selection:bg-brand-mint/30 selection:text-white">
@@ -1082,6 +1217,43 @@ function ClassView() {
               onRefreshPlaybackUrl={refreshPlaybackUrl}
               onProgressUpdate={handleS3ProgressUpdate}
             />
+
+            {/* Editorial Lesson Title & Identity Banner */}
+            <div className="rounded-2xl sm:rounded-3xl border border-white/[0.08] bg-bg-card/80 backdrop-blur-md p-5 sm:p-7 space-y-3 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-80 h-32 bg-brand-mint/[0.03] rounded-full blur-3xl pointer-events-none" />
+              <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+                <span className="text-brand-mint font-mono">{chapter?.title || 'Course Module'}</span>
+                {cls.duration && (
+                  <>
+                    <span className="w-1 h-1 rounded-full bg-white/20" />
+                    <span className="flex items-center gap-1 font-mono">
+                      <Clock className="w-3 h-3 text-text-muted" />
+                      {formatDuration(cls.duration)}
+                    </span>
+                  </>
+                )}
+                {isClassCompleted ? (
+                  <>
+                    <span className="w-1 h-1 rounded-full bg-white/20" />
+                    <span className="text-emerald-400 font-bold flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      Completed
+                    </span>
+                  </>
+                ) : classProgressPercent > 0 ? (
+                  <>
+                    <span className="w-1 h-1 rounded-full bg-white/20" />
+                    <span className="text-brand-yellow font-mono font-medium">
+                      {classProgressPercent}% watched
+                    </span>
+                  </>
+                ) : null}
+              </div>
+
+              <h1 className="font-heading font-extrabold text-xl sm:text-2xl md:text-3xl text-white tracking-tight leading-tight">
+                {cls.title || 'Untitled Lesson'}
+              </h1>
+            </div>
 
             {/* Lesson Navigation (Previous / Next Up / Chapter Transition) */}
             <LessonNavigation
@@ -1260,4 +1432,10 @@ function ClassView() {
   );
 }
 
-export default ClassView;
+export default function SafeClassView() {
+  return (
+    <ClassViewErrorBoundary>
+      <ClassView />
+    </ClassViewErrorBoundary>
+  );
+}

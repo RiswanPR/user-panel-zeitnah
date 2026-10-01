@@ -335,16 +335,22 @@ export function CurriculumDrawer({
   onSelectClass,
   onLockedClick,
 }) {
-  // Close drawer on Escape
+  // Close drawer on Escape & lock body scroll while open
   useEffect(() => {
     if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
   return (

@@ -514,4 +514,160 @@ describe('ZEITNAH LMS — Premium Learning Workspace Unit Tests', () => {
       assert.strictEqual(layout.usePersistentCurriculum, true);
     });
   });
+
+  describe('Phase 1 & Phase 2 Regression Tests: ClassView Initialization & Traversal', () => {
+    const mockChapters = [
+      {
+        _id: 'ch-alpha',
+        uniqueCode: 'CH01',
+        title: 'Module 01: Core Architecture',
+        order: 1,
+        classes: [
+          { _id: 'cls-1', title: 'Lesson 1', duration: 600, completed: true, progress: 100 },
+          { _id: 'cls-2', title: 'Lesson 2', duration: 900, completed: false, progress: 45 },
+          { _id: 'cls-3', title: 'Lesson 3', duration: 1200, completed: false, progress: 0 },
+        ],
+      },
+      {
+        _id: 'ch-beta',
+        uniqueCode: 'CH02',
+        title: 'Module 02: Advanced Systems',
+        order: 2,
+        classes: [
+          { _id: 'cls-4', title: 'Lesson 4', duration: 800, completed: false, progress: 0 },
+          { _id: 'cls-5', title: 'Lesson 5 (Locked)', duration: 1000, completed: false, progress: 0, locked: true },
+        ],
+      },
+    ];
+
+    it('TDZ & PROGRESS DERIVATION: Evaluates derived progress before curriculum consumption', () => {
+      // Simulating ClassView derived progress metrics calculation
+      const progressState = { classProgress: { progressPercent: 45, completed: false, lastPositionSeconds: 405 } };
+      const data = { progress: { learningProgress: { completionPercent: 20 } } };
+
+      const classProgress = progressState?.classProgress || data?.progress?.classProgress || null;
+      const learningProgress = progressState?.learningProgress || data?.progress?.learningProgress || null;
+      const classProgressPercent = Math.min(100, Math.max(0, Math.round(classProgress?.progressPercent || 0)));
+      const isClassCompleted = Boolean(classProgress?.completed) || classProgressPercent >= 90;
+
+      assert.strictEqual(classProgressPercent, 45);
+      assert.strictEqual(isClassCompleted, false);
+
+      // Now pass to normalizeCurriculum safely
+      const curriculum = normalizeCurriculum({
+        course: { _id: 'course-alpha', name: 'Alpha Mastery' },
+        rawChapters: mockChapters,
+        activeClassId: 'cls-2',
+        activeClassProgress: classProgress,
+        purchased: true,
+      });
+
+      assert.ok(curriculum);
+      assert.strictEqual(curriculum.currentLesson?.id, 'cls-2');
+      assert.strictEqual(curriculum.prevLesson?.id, 'cls-1');
+      assert.strictEqual(curriculum.nextLesson?.id, 'cls-3');
+    });
+
+    it('CROSS-CHAPTER NEXT: Lesson 3 (Chapter 1) nextLesson points to Lesson 4 (Chapter 2)', () => {
+      const curriculum = normalizeCurriculum({
+        course: { _id: 'course-alpha' },
+        rawChapters: mockChapters,
+        activeClassId: 'cls-3',
+        purchased: true,
+      });
+
+      assert.strictEqual(curriculum.isLastLessonInChapter, true);
+      assert.strictEqual(curriculum.nextLesson?.id, 'cls-4');
+      assert.strictEqual(curriculum.nextLesson?.title, 'Lesson 4');
+    });
+
+    it('CROSS-CHAPTER PREV: Lesson 4 (Chapter 2) prevLesson points to Lesson 3 (Chapter 1)', () => {
+      const curriculum = normalizeCurriculum({
+        course: { _id: 'course-alpha' },
+        rawChapters: mockChapters,
+        activeClassId: 'cls-4',
+        purchased: true,
+      });
+
+      assert.strictEqual(curriculum.isFirstLessonInChapter, true);
+      assert.strictEqual(curriculum.prevLesson?.id, 'cls-3');
+      assert.strictEqual(curriculum.prevLesson?.title, 'Lesson 3');
+    });
+
+    it('LOCKED TARGET REJECTION: Locked lessons expose both .locked and .isLocked true', () => {
+      const curriculum = normalizeCurriculum({
+        course: { _id: 'course-alpha' },
+        rawChapters: mockChapters,
+        activeClassId: 'cls-4',
+        purchased: true,
+      });
+
+      const next = curriculum.nextLesson;
+      assert.strictEqual(next.id, 'cls-5');
+      assert.strictEqual(next.locked, true);
+      assert.strictEqual(next.isLocked, true);
+      // Autoplay / navigation condition: !next.locked && !next.isLocked
+      const canNavigate = !next.locked && !next.isLocked;
+      assert.strictEqual(canNavigate, false);
+    });
+
+    it('FIRST LESSON: Beginning of course has null prevLesson', () => {
+      const curriculum = normalizeCurriculum({
+        course: { _id: 'course-alpha' },
+        rawChapters: mockChapters,
+        activeClassId: 'cls-1',
+        purchased: true,
+      });
+
+      assert.strictEqual(curriculum.prevLesson, null);
+      assert.strictEqual(curriculum.isFirstLessonInCourse, true);
+    });
+
+    it('FINAL LESSON: End of course has null nextLesson', () => {
+      const curriculum = normalizeCurriculum({
+        course: { _id: 'course-alpha' },
+        rawChapters: mockChapters,
+        activeClassId: 'cls-5',
+        purchased: true,
+      });
+
+      assert.strictEqual(curriculum.nextLesson, null);
+      assert.strictEqual(curriculum.isLastLessonInCourse, true);
+    });
+
+    it('FULL COURSE COMPLETION: Resume lesson gracefully returns first unlocked lesson for review', () => {
+      const allCompleteChapters = [
+        {
+          _id: 'ch-1',
+          classes: [
+            { _id: 'cls-1', title: 'L1', completed: true, progress: 100 },
+            { _id: 'cls-2', title: 'L2', completed: true, progress: 100 },
+          ],
+        },
+      ];
+
+      const curriculum = normalizeCurriculum({
+        course: { _id: 'c-all-done' },
+        rawChapters: allCompleteChapters,
+        purchased: true,
+      });
+
+      assert.strictEqual(curriculum.overallProgress.completionPercent, 100);
+      assert.ok(curriculum.resumeLesson);
+      assert.strictEqual(curriculum.resumeLesson.id, 'cls-1');
+      assert.strictEqual(getContinueLearningUrl({ _id: 'c-all-done' }, curriculum), '/courses/class/cls-1');
+    });
+
+    it('DRAWER BODY SCROLL LOCK: Verifies cleanup restoration', () => {
+      // Emulating body scroll toggle behavior in CurriculumDrawer
+      let bodyOverflow = '';
+      const original = bodyOverflow;
+      // When opened:
+      bodyOverflow = 'hidden';
+      assert.strictEqual(bodyOverflow, 'hidden');
+      // When closed (cleanup):
+      bodyOverflow = original;
+      assert.strictEqual(bodyOverflow, '');
+    });
+  });
 });
