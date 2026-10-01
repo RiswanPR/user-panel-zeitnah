@@ -392,7 +392,7 @@ export class AnnouncementsService {
         if (!announcement && annObjId) {
           announcement = await this.connection.db
             .collection('platform_announcements')
-            .findOne({ _id: annObjId } as any);
+            .findOne({ _id: annObjId });
         }
         if (!announcement) {
           announcement = await this.connection.db
@@ -511,7 +511,7 @@ export class AnnouncementsService {
         if (!ann && annObjId) {
           ann = await this.connection.db
             .collection('platform_announcements')
-            .findOne({ _id: annObjId } as any);
+            .findOne({ _id: annObjId });
         }
         if (!ann) {
           ann = await this.connection.db
@@ -563,10 +563,9 @@ export class AnnouncementsService {
           try {
             const res = await this.connection.db
               .collection('platform_announcements')
-              .updateOne(
-                { _id: announcementId } as any,
-                { $addToSet: { dismissedBy: userIdVal } } as any,
-              );
+              .updateOne({ _id: announcementId } as any, {
+                $addToSet: { dismissedBy: userIdVal },
+              });
             if (res && res.matchedCount) matchedCount += res.matchedCount;
           } catch (e) {
             // ignore
@@ -590,12 +589,9 @@ export class AnnouncementsService {
           try {
             const res = await this.connection.db
               .collection('announcements')
-              .updateOne(
-                { _id: announcementId } as any,
-                {
-                  $addToSet: { dismissedBy: userIdVal, readBy: userIdVal },
-                } as any,
-              );
+              .updateOne({ _id: announcementId } as any, {
+                $addToSet: { dismissedBy: userIdVal, readBy: userIdVal },
+              });
             if (res && res.matchedCount) matchedCount += res.matchedCount;
           } catch (e) {
             // ignore

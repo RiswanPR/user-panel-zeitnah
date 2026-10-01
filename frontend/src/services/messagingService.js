@@ -148,6 +148,70 @@ export const messagingService = {
     });
     return response.data;
   },
+
+  // ── Tier 3: Mentions ──
+  getMentionSuggestions: async (conversationId, params = {}) => {
+    const response = await api.get(
+      `/messages/conversations/${conversationId}/mention-suggestions`,
+      { params },
+    );
+    return response.data;
+  },
+
+  // ── Tier 3: Threads / Discussions ──
+  getThreadReplies: async (conversationId, rootMessageId, params = {}) => {
+    const response = await api.get(
+      `/messages/conversations/${conversationId}/threads/${rootMessageId}`,
+      { params },
+    );
+    return response.data;
+  },
+
+  createThreadReply: async (conversationId, rootMessageId, data) => {
+    const response = await api.post(
+      `/messages/conversations/${conversationId}/threads/${rootMessageId}/reply`,
+      data,
+    );
+    return response.data;
+  },
+
+  // ── Tier 3: Forwarding ──
+  forwardMessage: async (data) => {
+    const response = await api.post('/messages/forward', data);
+    return response.data;
+  },
+
+  // ── Tier 3: Advanced Group Collaboration ──
+  addGroupMembers: async (conversationId, userIds) => {
+    const response = await api.post(
+      `/messages/conversations/${conversationId}/members`,
+      { userIds },
+    );
+    return response.data;
+  },
+
+  removeGroupMember: async (conversationId, userId) => {
+    const response = await api.delete(
+      `/messages/conversations/${conversationId}/members/${userId}`,
+    );
+    return response.data;
+  },
+
+  updateGroupMemberRole: async (conversationId, userId, role) => {
+    const response = await api.patch(
+      `/messages/conversations/${conversationId}/members/${userId}/role`,
+      { role },
+    );
+    return response.data;
+  },
+
+  updateGroupMetadata: async (conversationId, data) => {
+    const response = await api.patch(
+      `/messages/conversations/${conversationId}/metadata`,
+      data,
+    );
+    return response.data;
+  },
 };
 
 export default messagingService;

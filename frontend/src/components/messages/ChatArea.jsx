@@ -37,6 +37,10 @@ import {
   BookmarkCheck,
   Maximize2,
   Link2,
+  MessageSquare,
+  Share2,
+  AtSign,
+  CornerUpRight,
 } from 'lucide-react';
 import { messagingService } from '../../services/messagingService';
 import moderationService from '../../services/moderationService';
@@ -46,6 +50,9 @@ import { getUploadUrl } from '../../utils/courseUi';
 import EcosystemRoleBadge from '../network/EcosystemRoleBadge';
 import ReportModal from '../network/ReportModal';
 import ConversationContextPanel from './ConversationContextPanel';
+import MentionAutocomplete from './MentionAutocomplete';
+import ThreadPanel from './ThreadPanel';
+import ForwardMessageModal from './ForwardMessageModal';
 import {
   getOtherParticipant,
   getConversationDisplayName,
@@ -112,11 +119,42 @@ function extractUrlMetadata(text) {
   }
 }
 
+// Structured mention rendering with canonical profile routing
+function renderBodyWithMentions(body, mentions = [], isMe = false) {
+  if (!body) return null;
+  const parts = body.split(/(@[a-zA-Z0-9_]+)/g);
+  return (
+    <p className="whitespace-pre-wrap break-words">
+      {parts.map((part, idx) => {
+        if (part.startsWith('@')) {
+          const uName = part.slice(1);
+          return (
+            <Link
+              key={idx}
+              to={`/u/${uName}`}
+              onClick={(e) => e.stopPropagation()}
+              className={`inline-flex items-center font-semibold rounded px-1 py-0.2 mx-0.5 transition-colors ${
+                isMe
+                  ? 'bg-black/15 text-bg-base hover:underline'
+                  : 'bg-brand-mint/15 text-brand-mint hover:text-brand-mint/80 hover:bg-brand-mint/25'
+              }`}
+            >
+              {part}
+            </Link>
+          );
+        }
+        return <span key={idx}>{part}</span>;
+      })}
+    </p>
+  );
+}
+
 export default function ChatArea({ conversationId, onBack }) {
   const queryClient = useQueryClient();
   const toast = useToast();
   const [searchParams] = useSearchParams();
   const urlMessageId = searchParams.get('m');
+  const urlThreadId = searchParams.get('t');
 
   const {
     currentUserId,
@@ -134,6 +172,12 @@ export default function ChatArea({ conversationId, onBack }) {
     unsaveMessage,
     pinMessage,
     unpinMessage,
+    activeThreadRoot,
+    openThread,
+    closeThread,
+    forwardMessageTarget,
+    openForwardModal,
+    closeForwardModal,
   } = useMessaging();
 
   const [inputText, setInputText] = useState('');
@@ -155,6 +199,12 @@ export default function ChatArea({ conversationId, onBack }) {
   const [highlightedMessageId, setHighlightedMessageId] = useState(null);
   const [focusedMessage, setFocusedMessage] = useState(null);
   const [showPinnedModal, setShowPinnedModal] = useState(false);
+
+  // ── Tier 3 Mention State ──
+  const [mentionVisible, setMentionVisible] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState('');
+  const [mentionStartIndex, setMentionStartIndex] = useState(-1);
+  const [collectedMentions, setCollectedMentions] = useState([]);
 
   const messagesEndRef = useRef(null);
   const firstUnreadRef = useRef(null);
@@ -341,6 +391,17 @@ export default function ChatArea({ conversationId, onBack }) {
             ...old,
             messages: res.messages,
           }));
+
+          // If target is inside a thread, open the thread root panel
+          if (res.targetThreadRootId) {
+            const rootMsg = res.messages.find(
+              (m) => String(m._id || m.id) === String(res.targetThreadRootId),
+            );
+            if (rootMsg) {
+              openThread(rootMsg);
+            }
+          }
+
           setTimeout(() => {
             findAndScroll();
           }, 150);
@@ -352,10 +413,11 @@ export default function ChatArea({ conversationId, onBack }) {
         toast.error('Jump failed', 'Could not locate message in history.');
       }
     },
-    [conversationId, queryClient, toast],
+    [conversationId, queryClient, toast, openThread],
   );
 
   const hasHandledUrlJumpRef = useRef(null);
+  const hasHandledThreadDeepLinkRef = useRef(null);
 
   // Jump to message if url ?m= or context targetMessageId specified
   useEffect(() => {
@@ -379,6 +441,36 @@ export default function ChatArea({ conversationId, onBack }) {
     rawMessages.length,
     handleJumpToMessage,
     setTargetMessageId,
+  ]);
+
+  // Deep-link direct to thread: ?t=<threadReplyId> or ?m=<rootId>&t=<threadReplyId>
+  useEffect(() => {
+    if (urlThreadId && !isLoadingMessages && rawMessages.length > 0) {
+      if (hasHandledThreadDeepLinkRef.current === urlThreadId) {
+        return;
+      }
+      hasHandledThreadDeepLinkRef.current = urlThreadId;
+      // If root message is urlMessageId, open its thread
+      if (urlMessageId) {
+        const rootMsg = rawMessages.find(
+          (m) => String(m._id || m.id) === String(urlMessageId),
+        );
+        if (rootMsg) {
+          openThread(rootMsg);
+        } else {
+          handleJumpToMessage(urlMessageId);
+        }
+      } else {
+        handleJumpToMessage(urlThreadId);
+      }
+    }
+  }, [
+    urlThreadId,
+    urlMessageId,
+    isLoadingMessages,
+    rawMessages,
+    openThread,
+    handleJumpToMessage,
   ]);
 
   // Handle Focus Mode Escape Key
@@ -623,7 +715,7 @@ export default function ChatArea({ conversationId, onBack }) {
     }
   };
 
-  // ── Input & Typing Change with Draft Persistence ──
+  // ── Input & Typing Change with Draft Persistence & Mention Detection ──
   const handleInputChange = (e) => {
     const val = e.target.value;
     setInputText(val);
@@ -633,6 +725,18 @@ export default function ChatArea({ conversationId, onBack }) {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+    }
+
+    // Auto-detect @mention query
+    const cursor = e.target.selectionEnd || val.length;
+    const textBefore = val.slice(0, cursor);
+    const match = textBefore.match(/(?:^|\s)@([a-zA-Z0-9_]*)$/);
+    if (match) {
+      setMentionStartIndex(cursor - match[1].length - 1);
+      setMentionQuery(match[1]);
+      setMentionVisible(true);
+    } else {
+      setMentionVisible(false);
     }
 
     if (!isTypingRef.current && val.trim().length > 0) {
@@ -650,6 +754,34 @@ export default function ChatArea({ conversationId, onBack }) {
         sendTyping(conversationId, false);
       }
     }, 2000);
+  };
+
+  // ── Mention Autocomplete Selection ──
+  const handleMentionSelect = (user) => {
+    if (!user || mentionStartIndex < 0) return;
+    const before = inputText.slice(0, mentionStartIndex);
+    const afterAt = inputText.slice(mentionStartIndex);
+    const match = afterAt.match(/^@[a-zA-Z0-9_]*/);
+    const tokenLength = match ? match[0].length : 1;
+    const after = inputText.slice(mentionStartIndex + tokenLength);
+    const newText = `${before}@${user.username} ${after}`;
+    setInputText(newText);
+    setConversationDraft(conversationId, newText);
+
+    const uId = user.userId || user.id || user._id;
+    if (uId) {
+      setCollectedMentions((prev) => (prev.includes(uId) ? prev : [...prev, uId]));
+    }
+    setMentionVisible(false);
+    setMentionQuery('');
+
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        const newCursor = before.length + (user.username?.length || 0) + 2;
+        textareaRef.current.setSelectionRange(newCursor, newCursor);
+      }
+    }, 0);
   };
 
   const handleSend = (e) => {
@@ -672,7 +804,10 @@ export default function ChatArea({ conversationId, onBack }) {
         body: bodyToSend,
         replyToId: replyingTo?._id,
         attachments: attachments.length > 0 ? attachments : undefined,
+        mentions: collectedMentions.length > 0 ? collectedMentions : undefined,
       });
+      setCollectedMentions([]);
+      setMentionVisible(false);
     }
   };
 
@@ -1192,6 +1327,28 @@ export default function ChatArea({ conversationId, onBack }) {
                             <Reply className="w-3 h-3" />
                           </button>
 
+                          {/* Reply in Thread */}
+                          <button
+                            type="button"
+                            onClick={() => openThread(msg)}
+                            className="p-1 text-text-muted hover:text-white cursor-pointer"
+                            title="Reply in thread"
+                            aria-label="Reply in thread"
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                          </button>
+
+                          {/* Forward Message */}
+                          <button
+                            type="button"
+                            onClick={() => openForwardModal(msg)}
+                            className="p-1 text-text-muted hover:text-white cursor-pointer"
+                            title="Forward message"
+                            aria-label="Forward message"
+                          >
+                            <Share2 className="w-3 h-3" />
+                          </button>
+
                           <button
                             type="button"
                             onClick={() => {
@@ -1469,9 +1626,47 @@ export default function ChatArea({ conversationId, onBack }) {
                             </div>
                           )}
 
-                          {/* Message Body Text */}
-                          {msg.body && (
-                            <p className="whitespace-pre-wrap break-words">{msg.body}</p>
+                          {/* Forwarded Status Banner */}
+                          {msg.isForwarded && (
+                            <div
+                              className={`flex items-center gap-1.5 text-[10px] mb-1.5 font-medium italic ${
+                                isMe ? 'text-bg-base/80' : 'text-text-muted'
+                              }`}
+                            >
+                              <CornerUpRight className="w-3 h-3" />
+                              <span>
+                                Forwarded{msg.forwardedFrom?.originalSenderName ? ` from ${msg.forwardedFrom.originalSenderName}` : ''}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Message Body Text with Structured Mentions */}
+                          {renderBodyWithMentions(msg.body, msg.mentions, isMe)}
+
+                          {/* Thread Discussion Trigger */}
+                          {msg.threadReplyCount > 0 && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openThread(msg);
+                              }}
+                              className={`flex items-center gap-1.5 px-2.5 py-1 mt-1.5 rounded-xl border text-[11px] font-semibold transition-all cursor-pointer ${
+                                isMe
+                                  ? 'bg-black/10 border-bg-base/30 text-bg-base hover:bg-black/20'
+                                  : 'bg-brand-mint/10 border-brand-mint/25 text-brand-mint hover:bg-brand-mint/20'
+                              }`}
+                            >
+                              <MessageSquare className="w-3.5 h-3.5" />
+                              <span>
+                                {msg.threadReplyCount} {msg.threadReplyCount === 1 ? 'reply' : 'replies'}
+                              </span>
+                              {msg.threadLastReplyAt && (
+                                <span className="opacity-70 font-mono text-[10px]">
+                                  · {formatTime(msg.threadLastReplyAt)}
+                                </span>
+                              )}
+                            </button>
                           )}
 
                           {/* Safe Client-Side Link Preview */}
@@ -1777,22 +1972,31 @@ export default function ChatArea({ conversationId, onBack }) {
                 <Smile className="w-4 h-4" />
               </button>
 
-              {/* Multiline Auto-expanding Textarea */}
-              <textarea
-                ref={textareaRef}
-                value={inputText}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                onPaste={handlePaste}
-                rows={1}
-                placeholder={
-                  editingMessage
-                    ? 'Update your message...'
-                    : `Message ${displayName}... (Shift+Enter for newline)`
-                }
-                className="flex-1 max-h-32 min-h-[44px] py-2.5 px-3.5 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-brand-mint/40 text-xs text-white placeholder-text-muted resize-none focus:outline-none transition-colors"
-                aria-label={`Write message to ${displayName}`}
-              />
+              {/* Multiline Auto-expanding Textarea with Mention Autocomplete */}
+              <div className="flex-1 relative">
+                <MentionAutocomplete
+                  visible={mentionVisible}
+                  query={mentionQuery}
+                  conversationId={conversationId}
+                  onSelect={handleMentionSelect}
+                  onClose={() => setMentionVisible(false)}
+                />
+                <textarea
+                  ref={textareaRef}
+                  value={inputText}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  onPaste={handlePaste}
+                  rows={1}
+                  placeholder={
+                    editingMessage
+                      ? 'Update your message...'
+                      : `Message ${displayName}... (@ to mention, Shift+Enter for newline)`
+                  }
+                  className="w-full max-h-32 min-h-[44px] py-2.5 px-3.5 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-brand-mint/40 text-xs text-white placeholder-text-muted resize-none focus:outline-none transition-colors"
+                  aria-label={`Write message to ${displayName}`}
+                />
+              </div>
 
               {/* Send Button */}
               <button
@@ -1816,7 +2020,34 @@ export default function ChatArea({ conversationId, onBack }) {
           </div>
         </div>
 
-        {/* ── 5. PROFESSIONAL CONTEXT PANEL (COLLAPSIBLE 3RD COLUMN ON DESKTOP) ── */}
+        {/* ── 5. THREAD WORKSPACE (DESKTOP COLUMN) ── */}
+        {activeThreadRoot && (
+          <div className="hidden xl:flex h-full border-l border-white/[0.08]">
+            <ThreadPanel
+              rootMessage={activeThreadRoot}
+              conversationId={conversationId}
+              onClose={closeThread}
+              currentUserId={currentUserId}
+              onJumpToMessage={handleJumpToMessage}
+            />
+          </div>
+        )}
+
+        {/* ── THREAD WORKSPACE (TABLET / MOBILE SLIDE-OVER) ── */}
+        {activeThreadRoot && (
+          <div className="xl:hidden">
+            <ThreadPanel
+              rootMessage={activeThreadRoot}
+              conversationId={conversationId}
+              onClose={closeThread}
+              isMobile={true}
+              currentUserId={currentUserId}
+              onJumpToMessage={handleJumpToMessage}
+            />
+          </div>
+        )}
+
+        {/* ── 6. PROFESSIONAL CONTEXT PANEL (COLLAPSIBLE 3RD COLUMN ON DESKTOP) ── */}
         {showContextPanel && (
           <>
             {/* Desktop 3rd Column */}
@@ -1937,6 +2168,30 @@ export default function ChatArea({ conversationId, onBack }) {
               >
                 <Reply className="w-4 h-4 text-brand-mint" />
                 <span>Reply</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  openThread(activeMobileMessage);
+                  setActiveMobileMessage(null);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold text-white hover:bg-white/[0.06] transition-colors"
+              >
+                <MessageSquare className="w-4 h-4 text-brand-mint" />
+                <span>Reply in Thread</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  openForwardModal(activeMobileMessage);
+                  setActiveMobileMessage(null);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold text-white hover:bg-white/[0.06] transition-colors"
+              >
+                <Share2 className="w-4 h-4 text-cyan-400" />
+                <span>Forward Message</span>
               </button>
 
               <button
@@ -2348,6 +2603,30 @@ export default function ChatArea({ conversationId, onBack }) {
                 <Link2 className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Link</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  openThread(focusedMessage);
+                  setFocusedMessage(null);
+                }}
+                className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-brand-mint text-xs font-semibold border border-white/[0.08] transition-colors cursor-pointer"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>Thread</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  openForwardModal(focusedMessage);
+                  setFocusedMessage(null);
+                }}
+                className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-cyan-400 text-xs font-semibold border border-white/[0.08] transition-colors cursor-pointer"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>Forward</span>
+              </button>
             </div>
           </div>
         </div>
@@ -2385,6 +2664,13 @@ export default function ChatArea({ conversationId, onBack }) {
           </div>
         </div>
       )}
+
+      {/* Forward Message Modal */}
+      <ForwardMessageModal
+        isOpen={Boolean(forwardMessageTarget)}
+        message={forwardMessageTarget}
+        onClose={closeForwardModal}
+      />
     </div>
   );
 }

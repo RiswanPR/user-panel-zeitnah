@@ -44,22 +44,18 @@ describe('Final Production Hardening Verification Suite', () => {
       httpServer.close(done);
     });
 
-    it(
-      '✓ Polling transport handshake returns HTTP 200 with SID and websocket upgrade capability',
-      async () => {
-        const res = await fetch(
-          `http://127.0.0.1:${serverPort}/api/socket.io/?EIO=4&transport=polling`,
-        );
-        expect(res.status).toBe(200);
-        const text = await res.text();
-        // Engine.IO open packet begins with '0{"sid":...'
-        expect(text.startsWith('0{')).toBe(true);
-        const payload = JSON.parse(text.slice(1));
-        expect(payload.sid).toBeDefined();
-        expect(payload.upgrades).toContain('websocket');
-      },
-      15000,
-    );
+    it('✓ Polling transport handshake returns HTTP 200 with SID and websocket upgrade capability', async () => {
+      const res = await fetch(
+        `http://127.0.0.1:${serverPort}/api/socket.io/?EIO=4&transport=polling`,
+      );
+      expect(res.status).toBe(200);
+      const text = await res.text();
+      // Engine.IO open packet begins with '0{"sid":...'
+      expect(text.startsWith('0{')).toBe(true);
+      const payload = JSON.parse(text.slice(1));
+      expect(payload.sid).toBeDefined();
+      expect(payload.upgrades).toContain('websocket');
+    }, 15000);
 
     it('✓ When proxy forwards transport=websocket WITHOUT Upgrade header, Engine.IO returns HTTP 400 {"code":3,"message":"Bad request"}', async () => {
       // Simulate Nginx receiving Upgrade request but stripping Upgrade headers before forwarding to upstream Node

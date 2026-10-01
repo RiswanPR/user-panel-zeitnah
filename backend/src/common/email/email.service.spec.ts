@@ -137,7 +137,9 @@ describe('Email Delivery Resilience & Fallback', () => {
       expect(isReservedDocumentationDomain('test@example.com')).toBe(true);
       expect(isReservedDocumentationDomain('user@example.org')).toBe(true);
       expect(isReservedDocumentationDomain('dev@example.net')).toBe(true);
-      expect(isReservedDocumentationDomain('student@sub.example.edu')).toBe(false);
+      expect(isReservedDocumentationDomain('student@sub.example.edu')).toBe(
+        false,
+      );
       expect(isReservedDocumentationDomain('student@service.test')).toBe(true);
       expect(isReservedDocumentationDomain('student@zeitnah.com')).toBe(false);
       expect(isReservedDocumentationDomain('user@gmail.com')).toBe(false);
@@ -182,7 +184,8 @@ describe('Email Delivery Resilience & Fallback', () => {
 
     it('does not retry permanent errors (e.g. invalid to or unverified domain)', async () => {
       const sendSpy = jest.spyOn(resend.emails, 'send').mockRejectedValue({
-        message: 'Invalid `to` field. Please use our testing email address instead of domains like `example.com`.',
+        message:
+          'Invalid `to` field. Please use our testing email address instead of domains like `example.com`.',
       });
 
       const result = await provider.sendEmail({

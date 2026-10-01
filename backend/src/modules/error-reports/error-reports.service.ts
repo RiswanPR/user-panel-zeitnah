@@ -21,7 +21,8 @@ export class ErrorReportsService {
 
     // Validate userId to prevent Mongoose CastError on invalid or placeholder values (e.g. 'Unknown')
     let validUserId: Types.ObjectId | undefined;
-    const candidateUserId = userId || sanitizedData?.userId || sanitizedData?.authentication?.userId;
+    const candidateUserId =
+      userId || sanitizedData?.userId || sanitizedData?.authentication?.userId;
     if (
       candidateUserId &&
       typeof candidateUserId === 'string' &&

@@ -856,8 +856,14 @@ export class NetworkConnectionsService {
     }
 
     if (!connection) {
-      const [uLow, uHigh] = this.getOrderedUserIds(connectionIdOrUserId, userId);
-      connection = await this.connectionModel.findOne({ userLow: uLow, userHigh: uHigh });
+      const [uLow, uHigh] = this.getOrderedUserIds(
+        connectionIdOrUserId,
+        userId,
+      );
+      connection = await this.connectionModel.findOne({
+        userLow: uLow,
+        userHigh: uHigh,
+      });
     }
 
     if (!connection) {
@@ -865,7 +871,9 @@ export class NetworkConnectionsService {
     }
 
     if (!connection.recipientId.equals(userObjId)) {
-      throw new ForbiddenException('Only the recipient can decline this connection request.');
+      throw new ForbiddenException(
+        'Only the recipient can decline this connection request.',
+      );
     }
 
     await this.connectionModel.deleteOne({ _id: connection._id });
@@ -889,8 +897,14 @@ export class NetworkConnectionsService {
     }
 
     if (!connection) {
-      const [uLow, uHigh] = this.getOrderedUserIds(connectionIdOrUserId, userId);
-      connection = await this.connectionModel.findOne({ userLow: uLow, userHigh: uHigh });
+      const [uLow, uHigh] = this.getOrderedUserIds(
+        connectionIdOrUserId,
+        userId,
+      );
+      connection = await this.connectionModel.findOne({
+        userLow: uLow,
+        userHigh: uHigh,
+      });
     }
 
     if (!connection) {
@@ -898,7 +912,9 @@ export class NetworkConnectionsService {
     }
 
     if (!connection.requesterId.equals(userObjId)) {
-      throw new ForbiddenException('Only the requester can cancel this connection request.');
+      throw new ForbiddenException(
+        'Only the requester can cancel this connection request.',
+      );
     }
 
     await this.connectionModel.deleteOne({ _id: connection._id });

@@ -43,7 +43,9 @@ export function isReservedDocumentationDomain(email: string): boolean {
 /**
  * Class-validator decorator to reject RFC 2606 reserved documentation domains.
  */
-export function IsNotReservedEmailDomain(validationOptions?: ValidationOptions) {
+export function IsNotReservedEmailDomain(
+  validationOptions?: ValidationOptions,
+) {
   return function (object: object, propertyName: string) {
     registerDecorator({
       name: 'isNotReservedEmailDomain',

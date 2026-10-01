@@ -85,6 +85,11 @@ export class SendMessageDto {
   @IsOptional()
   @IsString()
   replyToId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  mentions?: string[];
 }
 
 export class EditMessageDto {
@@ -105,8 +110,8 @@ export class AddReactionDto {
 
 export class QueryConversationsDto {
   @IsOptional()
-  @IsEnum(['chats', 'requests', 'archived'])
-  tab?: 'chats' | 'requests' | 'archived' = 'chats';
+  @IsEnum(['chats', 'requests', 'archived', 'mentions'])
+  tab?: 'chats' | 'requests' | 'archived' | 'mentions' = 'chats';
 
   @IsOptional()
   @IsString()
@@ -155,12 +160,12 @@ export class SearchMessagingDto {
 
   @IsOptional()
   @IsEnum(['all', 'messages', 'conversations', 'people', 'files', 'links'])
-  type?: 'all' | 'messages' | 'conversations' | 'people' | 'files' | 'links' = 'all';
+  type?: 'all' | 'messages' | 'conversations' | 'people' | 'files' | 'links' =
+    'all';
 
   @IsOptional()
   limit?: number = 20;
 }
-
 
 export class MuteConversationDto {
   @IsBoolean()
@@ -186,4 +191,86 @@ export class ReportConversationDto {
   @IsString()
   @MaxLength(1000)
   details?: string;
+}
+
+// ── Tier 3 DTOs ──
+
+export class QueryMentionSuggestionsDto {
+  @IsOptional()
+  @IsString()
+  q?: string;
+}
+
+export class CreateThreadReplyDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(5000)
+  body!: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AttachmentDto)
+  attachments?: AttachmentDto[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  mentions?: string[];
+}
+
+export class QueryThreadRepliesDto {
+  @IsOptional()
+  @IsString()
+  before?: string;
+
+  @IsOptional()
+  limit?: number = 30;
+}
+
+export class ForwardMessageDto {
+  @IsString()
+  @IsNotEmpty()
+  sourceMessageId!: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
+  targetConversationIds!: string[];
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  note?: string;
+}
+
+export class AddGroupMembersDto {
+  @IsArray()
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
+  userIds!: string[];
+}
+
+export class UpdateGroupMemberRoleDto {
+  @IsString()
+  @IsNotEmpty()
+  @IsEnum(['ADMIN', 'MEMBER'], { message: 'Role must be ADMIN or MEMBER' })
+  role!: 'ADMIN' | 'MEMBER';
+}
+
+export class UpdateGroupMetadataDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(2)
+  @MaxLength(80)
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  avatar?: string;
 }

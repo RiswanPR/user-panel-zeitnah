@@ -21,7 +21,9 @@ describe('CoursesService — My Learning & Role Resilience', () => {
       findById: jest.fn(),
       find: jest.fn(),
       findOne: jest.fn(),
-      updateOne: jest.fn().mockResolvedValue({ acknowledged: true, modifiedCount: 1 }),
+      updateOne: jest
+        .fn()
+        .mockResolvedValue({ acknowledged: true, modifiedCount: 1 }),
       exists: jest.fn(),
     };
 
@@ -32,8 +34,12 @@ describe('CoursesService — My Learning & Role Resilience', () => {
     };
 
     mockSignedUrlService = {
-      generateSignedImageUrl: jest.fn().mockImplementation((url) => Promise.resolve(`signed-${url}`)),
-      generateSignedUrl: jest.fn().mockImplementation((key) => Promise.resolve(`signed-${key}`)),
+      generateSignedImageUrl: jest
+        .fn()
+        .mockImplementation((url) => Promise.resolve(`signed-${url}`)),
+      generateSignedUrl: jest
+        .fn()
+        .mockImplementation((key) => Promise.resolve(`signed-${key}`)),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -85,8 +91,14 @@ describe('CoursesService — My Learning & Role Resilience', () => {
           {
             chapterCode: 'CH1',
             classes: [
-              { _id: new Types.ObjectId('6a4ff504ce1858ef121d4751'), duration: '10:00' },
-              { _id: new Types.ObjectId('6a4ff504ce1858ef121d4752'), duration: '15:00' },
+              {
+                _id: new Types.ObjectId('6a4ff504ce1858ef121d4751'),
+                duration: '10:00',
+              },
+              {
+                _id: new Types.ObjectId('6a4ff504ce1858ef121d4752'),
+                duration: '15:00',
+              },
             ],
           },
         ],
@@ -99,8 +111,14 @@ describe('CoursesService — My Learning & Role Resilience', () => {
             {
               chapterCode: 'CH1',
               classes: [
-                { _id: new Types.ObjectId('6a4ff504ce1858ef121d4751'), duration: '10:00' },
-                { _id: new Types.ObjectId('6a4ff504ce1858ef121d4752'), duration: '15:00' },
+                {
+                  _id: new Types.ObjectId('6a4ff504ce1858ef121d4751'),
+                  duration: '10:00',
+                },
+                {
+                  _id: new Types.ObjectId('6a4ff504ce1858ef121d4752'),
+                  duration: '15:00',
+                },
               ],
             },
           ],
@@ -135,7 +153,9 @@ describe('CoursesService — My Learning & Role Resilience', () => {
       mockUserModel.findById.mockResolvedValue(mockStudentUser);
       mockCourseModel.find.mockResolvedValue(mockCourses);
 
-      const result = await service.getMyLearningOverview(mockStudentUser._id.toString());
+      const result = await service.getMyLearningOverview(
+        mockStudentUser._id.toString(),
+      );
 
       expect(result).toBeDefined();
       expect(result.summary).toBeDefined();
@@ -171,7 +191,9 @@ describe('CoursesService — My Learning & Role Resilience', () => {
       mockUserModel.findById.mockResolvedValue(mockEducatorUser);
       mockCourseModel.find.mockResolvedValue([]);
 
-      const result = await service.getMyLearningOverview(mockEducatorUser._id.toString());
+      const result = await service.getMyLearningOverview(
+        mockEducatorUser._id.toString(),
+      );
 
       expect(result).toBeDefined();
       expect(result.summary.totalCourses).toBe(0);
@@ -199,7 +221,9 @@ describe('CoursesService — My Learning & Role Resilience', () => {
       mockCourseModel.find.mockResolvedValue([]);
 
       // Because atomic updateOne is used, full-document validation on mockLegacyUser.role is not triggered
-      const result = await service.getMyLearningOverview(mockLegacyUser._id.toString());
+      const result = await service.getMyLearningOverview(
+        mockLegacyUser._id.toString(),
+      );
 
       expect(result).toBeDefined();
       expect(result.summary).toBeDefined();

@@ -38,6 +38,13 @@ import {
   MuteConversationDto,
   ArchiveConversationDto,
   ReportConversationDto,
+  QueryMentionSuggestionsDto,
+  CreateThreadReplyDto,
+  QueryThreadRepliesDto,
+  ForwardMessageDto,
+  AddGroupMembersDto,
+  UpdateGroupMemberRoleDto,
+  UpdateGroupMetadataDto,
 } from './dto/messaging.dto';
 import {
   SavedMessage,
@@ -203,12 +210,25 @@ export class MessagingService {
       (m: any) => String(m.userId) === String(callerUserId),
     );
 
+    const membersWithRole = (conv.members || []).map((m: any) => ({
+      userId: String(m.userId?._id || m.userId),
+      role: m.role || 'MEMBER',
+      joinedAt: m.joinedAt,
+      isMuted: Boolean(m.mutedUntil && new Date(m.mutedUntil) > new Date()),
+    }));
+
+    const isCreator = conv.createdBy
+      ? String(conv.createdBy?._id || conv.createdBy) === String(callerUserId)
+      : false;
+    const callerRole = isCreator ? 'ADMIN' : myMember?.role || 'MEMBER';
+
     return {
       id: String(conv._id || conv.id),
       _id: conv._id || conv.id,
       type: conv.type,
       name: computedName,
       title: computedName, // Alias for frontend compatibility
+      description: conv.description || '',
       avatar: computedAvatar,
       avatarUrl: computedAvatar, // Alias for frontend compatibility
       memberCount,
@@ -216,6 +236,12 @@ export class MessagingService {
       otherParticipant: partner, // Alias for frontend compatibility
       isPartnerOnline,
       participants,
+      members: membersWithRole,
+      createdBy: conv.createdBy
+        ? String(conv.createdBy?._id || conv.createdBy)
+        : null,
+      callerRole,
+      isAdmin: callerRole === 'ADMIN' || isCreator,
       lastMessage: conv.lastMessage,
       lastMessageAt: conv.lastMessageAt,
       requestStatus: conv.requestStatus,
@@ -390,7 +416,7 @@ export class MessagingService {
 
     // 8. Update conversation's lastMessage
     conversation.lastMessage = {
-      messageId: message._id as Types.ObjectId,
+      messageId: message._id,
       senderId: callerObjId,
       body: dto.message.trim(),
       createdAt: new Date(),
@@ -620,6 +646,21 @@ export class MessagingService {
       baseFilter.members = {
         $elemMatch: { userId: userObjId, isArchived: true },
       };
+    } else if (tab === 'mentions') {
+      const mentionedConvs = await this.messageModel.distinct(
+        'conversationId',
+        {
+          'mentions.userId': userObjId,
+          deletedFor: { $ne: userObjId },
+        },
+      );
+      baseFilter._id = { $in: mentionedConvs };
+      baseFilter.requestStatus = {
+        $in: [RequestStatus.NONE, RequestStatus.ACCEPTED],
+      };
+      baseFilter.members = {
+        $elemMatch: { userId: userObjId, isArchived: { $ne: true } },
+      };
     } else {
       // Default: 'chats' (accepted or direct, not archived)
       baseFilter.requestStatus = {
@@ -744,7 +785,6 @@ export class MessagingService {
    */
   async getConversationById(userId: string, conversationId: string) {
     const convObjId = this.toObjectId(conversationId);
-    const userObjId = this.toObjectId(userId);
 
     const conversation = await this.conversationModel
       .findById(convObjId)
@@ -825,13 +865,28 @@ export class MessagingService {
         .lean();
 
       if (targetMsg) {
+        let centerMsg = targetMsg;
+        let targetThreadRootId: string | null = null;
+        if (targetMsg.threadRootId) {
+          targetThreadRootId = String(targetMsg.threadRootId);
+          const root = await this.messageModel
+            .findById(targetMsg.threadRootId)
+            .populate('senderId', 'name username avatar primaryRole')
+            .populate('reactions.userId', 'name username')
+            .lean();
+          if (root) {
+            centerMsg = root;
+          }
+        }
+
         const half = Math.max(10, Math.floor(limit / 2));
         const [earlier, later] = await Promise.all([
           this.messageModel
             .find({
               conversationId: convObjId,
               deletedFor: { $ne: userObjId },
-              createdAt: { $lt: targetMsg.createdAt },
+              threadRootId: { $in: [null, undefined] },
+              createdAt: { $lt: centerMsg.createdAt },
             })
             .populate('senderId', 'name username avatar primaryRole')
             .populate('reactions.userId', 'name username')
@@ -842,7 +897,8 @@ export class MessagingService {
             .find({
               conversationId: convObjId,
               deletedFor: { $ne: userObjId },
-              createdAt: { $gt: targetMsg.createdAt },
+              threadRootId: { $in: [null, undefined] },
+              createdAt: { $gt: centerMsg.createdAt },
             })
             .populate('senderId', 'name username avatar primaryRole')
             .populate('reactions.userId', 'name username')
@@ -852,7 +908,7 @@ export class MessagingService {
         ]);
 
         earlier.reverse();
-        const combined = [...earlier, targetMsg, ...later];
+        const combined = [...earlier, centerMsg, ...later];
 
         const savedIds = this.savedMessageModel
           ? new Set(
@@ -880,6 +936,7 @@ export class MessagingService {
           hasMore: earlier.length >= half,
           nextCursor: earlier.length > 0 ? String(earlier[0]._id) : null,
           targetMessageId: String(targetMsg._id),
+          targetThreadRootId,
         };
       }
     }
@@ -887,6 +944,7 @@ export class MessagingService {
     const filter: any = {
       conversationId: convObjId,
       deletedFor: { $ne: userObjId },
+      threadRootId: { $in: [null, undefined] },
     };
 
     if (query.before) {
@@ -1027,12 +1085,65 @@ export class MessagingService {
       }
     }
 
+    // Resolve mentions: verify users exist, belong to participants, and extract details
+    const validMentions: Array<{
+      userId: Types.ObjectId;
+      username: string;
+      name: string;
+    }> = [];
+    const mentionedUserIdsSet = new Set<string>();
+
+    const potentialMentionKeys = new Set<string>();
+    if (Array.isArray(dto.mentions)) {
+      dto.mentions.forEach((m) => {
+        if (typeof m === 'string' && m.trim()) {
+          potentialMentionKeys.add(m.trim().replace(/^@/, ''));
+        }
+      });
+    }
+
+    const bodyMentions = dto.body.match(/@([a-zA-Z0-9_.-]+)/g);
+    if (bodyMentions) {
+      bodyMentions.forEach((m) => potentialMentionKeys.add(m.slice(1)));
+    }
+
+    if (potentialMentionKeys.size > 0) {
+      const keyArr = Array.from(potentialMentionKeys);
+      const objectIdCandidates = keyArr
+        .filter((k) => Types.ObjectId.isValid(k))
+        .map((k) => this.toObjectId(k));
+
+      const candidates = await this.userModel
+        .find({
+          _id: { $in: conversation.participants },
+          $or: [
+            { _id: { $in: objectIdCandidates } },
+            { username: { $in: keyArr } },
+          ],
+        })
+        .select('_id name username')
+        .lean();
+
+      candidates.forEach((u: any) => {
+        const uId = String(u._id);
+        if (uId !== userId && !mentionedUserIdsSet.has(uId)) {
+          mentionedUserIdsSet.add(uId);
+          validMentions.push({
+            userId: u._id,
+            username: u.username || '',
+            name: u.name || '',
+          });
+        }
+      });
+    }
+
     const message = await this.messageModel.create({
       conversationId: convObjId,
       senderId: userObjId,
       body: dto.body.trim(),
       attachments: dto.attachments || [],
       replyTo: replyToObj,
+      mentions: validMentions,
       status: MessageStatus.SENT,
     });
 
@@ -1044,7 +1155,7 @@ export class MessagingService {
         : 'Sent a message');
 
     conversation.lastMessage = {
-      messageId: message._id as Types.ObjectId,
+      messageId: message._id,
       senderId: userObjId,
       body: lastBody,
       createdAt: new Date(),
@@ -1075,26 +1186,56 @@ export class MessagingService {
       conversation.participants.map(String),
     );
 
-    // Notify other unmuted participants
+    // Notify participants
     if (this.notificationsService) {
       const senderUser = await this.userModel.findById(userObjId).lean();
       const senderDisplayName =
         senderUser?.name?.trim() ||
         (senderUser?.username ? `@${senderUser.username}` : 'Zeitnah Member');
+
+      const notifiedUsers = new Set<string>();
+
+      // 1. Notify mentioned users with dedicated MESSAGE_MENTION notification
+      for (const m of validMentions) {
+        const mUserId = String(m.userId);
+        if (mUserId !== userId) {
+          notifiedUsers.add(mUserId);
+          try {
+            await this.notificationsService.createNotification({
+              recipientId: mUserId,
+              actorId: userId,
+              type: 'MESSAGE_MENTION',
+              category: 'network',
+              title: `${senderDisplayName} mentioned you`,
+              message: dto.body.slice(0, 100),
+              targetUrl: `/messages?c=${conversationId}&m=${message._id}`,
+              actionUrl: `/messages?c=${conversationId}&m=${message._id}`,
+              idempotencyKey: `mention_${message._id}_${mUserId}`,
+              metadata: { conversationId, messageId: String(message._id) },
+            });
+          } catch {
+            // Notification errors should not block message delivery
+          }
+        }
+      }
+
+      // 2. Notify other unmuted participants with generic MESSAGE notification
       for (const m of conversation.members) {
-        if (!m.userId.equals(userObjId)) {
+        const mId = String(m.userId);
+        if (mId !== userId && !notifiedUsers.has(mId)) {
           const isMuted = m.mutedUntil && new Date(m.mutedUntil) > new Date();
           if (!isMuted) {
             try {
               await this.notificationsService.createNotification({
-                recipientId: String(m.userId),
+                recipientId: mId,
                 actorId: userId,
                 type: 'MESSAGE',
                 category: 'network',
                 title: senderDisplayName,
                 message: dto.body.slice(0, 100),
-                targetUrl: `/messages?c=${conversationId}`,
-                actionUrl: `/messages?c=${conversationId}`,
+                targetUrl: `/messages?c=${conversationId}&m=${message._id}`,
+                actionUrl: `/messages?c=${conversationId}&m=${message._id}`,
+                idempotencyKey: `msg_${message._id}_${mId}`,
                 metadata: { conversationId, messageId: String(message._id) },
               });
             } catch {
@@ -1531,7 +1672,6 @@ export class MessagingService {
     dto: ReportConversationDto,
   ) {
     const convObjId = this.toObjectId(conversationId);
-    const userObjId = this.toObjectId(userId);
 
     const conversation = await this.conversationModel.findById(convObjId);
     if (!conversation) {
@@ -1670,7 +1810,9 @@ export class MessagingService {
       throw new NotFoundException('Message not found or deleted.');
     }
 
-    const conversation = await this.conversationModel.findById(message.conversationId).lean();
+    const conversation = await this.conversationModel
+      .findById(message.conversationId)
+      .lean();
     if (!conversation) {
       throw new NotFoundException('Conversation not found.');
     }
@@ -1679,7 +1821,9 @@ export class MessagingService {
       this.toObjectId(p).equals(userObjId),
     );
     if (!isMember) {
-      throw new ForbiddenException('Cannot save message from a conversation you do not belong to.');
+      throw new ForbiddenException(
+        'Cannot save message from a conversation you do not belong to.',
+      );
     }
 
     const existing = await this.savedMessageModel.findOne({
@@ -1688,7 +1832,12 @@ export class MessagingService {
     });
 
     if (existing) {
-      return { success: true, messageId, isSaved: true, savedAt: existing.savedAt };
+      return {
+        success: true,
+        messageId,
+        isSaved: true,
+        savedAt: existing.savedAt,
+      };
     }
 
     const saved = await this.savedMessageModel.create({
@@ -1732,7 +1881,10 @@ export class MessagingService {
         .populate({
           path: 'messageId',
           populate: [
-            { path: 'senderId', select: 'name username avatar primaryRole currentRole headline' },
+            {
+              path: 'senderId',
+              select: 'name username avatar primaryRole currentRole headline',
+            },
             { path: 'reactions.userId', select: 'name username' },
           ],
         })
@@ -1751,7 +1903,9 @@ export class MessagingService {
 
     // Format saved messages and filter out orphaned or deleted messages
     const savedMessages = rawSaved
-      .filter((s: any) => s.messageId && !s.messageId.isDeleted && s.conversationId)
+      .filter(
+        (s: any) => s.messageId && !s.messageId.isDeleted && s.conversationId,
+      )
       .map((s: any) => {
         const msg = s.messageId;
         const conv = s.conversationId;
@@ -1803,7 +1957,9 @@ export class MessagingService {
 
     const isMember = conversation.participants.some((p) => p.equals(userObjId));
     if (!isMember) {
-      throw new ForbiddenException('Not authorized to access this conversation.');
+      throw new ForbiddenException(
+        'Not authorized to access this conversation.',
+      );
     }
 
     const message = await this.messageModel.findById(msgObjId);
@@ -1816,11 +1972,16 @@ export class MessagingService {
 
     // Authorization check for group conversations
     if (conversation.type === ConversationType.GROUP) {
-      const myMember = conversation.members.find((m) => m.userId.equals(userObjId));
-      const isAdmin = myMember?.role === 'ADMIN' || conversation.createdBy.equals(userObjId);
+      const myMember = conversation.members.find((m) =>
+        m.userId.equals(userObjId),
+      );
+      const isAdmin =
+        myMember?.role === 'ADMIN' || conversation.createdBy.equals(userObjId);
       const isSender = message.senderId.equals(userObjId);
       if (!isAdmin && !isSender) {
-        throw new ForbiddenException('Only group admins or message authors can pin messages.');
+        throw new ForbiddenException(
+          'Only group admins or message authors can pin messages.',
+        );
       }
     }
 
@@ -1839,7 +2000,8 @@ export class MessagingService {
     } catch {
       populated = null;
     }
-    const finalDoc = populated || (message.toObject ? message.toObject() : message);
+    const finalDoc =
+      populated || (message.toObject ? message.toObject() : message);
 
     const formatted = {
       ...finalDoc,
@@ -1862,7 +2024,11 @@ export class MessagingService {
   /**
    * Unpin a message in a conversation.
    */
-  async unpinMessage(userId: string, conversationId: string, messageId: string) {
+  async unpinMessage(
+    userId: string,
+    conversationId: string,
+    messageId: string,
+  ) {
     const convObjId = this.toObjectId(conversationId);
     const msgObjId = this.toObjectId(messageId);
     const userObjId = this.toObjectId(userId);
@@ -1874,7 +2040,9 @@ export class MessagingService {
 
     const isMember = conversation.participants.some((p) => p.equals(userObjId));
     if (!isMember) {
-      throw new ForbiddenException('Not authorized to access this conversation.');
+      throw new ForbiddenException(
+        'Not authorized to access this conversation.',
+      );
     }
 
     const message = await this.messageModel.findById(msgObjId);
@@ -1884,12 +2052,17 @@ export class MessagingService {
 
     // Authorization check for groups
     if (conversation.type === ConversationType.GROUP) {
-      const myMember = conversation.members.find((m) => m.userId.equals(userObjId));
-      const isAdmin = myMember?.role === 'ADMIN' || conversation.createdBy.equals(userObjId);
+      const myMember = conversation.members.find((m) =>
+        m.userId.equals(userObjId),
+      );
+      const isAdmin =
+        myMember?.role === 'ADMIN' || conversation.createdBy.equals(userObjId);
       const isSender = message.senderId.equals(userObjId);
       const isPinner = message.pinnedBy?.equals(userObjId);
       if (!isAdmin && !isSender && !isPinner) {
-        throw new ForbiddenException('Only group admins or message pinners can unpin.');
+        throw new ForbiddenException(
+          'Only group admins or message pinners can unpin.',
+        );
       }
     }
 
@@ -1908,7 +2081,8 @@ export class MessagingService {
     } catch {
       populated = null;
     }
-    const finalDoc = populated || (message.toObject ? message.toObject() : message);
+    const finalDoc =
+      populated || (message.toObject ? message.toObject() : message);
 
     const formatted = {
       ...finalDoc,
@@ -1934,7 +2108,9 @@ export class MessagingService {
     const convObjId = this.toObjectId(conversationId);
     const userObjId = this.toObjectId(userId);
 
-    const conversation = await this.conversationModel.findById(convObjId).lean();
+    const conversation = await this.conversationModel
+      .findById(convObjId)
+      .lean();
     if (!conversation) {
       throw new NotFoundException('Conversation not found.');
     }
@@ -1943,7 +2119,9 @@ export class MessagingService {
       this.toObjectId(p).equals(userObjId),
     );
     if (!isMember) {
-      throw new ForbiddenException('Not authorized to access this conversation.');
+      throw new ForbiddenException(
+        'Not authorized to access this conversation.',
+      );
     }
 
     const raw = await this.messageModel
@@ -2000,7 +2178,10 @@ export class MessagingService {
         'members.userId': userObjId,
         'members.isDeletedFor': { $ne: true },
       })
-      .populate('participants', 'name username avatar primaryRole currentRole headline')
+      .populate(
+        'participants',
+        'name username avatar primaryRole currentRole headline',
+      )
       .sort({ lastMessageAt: -1 })
       .lean();
 
@@ -2015,7 +2196,9 @@ export class MessagingService {
         const matchTitle = searchRegex.test(title);
         const matchLast = searchRegex.test(lastMsg);
         const matchParticipant = (c.participants || []).some(
-          (p: any) => searchRegex.test(p.name || '') || searchRegex.test(p.username || ''),
+          (p: any) =>
+            searchRegex.test(p.name || '') ||
+            searchRegex.test(p.username || ''),
         );
         return matchTitle || matchLast || matchParticipant;
       })
@@ -2037,7 +2220,9 @@ export class MessagingService {
 
     const matchedMessages = matchedMessagesRaw.map((m: any) => {
       const rawConv = convMap.get(String(m.conversationId));
-      const formattedConv = rawConv ? this.formatConversation(rawConv, userId, 0) : null;
+      const formattedConv = rawConv
+        ? this.formatConversation(rawConv, userId, 0)
+        : null;
       return {
         ...m,
         id: String(m._id),
@@ -2063,7 +2248,9 @@ export class MessagingService {
     const matchedFiles: any[] = [];
     matchedFilesRaw.forEach((m: any) => {
       const rawConv = convMap.get(String(m.conversationId));
-      const formattedConv = rawConv ? this.formatConversation(rawConv, userId, 0) : null;
+      const formattedConv = rawConv
+        ? this.formatConversation(rawConv, userId, 0)
+        : null;
       (m.attachments || []).forEach((att: any) => {
         if (att.name && searchRegex.test(att.name)) {
           matchedFiles.push({
@@ -2095,7 +2282,9 @@ export class MessagingService {
     matchedLinksRaw.forEach((m: any) => {
       const urls = m.body?.match(/https?:\/\/[^\s]+/gi) || [];
       const rawConv = convMap.get(String(m.conversationId));
-      const formattedConv = rawConv ? this.formatConversation(rawConv, userId, 0) : null;
+      const formattedConv = rawConv
+        ? this.formatConversation(rawConv, userId, 0)
+        : null;
       urls.forEach((url: string) => {
         if (searchRegex.test(url) || searchRegex.test(m.body)) {
           try {
@@ -2143,5 +2332,869 @@ export class MessagingService {
       links: matchedLinks.slice(0, limit),
       people: Array.from(peopleMap.values()).slice(0, limit),
     };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 6. TIER 3: MENTIONS, THREADS, FORWARDING & ADVANCED GROUP COLLABORATION
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Get mention suggestions for a conversation.
+   * Only returns participants belonging to the conversation.
+   */
+  async getMentionSuggestions(
+    userId: string,
+    conversationId: string,
+    query: QueryMentionSuggestionsDto,
+  ) {
+    const convObjId = this.toObjectId(conversationId);
+    const userObjId = this.toObjectId(userId);
+
+    const conversation = await this.conversationModel
+      .findById(convObjId)
+      .lean();
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found.');
+    }
+
+    const isMember = (conversation.participants || []).some((p: any) =>
+      this.toObjectId(p).equals(userObjId),
+    );
+    if (!isMember) {
+      throw new ForbiddenException(
+        'Not authorized to access this conversation.',
+      );
+    }
+
+    const participantIds = (conversation.participants || [])
+      .map((p: any) => this.toObjectId(p))
+      .filter((pId: Types.ObjectId) => !pId.equals(userObjId));
+
+    if (participantIds.length === 0) {
+      return [];
+    }
+
+    const filter: any = { _id: { $in: participantIds } };
+    if (query?.q && query.q.trim()) {
+      const escaped = query.q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const searchRegex = new RegExp(escaped, 'i');
+      filter.$or = [{ name: searchRegex }, { username: searchRegex }];
+    }
+
+    const users = await this.userModel
+      .find(filter)
+      .select('name username avatar primaryRole currentRole headline')
+      .limit(20)
+      .lean();
+
+    return users.map((u: any) => {
+      const s = this.sanitizeParticipant(u);
+      return {
+        id: String(u._id),
+        _id: String(u._id),
+        name: s.name,
+        username: s.username,
+        avatar: s.avatar || s.avatarUrl,
+        avatarUrl: s.avatarUrl || s.avatar,
+        role: s.role,
+        headline: s.headline,
+      };
+    });
+  }
+
+  /**
+   * Get thread discussion replies for a root message.
+   */
+  async getThreadReplies(
+    userId: string,
+    conversationId: string,
+    rootMessageId: string,
+    query: QueryThreadRepliesDto,
+  ) {
+    const convObjId = this.toObjectId(conversationId);
+    const userObjId = this.toObjectId(userId);
+    const rootObjId = this.toObjectId(rootMessageId);
+
+    const conversation = await this.conversationModel
+      .findById(convObjId)
+      .lean();
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found.');
+    }
+
+    const isMember = (conversation.participants || []).some((p: any) =>
+      this.toObjectId(p).equals(userObjId),
+    );
+    if (!isMember) {
+      throw new ForbiddenException(
+        'Not authorized to access this conversation.',
+      );
+    }
+
+    const rootMessageRaw = await this.messageModel
+      .findOne({
+        _id: rootObjId,
+        conversationId: convObjId,
+        deletedFor: { $ne: userObjId },
+      })
+      .populate(
+        'senderId',
+        'name username avatar primaryRole currentRole headline',
+      )
+      .populate('reactions.userId', 'name username')
+      .lean();
+
+    if (!rootMessageRaw) {
+      throw new NotFoundException('Discussion root message not found.');
+    }
+
+    const limit = Math.min(100, Math.max(1, Number(query?.limit) || 50));
+    const filter: any = {
+      conversationId: convObjId,
+      threadRootId: rootObjId,
+      deletedFor: { $ne: userObjId },
+    };
+
+    if (query?.before) {
+      if (Types.ObjectId.isValid(query.before)) {
+        const beforeMsg = await this.messageModel.findById(query.before).lean();
+        if (beforeMsg) {
+          filter.createdAt = { $lt: beforeMsg.createdAt };
+        }
+      } else {
+        const beforeDate = new Date(query.before);
+        if (!isNaN(beforeDate.getTime())) {
+          filter.createdAt = { $lt: beforeDate };
+        }
+      }
+    }
+
+    const rawReplies = await this.messageModel
+      .find(filter)
+      .populate(
+        'senderId',
+        'name username avatar primaryRole currentRole headline',
+      )
+      .populate('reactions.userId', 'name username')
+      .sort({ createdAt: 1 })
+      .limit(limit + 1)
+      .lean();
+
+    const hasMore = rawReplies.length > limit;
+    const replies = hasMore ? rawReplies.slice(0, limit) : rawReplies;
+    const nextCursor =
+      hasMore && replies.length > 0
+        ? String(replies[replies.length - 1]._id)
+        : null;
+
+    const allMsgIds = [rootMessageRaw._id, ...replies.map((r: any) => r._id)];
+    const savedIds = this.savedMessageModel
+      ? new Set(
+          (
+            await this.savedMessageModel
+              .find({
+                userId: userObjId,
+                messageId: { $in: allMsgIds },
+              })
+              .select('messageId')
+              .lean()
+          ).map((s) => String(s.messageId)),
+        )
+      : new Set();
+
+    const formatMsg = (m: any) => ({
+      ...m,
+      id: String(m._id),
+      isOwn: String(m.senderId?._id || m.senderId) === userId,
+      isPinned: Boolean(m.isPinned),
+      isSaved: savedIds.has(String(m._id)),
+      body: m.isDeleted ? 'This message was deleted' : m.body,
+    });
+
+    return {
+      rootMessage: formatMsg(rootMessageRaw),
+      replies: replies.map(formatMsg),
+      hasMore,
+      nextCursor,
+      replyCount: rootMessageRaw.threadReplyCount || replies.length,
+    };
+  }
+
+  /**
+   * Post a reply to a thread discussion.
+   */
+  async createThreadReply(
+    userId: string,
+    conversationId: string,
+    rootMessageId: string,
+    dto: CreateThreadReplyDto,
+  ) {
+    const convObjId = this.toObjectId(conversationId);
+    const userObjId = this.toObjectId(userId);
+    const rootObjId = this.toObjectId(rootMessageId);
+
+    const conversation = await this.conversationModel.findById(convObjId);
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found.');
+    }
+
+    const isMember = (conversation.participants || []).some((p: any) =>
+      this.toObjectId(p).equals(userObjId),
+    );
+    if (!isMember) {
+      throw new ForbiddenException(
+        'Not authorized to access this conversation.',
+      );
+    }
+
+    const rootMessage = await this.messageModel.findOne({
+      _id: rootObjId,
+      conversationId: convObjId,
+    });
+
+    if (!rootMessage || rootMessage.isDeleted) {
+      throw new NotFoundException(
+        'Discussion root message is no longer available.',
+      );
+    }
+
+    // Resolve mentions for thread reply
+    const validMentions: Array<{
+      userId: Types.ObjectId;
+      username: string;
+      name: string;
+    }> = [];
+    const mentionedUserIdsSet = new Set<string>();
+    const potentialMentionKeys = new Set<string>();
+
+    if (Array.isArray(dto.mentions)) {
+      dto.mentions.forEach((m) => {
+        if (typeof m === 'string' && m.trim()) {
+          potentialMentionKeys.add(m.trim().replace(/^@/, ''));
+        }
+      });
+    }
+
+    const bodyMentions = dto.body.match(/@([a-zA-Z0-9_.-]+)/g);
+    if (bodyMentions) {
+      bodyMentions.forEach((m) => potentialMentionKeys.add(m.slice(1)));
+    }
+
+    if (potentialMentionKeys.size > 0) {
+      const keyArr = Array.from(potentialMentionKeys);
+      const objectIdCandidates = keyArr
+        .filter((k) => Types.ObjectId.isValid(k))
+        .map((k) => this.toObjectId(k));
+
+      const candidates = await this.userModel
+        .find({
+          _id: { $in: conversation.participants },
+          $or: [
+            { _id: { $in: objectIdCandidates } },
+            { username: { $in: keyArr } },
+          ],
+        })
+        .select('_id name username')
+        .lean();
+
+      candidates.forEach((u: any) => {
+        const uId = String(u._id);
+        if (uId !== userId && !mentionedUserIdsSet.has(uId)) {
+          mentionedUserIdsSet.add(uId);
+          validMentions.push({
+            userId: u._id,
+            username: u.username || '',
+            name: u.name || '',
+          });
+        }
+      });
+    }
+
+    const now = new Date();
+    const reply = await this.messageModel.create({
+      conversationId: convObjId,
+      senderId: userObjId,
+      threadRootId: rootObjId,
+      body: dto.body.trim(),
+      attachments: dto.attachments || [],
+      mentions: validMentions,
+      status: MessageStatus.SENT,
+    });
+
+    // Update root message reply count, last reply time, participants
+    rootMessage.threadReplyCount = (rootMessage.threadReplyCount || 0) + 1;
+    rootMessage.threadLastReplyAt = now;
+    if (!rootMessage.threadParticipants) {
+      rootMessage.threadParticipants = [];
+    }
+    if (!rootMessage.threadParticipants.some((p: any) => p.equals(userObjId))) {
+      rootMessage.threadParticipants.push(userObjId);
+    }
+    await rootMessage.save();
+
+    // Update conversation lastMessageAt
+    conversation.lastMessageAt = now;
+    await conversation.save();
+
+    const populatedReply = await this.messageModel
+      .findById(reply._id)
+      .populate(
+        'senderId',
+        'name username avatar primaryRole currentRole headline',
+      )
+      .populate('reactions.userId', 'name username')
+      .lean();
+
+    const populatedRoot = await this.messageModel
+      .findById(rootObjId)
+      .populate(
+        'senderId',
+        'name username avatar primaryRole currentRole headline',
+      )
+      .populate('reactions.userId', 'name username')
+      .lean();
+
+    const formattedReply = {
+      ...populatedReply,
+      id: String(reply._id),
+      isOwn: true,
+      isPinned: false,
+      isSaved: false,
+    };
+
+    const formattedRoot = populatedRoot
+      ? {
+          ...populatedRoot,
+          id: String(populatedRoot._id),
+          isOwn:
+            String(populatedRoot.senderId?._id || populatedRoot.senderId) ===
+            userId,
+        }
+      : null;
+
+    // Real-time broadcast
+    this.messagesGateway.notifyThreadReply(
+      conversationId,
+      rootMessageId,
+      formattedReply,
+      formattedRoot,
+      conversation.participants.map(String),
+    );
+
+    // Notifications
+    if (this.notificationsService) {
+      const senderUser = await this.userModel.findById(userObjId).lean();
+      const senderDisplayName =
+        senderUser?.name?.trim() ||
+        (senderUser?.username ? `@${senderUser.username}` : 'Zeitnah Member');
+
+      // 1. Notify root message sender if not caller
+      const rootSenderId = String(rootMessage.senderId);
+      if (rootSenderId !== userId) {
+        try {
+          await this.notificationsService.createNotification({
+            recipientId: rootSenderId,
+            actorId: userId,
+            type: 'THREAD_REPLY',
+            category: 'network',
+            title: `${senderDisplayName} replied to your thread`,
+            message: dto.body.slice(0, 100),
+            targetUrl: `/messages?c=${conversationId}&m=${rootMessageId}&t=${reply._id}`,
+            actionUrl: `/messages?c=${conversationId}&m=${rootMessageId}&t=${reply._id}`,
+            idempotencyKey: `thread_reply_${reply._id}_${rootSenderId}`,
+            metadata: {
+              conversationId,
+              rootMessageId,
+              replyId: String(reply._id),
+            },
+          });
+        } catch {
+          // Safe fail
+        }
+      }
+
+      // 2. Notify mentioned users in thread
+      for (const m of validMentions) {
+        const mUserId = String(m.userId);
+        if (mUserId !== userId && mUserId !== rootSenderId) {
+          try {
+            await this.notificationsService.createNotification({
+              recipientId: mUserId,
+              actorId: userId,
+              type: 'MESSAGE_MENTION',
+              category: 'network',
+              title: `${senderDisplayName} mentioned you in a thread`,
+              message: dto.body.slice(0, 100),
+              targetUrl: `/messages?c=${conversationId}&m=${rootMessageId}&t=${reply._id}`,
+              actionUrl: `/messages?c=${conversationId}&m=${rootMessageId}&t=${reply._id}`,
+              idempotencyKey: `mention_${reply._id}_${mUserId}`,
+              metadata: {
+                conversationId,
+                rootMessageId,
+                replyId: String(reply._id),
+              },
+            });
+          } catch {
+            // Safe fail
+          }
+        }
+      }
+    }
+
+    return formattedReply;
+  }
+
+  /**
+   * Forward a message to one or multiple accessible conversations.
+   * Preserves privacy: does not expose source conversation ID or other participants.
+   */
+  async forwardMessage(userId: string, dto: ForwardMessageDto) {
+    const userObjId = this.toObjectId(userId);
+    const sourceMsgObjId = this.toObjectId(dto.sourceMessageId);
+
+    // 1. Validate source message access
+    const sourceMessage = await this.messageModel
+      .findById(sourceMsgObjId)
+      .populate('senderId', 'name username')
+      .lean();
+
+    if (!sourceMessage || sourceMessage.isDeleted) {
+      throw new NotFoundException(
+        'Source message not found or has been deleted.',
+      );
+    }
+
+    const sourceConv = await this.conversationModel
+      .findById(sourceMessage.conversationId)
+      .lean();
+    if (!sourceConv) {
+      throw new NotFoundException('Source conversation not found.');
+    }
+
+    const canAccessSource = (sourceConv.participants || []).some((p: any) =>
+      this.toObjectId(p).equals(userObjId),
+    );
+    if (
+      !canAccessSource ||
+      (sourceMessage.deletedFor || []).some((uid: any) =>
+        this.toObjectId(uid).equals(userObjId),
+      )
+    ) {
+      throw new ForbiddenException(
+        'Not authorized to access the source message.',
+      );
+    }
+
+    const originalSender = sourceMessage.senderId as any;
+    const originalSenderName =
+      originalSender?.name?.trim() ||
+      (originalSender?.username
+        ? `@${originalSender.username}`
+        : 'Zeitnah Member');
+
+    // 2. Validate target conversations
+    if (
+      !Array.isArray(dto.targetConversationIds) ||
+      dto.targetConversationIds.length === 0
+    ) {
+      throw new BadRequestException(
+        'At least one target conversation must be specified.',
+      );
+    }
+
+    if (dto.targetConversationIds.length > 10) {
+      throw new BadRequestException(
+        'Cannot forward to more than 10 conversations simultaneously.',
+      );
+    }
+
+    const targetObjIds = dto.targetConversationIds.map((id) =>
+      this.toObjectId(id),
+    );
+    const targetConvs = await this.conversationModel
+      .find({
+        _id: { $in: targetObjIds },
+        participants: userObjId,
+      })
+      .lean();
+
+    if (targetConvs.length !== targetObjIds.length) {
+      throw new ForbiddenException(
+        'You are not a participant in one or more target conversations.',
+      );
+    }
+
+    const forwardedMessages: any[] = [];
+
+    for (const targetConv of targetConvs) {
+      const targetConvId = String(targetConv._id);
+
+      // Create forwarded message
+      const fwdMsg = await this.messageModel.create({
+        conversationId: targetConv._id,
+        senderId: userObjId,
+        body: sourceMessage.body,
+        attachments: sourceMessage.attachments || [],
+        isForwarded: true,
+        forwardedFrom: {
+          originalSenderName,
+        },
+        status: MessageStatus.SENT,
+      });
+
+      // Update target conversation lastMessage
+      await this.conversationModel.updateOne(
+        { _id: targetConv._id },
+        {
+          $set: {
+            lastMessage: {
+              messageId: fwdMsg._id,
+              senderId: userObjId,
+              body: fwdMsg.body || 'Forwarded message',
+              createdAt: new Date(),
+              status: MessageStatus.SENT,
+            },
+            lastMessageAt: new Date(),
+          },
+        },
+      );
+
+      const populatedFwd = await this.messageModel
+        .findById(fwdMsg._id)
+        .populate('senderId', 'name username avatar primaryRole')
+        .lean();
+
+      this.messagesGateway.notifyNewMessage(
+        targetConvId,
+        populatedFwd,
+        (targetConv.participants || []).map(String),
+      );
+
+      forwardedMessages.push(populatedFwd);
+
+      // If user supplied an accompanying note, send it as a follow-up message
+      if (dto.note && dto.note.trim()) {
+        await this.sendMessage(userId, targetConvId, {
+          body: dto.note.trim(),
+        });
+      }
+    }
+
+    return {
+      success: true,
+      forwardedCount: forwardedMessages.length,
+      messages: forwardedMessages,
+    };
+  }
+
+  private async safePopulateConversation(
+    convObjId: Types.ObjectId,
+    fallback: any,
+  ) {
+    try {
+      const q: any = this.conversationModel.findById(convObjId);
+      if (q && typeof q.populate === 'function') {
+        const p1 = q.populate(
+          'participants',
+          'name username avatar primaryRole currentRole headline primaryDiscipline specializations privacySettings account_Status',
+        );
+        if (p1 && typeof p1.populate === 'function') {
+          const res = await p1
+            .populate('createdBy', 'name username avatar')
+            .lean();
+          if (res) return res;
+        } else if (p1 && typeof p1.lean === 'function') {
+          const res = await p1.lean();
+          if (res) return res;
+        }
+      }
+    } catch {
+      // Fallback
+    }
+    return fallback;
+  }
+
+  /**
+   * Add members to a group conversation (ADMIN only).
+   */
+  async addGroupMembers(
+    userId: string,
+    conversationId: string,
+    dto: AddGroupMembersDto,
+  ) {
+    const convObjId = this.toObjectId(conversationId);
+    const userObjId = this.toObjectId(userId);
+
+    const conversation = await this.conversationModel.findById(convObjId);
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found.');
+    }
+
+    if (conversation.type !== ConversationType.GROUP) {
+      throw new BadRequestException(
+        'Members can only be added to group conversations.',
+      );
+    }
+
+    const callerMember = conversation.members.find((m) =>
+      m.userId.equals(userObjId),
+    );
+    const isCreator = conversation.createdBy?.equals(userObjId);
+    const isAdmin = callerMember?.role === 'ADMIN' || isCreator;
+
+    if (!isAdmin) {
+      throw new ForbiddenException(
+        'Only group admins or the creator can add members.',
+      );
+    }
+
+    if (!Array.isArray(dto.userIds) || dto.userIds.length === 0) {
+      throw new BadRequestException('At least one user must be specified.');
+    }
+
+    const newUserObjIds = dto.userIds.map((id) => this.toObjectId(id));
+    const validUsers = await this.userModel
+      .find({ _id: { $in: newUserObjIds } })
+      .select('_id name username')
+      .lean();
+
+    let addedCount = 0;
+    const now = new Date();
+
+    validUsers.forEach((u) => {
+      const alreadyInParticipants = conversation.participants.some((p) =>
+        p.equals(u._id),
+      );
+      if (!alreadyInParticipants) {
+        conversation.participants.push(u._id);
+        conversation.members.push({
+          userId: u._id,
+          role: 'MEMBER',
+          joinedAt: now,
+          lastReadAt: now,
+          isArchived: false,
+          isDeletedFor: false,
+        });
+        addedCount++;
+      }
+    });
+
+    if (addedCount > 0) {
+      await conversation.save();
+    }
+
+    const populated = await this.safePopulateConversation(
+      convObjId,
+      conversation,
+    );
+    const formatted = this.formatConversation(
+      populated || conversation,
+      userId,
+      0,
+    );
+    this.messagesGateway.notifyConversationUpdated(
+      conversation.participants.map(String),
+      formatted,
+    );
+
+    return { success: true, addedCount, conversation: formatted };
+  }
+
+  /**
+   * Remove a member from a group (ADMIN only, or self-leave).
+   */
+  async removeGroupMember(
+    userId: string,
+    conversationId: string,
+    targetUserId: string,
+  ) {
+    if (userId === targetUserId) {
+      return this.leaveGroup(userId, conversationId);
+    }
+
+    const convObjId = this.toObjectId(conversationId);
+    const userObjId = this.toObjectId(userId);
+    const targetObjId = this.toObjectId(targetUserId);
+
+    const conversation = await this.conversationModel.findById(convObjId);
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found.');
+    }
+
+    if (conversation.type !== ConversationType.GROUP) {
+      throw new BadRequestException(
+        'Only group conversations have member removal.',
+      );
+    }
+
+    const callerMember = conversation.members.find((m) =>
+      m.userId.equals(userObjId),
+    );
+    const isCreator = conversation.createdBy?.equals(userObjId);
+    const isAdmin = callerMember?.role === 'ADMIN' || isCreator;
+
+    if (!isAdmin) {
+      throw new ForbiddenException(
+        'Only group admins or the creator can remove members.',
+      );
+    }
+
+    if (conversation.createdBy?.equals(targetObjId)) {
+      throw new ForbiddenException('Cannot remove the group creator.');
+    }
+
+    const prevParticipants = conversation.participants.map(String);
+
+    conversation.participants = conversation.participants.filter(
+      (p) => !p.equals(targetObjId),
+    );
+    conversation.members = conversation.members.filter(
+      (m) => !m.userId.equals(targetObjId),
+    );
+
+    await conversation.save();
+
+    const populated = await this.safePopulateConversation(
+      convObjId,
+      conversation,
+    );
+    const formatted = this.formatConversation(
+      populated || conversation,
+      userId,
+      0,
+    );
+    this.messagesGateway.notifyConversationUpdated(prevParticipants, formatted);
+
+    return { success: true, message: 'Member removed from group.' };
+  }
+
+  /**
+   * Update a member's role in a group (ADMIN only).
+   */
+  async updateGroupMemberRole(
+    userId: string,
+    conversationId: string,
+    targetUserId: string,
+    dto: UpdateGroupMemberRoleDto,
+  ) {
+    const convObjId = this.toObjectId(conversationId);
+    const userObjId = this.toObjectId(userId);
+    const targetObjId = this.toObjectId(targetUserId);
+
+    const conversation = await this.conversationModel.findById(convObjId);
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found.');
+    }
+
+    if (conversation.type !== ConversationType.GROUP) {
+      throw new BadRequestException(
+        'Roles can only be updated in group conversations.',
+      );
+    }
+
+    const callerMember = conversation.members.find((m) =>
+      m.userId.equals(userObjId),
+    );
+    const isCreator = conversation.createdBy?.equals(userObjId);
+    const isAdmin = callerMember?.role === 'ADMIN' || isCreator;
+
+    if (!isAdmin) {
+      throw new ForbiddenException(
+        'Only group admins or the creator can modify roles.',
+      );
+    }
+
+    if (conversation.createdBy?.equals(targetObjId) && dto.role !== 'ADMIN') {
+      throw new ForbiddenException('Cannot demote the group creator.');
+    }
+
+    const targetMember = conversation.members.find((m) =>
+      m.userId.equals(targetObjId),
+    );
+    if (!targetMember) {
+      throw new NotFoundException('Target user is not a member of this group.');
+    }
+
+    targetMember.role = dto.role;
+    await conversation.save();
+
+    const populated = await this.safePopulateConversation(
+      convObjId,
+      conversation,
+    );
+    const formatted = this.formatConversation(
+      populated || conversation,
+      userId,
+      0,
+    );
+    this.messagesGateway.notifyConversationUpdated(
+      conversation.participants.map(String),
+      formatted,
+    );
+
+    return { success: true, conversation: formatted };
+  }
+
+  /**
+   * Update group metadata: name, description, avatar (ADMIN only).
+   */
+  async updateGroupMetadata(
+    userId: string,
+    conversationId: string,
+    dto: UpdateGroupMetadataDto,
+  ) {
+    const convObjId = this.toObjectId(conversationId);
+    const userObjId = this.toObjectId(userId);
+
+    const conversation = await this.conversationModel.findById(convObjId);
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found.');
+    }
+
+    if (conversation.type !== ConversationType.GROUP) {
+      throw new BadRequestException(
+        'Metadata updates only apply to group conversations.',
+      );
+    }
+
+    const callerMember = conversation.members.find((m) =>
+      m.userId.equals(userObjId),
+    );
+    const isCreator = conversation.createdBy?.equals(userObjId);
+    const isAdmin = callerMember?.role === 'ADMIN' || isCreator;
+
+    if (!isAdmin) {
+      throw new ForbiddenException(
+        'Only group admins or the creator can update group details.',
+      );
+    }
+
+    if (dto.name !== undefined) {
+      conversation.name = dto.name.trim();
+    }
+    if (dto.description !== undefined) {
+      conversation.description = dto.description.trim();
+    }
+    if (dto.avatar !== undefined) {
+      conversation.avatar = dto.avatar.trim();
+    }
+
+    await conversation.save();
+
+    const populated = await this.safePopulateConversation(
+      convObjId,
+      conversation,
+    );
+    const formatted = this.formatConversation(
+      populated || conversation,
+      userId,
+      0,
+    );
+    this.messagesGateway.notifyConversationUpdated(
+      conversation.participants.map(String),
+      formatted,
+    );
+
+    return { success: true, conversation: formatted };
   }
 }

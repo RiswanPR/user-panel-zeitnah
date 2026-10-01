@@ -15,6 +15,7 @@ import {
   Globe,
   MessageSquare,
   Loader2,
+  AtSign,
 } from 'lucide-react';
 import { messagingService } from '../../services/messagingService';
 import { getUploadUrl } from '../../utils/courseUi';
@@ -35,6 +36,7 @@ export default function MessagingCommandPalette({
   onNewGroup,
   onSwitchTab,
   onFilterUnread,
+  onFilterMentions,
   onJumpToMessage,
 }) {
   const [query, setQuery] = useState('');
@@ -107,6 +109,20 @@ export default function MessagingCommandPalette({
         },
       },
       {
+        id: 'mentions',
+        type: 'action',
+        section: 'COMMANDS',
+        title: 'Open Mentions',
+        subtitle: 'View conversations where you were mentioned',
+        icon: AtSign,
+        color: 'text-brand-mint',
+        action: () => {
+          onClose();
+          onSwitchTab?.('chats');
+          onFilterMentions?.();
+        },
+      },
+      {
         id: 'requests',
         type: 'action',
         section: 'COMMANDS',
@@ -133,7 +149,7 @@ export default function MessagingCommandPalette({
         },
       },
     ],
-    [onClose, onNewChat, onNewGroup, onSwitchTab, onFilterUnread],
+    [onClose, onNewChat, onNewGroup, onSwitchTab, onFilterUnread, onFilterMentions],
   );
 
   // Global search across accessible conversations from backend

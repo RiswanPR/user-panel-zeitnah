@@ -60,6 +60,18 @@ export class MessageReadReceipt {
   readAt!: Date;
 }
 
+@Schema({ _id: false })
+export class MessageMention {
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  userId!: Types.ObjectId;
+
+  @Prop({ required: true })
+  username!: string;
+
+  @Prop({ default: '' })
+  name!: string;
+}
+
 @Schema({ timestamps: true, collection: 'messages' })
 export class Message {
   @Prop({
@@ -84,6 +96,36 @@ export class Message {
 
   @Prop({ type: [MessageReaction], default: [] })
   reactions!: MessageReaction[];
+
+  @Prop({ type: [MessageMention], default: [] })
+  mentions!: MessageMention[];
+
+  // ── Tier 3: Threads / Discussions ──
+  @Prop({ type: Types.ObjectId, ref: 'Message', default: null, index: true })
+  threadRootId?: Types.ObjectId | null;
+
+  @Prop({ type: Number, default: 0 })
+  threadReplyCount!: number;
+
+  @Prop({ type: Date, default: null })
+  threadLastReplyAt?: Date | null;
+
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], default: [] })
+  threadParticipants!: Types.ObjectId[];
+
+  // ── Tier 3: Message Forwarding ──
+  @Prop({ type: Boolean, default: false })
+  isForwarded!: boolean;
+
+  @Prop({
+    type: {
+      originalSenderName: { type: String, default: '' },
+    },
+    default: null,
+  })
+  forwardedFrom?: {
+    originalSenderName?: string;
+  } | null;
 
   @Prop({
     type: String,
@@ -128,3 +170,5 @@ MessageSchema.index({ conversationId: 1, createdAt: -1 });
 MessageSchema.index({ conversationId: 1, senderId: 1 });
 MessageSchema.index({ senderId: 1, createdAt: -1 });
 MessageSchema.index({ conversationId: 1, isPinned: 1 });
+MessageSchema.index({ threadRootId: 1, createdAt: 1 });
+MessageSchema.index({ 'mentions.userId': 1, createdAt: -1 });

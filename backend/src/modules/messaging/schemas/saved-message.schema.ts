@@ -11,7 +11,12 @@ export class SavedMessage {
   @Prop({ type: Types.ObjectId, ref: 'Message', required: true, index: true })
   messageId!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Conversation', required: true, index: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'Conversation',
+    required: true,
+    index: true,
+  })
   conversationId!: Types.ObjectId;
 
   @Prop({ type: Date, default: Date.now, index: true })

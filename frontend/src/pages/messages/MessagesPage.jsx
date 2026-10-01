@@ -27,6 +27,7 @@ export default function MessagesPage() {
   const queryTab = searchParams.get('tab') || 'chats';
 
   const [activeTab, setActiveTab] = useState(queryTab);
+  const [subFilter, setSubFilter] = useState('all');
   const [selectedConversationId, setSelectedConversationId] = useState(
     routeConvId || queryConvId || null,
   );
@@ -124,6 +125,8 @@ export default function MessagesPage() {
           onNewChat={() => setShowNewChatModal(true)}
           onNewGroup={() => setShowNewGroupModal(true)}
           onOpenCommandPalette={() => setShowCommandPalette(true)}
+          subFilter={subFilter}
+          onSubFilterChange={setSubFilter}
         />
       </div>
 
@@ -236,7 +239,14 @@ export default function MessagesPage() {
         onNewChat={() => setShowNewChatModal(true)}
         onNewGroup={() => setShowNewGroupModal(true)}
         onSwitchTab={handleTabChange}
-        onFilterUnread={() => handleTabChange('chats')}
+        onFilterUnread={() => {
+          handleTabChange('chats');
+          setSubFilter('unread');
+        }}
+        onFilterMentions={() => {
+          handleTabChange('chats');
+          setSubFilter('mentions');
+        }}
         onJumpToMessage={handleJumpToMessage}
       />
     </div>

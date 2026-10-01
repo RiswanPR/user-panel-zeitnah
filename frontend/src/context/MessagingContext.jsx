@@ -226,6 +226,19 @@ export const MessagingProvider = ({ children }) => {
         queryClient.invalidateQueries({ queryKey: ['messages', 'unread-counts'] });
       });
 
+      newSocket.on('thread_reply', (payload) => {
+        const { conversationId, rootMessageId } = payload || {};
+        queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+        queryClient.invalidateQueries({ queryKey: ['thread', conversationId, rootMessageId] });
+        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      });
+
+      newSocket.on('thread_activity', (payload) => {
+        const { conversationId, rootMessageId } = payload || {};
+        queryClient.invalidateQueries({ queryKey: ['thread', conversationId, rootMessageId] });
+        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      });
+
       let lastLogTime = 0;
       newSocket.on('connect_error', async (err) => {
         // If user is already logged out or token is gone, disconnect immediately without noise
@@ -366,6 +379,34 @@ export const MessagingProvider = ({ children }) => {
   }, [isUserOnline, getUserLastSeen]);
 
   const [targetMessageId, setTargetMessageId] = useState(null);
+  const [activeThreadRoot, setActiveThreadRoot] = useState(null);
+  const [forwardMessageTarget, setForwardMessageTarget] = useState(null);
+
+  const openThread = useCallback((rootMessage) => {
+    setActiveThreadRoot(rootMessage);
+  }, []);
+
+  const closeThread = useCallback(() => {
+    setActiveThreadRoot(null);
+  }, []);
+
+  const openForwardModal = useCallback((message) => {
+    setForwardMessageTarget(message);
+  }, []);
+
+  const closeForwardModal = useCallback(() => {
+    setForwardMessageTarget(null);
+  }, []);
+
+  // Auto-close thread if switching conversations
+  useEffect(() => {
+    if (activeThreadRoot) {
+      const threadConvId = String(activeThreadRoot.conversationId?._id || activeThreadRoot.conversationId);
+      if (activeConversationId && threadConvId !== String(activeConversationId)) {
+        setActiveThreadRoot(null);
+      }
+    }
+  }, [activeConversationId, activeThreadRoot]);
 
   const saveMessage = useCallback(async (messageId) => {
     if (!messageId) return;
@@ -425,6 +466,13 @@ export const MessagingProvider = ({ children }) => {
         currentUserId,
         targetMessageId,
         setTargetMessageId,
+        activeThreadRoot,
+        setActiveThreadRoot,
+        openThread,
+        closeThread,
+        forwardMessageTarget,
+        openForwardModal,
+        closeForwardModal,
         joinConversation,
         leaveConversation,
         sendTyping,

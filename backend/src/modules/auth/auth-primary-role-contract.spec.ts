@@ -3,10 +3,7 @@ import { JwtStrategy } from '../strategies/jwt.strategy';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { mapPrimaryRoleToLegacyRole } from '../profile/profile.service';
-import {
-  UserSchema,
-  normalizeLegacyRoleValue,
-} from './schemas/user.schema';
+import { UserSchema, normalizeLegacyRoleValue } from './schemas/user.schema';
 
 describe('Auth Primary Role Contract & Identity Regression Tests', () => {
   let jwtStrategy: JwtStrategy;
@@ -94,7 +91,9 @@ describe('Auth Primary Role Contract & Identity Regression Tests', () => {
       usernameClaimed: true,
       primaryRole: 'RECRUITER',
       role: 'recruiter',
-      course: [{ courseId: 'course_201', courseName: 'Geotechnical Soil Mechanics' }],
+      course: [
+        { courseId: 'course_201', courseName: 'Geotechnical Soil Mechanics' },
+      ],
       devices: [
         {
           deviceId: 'dev_recruiter',
@@ -225,7 +224,9 @@ describe('Auth Primary Role Contract & Identity Regression Tests', () => {
     expect(mapPrimaryRoleToLegacyRole('MENTOR')).toBe('student');
     // Admin legacy privilege is strictly preserved
     expect(mapPrimaryRoleToLegacyRole('STUDENT', 'admin')).toBe('admin');
-    expect(mapPrimaryRoleToLegacyRole('PROFESSIONAL', 'superuser')).toBe('superuser');
+    expect(mapPrimaryRoleToLegacyRole('PROFESSIONAL', 'superuser')).toBe(
+      'superuser',
+    );
   });
 
   it('TEST 12: Legacy accounts missing primaryRole fallback gracefully to canonical role', async () => {

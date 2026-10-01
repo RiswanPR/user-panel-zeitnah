@@ -1945,14 +1945,19 @@ export class NetworkService {
     }
 
     // Fallback: If clean is a 24-character hexadecimal ObjectId that was a connection document ID
-    if (!userDoc && Types.ObjectId.isValid(clean) && (this.userModel as any)?.db?.collection) {
+    if (
+      !userDoc &&
+      Types.ObjectId.isValid(clean) &&
+      (this.userModel as any)?.db?.collection
+    ) {
       try {
         const connDoc = await (this.userModel as any).db
           .collection('network_connections')
           .findOne({ _id: new Types.ObjectId(clean) });
         if (connDoc) {
           const peerId =
-            currentUserId && String(connDoc.requesterId) === String(currentUserId)
+            currentUserId &&
+            String(connDoc.requesterId) === String(currentUserId)
               ? connDoc.recipientId
               : connDoc.requesterId;
           if (peerId) {

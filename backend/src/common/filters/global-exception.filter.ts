@@ -141,8 +141,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         event: sanitizedUrl?.includes('/auth/refresh-token')
           ? 'SESSION_EXPIRED'
           : isRoutineTokenExpiry
-          ? 'TOKEN_EXPIRED'
-          : 'AUTH_FAILURE',
+            ? 'TOKEN_EXPIRED'
+            : 'AUTH_FAILURE',
         correlationId,
         method: request.method,
         endpoint: sanitizedUrl,

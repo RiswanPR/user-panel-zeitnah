@@ -106,7 +106,7 @@ export class MessagesGateway
   isUserOnline(userId: string): boolean {
     const sId = String(userId);
     return Boolean(
-      this.userSockets.get(sId)?.size && this.userSockets.get(sId)!.size > 0,
+      this.userSockets.get(sId)?.size && this.userSockets.get(sId).size > 0,
     );
   }
 
@@ -210,8 +210,37 @@ export class MessagesGateway
   }
 
   notifyConversationUpdated(participantIds: string[], conversation: any) {
+    if (!this.server) return;
     for (const pid of participantIds) {
       this.server.to(`user_${pid}`).emit('conversation_updated', conversation);
+    }
+  }
+
+  notifyThreadReply(
+    conversationId: string,
+    rootMessageId: string,
+    reply: any,
+    updatedRoot: any,
+    participantIds: string[],
+  ) {
+    if (!this.server) return;
+    this.server.to(`conversation_${conversationId}`).emit('thread_reply', {
+      conversationId,
+      rootMessageId,
+      reply,
+    });
+    if (updatedRoot) {
+      this.server.to(`conversation_${conversationId}`).emit('message_updated', {
+        conversationId,
+        message: updatedRoot,
+      });
+    }
+    for (const pid of participantIds) {
+      this.server.to(`user_${pid}`).emit('thread_activity', {
+        conversationId,
+        rootMessageId,
+        reply,
+      });
     }
   }
 }

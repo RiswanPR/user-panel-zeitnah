@@ -536,7 +536,11 @@ export class ProfileService {
 
     // 3. Fallback: If clean is a 24-character hexadecimal ObjectId that was not a user _id,
     // check if it is a network_connections relationship document ID
-    if (!user && Types.ObjectId.isValid(clean) && (this.userModel as any)?.db?.collection) {
+    if (
+      !user &&
+      Types.ObjectId.isValid(clean) &&
+      (this.userModel as any)?.db?.collection
+    ) {
       try {
         const connDoc = await (this.userModel as any).db
           .collection('network_connections')
@@ -1657,7 +1661,10 @@ export class ProfileService {
 
     const previousRole = targetUser.primaryRole;
     targetUser.primaryRole = normalizedRole;
-    targetUser.role = mapPrimaryRoleToLegacyRole(normalizedRole, targetUser.role);
+    targetUser.role = mapPrimaryRoleToLegacyRole(
+      normalizedRole,
+      targetUser.role,
+    );
     await targetUser.save();
 
     await this.auditLogsService.record({

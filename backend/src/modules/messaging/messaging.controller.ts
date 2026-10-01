@@ -13,7 +13,12 @@ import {
   UploadedFile,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiConsumes,
+} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { MessagingService } from './messaging.service';
@@ -30,6 +35,13 @@ import {
   MuteConversationDto,
   ArchiveConversationDto,
   ReportConversationDto,
+  QueryMentionSuggestionsDto,
+  CreateThreadReplyDto,
+  QueryThreadRepliesDto,
+  ForwardMessageDto,
+  AddGroupMembersDto,
+  UpdateGroupMemberRoleDto,
+  UpdateGroupMetadataDto,
 } from './dto/messaging.dto';
 
 interface AuthenticatedRequest {
@@ -204,7 +216,11 @@ export class MessagingController {
     @Param('id') id: string,
     @Param('messageId') messageId: string,
   ) {
-    return this.messagingService.unpinMessage(this.getUserId(req), id, messageId);
+    return this.messagingService.unpinMessage(
+      this.getUserId(req),
+      id,
+      messageId,
+    );
   }
 
   @Post('conversations/:id/request/accept')
@@ -344,5 +360,124 @@ export class MessagingController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     return this.messagingService.uploadAttachment(this.getUserId(req), file);
+  }
+
+  // ── Tier 3 Endpoints ──
+
+  @Get('conversations/:id/mention-suggestions')
+  @ApiOperation({ summary: 'Get mention suggestions for conversation' })
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  async getMentionSuggestions(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Query() query: QueryMentionSuggestionsDto,
+  ) {
+    return this.messagingService.getMentionSuggestions(
+      this.getUserId(req),
+      id,
+      query,
+    );
+  }
+
+  @Get('conversations/:id/threads/:rootMessageId')
+  @ApiOperation({ summary: 'Get thread discussion replies' })
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  async getThreadReplies(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Param('rootMessageId') rootMessageId: string,
+    @Query() query: QueryThreadRepliesDto,
+  ) {
+    return this.messagingService.getThreadReplies(
+      this.getUserId(req),
+      id,
+      rootMessageId,
+      query,
+    );
+  }
+
+  @Post('conversations/:id/threads/:rootMessageId/reply')
+  @ApiOperation({ summary: 'Post a reply to a thread discussion' })
+  @Throttle({ default: { limit: 45, ttl: 60000 } })
+  async createThreadReply(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Param('rootMessageId') rootMessageId: string,
+    @Body() dto: CreateThreadReplyDto,
+  ) {
+    return this.messagingService.createThreadReply(
+      this.getUserId(req),
+      id,
+      rootMessageId,
+      dto,
+    );
+  }
+
+  @Post('forward')
+  @ApiOperation({ summary: 'Forward message to one or multiple conversations' })
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  async forwardMessage(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: ForwardMessageDto,
+  ) {
+    return this.messagingService.forwardMessage(this.getUserId(req), dto);
+  }
+
+  @Post('conversations/:id/members')
+  @ApiOperation({ summary: 'Add members to a group conversation' })
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  async addGroupMembers(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() dto: AddGroupMembersDto,
+  ) {
+    return this.messagingService.addGroupMembers(this.getUserId(req), id, dto);
+  }
+
+  @Delete('conversations/:id/members/:userId')
+  @ApiOperation({ summary: 'Remove a member from a group conversation' })
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  async removeGroupMember(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Param('userId') targetUserId: string,
+  ) {
+    return this.messagingService.removeGroupMember(
+      this.getUserId(req),
+      id,
+      targetUserId,
+    );
+  }
+
+  @Patch('conversations/:id/members/:userId/role')
+  @ApiOperation({ summary: 'Update a group member role' })
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  async updateGroupMemberRole(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Param('userId') targetUserId: string,
+    @Body() dto: UpdateGroupMemberRoleDto,
+  ) {
+    return this.messagingService.updateGroupMemberRole(
+      this.getUserId(req),
+      id,
+      targetUserId,
+      dto,
+    );
+  }
+
+  @Patch('conversations/:id/metadata')
+  @ApiOperation({ summary: 'Update group conversation metadata' })
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  async updateGroupMetadata(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() dto: UpdateGroupMetadataDto,
+  ) {
+    return this.messagingService.updateGroupMetadata(
+      this.getUserId(req),
+      id,
+      dto,
+    );
   }
 }

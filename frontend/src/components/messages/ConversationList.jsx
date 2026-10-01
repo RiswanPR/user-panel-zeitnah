@@ -122,10 +122,15 @@ export default function ConversationList({
     };
   }, []);
 
+  const effectiveTab =
+    activeTab === 'chats' && currentSubFilter === 'mentions'
+      ? 'mentions'
+      : activeTab;
+
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['conversations', { tab: activeTab, q: debouncedQuery }],
+    queryKey: ['conversations', { tab: effectiveTab, q: debouncedQuery }],
     queryFn: () =>
-      messagingService.getConversations({ tab: activeTab, q: debouncedQuery }),
+      messagingService.getConversations({ tab: effectiveTab, q: debouncedQuery }),
     staleTime: 1000 * 10,
     refetchOnWindowFocus: false,
   });
@@ -334,7 +339,7 @@ export default function ConversationList({
           </div>
         </div>
 
-        {/* ── Subfilter Chips (All, Unread, Direct, Groups) ── */}
+        {/* ── Subfilter Chips (All, Unread, Mentions, Direct, Groups) ── */}
         {activeTab === 'chats' && (
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5">
             {[
@@ -344,6 +349,7 @@ export default function ConversationList({
                 label: 'Unread',
                 count: unreadChatsCount,
               },
+              { id: 'mentions', label: '@ Mentions' },
               { id: 'direct', label: 'Direct' },
               { id: 'groups', label: 'Groups' },
             ].map((f) => {
@@ -631,6 +637,26 @@ export default function ConversationList({
                           className="w-3 h-3 text-text-faint"
                           aria-label="Muted conversation"
                         />
+                      )}
+                      {lastMsg?.mentions?.some(
+                        (m) =>
+                          String(m.userId?._id || m.userId?.id || m.userId) ===
+                          String(currentUserId),
+                      ) && (
+                        <span
+                          className="px-1.5 py-0.5 rounded-full bg-brand-mint/15 text-brand-mint border border-brand-mint/30 font-mono text-[9px] font-bold"
+                          title="You were mentioned in this conversation"
+                        >
+                          @
+                        </span>
+                      )}
+                      {lastMsg?.threadReplyCount > 0 && (
+                        <span
+                          className="px-1.5 py-0.5 rounded-full bg-white/[0.06] text-text-muted font-mono text-[9px] flex items-center gap-0.5"
+                          title={`${lastMsg.threadReplyCount} replies in thread`}
+                        >
+                          💬 {lastMsg.threadReplyCount}
+                        </span>
                       )}
                       {unreadCount > 0 && (
                         <span className="min-w-4 h-4 px-1.5 rounded-full bg-brand-mint text-bg-base text-[10px] font-extrabold flex items-center justify-center shadow-sm">

@@ -1171,7 +1171,9 @@ export const UserSchema = SchemaFactory.createForClass(User);
  *   - primaryRole is trimmed and uppercased
  *   - Inferred primaryRole if missing
  */
-export function normalizeLegacyRoleValue(roleValue?: string): string | undefined {
+export function normalizeLegacyRoleValue(
+  roleValue?: string,
+): string | undefined {
   if (!roleValue || typeof roleValue !== 'string') return roleValue;
   const raw = roleValue.trim().toLowerCase();
   switch (raw) {
@@ -1201,7 +1203,8 @@ UserSchema.pre('validate', function () {
     const cleanRole = String(this.role).trim().toLowerCase();
     if (cleanRole === 'teacher') this.primaryRole = 'EDUCATOR';
     else if (cleanRole === 'recruiter') this.primaryRole = 'RECRUITER';
-    else if (cleanRole === 'admin' || cleanRole === 'superuser') this.primaryRole = 'ADMIN';
+    else if (cleanRole === 'admin' || cleanRole === 'superuser')
+      this.primaryRole = 'ADMIN';
     else this.primaryRole = 'STUDENT';
   }
 });

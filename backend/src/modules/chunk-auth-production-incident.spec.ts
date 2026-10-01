@@ -12,8 +12,14 @@ describe('Zeitnah Pre-Phase 9 — Chunk Load & Auth Incident Verification Suite'
   // ─────────────────────────────────────────────────────────────
   describe('Item 1: Dynamic Chunk Loading Recovery (NetworkPage & Lazy Routes)', () => {
     it('✓ lazyWithRetry.jsx and ChunkLoadRecoveryFallback.jsx must physically exist', () => {
-      const lazyWithRetryPath = path.join(frontendDir, 'src/utils/lazyWithRetry.jsx');
-      const fallbackPath = path.join(frontendDir, 'src/components/common/ChunkLoadRecoveryFallback.jsx');
+      const lazyWithRetryPath = path.join(
+        frontendDir,
+        'src/utils/lazyWithRetry.jsx',
+      );
+      const fallbackPath = path.join(
+        frontendDir,
+        'src/components/common/ChunkLoadRecoveryFallback.jsx',
+      );
 
       expect(fs.existsSync(lazyWithRetryPath)).toBe(true);
       expect(fs.existsSync(fallbackPath)).toBe(true);
@@ -53,13 +59,32 @@ describe('Zeitnah Pre-Phase 9 — Chunk Load & Auth Incident Verification Suite'
       expect(isChunkLoadError(prodError1)).toBe(true);
 
       // Other browser variations:
-      expect(isChunkLoadError(new Error('error loading dynamically imported module'))).toBe(true);
-      expect(isChunkLoadError(new Error('Importing a module script failed.'))).toBe(true);
-      expect(isChunkLoadError({ name: 'ChunkLoadError', message: 'Loading chunk 404 failed.' })).toBe(true);
+      expect(
+        isChunkLoadError(
+          new Error('error loading dynamically imported module'),
+        ),
+      ).toBe(true);
+      expect(
+        isChunkLoadError(new Error('Importing a module script failed.')),
+      ).toBe(true);
+      expect(
+        isChunkLoadError({
+          name: 'ChunkLoadError',
+          message: 'Loading chunk 404 failed.',
+        }),
+      ).toBe(true);
 
       // Non-chunk errors must NOT be falsely identified
-      expect(isChunkLoadError(new ReferenceError('AdminBusinessReviewPage is not defined'))).toBe(false);
-      expect(isChunkLoadError(new TypeError("Cannot read properties of undefined (reading 'map')"))).toBe(false);
+      expect(
+        isChunkLoadError(
+          new ReferenceError('AdminBusinessReviewPage is not defined'),
+        ),
+      ).toBe(false);
+      expect(
+        isChunkLoadError(
+          new TypeError("Cannot read properties of undefined (reading 'map')"),
+        ),
+      ).toBe(false);
     });
 
     it('✓ App.jsx must import NetworkPage using lazyWithRetry', () => {
@@ -67,9 +92,15 @@ describe('Zeitnah Pre-Phase 9 — Chunk Load & Auth Incident Verification Suite'
       expect(fs.existsSync(appJsxPath)).toBe(true);
       const content = fs.readFileSync(appJsxPath, 'utf8');
 
-      expect(content).toContain('import { lazyWithRetry } from "./utils/lazyWithRetry";');
-      expect(content).toMatch(/const NetworkPage\s*=\s*lazyWithRetry\(\(\)\s*=>\s*import\(['"]\.\/pages\/network\/NetworkPage['"]\)\);/);
-      expect(content).toContain('<Route path="/network" element={<Suspense fallback={<PageLoader />}><NetworkPage /></Suspense>} />');
+      expect(content).toContain(
+        'import { lazyWithRetry } from "./utils/lazyWithRetry";',
+      );
+      expect(content).toMatch(
+        /const NetworkPage\s*=\s*lazyWithRetry\(\(\)\s*=>\s*import\(['"]\.\/pages\/network\/NetworkPage['"]\)\);/,
+      );
+      expect(content).toContain(
+        '<Route path="/network" element={<Suspense fallback={<PageLoader />}><NetworkPage /></Suspense>} />',
+      );
     });
 
     it('✓ All 32 lazy-loaded route views in App.jsx must physically exist on disk', () => {
@@ -86,7 +117,12 @@ describe('Zeitnah Pre-Phase 9 — Chunk Load & Auth Incident Verification Suite'
         const fullJsx = path.join(frontendDir, 'src', `${relImport}.jsx`);
         const fullTsx = path.join(frontendDir, 'src', `${relImport}.tsx`);
         const fullJs = path.join(frontendDir, 'src', `${relImport}.js`);
-        const fullIndexJsx = path.join(frontendDir, 'src', relImport, 'index.jsx');
+        const fullIndexJsx = path.join(
+          frontendDir,
+          'src',
+          relImport,
+          'index.jsx',
+        );
 
         const exists =
           fs.existsSync(fullJsx) ||
@@ -94,13 +130,22 @@ describe('Zeitnah Pre-Phase 9 — Chunk Load & Auth Incident Verification Suite'
           fs.existsSync(fullJs) ||
           fs.existsSync(fullIndexJsx);
 
-        expect({ importPath: relImport, exists }).toEqual({ importPath: relImport, exists: true });
+        expect({ importPath: relImport, exists }).toEqual({
+          importPath: relImport,
+          exists: true,
+        });
       }
     });
 
     it('✓ GlobalErrorBoundary and FeatureErrorBoundary must intercept chunk errors and never show generic error modal', () => {
-      const globalBoundaryPath = path.join(frontendDir, 'src/components/GlobalErrorBoundary.jsx');
-      const featureBoundaryPath = path.join(frontendDir, 'src/components/common/FeatureErrorBoundary.jsx');
+      const globalBoundaryPath = path.join(
+        frontendDir,
+        'src/components/GlobalErrorBoundary.jsx',
+      );
+      const featureBoundaryPath = path.join(
+        frontendDir,
+        'src/components/common/FeatureErrorBoundary.jsx',
+      );
 
       const globalContent = fs.readFileSync(globalBoundaryPath, 'utf8');
       expect(globalContent).toContain('isChunkLoadError');
@@ -150,7 +195,9 @@ describe('Zeitnah Pre-Phase 9 — Chunk Load & Auth Incident Verification Suite'
         }),
       };
 
-      const unauthException = new UnauthorizedException('Refresh token expired');
+      const unauthException = new UnauthorizedException(
+        'Refresh token expired',
+      );
       filter.catch(unauthException, mockArgumentsHost);
 
       expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.UNAUTHORIZED);
@@ -186,18 +233,28 @@ describe('Zeitnah Pre-Phase 9 — Chunk Load & Auth Incident Verification Suite'
       expect(content).toContain('status === 401 || status === 403');
       expect(content).toContain('safely idempotent');
       // No token is logged in plain text
-      expect(content).not.toMatch(/console\.(log|warn|error)\([^)]*accessToken/);
+      expect(content).not.toMatch(
+        /console\.(log|warn|error)\([^)]*accessToken/,
+      );
     });
 
     it('✓ AuthContext must invoke removePushTokenFromBackend before session revocation in logout()', () => {
-      const authContextPath = path.join(frontendDir, 'src/context/AuthContext.tsx');
+      const authContextPath = path.join(
+        frontendDir,
+        'src/context/AuthContext.tsx',
+      );
       const content = fs.readFileSync(authContextPath, 'utf8');
 
       // Verify removePushTokenFromBackend is called BEFORE api.post('/auth/logout')
-      const removeIndex = content.indexOf('nativeNotifications.removePushTokenFromBackend');
+      const removeIndex = content.indexOf(
+        'nativeNotifications.removePushTokenFromBackend',
+      );
       const logoutApiIndex = content.indexOf("api.post('/auth/logout')");
-      const logoutApiDoubleQuoteIndex = content.indexOf('api.post("/auth/logout")');
-      const actualApiIndex = logoutApiIndex !== -1 ? logoutApiIndex : logoutApiDoubleQuoteIndex;
+      const logoutApiDoubleQuoteIndex = content.indexOf(
+        'api.post("/auth/logout")',
+      );
+      const actualApiIndex =
+        logoutApiIndex !== -1 ? logoutApiIndex : logoutApiDoubleQuoteIndex;
 
       expect(removeIndex).toBeGreaterThan(0);
       expect(actualApiIndex).toBeGreaterThan(0);
@@ -210,20 +267,33 @@ describe('Zeitnah Pre-Phase 9 — Chunk Load & Auth Incident Verification Suite'
   // ─────────────────────────────────────────────────────────────
   describe('Item 4: Socket.IO Connection & Logout Cleanup', () => {
     it('✓ NotificationContext and MessagingContext must listen to zeitnah:auth:logout', () => {
-      const notifContextPath = path.join(frontendDir, 'src/context/NotificationContext.jsx');
-      const msgContextPath = path.join(frontendDir, 'src/context/MessagingContext.jsx');
+      const notifContextPath = path.join(
+        frontendDir,
+        'src/context/NotificationContext.jsx',
+      );
+      const msgContextPath = path.join(
+        frontendDir,
+        'src/context/MessagingContext.jsx',
+      );
 
       const notifContent = fs.readFileSync(notifContextPath, 'utf8');
-      expect(notifContent).toContain("window.addEventListener('zeitnah:auth:logout'");
+      expect(notifContent).toContain(
+        "window.addEventListener('zeitnah:auth:logout'",
+      );
       expect(notifContent).toContain('newSocket.disconnect()');
 
       const msgContent = fs.readFileSync(msgContextPath, 'utf8');
-      expect(msgContent).toContain("window.addEventListener('zeitnah:auth:logout'");
+      expect(msgContent).toContain(
+        "window.addEventListener('zeitnah:auth:logout'",
+      );
       expect(msgContent).toContain('newSocket.disconnect()');
     });
 
     it('✓ Socket connect_error handler must handle xhr poll error on 401 cleanly', () => {
-      const notifContextPath = path.join(frontendDir, 'src/context/NotificationContext.jsx');
+      const notifContextPath = path.join(
+        frontendDir,
+        'src/context/NotificationContext.jsx',
+      );
       const notifContent = fs.readFileSync(notifContextPath, 'utf8');
 
       expect(notifContent).toContain("err.message === 'xhr poll error'");
@@ -236,7 +306,10 @@ describe('Zeitnah Pre-Phase 9 — Chunk Load & Auth Incident Verification Suite'
   // ─────────────────────────────────────────────────────────────
   describe('Item 5: Production Build Asset Verification Script', () => {
     it('✓ verify-build-assets.mjs must exist and be registered in package.json', () => {
-      const scriptPath = path.join(frontendDir, 'scripts/verify-build-assets.mjs');
+      const scriptPath = path.join(
+        frontendDir,
+        'scripts/verify-build-assets.mjs',
+      );
       expect(fs.existsSync(scriptPath)).toBe(true);
 
       const pkgJsonPath = path.join(frontendDir, 'package.json');

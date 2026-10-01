@@ -53,6 +53,9 @@ export class Conversation {
   @Prop({ default: '', trim: true })
   name!: string;
 
+  @Prop({ default: '', trim: true, maxlength: 500 })
+  description?: string;
+
   @Prop({ default: '' })
   avatar!: string;
 

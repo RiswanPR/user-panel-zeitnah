@@ -9,7 +9,10 @@ import {
 import { MessagingService } from './messaging/messaging.service';
 import { ModerationService } from './moderation/moderation.service';
 import { MessagesGateway } from './messaging/messages.gateway';
-import { Conversation, ConversationType } from './messaging/schemas/conversation.schema';
+import {
+  Conversation,
+  ConversationType,
+} from './messaging/schemas/conversation.schema';
 import { Message } from './messaging/schemas/message.schema';
 import { SavedMessage } from './messaging/schemas/saved-message.schema';
 import { User } from './auth/schemas/user.schema';
@@ -69,7 +72,11 @@ describe('Messaging Tier 2 — Intelligence, Saved & Pinned Messages, and Search
       findOne: jest.fn().mockResolvedValue(null),
       find: jest.fn().mockImplementation(() => makeQuery([])),
       create: jest.fn().mockImplementation((dto) =>
-        Promise.resolve({ _id: new Types.ObjectId(), savedAt: new Date(), ...dto }),
+        Promise.resolve({
+          _id: new Types.ObjectId(),
+          savedAt: new Date(),
+          ...dto,
+        }),
       ),
       deleteOne: jest.fn().mockResolvedValue({ deletedCount: 1 }),
       countDocuments: jest.fn().mockResolvedValue(0),
@@ -96,11 +103,20 @@ describe('Messaging Tier 2 — Intelligence, Saved & Pinned Messages, and Search
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MessagingService,
-        { provide: getModelToken(Conversation.name), useValue: mockConversationModel },
+        {
+          provide: getModelToken(Conversation.name),
+          useValue: mockConversationModel,
+        },
         { provide: getModelToken(Message.name), useValue: mockMessageModel },
-        { provide: getModelToken(SavedMessage.name), useValue: mockSavedMessageModel },
+        {
+          provide: getModelToken(SavedMessage.name),
+          useValue: mockSavedMessageModel,
+        },
         { provide: getModelToken(User.name), useValue: mockUserModel },
-        { provide: getModelToken(NetworkConnection.name), useValue: mockConnectionModel },
+        {
+          provide: getModelToken(NetworkConnection.name),
+          useValue: mockConnectionModel,
+        },
         { provide: ModerationService, useValue: mockModerationService },
         { provide: MessagesGateway, useValue: mockMessagesGateway },
       ],
@@ -126,7 +142,10 @@ describe('Messaging Tier 2 — Intelligence, Saved & Pinned Messages, and Search
       mockConversationModel.findById.mockImplementation(() =>
         makeQuery({
           _id: convId,
-          participants: [new Types.ObjectId(userAId), new Types.ObjectId(userBId)],
+          participants: [
+            new Types.ObjectId(userAId),
+            new Types.ObjectId(userBId),
+          ],
         }),
       );
 
@@ -152,7 +171,10 @@ describe('Messaging Tier 2 — Intelligence, Saved & Pinned Messages, and Search
       mockConversationModel.findById.mockImplementation(() =>
         makeQuery({
           _id: convId,
-          participants: [new Types.ObjectId(userAId), new Types.ObjectId(userBId)],
+          participants: [
+            new Types.ObjectId(userAId),
+            new Types.ObjectId(userBId),
+          ],
         }),
       );
 
@@ -189,7 +211,10 @@ describe('Messaging Tier 2 — Intelligence, Saved & Pinned Messages, and Search
       mockConversationModel.findById.mockResolvedValue({
         _id: convId,
         type: ConversationType.DIRECT,
-        participants: [new Types.ObjectId(userAId), new Types.ObjectId(userBId)],
+        participants: [
+          new Types.ObjectId(userAId),
+          new Types.ObjectId(userBId),
+        ],
       });
 
       mockMessageModel.findById.mockImplementation((id: any) => {
@@ -201,7 +226,11 @@ describe('Messaging Tier 2 — Intelligence, Saved & Pinned Messages, and Search
 
       mockMessageModel.findById.mockReturnValue(mockMsgDoc);
 
-      const res = await messagingService.pinMessage(userAId, convId.toString(), msgId.toString());
+      const res = await messagingService.pinMessage(
+        userAId,
+        convId.toString(),
+        msgId.toString(),
+      );
       expect(saveFn).toHaveBeenCalled();
       expect(mockMsgDoc.isPinned).toBe(true);
     });
@@ -235,7 +264,11 @@ describe('Messaging Tier 2 — Intelligence, Saved & Pinned Messages, and Search
       mockMessageModel.findById.mockReturnValue(mockMsgDoc);
 
       await expect(
-        messagingService.pinMessage(userAId, convId.toString(), msgId.toString()),
+        messagingService.pinMessage(
+          userAId,
+          convId.toString(),
+          msgId.toString(),
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -269,7 +302,11 @@ describe('Messaging Tier 2 — Intelligence, Saved & Pinned Messages, and Search
 
       mockMessageModel.findById.mockReturnValue(mockMsgDoc);
 
-      const res = await messagingService.pinMessage(userAId, convId.toString(), msgId.toString());
+      const res = await messagingService.pinMessage(
+        userAId,
+        convId.toString(),
+        msgId.toString(),
+      );
       expect(mockMsgDoc.isPinned).toBe(true);
       expect(saveFn).toHaveBeenCalled();
     });
@@ -298,7 +335,10 @@ describe('Messaging Tier 2 — Intelligence, Saved & Pinned Messages, and Search
           {
             _id: new Types.ObjectId(),
             conversationId: accessibleConvId,
-            senderId: { _id: new Types.ObjectId(userBId), name: 'Sarah Connor' },
+            senderId: {
+              _id: new Types.ObjectId(userBId),
+              name: 'Sarah Connor',
+            },
             body: 'Here is the project architecture roadmap',
             createdAt: new Date(),
           },
@@ -348,10 +388,14 @@ describe('Messaging Tier 2 — Intelligence, Saved & Pinned Messages, and Search
       mockMessageModel.findOne.mockImplementation(() => makeQuery(targetMsg));
       mockMessageModel.find.mockImplementation(() => makeQuery([]));
 
-      const res = await messagingService.getMessages(userAId, convId.toString(), {
-        around: targetId.toString(),
-        limit: 20,
-      });
+      const res = await messagingService.getMessages(
+        userAId,
+        convId.toString(),
+        {
+          around: targetId.toString(),
+          limit: 20,
+        },
+      );
 
       expect(res.targetMessageId).toBe(targetId.toString());
       expect(res.messages.some((m) => m.id === targetId.toString())).toBe(true);
@@ -364,7 +408,10 @@ describe('Messaging Tier 2 — Intelligence, Saved & Pinned Messages, and Search
       mockConversationModel.findById.mockImplementation(() =>
         makeQuery({
           _id: convId,
-          participants: [new Types.ObjectId(userBId), new Types.ObjectId(strangerId)],
+          participants: [
+            new Types.ObjectId(userBId),
+            new Types.ObjectId(strangerId),
+          ],
         }),
       );
 
@@ -396,7 +443,10 @@ describe('Messaging Tier 2 — Intelligence, Saved & Pinned Messages, and Search
         ]),
       );
 
-      const res = await messagingService.getPinnedMessages(userAId, convId.toString());
+      const res = await messagingService.getPinnedMessages(
+        userAId,
+        convId.toString(),
+      );
       expect(res).toBeDefined();
       expect(Array.isArray(res.pinned)).toBe(true);
       expect(res.count).toBe(1);

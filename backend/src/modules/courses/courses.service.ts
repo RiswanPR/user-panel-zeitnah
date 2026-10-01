@@ -197,7 +197,9 @@ export class CoursesService {
 
     (course.chapters || []).forEach((chapter: any) => {
       chapter.classes?.forEach((cls: any) => {
-        const classId = cls._id ? cls._id.toString() : String(cls.classId || '');
+        const classId = cls._id
+          ? cls._id.toString()
+          : String(cls.classId || '');
 
         classIds.add(classId);
         durationByClassId.set(

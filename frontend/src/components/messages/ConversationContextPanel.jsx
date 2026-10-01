@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
   X,
@@ -20,6 +20,11 @@ import {
   Pin,
   Globe,
   ArrowRight,
+  UserPlus,
+  Shield,
+  MoreVertical,
+  Edit3,
+  Trash2,
 } from 'lucide-react';
 import { messagingService } from '../../services/messagingService';
 import { getUploadUrl } from '../../utils/courseUi';
@@ -35,6 +40,9 @@ import {
 } from '../../utils/messagingIdentity';
 import { getCanonicalProfileUrl } from '../../utils/roleNavigation';
 import { useMessaging } from '../../context/MessagingContext';
+import { useToast } from '../ui/Toast';
+import AddGroupMemberModal from './AddGroupMemberModal';
+import EditGroupModal from './EditGroupModal';
 
 function formatFileSize(bytes) {
   if (!bytes || bytes === 0) return '';
@@ -89,6 +97,52 @@ export default function ConversationContextPanel({
     if (Array.isArray(rawPinnedData)) return rawPinnedData;
     return [];
   }, [rawPinnedData]);
+
+  const [memberSearchQuery, setMemberSearchQuery] = useState('');
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [showEditGroupModal, setShowEditGroupModal] = useState(false);
+  const [activeMemberActionMenuId, setActiveMemberActionMenuId] = useState(null);
+  const queryClient = useQueryClient();
+  const toast = useToast();
+
+  const isCallerAdmin =
+    conversation?.isAdmin ||
+    conversation?.callerRole === 'ADMIN' ||
+    (conversation?.createdBy && String(conversation.createdBy) === String(currentUserId));
+
+  const handleUpdateRole = async (targetUserId, newRole) => {
+    try {
+      await messagingService.updateGroupMemberRole(convId, targetUserId, newRole);
+      toast.success('Role Updated', `Member role updated to ${newRole}.`);
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['conversation', convId] });
+      setActiveMemberActionMenuId(null);
+    } catch (err) {
+      toast.error('Failed to update role', err.response?.data?.message || 'Action failed');
+    }
+  };
+
+  const handleRemoveMember = async (targetUserId, targetName) => {
+    try {
+      await messagingService.removeGroupMember(convId, targetUserId);
+      toast.success('Member Removed', `${targetName} removed from group.`);
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['conversation', convId] });
+      setActiveMemberActionMenuId(null);
+    } catch (err) {
+      toast.error('Failed to remove member', err.response?.data?.message || 'Action failed');
+    }
+  };
+
+  const filteredMembers = useMemo(() => {
+    if (!memberSearchQuery.trim()) return groupParticipants;
+    const q = memberSearchQuery.toLowerCase();
+    return groupParticipants.filter((p) => {
+      const name = (getUserDisplayName(p) || '').toLowerCase();
+      const uname = (p?.username || '').toLowerCase();
+      return name.includes(q) || uname.includes(q);
+    });
+  }, [groupParticipants, memberSearchQuery]);
 
   const otherUser = isDirect
     ? getOtherParticipant(conversation, currentUserId)
@@ -282,9 +336,26 @@ export default function ConversationContextPanel({
             )}
 
             {!isDirect && (
-              <p className="text-xs text-text-muted">
-                {conversation?.participants?.length || 0} participants in workspace
-              </p>
+              <div className="space-y-1.5 pt-1">
+                <p className="text-xs text-text-muted">
+                  {conversation?.participants?.length || 0} participants in workspace
+                </p>
+                {conversation?.description && (
+                  <p className="text-xs text-slate-300 leading-relaxed px-2.5 py-1.5 bg-white/[0.03] rounded-lg border border-white/5 italic">
+                    "{conversation.description}"
+                  </p>
+                )}
+                {isCallerAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => setShowEditGroupModal(true)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 transition-colors"
+                  >
+                    <Edit3 className="w-3 h-3" />
+                    <span>Edit Group Details</span>
+                  </button>
+                )}
+              </div>
             )}
           </div>
 
@@ -434,73 +505,168 @@ export default function ConversationContextPanel({
 
           {/* 0. Group Members Tab (Group Chats) */}
           {!isDirect && activeMediaTab === 'members' && (
-            groupParticipants.length === 0 ? (
-              <div className="p-6 text-center text-xs text-text-muted bg-white/[0.01] rounded-2xl border border-white/[0.04]">
-                <Users className="w-5 h-5 mx-auto mb-1.5 opacity-30 text-brand-mint" />
-                <span>No group members listed</span>
+            <div className="space-y-2.5" role="tabpanel">
+              {/* Member Search and Add Member Bar */}
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={memberSearchQuery}
+                    onChange={(e) => setMemberSearchQuery(e.target.value)}
+                    placeholder="Search members…"
+                    className="w-full pl-8 pr-2.5 py-1.5 bg-white/[0.03] border border-white/10 rounded-lg text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                  />
+                </div>
+                {isCallerAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAddMemberModal(true)}
+                    className="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>Add</span>
+                  </button>
+                )}
               </div>
-            ) : (
-              <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1" role="tabpanel">
-                {groupParticipants.map((p, idx) => {
-                  const name = getUserDisplayName(p);
-                  const pId = getUserId(p);
-                  const isMe = pId === String(currentUserId);
-                  const pAvatar = p?.avatar ? getUploadUrl(p.avatar) : null;
-                  const pOnline = isUserOnline(pId);
-                  const role = p?.role || p?.primaryRole || 'STUDENT';
 
-                  return (
-                    <div
-                      key={pId || idx}
-                      className="p-2 rounded-xl bg-white/[0.02] border border-white/[0.04] flex items-center justify-between gap-2"
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="relative shrink-0">
-                          <div className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center overflow-hidden text-brand-mint text-[11px] font-bold">
-                            {pAvatar ? (
-                              <img src={pAvatar} alt={name} className="w-full h-full object-cover" />
-                            ) : (
-                              <span>{getInitials(name)}</span>
+              {filteredMembers.length === 0 ? (
+                <div className="p-6 text-center text-xs text-text-muted bg-white/[0.01] rounded-2xl border border-white/[0.04]">
+                  <Users className="w-5 h-5 mx-auto mb-1.5 opacity-30 text-brand-mint" />
+                  <span>No matching members</span>
+                </div>
+              ) : (
+                <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+                  {filteredMembers.map((p, idx) => {
+                    const name = getUserDisplayName(p);
+                    const pId = getUserId(p);
+                    const isMe = pId === String(currentUserId);
+                    const pAvatar = p?.avatar ? getUploadUrl(p.avatar) : null;
+                    const pOnline = isUserOnline(pId);
+                    const role = p?.role || p?.primaryRole || 'STUDENT';
+
+                    const memberRecord = (conversation?.members || []).find(
+                      (m) => String(m.userId) === pId,
+                    );
+                    const isCreator =
+                      conversation?.createdBy &&
+                      String(conversation.createdBy) === pId;
+                    const isMemberAdmin = isCreator || memberRecord?.role === 'ADMIN';
+
+                    return (
+                      <div
+                        key={pId || idx}
+                        className="p-2 rounded-xl bg-white/[0.02] border border-white/[0.04] flex items-center justify-between gap-2"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="relative shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center overflow-hidden text-brand-mint text-[11px] font-bold">
+                              {pAvatar ? (
+                                <img
+                                  src={pAvatar}
+                                  alt={name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span>{getInitials(name)}</span>
+                              )}
+                            </div>
+                            {pOnline && (
+                              <span
+                                className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#0A0F1A] bg-brand-mint"
+                                title="Online now"
+                              />
                             )}
                           </div>
-                          {pOnline && (
-                            <span
-                              className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#0A0F1A] bg-brand-mint"
-                              title="Online now"
-                            />
+
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <p className="text-xs font-semibold text-white truncate">
+                                {name}
+                              </p>
+                              {isMe && (
+                                <span className="text-[10px] text-brand-mint font-bold">
+                                  (You)
+                                </span>
+                              )}
+                              {isCreator ? (
+                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/10 border border-amber-500/20 text-amber-400 uppercase font-mono font-bold tracking-wider">
+                                  Owner
+                                </span>
+                              ) : isMemberAdmin ? (
+                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 uppercase font-mono font-bold tracking-wider">
+                                  Admin
+                                </span>
+                              ) : null}
+                            </div>
+                            <EcosystemRoleBadge role={role} size="xs" />
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          {/* Admin action menu */}
+                          {isCallerAdmin && !isMe && !isCreator && (
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setActiveMemberActionMenuId(
+                                    activeMemberActionMenuId === pId ? null : pId,
+                                  )
+                                }
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                                title="Manage member"
+                              >
+                                <MoreVertical className="w-3.5 h-3.5" />
+                              </button>
+
+                              {activeMemberActionMenuId === pId && (
+                                <div className="absolute right-0 top-full mt-1 w-36 bg-[#161822] border border-white/10 rounded-xl shadow-xl py-1 z-30 divide-y divide-white/5 text-xs">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleUpdateRole(
+                                        pId,
+                                        isMemberAdmin ? 'MEMBER' : 'ADMIN',
+                                      )
+                                    }
+                                    className="w-full text-left px-3 py-1.5 text-slate-300 hover:bg-white/5 transition-colors flex items-center gap-2"
+                                  >
+                                    <Shield className="w-3.5 h-3.5 text-emerald-400" />
+                                    <span>
+                                      {isMemberAdmin ? 'Make Member' : 'Make Admin'}
+                                    </span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveMember(pId, name)}
+                                    className="w-full text-left px-3 py-1.5 text-rose-400 hover:bg-rose-500/10 transition-colors flex items-center gap-2"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    <span>Remove</span>
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {!isMe && p && (
+                            <Link
+                              to={getCanonicalProfileUrl(p)}
+                              className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors"
+                              title={`View ${name}'s profile`}
+                              aria-label={`View ${name}'s profile`}
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </Link>
                           )}
                         </div>
-
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-xs font-semibold text-white truncate">
-                              {name}
-                            </p>
-                            {isMe && (
-                              <span className="text-[10px] text-brand-mint font-bold">
-                                (You)
-                              </span>
-                            )}
-                          </div>
-                          <EcosystemRoleBadge role={role} size="xs" />
-                        </div>
                       </div>
-
-                      {!isMe && p && (
-                        <Link
-                          to={getCanonicalProfileUrl(p)}
-                          className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors"
-                          title={`View ${name}'s profile`}
-                          aria-label={`View ${name}'s profile`}
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </Link>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           )}
 
           {/* 1. Pinned Tab */}
@@ -707,6 +873,19 @@ export default function ConversationContextPanel({
           )}
         </div>
       </div>
+
+      {/* ── Modals ── */}
+      <AddGroupMemberModal
+        isOpen={showAddMemberModal}
+        conversation={conversation}
+        onClose={() => setShowAddMemberModal(false)}
+      />
+
+      <EditGroupModal
+        isOpen={showEditGroupModal}
+        conversation={conversation}
+        onClose={() => setShowEditGroupModal(false)}
+      />
     </aside>
   );
 }
