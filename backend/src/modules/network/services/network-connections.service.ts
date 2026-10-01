@@ -614,8 +614,10 @@ export class NetworkConnectionsService {
         const rawPeer = isRequester ? c.recipientId : c.requesterId;
         const peer = await this.formatPopulatedUser(rawPeer);
         return {
-          _id: c._id,
-          id: String(c._id),
+          _id: peer._id || c._id,
+          id: peer.id || String(peer._id || c._id),
+          userId: peer.id || String(peer._id || ''),
+          connectionId: String(c._id),
           connectedSince: c.updatedAt || c.createdAt,
           peer,
           // Flatten peer properties for components expecting top-level fields
@@ -663,6 +665,7 @@ export class NetworkConnectionsService {
         const requester = await this.formatPopulatedUser(req.requesterId);
         return {
           ...req,
+          connectionId: String(req._id),
           requesterId: requester,
           requester,
         };
@@ -674,6 +677,7 @@ export class NetworkConnectionsService {
         const recipient = await this.formatPopulatedUser(req.recipientId);
         return {
           ...req,
+          connectionId: String(req._id),
           recipientId: recipient,
           recipient,
         };
@@ -723,6 +727,11 @@ export class NetworkConnectionsService {
       existing.requesterId = reqObjId;
       existing.recipientId = recObjId;
       await existing.save();
+      Object.assign(existing, {
+        connectionId: String(existing._id),
+        state: 'outgoing_pending',
+        success: true,
+      });
       return existing;
     }
 
@@ -752,6 +761,11 @@ export class NetworkConnectionsService {
       })
       .catch(() => {});
 
+    Object.assign(newConnection, {
+      connectionId: String(newConnection._id),
+      state: 'outgoing_pending',
+      success: true,
+    });
     return newConnection;
   }
 
@@ -804,7 +818,16 @@ export class NetworkConnectionsService {
     const connObjId = this.toObjectId(connectionId);
     const userObjId = this.toObjectId(userId);
 
-    const connection = await this.connectionModel.findById(connObjId);
+    let connection = await this.connectionModel.findById(connObjId);
+    if (!connection) {
+      // Fallback: Check if connectionId passed was actually the other participant's userId
+      const [uLow, uHigh] = this.getOrderedUserIds(connectionId, userId);
+      connection = await this.connectionModel.findOne({
+        userLow: uLow,
+        userHigh: uHigh,
+      });
+    }
+
     if (!connection) {
       throw new NotFoundException('Connection not found.');
     }
@@ -818,7 +841,7 @@ export class NetworkConnectionsService {
       );
     }
 
-    await this.connectionModel.deleteOne({ _id: connObjId });
+    await this.connectionModel.deleteOne({ _id: connection._id });
     return { success: true, message: 'Connection removed.' };
   }
 }

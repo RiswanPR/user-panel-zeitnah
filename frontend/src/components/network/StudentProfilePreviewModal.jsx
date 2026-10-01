@@ -16,7 +16,7 @@ import {
 import { getUploadUrl } from "../../utils/courseUi";
 import RelationshipAction from "./RelationshipAction";
 import EcosystemRoleBadge from "./EcosystemRoleBadge";
-import { normalizeUserRole } from "../../utils/roleNavigation";
+import { normalizeUserRole, getCanonicalProfileUrl, getProfileIdentifier } from "../../utils/roleNavigation";
 
 function getInitials(name) {
   if (!name) return "Z";
@@ -136,7 +136,11 @@ export default function StudentProfilePreviewModal({
         {/* Profile Header */}
         <div className="flex items-start gap-4">
           <div className="relative h-16 w-16 shrink-0">
-            <div className="h-16 w-16 rounded-2xl border border-brand-mint/30 bg-[#070B14] flex items-center justify-center overflow-hidden shadow-inner">
+            <Link
+              to={getCanonicalProfileUrl(student)}
+              onClick={onClose}
+              className="h-16 w-16 rounded-2xl border border-brand-mint/30 bg-[#070B14] flex items-center justify-center overflow-hidden shadow-inner hover:border-brand-mint/60 transition-colors block"
+            >
               {avatarSrc ? (
                 <img
                   src={avatarSrc}
@@ -148,7 +152,7 @@ export default function StudentProfilePreviewModal({
                   {initials}
                 </span>
               )}
-            </div>
+            </Link>
             {student.isVerified && (
               <div
                 className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand-mint text-black shadow-sm"
@@ -161,18 +165,28 @@ export default function StudentProfilePreviewModal({
 
           <div className="min-w-0 flex-1 pr-6">
             <div className="flex items-center gap-2">
-              <h2
-                id="preview-student-name"
-                className="text-lg sm:text-xl font-heading font-extrabold text-white truncate"
+              <Link
+                to={getCanonicalProfileUrl(student)}
+                onClick={onClose}
+                className="hover:underline hover:text-brand-mint transition-colors truncate block"
               >
-                {student.name}
-              </h2>
+                <h2
+                  id="preview-student-name"
+                  className="text-lg sm:text-xl font-heading font-extrabold text-white hover:text-brand-mint truncate transition-colors"
+                >
+                  {student.name}
+                </h2>
+              </Link>
             </div>
 
             {student.username && (
-              <p className="text-xs font-mono text-text-muted mt-0.5">
+              <Link
+                to={getCanonicalProfileUrl(student)}
+                onClick={onClose}
+                className="text-xs font-mono text-text-muted hover:text-brand-mint transition-colors mt-0.5 block truncate"
+              >
                 @{student.username}
-              </p>
+              </Link>
             )}
 
             {student.headline && (
@@ -300,9 +314,9 @@ export default function StudentProfilePreviewModal({
           )}
 
           {/* View Full Profile Link */}
-          {student.username && (
+          {getProfileIdentifier(student) && (
             <Link
-              to={`/network/profile/${encodeURIComponent(student.username)}`}
+              to={getCanonicalProfileUrl(student)}
               className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.1] bg-white/[0.04] py-2.5 px-4 text-xs font-semibold text-white hover:bg-white/[0.08] hover:border-brand-mint/30 transition-all cursor-pointer focus-ring"
             >
               <span>Full Profile</span>

@@ -7,6 +7,7 @@ import {
   Calendar,
 } from "lucide-react";
 import RelationshipAction from "./RelationshipAction";
+import { getCanonicalProfileUrl, getProfileIdentifier } from "../../utils/roleNavigation";
 
 /**
  * Formats ISO date into a human readable connection date.
@@ -103,19 +104,21 @@ export default function ConnectionCard({
 
           {/* Name & Username */}
           <div className="min-w-0 flex-1">
-            <button
-              type="button"
-              onClick={() => onPreview?.(student)}
+            <Link
+              to={getCanonicalProfileUrl(student)}
               className="block text-left group/link focus-ring rounded w-full"
             >
               <h3 className="truncate text-base font-heading font-bold text-white group-hover/link:text-brand-mint transition-colors">
                 {student.name}
               </h3>
-            </button>
+            </Link>
             {student.username && (
-              <p className="truncate text-xs font-mono text-text-muted">
+              <Link
+                to={getCanonicalProfileUrl(student)}
+                className="truncate text-xs font-mono text-text-muted hover:text-brand-mint transition-colors block"
+              >
                 @{student.username}
-              </p>
+              </Link>
             )}
           </div>
         </div>
@@ -163,10 +166,10 @@ export default function ConnectionCard({
             variant="compact"
           />
 
-          {/* Direct Link to /network/profile/:username */}
-          {student.username && (
+          {/* Direct Link to canonical profile */}
+          {getProfileIdentifier(student) && (
             <Link
-              to={`/network/profile/${encodeURIComponent(student.username)}`}
+              to={getCanonicalProfileUrl(student)}
               aria-label={`Open ${student.name}'s profile`}
               className="flex items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] p-2 text-text-muted hover:border-brand-mint/30 hover:bg-white/[0.06] hover:text-white transition-all focus-ring"
               title="Open full profile"

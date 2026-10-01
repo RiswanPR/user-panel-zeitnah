@@ -1,5 +1,5 @@
 import React, { Suspense } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { QueryClientProvider } from '@tanstack/react-query';
 import queryClient from "./services/queryClient";
 
@@ -73,6 +73,15 @@ const PageLoader = () => (
     </p>
   </div>
 );
+
+/**
+ * Canonical profile redirect: seamlessly forwards /network/profile/:username to /u/:username
+ */
+function NetworkProfileRedirect() {
+  const { username } = useParams();
+  return <Navigate to={`/u/${encodeURIComponent(username || "")}`} replace />;
+}
+
 
 
 import { nativeApp, initDeepLinks } from "./native";
@@ -168,7 +177,7 @@ function App() {
                 <Route path="/leaderboard" element={<Suspense fallback={<PageLoader />}><Leaderboard /></Suspense>} />
                 <Route path="/leaderboard/:courseId" element={<Suspense fallback={<PageLoader />}><Leaderboard /></Suspense>} />
                 <Route path="/network" element={<Suspense fallback={<PageLoader />}><NetworkPage /></Suspense>} />
-                <Route path="/network/profile/:username" element={<Suspense fallback={<PageLoader />}><NetworkProfilePage /></Suspense>} />
+                <Route path="/network/profile/:username" element={<NetworkProfileRedirect />} />
                 <Route path="/network/spaces/:slugOrId" element={<Suspense fallback={<PageLoader />}><LearningSpaceDetailPage /></Suspense>} />
                 <Route path="/network/spaces/:slugOrId/discussions/:discussionId" element={<Suspense fallback={<PageLoader />}><DiscussionDetailPage /></Suspense>} />
                 <Route path="/messages" element={<Suspense fallback={<PageLoader />}><MessagesPage /></Suspense>} />

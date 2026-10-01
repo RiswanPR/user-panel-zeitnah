@@ -1911,11 +1911,16 @@ export class NetworkService {
     const clean = rawUsername.trim().replace(/^@/, '');
     let userDoc: UserDocument | null = null;
 
+    const activeUserFilter = {
+      'account_Status.isBlocked': { $ne: true },
+      'account_Status.isDeleted': { $ne: true },
+    };
+
     if (Types.ObjectId.isValid(clean)) {
       userDoc = await this.userModel
         .findOne({
           _id: new Types.ObjectId(clean),
-          ...this.getEligibleStudentFilter(),
+          ...activeUserFilter,
         })
         .exec();
     }
@@ -1924,9 +1929,44 @@ export class NetworkService {
       userDoc = await this.userModel
         .findOne({
           username: clean.toLowerCase(),
-          ...this.getEligibleStudentFilter(),
+          ...activeUserFilter,
         })
         .exec();
+
+      if (!userDoc) {
+        const escaped = clean.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        userDoc = await this.userModel
+          .findOne({
+            username: { $regex: new RegExp(`^${escaped}$`, 'i') },
+            ...activeUserFilter,
+          })
+          .exec();
+      }
+    }
+
+    // Fallback: If clean is a 24-character hexadecimal ObjectId that was a connection document ID
+    if (!userDoc && Types.ObjectId.isValid(clean) && (this.userModel as any)?.db?.collection) {
+      try {
+        const connDoc = await (this.userModel as any).db
+          .collection('network_connections')
+          .findOne({ _id: new Types.ObjectId(clean) });
+        if (connDoc) {
+          const peerId =
+            currentUserId && String(connDoc.requesterId) === String(currentUserId)
+              ? connDoc.recipientId
+              : connDoc.requesterId;
+          if (peerId) {
+            userDoc = await this.userModel
+              .findOne({
+                _id: peerId,
+                ...activeUserFilter,
+              })
+              .exec();
+          }
+        }
+      } catch {
+        // Fallback silently if collection lookup fails
+      }
     }
 
     if (!userDoc) {

@@ -24,6 +24,69 @@ import InfrastructurePeopleFilters from "./InfrastructurePeopleFilters";
 import SendMessageRequestModal from "./SendMessageRequestModal";
 import StudentProfilePreviewModal from "./StudentProfilePreviewModal";
 import NetworkSearch from "./NetworkSearch";
+import { getCanonicalProfileUrl } from "../../utils/roleNavigation";
+
+/**
+ * Premium skeleton matching InfrastructurePeopleCard layout
+ */
+function PeopleCardSkeleton() {
+  return (
+    <div className="relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-[#0A0F14]/90 p-5 shadow-xl animate-pulse">
+      <div>
+        {/* Header: Avatar + Identity */}
+        <div className="flex items-start gap-3.5">
+          <div className="h-13 w-13 rounded-2xl bg-white/[0.06] shrink-0" />
+          <div className="min-w-0 flex-1 space-y-2 pt-0.5">
+            <div className="h-4 w-3/5 rounded bg-white/[0.08]" />
+            <div className="h-3 w-2/5 rounded bg-white/[0.04]" />
+            <div className="h-4 w-24 rounded-full bg-white/[0.05]" />
+          </div>
+        </div>
+
+        {/* Headline / Role */}
+        <div className="mt-4 space-y-2">
+          <div className="h-3 w-4/5 rounded bg-white/[0.06]" />
+          <div className="h-3 w-2/3 rounded bg-white/[0.04]" />
+        </div>
+
+        {/* Skills pill placeholders */}
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          <div className="h-5 w-16 rounded-md bg-white/[0.04]" />
+          <div className="h-5 w-20 rounded-md bg-white/[0.04]" />
+          <div className="h-5 w-14 rounded-md bg-white/[0.04]" />
+        </div>
+      </div>
+
+      {/* Footer Actions */}
+      <div className="mt-6 flex items-center gap-2 pt-4 border-t border-white/[0.06]">
+        <div className="h-8 flex-1 rounded-xl bg-white/[0.06]" />
+        <div className="h-8 w-24 rounded-xl bg-white/[0.04]" />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Clean skeleton for Connections / Followers / Following cards
+ */
+function ConnectionCardSkeleton() {
+  return (
+    <div className="p-5 rounded-2xl bg-[#0A0F14] border border-white/[0.08] flex flex-col justify-between gap-3 animate-pulse">
+      <div className="flex items-start gap-3.5 min-w-0">
+        <div className="w-12 h-12 rounded-2xl bg-white/[0.06] shrink-0" />
+        <div className="min-w-0 flex-1 space-y-2 pt-0.5">
+          <div className="h-3.5 w-3/4 rounded bg-white/[0.08]" />
+          <div className="h-2.5 w-1/2 rounded bg-white/[0.04]" />
+          <div className="h-2.5 w-2/3 rounded bg-white/[0.04]" />
+        </div>
+      </div>
+      <div className="pt-3 border-t border-white/[0.04] flex items-center justify-between">
+        <div className="h-3 w-24 rounded bg-white/[0.04]" />
+        <div className="h-7 w-20 rounded-xl bg-white/[0.06]" />
+      </div>
+    </div>
+  );
+}
 
 /**
  * Format integer count with locale commas
@@ -59,7 +122,11 @@ const VALID_TABS = ["people", "discover", "connections", "followers", "following
  * - Requests inbox view with Accept/Decline and Pending/Cancel.
  * - Integrated standardized NetworkSearch and InfrastructurePeopleFilters.
  */
-export default function NetworkConnections({ defaultTab = "people" }) {
+export default function NetworkConnections({
+  defaultTab = "people",
+  searchQuery: externalSearchQuery,
+  onSearchChange: externalOnSearchChange,
+}) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const toast = useToast();
@@ -76,8 +143,16 @@ export default function NetworkConnections({ defaultTab = "people" }) {
   const subTab = resolvedSub === "discover" ? "people" : resolvedSub;
 
   const [requestsSubTab, setRequestsSubTab] = useState("incoming"); // 'incoming' | 'outgoing'
-  const [searchQuery, setSearchQuery] = useState("");
-  const debouncedSearch = useDebounce(searchQuery, 300);
+  const [internalSearchQuery, setInternalSearchQuery] = useState("");
+  const activeSearch = externalSearchQuery !== undefined ? externalSearchQuery : internalSearchQuery;
+  const debouncedSearch = useDebounce(activeSearch, 300);
+
+  const handleSearchChange = (val) => {
+    setInternalSearchQuery(val);
+    externalOnSearchChange?.(val);
+    setPage(1);
+  };
+
   const [confirmRemoveId, setConfirmRemoveId] = useState(null);
 
   const [infraFilters, setInfraFilters] = useState({
@@ -270,7 +345,7 @@ export default function NetworkConnections({ defaultTab = "people" }) {
     countsData?.outgoingRequestsCount ?? requestsQuery.data?.outgoing?.length ?? 0;
 
   const handleTabChange = (newTab) => {
-    setSearchQuery("");
+    handleSearchChange("");
     setPage(1);
     setConfirmRemoveId(null);
     setSearchParams(
@@ -494,16 +569,17 @@ export default function NetworkConnections({ defaultTab = "people" }) {
           })}
         </div>
 
-        {/* Search for connections / followers / following */}
-        {subTab !== "requests" && subTab !== "people" && (
-          <div className="w-full sm:w-72">
+        {/* Search for people / connections / followers / following */}
+        {subTab !== "requests" && (
+          <div className="w-full sm:w-80">
             <NetworkSearch
-              value={searchQuery}
-              onChange={(val) => {
-                setSearchQuery(val);
-                setPage(1);
-              }}
-              placeholder={`Search ${subTab}...`}
+              value={activeSearch}
+              onChange={handleSearchChange}
+              placeholder={
+                subTab === "people"
+                  ? "Search by name, role, skill, or company..."
+                  : `Search ${subTab}...`
+              }
               size="sm"
             />
           </div>
@@ -555,10 +631,7 @@ export default function NetworkConnections({ defaultTab = "people" }) {
           {peopleQuery.isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div
-                  key={i}
-                  className="h-64 rounded-2xl bg-[#0A0F14] border border-white/[0.04] animate-pulse"
-                />
+                <PeopleCardSkeleton key={i} />
               ))}
             </div>
           ) : peopleQuery.isError ? (
@@ -582,33 +655,49 @@ export default function NetworkConnections({ defaultTab = "people" }) {
                 <Compass className="w-7 h-7" />
               </div>
               <h3 className="font-heading font-bold text-lg text-white">
-                No matching infrastructure candidates
+                {debouncedSearch
+                  ? "No candidates matching your search"
+                  : "No matching infrastructure candidates"}
               </h3>
               <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                Try clearing or adjusting disciplines, sectors, or software tags.
+                {debouncedSearch
+                  ? `No members found matching "${debouncedSearch}". Try resetting search or adjusting filters.`
+                  : "Try clearing or adjusting disciplines, sectors, or software tags."}
               </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchQuery("");
-                  setInfraFilters({
-                    role: "all",
-                    discipline: "",
-                    specialization: "",
-                    sector: "",
-                    software: "",
-                    skill: "",
-                    experience: "",
-                    location: "",
-                    institution: "",
-                    company: "",
-                  });
-                  setPage(1);
-                }}
-                className="mt-4 px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-white transition-colors cursor-pointer"
-              >
-                Reset All Filters
-              </button>
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleSearchChange("");
+                    setInfraFilters({
+                      role: "all",
+                      discipline: "",
+                      specialization: "",
+                      sector: "",
+                      software: "",
+                      skill: "",
+                      experience: "",
+                      location: "",
+                      institution: "",
+                      company: "",
+                    });
+                    setPage(1);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-white transition-colors cursor-pointer"
+                >
+                  Reset All Filters
+                </button>
+                {activeSearch && (
+                  <button
+                    type="button"
+                    onClick={() => handleSearchChange("")}
+                    className="px-4 py-2 rounded-xl bg-brand-mint/10 text-brand-mint border border-brand-mint/30 hover:bg-brand-mint/20 text-xs font-bold transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span>Clear Search</span>
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -672,10 +761,7 @@ export default function NetworkConnections({ defaultTab = "people" }) {
           {connectionsQuery.isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div
-                  key={i}
-                  className="h-36 rounded-2xl bg-[#0A0F14] border border-white/[0.04] animate-pulse"
-                />
+                <ConnectionCardSkeleton key={i} />
               ))}
             </div>
           ) : connectionsQuery.isError ? (
@@ -703,7 +789,16 @@ export default function NetworkConnections({ defaultTab = "people" }) {
                   ? "No connections found matching your search."
                   : "Connect with classmates, peers, and mentors to expand your learning network."}
               </p>
-              {!debouncedSearch && (
+              {debouncedSearch ? (
+                <button
+                  type="button"
+                  onClick={() => handleSearchChange("")}
+                  className="mt-4 px-4 py-2 rounded-xl bg-brand-mint/10 text-brand-mint border border-brand-mint/30 hover:bg-brand-mint/20 text-xs font-bold transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Clear Search</span>
+                </button>
+              ) : (
                 <button
                   type="button"
                   onClick={() => handleTabChange("people")}
@@ -718,8 +813,7 @@ export default function NetworkConnections({ defaultTab = "people" }) {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {(connectionsQuery.data?.data || []).map((conn) => {
                 const connId = conn.id || conn._id;
-                const identifier = conn.username || connId || "";
-                const profileLink = `/network/profile/${encodeURIComponent(identifier)}`;
+                const profileLink = getCanonicalProfileUrl(conn);
 
                 return (
                   <div
@@ -859,10 +953,7 @@ export default function NetworkConnections({ defaultTab = "people" }) {
           {followersQuery.isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div
-                  key={i}
-                  className="h-36 rounded-2xl bg-[#0A0F14] border border-white/[0.04] animate-pulse"
-                />
+                <ConnectionCardSkeleton key={i} />
               ))}
             </div>
           ) : followersQuery.isError ? (
@@ -886,14 +977,25 @@ export default function NetworkConnections({ defaultTab = "people" }) {
                 {debouncedSearch ? "No matching followers" : "No followers yet"}
               </h3>
               <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                When fellow students and mentors follow your learning journey, they appear here.
+                {debouncedSearch
+                  ? "No followers found matching your search."
+                  : "When fellow students and mentors follow your learning journey, they appear here."}
               </p>
+              {debouncedSearch && (
+                <button
+                  type="button"
+                  onClick={() => handleSearchChange("")}
+                  className="mt-4 px-4 py-2 rounded-xl bg-brand-mint/10 text-brand-mint border border-brand-mint/30 hover:bg-brand-mint/20 text-xs font-bold transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Clear Search</span>
+                </button>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {(followersQuery.data?.data || []).map((user) => {
-                const identifier = user.username || user.id || user._id || "";
-                const profileLink = `/network/profile/${encodeURIComponent(identifier)}`;
+                const profileLink = getCanonicalProfileUrl(user);
                 const isFollowing = Boolean(user.isFollowing);
 
                 return (
@@ -991,10 +1093,7 @@ export default function NetworkConnections({ defaultTab = "people" }) {
           {followingQuery.isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div
-                  key={i}
-                  className="h-36 rounded-2xl bg-[#0A0F14] border border-white/[0.04] animate-pulse"
-                />
+                <ConnectionCardSkeleton key={i} />
               ))}
             </div>
           ) : followingQuery.isError ? (
@@ -1020,7 +1119,16 @@ export default function NetworkConnections({ defaultTab = "people" }) {
               <p className="text-xs text-text-muted mt-1 leading-relaxed">
                 Follow peers, faculty, and industry leaders to see their contributions.
               </p>
-              {!debouncedSearch && (
+              {debouncedSearch ? (
+                <button
+                  type="button"
+                  onClick={() => handleSearchChange("")}
+                  className="mt-4 px-4 py-2 rounded-xl bg-brand-mint/10 text-brand-mint border border-brand-mint/30 hover:bg-brand-mint/20 text-xs font-bold transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Clear Search</span>
+                </button>
+              ) : (
                 <button
                   type="button"
                   onClick={() => handleTabChange("people")}
@@ -1034,8 +1142,7 @@ export default function NetworkConnections({ defaultTab = "people" }) {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {(followingQuery.data?.data || []).map((user) => {
-                const identifier = user.username || user.id || user._id || "";
-                const profileLink = `/network/profile/${encodeURIComponent(identifier)}`;
+                const profileLink = getCanonicalProfileUrl(user);
 
                 return (
                   <div
@@ -1169,9 +1276,8 @@ export default function NetworkConnections({ defaultTab = "people" }) {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {(requestsQuery.data?.incoming || []).map((req) => {
-                    const requester = req.requesterId || {};
-                    const identifier = requester.username || requester.id || requester._id || "";
-                    const profileLink = `/network/profile/${encodeURIComponent(identifier)}`;
+                    const requester = req.requester || req.requesterId || {};
+                    const profileLink = getCanonicalProfileUrl(requester);
 
                     return (
                       <div
@@ -1265,9 +1371,8 @@ export default function NetworkConnections({ defaultTab = "people" }) {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {(requestsQuery.data?.outgoing || []).map((req) => {
-                    const recipient = req.recipientId || {};
-                    const identifier = recipient.username || recipient.id || recipient._id || "";
-                    const profileLink = `/network/profile/${encodeURIComponent(identifier)}`;
+                    const recipient = req.recipient || req.recipientId || {};
+                    const profileLink = getCanonicalProfileUrl(recipient);
 
                     return (
                       <div

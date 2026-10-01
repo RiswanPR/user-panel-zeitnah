@@ -520,6 +520,41 @@ export class ProfileService {
             'account_Status.isBlocked': { $ne: true },
           })
           .select(projection);
+
+        if (!user) {
+          const escaped = sanitized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          user = await this.userModel
+            .findOne({
+              username: { $regex: new RegExp(`^${escaped}$`, 'i') },
+              'account_Status.isDeleted': { $ne: true },
+              'account_Status.isBlocked': { $ne: true },
+            })
+            .select(projection);
+        }
+      }
+    }
+
+    // 3. Fallback: If clean is a 24-character hexadecimal ObjectId that was not a user _id,
+    // check if it is a network_connections relationship document ID
+    if (!user && Types.ObjectId.isValid(clean) && (this.userModel as any)?.db?.collection) {
+      try {
+        const connDoc = await (this.userModel as any).db
+          .collection('network_connections')
+          .findOne({ _id: new Types.ObjectId(clean) });
+        if (connDoc) {
+          const peerUserId = connDoc.recipientId || connDoc.requesterId;
+          if (peerUserId) {
+            user = await this.userModel
+              .findOne({
+                _id: peerUserId,
+                'account_Status.isDeleted': { $ne: true },
+                'account_Status.isBlocked': { $ne: true },
+              })
+              .select(projection);
+          }
+        }
+      } catch {
+        // Fallback silently if collection lookup fails
       }
     }
 

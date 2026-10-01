@@ -7,6 +7,8 @@ import {
   getPrimaryCareerNavigation,
   getPrimaryNavLinks,
   getMoreNavSections,
+  getProfileIdentifier,
+  getCanonicalProfileUrl,
 } from './roleNavigation.js';
 import { getProfessionalContext } from './messagingIdentity.js';
 
@@ -322,6 +324,72 @@ describe('Role Navigation Logic & Regression Tests', () => {
       assert.equal(allowedRoles.includes(normalizeUserRole({ primaryRole: 'PROFESSIONAL' })), false);
       assert.equal(allowedRoles.includes(normalizeUserRole({ primaryRole: 'MENTOR' })), false);
       assert.equal(allowedRoles.includes(normalizeUserRole({ primaryRole: 'EDUCATOR' })), false);
+    });
+  });
+
+  describe('Canonical Profile Routing Resolution', () => {
+    it('prefers username over raw IDs', () => {
+      assert.equal(getProfileIdentifier({ username: 'rahulk', id: '6ab3b5f1f762d65012683b82' }), 'rahulk');
+      assert.equal(getCanonicalProfileUrl({ username: 'rahulk', id: '6ab3b5f1f762d65012683b82' }), '/u/rahulk');
+    });
+
+    it('strips leading @ from handles', () => {
+      assert.equal(getProfileIdentifier('@rahulk'), 'rahulk');
+      assert.equal(getCanonicalProfileUrl('@rahulk'), '/u/rahulk');
+    });
+
+    it('unpacks nested peer and requester/recipient objects without using connection document ID', () => {
+      const connectionDoc = {
+        _id: '6ab4efe2f762d65012683bac', // internal relationship ID
+        id: '6ab4efe2f762d65012683bac',
+        connectionId: '6ab4efe2f762d65012683bac',
+        peer: {
+          _id: 'user_9999',
+          id: 'user_9999',
+          username: 'johndoe',
+        },
+      };
+      assert.equal(getProfileIdentifier(connectionDoc), 'johndoe');
+      assert.equal(getCanonicalProfileUrl(connectionDoc), '/u/johndoe');
+
+      const connectionDocNoUsername = {
+        _id: '6ab4efe2f762d65012683bac',
+        id: '6ab4efe2f762d65012683bac',
+        connectionId: '6ab4efe2f762d65012683bac',
+        peer: {
+          _id: 'user_9999',
+          id: 'user_9999',
+          username: '',
+        },
+      };
+      assert.equal(getProfileIdentifier(connectionDocNoUsername), 'user_9999');
+      assert.equal(getCanonicalProfileUrl(connectionDocNoUsername), '/u/user_9999');
+    });
+
+    it('unpacks incoming connection request objects', () => {
+      const incomingReq = {
+        _id: '6ab4efe2f762d65012683bac',
+        requester: {
+          id: 'user_7777',
+          username: 'alice',
+        },
+      };
+      assert.equal(getProfileIdentifier(incomingReq), 'alice');
+      assert.equal(getCanonicalProfileUrl(incomingReq), '/u/alice');
+    });
+
+    it('unpacks student, person, candidate, and string target wrappers', () => {
+      assert.equal(getProfileIdentifier({ student: { id: 's123', username: 'bob' } }), 'bob');
+      assert.equal(getCanonicalProfileUrl({ person: { id: 'p456', username: 'carol' } }), '/u/carol');
+      assert.equal(getProfileIdentifier({ candidate: { id: 'c789', username: 'dave' } }), 'dave');
+      assert.equal(getProfileIdentifier({ user: '6ab3b5f1f762d65012683b82' }), '6ab3b5f1f762d65012683b82');
+    });
+
+    it('handles null, undefined and empty inputs safely', () => {
+      assert.equal(getProfileIdentifier(null), '');
+      assert.equal(getCanonicalProfileUrl(null), '/network');
+      assert.equal(getProfileIdentifier(undefined), '');
+      assert.equal(getCanonicalProfileUrl(undefined), '/network');
     });
   });
 });

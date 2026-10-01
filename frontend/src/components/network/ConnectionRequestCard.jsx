@@ -9,6 +9,7 @@ import {
   ArrowDownLeft,
 } from "lucide-react";
 import RelationshipAction from "./RelationshipAction";
+import { getCanonicalProfileUrl, getProfileIdentifier } from "../../utils/roleNavigation";
 
 /**
  * Formats ISO date into relative time (e.g. "2 hours ago", "Yesterday").
@@ -139,19 +140,21 @@ export default function ConnectionRequestCard({
 
           {/* Name & Username */}
           <div className="min-w-0 flex-1">
-            <button
-              type="button"
-              onClick={() => onPreview?.(student)}
+            <Link
+              to={getCanonicalProfileUrl(student)}
               className="block text-left group/link focus-ring rounded w-full"
             >
               <h3 className="truncate text-base font-heading font-bold text-white group-hover/link:text-brand-mint transition-colors">
                 {student.name}
               </h3>
-            </button>
+            </Link>
             {student.username && (
-              <p className="truncate text-xs font-mono text-text-muted">
+              <Link
+                to={getCanonicalProfileUrl(student)}
+                className="truncate text-xs font-mono text-text-muted hover:text-brand-mint transition-colors block"
+              >
                 @{student.username}
-              </p>
+              </Link>
             )}
           </div>
         </div>
@@ -193,9 +196,9 @@ export default function ConnectionRequestCard({
             variant="compact"
           />
 
-          {student.username && (
+          {getProfileIdentifier(student) && (
             <Link
-              to={`/network/profile/${encodeURIComponent(student.username)}`}
+              to={getCanonicalProfileUrl(student)}
               aria-label={`Open ${student.name}'s profile`}
               className="flex items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] p-2 text-text-muted hover:border-brand-mint/30 hover:bg-white/[0.06] hover:text-white transition-all focus-ring"
               title="Open full profile"

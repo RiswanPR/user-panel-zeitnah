@@ -280,6 +280,8 @@ export default function NetworkPage() {
                   ? "requests"
                   : "people"
               }
+              searchQuery={peopleHeroSearch}
+              onSearchChange={setPeopleHeroSearch}
             />
           </div>
         )}

@@ -18,7 +18,7 @@ import { getUploadUrl } from "../../utils/courseUi";
 import RelationshipAction from "./RelationshipAction";
 import EcosystemRoleBadge from "./EcosystemRoleBadge";
 import { useToast } from "../ui/Toast";
-import { normalizeUserRole } from "../../utils/roleNavigation";
+import { normalizeUserRole, getCanonicalProfileUrl, getProfileIdentifier } from "../../utils/roleNavigation";
 
 function getInitials(name) {
   if (!name) return "Z";
@@ -104,8 +104,9 @@ export default function InfrastructurePeopleCard({
 
   const handleCopyLink = async () => {
     setIsMenuOpen(false);
-    if (!person?.username) return;
-    const profileUrl = `${window.location.origin}/network/profile/${encodeURIComponent(person.username)}`;
+    const identifier = getProfileIdentifier(person);
+    if (!identifier) return;
+    const profileUrl = `${window.location.origin}${getCanonicalProfileUrl(person)}`;
     try {
       await navigator.clipboard.writeText(profileUrl);
       setCopied(true);
@@ -171,19 +172,21 @@ export default function InfrastructurePeopleCard({
 
           {/* Name & Handle */}
           <div className="min-w-0 flex-1">
-            <button
-              type="button"
-              onClick={() => onPreview?.(person)}
+            <Link
+              to={getCanonicalProfileUrl(person)}
               className="block text-left focus-ring rounded w-full cursor-pointer"
             >
-              <h3 className="truncate text-sm sm:text-base font-heading font-bold text-white group-hover:text-brand-mint transition-colors">
+              <h3 className="truncate text-sm sm:text-base font-heading font-bold text-white hover:text-brand-mint transition-colors">
                 {person.name}
               </h3>
-            </button>
+            </Link>
             {person.username && (
-              <p className="truncate text-xs font-mono text-text-muted mt-0.5">
+              <Link
+                to={getCanonicalProfileUrl(person)}
+                className="truncate text-xs font-mono text-text-muted hover:text-brand-mint/80 transition-colors mt-0.5 block"
+              >
                 @{person.username}
-              </p>
+              </Link>
             )}
 
             {/* Ecosystem Persona Badge */}
@@ -338,9 +341,9 @@ export default function InfrastructurePeopleCard({
               )}
 
               {/* Option B: Open Full Profile Link */}
-              {person.username && (
+              {getProfileIdentifier(person) && (
                 <Link
-                  to={`/network/profile/${encodeURIComponent(person.username)}`}
+                  to={getCanonicalProfileUrl(person)}
                   role="menuitem"
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-white/90 hover:bg-white/[0.06] hover:text-white transition-colors cursor-pointer text-left"
                 >
@@ -350,7 +353,7 @@ export default function InfrastructurePeopleCard({
               )}
 
               {/* Option C: Copy Profile Link */}
-              {person.username && (
+              {getProfileIdentifier(person) && (
                 <button
                   type="button"
                   role="menuitem"

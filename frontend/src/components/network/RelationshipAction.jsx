@@ -84,7 +84,8 @@ export default function RelationshipAction({
       return { prevState };
     },
     onSuccess: (res) => {
-      updateState(res.state || "outgoing_pending", res.connectionId);
+      const returnedConnId = res?.connectionId || res?._id || res?.id || null;
+      updateState(res?.state || "outgoing_pending", returnedConnId);
       toast.success(
         "Request Sent",
         `Connection request sent to ${studentName}.`,
@@ -213,8 +214,9 @@ export default function RelationshipAction({
             type="button"
             disabled={isLoading}
             onClick={() => {
-              if (effectiveConnectionId) {
-                removeMutation.mutate(effectiveConnectionId);
+              const idToUse = effectiveConnectionId || targetUserId;
+              if (idToUse) {
+                removeMutation.mutate(idToUse);
               }
             }}
             className="rounded-lg bg-red-500/20 border border-red-500/30 px-2 py-1 text-[11px] font-bold text-red-400 hover:bg-red-500/30 transition-colors focus-ring"
@@ -273,8 +275,9 @@ export default function RelationshipAction({
           type="button"
           disabled={isLoading}
           onClick={() => {
-            if (effectiveConnectionId) {
-              cancelMutation.mutate(effectiveConnectionId);
+            const idToUse = effectiveConnectionId || targetUserId;
+            if (idToUse) {
+              cancelMutation.mutate(idToUse);
             }
           }}
           title={`Cancel connection request to ${studentName}`}
@@ -299,8 +302,9 @@ export default function RelationshipAction({
           type="button"
           disabled={isLoading}
           onClick={() => {
-            if (effectiveConnectionId) {
-              acceptMutation.mutate(effectiveConnectionId);
+            const idToUse = effectiveConnectionId || targetUserId;
+            if (idToUse) {
+              acceptMutation.mutate(idToUse);
             }
           }}
           className="inline-flex items-center gap-1 rounded-xl bg-brand-mint px-3 py-1.5 text-xs font-bold text-bg-base hover:bg-brand-mint/90 transition-all focus-ring shadow-sm"
@@ -317,8 +321,9 @@ export default function RelationshipAction({
           type="button"
           disabled={isLoading}
           onClick={() => {
-            if (effectiveConnectionId) {
-              declineMutation.mutate(effectiveConnectionId);
+            const idToUse = effectiveConnectionId || targetUserId;
+            if (idToUse) {
+              declineMutation.mutate(idToUse);
             }
           }}
           title={`Decline connection request from ${studentName}`}

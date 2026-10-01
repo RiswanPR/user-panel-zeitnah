@@ -243,3 +243,94 @@ export function getMoreNavSections(user) {
 
   return sections;
 }
+
+/**
+ * CANONICAL PROFILE ROUTING HELPER
+ * Resolves the authoritative public profile URL identifier for any user, student,
+ * connection, or request item across the platform.
+ *
+ * Rules:
+ * 1. Prefer username if non-empty string (stripped of leading '@').
+ * 2. Unpack nested identity wrappers (peer, requester, recipient, user).
+ * 3. Never confuse internal relationship/connection IDs with user identity IDs.
+ * 4. Fall back to user document ID (_id or id) only when genuine user ID.
+ *
+ * @param {object|string|null|undefined} userOrItem
+ * @returns {string} Clean profile identifier
+ */
+export function getProfileIdentifier(userOrItem) {
+  if (!userOrItem) return "";
+
+  if (typeof userOrItem === "string") {
+    return userOrItem.trim().replace(/^@/, "");
+  }
+
+  // Unpack nested wrappers if present
+  const target =
+    userOrItem.peer ||
+    userOrItem.requester ||
+    userOrItem.recipient ||
+    userOrItem.user ||
+    userOrItem.student ||
+    userOrItem.candidate ||
+    userOrItem.person ||
+    userOrItem.requesterId ||
+    userOrItem.recipientId ||
+    userOrItem;
+
+  if (typeof target === "string") {
+    return target.trim().replace(/^@/, "");
+  }
+
+  // 1. Prefer clean username
+  const rawUsername = target.username || userOrItem.username;
+  if (typeof rawUsername === "string" && rawUsername.trim().length > 0) {
+    return rawUsername.trim().replace(/^@/, "");
+  }
+
+  // 2. Direct user ID from nested object
+  if (userOrItem.peer) {
+    const peerId = userOrItem.peer.id || userOrItem.peer._id || userOrItem.peer.userId;
+    if (peerId) return String(peerId);
+  }
+  if (userOrItem.requester) {
+    const reqId = userOrItem.requester.id || userOrItem.requester._id || userOrItem.requester.userId;
+    if (reqId) return String(reqId);
+  }
+  if (userOrItem.recipient) {
+    const recId = userOrItem.recipient.id || userOrItem.recipient._id || userOrItem.recipient.userId;
+    if (recId) return String(recId);
+  }
+
+  // 3. User ID field on target
+  if (target.userId) {
+    return String(target.userId);
+  }
+
+  // 4. Avoid connectionId confusion:
+  // If target has connectionId matching target.id or target._id, this is a relationship document
+  const connId = target.connectionId || userOrItem.connectionId;
+  const rawTargetId = target._id || target.id;
+  if (connId && rawTargetId && String(connId) === String(rawTargetId)) {
+    // Relationship doc ID detected. Check for secondary peer/target user ID
+    if (target.targetUserId) return String(target.targetUserId);
+    if (target.peerId) return String(target.peerId);
+    if (userOrItem.targetUserId) return String(userOrItem.targetUserId);
+    return "";
+  }
+
+  return rawTargetId ? String(rawTargetId) : "";
+}
+
+/**
+ * Generates the authoritative canonical public profile route URL.
+ * Canonical path: /u/:username (with /u/:userId fallback)
+ *
+ * @param {object|string|null|undefined} userOrItem
+ * @returns {string} Canonical URL (e.g. "/u/johndoe")
+ */
+export function getCanonicalProfileUrl(userOrItem) {
+  const identifier = getProfileIdentifier(userOrItem);
+  if (!identifier) return "/network";
+  return `/u/${encodeURIComponent(identifier)}`;
+}

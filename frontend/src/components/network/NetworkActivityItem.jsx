@@ -14,6 +14,7 @@ import {
   Clock,
 } from "lucide-react";
 import { getUploadUrl } from "../../utils/courseUi";
+import { getCanonicalProfileUrl } from "../../utils/roleNavigation";
 
 /**
  * Returns a human-friendly relative time string.
@@ -140,9 +141,7 @@ export default function NetworkActivityItem({ activity }) {
     actor?.avatarUrl && !avatarError ? getUploadUrl(actor.avatarUrl) : null;
   const initials = getInitials(actor?.name);
   const timeAgo = getRelativeTime(createdAt);
-  const profileUrl = actor?.username
-    ? `/network/profile/${encodeURIComponent(actor.username)}`
-    : "#";
+  const profileUrl = getCanonicalProfileUrl(actor);
 
   const thumbnailSrc =
     context?.thumbnail && !thumbError

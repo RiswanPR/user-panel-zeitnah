@@ -18,9 +18,9 @@ import {
   Briefcase,
   MapPin,
 } from "lucide-react";
-import { AuthContext } from "../../context/AuthContext";
 import { networkConnectionsService } from "../../services/networkConnectionsService";
 import { useToast } from "../ui/Toast";
+import { getCanonicalProfileUrl } from "../../utils/roleNavigation";
 
 /**
  * Format integer count with locale commas
@@ -120,7 +120,7 @@ function NetworkUserRow({
     }
   };
 
-  const profileLink = `/network/profile/${encodeURIComponent(userItem.username || userItem.id || userItem._id || "")}`;
+  const profileLink = getCanonicalProfileUrl(userItem);
   const initials = getInitials(userItem.name);
 
   return (
@@ -232,7 +232,7 @@ function NetworkUserRow({
                 type="button"
                 onClick={() => {
                   onCloseModal?.();
-                  navigate(`/network/profile/${userItem.username || userItem._id}`);
+                  navigate(getCanonicalProfileUrl(userItem));
                 }}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white/[0.06] hover:bg-white/[0.12] text-white border border-white/10 transition-all cursor-pointer focus-ring min-h-[36px]"
                 title="View Profile"

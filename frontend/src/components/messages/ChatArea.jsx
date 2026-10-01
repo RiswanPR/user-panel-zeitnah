@@ -41,6 +41,7 @@ import {
   getInitials,
   getUserId,
 } from '../../utils/messagingIdentity';
+import { getCanonicalProfileUrl } from '../../utils/roleNavigation';
 
 const REACTION_EMOJIS = ['👍', '❤️', '👏', '🎯', '🚀', '💡'];
 
@@ -460,11 +461,9 @@ export default function ChatArea({ conversationId, onBack }) {
           </button>
 
           {/* Direct Profile Link */}
-          {isDirect && otherUser?.username && (
+          {isDirect && otherUser && (
             <Link
-              to={`/network/profile/${encodeURIComponent(
-                otherUser.username.replace(/^@/, ''),
-              )}`}
+              to={getCanonicalProfileUrl(otherUser)}
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/[0.1] bg-white/[0.04] text-xs font-semibold text-text-secondary hover:text-white hover:bg-white/[0.08] transition-all focus-ring"
             >
               <span>Profile</span>
