@@ -68,6 +68,12 @@ export default function MainLayout({ children }) {
     return false;
   };
 
+  // Authoritative mobile active conversation check: suppress bottom nav inside active chat
+  const isMessagesActiveConversation =
+    location.pathname.startsWith("/messages") &&
+    (Boolean(new URLSearchParams(location.search).get("c")) ||
+      location.pathname.replace(/\/+$/, "").length > "/messages".length);
+
   // Authoritative career item based on role (Manage Business for Recruiter/Founder, Jobs for others)
   const careerItem = getPrimaryCareerNavigation(user);
   const CareerIcon = careerItem.icon;
@@ -93,9 +99,11 @@ export default function MainLayout({ children }) {
         {/* ═══════════════════════════════════════════════
           MOBILE BOTTOM NAVIGATION (5 Primary Touchpoints)
           1. Courses  2. Network  3. Messages  4. Jobs  5. More
+          Suppressed inside active mobile conversation
           ═══════════════════════════════════════════════ */}
-        <div className="fixed bottom-0 inset-x-0 z-40 md:hidden pb-[env(safe-area-inset-bottom)] pointer-events-none">
-          <div className="mx-3 mb-2.5 px-2 py-1.5 rounded-2xl bg-[#0B111E]/95 border border-white/[0.1] backdrop-blur-2xl shadow-[0_-8px_32px_rgba(0,0,0,0.5)] pointer-events-auto">
+        {!isMessagesActiveConversation && (
+          <div className="fixed bottom-0 inset-x-0 z-40 md:hidden pb-[env(safe-area-inset-bottom)] pointer-events-none">
+            <div className="mx-3 mb-2.5 px-2 py-1.5 rounded-2xl bg-[#0B111E]/95 border border-white/[0.1] backdrop-blur-2xl shadow-[0_-8px_32px_rgba(0,0,0,0.5)] pointer-events-auto">
             <nav className="flex items-center justify-around" aria-label="Mobile Bottom Navigation">
               {/* 1. Courses (First) */}
               <Link
@@ -237,12 +245,28 @@ export default function MainLayout({ children }) {
             </nav>
           </div>
         </div>
+        )}
 
         {/* ═══════════════════════════════════════════════
           MAIN CONTENT AREA (Spacious, Expansive Full Width)
+          Adaptive full-height for active messaging conversations
           ═══════════════════════════════════════════════ */}
-        <main className="flex-1 min-w-0 pb-28 md:pb-12 relative z-10">
-          <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7">
+        <main
+          className={`flex-1 min-w-0 relative z-10 ${
+            isMessagesActiveConversation
+              ? 'pb-0'
+              : location.pathname.startsWith('/messages')
+              ? 'pb-20 md:pb-0'
+              : 'pb-28 md:pb-12'
+          }`}
+        >
+          <div
+            className={
+              location.pathname.startsWith('/messages')
+                ? 'w-full h-full'
+                : 'max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7'
+            }
+          >
             <FeatureErrorBoundary featureName="Page Content">
               <PageTransition key={location.pathname}>
                 {children || <Outlet />}

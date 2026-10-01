@@ -16,6 +16,7 @@ import {
   MessageSquare,
   Loader2,
   AtSign,
+  ArrowLeft,
 } from 'lucide-react';
 import { messagingService } from '../../services/messagingService';
 import { getUploadUrl } from '../../utils/courseUi';
@@ -314,7 +315,7 @@ export default function MessagingCommandPalette({
   return (
     <AnimatePresence>
       <div
-        className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/80 backdrop-blur-md"
+        className="fixed inset-0 z-50 flex items-start justify-center pt-0 sm:pt-24 p-0 sm:px-4 bg-black/85 backdrop-blur-md"
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose();
         }}
@@ -327,11 +328,19 @@ export default function MessagingCommandPalette({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96 }}
           transition={{ duration: 0.15, ease: 'easeOut' }}
-          className="relative w-full max-w-2xl rounded-2xl border border-white/[0.1] bg-[#0C121E] shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+          className="relative w-full sm:max-w-2xl h-full sm:h-auto sm:max-h-[80vh] rounded-none sm:rounded-2xl border-0 sm:border border-white/[0.1] bg-[#0C121E] shadow-2xl overflow-hidden flex flex-col pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Search Input Bar */}
           <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/[0.08] bg-[#0E1524]">
+            <button
+              type="button"
+              onClick={onClose}
+              className="sm:hidden min-h-[44px] min-w-[44px] -ml-2 flex items-center justify-center text-text-muted hover:text-white"
+              aria-label="Close search"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
             {isFetching ? (
               <Loader2 className="w-5 h-5 text-brand-mint animate-spin shrink-0" />
             ) : (
@@ -346,14 +355,15 @@ export default function MessagingCommandPalette({
                 setSelectedIndex(0);
               }}
               onKeyDown={handleKeyDown}
-              placeholder="Search people, conversations, messages, files, links..."
+              placeholder="Search people, conversations, messages, files..."
               className="w-full bg-transparent text-sm text-white placeholder-text-muted focus:outline-none"
             />
             {query && (
               <button
                 type="button"
                 onClick={() => setQuery('')}
-                className="p-1 rounded-lg text-text-muted hover:text-white"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-white"
+                aria-label="Clear query"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -622,13 +632,20 @@ export default function MessagingCommandPalette({
           </div>
 
           {/* Footer Hints */}
-          <div className="px-4 py-2 border-t border-white/[0.06] bg-[#0A0F1A] flex items-center justify-between text-[11px] font-mono text-text-faint">
+          <div className="px-4 py-2.5 border-t border-white/[0.06] bg-[#0A0F1A] flex items-center justify-between text-[11px] font-mono text-text-faint">
             <div className="flex items-center gap-3">
-              <span>↑↓ Navigate</span>
-              <span>↵ Open</span>
-              <span>ESC Close</span>
+              <span className="hidden sm:inline">↑↓ Navigate</span>
+              <span className="hidden sm:inline">↵ Open</span>
+              <button
+                type="button"
+                onClick={onClose}
+                className="sm:hidden text-brand-mint font-semibold"
+              >
+                Close Search
+              </button>
+              <span className="hidden sm:inline">ESC Close</span>
             </div>
-            <span>Zeitnah Command Center</span>
+            <span>Zeitnah Search</span>
           </div>
         </motion.div>
       </div>

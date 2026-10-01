@@ -199,6 +199,66 @@ export default function ChatArea({ conversationId, onBack }) {
   const [highlightedMessageId, setHighlightedMessageId] = useState(null);
   const [focusedMessage, setFocusedMessage] = useState(null);
   const [showPinnedModal, setShowPinnedModal] = useState(false);
+  const [pressedMessageId, setPressedMessageId] = useState(null);
+  const touchStartPos = useRef({ x: 0, y: 0 });
+  const longPressTimer = useRef(null);
+
+  // Close active mobile message on Android back or Escape
+  useEffect(() => {
+    if (!activeMobileMessage) return;
+    const handlePop = () => {
+      setActiveMobileMessage(null);
+    };
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') setActiveMobileMessage(null);
+    };
+    window.addEventListener('popstate', handlePop);
+    window.addEventListener('keydown', handleEsc);
+    return () => {
+      window.removeEventListener('popstate', handlePop);
+      window.removeEventListener('keydown', handleEsc);
+    };
+  }, [activeMobileMessage]);
+
+  const handleTouchStart = (e, msg) => {
+    if (!e.touches || e.touches.length === 0) return;
+    const touch = e.touches[0];
+    touchStartPos.current = { x: touch.clientX, y: touch.clientY };
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    const msgId = msg._id || msg.id;
+    setPressedMessageId(msgId);
+    longPressTimer.current = setTimeout(() => {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try {
+          navigator.vibrate(40);
+        } catch (_) {}
+      }
+      setActiveMobileMessage(msg);
+      setPressedMessageId(null);
+    }, 420);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!touchStartPos.current || !longPressTimer.current) return;
+    const touch = e.touches[0];
+    const dx = Math.abs(touch.clientX - touchStartPos.current.x);
+    const dy = Math.abs(touch.clientY - touchStartPos.current.y);
+    if (dx > 10 || dy > 10) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+      setPressedMessageId(null);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    setPressedMessageId(null);
+  };
+
+  const handleTouchCancel = handleTouchEnd;
 
   // ── Tier 3 Mention State ──
   const [mentionVisible, setMentionVisible] = useState(false);
@@ -813,8 +873,10 @@ export default function ChatArea({ conversationId, onBack }) {
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
+      if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+        e.preventDefault();
+        handleSend();
+      }
     }
   };
 
@@ -863,116 +925,170 @@ export default function ChatArea({ conversationId, onBack }) {
         </div>
       )}
 
-      {/* ── 1. TIER 1 CONVERSATION HEADER ── */}
-      <div className="p-3 sm:px-6 border-b border-white/[0.08] bg-[#0C121E]/95 backdrop-blur-xl flex items-center justify-between gap-3 shrink-0 z-20 shadow-sm">
-        <div className="flex items-center gap-3 min-w-0">
+      {/* ── 1. TIER 1 CONVERSATION HEADER (Sticky, Safe-Area Supported, Never Disappearing) ── */}
+      <div className="sticky top-0 z-30 pt-[env(safe-area-inset-top,0px)] border-b border-white/[0.08] bg-[#0C121E]/95 backdrop-blur-xl p-2.5 sm:px-6 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-3 shrink-0 shadow-sm">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
           {/* Mobile Back Button */}
           {onBack && (
             <button
               type="button"
               onClick={onBack}
-              className="md:hidden p-2 rounded-xl text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors focus-ring cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="md:hidden p-2 -ml-1 rounded-xl text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors focus-ring cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0"
               aria-label="Back to conversations list"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-5 h-5" />
             </button>
           )}
 
-          {/* Avatar with Presence Indicator */}
-          <div className="relative shrink-0">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center overflow-hidden text-brand-mint font-heading font-bold text-xs shadow-inner">
-              {avatarUrl ? (
-                <img
-                  src={getUploadUrl(avatarUrl)}
-                  alt={displayName}
-                  className="w-full h-full object-cover"
+          {/* Identity Container: Avatar + Presence Indicator + Details (Clickable on Mobile to Open Info) */}
+          <div
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.innerWidth < 1280) {
+                setShowContextPanel(true);
+              }
+            }}
+            className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 cursor-pointer xl:cursor-default"
+            title="View conversation details"
+          >
+            {/* Avatar with Presence Indicator */}
+            <div className="relative shrink-0">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center overflow-hidden text-brand-mint font-heading font-bold text-xs shadow-inner">
+                {avatarUrl ? (
+                  <img
+                    src={getUploadUrl(avatarUrl)}
+                    alt={displayName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : isDirect ? (
+                  <span className="tracking-wider">{initials}</span>
+                ) : (
+                  <Users className="w-5 h-5 text-brand-mint" />
+                )}
+              </div>
+              {isOnline && (
+                <span
+                  className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#0C121E] bg-brand-mint shadow-sm"
+                  title="Online"
+                  aria-label="Online"
                 />
-              ) : isDirect ? (
-                <span className="tracking-wider">{initials}</span>
-              ) : (
-                <Users className="w-5 h-5 text-brand-mint" />
-              )}
-            </div>
-            {isOnline && (
-              <span
-                className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#0C121E] bg-brand-mint shadow-sm"
-                title="Online"
-                aria-label="Online"
-              />
-            )}
-          </div>
-
-          {/* Identity & Status */}
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm sm:text-base font-bold text-white truncate tracking-tight">
-                {displayName}
-              </h3>
-              {isDirect && otherUser?.role && (
-                <EcosystemRoleBadge role={otherUser.role} size="xs" />
               )}
             </div>
 
-            <div className="flex items-center gap-1.5 text-[11px] text-text-muted truncate mt-0.5">
-              {isDirect ? (
-                <>
-                  {isOnline ? (
-                    <span className="text-brand-mint font-medium flex items-center gap-1 shrink-0">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-mint animate-pulse inline-block" />
-                      Active now
-                    </span>
-                  ) : (
-                    <span className="text-text-muted shrink-0">
-                      {formatUserPresence(otherId, false, otherUser)}
-                    </span>
-                  )}
-                  {username && (
-                    <>
-                      <span className="text-white/20">•</span>
-                      <span className="font-mono text-text-muted/80 truncate">
-                        {username}
+            {/* Identity & Status */}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <h3 className="text-sm sm:text-base font-bold text-white truncate tracking-tight">
+                  {displayName}
+                </h3>
+                {isDirect && otherUser?.role && (
+                  <span className="hidden sm:inline-flex">
+                    <EcosystemRoleBadge role={otherUser.role} size="xs" />
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1 text-[11px] text-text-muted truncate mt-0.5">
+                {isDirect ? (
+                  <>
+                    {isOnline ? (
+                      <span className="text-brand-mint font-medium flex items-center gap-1 shrink-0">
+                        <span className="w-1.5 h-1.5 rounded-full bg-brand-mint animate-pulse inline-block" />
+                        Active now
                       </span>
-                    </>
-                  )}
-                  {professionalContext && (
-                    <>
-                      <span className="text-white/20">•</span>
-                      <span className="truncate">{professionalContext}</span>
-                    </>
-                  )}
-                </>
-              ) : (
-                <span>
-                  {memberCount} members
-                  {onlineGroupCount > 0 ? ` · ${onlineGroupCount} online` : ''}
-                </span>
-              )}
+                    ) : (
+                      <span className="text-text-muted shrink-0">
+                        {formatUserPresence(otherId, false, otherUser)}
+                      </span>
+                    )}
+                    {professionalContext && (
+                      <>
+                        <span className="text-white/20">•</span>
+                        <span className="truncate">{professionalContext}</span>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <span>
+                    {memberCount} members
+                    {onlineGroupCount > 0 ? ` · ${onlineGroupCount} online` : ''}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Header Right Actions */}
         <div className="flex items-center gap-1 shrink-0">
-          {/* Pinned Messages Indicator Badge */}
-          {pinnedMessages.length > 0 && (
+          {/* Desktop Toolbar */}
+          <div className="hidden md:flex items-center gap-1">
+            {/* Pinned Messages Indicator Badge */}
+            {pinnedMessages.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowPinnedModal(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-mint/10 border border-brand-mint/30 text-brand-mint text-xs font-semibold hover:bg-brand-mint/20 transition-all cursor-pointer shadow-xs min-h-[36px]"
+                title="View pinned messages in this conversation"
+                aria-label={`${pinnedMessages.length} pinned messages`}
+              >
+                <span>📌</span>
+                <span className="font-mono">{pinnedMessages.length}</span>
+                <span className="hidden sm:inline">pinned</span>
+              </button>
+            )}
+
+            {/* Search Toggle */}
             <button
               type="button"
-              onClick={() => setShowPinnedModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-mint/10 border border-brand-mint/30 text-brand-mint text-xs font-semibold hover:bg-brand-mint/20 transition-all cursor-pointer shadow-xs min-h-[36px]"
-              title="View pinned messages in this conversation"
-              aria-label={`${pinnedMessages.length} pinned messages`}
+              onClick={() => setShowInChatSearch(!showInChatSearch)}
+              className={`p-2 rounded-xl transition-colors focus-ring cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center ${
+                showInChatSearch
+                  ? 'bg-brand-mint/15 text-brand-mint'
+                  : 'text-text-muted hover:text-white hover:bg-white/[0.06]'
+              }`}
+              title="Search in conversation"
+              aria-label="Search messages in conversation"
             >
-              <span>📌</span>
-              <span className="font-mono">{pinnedMessages.length}</span>
-              <span className="hidden sm:inline">pinned</span>
+              <Search className="w-4 h-4" />
             </button>
-          )}
 
-          {/* Search Toggle */}
+            {/* Canonical Profile Link */}
+            {isDirect && otherUser && (
+              <Link
+                to={getCanonicalProfileUrl(otherUser)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-xs font-semibold text-text-secondary hover:text-white hover:bg-white/[0.06] transition-all focus-ring min-h-[36px]"
+                title="View canonical profile"
+              >
+                <span>Profile</span>
+                <ExternalLink className="w-3 h-3 text-text-faint" />
+              </Link>
+            )}
+
+            {/* Toggle Professional Context Panel (3rd Column) */}
+            <button
+              type="button"
+              onClick={() => setShowContextPanel(!showContextPanel)}
+              className={`p-2 rounded-xl transition-colors focus-ring cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center ${
+                showContextPanel
+                  ? 'bg-brand-mint/15 text-brand-mint border border-brand-mint/30'
+                  : 'text-text-muted hover:text-white hover:bg-white/[0.06]'
+              }`}
+              title={showContextPanel ? 'Close Workspace Panel' : 'Open Workspace Panel'}
+              aria-label="Toggle workspace context panel"
+            >
+              {showContextPanel ? (
+                <PanelRightClose className="w-4 h-4" />
+              ) : (
+                <PanelRightOpen className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+
+          {/* Search Toggle (Mobile) */}
           <button
             type="button"
             onClick={() => setShowInChatSearch(!showInChatSearch)}
-            className={`p-2 rounded-xl transition-colors focus-ring cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center ${
+            className={`md:hidden p-2 rounded-xl transition-colors focus-ring cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center ${
               showInChatSearch
                 ? 'bg-brand-mint/15 text-brand-mint'
                 : 'text-text-muted hover:text-white hover:bg-white/[0.06]'
@@ -981,37 +1097,6 @@ export default function ChatArea({ conversationId, onBack }) {
             aria-label="Search messages in conversation"
           >
             <Search className="w-4 h-4" />
-          </button>
-
-          {/* Canonical Profile Link */}
-          {isDirect && otherUser && (
-            <Link
-              to={getCanonicalProfileUrl(otherUser)}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-xs font-semibold text-text-secondary hover:text-white hover:bg-white/[0.06] transition-all focus-ring min-h-[36px]"
-              title="View canonical profile"
-            >
-              <span>Profile</span>
-              <ExternalLink className="w-3 h-3 text-text-faint" />
-            </Link>
-          )}
-
-          {/* Toggle Professional Context Panel (3rd Column) */}
-          <button
-            type="button"
-            onClick={() => setShowContextPanel(!showContextPanel)}
-            className={`p-2 rounded-xl transition-colors focus-ring cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center ${
-              showContextPanel
-                ? 'bg-brand-mint/15 text-brand-mint border border-brand-mint/30'
-                : 'text-text-muted hover:text-white hover:bg-white/[0.06]'
-            }`}
-            title={showContextPanel ? 'Close Workspace Panel' : 'Open Workspace Panel'}
-            aria-label="Toggle workspace context panel"
-          >
-            {showContextPanel ? (
-              <PanelRightClose className="w-4 h-4" />
-            ) : (
-              <PanelRightOpen className="w-4 h-4" />
-            )}
           </button>
 
           {/* More Options Dropdown */}
@@ -1027,9 +1112,49 @@ export default function ChatArea({ conversationId, onBack }) {
 
             {showMenu && (
               <div
-                className="absolute right-0 top-full mt-2 w-52 rounded-2xl border border-white/[0.1] bg-[#0E1524]/98 p-1.5 shadow-2xl backdrop-blur-xl z-30 divide-y divide-white/[0.06]"
+                className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-white/[0.1] bg-[#0E1524]/98 p-1.5 shadow-2xl backdrop-blur-xl z-30 divide-y divide-white/[0.06]"
                 role="menu"
               >
+                {/* Mobile info entry point */}
+                <div className="py-1 md:hidden">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setShowMenu(false);
+                      setShowContextPanel(true);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-brand-mint hover:bg-brand-mint/10 rounded-xl transition-colors text-left cursor-pointer"
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    <span>Conversation Info</span>
+                  </button>
+                  {pinnedMessages.length > 0 && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setShowMenu(false);
+                        setShowPinnedModal(true);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-text-secondary hover:text-white hover:bg-white/[0.06] rounded-xl transition-colors text-left cursor-pointer"
+                    >
+                      <Pin className="w-3.5 h-3.5 text-brand-mint" />
+                      <span>Pinned Messages ({pinnedMessages.length})</span>
+                    </button>
+                  )}
+                  {isDirect && otherUser && (
+                    <Link
+                      to={getCanonicalProfileUrl(otherUser)}
+                      onClick={() => setShowMenu(false)}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-text-secondary hover:text-white hover:bg-white/[0.06] rounded-xl transition-colors text-left cursor-pointer"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>View Canonical Profile</span>
+                    </Link>
+                  )}
+                </div>
+
                 <div className="py-1">
                   <button
                     type="button"
@@ -1227,6 +1352,18 @@ export default function ChatArea({ conversationId, onBack }) {
                   new Date(msg.createdAt) - new Date(prevMsg.createdAt) < 120000 &&
                   !showDateDivider;
 
+                const nextMsg = index < messages.length - 1 ? messages[index + 1] : null;
+                const nextMsgDateDivider =
+                  nextMsg &&
+                  new Date(nextMsg.createdAt).toDateString() !==
+                    new Date(msg.createdAt).toDateString();
+                const isSameSenderAsNext =
+                  nextMsg &&
+                  String(nextMsg.senderId?._id || nextMsg.senderId) ===
+                    String(msg.senderId?._id || msg.senderId) &&
+                  new Date(nextMsg.createdAt) - new Date(msg.createdAt) < 120000 &&
+                  !nextMsgDateDivider;
+
                 // Unread divider check
                 const isFirstUnread = index === firstUnreadIndex;
                 const urlMetadata = extractUrlMetadata(msg.body);
@@ -1239,12 +1376,39 @@ export default function ChatArea({ conversationId, onBack }) {
                   (att) => att.type !== 'image' && !att.url?.match(/\.(jpeg|jpg|png|webp|gif)$/i),
                 );
 
+                // Short message density check (Phase 7)
+                const isShortMessage =
+                  !msg.replyTo &&
+                  (!msg.attachments || msg.attachments.length === 0) &&
+                  !urlMetadata &&
+                  !msg.threadReplyCount &&
+                  !msg.isPinned &&
+                  !msg.isSaved &&
+                  Boolean(msg.body && msg.body.trim().length <= 35 && !msg.body.includes('\n'));
+
+                // Connected border-radius styling for message grouping (Phase 6)
+                const bubbleCornerRadius = isMe
+                  ? isSameSenderAsNext && isSameSenderAsPrev
+                    ? 'rounded-2xl rounded-tr-md rounded-br-md'
+                    : isSameSenderAsNext && !isSameSenderAsPrev
+                    ? 'rounded-2xl rounded-br-md'
+                    : !isSameSenderAsNext && isSameSenderAsPrev
+                    ? 'rounded-2xl rounded-tr-md rounded-br-xs'
+                    : 'rounded-2xl rounded-br-xs'
+                  : isSameSenderAsNext && isSameSenderAsPrev
+                  ? 'rounded-2xl rounded-tl-md rounded-bl-md'
+                  : isSameSenderAsNext && !isSameSenderAsPrev
+                  ? 'rounded-2xl rounded-bl-md'
+                  : !isSameSenderAsNext && isSameSenderAsPrev
+                  ? 'rounded-2xl rounded-tl-md rounded-bl-xs'
+                  : 'rounded-2xl rounded-bl-xs';
+
                 return (
                   <div
                     key={msg._id || msg.id}
                     id={`message-${msg._id || msg.id}`}
-                    className={`space-y-1 transition-all duration-300 rounded-2xl ${
-                      isSameSenderAsPrev ? 'mt-1' : 'mt-3'
+                    className={`space-y-0.5 transition-all duration-200 rounded-2xl ${
+                      isSameSenderAsPrev ? 'mt-0.5 sm:mt-1' : 'mt-2.5 sm:mt-3'
                     } ${
                       highlightedMessageId === (msg._id || msg.id)
                         ? 'p-2 ring-2 ring-brand-mint/60 bg-brand-mint/10 shadow-lg shadow-brand-mint/15'
@@ -1286,14 +1450,29 @@ export default function ChatArea({ conversationId, onBack }) {
                         </span>
                       )}
 
-                      {/* Message Bubble Container */}
-                      <div className="relative max-w-[88%] sm:max-w-[75%]">
-                        {/* Hover Floating Actions Menu (Desktop) */}
-                        <div
-                          className={`absolute top-0 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10 hidden sm:flex items-center gap-1 bg-[#101726] border border-white/[0.1] rounded-xl px-1.5 py-1 shadow-xl backdrop-blur-md ${
-                            isMe ? 'right-0' : 'left-0'
-                          }`}
+                      {/* Message Bubble Container with Mobile Touch & Long-Press Action Support */}
+                      <div className={`relative max-w-[88%] sm:max-w-[75%] flex items-end gap-1 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                        {/* Mobile 3-Dots Action Button (Accessible Alternative to Long-Press) */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveMobileMessage(msg);
+                          }}
+                          className="sm:hidden p-1.5 rounded-lg text-text-muted/60 hover:text-white active:bg-white/10 shrink-0 min-w-[28px] min-h-[28px] flex items-center justify-center opacity-60 active:opacity-100 touch-manipulation cursor-pointer"
+                          aria-label="Message options"
+                          title="Message options"
                         >
+                          <MoreVertical className="w-3.5 h-3.5" />
+                        </button>
+
+                        <div className="relative min-w-0">
+                          {/* Hover Floating Actions Menu (Desktop) */}
+                          <div
+                            className={`absolute top-0 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10 hidden sm:flex items-center gap-1 bg-[#101726] border border-white/[0.1] rounded-xl px-1.5 py-1 shadow-xl backdrop-blur-md ${
+                              isMe ? 'right-0' : 'left-0'
+                            }`}
+                          >
                           {/* Reaction Emojis: 👍, ❤️, 👏, 🎯 */}
                           {REACTION_EMOJIS.map((emoji) => (
                             <button
@@ -1487,13 +1666,47 @@ export default function ChatArea({ conversationId, onBack }) {
 
                         {/* Actual Message Bubble */}
                         <div
-                          onClick={() => setActiveMobileMessage(msg)}
-                          className={`p-3 sm:p-3.5 rounded-2xl text-xs leading-relaxed shadow-md cursor-pointer sm:cursor-default ${
+                          onTouchStart={(e) => handleTouchStart(e, msg)}
+                          onTouchMove={handleTouchMove}
+                          onTouchEnd={handleTouchEnd}
+                          onTouchCancel={handleTouchCancel}
+                          className={`transition-all duration-150 select-text ${bubbleCornerRadius} ${
+                            isShortMessage ? 'px-3 py-1.5' : 'p-3 sm:p-3.5'
+                          } text-xs leading-relaxed shadow-md cursor-default ${
+                            pressedMessageId === (msg._id || msg.id)
+                              ? 'scale-[0.98] ring-2 ring-brand-mint/50 opacity-90'
+                              : ''
+                          } ${
                             isMe
-                              ? 'bg-brand-mint text-bg-base font-medium rounded-br-xs'
-                              : 'bg-[#121826] border border-white/[0.08] text-white/95 rounded-bl-xs'
+                              ? 'bg-brand-mint text-bg-base font-medium'
+                              : 'bg-[#121826] border border-white/[0.08] text-white/95'
                           }`}
                         >
+                          {isShortMessage ? (
+                            <div className="flex items-baseline gap-2">
+                              {renderBodyWithMentions(msg.body, msg.mentions, isMe)}
+                              <span
+                                className={`inline-flex items-center gap-0.5 text-[9px] font-mono shrink-0 whitespace-nowrap ml-1 ${
+                                  isMe ? 'text-bg-base/70' : 'text-text-faint'
+                                }`}
+                              >
+                                {msg.isEdited && <span className="mr-0.5">(edited)</span>}
+                                {formatTime(msg.createdAt)}
+                                {isMe && (
+                                  <span title={msg.status}>
+                                    {msg.status === 'read' ? (
+                                      <CheckCheck className="w-2.5 h-2.5 text-bg-base inline ml-0.5" />
+                                    ) : msg.status === 'delivered' ? (
+                                      <CheckCheck className="w-2.5 h-2.5 opacity-70 inline ml-0.5" />
+                                    ) : (
+                                      <Check className="w-2.5 h-2.5 opacity-70 inline ml-0.5" />
+                                    )}
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                          ) : (
+                            <>
                           {/* Saved & Pinned Indicator Badges */}
                           {(msg.isPinned || msg.isSaved) && (
                             <div className="flex items-center gap-1.5 mb-1.5">
@@ -1723,7 +1936,10 @@ export default function ChatArea({ conversationId, onBack }) {
                               </span>
                             )}
                           </div>
-                        </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
 
                         {/* Reactions Display */}
                         {msg.reactions && msg.reactions.length > 0 && (
@@ -1779,7 +1995,7 @@ export default function ChatArea({ conversationId, onBack }) {
           )}
 
           {/* ── 4. STICKY COMPOSER ── */}
-          <div className="p-3 sm:p-4 border-t border-white/[0.08] bg-[#0C121E]/95 backdrop-blur-xl shrink-0 space-y-2">
+          <div className="p-3 sm:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-white/[0.08] bg-[#0C121E]/95 backdrop-blur-xl shrink-0 space-y-2">
             {/* Reply / Edit Banner */}
             {(replyingTo || editingMessage) && (
               <div className="flex items-center justify-between p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs">
@@ -1991,7 +2207,9 @@ export default function ChatArea({ conversationId, onBack }) {
                   placeholder={
                     editingMessage
                       ? 'Update your message...'
-                      : `Message ${displayName}... (@ to mention, Shift+Enter for newline)`
+                      : isDirect
+                      ? `Message ${displayName}...`
+                      : 'Write a message...'
                   }
                   className="w-full max-h-32 min-h-[44px] py-2.5 px-3.5 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-brand-mint/40 text-xs text-white placeholder-text-muted resize-none focus:outline-none transition-colors"
                   aria-label={`Write message to ${displayName}`}
@@ -2073,7 +2291,7 @@ export default function ChatArea({ conversationId, onBack }) {
               onClick={() => setShowContextPanel(false)}
             >
               <div
-                className="w-full max-w-sm h-full bg-[#0A0F1D] shadow-2xl border-l border-white/[0.1] flex flex-col overflow-hidden"
+                className="w-full sm:max-w-md h-full bg-[#0A0F1D] shadow-2xl border-l border-white/[0.1] flex flex-col overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
               >
                 <ConversationContextPanel
@@ -2116,58 +2334,89 @@ export default function ChatArea({ conversationId, onBack }) {
       {/* ── Mobile Message Action Bottom Sheet ── */}
       {activeMobileMessage && (
         <div
-          className="sm:hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex flex-col justify-end p-4"
+          className="sm:hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col justify-end p-0 sm:p-4"
           onClick={() => setActiveMobileMessage(null)}
         >
           <div
-            className="bg-[#0E1524] border border-white/[0.1] rounded-3xl p-4 space-y-3 shadow-2xl"
+            className="bg-[#0E1524] border-t border-white/[0.12] rounded-t-3xl p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] space-y-3.5 shadow-2xl max-h-[88dvh] flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
-              <span className="text-xs font-bold text-white uppercase tracking-wider">
-                Message Actions
-              </span>
+            <div className="w-10 h-1 bg-white/20 rounded-full mx-auto shrink-0 mb-0.5" />
+
+            <div className="flex items-center justify-between pb-2 border-b border-white/[0.08] shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-xs font-bold text-white uppercase tracking-wider">
+                  Message Options
+                </span>
+                <span className="text-[11px] text-text-muted font-mono">
+                  {formatTime(activeMobileMessage.createdAt)}
+                </span>
+              </div>
               <button
                 type="button"
                 onClick={() => setActiveMobileMessage(null)}
-                className="p-1 text-text-muted hover:text-white"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors"
+                aria-label="Close message actions"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
+            {/* Message quote preview */}
+            <div className="px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] text-xs text-text-muted italic line-clamp-2 shrink-0">
+              "{activeMobileMessage.body || (activeMobileMessage.attachments?.length ? '📎 Attachment' : 'Message')}"
+            </div>
+
             {/* Quick Reactions */}
-            <div className="flex items-center justify-around py-2 bg-white/[0.03] rounded-2xl border border-white/[0.06]">
-              {REACTION_EMOJIS.map((emoji) => (
-                <button
-                  key={emoji}
-                  type="button"
-                  onClick={() => {
-                    reactionMutation.mutate({
-                      messageId: activeMobileMessage._id,
-                      emoji,
-                    });
-                    setActiveMobileMessage(null);
-                  }}
-                  className="text-2xl p-2 hover:scale-125 transition-transform"
-                >
-                  {emoji}
-                </button>
-              ))}
+            <div className="flex items-center justify-around py-2 px-1 bg-white/[0.03] rounded-2xl border border-white/[0.06] shrink-0">
+              {REACTION_EMOJIS.map((emoji) => {
+                const reactionObj = activeMobileMessage.reactions?.find((r) => r.emoji === emoji);
+                const userHasReacted = reactionObj?.users?.some(
+                  (u) => String(u) === String(currentUserId)
+                );
+                const count = reactionObj?.count || 0;
+
+                return (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => {
+                      reactionMutation.mutate({
+                        messageId: activeMobileMessage._id,
+                        emoji,
+                      });
+                      setActiveMobileMessage(null);
+                    }}
+                    className={`min-h-[48px] px-3.5 py-2 flex items-center gap-1.5 rounded-xl text-2xl transition-all active:scale-95 ${
+                      userHasReacted
+                        ? 'bg-brand-mint/20 border border-brand-mint/50 ring-2 ring-brand-mint/30 scale-105'
+                        : 'hover:bg-white/[0.06] border border-transparent'
+                    }`}
+                    aria-label={`React with ${emoji}${userHasReacted ? ' (active)' : ''}`}
+                  >
+                    <span>{emoji}</span>
+                    {count > 0 && (
+                      <span className="text-xs font-mono font-bold text-text-muted">
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Action buttons */}
-            <div className="space-y-1">
+            <div className="space-y-1.5 overflow-y-auto pr-0.5">
               <button
                 type="button"
                 onClick={() => {
                   setReplyingTo(activeMobileMessage);
                   setActiveMobileMessage(null);
                 }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold text-white hover:bg-white/[0.06] transition-colors"
+                className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
               >
-                <Reply className="w-4 h-4 text-brand-mint" />
-                <span>Reply</span>
+                <Reply className="w-4 h-4 text-brand-mint shrink-0" />
+                <span className="flex-1 text-left">Reply</span>
               </button>
 
               <button
@@ -2176,10 +2425,15 @@ export default function ChatArea({ conversationId, onBack }) {
                   openThread(activeMobileMessage);
                   setActiveMobileMessage(null);
                 }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold text-white hover:bg-white/[0.06] transition-colors"
+                className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
               >
-                <MessageSquare className="w-4 h-4 text-brand-mint" />
-                <span>Reply in Thread</span>
+                <MessageSquare className="w-4 h-4 text-brand-mint shrink-0" />
+                <span className="flex-1 text-left">Reply in Thread</span>
+                {activeMobileMessage.threadReplyCount > 0 && (
+                  <span className="text-[11px] font-mono text-brand-mint bg-brand-mint/10 px-2 py-0.5 rounded-full border border-brand-mint/20">
+                    {activeMobileMessage.threadReplyCount}
+                  </span>
+                )}
               </button>
 
               <button
@@ -2188,24 +2442,26 @@ export default function ChatArea({ conversationId, onBack }) {
                   openForwardModal(activeMobileMessage);
                   setActiveMobileMessage(null);
                 }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold text-white hover:bg-white/[0.06] transition-colors"
+                className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
               >
-                <Share2 className="w-4 h-4 text-cyan-400" />
-                <span>Forward Message</span>
+                <Share2 className="w-4 h-4 text-cyan-400 shrink-0" />
+                <span className="flex-1 text-left">Forward Message</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText(activeMobileMessage.body);
-                  toast.success('Copied to clipboard');
-                  setActiveMobileMessage(null);
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold text-white hover:bg-white/[0.06] transition-colors"
-              >
-                <Copy className="w-4 h-4 text-brand-gold" />
-                <span>Copy Text</span>
-              </button>
+              {activeMobileMessage.body && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(activeMobileMessage.body);
+                    toast.success('Copied to clipboard');
+                    setActiveMobileMessage(null);
+                  }}
+                  className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
+                >
+                  <Copy className="w-4 h-4 text-brand-gold shrink-0" />
+                  <span className="flex-1 text-left">Copy Text</span>
+                </button>
+              )}
 
               {/* Save / Unsave Mobile Button */}
               <button
@@ -2218,14 +2474,16 @@ export default function ChatArea({ conversationId, onBack }) {
                   }
                   setActiveMobileMessage(null);
                 }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold text-white hover:bg-white/[0.06] transition-colors"
+                className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
               >
                 {activeMobileMessage.isSaved ? (
-                  <BookmarkCheck className="w-4 h-4 text-brand-gold fill-brand-gold/20" />
+                  <BookmarkCheck className="w-4 h-4 text-brand-gold fill-brand-gold/20 shrink-0" />
                 ) : (
-                  <Bookmark className="w-4 h-4 text-brand-gold" />
+                  <Bookmark className="w-4 h-4 text-brand-gold shrink-0" />
                 )}
-                <span>{activeMobileMessage.isSaved ? 'Unsave Message' : 'Save Message'}</span>
+                <span className="flex-1 text-left">
+                  {activeMobileMessage.isSaved ? 'Unsave Message' : 'Save Message'}
+                </span>
               </button>
 
               {/* Pin / Unpin Mobile Button */}
@@ -2240,14 +2498,16 @@ export default function ChatArea({ conversationId, onBack }) {
                     }
                     setActiveMobileMessage(null);
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold text-white hover:bg-white/[0.06] transition-colors"
+                  className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
                 >
                   {activeMobileMessage.isPinned ? (
-                    <PinOff className="w-4 h-4 text-brand-mint" />
+                    <PinOff className="w-4 h-4 text-brand-mint shrink-0" />
                   ) : (
-                    <Pin className="w-4 h-4 text-brand-mint" />
+                    <Pin className="w-4 h-4 text-brand-mint shrink-0" />
                   )}
-                  <span>{activeMobileMessage.isPinned ? 'Unpin Message' : 'Pin Message'}</span>
+                  <span className="flex-1 text-left">
+                    {activeMobileMessage.isPinned ? 'Unpin Message' : 'Pin Message'}
+                  </span>
                 </button>
               )}
 
@@ -2258,10 +2518,10 @@ export default function ChatArea({ conversationId, onBack }) {
                   setFocusedMessage(activeMobileMessage);
                   setActiveMobileMessage(null);
                 }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold text-white hover:bg-white/[0.06] transition-colors"
+                className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
               >
-                <Maximize2 className="w-4 h-4 text-brand-mint" />
-                <span>Focus Message</span>
+                <Maximize2 className="w-4 h-4 text-brand-mint shrink-0" />
+                <span className="flex-1 text-left">Focus Message</span>
               </button>
 
               {/* Copy Message Link */}
@@ -2271,14 +2531,14 @@ export default function ChatArea({ conversationId, onBack }) {
                   handleCopyMessageLink(activeMobileMessage._id);
                   setActiveMobileMessage(null);
                 }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold text-white hover:bg-white/[0.06] transition-colors"
+                className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
               >
-                <Link2 className="w-4 h-4 text-cyan-400" />
-                <span>Copy Message Link</span>
+                <Link2 className="w-4 h-4 text-cyan-400 shrink-0" />
+                <span className="flex-1 text-left">Copy Message Link</span>
               </button>
 
               {String(activeMobileMessage.senderId?._id || activeMobileMessage.senderId) === String(currentUserId) ? (
-                <>
+                <div className="pt-2 border-t border-white/[0.06] space-y-1.5">
                   <button
                     type="button"
                     onClick={() => {
@@ -2286,10 +2546,10 @@ export default function ChatArea({ conversationId, onBack }) {
                       setInputText(activeMobileMessage.body);
                       setActiveMobileMessage(null);
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold text-white hover:bg-white/[0.06] transition-colors"
+                    className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white bg-white/[0.02] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.04] transition-colors"
                   >
-                    <Edit2 className="w-4 h-4 text-cyan-400" />
-                    <span>Edit Message</span>
+                    <Edit2 className="w-4 h-4 text-cyan-400 shrink-0" />
+                    <span className="flex-1 text-left">Edit Message</span>
                   </button>
                   <button
                     type="button"
@@ -2300,28 +2560,30 @@ export default function ChatArea({ conversationId, onBack }) {
                       });
                       setActiveMobileMessage(null);
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors"
+                    className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-rose-400 bg-rose-500/[0.04] hover:bg-rose-500/10 active:bg-rose-500/20 border border-rose-500/20 transition-colors"
                   >
-                    <Trash2 className="w-4 h-4" />
-                    <span>Delete Message</span>
+                    <Trash2 className="w-4 h-4 shrink-0" />
+                    <span className="flex-1 text-left">Delete Message</span>
                   </button>
-                </>
+                </div>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setReportTarget({
-                      type: 'MESSAGE',
-                      id: activeMobileMessage._id,
-                      name: `Message from ${getUserDisplayName(activeMobileMessage.senderId)}`,
-                    });
-                    setActiveMobileMessage(null);
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors"
-                >
-                  <Flag className="w-4 h-4" />
-                  <span>Report Message</span>
-                </button>
+                <div className="pt-2 border-t border-white/[0.06]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReportTarget({
+                        type: 'MESSAGE',
+                        id: activeMobileMessage._id,
+                        name: `Message from ${getUserDisplayName(activeMobileMessage.senderId)}`,
+                      });
+                      setActiveMobileMessage(null);
+                    }}
+                    className="w-full min-h-[48px] flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-semibold text-rose-400 bg-rose-500/[0.04] hover:bg-rose-500/10 active:bg-rose-500/20 border border-rose-500/20 transition-colors"
+                  >
+                    <Flag className="w-4 h-4 shrink-0" />
+                    <span className="flex-1 text-left">Report Message</span>
+                  </button>
+                </div>
               )}
             </div>
           </div>

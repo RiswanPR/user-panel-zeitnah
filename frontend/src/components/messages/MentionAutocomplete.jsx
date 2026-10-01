@@ -129,7 +129,7 @@ export default function MentionAutocomplete({
                   type="button"
                   onClick={() => onSelect(user)}
                   onMouseEnter={() => setSelectedIndex(idx)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors text-xs ${
+                  className={`w-full min-h-[44px] flex items-center gap-2.5 px-3 py-2 text-left transition-colors text-xs ${
                     isSelected
                       ? 'bg-emerald-500/15 text-white'
                       : 'text-slate-300 hover:bg-white/[0.04]'

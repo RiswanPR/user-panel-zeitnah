@@ -35,12 +35,14 @@ export default function MessagesPage() {
   const [showNewGroupModal, setShowNewGroupModal] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
 
-  // Sync route / query changes
+  // Sync route / query changes with authoritative mobile back support
   useEffect(() => {
     if (routeConvId) {
       setSelectedConversationId(routeConvId);
     } else if (queryConvId) {
       setSelectedConversationId(queryConvId);
+    } else {
+      setSelectedConversationId(null);
     }
   }, [routeConvId, queryConvId]);
 
@@ -87,7 +89,7 @@ export default function MessagesPage() {
     if (convId) {
       setSelectedConversationId(convId);
       const url = targetMsgId ? `/messages?c=${convId}&m=${targetMsgId}` : `/messages?c=${convId}`;
-      navigate(url, { replace: true });
+      navigate(url);
       if (targetMsgId && setTargetMessageId) {
         setTargetMessageId(targetMsgId);
       }
@@ -110,7 +112,7 @@ export default function MessagesPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-4.25rem)] -m-4 sm:-m-6 lg:-m-8 flex overflow-hidden bg-[#080C14]">
+    <div className="h-[calc(100dvh-4rem)] md:h-[calc(100vh-4.25rem)] w-full flex overflow-hidden bg-[#080C14]">
       {/* ── Left Pane: Conversations / Folders / Search ── */}
       <div
         className={`${
@@ -143,7 +145,7 @@ export default function MessagesPage() {
             conversationId={selectedConversationId}
             onBack={() => {
               setSelectedConversationId(null);
-              navigate('/messages', { replace: true });
+              navigate('/messages');
             }}
           />
         ) : (

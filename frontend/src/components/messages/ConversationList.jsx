@@ -188,7 +188,7 @@ export default function ConversationList({
       aria-label="Conversation list"
     >
       {/* ── Top Header & Actions ── */}
-      <div className="p-3.5 sm:p-4 border-b border-white/[0.08] space-y-3 shrink-0 bg-[#0C121E]/95 backdrop-blur-md">
+      <div className="p-3.5 sm:p-4 border-b border-white/[0.08] space-y-3 shrink-0 bg-[#0C121E]/95 backdrop-blur-md pt-[max(0.875rem,env(safe-area-inset-top))]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <h2 className="text-base sm:text-lg font-heading font-black text-white tracking-tight">
@@ -205,7 +205,7 @@ export default function ConversationList({
             <button
               type="button"
               onClick={onNewGroup}
-              className="p-2 rounded-xl text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors focus-ring cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
+              className="rounded-xl text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors focus-ring cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
               title="New Group Workspace"
               aria-label="Create new group chat"
             >
@@ -214,7 +214,7 @@ export default function ConversationList({
             <button
               type="button"
               onClick={onNewChat}
-              className="p-2 rounded-xl bg-brand-mint/15 text-brand-mint hover:bg-brand-mint/25 transition-colors focus-ring cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center shadow-sm"
+              className="rounded-xl bg-brand-mint/15 text-brand-mint hover:bg-brand-mint/25 transition-colors focus-ring cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center shadow-sm"
               title="New Direct Message"
               aria-label="Start new direct message"
             >
@@ -529,52 +529,51 @@ export default function ConversationList({
                 </div>
 
                 {/* Identity & Message Preview */}
-                <div className="min-w-0 flex-1">
-                  {/* Top Line: Name, Role Badge, Timestamp */}
-                  <div className="flex items-center justify-between gap-1.5 mb-0.5">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span
-                        className={`text-xs font-bold truncate ${
-                          isSelected
-                            ? 'text-brand-mint'
-                            : unreadCount > 0
-                            ? 'text-white font-extrabold'
-                            : 'text-white/90'
-                        }`}
-                      >
-                        {displayName}
-                      </span>
-                      {isDirect && otherUser?.role && (
-                        <EcosystemRoleBadge role={otherUser.role} size="xs" />
-                      )}
-                    </div>
+                <div className="min-w-0 flex-1 flex flex-col justify-center">
+                  {/* Line 1: Name and Timestamp */}
+                  <div className="flex items-baseline justify-between gap-2 mb-0.5">
+                    <span
+                      className={`text-xs sm:text-[13px] font-bold truncate ${
+                        isSelected
+                          ? 'text-brand-mint'
+                          : unreadCount > 0
+                          ? 'text-white font-extrabold'
+                          : 'text-white/95'
+                      }`}
+                    >
+                      {displayName}
+                    </span>
                     {lastMsg?.createdAt && (
-                      <span className="text-[10px] font-mono text-text-faint shrink-0">
+                      <span className="text-[10px] font-mono text-text-faint shrink-0 whitespace-nowrap">
                         {formatTimestamp(lastMsg.createdAt)}
                       </span>
                     )}
                   </div>
 
-                  {/* Subline: Username or Professional Context or Group Member Count */}
+                  {/* Line 2: Role / Presence / Group Context */}
                   <div className="flex items-center gap-1.5 text-[11px] text-text-muted truncate mb-1">
                     {isDirect ? (
                       <>
-                        {username && (
-                          <span className="font-mono text-text-muted/80 truncate">
-                            {username}
+                        {otherUser?.role && (
+                          <span className="inline-flex items-center shrink-0">
+                            <EcosystemRoleBadge role={otherUser.role} size="xs" />
                           </span>
                         )}
-                        {username && professionalContext && (
-                          <span className="text-white/20">•</span>
-                        )}
-                        {professionalContext && (
-                          <span className="text-text-muted truncate">
-                            {professionalContext}
-                          </span>
-                        )}
+                        <span className="truncate flex items-center gap-1">
+                          {isOnline ? (
+                            <span className="text-brand-mint font-medium flex items-center gap-1 shrink-0">
+                              <span className="w-1.5 h-1.5 rounded-full bg-brand-mint animate-pulse" />
+                              Online
+                            </span>
+                          ) : (
+                            <span className="text-text-muted/80 truncate">
+                              {professionalContext || username || 'Offline'}
+                            </span>
+                          )}
+                        </span>
                       </>
                     ) : (
-                      <span className="text-text-muted truncate">
+                      <span className="text-text-muted/80 truncate">
                         {conv.memberCount ||
                           conv.members?.length ||
                           conv.participants?.length ||
@@ -584,19 +583,19 @@ export default function ConversationList({
                     )}
                   </div>
 
-                  {/* Bottom Line: Last Message Preview OR Draft Preview */}
+                  {/* Line 3: Last Message Preview + Badges */}
                   <div className="flex items-center justify-between gap-2">
                     <div
-                      className={`text-xs truncate flex items-center gap-1.5 ${
+                      className={`text-xs truncate flex items-center gap-1 min-w-0 flex-1 ${
                         unreadCount > 0
-                          ? 'font-semibold text-white/95'
+                          ? 'font-semibold text-white/90'
                           : 'text-text-muted'
                       }`}
                     >
                       {hasDraft && !isSelected ? (
                         <span className="text-amber-400 font-medium truncate flex items-center gap-1 text-xs">
                           <Edit3 className="w-3 h-3 text-amber-400 shrink-0" />
-                          <span className="font-bold">Draft ·</span>
+                          <span className="font-bold shrink-0">Draft:</span>
                           <span className="truncate">{draftText}</span>
                         </span>
                       ) : (
@@ -619,7 +618,7 @@ export default function ConversationList({
                             <span className="inline-flex items-center gap-1 text-text-secondary truncate">
                               <Paperclip className="w-3 h-3 text-brand-mint shrink-0" />
                               <span className="truncate">
-                                {lastMsg.body || 'Shared an attachment'}
+                                {lastMsg.body || 'Attachment'}
                               </span>
                             </span>
                           ) : (
@@ -631,10 +630,11 @@ export default function ConversationList({
                       )}
                     </div>
 
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    {/* Badges Container with Reserved Width & No Collisions */}
+                    <div className="flex items-center gap-1.5 shrink-0 pl-1">
                       {isMuted && (
                         <VolumeX
-                          className="w-3 h-3 text-text-faint"
+                          className="w-3 h-3 text-text-faint shrink-0"
                           aria-label="Muted conversation"
                         />
                       )}
@@ -644,22 +644,22 @@ export default function ConversationList({
                           String(currentUserId),
                       ) && (
                         <span
-                          className="px-1.5 py-0.5 rounded-full bg-brand-mint/15 text-brand-mint border border-brand-mint/30 font-mono text-[9px] font-bold"
-                          title="You were mentioned in this conversation"
+                          className="px-1.5 py-0.2 rounded-full bg-brand-mint/15 text-brand-mint border border-brand-mint/30 font-mono text-[9px] font-bold shrink-0"
+                          title="You were mentioned"
                         >
                           @
                         </span>
                       )}
                       {lastMsg?.threadReplyCount > 0 && (
                         <span
-                          className="px-1.5 py-0.5 rounded-full bg-white/[0.06] text-text-muted font-mono text-[9px] flex items-center gap-0.5"
-                          title={`${lastMsg.threadReplyCount} replies in thread`}
+                          className="px-1.5 py-0.2 rounded-full bg-white/[0.06] text-text-muted font-mono text-[9px] flex items-center gap-0.5 shrink-0"
+                          title={`${lastMsg.threadReplyCount} thread replies`}
                         >
                           💬 {lastMsg.threadReplyCount}
                         </span>
                       )}
                       {unreadCount > 0 && (
-                        <span className="min-w-4 h-4 px-1.5 rounded-full bg-brand-mint text-bg-base text-[10px] font-extrabold flex items-center justify-center shadow-sm">
+                        <span className="min-w-4 h-4 px-1.5 rounded-full bg-brand-mint text-bg-base text-[10px] font-extrabold flex items-center justify-center shadow-sm shrink-0">
                           {unreadCount > 99 ? '99+' : unreadCount}
                         </span>
                       )}

@@ -97,21 +97,21 @@ export default function AddGroupMemberModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 bg-black/75 backdrop-blur-sm"
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm"
         />
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 15 }}
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 15 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ duration: 0.18 }}
-          className="relative w-full max-w-md bg-[#12141c] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] z-10"
+          className="relative w-full max-w-md bg-[#12141c] border-t sm:border border-white/10 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[85vh] z-10 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
           role="dialog"
           aria-modal="true"
         >
@@ -132,7 +132,7 @@ export default function AddGroupMemberModal({
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-white rounded-lg transition-colors hover:bg-white/5"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-white rounded-lg transition-colors hover:bg-white/5"
             >
               <X className="w-5 h-5" />
             </button>
@@ -147,7 +147,7 @@ export default function AddGroupMemberModal({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search connections…"
-                className="w-full pl-9 pr-4 py-2 bg-white/[0.04] border border-white/10 rounded-xl text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-emerald-500/50 transition-all"
+                className="w-full pl-9 pr-4 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-emerald-500/50 transition-all"
               />
             </div>
           </div>
@@ -179,7 +179,7 @@ export default function AddGroupMemberModal({
                     key={uId}
                     type="button"
                     onClick={() => toggleUser(uId)}
-                    className={`w-full flex items-center justify-between p-2.5 rounded-xl transition-all text-left ${
+                    className={`w-full min-h-[48px] flex items-center justify-between p-3 rounded-xl transition-all text-left ${
                       isSelected
                         ? 'bg-emerald-500/15 border border-emerald-500/30'
                         : 'hover:bg-white/[0.04] border border-transparent'
@@ -210,13 +210,13 @@ export default function AddGroupMemberModal({
                     </div>
 
                     <div
-                      className={`w-4 h-4 rounded flex items-center justify-center border transition-all ${
+                      className={`w-5 h-5 rounded flex items-center justify-center border transition-all shrink-0 ${
                         isSelected
                           ? 'bg-emerald-500 border-emerald-500 text-white'
                           : 'border-white/20 bg-white/5'
                       }`}
                     >
-                      {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                      {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                     </div>
                   </button>
                 );
@@ -233,7 +233,7 @@ export default function AddGroupMemberModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-3.5 py-1.5 rounded-xl border border-white/10 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                className="min-h-[44px] px-4 py-2 rounded-xl border border-white/10 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
               >
                 Cancel
               </button>
@@ -243,7 +243,7 @@ export default function AddGroupMemberModal({
                 disabled={
                   selectedUserIds.length === 0 || addMembersMutation.isPending
                 }
-                className="px-4 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 disabled:hover:bg-emerald-500 text-white text-xs font-medium transition-all flex items-center gap-1.5"
+                className="min-h-[44px] px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 disabled:hover:bg-emerald-500 text-white text-xs font-medium transition-all flex items-center gap-1.5"
               >
                 {addMembersMutation.isPending && (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
