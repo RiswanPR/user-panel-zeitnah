@@ -21,8 +21,21 @@ export const opportunityService = {
     return res.data;
   },
 
-  async updateStatus(id, status) {
-    const res = await api.patch(`/opportunities/${id}/status`, { status });
+  async updateStatus(id, status, deadline = null) {
+    const payload = { status };
+    if (deadline) {
+      payload.deadline = typeof deadline === 'string' ? deadline : new Date(deadline).toISOString();
+    }
+    const res = await api.patch(`/opportunities/${id}/status`, payload);
+    return res.data;
+  },
+
+  async updateOpportunityStatus(id, status, deadline = null) {
+    return this.updateStatus(id, status, deadline);
+  },
+
+  async deleteOpportunity(id) {
+    const res = await api.delete(`/opportunities/${id}`);
     return res.data;
   },
 
@@ -65,6 +78,11 @@ export const opportunityService = {
 
   async getJobApplications(jobId) {
     const res = await api.get(`/opportunities/${jobId}/applications`);
+    return res.data;
+  },
+
+  async updateApplicationStatus(applicationId, status) {
+    const res = await api.patch(`/opportunities/applications/${applicationId}/status`, { status });
     return res.data;
   },
 

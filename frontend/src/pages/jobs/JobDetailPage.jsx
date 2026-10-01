@@ -26,12 +26,13 @@ import {
 } from 'lucide-react';
 import { opportunityService } from '../../services/opportunityService';
 import { useToast } from '../../components/ui/Toast';
+import { getErrorMessage } from '../../utils/errorMessage';
 
 export default function JobDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { addToast } = useToast();
+  const toast = useToast();
 
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [coverNote, setCoverNote] = useState('');
@@ -58,9 +59,8 @@ export default function JobDetailPage() {
       }
     },
     onSuccess: () => {
-      addToast(
-        job?.isSaved ? 'Job removed from saved' : 'Job bookmarked to saved list!',
-        'success',
+      toast.success(
+        job?.isSaved ? 'Job removed from saved' : 'Job bookmarked to saved list!'
       );
       queryClient.invalidateQueries({ queryKey: ['job-detail', id] });
       queryClient.invalidateQueries({ queryKey: ['saved-jobs'] });
@@ -75,16 +75,13 @@ export default function JobDetailPage() {
         resumeUrl,
       }),
     onSuccess: () => {
-      addToast('Application submitted successfully to employer!', 'success');
+      toast.success('Application submitted successfully to employer!');
       setIsApplyModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ['job-detail', id] });
       queryClient.invalidateQueries({ queryKey: ['my-applications'] });
     },
     onError: (err) => {
-      addToast(
-        err?.response?.data?.message || 'Failed to submit application',
-        'error',
-      );
+      toast.error(getErrorMessage(err, 'Failed to submit application'));
     },
   });
 

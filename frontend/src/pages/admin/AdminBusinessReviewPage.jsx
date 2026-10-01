@@ -17,10 +17,11 @@ import {
 } from 'lucide-react';
 import { organizationService } from '../../services/organizationService';
 import { useToast } from '../../components/ui/Toast';
+import { getErrorMessage } from '../../utils/errorMessage';
 
 export default function AdminBusinessReviewPage() {
   const queryClient = useQueryClient();
-  const { addToast } = useToast();
+  const toast = useToast();
 
   const [statusFilter, setStatusFilter] = useState('PENDING'); // 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED' | 'ALL'
   const [searchQuery, setSearchQuery] = useState('');
@@ -51,12 +52,12 @@ export default function AdminBusinessReviewPage() {
   const approveMutation = useMutation({
     mutationFn: (orgId) => organizationService.approveOrganization(orgId),
     onSuccess: (data) => {
-      addToast(`Business '${data.name}' has been APPROVED and verified!`, 'success');
+      toast.success(`Business '${data.name}' has been APPROVED and verified!`);
       setReviewingOrg(null);
       queryClient.invalidateQueries({ queryKey: ['admin-businesses'] });
     },
     onError: (err) => {
-      addToast(err?.response?.data?.message || 'Failed to approve business', 'error');
+      toast.error(getErrorMessage(err, 'Failed to approve business'));
     },
   });
 
@@ -65,13 +66,13 @@ export default function AdminBusinessReviewPage() {
     mutationFn: ({ orgId, reason }) =>
       organizationService.rejectOrganization(orgId, reason),
     onSuccess: (data) => {
-      addToast(`Business '${data.name}' has been REJECTED`, 'info');
+      toast.info(`Business '${data.name}' has been REJECTED`);
       setRejectingOrg(null);
       setReasonInput('');
       queryClient.invalidateQueries({ queryKey: ['admin-businesses'] });
     },
     onError: (err) => {
-      addToast(err?.response?.data?.message || 'Failed to reject business', 'error');
+      toast.error(getErrorMessage(err, 'Failed to reject business'));
     },
   });
 
@@ -80,13 +81,13 @@ export default function AdminBusinessReviewPage() {
     mutationFn: ({ orgId, reason }) =>
       organizationService.suspendOrganization(orgId, reason),
     onSuccess: (data) => {
-      addToast(`Business '${data.name}' has been SUSPENDED`, 'info');
+      toast.info(`Business '${data.name}' has been SUSPENDED`);
       setSuspendingOrg(null);
       setReasonInput('');
       queryClient.invalidateQueries({ queryKey: ['admin-businesses'] });
     },
     onError: (err) => {
-      addToast(err?.response?.data?.message || 'Failed to suspend business', 'error');
+      toast.error(getErrorMessage(err, 'Failed to suspend business'));
     },
   });
 

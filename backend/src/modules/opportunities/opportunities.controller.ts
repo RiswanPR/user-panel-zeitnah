@@ -19,10 +19,11 @@ import {
   UpdateOpportunityDto,
   QueryOpportunitiesDto,
 } from './opportunities.service';
-import { OpportunityStatus } from './schemas/opportunity.schema';
 
 import { SendOpportunityDto } from './dto/send-opportunity.dto';
 import { DeclineOpportunityDto } from './dto/opportunity-response.dto';
+import { UpdateOpportunityStatusDto } from './dto/update-opportunity-status.dto';
+import { JobApplicationStatus } from './schemas/job-application.schema';
 
 @Controller('opportunities')
 export class OpportunitiesController {
@@ -68,6 +69,20 @@ export class OpportunitiesController {
     @Param('applicationId') applicationId: string,
   ) {
     return this.oppService.withdrawApplication(req.user.userId, applicationId);
+  }
+
+  @Patch('applications/:applicationId/status')
+  @UseGuards(JwtAuthGuard)
+  async updateApplicationStatus(
+    @Req() req: any,
+    @Param('applicationId') applicationId: string,
+    @Body() body: { status: JobApplicationStatus },
+  ) {
+    return this.oppService.updateApplicationStatus(
+      req.user.userId,
+      applicationId,
+      body.status,
+    );
   }
 
   // =========================================================================
@@ -194,9 +209,15 @@ export class OpportunitiesController {
   async updateStatus(
     @Req() req: any,
     @Param('id') id: string,
-    @Body() body: { status: OpportunityStatus },
+    @Body() body: UpdateOpportunityStatusDto,
   ) {
-    return this.oppService.updateStatus(req.user.userId, id, body.status);
+    return this.oppService.updateStatus(req.user.userId, id, body);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  async deleteOpportunity(@Req() req: any, @Param('id') id: string) {
+    return this.oppService.deleteOpportunity(req.user.userId, id);
   }
 
   @Post(':id/save')

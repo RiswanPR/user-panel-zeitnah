@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Briefcase, Sparkles, AlertCircle, Plus, Trash2, Check } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { X, Briefcase, AlertCircle, Check, Edit3 } from 'lucide-react';
 import { opportunityService } from '../../services/opportunityService';
 import {
   INFRASTRUCTURE_DISCIPLINES,
@@ -8,41 +8,75 @@ import {
   JOB_TYPES,
   WORK_MODES,
 } from '../../constants/infrastructureTaxonomy';
+import { getErrorMessage } from '../../utils/errorMessage';
 
-export default function CreateJobModal({ isOpen, onClose, business, onSuccess }) {
-  const [formData, setFormData] = useState({
-    title: '',
-    jobType: 'Full-time',
-    employmentType: 'Full-time',
-    workMode: 'On-site',
-    discipline: INFRASTRUCTURE_DISCIPLINES[0] || 'Civil Engineering',
-    specialization: '',
-    infrastructureSector: INFRASTRUCTURE_SECTORS[0] || 'Highways',
-    minYearsExperience: 2,
-    maxYearsExperience: 5,
-    requiredSkills: [],
-    preferredSkills: [],
-    requiredSoftware: [],
-    preferredSoftware: [],
-    requiredEducation: 'B.Tech / B.E in Civil Engineering or related field',
-    preferredEducation: '',
-    requiredCertifications: [],
-    preferredCertifications: [],
-    location: business?.location || '',
-    salaryMin: '',
-    salaryMax: '',
-    currency: 'INR',
-    responsibilities: '',
-    requirements: '',
-    benefits: '',
-    applicationDeadline: '',
-  });
+export default function CreateJobModal({
+  isOpen,
+  onClose,
+  business,
+  onSuccess,
+  jobToEdit = null,
+  missingFieldsPrompt = null,
+}) {
+  const isEditMode = Boolean(jobToEdit);
 
+  const getInitialState = useCallback(() => ({
+    title: jobToEdit?.title || '',
+    jobType: jobToEdit?.jobType || 'Full-time',
+    employmentType: jobToEdit?.employmentType || 'Full-time',
+    workMode: jobToEdit?.workMode || 'On-site',
+    discipline: jobToEdit?.discipline || INFRASTRUCTURE_DISCIPLINES[0] || 'Civil Engineering',
+    specialization: jobToEdit?.specialization || '',
+    infrastructureSector: jobToEdit?.infrastructureSector || INFRASTRUCTURE_SECTORS[0] || 'Highways',
+    minYearsExperience: jobToEdit?.minYearsExperience ?? 2,
+    maxYearsExperience: jobToEdit?.maxYearsExperience ?? 5,
+    requiredSkills: jobToEdit?.requiredSkills || jobToEdit?.skills || [],
+    preferredSkills: jobToEdit?.preferredSkills || [],
+    requiredSoftware: jobToEdit?.requiredSoftware || [],
+    preferredSoftware: jobToEdit?.preferredSoftware || [],
+    requiredEducation: jobToEdit?.requiredEducation || 'B.Tech / B.E in Civil Engineering or related field',
+    preferredEducation: jobToEdit?.preferredEducation || '',
+    requiredCertifications: jobToEdit?.requiredCertifications || [],
+    preferredCertifications: jobToEdit?.preferredCertifications || [],
+    location: jobToEdit?.location || business?.location || '',
+    salaryMin: jobToEdit?.salaryMin ?? '',
+    salaryMax: jobToEdit?.salaryMax ?? '',
+    currency: jobToEdit?.currency || 'INR',
+    responsibilities: jobToEdit?.responsibilities || '',
+    requirements: jobToEdit?.requirements || '',
+    benefits: jobToEdit?.benefits || '',
+    applicationDeadline: jobToEdit?.applicationDeadline
+      ? new Date(jobToEdit.applicationDeadline).toISOString().slice(0, 10)
+      : '',
+  }), [jobToEdit, business?.location]);
+
+  const [formData, setFormData] = useState(getInitialState);
   const [skillInput, setSkillInput] = useState('');
   const [prefSkillInput, setPrefSkillInput] = useState('');
   const [certInput, setCertInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  // Re-sync form state when modal opens or jobToEdit changes
+  useEffect(() => {
+    if (isOpen) {
+      setFormData(getInitialState());
+      setError('');
+      setSkillInput('');
+      setPrefSkillInput('');
+      setCertInput('');
+    }
+  }, [isOpen, getInitialState]);
+
+  // Escape key handler
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -124,41 +158,56 @@ export default function CreateJobModal({ isOpen, onClose, business, onSuccess })
 
       const payload = {
         ...formData,
-        organizationId: business?._id || business?.id,
-        status: publish ? 'PUBLISHED' : 'DRAFT',
         minYearsExperience: Number(formData.minYearsExperience) || 0,
         maxYearsExperience: Number(formData.maxYearsExperience) || 0,
         salaryMin: formData.salaryMin ? Number(formData.salaryMin) : null,
         salaryMax: formData.salaryMax ? Number(formData.salaryMax) : null,
+        applicationDeadline: formData.applicationDeadline
+          ? new Date(formData.applicationDeadline).toISOString()
+          : null,
         description:
           formData.responsibilities ||
           formData.requirements ||
-          `${formData.title} at ${business?.name}`,
+          `${formData.title} at ${business?.name || ''}`,
       };
 
-      const res = await opportunityService.createOpportunity(payload);
+      let res;
+      if (isEditMode) {
+        payload.status = publish ? 'PUBLISHED' : (jobToEdit.status || 'DRAFT');
+        res = await opportunityService.updateOpportunity(jobToEdit._id || jobToEdit.id, payload);
+      } else {
+        payload.organizationId = business?._id || business?.id;
+        payload.status = publish ? 'PUBLISHED' : 'DRAFT';
+        res = await opportunityService.createOpportunity(payload);
+      }
+
       if (onSuccess) onSuccess(res);
       onClose();
     } catch (err) {
-      const msg =
-        err?.response?.data?.message || err?.message || 'Failed to save job opportunity.';
-      setError(msg);
+      setError(getErrorMessage(err, 'Failed to save job opportunity.'));
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="job-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto"
+    >
       <div className="relative w-full max-w-3xl bg-[#121217] border border-white/[0.1] rounded-3xl shadow-2xl p-6 sm:p-8 my-8 text-white max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-start justify-between pb-5 border-b border-white/[0.08] shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-300">
-              <Briefcase className="w-6 h-6" />
+              {isEditMode ? <Edit3 className="w-6 h-6" /> : <Briefcase className="w-6 h-6" />}
             </div>
             <div>
-              <h2 className="text-xl font-bold font-heading text-white">Create Infrastructure Job</h2>
+              <h2 id="job-modal-title" className="text-xl font-bold font-heading text-white">
+                {isEditMode ? 'Edit Infrastructure Job' : 'Create Infrastructure Job'}
+              </h2>
               <p className="text-xs text-text-muted mt-0.5">
                 Posting for <span className="text-brand-mint font-semibold">{business?.name}</span>
               </p>
@@ -166,11 +215,23 @@ export default function CreateJobModal({ isOpen, onClose, business, onSuccess })
           </div>
           <button
             onClick={onClose}
+            aria-label="Close modal"
             className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Missing Fields Guidance Banner */}
+        {missingFieldsPrompt && (
+          <div className="mt-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-200 text-xs space-y-1.5">
+            <div className="flex items-center gap-2 font-bold text-amber-300">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>Complete Required Fields Before Publishing</span>
+            </div>
+            <p className="text-amber-200/90 leading-relaxed">{missingFieldsPrompt}</p>
+          </div>
+        )}
 
         {/* Status Warning if unapproved */}
         {!isApproved && (
@@ -685,17 +746,19 @@ export default function CreateJobModal({ isOpen, onClose, business, onSuccess })
         </div>
 
         {/* Footer */}
-        <div className="pt-4 border-t border-white/[0.08] flex items-center justify-between gap-4 shrink-0">
-          <p className="text-[11px] text-text-muted">
-            {isApproved
-              ? 'Published jobs are immediately discoverable on the Zeitnah network.'
-              : 'Save as draft until business is approved.'}
+        <div className="pt-4 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
+          <p className="text-[11px] text-text-muted text-center sm:text-left">
+            {isEditMode
+              ? 'Changes will immediately update across search and candidate matches.'
+              : isApproved
+                ? 'Published jobs are immediately discoverable on the Zeitnah network.'
+                : 'Save as draft until business is approved.'}
           </p>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-white/60 hover:text-white hover:bg-white/[0.04] transition-all"
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-white/60 hover:text-white hover:bg-white/[0.04] transition-all cursor-pointer"
             >
               Cancel
             </button>
@@ -705,7 +768,7 @@ export default function CreateJobModal({ isOpen, onClose, business, onSuccess })
               onClick={() => handleSubmit(false)}
               className="px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-white text-xs font-semibold transition-all disabled:opacity-50 cursor-pointer"
             >
-              Save as Draft
+              {saving ? 'Saving...' : isEditMode ? 'Save Changes' : 'Save as Draft'}
             </button>
             <button
               type="button"
@@ -713,7 +776,13 @@ export default function CreateJobModal({ isOpen, onClose, business, onSuccess })
               onClick={() => handleSubmit(true)}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-brand-mint text-black font-bold text-xs shadow-lg shadow-cyan-500/20 hover:opacity-90 disabled:opacity-50 transition-all cursor-pointer"
             >
-              {saving ? 'Publishing...' : 'Publish Job'}
+              {saving
+                ? 'Saving...'
+                : isEditMode
+                  ? jobToEdit?.status === 'PUBLISHED'
+                    ? 'Update Live Job'
+                    : 'Save & Publish'
+                  : 'Publish Job'}
             </button>
           </div>
         </div>

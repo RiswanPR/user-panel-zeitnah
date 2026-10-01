@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { matchingService } from '../../services/matchingService';
 import { useToast } from '../../components/ui/Toast';
+import { getErrorMessage } from '../../utils/errorMessage';
 
 // ─── Match Category Badges ──────────────────────────────────────────────────
 
@@ -58,7 +59,7 @@ function CandidateCard({ match, jobId, onInviteSent, onSaveToggled, onDismissed 
   const [showSendModal, setShowSendModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dismissing, setDismissing] = useState(false);
-  const { addToast } = useToast();
+  const toast = useToast();
 
   const candidate = match.candidate;
   if (!candidate) return null;
@@ -67,13 +68,12 @@ function CandidateCard({ match, jobId, onInviteSent, onSaveToggled, onDismissed 
     try {
       setSaving(true);
       const res = await matchingService.toggleSaveCandidate(jobId, candidate.id);
-      addToast(
-        res.isSaved ? `${candidate.name} saved to shortlist` : `${candidate.name} removed from shortlist`,
-        'success',
+      toast.success(
+        res.isSaved ? `${candidate.name} saved to shortlist` : `${candidate.name} removed from shortlist`
       );
       onSaveToggled?.();
     } catch (err) {
-      addToast(err?.response?.data?.message || 'Failed to update saved status', 'error');
+      toast.error(getErrorMessage(err, 'Failed to update saved status'));
     } finally {
       setSaving(false);
     }
@@ -83,10 +83,10 @@ function CandidateCard({ match, jobId, onInviteSent, onSaveToggled, onDismissed 
     try {
       setDismissing(true);
       await matchingService.dismissCandidate(jobId, candidate.id);
-      addToast(`${candidate.name} removed from recommendations`, 'info');
+      toast.info(`${candidate.name} removed from recommendations`);
       onDismissed?.();
     } catch (err) {
-      addToast(err?.response?.data?.message || 'Failed to remove candidate', 'error');
+      toast.error(getErrorMessage(err, 'Failed to remove candidate'));
     } finally {
       setDismissing(false);
     }
@@ -373,19 +373,16 @@ function CandidateCard({ match, jobId, onInviteSent, onSaveToggled, onDismissed 
 function SendOpportunityModal({ jobId, candidate, onClose, onSuccess }) {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
-  const { addToast } = useToast();
+  const toast = useToast();
 
   const handleSend = async () => {
     try {
       setSending(true);
       await matchingService.sendOpportunityInvite(jobId, candidate.id, message);
-      addToast(`Opportunity sent to ${candidate.name}`, 'success');
+      toast.success(`Opportunity sent to ${candidate.name}`);
       onSuccess?.();
     } catch (err) {
-      addToast(
-        err?.response?.data?.message || 'Failed to send opportunity',
-        'error',
-      );
+      toast.error(getErrorMessage(err, 'Failed to send opportunity'));
     } finally {
       setSending(false);
     }
@@ -472,7 +469,7 @@ function SendOpportunityModal({ jobId, candidate, onClose, onSuccess }) {
 
 export default function RecommendedTalent({ jobId, jobTitle }) {
   const queryClient = useQueryClient();
-  const { addToast } = useToast();
+  const toast = useToast();
   const [categoryFilter, setCategoryFilter] = useState('');
   const [savedOnly, setSavedOnly] = useState(false);
   const [page, setPage] = useState(1);
@@ -509,16 +506,14 @@ export default function RecommendedTalent({ jobId, jobTitle }) {
   const triggerMutation = useMutation({
     mutationFn: () => matchingService.triggerMatching(jobId),
     onSuccess: (data) => {
-      addToast(
-        `Matching completed: ${data.candidatesScored} candidates analyzed in ${data.processingDurationMs}ms`,
-        'success',
+      toast.success(
+        `Matching completed: ${data.candidatesScored} candidates analyzed in ${data.processingDurationMs}ms`
       );
       queryClient.invalidateQueries({ queryKey: ['recommended-talent', jobId] });
     },
     onError: (err) => {
-      addToast(
-        err?.response?.data?.message || 'Talent matching failed. The job is still published.',
-        'error',
+      toast.error(
+        getErrorMessage(err, 'Talent matching failed. The job is still published.')
       );
     },
   });

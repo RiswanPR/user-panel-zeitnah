@@ -16,7 +16,6 @@ import {
   Opportunity,
   OpportunityDocument,
   OpportunityType,
-  WorkMode,
   ExperienceLevel,
   OpportunityStatus,
   OpportunityVisibility,
@@ -48,6 +47,7 @@ import {
 import { User, UserDocument } from '../auth/schemas/user.schema';
 import { SendOpportunityDto } from './dto/send-opportunity.dto';
 import { DeclineOpportunityDto } from './dto/opportunity-response.dto';
+import { UpdateOpportunityStatusDto } from './dto/update-opportunity-status.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ModerationService } from '../moderation/moderation.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
@@ -769,9 +769,14 @@ export class OpportunitiesService {
   }
 
   /**
-   * Update status (PUBLISHED, DRAFT, CLOSED) with verification and validation
+   * Update status (PUBLISHED, DRAFT, CLOSED, ARCHIVED) with verification, validation, and optional deadline adjustment
    */
-  async updateStatus(userId: string, id: string, status: OpportunityStatus) {
+  async updateStatus(
+    userId: string,
+    id: string,
+    dtoOrStatus: UpdateOpportunityStatusDto | OpportunityStatus,
+    maybeDeadline?: string,
+  ) {
     const opp = await this.oppModel.findById(id);
     if (!opp) {
       throw new NotFoundException('Opportunity not found');
@@ -782,6 +787,26 @@ export class OpportunitiesService {
       OrganizationRole.ADMIN,
       OrganizationRole.RECRUITER,
     ]);
+
+    const status: OpportunityStatus =
+      typeof dtoOrStatus === 'object' &&
+      dtoOrStatus !== null &&
+      'status' in dtoOrStatus
+        ? dtoOrStatus.status
+        : (dtoOrStatus as OpportunityStatus);
+
+    const newDeadlineStr: string | undefined =
+      typeof dtoOrStatus === 'object' && dtoOrStatus !== null
+        ? dtoOrStatus.deadline || dtoOrStatus.applicationDeadline
+        : maybeDeadline;
+
+    if (newDeadlineStr) {
+      const deadlineDate = new Date(newDeadlineStr);
+      if (isNaN(deadlineDate.getTime())) {
+        throw new BadRequestException('Invalid deadline date format');
+      }
+      opp.applicationDeadline = deadlineDate;
+    }
 
     if (status === OpportunityStatus.PUBLISHED) {
       const org = this.orgModel?.findById
@@ -828,12 +853,15 @@ export class OpportunitiesService {
               `Async talent matching failed for job ${opp._id}: ${err.message}`,
             );
           });
-      } else if (status === OpportunityStatus.CLOSED) {
+      } else if (
+        status === OpportunityStatus.CLOSED ||
+        status === OpportunityStatus.ARCHIVED
+      ) {
         this.matchingService
           .invalidateJobMatches(String(opp._id))
           .catch((err) => {
             this.logger.warn(
-              `Failed invalidating matches for closed job ${opp._id}: ${err.message}`,
+              `Failed invalidating matches for job ${opp._id}: ${err.message}`,
             );
           });
       }
@@ -847,7 +875,9 @@ export class OpportunitiesService {
             ? 'JOB_PUBLISHED'
             : status === OpportunityStatus.CLOSED
               ? 'JOB_CLOSED'
-              : 'JOB_STATUS_UPDATED',
+              : status === OpportunityStatus.ARCHIVED
+                ? 'JOB_ARCHIVED'
+                : 'JOB_STATUS_UPDATED',
         entityType: 'Opportunity',
         entityId: String(opp._id),
         message: `Job '${opp.title}' status updated to '${status}'`,
@@ -856,6 +886,119 @@ export class OpportunitiesService {
     }
 
     return opp;
+  }
+
+  /**
+   * Permanently delete an opportunity if no active applications exist
+   */
+  async deleteOpportunity(userId: string, id: string) {
+    const opp = await this.oppModel.findById(id);
+    if (!opp) {
+      throw new NotFoundException('Opportunity not found');
+    }
+
+    await this.assertOrgRole(userId, String(opp.organizationId), [
+      OrganizationRole.OWNER,
+      OrganizationRole.ADMIN,
+    ]);
+
+    if (this.jobAppModel) {
+      const activeApps = await this.jobAppModel.countDocuments({
+        jobId: opp._id,
+        status: { $ne: JobApplicationStatus.WITHDRAWN },
+      });
+      if (activeApps > 0) {
+        throw new BadRequestException(
+          'Cannot delete a job with active applications. Consider closing or archiving it instead.',
+        );
+      }
+      await this.jobAppModel.deleteMany({ jobId: opp._id });
+    }
+
+    if (this.savedJobModel) {
+      await this.savedJobModel.deleteMany({ jobId: opp._id });
+    }
+
+    if (this.matchingService) {
+      this.matchingService
+        .invalidateJobMatches(String(opp._id))
+        .catch((err) => {
+          this.logger.warn(
+            `Failed invalidating matches for deleted job ${opp._id}: ${err.message}`,
+          );
+        });
+    }
+
+    await this.oppModel.deleteOne({ _id: opp._id });
+
+    if (this.auditLogsService) {
+      await this.auditLogsService.record({
+        actor: new Types.ObjectId(userId),
+        action: 'JOB_DELETED',
+        entityType: 'Opportunity',
+        entityId: String(opp._id),
+        message: `Job '${opp.title}' was permanently deleted`,
+        metadata: { jobId: String(opp._id), title: opp.title },
+      });
+    }
+
+    return { success: true, message: 'Job opportunity deleted successfully' };
+  }
+
+  /**
+   * Recruiter updates candidate application status (e.g. reviewing, shortlisted, rejected, offered)
+   */
+  async updateApplicationStatus(
+    userId: string,
+    applicationId: string,
+    status: JobApplicationStatus,
+  ) {
+    if (!this.jobAppModel) {
+      throw new BadRequestException('Job application service unavailable');
+    }
+
+    const validStatuses = Object.values(JobApplicationStatus);
+    if (!validStatuses.includes(status)) {
+      throw new BadRequestException(
+        `Invalid application status. Must be one of: ${validStatuses.join(', ')}`,
+      );
+    }
+
+    const application = await this.jobAppModel.findById(applicationId);
+    if (!application) {
+      throw new NotFoundException('Application not found');
+    }
+
+    const opp = await this.oppModel.findById(application.jobId);
+    if (!opp) {
+      throw new NotFoundException('Associated job not found');
+    }
+
+    await this.assertOrgRole(userId, String(opp.organizationId), [
+      OrganizationRole.OWNER,
+      OrganizationRole.ADMIN,
+      OrganizationRole.RECRUITER,
+    ]);
+
+    application.status = status;
+    await application.save();
+
+    if (this.auditLogsService) {
+      await this.auditLogsService.record({
+        actor: new Types.ObjectId(userId),
+        action: 'APPLICATION_STATUS_UPDATED',
+        entityType: 'JobApplication',
+        entityId: String(application._id),
+        message: `Candidate application status updated to '${status}'`,
+        metadata: {
+          applicationId: String(application._id),
+          jobId: String(opp._id),
+          status,
+        },
+      });
+    }
+
+    return application;
   }
 
   /**
@@ -1224,17 +1367,41 @@ export class OpportunitiesService {
     const userObjId = new Types.ObjectId(userId);
     const orgObjId = new Types.ObjectId(orgId);
 
+    // 1. Platform admin override
+    if (this.userModel) {
+      const user = await this.userModel.findById(userObjId);
+      if (user && user.role === 'admin') {
+        return;
+      }
+    }
+
+    // 2. Active membership check
     const membership = await this.membershipModel.findOne({
       organizationId: orgObjId,
       userId: userObjId,
       status: MembershipStatus.ACTIVE,
     });
 
-    if (!membership || !allowedRoles.includes(membership.role)) {
-      throw new ForbiddenException(
-        'You must be an Owner, Admin, or Recruiter of this organization to manage opportunities',
-      );
+    if (membership && allowedRoles.includes(membership.role)) {
+      return;
     }
+
+    // 3. Organization creator fallback (acting with Owner role)
+    if (this.orgModel) {
+      const org = await this.orgModel.findById(orgObjId);
+      if (
+        org &&
+        String(org.createdBy) === String(userId) &&
+        (allowedRoles.includes(OrganizationRole.OWNER) ||
+          allowedRoles.includes(OrganizationRole.ADMIN))
+      ) {
+        return;
+      }
+    }
+
+    throw new ForbiddenException(
+      'You must be an Owner, Admin, or Recruiter of this organization to manage opportunities',
+    );
   }
 
   // =========================================================================

@@ -25,6 +25,7 @@ import {
 import { opportunityService } from '../../services/opportunityService';
 import { matchingService } from '../../services/matchingService';
 import { useToast } from '../../components/ui/Toast';
+import { getErrorMessage } from '../../utils/errorMessage';
 import PageHeader from '../../components/ui/PageHeader';
 import {
   INFRASTRUCTURE_DISCIPLINES,
@@ -36,7 +37,7 @@ import {
 
 export default function JobsPage() {
   const queryClient = useQueryClient();
-  const { addToast } = useToast();
+  const toast = useToast();
 
   const [activeTab, setActiveTab] = useState('forYou'); // 'forYou' | 'all' | 'recent' | 'saved' | 'applications' | 'invites'
   const [recCategory, setRecCategory] = useState('');
@@ -92,14 +93,13 @@ export default function JobsPage() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['recommended-jobs'] });
       queryClient.invalidateQueries({ queryKey: ['profile-job-insights'] });
-      addToast(
+      toast.success(
         data?.recommendationsCount > 0
           ? `AI matched ${data.recommendationsCount} opportunities for your profile!`
-          : 'Recommendations refreshed based on your profile.',
-        'success',
+          : 'Recommendations refreshed based on your profile.'
       );
     },
-    onError: () => addToast('Failed to refresh recommendations', 'error'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to refresh recommendations')),
   });
 
   // ── Phase 4: Hide job mutation ────────────────────────────────────
@@ -107,7 +107,10 @@ export default function JobsPage() {
     mutationFn: (jobId) => matchingService.hideRecommendedJob(jobId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recommended-jobs'] });
-      addToast('Job hidden from recommendations', 'success');
+      toast.success('Job hidden from recommendations');
+    },
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to hide job'));
     },
   });
 
@@ -117,12 +120,14 @@ export default function JobsPage() {
       matchingService.recordJobFeedback(jobId, feedback),
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['recommended-jobs'] });
-      addToast(
+      toast.success(
         vars.feedback === 'INTERESTED'
           ? 'Marked as interested! We will prioritize similar roles.'
-          : 'Marked as not interested.',
-        'success',
+          : 'Marked as not interested.'
       );
+    },
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to record feedback'));
     },
   });
 
@@ -195,16 +200,15 @@ export default function JobsPage() {
     mutationFn: ({ inviteId, response }) =>
       matchingService.respondToInvite(inviteId, response),
     onSuccess: (_, vars) => {
-      addToast(
+      toast.success(
         vars.response === 'interested'
           ? 'Marked as interested! The employer has been notified.'
-          : 'Opportunity declined.',
-        'success',
+          : 'Opportunity declined.'
       );
       refetchInvites();
     },
     onError: (err) => {
-      addToast(err?.response?.data?.message || 'Failed to update invite', 'error');
+      toast.error(getErrorMessage(err, 'Failed to update invite'));
     },
   });
 
@@ -218,15 +222,14 @@ export default function JobsPage() {
       }
     },
     onSuccess: (data, variables) => {
-      addToast(
-        variables.isSaved ? 'Job removed from saved' : 'Job saved to bookmarks!',
-        'success',
+      toast.success(
+        variables.isSaved ? 'Job removed from saved' : 'Job saved to bookmarks!'
       );
       queryClient.invalidateQueries({ queryKey: ['jobs'] });
       queryClient.invalidateQueries({ queryKey: ['saved-jobs'] });
     },
-    onError: () => {
-      addToast('Failed to update saved job status', 'error');
+    onError: (err) => {
+      toast.error(getErrorMessage(err, 'Failed to update saved job status'));
     },
   });
 
@@ -234,11 +237,11 @@ export default function JobsPage() {
   const withdrawMutation = useMutation({
     mutationFn: (appId) => opportunityService.withdrawApplication(appId),
     onSuccess: () => {
-      addToast('Application withdrawn successfully', 'info');
+      toast.info('Application withdrawn successfully');
       queryClient.invalidateQueries({ queryKey: ['my-applications'] });
     },
     onError: (err) => {
-      addToast(err?.response?.data?.message || 'Failed to withdraw application', 'error');
+      toast.error(getErrorMessage(err, 'Failed to withdraw application'));
     },
   });
 

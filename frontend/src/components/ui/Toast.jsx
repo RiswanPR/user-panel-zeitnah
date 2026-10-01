@@ -55,6 +55,12 @@ export function ToastProvider({ children }) {
     error: (title, message) => addToast({ type: 'error', title, message }),
     warning: (title, message) => addToast({ type: 'warning', title, message }),
     info: (title, message) => addToast({ type: 'info', title, message }),
+    addToast: (messageOrOptions, type = 'info', duration = 4000) => {
+      if (typeof messageOrOptions === 'object' && messageOrOptions !== null) {
+        return addToast(messageOrOptions);
+      }
+      return addToast({ type, title: String(messageOrOptions || ''), duration });
+    },
   }), [addToast]);
 
   return (
@@ -114,6 +120,7 @@ export function useToast() {
       error: (title, msg) => console.error(`[Toast] ${title}`, msg),
       warning: (title, msg) => console.warn(`[Toast] ${title}`, msg),
       info: (title, msg) => console.info(`[Toast] ${title}`, msg),
+      addToast: (title, type) => console.log(`[Toast] [${type || 'info'}] ${title}`),
     };
   }
   return context;
