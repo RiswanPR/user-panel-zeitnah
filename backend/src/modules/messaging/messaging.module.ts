@@ -6,11 +6,16 @@ import {
   ConversationSchema,
 } from './schemas/conversation.schema';
 import { Message, MessageSchema } from './schemas/message.schema';
+import {
+  SavedMessage,
+  SavedMessageSchema,
+} from './schemas/saved-message.schema';
 import { User, UserSchema } from '../auth/schemas/user.schema';
 import {
   NetworkConnection,
   NetworkConnectionSchema,
 } from '../network/schemas/connection.schema';
+import { AwsModule } from '../../common/aws/aws.module';
 import { ModerationModule } from '../moderation/moderation.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { MessagingService } from './messaging.service';
@@ -25,9 +30,11 @@ import { MessagesGateway } from './messages.gateway';
     MongooseModule.forFeature([
       { name: Conversation.name, schema: ConversationSchema },
       { name: Message.name, schema: MessageSchema },
+      { name: SavedMessage.name, schema: SavedMessageSchema },
       { name: User.name, schema: UserSchema },
       { name: NetworkConnection.name, schema: NetworkConnectionSchema },
     ]),
+    AwsModule,
     ModerationModule,
     NotificationsModule,
   ],

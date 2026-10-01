@@ -110,6 +110,15 @@ export class Message {
   @Prop({ type: Date, default: null })
   editedAt?: Date | null;
 
+  @Prop({ type: Boolean, default: false, index: true })
+  isPinned!: boolean;
+
+  @Prop({ type: Date, default: null })
+  pinnedAt?: Date | null;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  pinnedBy?: Types.ObjectId | null;
+
   createdAt!: Date;
   updatedAt!: Date;
 }
@@ -118,3 +127,4 @@ export const MessageSchema = SchemaFactory.createForClass(Message);
 MessageSchema.index({ conversationId: 1, createdAt: -1 });
 MessageSchema.index({ conversationId: 1, senderId: 1 });
 MessageSchema.index({ senderId: 1, createdAt: -1 });
+MessageSchema.index({ conversationId: 1, isPinned: 1 });

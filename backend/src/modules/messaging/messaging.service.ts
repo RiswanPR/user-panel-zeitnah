@@ -33,11 +33,19 @@ import {
   EditMessageDto,
   QueryConversationsDto,
   QueryMessagesDto,
+  QuerySavedMessagesDto,
+  SearchMessagingDto,
   MuteConversationDto,
   ArchiveConversationDto,
   ReportConversationDto,
 } from './dto/messaging.dto';
+import {
+  SavedMessage,
+  SavedMessageDocument,
+} from './schemas/saved-message.schema';
 import { ReportTargetType } from '../moderation/schemas/report.schema';
+import { UploadService } from '../../common/aws/upload.service';
+import { SignedUrlService } from '../../common/aws/signed-url.service';
 
 @Injectable()
 export class MessagingService {
@@ -53,7 +61,14 @@ export class MessagingService {
     private readonly moderationService: ModerationService,
     private readonly messagesGateway: MessagesGateway,
     @Optional()
+    @InjectModel(SavedMessage.name)
+    private readonly savedMessageModel?: Model<SavedMessageDocument>,
+    @Optional()
     private readonly notificationsService?: NotificationsService,
+    @Optional()
+    private readonly uploadService?: UploadService,
+    @Optional()
+    private readonly signedUrlService?: SignedUrlService,
   ) {}
 
   private toObjectId(id: string | Types.ObjectId): Types.ObjectId {
@@ -796,6 +811,79 @@ export class MessagingService {
     }
 
     const limit = Math.min(100, Math.max(1, Number(query.limit) || 30));
+
+    // Handle historical message targeting: query.around
+    if (query.around && Types.ObjectId.isValid(query.around)) {
+      const targetMsg = await this.messageModel
+        .findOne({
+          _id: this.toObjectId(query.around),
+          conversationId: convObjId,
+          deletedFor: { $ne: userObjId },
+        })
+        .populate('senderId', 'name username avatar primaryRole')
+        .populate('reactions.userId', 'name username')
+        .lean();
+
+      if (targetMsg) {
+        const half = Math.max(10, Math.floor(limit / 2));
+        const [earlier, later] = await Promise.all([
+          this.messageModel
+            .find({
+              conversationId: convObjId,
+              deletedFor: { $ne: userObjId },
+              createdAt: { $lt: targetMsg.createdAt },
+            })
+            .populate('senderId', 'name username avatar primaryRole')
+            .populate('reactions.userId', 'name username')
+            .sort({ createdAt: -1 })
+            .limit(half)
+            .lean(),
+          this.messageModel
+            .find({
+              conversationId: convObjId,
+              deletedFor: { $ne: userObjId },
+              createdAt: { $gt: targetMsg.createdAt },
+            })
+            .populate('senderId', 'name username avatar primaryRole')
+            .populate('reactions.userId', 'name username')
+            .sort({ createdAt: 1 })
+            .limit(half)
+            .lean(),
+        ]);
+
+        earlier.reverse();
+        const combined = [...earlier, targetMsg, ...later];
+
+        const savedIds = this.savedMessageModel
+          ? new Set(
+              (
+                await this.savedMessageModel
+                  .find({
+                    userId: userObjId,
+                    messageId: { $in: combined.map((m: any) => m._id) },
+                  })
+                  .select('messageId')
+                  .lean()
+              ).map((s) => String(s.messageId)),
+            )
+          : new Set();
+
+        return {
+          messages: combined.map((m: any) => ({
+            ...m,
+            id: String(m._id),
+            isOwn: String(m.senderId?._id || m.senderId) === userId,
+            isPinned: Boolean(m.isPinned),
+            isSaved: savedIds.has(String(m._id)),
+            body: m.isDeleted ? 'This message was deleted' : m.body,
+          })),
+          hasMore: earlier.length >= half,
+          nextCursor: earlier.length > 0 ? String(earlier[0]._id) : null,
+          targetMessageId: String(targetMsg._id),
+        };
+      }
+    }
+
     const filter: any = {
       conversationId: convObjId,
       deletedFor: { $ne: userObjId },
@@ -835,11 +923,28 @@ export class MessagingService {
     const nextCursor =
       hasMore && messages.length > 0 ? String(messages[0]._id) : null;
 
+    // Check saved state for returned messages
+    const savedIds = this.savedMessageModel
+      ? new Set(
+          (
+            await this.savedMessageModel
+              .find({
+                userId: userObjId,
+                messageId: { $in: messages.map((m: any) => m._id) },
+              })
+              .select('messageId')
+              .lean()
+          ).map((s) => String(s.messageId)),
+        )
+      : new Set();
+
     return {
       messages: messages.map((m: any) => ({
         ...m,
         id: String(m._id),
         isOwn: String(m.senderId?._id || m.senderId) === userId,
+        isPinned: Boolean(m.isPinned),
+        isSaved: savedIds.has(String(m._id)),
         body: m.isDeleted ? 'This message was deleted' : m.body,
       })),
       hasMore,
@@ -932,10 +1037,16 @@ export class MessagingService {
     });
 
     // Update conversation metadata
+    const lastBody =
+      dto.body?.trim() ||
+      (dto.attachments?.length
+        ? `📎 ${dto.attachments[0].name}`
+        : 'Sent a message');
+
     conversation.lastMessage = {
       messageId: message._id as Types.ObjectId,
       senderId: userObjId,
-      body: dto.body.trim(),
+      body: lastBody,
       createdAt: new Date(),
       status: MessageStatus.SENT,
     };
@@ -1493,5 +1604,544 @@ export class MessagingService {
     );
 
     return { success: true, message: 'You have left the group.' };
+  }
+
+  /**
+   * Upload message attachment to S3 storage with presigned / permanent URL.
+   */
+  async uploadAttachment(userId: string, file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+    const MAX_SIZE = 25 * 1024 * 1024; // 25MB
+    if (file.size > MAX_SIZE) {
+      throw new BadRequestException('Attachment size exceeds 25MB limit.');
+    }
+    const userObjId = this.toObjectId(userId);
+    const user = await this.userModel.findById(userObjId).lean();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const cleanName = (file.originalname || 'attachment')
+      .replace(/[^a-zA-Z0-9._-]/g, '_')
+      .slice(-80);
+    const timestamp = Date.now();
+    const key = `messages/attachments/${userId}/${timestamp}-${cleanName}`;
+    let url = '';
+
+    if (this.uploadService) {
+      await this.uploadService.uploadFile(key, file.buffer, file.mimetype);
+      if (this.signedUrlService) {
+        url = await this.signedUrlService.generateSignedImageUrl(key);
+      } else {
+        const bucket = process.env.AWS_S3_BUCKET || 'zeitnahacademy-production';
+        const region = process.env.AWS_REGION || 'ap-south-1';
+        url = `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+      }
+    } else {
+      url = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+    }
+
+    const isImage = file.mimetype.startsWith('image/');
+    return {
+      url,
+      name: file.originalname || cleanName,
+      type: isImage ? 'image' : 'file',
+      size: file.size,
+      key,
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 3. TIER 2: SAVED MESSAGES
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Save a message for later reference.
+   * Authorization: Caller must be a member of the conversation and message must not be deleted.
+   */
+  async saveMessage(userId: string, messageId: string) {
+    const msgObjId = this.toObjectId(messageId);
+    const userObjId = this.toObjectId(userId);
+
+    const message = await this.messageModel.findById(msgObjId).lean();
+    if (!message || message.isDeleted) {
+      throw new NotFoundException('Message not found or deleted.');
+    }
+
+    const conversation = await this.conversationModel.findById(message.conversationId).lean();
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found.');
+    }
+
+    const isMember = (conversation.participants || []).some((p: any) =>
+      this.toObjectId(p).equals(userObjId),
+    );
+    if (!isMember) {
+      throw new ForbiddenException('Cannot save message from a conversation you do not belong to.');
+    }
+
+    const existing = await this.savedMessageModel.findOne({
+      userId: userObjId,
+      messageId: msgObjId,
+    });
+
+    if (existing) {
+      return { success: true, messageId, isSaved: true, savedAt: existing.savedAt };
+    }
+
+    const saved = await this.savedMessageModel.create({
+      userId: userObjId,
+      messageId: msgObjId,
+      conversationId: message.conversationId,
+      savedAt: new Date(),
+    });
+
+    return { success: true, messageId, isSaved: true, savedAt: saved.savedAt };
+  }
+
+  /**
+   * Remove a message from saved messages.
+   */
+  async unsaveMessage(userId: string, messageId: string) {
+    const msgObjId = this.toObjectId(messageId);
+    const userObjId = this.toObjectId(userId);
+
+    await this.savedMessageModel.deleteOne({
+      userId: userObjId,
+      messageId: msgObjId,
+    });
+
+    return { success: true, messageId, isSaved: false };
+  }
+
+  /**
+   * List user's saved messages with pagination and enriched metadata.
+   */
+  async getSavedMessages(userId: string, query: QuerySavedMessagesDto = {}) {
+    const userObjId = this.toObjectId(userId);
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(50, Math.max(1, Number(query.limit) || 20));
+    const skip = (page - 1) * limit;
+
+    const [total, rawSaved] = await Promise.all([
+      this.savedMessageModel.countDocuments({ userId: userObjId }),
+      this.savedMessageModel
+        .find({ userId: userObjId })
+        .populate({
+          path: 'messageId',
+          populate: [
+            { path: 'senderId', select: 'name username avatar primaryRole currentRole headline' },
+            { path: 'reactions.userId', select: 'name username' },
+          ],
+        })
+        .populate({
+          path: 'conversationId',
+          populate: {
+            path: 'participants',
+            select: 'name username avatar primaryRole currentRole headline',
+          },
+        })
+        .sort({ savedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+    ]);
+
+    // Format saved messages and filter out orphaned or deleted messages
+    const savedMessages = rawSaved
+      .filter((s: any) => s.messageId && !s.messageId.isDeleted && s.conversationId)
+      .map((s: any) => {
+        const msg = s.messageId;
+        const conv = s.conversationId;
+        const formattedConv = this.formatConversation(conv, userId, 0);
+        return {
+          id: String(s._id),
+          savedAt: s.savedAt,
+          messageId: String(msg._id),
+          conversationId: String(conv._id),
+          conversation: formattedConv,
+          message: {
+            ...msg,
+            id: String(msg._id),
+            isOwn: String(msg.senderId?._id || msg.senderId) === userId,
+            isPinned: Boolean(msg.isPinned),
+            isSaved: true,
+          },
+        };
+      });
+
+    return {
+      savedMessages,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      hasNextPage: page * limit < total,
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 4. TIER 2: PINNED MESSAGES
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Pin a message in a conversation.
+   * Direct conversations: Both participants can pin.
+   * Group conversations: Group ADMIN or conversation creator or message sender can pin.
+   */
+  async pinMessage(userId: string, conversationId: string, messageId: string) {
+    const convObjId = this.toObjectId(conversationId);
+    const msgObjId = this.toObjectId(messageId);
+    const userObjId = this.toObjectId(userId);
+
+    const conversation = await this.conversationModel.findById(convObjId);
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found.');
+    }
+
+    const isMember = conversation.participants.some((p) => p.equals(userObjId));
+    if (!isMember) {
+      throw new ForbiddenException('Not authorized to access this conversation.');
+    }
+
+    const message = await this.messageModel.findById(msgObjId);
+    if (!message || !message.conversationId.equals(convObjId)) {
+      throw new NotFoundException('Message not found in this conversation.');
+    }
+    if (message.isDeleted) {
+      throw new BadRequestException('Cannot pin a deleted message.');
+    }
+
+    // Authorization check for group conversations
+    if (conversation.type === ConversationType.GROUP) {
+      const myMember = conversation.members.find((m) => m.userId.equals(userObjId));
+      const isAdmin = myMember?.role === 'ADMIN' || conversation.createdBy.equals(userObjId);
+      const isSender = message.senderId.equals(userObjId);
+      if (!isAdmin && !isSender) {
+        throw new ForbiddenException('Only group admins or message authors can pin messages.');
+      }
+    }
+
+    message.isPinned = true;
+    message.pinnedAt = new Date();
+    message.pinnedBy = userObjId;
+    await message.save();
+
+    let populated: any = null;
+    try {
+      populated = await this.messageModel
+        .findById(message._id)
+        .populate('senderId', 'name username avatar primaryRole')
+        .populate('reactions.userId', 'name username')
+        .lean();
+    } catch {
+      populated = null;
+    }
+    const finalDoc = populated || (message.toObject ? message.toObject() : message);
+
+    const formatted = {
+      ...finalDoc,
+      id: String(finalDoc._id || message._id),
+      isOwn: String(finalDoc.senderId?._id || finalDoc.senderId) === userId,
+      isPinned: true,
+    };
+
+    // Real-time broadcast
+    this.messagesGateway.notifyMessageUpdated(conversationId, formatted);
+    if (this.messagesGateway.server) {
+      this.messagesGateway.server
+        .to(`conversation_${conversationId}`)
+        .emit('message_pinned', { conversationId, message: formatted });
+    }
+
+    return formatted;
+  }
+
+  /**
+   * Unpin a message in a conversation.
+   */
+  async unpinMessage(userId: string, conversationId: string, messageId: string) {
+    const convObjId = this.toObjectId(conversationId);
+    const msgObjId = this.toObjectId(messageId);
+    const userObjId = this.toObjectId(userId);
+
+    const conversation = await this.conversationModel.findById(convObjId);
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found.');
+    }
+
+    const isMember = conversation.participants.some((p) => p.equals(userObjId));
+    if (!isMember) {
+      throw new ForbiddenException('Not authorized to access this conversation.');
+    }
+
+    const message = await this.messageModel.findById(msgObjId);
+    if (!message || !message.conversationId.equals(convObjId)) {
+      throw new NotFoundException('Message not found in this conversation.');
+    }
+
+    // Authorization check for groups
+    if (conversation.type === ConversationType.GROUP) {
+      const myMember = conversation.members.find((m) => m.userId.equals(userObjId));
+      const isAdmin = myMember?.role === 'ADMIN' || conversation.createdBy.equals(userObjId);
+      const isSender = message.senderId.equals(userObjId);
+      const isPinner = message.pinnedBy?.equals(userObjId);
+      if (!isAdmin && !isSender && !isPinner) {
+        throw new ForbiddenException('Only group admins or message pinners can unpin.');
+      }
+    }
+
+    message.isPinned = false;
+    message.pinnedAt = null;
+    message.pinnedBy = null;
+    await message.save();
+
+    let populated: any = null;
+    try {
+      populated = await this.messageModel
+        .findById(message._id)
+        .populate('senderId', 'name username avatar primaryRole')
+        .populate('reactions.userId', 'name username')
+        .lean();
+    } catch {
+      populated = null;
+    }
+    const finalDoc = populated || (message.toObject ? message.toObject() : message);
+
+    const formatted = {
+      ...finalDoc,
+      id: String(finalDoc._id || message._id),
+      isOwn: String(finalDoc.senderId?._id || finalDoc.senderId) === userId,
+      isPinned: false,
+    };
+
+    this.messagesGateway.notifyMessageUpdated(conversationId, formatted);
+    if (this.messagesGateway.server) {
+      this.messagesGateway.server
+        .to(`conversation_${conversationId}`)
+        .emit('message_unpinned', { conversationId, messageId });
+    }
+
+    return formatted;
+  }
+
+  /**
+   * Get all pinned messages in a conversation.
+   */
+  async getPinnedMessages(userId: string, conversationId: string) {
+    const convObjId = this.toObjectId(conversationId);
+    const userObjId = this.toObjectId(userId);
+
+    const conversation = await this.conversationModel.findById(convObjId).lean();
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found.');
+    }
+
+    const isMember = (conversation.participants || []).some((p: any) =>
+      this.toObjectId(p).equals(userObjId),
+    );
+    if (!isMember) {
+      throw new ForbiddenException('Not authorized to access this conversation.');
+    }
+
+    const raw = await this.messageModel
+      .find({
+        conversationId: convObjId,
+        isPinned: true,
+        isDeleted: false,
+        deletedFor: { $ne: userObjId },
+      })
+      .populate('senderId', 'name username avatar primaryRole')
+      .populate('pinnedBy', 'name username')
+      .sort({ pinnedAt: -1 })
+      .lean();
+
+    const pinned = raw.map((m: any) => ({
+      ...m,
+      id: String(m._id),
+      isOwn: String(m.senderId?._id || m.senderId) === userId,
+      isPinned: true,
+    }));
+
+    return { pinned, count: pinned.length };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 5. TIER 2: GLOBAL & CONVERSATION SEARCH
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Search across all user-accessible conversations:
+   * Categorized by PEOPLE, CONVERSATIONS, MESSAGES, FILES, LINKS.
+   */
+  async searchMessages(userId: string, query: SearchMessagingDto) {
+    const userObjId = this.toObjectId(userId);
+    const qStr = (query.q || '').trim();
+    if (!qStr) {
+      return {
+        query: '',
+        people: [],
+        conversations: [],
+        messages: [],
+        files: [],
+        links: [],
+      };
+    }
+
+    const escaped = qStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const searchRegex = new RegExp(escaped, 'i');
+    const limit = Math.min(30, Math.max(1, Number(query.limit) || 15));
+
+    // 1. Fetch user's accessible active conversations
+    const userConversations = await this.conversationModel
+      .find({
+        'members.userId': userObjId,
+        'members.isDeletedFor': { $ne: true },
+      })
+      .populate('participants', 'name username avatar primaryRole currentRole headline')
+      .sort({ lastMessageAt: -1 })
+      .lean();
+
+    const accessibleConvIds = userConversations.map((c) => c._id);
+    const convMap = new Map(userConversations.map((c) => [String(c._id), c]));
+
+    // 2. Search Conversations
+    const matchedConversations = userConversations
+      .filter((c: any) => {
+        const title = this.formatConversation(c, userId, 0)?.name || '';
+        const lastMsg = c.lastMessage?.body || '';
+        const matchTitle = searchRegex.test(title);
+        const matchLast = searchRegex.test(lastMsg);
+        const matchParticipant = (c.participants || []).some(
+          (p: any) => searchRegex.test(p.name || '') || searchRegex.test(p.username || ''),
+        );
+        return matchTitle || matchLast || matchParticipant;
+      })
+      .slice(0, limit)
+      .map((c: any) => this.formatConversation(c, userId, 0));
+
+    // 3. Search Messages
+    const matchedMessagesRaw = await this.messageModel
+      .find({
+        conversationId: { $in: accessibleConvIds },
+        body: searchRegex,
+        isDeleted: false,
+        deletedFor: { $ne: userObjId },
+      })
+      .populate('senderId', 'name username avatar primaryRole')
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+
+    const matchedMessages = matchedMessagesRaw.map((m: any) => {
+      const rawConv = convMap.get(String(m.conversationId));
+      const formattedConv = rawConv ? this.formatConversation(rawConv, userId, 0) : null;
+      return {
+        ...m,
+        id: String(m._id),
+        conversationName: formattedConv?.name || 'Conversation',
+        conversationType: rawConv?.type || 'DIRECT',
+        isOwn: String(m.senderId?._id || m.senderId) === userId,
+      };
+    });
+
+    // 4. Search Files (Attachments)
+    const matchedFilesRaw = await this.messageModel
+      .find({
+        conversationId: { $in: accessibleConvIds },
+        'attachments.name': searchRegex,
+        isDeleted: false,
+        deletedFor: { $ne: userObjId },
+      })
+      .populate('senderId', 'name username avatar')
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+
+    const matchedFiles: any[] = [];
+    matchedFilesRaw.forEach((m: any) => {
+      const rawConv = convMap.get(String(m.conversationId));
+      const formattedConv = rawConv ? this.formatConversation(rawConv, userId, 0) : null;
+      (m.attachments || []).forEach((att: any) => {
+        if (att.name && searchRegex.test(att.name)) {
+          matchedFiles.push({
+            ...att,
+            messageId: String(m._id),
+            conversationId: String(m.conversationId),
+            conversationName: formattedConv?.name || 'Conversation',
+            sender: m.senderId,
+            createdAt: m.createdAt,
+          });
+        }
+      });
+    });
+
+    // 5. Search Links (safe domain and URL matching)
+    const matchedLinksRaw = await this.messageModel
+      .find({
+        conversationId: { $in: accessibleConvIds },
+        body: /https?:\/\//i,
+        isDeleted: false,
+        deletedFor: { $ne: userObjId },
+      })
+      .populate('senderId', 'name username avatar')
+      .sort({ createdAt: -1 })
+      .limit(40)
+      .lean();
+
+    const matchedLinks: any[] = [];
+    matchedLinksRaw.forEach((m: any) => {
+      const urls = m.body?.match(/https?:\/\/[^\s]+/gi) || [];
+      const rawConv = convMap.get(String(m.conversationId));
+      const formattedConv = rawConv ? this.formatConversation(rawConv, userId, 0) : null;
+      urls.forEach((url: string) => {
+        if (searchRegex.test(url) || searchRegex.test(m.body)) {
+          try {
+            const parsed = new URL(url);
+            matchedLinks.push({
+              url,
+              hostname: parsed.hostname,
+              messageSnippet: m.body.slice(0, 100),
+              messageId: String(m._id),
+              conversationId: String(m.conversationId),
+              conversationName: formattedConv?.name || 'Conversation',
+              sender: m.senderId,
+              createdAt: m.createdAt,
+            });
+          } catch {
+            // Ignore malformed URLs
+          }
+        }
+      });
+    });
+
+    // 6. Search People (participants in user's conversations)
+    const peopleMap = new Map<string, any>();
+    userConversations.forEach((c: any) => {
+      (c.participants || []).forEach((p: any) => {
+        const pId = String(p._id || p.id || p);
+        if (pId !== userId && !peopleMap.has(pId)) {
+          const name = p.name || '';
+          const uname = p.username || '';
+          if (searchRegex.test(name) || searchRegex.test(uname)) {
+            peopleMap.set(pId, {
+              ...this.sanitizeParticipant(p),
+              conversationId: String(c._id),
+            });
+          }
+        }
+      });
+    });
+
+    return {
+      query: qStr,
+      conversations: matchedConversations,
+      messages: matchedMessages,
+      files: matchedFiles.slice(0, limit),
+      links: matchedLinks.slice(0, limit),
+      people: Array.from(peopleMap.values()).slice(0, limit),
+    };
   }
 }

@@ -9,8 +9,11 @@ import {
   Query,
   Req,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { MessagingService } from './messaging.service';
@@ -22,6 +25,8 @@ import {
   AddReactionDto,
   QueryConversationsDto,
   QueryMessagesDto,
+  QuerySavedMessagesDto,
+  SearchMessagingDto,
   MuteConversationDto,
   ArchiveConversationDto,
   ReportConversationDto,
@@ -63,6 +68,46 @@ export class MessagingController {
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   async getUnreadCounts(@Req() req: AuthenticatedRequest) {
     return this.messagingService.getUnreadCounts(this.getUserId(req));
+  }
+
+  @Get('search')
+  @ApiOperation({ summary: 'Global search across accessible conversations' })
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  async searchMessages(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: SearchMessagingDto,
+  ) {
+    return this.messagingService.searchMessages(this.getUserId(req), query);
+  }
+
+  @Get('saved')
+  @ApiOperation({ summary: 'Get user saved messages' })
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  async getSavedMessages(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: QuerySavedMessagesDto,
+  ) {
+    return this.messagingService.getSavedMessages(this.getUserId(req), query);
+  }
+
+  @Post('saved/:messageId')
+  @ApiOperation({ summary: 'Save a message' })
+  @Throttle({ default: { limit: 40, ttl: 60000 } })
+  async saveMessage(
+    @Req() req: AuthenticatedRequest,
+    @Param('messageId') messageId: string,
+  ) {
+    return this.messagingService.saveMessage(this.getUserId(req), messageId);
+  }
+
+  @Delete('saved/:messageId')
+  @ApiOperation({ summary: 'Unsave a message' })
+  @Throttle({ default: { limit: 40, ttl: 60000 } })
+  async unsaveMessage(
+    @Req() req: AuthenticatedRequest,
+    @Param('messageId') messageId: string,
+  ) {
+    return this.messagingService.unsaveMessage(this.getUserId(req), messageId);
   }
 
   @Get('conversations/:id')
@@ -128,6 +173,38 @@ export class MessagingController {
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   async markRead(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.messagingService.markConversationRead(this.getUserId(req), id);
+  }
+
+  @Get('conversations/:id/pinned')
+  @ApiOperation({ summary: 'Get pinned messages in conversation' })
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  async getPinnedMessages(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ) {
+    return this.messagingService.getPinnedMessages(this.getUserId(req), id);
+  }
+
+  @Post('conversations/:id/pin/:messageId')
+  @ApiOperation({ summary: 'Pin message in conversation' })
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  async pinMessage(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Param('messageId') messageId: string,
+  ) {
+    return this.messagingService.pinMessage(this.getUserId(req), id, messageId);
+  }
+
+  @Delete('conversations/:id/pin/:messageId')
+  @ApiOperation({ summary: 'Unpin message in conversation' })
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  async unpinMessage(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Param('messageId') messageId: string,
+  ) {
+    return this.messagingService.unpinMessage(this.getUserId(req), id, messageId);
   }
 
   @Post('conversations/:id/request/accept')
@@ -251,5 +328,21 @@ export class MessagingController {
       messageId,
       dto,
     );
+  }
+
+  @Post('attachments')
+  @ApiOperation({ summary: 'Upload attachment for conversation message' })
+  @ApiConsumes('multipart/form-data')
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
+    }),
+  )
+  async uploadAttachment(
+    @Req() req: AuthenticatedRequest,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.messagingService.uploadAttachment(this.getUserId(req), file);
   }
 }

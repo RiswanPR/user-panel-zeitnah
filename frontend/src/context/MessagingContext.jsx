@@ -10,6 +10,22 @@ import { getRefreshedToken } from '../services/api';
 
 export const MessagingContext = createContext(null);
 
+export function formatPresenceStatus(isOnline, lastSeenAt, isTyping = false) {
+  if (isTyping) return 'Typing…';
+  if (isOnline) return '● Active now';
+  if (!lastSeenAt) return 'Offline';
+  const d = new Date(lastSeenAt);
+  if (isNaN(d.getTime())) return 'Offline';
+  const now = new Date();
+  const diffMins = Math.floor((now - d) / 60000);
+  const diffHours = Math.floor((now - d) / 3600000);
+  if (diffMins < 1) return 'Active just now';
+  if (diffMins < 60) return `Active ${diffMins}m ago`;
+  if (diffHours < 24) return `Active ${diffHours}h ago`;
+  if (now.toDateString() === d.toDateString()) return 'Active today';
+  return 'Offline';
+}
+
 export const MessagingProvider = ({ children }) => {
   const { user, loading } = useContext(AuthContext);
   const [socket, setSocket] = useState(null);
@@ -17,6 +33,7 @@ export const MessagingProvider = ({ children }) => {
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [typingMap, setTypingMap] = useState({}); // { [convId]: Set<{ userId, userName }> }
   const [onlineUserSet, setOnlineUserSet] = useState(new Set());
+  const [lastSeenMap, setLastSeenMap] = useState({}); // { [userId]: Date }
   const queryClient = useQueryClient();
   const toast = useToast();
   const activeConvRef = useRef(activeConversationId);
@@ -117,6 +134,10 @@ export const MessagingProvider = ({ children }) => {
             next.add(payload.userId);
           } else {
             next.delete(payload.userId);
+            setLastSeenMap((lastPrev) => ({
+              ...lastPrev,
+              [payload.userId]: payload.timestamp ? new Date(payload.timestamp) : new Date(),
+            }));
           }
           return next;
         });
@@ -186,6 +207,18 @@ export const MessagingProvider = ({ children }) => {
       newSocket.on('reaction_updated', (payload) => {
         const { conversationId } = payload || {};
         queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+      });
+
+      newSocket.on('message_pinned', (payload) => {
+        const { conversationId } = payload || {};
+        queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+        queryClient.invalidateQueries({ queryKey: ['pinned', conversationId] });
+      });
+
+      newSocket.on('message_unpinned', (payload) => {
+        const { conversationId } = payload || {};
+        queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+        queryClient.invalidateQueries({ queryKey: ['pinned', conversationId] });
       });
 
       newSocket.on('conversation_updated', () => {
@@ -321,6 +354,67 @@ export const MessagingProvider = ({ children }) => {
     }
   }, [queryClient]);
 
+  const getUserLastSeen = useCallback((userId) => {
+    if (!userId) return null;
+    return lastSeenMap[String(userId)] || null;
+  }, [lastSeenMap]);
+
+  const formatUserPresence = useCallback((userId, isTyping = false, userObj = null) => {
+    const online = isUserOnline(userId);
+    const lastSeen = getUserLastSeen(userId) || userObj?.lastSeenAt || userObj?.lastActive || userObj?.updatedAt;
+    return formatPresenceStatus(online, lastSeen, isTyping);
+  }, [isUserOnline, getUserLastSeen]);
+
+  const [targetMessageId, setTargetMessageId] = useState(null);
+
+  const saveMessage = useCallback(async (messageId) => {
+    if (!messageId) return;
+    try {
+      await messagingService.saveMessage(messageId);
+      toast.success('Message saved for reference');
+      queryClient.invalidateQueries({ queryKey: ['saved-messages'] });
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+    } catch (err) {
+      toast.error('Unable to save message', err.response?.data?.message || 'Action failed');
+    }
+  }, [queryClient, toast]);
+
+  const unsaveMessage = useCallback(async (messageId) => {
+    if (!messageId) return;
+    try {
+      await messagingService.unsaveMessage(messageId);
+      toast.info('Message removed from saved');
+      queryClient.invalidateQueries({ queryKey: ['saved-messages'] });
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+    } catch (err) {
+      toast.error('Unable to unsave message', err.response?.data?.message || 'Action failed');
+    }
+  }, [queryClient, toast]);
+
+  const pinMessage = useCallback(async (convId, messageId) => {
+    if (!convId || !messageId) return;
+    try {
+      await messagingService.pinMessage(convId, messageId);
+      toast.success('Message pinned');
+      queryClient.invalidateQueries({ queryKey: ['messages', convId] });
+      queryClient.invalidateQueries({ queryKey: ['pinned', convId] });
+    } catch (err) {
+      toast.error('Unable to pin message', err.response?.data?.message || 'Action failed');
+    }
+  }, [queryClient, toast]);
+
+  const unpinMessage = useCallback(async (convId, messageId) => {
+    if (!convId || !messageId) return;
+    try {
+      await messagingService.unpinMessage(convId, messageId);
+      toast.info('Message unpinned');
+      queryClient.invalidateQueries({ queryKey: ['messages', convId] });
+      queryClient.invalidateQueries({ queryKey: ['pinned', convId] });
+    } catch (err) {
+      toast.error('Unable to unpin message', err.response?.data?.message || 'Action failed');
+    }
+  }, [queryClient, toast]);
+
   return (
     <MessagingContext.Provider
       value={{
@@ -329,12 +423,20 @@ export const MessagingProvider = ({ children }) => {
         unreadCounts,
         activeConversationId,
         currentUserId,
+        targetMessageId,
+        setTargetMessageId,
         joinConversation,
         leaveConversation,
         sendTyping,
         isUserOnline,
+        getUserLastSeen,
+        formatUserPresence,
         getTypingUsers,
         markRead,
+        saveMessage,
+        unsaveMessage,
+        pinMessage,
+        unpinMessage,
       }}
     >
       {children}

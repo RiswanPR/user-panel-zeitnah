@@ -98,6 +98,56 @@ export const messagingService = {
     const response = await api.post(`/messages/messages/${messageId}/report`, data);
     return response.data;
   },
+
+  // ── Tier 2: Saved Messages ──
+  getSavedMessages: async (params = {}) => {
+    const response = await api.get('/messages/saved', { params });
+    return response.data;
+  },
+
+  saveMessage: async (messageId) => {
+    const response = await api.post(`/messages/saved/${messageId}`);
+    return response.data;
+  },
+
+  unsaveMessage: async (messageId) => {
+    const response = await api.delete(`/messages/saved/${messageId}`);
+    return response.data;
+  },
+
+  // ── Tier 2: Pinned Messages ──
+  getPinnedMessages: async (conversationId) => {
+    const response = await api.get(`/messages/conversations/${conversationId}/pinned`);
+    return response.data;
+  },
+
+  pinMessage: async (conversationId, messageId) => {
+    const response = await api.post(`/messages/conversations/${conversationId}/pin/${messageId}`);
+    return response.data;
+  },
+
+  unpinMessage: async (conversationId, messageId) => {
+    const response = await api.delete(`/messages/conversations/${conversationId}/pin/${messageId}`);
+    return response.data;
+  },
+
+  // ── Tier 2: Global Search ──
+  searchGlobal: async (params = {}) => {
+    const response = await api.get('/messages/search', { params });
+    return response.data;
+  },
+
+  // ── Attachments ──
+  uploadAttachment: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/messages/attachments', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
 };
 
 export default messagingService;

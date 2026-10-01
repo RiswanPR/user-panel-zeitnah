@@ -125,12 +125,42 @@ export class QueryMessagesDto {
   before?: string; // messageId cursor or timestamp
 
   @IsOptional()
+  @IsString()
+  around?: string; // messageId to center the message window around
+
+  @IsOptional()
   limit?: number = 30;
 
   @IsOptional()
   @IsString()
   q?: string;
 }
+
+export class QuerySavedMessagesDto {
+  @IsOptional()
+  page?: number = 1;
+
+  @IsOptional()
+  limit?: number = 20;
+
+  @IsOptional()
+  @IsString()
+  q?: string;
+}
+
+export class SearchMessagingDto {
+  @IsString()
+  @IsNotEmpty()
+  q!: string;
+
+  @IsOptional()
+  @IsEnum(['all', 'messages', 'conversations', 'people', 'files', 'links'])
+  type?: 'all' | 'messages' | 'conversations' | 'people' | 'files' | 'links' = 'all';
+
+  @IsOptional()
+  limit?: number = 20;
+}
+
 
 export class MuteConversationDto {
   @IsBoolean()
