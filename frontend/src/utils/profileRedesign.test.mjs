@@ -236,4 +236,29 @@ describe('Profile Redesign Architecture & Routing Validation', () => {
     assert.equal(merged.recommendations.length, 1);
     assert.equal(merged.recommendations[0].id, 'rec-1');
   });
+
+  it('safely handles getUploadUrl across diverse media paths and objects without throwing', async () => {
+    const { getUploadUrl } = await import('./courseUi.js');
+    assert.equal(getUploadUrl(null), null);
+    assert.equal(getUploadUrl(undefined), null);
+    assert.equal(getUploadUrl(''), null);
+    assert.equal(getUploadUrl('https://example.com/photo.jpg'), 'https://example.com/photo.jpg');
+    assert.equal(getUploadUrl('http://cdn.zeitnah.com/avatar.png'), 'http://cdn.zeitnah.com/avatar.png');
+    assert.match(getUploadUrl('avatars/member.png'), /\/uploads\/avatars\/member\.png$/);
+    assert.match(getUploadUrl({ url: 'avatars/nested.png' }), /\/uploads\/avatars\/nested\.png$/);
+    assert.equal(getUploadUrl(12345), null);
+  });
+
+  it('guarantees Profile.jsx statically imports getUploadUrl from courseUi and guards ImageEditorModal', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const profilePath = path.resolve('src/pages/profile/Profile.jsx');
+    const content = fs.readFileSync(profilePath, 'utf8');
+
+    // Must import getUploadUrl from courseUi
+    assert.match(content, /import\s*\{[^}]*getUploadUrl[^}]*\}\s*from\s*["'][^"']*courseUi["']/);
+
+    // ImageEditorModal must be conditionally mounted to prevent unneeded initialization evaluation
+    assert.match(content, /Boolean\(editingImage\)\s*&&\s*\(/);
+  });
 });

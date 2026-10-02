@@ -386,7 +386,7 @@ export default function PortfolioPage({ isPublic = false }) {
               </div>
               <p className="text-xs text-text-muted mt-0.5">
                 {resume?.url
-                  ? `Uploaded ${new Date(resume.updatedAt || Date.now()).toLocaleDateString()}`
+                  ? (resume.updatedAt ? `Uploaded ${new Date(resume.updatedAt).toLocaleDateString()}` : 'Uploaded recently')
                   : 'No verified CV uploaded yet'}
               </p>
             </div>

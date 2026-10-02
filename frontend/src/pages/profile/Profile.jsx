@@ -1,29 +1,21 @@
-import { useContext, useRef, useState } from "react";
+import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   RefreshCw,
-  Award,
   BookOpen,
-  Briefcase,
   Layers,
   ShieldCheck,
-  CheckCircle2,
-  ExternalLink,
-  Edit3,
   ArrowRight,
   LogOut,
   ChevronRight,
-  Clock,
-  Send,
-  Sparkles,
 } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
 import { coreProfileService } from "../../services/coreProfileService";
 import { projectsService } from "../../services/projectsService";
 import { useToast } from "../../components/ui/Toast";
+import { getUploadUrl } from "../../utils/courseUi";
 
 // Core Reusable Profile Components
 import ProfileNav from "../../components/profile/ProfileNav";
@@ -274,7 +266,6 @@ export default function Profile() {
   }
 
   const gamification = profile.gamification || {};
-  const isPublished = Boolean(profile.publicProfilePublished);
   const isVerified = Boolean(profile.isVerified);
 
   return (
@@ -576,27 +567,30 @@ export default function Profile() {
         onClose={() => setIsChangeUsernameOpen(false)}
       />
 
-      <ImageEditorModal
-        isOpen={Boolean(editingImage)}
-        onClose={() => setEditingImage(null)}
-        imageFile={editingImage?.file}
-        type={editingImage?.type || "avatar"}
-        onSave={(processedFile) => {
-          if (editingImage?.type === "avatar") {
-            avatarMutation.mutate(processedFile, {
-              onSuccess: () => setEditingImage(null),
-            });
-          } else {
-            bannerMutation.mutate(processedFile, {
-              onSuccess: () => setEditingImage(null),
-            });
-          }
-        }}
-        currentAvatarUrl={profile?.avatar ? getUploadUrl(profile.avatar) : null}
-        userName={profile?.name || "Member"}
-        userRole={profile?.currentRole || profile?.headline || "Infrastructure Professional"}
-        isUploading={avatarMutation.isPending || bannerMutation.isPending}
-      />
+      {/* Image Editor Modal for Avatar & Banner */}
+      {Boolean(editingImage) && (
+        <ImageEditorModal
+          isOpen={Boolean(editingImage)}
+          onClose={() => setEditingImage(null)}
+          imageFile={editingImage?.file}
+          type={editingImage?.type || "avatar"}
+          onSave={(processedFile) => {
+            if (editingImage?.type === "avatar") {
+              avatarMutation.mutate(processedFile, {
+                onSuccess: () => setEditingImage(null),
+              });
+            } else {
+              bannerMutation.mutate(processedFile, {
+                onSuccess: () => setEditingImage(null),
+              });
+            }
+          }}
+          currentAvatarUrl={profile?.avatar ? getUploadUrl(profile.avatar) : null}
+          userName={profile?.name || "Member"}
+          userRole={profile?.currentRole || profile?.headline || "Infrastructure Professional"}
+          isUploading={avatarMutation.isPending || bannerMutation.isPending}
+        />
+      )}
 
       <ProjectEditorModal
         isOpen={isProjectEditorOpen}

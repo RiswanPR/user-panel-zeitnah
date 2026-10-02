@@ -9,6 +9,15 @@ export function getUploadUrl(path) {
     return null;
   }
 
+  if (typeof path === "object" && path !== null) {
+    path = path.url || path.path || path.src || "";
+    if (!path) return null;
+  }
+
+  if (typeof path !== "string") {
+    return null;
+  }
+
   if (/^https?:\/\//i.test(path)) {
     return path;
   }
