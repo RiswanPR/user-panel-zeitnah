@@ -224,12 +224,6 @@ export class PostRepository extends BaseRepository<PostDocument> {
 
   // Retrieve single populated post
   async findByIdPopulated(postId: string, viewerUserId?: string): Promise<any> {
-    const feed = await this.findFeed({
-      userId: viewerUserId,
-      limit: 1,
-      cursor: undefined,
-    });
-
     // Directly match by ID
     const single = await this.postModel.aggregate([
       {

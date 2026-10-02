@@ -233,6 +233,8 @@ function PostCard({ post }) {
         {/* Post Options Menu */}
         <div className="relative shrink-0" ref={menuRef}>
           <button
+            id={`options-btn-${postId}`}
+            data-testid="post-options-btn"
             onClick={() => setShowMenu((prev) => !prev)}
             className="p-2 text-text-muted hover:text-white hover:bg-white/[0.06] rounded-full transition-colors cursor-pointer"
             aria-label="Post options"
@@ -261,8 +263,10 @@ function PostCard({ post }) {
                   <>
                     <div className="h-px w-full bg-white/[0.06] my-1" />
                     <button
+                      id={`delete-btn-${postId}`}
+                      data-testid="post-delete-btn"
                       onClick={handleDelete}
-                      className="w-full text-left px-3.5 py-2 text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors flex items-center justify-between"
+                      className="w-full text-left px-3.5 py-2 text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors flex items-center justify-between cursor-pointer"
                     >
                       <span>Delete</span>
                       <Trash2 className="w-3.5 h-3.5" />
@@ -396,6 +400,8 @@ function PostCard({ post }) {
             </AnimatePresence>
 
             <button
+              id={`like-btn-${postId}`}
+              data-testid="post-like-btn"
               onClick={handleToggleLike}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                 isLiked
@@ -415,6 +421,8 @@ function PostCard({ post }) {
 
           {/* Comment Toggle Button */}
           <button
+            id={`comment-btn-${postId}`}
+            data-testid="post-comment-btn"
             onClick={() => setShowComments((prev) => !prev)}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
               showComments
@@ -433,6 +441,8 @@ function PostCard({ post }) {
 
         {/* Bookmark Button */}
         <button
+          id={`bookmark-btn-${postId}`}
+          data-testid="post-bookmark-btn"
           onClick={handleToggleBookmark}
           className={`p-2 rounded-lg transition-colors cursor-pointer ${
             isSaved
@@ -459,6 +469,8 @@ function PostCard({ post }) {
             {/* New Comment Input */}
             <form onSubmit={handleAddComment} className="flex gap-2.5 mb-4">
               <input
+                id={`comment-input-${postId}`}
+                data-testid="comment-input"
                 type="text"
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
@@ -467,9 +479,11 @@ function PostCard({ post }) {
                 maxLength={500}
               />
               <button
+                id={`comment-submit-${postId}`}
+                data-testid="comment-submit"
                 type="submit"
                 disabled={!commentText.trim() || createCommentMutation.isPending}
-                className="px-3.5 py-2 bg-brand-mint text-bg-base font-semibold rounded-xl text-xs flex items-center justify-center hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                className="px-3.5 py-2 bg-brand-mint text-bg-base font-semibold rounded-xl text-xs flex items-center justify-center hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                 aria-label="Submit comment"
               >
                 {createCommentMutation.isPending ? (

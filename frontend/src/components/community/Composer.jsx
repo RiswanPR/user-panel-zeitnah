@@ -288,10 +288,18 @@ export default function Composer() {
 
           {/* Text Area */}
           <textarea
+            id="composer-textarea"
+            data-testid="composer-textarea"
             ref={textareaRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onFocus={() => setIsExpanded(true)}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                e.preventDefault();
+                handleSubmit();
+              }
+            }}
             placeholder={
               isExpanded
                 ? "What's on your mind? Share an insight, project update, or ask a question..."
@@ -478,6 +486,8 @@ export default function Composer() {
               )}
 
               <button
+                id="composer-submit-btn"
+                data-testid="composer-submit-btn"
                 type="button"
                 onClick={handleSubmit}
                 disabled={
