@@ -205,8 +205,8 @@ export default function MainNavbar({
                   <span className="font-mono text-[13px] font-bold tracking-[0.14em] text-white group-hover:text-brand-mint transition-colors leading-none uppercase">
                     Zeitnah
                   </span>
-                  <span className="text-[8.5px] font-mono tracking-[0.18em] text-text-faint/80 uppercase leading-none mt-1">
-                    AEC HUB
+                  <span className="text-[8px] font-mono tracking-[0.14em] text-brand-mint/80 font-medium uppercase leading-none mt-1">
+                    See the unseen
                   </span>
                 </div>
               </Link>

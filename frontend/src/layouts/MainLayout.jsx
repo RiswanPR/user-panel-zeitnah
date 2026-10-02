@@ -21,6 +21,7 @@ import NotificationDrawer from "../components/notifications/NotificationDrawer";
 import PlatformAnnouncementBanner from "../components/announcements/PlatformAnnouncementBanner";
 import MobileMoreDrawer from "../components/navigation/MobileMoreDrawer";
 import MainNavbar from "../components/navigation/MainNavbar";
+import Footer from "../components/navigation/Footer";
 import { getPrimaryCareerNavigation } from "../utils/roleNavigation";
 
 export default function MainLayout({ children }) {
@@ -274,6 +275,13 @@ export default function MainLayout({ children }) {
           </div>
         </main>
       </div>
+
+      {/* ── Global Platform Footer (suppressed in full-height messaging) ── */}
+      {!isMessagesActiveConversation && !location.pathname.startsWith('/messages') && (
+        <div className="pb-16 md:pb-0">
+          <Footer />
+        </div>
+      )}
 
       {/* Mobile More Navigation Drawer */}
       <MobileMoreDrawer

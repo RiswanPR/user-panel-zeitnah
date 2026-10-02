@@ -966,7 +966,7 @@ export default function PublicProfilePage() {
         <section className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-4 shadow-sm">
           <h2 className="text-base sm:text-lg font-heading font-extrabold text-white flex items-center gap-2">
             <span className="w-1.5 h-4 rounded-full bg-brand-mint" />
-            Academy Courses & Credentials
+            Courses & Credentials
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
             {student.courses.map((course, idx) => (

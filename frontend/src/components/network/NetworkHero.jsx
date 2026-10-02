@@ -118,7 +118,7 @@ export default function NetworkHero({
             transition={{ duration: 0.25, delay: 0.05 }}
             className="text-xs sm:text-sm text-text-secondary leading-relaxed font-normal"
           >
-            Discover people, build meaningful relationships, and grow with Zeitnah.
+            Build, connect, discover through knowledge, community, and opportunity.
           </motion.p>
         </div>
 

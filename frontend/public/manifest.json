@@ -1,7 +1,7 @@
 {
-  "name": "Zeitnah Academy",
+  "name": "Zeitnah",
   "short_name": "Zeitnah",
-  "description": "Zeitnah Academy Learning Management System — Access structured courses, track your progress, and achieve your educational goals.",
+  "description": "Zeitnah — See the unseen. Build, connect, discover through knowledge, community, and opportunity.",
   "display": "standalone",
   "start_url": "/",
   "scope": "/",

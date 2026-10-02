@@ -80,7 +80,7 @@ const LearningProgressStrip = memo(function LearningProgressStrip({ courses = []
             </div>
             <div>
               <span className="text-[10px] font-mono font-bold uppercase tracking-[0.18em] text-text-muted">
-                ACADEMY TELEMETRY
+                LEARNING TELEMETRY
               </span>
               <h3 className="text-sm font-heading font-extrabold text-white tracking-tight uppercase">
                 Active Learning Progress

@@ -680,7 +680,7 @@ export default function NetworkConnections({
                 const connId = conn.id || conn._id;
                 const profileLink = getCanonicalProfileUrl(conn);
                 const role = conn.currentRole || conn.headline || "Infrastructure Professional";
-                const org = conn.organization || conn.company || conn.institution || "Zeitnah Academy";
+                const org = conn.organization || conn.company || conn.institution || "Zeitnah";
                 const location =
                   conn.location ||
                   (conn.city ? `${conn.city}${conn.country ? ` · ${conn.country}` : ""}` : null);

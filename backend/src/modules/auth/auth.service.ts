@@ -622,7 +622,7 @@ export class AuthService {
 
     await this.getEmailService().sendEmail({
       to: data.email,
-      subject: `${otp} is your Registration Code - Zeitnah Academy`,
+      subject: `${otp} is your Registration Code - Zeitnah`,
       html: generateOtpEmailHtml(otp, 'Registration'),
     });
 
@@ -946,7 +946,7 @@ export class AuthService {
 
     await this.getEmailService().sendEmail({
       to: cleanEmail,
-      subject: `${otp} is your Login Verification Code - Zeitnah Academy`,
+      subject: `${otp} is your Login Verification Code - Zeitnah`,
       html: generateOtpEmailHtml(otp, 'Login'),
     });
 

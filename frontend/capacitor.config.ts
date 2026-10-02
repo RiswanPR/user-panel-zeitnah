@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.zeitnahacademy.app',
-  appName: 'Zeitnah Academy',
+  appName: 'Zeitnah',
   webDir: 'dist',
   plugins: {
     SplashScreen: {

@@ -39,8 +39,8 @@ export default function ShareProfileModal({ isOpen, onClose, username, name, pro
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `${effectiveName} on Zeitnah Academy`,
-          text: `Check out ${effectiveName}'s student profile on Zeitnah Academy (@${effectiveUsername}):`,
+          title: `${effectiveName} on Zeitnah`,
+          text: `Check out ${effectiveName}'s profile on Zeitnah (@${effectiveUsername}):`,
           url: publicUrl,
         });
       } catch (err) {

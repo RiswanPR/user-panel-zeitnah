@@ -319,6 +319,13 @@ export default function MobileMoreDrawer({
                   <span>Sign Out of Zeitnah</span>
                 </button>
               </div>
+
+              {/* Brand Micro-Anchor */}
+              <div className="pt-2 text-center select-none">
+                <p className="text-[10px] font-mono tracking-[0.2em] text-text-faint/70 uppercase">
+                  Zeitnah • See the unseen
+                </p>
+              </div>
             </div>
           </motion.div>
         </div>

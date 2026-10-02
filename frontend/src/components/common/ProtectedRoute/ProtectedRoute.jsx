@@ -20,7 +20,7 @@ function ProtectedRoute({ children, allowedRoles, redirectTo = "/jobs" }) {
           <div className="w-16 h-16 rounded-2xl border border-brand-mint/30 overflow-hidden shadow-2xl bg-bg-surface flex items-center justify-center animate-pulse">
             <img
               src="/zeitnah-logo.png"
-              alt="Zeitnah Academy"
+              alt="Zeitnah Logo"
               className="w-full h-full object-cover"
             />
           </div>

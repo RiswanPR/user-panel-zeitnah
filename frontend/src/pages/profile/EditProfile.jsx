@@ -2694,7 +2694,7 @@ export default function EditProfile() {
                   value={eduForm.institution}
                   onChange={(e) => setEduForm({ ...eduForm, institution: e.target.value })}
                   required
-                  placeholder="e.g. University of Calicut, IIT Madras, Zeitnah Academy"
+                  placeholder="e.g. University of Calicut, IIT Madras, Zeitnah"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
                 />
               </div>
@@ -2845,7 +2845,7 @@ export default function EditProfile() {
                   value={certForm.issuer}
                   onChange={(e) => setCertForm({ ...certForm, issuer: e.target.value })}
                   required
-                  placeholder="e.g. Autodesk, PMI, Oracle, ASCE, Zeitnah Academy"
+                  placeholder="e.g. Autodesk, PMI, Oracle, ASCE, Zeitnah"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
                 />
               </div>
@@ -2906,7 +2906,7 @@ export default function EditProfile() {
               <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs text-text-muted flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-text-faint shrink-0" />
                 <span>
-                  Certifications are marked as <strong className="text-text-secondary">Unverified</strong> unless directly issued by Zeitnah Academy or verified via credential link.
+                  Certifications are marked as <strong className="text-text-secondary">Unverified</strong> unless directly issued by Zeitnah or verified via credential link.
                 </span>
               </div>
 

@@ -1,5 +1,5 @@
 /**
- * Zeitnah Academy — Professional HTML Email Templates
+ * Zeitnah — Professional HTML Email Templates
  */
 
 export function escapeHtml(str?: string | null): string {
@@ -13,11 +13,11 @@ export function escapeHtml(str?: string | null): string {
 }
 
 /**
- * Base Wrapper for all Zeitnah Academy emails
+ * Base Wrapper for all Zeitnah emails
  */
 function wrapInEmailBase(
   contentHtml: string,
-  previewText: string = 'Zeitnah Academy Notification',
+  previewText: string = 'Zeitnah — See the unseen',
 ): string {
   return `
 <!DOCTYPE html>
@@ -25,7 +25,7 @@ function wrapInEmailBase(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Zeitnah Academy</title>
+  <title>Zeitnah</title>
   <!--[if mso]>
   <style type="text/css">
     table {border-collapse: collapse;}
@@ -53,12 +53,12 @@ function wrapInEmailBase(
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
                   <td align="center">
-                    <div style="display: inline-block; padding: 10px 18px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; margin-bottom: 8px;">
-                      <span style="font-size: 20px; font-weight: 900; letter-spacing: 2px; color: #38bdf8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-transform: uppercase;">
+                    <div style="display: inline-block; padding: 10px 18px; background: rgba(159, 213, 178, 0.1); border: 1px solid rgba(159, 213, 178, 0.25); border-radius: 12px; margin-bottom: 8px;">
+                      <span style="font-size: 20px; font-weight: 900; letter-spacing: 2px; color: #9fd5b2; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-transform: uppercase;">
                         ZEITNAH
                       </span>
-                      <span style="font-size: 11px; font-weight: 700; letter-spacing: 3px; color: #94a3b8; text-transform: uppercase; margin-left: 6px; display: inline-block;">
-                        ACADEMY
+                      <span style="font-size: 11px; font-weight: 700; letter-spacing: 2px; color: #94a3b8; text-transform: uppercase; margin-left: 8px; display: inline-block;">
+                        SEE THE UNSEEN
                       </span>
                     </div>
                   </td>
@@ -77,14 +77,17 @@ function wrapInEmailBase(
           <!-- Footer -->
           <tr>
             <td style="background-color: #080c14; padding: 28px 32px; border-top: 1px solid #1e293b; text-align: center;">
-              <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600; color: #64748b;">
-                Zeitnah Academy — Premium Learning Platform
+              <p style="margin: 0 0 6px 0; font-size: 13px; font-weight: 700; color: #9fd5b2; letter-spacing: 1px; text-transform: uppercase;">
+                Zeitnah — See the unseen
               </p>
-              <p style="margin: 0 0 12px 0; font-size: 11px; color: #475569; line-height: 1.5;">
+              <p style="margin: 0 0 12px 0; font-size: 11px; color: #94a3b8; line-height: 1.5;">
+                Build, connect, discover through knowledge, community, and opportunity.
+              </p>
+              <p style="margin: 0 0 8px 0; font-size: 11px; color: #475569; line-height: 1.5;">
                 Please do not reply directly to this message.
               </p>
               <p style="margin: 0; font-size: 11px; color: #334155;">
-                &copy; ${new Date().getFullYear()} Zeitnah Academy. All rights reserved.
+                &copy; ${new Date().getFullYear()} Zeitnah. All rights reserved.
               </p>
             </td>
           </tr>
@@ -108,7 +111,7 @@ export function generateOtpEmailHtml(
   type: 'Login' | 'Registration',
 ): string {
   const isLogin = type === 'Login';
-  const title = isLogin ? 'Login Verification' : 'Welcome to Zeitnah Academy';
+  const title = isLogin ? 'Login Verification' : 'Welcome to Zeitnah';
   const subtitle = isLogin
     ? 'Use the code below to complete your login securely.'
     : 'Use the code below to verify your email address and activate your account.';
@@ -144,7 +147,7 @@ export function generateOtpEmailHtml(
         🔒 Security Reminder
       </h4>
       <p style="margin: 0; font-size: 12px; color: #94a3b8; line-height: 1.5;">
-        Never share this code with anyone. Zeitnah Academy support personnel will never request your OTP. If you did not initiate this request, please ignore this email.
+        Never share this code with anyone. Zeitnah support personnel will never request your OTP. If you did not initiate this request, please ignore this email.
       </p>
     </div>
   `;
@@ -185,7 +188,7 @@ export function generateSuspiciousLoginEmailHtml(
       Suspicious Login Attempt Detected
     </h2>
     <p style="margin: 0 0 24px 0; font-size: 14px; color: #94a3b8; text-align: center; line-height: 1.6;">
-      We noticed a sign-in to your Zeitnah Academy account (<strong style="color: #e2e8f0;">${escapeHtml(userEmail)}</strong>) that differs from your typical login patterns.
+      We noticed a sign-in to your Zeitnah account (<strong style="color: #e2e8f0;">${escapeHtml(userEmail)}</strong>) that differs from your typical login patterns.
     </p>
 
     <!-- Trigger Reasons Card -->

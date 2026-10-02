@@ -284,7 +284,7 @@ export default function ChangeUsernameModal({
                     Username Change Cooldown Active
                   </div>
                   <p className="text-[11px] leading-relaxed text-amber-300/90">
-                    To maintain trusted identity across the academy, usernames
+                    To maintain trusted identity across Zeitnah, usernames
                     can only be changed once every 14 days.
                   </p>
                   <div className="pt-1 text-[11px] font-semibold text-white">

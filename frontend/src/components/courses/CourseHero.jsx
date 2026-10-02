@@ -80,7 +80,7 @@ const CourseHero = memo(function CourseHero({
               <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-mint" />
             </span>
             <span className="text-[10px] sm:text-[11px] font-mono font-bold tracking-[0.2em] uppercase text-brand-mint">
-              {firstName ? `LEARNER TELEMETRY // ${firstName}` : "ZEITNAH // ACADEMY MASTERCLASSES"}
+              {firstName ? `LEARNER TELEMETRY // ${firstName}` : "ZEITNAH // SEE THE UNSEEN"}
             </span>
           </motion.div>
 

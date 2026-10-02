@@ -431,7 +431,7 @@ function Courses() {
               <p className="text-xs sm:text-sm text-text-secondary max-w-md mx-auto leading-relaxed">
                 {search
                   ? `No course titles match the query "${search}". Check your keywords or clear your filter to browse the full curriculum.`
-                  : "You do not have any courses in this partition yet. Explore the academy catalog to begin your learning trajectory."}
+                  : "You do not have any courses in this partition yet. Explore the course catalog to begin your learning trajectory."}
               </p>
             </div>
 

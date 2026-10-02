@@ -90,7 +90,7 @@ export default function ErrorFeedbackModal({ errorData, onClose, onRetry }) {
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
           </div>
           <h2 className="text-2xl font-bold text-white mb-2">Report Sent</h2>
-          <p className="text-white/60 mb-8">Thank you for helping us improve Zeitnah Academy. Our engineering team has been notified.</p>
+          <p className="text-white/60 mb-8">Thank you for helping us improve Zeitnah. Our engineering team has been notified.</p>
           <div className="flex gap-3 justify-center">
             <button onClick={handleReload} className="px-6 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transition-colors">Reload Page</button>
             <button onClick={handleHome} className="px-6 py-2.5 bg-[#9fd5b2] hover:bg-[#86c49a] text-[#0A1A2F] rounded-lg font-bold transition-colors">Go Home</button>

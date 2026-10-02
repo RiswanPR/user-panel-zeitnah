@@ -55,6 +55,8 @@ const MessagesPage = lazyWithRetry(() => import("./pages/messages/MessagesPage")
 const PortfolioPage = lazyWithRetry(() => import("./pages/profile/PortfolioPage"));
 const VerificationCenterPage = lazyWithRetry(() => import("./pages/profile/VerificationCenterPage"));
 const OpportunityInboxPage = lazyWithRetry(() => import("./pages/opportunities/OpportunityInboxPage"));
+const Home = lazyWithRetry(() => import("./pages/home/Home"));
+const AboutPage = lazyWithRetry(() => import("./pages/about/AboutPage"));
 
 import ProtectedRoute from "./components/common/ProtectedRoute/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";
@@ -150,6 +152,14 @@ function App() {
                   </Suspense>
                 }
               />
+              <Route
+                path="/about"
+                element={
+                  <Suspense fallback={<PageLoader />}>
+                    <AboutPage />
+                  </Suspense>
+                }
+              />
 
               {/* SECURE APPLICATION ROUTING (Main Layout) */}
               <Route
@@ -160,6 +170,8 @@ function App() {
                 }
               >
                 <Route path="/" element={<Navigate to="/courses" />} />
+                <Route path="/home" element={<Suspense fallback={<PageLoader />}><Home /></Suspense>} />
+                <Route path="/about" element={<Suspense fallback={<PageLoader />}><AboutPage /></Suspense>} />
                 <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
                 <Route path="/profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
                 <Route path="/profile/portfolio" element={<Suspense fallback={<PageLoader />}><PortfolioPage /></Suspense>} />

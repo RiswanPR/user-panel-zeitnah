@@ -405,8 +405,8 @@ function VerifyOtp() {
                         <div className="font-heading text-[13px] font-black uppercase tracking-[0.2em]">
                           Zeitnah
                         </div>
-                        <div className="mt-1 text-[8px] font-bold uppercase tracking-[0.22em] text-[#9fd5b2]/65">
-                          Learning platform
+                        <div className="mt-1 text-[8.5px] font-bold uppercase tracking-[0.2em] text-[#9fd5b2]">
+                          See the unseen
                         </div>
                       </div>
                     </div>
@@ -550,8 +550,8 @@ function VerifyOtp() {
                       <div className="font-heading text-[13px] font-black uppercase tracking-[0.2em]">
                         Zeitnah
                       </div>
-                      <div className="mt-1 text-[8px] font-bold uppercase tracking-[0.22em] text-[#9fd5b2]/65">
-                        Learning platform
+                      <div className="mt-1 text-[8.5px] font-bold uppercase tracking-[0.2em] text-[#9fd5b2]">
+                        See the unseen
                       </div>
                     </div>
                   </div>
@@ -913,8 +913,8 @@ function VerifyOtp() {
             </div>
           </div>
 
-          <div className="mt-4 text-center text-[8px] font-bold uppercase tracking-[0.2em] text-white/12">
-            Zeitnah secure authentication
+          <div className="mt-4 text-center text-[8.5px] font-bold uppercase tracking-[0.2em] text-white/25">
+            Zeitnah • See the unseen
           </div>
         </div>
       </main>

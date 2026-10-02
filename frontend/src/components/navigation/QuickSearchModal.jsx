@@ -23,7 +23,7 @@ import {
 
 const searchableItems = [
   {
-    category: "Courses & Academy",
+    category: "Courses & Knowledge",
     title: "All Courses",
     desc: "Explore full infrastructure curriculum & technical tracks",
     path: "/courses",
@@ -31,7 +31,7 @@ const searchableItems = [
     keywords: ["courses", "classes", "bim", "engineering", "infrastructure", "catalog"],
   },
   {
-    category: "Courses & Academy",
+    category: "Courses & Knowledge",
     title: "My Learning & Dashboard",
     desc: "Access your enrolled courses, lectures & completion progress",
     path: "/my-learning",
@@ -39,7 +39,7 @@ const searchableItems = [
     keywords: ["learning", "enrolled", "my courses", "study", "classes"],
   },
   {
-    category: "Courses & Academy",
+    category: "Courses & Knowledge",
     title: "Global Leaderboard",
     desc: "Check rankings, XP standings & top performers",
     path: "/leaderboard",

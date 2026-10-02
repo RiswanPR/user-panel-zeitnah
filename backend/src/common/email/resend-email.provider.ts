@@ -111,7 +111,7 @@ export class ResendEmailProvider implements EmailProvider {
     const timeoutMs = options.timeoutMs || 7000;
     const defaultFrom =
       process.env.RESEND_FROM_EMAIL ||
-      'Zeitnah Academy <onboarding@resend.dev>';
+      'Zeitnah <onboarding@resend.dev>';
     const payload = {
       from: options.from || defaultFrom,
       to: options.to,
@@ -151,7 +151,7 @@ export class ResendEmailProvider implements EmailProvider {
 
         if (err?.message?.includes('domain is not verified')) {
           this.logger.warn(
-            `Resend sender domain is not verified. To send in testing mode, set RESEND_FROM_EMAIL to 'Zeitnah Academy <onboarding@resend.dev>' and send to your registered Resend account address or delivered@resend.dev.`,
+            `Resend sender domain is not verified. To send in testing mode, set RESEND_FROM_EMAIL to 'Zeitnah <onboarding@resend.dev>' and send to your registered Resend account address or delivered@resend.dev.`,
           );
         }
 

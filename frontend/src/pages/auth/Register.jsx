@@ -138,7 +138,7 @@ function Register() {
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.22),transparent_35%)]" />
                   <img
                     src="/zeitnah-logo.png"
-                    alt="Zeitnah Academy  Logo"
+                    alt="Zeitnah Logo"
                     className="relative h-full w-full object-cover"
                   />
                 </div>
@@ -147,16 +147,16 @@ function Register() {
                   <div className="font-heading text-[15px] font-black uppercase tracking-[0.22em] text-white">
                     Zeitnah
                   </div>
-                  <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.24em] text-[#9fd5b2]/70">
-                    Academy
+                  <div className="mt-1 text-[8.5px] font-bold uppercase tracking-[0.2em] text-[#9fd5b2]">
+                    See the unseen
                   </div>
                 </div>
               </div>
 
               <div className="hidden xl:flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.035] px-3 py-1.5 backdrop-blur-xl">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#f6ed4a] shadow-[0_0_12px_rgba(246,237,74,0.75)]" />
-                <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/35">
-                  New chapter
+                <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/50">
+                  Global Civil Community
                 </span>
               </div>
             </div>
@@ -179,22 +179,20 @@ function Register() {
                     />
                   </svg>
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/48">
-                  Begin your journey
+                <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/70">
+                  Build • Connect • Discover
                 </span>
               </div>
 
               <h1 className="font-heading text-[4.2rem] font-black leading-[0.98] tracking-[-0.055em] text-white xl:text-[5.4rem] 2xl:text-[6.2rem]">
-                Your next
+                See the
                 <span className="block">
-                  chapter
-                  <span className="text-[#9fd5b2]"> starts now.</span>
+                  <span className="text-[#9fd5b2]">unseen.</span>
                 </span>
               </h1>
 
-              <p className="mt-7 max-w-2xl text-[15px] font-medium leading-7 tracking-[-0.01em] text-white/42 xl:text-[16px]">
-                Create your Zeitnah identity and unlock a learning ecosystem
-                built around skills, progress, opportunities, and your future.
+              <p className="mt-7 max-w-2xl text-[15px] font-medium leading-7 tracking-[-0.01em] text-white/60 xl:text-[16px]">
+                Create your Zeitnah identity to build, connect, and discover across a global civil community.
               </p>
 
               {/* Visual roadmap */}
@@ -290,7 +288,7 @@ function Register() {
               <div className="relative h-11 w-11 overflow-hidden rounded-[14px] border border-white/10 bg-white/[0.06] shadow-xl">
                 <img
                   src="/zeitnah-logo.png"
-                  alt="Zeitnah Academy  Logo"
+                  alt="Zeitnah Logo"
                   className="h-full w-full object-cover"
                 />
               </div>
@@ -298,8 +296,8 @@ function Register() {
                 <div className="font-heading text-base font-black uppercase tracking-[0.18em] text-white">
                   Zeitnah
                 </div>
-                <div className="mt-1 text-[8px] font-bold uppercase tracking-[0.22em] text-[#9fd5b2]/70">
-                  Learning platform
+                <div className="mt-1 text-[8.5px] font-bold uppercase tracking-[0.2em] text-[#9fd5b2]">
+                  See the unseen
                 </div>
               </div>
             </div>
@@ -687,8 +685,8 @@ function Register() {
               </div>
             </div>
 
-            <div className="mt-5 text-center text-[8px] font-bold uppercase tracking-[0.2em] text-white/14">
-              Secure authentication • Zeitnah
+            <div className="mt-5 text-center text-[8.5px] font-bold uppercase tracking-[0.2em] text-white/25">
+              Zeitnah • See the unseen
             </div>
           </div>
         </section>

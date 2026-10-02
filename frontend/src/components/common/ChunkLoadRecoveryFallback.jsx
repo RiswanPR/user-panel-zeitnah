@@ -46,7 +46,7 @@ export function ChunkLoadRecoveryFallback({ onReload, onHome }) {
         Application Update Available
       </h2>
       <p className="text-sm text-text-muted max-w-md mb-8 leading-relaxed">
-        A new version of Zeitnah Academy has been deployed. Please refresh to load the latest components and ensure seamless performance.
+        A new version of Zeitnah has been deployed. Please refresh to load the latest components and ensure seamless performance.
       </p>
 
       <div className="flex flex-col sm:flex-row items-center gap-3">

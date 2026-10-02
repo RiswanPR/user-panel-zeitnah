@@ -213,8 +213,8 @@ export default function Profile() {
     if (!profile) return;
     const shareUrl = `${window.location.origin}/u/${encodeURIComponent(profile.username || "")}`;
     const shareData = {
-      title: `${profile.name || "Student"} — Zeitnah Student Identity`,
-      text: `Check out ${profile.name || "my"}'s verified student profile on Zeitnah Academy.`,
+      title: `${profile.name || "Member"} — Zeitnah Identity`,
+      text: `Check out ${profile.name || "my"}'s verified profile on Zeitnah.`,
       url: shareUrl,
     };
 
@@ -408,7 +408,7 @@ export default function Profile() {
               <div className="absolute right-12 bottom-10 w-48 h-48 rounded-full bg-brand-yellow/[0.04] blur-3xl pointer-events-none" />
               <div className="text-center opacity-30 select-none">
                 <span className="font-mono text-xs uppercase tracking-[0.25em] text-brand-mint font-semibold">
-                  Zeitnah Learning Identity
+                  Zeitnah Identity
                 </span>
               </div>
             </div>

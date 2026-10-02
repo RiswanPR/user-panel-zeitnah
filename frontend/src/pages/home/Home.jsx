@@ -1,227 +1,402 @@
 import { useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import api from "../../services/api";
+import { Link } from "react-router-dom";
+import { motion, useReducedMotion } from "framer-motion";
+import {
+  Compass,
+  BookOpen,
+  Briefcase,
+  TrendingUp,
+  ShieldCheck,
+  Trophy,
+  ArrowRight,
+  Layers,
+  Sparkles,
+  Users,
+  CheckCircle2,
+} from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
-import { storage } from "../../services/storage";
+import BRAND from "../../constants/brand";
+import ZeitnahZMotif from "../../components/courses/ZeitnahZMotif";
 
-function Home() {
-  const { user, setUser, logout, requestLogout } = useContext(AuthContext);
-  const navigate = useNavigate();
-
-  // SECURE DISCONNECT PIPELINE (Prompts Confirmation Modal)
-  const handleLogout = () => {
-    if (requestLogout) {
-      requestLogout();
-    } else if (logout) {
-      logout();
-    }
-  };
+export default function Home() {
+  const { user } = useContext(AuthContext);
+  const shouldReduceMotion = useReducedMotion();
 
   return (
-    <div className="min-h-screen bg-[#070B14] relative overflow-hidden px-4 py-6 sm:py-10 text-white font-body antialiased selection:bg-[#f6ed4a] selection:text-[#07192a] accelerated-canvas">
-      
-      {/* ── HIGH PERFORMANCE CUSTOM NETWORK LOOP BACKGROUND GRAPHICS ── */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        .accelerated-canvas {
-          transform: translate3d(0, 0, 0);
-          backface-visibility: hidden;
-        }
-
-        /* Fluid breathing motion for custom architectural loop networks */
-        @keyframes abstractBreathe {
-          0%, 100% {
-            transform: translate3d(0, 0, 0) scale(1);
-          }
-          50% {
-            transform: translate3d(6px, -10px, 0) scale(1.01);
-          }
-        }
-
-        .animated-mesh-art {
-          animation: abstractBreathe 32s ease-in-out infinite;
-          transform-origin: center;
-        }
-
-        /* Panoramic fade mask to isolate workspace text structures */
-        .workspace-panoramic-mask {
-          mask-image: radial-gradient(circle at center, transparent 20%, black 80%, black 100%);
-          -webkit-mask-image: radial-gradient(circle at center, transparent 20%, black 80%, black 100%);
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .animated-mesh-art {
-            animation: none !important;
-          }
-        }
-      `}} />
-
-      {/* Atmospheric Ambient Lighting Gradients */}
+    <div className="min-h-screen text-white font-body antialiased relative overflow-hidden pb-16">
+      {/* ── AMBIENT ATMOSPHERIC BACKGROUND ── */}
       <div className="absolute inset-0 pointer-events-none select-none z-0">
-        <div className="absolute inset-0 filter blur-[130px] opacity-50 mix-blend-screen">
-          <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] max-w-[500px] rounded-full bg-[radial-gradient(circle,rgba(159,213,178,0.08)_0%,transparent_65%)]" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] max-w-[500px] rounded-full bg-[radial-gradient(circle,rgba(246,237,74,0.03)_0%,transparent_65%)]" />
-        </div>
-
-        {/* Custom Integrated Continuous Loop Grid Architecture */}
-        <div className="absolute inset-0 workspace-panoramic-mask opacity-75">
-          <svg 
-            className="w-full h-full animated-mesh-art" 
-            viewBox="0 0 1200 800" 
-            preserveAspectRatio="xMidYMid slice" 
-            fill="none" 
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <defs>
-              <linearGradient id="homeBrandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#9fd5b2" stopOpacity="0.08" />
-                <stop offset="50%" stopColor="#a8f06a" stopOpacity="0.04" />
-                <stop offset="100%" stopColor="#f6ed4a" stopOpacity="0.08" />
-              </linearGradient>
-            </defs>
-
-            {/* Interlocking Custom Circuit Flow Lines */}
-            <g stroke="url(#homeBrandGrad)" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M 100,150 C 130,100 170,100 200,150 C 230,200 200,250 250,280 C 300,310 330,270 360,320 C 390,370 350,420 400,450 C 450,480 490,430 520,490 C 550,550 510,600 560,640 C 610,680 650,630 690,680 C 730,730 710,780 760,790" />
-              <path d="M 950,100 C 920,50 850,80 820,130 C 790,180 840,220 800,270 C 760,320 700,300 660,360 C 620,420 650,480 600,530 C 550,580 480,560 440,620 C 400,680 420,740 370,790" />
-              <path d="M 850,200 C 900,150 960,180 990,240 C 1020,300 970,350 1010,420 C 1050,490 1120,470 1150,540" />
-              <path d="M 150,500 C 180,450 240,480 270,540 C 300,600 260,650 300,710 C 340,770 410,750 440,820" />
-            </g>
-          </svg>
-        </div>
+        <div className="absolute top-0 right-1/4 w-[500px] h-[500px] rounded-full bg-brand-mint/5 blur-[140px]" />
+        <div className="absolute bottom-1/3 left-10 w-[450px] h-[450px] rounded-full bg-[#12314C]/25 blur-[130px]" />
+        <div className="absolute inset-0 bg-tech-grid opacity-25" />
       </div>
 
-      {/* ── INTERACTIVE WORKSPACE HUB CONTENT ── */}
-      <div className="relative z-10 max-w-6xl mx-auto space-y-8 sm:space-y-10">
-
-        {/* WELCOME IDENTIFICATION HUB */}
-        <div className="space-y-2 text-center sm:text-left select-none">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-heading font-black text-white tracking-tight leading-none">
-            Welcome back, {user?.name || "Academic Member"} 👋
-          </h1>
-          <p className="text-[rgba(255,255,255,0.45)] text-sm font-medium max-w-xl leading-relaxed mx-auto sm:mx-0">
-            Manage your academic parameters, active profile sessions, performance activities, and system security.
-          </p>
-        </div>
-
-        {/* WORKSPACE OPERATIONS GRID SYSTEM */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 w-full">
-
-          {/* PROFILE CONTROL HUB */}
-          <Link
-            to="/profile"
-            className="group glass-card p-6 flex flex-col justify-between h-44 w-full"
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 sm:space-y-24 pt-4 sm:pt-8">
+        
+        {/* ══════════════════════════════════════════════════════════
+            HERO BRAND PRESENTATION (SECTIONS 3, 4 & 5)
+            Hierarchy:
+            SEE THE UNSEEN
+                  ↓
+            Build, connect, discover
+                  ↓
+            Our mission...
+            ══════════════════════════════════════════════════════════ */}
+        <section
+          aria-labelledby="brand-hero-heading"
+          className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-b from-[#0D1522] via-[#090E17] to-[#070B14] p-6 sm:p-12 lg:p-16 shadow-2xl"
+        >
+          {/* Subtle decorative background motif */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-16 -bottom-16 w-80 h-80 sm:w-96 sm:h-96 opacity-10 select-none"
           >
-            <div className="w-full min-w-0">
-              <div className="flex items-center justify-between mb-4 gap-2">
-                <h2 className="text-base font-heading font-bold text-white tracking-tight truncate">
-                  Profile Asset
-                </h2>
-                <span className="text-[#9fd5b2] group-hover:translate-x-0.5 transition-transform text-lg leading-none shrink-0">
-                  &rarr;
-                </span>
-              </div>
-              <p className="text-[rgba(255,255,255,0.45)] text-xs font-medium leading-relaxed line-clamp-3">
-                View, audit, and modify your corporate technical specialty indexes and biography metadata.
-              </p>
-            </div>
-            <div className="text-[9px] font-bold tracking-widest text-white/30 uppercase select-none mt-2">
-              Identity Matrix
-            </div>
-          </Link>
+            <ZeitnahZMotif
+              variant="gradient"
+              animated={!shouldReduceMotion}
+              glow={false}
+              breathing={true}
+              className="w-full h-full rotate-12"
+            />
+          </div>
 
-          {/* ACTIVE ACCOUNT SECURITY WORKSPACE STATUS */}
-          <div className="glass-card p-6 flex flex-col justify-between h-44 w-full relative overflow-hidden">
-            <div className="w-full min-w-0">
-              <div className="flex items-center justify-between mb-4 gap-2">
-                <h2 className="text-base font-heading font-bold text-white tracking-tight truncate">
-                  Security Status
-                </h2>
-                <span className="flex h-2 w-2 relative shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          <div className="relative z-10 max-w-4xl space-y-8">
+            
+            {/* Top Identity Eyebrow */}
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-widest text-brand-mint bg-brand-mint/10 border border-brand-mint/25 backdrop-blur-md">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-mint animate-pulse" />
+                {BRAND.name} Official Platform
+              </span>
+
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono text-text-muted bg-white/[0.03] border border-white/[0.08]">
+                {BRAND.ecosystem.community}
+              </span>
+            </div>
+
+            {/* 1. Official Primary Tagline (Hierarchy Step 1) */}
+            <div className="space-y-3">
+              <p className="text-xs sm:text-sm font-mono tracking-[0.24em] uppercase text-brand-mint font-bold">
+                {BRAND.name}
+              </p>
+              <h1
+                id="brand-hero-heading"
+                className="font-heading font-black text-4xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white leading-[0.92] uppercase"
+              >
+                {BRAND.tagline}
+              </h1>
+            </div>
+
+            {/* 2. Official Vision (Hierarchy Step 2) */}
+            <div className="pt-1">
+              <div className="inline-flex items-center gap-2 sm:gap-3 px-4 py-2 rounded-2xl bg-white/[0.04] border border-white/[0.1] backdrop-blur-md shadow-sm">
+                <span className="text-sm sm:text-xl font-heading font-bold text-white tracking-wide">
+                  {BRAND.vision}
                 </span>
               </div>
-              <p className="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-2 truncate">
-                Workstation Shield Active
-              </p>
-              <p className="text-[rgba(255,255,255,0.45)] text-xs font-medium leading-relaxed line-clamp-2">
-                Cryptographic 6-digit OTP verification parameters are active across your node.
+            </div>
+
+            {/* 3. Official Mission (Hierarchy Step 3 - Exact Wording) */}
+            <div className="pt-2 max-w-3xl">
+              <div className="relative border-l-2 border-brand-mint/60 pl-5 sm:pl-6 py-1">
+                <p className="text-[10px] sm:text-xs font-mono font-semibold uppercase tracking-widest text-brand-mint/90 mb-2">
+                  Our Mission
+                </p>
+                <p className="text-base sm:text-lg md:text-xl font-medium text-white/90 leading-relaxed sm:leading-relaxed">
+                  "{BRAND.mission}"
+                </p>
+              </div>
+            </div>
+
+            {/* Primary Action Buttons */}
+            <div className="pt-4 flex flex-wrap items-center gap-3 sm:gap-4">
+              <Link
+                to="/courses"
+                className="zn-btn-primary px-6 py-3 text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-brand-mint/15"
+              >
+                <BookOpen className="w-4 h-4" />
+                <span>Explore Courses</span>
+              </Link>
+
+              <Link
+                to="/network"
+                className="zn-btn-secondary px-6 py-3 text-xs sm:text-sm font-semibold flex items-center gap-2"
+              >
+                <Compass className="w-4 h-4 text-brand-mint" />
+                <span>Join Network</span>
+              </Link>
+
+              <Link
+                to="/about"
+                className="px-4 py-3 text-xs sm:text-sm font-medium text-text-muted hover:text-white transition-colors flex items-center gap-1.5"
+              >
+                <span>Read Full Mission</span>
+                <ArrowRight className="w-3.5 h-3.5 text-brand-mint" />
+              </Link>
+            </div>
+
+          </div>
+        </section>
+
+
+        {/* ══════════════════════════════════════════════════════════
+            THE THREE PILLARS (SECTION 3)
+            Build • Connect • Discover
+            ══════════════════════════════════════════════════════════ */}
+        <section aria-labelledby="pillars-heading" className="space-y-8">
+          <div className="text-center sm:text-left space-y-2">
+            <span className="text-[10px] font-mono font-bold tracking-[0.22em] uppercase text-brand-mint">
+              The Ecosystem
+            </span>
+            <h2
+              id="pillars-heading"
+              className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl text-white tracking-tight"
+            >
+              Build. Connect. Discover.
+            </h2>
+            <p className="text-sm text-text-muted max-w-2xl leading-relaxed">
+              Three foundational movements driving individual advancement and community success across the civil landscape.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            {/* PILLAR 1: BUILD */}
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 sm:p-7 flex flex-col justify-between hover:border-brand-mint/30 hover:bg-white/[0.03] transition-all group">
+              <div className="space-y-4">
+                <div className="w-12 h-12 rounded-xl bg-brand-mint/10 border border-brand-mint/25 flex items-center justify-center text-brand-mint">
+                  <Layers className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-heading font-bold text-xl text-white tracking-tight">
+                    {BRAND.pillars.build.title}
+                  </h3>
+                  <p className="text-xs text-brand-mint/80 font-mono mt-0.5">
+                    {BRAND.pillars.build.tagline}
+                  </p>
+                </div>
+                <p className="text-xs text-text-muted leading-relaxed">
+                  {BRAND.pillars.build.description}
+                </p>
+
+                {/* Focus List */}
+                <div className="pt-2 border-t border-white/[0.06] space-y-2">
+                  <p className="text-[10px] font-mono uppercase tracking-wider text-text-faint font-semibold">
+                    What You Build
+                  </p>
+                  <ul className="grid grid-cols-1 gap-1.5">
+                    {BRAND.pillars.build.items.map((item) => (
+                      <li key={item} className="flex items-center gap-2 text-xs text-white/80 capitalize">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-brand-mint/70 shrink-0" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              <div className="pt-6">
+                <Link
+                  to="/courses"
+                  className="text-xs font-semibold text-brand-mint group-hover:underline inline-flex items-center gap-1.5"
+                >
+                  <span>Explore Learning Modules</span>
+                  <span>&rarr;</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* PILLAR 2: CONNECT */}
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 sm:p-7 flex flex-col justify-between hover:border-brand-mint/30 hover:bg-white/[0.03] transition-all group">
+              <div className="space-y-4">
+                <div className="w-12 h-12 rounded-xl bg-[#F6ED4A]/10 border border-[#F6ED4A]/25 flex items-center justify-center text-[#F6ED4A]">
+                  <Users className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-heading font-bold text-xl text-white tracking-tight">
+                    {BRAND.pillars.connect.title}
+                  </h3>
+                  <p className="text-xs text-[#F6ED4A]/80 font-mono mt-0.5">
+                    {BRAND.pillars.connect.tagline}
+                  </p>
+                </div>
+                <p className="text-xs text-text-muted leading-relaxed">
+                  {BRAND.pillars.connect.description}
+                </p>
+
+                {/* Focus List */}
+                <div className="pt-2 border-t border-white/[0.06] space-y-2">
+                  <p className="text-[10px] font-mono uppercase tracking-wider text-text-faint font-semibold">
+                    Who You Connect With
+                  </p>
+                  <ul className="grid grid-cols-1 gap-1.5">
+                    {BRAND.pillars.connect.items.map((item) => (
+                      <li key={item} className="flex items-center gap-2 text-xs text-white/80 capitalize">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#F6ED4A]/70 shrink-0" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              <div className="pt-6">
+                <Link
+                  to="/network"
+                  className="text-xs font-semibold text-[#F6ED4A] group-hover:underline inline-flex items-center gap-1.5"
+                >
+                  <span>Connect with Peers & Mentors</span>
+                  <span>&rarr;</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* PILLAR 3: DISCOVER */}
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 sm:p-7 flex flex-col justify-between hover:border-brand-mint/30 hover:bg-white/[0.03] transition-all group">
+              <div className="space-y-4">
+                <div className="w-12 h-12 rounded-xl bg-blue-400/10 border border-blue-400/25 flex items-center justify-center text-blue-400">
+                  <Sparkles className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-heading font-bold text-xl text-white tracking-tight">
+                    {BRAND.pillars.discover.title}
+                  </h3>
+                  <p className="text-xs text-blue-400/80 font-mono mt-0.5">
+                    {BRAND.pillars.discover.tagline}
+                  </p>
+                </div>
+                <p className="text-xs text-text-muted leading-relaxed">
+                  {BRAND.pillars.discover.description}
+                </p>
+
+                {/* Focus List */}
+                <div className="pt-2 border-t border-white/[0.06] space-y-2">
+                  <p className="text-[10px] font-mono uppercase tracking-wider text-text-faint font-semibold">
+                    What You Discover
+                  </p>
+                  <ul className="grid grid-cols-1 gap-1.5">
+                    {BRAND.pillars.discover.items.map((item) => (
+                      <li key={item} className="flex items-center gap-2 text-xs text-white/80 capitalize">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-blue-400/70 shrink-0" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              <div className="pt-6">
+                <Link
+                  to="/jobs"
+                  className="text-xs font-semibold text-blue-400 group-hover:underline inline-flex items-center gap-1.5"
+                >
+                  <span>Discover Industry Opportunities</span>
+                  <span>&rarr;</span>
+                </Link>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+
+        {/* ══════════════════════════════════════════════════════════
+            MEMBER QUICK ACCESS HUB (Preserving Workstation Access)
+            ══════════════════════════════════════════════════════════ */}
+        <section aria-labelledby="workspace-hub-heading" className="space-y-6 pt-4 border-t border-white/[0.06]">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <h2
+                id="workspace-hub-heading"
+                className="font-heading font-bold text-xl text-white tracking-tight"
+              >
+                Member Command Center
+              </h2>
+              <p className="text-xs text-text-muted">
+                Quick access to your profile parameters, active sessions, and security telemetry.
               </p>
             </div>
-            <div className="text-[9px] font-bold tracking-widest text-white/30 uppercase select-none mt-2">
-              Operational Safety
+            <div className="text-[11px] font-mono text-text-faint">
+              Active Session: <span className="text-emerald-400 font-semibold">{user?.name || "Member"}</span>
             </div>
           </div>
 
-          {/* ACTIVE ALLOCATIONS METRIC HUB */}
-          <Link
-            to="/active-sessions"
-            className="group glass-card p-6 flex flex-col justify-between h-44 w-full"
-          >
-            <div className="w-full min-w-0">
-              <div className="flex items-center justify-between mb-4 gap-2">
-                <h2 className="text-base font-heading font-bold text-white tracking-tight truncate">
-                  Active Sessions
-                </h2>
-                <span className="text-[#9fd5b2] group-hover:translate-x-0.5 transition-transform text-lg leading-none shrink-0">
-                  &rarr;
-                </span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Link
+              to="/profile"
+              className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-brand-mint/30 transition-all flex flex-col justify-between h-36"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="font-heading font-bold text-sm text-white">Profile Identity</span>
+                  <ArrowRight className="w-4 h-4 text-brand-mint" />
+                </div>
+                <p className="text-xs text-text-muted mt-2 line-clamp-2">
+                  View and modify your public credentials, engineering bio, and disciplines.
+                </p>
               </div>
-              <p className="text-[rgba(255,255,255,0.45)] text-xs font-medium leading-relaxed line-clamp-3">
-                Examine running hardware device addresses and cross-verify active authorized workspace connections.
-              </p>
-            </div>
-            <div className="text-[9px] font-bold tracking-widest text-white/30 uppercase select-none mt-2">
-              Session Tracking
-            </div>
-          </Link>
+              <span className="text-[9px] font-mono uppercase tracking-wider text-text-faint">
+                Identity Center
+              </span>
+            </Link>
 
-          {/* SYSTEM CHANGE OPERATION METRIC STREAM */}
-          <Link
-            to="/audit-logs"
-            className="group glass-card p-6 flex flex-col justify-between h-44 w-full"
-          >
-            <div className="w-full min-w-0">
-              <div className="flex items-center justify-between mb-4 gap-2">
-                <h2 className="text-base font-heading font-bold text-white tracking-tight truncate">
-                  Audit Logs
-                </h2>
-                <span className="text-[#9fd5b2] group-hover:translate-x-0.5 transition-transform text-lg leading-none shrink-0">
-                  &rarr;
-                </span>
+            <Link
+              to="/active-sessions"
+              className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-brand-mint/30 transition-all flex flex-col justify-between h-36"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="font-heading font-bold text-sm text-white">Active Sessions</span>
+                  <ArrowRight className="w-4 h-4 text-brand-mint" />
+                </div>
+                <p className="text-xs text-text-muted mt-2 line-clamp-2">
+                  Inspect authorized devices, geographic endpoints, and active logins.
+                </p>
               </div>
-              <p className="text-[rgba(255,255,255,0.45)] text-xs font-medium leading-relaxed line-clamp-3">
-                Trace account metadata modifications, chronological authentication records, and core system actions.
-              </p>
-            </div>
-            <div className="text-[9px] font-bold tracking-widest text-white/30 uppercase select-none mt-2">
-              Activity Stream
-            </div>
-          </Link>
+              <span className="text-[9px] font-mono uppercase tracking-wider text-text-faint">
+                Security Audit
+              </span>
+            </Link>
 
-        </div>
+            <Link
+              to="/career-intelligence"
+              className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-brand-mint/30 transition-all flex flex-col justify-between h-36"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="font-heading font-bold text-sm text-white">Career Intelligence</span>
+                  <ArrowRight className="w-4 h-4 text-brand-mint" />
+                </div>
+                <p className="text-xs text-text-muted mt-2 line-clamp-2">
+                  AI-powered skill pathway mapping and industry role alignment.
+                </p>
+              </div>
+              <span className="text-[9px] font-mono uppercase tracking-wider text-text-faint">
+                Intelligence
+              </span>
+            </Link>
 
-        {/* BOTTOM METADATA CONTROLS FOOTER */}
-        <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 w-full border-t border-white/[0.04]">
-          <div className="flex items-center gap-2 text-xs font-bold tracking-wider text-[rgba(255,255,255,0.25)] uppercase select-none text-center sm:text-left">
-            <svg className="w-4 h-4 text-emerald-500/40 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            Protected Academic Session Active
+            <Link
+              to="/audit-logs"
+              className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-brand-mint/30 transition-all flex flex-col justify-between h-36"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="font-heading font-bold text-sm text-white">Audit Logs</span>
+                  <ArrowRight className="w-4 h-4 text-brand-mint" />
+                </div>
+                <p className="text-xs text-text-muted mt-2 line-clamp-2">
+                  Chronological records of security events and parameter updates.
+                </p>
+              </div>
+              <span className="text-[9px] font-mono uppercase tracking-wider text-text-faint">
+                Activity Stream
+              </span>
+            </Link>
           </div>
-
-          {/* TERMINATION TRIGGER — VOLT YELLOW EXCLUSIVE CTA FROM DESIGN SYSTEM */}
-          <button
-            onClick={handleLogout}
-            className="w-full sm:w-auto btn-primary shrink-0 block"
-          >
-            Logout Securely
-          </button>
-        </div>
+        </section>
 
       </div>
     </div>
   );
 }
-
-export default Home;
