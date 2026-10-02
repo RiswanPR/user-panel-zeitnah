@@ -5,9 +5,12 @@
 
 import api from './api';
 
+import { deduplicateAndSortNotifications } from '../utils/notificationUtils';
+
 export const notificationService = {
   /**
    * Retrieves paginated notifications with optional category and unread filters.
+   * Standardizes response to guarantee { notifications, data, unreadCount, total, page, limit, totalPages }.
    */
   getNotifications: async ({ page = 1, limit = 20, category = '', unreadOnly = false } = {}) => {
     const params = new URLSearchParams();
@@ -17,7 +20,19 @@ export const notificationService = {
     if (unreadOnly) params.append('unreadOnly', 'true');
 
     const response = await api.get(`/notifications?${params.toString()}`);
-    return response.data;
+    const raw = response.data;
+    const rawList = raw?.notifications || raw?.data || (Array.isArray(raw) ? raw : []);
+    const notifications = deduplicateAndSortNotifications(rawList);
+
+    return {
+      notifications,
+      data: notifications, // backwards-compatible alias
+      unreadCount: typeof raw?.unreadCount === 'number' ? raw.unreadCount : 0,
+      total: typeof raw?.total === 'number' ? raw.total : notifications.length,
+      page: Number(raw?.page) || Number(page) || 1,
+      limit: Number(raw?.limit) || Number(limit) || 20,
+      totalPages: Number(raw?.totalPages) || 1,
+    };
   },
 
   /**

@@ -59,7 +59,7 @@ export default function NotificationCenterPage() {
     staleTime: 1000 * 20,
   });
 
-  const notifications = useMemo(() => data?.data || [], [data?.data]);
+  const notifications = useMemo(() => data?.notifications || data?.data || [], [data?.notifications, data?.data]);
   const totalPages = data?.totalPages || 1;
   const total = data?.total || 0;
 

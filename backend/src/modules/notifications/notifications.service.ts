@@ -557,7 +557,7 @@ export class NotificationsService {
       this.notificationModel
         .find(filter)
         .populate('actorId', 'name email avatar profileImage role')
-        .sort({ createdAt: -1 })
+        .sort({ createdAt: -1, _id: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),

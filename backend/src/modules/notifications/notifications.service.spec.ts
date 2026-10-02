@@ -66,26 +66,29 @@ describe('NotificationsService - Lifecycle & Preferences', () => {
         { _id: notifId, title: 'New announcement', isRead: false },
       ];
 
-      mockNotificationModel.find.mockReturnValue({
-        populate: jest.fn().mockReturnValue({
-          sort: jest.fn().mockReturnValue({
-            skip: jest.fn().mockReturnValue({
-              limit: jest.fn().mockReturnValue({
-                lean: jest.fn().mockResolvedValue(mockNotifs),
-              }),
-            }),
+      mockNotificationModel.countDocuments
+        .mockResolvedValueOnce(1) // total
+        .mockResolvedValueOnce(1); // unreadCount
+
+      const sortSpy = jest.fn().mockReturnValue({
+        skip: jest.fn().mockReturnValue({
+          limit: jest.fn().mockReturnValue({
+            lean: jest.fn().mockResolvedValue(mockNotifs),
           }),
         }),
       });
 
-      mockNotificationModel.countDocuments
-        .mockResolvedValueOnce(1) // total
-        .mockResolvedValueOnce(1); // unreadCount
+      mockNotificationModel.find.mockReturnValue({
+        populate: jest.fn().mockReturnValue({
+          sort: sortSpy,
+        }),
+      });
 
       const result = await service.getUserNotifications(userId.toHexString(), {
         page: 1,
         limit: 20,
       });
+      expect(sortSpy).toHaveBeenCalledWith({ createdAt: -1, _id: -1 });
       expect(result.notifications).toEqual(mockNotifs);
       expect(result.total).toBe(1);
       expect(result.unreadCount).toBe(1);

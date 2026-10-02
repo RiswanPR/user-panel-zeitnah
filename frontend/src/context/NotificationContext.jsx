@@ -100,7 +100,12 @@ export const NotificationProvider = ({ children }) => {
       });
 
       newSocket.on('notification', (newNotif) => {
-        // Invalidate queries so lists update in realtime
+        if (!newNotif) return;
+
+        // Optimistically increment unread count
+        queryClient.setQueryData(['notifications', 'unread-count'], (old = 0) => Math.max(0, Number(old) + 1));
+
+        // Invalidate queries so lists update in background with server state
         queryClient.invalidateQueries({ queryKey: ['notifications'] });
         queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
 
@@ -205,17 +210,76 @@ export const NotificationProvider = ({ children }) => {
   // ── 4. Mutations ──
   const markAsReadMutation = useMutation({
     mutationFn: (id) => notificationService.markAsRead(id),
-    onSuccess: () => {
+    onMutate: async (id) => {
+      // Optimistically decrement unread count badge
+      queryClient.setQueryData(['notifications', 'unread-count'], (old = 0) => Math.max(0, Number(old) - 1));
+
+      // Optimistically mark notification as read in all active notifications queries
+      queryClient.setQueriesData({ queryKey: ['notifications'] }, (old) => {
+        if (!old) return old;
+        const markItem = (item) => {
+          if (!item) return item;
+          if (item._id === id || item.id === id) {
+            return { ...item, isRead: true, readAt: new Date().toISOString() };
+          }
+          return item;
+        };
+
+        if (Array.isArray(old.notifications)) {
+          const updated = old.notifications.map(markItem);
+          return {
+            ...old,
+            notifications: updated,
+            data: updated,
+            unreadCount: Math.max(0, (old.unreadCount || 1) - 1),
+          };
+        }
+        if (Array.isArray(old)) {
+          return old.map(markItem);
+        }
+        return old;
+      });
+    },
+    onSuccess: (res) => {
+      if (typeof res?.unreadCount === 'number') {
+        queryClient.setQueryData(['notifications', 'unread-count'], res.unreadCount);
+      }
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
     },
   });
 
   const markAllAsReadMutation = useMutation({
     mutationFn: (category) => notificationService.markAllAsRead(category),
+    onMutate: async () => {
+      // Optimistically clear unread badge
+      queryClient.setQueryData(['notifications', 'unread-count'], 0);
+
+      // Optimistically mark all items as read in cache
+      queryClient.setQueriesData({ queryKey: ['notifications'] }, (old) => {
+        if (!old) return old;
+        const markAll = (list) =>
+          Array.isArray(list)
+            ? list.map((item) => ({ ...item, isRead: true, readAt: item.readAt || new Date().toISOString() }))
+            : list;
+
+        if (Array.isArray(old.notifications)) {
+          const updated = markAll(old.notifications);
+          return {
+            ...old,
+            notifications: updated,
+            data: updated,
+            unreadCount: 0,
+          };
+        }
+        if (Array.isArray(old)) {
+          return markAll(old);
+        }
+        return old;
+      });
+    },
     onSuccess: () => {
+      queryClient.setQueryData(['notifications', 'unread-count'], 0);
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
     },
   });
 
