@@ -13,6 +13,7 @@ import { OrganizationsService } from './organizations.service';
 import { OrganizationsController } from './organizations.controller';
 
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
+import { AwsModule } from '../../common/aws/aws.module';
 import {
   Opportunity,
   OpportunitySchema,
@@ -20,6 +21,7 @@ import {
 
 @Module({
   imports: [
+    AwsModule,
     AuditLogsModule,
     MongooseModule.forFeature([
       { name: Organization.name, schema: OrganizationSchema },

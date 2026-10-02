@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Building2, Globe, Mail, Phone, Check, AlertCircle } from 'lucide-react';
 import { organizationService } from '../../services/organizationService';
+import LogoUploader from '../../components/common/LogoUploader';
 import {
   INFRASTRUCTURE_SPECIALIZATIONS,
   BUSINESS_TYPES,
@@ -27,6 +28,9 @@ export default function EditBusinessModal({ isOpen, onClose, business, onSuccess
     linkedin: '',
   });
 
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoRemoved, setLogoRemoved] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -51,6 +55,9 @@ export default function EditBusinessModal({ isOpen, onClose, business, onSuccess
         foundedYear: business.foundedYear ? String(business.foundedYear) : '',
         linkedin: business.linkedin || '',
       });
+      setLogoFile(null);
+      setLogoRemoved(false);
+      setUploadingLogo(false);
       setError('');
     }
   }, [isOpen, business]);
@@ -79,6 +86,14 @@ export default function EditBusinessModal({ isOpen, onClose, business, onSuccess
     });
   };
 
+  const handleClose = () => {
+    setLogoFile(null);
+    setLogoRemoved(false);
+    setUploadingLogo(false);
+    setError('');
+    onClose();
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name.trim()) {
@@ -94,10 +109,37 @@ export default function EditBusinessModal({ isOpen, onClose, business, onSuccess
       setSaving(true);
       setError('');
 
+      let finalLogo = formData.logo?.trim() || '';
+
+      if (logoRemoved) {
+        finalLogo = '';
+      } else if (logoFile) {
+        setUploadingLogo(true);
+        try {
+          const uploadRes = await organizationService.uploadLogo(logoFile);
+          finalLogo = uploadRes.url || uploadRes.data?.url || uploadRes.key || '';
+        } catch (uploadErr) {
+          const uploadMsg =
+            uploadErr?.response?.data?.message ||
+            uploadErr?.message ||
+            'Logo upload failed. Changes have not been saved.';
+          setError(
+            typeof uploadMsg === 'string' && uploadMsg.includes('not been saved')
+              ? uploadMsg
+              : `Logo upload failed: ${uploadMsg}. Changes have not been saved.`
+          );
+          setSaving(false);
+          setUploadingLogo(false);
+          return;
+        } finally {
+          setUploadingLogo(false);
+        }
+      }
+
       const orgId = business._id || business.id;
       const payload = {
         name: formData.name.trim(),
-        logo: formData.logo?.trim() || '',
+        logo: finalLogo,
         description: formData.description?.trim() || '',
         type: formData.type,
         industry: formData.industry?.trim() || 'Construction & Infrastructure',
@@ -120,7 +162,7 @@ export default function EditBusinessModal({ isOpen, onClose, business, onSuccess
 
       const updated = await organizationService.updateOrganization(orgId, payload);
       if (onSuccess) onSuccess(updated);
-      onClose();
+      handleClose();
     } catch (err) {
       setError(getErrorMessage(err, 'Failed to update business profile.'));
     } finally {
@@ -152,7 +194,7 @@ export default function EditBusinessModal({ isOpen, onClose, business, onSuccess
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Close modal"
             className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
           >
@@ -204,33 +246,37 @@ export default function EditBusinessModal({ isOpen, onClose, business, onSuccess
             </div>
           </div>
 
-          {/* Logo URL & Website */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-white/80 mb-1.5">Logo URL</label>
+          {/* Business Logo Upload */}
+          <LogoUploader
+            file={logoFile}
+            value={logoRemoved ? '' : formData.logo}
+            onChange={(selectedFile) => {
+              setLogoFile(selectedFile);
+              setLogoRemoved(false);
+              setError('');
+            }}
+            onRemove={() => {
+              setLogoFile(null);
+              setLogoRemoved(true);
+              setFormData((prev) => ({ ...prev, logo: '' }));
+            }}
+            disabled={saving || uploadingLogo}
+          />
+
+          {/* Official Website */}
+          <div>
+            <label className="block text-xs font-semibold text-white/80 mb-1.5">
+              Official Website
+            </label>
+            <div className="relative">
+              <Globe className="w-4 h-4 absolute left-3.5 top-3 text-white/30" />
               <input
                 type="url"
-                value={formData.logo}
-                onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
-                placeholder="https://example.com/logo.png"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-brand-mint text-sm text-white placeholder-white/30 outline-none transition-all"
+                value={formData.website}
+                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                placeholder="https://company.com"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-brand-mint text-sm text-white placeholder-white/30 outline-none transition-all"
               />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-white/80 mb-1.5">
-                Official Website
-              </label>
-              <div className="relative">
-                <Globe className="w-4 h-4 absolute left-3.5 top-3 text-white/30" />
-                <input
-                  type="url"
-                  value={formData.website}
-                  onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                  placeholder="https://company.com"
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-brand-mint text-sm text-white placeholder-white/30 outline-none transition-all"
-                />
-              </div>
             </div>
           </div>
 
@@ -397,19 +443,19 @@ export default function EditBusinessModal({ isOpen, onClose, business, onSuccess
         <div className="pt-4 border-t border-white/[0.08] flex items-center justify-end gap-3 shrink-0">
           <button
             type="button"
-            onClick={onClose}
-            disabled={saving}
-            className="px-4 py-2.5 rounded-xl text-xs font-semibold text-white/60 hover:text-white hover:bg-white/[0.04] transition-all cursor-pointer"
+            onClick={handleClose}
+            disabled={saving || uploadingLogo}
+            className="px-4 py-2.5 rounded-xl text-xs font-semibold text-white/60 hover:text-white hover:bg-white/[0.04] transition-all cursor-pointer disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             type="submit"
             form="edit-business-form"
-            disabled={saving}
+            disabled={saving || uploadingLogo}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-mint text-black font-bold text-xs shadow-lg shadow-brand-mint/20 hover:opacity-90 disabled:opacity-50 transition-all cursor-pointer"
           >
-            {saving ? 'Saving Changes...' : 'Save Business Profile'}
+            {uploadingLogo ? 'Uploading Logo...' : saving ? 'Saving Changes...' : 'Save Business Profile'}
           </button>
         </div>
       </div>

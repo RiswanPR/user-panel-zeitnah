@@ -25,6 +25,9 @@ import {
 } from './schemas/organization-membership.schema';
 import { User, UserDocument } from '../auth/schemas/user.schema';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { v4 as uuidv4 } from 'uuid';
+import { UploadService } from '../../common/aws/upload.service';
+import { SignedUrlService } from '../../common/aws/signed-url.service';
 import {
   Opportunity,
   OpportunityDocument,
@@ -88,6 +91,10 @@ export class OrganizationsService {
     private readonly oppModel?: Model<OpportunityDocument>,
     @Optional()
     private readonly auditLogsService?: AuditLogsService,
+    @Optional()
+    private readonly uploadService?: UploadService,
+    @Optional()
+    private readonly signedUrlService?: SignedUrlService,
   ) {}
 
   /**
@@ -196,6 +203,117 @@ export class OrganizationsService {
     }
 
     return org;
+  }
+
+  /**
+   * Validate image buffer size, non-emptiness, and magic binary signatures.
+   * Protects against spoofed file extensions and oversized payloads.
+   */
+  validateImageBuffer(buffer: Buffer, mimetype: string): void {
+    if (!buffer || buffer.length === 0) {
+      throw new BadRequestException('Empty image file provided');
+    }
+
+    // Maximum 5 MB limit
+    const MAX_SIZE = 5 * 1024 * 1024;
+    if (buffer.length > MAX_SIZE) {
+      throw new BadRequestException('Image file exceeds maximum limit of 5 MB');
+    }
+
+    if (mimetype === 'image/png') {
+      const isPng =
+        buffer.length >= 8 &&
+        buffer[0] === 0x89 &&
+        buffer[1] === 0x50 &&
+        buffer[2] === 0x4e &&
+        buffer[3] === 0x47;
+      if (!isPng) {
+        throw new BadRequestException('File is not a valid PNG image');
+      }
+    } else if (mimetype === 'image/jpeg') {
+      const isJpg =
+        buffer.length >= 3 &&
+        buffer[0] === 0xff &&
+        buffer[1] === 0xd8 &&
+        buffer[2] === 0xff;
+      if (!isJpg) {
+        throw new BadRequestException('File is not a valid JPG/JPEG image');
+      }
+    } else if (mimetype === 'image/webp') {
+      const isWebp =
+        buffer.length >= 12 &&
+        buffer[0] === 0x52 &&
+        buffer[1] === 0x49 &&
+        buffer[2] === 0x46 &&
+        buffer[3] === 0x46 && // 'RIFF'
+        buffer[8] === 0x57 &&
+        buffer[9] === 0x45 &&
+        buffer[10] === 0x42 &&
+        buffer[11] === 0x50; // 'WEBP'
+      if (!isWebp) {
+        throw new BadRequestException('File is not a valid WebP image');
+      }
+    } else {
+      throw new BadRequestException(
+        'Unsupported image format. Allowed formats: PNG, JPG, WebP',
+      );
+    }
+  }
+
+  /**
+   * Uploads a business logo to storage (S3) with strict authorization & binary verification.
+   */
+  async uploadLogo(userId: string, file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('No logo file provided');
+    }
+
+    // Verify role permissions: Recruiters, Founders, and Admins only
+    if (this.userModel?.findById) {
+      const user = await this.userModel.findById(userId);
+      if (user) {
+        const primaryRole = (user.primaryRole || '').toUpperCase();
+        const isRecruiterOrFounder =
+          primaryRole === 'RECRUITER' || primaryRole === 'FOUNDER';
+        const isAdmin = user.role === 'admin';
+
+        if (!isRecruiterOrFounder && !isAdmin) {
+          throw new ForbiddenException(
+            'Only Recruiters and Founders are permitted to upload business logos',
+          );
+        }
+      }
+    }
+
+    this.validateImageBuffer(file.buffer, file.mimetype);
+
+    const extension =
+      file.mimetype === 'image/png'
+        ? 'png'
+        : file.mimetype === 'image/webp'
+          ? 'webp'
+          : 'jpg';
+    const key = `organizations/logos/${userId}-${uuidv4()}.${extension}`;
+
+    if (this.uploadService) {
+      await this.uploadService.uploadFile(key, file.buffer, file.mimetype);
+    }
+
+    let url = key;
+    if (this.signedUrlService) {
+      url = await this.signedUrlService.generateSignedImageUrl(key);
+    } else if (this.uploadService?.['s3Service']?.bucketName) {
+      const bucket = this.uploadService['s3Service'].bucketName;
+      const region = this.uploadService['s3Service'].region || 'us-east-1';
+      url = `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+    }
+
+    return {
+      success: true,
+      url: url || key,
+      key,
+      message: 'Logo uploaded successfully',
+    };
   }
 
   /**
@@ -494,7 +612,31 @@ export class OrganizationsService {
     if (dto.name !== undefined) org.name = dto.name.trim();
     if (dto.type !== undefined) org.type = dto.type;
     if (dto.description !== undefined) org.description = dto.description.trim();
-    if (dto.logo !== undefined) org.logo = dto.logo;
+    if (dto.logo !== undefined) {
+      const oldLogo = org.logo;
+      org.logo = dto.logo;
+      if (
+        oldLogo &&
+        oldLogo !== dto.logo &&
+        this.uploadService &&
+        typeof oldLogo === 'string' &&
+        oldLogo.includes('organizations/logos/')
+      ) {
+        const keyMatch = oldLogo.match(
+          /(organizations\/logos\/[a-zA-Z0-9_-]+\.[a-z]+)/,
+        );
+        const fileKeyToDelete = keyMatch
+          ? keyMatch[1]
+          : oldLogo.startsWith('organizations/logos/')
+            ? oldLogo
+            : null;
+        if (fileKeyToDelete) {
+          await Promise.resolve(
+            this.uploadService.deleteFile(fileKeyToDelete),
+          ).catch(() => {});
+        }
+      }
+    }
     if (dto.website !== undefined) org.website = dto.website.trim();
     if (dto.industry !== undefined) org.industry = dto.industry.trim();
     if (dto.infrastructureSpecializations !== undefined)

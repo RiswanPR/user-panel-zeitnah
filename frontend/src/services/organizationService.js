@@ -21,6 +21,15 @@ export const organizationService = {
     return res.data;
   },
 
+  async uploadLogo(file) {
+    const formData = new FormData();
+    formData.append('logo', file);
+    const res = await api.post('/organizations/upload-logo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+  },
+
   async updateOrganization(id, data) {
     const res = await api.patch(`/organizations/${id}`, data);
     return res.data;

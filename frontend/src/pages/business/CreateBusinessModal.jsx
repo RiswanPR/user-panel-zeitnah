@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Building2, Globe, Mail, Phone, MapPin, Sparkles, Check, AlertCircle } from 'lucide-react';
 import { organizationService } from '../../services/organizationService';
+import LogoUploader from '../../components/common/LogoUploader';
 import {
   INFRASTRUCTURE_SPECIALIZATIONS,
   BUSINESS_TYPES,
@@ -26,6 +27,8 @@ export default function CreateBusinessModal({ isOpen, onClose, onSuccess }) {
     linkedin: '',
   });
 
+  const [logoFile, setLogoFile] = useState(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -43,6 +46,13 @@ export default function CreateBusinessModal({ isOpen, onClose, onSuccess }) {
     });
   };
 
+  const handleClose = () => {
+    setLogoFile(null);
+    setUploadingLogo(false);
+    setError('');
+    onClose();
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name.trim()) {
@@ -57,12 +67,40 @@ export default function CreateBusinessModal({ isOpen, onClose, onSuccess }) {
     try {
       setSaving(true);
       setError('');
+
+      let finalLogo = formData.logo?.trim() || '';
+
+      // Upload local logo if selected
+      if (logoFile) {
+        setUploadingLogo(true);
+        try {
+          const uploadRes = await organizationService.uploadLogo(logoFile);
+          finalLogo = uploadRes.url || uploadRes.data?.url || uploadRes.key || '';
+        } catch (uploadErr) {
+          const uploadMsg =
+            uploadErr?.response?.data?.message ||
+            uploadErr?.message ||
+            'Logo upload failed. Your business has not been created.';
+          setError(
+            typeof uploadMsg === 'string' && uploadMsg.includes('not been created')
+              ? uploadMsg
+              : `Logo upload failed: ${uploadMsg}. Your business has not been created.`
+          );
+          setSaving(false);
+          setUploadingLogo(false);
+          return;
+        } finally {
+          setUploadingLogo(false);
+        }
+      }
+
       const created = await organizationService.createOrganization({
         ...formData,
+        logo: finalLogo,
         foundedYear: formData.foundedYear ? Number(formData.foundedYear) : null,
       });
       if (onSuccess) onSuccess(created);
-      onClose();
+      handleClose();
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
@@ -91,7 +129,7 @@ export default function CreateBusinessModal({ isOpen, onClose, onSuccess }) {
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors"
           >
             <X className="w-5 h-5" />
@@ -142,35 +180,35 @@ export default function CreateBusinessModal({ isOpen, onClose, onSuccess }) {
             </div>
           </div>
 
-          {/* Logo URL & Website */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-white/80 mb-1.5">
-                Company Logo URL
-              </label>
+          {/* Business Logo Upload */}
+          <LogoUploader
+            file={logoFile}
+            value={formData.logo}
+            onChange={(selectedFile) => {
+              setLogoFile(selectedFile);
+              setError('');
+            }}
+            onRemove={() => {
+              setLogoFile(null);
+              setFormData((prev) => ({ ...prev, logo: '' }));
+            }}
+            disabled={saving || uploadingLogo}
+          />
+
+          {/* Official Website */}
+          <div>
+            <label className="block text-xs font-semibold text-white/80 mb-1.5">
+              Official Website
+            </label>
+            <div className="relative">
+              <Globe className="w-4 h-4 text-white/30 absolute left-3.5 top-3" />
               <input
                 type="url"
-                value={formData.logo}
-                onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
-                placeholder="https://.../logo.png"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-brand-mint text-sm text-white placeholder-white/30 outline-none"
+                value={formData.website}
+                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                placeholder="https://exampleinfra.com"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-brand-mint text-sm text-white placeholder-white/30 outline-none"
               />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-white/80 mb-1.5">
-                Website
-              </label>
-              <div className="relative">
-                <Globe className="w-4 h-4 text-white/30 absolute left-3.5 top-3" />
-                <input
-                  type="url"
-                  value={formData.website}
-                  onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                  placeholder="https://exampleinfra.com"
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-brand-mint text-sm text-white placeholder-white/30 outline-none"
-                />
-              </div>
             </div>
           </div>
 
@@ -358,7 +396,7 @@ export default function CreateBusinessModal({ isOpen, onClose, onSuccess }) {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 rounded-xl text-xs font-semibold text-white/60 hover:text-white hover:bg-white/[0.04] transition-all"
             >
               Cancel
@@ -366,10 +404,10 @@ export default function CreateBusinessModal({ isOpen, onClose, onSuccess }) {
             <button
               type="submit"
               form="create-business-form"
-              disabled={saving}
+              disabled={saving || uploadingLogo}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-mint text-black font-bold text-xs shadow-lg shadow-brand-mint/20 hover:opacity-90 disabled:opacity-50 transition-all cursor-pointer"
             >
-              {saving ? 'Submitting...' : 'Submit for Verification'}
+              {uploadingLogo ? 'Uploading Logo...' : saving ? 'Submitting...' : 'Submit for Verification'}
             </button>
           </div>
         </div>

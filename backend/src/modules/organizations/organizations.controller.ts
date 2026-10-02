@@ -9,8 +9,12 @@ import {
   Req,
   UseGuards,
   ForbiddenException,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
 import {
@@ -93,6 +97,41 @@ export class OrganizationsController {
   @UseGuards(JwtAuthGuard)
   async resubmitOrganization(@Req() req: any, @Param('id') id: string) {
     return this.orgService.resubmitOrganization(req.user.userId, id);
+  }
+
+  @Post('upload-logo')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({
+    default: {
+      limit: 15,
+      ttl: 60000,
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor('logo', {
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) => {
+        const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowedMimes.includes(file.mimetype)) {
+          return cb(
+            new BadRequestException(
+              'Only JPG, PNG, and WebP image files are permitted for business logo.',
+            ),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  async uploadLogo(
+    @Req() req: any,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('No logo file provided');
+    }
+    return this.orgService.uploadLogo(req.user.userId, file);
   }
 
   @Get(':slug')
