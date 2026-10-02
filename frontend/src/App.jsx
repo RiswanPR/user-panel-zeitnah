@@ -119,46 +119,49 @@ function App() {
               <Route path="/verify-login-otp" element={<VerifyOtp />} />
               <Route path="/register" element={<Register />} />
               <Route path="/verify-register-otp" element={<VerifyRegisterOtp />} />
-              <Route
-                path="/u/:username"
-                element={
-                  <Suspense fallback={<PageLoader />}>
-                    <PublicProfilePage />
-                  </Suspense>
-                }
-              />
-              <Route
-                path="/u/:username/portfolio"
-                element={
-                  <Suspense fallback={<PageLoader />}>
-                    <PortfolioPage isPublic={true} />
-                  </Suspense>
-                }
-              />
-              <Route
-                path="/profile/u/:username"
-                element={
-                  <Suspense fallback={<PageLoader />}>
-                    <PublicProfilePage />
-                  </Suspense>
-                }
-              />
-              <Route
-                path="/profile/u/:username/portfolio"
-                element={
-                  <Suspense fallback={<PageLoader />}>
-                    <PortfolioPage isPublic={true} />
-                  </Suspense>
-                }
-              />
-              <Route
-                path="/about"
-                element={
-                  <Suspense fallback={<PageLoader />}>
-                    <AboutPage />
-                  </Suspense>
-                }
-              />
+              {/* PUBLIC DISCOVERY & PROFILE ROUTES (Main Layout Shell) */}
+              <Route element={<MainLayout />}>
+                <Route
+                  path="/u/:username"
+                  element={
+                    <Suspense fallback={<PageLoader />}>
+                      <PublicProfilePage />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/u/:username/portfolio"
+                  element={
+                    <Suspense fallback={<PageLoader />}>
+                      <PortfolioPage isPublic={true} />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/profile/u/:username"
+                  element={
+                    <Suspense fallback={<PageLoader />}>
+                      <PublicProfilePage />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/profile/u/:username/portfolio"
+                  element={
+                    <Suspense fallback={<PageLoader />}>
+                      <PortfolioPage isPublic={true} />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/about"
+                  element={
+                    <Suspense fallback={<PageLoader />}>
+                      <AboutPage />
+                    </Suspense>
+                  }
+                />
+              </Route>
 
               {/* SECURE APPLICATION ROUTING (Main Layout) */}
               <Route
@@ -170,7 +173,6 @@ function App() {
               >
                 <Route path="/" element={<Navigate to="/courses" />} />
                 <Route path="/home" element={<Suspense fallback={<PageLoader />}><Home /></Suspense>} />
-                <Route path="/about" element={<Suspense fallback={<PageLoader />}><AboutPage /></Suspense>} />
                 <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
                 <Route path="/profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
                 <Route path="/profile/portfolio" element={<Suspense fallback={<PageLoader />}><PortfolioPage /></Suspense>} />

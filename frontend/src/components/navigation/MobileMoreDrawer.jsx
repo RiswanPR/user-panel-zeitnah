@@ -208,37 +208,51 @@ export default function MobileMoreDrawer({
 
             {/* Header: User Profile Card & Close */}
             <div className="px-5 py-3 border-b border-white/[0.06] flex items-center justify-between gap-3">
-              <Link
-                to="/profile"
-                onClick={onClose}
-                className="flex items-center gap-3 min-w-0 flex-1 p-2 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] transition-colors"
-              >
-                <div className="relative w-10 h-10 rounded-full overflow-hidden border border-brand-mint/30 bg-brand-mint/15 shrink-0 flex items-center justify-center">
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt={user?.name || "Avatar"}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-xs font-mono font-bold text-brand-mint">
-                      {userInitials}
-                    </span>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-white truncate leading-tight">
-                    {user?.name || "Professional"}
-                  </p>
-                  <p className="text-[10px] text-text-muted font-mono truncate mt-0.5 leading-tight">
-                    @{user?.username || "profile"}
-                  </p>
-                  <div className="mt-1 inline-flex items-center px-1.5 py-0.2 rounded bg-white/[0.06] border border-white/[0.1] text-text-secondary text-[8.5px] font-mono uppercase tracking-wider font-semibold">
-                    {normalizedRole}
+              {user ? (
+                <Link
+                  to="/profile"
+                  onClick={onClose}
+                  className="flex items-center gap-3 min-w-0 flex-1 p-2 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] transition-colors"
+                >
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden border border-brand-mint/30 bg-brand-mint/15 shrink-0 flex items-center justify-center">
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt={user?.name || "Avatar"}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-xs font-mono font-bold text-brand-mint">
+                        {userInitials}
+                      </span>
+                    )}
                   </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-text-faint shrink-0" aria-hidden="true" />
-              </Link>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-white truncate leading-tight">
+                      {user?.name || "Professional"}
+                    </p>
+                    <p className="text-[10px] text-text-muted font-mono truncate mt-0.5 leading-tight">
+                      @{user?.username || "profile"}
+                    </p>
+                    <div className="mt-1 inline-flex items-center px-1.5 py-0.2 rounded bg-white/[0.06] border border-white/[0.1] text-text-secondary text-[8.5px] font-mono uppercase tracking-wider font-semibold">
+                      {normalizedRole}
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-text-faint shrink-0" aria-hidden="true" />
+                </Link>
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={onClose}
+                  className="flex items-center justify-between gap-3 min-w-0 flex-1 p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] transition-colors"
+                >
+                  <div>
+                    <p className="text-xs font-bold text-white leading-tight">Sign In to Zeitnah</p>
+                    <p className="text-[10px] text-text-muted mt-0.5">Explore courses, network & opportunities</p>
+                  </div>
+                  <span className="zn-btn-primary text-xs py-1 px-3 shrink-0 font-semibold">Sign In</span>
+                </Link>
+              )}
 
               <button
                 type="button"

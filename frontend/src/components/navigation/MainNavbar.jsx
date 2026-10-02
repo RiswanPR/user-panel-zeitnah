@@ -398,125 +398,136 @@ export default function MainNavbar({
               {/* Notifications Bell */}
               <NotificationBell className="shrink-0" />
 
-              {/* User Profile Menu */}
-              <div className="relative" ref={profileDropdownRef}>
-                <button
-                  ref={profileButtonRef}
-                  type="button"
-                  onClick={() => setIsProfileOpen((prev) => !prev)}
-                  aria-expanded={isProfileOpen}
-                  aria-haspopup="true"
-                  aria-label="User account menu"
-                  className="flex items-center gap-2 p-1 rounded-lg hover:bg-white/[0.04] transition-colors focus-ring cursor-pointer group"
-                >
-                  <div className="relative w-7 h-7 rounded-full border border-brand-mint/30 overflow-hidden flex items-center justify-center bg-gradient-to-br from-brand-mint/20 to-brand-navy/60 shadow-sm shrink-0">
-                    {avatarUrl ? (
-                      <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-[9px] font-mono font-bold text-brand-mint">
-                        {userInitials}
-                      </span>
-                    )}
-                  </div>
+              {/* User Profile Menu or Guest Sign In */}
+              {user ? (
+                <div className="relative" ref={profileDropdownRef}>
+                  <button
+                    ref={profileButtonRef}
+                    type="button"
+                    onClick={() => setIsProfileOpen((prev) => !prev)}
+                    aria-expanded={isProfileOpen}
+                    aria-haspopup="true"
+                    aria-label="User account menu"
+                    className="flex items-center gap-2 p-1 rounded-lg hover:bg-white/[0.04] transition-colors focus-ring cursor-pointer group"
+                  >
+                    <div className="relative w-7 h-7 rounded-full border border-brand-mint/30 overflow-hidden flex items-center justify-center bg-gradient-to-br from-brand-mint/20 to-brand-navy/60 shadow-sm shrink-0">
+                      {avatarUrl ? (
+                        <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-[9px] font-mono font-bold text-brand-mint">
+                          {userInitials}
+                        </span>
+                      )}
+                    </div>
 
-                  <span className="hidden xl:block text-xs font-medium text-white/90 group-hover:text-brand-mint transition-colors max-w-[90px] truncate text-left">
-                    {user?.name || "Account"}
-                  </span>
+                    <span className="hidden xl:block text-xs font-medium text-white/90 group-hover:text-brand-mint transition-colors max-w-[90px] truncate text-left">
+                      {user?.name || "Account"}
+                    </span>
 
-                  <ChevronDown
-                    className={`hidden xl:block w-3 h-3 text-text-faint group-hover:text-white transition-transform duration-200 ${isProfileOpen ? "rotate-180 text-brand-mint" : ""
-                      }`}
-                    aria-hidden="true"
-                  />
-                </button>
+                    <ChevronDown
+                      className={`hidden xl:block w-3 h-3 text-text-faint group-hover:text-white transition-transform duration-200 ${isProfileOpen ? "rotate-180 text-brand-mint" : ""
+                        }`}
+                      aria-hidden="true"
+                    />
+                  </button>
 
-                {/* Profile Command Menu Card */}
-                <AnimatePresence>
-                  {isProfileOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 6, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 4, scale: 0.98 }}
-                      transition={{ duration: 0.14, ease: "easeOut" }}
-                      className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#0D1625]/98 border border-white/[0.09] backdrop-blur-2xl shadow-2xl p-2 z-50 divide-y divide-white/[0.05]"
-                    >
-                      {/* User Identity Header */}
-                      <div className="px-3 py-2.5">
-                        <p className="text-xs font-bold text-white truncate leading-tight">
-                          {user?.name || "Professional"}
-                        </p>
-                        <p className="text-[10px] font-mono text-text-muted truncate mt-0.5 leading-tight">
-                          @{user?.username || "profile"}
-                        </p>
+                  {/* Profile Command Menu Card */}
+                  <AnimatePresence>
+                    {isProfileOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                        transition={{ duration: 0.14, ease: "easeOut" }}
+                        className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#0D1625]/98 border border-white/[0.09] backdrop-blur-2xl shadow-2xl p-2 z-50 divide-y divide-white/[0.05]"
+                      >
+                        {/* User Identity Header */}
+                        <div className="px-3 py-2.5">
+                          <p className="text-xs font-bold text-white truncate leading-tight">
+                            {user?.name || "Professional"}
+                          </p>
+                          <p className="text-[10px] font-mono text-text-muted truncate mt-0.5 leading-tight">
+                            @{user?.username || "profile"}
+                          </p>
 
-                        {/* Restrained Role Badge (Role != Verification) */}
-                        <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-md bg-white/[0.05] border border-white/[0.1] text-text-secondary text-[9px] font-mono uppercase tracking-wider font-semibold">
-                          {normalizedRole}
+                          {/* Restrained Role Badge (Role != Verification) */}
+                          <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-md bg-white/[0.05] border border-white/[0.1] text-text-secondary text-[9px] font-mono uppercase tracking-wider font-semibold">
+                            {normalizedRole}
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Profile Quick Links */}
-                      <div className="py-1 space-y-0.5">
-                        <Link
-                          to="/profile"
-                          onClick={() => setIsProfileOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
-                        >
-                          <User className="w-3.5 h-3.5 text-text-muted" aria-hidden="true" />
-                          <span>My Profile</span>
-                        </Link>
-                        <Link
-                          to="/profile/portfolio"
-                          onClick={() => setIsProfileOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
-                        >
-                          <Layers className="w-3.5 h-3.5 text-text-muted" aria-hidden="true" />
-                          <span>Portfolio</span>
-                        </Link>
-                        <Link
-                          to="/profile/verification"
-                          onClick={() => setIsProfileOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
-                        >
-                          <ShieldCheck className="w-3.5 h-3.5 text-text-muted" aria-hidden="true" />
-                          <span>Verification Center</span>
-                        </Link>
-                        <Link
-                          to="/profile/edit"
-                          onClick={() => setIsProfileOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
-                        >
-                          <Settings className="w-3.5 h-3.5 text-text-muted" aria-hidden="true" />
-                          <span>Account Settings</span>
-                        </Link>
-                        <Link
-                          to="/active-sessions"
-                          onClick={() => setIsProfileOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
-                        >
-                          <ShieldAlert className="w-3.5 h-3.5 text-text-muted" aria-hidden="true" />
-                          <span>Active Sessions</span>
-                        </Link>
-                      </div>
+                        {/* Profile Quick Links */}
+                        <div className="py-1 space-y-0.5">
+                          <Link
+                            to="/profile"
+                            onClick={() => setIsProfileOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
+                          >
+                            <User className="w-3.5 h-3.5 text-text-muted" aria-hidden="true" />
+                            <span>My Profile</span>
+                          </Link>
+                          <Link
+                            to="/profile/portfolio"
+                            onClick={() => setIsProfileOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
+                          >
+                            <Layers className="w-3.5 h-3.5 text-text-muted" aria-hidden="true" />
+                            <span>Portfolio</span>
+                          </Link>
+                          <Link
+                            to="/profile/verification"
+                            onClick={() => setIsProfileOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
+                          >
+                            <ShieldCheck className="w-3.5 h-3.5 text-text-muted" aria-hidden="true" />
+                            <span>Verification Center</span>
+                          </Link>
+                          <Link
+                            to="/profile/edit"
+                            onClick={() => setIsProfileOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
+                          >
+                            <Settings className="w-3.5 h-3.5 text-text-muted" aria-hidden="true" />
+                            <span>Account Settings</span>
+                          </Link>
+                          <Link
+                            to="/active-sessions"
+                            onClick={() => setIsProfileOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
+                          >
+                            <ShieldAlert className="w-3.5 h-3.5 text-text-muted" aria-hidden="true" />
+                            <span>Active Sessions</span>
+                          </Link>
+                        </div>
 
-                      {/* Sign Out Action */}
-                      <div className="pt-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsProfileOpen(false);
-                            onRequestLogout?.();
-                          }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors cursor-pointer"
-                        >
-                          <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>Sign Out</span>
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                        {/* Sign Out Action */}
+                        <div className="pt-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsProfileOpen(false);
+                              onRequestLogout?.();
+                            }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors cursor-pointer"
+                          >
+                            <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Sign Out</span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Link
+                    to="/login"
+                    className="zn-btn-primary text-xs py-1.5 px-3.5 flex items-center gap-1.5 shadow-sm font-semibold cursor-pointer"
+                  >
+                    <span>Sign In</span>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>

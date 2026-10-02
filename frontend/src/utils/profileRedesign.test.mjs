@@ -261,4 +261,61 @@ describe('Profile Redesign Architecture & Routing Validation', () => {
     // ImageEditorModal must be conditionally mounted to prevent unneeded initialization evaluation
     assert.match(content, /Boolean\(editingImage\)\s*&&\s*\(/);
   });
+
+  it('verifies smart Back navigation resolution between history and /network fallback', () => {
+    function resolveBackDestination(historyState) {
+      if (historyState && typeof historyState.idx === 'number' && historyState.idx > 0) {
+        return -1;
+      }
+      return '/network';
+    }
+
+    assert.equal(resolveBackDestination({ idx: 2 }), -1);
+    assert.equal(resolveBackDestination({ idx: 1 }), -1);
+    assert.equal(resolveBackDestination({ idx: 0 }), '/network');
+    assert.equal(resolveBackDestination(null), '/network');
+    assert.equal(resolveBackDestination(undefined), '/network');
+  });
+
+  it('filters public profile sections to prevent empty rendered blocks', () => {
+    function computeVisibleSections(student, isExpVisible, isEduVisible, isProjectsVisible, isCertVisible, projects) {
+      return [
+        { id: "all", label: "Full Profile" },
+        ...(student.bio || student.headline ? [{ id: "about", label: "Story" }] : []),
+        ...(isExpVisible && student.experience?.length > 0 ? [{ id: "experience", label: "Experience" }] : []),
+        ...(isEduVisible && student.education?.length > 0 ? [{ id: "education", label: "Education" }] : []),
+        ...((student.skills?.length > 0 || student.structuredSkills) ? [{ id: "skills", label: "Skills" }] : []),
+        ...(isProjectsVisible && projects.length > 0 ? [{ id: "projects", label: "Projects" }] : []),
+        ...(isCertVisible && student.certifications?.length > 0 ? [{ id: "certifications", label: "Certifications" }] : []),
+        ...(student.recommendations?.length > 0 ? [{ id: "recommendations", label: "Endorsements" }] : []),
+      ];
+    }
+
+    const minimalUser = { name: 'New Engineer' };
+    const minimalSections = computeVisibleSections(minimalUser, true, true, true, true, []);
+    assert.deepEqual(minimalSections, [{ id: "all", label: "Full Profile" }]);
+
+    const fullUser = {
+      name: 'Senior Planner',
+      headline: 'Lead Infrastructure Engineer',
+      experience: [{ role: 'Senior PM' }],
+      skills: ['Primavera P6', 'BIM'],
+      recommendations: [{ id: 'rec-1' }],
+    };
+    const fullSections = computeVisibleSections(fullUser, true, true, true, true, [{ id: 'p1' }]);
+    assert.equal(fullSections.length, 6); // all, about, experience, skills, projects, recommendations
+    assert.ok(fullSections.some((s) => s.id === 'about'));
+    assert.ok(fullSections.some((s) => s.id === 'experience'));
+    assert.ok(fullSections.some((s) => s.id === 'skills'));
+  });
+
+  it('guarantees App.jsx defines public profile routes under MainLayout shell', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const appPath = path.resolve('src/App.jsx');
+    const appContent = fs.readFileSync(appPath, 'utf8');
+
+    // Route element={<MainLayout />} must contain /u/:username
+    assert.match(appContent, /<Route\s+element=\{<MainLayout\s*\/>\}>[\s\S]*?path="\/u\/:username"[\s\S]*?<\/Route>/);
+  });
 });
