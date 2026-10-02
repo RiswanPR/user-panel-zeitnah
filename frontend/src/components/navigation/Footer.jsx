@@ -2,13 +2,13 @@ import { Link } from "react-router-dom";
 import { Sparkles, Compass, BookOpen, Briefcase, Trophy, TrendingUp, ShieldCheck } from "lucide-react";
 import BRAND from "../../constants/brand";
 
-export default function Footer() {
+export default function Footer({ className = "" }) {
   const currentYear = new Date().getFullYear();
 
   return (
     <footer
       aria-label="Platform Footer"
-      className="border-t border-white/[0.08] bg-[#070B14]/90 backdrop-blur-xl text-white select-none relative z-10 transition-colors"
+      className={`hidden md:block border-t border-white/[0.08] bg-[#070B14]/90 backdrop-blur-xl text-white select-none relative z-10 transition-colors ${className}`}
     >
       {/* Subtle top ambient glow */}
       <div

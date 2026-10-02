@@ -276,11 +276,9 @@ export default function MainLayout({ children }) {
         </main>
       </div>
 
-      {/* ── Global Platform Footer (suppressed in full-height messaging) ── */}
+      {/* ── Global Platform Footer (hidden on mobile, suppressed in full-height messaging) ── */}
       {!isMessagesActiveConversation && !location.pathname.startsWith('/messages') && (
-        <div className="pb-16 md:pb-0">
-          <Footer />
-        </div>
+        <Footer />
       )}
 
       {/* Mobile More Navigation Drawer */}
