@@ -56,6 +56,7 @@ const VerificationCenterPage = lazyWithRetry(() => import("./pages/profile/Verif
 const OpportunityInboxPage = lazyWithRetry(() => import("./pages/opportunities/OpportunityInboxPage"));
 const Home = lazyWithRetry(() => import("./pages/home/Home"));
 const AboutPage = lazyWithRetry(() => import("./pages/about/AboutPage"));
+const CommunityHome = lazyWithRetry(() => import("./pages/community/CommunityHome"));
 
 import ProtectedRoute from "./components/common/ProtectedRoute/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";
@@ -195,6 +196,7 @@ function App() {
                 <Route path="/network/profile/:username" element={<NetworkProfileRedirect />} />
                 <Route path="/network/spaces/:slugOrId" element={<Suspense fallback={<PageLoader />}><LearningSpaceDetailPage /></Suspense>} />
                 <Route path="/network/spaces/:slugOrId/discussions/:discussionId" element={<Suspense fallback={<PageLoader />}><DiscussionDetailPage /></Suspense>} />
+                <Route path="/community" element={<Suspense fallback={<PageLoader />}><CommunityHome /></Suspense>} />
                 <Route path="/messages" element={<Suspense fallback={<PageLoader />}><MessagesPage /></Suspense>} />
                 <Route path="/messages/:conversationId" element={<Suspense fallback={<PageLoader />}><MessagesPage /></Suspense>} />
                 <Route path="/notifications" element={<Suspense fallback={<PageLoader />}><NotificationsPage /></Suspense>} />

@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Trophy,
   Shield,
+  Globe,
 } from "lucide-react";
 
 /**
@@ -214,6 +215,13 @@ export function getMoreNavSections(user) {
       id: "community",
       title: "COMMUNITY & STANDING",
       items: [
+        {
+          key: "community",
+          path: "/community",
+          label: "Community",
+          icon: Globe,
+          desc: "Social discovery, posts & engagement",
+        },
         {
           key: "leaderboard",
           path: "/leaderboard",

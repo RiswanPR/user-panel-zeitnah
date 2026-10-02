@@ -14,6 +14,7 @@ import { AwsModule } from './common/aws/aws.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AnnouncementsModule } from './modules/announcements/announcements.module';
 import { NetworkModule } from './modules/network/network.module';
+import { CommunityModule } from './modules/community/community.module';
 import { SkillsModule } from './modules/skills/skills.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
@@ -55,6 +56,7 @@ import { EmailModule } from './common/email/email.module';
     NotificationsModule,
     AnnouncementsModule,
     NetworkModule,
+    CommunityModule,
 
     // NETWORK 3.0 ECOSYSTEM MODULES
     SkillsModule,

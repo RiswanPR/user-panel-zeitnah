@@ -135,6 +135,7 @@ export default function MainNavbar({
       if (key === "career-intelligence") return path.startsWith("/career-intelligence");
       if (key === "portfolio") return path === "/profile/portfolio" || path.endsWith("/portfolio");
       if (key === "verification") return path.startsWith("/profile/verification");
+      if (key === "community") return path === "/community" || path.startsWith("/community/");
       if (key === "leaderboard") return path === "/leaderboard" || path.startsWith("/leaderboard/");
       if (key === "admin-businesses") return path.startsWith("/admin/businesses");
       if (key === "profile") {
