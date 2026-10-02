@@ -6,8 +6,6 @@ import {
   Building2,
   Calendar,
   CheckCircle2,
-  Clock,
-  Copy,
   Download,
   Edit3,
   ExternalLink,
@@ -17,12 +15,9 @@ import {
   Hammer,
   Layers,
   Lock,
-  Mail,
   MapPin,
-  MessageSquare,
   Plus,
   Printer,
-  Send,
   Share2,
   ShieldCheck,
   Sparkles,
@@ -31,8 +26,10 @@ import {
   User,
   X,
   XCircle,
-  FileSpreadsheet,
-  Image as ImageIcon,
+  Cpu,
+  Code2,
+  ArrowLeft,
+  Check,
 } from 'lucide-react';
 import { portfolioService } from '../../services/portfolioService';
 import { AuthContext } from '../../context/AuthContext';
@@ -62,6 +59,7 @@ export default function PortfolioPage({ isPublic = false }) {
   const [isSendOpportunityOpen, setIsSendOpportunityOpen] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [isResumeUploading, setIsResumeUploading] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   // Portfolio Editor form state
   const [editHeadline, setEditHeadline] = useState('');
@@ -99,10 +97,10 @@ export default function PortfolioPage({ isPublic = false }) {
         setEditFeaturedSkills(p.featuredSkills || []);
         setEditFeaturedSoftware(p.featuredSoftware || []);
         if (p.sectionVisibility) {
-          setEditSectionVisibility({
-            ...editSectionVisibility,
+          setEditSectionVisibility((prev) => ({
+            ...prev,
             ...p.sectionVisibility,
-          });
+          }));
         }
 
         // Fetch user projects for selection in editor
@@ -226,21 +224,18 @@ export default function PortfolioPage({ isPublic = false }) {
         .catch(() => {});
     } else {
       navigator.clipboard.writeText(url);
+      setCopiedLink(true);
       toast?.success?.('Portfolio link copied to clipboard!');
+      setTimeout(() => setCopiedLink(false), 2000);
     }
-  };
-
-  const handlePrint = () => {
-    window.print();
   };
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3">
-        <div className="w-8 h-8 rounded-full border-2 border-brand-mint/20 border-t-brand-mint animate-spin" />
-        <p className="text-text-muted text-xs font-mono uppercase tracking-wider">
-          Loading professional portfolio...
-        </p>
+      <div className="space-y-6 max-w-7xl mx-auto pb-16 animate-pulse">
+        <div className="h-12 bg-white/[0.04] rounded-2xl border border-white/[0.06]" />
+        <div className="h-64 bg-white/[0.04] rounded-3xl border border-white/[0.06]" />
+        <div className="h-96 bg-white/[0.04] rounded-3xl border border-white/[0.06]" />
       </div>
     );
   }
@@ -248,85 +243,76 @@ export default function PortfolioPage({ isPublic = false }) {
   const user = candidateProfile || {};
   const portfolio = portfolioData?.portfolio || {};
   const verifications = portfolioData?.verifications || user?.verifications || {};
-  const completeness = portfolioData?.completeness || portfolio?.completeness || 0;
-  const missingItems = portfolioData?.missingItems || [];
-  const projects = portfolioData?.projects || [];
-  const isBusinessViewer =
-    (isRecruiterOrFounder(authUser) || isAdmin(authUser)) && !isOwner;
+  const featuredProjects = portfolioData?.projects || [];
+  const resume = portfolioData?.resume || user?.resume;
+  const avatarUrl = getUploadUrl(user.avatar);
+
+  const canRecruiterSendOpportunity = Boolean(
+    authUser && isRecruiterOrFounder(authUser) && !isOwner
+  );
 
   return (
-    <div className="space-y-8 animate-fadeIn max-w-6xl mx-auto pb-16 print:p-0 print:m-0 print:space-y-4">
-      {/* ── PROFILE NAV (OWNER VIEW ONLY) ── */}
-      {isOwner && <ProfileNav className="print:hidden" />}
+    <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto pb-20">
+      {/* ── 01. NAVIGATION BAR ── */}
+      {authUser && <ProfileNav />}
 
-      {/* ── HERO BANNER ── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-bg-surface via-bg-surface/90 to-brand-navy/30 border border-border-subtle p-6 sm:p-10 backdrop-blur-xl shadow-xl print:border-none print:shadow-none print:bg-white print:text-black">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-brand-mint/5 rounded-full blur-3xl -z-10 pointer-events-none print:hidden" />
+      {/* ── 02. EDITORIAL PORTFOLIO HERO ── */}
+      <section className="relative overflow-hidden rounded-3xl bg-[#0A0F18]/95 border border-white/[0.08] p-6 sm:p-10 shadow-[0_12px_40px_rgba(0,0,0,0.4)]">
+        <div
+          className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-yellow/30 to-transparent pointer-events-none"
+          aria-hidden="true"
+        />
 
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+        <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left min-w-0">
             {/* Avatar */}
-            <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-br from-brand-mint/20 to-brand-navy/40 border-2 border-brand-mint/30 flex items-center justify-center overflow-hidden shrink-0 shadow-lg">
-              {user.avatar ? (
+            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-2 border-white/10 bg-[#0F1724] shrink-0 shadow-xl">
+              {avatarUrl ? (
                 <img
-                  src={getUploadUrl(user.avatar)}
-                  alt={user.name}
+                  src={avatarUrl}
+                  alt={user.name || 'Member'}
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="text-3xl font-heading font-black text-brand-mint">
-                  {user.name ? user.name.slice(0, 2).toUpperCase() : 'Z'}
-                </span>
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-yellow/20 to-brand-navy/60 text-brand-yellow font-heading font-black text-2xl">
+                  {user.name ? user.name.slice(0, 2).toUpperCase() : 'ZU'}
+                </div>
               )}
             </div>
 
-            {/* Profile identity info */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-white print:text-black">
+            {/* Identity details */}
+            <div className="space-y-2 min-w-0">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
+                <h1 className="font-heading font-black text-2xl sm:text-3xl text-white tracking-tight">
                   {user.name}
                 </h1>
-                {/* Role Tag */}
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-white/[0.06] border border-white/10 text-white/90">
-                  {user.primaryRole || 'Professional'}
-                </span>
-
-                {/* Verification Badges */}
-                {verifications?.professional?.status === 'VERIFIED' && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-                    <ShieldCheck className="w-3.5 h-3.5" /> Professional Verified
-                  </span>
-                )}
-                {verifications?.identity?.status === 'VERIFIED' && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-brand-mint/10 border border-brand-mint/30 text-brand-mint">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> ID Verified
+                {user.isVerified && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-brand-mint/30 bg-brand-mint/10 px-2 py-0.5 text-xs font-bold text-brand-mint">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Verified
                   </span>
                 )}
               </div>
 
-              {/* Headline */}
-              <p className="text-sm sm:text-base text-brand-mint/90 font-medium max-w-2xl leading-snug">
-                {portfolio.headline || user.headline || 'Civil & Infrastructure Engineering Professional'}
+              <p className="font-mono text-sm text-brand-mint">
+                @{user.username}
               </p>
 
-              {/* Infrastructure Discipline & Location */}
-              <div className="flex items-center gap-4 text-xs text-text-muted flex-wrap pt-1 print:text-gray-700">
-                {user.infrastructureDomain && (
-                  <span className="flex items-center gap-1 font-semibold text-white/80 print:text-black">
-                    <Hammer className="w-3.5 h-3.5 text-brand-mint" />
-                    {user.infrastructureDomain}
+              <p className="text-sm sm:text-base text-white/90 font-medium max-w-2xl leading-relaxed">
+                {portfolio.headline || user.headline || 'Infrastructure Engineer & Problem Solver'}
+              </p>
+
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 text-xs text-text-muted pt-1">
+                {user.currentRole && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Briefcase className="w-3.5 h-3.5 text-text-faint" />
+                    <span>{user.currentRole}</span>
                   </span>
                 )}
                 {user.location && (
-                  <span className="flex items-center gap-1">
+                  <span className="inline-flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 text-text-faint" />
-                    {user.location}
-                  </span>
-                )}
-                {user.experienceYears !== undefined && (
-                  <span className="flex items-center gap-1 font-mono">
-                    <Clock className="w-3.5 h-3.5 text-text-faint" />
-                    {user.experienceYears} Years Experience
+                    <span>{user.location}</span>
                   </span>
                 )}
               </div>
@@ -334,636 +320,374 @@ export default function PortfolioPage({ isPublic = false }) {
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-2.5 flex-wrap shrink-0 print:hidden">
+          <div className="flex flex-wrap items-center justify-center gap-2.5 shrink-0">
             {isOwner ? (
               <>
                 <button
                   type="button"
                   onClick={() => setIsEditorOpen(true)}
-                  className="px-4 py-2.5 rounded-xl bg-brand-mint text-black text-xs font-bold font-heading hover:bg-brand-mint/90 transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                  className="zn-btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-3 px-5 shadow-sm"
                 >
-                  <Edit3 className="w-4 h-4" /> Edit Portfolio
+                  <Edit3 className="w-4 h-4" />
+                  <span>Curate Showcase</span>
                 </button>
-                <Link
-                  to="/profile/verification"
-                  className="px-4 py-2.5 rounded-xl border border-white/10 hover:border-brand-mint/40 bg-white/[0.04] text-white text-xs font-semibold flex items-center gap-1.5 transition-all"
-                >
-                  <ShieldCheck className="w-4 h-4 text-brand-mint" /> Verification Center
-                </Link>
                 <button
                   type="button"
                   onClick={handleSharePortfolio}
-                  className="p-2.5 rounded-xl border border-white/10 hover:border-white/20 bg-white/[0.04] text-white transition-all cursor-pointer"
-                  title="Share Portfolio Link"
+                  className="p-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] text-text-muted hover:text-white transition-colors cursor-pointer focus-ring"
+                  title="Share portfolio"
                 >
-                  <Share2 className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={handlePrint}
-                  className="p-2.5 rounded-xl border border-white/10 hover:border-white/20 bg-white/[0.04] text-white transition-all cursor-pointer"
-                  title="Download / Print PDF"
-                >
-                  <Printer className="w-4 h-4" />
+                  {copiedLink ? <Check className="w-4 h-4 text-brand-mint" /> : <Share2 className="w-4 h-4" />}
                 </button>
               </>
             ) : (
               <>
-                {isBusinessViewer && (
+                {canRecruiterSendOpportunity && (
                   <button
                     type="button"
                     onClick={() => setIsSendOpportunityOpen(true)}
-                    className="px-5 py-2.5 rounded-xl bg-brand-mint text-black text-xs font-bold font-heading hover:bg-brand-mint/90 transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-4 py-3 rounded-xl bg-gradient-to-r from-brand-yellow/20 to-brand-mint/20 border border-brand-yellow/30 text-brand-yellow text-xs font-bold uppercase tracking-wider hover:border-brand-yellow/50 transition-all shadow-sm"
                   >
-                    <Send className="w-4 h-4" /> Send Opportunity
+                    <Briefcase className="w-4 h-4" />
+                    <span>Send Opportunity</span>
                   </button>
                 )}
-                <Link
-                  to={`/messages?user=${user._id || user.id}`}
-                  className="px-4 py-2.5 rounded-xl border border-brand-mint/30 bg-brand-mint/10 hover:bg-brand-mint/20 text-brand-mint text-xs font-semibold flex items-center gap-1.5 transition-all"
-                >
-                  <MessageSquare className="w-4 h-4" /> Message
-                </Link>
                 <button
                   type="button"
                   onClick={handleSharePortfolio}
-                  className="p-2.5 rounded-xl border border-white/10 hover:border-white/20 bg-white/[0.04] text-white transition-all cursor-pointer"
-                  title="Share Portfolio"
+                  className="zn-btn-secondary text-xs uppercase tracking-wider flex items-center gap-1.5 py-3 px-4"
                 >
                   <Share2 className="w-4 h-4" />
+                  <span>Share</span>
                 </button>
               </>
             )}
           </div>
         </div>
+      </section>
 
-        {/* ── PORTFOLIO COMPLETENESS CARD (OWNER ONLY) ── */}
-        {isOwner && completeness < 100 && (
-          <div className="mt-8 pt-6 border-t border-white/[0.08] flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-mono font-bold text-white uppercase tracking-wider">
-                  Portfolio Completeness
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-brand-mint/15 text-brand-mint border border-brand-mint/30">
-                  {completeness}%
-                </span>
-              </div>
-              <div className="w-64 sm:w-80 h-2 rounded-full bg-white/[0.08] overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-brand-mint to-brand-yellow rounded-full transition-all duration-500"
-                  style={{ width: `${completeness}%` }}
-                />
-              </div>
+      {/* ── 03. RESUME & VERIFIED EVIDENCE STRIP ── */}
+      <section className="rounded-3xl border border-white/[0.08] bg-[#0A0F18]/90 backdrop-blur-xl p-6 sm:p-8 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-brand-yellow/10 border border-brand-yellow/25 flex items-center justify-center text-brand-yellow shadow-inner">
+              <FileText className="w-6 h-6" />
             </div>
-
-            {missingItems.length > 0 && (
-              <div className="flex items-center gap-2 flex-wrap text-xs text-text-muted">
-                <span className="font-semibold text-text-secondary">Missing for 100%:</span>
-                {missingItems.map((item, idx) => (
-                  <span
-                    key={idx}
-                    className="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-text-secondary"
-                  >
-                    + {item}
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-heading font-extrabold text-white tracking-tight">
+                  Official Resume & Credentials
+                </h2>
+                {resume?.url && (
+                  <span className="px-2 py-0.5 rounded-full bg-brand-mint/10 border border-brand-mint/25 text-[10px] font-bold text-brand-mint">
+                    PDF Ready
                   </span>
-                ))}
+                )}
               </div>
+              <p className="text-xs text-text-muted mt-0.5">
+                {resume?.url
+                  ? `Uploaded ${new Date(resume.updatedAt || Date.now()).toLocaleDateString()}`
+                  : 'No verified CV uploaded yet'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            {resume?.url ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleDownloadResume}
+                  className="zn-btn-primary text-xs flex items-center gap-1.5 py-2.5 px-4 cursor-pointer"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Download CV</span>
+                </button>
+
+                {isOwner && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => resumeInputRef.current?.click()}
+                      disabled={isResumeUploading}
+                      className="zn-btn-secondary text-xs flex items-center gap-1.5 py-2.5 px-4 cursor-pointer"
+                    >
+                      <UploadCloud className="w-4 h-4" />
+                      <span>{isResumeUploading ? 'Uploading...' : 'Replace'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDeleteResume}
+                      className="p-2.5 rounded-xl border border-red-500/25 bg-red-500/10 text-red-400 hover:text-red-300 transition-colors"
+                      title="Remove resume"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
+              </>
+            ) : isOwner ? (
+              <button
+                type="button"
+                onClick={() => resumeInputRef.current?.click()}
+                disabled={isResumeUploading}
+                className="zn-btn-primary text-xs flex items-center gap-1.5 py-2.5 px-5 cursor-pointer"
+              >
+                <UploadCloud className="w-4 h-4" />
+                <span>{isResumeUploading ? 'Uploading...' : 'Upload PDF Resume'}</span>
+              </button>
+            ) : (
+              <span className="text-xs text-text-muted italic">
+                Resume is not publicly available
+              </span>
             )}
-          </div>
-        )}
-      </div>
 
-      {/* ── ABOUT / BIO SECTION ── */}
-      {portfolio.bio && (
-        <div className="rounded-3xl border border-border-subtle bg-bg-surface/60 backdrop-blur-xl p-6 sm:p-8 space-y-3">
-          <h2 className="text-base font-heading font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
-            <User className="w-4 h-4 text-brand-mint" /> Professional Summary
-          </h2>
-          <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">
-            {portfolio.bio}
-          </p>
+            <input
+              ref={resumeInputRef}
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={handleResumeUpload}
+            />
+          </div>
         </div>
-      )}
+      </section>
 
-      {/* ── FEATURED INFRASTRUCTURE PROJECTS ── */}
-      <div className="space-y-4">
+      {/* ── 04. FEATURED DELIVERABLES & PROJECTS SHOWCASE ── */}
+      <section className="rounded-3xl border border-white/[0.08] bg-[#0A0F18]/90 backdrop-blur-xl p-6 sm:p-8 shadow-sm space-y-6">
         <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <h2 className="text-lg font-heading font-extrabold text-white flex items-center gap-2">
-              <Layers className="w-5 h-5 text-brand-mint" /> Infrastructure Projects & Artifacts
-            </h2>
-            <p className="text-xs text-text-muted">
-              Engineering packages, drawings, BOQ documentation, and execution highlights.
-            </p>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-brand-mint/10 border border-brand-mint/20 flex items-center justify-center text-brand-mint shadow-inner">
+              <Hammer className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-lg sm:text-xl font-heading font-extrabold text-white tracking-tight">
+                Curated Engineering Deliverables
+              </h2>
+              <p className="text-xs text-text-muted mt-0.5">
+                Technical drawings, project case studies, and engineering deliverables
+              </p>
+            </div>
           </div>
+
           {isOwner && (
-            <Link
-              to="/profile/edit#projects"
-              className="text-xs font-semibold text-brand-mint hover:underline flex items-center gap-1 print:hidden"
+            <button
+              type="button"
+              onClick={() => setIsEditorOpen(true)}
+              className="zn-btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5"
             >
-              <Plus className="w-3.5 h-3.5" /> Manage Projects
-            </Link>
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Select Featured</span>
+            </button>
           )}
         </div>
 
-        {projects.length === 0 ? (
-          <div className="rounded-2xl border border-border-subtle bg-bg-surface/40 p-8 text-center text-xs text-text-muted space-y-2">
-            <Layers className="w-8 h-8 opacity-30 mx-auto" />
-            <p>No featured projects displayed yet.</p>
+        {featuredProjects.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.01] p-10 text-center">
+            <Hammer className="w-8 h-8 text-text-muted mx-auto mb-3" />
+            <h3 className="text-sm font-heading font-bold text-white mb-1">
+              No featured deliverables selected
+            </h3>
+            <p className="text-xs text-text-muted max-w-sm mx-auto mb-4">
+              {isOwner
+                ? 'Select specific projects from your catalog to feature on your official portfolio showcase.'
+                : 'This member has not pinned featured deliverables yet.'}
+            </p>
             {isOwner && (
               <button
                 type="button"
                 onClick={() => setIsEditorOpen(true)}
-                className="text-brand-mint font-semibold hover:underline cursor-pointer"
+                className="zn-btn-primary text-xs py-2.5 px-5"
               >
-                Select featured projects to showcase
+                <span>Curate Showcase Now</span>
               </button>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {projects.map((project) => {
-              const media = project.portfolioMedia || [];
-              const publicMedia = isOwner
-                ? media
-                : media.filter((m) => m.visibility === 'PUBLIC' || !m.visibility);
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {featuredProjects.map((proj, idx) => {
+              const coverImg = proj.thumbnailUrl || (proj.media && proj.media[0]?.url);
+              const resolvedCover = coverImg ? getUploadUrl(coverImg) : null;
 
               return (
                 <div
-                  key={project._id}
-                  className="rounded-2xl border border-border-subtle bg-bg-surface/70 backdrop-blur-xl p-5 sm:p-6 space-y-4 hover:border-white/20 transition-all flex flex-col justify-between"
+                  key={proj._id || proj.id || idx}
+                  className="rounded-2xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.04] hover:border-brand-mint/30 transition-all p-5 flex flex-col justify-between group shadow-sm"
                 >
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase bg-brand-mint/10 text-brand-mint border border-brand-mint/20">
-                          {project.infrastructureSector || 'Infrastructure'}
-                        </span>
-                        <h3 className="text-base font-heading font-bold text-white">
-                          {project.title}
-                        </h3>
+                  <div>
+                    {resolvedCover && (
+                      <div
+                        className="h-44 w-full rounded-xl overflow-hidden mb-4 bg-black/40 border border-white/[0.06] relative cursor-pointer"
+                        onClick={() => setSelectedMedia({ url: resolvedCover, title: proj.title })}
+                      >
+                        <img
+                          src={resolvedCover}
+                          alt={proj.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        {proj.sector && (
+                          <span className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md border border-white/10 text-[10px] font-mono text-white font-semibold">
+                            {proj.sector}
+                          </span>
+                        )}
                       </div>
-                      {project.role && (
-                        <span className="text-xs font-mono font-semibold text-text-muted shrink-0">
-                          {project.role}
-                        </span>
-                      )}
-                    </div>
+                    )}
 
-                    <div className="flex items-center gap-3 text-xs text-text-muted flex-wrap">
-                      {project.location && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-text-faint" />
-                          {project.location}
-                        </span>
-                      )}
-                      {(project.startDate || project.endDate) && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-text-faint" />
-                          {project.startDate ? new Date(project.startDate).getFullYear() : ''} -{' '}
-                          {project.isCurrent ? 'Present' : project.endDate ? new Date(project.endDate).getFullYear() : ''}
-                        </span>
-                      )}
-                      {project.projectScale && (
-                        <span className="font-mono text-brand-yellow/90">
-                          Scale: {project.projectScale}
-                        </span>
-                      )}
-                    </div>
+                    <h3 className="text-base font-heading font-bold text-white group-hover:text-brand-mint transition-colors tracking-tight line-clamp-1 mb-1">
+                      {proj.title}
+                    </h3>
 
-                    {project.description && (
-                      <p className="text-xs text-text-secondary leading-relaxed line-clamp-3">
-                        {project.description}
+                    {proj.role && (
+                      <p className="text-xs font-semibold text-brand-yellow mb-2">
+                        {proj.role}
                       </p>
                     )}
 
-                    {/* Key Responsibilities list */}
-                    {project.responsibilities && project.responsibilities.length > 0 && (
-                      <div className="space-y-1 pt-1">
-                        <span className="text-[11px] font-mono text-text-muted uppercase">Key Responsibilities:</span>
-                        <ul className="list-disc list-inside text-xs text-text-secondary space-y-0.5">
-                          {project.responsibilities.slice(0, 3).map((resp, i) => (
-                            <li key={i} className="line-clamp-1">{resp}</li>
-                          ))}
-                        </ul>
-                      </div>
+                    {proj.description && (
+                      <p className="text-xs text-text-secondary leading-relaxed line-clamp-3 mb-4">
+                        {proj.description}
+                      </p>
                     )}
-
-                    {/* Skills & Software tags */}
-                    <div className="flex items-center gap-1.5 flex-wrap pt-2">
-                      {project.skillsUsed?.map((sk, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.08] text-[11px] text-text-secondary font-mono"
-                        >
-                          {sk}
-                        </span>
-                      ))}
-                      {project.softwareUsed?.map((sw, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2 py-0.5 rounded-md bg-brand-yellow/10 border border-brand-yellow/20 text-[11px] text-brand-yellow font-mono"
-                        >
-                          {sw}
-                        </span>
-                      ))}
-                    </div>
                   </div>
 
-                  {/* Portfolio Media attachments */}
-                  {publicMedia.length > 0 && (
-                    <div className="pt-4 border-t border-white/[0.06] space-y-2">
-                      <span className="text-[11px] font-mono text-text-muted uppercase flex items-center gap-1.5">
-                        <FileCheck className="w-3.5 h-3.5 text-brand-mint" /> Portfolio Media ({publicMedia.length})
-                      </span>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        {publicMedia.map((m, idx) => {
-                          const isImg = m.mimeType?.startsWith('image/');
-                          const isPdf = m.mimeType === 'application/pdf';
-
-                          return (
-                            <button
-                              key={idx}
-                              type="button"
-                              onClick={() => setSelectedMedia(m)}
-                              className="group/media relative p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-brand-mint/40 text-left transition-all cursor-pointer overflow-hidden"
-                            >
-                              <div className="flex items-center gap-2">
-                                {isImg ? (
-                                  <ImageIcon className="w-4 h-4 text-brand-mint shrink-0" />
-                                ) : (
-                                  <FileText className="w-4 h-4 text-brand-yellow shrink-0" />
-                                )}
-                                <span className="text-xs font-semibold text-white/90 truncate block">
-                                  {m.name || 'Artifact'}
-                                </span>
-                              </div>
-                              {m.caption && (
-                                <p className="text-[10px] text-text-muted truncate mt-0.5">{m.caption}</p>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+                  <div className="pt-3 border-t border-white/[0.05] flex items-center justify-between text-xs font-mono">
+                    <span className="text-text-muted">
+                      {proj.startDate ? new Date(proj.startDate).getFullYear() : 'Ongoing'}
+                    </span>
+                    {proj.projectUrl && (
+                      <a
+                        href={proj.projectUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-brand-mint hover:underline"
+                      >
+                        <span>View Deliverable</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
                 </div>
               );
             })}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* ── FEATURED SKILLS & SOFTWARE ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Skills */}
-        <div className="rounded-3xl border border-border-subtle bg-bg-surface/60 backdrop-blur-xl p-6 sm:p-8 space-y-4">
-          <h2 className="text-base font-heading font-extrabold text-white flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-brand-mint" /> Canonical Infrastructure Skills
-          </h2>
-          <div className="flex items-center gap-2 flex-wrap">
-            {portfolio.featuredSkills && portfolio.featuredSkills.length > 0 ? (
-              portfolio.featuredSkills.map((sk, idx) => (
-                <span
-                  key={idx}
-                  className="px-3 py-1.5 rounded-xl bg-brand-mint/10 border border-brand-mint/20 text-brand-mint text-xs font-semibold font-mono"
-                >
-                  {sk}
-                </span>
-              ))
-            ) : user.skills && user.skills.length > 0 ? (
-              user.skills.slice(0, 10).map((sk, idx) => (
-                <span
-                  key={idx}
-                  className="px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white/90 text-xs font-mono"
-                >
-                  {typeof sk === 'string' ? sk : sk.name}
-                </span>
-              ))
-            ) : (
-              <span className="text-xs text-text-muted">No featured skills selected.</span>
-            )}
-          </div>
-        </div>
-
-        {/* Software */}
-        <div className="rounded-3xl border border-border-subtle bg-bg-surface/60 backdrop-blur-xl p-6 sm:p-8 space-y-4">
-          <h2 className="text-base font-heading font-extrabold text-white flex items-center gap-2">
-            <Hammer className="w-4 h-4 text-brand-yellow" /> Featured Engineering Software
-          </h2>
-          <div className="flex items-center gap-2 flex-wrap">
-            {portfolio.featuredSoftware && portfolio.featuredSoftware.length > 0 ? (
-              portfolio.featuredSoftware.map((sw, idx) => (
-                <span
-                  key={idx}
-                  className="px-3 py-1.5 rounded-xl bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow text-xs font-semibold font-mono"
-                >
-                  {sw}
-                </span>
-              ))
-            ) : (
-              <span className="text-xs text-text-muted">Primavera P6, AutoCAD, Civil 3D, Revit.</span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ── PROFESSIONAL RESUME / CV CARD ── */}
-      <div className="rounded-3xl border border-border-subtle bg-bg-surface/60 backdrop-blur-xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 print:hidden">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0 text-brand-mint">
-            <FileText className="w-6 h-6" />
-          </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-base font-heading font-bold text-white">
-                Professional Resume / CV
-              </h2>
-              {portfolio.resumeUrl ? (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  PDF Available ({portfolio.resumeVisibility || 'RECRUITERS'})
-                </span>
-              ) : (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/[0.04] text-text-muted">
-                  No Resume Uploaded
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-text-muted max-w-xl">
-              {isOwner
-                ? 'Your resume is protected. Choose whether recruiters, the public, or only you can view/download it.'
-                : 'Verified professional curriculum vitae containing detailed project track record.'}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 shrink-0 flex-wrap">
-          {/* Download button if available */}
-          {portfolio.resumeUrl && (
-            <button
-              type="button"
-              onClick={handleDownloadResume}
-              className="px-4 py-2.5 rounded-xl bg-brand-mint text-black text-xs font-bold font-heading hover:bg-brand-mint/90 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
-            >
-              <Download className="w-4 h-4" /> Download Resume
-            </button>
-          )}
-
-          {/* Owner controls: upload / replace / change visibility */}
-          {isOwner && (
-            <>
-              <input
-                ref={resumeInputRef}
-                type="file"
-                accept=".pdf"
-                className="hidden"
-                onChange={handleResumeUpload}
-              />
-              <button
-                type="button"
-                disabled={isResumeUploading}
-                onClick={() => resumeInputRef.current?.click()}
-                className="px-4 py-2.5 rounded-xl border border-white/10 hover:border-white/20 bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
-              >
-                <UploadCloud className="w-4 h-4 text-brand-mint" />
-                {isResumeUploading ? 'Uploading...' : portfolio.resumeUrl ? 'Replace PDF' : 'Upload PDF'}
-              </button>
-
-              {portfolio.resumeUrl && (
-                <>
-                  <select
-                    value={portfolio.resumeVisibility || 'RECRUITERS'}
-                    onChange={(e) => handleUpdateResumeVisibility(e.target.value)}
-                    className="rounded-xl bg-white/[0.04] border border-white/10 px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-mint"
-                  >
-                    <option value="PRIVATE" className="bg-bg-surface">Private (Only Me)</option>
-                    <option value="RECRUITERS" className="bg-bg-surface">Recruiters & Founders</option>
-                    <option value="PUBLIC" className="bg-bg-surface">Public</option>
-                  </select>
-
-                  <button
-                    type="button"
-                    onClick={handleDeleteResume}
-                    className="p-2.5 rounded-xl border border-red-500/20 hover:bg-red-500/10 text-red-400 transition-all cursor-pointer"
-                    title="Delete Resume"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* ── PORTFOLIO MEDIA VIEWER MODAL ── */}
-      <AnimatePresence>
-        {selectedMedia && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-2xl bg-bg-surface border border-border-subtle rounded-3xl p-6 sm:p-8 space-y-4 shadow-2xl"
-            >
-              <button
-                type="button"
-                onClick={() => setSelectedMedia(null)}
-                className="absolute top-5 right-5 p-2 rounded-full border border-white/10 hover:bg-white/[0.08] text-text-muted hover:text-white"
-              >
-                ✕
-              </button>
-
-              <div className="space-y-1">
-                <span className="text-[10px] font-mono uppercase text-brand-mint font-bold">
-                  {selectedMedia.mediaType || 'Artifact'}
-                </span>
-                <h3 className="text-xl font-heading font-bold text-white">
-                  {selectedMedia.name || 'Project Document'}
-                </h3>
-                {selectedMedia.caption && (
-                  <p className="text-xs text-text-secondary">{selectedMedia.caption}</p>
-                )}
-              </div>
-
-              {/* Image preview */}
-              {selectedMedia.mimeType?.startsWith('image/') && selectedMedia.fileUrl && (
-                <div className="rounded-2xl overflow-hidden border border-white/10 max-h-[50vh] bg-black/40 flex items-center justify-center">
-                  <img
-                    src={getUploadUrl(selectedMedia.fileUrl)}
-                    alt={selectedMedia.name}
-                    className="w-full h-auto max-h-[50vh] object-contain"
-                  />
-                </div>
-              )}
-
-              {/* Action buttons */}
-              <div className="flex items-center justify-end gap-3 pt-3">
-                {selectedMedia.fileUrl && (
-                  <a
-                    href={getUploadUrl(selectedMedia.fileUrl)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-4 py-2 rounded-xl bg-brand-mint text-black text-xs font-bold font-heading hover:bg-brand-mint/90 transition-all flex items-center gap-1.5"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" /> Open / Download File
-                  </a>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setSelectedMedia(null)}
-                  className="px-4 py-2 rounded-xl border border-white/10 text-xs font-semibold text-text-muted hover:text-white"
-                >
-                  Close
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* ── PORTFOLIO EDITOR MODAL ── */}
+      {/* ── 05. CURATION MODAL (OWNER ONLY) ── */}
       <AnimatePresence>
         {isEditorOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-2xl bg-bg-surface border border-border-subtle rounded-3xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl space-y-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsEditorOpen(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-3xl bg-[#0F1724] border border-white/[0.12] p-6 sm:p-8 shadow-2xl z-10 space-y-6"
             >
-              <button
-                type="button"
-                onClick={() => setIsEditorOpen(false)}
-                className="absolute top-5 right-5 p-2 rounded-full border border-white/10 hover:bg-white/[0.08] text-text-muted hover:text-white"
-              >
-                ✕
-              </button>
-
-              <div>
-                <h3 className="text-xl font-heading font-bold text-white">
-                  Curate Infrastructure Portfolio
-                </h3>
-                <p className="text-xs text-text-muted mt-1">
-                  Customize the presentation of your verified engineering work, canonical skills, and featured projects.
-                </p>
+              <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-brand-yellow/10 border border-brand-yellow/25 flex items-center justify-center text-brand-yellow">
+                    <Layers className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-bold text-white text-base">
+                      Curate Portfolio Showcase
+                    </h3>
+                    <p className="text-xs text-text-muted">
+                      Configure your showcase headline and featured deliverables
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsEditorOpen(false)}
+                  className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
               <form onSubmit={handleSavePortfolio} className="space-y-5">
-                {/* Headline */}
                 <div>
-                  <label className="block text-xs font-semibold text-text-muted uppercase mb-1">
-                    Custom Professional Headline
+                  <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
+                    Portfolio Headline
                   </label>
                   <input
                     type="text"
                     value={editHeadline}
                     onChange={(e) => setEditHeadline(e.target.value)}
-                    placeholder="e.g. Senior Planning Engineer | Highways & Bridges EPC"
-                    className="w-full rounded-xl bg-white/[0.04] border border-white/[0.08] px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-brand-mint"
+                    placeholder="e.g. Senior Bridge Engineer | Specialized in Seismic Retrofitting"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white text-xs focus:border-brand-mint outline-none transition-colors"
                   />
                 </div>
 
-                {/* Bio / Summary */}
                 <div>
-                  <label className="block text-xs font-semibold text-text-muted uppercase mb-1">
-                    Portfolio Bio & Value Proposition
+                  <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
+                    Select Projects to Feature
                   </label>
-                  <textarea
-                    rows={4}
-                    value={editBio}
-                    onChange={(e) => setEditBio(e.target.value)}
-                    placeholder="Provide a compelling narrative of your engineering track record, mega-projects executed, and core competencies..."
-                    className="w-full rounded-xl bg-white/[0.04] border border-white/[0.08] p-3 text-xs text-white focus:outline-none focus:border-brand-mint resize-none"
-                  />
-                </div>
-
-                {/* Featured Projects Selection */}
-                {allProjects.length > 0 && (
-                  <div>
-                    <label className="block text-xs font-semibold text-text-muted uppercase mb-2">
-                      Featured Projects (Select to highlight)
-                    </label>
-                    <div className="space-y-2 max-h-48 overflow-y-auto p-2 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                  {allProjects.length === 0 ? (
+                    <p className="text-xs text-text-muted italic">
+                      No projects found. Add projects from your Profile page first.
+                    </p>
+                  ) : (
+                    <div className="space-y-2 max-h-48 overflow-y-auto no-scrollbar pr-1">
                       {allProjects.map((p) => {
-                        const isFeatured = editFeaturedProjects.includes(p._id);
+                        const pid = p._id || p.id;
+                        const isSelected = editFeaturedProjects.includes(pid);
+
                         return (
-                          <label
-                            key={p._id}
-                            className={`flex items-center justify-between p-2.5 rounded-xl border text-xs cursor-pointer transition-all ${
-                              isFeatured
-                                ? 'border-brand-mint/40 bg-brand-mint/10 text-white'
-                                : 'border-white/[0.06] text-text-secondary hover:bg-white/[0.03]'
+                          <div
+                            key={pid}
+                            onClick={() => {
+                              if (isSelected) {
+                                setEditFeaturedProjects(editFeaturedProjects.filter((id) => id !== pid));
+                              } else {
+                                setEditFeaturedProjects([...editFeaturedProjects, pid]);
+                              }
+                            }}
+                            className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
+                              isSelected
+                                ? 'bg-brand-mint/10 border-brand-mint/30 text-white'
+                                : 'bg-white/[0.02] border-white/[0.06] text-text-secondary hover:border-white/20'
                             }`}
                           >
-                            <span className="font-semibold">{p.title}</span>
-                            <input
-                              type="checkbox"
-                              checked={isFeatured}
-                              onChange={() => {
-                                if (isFeatured) {
-                                  setEditFeaturedProjects(editFeaturedProjects.filter((id) => id !== p._id));
-                                } else {
-                                  setEditFeaturedProjects([...editFeaturedProjects, p._id]);
-                                }
-                              }}
-                              className="accent-brand-mint"
-                            />
-                          </label>
+                            <span className="text-xs font-medium truncate">{p.title}</span>
+                            <span
+                              className={`w-4 h-4 rounded-md border flex items-center justify-center text-[10px] ${
+                                isSelected
+                                  ? 'bg-brand-mint text-[#070B14] border-brand-mint font-bold'
+                                  : 'border-white/20'
+                              }`}
+                            >
+                              {isSelected ? '✓' : ''}
+                            </span>
+                          </div>
                         );
                       })}
                     </div>
-                  </div>
-                )}
-
-                {/* Section Visibility toggles */}
-                <div>
-                  <label className="block text-xs font-semibold text-text-muted uppercase mb-2">
-                    Section Visibility
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {['about', 'projects', 'skills', 'experience', 'certifications', 'resume'].map((sec) => (
-                      <label
-                        key={sec}
-                        className={`flex items-center justify-between p-2.5 rounded-xl border text-xs cursor-pointer transition-all ${
-                          editSectionVisibility[sec]
-                            ? 'border-brand-mint/30 bg-brand-mint/5 text-white'
-                            : 'border-white/[0.06] text-text-muted'
-                        }`}
-                      >
-                        <span className="capitalize">{sec}</span>
-                        <input
-                          type="checkbox"
-                          checked={editSectionVisibility[sec] ?? true}
-                          onChange={(e) =>
-                            setEditSectionVisibility({
-                              ...editSectionVisibility,
-                              [sec]: e.target.checked,
-                            })
-                          }
-                          className="accent-brand-mint"
-                        />
-                      </label>
-                    ))}
-                  </div>
+                  )}
                 </div>
 
-                {/* Submit */}
-                <div className="flex items-center justify-end gap-3 pt-3">
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/[0.08]">
                   <button
                     type="button"
                     onClick={() => setIsEditorOpen(false)}
-                    className="px-4 py-2.5 rounded-xl border border-white/10 text-xs font-semibold text-text-muted hover:text-white"
+                    className="px-4 py-2 rounded-xl border border-white/10 text-text-muted hover:text-white text-xs font-semibold"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={savingSettings}
-                    className="px-5 py-2.5 rounded-xl bg-brand-mint text-black text-xs font-bold font-heading hover:bg-brand-mint/90 transition-all shadow-sm cursor-pointer"
+                    className="zn-btn-primary text-xs px-5 py-2.5 cursor-pointer disabled:opacity-50"
                   >
-                    {savingSettings ? 'Saving...' : 'Save Portfolio'}
+                    {savingSettings ? 'Saving...' : 'Save Settings'}
                   </button>
                 </div>
               </form>
@@ -972,14 +696,38 @@ export default function PortfolioPage({ isPublic = false }) {
         )}
       </AnimatePresence>
 
-      {/* ── SEND OPPORTUNITY MODAL (FOR RECRUITERS VIEWING CANDIDATE) ── */}
+      {/* ── 06. MEDIA LIGHTBOX MODAL ── */}
+      <AnimatePresence>
+        {selectedMedia && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/90 backdrop-blur-lg"
+              onClick={() => setSelectedMedia(null)}
+            />
+            <div className="relative max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl z-10">
+              <button
+                type="button"
+                onClick={() => setSelectedMedia(null)}
+                className="absolute top-3 right-3 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors z-20"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <img
+                src={selectedMedia.url}
+                alt={selectedMedia.title}
+                className="w-full h-auto max-h-[85vh] object-contain rounded-2xl"
+              />
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── 07. SEND OPPORTUNITY MODAL (FOR RECRUITERS) ── */}
       <SendOpportunityModal
         isOpen={isSendOpportunityOpen}
         onClose={() => setIsSendOpportunityOpen(false)}
-        candidate={candidateProfile}
-        onSuccess={() => {
-          toast?.success?.('Opportunity sent successfully to candidate inbox!');
-        }}
+        candidateId={user.id || user._id}
+        candidateName={user.name}
       />
     </div>
   );

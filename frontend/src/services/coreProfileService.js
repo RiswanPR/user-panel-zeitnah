@@ -145,8 +145,19 @@ export const coreProfileService = {
   },
 
   updateRecommendationStatus: async (id, status) => {
-    const response = await api.patch(`/profile/recommendations/${id}/status`, { status });
+    const normalizedStatus = String(status || "").toLowerCase();
+    const response = await api.patch(`/profile/recommendations/${id}/status`, { status: normalizedStatus });
     return response.data;
+  },
+
+  getMyRecommendations: async () => {
+    const response = await api.get("/profile/recommendations");
+    return response.data;
+  },
+
+  getProfileCompletion: async () => {
+    const response = await api.get("/profile/me");
+    return response.data?.completion || null;
   },
 
   deleteRecommendation: async (id) => {

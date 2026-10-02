@@ -8,8 +8,6 @@ import {
   X,
   Pencil,
   User,
-  FileText,
-  Sparkles,
   Plus,
   Camera,
   RefreshCw,
@@ -19,7 +17,6 @@ import {
   Award,
   Code2,
   Globe,
-  Share2,
   Trash2,
   ExternalLink,
   MapPin,
@@ -34,8 +31,9 @@ import {
   ChevronRight,
   AlertTriangle,
   Hammer,
-  Cpu,
-  Lock,
+  Sparkles,
+  Layers,
+  ChevronDown,
 } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
 import { coreProfileService } from "../../services/coreProfileService";
@@ -59,17 +57,17 @@ import { normalizeUserRole } from "../../utils/roleNavigation";
 const MAX_BIO_LENGTH = 1000;
 
 const SECTION_CONFIG = [
-  { id: "basic-info", label: "Basic Information", icon: User, xp: 45 },
-  { id: "professional-identity", label: "Professional Identity", icon: Briefcase, xp: 25 },
-  { id: "infrastructure-expertise", label: "Infrastructure Expertise", icon: Building, xp: 30 },
-  { id: "skills", label: "Skills & Software", icon: Code2, xp: 20 },
-  { id: "experience", label: "Experience", icon: Briefcase, xp: 20 },
-  { id: "projects", label: "Projects", icon: Hammer, xp: 25 },
-  { id: "education", label: "Education", icon: GraduationCap, xp: 20 },
-  { id: "certifications", label: "Certifications", icon: Award, xp: 15 },
-  { id: "career-preferences", label: "Career & Privacy", icon: ShieldCheck, xp: 20 },
-  { id: "recommendations", label: "Recommendations", icon: HeartHandshake, xp: 0 },
-  { id: "public-profile", label: "Public Profile Setup", icon: Globe, xp: 50 },
+  { id: "basic-info", index: "01", label: "Basic Information", icon: User, xp: 45, desc: "Avatar, banner, name, location & biography" },
+  { id: "professional-identity", index: "02", label: "Professional Identity", icon: Briefcase, xp: 25, desc: "Role, availability & career headline" },
+  { id: "infrastructure-expertise", index: "03", label: "Infrastructure Expertise", icon: Building, xp: 30, desc: "Primary discipline, sectors & software" },
+  { id: "skills", index: "04", label: "Skills & Software", icon: Code2, xp: 20, desc: "Structured engineering & technical matrix" },
+  { id: "experience", index: "05", label: "Experience", icon: Briefcase, xp: 20, desc: "Career timeline & project contributions" },
+  { id: "projects", index: "06", label: "Projects", icon: Hammer, xp: 25, desc: "Engineering deliverables & case studies" },
+  { id: "education", index: "07", label: "Education", icon: GraduationCap, xp: 20, desc: "Academic qualifications & degrees" },
+  { id: "certifications", index: "08", label: "Certifications", icon: Award, xp: 15, desc: "Accredited licenses & credential links" },
+  { id: "career-preferences", index: "09", label: "Career & Privacy", icon: ShieldCheck, xp: 20, desc: "Target roles, salary & privacy toggles" },
+  { id: "recommendations", index: "10", label: "Recommendations", icon: HeartHandshake, xp: 0, desc: "Verified peer & mentor endorsements" },
+  { id: "public-profile", index: "11", label: "Public Profile Setup", icon: Globe, xp: 50, desc: "Public handle, link & publishing state" },
 ];
 
 export default function EditProfile() {
@@ -101,7 +99,7 @@ export default function EditProfile() {
   const [industry, setIndustry] = useState("");
   const [bio, setBio] = useState("");
 
-  // Role & Infrastructure states
+  // Role & Ecosystem
   const [primaryRole, setPrimaryRole] = useState("STUDENT");
   const [availability, setAvailability] = useState("NOT_CURRENTLY_AVAILABLE");
   const [discoverableToRecruiters, setDiscoverableToRecruiters] = useState(false);
@@ -113,42 +111,44 @@ export default function EditProfile() {
   const [preferredLocations, setPreferredLocations] = useState([]);
   const [yearsOfExperience, setYearsOfExperience] = useState(0);
 
-  // Structured Skills states
+  // Skills
   const [structuredSkills, setStructuredSkills] = useState({
-    technical: [],
-    software: [],
-    industry: [],
-    professional: [],
+    softwareTools: [],
+    technicalCalculations: [],
+    industryStandards: [],
+    professionalLeadership: [],
   });
   const [flatSkills, setFlatSkills] = useState([]);
 
-  // Career Preferences & Privacy
+  // Career Preferences
   const [careerPreferences, setCareerPreferences] = useState({
-    openToOpportunities: false,
-    preferredRoles: [],
-    preferredInfrastructureSectors: [],
+    targetRoles: [],
     preferredLocations: [],
-    preferredWorkMode: "Hybrid",
-    preferredEmploymentType: "Full-time",
-    expectedSalaryRange: { min: 0, max: 0, currency: "USD" },
-    availability: "Immediate",
+    workModes: [],
+    openToRelocation: false,
+    expectedSalary: { min: "", max: "", currency: "INR" },
+    expectedContractRate: { min: "", max: "", currency: "USD", rateType: "HOURLY" },
+    noticePeriod: "IMMEDIATE",
+    activelyLooking: false,
+    visaSponsorshipRequired: false,
   });
 
+  // Privacy Settings
   const [privacySettings, setPrivacySettings] = useState({
-    experienceVisibility: "PUBLIC",
-    educationVisibility: "PUBLIC",
-    projectsVisibility: "PUBLIC",
-    certificationsVisibility: "PUBLIC",
-    careerPreferencesVisibility: "PRIVATE",
-    contactInfoVisibility: "PRIVATE",
+    hideSalaryPreferences: false,
+    hideContactInfoFromPublic: false,
+    showEmailToConnectionsOnly: true,
+    showPhoneToConnectionsOnly: true,
+    allowRecommendationRequests: true,
+    showExactLocationToPublic: false,
   });
 
-  // Unsaved changes tracking
+  // Dirty State Protection
   const [isDirty, setIsDirty] = useState(false);
   const [pendingSectionSwitch, setPendingSectionSwitch] = useState(null);
   const [isUnsavedModalOpen, setIsUnsavedModalOpen] = useState(false);
 
-  // Experience modal state
+  // Experience Modal & Form
   const [isExpModalOpen, setIsExpModalOpen] = useState(false);
   const [editingExpId, setEditingExpId] = useState(null);
   const [expForm, setExpForm] = useState({
@@ -167,11 +167,11 @@ export default function EditProfile() {
   const [expSkillInput, setExpSkillInput] = useState("");
   const [expSoftwareInput, setExpSoftwareInput] = useState("");
 
-  // Projects modal state
+  // Projects Modal & State
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
 
-  // Education modal state
+  // Education Modal & Form
   const [isEduModalOpen, setIsEduModalOpen] = useState(false);
   const [editingEduId, setEditingEduId] = useState(null);
   const [eduForm, setEduForm] = useState({
@@ -184,7 +184,7 @@ export default function EditProfile() {
     description: "",
   });
 
-  // Certification modal state
+  // Certifications Modal & Form
   const [isCertModalOpen, setIsCertModalOpen] = useState(false);
   const [editingCertId, setEditingCertId] = useState(null);
   const [certForm, setCertForm] = useState({
@@ -196,42 +196,94 @@ export default function EditProfile() {
     credentialUrl: "",
   });
 
-  // Recommendation & Image editor state
+  // Recommendation Request Modal
   const [isReqRecModalOpen, setIsReqRecModalOpen] = useState(false);
+
+  // Image Editor Modal state for avatar / banner
   const [editingImage, setEditingImage] = useState(null);
 
-  // TanStack Query for initial profile data
+  // Synchronize section changes from URL
+  useEffect(() => {
+    if (normalizedSection !== activeSection) {
+      setActiveSection(normalizedSection);
+    }
+  }, [normalizedSection]);
+
+  const handleSelectSection = (sectionId) => {
+    if (sectionId === activeSection) return;
+    if (isDirty) {
+      setPendingSectionSwitch(sectionId);
+      setIsUnsavedModalOpen(true);
+    } else {
+      setActiveSection(sectionId);
+      setSearchParams({ section: sectionId });
+    }
+  };
+
+  const handleConfirmDiscard = () => {
+    setIsDirty(false);
+    setIsUnsavedModalOpen(false);
+    if (pendingSectionSwitch) {
+      setActiveSection(pendingSectionSwitch);
+      setSearchParams({ section: pendingSectionSwitch });
+      setPendingSectionSwitch(null);
+    }
+  };
+
+  const handleReturnToOverview = () => {
+    if (isDirty) {
+      setPendingSectionSwitch("exit");
+      setIsUnsavedModalOpen(true);
+    } else {
+      navigate("/profile");
+    }
+  };
+
+  // ── Queries ──
   const {
-    data,
+    data: profileData,
     isLoading,
     isError,
     error,
     refetch,
   } = useQuery({
     queryKey: ["profile", "me"],
-    queryFn: coreProfileService.getMyProfile,
+    queryFn: () => coreProfileService.getMyProfile(),
+    staleTime: 1000 * 60 * 5,
   });
 
-  // Query for user's projects
-  const {
-    data: projectsData,
-    refetch: refetchProjects,
-  } = useQuery({
+  const { data: completionData } = useQuery({
+    queryKey: ["myProfileCompletion"],
+    queryFn: () => coreProfileService.getProfileCompletion(),
+    staleTime: 1000 * 60 * 2,
+  });
+
+  const { data: projectsData } = useQuery({
     queryKey: ["projects", "my"],
-    queryFn: projectsService.getMyProjects,
+    queryFn: () => projectsService.getMyProjects(),
+    staleTime: 1000 * 60 * 5,
   });
 
-  const myProjects = Array.isArray(projectsData) ? projectsData : [];
-  const profile = data?.user || authUser;
-  const completion = data?.completion;
+  const { data: recommendationsData } = useQuery({
+    queryKey: ["profile", "recommendations"],
+    queryFn: () => coreProfileService.getMyRecommendations(),
+    staleTime: 1000 * 60 * 5,
+  });
 
-  useEffect(() => {
-    if (searchParams.get("section")) {
-      const s = searchParams.get("section");
-      setActiveSection(s === "introduction" || s === "about" ? "basic-info" : s);
-    }
-  }, [searchParams]);
+  const profile = profileData?.user || profileData?.profile || profileData;
+  const completion = profileData?.completion || completionData?.completion || profile?.completion;
+  const myProjects = Array.isArray(projectsData?.projects)
+    ? projectsData.projects
+    : Array.isArray(projectsData)
+    ? projectsData
+    : [];
+  const recommendations = Array.isArray(recommendationsData?.recommendations)
+    ? recommendationsData.recommendations
+    : Array.isArray(recommendationsData)
+    ? recommendationsData
+    : [];
 
+  // Populate local form states from profile data
   useEffect(() => {
     if (profile) {
       setName(profile.name || "");
@@ -253,35 +305,36 @@ export default function EditProfile() {
 
       if (profile.structuredSkills) {
         setStructuredSkills({
-          technical: Array.isArray(profile.structuredSkills.technical) ? profile.structuredSkills.technical : [],
-          software: Array.isArray(profile.structuredSkills.software) ? profile.structuredSkills.software : [],
-          industry: Array.isArray(profile.structuredSkills.industry) ? profile.structuredSkills.industry : [],
-          professional: Array.isArray(profile.structuredSkills.professional) ? profile.structuredSkills.professional : [],
+          softwareTools: Array.isArray(profile.structuredSkills.softwareTools) ? profile.structuredSkills.softwareTools : [],
+          technicalCalculations: Array.isArray(profile.structuredSkills.technicalCalculations) ? profile.structuredSkills.technicalCalculations : [],
+          industryStandards: Array.isArray(profile.structuredSkills.industryStandards) ? profile.structuredSkills.industryStandards : [],
+          professionalLeadership: Array.isArray(profile.structuredSkills.professionalLeadership) ? profile.structuredSkills.professionalLeadership : [],
         });
       }
       setFlatSkills(Array.isArray(profile.skills) ? profile.skills : []);
 
       if (profile.careerPreferences) {
         setCareerPreferences({
-          openToOpportunities: Boolean(profile.careerPreferences.openToOpportunities),
-          preferredRoles: Array.isArray(profile.careerPreferences.preferredRoles) ? profile.careerPreferences.preferredRoles : [],
-          preferredInfrastructureSectors: Array.isArray(profile.careerPreferences.preferredInfrastructureSectors) ? profile.careerPreferences.preferredInfrastructureSectors : [],
+          targetRoles: Array.isArray(profile.careerPreferences.targetRoles) ? profile.careerPreferences.targetRoles : [],
           preferredLocations: Array.isArray(profile.careerPreferences.preferredLocations) ? profile.careerPreferences.preferredLocations : [],
-          preferredWorkMode: profile.careerPreferences.preferredWorkMode || "Hybrid",
-          preferredEmploymentType: profile.careerPreferences.preferredEmploymentType || "Full-time",
-          expectedSalaryRange: profile.careerPreferences.expectedSalaryRange || { min: 0, max: 0, currency: "USD" },
-          availability: profile.careerPreferences.availability || "Immediate",
+          workModes: Array.isArray(profile.careerPreferences.workModes) ? profile.careerPreferences.workModes : [],
+          openToRelocation: Boolean(profile.careerPreferences.openToRelocation),
+          expectedSalary: profile.careerPreferences.expectedSalary || { min: "", max: "", currency: "INR" },
+          expectedContractRate: profile.careerPreferences.expectedContractRate || { min: "", max: "", currency: "USD", rateType: "HOURLY" },
+          noticePeriod: profile.careerPreferences.noticePeriod || "IMMEDIATE",
+          activelyLooking: Boolean(profile.careerPreferences.activelyLooking),
+          visaSponsorshipRequired: Boolean(profile.careerPreferences.visaSponsorshipRequired),
         });
       }
 
       if (profile.privacySettings) {
         setPrivacySettings({
-          experienceVisibility: profile.privacySettings.experienceVisibility || "PUBLIC",
-          educationVisibility: profile.privacySettings.educationVisibility || "PUBLIC",
-          projectsVisibility: profile.privacySettings.projectsVisibility || "PUBLIC",
-          certificationsVisibility: profile.privacySettings.certificationsVisibility || "PUBLIC",
-          careerPreferencesVisibility: profile.privacySettings.careerPreferencesVisibility || "PRIVATE",
-          contactInfoVisibility: profile.privacySettings.contactInfoVisibility || "PRIVATE",
+          hideSalaryPreferences: Boolean(profile.privacySettings.hideSalaryPreferences),
+          hideContactInfoFromPublic: Boolean(profile.privacySettings.hideContactInfoFromPublic),
+          showEmailToConnectionsOnly: Boolean(profile.privacySettings.showEmailToConnectionsOnly),
+          showPhoneToConnectionsOnly: Boolean(profile.privacySettings.showPhoneToConnectionsOnly),
+          allowRecommendationRequests: Boolean(profile.privacySettings.allowRecommendationRequests),
+          showExactLocationToPublic: Boolean(profile.privacySettings.showExactLocationToPublic),
         });
       }
 
@@ -289,73 +342,14 @@ export default function EditProfile() {
     }
   }, [profile]);
 
-  // Modal scroll lock
-  useEffect(() => {
-    const isAnyModalOpen =
-      isUnsavedModalOpen ||
-      isExpModalOpen ||
-      isEduModalOpen ||
-      isCertModalOpen ||
-      isReqRecModalOpen ||
-      isChangeUsernameOpen ||
-      isProjectModalOpen ||
-      Boolean(editingImage);
-
-    if (isAnyModalOpen) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
-    }
-  }, [
-    isUnsavedModalOpen,
-    isExpModalOpen,
-    isEduModalOpen,
-    isCertModalOpen,
-    isReqRecModalOpen,
-    isChangeUsernameOpen,
-    isProjectModalOpen,
-    editingImage,
-  ]);
-
-  const handleSelectSection = (id) => {
-    if (id === activeSection) return;
-    if (isDirty) {
-      setPendingSectionSwitch(id);
-      setIsUnsavedModalOpen(true);
-      return;
-    }
-    setActiveSection(id);
-    setSearchParams({ section: id });
-  };
-
-  const handleConfirmDiscard = () => {
-    refetch();
-    setIsDirty(false);
-    setIsUnsavedModalOpen(false);
-    if (pendingSectionSwitch === "navigate-back") {
-      navigate("/profile");
-    } else if (pendingSectionSwitch) {
-      setActiveSection(pendingSectionSwitch);
-      setSearchParams({ section: pendingSectionSwitch });
-    }
-    setPendingSectionSwitch(null);
-  };
-
-  const handleReturnToOverview = () => {
-    if (isDirty) {
-      setPendingSectionSwitch("navigate-back");
-      setIsUnsavedModalOpen(true);
-      return;
-    }
-    navigate("/profile");
-  };
-
   const notifyMilestones = (newlyAwarded) => {
-    if (newlyAwarded?.length) {
+    if (Array.isArray(newlyAwarded) && newlyAwarded.length > 0) {
       newlyAwarded.forEach((m) => {
-        toast.success(`+${m.points} XP Earned!`, `${m.label} • Profile strength increased`);
+        toast.success(
+          `Achievement Unlocked: ${m.title}`,
+          `You earned +${m.xpAwarded} XP!`,
+          { duration: 6000 }
+        );
       });
     }
   };
@@ -364,89 +358,79 @@ export default function EditProfile() {
   const updateMutation = useMutation({
     mutationFn: (payload) => coreProfileService.updateMyProfile(payload),
     onSuccess: (res) => {
-      queryClient.setQueryData(["profile", "me"], (old) => {
-        if (!old?.user) return old;
-        return {
-          ...old,
-          user: res.user,
-          completion: res.completion || old.completion,
-        };
+      queryClient.setQueryData(["myProfile"], (old) => {
+        if (!old) return old;
+        const currentProfile = old.profile || old;
+        const updatedProfile = { ...currentProfile, ...(res.profile || res) };
+        return old.profile ? { ...old, profile: updatedProfile } : updatedProfile;
       });
+      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
 
-      updateUser({
-        name: res.user?.name,
-        headline: res.user?.headline,
-        bio: res.user?.bio,
-        skills: res.user?.skills,
-        primaryRole: res.user?.primaryRole,
-      });
+      if (res?.user && updateUser) {
+        updateUser(res.user);
+      } else if (res?.profile && updateUser) {
+        updateUser({
+          name: res.profile.name,
+          avatar: res.profile.avatar,
+          headline: res.profile.headline,
+          primaryRole: res.profile.primaryRole,
+        });
+      }
 
       setIsDirty(false);
-      toast.success("Changes saved", res.message || "Profile updated successfully.");
+      toast.success("Changes saved", "Your profile has been updated.");
       notifyMilestones(res.newlyAwarded);
     },
     onError: (err) => {
-      const msg = err.response?.data?.message || "Could not save profile changes.";
-      toast.error("Update failed", msg);
+      toast.error("Save failed", err.response?.data?.message || "Could not update your profile.");
     },
   });
 
-  // Avatar Upload Mutation
+  // Avatar upload mutation
   const avatarMutation = useMutation({
     mutationFn: (file) => coreProfileService.uploadAvatar(file),
     onSuccess: (res) => {
-      queryClient.setQueryData(["profile", "me"], (old) => {
-        if (!old?.user) return old;
-        return {
-          ...old,
-          user: { ...old.user, avatar: res.avatar },
-          completion: res.completion || old.completion,
-        };
-      });
-      setUser((prev) => (prev ? { ...prev, avatar: res.avatar } : prev));
-      toast.success("Photo updated", "Profile photo has been saved.");
+      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
+      if (res?.avatar) {
+        if (updateUser) updateUser({ avatar: res.avatar });
+        if (setUser && authUser) setUser({ ...authUser, avatar: res.avatar });
+      }
+      toast.success("Avatar updated", "Your profile picture was uploaded.");
       notifyMilestones(res.newlyAwarded);
     },
     onError: (err) => {
-      toast.error("Upload failed", err.response?.data?.message || "Could not upload photo.");
+      toast.error("Upload failed", err.response?.data?.message || "Could not upload avatar image.");
     },
   });
 
-  // Banner Upload Mutation
+  // Banner upload mutation
   const bannerMutation = useMutation({
     mutationFn: (file) => coreProfileService.uploadBackground(file),
     onSuccess: (res) => {
-      queryClient.setQueryData(["profile", "me"], (old) => {
-        if (!old?.user) return old;
-        return {
-          ...old,
-          user: { ...old.user, backgroundImage: res.backgroundImage },
-          completion: res.completion || old.completion,
-        };
-      });
-      toast.success("Cover updated", "Background cover has been saved.");
+      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
+      if (res?.backgroundImage && updateUser) {
+        updateUser({ backgroundImage: res.backgroundImage });
+      }
+      toast.success("Cover updated", "Your profile cover banner was uploaded.");
       notifyMilestones(res.newlyAwarded);
     },
     onError: (err) => {
-      toast.error("Upload failed", err.response?.data?.message || "Could not upload cover.");
+      toast.error("Upload failed", err.response?.data?.message || "Could not upload cover image.");
     },
   });
 
-  // Remove Banner Mutation
+  // Remove Banner mutation
   const removeBannerMutation = useMutation({
     mutationFn: () => coreProfileService.removeBackground(),
     onSuccess: () => {
-      queryClient.setQueryData(["profile", "me"], (old) => {
-        if (!old?.user) return old;
-        return {
-          ...old,
-          user: { ...old.user, backgroundImage: "" },
-        };
-      });
-      toast.success("Cover removed", "Background cover has been reset.");
+      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+      toast.success("Banner removed", "Your custom banner was removed.");
     },
     onError: (err) => {
-      toast.error("Remove failed", err.response?.data?.message || "Could not remove cover.");
+      toast.error("Action failed", err.response?.data?.message || "Could not remove banner.");
     },
   });
 
@@ -454,57 +438,40 @@ export default function EditProfile() {
   const addExpMutation = useMutation({
     mutationFn: (payload) => coreProfileService.addExperience(payload),
     onSuccess: (res) => {
-      queryClient.setQueryData(["profile", "me"], (old) => {
-        if (!old?.user) return old;
-        return {
-          ...old,
-          user: { ...old.user, experience: res.experience },
-          completion: res.completion || old.completion,
-        };
-      });
-      toast.success("Experience added", res.message);
-      notifyMilestones(res.newlyAwarded);
+      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
       setIsExpModalOpen(false);
       resetExpForm();
+      toast.success("Experience added", "Your professional role has been added.");
+      notifyMilestones(res.newlyAwarded);
     },
-    onError: (err) => toast.error("Failed to add", err.response?.data?.message),
+    onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to add experience."),
   });
 
   const updateExpMutation = useMutation({
     mutationFn: ({ id, payload }) => coreProfileService.updateExperience(id, payload),
     onSuccess: (res) => {
-      queryClient.setQueryData(["profile", "me"], (old) => {
-        if (!old?.user) return old;
-        return {
-          ...old,
-          user: { ...old.user, experience: res.experience },
-          completion: res.completion || old.completion,
-        };
-      });
-      toast.success("Experience updated", res.message);
+      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
       setIsExpModalOpen(false);
       resetExpForm();
+      toast.success("Experience updated", "Your professional role was saved.");
+      notifyMilestones(res.newlyAwarded);
     },
-    onError: (err) => toast.error("Failed to update", err.response?.data?.message),
+    onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to update experience."),
   });
 
   const deleteExpMutation = useMutation({
     mutationFn: (id) => coreProfileService.deleteExperience(id),
-    onSuccess: (res) => {
-      queryClient.setQueryData(["profile", "me"], (old) => {
-        if (!old?.user) return old;
-        return {
-          ...old,
-          user: { ...old.user, experience: res.experience },
-          completion: res.completion || old.completion,
-        };
-      });
-      toast.success("Experience deleted", res.message);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
+      toast.success("Deleted", "Experience record removed.");
     },
-    onError: (err) => toast.error("Failed to delete", err.response?.data?.message),
+    onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to delete experience."),
   });
 
-  // Project Mutations
+  // Projects Mutations
   const saveProjectMutation = useMutation({
     mutationFn: (payload) => {
       if (editingProject?.id || editingProject?._id) {
@@ -512,171 +479,129 @@ export default function EditProfile() {
       }
       return projectsService.createProject(payload);
     },
-    onSuccess: () => {
-      toast.success("Project saved", "Infrastructure project updated successfully.");
-      refetchProjects();
-      refetch();
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["myProjects"] });
+      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
       setIsProjectModalOpen(false);
       setEditingProject(null);
+      toast.success("Project saved", "Infrastructure project details stored.");
+      notifyMilestones(res.newlyAwarded);
     },
-    onError: (err) => toast.error("Project error", err.response?.data?.message || "Failed to save project."),
+    onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to save project."),
   });
 
   const deleteProjectMutation = useMutation({
     mutationFn: (id) => projectsService.deleteProject(id),
     onSuccess: () => {
-      toast.success("Project removed", "Infrastructure project deleted.");
-      refetchProjects();
-      refetch();
+      queryClient.invalidateQueries({ queryKey: ["myProjects"] });
+      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
+      toast.success("Deleted", "Project record removed.");
     },
-    onError: (err) => toast.error("Failed to delete project", err.response?.data?.message),
+    onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to delete project."),
   });
 
   // Education Mutations
   const addEduMutation = useMutation({
     mutationFn: (payload) => coreProfileService.addEducation(payload),
     onSuccess: (res) => {
-      queryClient.setQueryData(["profile", "me"], (old) => {
-        if (!old?.user) return old;
-        return {
-          ...old,
-          user: { ...old.user, education: res.education },
-          completion: res.completion || old.completion,
-        };
-      });
-      toast.success("Education added", res.message);
-      notifyMilestones(res.newlyAwarded);
+      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
       setIsEduModalOpen(false);
       resetEduForm();
+      toast.success("Education added", "Academic qualification added.");
+      notifyMilestones(res.newlyAwarded);
     },
-    onError: (err) => toast.error("Failed to add", err.response?.data?.message),
+    onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to add education."),
   });
 
   const updateEduMutation = useMutation({
     mutationFn: ({ id, payload }) => coreProfileService.updateEducation(id, payload),
     onSuccess: (res) => {
-      queryClient.setQueryData(["profile", "me"], (old) => {
-        if (!old?.user) return old;
-        return {
-          ...old,
-          user: { ...old.user, education: res.education },
-          completion: res.completion || old.completion,
-        };
-      });
-      toast.success("Education updated", res.message);
+      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
       setIsEduModalOpen(false);
       resetEduForm();
+      toast.success("Education updated", "Academic qualification updated.");
+      notifyMilestones(res.newlyAwarded);
     },
-    onError: (err) => toast.error("Failed to update", err.response?.data?.message),
+    onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to update education."),
   });
 
   const deleteEduMutation = useMutation({
     mutationFn: (id) => coreProfileService.deleteEducation(id),
-    onSuccess: (res) => {
-      queryClient.setQueryData(["profile", "me"], (old) => {
-        if (!old?.user) return old;
-        return {
-          ...old,
-          user: { ...old.user, education: res.education },
-          completion: res.completion || old.completion,
-        };
-      });
-      toast.success("Education deleted", res.message);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
+      toast.success("Deleted", "Education record removed.");
     },
-    onError: (err) => toast.error("Failed to delete", err.response?.data?.message),
+    onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to delete education."),
   });
 
   // Certification Mutations
   const addCertMutation = useMutation({
     mutationFn: (payload) => coreProfileService.addCertification(payload),
     onSuccess: (res) => {
-      queryClient.setQueryData(["profile", "me"], (old) => {
-        if (!old?.user) return old;
-        return {
-          ...old,
-          user: { ...old.user, certifications: res.certifications },
-          completion: res.completion || old.completion,
-        };
-      });
-      toast.success("Certification added", res.message);
-      notifyMilestones(res.newlyAwarded);
+      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
       setIsCertModalOpen(false);
       resetCertForm();
+      toast.success("Certification added", "Credential record stored.");
+      notifyMilestones(res.newlyAwarded);
     },
-    onError: (err) => toast.error("Failed to add", err.response?.data?.message),
+    onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to add certification."),
   });
 
   const updateCertMutation = useMutation({
     mutationFn: ({ id, payload }) => coreProfileService.updateCertification(id, payload),
     onSuccess: (res) => {
-      queryClient.setQueryData(["profile", "me"], (old) => {
-        if (!old?.user) return old;
-        return {
-          ...old,
-          user: { ...old.user, certifications: res.certifications },
-          completion: res.completion || old.completion,
-        };
-      });
-      toast.success("Certification updated", res.message);
+      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
       setIsCertModalOpen(false);
       resetCertForm();
+      toast.success("Certification updated", "Credential record updated.");
+      notifyMilestones(res.newlyAwarded);
     },
-    onError: (err) => toast.error("Failed to update", err.response?.data?.message),
+    onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to update certification."),
   });
 
   const deleteCertMutation = useMutation({
     mutationFn: (id) => coreProfileService.deleteCertification(id),
-    onSuccess: (res) => {
-      queryClient.setQueryData(["profile", "me"], (old) => {
-        if (!old?.user) return old;
-        return {
-          ...old,
-          user: { ...old.user, certifications: res.certifications },
-          completion: res.completion || old.completion,
-        };
-      });
-      toast.success("Certification deleted", res.message);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
+      toast.success("Deleted", "Certification record removed.");
     },
-    onError: (err) => toast.error("Failed to delete", err.response?.data?.message),
+    onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to delete certification."),
   });
 
-  // Recommendations query
-  const { data: recData, refetch: refetchRecs } = useQuery({
-    queryKey: ["profile", "recommendations"],
-    queryFn: coreProfileService.getRecommendations,
-  });
-
-  const recommendations = recData?.recommendations || [];
-
+  // Recommendation Status Mutation
   const updateRecStatusMutation = useMutation({
     mutationFn: ({ id, status }) => coreProfileService.updateRecommendationStatus(id, status),
-    onSuccess: (res) => {
-      toast.success("Status updated", res.message);
-      refetchRecs();
-      refetch();
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["myRecommendations"] });
+      toast.success("Updated", "Recommendation visibility updated.");
     },
-    onError: (err) => toast.error("Failed", err.response?.data?.message),
+    onError: (err) => toast.error("Action failed", err.response?.data?.message),
   });
 
   const deleteRecMutation = useMutation({
     mutationFn: (id) => coreProfileService.deleteRecommendation(id),
-    onSuccess: (res) => {
-      toast.success("Recommendation removed", res.message);
-      refetchRecs();
-      refetch();
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["myRecommendations"] });
+      toast.success("Deleted", "Recommendation removed.");
     },
-    onError: (err) => toast.error("Failed", err.response?.data?.message),
+    onError: (err) => toast.error("Action failed", err.response?.data?.message),
   });
 
-  // Public Profile Publish State Mutation
+  // Toggle Public Profile Publish
   const publishMutation = useMutation({
     mutationFn: (published) => coreProfileService.setPublicProfilePublishState(published),
     onSuccess: (res) => {
-      queryClient.setQueryData(["profile", "me"], (old) => {
-        if (!old?.user) return old;
+      queryClient.setQueryData(["myProfile"], (old) => {
+        if (!old) return old;
         return {
           ...old,
-          user: { ...old.user, publicProfilePublished: res.published },
+          publicProfilePublished: res.published,
           completion: res.completion || old.completion,
         };
       });
@@ -858,8 +783,11 @@ export default function EditProfile() {
   if (isLoading) {
     return (
       <div className="space-y-6 max-w-7xl mx-auto animate-pulse pb-16">
-        <div className="h-14 bg-bg-card rounded-2xl border border-border-default" />
-        <div className="h-96 bg-bg-card rounded-3xl border border-border-default" />
+        <div className="h-14 bg-bg-card/60 rounded-2xl border border-white/[0.06]" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-4 h-96 bg-bg-card/60 rounded-3xl border border-white/[0.06]" />
+          <div className="lg:col-span-8 h-96 bg-bg-card/60 rounded-3xl border border-white/[0.06]" />
+        </div>
       </div>
     );
   }
@@ -870,16 +798,16 @@ export default function EditProfile() {
         <div className="w-16 h-16 rounded-2xl bg-danger/10 border border-danger/20 text-danger flex items-center justify-center mx-auto mb-4">
           <AlertCircle className="w-8 h-8" />
         </div>
-        <h2 className="text-2xl font-heading font-bold text-white mb-2">
-          Unable to Load Profile
+        <h2 className="text-2xl font-heading font-extrabold text-white mb-2">
+          Unable to Load Profile Studio
         </h2>
-        <p className="text-sm text-text-muted mb-6">
+        <p className="text-sm text-text-muted mb-6 leading-relaxed">
           {error?.response?.data?.message || "We encountered an issue retrieving your identity data."}
         </p>
         <button
           type="button"
           onClick={() => refetch()}
-          className="btn-primary inline-flex items-center gap-2 py-2.5 px-6 cursor-pointer"
+          className="btn-primary inline-flex items-center gap-2 py-3 px-6 cursor-pointer"
         >
           <RefreshCw className="w-4 h-4" />
           Try Again
@@ -934,44 +862,63 @@ export default function EditProfile() {
     }
   };
 
+  const currentSectionMeta = SECTION_CONFIG.find((s) => s.id === activeSection) || SECTION_CONFIG[0];
+
   return (
     <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto pb-16">
       {/* ── Sub-Navigation ── */}
       <ProfileNav />
 
-      {/* ── Header with Return & Live Preview Toggle ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      {/* ── Studio Header with Breadcrumb & Quick Actions ── */}
+      <div className="p-4 sm:p-6 rounded-3xl border border-white/[0.08] bg-bg-card/80 backdrop-blur-xl shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
           <button
             type="button"
             onClick={handleReturnToOverview}
-            className="p-2.5 rounded-xl border border-border-default bg-bg-card hover:bg-white/[0.04] text-text-muted hover:text-white transition-colors cursor-pointer shadow-sm min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="p-2.5 rounded-xl border border-white/[0.08] bg-bg-elevated/70 hover:bg-white/[0.08] text-text-muted hover:text-white transition-all cursor-pointer shadow-sm min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0 active:scale-95"
             title="Return to Profile Overview"
+            aria-label="Back to overview"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
-            <h1 className="font-heading font-black text-2xl sm:text-3xl text-white tracking-tight leading-none">
-              Infrastructure Profile Editor
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono font-bold tracking-widest text-brand-mint uppercase">
+                Profile Studio
+              </span>
+              <span className="text-text-faint text-xs">•</span>
+              <span className="text-[10px] font-mono text-text-muted uppercase">
+                {currentSectionMeta.index} / 11
+              </span>
+              {isDirty && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-yellow/15 border border-brand-yellow/30 text-brand-yellow animate-pulse">
+                  <AlertTriangle className="w-3 h-3" />
+                  Draft Changes
+                </span>
+              )}
+            </div>
+            <h1 className="font-heading font-black text-xl sm:text-2xl text-white tracking-tight leading-none mt-1">
+              {currentSectionMeta.label}
             </h1>
-            <p className="text-xs sm:text-sm text-text-muted mt-1">
-              Curate your professional engineering, construction, and infrastructure identity
+            <p className="text-xs text-text-muted mt-1 hidden sm:block">
+              {currentSectionMeta.desc}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
           <button
             type="button"
             onClick={() => setIsPreviewOpen(!isPreviewOpen)}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer min-h-[44px] ${
+            className={`inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer min-h-[44px] ${
               isPreviewOpen
                 ? "bg-brand-mint/15 border border-brand-mint text-brand-mint shadow-[0_0_15px_rgba(159,213,178,0.15)]"
-                : "bg-bg-card border border-border-default text-text-muted hover:text-white"
+                : "bg-bg-elevated/70 border border-white/[0.08] text-text-muted hover:text-white hover:border-white/20"
             }`}
           >
             <Eye className="w-3.5 h-3.5" />
-            {isPreviewOpen ? "Hide Preview" : "Live Preview"}
+            <span className="hidden sm:inline">{isPreviewOpen ? "Hide Preview" : "Live Preview"}</span>
+            <span className="sm:hidden">Preview</span>
           </button>
 
           <Link
@@ -979,20 +926,16 @@ export default function EditProfile() {
             className="btn-secondary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer min-h-[44px]"
           >
             <ExternalLink className="w-3.5 h-3.5" />
-            View Public
+            <span className="hidden sm:inline">View Public</span>
+            <span className="sm:hidden">Public</span>
           </Link>
         </div>
       </div>
 
-      {/* ── Main Layout: Sidebar & Content Area ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Navigation Sidebar of Sections */}
-        <div className="lg:col-span-4 space-y-3">
-          <div className="rounded-3xl border border-border-default bg-bg-card p-3 sm:p-4 space-y-1 shadow-sm">
-            <div className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-text-faint">
-              Profile Sections
-            </div>
-
+      {/* ── Mobile Horizontal Section Carousel (Visible on mobile/tablet < lg) ── */}
+      <div className="lg:hidden">
+        <div className="overflow-x-auto no-scrollbar py-1 -my-1">
+          <div className="flex items-center gap-2 min-w-max px-0.5">
             {SECTION_CONFIG.map((sec) => {
               const Icon = sec.icon;
               const isActive = activeSection === sec.id;
@@ -1003,54 +946,106 @@ export default function EditProfile() {
                   key={sec.id}
                   type="button"
                   onClick={() => handleSelectSection(sec.id)}
-                  className={`w-full flex items-center justify-between p-3 rounded-2xl text-left transition-all cursor-pointer min-h-[44px] ${
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer min-h-[44px] shrink-0 border ${
                     isActive
-                      ? "bg-brand-mint/10 border border-brand-mint/25 text-white font-bold shadow-sm"
-                      : "text-text-muted hover:text-white hover:bg-white/[0.03] border border-transparent"
+                      ? "bg-brand-mint/15 border-brand-mint/40 text-brand-mint font-bold shadow-md shadow-brand-mint/10"
+                      : "bg-bg-card/70 border-white/[0.06] text-text-muted hover:text-white hover:bg-white/[0.03]"
                   }`}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div
-                      className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                        isActive
-                          ? "bg-brand-mint/20 text-brand-mint"
-                          : "bg-white/[0.03] text-text-faint"
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    <span className="text-sm truncate">{sec.label}</span>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span
-                      className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                        status === "complete"
-                          ? "text-brand-mint bg-brand-mint/10"
-                          : status === "in-progress"
-                          ? "text-brand-yellow bg-brand-yellow/10"
-                          : "text-text-faint bg-white/[0.02]"
-                      }`}
-                    >
-                      {status === "complete" ? "✓" : status === "in-progress" ? "◐" : "○"}
-                    </span>
-
-                    {sec.xp > 0 && (
-                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-white/[0.04] text-brand-yellow">
-                        +{sec.xp}
-                      </span>
-                    )}
-                  </div>
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{sec.label}</span>
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      status === "complete"
+                        ? "bg-brand-mint"
+                        : status === "in-progress"
+                        ? "bg-brand-yellow"
+                        : "bg-text-faint/40"
+                    }`}
+                  />
                 </button>
               );
             })}
           </div>
+        </div>
+      </div>
+
+      {/* ── Main Layout: Sidebar & Content Area ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Navigation Sidebar of Sections (Desktop) */}
+        <div className="hidden lg:block lg:col-span-4 space-y-4 sticky top-24">
+          <div className="rounded-3xl border border-white/[0.08] bg-bg-card/80 backdrop-blur-xl p-3 sm:p-4 space-y-1.5 shadow-xl">
+            <div className="px-3 py-2 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-text-faint">
+              <span>Studio Sections</span>
+              <span className="font-mono text-[10px] text-text-muted">11 Modules</span>
+            </div>
+
+            <div className="space-y-1">
+              {SECTION_CONFIG.map((sec) => {
+                const Icon = sec.icon;
+                const isActive = activeSection === sec.id;
+                const status = getSectionStatus(sec.id);
+
+                return (
+                  <button
+                    key={sec.id}
+                    type="button"
+                    onClick={() => handleSelectSection(sec.id)}
+                    className={`w-full flex items-center justify-between p-3 rounded-2xl text-left transition-all cursor-pointer min-h-[48px] group relative ${
+                      isActive
+                        ? "bg-brand-mint/10 border border-brand-mint/30 text-white font-bold shadow-sm"
+                        : "text-text-muted hover:text-white hover:bg-white/[0.03] border border-transparent"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className={`text-[10px] font-mono shrink-0 ${isActive ? "text-brand-mint font-bold" : "text-text-faint"}`}>
+                        {sec.index}
+                      </span>
+                      <div
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                          isActive
+                            ? "bg-brand-mint/20 text-brand-mint ring-1 ring-brand-mint/30"
+                            : "bg-white/[0.03] text-text-faint group-hover:text-white"
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <span className="text-sm truncate">{sec.label}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span
+                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                          status === "complete"
+                            ? "text-brand-mint bg-brand-mint/10 border border-brand-mint/20"
+                            : status === "in-progress"
+                            ? "text-brand-yellow bg-brand-yellow/10 border border-brand-yellow/20"
+                            : "text-text-faint bg-white/[0.02]"
+                        }`}
+                      >
+                        {status === "complete" ? "✓" : status === "in-progress" ? "◐" : "○"}
+                      </span>
+
+                      {sec.xp > 0 && (
+                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-white/[0.04] text-brand-yellow">
+                          +{sec.xp}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           {/* Profile Strength Mini Card */}
-          <div className="rounded-3xl border border-border-default bg-bg-card p-5 space-y-3 shadow-sm">
+          <div className="rounded-3xl border border-white/[0.08] bg-bg-card/80 backdrop-blur-xl p-5 space-y-3.5 shadow-xl">
             <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-text-muted">
-              <span>Profile Strength</span>
-              <span className="text-brand-mint font-mono font-bold">
+              <span className="flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-brand-mint" />
+                Profile Strength
+              </span>
+              <span className="text-brand-mint font-mono font-bold text-sm">
                 {completion?.completionPercent || 0}%
               </span>
             </div>
@@ -1060,8 +1055,8 @@ export default function EditProfile() {
                 style={{ width: `${completion?.completionPercent || 0}%` }}
               />
             </div>
-            <p className="text-xs text-text-muted">
-              {completion?.remainingMilestones?.length || 0} step{completion?.remainingMilestones?.length === 1 ? "" : "s"} remaining to 100% completion.
+            <p className="text-xs text-text-muted leading-relaxed">
+              {completion?.remainingMilestones?.length || 0} step{completion?.remainingMilestones?.length === 1 ? "" : "s"} remaining to 100% completion. Complete items to unlock senior infrastructure perks.
             </p>
           </div>
         </div>
@@ -1073,18 +1068,23 @@ export default function EditProfile() {
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-6 shadow-sm"
+              className="rounded-3xl border border-white/[0.08] bg-bg-card/80 backdrop-blur-xl p-6 sm:p-8 space-y-6 shadow-xl"
             >
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <h2 className="text-xl font-heading font-extrabold text-white">
-                    Basic Information
-                  </h2>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
+                      SECTION 01 OF 11
+                    </span>
+                  </div>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                     +45 XP
                   </span>
                 </div>
-                <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
+                <h2 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
+                  Basic Information
+                </h2>
+                <p className="text-xs sm:text-sm text-text-muted leading-relaxed mt-1">
                   Set your profile photo, cover banner, full name, base location, and professional biography.
                 </p>
               </div>
@@ -1094,9 +1094,9 @@ export default function EditProfile() {
                 <label className="text-xs font-bold uppercase tracking-wider text-text-secondary">
                   Background Cover Banner
                 </label>
-                <div className="relative h-40 w-full rounded-2xl border border-border-default overflow-hidden bg-bg-elevated flex items-center justify-center">
+                <div className="relative h-44 w-full rounded-2xl border border-white/[0.08] overflow-hidden bg-bg-elevated flex items-center justify-center group shadow-inner">
                   {bannerUrl ? (
-                    <img src={bannerUrl} alt="Cover" className="w-full h-full object-cover" />
+                    <img src={bannerUrl} alt="Cover" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                   ) : (
                     <div className="w-full h-full relative overflow-hidden bg-gradient-to-br from-[#0c1520] to-[#04070a] flex items-center justify-center">
                       <span className="text-xs text-text-muted font-mono uppercase tracking-widest">
@@ -1104,14 +1104,14 @@ export default function EditProfile() {
                       </span>
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/45 flex items-center justify-center gap-2 opacity-0 hover:opacity-100 transition-opacity">
+                  <div className="absolute inset-0 bg-black/55 backdrop-blur-[2px] flex items-center justify-center gap-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       type="button"
                       onClick={() => bannerFileRef.current?.click()}
                       disabled={bannerMutation.isPending}
-                      className="btn-secondary text-xs py-2 px-3.5 flex items-center gap-1.5 cursor-pointer shadow-md min-h-[44px]"
+                      className="btn-secondary text-xs py-2.5 px-4 flex items-center gap-2 cursor-pointer shadow-md min-h-[44px]"
                     >
-                      <Camera className="w-3.5 h-3.5 text-brand-mint" />
+                      <Camera className="w-4 h-4 text-brand-mint" />
                       Upload Banner
                     </button>
                     {bannerUrl && (
@@ -1119,9 +1119,9 @@ export default function EditProfile() {
                         type="button"
                         onClick={() => removeBannerMutation.mutate()}
                         disabled={removeBannerMutation.isPending}
-                        className="btn-danger text-xs py-2 px-3.5 flex items-center gap-1.5 cursor-pointer shadow-md min-h-[44px]"
+                        className="btn-danger text-xs py-2.5 px-4 flex items-center gap-2 cursor-pointer shadow-md min-h-[44px]"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                         Remove
                       </button>
                     )}
@@ -1139,7 +1139,7 @@ export default function EditProfile() {
               {/* Avatar Uploader */}
               <div className="flex items-center gap-5 pt-2">
                 <div className="relative group shrink-0">
-                  <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-brand-mint/30 bg-bg-elevated flex items-center justify-center shadow-lg">
+                  <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-brand-mint/40 bg-bg-elevated flex items-center justify-center shadow-lg ring-4 ring-brand-mint/10">
                     {avatarUrl ? (
                       <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
                     ) : (
@@ -1150,7 +1150,7 @@ export default function EditProfile() {
                     type="button"
                     onClick={() => avatarFileRef.current?.click()}
                     disabled={avatarMutation.isPending}
-                    className="absolute inset-0 bg-black/60 rounded-2xl flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white"
+                    className="absolute inset-0 bg-black/60 backdrop-blur-xs rounded-2xl flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white"
                   >
                     <Camera className="w-5 h-5 mb-0.5 text-brand-mint" />
                     <span className="text-[9px] font-bold uppercase">Change</span>
@@ -1167,12 +1167,12 @@ export default function EditProfile() {
                 <div>
                   <h4 className="text-sm font-bold text-white">Profile Photo</h4>
                   <p className="text-xs text-text-muted mt-0.5 leading-relaxed">
-                    JPG, PNG, or WebP under 25 MB. Represents your verified infrastructure identity.
+                    JPG, PNG, or WebP under 25 MB. Represents your verified infrastructure identity across Zeitnah.
                   </p>
                   <button
                     type="button"
                     onClick={() => avatarFileRef.current?.click()}
-                    className="mt-2 text-xs font-semibold text-brand-mint hover:underline inline-flex items-center gap-1 cursor-pointer"
+                    className="mt-2 text-xs font-semibold text-brand-mint hover:underline inline-flex items-center gap-1.5 cursor-pointer min-h-[36px]"
                   >
                     <Camera className="w-3.5 h-3.5" />
                     Choose New Photo
@@ -1193,7 +1193,7 @@ export default function EditProfile() {
                       setIsDirty(true);
                     }}
                     required
-                    className="w-full px-4 py-3 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors"
+                    className="w-full px-4 py-3 rounded-xl bg-bg-elevated/70 border border-white/[0.08] focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30 focus:outline-none text-sm text-white transition-colors"
                     placeholder="e.g. Riswan P.R"
                   />
                 </div>
@@ -1209,7 +1209,7 @@ export default function EditProfile() {
                       setLocation(e.target.value);
                       setIsDirty(true);
                     }}
-                    className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors"
+                    className="w-full px-4 py-3 rounded-xl bg-bg-elevated/70 border border-white/[0.08] focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30 focus:outline-none text-sm text-white transition-colors"
                     placeholder="e.g. Dubai, United Arab Emirates"
                   />
                 </div>
@@ -1226,8 +1226,8 @@ export default function EditProfile() {
                     }}
                     rows={6}
                     maxLength={MAX_BIO_LENGTH}
-                    className="w-full px-4 py-3 rounded-2xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors resize-none leading-relaxed"
-                    placeholder="Tell your professional infrastructure story: your background, major projects, technical focus, and areas of engineering passion..."
+                    className="w-full px-4 py-3 rounded-2xl bg-bg-elevated/70 border border-white/[0.08] focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30 focus:outline-none text-sm text-white transition-colors resize-none leading-relaxed"
+                    placeholder="Tell your professional infrastructure story: your engineering trajectory, key projects, specialization areas, and career goals..."
                   />
                   <div className="flex justify-between text-xs text-text-muted mt-1 px-1">
                     <span>Authentic overview of your engineering trajectory.</span>
@@ -1241,7 +1241,7 @@ export default function EditProfile() {
                   <button
                     type="submit"
                     disabled={updateMutation.isPending}
-                    className="btn-primary text-xs uppercase tracking-wider flex items-center gap-2 py-3 px-6 cursor-pointer shadow-md min-h-[44px]"
+                    className="btn-primary text-xs uppercase tracking-wider flex items-center gap-2 py-3 px-6 cursor-pointer shadow-lg shadow-brand-mint/10 min-h-[44px]"
                   >
                     {updateMutation.isPending ? (
                       <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1260,18 +1260,21 @@ export default function EditProfile() {
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-6 shadow-sm"
+              className="rounded-3xl border border-white/[0.08] bg-bg-card/80 backdrop-blur-xl p-6 sm:p-8 space-y-6 shadow-xl"
             >
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <h2 className="text-xl font-heading font-extrabold text-white">
-                    Professional Identity & Role
-                  </h2>
+                  <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
+                    SECTION 02 OF 11
+                  </span>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                     +25 XP
                   </span>
                 </div>
-                <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
+                <h2 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
+                  Professional Identity & Role
+                </h2>
+                <p className="text-xs sm:text-sm text-text-muted leading-relaxed mt-1">
                   Establish your infrastructure ecosystem role, headline, availability, and job title.
                 </p>
               </div>
@@ -1300,7 +1303,7 @@ export default function EditProfile() {
                       setIsDirty(true);
                     }}
                     maxLength={140}
-                    className="w-full px-4 py-3 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors"
+                    className="w-full px-4 py-3 rounded-xl bg-bg-elevated/70 border border-white/[0.08] focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30 focus:outline-none text-sm text-white transition-colors"
                     placeholder="e.g. Planning Engineer | Primavera P6 & BIM Specialist | Metro & Rail Infrastructure"
                   />
                   <span className="text-[11px] text-text-muted mt-1 block">
@@ -1320,7 +1323,7 @@ export default function EditProfile() {
                         setCurrentRole(e.target.value);
                         setIsDirty(true);
                       }}
-                      className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors"
+                      className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated/70 border border-white/[0.08] focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30 focus:outline-none text-sm text-white transition-colors"
                       placeholder="e.g. Senior Structural Engineer"
                     />
                   </div>
@@ -1335,7 +1338,7 @@ export default function EditProfile() {
                         setAvailability(e.target.value);
                         setIsDirty(true);
                       }}
-                      className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors cursor-pointer"
+                      className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated/70 border border-white/[0.08] focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30 focus:outline-none text-sm text-white transition-colors cursor-pointer"
                     >
                       <option value="NOT_CURRENTLY_AVAILABLE">Not Currently Available</option>
                       <option value="OPEN_TO_OPPORTUNITIES">Open to Opportunities</option>
@@ -1349,7 +1352,7 @@ export default function EditProfile() {
                   <button
                     type="submit"
                     disabled={updateMutation.isPending}
-                    className="btn-primary text-xs uppercase tracking-wider flex items-center gap-2 py-3 px-6 cursor-pointer shadow-md min-h-[44px]"
+                    className="btn-primary text-xs uppercase tracking-wider flex items-center gap-2 py-3 px-6 cursor-pointer shadow-lg shadow-brand-mint/10 min-h-[44px]"
                   >
                     {updateMutation.isPending ? (
                       <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1368,18 +1371,21 @@ export default function EditProfile() {
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-6 shadow-sm"
+              className="rounded-3xl border border-white/[0.08] bg-bg-card/80 backdrop-blur-xl p-6 sm:p-8 space-y-6 shadow-xl"
             >
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <h2 className="text-xl font-heading font-extrabold text-white">
-                    Infrastructure Expertise & Taxonomy
-                  </h2>
+                  <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
+                    SECTION 03 OF 11
+                  </span>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                     +30 XP
                   </span>
                 </div>
-                <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
+                <h2 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
+                  Infrastructure Expertise & Taxonomy
+                </h2>
+                <p className="text-xs sm:text-sm text-text-muted leading-relaxed mt-1">
                   Specify your primary engineering discipline, specialized niches, and targeted infrastructure sectors.
                 </p>
               </div>
@@ -1403,7 +1409,7 @@ export default function EditProfile() {
                   <button
                     type="submit"
                     disabled={updateMutation.isPending}
-                    className="btn-primary text-xs uppercase tracking-wider flex items-center gap-2 py-3 px-6 cursor-pointer shadow-md min-h-[44px]"
+                    className="btn-primary text-xs uppercase tracking-wider flex items-center gap-2 py-3 px-6 cursor-pointer shadow-lg shadow-brand-mint/10 min-h-[44px]"
                   >
                     {updateMutation.isPending ? (
                       <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1422,18 +1428,21 @@ export default function EditProfile() {
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-6 shadow-sm"
+              className="rounded-3xl border border-white/[0.08] bg-bg-card/80 backdrop-blur-xl p-6 sm:p-8 space-y-6 shadow-xl"
             >
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <h2 className="text-xl font-heading font-extrabold text-white">
-                    Structured Skills & Software
-                  </h2>
+                  <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
+                    SECTION 04 OF 11
+                  </span>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                     +20 XP (3+ Skills)
                   </span>
                 </div>
-                <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
+                <h2 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
+                  Structured Skills & Software
+                </h2>
+                <p className="text-xs sm:text-sm text-text-muted leading-relaxed mt-1">
                   Organized across Software Tools, Technical Calculations, Industry Standards, and Professional Leadership.
                 </p>
               </div>
@@ -1451,14 +1460,14 @@ export default function EditProfile() {
                   <button
                     type="submit"
                     disabled={updateMutation.isPending}
-                    className="btn-primary text-xs uppercase tracking-wider flex items-center gap-2 py-3 px-6 cursor-pointer shadow-md min-h-[44px]"
+                    className="btn-primary text-xs uppercase tracking-wider flex items-center gap-2 py-3 px-6 cursor-pointer shadow-lg shadow-brand-mint/10 min-h-[44px]"
                   >
                     {updateMutation.isPending ? (
                       <RefreshCw className="w-4 h-4 animate-spin" />
                     ) : (
                       <Save className="w-4 h-4" />
                     )}
-                    Save Skills & Software
+                    Save Skills Matrix
                   </button>
                 </div>
               </form>
@@ -1470,14 +1479,22 @@ export default function EditProfile() {
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-6 shadow-sm"
+              className="rounded-3xl border border-white/[0.08] bg-bg-card/80 backdrop-blur-xl p-6 sm:p-8 space-y-6 shadow-xl"
             >
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-heading font-extrabold text-white">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
+                      SECTION 05 OF 11
+                    </span>
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
+                      +20 XP
+                    </span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
                     Professional Experience
                   </h2>
-                  <p className="text-xs sm:text-sm text-text-muted mt-0.5">
+                  <p className="text-xs sm:text-sm text-text-muted mt-1 leading-relaxed">
                     Engineering, site supervision, consultancy, internship, and project management roles.
                   </p>
                 </div>
@@ -1487,7 +1504,7 @@ export default function EditProfile() {
                     resetExpForm();
                     setIsExpModalOpen(true);
                   }}
-                  className="btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer shadow-sm min-h-[44px]"
+                  className="btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer shadow-md min-h-[44px] shrink-0"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add Experience
@@ -1500,7 +1517,7 @@ export default function EditProfile() {
                     <div key={exp.id} className="relative group">
                       <div className="absolute -left-6 top-1.5 w-3 h-3 rounded-full bg-brand-mint border-2 border-bg-card shadow-sm ring-2 ring-brand-mint/20" />
 
-                      <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/25 transition-all flex items-start justify-between gap-4">
+                      <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/30 transition-all flex items-start justify-between gap-4">
                         <div className="space-y-1.5 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs font-mono font-bold text-brand-mint uppercase tracking-wider">
@@ -1565,16 +1582,18 @@ export default function EditProfile() {
                               });
                               setIsExpModalOpen(true);
                             }}
-                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer"
+                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer"
                             title="Edit"
+                            aria-label="Edit experience"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
                           <button
                             type="button"
                             onClick={() => deleteExpMutation.mutate(exp.id)}
-                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-danger hover:bg-white/[0.04] transition-colors cursor-pointer"
+                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-danger hover:bg-white/[0.04] transition-colors cursor-pointer"
                             title="Delete"
+                            aria-label="Delete experience"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -1584,22 +1603,26 @@ export default function EditProfile() {
                   ))}
                 </div>
               ) : (
-                <div className="py-12 px-4 rounded-2xl border border-dashed border-white/[0.08] text-center space-y-3">
-                  <Briefcase className="w-8 h-8 text-text-faint mx-auto mb-1" />
-                  <h4 className="text-sm font-bold text-white">No experience added yet.</h4>
-                  <p className="text-xs text-text-muted max-w-sm mx-auto">
-                    Add your professional experience so your infrastructure profile is more complete.
-                  </p>
+                <div className="py-14 px-4 rounded-3xl border border-dashed border-white/[0.1] text-center space-y-3.5 bg-white/[0.01]">
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto text-text-muted">
+                    <Briefcase className="w-6 h-6 text-brand-mint/70" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">No career experience listed yet</h4>
+                    <p className="text-xs text-text-muted max-w-sm mx-auto mt-1 leading-relaxed">
+                      Document your on-site engineering, design consultancy, or management roles to build professional authority.
+                    </p>
+                  </div>
                   <button
                     type="button"
                     onClick={() => {
                       resetExpForm();
                       setIsExpModalOpen(true);
                     }}
-                    className="btn-primary text-xs uppercase tracking-wider inline-flex items-center gap-1.5 py-2.5 px-4 cursor-pointer min-h-[44px]"
+                    className="btn-primary text-xs uppercase tracking-wider inline-flex items-center gap-1.5 py-2.5 px-5 cursor-pointer min-h-[44px]"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    Add Experience
+                    Add First Experience
                   </button>
                 </div>
               )}
@@ -1611,14 +1634,22 @@ export default function EditProfile() {
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-6 shadow-sm"
+              className="rounded-3xl border border-white/[0.08] bg-bg-card/80 backdrop-blur-xl p-6 sm:p-8 space-y-6 shadow-xl"
             >
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-heading font-extrabold text-white">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
+                      SECTION 06 OF 11
+                    </span>
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
+                      +25 XP
+                    </span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
                     Infrastructure Projects
                   </h2>
-                  <p className="text-xs sm:text-sm text-text-muted mt-0.5">
+                  <p className="text-xs sm:text-sm text-text-muted mt-1 leading-relaxed">
                     Civil structures, highways, bridges, metro rails, water treatment, and mega-projects.
                   </p>
                 </div>
@@ -1628,7 +1659,7 @@ export default function EditProfile() {
                     setEditingProject(null);
                     setIsProjectModalOpen(true);
                   }}
-                  className="btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer shadow-sm min-h-[44px]"
+                  className="btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer shadow-md min-h-[44px] shrink-0"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add Project
@@ -1642,7 +1673,7 @@ export default function EditProfile() {
                     return (
                       <div
                         key={pId}
-                        className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/25 transition-all flex flex-col justify-between gap-3 shadow-sm"
+                        className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/30 transition-all flex flex-col justify-between gap-3 shadow-sm"
                       >
                         <div className="space-y-2">
                           <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -1650,10 +1681,11 @@ export default function EditProfile() {
                               <span className="text-xs font-mono font-bold text-brand-mint uppercase tracking-wider">
                                 {proj.infrastructureSector || "Infrastructure"}
                               </span>
-                              <span className="text-xs text-text-faint">•</span>
-                              <span className="text-xs px-2 py-0.5 rounded bg-white/[0.04] text-text-muted font-bold">
-                                {proj.projectType || "Infrastructure"}
-                              </span>
+                              {proj.status && (
+                                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-white/[0.04] text-text-muted font-bold">
+                                  {proj.status}
+                                </span>
+                              )}
                             </div>
 
                             <div className="flex items-center gap-1">
@@ -1663,16 +1695,18 @@ export default function EditProfile() {
                                   setEditingProject(proj);
                                   setIsProjectModalOpen(true);
                                 }}
-                                className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-brand-mint cursor-pointer"
-                                title="Edit project"
+                                className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer"
+                                title="Edit"
+                                aria-label="Edit project"
                               >
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>
                               <button
                                 type="button"
                                 onClick={() => deleteProjectMutation.mutate(pId)}
-                                className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-danger cursor-pointer"
-                                title="Delete project"
+                                className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-danger hover:bg-white/[0.04] transition-colors cursor-pointer"
+                                title="Delete"
+                                aria-label="Delete project"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -1680,40 +1714,20 @@ export default function EditProfile() {
                           </div>
 
                           <h4 className="text-base font-bold text-white">{proj.title}</h4>
-                          {proj.role && (
-                            <div className="text-sm font-semibold text-text-secondary">
-                              Role: {proj.role} {proj.location && `• ${proj.location}`}
-                            </div>
+                          {proj.tagline && (
+                            <p className="text-xs text-text-secondary font-medium">{proj.tagline}</p>
                           )}
-
-                          {proj.description && (
-                            <p className="text-xs text-text-muted leading-relaxed whitespace-pre-line">
-                              {proj.description}
+                          {proj.summary && (
+                            <p className="text-xs text-text-muted line-clamp-2 leading-relaxed">
+                              {proj.summary}
                             </p>
                           )}
 
-                          {proj.responsibilities && (
-                            <div className="pt-1">
-                              <span className="text-[11px] font-bold uppercase tracking-wider text-text-faint block mb-1">
-                                Deliverables & Responsibilities:
-                              </span>
-                              <p className="text-xs text-text-secondary leading-relaxed whitespace-pre-line">
-                                {proj.responsibilities}
-                              </p>
-                            </div>
-                          )}
-
-                          {/* Software & Skills Used */}
-                          {(proj.softwareUsed?.length > 0 || proj.skills?.length > 0) && (
-                            <div className="flex flex-wrap gap-1.5 pt-2">
-                              {proj.softwareUsed?.map((sw) => (
-                                <span key={sw} className="px-2 py-0.5 rounded-md bg-brand-mint/10 border border-brand-mint/20 text-[11px] text-brand-mint font-medium">
+                          {Array.isArray(proj.softwareUsed) && proj.softwareUsed.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 pt-1">
+                              {proj.softwareUsed.map((sw) => (
+                                <span key={sw} className="px-2 py-0.5 rounded-md bg-white/[0.04] text-[10px] text-brand-mint">
                                   {sw}
-                                </span>
-                              ))}
-                              {proj.skills?.map((sk) => (
-                                <span key={sk} className="px-2 py-0.5 rounded-md bg-white/[0.04] text-[11px] text-text-secondary">
-                                  {sk}
                                 </span>
                               ))}
                             </div>
@@ -1724,22 +1738,26 @@ export default function EditProfile() {
                   })}
                 </div>
               ) : (
-                <div className="py-12 px-4 rounded-2xl border border-dashed border-white/[0.08] text-center space-y-3">
-                  <Hammer className="w-8 h-8 text-text-faint mx-auto mb-1" />
-                  <h4 className="text-sm font-bold text-white">No projects yet.</h4>
-                  <p className="text-xs text-text-muted max-w-sm mx-auto">
-                    Show the infrastructure projects you've worked on.
-                  </p>
+                <div className="py-14 px-4 rounded-3xl border border-dashed border-white/[0.1] text-center space-y-3.5 bg-white/[0.01]">
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto text-text-muted">
+                    <Hammer className="w-6 h-6 text-brand-mint/70" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">No projects published yet</h4>
+                    <p className="text-xs text-text-muted max-w-sm mx-auto mt-1 leading-relaxed">
+                      Present your engineering deliverables, structural modeling, or site execution case studies.
+                    </p>
+                  </div>
                   <button
                     type="button"
                     onClick={() => {
                       setEditingProject(null);
                       setIsProjectModalOpen(true);
                     }}
-                    className="btn-primary text-xs uppercase tracking-wider inline-flex items-center gap-1.5 py-2.5 px-4 cursor-pointer min-h-[44px]"
+                    className="btn-primary text-xs uppercase tracking-wider inline-flex items-center gap-1.5 py-2.5 px-5 cursor-pointer min-h-[44px]"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    Add Project
+                    Add First Project
                   </button>
                 </div>
               )}
@@ -1751,15 +1769,23 @@ export default function EditProfile() {
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-6 shadow-sm"
+              className="rounded-3xl border border-white/[0.08] bg-bg-card/80 backdrop-blur-xl p-6 sm:p-8 space-y-6 shadow-xl"
             >
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-heading font-extrabold text-white">
-                    Education
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
+                      SECTION 07 OF 11
+                    </span>
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
+                      +20 XP
+                    </span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
+                    Education & Academics
                   </h2>
-                  <p className="text-xs sm:text-sm text-text-muted mt-0.5">
-                    Degrees, diplomas, and engineering academic qualifications.
+                  <p className="text-xs sm:text-sm text-text-muted mt-1 leading-relaxed">
+                    Engineering degrees, technical diplomas, and university qualifications.
                   </p>
                 </div>
                 <button
@@ -1768,7 +1794,7 @@ export default function EditProfile() {
                     resetEduForm();
                     setIsEduModalOpen(true);
                   }}
-                  className="btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer shadow-sm min-h-[44px]"
+                  className="btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer shadow-md min-h-[44px] shrink-0"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add Education
@@ -1776,70 +1802,84 @@ export default function EditProfile() {
               </div>
 
               {profile?.education?.length > 0 ? (
-                <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-white/[0.08]">
+                <div className="space-y-4">
                   {profile.education.map((edu) => (
-                    <div key={edu.id} className="relative group">
-                      <div className="absolute -left-6 top-1.5 w-3 h-3 rounded-full bg-brand-mint border-2 border-bg-card shadow-sm ring-2 ring-brand-mint/20" />
-
-                      <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/25 transition-all flex items-start justify-between gap-4">
-                        <div className="space-y-1 min-w-0">
-                          <span className="text-xs font-mono font-bold text-brand-mint uppercase tracking-wider">
-                            {new Date(edu.startDate).getFullYear()} — {edu.currentlyStudying ? "Present" : edu.endDate ? new Date(edu.endDate).getFullYear() : "Present"}
-                          </span>
-
-                          <h4 className="text-base font-bold text-white leading-snug">{edu.institution}</h4>
-                          <div className="text-sm font-semibold text-text-secondary">
-                            {edu.qualification} {edu.fieldOfStudy && `• ${edu.fieldOfStudy}`}
-                          </div>
-
-                          {edu.description && (
-                            <p className="text-xs text-text-muted mt-2 leading-relaxed">
-                              {edu.description}
-                            </p>
-                          )}
+                    <div
+                      key={edu.id}
+                      className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/30 transition-all flex items-start justify-between gap-4"
+                    >
+                      <div className="space-y-1 min-w-0">
+                        <div className="text-xs font-mono font-bold text-brand-mint uppercase tracking-wider">
+                          {new Date(edu.startDate).getFullYear()} — {edu.currentlyStudying ? "Present" : edu.endDate ? new Date(edu.endDate).getFullYear() : "Present"}
                         </div>
-
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingEduId(edu.id);
-                              setEduForm({
-                                institution: edu.institution,
-                                qualification: edu.qualification,
-                                fieldOfStudy: edu.fieldOfStudy || "",
-                                startDate: edu.startDate ? new Date(edu.startDate).toISOString().split("T")[0] : "",
-                                endDate: edu.endDate ? new Date(edu.endDate).toISOString().split("T")[0] : "",
-                                currentlyStudying: Boolean(edu.currentlyStudying),
-                                description: edu.description || "",
-                              });
-                              setIsEduModalOpen(true);
-                            }}
-                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer"
-                            title="Edit"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => deleteEduMutation.mutate(edu.id)}
-                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-danger hover:bg-white/[0.04] transition-colors cursor-pointer"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                        <h4 className="text-base font-bold text-white">{edu.qualification}</h4>
+                        <div className="text-sm font-semibold text-text-secondary">
+                          {edu.institution} {edu.fieldOfStudy && `• ${edu.fieldOfStudy}`}
                         </div>
+                        {edu.description && (
+                          <p className="text-xs text-text-muted mt-2 leading-relaxed">
+                            {edu.description}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingEduId(edu.id);
+                            setEduForm({
+                              institution: edu.institution || "",
+                              qualification: edu.qualification || "",
+                              fieldOfStudy: edu.fieldOfStudy || "",
+                              startDate: edu.startDate ? new Date(edu.startDate).toISOString().split("T")[0] : "",
+                              endDate: edu.endDate ? new Date(edu.endDate).toISOString().split("T")[0] : "",
+                              currentlyStudying: Boolean(edu.currentlyStudying),
+                              description: edu.description || "",
+                            });
+                            setIsEduModalOpen(true);
+                          }}
+                          className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer"
+                          title="Edit"
+                          aria-label="Edit education"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteEduMutation.mutate(edu.id)}
+                          className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-danger hover:bg-white/[0.04] transition-colors cursor-pointer"
+                          title="Delete"
+                          aria-label="Delete education"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="py-12 px-4 rounded-2xl border border-dashed border-white/[0.08] text-center">
-                  <GraduationCap className="w-8 h-8 text-text-faint mx-auto mb-2" />
-                  <h4 className="text-sm font-bold text-white">Show your engineering education</h4>
-                  <p className="text-xs text-text-muted max-w-sm mx-auto mt-1">
-                    Add your university, engineering college, or polytechnic credentials.
-                  </p>
+                <div className="py-14 px-4 rounded-3xl border border-dashed border-white/[0.1] text-center space-y-3.5 bg-white/[0.01]">
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto text-text-muted">
+                    <GraduationCap className="w-6 h-6 text-brand-mint/70" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">No academic history added</h4>
+                    <p className="text-xs text-text-muted max-w-sm mx-auto mt-1 leading-relaxed">
+                      Add your engineering degrees, technical diplomas, and university credentials.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      resetEduForm();
+                      setIsEduModalOpen(true);
+                    }}
+                    className="btn-primary text-xs uppercase tracking-wider inline-flex items-center gap-1.5 py-2.5 px-5 cursor-pointer min-h-[44px]"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add Education
+                  </button>
                 </div>
               )}
             </motion.div>
@@ -1850,15 +1890,23 @@ export default function EditProfile() {
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-6 shadow-sm"
+              className="rounded-3xl border border-white/[0.08] bg-bg-card/80 backdrop-blur-xl p-6 sm:p-8 space-y-6 shadow-xl"
             >
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-heading font-extrabold text-white">
-                    Licenses & Certifications
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
+                      SECTION 08 OF 11
+                    </span>
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
+                      +15 XP
+                    </span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
+                    Accredited Certifications
                   </h2>
-                  <p className="text-xs sm:text-sm text-text-muted mt-0.5">
-                    PE, PMP, Autodesk Certified Professional, Primavera P6, and safety certifications.
+                  <p className="text-xs sm:text-sm text-text-muted mt-1 leading-relaxed">
+                    Licenses, software certifications, and professional engineering council registrations.
                   </p>
                 </div>
                 <button
@@ -1867,7 +1915,7 @@ export default function EditProfile() {
                     resetCertForm();
                     setIsCertModalOpen(true);
                   }}
-                  className="btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer shadow-sm min-h-[44px]"
+                  className="btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer shadow-md min-h-[44px] shrink-0"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add Certificate
@@ -1879,32 +1927,27 @@ export default function EditProfile() {
                   {profile.certifications.map((cert) => (
                     <div
                       key={cert.id}
-                      className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/25 transition-all flex flex-col justify-between gap-3 shadow-sm"
+                      className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/30 transition-all flex flex-col justify-between gap-3 shadow-sm"
                     >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1.5 text-xs font-semibold">
-                          {cert.isVerified || cert.issuer?.toLowerCase().includes("zeitnah") ? (
-                            <>
-                              <ShieldCheck className="w-3.5 h-3.5 text-brand-mint" />
-                              <span className="text-brand-mint">Verified by Zeitnah</span>
-                            </>
-                          ) : (
-                            <>
-                              <Award className="w-3.5 h-3.5 text-text-muted" />
-                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white/[0.04] text-text-muted border border-white/[0.08]">
-                                Unverified
-                              </span>
-                            </>
-                          )}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-mono font-bold text-brand-mint uppercase tracking-wider">
+                            {new Date(cert.issueDate).getFullYear()}
+                          </span>
+                          <span
+                            className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                              cert.verified
+                                ? "bg-brand-mint/15 text-brand-mint border border-brand-mint/30"
+                                : "bg-white/[0.04] text-text-faint"
+                            }`}
+                          >
+                            {cert.verified ? "Verified ✓" : "Unverified"}
+                          </span>
                         </div>
-                        <h4 className="text-base font-bold text-white leading-snug break-words">{cert.name}</h4>
-                        <div className="text-sm font-semibold text-text-secondary break-words">{cert.issuer}</div>
-                        <div className="text-xs text-text-muted">
-                          Issued {new Date(cert.issueDate).toLocaleDateString(undefined, { month: "short", year: "numeric" })}
-                          {cert.expirationDate && ` • Expires ${new Date(cert.expirationDate).toLocaleDateString(undefined, { month: "short", year: "numeric" })}`}
-                        </div>
+                        <h4 className="text-sm font-bold text-white leading-snug">{cert.name}</h4>
+                        <div className="text-xs text-text-secondary">{cert.issuer}</div>
                         {cert.credentialId && (
-                          <div className="text-[11px] font-mono text-text-faint break-words">
+                          <div className="text-[11px] font-mono text-text-faint truncate">
                             ID: {cert.credentialId}
                           </div>
                         )}
@@ -1916,13 +1959,13 @@ export default function EditProfile() {
                             href={cert.credentialUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-brand-mint hover:underline font-semibold"
+                            className="text-xs text-brand-mint hover:underline inline-flex items-center gap-1 min-h-[36px]"
                           >
-                            <span>Verify Credential</span>
                             <ExternalLink className="w-3 h-3" />
+                            View Credential
                           </a>
                         ) : (
-                          <span className="text-[11px] text-text-faint">No verification link</span>
+                          <span />
                         )}
 
                         <div className="flex items-center gap-1">
@@ -1931,8 +1974,8 @@ export default function EditProfile() {
                             onClick={() => {
                               setEditingCertId(cert.id);
                               setCertForm({
-                                name: cert.name,
-                                issuer: cert.issuer,
+                                name: cert.name || "",
+                                issuer: cert.issuer || "",
                                 issueDate: cert.issueDate ? new Date(cert.issueDate).toISOString().split("T")[0] : "",
                                 expirationDate: cert.expirationDate ? new Date(cert.expirationDate).toISOString().split("T")[0] : "",
                                 credentialId: cert.credentialId || "",
@@ -1940,16 +1983,18 @@ export default function EditProfile() {
                               });
                               setIsCertModalOpen(true);
                             }}
-                            className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-brand-mint cursor-pointer"
+                            className="p-1.5 rounded-lg text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
                             title="Edit"
+                            aria-label="Edit certification"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
                           <button
                             type="button"
                             onClick={() => deleteCertMutation.mutate(cert.id)}
-                            className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-danger cursor-pointer"
+                            className="p-1.5 rounded-lg text-text-muted hover:text-danger hover:bg-white/[0.04] transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
                             title="Delete"
+                            aria-label="Delete certification"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -1959,22 +2004,26 @@ export default function EditProfile() {
                   ))}
                 </div>
               ) : (
-                <div className="py-12 px-4 rounded-2xl border border-dashed border-white/[0.08] text-center space-y-3">
-                  <Award className="w-8 h-8 text-text-faint mx-auto mb-1" />
-                  <h4 className="text-sm font-bold text-white">No certifications yet.</h4>
-                  <p className="text-xs text-text-muted max-w-sm mx-auto">
-                    Add certifications to strengthen your professional profile.
-                  </p>
+                <div className="py-14 px-4 rounded-3xl border border-dashed border-white/[0.1] text-center space-y-3.5 bg-white/[0.01]">
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto text-text-muted">
+                    <Award className="w-6 h-6 text-brand-mint/70" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">No certifications recorded</h4>
+                    <p className="text-xs text-text-muted max-w-sm mx-auto mt-1 leading-relaxed">
+                      Add BIM certificates, project management certifications, or state engineering licenses.
+                    </p>
+                  </div>
                   <button
                     type="button"
                     onClick={() => {
                       resetCertForm();
                       setIsCertModalOpen(true);
                     }}
-                    className="btn-primary text-xs uppercase tracking-wider inline-flex items-center gap-1.5 py-2.5 px-4 cursor-pointer min-h-[44px]"
+                    className="btn-primary text-xs uppercase tracking-wider inline-flex items-center gap-1.5 py-2.5 px-5 cursor-pointer min-h-[44px]"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    Add Certification
+                    Add Certificate
                   </button>
                 </div>
               )}
@@ -1986,19 +2035,22 @@ export default function EditProfile() {
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-6 shadow-sm"
+              className="rounded-3xl border border-white/[0.08] bg-bg-card/80 backdrop-blur-xl p-6 sm:p-8 space-y-6 shadow-xl"
             >
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <h2 className="text-xl font-heading font-extrabold text-white">
-                    Career Preferences & Privacy
-                  </h2>
+                  <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
+                    SECTION 09 OF 11
+                  </span>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                     +20 XP
                   </span>
                 </div>
-                <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
-                  Configure employment targets for future matchmaking and establish granular visibility controls.
+                <h2 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
+                  Career Preferences & Privacy Controls
+                </h2>
+                <p className="text-xs sm:text-sm text-text-muted leading-relaxed mt-1">
+                  Set confidential recruitment discovery, desired job titles, salary visibility, and contact privacy.
                 </p>
               </div>
 
@@ -2019,14 +2071,14 @@ export default function EditProfile() {
                   <button
                     type="submit"
                     disabled={updateMutation.isPending}
-                    className="btn-primary text-xs uppercase tracking-wider flex items-center gap-2 py-3 px-6 cursor-pointer shadow-md min-h-[44px]"
+                    className="btn-primary text-xs uppercase tracking-wider flex items-center gap-2 py-3 px-6 cursor-pointer shadow-lg shadow-brand-mint/10 min-h-[44px]"
                   >
                     {updateMutation.isPending ? (
                       <RefreshCw className="w-4 h-4 animate-spin" />
                     ) : (
                       <Save className="w-4 h-4" />
                     )}
-                    Save Career Preferences & Privacy
+                    Save Career & Privacy Preferences
                   </button>
                 </div>
               </form>
@@ -2038,101 +2090,123 @@ export default function EditProfile() {
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-6 shadow-sm"
+              className="rounded-3xl border border-white/[0.08] bg-bg-card/80 backdrop-blur-xl p-6 sm:p-8 space-y-6 shadow-xl"
             >
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-heading font-extrabold text-white">
-                    Recommendations
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
+                      SECTION 10 OF 11
+                    </span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
+                    Peer & Mentor Endorsements
                   </h2>
-                  <p className="text-xs sm:text-sm text-text-muted mt-0.5">
-                    Endorsements from mentors, site leads, and engineering peers.
+                  <p className="text-xs sm:text-sm text-text-muted mt-1 leading-relaxed">
+                    Verified testimonials from colleagues, project leaders, and academic professors.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsReqRecModalOpen(true)}
-                  className="btn-secondary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2 px-3.5 cursor-pointer shadow-sm min-h-[44px]"
+                  className="btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer shadow-md min-h-[44px] shrink-0"
                 >
-                  <Share2 className="w-3.5 h-3.5" />
+                  <Plus className="w-3.5 h-3.5" />
                   Request Endorsement
                 </button>
               </div>
 
               {recommendations.length > 0 ? (
                 <div className="space-y-4">
-                  {recommendations.map((rec) => (
-                    <div
-                      key={rec.id}
-                      className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-3"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl overflow-hidden bg-bg-elevated border border-white/10 flex items-center justify-center">
-                            {rec.authorAvatar ? (
-                              <img src={rec.authorAvatar} alt={rec.authorName} className="w-full h-full object-cover" />
-                            ) : (
-                              <User className="w-5 h-5 text-brand-mint" />
-                            )}
+                  {recommendations.map((rec) => {
+                    const rId = rec.id || rec._id;
+                    const author = rec.author || {};
+                    const authorName = rec.authorName || author.name || "Peer";
+                    const authorAvatar = rec.authorAvatar || author.avatar;
+                    const authorHeadline = rec.authorHeadline || author.headline || rec.relationship || "Colleague";
+                    const isApproved = String(rec.status).toLowerCase() === "approved";
+
+                    return (
+                      <div
+                        key={rId}
+                        className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/30 transition-all flex flex-col justify-between gap-3 shadow-sm"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-bg-elevated border border-white/[0.08] overflow-hidden flex items-center justify-center shrink-0">
+                              {authorAvatar ? (
+                                <img src={getUploadUrl(authorAvatar)} alt={authorName} className="w-full h-full object-cover" />
+                              ) : (
+                                <User className="w-5 h-5 text-brand-mint" />
+                              )}
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-bold text-white">{authorName}</h4>
+                              <p className="text-xs text-text-muted">{authorHeadline}</p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="text-sm font-bold text-white">{rec.authorName}</h4>
-                            <p className="text-xs text-text-muted">
-                              @{rec.authorUsername} • {rec.relationship}
-                            </p>
+
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                                isApproved
+                                  ? "bg-brand-mint/15 text-brand-mint border border-brand-mint/30"
+                                  : "bg-brand-yellow/15 text-brand-yellow border border-brand-yellow/30"
+                              }`}
+                            >
+                              {isApproved ? "Approved ✓" : "Pending"}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => deleteRecMutation.mutate(rId)}
+                              className="p-2 min-h-[40px] min-w-[40px] flex items-center justify-center rounded-lg text-text-muted hover:text-danger hover:bg-white/[0.04] transition-colors cursor-pointer"
+                              title="Delete"
+                              aria-label="Delete recommendation"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </div>
 
-                        <span
-                          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                            rec.status === "approved"
-                              ? "bg-brand-mint/10 text-brand-mint"
-                              : "bg-brand-yellow/10 text-brand-yellow"
-                          }`}
-                        >
-                          {rec.status}
-                        </span>
-                      </div>
+                        <p className="text-xs text-text-secondary leading-relaxed italic border-l-2 border-brand-mint/30 pl-3 my-1">
+                          "{rec.content || rec.text || rec.message}"
+                        </p>
 
-                      <p className="text-xs text-text-secondary italic leading-relaxed border-l-2 border-brand-mint/30 pl-3">
-                        "{rec.content}"
-                      </p>
-
-                      <div className="flex items-center justify-between text-xs text-text-muted pt-1">
-                        <span>{new Date(rec.createdAt).toLocaleDateString()}</span>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              updateRecStatusMutation.mutate({
-                                id: rec.id,
-                                status: rec.status === "approved" ? "hidden" : "approved",
-                              })
-                            }
-                            className="text-xs font-semibold text-brand-mint hover:underline cursor-pointer"
-                          >
-                            {rec.status === "approved" ? "Hide from profile" : "Show on profile"}
-                          </button>
-                          <span className="text-text-faint">•</span>
-                          <button
-                            type="button"
-                            onClick={() => deleteRecMutation.mutate(rec.id)}
-                            className="text-xs font-semibold text-danger hover:underline cursor-pointer"
-                          >
-                            Remove
-                          </button>
+                        <div className="flex items-center justify-between text-[11px] text-text-faint pt-1">
+                          <span>Relationship: {rec.relationship || "Professional"}</span>
+                          {!isApproved && (
+                            <button
+                              type="button"
+                              onClick={() => updateRecStatusMutation.mutate({ id: rId, status: "approved" })}
+                              className="text-brand-mint font-semibold hover:underline cursor-pointer"
+                            >
+                              Approve for Public Profile
+                            </button>
+                          )}
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
-                <div className="py-12 px-4 rounded-2xl border border-dashed border-white/[0.08] text-center">
-                  <HeartHandshake className="w-8 h-8 text-text-faint mx-auto mb-2" />
-                  <h4 className="text-sm font-bold text-white">No recommendations yet</h4>
-                  <p className="text-xs text-text-muted max-w-sm mx-auto mt-1">
-                    Recommendations from instructors, mentors, or collaborators will appear here.
-                  </p>
+                <div className="py-14 px-4 rounded-3xl border border-dashed border-white/[0.1] text-center space-y-3.5 bg-white/[0.01]">
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto text-text-muted">
+                    <HeartHandshake className="w-6 h-6 text-brand-mint/70" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">No endorsements received yet</h4>
+                    <p className="text-xs text-text-muted max-w-sm mx-auto mt-1 leading-relaxed">
+                      Invite managers, senior engineers, or teammates to vouch for your work and technical execution.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsReqRecModalOpen(true)}
+                    className="btn-primary text-xs uppercase tracking-wider inline-flex items-center gap-1.5 py-2.5 px-5 cursor-pointer min-h-[44px]"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Request Endorsement
+                  </button>
                 </div>
               )}
             </motion.div>
@@ -2143,20 +2217,45 @@ export default function EditProfile() {
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-6 shadow-sm"
+              className="rounded-3xl border border-white/[0.08] bg-bg-card/80 backdrop-blur-xl p-6 sm:p-8 space-y-6 shadow-xl"
             >
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <h2 className="text-xl font-heading font-extrabold text-white">
-                    Public Profile Setup & Publish
-                  </h2>
+                  <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
+                    SECTION 11 OF 11
+                  </span>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                     +50 Total XP
                   </span>
                 </div>
-                <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
+                <h2 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
+                  Public Profile Setup & Publish
+                </h2>
+                <p className="text-xs sm:text-sm text-text-muted leading-relaxed mt-1">
                   Ensure required infrastructure identity elements are ready before publishing your public presence at /u/:username.
                 </p>
+              </div>
+
+              {/* Public URL & Handle */}
+              <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
+                    Canonical Public URL
+                  </h4>
+                  <div className="font-mono text-xs text-brand-mint flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5" />
+                    {window.location.origin}/u/{profile?.username || "your-handle"}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsChangeUsernameOpen(true)}
+                  className="btn-secondary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer min-h-[44px] shrink-0"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  Change Handle
+                </button>
               </div>
 
               {/* Publish Checklist */}
@@ -2168,9 +2267,9 @@ export default function EditProfile() {
                 <div className="space-y-2 text-xs">
                   <div className="flex items-center gap-2.5">
                     {profile?.avatar ? (
-                      <CheckCircle2 className="w-4 h-4 text-brand-mint" />
+                      <CheckCircle2 className="w-4 h-4 text-brand-mint shrink-0" />
                     ) : (
-                      <Circle className="w-4 h-4 text-brand-yellow" />
+                      <Circle className="w-4 h-4 text-brand-yellow shrink-0" />
                     )}
                     <span className={profile?.avatar ? "text-white" : "text-text-muted"}>
                       Profile photo uploaded
@@ -2179,9 +2278,9 @@ export default function EditProfile() {
 
                   <div className="flex items-center gap-2.5">
                     {profile?.headline ? (
-                      <CheckCircle2 className="w-4 h-4 text-brand-mint" />
+                      <CheckCircle2 className="w-4 h-4 text-brand-mint shrink-0" />
                     ) : (
-                      <Circle className="w-4 h-4 text-brand-yellow" />
+                      <Circle className="w-4 h-4 text-brand-yellow shrink-0" />
                     )}
                     <span className={profile?.headline ? "text-white" : "text-text-muted"}>
                       Professional headline added
@@ -2190,9 +2289,9 @@ export default function EditProfile() {
 
                   <div className="flex items-center gap-2.5">
                     {profile?.primaryDiscipline ? (
-                      <CheckCircle2 className="w-4 h-4 text-brand-mint" />
+                      <CheckCircle2 className="w-4 h-4 text-brand-mint shrink-0" />
                     ) : (
-                      <Circle className="w-4 h-4 text-brand-yellow" />
+                      <Circle className="w-4 h-4 text-brand-yellow shrink-0" />
                     )}
                     <span className={profile?.primaryDiscipline ? "text-white" : "text-text-muted"}>
                       Primary infrastructure discipline selected ({profile?.primaryDiscipline || "Not selected"})
@@ -2201,9 +2300,9 @@ export default function EditProfile() {
 
                   <div className="flex items-center gap-2.5">
                     {flatSkills.length >= 3 ? (
-                      <CheckCircle2 className="w-4 h-4 text-brand-mint" />
+                      <CheckCircle2 className="w-4 h-4 text-brand-mint shrink-0" />
                     ) : (
-                      <Circle className="w-4 h-4 text-brand-yellow" />
+                      <Circle className="w-4 h-4 text-brand-yellow shrink-0" />
                     )}
                     <span className={flatSkills.length >= 3 ? "text-white" : "text-text-muted"}>
                       At least 3 skills added ({flatSkills.length}/3)
@@ -2212,9 +2311,9 @@ export default function EditProfile() {
 
                   <div className="flex items-center gap-2.5">
                     {profile?.username ? (
-                      <CheckCircle2 className="w-4 h-4 text-brand-mint" />
+                      <CheckCircle2 className="w-4 h-4 text-brand-mint shrink-0" />
                     ) : (
-                      <Circle className="w-4 h-4 text-brand-yellow" />
+                      <Circle className="w-4 h-4 text-brand-yellow shrink-0" />
                     )}
                     <span className={profile?.username ? "text-white" : "text-text-muted"}>
                       Handle claimed (@{profile?.username})
@@ -2250,7 +2349,7 @@ export default function EditProfile() {
                     type="button"
                     onClick={() => publishMutation.mutate(!profile?.publicProfilePublished)}
                     disabled={publishMutation.isPending}
-                    className={`text-xs uppercase tracking-wider py-2.5 px-5 rounded-xl font-bold transition-all cursor-pointer shadow-md min-h-[44px] ${
+                    className={`text-xs uppercase tracking-wider py-3 px-6 rounded-xl font-bold transition-all cursor-pointer shadow-md min-h-[44px] ${
                       profile?.publicProfilePublished
                         ? "bg-white/[0.04] border border-white/10 text-white hover:bg-white/[0.08]"
                         : "btn-primary"
@@ -2270,17 +2369,19 @@ export default function EditProfile() {
           )}
         </div>
 
-        {/* Live Preview Aside */}
+        {/* Live Preview Aside (Desktop / Toggleable) */}
         {isPreviewOpen && (
-          <div className="lg:col-span-4 sticky top-24 rounded-3xl border border-border-default bg-bg-card p-5 space-y-4 shadow-xl overflow-hidden">
+          <div className="lg:col-span-4 sticky top-24 rounded-3xl border border-white/[0.08] bg-bg-card/90 backdrop-blur-xl p-5 space-y-4 shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-brand-mint flex items-center gap-1.5">
                 <Eye className="w-3.5 h-3.5" /> Live Preview
               </span>
-              <span className="text-[10px] text-text-muted font-mono">/u/{profile?.username}</span>
+              <span className="text-[10px] text-text-muted font-mono truncate max-w-[150px]">
+                /u/{profile?.username}
+              </span>
             </div>
 
-            <div className="rounded-2xl border border-white/[0.06] bg-bg-base overflow-hidden shadow-inner">
+            <div className="rounded-2xl border border-white/[0.08] bg-bg-base overflow-hidden shadow-inner">
               <div className="h-20 w-full bg-gradient-to-r from-bg-elevated to-brand-navy/50 relative">
                 {bannerUrl && <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" />}
               </div>
@@ -2330,12 +2431,12 @@ export default function EditProfile() {
       {/* Unsaved Changes Modal */}
       <AnimatePresence>
         {isUnsavedModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-md rounded-3xl border border-border-default bg-bg-card p-6 sm:p-7 space-y-4 shadow-2xl max-h-[90dvh] overflow-y-auto overscroll-contain"
+              className="relative w-full max-w-md rounded-3xl border border-white/[0.1] bg-bg-card p-6 sm:p-7 space-y-4 shadow-2xl max-h-[90dvh] overflow-y-auto overscroll-contain"
             >
               <div className="w-12 h-12 rounded-2xl bg-brand-yellow/10 border border-brand-yellow/20 flex items-center justify-center text-brand-yellow">
                 <AlertTriangle className="w-6 h-6" />
@@ -2373,8 +2474,8 @@ export default function EditProfile() {
 
       {/* Experience Modal */}
       {isExpModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
-          <div className="relative w-full max-w-lg rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90dvh] sm:max-h-[85vh] overflow-y-auto overscroll-contain">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in">
+          <div className="relative w-full max-w-lg rounded-3xl border border-white/[0.1] bg-bg-card p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90dvh] sm:max-h-[85vh] overflow-y-auto overscroll-contain">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-heading font-extrabold text-white">
                 {editingExpId ? "Edit Experience" : "Add Experience"}
@@ -2400,7 +2501,7 @@ export default function EditProfile() {
                   onChange={(e) => setExpForm({ ...expForm, organization: e.target.value })}
                   required
                   placeholder="e.g. Larsen & Toubro, AECOM, Bechtel"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
                 />
               </div>
 
@@ -2415,7 +2516,7 @@ export default function EditProfile() {
                     onChange={(e) => setExpForm({ ...expForm, role: e.target.value })}
                     required
                     placeholder="e.g. Site Engineer, BIM Lead"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
                   />
                 </div>
 
@@ -2426,7 +2527,7 @@ export default function EditProfile() {
                   <select
                     value={expForm.employmentType}
                     onChange={(e) => setExpForm({ ...expForm, employmentType: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
                   >
                     <option value="Full-time">Full-time</option>
                     <option value="Part-time">Part-time</option>
@@ -2445,7 +2546,7 @@ export default function EditProfile() {
                   <select
                     value={expForm.infrastructureSector}
                     onChange={(e) => setExpForm({ ...expForm, infrastructureSector: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
                   >
                     {INFRASTRUCTURE_SECTORS.map((s) => (
                       <option key={s} value={s}>
@@ -2464,7 +2565,7 @@ export default function EditProfile() {
                     value={expForm.location}
                     onChange={(e) => setExpForm({ ...expForm, location: e.target.value })}
                     placeholder="e.g. Riyadh, KSA"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
                   />
                 </div>
               </div>
@@ -2479,7 +2580,7 @@ export default function EditProfile() {
                     value={expForm.startDate}
                     onChange={(e) => setExpForm({ ...expForm, startDate: e.target.value })}
                     required
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
                   />
                 </div>
 
@@ -2492,7 +2593,7 @@ export default function EditProfile() {
                     value={expForm.endDate}
                     onChange={(e) => setExpForm({ ...expForm, endDate: e.target.value })}
                     disabled={expForm.currentlyActive}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none disabled:opacity-40"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none disabled:opacity-40"
                   />
                 </div>
               </div>
@@ -2503,7 +2604,7 @@ export default function EditProfile() {
                   id="currentlyActiveExp"
                   checked={expForm.currentlyActive}
                   onChange={(e) => setExpForm({ ...expForm, currentlyActive: e.target.checked })}
-                  className="rounded border-border-default text-brand-mint focus:ring-0 cursor-pointer"
+                  className="rounded border-white/[0.08] text-brand-mint focus:ring-0 cursor-pointer"
                 />
                 <label htmlFor="currentlyActiveExp" className="text-xs text-text-secondary cursor-pointer">
                   I currently work / lead here
@@ -2519,7 +2620,7 @@ export default function EditProfile() {
                   value={expForm.description}
                   onChange={(e) => setExpForm({ ...expForm, description: e.target.value })}
                   placeholder="Key responsibilities, project scale, engineering challenges..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none resize-none"
                 />
               </div>
 
@@ -2544,7 +2645,7 @@ export default function EditProfile() {
                       }
                     }}
                     placeholder="e.g. AutoCAD, Primavera P6..."
-                    className="flex-1 px-3 py-2 rounded-xl bg-bg-elevated border border-border-default text-xs text-white"
+                    className="flex-1 px-3 py-2 rounded-xl bg-bg-elevated border border-white/[0.08] text-xs text-white"
                   />
                   <button
                     type="button"
@@ -2555,7 +2656,7 @@ export default function EditProfile() {
                         setExpSoftwareInput("");
                       }
                     }}
-                    className="btn-secondary text-xs px-3 py-2 cursor-pointer"
+                    className="btn-secondary text-xs px-3 py-2 cursor-pointer min-h-[38px]"
                   >
                     Add
                   </button>
@@ -2599,7 +2700,7 @@ export default function EditProfile() {
                       }
                     }}
                     placeholder="e.g. Site supervision, Quantity estimation..."
-                    className="flex-1 px-3 py-2 rounded-xl bg-bg-elevated border border-border-default text-xs text-white"
+                    className="flex-1 px-3 py-2 rounded-xl bg-bg-elevated border border-white/[0.08] text-xs text-white"
                   />
                   <button
                     type="button"
@@ -2610,7 +2711,7 @@ export default function EditProfile() {
                         setExpSkillInput("");
                       }
                     }}
-                    className="btn-secondary text-xs px-3 py-2 cursor-pointer"
+                    className="btn-secondary text-xs px-3 py-2 cursor-pointer min-h-[38px]"
                   >
                     Add
                   </button>
@@ -2668,8 +2769,8 @@ export default function EditProfile() {
 
       {/* Education Modal */}
       {isEduModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
-          <div className="relative w-full max-w-lg rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90dvh] sm:max-h-[85vh] overflow-y-auto overscroll-contain">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in">
+          <div className="relative w-full max-w-lg rounded-3xl border border-white/[0.1] bg-bg-card p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90dvh] sm:max-h-[85vh] overflow-y-auto overscroll-contain">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-heading font-extrabold text-white">
                 {editingEduId ? "Edit Education" : "Add Education"}
@@ -2695,7 +2796,7 @@ export default function EditProfile() {
                   onChange={(e) => setEduForm({ ...eduForm, institution: e.target.value })}
                   required
                   placeholder="e.g. University of Calicut, IIT Madras, Zeitnah"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
                 />
               </div>
 
@@ -2710,7 +2811,7 @@ export default function EditProfile() {
                     onChange={(e) => setEduForm({ ...eduForm, qualification: e.target.value })}
                     required
                     placeholder="e.g. B.Tech, M.S, Diploma"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
                   />
                 </div>
 
@@ -2723,7 +2824,7 @@ export default function EditProfile() {
                     value={eduForm.fieldOfStudy}
                     onChange={(e) => setEduForm({ ...eduForm, fieldOfStudy: e.target.value })}
                     placeholder="e.g. Civil Engineering"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
                   />
                 </div>
               </div>
@@ -2738,7 +2839,7 @@ export default function EditProfile() {
                     value={eduForm.startDate}
                     onChange={(e) => setEduForm({ ...eduForm, startDate: e.target.value })}
                     required
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
                   />
                 </div>
 
@@ -2751,7 +2852,7 @@ export default function EditProfile() {
                     value={eduForm.endDate}
                     onChange={(e) => setEduForm({ ...eduForm, endDate: e.target.value })}
                     disabled={eduForm.currentlyStudying}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none disabled:opacity-40"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none disabled:opacity-40"
                   />
                 </div>
               </div>
@@ -2762,7 +2863,7 @@ export default function EditProfile() {
                   id="currentlyStudyingEdu"
                   checked={eduForm.currentlyStudying}
                   onChange={(e) => setEduForm({ ...eduForm, currentlyStudying: e.target.checked })}
-                  className="rounded border-border-default text-brand-mint focus:ring-0 cursor-pointer"
+                  className="rounded border-white/[0.08] text-brand-mint focus:ring-0 cursor-pointer"
                 />
                 <label htmlFor="currentlyStudyingEdu" className="text-xs text-text-secondary cursor-pointer">
                   I currently study here
@@ -2778,7 +2879,7 @@ export default function EditProfile() {
                   value={eduForm.description}
                   onChange={(e) => setEduForm({ ...eduForm, description: e.target.value })}
                   placeholder="Academic clubs, honors, capstone thesis title..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none resize-none"
                 />
               </div>
 
@@ -2805,8 +2906,8 @@ export default function EditProfile() {
 
       {/* Certification Modal */}
       {isCertModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
-          <div className="relative w-full max-w-lg rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90dvh] sm:max-h-[85vh] overflow-y-auto overscroll-contain">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in">
+          <div className="relative w-full max-w-lg rounded-3xl border border-white/[0.1] bg-bg-card p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90dvh] sm:max-h-[85vh] overflow-y-auto overscroll-contain">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-heading font-extrabold text-white">
                 {editingCertId ? "Edit Certification" : "Add Certification"}
@@ -2832,7 +2933,7 @@ export default function EditProfile() {
                   onChange={(e) => setCertForm({ ...certForm, name: e.target.value })}
                   required
                   placeholder="e.g. Autodesk Certified Professional: Revit for Structural Design"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
                 />
               </div>
 
@@ -2846,7 +2947,7 @@ export default function EditProfile() {
                   onChange={(e) => setCertForm({ ...certForm, issuer: e.target.value })}
                   required
                   placeholder="e.g. Autodesk, PMI, Oracle, ASCE, Zeitnah"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
                 />
               </div>
 
@@ -2860,7 +2961,7 @@ export default function EditProfile() {
                     value={certForm.issueDate}
                     onChange={(e) => setCertForm({ ...certForm, issueDate: e.target.value })}
                     required
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
                   />
                 </div>
 
@@ -2872,7 +2973,7 @@ export default function EditProfile() {
                     type="date"
                     value={certForm.expirationDate}
                     onChange={(e) => setCertForm({ ...certForm, expirationDate: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
                   />
                 </div>
               </div>
@@ -2886,7 +2987,7 @@ export default function EditProfile() {
                   value={certForm.credentialId}
                   onChange={(e) => setCertForm({ ...certForm, credentialId: e.target.value })}
                   placeholder="e.g. CERT-REV-9874"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
                 />
               </div>
 
@@ -2899,7 +3000,7 @@ export default function EditProfile() {
                   value={certForm.credentialUrl}
                   onChange={(e) => setCertForm({ ...certForm, credentialUrl: e.target.value })}
                   placeholder="https://..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
                 />
               </div>
 
@@ -2933,8 +3034,8 @@ export default function EditProfile() {
 
       {/* Endorsement Request Modal */}
       {isReqRecModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
-          <div className="relative w-full max-w-md rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-4 shadow-2xl max-h-[90dvh] overflow-y-auto overscroll-contain">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in">
+          <div className="relative w-full max-w-md rounded-3xl border border-white/[0.1] bg-bg-card p-6 sm:p-8 space-y-4 shadow-2xl max-h-[90dvh] overflow-y-auto overscroll-contain">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-heading font-extrabold text-white">
                 Request an Endorsement
@@ -2953,7 +3054,7 @@ export default function EditProfile() {
               Share your public profile link with project directors, consultants, or senior engineers to receive verified endorsements.
             </p>
 
-            <div className="p-3 rounded-xl bg-bg-elevated border border-border-default flex items-center justify-between gap-2">
+            <div className="p-3 rounded-xl bg-bg-elevated border border-white/[0.08] flex items-center justify-between gap-2">
               <span className="text-xs font-mono text-white truncate">
                 {`${window.location.origin}/u/${profile?.username}`}
               </span>

@@ -16,6 +16,7 @@ import {
   Building2,
   GraduationCap,
   Info,
+  X,
 } from 'lucide-react';
 import { portfolioService } from '../../services/portfolioService';
 import ProfileNav from '../../components/profile/ProfileNav';
@@ -74,24 +75,6 @@ export default function VerificationCenterPage() {
   const [files, setFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      setLoading(true);
-      try {
-        const res = await portfolioService.getVerificationCenter();
-        if (active) setData(res);
-      } catch (err) {
-        console.error('Failed to load verification center:', err);
-        if (active) toast?.error?.('Could not load verification records.');
-      } finally {
-        if (active) setLoading(false);
-      }
-    })();
-    return () => { active = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const loadVerificationCenter = async () => {
     setLoading(true);
     try {
@@ -104,6 +87,11 @@ export default function VerificationCenterPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadVerificationCenter();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleOpenRequest = (cat) => {
     setCategory(cat || 'PROFESSIONAL');
@@ -165,7 +153,7 @@ export default function VerificationCenterPage() {
     const s = (status || 'UNVERIFIED').toUpperCase();
     if (s === 'VERIFIED') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
           <CheckCircle2 className="w-3.5 h-3.5" /> Verified
           {validUntil && <span className="text-[10px] text-text-muted">(exp {new Date(validUntil).toLocaleDateString()})</span>}
         </span>
@@ -173,14 +161,14 @@ export default function VerificationCenterPage() {
     }
     if (s === 'PENDING') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-mono bg-brand-yellow/10 text-brand-yellow border border-brand-yellow/20">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-mono bg-brand-yellow/10 text-brand-yellow border border-brand-yellow/25">
           <Clock className="w-3.5 h-3.5" /> Under Review
         </span>
       );
     }
     if (s === 'REJECTED') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-mono bg-red-500/10 text-red-400 border border-red-500/20">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-mono bg-red-500/10 text-red-400 border border-red-500/25">
           <XCircle className="w-3.5 h-3.5" /> Rejected
         </span>
       );
@@ -200,22 +188,26 @@ export default function VerificationCenterPage() {
   };
 
   return (
-    <div className="space-y-8 animate-fadeIn max-w-6xl mx-auto pb-16">
-      {/* ── UNIFIED PROFILE NAVIGATION ── */}
+    <div className="space-y-6 sm:space-y-8 max-w-6xl mx-auto pb-20">
+      {/* ── 01. UNIFIED PROFILE NAVIGATION ── */}
       <ProfileNav />
 
-      {/* ── HEADER HERO ── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-bg-surface via-bg-surface/90 to-brand-navy/30 border border-border-subtle p-6 sm:p-8 backdrop-blur-xl shadow-xl">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-brand-mint/5 rounded-full blur-3xl -z-10 pointer-events-none" />
+      {/* ── 02. TRUST & VERIFICATION HERO ── */}
+      <section className="relative overflow-hidden rounded-3xl bg-[#0A0F18]/95 border border-white/[0.08] p-6 sm:p-10 shadow-[0_12px_40px_rgba(0,0,0,0.4)]">
+        <div
+          className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-mint/40 to-transparent pointer-events-none"
+          aria-hidden="true"
+        />
+
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-mint/10 border border-brand-mint/20 text-brand-mint text-xs font-semibold uppercase tracking-wider">
-              <ShieldCheck className="w-3.5 h-3.5" /> Trust & Verification Network
+              <ShieldCheck className="w-3.5 h-3.5" /> Trust & Verification Center
             </div>
-            <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-white">
+            <h1 className="text-2xl sm:text-3xl font-heading font-black text-white tracking-tight">
               Verification Center
             </h1>
-            <p className="text-text-muted text-sm max-w-2xl">
+            <p className="text-text-muted text-xs sm:text-sm max-w-2xl leading-relaxed">
               Establish credible infrastructure authority. Badges represent verified credentials, council registrations, and validated enterprise affiliations.
             </p>
           </div>
@@ -223,16 +215,17 @@ export default function VerificationCenterPage() {
           <div className="flex items-center gap-3 shrink-0">
             <Link
               to="/profile/portfolio"
-              className="px-4 py-2.5 rounded-xl border border-white/10 hover:border-white/20 bg-white/[0.04] text-white text-xs sm:text-sm font-semibold flex items-center gap-2 hover:bg-white/[0.08] transition-all"
+              className="zn-btn-secondary text-xs sm:text-sm py-2.5 px-4"
             >
               View Portfolio
             </Link>
             <button
               type="button"
               onClick={() => handleOpenRequest('PROFESSIONAL')}
-              className="px-5 py-2.5 rounded-xl bg-brand-mint text-black text-xs sm:text-sm font-bold font-heading hover:bg-brand-mint/90 transition-all flex items-center gap-2 shadow-sm cursor-pointer"
+              className="zn-btn-primary text-xs sm:text-sm py-2.5 px-5 flex items-center gap-2 cursor-pointer shadow-sm"
             >
-              <ShieldCheck className="w-4 h-4" /> Request Verification
+              <ShieldCheck className="w-4 h-4" />
+              <span>Request Verification</span>
             </button>
           </div>
         </div>
@@ -240,13 +233,13 @@ export default function VerificationCenterPage() {
         {/* Security / Privacy notice */}
         <div className="mt-6 flex items-start gap-3 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] text-xs text-text-secondary">
           <Lock className="w-4 h-4 text-brand-mint shrink-0 mt-0.5" />
-          <p>
+          <p className="leading-relaxed">
             <strong className="text-white">Strict Document Security:</strong> Verification documents and licenses are stored in private encrypted storage with authenticated signed tokens. Documents are never exposed on your public profile or shared with recruiters. Only the resulting verification badge is displayed.
           </p>
         </div>
-      </div>
+      </section>
 
-      {/* ── CATEGORY CARDS ── */}
+      {/* ── 03. CATEGORY CARDS ── */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
           <div className="w-8 h-8 rounded-full border-2 border-brand-mint/20 border-t-brand-mint animate-spin" />
@@ -256,7 +249,7 @@ export default function VerificationCenterPage() {
         </div>
       ) : (
         <div className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
             {Object.entries(CATEGORY_META).map(([catKey, meta]) => {
               const Icon = meta.icon;
               const catStatus = data?.verifications?.[catKey.toLowerCase()] || { status: 'UNVERIFIED' };
@@ -266,7 +259,7 @@ export default function VerificationCenterPage() {
               return (
                 <div
                   key={catKey}
-                  className="rounded-2xl border border-border-subtle bg-bg-surface/70 backdrop-blur-xl p-5 sm:p-6 space-y-4 hover:border-white/20 transition-all"
+                  className="rounded-2xl border border-white/[0.08] bg-[#0A0F18]/90 p-5 sm:p-6 space-y-4 hover:border-white/20 transition-all shadow-sm"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
@@ -308,7 +301,8 @@ export default function VerificationCenterPage() {
                         onClick={() => handleOpenRequest(catKey)}
                         className="text-xs font-bold text-brand-mint hover:underline flex items-center gap-1 cursor-pointer"
                       >
-                        Verify this category <ArrowRight className="w-3.5 h-3.5" />
+                        <span>Verify this category</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
@@ -317,21 +311,21 @@ export default function VerificationCenterPage() {
             })}
           </div>
 
-          {/* ── VERIFICATION HISTORY & AUDIT TRAIL ── */}
-          <div className="rounded-3xl border border-border-subtle bg-bg-surface/60 backdrop-blur-xl p-6 sm:p-8 space-y-6">
+          {/* ── 04. VERIFICATION AUDIT TRAIL ── */}
+          <section className="rounded-3xl border border-white/[0.08] bg-[#0A0F18]/90 backdrop-blur-xl p-6 sm:p-8 space-y-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-heading font-extrabold text-white">
+                <h2 className="text-lg font-heading font-extrabold text-white tracking-tight">
                   Verification History
                 </h2>
-                <p className="text-xs text-text-muted">
-                  Audit log of your submitted verification requests and decisions.
+                <p className="text-xs text-text-muted mt-0.5">
+                  Audit log of your submitted verification requests and decisions
                 </p>
               </div>
             </div>
 
             {(!data?.requests || data.requests.length === 0) ? (
-              <div className="py-8 text-center text-text-muted text-xs space-y-2">
+              <div className="py-10 text-center text-text-muted text-xs space-y-2 border border-dashed border-white/[0.08] rounded-2xl">
                 <Shield className="w-8 h-8 opacity-30 mx-auto" />
                 <p>No verification requests submitted yet.</p>
               </div>
@@ -373,11 +367,11 @@ export default function VerificationCenterPage() {
                 ))}
               </div>
             )}
-          </div>
+          </section>
         </div>
       )}
 
-      {/* ── REQUEST VERIFICATION MODAL ── */}
+      {/* ── 05. REQUEST VERIFICATION MODAL ── */}
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
@@ -385,30 +379,29 @@ export default function VerificationCenterPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-lg bg-bg-surface border border-border-subtle rounded-3xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl space-y-5"
+              className="relative w-full max-w-lg bg-[#0F1724] border border-white/[0.12] rounded-3xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl space-y-5"
             >
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="absolute top-5 right-5 p-2 rounded-full border border-white/10 hover:bg-white/[0.08] text-text-muted hover:text-white"
+                className="absolute top-5 right-5 p-2 rounded-full border border-white/10 hover:bg-white/[0.08] text-text-muted hover:text-white transition-colors"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
 
               <div>
                 <h3 className="text-xl font-heading font-bold text-white">
                   Request Credential Verification
                 </h3>
-                <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                  Submit proof to receive a verified badge. All documents are kept confidential.
+                <p className="text-xs text-text-muted mt-1">
+                  Upload official documentation to establish verified trust on Zeitnah.
                 </p>
               </div>
 
               <form onSubmit={handleSubmitRequest} className="space-y-4">
-                {/* Category select */}
                 <div>
-                  <label className="block text-xs font-semibold text-text-muted uppercase mb-1">
-                    Verification Category
+                  <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
+                    Category
                   </label>
                   <select
                     value={category}
@@ -417,112 +410,93 @@ export default function VerificationCenterPage() {
                       const meta = CATEGORY_META[e.target.value];
                       setDocumentType(meta?.allowedTypes?.[0] || '');
                     }}
-                    className="w-full rounded-xl bg-white/[0.04] border border-white/[0.08] px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-brand-mint"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white text-xs focus:border-brand-mint outline-none transition-colors"
                   >
-                    <option value="PROFESSIONAL" className="bg-bg-surface">Professional Status (Engineering Council)</option>
-                    <option value="IDENTITY" className="bg-bg-surface">Identity Verification (National ID / Passport)</option>
-                    <option value="BUSINESS_AFFILIATION" className="bg-bg-surface">Business Affiliation (Employer Contract / ID)</option>
-                    <option value="CERTIFICATION" className="bg-bg-surface">Certification (Primavera / BIM / PMP)</option>
+                    {Object.entries(CATEGORY_META)
+                      .filter(([, meta]) => !meta.isAdminOnly)
+                      .map(([key, meta]) => (
+                        <option key={key} value={key} className="bg-[#0F1724]">
+                          {meta.title}
+                        </option>
+                      ))}
                   </select>
                 </div>
 
-                {/* Document Type */}
                 <div>
-                  <label className="block text-xs font-semibold text-text-muted uppercase mb-1">
-                    Document / Credential Type
+                  <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
+                    Document Type
                   </label>
                   <input
                     type="text"
-                    required
                     value={documentType}
                     onChange={(e) => setDocumentType(e.target.value)}
-                    placeholder="e.g. Chartered Engineer Certificate"
-                    className="w-full rounded-xl bg-white/[0.04] border border-white/[0.08] px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-brand-mint"
+                    placeholder="e.g. Council Registration Certificate"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white text-xs focus:border-brand-mint outline-none transition-colors"
+                    required
                   />
                 </div>
 
-                {/* Issuing Authority */}
-                <div>
-                  <label className="block text-xs font-semibold text-text-muted uppercase mb-1">
-                    Issuing Authority / Organization
-                  </label>
-                  <input
-                    type="text"
-                    value={issuingAuthority}
-                    onChange={(e) => setIssuingAuthority(e.target.value)}
-                    placeholder="e.g. Institution of Engineers, Autodesk, ABC Infrastructure"
-                    className="w-full rounded-xl bg-white/[0.04] border border-white/[0.08] px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-brand-mint"
-                  />
-                </div>
-
-                {/* Document / License Number */}
-                <div>
-                  <label className="block text-xs font-semibold text-text-muted uppercase mb-1">
-                    Registration / License Number (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={documentNumber}
-                    onChange={(e) => setDocumentNumber(e.target.value)}
-                    placeholder="e.g. CE-984210"
-                    className="w-full rounded-xl bg-white/[0.04] border border-white/[0.08] px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-brand-mint"
-                  />
-                </div>
-
-                {/* Expiration date */}
-                <div>
-                  <label className="block text-xs font-semibold text-text-muted uppercase mb-1">
-                    Valid Until / Expiration (Optional)
-                  </label>
-                  <input
-                    type="date"
-                    value={expiresAt}
-                    onChange={(e) => setExpiresAt(e.target.value)}
-                    className="w-full rounded-xl bg-white/[0.04] border border-white/[0.08] px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-brand-mint"
-                  />
-                </div>
-
-                {/* File upload */}
-                <div>
-                  <label className="block text-xs font-semibold text-text-muted uppercase mb-1">
-                    Upload Evidence Document (PDF, JPG, PNG — max 10MB)
-                  </label>
-                  <div className="border border-dashed border-white/20 hover:border-brand-mint/50 rounded-2xl p-4 text-center cursor-pointer transition-all bg-white/[0.02]">
-                    <input
-                      type="file"
-                      required
-                      accept=".pdf,.png,.jpg,.jpeg,.webp"
-                      onChange={handleFileChange}
-                      className="hidden"
-                      id="verif-file-upload"
-                    />
-                    <label htmlFor="verif-file-upload" className="cursor-pointer space-y-1 block">
-                      <UploadCloud className="w-6 h-6 text-brand-mint mx-auto" />
-                      <p className="text-xs text-white font-semibold">
-                        {files.length > 0 ? files[0].name : 'Click to select file'}
-                      </p>
-                      <p className="text-[10px] text-text-muted">
-                        Encrypted private upload
-                      </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
+                      Document / License #
                     </label>
+                    <input
+                      type="text"
+                      value={documentNumber}
+                      onChange={(e) => setDocumentNumber(e.target.value)}
+                      placeholder="Optional"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white text-xs focus:border-brand-mint outline-none transition-colors"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
+                      Issuing Authority
+                    </label>
+                    <input
+                      type="text"
+                      value={issuingAuthority}
+                      onChange={(e) => setIssuingAuthority(e.target.value)}
+                      placeholder="e.g. Council of Engineers"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white text-xs focus:border-brand-mint outline-none transition-colors"
+                    />
                   </div>
                 </div>
 
-                {/* Submit button */}
-                <div className="flex items-center justify-end gap-3 pt-3">
+                <div>
+                  <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
+                    Upload Official Evidence (PDF, JPG, PNG &le; 10MB)
+                  </label>
+                  <input
+                    type="file"
+                    multiple
+                    accept="application/pdf,image/jpeg,image/png,image/webp"
+                    onChange={handleFileChange}
+                    className="w-full text-xs text-text-muted file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border file:border-white/10 file:bg-white/[0.05] file:text-white file:text-xs file:font-semibold hover:file:bg-white/[0.1] file:cursor-pointer"
+                    required
+                  />
+                  {files.length > 0 && (
+                    <p className="text-[11px] text-brand-mint mt-1">
+                      {files.length} document{files.length > 1 ? 's' : ''} selected
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/[0.08]">
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2.5 rounded-xl border border-white/10 text-xs font-semibold text-text-muted hover:text-white"
+                    className="px-4 py-2 rounded-xl border border-white/10 text-text-muted hover:text-white text-xs font-semibold"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-5 py-2.5 rounded-xl bg-brand-mint text-black text-xs font-bold font-heading hover:bg-brand-mint/90 transition-all shadow-sm cursor-pointer"
+                    className="zn-btn-primary text-xs px-5 py-2.5 cursor-pointer disabled:opacity-50"
                   >
-                    {submitting ? 'Submitting...' : 'Submit Verification Request'}
+                    {submitting ? 'Submitting...' : 'Submit Evidence'}
                   </button>
                 </div>
               </form>

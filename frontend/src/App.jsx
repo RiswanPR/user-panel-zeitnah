@@ -37,7 +37,6 @@ const Dashboard = lazyWithRetry(() => import("./pages/learning/Dashboard"));
 const MyPoints = lazyWithRetry(() => import("./pages/learning/MyPoints"));
 const Leaderboard = lazyWithRetry(() => import("./pages/leaderboard/LeaderboardPage"));
 const NetworkPage = lazyWithRetry(() => import("./pages/network/NetworkPage"));
-const NetworkProfilePage = lazyWithRetry(() => import("./pages/network/NetworkProfilePage"));
 const LearningSpaceDetailPage = lazyWithRetry(() => import("./pages/network/LearningSpaceDetailPage"));
 const DiscussionDetailPage = lazyWithRetry(() => import("./pages/network/DiscussionDetailPage"));
 const NotFoundPage = lazyWithRetry(() => import("./pages/NotFoundPage"));
