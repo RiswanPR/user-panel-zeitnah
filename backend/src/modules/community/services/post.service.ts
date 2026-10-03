@@ -12,6 +12,7 @@ import { CommunityGateway } from '../gateways/community.gateway';
 import { NotificationsService } from '../../notifications/notifications.service';
 import { SignedUrlService } from '../../../common/aws/signed-url.service';
 import { CommunityS3Service } from './community-s3.service';
+import { CommunityIdempotencyService } from './community-idempotency.service';
 
 @Injectable()
 export class PostService {
@@ -25,6 +26,7 @@ export class PostService {
     private readonly notificationsService: NotificationsService,
     @Optional() private readonly signedUrlService?: SignedUrlService,
     @Optional() private readonly communityS3Service?: CommunityS3Service,
+    @Optional() private readonly communityIdempotencyService?: CommunityIdempotencyService,
   ) {}
 
   private async resolveMediaUrls(posts: any[]): Promise<any[]> {
@@ -140,19 +142,47 @@ export class PostService {
     return normalized;
   }
 
-  async createPost(userId: string, data: CreatePostDto, isAdmin: boolean = false): Promise<any> {
-    // Duplicate publish protection (Section 12):
+  async createPost(
+    userId: string,
+    data: CreatePostDto,
+    isAdmin: boolean = false,
+    idempotencyKey?: string,
+  ): Promise<any> {
+    const clientKey = idempotencyKey || (data as any)?.idempotencyKey;
+    if (this.communityIdempotencyService && clientKey) {
+      return this.communityIdempotencyService.executeWithIdempotency(
+        userId,
+        'CREATE_POST',
+        clientKey,
+        data,
+        () => this.executePostCreation(userId, data, isAdmin, clientKey),
+      );
+    }
+    return this.executePostCreation(userId, data, isAdmin, clientKey);
+  }
+
+  private async executePostCreation(
+    userId: string,
+    data: CreatePostDto,
+    isAdmin: boolean = false,
+    clientKey?: string,
+  ): Promise<any> {
+    // In-flight locks & short-window duplicate publish protection (Section 12):
     // Deduplicate rapid concurrent submissions / enter spam
     const mediaFingerprint = (data.media || []).map((m: any) => m.url).sort().join(',');
-    const fingerprint = `${userId}:${data.content?.trim() || ''}:${mediaFingerprint}:${data.courseId || ''}`;
+    const fingerprint = clientKey
+      ? `${userId}:key:${clientKey}`
+      : `${userId}:${data.content?.trim() || ''}:${mediaFingerprint}:${data.courseId || ''}`;
 
     if (this.inFlightPostRequests.has(fingerprint)) {
       return await this.inFlightPostRequests.get(fingerprint);
     }
 
-    const recent = this.recentPostsCache.get(fingerprint);
-    if (recent && Date.now() - recent.timestamp < 3000) {
-      return recent.post;
+    if (!clientKey) {
+      const recent = this.recentPostsCache.get(fingerprint);
+      if (recent && Date.now() - recent.timestamp < 3000) {
+        return recent.post;
+      }
     }
 
     const execution = async () => {
@@ -224,13 +254,15 @@ export class PostService {
 
     try {
       const result = await promise;
-      this.recentPostsCache.set(fingerprint, { post: result, timestamp: Date.now() });
-      const timer = setTimeout(() => {
-        if (this.recentPostsCache.get(fingerprint)?.post?._id === result?._id) {
-          this.recentPostsCache.delete(fingerprint);
-        }
-      }, 5000);
-      timer.unref?.();
+      if (!clientKey) {
+        this.recentPostsCache.set(fingerprint, { post: result, timestamp: Date.now() });
+        const timer = setTimeout(() => {
+          if (this.recentPostsCache.get(fingerprint)?.post?._id === result?._id) {
+            this.recentPostsCache.delete(fingerprint);
+          }
+        }, 5000);
+        timer.unref?.();
+      }
       return result;
     } finally {
       this.inFlightPostRequests.delete(fingerprint);

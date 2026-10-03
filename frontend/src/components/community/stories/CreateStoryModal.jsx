@@ -27,6 +27,7 @@ export default function CreateStoryModal({ isOpen, onClose }) {
   
   const fileInputRef = useRef(null);
   const previousActiveElementRef = useRef(null);
+  const idempotencyKeyRef = useRef(null);
   const shouldReduceMotion = useReducedMotion();
   const createStoryMutation = useCreateStory();
 
@@ -52,6 +53,7 @@ export default function CreateStoryModal({ isOpen, onClose }) {
   };
 
   const handleClose = useCallback(() => {
+    idempotencyKeyRef.current = null;
     setText('');
     setTab('media');
     removeFile();
@@ -64,6 +66,10 @@ export default function CreateStoryModal({ isOpen, onClose }) {
     try {
       setIsUploading(true);
       let mediaData = null;
+
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = `story_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      }
 
       if (tab === 'media' && file) {
         const uploadRes = await communityApi.uploadMedia(file, (progressEvent) => {
@@ -91,10 +97,12 @@ export default function CreateStoryModal({ isOpen, onClose }) {
           type: storyType,
           text: tab === 'text' ? text : undefined,
           backgroundColor: tab === 'text' ? bgColor : undefined,
+          idempotencyKey: idempotencyKeyRef.current,
           ...mediaData,
         },
         {
           onSuccess: () => {
+            idempotencyKeyRef.current = null;
             toast.success('Story published!');
             handleClose();
           },

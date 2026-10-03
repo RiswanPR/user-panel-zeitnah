@@ -52,6 +52,11 @@ export class CreateStoryDto {
   @IsNumber()
   @IsOptional()
   mediaDuration?: number;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  idempotencyKey?: string;
 }
 
 export class StoryReplyDto {

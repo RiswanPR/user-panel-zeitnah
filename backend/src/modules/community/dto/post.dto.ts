@@ -132,6 +132,11 @@ export class CreatePostDto {
   @IsOptional()
   @IsString({ each: true })
   mentions?: string[];
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  idempotencyKey?: string;
 }
 
 export class UpdatePostDto {

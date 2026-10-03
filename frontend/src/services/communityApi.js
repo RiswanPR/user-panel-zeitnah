@@ -96,8 +96,13 @@ export const communityApi = {
     };
   },
 
-  createPost: async (data) => {
-    const response = await api.post('/community/posts', data);
+  createPost: async (data, options = {}) => {
+    const idempotencyKey = data?.idempotencyKey || options?.idempotencyKey;
+    const config = {};
+    if (idempotencyKey) {
+      config.headers = { 'Idempotency-Key': idempotencyKey };
+    }
+    const response = await api.post('/community/posts', data, config);
     return response.data;
   },
 
@@ -156,8 +161,13 @@ export const communityApi = {
     return response.data;
   },
 
-  createStory: async (data) => {
-    const response = await api.post('/community/stories', data);
+  createStory: async (data, options = {}) => {
+    const idempotencyKey = data?.idempotencyKey || options?.idempotencyKey;
+    const config = {};
+    if (idempotencyKey) {
+      config.headers = { 'Idempotency-Key': idempotencyKey };
+    }
+    const response = await api.post('/community/stories', data, config);
     return response.data;
   },
 

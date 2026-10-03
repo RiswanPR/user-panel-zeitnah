@@ -89,6 +89,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
   const previousActiveElementRef = useRef(null);
   const abortControllerRef = useRef(null);
   const isPublishingRef = useRef(false);
+  const idempotencyKeyRef = useRef(null);
 
   const createPostMutation = useCreatePost();
   const improveMutation = useAIImproveText();
@@ -210,6 +211,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
   }, [isOpen, handleRequestClose]);
 
   const resetState = (cleanupUploaded = false) => {
+    idempotencyKeyRef.current = null;
     files.forEach((f) => {
       if (f.previewUrl) URL.revokeObjectURL(f.previewUrl);
       if (cleanupUploaded && f.uploadedUrl) {
@@ -256,6 +258,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
   };
 
   const handleDiscardDraft = () => {
+    idempotencyKeyRef.current = null;
     try {
       localStorage.removeItem(DRAFT_STORAGE_KEY);
     } catch {}
@@ -342,6 +345,10 @@ export default function CreatePostModal({ isOpen, onClose }) {
       return;
     }
 
+    if (!idempotencyKeyRef.current) {
+      idempotencyKeyRef.current = `post_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    }
+
     isPublishingRef.current = true;
     abortControllerRef.current = new AbortController();
     setStep('UPLOADING');
@@ -426,11 +433,15 @@ export default function CreatePostModal({ isOpen, onClose }) {
         type: postType,
         media: uploadedMedia,
         tags,
+        idempotencyKey: idempotencyKeyRef.current,
       });
 
       setUploadProgress(100);
       setUploadStatusText('Published!');
       toast.success('Post shared to Community!');
+
+      // Reset idempotency key upon successful publish
+      idempotencyKeyRef.current = null;
 
       // Remove saved draft if any
       try {

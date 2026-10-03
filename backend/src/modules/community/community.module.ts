@@ -21,6 +21,10 @@ import {
   SavedPostSchema,
 } from './schemas/post.schema';
 import {
+  CommunityPublishIdempotency,
+  CommunityPublishIdempotencySchema,
+} from './schemas/idempotency.schema';
+import {
   Comment,
   CommentSchema,
   CommentReaction,
@@ -97,6 +101,7 @@ import { StoryService } from './services/story.service';
 import { NotificationService } from './services/notification.service';
 import { CommunityGroupService } from './services/community-group.service';
 import { CommunityS3Service } from './services/community-s3.service';
+import { CommunityIdempotencyService } from './services/community-idempotency.service';
 import { CommunityGamificationService } from './services/community-gamification.service';
 import { CommunityAIService } from './services/community-ai.service';
 import { CommunityModerationService } from './services/community-moderation.service';
@@ -160,6 +165,10 @@ import { User, UserSchema } from '../auth/schemas/user.schema';
       { name: CommunityEvent.name, schema: CommunityEventSchema },
       { name: EventRsvp.name, schema: EventRsvpSchema },
       { name: ModerationLog.name, schema: ModerationLogSchema },
+      {
+        name: CommunityPublishIdempotency.name,
+        schema: CommunityPublishIdempotencySchema,
+      },
     ]),
     AwsModule,
     JwtModule.register({ secret: process.env.JWT_SECRET || 'secret' }),
@@ -188,6 +197,7 @@ import { User, UserSchema } from '../auth/schemas/user.schema';
     NotificationService,
     CommunityGroupService,
     CommunityS3Service,
+    CommunityIdempotencyService,
     CommunityGamificationService,
     CommunityAIService,
     CommunityModerationService,
@@ -201,6 +211,8 @@ import { User, UserSchema } from '../auth/schemas/user.schema';
     StoryService,
     NotificationService,
     CommunityGroupService,
+    CommunityS3Service,
+    CommunityIdempotencyService,
     CommunityGamificationService,
     CommunityModerationService,
     CommunityEventService,

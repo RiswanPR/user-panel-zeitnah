@@ -506,6 +506,28 @@ test("Community Feed, Comments & Stories — Phase 2C Verification", async (t) =
     assert.ok(modalContent.includes("file.size > 50 * 1024 * 1024"), "CreatePostModal must enforce 50MB file size limit");
     assert.ok(modalContent.includes("['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'mp4', 'mov', 'webm', 'pdf']"), "CreatePostModal must validate allowed extensions");
   });
+
+  await t.test("Phase 4.4: verifies CreatePostModal generates idempotencyKey once per publish attempt, preserves on retry, and clears on success", () => {
+    const modalContent = fs.readFileSync(path.resolve("src/components/community/composer/CreatePostModal.jsx"), "utf8");
+    assert.ok(modalContent.includes("const idempotencyKeyRef = useRef(null);"), "CreatePostModal must define idempotencyKeyRef");
+    assert.ok(modalContent.includes("if (!idempotencyKeyRef.current)"), "CreatePostModal must check if idempotencyKey already exists before generating");
+    assert.ok(modalContent.includes("idempotencyKey: idempotencyKeyRef.current"), "CreatePostModal must pass idempotencyKey to mutation");
+    assert.ok(modalContent.includes("idempotencyKeyRef.current = null;"), "CreatePostModal must reset key on success and discard");
+  });
+
+  await t.test("Phase 4.4: verifies CreateStoryModal generates idempotencyKey once per attempt, preserves on retry, and clears on close/success", () => {
+    const modalContent = fs.readFileSync(path.resolve("src/components/community/stories/CreateStoryModal.jsx"), "utf8");
+    assert.ok(modalContent.includes("const idempotencyKeyRef = useRef(null);"), "CreateStoryModal must define idempotencyKeyRef");
+    assert.ok(modalContent.includes("if (!idempotencyKeyRef.current)"), "CreateStoryModal must generate key only if not already present");
+    assert.ok(modalContent.includes("idempotencyKey: idempotencyKeyRef.current"), "CreateStoryModal must pass key to createStoryMutation");
+    assert.ok(modalContent.includes("idempotencyKeyRef.current = null;"), "CreateStoryModal must clear key on success and close");
+  });
+
+  await t.test("Phase 4.4: verifies communityApi forwards Idempotency-Key header on createPost and createStory", () => {
+    const apiContent = fs.readFileSync(path.resolve("src/services/communityApi.js"), "utf8");
+    assert.ok(apiContent.includes("config.headers = { 'Idempotency-Key': idempotencyKey };"), "communityApi must attach Idempotency-Key header");
+  });
 });
+
 
 

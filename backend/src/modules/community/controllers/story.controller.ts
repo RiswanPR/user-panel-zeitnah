@@ -35,7 +35,11 @@ export class StoryController {
   async createStory(@Req() req, @Body() data: CreateStoryDto) {
     const userId = this.getUserId(req);
     const isAdmin = req.user?.role === 'admin';
-    return this.storyService.createStory(userId, data, isAdmin);
+    const idempotencyKey =
+      (req.headers['idempotency-key'] as string) ||
+      (req.headers['x-idempotency-key'] as string) ||
+      data.idempotencyKey;
+    return this.storyService.createStory(userId, data, isAdmin, idempotencyKey);
   }
 
   @Get()

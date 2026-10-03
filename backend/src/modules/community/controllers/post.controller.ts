@@ -37,7 +37,11 @@ export class PostController {
   async createPost(@Req() req, @Body() data: CreatePostDto) {
     const userId = this.getUserId(req);
     const isAdmin = req.user?.role === 'admin';
-    return this.postService.createPost(userId, data, isAdmin);
+    const idempotencyKey =
+      (req.headers['idempotency-key'] as string) ||
+      (req.headers['x-idempotency-key'] as string) ||
+      data.idempotencyKey;
+    return this.postService.createPost(userId, data, isAdmin, idempotencyKey);
   }
 
   @Get()

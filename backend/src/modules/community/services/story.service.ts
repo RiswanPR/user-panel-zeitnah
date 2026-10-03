@@ -12,6 +12,7 @@ import { CreateStoryDto } from '../dto/story.dto';
 import { CommunityGateway } from '../gateways/community.gateway';
 import { SignedUrlService } from '../../../common/aws/signed-url.service';
 import { CommunityS3Service } from './community-s3.service';
+import { CommunityIdempotencyService } from './community-idempotency.service';
 
 @Injectable()
 export class StoryService {
@@ -23,6 +24,7 @@ export class StoryService {
     private readonly communityGateway: CommunityGateway,
     @Optional() private readonly signedUrlService?: SignedUrlService,
     @Optional() private readonly communityS3Service?: CommunityS3Service,
+    @Optional() private readonly communityIdempotencyService?: CommunityIdempotencyService,
   ) {}
 
   private async resolveStoryMedia(story: any): Promise<void> {
@@ -37,8 +39,34 @@ export class StoryService {
     }
   }
 
-  async createStory(userId: string, data: CreateStoryDto, isAdmin: boolean = false): Promise<any> {
-    const fingerprint = `${userId}:${data.text || ''}:${data.mediaUrl || ''}`;
+  async createStory(
+    userId: string,
+    data: CreateStoryDto,
+    isAdmin: boolean = false,
+    idempotencyKey?: string,
+  ): Promise<any> {
+    const clientKey = idempotencyKey || (data as any)?.idempotencyKey;
+    if (this.communityIdempotencyService && clientKey) {
+      return this.communityIdempotencyService.executeWithIdempotency(
+        userId,
+        'CREATE_STORY',
+        clientKey,
+        data,
+        () => this.executeStoryCreation(userId, data, isAdmin, clientKey),
+      );
+    }
+    return this.executeStoryCreation(userId, data, isAdmin, clientKey);
+  }
+
+  private async executeStoryCreation(
+    userId: string,
+    data: CreateStoryDto,
+    isAdmin: boolean = false,
+    clientKey?: string,
+  ): Promise<any> {
+    const fingerprint = clientKey
+      ? `${userId}:key:${clientKey}`
+      : `${userId}:${data.text || ''}:${data.mediaUrl || ''}`;
     if (this.inFlightStoryRequests.has(fingerprint)) {
       return await this.inFlightStoryRequests.get(fingerprint);
     }
