@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { Repeat2, Quote, Trash2 } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { Repeat2, Quote } from 'lucide-react';
 
 /**
  * RepostMenu — Accessible popup menu allowing users to Repost / Unrepost

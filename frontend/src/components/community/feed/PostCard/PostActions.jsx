@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { MessageCircle, Bookmark, Share2, Heart, Repeat2 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { MessageCircle, Bookmark, Share2, Repeat2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ReactionBar from './ReactionBar';
 import RepostMenu from '../../reposts/RepostMenu';
@@ -77,7 +77,6 @@ export default function PostActions({
   };
 
   const reactionCount = post?.stats?.likes || 0;
-  const commentCount = post?.stats?.comments || 0;
   const repostCount = post?.stats?.reposts || 0;
 
   return (

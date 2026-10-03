@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Globe, Users, GraduationCap } from 'lucide-react';
 

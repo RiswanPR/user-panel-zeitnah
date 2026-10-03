@@ -1,12 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MoreHorizontal, Flag, Trash2, Check, Globe, Users, Lock } from 'lucide-react';
+import { MoreHorizontal, Flag, Trash2, Check } from 'lucide-react';
 import Badge from '../../../ui/Badge';
 import { getCanonicalProfileUrl } from '../../../../utils/roleNavigation';
 import { formatRelativeTime } from '../../../../utils/communityFormatters';
-
-export { formatRelativeTime };
 
 /**
  * PostHeader — Polished author identity and post options dropdown
@@ -89,13 +87,13 @@ export default function PostHeader({
           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             <Link
               to={authorProfileUrl}
-              className="text-sm sm:text-[15px] font-semibold text-white hover:text-brand-mint transition-colors truncate max-w-[180px] sm:max-w-xs"
+              className="text-sm sm:text-[15px] font-semibold text-slate-100 hover:text-brand-mint transition-colors truncate max-w-[180px] sm:max-w-xs"
             >
               {authorName}
             </Link>
 
             {authorUsername && (
-              <span className="hidden sm:inline text-xs text-text-faint truncate max-w-[120px]">
+              <span className="hidden sm:inline text-xs text-text-muted/80 font-normal truncate max-w-[120px]">
                 {authorUsername}
               </span>
             )}
@@ -113,10 +111,10 @@ export default function PostHeader({
             )}
           </div>
 
-          <p className="text-xs text-text-muted mt-0.5 flex items-center gap-1.5">
+          <p className="text-xs text-text-muted/80 mt-0.5 flex items-center gap-1.5 font-normal">
             <span>{formatRelativeTime(post?.createdAt)}</span>
             <span className="text-white/20">•</span>
-            <span className="capitalize text-text-muted text-[11px]">
+            <span className="capitalize text-text-muted/80 text-[11px]">
               {audienceLabel === 'PUBLIC' ? 'Public' : audienceLabel === 'COURSE' ? 'Course' : 'Private'}
             </span>
           </p>

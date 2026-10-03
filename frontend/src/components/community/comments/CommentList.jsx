@@ -1,4 +1,3 @@
-import React from 'react';
 import { MessageCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import CommentItem from './CommentItem';
 import CommentSkeleton from './CommentSkeleton';
@@ -8,7 +7,7 @@ import CommentSkeleton from './CommentSkeleton';
  * error handling, and scrollable container.
  */
 export default function CommentList({
-  comments = [],
+  comments: rawComments = [],
   isLoading,
   isError,
   currentUserId,
@@ -17,6 +16,14 @@ export default function CommentList({
   onDelete,
   onRetry,
 }) {
+  const comments = Array.isArray(rawComments)
+    ? rawComments
+    : Array.isArray(rawComments?.comments)
+    ? rawComments.comments
+    : Array.isArray(rawComments?.data)
+    ? rawComments.data
+    : [];
+
   if (isLoading) {
     return <CommentSkeleton count={3} />;
   }

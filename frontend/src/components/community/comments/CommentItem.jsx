@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Trash2, Reply, Flag } from 'lucide-react';
 import { getCanonicalProfileUrl } from '../../../utils/roleNavigation';

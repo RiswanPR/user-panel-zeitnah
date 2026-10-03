@@ -1,8 +1,7 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
-import { AlertCircle, Film, Image as ImageIcon } from 'lucide-react';
+import { AlertCircle, Film } from 'lucide-react';
 import { getCanonicalProfileUrl } from '../../../utils/roleNavigation';
-import { formatRelativeTime } from '../feed/PostCard/PostHeader';
+import { formatRelativeTime } from '../../../utils/communityFormatters';
 
 /**
  * QuotedPost — Embedded preview of the original canonical post.

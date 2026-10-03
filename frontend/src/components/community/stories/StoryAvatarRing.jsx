@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 /**
  * StoryAvatarRing — Renders a story author avatar with vibrant unread gradient rings

@@ -1,19 +1,13 @@
-import React, { useState, useRef, useEffect, useCallback, useContext } from 'react';
+import { useState, useRef, useEffect, useCallback, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   X,
   ArrowLeft,
-  Image as ImageIcon,
-  Film,
   UploadCloud,
-  Check,
-  Trash2,
   RotateCw,
   Sparkles,
   MapPin,
-  Smile,
-  Hash,
   Layers,
   ChevronRight,
   ChevronLeft,
@@ -22,7 +16,7 @@ import {
 } from 'lucide-react';
 import { AuthContext } from '../../../context/AuthContext';
 import { getUploadUrl } from '../../../utils/courseUi';
-import { useCreatePost, useAIImproveText, useAISuggestTags } from '../../../hooks/useCommunity';
+import { useCreatePost } from '../../../hooks/useCommunity';
 import { communityApi } from '../../../services/communityApi';
 import toast from 'react-hot-toast';
 import BrandAmbientShape from '../ui/BrandAmbientShape';
@@ -75,7 +69,6 @@ export default function CreatePostModal({ isOpen, onClose }) {
   const [location, setLocation] = useState('');
   const [showLocationInput, setShowLocationInput] = useState(false);
   const [altText, setAltText] = useState('');
-  const [showAltInput, setShowAltInput] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   const [isUploading, setIsUploading] = useState(false);
@@ -94,8 +87,6 @@ export default function CreatePostModal({ isOpen, onClose }) {
   const idempotencyKeyRef = useRef(null);
 
   const createPostMutation = useCreatePost();
-  const improveMutation = useAIImproveText();
-  const suggestTagsMutation = useAISuggestTags();
 
   const userInitials = user?.name
     ? user.name
@@ -177,42 +168,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
     toast('Upload cancelled.');
   };
 
-  // Close / Dismissal confirmation
-  const handleRequestClose = useCallback(() => {
-    if (isUploading) {
-      if (window.confirm('Upload in progress. Are you sure you want to cancel?')) {
-        if (abortControllerRef.current) abortControllerRef.current.abort();
-        setIsUploading(false);
-        resetState(true);
-        onClose();
-      }
-      return;
-    }
-
-    if (content.trim() || files.length > 0) {
-      setShowDraftDialog(true);
-    } else {
-      resetState();
-      onClose();
-    }
-  }, [content, files, isUploading, onClose]);
-
-  // Keydown listener (Escape and Tab)
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        handleRequestClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, handleRequestClose]);
-
-  const resetState = (cleanupUploaded = false) => {
+  const resetState = useCallback((cleanupUploaded = false) => {
     idempotencyKeyRef.current = null;
     files.forEach((f) => {
       if (f.previewUrl) URL.revokeObjectURL(f.previewUrl);
@@ -235,7 +191,42 @@ export default function CreatePostModal({ isOpen, onClose }) {
     setUploadError(null);
     setShowDraftDialog(false);
     isPublishingRef.current = false;
-  };
+  }, [files]);
+
+  // Close / Dismissal confirmation
+  const handleRequestClose = useCallback(() => {
+    if (isUploading) {
+      if (window.confirm('Upload in progress. Are you sure you want to cancel?')) {
+        if (abortControllerRef.current) abortControllerRef.current.abort();
+        setIsUploading(false);
+        resetState(true);
+        onClose();
+      }
+      return;
+    }
+
+    if (content.trim() || files.length > 0) {
+      setShowDraftDialog(true);
+    } else {
+      resetState();
+      onClose();
+    }
+  }, [content, files, isUploading, onClose, resetState]);
+
+  // Keydown listener (Escape and Tab)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        handleRequestClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, handleRequestClose]);
 
   const handleSaveDraft = () => {
     try {

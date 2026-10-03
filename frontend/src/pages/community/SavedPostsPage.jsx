@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bookmark, Sparkles, Loader2 } from 'lucide-react';
+import { ArrowLeft, Bookmark, Loader2 } from 'lucide-react';
 import { useSavedPosts } from '../../hooks/useCommunity';
 import PostCard from '../../components/community/feed/PostCard';
 import CommentDrawer from '../../components/community/comments/CommentDrawer';

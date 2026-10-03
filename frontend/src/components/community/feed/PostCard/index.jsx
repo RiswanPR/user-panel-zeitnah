@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import { useState, useContext, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Loader2, Trash2, AlertCircle } from 'lucide-react';
@@ -15,9 +15,10 @@ import {
   useDeleteComment,
 } from '../../../../hooks/useCommunity';
 import { getCanonicalProfileUrl } from '../../../../utils/roleNavigation';
+import { formatRelativeTime } from '../../../../utils/communityFormatters';
 import toast from 'react-hot-toast';
 
-import PostHeader, { formatRelativeTime } from './PostHeader';
+import PostHeader from './PostHeader';
 import PostContent from './PostContent';
 import PostMedia from './PostMedia';
 import PostActions from './PostActions';
@@ -394,7 +395,7 @@ function PostCard({ post, onOpenComments, isActiveCommentPost }) {
   );
 }
 
-export default React.memo(PostCard, (prevProps, nextProps) => {
+export default memo(PostCard, (prevProps, nextProps) => {
   const prevId = prevProps.post?._id || prevProps.post?.id;
   const nextId = nextProps.post?._id || nextProps.post?.id;
 

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
@@ -21,12 +21,12 @@ const MAX_IMAGE_SIZE_BYTES = 15 * 1024 * 1024; // 15MB
 const MAX_VIDEO_SIZE_BYTES = 50 * 1024 * 1024; // 50MB
 
 const BACKGROUND_COLORS = [
-  'bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-700',
-  'bg-gradient-to-br from-pink-500 via-rose-500 to-amber-500',
-  'bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-700',
-  'bg-gradient-to-br from-amber-500 via-orange-600 to-rose-600',
-  'bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-500',
-  'bg-gradient-to-br from-gray-900 via-slate-800 to-black',
+  'bg-gradient-to-br from-[#12314C] via-[#0C2033] to-[#070B14]',
+  'bg-gradient-to-br from-[#0F283E] via-[#12314C] to-[#1B4B6F]',
+  'bg-gradient-to-br from-[#0B1A28] via-[#12314C] to-[#0D2436]',
+  'bg-gradient-to-br from-[#1A2E3D] via-[#12314C] to-[#252210]',
+  'bg-gradient-to-br from-[#161F2E] via-[#0E1522] to-[#070B14]',
+  'bg-gradient-to-b from-[#0E1726] to-[#060A12]',
 ];
 
 /**

@@ -1,10 +1,8 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import {
   ShieldCheck,
   Layers,
   Trophy,
-  Compass,
   CheckCircle2,
   ExternalLink,
   BookOpen,

@@ -1,11 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   ZoomIn,
   AlertCircle,
   ChevronLeft,
   ChevronRight,
-  Heart,
   Volume2,
   VolumeX,
 } from 'lucide-react';
@@ -139,14 +138,24 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
   if (!media || media.length === 0) return null;
 
   const isMulti = media.length > 1;
-  const currentItem = media[currentIndex] || media[0];
 
   return (
     <>
       <div
         data-testid="post-media-container"
         aria-label="Double tap to like"
-        className="relative my-3 -mx-4 sm:mx-0 rounded-none sm:rounded-2xl overflow-hidden bg-[#070B14] border-y sm:border border-white/[0.08] select-none group transition-all duration-300 hover:brightness-[1.02]"
+        tabIndex={isMulti ? 0 : undefined}
+        onKeyDown={(e) => {
+          if (!isMulti) return;
+          if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            setCurrentIndex((prev) => Math.max(prev - 1, 0));
+          } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            setCurrentIndex((prev) => Math.min(prev + 1, media.length - 1));
+          }
+        }}
+        className="relative my-3 -mx-4 sm:mx-0 rounded-none sm:rounded-2xl overflow-hidden bg-[#070B14] border-y sm:border border-white/[0.08] select-none group transition-all duration-300 hover:brightness-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -323,7 +332,7 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
                   e.stopPropagation();
                   setCurrentIndex((prev) => Math.max(prev - 1, 0));
                 }}
-                className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 text-white items-center justify-center backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 transition-all cursor-pointer z-20 shadow-md"
+                className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 text-white items-center justify-center backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus:outline-none focus:ring-2 focus:ring-brand-mint transition-all cursor-pointer z-20 shadow-md"
                 aria-label="Previous media"
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -338,7 +347,7 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
                   e.stopPropagation();
                   setCurrentIndex((prev) => Math.min(prev + 1, media.length - 1));
                 }}
-                className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 text-white items-center justify-center backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 transition-all cursor-pointer z-20 shadow-md"
+                className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 text-white items-center justify-center backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus:outline-none focus:ring-2 focus:ring-brand-mint transition-all cursor-pointer z-20 shadow-md"
                 aria-label="Next media"
               >
                 <ChevronRight className="w-5 h-5" />

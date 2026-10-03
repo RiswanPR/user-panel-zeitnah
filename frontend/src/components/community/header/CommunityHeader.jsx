@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Compass, Bookmark, Sparkles } from 'lucide-react';
 import BrandAmbientShape from '../ui/BrandAmbientShape';
@@ -15,7 +14,7 @@ export default function CommunityHeader({
 }) {
   return (
     <header
-      className="relative mb-4 sm:mb-6 flex items-center justify-between gap-2 sm:gap-4 select-none min-w-0 max-w-full overflow-hidden"
+      className="relative mb-5 sm:mb-6 flex items-center justify-between gap-2 sm:gap-4 select-none min-w-0 max-w-full overflow-hidden"
       aria-label="Community header"
     >
       {/* Brand Ambient Contour Behind Header */}
@@ -26,13 +25,13 @@ export default function CommunityHeader({
 
       <div className="relative z-10 min-w-0 shrink-0">
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <h1 className="text-xl sm:text-3xl font-bold font-heading text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold font-heading text-white tracking-tight leading-none">
             Community
           </h1>
           <span className="w-1.5 h-1.5 rounded-full bg-brand-mint shadow-[0_0_10px_rgba(159,213,178,0.7)] shrink-0" />
         </div>
-        <div className="h-[2px] w-8 sm:w-10 bg-gradient-to-r from-brand-mint via-[#D4E37A]/60 to-transparent rounded-full mt-1 opacity-80" />
-        <p className="text-xs text-text-muted mt-1 font-normal tracking-wide truncate hidden sm:block">
+        <div className="h-[2px] w-9 sm:w-12 bg-gradient-to-r from-brand-mint via-[#D4E37A]/60 to-transparent rounded-full mt-1.5 opacity-80" />
+        <p className="text-xs text-text-muted mt-1.5 font-normal tracking-wide truncate hidden sm:block">
           Discover engineering insights, blueprints and moments
         </p>
       </div>

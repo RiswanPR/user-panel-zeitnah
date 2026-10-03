@@ -1,11 +1,10 @@
-import React, { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Image,
   Send,
   Globe,
   Users,
-  Lock,
   ChevronDown,
   X,
   Sparkles,

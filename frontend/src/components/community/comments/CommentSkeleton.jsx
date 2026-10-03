@@ -1,4 +1,3 @@
-import React from 'react';
 
 /**
  * CommentSkeleton — Clean Zeitnah skeleton placeholder for comments loading state

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useContext, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useContext, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
@@ -494,12 +494,19 @@ export default function StoryViewer({
 
           {/* Media Stage */}
           <div className="relative flex-1 bg-black flex items-center justify-center overflow-hidden">
+            {/* Loading Indicator for Slow Media */}
+            {mediaUrl && !mediaLoaded && !mediaError && (
+              <div className="absolute inset-0 bg-[#070B14] flex items-center justify-center z-10" aria-label="Loading story media">
+                <div className="w-8 h-8 rounded-full border-2 border-brand-mint/20 border-t-brand-mint animate-spin" />
+              </div>
+            )}
+
             {isVideo && mediaUrl ? (
               <video
                 ref={videoRef}
                 key={mediaUrl}
                 src={mediaUrl}
-                className="w-full h-full object-cover"
+                className={`w-full h-full object-cover transition-opacity duration-300 ${mediaLoaded ? 'opacity-100' : 'opacity-0'}`}
                 autoPlay
                 playsInline
                 loop={false}
@@ -513,7 +520,7 @@ export default function StoryViewer({
                 key={mediaUrl}
                 src={mediaUrl}
                 alt={`Story by ${authorName}`}
-                className="w-full h-full object-cover"
+                className={`w-full h-full object-cover transition-opacity duration-300 ${mediaLoaded ? 'opacity-100' : 'opacity-0'}`}
                 onLoad={() => setMediaLoaded(true)}
                 onError={() => setMediaError(true)}
               />

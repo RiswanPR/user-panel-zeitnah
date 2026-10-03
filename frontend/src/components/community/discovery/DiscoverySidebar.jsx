@@ -1,4 +1,3 @@
-import React from 'react';
 import { BookOpen } from 'lucide-react';
 import TrendingTopics from './TrendingTopics';
 import DiscoveryLinks from './DiscoveryLinks';

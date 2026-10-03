@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Plus } from 'lucide-react';
 import { Skeleton, SkeletonCircle } from '../../ui/Skeleton';
 import StoryAvatarRing from './StoryAvatarRing';

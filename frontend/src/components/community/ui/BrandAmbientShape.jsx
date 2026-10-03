@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 
 /**
  * BrandAmbientShape — Reusable Zeitnah visual primitive for organic Z shapes,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, Loader2 } from 'lucide-react';
 import QuotedPost from './QuotedPost';
@@ -37,6 +37,11 @@ export default function QuotePostModal({
     }
   }, [isOpen]);
 
+  const handleClose = useCallback(() => {
+    onClose();
+    triggerRef?.current?.focus();
+  }, [onClose, triggerRef]);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -73,12 +78,7 @@ export default function QuotePostModal({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]);
-
-  const handleClose = () => {
-    onClose();
-    triggerRef?.current?.focus();
-  };
+  }, [isOpen, handleClose]);
 
   const handleSubmit = (e) => {
     e?.preventDefault();

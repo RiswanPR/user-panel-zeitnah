@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useContext } from 'react';
+import { useState, useEffect, useCallback, useRef, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { X, MessageCircle } from 'lucide-react';
@@ -34,11 +34,19 @@ export default function CommentDrawer({ isOpen, post, onClose }) {
 
   // Only fetch comments when the drawer is open for this specific post
   const {
-    data: comments = [],
+    data: rawComments = [],
     isLoading,
     isError,
     refetch,
   } = useComments(postId, isOpen);
+
+  const comments = Array.isArray(rawComments)
+    ? rawComments
+    : Array.isArray(rawComments?.comments)
+    ? rawComments.comments
+    : Array.isArray(rawComments?.data)
+    ? rawComments.data
+    : [];
 
   const createCommentMutation = useCreateComment();
   const deleteCommentMutation = useDeleteComment();
@@ -191,7 +199,7 @@ export default function CommentDrawer({ isOpen, post, onClose }) {
           >
             {/* Subtle Gradient Edge Highlights */}
             <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-brand-mint/30 to-transparent pointer-events-none md:hidden" />
-            <div className="absolute top-0 bottom-0 left-0 w-[2px] bg-gradient-to-b from-brand-mint/35 via-cyan-400/20 to-transparent pointer-events-none hidden md:block" />
+            <div className="absolute top-0 bottom-0 left-0 w-[2px] bg-gradient-to-b from-brand-mint/35 via-[#12314C]/40 to-transparent pointer-events-none hidden md:block" />
 
             {/* Mobile Drag Indicator */}
             <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mt-2.5 mb-1 md:hidden shrink-0" />

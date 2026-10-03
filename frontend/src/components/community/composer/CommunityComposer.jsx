@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useContext, useCallback } from 'react';
+import { useState, useRef, useEffect, useContext, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthContext } from '../../../context/AuthContext';
 import { getUploadUrl } from '../../../utils/courseUi';
@@ -224,14 +224,6 @@ export default function CommunityComposer({ onOpenModal }) {
         },
       }
     );
-  };
-
-  const handleCollapsedMediaClick = () => {
-    setIsExpanded(true);
-    // Short timeout to allow fileInputRef to mount in expanded view
-    setTimeout(() => {
-      fileInputRef.current?.click();
-    }, 50);
   };
 
   return (

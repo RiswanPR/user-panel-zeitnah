@@ -73,7 +73,12 @@ export default function CommunityHome() {
 
   // ── Fetch Stories & Group (1 User = 1 Icon) ──
   const { data: storiesData, isLoading: storiesLoading } = useActiveStories();
-  const stories = storiesData || [];
+  const stories = useMemo(() => {
+    if (Array.isArray(storiesData)) return storiesData;
+    if (Array.isArray(storiesData?.stories)) return storiesData.stories;
+    if (Array.isArray(storiesData?.data)) return storiesData.data;
+    return [];
+  }, [storiesData]);
 
   const { allGroups } = useMemo(() => {
     return groupStoriesByUser(stories, currentUserId);

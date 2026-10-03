@@ -1,4 +1,3 @@
-import React from 'react';
 import { Image, Video, HelpCircle, Send } from 'lucide-react';
 import BrandAmbientShape from '../ui/BrandAmbientShape';
 

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { Repeat2 } from 'lucide-react';
 import { getCanonicalProfileUrl } from '../../../utils/roleNavigation';

@@ -1,5 +1,4 @@
-import React from 'react';
-import { Hash, Sparkles } from 'lucide-react';
+import { Hash } from 'lucide-react';
 import PremiumCard from '../../ui/PremiumCard';
 
 /**
