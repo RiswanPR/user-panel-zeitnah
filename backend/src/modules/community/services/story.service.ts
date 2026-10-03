@@ -29,12 +29,29 @@ export class StoryService {
 
   private async resolveStoryMedia(story: any): Promise<void> {
     if (!this.signedUrlService || !story) return;
-    const media = story.media || story.mediaUrl;
-    if (story.media?.url && (story.media.url.includes('.amazonaws.com') || !story.media.url.startsWith('http'))) {
+
+    // Resolve array of media items in story.media
+    if (Array.isArray(story.media)) {
+      for (const m of story.media) {
+        if (m?.url && (m.url.includes('.amazonaws.com') || !m.url.startsWith('http'))) {
+          try {
+            const cleanUrl = m.url.split('?')[0];
+            const signed = await this.signedUrlService.generateSignedImageUrl(cleanUrl, 86400 * 7);
+            if (signed) m.url = signed;
+          } catch {}
+        }
+      }
+    }
+
+    // Resolve direct mediaUrl property if present
+    if (
+      typeof story.mediaUrl === 'string' &&
+      (story.mediaUrl.includes('.amazonaws.com') || !story.mediaUrl.startsWith('http'))
+    ) {
       try {
-        const cleanUrl = story.media.url.split('?')[0];
+        const cleanUrl = story.mediaUrl.split('?')[0];
         const signed = await this.signedUrlService.generateSignedImageUrl(cleanUrl, 86400 * 7);
-        if (signed) story.media.url = signed;
+        if (signed) story.mediaUrl = signed;
       } catch {}
     }
   }
@@ -161,11 +178,9 @@ export class StoryService {
   async getActiveFeed(): Promise<any[]> {
     const stories = await this.storyRepository.getActiveStories();
     if (this.signedUrlService && Array.isArray(stories)) {
-      for (const group of stories) {
-        if (Array.isArray(group?.stories)) {
-          for (const s of group.stories) {
-            await this.resolveStoryMedia(s);
-          }
+      for (const story of stories) {
+        if (story) {
+          await this.resolveStoryMedia(story);
         }
       }
     }

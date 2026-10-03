@@ -181,7 +181,7 @@ export default function CommentDrawer({ isOpen, post, onClose }) {
                 : { type: 'spring', damping: 30, stiffness: 350 }
             }
             className={`
-              relative z-10 w-full bg-[#0B111E] border-white/[0.08] shadow-[0_0_50px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden
+              relative z-10 w-full bg-[#0B111E]/95 backdrop-blur-2xl border-white/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.7)] flex flex-col overflow-hidden
               /* Mobile bottom sheet */
               max-h-[85vh] h-[82vh] rounded-t-3xl border-t
               /* Desktop right drawer >= 768px */
@@ -189,6 +189,10 @@ export default function CommentDrawer({ isOpen, post, onClose }) {
             `}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Subtle Gradient Edge Highlights */}
+            <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-brand-mint/30 to-transparent pointer-events-none md:hidden" />
+            <div className="absolute top-0 bottom-0 left-0 w-[2px] bg-gradient-to-b from-brand-mint/35 via-cyan-400/20 to-transparent pointer-events-none hidden md:block" />
+
             {/* Mobile Drag Indicator */}
             <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mt-2.5 mb-1 md:hidden shrink-0" />
 

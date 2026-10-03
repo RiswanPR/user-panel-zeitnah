@@ -45,7 +45,7 @@ export default function CommentItem({
     <div
       id={`comment-item-${commentId}`}
       data-testid="comment-item"
-      className="flex items-start gap-3 p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/[0.04] transition-colors group"
+      className="flex items-start gap-3 py-3 px-2 rounded-xl hover:bg-white/[0.02] transition-colors group border-b border-white/[0.03] last:border-b-0"
     >
       {/* Author Avatar */}
       <Link

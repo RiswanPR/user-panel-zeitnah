@@ -542,7 +542,11 @@ export default function CreatePostModal({ isOpen, onClose }) {
                   id="composer-submit-btn"
                   onClick={handlePublish}
                   disabled={isUploading || createPostMutation.isPending}
-                  className="text-xs font-bold text-bg-base bg-brand-mint hover:bg-brand-mint/90 px-4 py-1.5 rounded-xl transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                  className={`min-h-[38px] px-4 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer disabled:opacity-50 ${
+                    createPostMutation.isPending || isUploading
+                      ? 'community-shimmer-btn text-[#070B14]'
+                      : 'bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 text-[#070B14] hover:shadow-[0_0_18px_rgba(52,211,153,0.38)] hover:brightness-105 active:scale-95'
+                  }`}
                 >
                   {createPostMutation.isPending || isUploading ? 'Publishing...' : 'Publish'}
                 </button>
@@ -984,9 +988,9 @@ export default function CreatePostModal({ isOpen, onClose }) {
                   )}
 
                   {/* Progress Bar */}
-                  <div className="w-full max-w-xs h-2 bg-white/[0.08] rounded-full overflow-hidden mb-2">
+                  <div className="w-full max-w-xs h-2 bg-white/[0.08] rounded-full overflow-hidden mb-2 shadow-inner">
                     <motion.div
-                      className="h-full bg-brand-mint rounded-full"
+                      className="h-full bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 rounded-full shadow-[0_0_12px_rgba(52,211,153,0.35)]"
                       initial={{ width: 0 }}
                       animate={{ width: `${uploadProgress}%` }}
                       transition={{ duration: 0.2 }}
@@ -994,7 +998,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
                   </div>
 
                   <p className="text-xs font-mono font-bold text-brand-mint mb-8">
-                    {uploadProgress}%
+                    {uploadProgress}% · Almost there
                   </p>
 
                   <button

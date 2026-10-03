@@ -32,7 +32,8 @@ export default function SavedPostsPage() {
   }, [data]);
 
   return (
-    <div className="max-w-[840px] mx-auto py-4 sm:py-6 px-3 sm:px-0">
+    <div className="community-aurora-bg min-h-screen">
+      <div className="max-w-[840px] mx-auto py-4 sm:py-6 px-3 sm:px-0">
       {/* Navigation Header */}
       <div className="mb-6 pb-4 border-b border-white/[0.08]">
         <div className="flex items-center gap-3 mb-3">
@@ -134,6 +135,7 @@ export default function SavedPostsPage() {
         post={activeCommentPost}
         onClose={() => setActiveCommentPost(null)}
       />
+      </div>
     </div>
   );
 }

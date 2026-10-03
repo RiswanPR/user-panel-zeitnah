@@ -39,6 +39,7 @@ export class StoryRepository extends BaseRepository<StoryDocument> {
       expiresAt: s.expiresAt,
       createdAt: s.createdAt,
       media: s.media || [],
+      mediaUrl: s.media?.[0]?.url || s.mediaUrl || '',
       author: {
         _id: authorObj._id ? String(authorObj._id) : (s.authorId || ''),
         id: authorObj._id ? String(authorObj._id) : (s.authorId || ''),

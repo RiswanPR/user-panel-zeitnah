@@ -157,7 +157,7 @@ function PostCard({ post, onOpenComments, isActiveCommentPost }) {
       layout
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      className="zn-card bg-[#0B111E]/90 backdrop-blur-xl border border-white/[0.08] hover:border-white/[0.12] rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.3)] p-4 sm:p-5 mb-4 group overflow-hidden transition-all duration-200"
+      className="zn-card bg-[#0B111E] border border-white/[0.07] hover:border-brand-mint/20 hover:bg-[#0D1424] rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.25)] p-4 sm:p-5 mb-4 group overflow-hidden transition-all duration-200"
     >
       {/* 0. Repost Attribution Header if post is a repost */}
       {isRepost && <RepostAttribution author={post.author} />}

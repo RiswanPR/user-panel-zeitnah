@@ -282,12 +282,12 @@ html, body {
 .shimmer {
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.03) 25%,
-    rgba(255, 255, 255, 0.06) 50%,
-    rgba(255, 255, 255, 0.03) 75%
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 75%
   );
   background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
+  animation: shimmer 1.6s ease-in-out infinite;
   border-radius: 8px;
 }
 
@@ -1746,6 +1746,113 @@ html, body {
 .bg-tech-dots {
   background-size: 24px 24px;
   background-image: radial-gradient(rgba(159, 213, 178, 0.15) 1px, transparent 1px);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PHASE 5.1 — COMMUNITY PREMIUM GRADIENT & AURORA SYSTEM
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Global atmospheric aurora lighting for Community */
+.community-aurora-bg {
+  position: relative;
+  min-height: 100%;
+}
+
+.community-aurora-bg::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 14% 6%, rgba(80, 220, 180, 0.075), transparent 32%),
+    radial-gradient(circle at 86% 16%, rgba(129, 140, 248, 0.065), transparent 35%),
+    radial-gradient(circle at 50% 60%, rgba(56, 189, 248, 0.04), transparent 42%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Premium card surface system */
+.community-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 18px 50px -10px rgba(0, 0, 0, 0.35);
+  border-radius: 20px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.community-card:hover {
+  background: rgba(255, 255, 255, 0.038);
+  border-color: rgba(159, 213, 178, 0.18);
+  box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.45), 0 0 24px rgba(159, 213, 178, 0.04);
+}
+
+/* Glass rail container */
+.community-glass-rail {
+  background: linear-gradient(135deg, rgba(15, 23, 38, 0.75) 0%, rgba(11, 17, 30, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.35);
+  border-radius: 22px;
+}
+
+/* Premium gradient Create button */
+.community-btn-create {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.625rem 1.25rem;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  background: linear-gradient(135deg, #9FD5B2 0%, #38BDF8 100%);
+  color: #070B14;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(159, 213, 178, 0.28), 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.community-btn-create:hover {
+  box-shadow: 0 0 28px rgba(159, 213, 178, 0.45), 0 6px 18px rgba(0, 0, 0, 0.35);
+  transform: translateY(-1px);
+}
+
+.community-btn-create:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* Shimmer animation for publishing CTAs */
+@keyframes communityShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.community-shimmer-btn {
+  background: linear-gradient(90deg, #9FD5B2 0%, #38BDF8 45%, #818CF8 55%, #9FD5B2 100%);
+  background-size: 200% 100%;
+  animation: communityShimmer 2.2s linear infinite;
+}
+
+/* Story Ring Gradients */
+.community-ring-unseen {
+  background: linear-gradient(135deg, #9FD5B2 0%, #38BDF8 50%, #818CF8 100%);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.32);
+}
+
+.community-ring-own {
+  background: linear-gradient(135deg, #F6ED4A 0%, #FB923C 50%, #F43F5E 100%);
+  box-shadow: 0 0 16px rgba(251, 146, 60, 0.32);
+}
+
+/* Active Segment in Story Viewer */
+.community-progress-active {
+  background: linear-gradient(90deg, #9FD5B2 0%, #38BDF8 60%, #818CF8 100%);
+  box-shadow: 0 0 8px rgba(159, 213, 178, 0.5);
 }
 
 /* Respect reduced motion */

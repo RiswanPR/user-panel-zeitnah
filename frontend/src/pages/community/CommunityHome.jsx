@@ -22,6 +22,7 @@ import {
   extractTrendingTopics,
   sanitizeTag,
 } from '../../utils/communityFormatters';
+import { groupStoriesByUser } from '../../utils/storyGrouping';
 import { Sparkles, Users, GraduationCap, Globe, AlertCircle } from 'lucide-react';
 
 /**
@@ -58,7 +59,7 @@ export default function CommunityHome() {
   );
 
   // ── Modals & Overlays State ──
-  const [activeStoryIndex, setActiveStoryIndex] = useState(null);
+  const [selectedGroupIndex, setSelectedGroupIndex] = useState(null);
   const [isCreateStoryModalOpen, setIsCreateStoryModalOpen] = useState(false);
   const [isCreateActionOpen, setIsCreateActionOpen] = useState(false);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
@@ -69,9 +70,13 @@ export default function CommunityHome() {
   const currentUserId = user?._id || user?.id || user?.userId;
   const hasCohort = Boolean(user?.enrolledCourses && user.enrolledCourses.length > 0);
 
-  // ── Fetch Stories ──
+  // ── Fetch Stories & Group (1 User = 1 Icon) ──
   const { data: storiesData, isLoading: storiesLoading } = useActiveStories();
   const stories = storiesData || [];
+
+  const { allGroups } = useMemo(() => {
+    return groupStoriesByUser(stories, currentUserId);
+  }, [stories, currentUserId]);
 
   // ── Fetch Feed per Filter ──
   const {
@@ -131,13 +136,14 @@ export default function CommunityHome() {
   }, []);
 
   return (
-    <div className="w-full">
+    <div className="w-full community-aurora-bg">
       {/* ── Story Modal & Viewer Overlays ── */}
-      {activeStoryIndex !== null && stories.length > 0 && (
+      {selectedGroupIndex !== null && allGroups.length > 0 && (
         <StoryViewer
-          stories={stories}
-          initialIndex={activeStoryIndex}
-          onClose={() => setActiveStoryIndex(null)}
+          userGroups={allGroups}
+          initialUserIndex={selectedGroupIndex}
+          initialStoryIndex={0}
+          onClose={() => setSelectedGroupIndex(null)}
         />
       )}
 
@@ -190,8 +196,13 @@ export default function CommunityHome() {
           stories={stories}
           isLoading={storiesLoading}
           onAddStory={() => setIsCreateStoryModalOpen(true)}
-          onSelectStory={setActiveStoryIndex}
+          onSelectGroup={(group) => {
+            const idx = allGroups.findIndex((g) => g.userId === group.userId);
+            setSelectedGroupIndex(idx !== -1 ? idx : 0);
+          }}
           currentUserId={currentUserId}
+          currentUserAvatar={user?.avatar || user?.profilePicture || user?.avatarUrl}
+          currentUserName={user?.name || user?.username || 'You'}
         />
       </div>
 

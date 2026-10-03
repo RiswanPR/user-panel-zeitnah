@@ -16,7 +16,7 @@ export default function ComposerCollapsed({
   return (
     <div
       onClick={onExpand}
-      className="bg-[#0B111E]/90 backdrop-blur-xl border border-white/[0.08] hover:border-white/[0.14] rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.3)] p-3.5 sm:p-4 transition-all duration-200 cursor-pointer group"
+      className="bg-[#0B111E] border border-white/[0.07] hover:border-brand-mint/20 hover:bg-[#0D1424] rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.25)] p-3.5 sm:p-4 transition-all duration-200 cursor-pointer group"
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {

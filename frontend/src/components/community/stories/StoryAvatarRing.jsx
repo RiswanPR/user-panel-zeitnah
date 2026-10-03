@@ -5,17 +5,31 @@ import React, { useState } from 'react';
  * or refined watched subtle rings.
  */
 export default function StoryAvatarRing({
-  story,
-  index,
-  isSeen,
-  isOwnStory,
+  userGroup,
+  story, // backward-compat fallback
+  index = 0,
+  isSeen = false,
+  isOwnStory = false,
   onClick,
 }) {
   const [imgError, setImgError] = useState(false);
 
-  const author = story.author;
-  const authorName = author?.name || author?.displayName || 'Member';
-  const avatarUrl = author?.avatar;
+  // Normalize between userGroup view model and raw story
+  const group = userGroup || (story ? {
+    userId: story.author?._id || story.author?.id || story.authorId,
+    displayName: story.author?.name || story.author?.displayName || 'Member',
+    avatar: story.author?.avatar,
+    stories: [story],
+    hasUnseenStories: !isSeen,
+  } : null);
+
+  if (!group) return null;
+
+  const authorName = group.displayName || 'Member';
+  const avatarUrl = group.avatar;
+  const storiesCount = Array.isArray(group.stories) ? group.stories.length : 1;
+  const unseen = group.hasUnseenStories ?? !isSeen;
+
   const initials = authorName
     .split(' ')
     .filter(Boolean)
@@ -26,24 +40,26 @@ export default function StoryAvatarRing({
 
   return (
     <div
-      onClick={() => onClick(index)}
+      onClick={() => onClick?.(index)}
       className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group select-none transition-transform active:scale-95"
       role="button"
       tabIndex={0}
-      aria-label={`View story by ${authorName}${isSeen ? ' (already viewed)' : ''}`}
+      aria-label={`View ${storiesCount} ${storiesCount === 1 ? 'story' : 'stories'} by ${authorName}${!unseen ? ' (already viewed)' : ''}`}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          onClick(index);
+          onClick?.(index);
         }
       }}
     >
-      {/* Outer Ring with Seen / Unseen Distinction */}
+      {/* Outer Ring with Seen / Unseen Distinction & Aurora Gradients */}
       <div
-        className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full transition-all duration-200 group-hover:scale-105 ${
-          isSeen
-            ? 'p-[2px] bg-white/[0.12] ring-1 ring-white/10 opacity-75 group-hover:opacity-100'
-            : 'p-[2.5px] bg-gradient-to-tr from-emerald-400 via-teal-400 to-brand-mint shadow-[0_0_14px_rgba(52,211,153,0.35)] ring-1 ring-brand-mint/40'
+        className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-full transition-all duration-200 group-hover:scale-[1.04] ${
+          !unseen
+            ? 'p-[2px] bg-white/[0.12] ring-1 ring-white/10 opacity-75 group-hover:opacity-100 group-hover:ring-white/25'
+            : isOwnStory
+            ? 'p-[2.5px] bg-gradient-to-tr from-[#F6ED4A] via-[#FB923C] to-[#F43F5E] shadow-[0_0_12px_rgba(251,146,60,0.25)] ring-1 ring-amber-400/35'
+            : 'p-[2.5px] bg-gradient-to-tr from-emerald-400 via-cyan-400 to-indigo-500 shadow-[0_0_12px_rgba(56,189,248,0.22)] ring-1 ring-brand-mint/30'
         }`}
       >
         {/* Inner Avatar Container */}
@@ -59,13 +75,23 @@ export default function StoryAvatarRing({
           ) : (
             <span
               className={`text-xs font-bold ${
-                isSeen ? 'text-text-muted' : 'text-brand-mint'
+                !unseen ? 'text-text-muted' : 'text-brand-mint'
               }`}
             >
               {initials}
             </span>
           )}
         </div>
+
+        {/* Multi-story count pill (if user has 2+ stories) */}
+        {storiesCount > 1 && (
+          <span
+            className="absolute -top-1 -right-1 px-1.5 py-0.5 text-[9px] font-bold bg-[#070B14]/90 backdrop-blur-md text-white border border-white/20 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.4)] flex items-center justify-center min-w-[18px]"
+            title={`${storiesCount} stories`}
+          >
+            {storiesCount}
+          </span>
+        )}
       </div>
 
       {/* Author Name Tag */}

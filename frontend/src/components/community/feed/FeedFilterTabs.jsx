@@ -59,7 +59,7 @@ export default function FeedFilterTabs({
             {isActive && (
               <motion.div
                 layoutId="active-feed-tab"
-                className="absolute inset-0 bg-white/[0.08] border border-white/[0.12] rounded-lg shadow-sm"
+                className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-teal-500/15 to-indigo-500/20 border border-brand-mint/35 rounded-lg shadow-[0_0_14px_rgba(52,211,153,0.18)]"
                 transition={{ type: 'spring', stiffness: 450, damping: 32 }}
               />
             )}

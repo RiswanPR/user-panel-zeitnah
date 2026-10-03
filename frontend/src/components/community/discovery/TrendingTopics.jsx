@@ -49,12 +49,13 @@ export default function TrendingTopics({
                   border transition-all duration-150 cursor-pointer
                   ${
                     isSelected
-                      ? 'bg-brand-mint text-bg-base border-brand-mint font-semibold shadow-sm'
-                      : 'bg-white/[0.04] hover:bg-white/[0.08] text-text-secondary hover:text-white border-white/[0.06]'
+                      ? 'bg-brand-mint text-bg-base border-brand-mint font-semibold shadow-[0_0_12px_rgba(52,211,153,0.3)]'
+                      : 'bg-white/[0.035] hover:bg-white/[0.07] text-text-secondary hover:text-white border-white/[0.07] hover:border-brand-mint/20'
                   }
                 `}
                 aria-label={`Filter by #${tag}`}
               >
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSelected ? 'bg-bg-base' : 'bg-gradient-to-r from-brand-mint to-cyan-400'}`} />
                 <span>#{tag}</span>
                 {count > 1 && (
                   <span

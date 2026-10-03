@@ -52,7 +52,7 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
     if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
       // Double tap triggered
       setShowHeartBurst(true);
-      setTimeout(() => setShowHeartBurst(false), 900);
+      setTimeout(() => setShowHeartBurst(false), 550);
       if (onDoubleTapLike) {
         onDoubleTapLike();
       }
@@ -146,7 +146,7 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
       <div
         data-testid="post-media-container"
         aria-label="Double tap to like"
-        className="relative my-3 -mx-4 sm:mx-0 rounded-none sm:rounded-2xl overflow-hidden bg-[#070B14] border-y sm:border border-white/[0.08] select-none group"
+        className="relative my-3 -mx-4 sm:mx-0 rounded-none sm:rounded-2xl overflow-hidden bg-[#070B14] border-y sm:border border-white/[0.08] select-none group transition-all duration-300 hover:brightness-[1.02]"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -158,21 +158,24 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
           </div>
         )}
 
-        {/* Double-Tap Heart Burst Animation */}
+        {/* Double-Tap Heart Burst Animation with Radiant Aurora Glow */}
         <AnimatePresence>
           {showHeartBurst && (
             <motion.div
               initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0, opacity: 0 }}
               animate={
                 shouldReduceMotion
-                  ? { opacity: [0, 1, 0] }
-                  : { scale: [0, 1.3, 1], opacity: [0, 1, 0] }
+                   ? { opacity: [0, 1, 0] }
+                   : { scale: [0, 1.15, 1], opacity: [0, 1, 0] }
               }
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.85, ease: 'easeOut' }}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
               className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none"
             >
-              <Heart className="w-24 h-24 text-rose-500 fill-rose-500 drop-shadow-[0_0_24px_rgba(244,63,94,0.7)]" />
+              <div className="relative flex items-center justify-center">
+                <div className="absolute w-28 h-28 rounded-full bg-gradient-to-tr from-brand-mint/30 via-rose-500/40 to-indigo-500/30 blur-xl" />
+                <Heart className="w-20 h-20 text-rose-500 fill-rose-500 drop-shadow-[0_0_24px_rgba(244,63,94,0.75)] relative z-10" />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -270,7 +273,7 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
                   onError={() => handleMediaError(idx)}
                   loading="lazy"
                   decoding="async"
-                  className={`w-full max-h-[640px] object-contain sm:object-cover transition-opacity duration-300 ${
+                  className={`w-full max-h-[640px] object-contain sm:object-cover transition-all duration-300 sm:group-hover:scale-[1.005] ${
                     isLoaded ? 'opacity-100' : 'opacity-0'
                   }`}
                 />

@@ -1,24 +1,75 @@
-import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useContext, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Pause, Play, Send, Trash2, ChevronLeft, ChevronRight, AlertCircle, RefreshCw, Volume2, VolumeX } from 'lucide-react';
+import {
+  X,
+  Pause,
+  Play,
+  Send,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  AlertCircle,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useViewStory } from '../../../hooks/useCommunity';
 import { communityApi } from '../../../services/communityApi';
 import { getCanonicalProfileUrl } from '../../../utils/roleNavigation';
 import { formatRelativeTime } from '../../../utils/communityFormatters';
+import { groupStoriesByUser } from '../../../utils/storyGrouping';
 import { AuthContext } from '../../../context/AuthContext';
 import toast from 'react-hot-toast';
 
 const STORY_DURATION_MS = 5000;
 
 /**
- * StoryViewer — Fullscreen premium story modal with segmented progress,
- * pause/resume on hold, gesture navigation, keyboard controls, and reply bar.
+ * StoryViewer — Fullscreen premium story modal with segmented progress per user,
+ * multi-user sequential transitions, video mute toggle, hold-to-pause, gestures,
+ * keyboard controls, and reply bar.
  */
-export default function StoryViewer({ stories = [], initialIndex = 0, onClose }) {
+export default function StoryViewer({
+  stories = [],
+  userGroups = null,
+  initialUserIndex = 0,
+  initialStoryIndex = 0,
+  initialIndex = 0, // legacy fallback index
+  onClose,
+}) {
   const { user } = useContext(AuthContext);
-  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const currentUserId = user?._id || user?.id || user?.userId;
+
+  // Normalized User Groups: use provided userGroups or group the raw stories
+  const normalizedGroups = useMemo(() => {
+    if (Array.isArray(userGroups) && userGroups.length > 0) {
+      return userGroups;
+    }
+    const { allGroups } = groupStoriesByUser(stories, currentUserId);
+    return allGroups;
+  }, [userGroups, stories, currentUserId]);
+
+  // Determine starting indices
+  const resolvedInitialGroupIndex = useMemo(() => {
+    if (userGroups && userGroups.length > 0) {
+      return Math.min(Math.max(0, initialUserIndex), userGroups.length - 1);
+    }
+    if (stories.length > 0 && initialIndex > 0) {
+      const targetStory = stories[initialIndex];
+      const targetAuthorId = targetStory?.author?._id || targetStory?.author?.id || targetStory?.authorId;
+      const foundIdx = normalizedGroups.findIndex((g) => g.userId === String(targetAuthorId));
+      return foundIdx !== -1 ? foundIdx : 0;
+    }
+    return 0;
+  }, [userGroups, initialUserIndex, stories, initialIndex, normalizedGroups]);
+
+  const [currentGroupIndex, setCurrentGroupIndex] = useState(resolvedInitialGroupIndex);
+  const [currentStoryIndex, setCurrentStoryIndex] = useState(initialStoryIndex || 0);
+
+  const activeGroup = normalizedGroups[currentGroupIndex] || null;
+  const activeStories = activeGroup?.stories || [];
+  const currentStory = activeStories[currentStoryIndex] || null;
+
   const [progress, setProgress] = useState(0);
   const progressRef = useRef(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -33,50 +84,68 @@ export default function StoryViewer({ stories = [], initialIndex = 0, onClose })
   const touchStartXRef = useRef(null);
   const touchStartYRef = useRef(null);
   const previousActiveElementRef = useRef(null);
+  const videoRef = useRef(null);
 
-  const currentStory = stories[currentIndex] || null;
   const viewMutation = useViewStory();
 
-  const currentUserId = user?._id || user?.id || user?.userId;
-  const storyAuthorId = currentStory?.author?._id || currentStory?.author?.id || currentStory?.authorId;
+  const storyAuthorId = activeGroup?.userId || currentStory?.authorId;
   const isOwner = Boolean(
     currentUserId && storyAuthorId && String(currentUserId) === String(storyAuthorId)
   );
   const isAdmin = user?.role === 'admin' || user?.primaryRole === 'ADMIN';
 
-  // Mark story as viewed on switch
+  // Mark story as viewed whenever active story changes
   useEffect(() => {
     if (currentStory) {
       setMediaLoaded(false);
       setMediaError(false);
-      viewMutation.mutate(currentStory._id || currentStory.id);
+      progressRef.current = 0;
+      setProgress(0);
+      startTimeRef.current = Date.now();
+      const storyId = currentStory._id || currentStory.id;
+      if (storyId) {
+        viewMutation.mutate(storyId);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIndex, currentStory]);
+  }, [currentGroupIndex, currentStoryIndex, currentStory?._id]);
 
+  // Navigate to Next Story or Next User Group
   const handleNext = useCallback(() => {
-    if (currentIndex < stories.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-      progressRef.current = 0;
-      setProgress(0);
-      startTimeRef.current = Date.now();
+    if (currentStoryIndex < activeStories.length - 1) {
+      // Advance to next story in current user's group
+      setCurrentStoryIndex((prev) => prev + 1);
+    } else if (currentGroupIndex < normalizedGroups.length - 1) {
+      // Current user's stories finished -> Advance to next user group!
+      setCurrentGroupIndex((prev) => prev + 1);
+      setCurrentStoryIndex(0);
     } else {
-      onClose();
+      // Last story of last user group -> Close viewer
+      onClose?.();
     }
-  }, [currentIndex, stories.length, onClose]);
+  }, [currentStoryIndex, activeStories.length, currentGroupIndex, normalizedGroups.length, onClose]);
 
+  // Navigate to Previous Story or Previous User Group
   const handlePrev = useCallback(() => {
-    if (currentIndex > 0) {
-      setCurrentIndex((prev) => prev - 1);
-      progressRef.current = 0;
-      setProgress(0);
-      startTimeRef.current = Date.now();
+    if (currentStoryIndex > 0) {
+      // Go to previous story in current user's group
+      setCurrentStoryIndex((prev) => prev - 1);
+    } else if (currentGroupIndex > 0) {
+      // Go to previous user group's last story
+      const prevGroup = normalizedGroups[currentGroupIndex - 1];
+      const prevStories = prevGroup?.stories || [];
+      setCurrentGroupIndex((prev) => prev - 1);
+      setCurrentStoryIndex(Math.max(0, prevStories.length - 1));
     } else {
+      // Restart current story progress
       progressRef.current = 0;
       setProgress(0);
       startTimeRef.current = Date.now();
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0;
+      }
     }
-  }, [currentIndex]);
+  }, [currentStoryIndex, currentGroupIndex, normalizedGroups]);
 
   // Body scroll lock and focus restoration
   useEffect(() => {
@@ -91,13 +160,13 @@ export default function StoryViewer({ stories = [], initialIndex = 0, onClose })
     };
   }, []);
 
-  // Keyboard controls
+  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') onClose?.();
       else if (e.key === 'ArrowRight') handleNext();
       else if (e.key === 'ArrowLeft') handlePrev();
-      else if (e.key === ' ' && e.target.tagName !== 'INPUT') {
+      else if (e.key === ' ' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
         e.preventDefault();
         setIsPaused((p) => !p);
       }
@@ -106,8 +175,10 @@ export default function StoryViewer({ stories = [], initialIndex = 0, onClose })
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose, handleNext, handlePrev]);
 
-  // Timer progression using smooth requestAnimationFrame (without per-frame effect re-mounting)
+  // Timer progression using requestAnimationFrame
   useEffect(() => {
+    if (!currentStory) return;
+
     startTimeRef.current = Date.now() - (progressRef.current / 100) * STORY_DURATION_MS;
 
     const animate = () => {
@@ -117,8 +188,18 @@ export default function StoryViewer({ stories = [], initialIndex = 0, onClose })
         return;
       }
 
-      const elapsed = Date.now() - startTimeRef.current;
-      const newProgress = Math.min(100, (elapsed / STORY_DURATION_MS) * 100);
+      // If video, calculate progress based on video playback currentTime if available
+      let newProgress = 0;
+      if (videoRef.current && videoRef.current.duration) {
+        newProgress = Math.min(
+          100,
+          (videoRef.current.currentTime / videoRef.current.duration) * 100
+        );
+      } else {
+        const elapsed = Date.now() - startTimeRef.current;
+        newProgress = Math.min(100, (elapsed / STORY_DURATION_MS) * 100);
+      }
+
       progressRef.current = newProgress;
       setProgress(newProgress);
 
@@ -136,7 +217,7 @@ export default function StoryViewer({ stories = [], initialIndex = 0, onClose })
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [currentIndex, isPaused, handleNext]);
+  }, [currentGroupIndex, currentStoryIndex, currentStory, isPaused, handleNext]);
 
   // Touch gesture handling: Swipe Left (Next), Swipe Right (Prev), Swipe Down (Close)
   const handleTouchStart = (e) => {
@@ -155,7 +236,7 @@ export default function StoryViewer({ stories = [], initialIndex = 0, onClose })
 
       // Swipe Down to dismiss
       if (deltaY > 80 && Math.abs(deltaX) < 60) {
-        onClose();
+        onClose?.();
         return;
       }
 
@@ -194,50 +275,60 @@ export default function StoryViewer({ stories = [], initialIndex = 0, onClose })
       try {
         await communityApi.deleteStory(currentStory._id || currentStory.id);
         toast.success('Story deleted');
-        onClose();
+        onClose?.();
       } catch {
         toast.error('Failed to delete story');
       }
     }
   };
 
-  if (!currentStory) return null;
+  if (!activeGroup || !currentStory) return null;
 
-  const authorName = currentStory.author?.name || currentStory.author?.displayName || 'Zeitnah Member';
-  const authorProfileUrl = getCanonicalProfileUrl(currentStory.author);
-  const authorAvatar = currentStory.author?.avatar;
+  const authorName = activeGroup.displayName || 'Zeitnah Member';
+  const authorProfileUrl = getCanonicalProfileUrl({
+    id: activeGroup.userId,
+    username: activeGroup.username,
+  });
+  const authorAvatar = activeGroup.avatar;
   const authorInitials = authorName.slice(0, 2).toUpperCase();
 
-  const mediaUrl = currentStory.media?.[0]?.url || currentStory.mediaUrl || currentStory.image;
+  const mediaUrl =
+    currentStory.media?.[0]?.url ||
+    currentStory.mediaUrl ||
+    currentStory.image ||
+    '';
   const isVideo =
+    currentStory.type === 'VIDEO' ||
     currentStory.media?.[0]?.type === 'video' ||
-    (typeof mediaUrl === 'string' && mediaUrl.match(/\.(mp4|webm|mov)$/i));
+    (typeof mediaUrl === 'string' && Boolean(mediaUrl.match(/\.(mp4|webm|mov)(\?.*)?$/i)));
 
   return createPortal(
     <AnimatePresence>
       <div
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-2xl"
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-2xl select-none"
         role="dialog"
         aria-modal="true"
         aria-label={`Story by ${authorName}`}
       >
-        {/* Desktop Prev / Next Chevrons */}
-        {currentIndex > 0 && (
+        {/* Desktop Prev Button (Left Chevron) */}
+        {(currentStoryIndex > 0 || currentGroupIndex > 0) && (
           <button
             type="button"
             onClick={handlePrev}
-            className="hidden md:flex absolute left-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white items-center justify-center transition-all cursor-pointer z-30 shadow-lg border border-white/10"
+            className="hidden md:flex absolute left-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white items-center justify-center transition-all cursor-pointer z-30 shadow-lg border border-white/10"
             aria-label="Previous story"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
         )}
 
-        {currentIndex < stories.length - 1 && (
+        {/* Desktop Next Button (Right Chevron) */}
+        {(currentStoryIndex < activeStories.length - 1 ||
+          currentGroupIndex < normalizedGroups.length - 1) && (
           <button
             type="button"
             onClick={handleNext}
-            className="hidden md:flex absolute right-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white items-center justify-center transition-all cursor-pointer z-30 shadow-lg border border-white/10"
+            className="hidden md:flex absolute right-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white items-center justify-center transition-all cursor-pointer z-30 shadow-lg border border-white/10"
             aria-label="Next story"
           >
             <ChevronRight className="w-6 h-6" />
@@ -248,34 +339,55 @@ export default function StoryViewer({ stories = [], initialIndex = 0, onClose })
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2.5 bg-white/10 hover:bg-white/20 active:scale-95 rounded-full text-white transition-all z-50 cursor-pointer border border-white/10 shadow-lg"
+          className="absolute top-[calc(1rem+env(safe-area-inset-top))] right-4 sm:top-6 sm:right-6 p-2.5 bg-black/40 hover:bg-black/60 active:scale-95 rounded-full text-white transition-all z-50 cursor-pointer border border-white/10 shadow-lg"
           aria-label="Close story viewer"
         >
           <X className="w-5 h-5" />
         </button>
 
-        {/* Main Story Stage */}
+        {/* Ambient Blurred Media / Color Background */}
+        {mediaUrl ? (
+          <div
+            className="absolute inset-0 bg-cover bg-center blur-3xl opacity-15 pointer-events-none scale-110 transition-all duration-700 select-none overflow-hidden"
+            style={{ backgroundImage: `url(${mediaUrl})` }}
+            aria-hidden="true"
+          />
+        ) : (
+          <div
+            className="absolute inset-0 blur-3xl opacity-15 pointer-events-none scale-110 transition-all duration-700 select-none overflow-hidden bg-gradient-to-tr from-purple-700 via-indigo-900 to-cyan-900"
+            aria-hidden="true"
+          />
+        )}
+
+        {/* Main Story Container (Edge-to-edge on mobile, rounded card on desktop) */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
+          key={`${activeGroup.userId}-${currentStory._id || currentStoryIndex}`}
+          initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.96 }}
-          transition={{ duration: 0.2 }}
-          className="relative w-full max-w-[420px] h-[100dvh] sm:h-[86vh] sm:rounded-3xl bg-[#070B14] border border-white/[0.08] overflow-hidden shadow-2xl flex flex-col"
+          exit={{ opacity: 0, scale: 0.98 }}
+          transition={{ duration: 0.18 }}
+          className="relative w-full max-w-[430px] h-[100dvh] sm:h-[88vh] sm:rounded-3xl bg-[#070B14] border border-white/[0.1] overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.8)] flex flex-col z-20"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
         >
-          {/* Segmented Progress Bar */}
-          <div className="absolute top-0 inset-x-0 pt-3 px-3 flex gap-1 z-30">
-            {stories.map((s, idx) => (
+          {/* Top Segmented Progress Bar: One segment per story in active user's group */}
+          <div className="absolute top-0 inset-x-0 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:pt-3 px-3.5 flex gap-1.5 z-30">
+            {activeStories.map((s, idx) => (
               <div
                 key={s._id || s.id || idx}
-                className="h-1 flex-1 bg-white/25 rounded-full overflow-hidden"
+                className="h-1 flex-1 bg-white/20 rounded-full overflow-hidden"
               >
                 <div
-                  className="h-full bg-white transition-all ease-linear"
+                  className={`h-full transition-all ease-linear ${
+                    idx === currentStoryIndex
+                      ? 'bg-gradient-to-r from-emerald-400 via-teal-300 to-indigo-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]'
+                      : 'bg-white'
+                  }`}
                   style={{
                     width:
-                      idx === currentIndex
+                      idx === currentStoryIndex
                         ? `${progress}%`
-                        : idx < currentIndex
+                        : idx < currentStoryIndex
                         ? '100%'
                         : '0%',
                   }}
@@ -285,7 +397,7 @@ export default function StoryViewer({ stories = [], initialIndex = 0, onClose })
           </div>
 
           {/* Author Header */}
-          <div className="absolute top-6 inset-x-0 px-4 flex items-center justify-between z-30">
+          <div className="absolute top-[calc(1.75rem+env(safe-area-inset-top))] sm:top-6 inset-x-0 px-4 flex items-center justify-between z-30">
             <Link
               to={authorProfileUrl}
               onClick={onClose}
@@ -306,9 +418,16 @@ export default function StoryViewer({ stories = [], initialIndex = 0, onClose })
                 )}
               </div>
               <div className="min-w-0">
-                <h4 className="text-xs sm:text-sm font-bold text-white drop-shadow-sm truncate max-w-[170px]">
-                  {authorName}
-                </h4>
+                <div className="flex items-center gap-1.5">
+                  <h4 className="text-xs sm:text-sm font-bold text-white drop-shadow-sm truncate max-w-[160px]">
+                    {authorName}
+                  </h4>
+                  {activeStories.length > 1 && (
+                    <span className="text-[10px] text-white/50 font-normal">
+                      {currentStoryIndex + 1}/{activeStories.length}
+                    </span>
+                  )}
+                </div>
                 <p className="text-[10px] text-white/70">
                   {formatRelativeTime(currentStory.createdAt)}
                 </p>
@@ -316,11 +435,12 @@ export default function StoryViewer({ stories = [], initialIndex = 0, onClose })
             </Link>
 
             <div className="flex items-center gap-1.5">
+              {/* Video Mute Toggle */}
               {isVideo && (
                 <button
                   type="button"
-                  onClick={() => setIsMuted((prev) => !prev)}
-                  className="p-2 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                  onClick={() => setIsMuted((m) => !m)}
+                  className="p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-all cursor-pointer"
                   aria-label={isMuted ? 'Unmute video' : 'Mute video'}
                 >
                   {isMuted ? (
@@ -331,24 +451,26 @@ export default function StoryViewer({ stories = [], initialIndex = 0, onClose })
                 </button>
               )}
 
+              {/* Pause / Play Toggle */}
               <button
                 type="button"
-                onClick={() => setIsPaused((prev) => !prev)}
-                className="p-2 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                onClick={() => setIsPaused((p) => !p)}
+                className="p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-all cursor-pointer"
                 aria-label={isPaused ? 'Resume story' : 'Pause story'}
               >
                 {isPaused ? (
-                  <Play className="w-4 h-4 fill-current" />
+                  <Play className="w-4 h-4 fill-white" />
                 ) : (
-                  <Pause className="w-4 h-4 fill-current" />
+                  <Pause className="w-4 h-4 fill-white" />
                 )}
               </button>
 
+              {/* Delete Story Button for Author or Admin */}
               {(isOwner || isAdmin) && (
                 <button
                   type="button"
                   onClick={handleDeleteStory}
-                  className="p-2 rounded-full text-white/80 hover:text-rose-400 hover:bg-white/10 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-full bg-black/40 hover:bg-rose-600/80 text-white transition-all cursor-pointer"
                   title="Delete story"
                   aria-label="Delete story"
                 >
@@ -358,105 +480,99 @@ export default function StoryViewer({ stories = [], initialIndex = 0, onClose })
             </div>
           </div>
 
-          {/* Interactive Tap Area / Media Stage */}
-          <div
-            className="flex-1 relative bg-black flex items-center justify-center select-none overflow-hidden"
-            onMouseDown={() => setIsPaused(true)}
-            onMouseUp={() => setIsPaused(false)}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-          >
-            {/* Click Tap Zones for Mobile & Desktop Navigation */}
+          {/* Interactive Tap Zones (Left 35% = Prev, Right 65% = Next) */}
+          <div className="absolute inset-0 z-20 flex">
             <div
-              className="absolute inset-y-0 left-0 w-1/3 z-20 cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePrev();
-              }}
-              aria-label="Previous story"
+              className="w-[35%] h-full cursor-pointer"
+              onClick={handlePrev}
+              aria-label="Previous story tap zone"
             />
             <div
-              className="absolute inset-y-0 right-0 w-2/3 z-20 cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNext();
-              }}
-              aria-label="Next story"
+              className="w-[65%] h-full cursor-pointer"
+              onClick={handleNext}
+              aria-label="Next story tap zone"
             />
+          </div>
 
-            {/* Media Rendering */}
-            {mediaError ? (
-              <div className="p-6 text-center text-white/80 z-10">
-                <AlertCircle className="w-8 h-8 text-rose-400 mx-auto mb-2" />
-                <p className="text-sm font-medium mb-2">Unable to load this story</p>
-                <button
-                  type="button"
-                  onClick={() => setMediaError(false)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-semibold"
-                >
-                  <RefreshCw className="w-3 h-3" /> Retry
-                </button>
-              </div>
+          {/* Media Stage */}
+          <div className="relative flex-1 bg-black flex items-center justify-center overflow-hidden">
+            {isVideo && mediaUrl ? (
+              <video
+                ref={videoRef}
+                key={mediaUrl}
+                src={mediaUrl}
+                className="w-full h-full object-cover"
+                autoPlay
+                playsInline
+                loop={false}
+                muted={isMuted}
+                onLoadedData={() => setMediaLoaded(true)}
+                onError={() => setMediaError(true)}
+                onEnded={handleNext}
+              />
             ) : mediaUrl ? (
-              isVideo ? (
-                <video
-                  src={mediaUrl}
-                  autoPlay
-                  loop
-                  muted={isMuted}
-                  playsInline
-                  onLoadedData={() => setMediaLoaded(true)}
-                  onError={() => setMediaError(true)}
-                  className="w-full h-full object-cover absolute inset-0"
-                />
-              ) : (
-                <img
-                  src={mediaUrl}
-                  alt="Story content"
-                  onLoad={() => setMediaLoaded(true)}
-                  onError={() => setMediaError(true)}
-                  className="w-full h-full object-cover absolute inset-0"
-                />
-              )
+              <img
+                key={mediaUrl}
+                src={mediaUrl}
+                alt={`Story by ${authorName}`}
+                className="w-full h-full object-cover"
+                onLoad={() => setMediaLoaded(true)}
+                onError={() => setMediaError(true)}
+              />
             ) : (
-              // Text Story Card
+              // Text Story with Rich Dynamic Background
               <div
-                className={`absolute inset-0 flex items-center justify-center p-6 ${
+                className={`w-full h-full flex items-center justify-center p-8 text-center ${
                   currentStory.backgroundColor ||
-                  'bg-gradient-to-br from-[#0B111E] via-[#0E1726] to-[#121B2B]'
+                  'bg-gradient-to-br from-purple-600 via-indigo-700 to-slate-900'
                 }`}
               >
-                <h2 className="text-xl sm:text-2xl font-bold text-white text-center leading-relaxed max-w-xs break-words px-4">
+                <p className="text-xl sm:text-2xl font-bold text-white leading-relaxed drop-shadow-md max-w-sm">
+                  {currentStory.text || '✨'}
+                </p>
+              </div>
+            )}
+
+            {/* Subtle Gradient Overlays for Readability */}
+            <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/80 via-black/30 to-transparent pointer-events-none z-10" />
+            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none z-10" />
+
+            {/* Optional Media Caption Overlay */}
+            {currentStory.text && mediaUrl && (
+              <div className="absolute bottom-20 inset-x-4 z-20 text-center pointer-events-none">
+                <span className="inline-block px-3.5 py-1.5 rounded-full bg-black/60 backdrop-blur-md text-white text-xs sm:text-sm font-medium shadow-md">
                   {currentStory.text}
-                </h2>
+                </span>
+              </div>
+            )}
+
+            {/* Error Fallback */}
+            {mediaError && (
+              <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-text-muted gap-2 z-20">
+                <AlertCircle className="w-8 h-8 text-rose-400" />
+                <span className="text-xs">Story media unavailable</span>
               </div>
             )}
           </div>
 
-          {/* Sticky Reply Footer */}
-          <div className="p-3.5 sm:p-4 bg-gradient-to-t from-black/95 via-black/60 to-transparent z-30 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-            <form onSubmit={handleReply} className="flex gap-2">
+          {/* Bottom Reply Bar */}
+          <div className="relative z-30 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-black via-black/90 to-transparent border-t border-white/[0.08]">
+            <form onSubmit={handleReply} className="flex items-center gap-2">
               <input
-                id="story-reply-input"
-                data-testid="story-reply-input"
                 type="text"
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
-                onFocus={() => setIsPaused(true)}
-                onBlur={() => setIsPaused(false)}
                 placeholder={`Reply to ${authorName}...`}
-                className="flex-1 bg-white/[0.08] border border-white/20 focus:border-brand-mint/60 rounded-full px-4 py-2 text-xs sm:text-sm text-white placeholder-white/50 focus:outline-none transition-colors"
-                maxLength={300}
+                className="flex-1 bg-white/[0.08] hover:bg-white/[0.12] focus:bg-white/[0.15] border border-white/[0.1] rounded-full px-4 py-2.5 text-xs sm:text-sm text-white placeholder-white/50 focus:outline-none focus:ring-1 focus:ring-brand-mint transition-all"
+                disabled={isSubmittingReply}
               />
               <button
-                id="story-reply-submit"
-                data-testid="story-reply-submit"
                 type="submit"
                 disabled={!replyText.trim() || isSubmittingReply}
-                className="p-2.5 rounded-full bg-brand-mint text-bg-base font-semibold hover:opacity-90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shrink-0 shadow-sm"
-                aria-label="Send reply to story"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-brand-mint text-[#0B111E] hover:bg-brand-mint/90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shrink-0 shadow-md"
+                aria-label="Send reply"
               >
-                <Send className="w-4 h-4" />
+                <Send className="w-4 h-4 stroke-[2.5]" />
               </button>
             </form>
           </div>

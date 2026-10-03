@@ -86,7 +86,7 @@ export default function CommentInput({
             }}
             placeholder={replyingTo ? `Reply to @${replyAuthorName}...` : placeholder}
             maxLength={500}
-            className="w-full bg-white/[0.04] border border-white/[0.08] focus:border-brand-mint/50 focus:bg-white/[0.06] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-text-faint focus:outline-none transition-all"
+            className="w-full bg-white/[0.04] border border-white/[0.08] focus:border-cyan-400/50 focus:bg-white/[0.06] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-text-faint focus:outline-none focus:ring-2 focus:ring-brand-mint/20 focus:shadow-[0_0_12px_rgba(56,189,248,0.15)] transition-all"
           />
         </div>
 
@@ -96,7 +96,7 @@ export default function CommentInput({
           data-testid="comment-drawer-submit"
           type="submit"
           disabled={!value.trim() || isSubmitting}
-          className="min-h-[44px] min-w-[44px] px-3.5 py-2.5 bg-brand-mint text-bg-base font-semibold rounded-xl text-xs flex items-center justify-center hover:opacity-90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-mint/50"
+          className="min-h-[44px] min-w-[44px] px-3.5 py-2.5 bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 text-[#070B14] font-bold rounded-xl text-xs flex items-center justify-center hover:brightness-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_14px_rgba(159,213,178,0.25)] focus:outline-none focus:ring-2 focus:ring-brand-mint/50"
           aria-label="Post comment"
         >
           {isSubmitting ? (

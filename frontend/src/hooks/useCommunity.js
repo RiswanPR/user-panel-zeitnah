@@ -605,19 +605,30 @@ export function useCreateStory() {
     mutationFn: communityApi.createStory,
     onSuccess: (story) => {
       queryClient.setQueryData(['community', 'stories'], (oldData = []) => {
-        return [story, ...oldData.filter(s => (s._id || s.id) !== (story._id || story.id))];
+        const list = Array.isArray(oldData) ? oldData : [];
+        return [story, ...list.filter((s) => (s._id || s.id) !== (story._id || story.id))];
       });
-      toast.success('Story shared!');
-    },
-    onError: () => {
-      toast.error('Failed to upload story');
+      queryClient.invalidateQueries({ queryKey: ['community', 'stories'] });
     },
   });
 }
 
 export function useViewStory() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: communityApi.viewStory,
+    onSuccess: (_, storyId) => {
+      queryClient.setQueryData(['community', 'stories'], (oldData = []) => {
+        if (!Array.isArray(oldData)) return oldData;
+        return oldData.map((s) => {
+          if ((s._id || s.id) === storyId) {
+            return { ...s, isViewed: true };
+          }
+          return s;
+        });
+      });
+    },
   });
 }
 
