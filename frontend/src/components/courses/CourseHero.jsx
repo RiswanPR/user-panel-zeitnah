@@ -94,10 +94,10 @@ const CourseHero = memo(function CourseHero({
             <h1 className="display-headline text-4xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white leading-[0.92]">
               BUILD
               <br />
-              <span className="text-white/40">WHAT’S</span>
+              <span className="text-white/40">CONNECT</span>
               <br />
               <span className="bg-gradient-to-r from-white via-white to-brand-mint bg-clip-text text-transparent">
-                NEXT.
+                DISCOVER.
               </span>
             </h1>
           </motion.div>
