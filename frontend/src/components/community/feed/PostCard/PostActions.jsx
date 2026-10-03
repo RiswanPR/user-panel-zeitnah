@@ -22,6 +22,7 @@ export default function PostActions({
   onToggleComments,
   onToggleBookmark,
   onToggleRepost,
+  isRepostPending = false,
 }) {
   const [showRepostMenu, setShowRepostMenu] = useState(false);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
@@ -141,6 +142,7 @@ export default function PostActions({
               onToggleRepost={onToggleRepost}
               onQuote={() => setShowQuoteModal(true)}
               triggerRef={repostTriggerRef}
+              isPending={isRepostPending}
             />
           </div>
 

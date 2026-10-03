@@ -13,6 +13,7 @@ import { NotificationsService } from '../../notifications/notifications.service'
 import { SignedUrlService } from '../../../common/aws/signed-url.service';
 import { CommunityS3Service } from './community-s3.service';
 import { CommunityIdempotencyService } from './community-idempotency.service';
+import { PostType, PostAudience } from '../domain/post.model';
 
 @Injectable()
 export class PostService {
@@ -189,11 +190,14 @@ export class PostService {
       // Validate and normalize media first before creating post (Section 5, 6, 8, 13)
       const validatedMedia = this.validateAndNormalizeMedia(data.media || [], userId, isAdmin);
 
+      const audienceVal = ((data.audience || 'PUBLIC').toUpperCase() as PostAudience);
+      const typeVal = ((data.type || (validatedMedia.length > 0 ? validatedMedia[0].type : 'TEXT')).toUpperCase() as PostType);
+
       const postData: any = {
         authorId: userId,
         content: data.content,
-        type: data.type || (validatedMedia.length > 0 ? validatedMedia[0].type : 'text'),
-        audience: data.audience || 'public',
+        type: typeVal,
+        audience: audienceVal,
         courseId: data.courseId,
         batchId: data.batchId,
         hashtags: data.hashtags || [],
@@ -455,7 +459,7 @@ export class PostService {
       createdRepost = await this.postRepository.createRepost({
         originalPostId: canonicalPostId,
         authorId: userId,
-        audience: canonicalPost.audience,
+        audience: ((canonicalPost.audience || 'PUBLIC').toUpperCase() as PostAudience),
         courseId: canonicalPost.courseId,
         batchId: canonicalPost.batchId,
       });
@@ -573,8 +577,8 @@ export class PostService {
       quoteText: trimmedContent,
       postType: 'quote',
       originalPostId: canonicalPostId,
-      type: 'text',
-      audience: data.audience || canonicalPost.audience || 'public',
+      type: PostType.TEXT,
+      audience: (((data.audience || canonicalPost.audience || 'PUBLIC')).toUpperCase() as PostAudience),
       courseId: data.courseId || canonicalPost.courseId,
       hashtags: [],
       mentions: [],

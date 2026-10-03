@@ -1,4 +1,4 @@
-import { Document, Model } from 'mongoose';
+import { Document, Model, Types } from 'mongoose';
 
 export abstract class BaseRepository<T extends Document> {
   constructor(protected readonly model: Model<T>) {}
@@ -9,7 +9,12 @@ export abstract class BaseRepository<T extends Document> {
   }
 
   async findById(id: string): Promise<T | null> {
-    return this.model.findOne({ _id: id as any, isDeleted: false }).exec();
+    if (!id) return null;
+    const matches: any[] = [id];
+    if (Types.ObjectId.isValid(id)) {
+      matches.push(new Types.ObjectId(id));
+    }
+    return this.model.findOne({ _id: { $in: matches }, isDeleted: false }).exec();
   }
 
   async findOne(filterQuery: any): Promise<T | null> {

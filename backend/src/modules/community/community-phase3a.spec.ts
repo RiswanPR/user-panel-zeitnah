@@ -479,5 +479,75 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
       expect(res.message).toBe('Already reposted');
       expect(res.isReposted).toBe(true);
     });
+
+    it('Regression Phase 5.6: repostPost safely handles UUID string identifiers and passes normalized audience', async () => {
+      const uuidPostId = 'dd10d087-ce9e-4c26-a47d-94cb832dcfd';
+      const originalPost = {
+        _id: uuidPostId,
+        authorId: 'author-uuid-1',
+        content: 'Post with UUID identifier',
+        audience: 'public',
+        stats: { reposts: 3 },
+      };
+
+      mockPostRepository.findById.mockResolvedValue(originalPost);
+      mockPostRepository.findActiveRepost.mockResolvedValue(null);
+      mockPostRepository.createRepost.mockImplementation(async (data: any) => ({
+        _id: 'repost-uuid-new',
+        originalPostId: data.originalPostId,
+        authorId: data.authorId,
+        audience: data.audience,
+        type: 'TEXT',
+      }));
+      mockPostRepository.findByIdPopulated.mockResolvedValue({
+        ...originalPost,
+        stats: { reposts: 4 },
+      });
+
+      const res = await postService.repostPost(uuidPostId, 'user-uuid-actor');
+
+      expect(res.success).toBe(true);
+      expect(res.isReposted).toBe(true);
+      expect(res.repostsCount).toBe(4);
+      expect(mockPostRepository.createRepost).toHaveBeenCalledWith(
+        expect.objectContaining({
+          originalPostId: uuidPostId,
+          authorId: 'user-uuid-actor',
+          audience: 'PUBLIC',
+        })
+      );
+    });
+
+    it('Regression Phase 5.6: quotePost ensures uppercase enum type TEXT and uppercase audience', async () => {
+      const originalPost = {
+        _id: 'post-quote-uuid',
+        authorId: 'author-original',
+        content: 'Original knowledge post',
+        audience: 'public',
+        stats: { reposts: 0 },
+      };
+
+      mockPostRepository.findById.mockResolvedValue(originalPost);
+      mockPostRepository.create.mockImplementation(async (data: any) => ({
+        _id: 'quote-post-new',
+        ...data,
+      }));
+      mockPostRepository.findByIdPopulated.mockResolvedValue(originalPost);
+
+      const res = await postService.quotePost('post-quote-uuid', 'quoter-user', {
+        content: 'Fascinating engineering design benchmark',
+        audience: 'public' as any,
+      });
+
+      expect(res).toBeDefined();
+      expect(mockPostRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'TEXT',
+          audience: 'PUBLIC',
+          postType: 'quote',
+          originalPostId: 'post-quote-uuid',
+        })
+      );
+    });
   });
 });

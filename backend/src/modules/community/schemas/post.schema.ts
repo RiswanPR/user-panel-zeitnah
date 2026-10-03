@@ -31,10 +31,20 @@ export class Post {
   @Prop({ type: String })
   quoteText?: string;
 
-  @Prop({ type: String, enum: PostType, required: true })
+  @Prop({
+    type: String,
+    enum: Object.values(PostType),
+    required: true,
+    set: (v: string) => (typeof v === 'string' ? (v.toUpperCase() as PostType) : v),
+  })
   type: PostType;
 
-  @Prop({ type: String, enum: PostAudience, required: true })
+  @Prop({
+    type: String,
+    enum: Object.values(PostAudience),
+    required: true,
+    set: (v: string) => (typeof v === 'string' ? (v.toUpperCase() as PostAudience) : v),
+  })
   audience: PostAudience;
 
   @Prop({ type: String, index: true })

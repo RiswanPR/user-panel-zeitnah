@@ -118,7 +118,10 @@ function PostCard({ post, onOpenComments, isActiveCommentPost }) {
     }
   };
 
+  const isRepostPending = repostMutation.isPending || unrepostMutation.isPending;
+
   const handleToggleRepost = () => {
+    if (isRepostPending) return;
     if (isReposted) {
       unrepostMutation.mutate(canonicalPostId);
     } else {
@@ -213,6 +216,7 @@ function PostCard({ post, onOpenComments, isActiveCommentPost }) {
                 onToggleComments={handleToggleComments}
                 onToggleBookmark={handleToggleBookmark}
                 onToggleRepost={handleToggleRepost}
+                isRepostPending={isRepostPending}
               />
 
               {/* Author Caption & Tags */}
@@ -251,6 +255,7 @@ function PostCard({ post, onOpenComments, isActiveCommentPost }) {
                 onToggleComments={handleToggleComments}
                 onToggleBookmark={handleToggleBookmark}
                 onToggleRepost={handleToggleRepost}
+                isRepostPending={isRepostPending}
               />
             </>
           )}

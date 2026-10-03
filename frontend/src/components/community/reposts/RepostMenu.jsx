@@ -12,6 +12,7 @@ export default function RepostMenu({
   onToggleRepost,
   onQuote,
   triggerRef,
+  isPending = false,
 }) {
   const menuRef = useRef(null);
 
@@ -77,11 +78,15 @@ export default function RepostMenu({
       <button
         type="button"
         role="menuitem"
+        disabled={isPending}
         onClick={() => {
+          if (isPending) return;
           onToggleRepost();
           onClose();
         }}
         className={`w-full min-h-[44px] px-3.5 py-2.5 flex items-center gap-2.5 text-xs font-semibold text-left transition-colors cursor-pointer ${
+          isPending ? 'opacity-60 cursor-not-allowed' : ''
+        } ${
           isReposted
             ? 'text-rose-400 hover:bg-rose-500/10'
             : 'text-white hover:bg-brand-mint/10 hover:text-brand-mint'

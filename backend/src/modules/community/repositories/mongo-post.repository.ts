@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { BaseRepository } from './base.repository';
+import { PostType, PostAudience } from '../domain/post.model';
 import {
   Post,
   PostDocument,
@@ -118,7 +119,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
               $match: {
                 $expr: {
                   $or: [
-                    { $eq: ['$_id', { $toObjectId: '$$authorStr' }] },
+                    { $eq: ['$_id', { $convert: { input: '$$authorStr', to: 'objectId', onError: null, onNull: null } }] },
                     { $eq: [{ $toString: '$_id' }, '$$authorStr'] },
                   ],
                 },
@@ -241,7 +242,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
                     $match: {
                       $expr: {
                         $or: [
-                          { $eq: ['$_id', { $toObjectId: '$$origAuthorStr' }] },
+                          { $eq: ['$_id', { $convert: { input: '$$origAuthorStr', to: 'objectId', onError: null, onNull: null } }] },
                           { $eq: [{ $toString: '$_id' }, '$$origAuthorStr'] },
                         ],
                       },
@@ -472,7 +473,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
               $match: {
                 $expr: {
                   $or: [
-                    { $eq: ['$_id', { $toObjectId: '$$authorStr' }] },
+                    { $eq: ['$_id', { $convert: { input: '$$authorStr', to: 'objectId', onError: null, onNull: null } }] },
                     { $eq: [{ $toString: '$_id' }, '$$authorStr'] },
                   ],
                 },
@@ -590,7 +591,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
                     $match: {
                       $expr: {
                         $or: [
-                          { $eq: ['$_id', { $toObjectId: '$$origAuthorStr' }] },
+                          { $eq: ['$_id', { $convert: { input: '$$origAuthorStr', to: 'objectId', onError: null, onNull: null } }] },
                           { $eq: [{ $toString: '$_id' }, '$$origAuthorStr'] },
                         ],
                       },
@@ -976,12 +977,15 @@ export class PostRepository extends BaseRepository<PostDocument> {
       isDeleted: true,
     });
 
+    const audienceEnum = (data.audience?.toUpperCase() as PostAudience) || PostAudience.PUBLIC;
+
     if (existingSoftDeleted) {
       existingSoftDeleted.isDeleted = false;
       existingSoftDeleted.deletedAt = undefined;
       (existingSoftDeleted as any).createdAt = new Date();
       (existingSoftDeleted as any).updatedAt = new Date();
-      existingSoftDeleted.audience = (data.audience as any) || 'PUBLIC';
+      existingSoftDeleted.type = PostType.TEXT;
+      existingSoftDeleted.audience = audienceEnum;
       existingSoftDeleted.courseId = data.courseId;
       existingSoftDeleted.batchId = data.batchId;
       return existingSoftDeleted.save();
@@ -992,8 +996,8 @@ export class PostRepository extends BaseRepository<PostDocument> {
       originalPostId: data.originalPostId,
       postType: 'repost',
       content: '',
-      type: 'text',
-      audience: data.audience || 'public',
+      type: PostType.TEXT,
+      audience: audienceEnum,
       courseId: data.courseId,
       batchId: data.batchId,
       hashtags: [],

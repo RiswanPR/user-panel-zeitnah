@@ -86,7 +86,7 @@ api.interceptors.request.use(async (config) => {
 
   const token = storage.getAccessToken();
 
-  if (token) {
+  if (token && !(config as any)._isRefreshRequest && !config.url?.includes('/auth/refresh-token')) {
     if (config.headers?.set) {
       config.headers.set("Authorization", `Bearer ${token}`);
     } else {

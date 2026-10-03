@@ -8,6 +8,7 @@ import {
   Req,
   Res,
   UseGuards,
+  UnauthorizedException,
 } from '@nestjs/common';
 
 import type { Request, Response } from 'express';
@@ -241,7 +242,10 @@ export class AuthController {
     @Res({ passthrough: true })
     res: Response,
   ) {
-    const refreshTokenToUse = req.cookies?.refreshToken || body?.refreshToken;
+    const refreshTokenToUse = body?.refreshToken || req.cookies?.refreshToken;
+    if (!refreshTokenToUse) {
+      throw new UnauthorizedException('Refresh token is required');
+    }
 
     const result = await this.authService.refreshToken(refreshTokenToUse);
 
