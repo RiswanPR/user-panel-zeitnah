@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useContext, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   X,
   Pause,
@@ -66,6 +66,7 @@ export default function StoryViewer({
 
   const [currentGroupIndex, setCurrentGroupIndex] = useState(resolvedInitialGroupIndex);
   const [currentStoryIndex, setCurrentStoryIndex] = useState(initialStoryIndex || 0);
+  const shouldReduceMotion = useReducedMotion();
 
   const activeGroup = normalizedGroups[currentGroupIndex] || null;
   const activeStories = activeGroup?.stories || [];
@@ -359,10 +360,10 @@ export default function StoryViewer({
         {/* Main Story Container (Edge-to-edge on mobile, rounded card on desktop) */}
         <motion.div
           key={`${activeGroup.userId}-${currentStory._id || currentStoryIndex}`}
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.98 }}
-          transition={{ duration: 0.18 }}
+          initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.985, y: 4 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.985, y: -4 }}
+          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
           className="relative w-full max-w-[430px] h-[100dvh] sm:h-[88vh] sm:rounded-3xl bg-[#070B14] border border-white/[0.1] overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.8)] flex flex-col z-20"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
@@ -377,7 +378,7 @@ export default function StoryViewer({
                 <div
                   className={`h-full transition-all ease-linear ${
                     idx === currentStoryIndex
-                      ? 'bg-gradient-to-r from-brand-mint via-brand-mint to-brand-yellow shadow-[0_0_8px_rgba(159,213,178,0.7)]'
+                      ? 'bg-gradient-to-r from-brand-mint via-[#D4E37A] to-brand-yellow shadow-[0_0_8px_rgba(159,213,178,0.6)]'
                       : 'bg-white'
                   }`}
                   style={{

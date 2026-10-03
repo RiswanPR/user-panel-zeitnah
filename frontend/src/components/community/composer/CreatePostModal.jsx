@@ -76,6 +76,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
   const [showLocationInput, setShowLocationInput] = useState(false);
   const [altText, setAltText] = useState('');
   const [showAltInput, setShowAltInput] = useState(false);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -498,10 +499,10 @@ export default function CreatePostModal({ isOpen, onClose }) {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="relative w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-[760px] bg-[#0B111E] border-0 sm:border border-white/[0.1] rounded-none sm:rounded-3xl shadow-[0_16px_64px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden text-white"
+          className="relative w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-[760px] bg-[#0A131F] border-0 sm:border border-white/[0.1] rounded-none sm:rounded-3xl shadow-[0_16px_64px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden text-white"
         >
           {/* ── Modal Header Bar ── */}
-          <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/[0.08] shrink-0 select-none bg-[#0B111E]">
+          <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/[0.08] shrink-0 select-none bg-[#0A131F]">
             <div className="flex items-center gap-2">
               {step !== 'SELECT' && step !== 'UPLOADING' ? (
                 <button
@@ -517,7 +518,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
                 </button>
               ) : null}
 
-              <h2 id="create-post-title" className="text-sm sm:text-base font-bold text-white tracking-tight">
+              <h2 id="create-post-title" className="text-sm sm:text-base font-bold font-heading text-white tracking-tight">
                 {step === 'SELECT' && 'Create new post'}
                 {step === 'EDIT' && 'Adjust & Preview'}
                 {step === 'DETAILS' && 'New post'}
@@ -609,15 +610,38 @@ export default function CreatePostModal({ isOpen, onClose }) {
           {step === 'SELECT' && (
             <div
               id="media-dropzone"
-              className="relative flex-1 flex flex-col items-center justify-center p-8 sm:p-12 text-center min-h-[380px] sm:min-h-[460px] overflow-hidden"
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDraggingOver(true);
+              }}
+              onDragLeave={() => setIsDraggingOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDraggingOver(false);
+                if (e.dataTransfer?.files?.length) {
+                  handleFilesAdded({ target: { files: e.dataTransfer.files } });
+                }
+              }}
+              className={`relative flex-1 flex flex-col items-center justify-center p-8 sm:p-12 text-center min-h-[380px] sm:min-h-[460px] overflow-hidden transition-all duration-300 ${
+                isDraggingOver
+                  ? 'bg-[#12314C]/45 border-2 border-dashed border-brand-mint/60 shadow-[0_0_32px_rgba(159,213,178,0.22)]'
+                  : 'bg-transparent'
+              }`}
             >
-              <BrandAmbientShape variant="composer" opacity={0.5} />
+              {/* Subtle Mint Atmosphere in Center */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full bg-brand-mint/[0.04] blur-3xl pointer-events-none" />
 
-              <div className="relative z-10 w-20 h-20 rounded-3xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-text-muted mb-5 shadow-inner">
-                <UploadCloud className="w-10 h-10 text-brand-mint" />
+              <BrandAmbientShape variant="composer" intensity="subtle" />
+
+              <div className={`relative z-10 w-20 h-20 rounded-3xl border flex items-center justify-center mb-5 transition-all duration-300 ${
+                isDraggingOver
+                  ? 'bg-brand-mint/15 border-brand-mint/40 scale-105 shadow-[0_0_20px_rgba(159,213,178,0.3)]'
+                  : 'bg-white/[0.04] border-white/[0.08] text-text-muted shadow-inner'
+              }`}>
+                <UploadCloud className={`w-10 h-10 transition-colors ${isDraggingOver ? 'text-brand-yellow' : 'text-brand-mint'}`} />
               </div>
 
-              <h3 className="relative z-10 text-base sm:text-lg font-bold text-white mb-2">
+              <h3 className="relative z-10 text-base sm:text-lg font-bold font-heading text-white mb-2">
                 Drag photos and videos here
               </h3>
               <p className="relative z-10 text-xs text-text-muted max-w-sm mb-6 leading-relaxed">
@@ -628,7 +652,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="min-h-[44px] px-6 py-2.5 rounded-xl bg-gradient-to-r from-brand-mint to-brand-yellow text-[#070B14] font-bold text-xs hover:brightness-105 transition-all shadow-[0_0_16px_rgba(159,213,178,0.25)] cursor-pointer"
+                  className="min-h-[44px] px-6 py-2.5 rounded-xl bg-gradient-to-r from-brand-mint via-[#D4E37A] to-brand-yellow text-[#070B14] font-bold text-xs hover:brightness-105 active:scale-95 transition-all shadow-[0_1px_2px_rgba(255,255,255,0.3)_inset,0_0_16px_rgba(159,213,178,0.25)] cursor-pointer"
                 >
                   Select from computer
                 </button>

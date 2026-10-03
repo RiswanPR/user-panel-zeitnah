@@ -1,5 +1,6 @@
 import React from 'react';
 import { Image, Video, HelpCircle, Send } from 'lucide-react';
+import BrandAmbientShape from '../ui/BrandAmbientShape';
 
 /**
  * ComposerCollapsed — Compact media-first composer bar.
@@ -16,7 +17,7 @@ export default function ComposerCollapsed({
   return (
     <div
       onClick={onExpand}
-      className="bg-[#0B111E] border border-white/[0.07] hover:border-brand-mint/20 hover:bg-[#0D1424] rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.25)] p-3.5 sm:p-4 transition-all duration-200 cursor-pointer group"
+      className="relative overflow-hidden zn-card p-3.5 sm:p-4 transition-all duration-200 cursor-pointer group hover:border-brand-mint/25"
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -27,6 +28,8 @@ export default function ComposerCollapsed({
       }}
       aria-label="Create a post"
     >
+      {/* Organic Z Ambient Accent on Hover */}
+      <BrandAmbientShape variant="composer" intensity="subtle" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       {/* Top Input Trigger Row */}
       <div className="flex items-center gap-3 mb-3">
         {/* User Avatar */}

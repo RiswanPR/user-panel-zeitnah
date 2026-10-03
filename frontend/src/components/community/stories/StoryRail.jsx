@@ -49,14 +49,15 @@ export default function StoryRail({
   return (
     <section
       aria-label="Community Stories"
-      className="relative p-3.5 sm:p-4 rounded-2xl bg-[#0B111E]/80 border border-white/[0.08] backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:border-brand-mint/20 transition-all select-none overflow-hidden"
+      className="relative p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-[#0C1524]/90 via-[#0B1220]/85 to-[#0C1524]/90 border border-white/[0.08] backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:border-brand-mint/20 transition-all select-none overflow-hidden"
     >
       {/* Top subtle ambient light bar */}
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-mint/25 to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#12314C]/40 to-transparent pointer-events-none" />
 
       {/* Edge gradient masks for smooth horizontal scroll indicator */}
-      <div className="absolute left-0 inset-y-0 w-5 bg-gradient-to-r from-[#0B111E] to-transparent pointer-events-none z-10 opacity-60 hidden sm:block" />
-      <div className="absolute right-0 inset-y-0 w-8 bg-gradient-to-l from-[#0B111E] to-transparent pointer-events-none z-10 opacity-60" />
+      <div className="absolute left-0 inset-y-0 w-6 bg-gradient-to-r from-[#0C1524] to-transparent pointer-events-none z-10 opacity-70 hidden sm:block" />
+      <div className="absolute right-0 inset-y-0 w-8 bg-gradient-to-l from-[#0C1524] to-transparent pointer-events-none z-10 opacity-70" />
 
       <div className="flex gap-3.5 sm:gap-4 overflow-x-auto pb-1 scrollbar-none items-center snap-x snap-mandatory">
         {/* Your Story Item with '+' Badge */}
@@ -78,8 +79,8 @@ export default function StoryRail({
               className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full transition-transform duration-200 group-hover:scale-[1.04] ${
                 hasOwnStory
                   ? currentUserGroup.hasUnseenStories
-                    ? 'p-[2.5px] bg-gradient-to-tr from-[#12314C] via-brand-mint to-[#F6ED4A] shadow-[0_0_14px_rgba(246,237,74,0.25)] ring-1 ring-brand-yellow/40'
-                    : 'p-[2px] bg-gradient-to-tr from-[#12314C]/70 via-white/[0.1] to-[#9FD5B2]/20 ring-1 ring-white/10 opacity-80 group-hover:opacity-100 group-hover:ring-brand-mint/20'
+                    ? 'p-[2.5px] community-ring-own ring-1 ring-brand-yellow/30'
+                    : 'p-[2px] zn-gradient-ring-seen ring-1 ring-white/10 opacity-80 group-hover:opacity-100 group-hover:ring-brand-mint/20'
                   : 'p-[2px] bg-white/[0.08] border-2 border-dashed border-white/20 group-hover:border-brand-mint/60'
               }`}
             >

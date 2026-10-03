@@ -59,9 +59,12 @@ export default function FeedFilterTabs({
             {isActive && (
               <motion.div
                 layoutId="active-feed-tab"
-                className="absolute inset-0 bg-gradient-to-r from-[#12314C] via-[#12314C]/85 to-[#9FD5B2]/25 border border-brand-mint/45 rounded-lg shadow-[0_0_14px_rgba(159,213,178,0.22)]"
+                className="absolute inset-0 bg-gradient-to-r from-[#12314C] via-[#163B5C] to-[#9FD5B2]/25 border border-brand-mint/45 rounded-lg shadow-[0_2px_12px_rgba(18,49,76,0.6),0_0_14px_rgba(159,213,178,0.22)] overflow-hidden"
                 transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-              />
+              >
+                {/* Subtle top internal highlight edge */}
+                <div className="absolute top-0 inset-x-2 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
+              </motion.div>
             )}
             <Icon
               className={`w-3.5 h-3.5 relative z-10 transition-colors ${

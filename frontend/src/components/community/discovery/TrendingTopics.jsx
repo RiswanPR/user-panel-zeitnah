@@ -49,7 +49,7 @@ export default function TrendingTopics({
                   border transition-all duration-150 cursor-pointer
                   ${
                     isSelected
-                      ? 'bg-brand-mint text-[#070B14] border-brand-mint font-semibold shadow-[0_0_14px_rgba(159,213,178,0.35)]'
+                      ? 'bg-gradient-to-r from-brand-mint to-brand-yellow text-[#070B14] border-transparent font-bold shadow-[0_0_14px_rgba(159,213,178,0.35)]'
                       : 'bg-white/[0.035] hover:bg-white/[0.07] text-text-secondary hover:text-white border-white/[0.07] hover:border-brand-mint/30'
                   }
                 `}
@@ -59,8 +59,8 @@ export default function TrendingTopics({
                 <span>#{tag}</span>
                 {count > 1 && (
                   <span
-                    className={`text-[10px] px-1 rounded-full ${
-                      isSelected ? 'bg-bg-base/20 text-bg-base' : 'bg-white/[0.08] text-text-faint'
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                      isSelected ? 'bg-black/20 text-[#070B14]' : 'bg-[#12314C]/60 text-brand-yellow/90 border border-brand-yellow/20'
                     }`}
                   >
                     {count}

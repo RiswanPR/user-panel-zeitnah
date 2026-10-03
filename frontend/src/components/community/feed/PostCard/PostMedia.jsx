@@ -151,6 +151,9 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
+        {/* Subtle Ambient Brand Edge Integration */}
+        <div className="absolute inset-0 pointer-events-none rounded-none sm:rounded-2xl ring-1 ring-inset ring-brand-mint/[0.06] z-10" />
+
         {/* Carousel Counter Badge (e.g. 1/3) */}
         {isMulti && (
           <div className="absolute top-3 right-3 z-20 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[11px] font-mono font-medium text-white/90 shadow-sm border border-white/10 pointer-events-none">

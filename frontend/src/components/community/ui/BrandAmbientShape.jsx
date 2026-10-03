@@ -46,16 +46,28 @@ const ORGANIC_Z_PATH = `
   Z
 `;
 
+// Intensity level map to visual prominence
+const INTENSITY_PRESETS = {
+  subtle: 0.025, // 1–3% visual prominence
+  ambient: 0.05, // 3–7%
+  featured: 0.09, // 7–12%
+  cinematic: 0.13, // 10–15%
+};
+
 export const BrandAmbientShape = memo(function BrandAmbientShape({
   variant = 'canvas',
   className = '',
-  opacity = 1,
+  intensity = 'ambient',
+  opacity,
 }) {
+  const intensityFactor = INTENSITY_PRESETS[intensity] ?? INTENSITY_PRESETS.ambient;
+  const effectiveOpacity = opacity !== undefined ? opacity : intensityFactor * 10;
+
   if (variant === 'header') {
     return (
       <div
         className={`absolute -top-10 right-0 sm:right-6 w-72 sm:w-96 h-48 pointer-events-none select-none overflow-hidden z-0 ${className}`}
-        style={{ opacity }}
+        style={{ opacity: effectiveOpacity }}
         aria-hidden="true"
       >
         <svg
@@ -111,7 +123,7 @@ export const BrandAmbientShape = memo(function BrandAmbientShape({
     return (
       <div
         className={`absolute inset-0 pointer-events-none select-none overflow-hidden z-0 ${className}`}
-        style={{ opacity }}
+        style={{ opacity: effectiveOpacity }}
         aria-hidden="true"
       >
         <svg
@@ -141,7 +153,7 @@ export const BrandAmbientShape = memo(function BrandAmbientShape({
     return (
       <div
         className={`absolute inset-0 pointer-events-none select-none overflow-hidden ${className}`}
-        style={{ opacity }}
+        style={{ opacity: effectiveOpacity }}
         aria-hidden="true"
       >
         {/* Cinematic deep navy to black gradient */}
@@ -187,7 +199,7 @@ export const BrandAmbientShape = memo(function BrandAmbientShape({
     return (
       <div
         className={`w-20 h-20 sm:w-24 sm:h-24 relative flex items-center justify-center select-none pointer-events-none ${className}`}
-        style={{ opacity }}
+        style={{ opacity: effectiveOpacity }}
         aria-hidden="true"
       >
         <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-[#12314C]/40 via-[#9FD5B2]/10 to-[#F6ED4A]/5 border border-brand-mint/20 shadow-[0_0_24px_rgba(159,213,178,0.1)]" />
@@ -214,7 +226,7 @@ export const BrandAmbientShape = memo(function BrandAmbientShape({
     return (
       <div
         className={`w-full overflow-hidden pointer-events-none select-none ${className}`}
-        style={{ opacity }}
+        style={{ opacity: effectiveOpacity }}
         aria-hidden="true"
       >
         <svg
@@ -259,7 +271,7 @@ export const BrandAmbientShape = memo(function BrandAmbientShape({
   return (
     <div
       className={`absolute inset-0 pointer-events-none select-none overflow-hidden z-0 ${className}`}
-      style={{ opacity }}
+      style={{ opacity: effectiveOpacity }}
       aria-hidden="true"
     >
       <svg
