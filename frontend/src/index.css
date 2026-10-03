@@ -1970,6 +1970,7 @@ html, body {
   background: linear-gradient(135deg, rgba(159, 213, 178, 0.4) 0%, rgba(246, 237, 74, 0.2) 50%, rgba(18, 49, 76, 0.3) 100%);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
   pointer-events: none;
 }
