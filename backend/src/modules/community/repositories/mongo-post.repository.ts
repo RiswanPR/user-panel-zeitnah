@@ -969,34 +969,56 @@ export class PostRepository extends BaseRepository<PostDocument> {
       authorMatches.push(new Types.ObjectId(data.authorId));
     }
 
-    // Check if a soft-deleted repost already exists for this pair to avoid duplicate historical records
-    const existingSoftDeleted = await this.postModel.findOne({
-      originalPostId: { $in: origMatches },
-      authorId: { $in: authorMatches },
-      postType: 'repost',
-      isDeleted: true,
-    });
+    // Canonical enum values — always uppercase, always valid
+    const audienceEnum = ((data.audience || PostAudience.PUBLIC).toUpperCase() as PostAudience);
+    const typeEnum = PostType.TEXT; // Repost documents always use TEXT
 
-    const audienceEnum = (data.audience?.toUpperCase() as PostAudience) || PostAudience.PUBLIC;
+    // Check if a soft-deleted repost already exists for this pair to reuse the document
+    const existingSoftDeleted = await this.postModel
+      .findOne({
+        originalPostId: { $in: origMatches },
+        authorId: { $in: authorMatches },
+        postType: 'repost',
+        isDeleted: true,
+      })
+      .lean()
+      .exec();
 
     if (existingSoftDeleted) {
-      existingSoftDeleted.isDeleted = false;
-      existingSoftDeleted.deletedAt = undefined;
-      (existingSoftDeleted as any).createdAt = new Date();
-      (existingSoftDeleted as any).updatedAt = new Date();
-      existingSoftDeleted.type = PostType.TEXT;
-      existingSoftDeleted.audience = audienceEnum;
-      existingSoftDeleted.courseId = data.courseId;
-      existingSoftDeleted.batchId = data.batchId;
-      return existingSoftDeleted.save();
+      // Use findOneAndUpdate with $set to bypass Mongoose document setter/validator
+      // on documents that may have been stored with pre-fix lowercase enum values.
+      // $set writes the canonical uppercase values directly to MongoDB, guaranteed valid.
+      const revived = await this.postModel
+        .findOneAndUpdate(
+          { _id: (existingSoftDeleted as any)._id },
+          {
+            $set: {
+              isDeleted: false,
+              type: typeEnum,
+              audience: audienceEnum,
+              courseId: data.courseId ?? null,
+              batchId: data.batchId ?? null,
+            },
+            $unset: {
+              deletedAt: '',
+            },
+          },
+          {
+            new: true,        // return the updated document
+            runValidators: true, // validate with canonical values AFTER $set
+          },
+        )
+        .exec();
+      return revived;
     }
 
+    // No soft-deleted document exists — create a fresh repost record
     const post = new this.postModel({
       authorId: data.authorId,
       originalPostId: data.originalPostId,
       postType: 'repost',
       content: '',
-      type: PostType.TEXT,
+      type: typeEnum,
       audience: audienceEnum,
       courseId: data.courseId,
       batchId: data.batchId,
@@ -1005,6 +1027,9 @@ export class PostRepository extends BaseRepository<PostDocument> {
       tags: [],
       stats: {
         likes: 0,
+        loves: 0,
+        celebrates: 0,
+        insightfuls: 0,
         comments: 0,
         shares: 0,
         views: 0,

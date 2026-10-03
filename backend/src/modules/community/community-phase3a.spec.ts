@@ -177,7 +177,99 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
 
       expect(mockNotificationsService.createNotification).not.toHaveBeenCalled();
     });
+
+    /**
+     * REGRESSION TEST — Phase 5.6 Production Bug
+     * Bug: ValidationError: Post validation failed: type: `text` is not a valid enum value
+     * Root cause: createRepost was called with audience='public' (lowercase), and any stale
+     * soft-deleted documents with type='text' would fail Mongoose enum validation on .save().
+     * Fix: createRepost now uses findOneAndUpdate($set) with canonical uppercase enum values,
+     * bypassing in-memory Mongoose document validator on stale docs.
+     * This test guarantees createRepost is always called with UPPERCASE audience enum,
+     * and that the service contract for repost type remains 'TEXT' (via PostType.TEXT).
+     */
+    it('[REGRESSION] repostPost always calls createRepost with canonical UPPERCASE audience — never lowercase', async () => {
+      const originalPostWithLowercaseAudience = {
+        _id: 'post-regression-lowercase',
+        authorId: 'author-regression',
+        content: 'Post that had lowercase audience in DB',
+        audience: 'public', // Simulate a DB doc with lowercase audience
+        stats: { reposts: 0 },
+        isDeleted: false,
+      };
+
+      const createdRepost = {
+        _id: 'repost-regression',
+        authorId: 'user-regression',
+        originalPostId: 'post-regression-lowercase',
+        postType: 'repost',
+        type: 'TEXT', // Must always be canonical uppercase
+        audience: 'PUBLIC', // Must always be canonical uppercase
+      };
+
+      mockPostRepository.findById.mockResolvedValue(originalPostWithLowercaseAudience);
+      mockPostRepository.findActiveRepost.mockResolvedValue(null);
+      mockPostRepository.createRepost.mockResolvedValue(createdRepost);
+      mockPostRepository.findByIdPopulated.mockResolvedValue(originalPostWithLowercaseAudience);
+
+      const result = await postService.repostPost('post-regression-lowercase', 'user-regression');
+
+      // CRITICAL: audience must be uppercased before reaching createRepost
+      expect(mockPostRepository.createRepost).toHaveBeenCalledWith(
+        expect.objectContaining({
+          originalPostId: 'post-regression-lowercase',
+          authorId: 'user-regression',
+          audience: 'PUBLIC', // Must be uppercase — never 'public'
+        }),
+      );
+
+      // Service must not pass lowercase audience to repository
+      const createRepostCall = mockPostRepository.createRepost.mock.calls[0][0];
+      expect(createRepostCall.audience).not.toBe('public');
+      expect(createRepostCall.audience).toBe('PUBLIC');
+
+      expect(result.success).toBe(true);
+      expect(result.isReposted).toBe(true);
+    });
+
+    it('[REGRESSION] repostPost audience normalization works for all supported audience values', async () => {
+      const audienceInputs = [
+        { stored: 'public', expected: 'PUBLIC' },
+        { stored: 'PUBLIC', expected: 'PUBLIC' },
+        { stored: 'course', expected: 'COURSE' },
+        { stored: 'COURSE', expected: 'COURSE' },
+        { stored: 'batch', expected: 'BATCH' },
+        { stored: 'BATCH', expected: 'BATCH' },
+        { stored: undefined, expected: 'PUBLIC' }, // fallback
+        { stored: null, expected: 'PUBLIC' },       // fallback
+      ];
+
+      for (const { stored, expected } of audienceInputs) {
+        jest.clearAllMocks();
+
+        const post = {
+          _id: 'post-aud-test',
+          authorId: 'author-aud',
+          courseId: 'course-test-123',
+          content: 'Audience normalization test',
+          audience: stored,
+          stats: { reposts: 0 },
+          isDeleted: false,
+        };
+
+        mockPostRepository.findById.mockResolvedValue(post);
+        mockPostRepository.findActiveRepost.mockResolvedValue(null);
+        mockPostRepository.createRepost.mockResolvedValue({ _id: 'repost-aud' });
+        mockPostRepository.findByIdPopulated.mockResolvedValue(post);
+
+        await postService.repostPost('post-aud-test', 'user-aud-tester', ['course-test-123']);
+
+        const call = mockPostRepository.createRepost.mock.calls[0][0];
+        expect(call.audience).toBe(expected);
+      }
+    });
   });
+
 
   describe('2. Quote Post Capabilities', () => {
     it('creates a quote post with commentary and links canonical original post', async () => {

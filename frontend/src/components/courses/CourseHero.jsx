@@ -11,7 +11,7 @@ import ZeitnahZMotif from "./ZeitnahZMotif";
  * - Structural navy #12314C / deep charcoal #0A0F14 canvas with technical grid
  * - Ambient mint & yellow glow
  * - Large-scale asymmetrical organic "Z" motif watermark
- * - Massive editorial typography: "BUILD WHAT'S NEXT."
+ * - Massive editorial typography: "Build Connect Discover"
  * - Instrument-panel "Learning Signal" telemetry (real progress only, zero fabrication)
  * - Premium Framer Motion entry with ease [0.16, 1, 0.3, 1]
  */
