@@ -1,7 +1,6 @@
 import {
   BookOpen,
   Compass,
-  MessageSquare,
   Briefcase,
   Building2,
   TrendingUp,
@@ -140,20 +139,21 @@ export function getPrimaryNavLinks(user, { unreadMessagesCount = 0 } = {}) {
       badge: 0,
     },
     {
+      key: "community",
+      path: "/community",
+      label: "Community",
+      mobileLabel: "Community",
+      icon: Globe,
+      badge: 0,
+      isCommunity: true,
+    },
+    {
       key: "network",
       path: "/network",
       label: "Network",
       mobileLabel: "Network",
       icon: Compass,
       badge: 0,
-    },
-    {
-      key: "messages",
-      path: "/messages",
-      label: "Messages",
-      mobileLabel: "Messages",
-      icon: MessageSquare,
-      badge: Number.isFinite(unreadMessagesCount) ? Math.max(0, unreadMessagesCount) : 0,
     },
     {
       ...careerItem,
@@ -212,16 +212,9 @@ export function getMoreNavSections(user) {
       ],
     },
     {
-      id: "community",
-      title: "COMMUNITY & STANDING",
+      id: "standing",
+      title: "STANDING",
       items: [
-        {
-          key: "community",
-          path: "/community",
-          label: "Community",
-          icon: Globe,
-          desc: "Social discovery, posts & engagement",
-        },
         {
           key: "leaderboard",
           path: "/leaderboard",

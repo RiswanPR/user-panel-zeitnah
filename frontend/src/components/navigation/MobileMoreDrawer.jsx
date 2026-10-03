@@ -13,81 +13,83 @@ import {
   ShieldAlert,
   Shield,
   LogOut,
+  MessageSquare,
   ChevronRight,
 } from "lucide-react";
 import { getUploadUrl } from "../../utils/courseUi";
 import { normalizeUserRole, isAdmin } from "../../utils/roleNavigation";
 
 /**
- * Zeitnah 2.0 Mobile "More" Command Drawer
- * Editorial, high-density bottom drawer offering full product access on mobile devices.
+ * Zeitnah 3.0 Mobile "More" Command Sheet
+ * Premium bottom drawer — community-first navigation hierarchy.
  *
- * Characteristics:
- * - Clean structured sections (Career, Identity, Community, Account).
- * - Zero duplicated links (No Jobs or Manage Business, which are already in bottom nav).
- * - Restrained role badge (Role != Verification).
- * - High-speed spring animation, touch-friendly min-height >= 44px.
- * - WCAG compliant: dialog role, aria-modal, focus trapping, Escape key closing.
+ * Navigation contract:
+ * - Primary bottom nav: Courses | Community | Network | Jobs/Business | More
+ * - Messages is in the top utility bar, but also surfaced here for discoverability
+ * - Zero duplicated links with primary bottom nav (no Courses, Community, Network, Jobs/Business)
+ * - Role-aware Admin governance section
+ * - WCAG compliant: dialog, aria-modal, Escape, focus-safe
  */
 export default function MobileMoreDrawer({
   isOpen,
   onClose,
   user,
   onRequestLogout,
+  unreadMessagesCount = 0,
 }) {
   const location = useLocation();
 
-  // Close drawer on route change
+  // Close on route change
   useEffect(() => {
-    if (isOpen) {
-      onClose();
-    }
+    if (isOpen) onClose();
   }, [location.pathname]);
 
-  // Lock body scroll and handle Escape key
+  // Scroll lock + Escape key
   useEffect(() => {
     if (!isOpen) return;
-
     const handleKeyDown = (e) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
+      if (e.key === "Escape") onClose();
     };
-
-    const originalOverflow = document.body.style.overflow;
+    const original = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", handleKeyDown);
-
     return () => {
-      document.body.style.overflow = originalOverflow;
+      document.body.style.overflow = original;
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen, onClose]);
 
-  // Role resolution
   const normalizedRole = normalizeUserRole(user);
   const adminUser = isAdmin(user);
 
-  // Avatar and initials computation
   const avatarUrl = user?.avatar ? getUploadUrl(user.avatar) : null;
   const userInitials = useMemo(() => {
     const name = user?.name?.trim();
     if (!name) return "Z";
-    const initials = name
-      .split(/\s+/)
-      .map((part) => part[0])
-      .filter(Boolean)
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
-    return initials || "Z";
+    return (
+      name.split(/\s+/).map((p) => p[0]).filter(Boolean).join("").slice(0, 2).toUpperCase() || "Z"
+    );
   }, [user?.name]);
 
-  // Authoritative mobile groups (Zero link duplication with primary bottom nav)
+  const messagesActive = location.pathname.startsWith("/messages");
+
+  // Navigation groups — zero duplication with bottom primary nav
   const navigationGroups = useMemo(() => {
     const groups = [
       {
-        title: "CAREER ACCELERATION",
+        title: "MESSAGING",
+        items: [
+          {
+            label: "Direct Messages",
+            path: "/messages",
+            icon: MessageSquare,
+            desc: "Chat with peers, mentors & collaborators",
+            badge: unreadMessagesCount,
+          },
+        ],
+      },
+      {
+        title: "CAREER",
         items: [
           {
             label: "Career Intelligence",
@@ -115,7 +117,7 @@ export default function MobileMoreDrawer({
         ],
       },
       {
-        title: "COMMUNITY & STANDING",
+        title: "STANDING",
         items: [
           {
             label: "Global Leaderboard",
@@ -132,7 +134,7 @@ export default function MobileMoreDrawer({
         ],
       },
       {
-        title: "ACCOUNT & SECURITY",
+        title: "ACCOUNT",
         items: [
           {
             label: "My Profile",
@@ -171,7 +173,7 @@ export default function MobileMoreDrawer({
     }
 
     return groups;
-  }, [adminUser]);
+  }, [adminUser, unreadMessagesCount]);
 
   return (
     <AnimatePresence>
@@ -180,41 +182,73 @@ export default function MobileMoreDrawer({
           className="fixed inset-0 z-50 md:hidden flex flex-col justify-end"
           role="dialog"
           aria-modal="true"
-          aria-label="Mobile Navigation Menu"
+          aria-label="Navigation menu"
         >
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.22 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0"
+            style={{ background: "rgba(0,0,0,0.72)", backdropFilter: "blur(4px)" }}
             aria-hidden="true"
           />
 
-          {/* Drawer Container */}
+          {/* Drawer */}
           <motion.div
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
-            transition={{ type: "spring", stiffness: 380, damping: 34 }}
-            className="relative z-10 w-full max-h-[88vh] bg-[#0A101C]/98 border-t border-white/[0.1] rounded-t-3xl shadow-2xl flex flex-col overflow-hidden pb-[calc(env(safe-area-inset-bottom,16px)+16px)]"
+            transition={{ type: "spring", stiffness: 400, damping: 38, mass: 0.85 }}
+            className="relative z-10 w-full flex flex-col overflow-hidden"
+            style={{
+              maxHeight: "88vh",
+              background: "rgba(8,13,25,0.99)",
+              borderTop: "1px solid rgba(255,255,255,0.09)",
+              borderRadius: "20px 20px 0 0",
+              boxShadow: "0 -24px 80px rgba(0,0,0,0.6), 0 -4px 16px rgba(0,0,0,0.4)",
+              paddingBottom: "calc(env(safe-area-inset-bottom, 16px) + 16px)",
+            }}
           >
-            {/* Grab handle indicator */}
-            <div className="w-full flex items-center justify-center pt-3 pb-2 cursor-grab">
-              <div className="w-10 h-1 rounded-full bg-white/20" />
+            {/* Grab handle */}
+            <div className="flex justify-center pt-3 pb-2">
+              <div
+                className="rounded-full"
+                style={{ width: "36px", height: "4px", background: "rgba(255,255,255,0.15)" }}
+              />
             </div>
 
-            {/* Header: User Profile Card & Close */}
-            <div className="px-5 py-3 border-b border-white/[0.06] flex items-center justify-between gap-3">
+            {/* Header: Identity card + Close */}
+            <div
+              className="px-4 py-3 flex items-center gap-3"
+              style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+            >
               {user ? (
                 <Link
                   to="/profile"
                   onClick={onClose}
-                  className="flex items-center gap-3 min-w-0 flex-1 p-2 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] transition-colors"
+                  className="flex items-center gap-3 flex-1 min-w-0 rounded-2xl transition-all duration-150 touch-manipulation"
+                  style={{
+                    padding: "10px 12px",
+                    background: "rgba(255,255,255,0.025)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                  }}
+                  onTouchStart={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.045)"; }}
+                  onTouchEnd={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.025)"; }}
                 >
-                  <div className="relative w-10 h-10 rounded-full overflow-hidden border border-brand-mint/30 bg-brand-mint/15 shrink-0 flex items-center justify-center">
+                  {/* Avatar */}
+                  <div
+                    className="shrink-0 flex items-center justify-center overflow-hidden"
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      borderRadius: "50%",
+                      background: "linear-gradient(135deg, rgba(159,213,178,0.2), rgba(18,49,76,0.6))",
+                      border: "1.5px solid rgba(159,213,178,0.25)",
+                    }}
+                  >
                     {avatarUrl ? (
                       <img
                         src={avatarUrl}
@@ -222,35 +256,70 @@ export default function MobileMoreDrawer({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <span className="text-xs font-mono font-bold text-brand-mint">
+                      <span
+                        className="font-mono font-bold text-brand-mint"
+                        style={{ fontSize: "12px" }}
+                      >
                         {userInitials}
                       </span>
                     )}
                   </div>
+
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-white truncate leading-tight">
+                    <p
+                      className="font-semibold text-white truncate leading-tight"
+                      style={{ fontSize: "13px" }}
+                    >
                       {user?.name || "Professional"}
                     </p>
-                    <p className="text-[10px] text-text-muted font-mono truncate mt-0.5 leading-tight">
+                    <p
+                      className="font-mono text-white/40 truncate leading-tight mt-0.5"
+                      style={{ fontSize: "10.5px" }}
+                    >
                       @{user?.username || "profile"}
                     </p>
-                    <div className="mt-1 inline-flex items-center px-1.5 py-0.2 rounded bg-white/[0.06] border border-white/[0.1] text-text-secondary text-[8.5px] font-mono uppercase tracking-wider font-semibold">
+                    <div
+                      className="mt-1.5 inline-flex items-center font-mono font-semibold uppercase tracking-wider"
+                      style={{
+                        padding: "2px 7px",
+                        fontSize: "8px",
+                        borderRadius: "5px",
+                        background: "rgba(255,255,255,0.05)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        color: "rgba(255,255,255,0.35)",
+                      }}
+                    >
                       {normalizedRole}
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-text-faint shrink-0" aria-hidden="true" />
+
+                  <ChevronRight
+                    style={{ width: "15px", height: "15px", color: "rgba(255,255,255,0.2)", flexShrink: 0 }}
+                    aria-hidden="true"
+                  />
                 </Link>
               ) : (
                 <Link
                   to="/login"
                   onClick={onClose}
-                  className="flex items-center justify-between gap-3 min-w-0 flex-1 p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] transition-colors"
+                  className="flex items-center justify-between gap-3 flex-1 min-w-0 rounded-2xl transition-all duration-150"
+                  style={{
+                    padding: "12px 14px",
+                    background: "rgba(255,255,255,0.025)",
+                    border: "1px solid rgba(255,255,255,0.07)",
+                  }}
                 >
                   <div>
-                    <p className="text-xs font-bold text-white leading-tight">Sign In to Zeitnah</p>
-                    <p className="text-[10px] text-text-muted mt-0.5">Explore courses, network & opportunities</p>
+                    <p className="font-semibold text-white leading-tight" style={{ fontSize: "13px" }}>
+                      Sign in to Zeitnah
+                    </p>
+                    <p className="text-white/40 mt-0.5" style={{ fontSize: "11px" }}>
+                      Courses, community & opportunities
+                    </p>
                   </div>
-                  <span className="zn-btn-primary text-xs py-1 px-3 shrink-0 font-semibold">Sign In</span>
+                  <span className="zn-btn-primary text-xs py-1.5 px-3 shrink-0 font-semibold">
+                    Sign In
+                  </span>
                 </Link>
               )}
 
@@ -258,87 +327,158 @@ export default function MobileMoreDrawer({
                 type="button"
                 onClick={onClose}
                 aria-label="Close menu"
-                className="w-9 h-9 rounded-full border border-white/[0.08] bg-white/[0.04] text-text-muted hover:text-white flex items-center justify-center shrink-0 active:scale-95 transition-all touch-manipulation cursor-pointer"
+                className="flex items-center justify-center rounded-full transition-all duration-150 active:scale-95 touch-manipulation shrink-0 cursor-pointer"
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  color: "rgba(255,255,255,0.45)",
+                }}
               >
-                <X className="w-4 h-4" aria-hidden="true" />
+                <X style={{ width: "15px", height: "15px" }} aria-hidden="true" />
               </button>
             </div>
 
-            {/* Scrollable Navigation Body */}
-            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5 no-scrollbar">
-              {navigationGroups.map((group) => (
-                <div key={group.title} className="space-y-1.5">
-                  <h4 className="text-[9px] font-mono font-bold tracking-widest text-text-faint uppercase px-1 select-none">
-                    {group.title}
-                  </h4>
-                  <div className="grid grid-cols-1 gap-1.5">
-                    {group.items.map((item) => {
-                      const Icon = item.icon;
-                      const isActive =
-                        location.pathname === item.path ||
-                        location.pathname.startsWith(`${item.path}/`);
+            {/* Scrollable navigation body */}
+            <div
+              className="flex-1 overflow-y-auto no-scrollbar"
+              style={{ padding: "12px 16px 8px" }}
+            >
+              <div className="space-y-4">
+                {navigationGroups.map((group, gIdx) => (
+                  <div key={group.title}>
+                    {gIdx > 0 && (
+                      <div
+                        className="mb-4"
+                        style={{ height: "1px", background: "rgba(255,255,255,0.05)" }}
+                      />
+                    )}
+                    <p
+                      className="font-mono font-bold uppercase tracking-widest select-none mb-2"
+                      style={{
+                        fontSize: "9px",
+                        color: "rgba(255,255,255,0.22)",
+                        paddingLeft: "2px",
+                      }}
+                    >
+                      {group.title}
+                    </p>
+                    <div className="space-y-1">
+                      {group.items.map((item) => {
+                        const Icon = item.icon;
+                        const isActive =
+                          location.pathname === item.path ||
+                          location.pathname.startsWith(`${item.path}/`);
 
-                      return (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          onClick={onClose}
-                          className={`flex items-center gap-3 p-2.5 rounded-xl border transition-all duration-150 min-h-[46px] touch-manipulation ${
-                            isActive
-                              ? "bg-brand-mint/10 border-brand-mint/25 text-white shadow-sm"
-                              : "bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.05] text-white/90"
-                          }`}
-                        >
-                          <div
-                            className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                              isActive
-                                ? "bg-brand-mint/20 text-brand-mint"
-                                : "bg-white/[0.04] text-text-muted"
-                            }`}
+                        return (
+                          <Link
+                            key={item.path}
+                            to={item.path}
+                            onClick={onClose}
+                            className="flex items-center gap-3 rounded-xl transition-all duration-150 touch-manipulation"
+                            style={{
+                              padding: "10px 12px",
+                              minHeight: "48px",
+                              background: isActive ? "rgba(159,213,178,0.08)" : "rgba(255,255,255,0.025)",
+                              border: `1px solid ${isActive ? "rgba(159,213,178,0.2)" : "rgba(255,255,255,0.05)"}`,
+                            }}
+                            aria-current={isActive ? "page" : undefined}
                           >
-                            <Icon className="w-4 h-4" aria-hidden="true" />
-                          </div>
+                            {/* Icon slot */}
+                            <div
+                              className="flex items-center justify-center shrink-0 rounded-lg"
+                              style={{
+                                width: "32px",
+                                height: "32px",
+                                background: isActive ? "rgba(159,213,178,0.15)" : "rgba(255,255,255,0.04)",
+                                color: isActive ? "rgba(159,213,178,0.9)" : "rgba(255,255,255,0.35)",
+                              }}
+                            >
+                              <Icon style={{ width: "14px", height: "14px" }} aria-hidden="true" />
+                            </div>
 
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs font-medium truncate leading-tight">
-                              {item.label}
-                            </p>
-                            <p className="text-[10px] text-text-faint truncate leading-tight mt-0.5">
-                              {item.desc}
-                            </p>
-                          </div>
+                            {/* Text */}
+                            <div className="flex-1 min-w-0">
+                              <p
+                                className="font-medium truncate leading-tight"
+                                style={{
+                                  fontSize: "13px",
+                                  color: isActive ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.75)",
+                                }}
+                              >
+                                {item.label}
+                              </p>
+                              <p
+                                className="truncate leading-tight mt-0.5"
+                                style={{ fontSize: "10.5px", color: "rgba(255,255,255,0.3)" }}
+                              >
+                                {item.desc}
+                              </p>
+                            </div>
 
-                          <ChevronRight
-                            className="w-3.5 h-3.5 text-text-faint shrink-0"
-                            aria-hidden="true"
-                          />
-                        </Link>
-                      );
-                    })}
+                            {/* Badge */}
+                            {item.badge > 0 && (
+                              <span
+                                className="shrink-0 flex items-center justify-center font-mono font-bold text-black bg-brand-mint rounded-full"
+                                style={{ minWidth: "18px", height: "18px", padding: "0 5px", fontSize: "9px" }}
+                                aria-label={`${item.badge} unread`}
+                              >
+                                {item.badge > 99 ? "99+" : item.badge}
+                              </span>
+                            )}
+
+                            {!item.badge && (
+                              <ChevronRight
+                                style={{ width: "13px", height: "13px", color: "rgba(255,255,255,0.18)", flexShrink: 0 }}
+                                aria-hidden="true"
+                              />
+                            )}
+                          </Link>
+                        );
+                      })}
+                    </div>
                   </div>
+                ))}
+
+                {/* Sign Out */}
+                {user && (
+                  <div style={{ paddingTop: "4px" }}>
+                    <div
+                      className="mb-4"
+                      style={{ height: "1px", background: "rgba(255,255,255,0.05)" }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        onRequestLogout?.();
+                      }}
+                      className="w-full flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-150 touch-manipulation cursor-pointer"
+                      style={{
+                        minHeight: "46px",
+                        padding: "10px 16px",
+                        fontSize: "12.5px",
+                        color: "rgba(248,113,113,0.8)",
+                        background: "rgba(239,68,68,0.06)",
+                        border: "1px solid rgba(239,68,68,0.14)",
+                      }}
+                    >
+                      <LogOut style={{ width: "14px", height: "14px" }} aria-hidden="true" />
+                      Sign Out of Zeitnah
+                    </button>
+                  </div>
+                )}
+
+                {/* Brand anchor */}
+                <div className="text-center pt-2 pb-1 select-none">
+                  <p
+                    className="font-mono uppercase tracking-[0.2em]"
+                    style={{ fontSize: "9px", color: "rgba(255,255,255,0.15)" }}
+                  >
+                    Zeitnah · See the unseen
+                  </p>
                 </div>
-              ))}
-
-              {/* Logout Button */}
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    onClose();
-                    onRequestLogout?.();
-                  }}
-                  className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-red-500/20 bg-red-500/10 text-red-400 hover:bg-red-500/15 font-semibold text-xs transition-colors min-h-[44px] touch-manipulation cursor-pointer"
-                >
-                  <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Sign Out of Zeitnah</span>
-                </button>
-              </div>
-
-              {/* Brand Micro-Anchor */}
-              <div className="pt-2 text-center select-none">
-                <p className="text-[10px] font-mono tracking-[0.2em] text-text-faint/70 uppercase">
-                  Zeitnah • See the unseen
-                </p>
               </div>
             </div>
           </motion.div>

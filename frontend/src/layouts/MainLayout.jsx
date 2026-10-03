@@ -3,8 +3,8 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   BookOpen,
+  Globe,
   Compass,
-  MessageSquare,
   MoreHorizontal,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -61,6 +61,7 @@ export default function MainLayout({ children }) {
   const isRouteActive = (key) => {
     const path = location.pathname;
     if (key === "courses") return path === "/courses" || path.startsWith("/courses/") || path === "/";
+    if (key === "community") return path === "/community" || path.startsWith("/community/");
     if (key === "network") return path === "/network" || path.startsWith("/network/");
     if (key === "messages") return path.startsWith("/messages");
     if (key === "jobs") return path.startsWith("/jobs");
@@ -69,7 +70,6 @@ export default function MainLayout({ children }) {
   };
 
   const isMoreRouteActive =
-    location.pathname.startsWith("/community") ||
     location.pathname.startsWith("/leaderboard") ||
     location.pathname.startsWith("/career-intelligence") ||
     location.pathname.startsWith("/profile/portfolio") ||
@@ -140,7 +140,34 @@ export default function MainLayout({ children }) {
                 </span>
               </Link>
 
-              {/* 2. Network */}
+              {/* 2. Community */}
+              <Link
+                to="/community"
+                aria-current={isRouteActive("community") ? "page" : undefined}
+                className="relative flex flex-col items-center justify-center py-1 px-3 min-h-[46px] min-w-[54px] rounded-xl transition-all focus-ring touch-manipulation"
+              >
+                {isRouteActive("community") && (
+                  <motion.div
+                    layoutId={shouldReduceMotion ? undefined : "mobile-nav-active"}
+                    className="absolute inset-0 rounded-xl bg-brand-mint/12 border border-brand-mint/25"
+                    transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                  />
+                )}
+                <Globe
+                  className={`w-5 h-5 relative z-10 transition-colors ${
+                    isRouteActive("community") ? "text-brand-mint" : "text-text-muted"
+                  }`}
+                />
+                <span
+                  className={`text-[10px] mt-0.5 relative z-10 font-semibold tracking-tight ${
+                    isRouteActive("community") ? "text-brand-mint" : "text-text-faint"
+                  }`}
+                >
+                  Community
+                </span>
+              </Link>
+
+              {/* 3. Network */}
               <Link
                 to="/network"
                 aria-current={isRouteActive("network") ? "page" : undefined}
@@ -164,40 +191,6 @@ export default function MainLayout({ children }) {
                   }`}
                 >
                   Network
-                </span>
-              </Link>
-
-              {/* 3. Messages */}
-              <Link
-                to="/messages"
-                aria-current={isRouteActive("messages") ? "page" : undefined}
-                className="relative flex flex-col items-center justify-center py-1 px-3 min-h-[46px] min-w-[54px] rounded-xl transition-all focus-ring touch-manipulation"
-              >
-                {isRouteActive("messages") && (
-                  <motion.div
-                    layoutId={shouldReduceMotion ? undefined : "mobile-nav-active"}
-                    className="absolute inset-0 rounded-xl bg-brand-mint/12 border border-brand-mint/25"
-                    transition={{ type: "spring", stiffness: 400, damping: 28 }}
-                  />
-                )}
-                <div className="relative z-10">
-                  <MessageSquare
-                    className={`w-5 h-5 transition-colors ${
-                      isRouteActive("messages") ? "text-brand-mint" : "text-text-muted"
-                    }`}
-                  />
-                  {unreadMessagesCount > 0 && (
-                    <span className="absolute -top-1 -right-2 min-w-4 h-4 px-1 rounded-full bg-brand-mint text-black font-bold font-mono text-[9px] flex items-center justify-center shadow-sm">
-                      {unreadMessagesCount > 9 ? "9+" : unreadMessagesCount}
-                    </span>
-                  )}
-                </div>
-                <span
-                  className={`text-[10px] mt-0.5 relative z-10 font-semibold tracking-tight ${
-                    isRouteActive("messages") ? "text-brand-mint" : "text-text-faint"
-                  }`}
-                >
-                  Messages
                 </span>
               </Link>
 
@@ -311,6 +304,7 @@ export default function MainLayout({ children }) {
         onClose={() => setIsMobileMoreOpen(false)}
         user={user}
         onRequestLogout={requestLogout || logout}
+        unreadMessagesCount={unreadMessagesCount}
         unreadOpportunitiesCount={unreadOpportunitiesCount}
         unreadNotificationsCount={unreadNotifCount}
       />

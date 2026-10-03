@@ -11,6 +11,7 @@ import {
   Layers,
   ShieldCheck,
   Trophy,
+  MessageSquare,
 } from "lucide-react";
 import NotificationBell from "../notifications/NotificationBell";
 import QuickSearchModal from "./QuickSearchModal";
@@ -22,17 +23,21 @@ import {
 } from "../../utils/roleNavigation";
 
 /**
- * ZEITNAH — PREMIUM NAVBAR 2.0
- * Role-Aware Navigation + Extraordinary Engineering UX
+ * ZEITNAH — PREMIUM NAVBAR 3.0
+ * Community-First Navigation + Precision UX Engineering
  *
- * Characteristics:
- * - Calm, precise, editorial, technical, confident.
- * - Dynamic role switching:
- *     Student / Educator / Professional / Mentor -> JOBS
- *     Recruiter / Founder -> MANAGE BUSINESS
- *     Admin -> JOBS (with Admin Governance in More)
- * - Zero duplicated links between primary and More.
- * - Fast, accessible, keyboard-first (Cmd+K, Escape, click-outside).
+ * Navigation Hierarchy:
+ *   PRIMARY:  Courses | Community | Network | Jobs/Business | More
+ *   UTILITY:  Search · Messages · Leaderboard · Notifications · Profile
+ *
+ * Design Principles:
+ * - Calm, precise, editorial, technical, restrained.
+ * - Community is first-class platform destination (position 2).
+ * - Messages moves to utility cluster with unread badge.
+ * - Leaderboard is a compact rank capsule in utility area.
+ * - Role-aware navigation fully preserved (Jobs vs. Manage Business).
+ * - Zero route duplication between primary and More.
+ * - Sophisticated active states: no loud glows, no filled pills.
  */
 export default function MainNavbar({
   user,
@@ -53,22 +58,19 @@ export default function MainNavbar({
   const moreButtonRef = useRef(null);
   const profileButtonRef = useRef(null);
 
-  // Normalize user role safely (Authoritative)
   const normalizedRole = normalizeUserRole(user);
 
-  // Avatar and initials computation with safe fallback
   const avatarUrl = user?.avatar ? getUploadUrl(user.avatar) : null;
   const userInitials = useMemo(() => {
     const name = user?.name?.trim();
     if (!name) return "Z";
-    const initials = name
+    return name
       .split(/\s+/)
-      .map((part) => part[0])
+      .map((p) => p[0])
       .filter(Boolean)
       .join("")
       .slice(0, 2)
-      .toUpperCase();
-    return initials || "Z";
+      .toUpperCase() || "Z";
   }, [user?.name]);
 
   // Global Cmd+K / Ctrl+K keyboard shortcut
@@ -83,7 +85,7 @@ export default function MainNavbar({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Keyboard navigation & Escape key handler to close menus
+  // Escape key to close open menus and restore focus
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
@@ -103,7 +105,7 @@ export default function MainNavbar({
     }
   }, [isMoreOpen, isProfileOpen]);
 
-  // Click outside listener for open dropdowns
+  // Click outside to dismiss open dropdowns
   useEffect(() => {
     function handleClickOutside(e) {
       if (moreDropdownRef.current && !moreDropdownRef.current.contains(e.target)) {
@@ -117,13 +119,12 @@ export default function MainNavbar({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Auto-close dropdowns on route changes
+  // Auto-close on route change
   useEffect(() => {
     setIsMoreOpen(false);
     setIsProfileOpen(false);
   }, [location.pathname]);
 
-  // Route active state checker
   const isRouteActive = useCallback(
     (key) => {
       const path = location.pathname;
@@ -149,114 +150,172 @@ export default function MainNavbar({
     [location.pathname]
   );
 
-  // Authoritative Primary Navigation Links (Courses is unconditionally first)
+  // Primary nav links: Courses | Community | Network | Jobs/Business | More
   const primaryLinks = useMemo(
     () => getPrimaryNavLinks(user, { unreadMessagesCount }),
     [user, unreadMessagesCount]
   );
 
-  // Authoritative "More" Dropdown Sections (Zero link duplication)
   const moreSections = useMemo(() => getMoreNavSections(user), [user]);
 
-  // Check if any secondary link in More is currently active
   const isAnyMoreLinkActive = useMemo(() => {
     return moreSections.some((section) =>
       section.items.some((item) => isRouteActive(item.key))
     );
   }, [moreSections, isRouteActive]);
 
+  const messagesActive = isRouteActive("messages");
+  const leaderboardActive = isRouteActive("leaderboard");
+
+  const dropdownMotion = {
+    initial: { opacity: 0, y: 5, scale: 0.98 },
+    animate: { opacity: 1, y: 0, scale: 1 },
+    exit: { opacity: 0, y: 3, scale: 0.98 },
+    transition: { duration: 0.18, ease: [0.16, 1, 0.3, 1] },
+  };
+
   return (
     <>
-      {/* ══════════════════════════════════════════════════════════
-          ZEITNAH PREMIUM NAVBAR 2.0 (STICKY HEADER)
-          Height: 58px | Visual Surface: Technical Deep Frosted Glass
-          ══════════════════════════════════════════════════════════ */}
+      {/* ═══════════════════════════════════════════════════════════════
+          ZEITNAH PREMIUM NAVBAR 3.0
+          Height: 64px | Surface: Technical deep frosted glass
+          ═══════════════════════════════════════════════════════════════ */}
       <header
         aria-label="Main platform navigation"
-        className="sticky top-0 z-40 w-full bg-[#0B111E]/95 backdrop-blur-xl border-b border-white/[0.08] shadow-[0_4px_24px_rgba(0,0,0,0.35)] transition-all"
+        className="sticky top-0 z-40 w-full"
+        style={{
+          background: "rgba(8, 13, 25, 0.92)",
+          backdropFilter: "blur(20px) saturate(1.4)",
+          WebkitBackdropFilter: "blur(20px) saturate(1.4)",
+          borderBottom: "1px solid rgba(255,255,255,0.065)",
+          boxShadow: "0 1px 0 rgba(255,255,255,0.04), 0 4px 16px rgba(0,0,0,0.28)",
+        }}
       >
-        {/* Subtle accent hairline */}
+        {/* Premium accent hairline — restrained mint gradient */}
         <div
-          className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-brand-mint/35 to-transparent pointer-events-none"
+          className="absolute top-0 inset-x-0 h-px pointer-events-none"
+          style={{
+            background: "linear-gradient(90deg, transparent 0%, rgba(159,213,178,0.28) 40%, rgba(159,213,178,0.18) 60%, transparent 100%)",
+          }}
           aria-hidden="true"
         />
 
-        <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-[58px] gap-2 sm:gap-4">
-            {/* ── LEFT: Brand Logo & Title ── */}
-            <div className="flex items-center gap-6 shrink-0">
+        <div className="max-w-[1536px] mx-auto px-4 sm:px-5 lg:px-8">
+          <div className="flex items-center justify-between h-16 gap-3">
+
+            {/* ── LEFT: Brand + Primary Navigation ── */}
+            <div className="flex items-center gap-5 xl:gap-7 min-w-0 shrink-0">
+
+              {/* ── BRAND LOGO ── */}
               <Link
                 to="/courses"
-                className="flex items-center gap-2.5 select-none group focus-ring rounded-lg py-1 transition-opacity"
-                aria-label="Zeitnah home"
+                className="flex items-center gap-2.5 select-none group shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50 rounded-lg"
+                aria-label="Zeitnah — Return to home"
               >
-                {/* Technical Compact Logo Frame */}
-                <div className="relative w-8 h-8 shrink-0 rounded-lg border border-white/[0.12] bg-[#0E1726]/80 flex items-center justify-center overflow-hidden shadow-inner group-hover:border-brand-mint/40 transition-colors">
+                {/* Monogram frame */}
+                <div
+                  className="relative w-[30px] h-[30px] shrink-0 rounded-lg flex items-center justify-center overflow-hidden transition-all duration-200 group-hover:scale-[1.04]"
+                  style={{
+                    background: "rgba(14,23,38,0.9)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+                  }}
+                >
                   <img
                     src="/zeitnah-logo.png"
-                    alt="Zeitnah Logo"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                    width={32}
-                    height={32}
+                    alt=""
+                    aria-hidden="true"
+                    className="w-full h-full object-cover"
+                    width={30}
+                    height={30}
                   />
                 </div>
 
-                {/* Typography Hierarchy */}
-                <div className="flex flex-col justify-center">
-                  <span className="font-mono text-[13px] font-bold tracking-[0.14em] text-white group-hover:text-brand-mint transition-colors leading-none uppercase">
+                {/* Wordmark */}
+                <div className="flex flex-col justify-center leading-none">
+                  <span
+                    className="font-mono font-bold tracking-[0.12em] uppercase transition-colors duration-200 text-white group-hover:text-brand-mint"
+                    style={{ fontSize: "12px", letterSpacing: "0.12em" }}
+                  >
                     Zeitnah
                   </span>
-                  <span className="text-[8px] font-mono tracking-[0.14em] text-brand-mint/80 font-medium uppercase leading-none mt-1">
+                  <span
+                    className="font-mono tracking-[0.16em] uppercase text-brand-mint/60 group-hover:text-brand-mint/80 transition-colors duration-200"
+                    style={{ fontSize: "7.5px", marginTop: "2px" }}
+                  >
                     See the unseen
                   </span>
                 </div>
               </Link>
 
-              {/* ── DESKTOP PRIMARY LINKS (Courses FIRST, Role-Aware Career item) ── */}
+              {/* ── DESKTOP PRIMARY LINKS ── */}
               <nav
-                className="hidden md:flex items-center gap-0.5 lg:gap-1"
-                aria-label="Desktop primary navigation"
+                className="hidden md:flex items-center"
+                aria-label="Primary navigation"
+                style={{ gap: "2px" }}
               >
                 {primaryLinks.map((item) => {
                   const active = isRouteActive(item.key);
                   const Icon = item.icon;
+                  const isCommunity = item.isCommunity;
 
                   return (
                     <Link
                       key={item.key}
                       to={item.path}
                       aria-current={active ? "page" : undefined}
-                      className={`relative flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 select-none group focus-ring ${active
-                          ? "text-white font-semibold"
-                          : "text-text-secondary hover:text-white hover:bg-white/[0.04]"
-                        }`}
                       title={item.label}
+                      className={`relative flex items-center gap-1.5 rounded-lg select-none transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50 group ${
+                        active
+                          ? "text-white"
+                          : "text-white/50 hover:text-white/90"
+                      }`}
+                      style={{
+                        padding: "5px 10px",
+                        fontSize: "12.5px",
+                        fontWeight: active ? 600 : 450,
+                        letterSpacing: "0.01em",
+                      }}
                     >
-                      {/* Active Background Pill */}
+                      {/* Active underline indicator */}
                       {active && (
                         <motion.div
-                          layoutId={shouldReduceMotion ? undefined : "desktop-navbar-active-pill"}
-                          className={`absolute inset-0 rounded-lg ${item.isBusiness
-                              ? "bg-brand-mint/15 border border-brand-mint/30 shadow-sm"
-                              : "bg-white/[0.07] border border-white/[0.12] shadow-sm"
-                            }`}
-                          transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                          layoutId={shouldReduceMotion ? undefined : "nav-active-indicator"}
+                          className="absolute bottom-0 inset-x-2 h-[1.5px] rounded-full bg-brand-mint"
+                          transition={{ type: "spring", stiffness: 500, damping: 35 }}
                         />
                       )}
 
+                      {/* Hover surface */}
+                      <div
+                        className={`absolute inset-0 rounded-lg transition-all duration-150 ${
+                          active
+                            ? "bg-white/[0.06]"
+                            : "bg-transparent group-hover:bg-white/[0.04]"
+                        }`}
+                      />
+
+                      {/* Community gets icon always visible; others only on lg */}
                       <Icon
-                        className={`w-3.5 h-3.5 relative z-10 transition-all duration-200 ${active
-                            ? "text-brand-mint"
-                            : "text-text-muted group-hover:text-white group-hover:-translate-y-0.5"
-                          }`}
+                        className={`shrink-0 relative z-10 transition-colors duration-150 ${
+                          active
+                            ? isCommunity ? "text-brand-mint" : "text-white"
+                            : "text-white/40 group-hover:text-white/70"
+                        }`}
+                        style={{ width: "13px", height: "13px" }}
                         aria-hidden="true"
                       />
 
-                      <span className="relative z-10 leading-none hidden lg:inline">{item.label}</span>
+                      <span className="relative z-10 hidden lg:inline">
+                        {item.label}
+                      </span>
 
-                      {/* Unread message count badge */}
+                      {/* Unread badge */}
                       {item.badge > 0 && (
-                        <span className="relative z-10 ml-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-bold font-mono bg-brand-mint text-black shadow-sm leading-tight">
+                        <span
+                          className="relative z-10 flex items-center justify-center font-mono font-bold text-black bg-brand-mint rounded-full shadow-sm"
+                          style={{ minWidth: "16px", height: "16px", padding: "0 4px", fontSize: "9px" }}
+                        >
                           {item.badge > 99 ? "99+" : item.badge}
                         </span>
                       )}
@@ -264,7 +323,7 @@ export default function MainNavbar({
                   );
                 })}
 
-                {/* ── Secondary "More" Command Menu ── */}
+                {/* ── MORE command menu ── */}
                 <div className="relative" ref={moreDropdownRef}>
                   <button
                     ref={moreButtonRef}
@@ -272,96 +331,112 @@ export default function MainNavbar({
                     onClick={() => setIsMoreOpen((prev) => !prev)}
                     aria-expanded={isMoreOpen}
                     aria-haspopup="true"
-                    aria-label="More platform navigation"
-                    title="More navigation"
-                    className={`relative flex items-center gap-1.5 px-2 lg:px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 select-none group cursor-pointer focus-ring ${
+                    aria-label="More navigation"
+                    className={`relative flex items-center gap-1 rounded-lg select-none transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50 group ${
                       isAnyMoreLinkActive
-                        ? "text-white font-semibold"
+                        ? "text-white"
                         : isMoreOpen
-                        ? "text-white bg-white/[0.06] border border-white/[0.1]"
-                        : "text-text-secondary hover:text-white hover:bg-white/[0.04]"
+                        ? "text-white/90"
+                        : "text-white/50 hover:text-white/90"
                     }`}
+                    style={{
+                      padding: "5px 8px 5px 10px",
+                      fontSize: "12.5px",
+                      fontWeight: isAnyMoreLinkActive ? 600 : 450,
+                    }}
                   >
-                    {/* Active Background Pill when any More item is active */}
                     {isAnyMoreLinkActive && (
                       <motion.div
-                        layoutId={shouldReduceMotion ? undefined : "desktop-navbar-active-pill"}
-                        className="absolute inset-0 rounded-lg bg-brand-mint/15 border border-brand-mint/30 shadow-sm pointer-events-none"
-                        transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                        layoutId={shouldReduceMotion ? undefined : "nav-active-indicator"}
+                        className="absolute bottom-0 inset-x-2 h-[1.5px] rounded-full bg-brand-mint"
+                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
                       />
                     )}
-
-                    <span className="relative z-10 leading-none hidden lg:inline">More</span>
-
-                    {/* Active Mint Dot or Unread Badge */}
-                    {isAnyMoreLinkActive ? (
-                      <span
-                        className="relative z-10 w-1.5 h-1.5 rounded-full bg-brand-mint shadow-sm"
-                        aria-hidden="true"
-                      />
-                    ) : unreadOpportunitiesCount > 0 ? (
-                      <span
-                        className="relative z-10 w-1.5 h-1.5 rounded-full bg-brand-mint shadow-sm"
-                        aria-hidden="true"
-                      />
-                    ) : null}
-
-                    <ChevronDown
-                      className={`w-3 h-3 relative z-10 transition-transform duration-200 ${
-                        isMoreOpen
-                          ? "rotate-180 text-brand-mint"
-                          : isAnyMoreLinkActive
-                          ? "text-brand-mint"
-                          : "text-text-faint group-hover:text-white"
+                    <div
+                      className={`absolute inset-0 rounded-lg transition-all duration-150 ${
+                        isAnyMoreLinkActive || isMoreOpen
+                          ? "bg-white/[0.06]"
+                          : "bg-transparent group-hover:bg-white/[0.04]"
                       }`}
+                    />
+                    <span className="relative z-10 hidden lg:inline">More</span>
+                    <ChevronDown
+                      className={`relative z-10 transition-transform duration-200 ${
+                        isMoreOpen ? "rotate-180 text-brand-mint" : ""
+                      }`}
+                      style={{ width: "11px", height: "11px" }}
                       aria-hidden="true"
                     />
                   </button>
 
-                  {/* "More" Command Surface Dropdown */}
+                  {/* More command surface */}
                   <AnimatePresence>
                     {isMoreOpen && (
                       <motion.div
-                        initial={{ opacity: 0, y: 6, scale: 0.98 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 4, scale: 0.98 }}
-                        transition={{ duration: 0.14, ease: "easeOut" }}
-                        className="absolute left-0 mt-2 w-80 rounded-2xl bg-[#0D1625]/98 border border-white/[0.09] backdrop-blur-2xl shadow-2xl p-2.5 z-50 divide-y divide-white/[0.05]"
+                        {...dropdownMotion}
+                        className="absolute left-0 mt-1.5 z-50 py-1"
+                        style={{
+                          width: "288px",
+                          background: "rgba(10,16,30,0.98)",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                          borderRadius: "14px",
+                          backdropFilter: "blur(24px)",
+                          boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.3)",
+                        }}
                       >
-                        {moreSections.map((section) => (
-                          <div key={section.id} className="py-1.5 first:pt-0.5 last:pb-0.5">
-                            <h4 className="px-2 pb-1 text-[9px] font-mono font-bold tracking-widest text-text-faint uppercase select-none">
-                              {section.title}
-                            </h4>
-                            <div className="space-y-0.5">
+                        {moreSections.map((section, sIdx) => (
+                          <div key={section.id}>
+                            {sIdx > 0 && (
+                              <div
+                                className="mx-3 my-1"
+                                style={{ height: "1px", background: "rgba(255,255,255,0.05)" }}
+                              />
+                            )}
+                            <div className="px-3 pt-2.5 pb-1">
+                              <p
+                                className="font-mono font-bold uppercase tracking-widest text-white/25 select-none"
+                                style={{ fontSize: "9px" }}
+                              >
+                                {section.title}
+                              </p>
+                            </div>
+                            <div className="px-2 pb-1 space-y-0.5">
                               {section.items.map((item) => {
                                 const active = isRouteActive(item.key);
                                 const Icon = item.icon;
-
                                 return (
                                   <Link
                                     key={item.key}
                                     to={item.path}
                                     onClick={() => setIsMoreOpen(false)}
                                     aria-current={active ? "page" : undefined}
-                                    className={`flex items-center gap-3 px-2.5 py-2 rounded-xl transition-all duration-150 group ${active
-                                        ? "bg-brand-mint/12 text-white font-semibold"
-                                        : "text-text-secondary hover:text-white hover:bg-white/[0.04]"
-                                      }`}
+                                    className={`flex items-center gap-3 px-2.5 py-2 rounded-xl transition-all duration-150 group ${
+                                      active
+                                        ? "bg-brand-mint/8 text-white"
+                                        : "text-white/55 hover:text-white hover:bg-white/[0.04]"
+                                    }`}
                                   >
                                     <div
-                                      className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${active
-                                          ? "bg-brand-mint/20 text-brand-mint"
-                                          : "bg-white/[0.03] text-text-muted group-hover:text-brand-mint"
-                                        }`}
+                                      className={`flex items-center justify-center shrink-0 rounded-lg transition-colors duration-150 ${
+                                        active
+                                          ? "bg-brand-mint/15 text-brand-mint"
+                                          : "bg-white/[0.04] text-white/35 group-hover:text-white/70 group-hover:bg-white/[0.06]"
+                                      }`}
+                                      style={{ width: "28px", height: "28px" }}
                                     >
-                                      <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+                                      <Icon style={{ width: "13px", height: "13px" }} aria-hidden="true" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                      <p className="text-xs font-medium truncate leading-tight">
+                                      <p
+                                        className="truncate leading-tight font-medium"
+                                        style={{ fontSize: "12px" }}
+                                      >
                                         {item.label}
                                       </p>
-                                      <p className="text-[10px] text-text-faint truncate leading-tight mt-0.5">
+                                      <p
+                                        className="truncate text-white/35 leading-tight mt-0.5"
+                                        style={{ fontSize: "10px" }}
+                                      >
                                         {item.desc}
                                       </p>
                                     </div>
@@ -378,167 +453,311 @@ export default function MainNavbar({
               </nav>
             </div>
 
-            {/* ── RIGHT: Utilities Area (Search, Rank, Notifications, Profile) ── */}
-            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-              {/* Command Search Trigger Button (⌘K) */}
+            {/* ── RIGHT: Premium Utility Cluster ── */}
+            {/* [ Search ] [ Messages ] [ Rank ] [ Notifications ] [ Profile ] */}
+            <div className="flex items-center gap-1 shrink-0">
+
+              {/* Subtle separator between nav and utilities on desktop */}
+              <div
+                className="hidden md:block self-stretch my-3.5 w-px mr-1.5"
+                style={{ background: "rgba(255,255,255,0.06)" }}
+                aria-hidden="true"
+              />
+
+              {/* ── SEARCH ── */}
               <button
                 type="button"
                 onClick={() => setIsSearchOpen(true)}
                 aria-label="Search platform (Cmd+K)"
-                className="flex items-center justify-center gap-2 h-8 w-8 sm:w-auto px-0 sm:px-2.5 rounded-lg border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.16] text-text-muted hover:text-white transition-all cursor-pointer focus-ring text-xs"
+                className="flex items-center gap-2 rounded-lg transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50 group"
+                style={{
+                  padding: "5px 10px",
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  color: "rgba(255,255,255,0.45)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.055)";
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
+                  e.currentTarget.style.color = "rgba(255,255,255,0.75)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)";
+                  e.currentTarget.style.color = "rgba(255,255,255,0.45)";
+                }}
               >
-                <Search className="w-3.5 h-3.5 text-brand-mint shrink-0" aria-hidden="true" />
-                <span className="hidden xl:inline text-[11px] font-normal text-text-muted">
-                  Search...
-                </span>
-                <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[9px] font-mono rounded bg-white/[0.06] text-text-faint border border-white/[0.08] leading-none">
+                <Search style={{ width: "13px", height: "13px", color: "rgba(159,213,178,0.7)" }} aria-hidden="true" />
+                <span className="hidden xl:inline" style={{ fontSize: "11.5px" }}>Search</span>
+                <kbd
+                  className="hidden sm:flex items-center font-mono"
+                  style={{
+                    padding: "1px 5px",
+                    fontSize: "9.5px",
+                    borderRadius: "4px",
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    color: "rgba(255,255,255,0.3)",
+                    lineHeight: "1.5",
+                  }}
+                >
                   ⌘K
                 </kbd>
               </button>
 
-              {/* Global Leaderboard Rank Pill */}
+              {/* ── MESSAGES ── */}
+              <Link
+                to="/messages"
+                aria-label={
+                  unreadMessagesCount > 0
+                    ? `Messages, ${unreadMessagesCount} unread`
+                    : "Messages"
+                }
+                title="Messages"
+                className="relative flex items-center justify-center rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50 group"
+                style={{
+                  width: "34px",
+                  height: "34px",
+                  color: messagesActive ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.45)",
+                  background: messagesActive ? "rgba(255,255,255,0.07)" : "transparent",
+                }}
+                onMouseEnter={(e) => {
+                  if (!messagesActive) {
+                    e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                    e.currentTarget.style.color = "rgba(255,255,255,0.8)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!messagesActive) {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.color = "rgba(255,255,255,0.45)";
+                  }
+                }}
+              >
+                <MessageSquare style={{ width: "16px", height: "16px" }} aria-hidden="true" />
+
+                {/* Unread badge */}
+                {unreadMessagesCount > 0 && (
+                  <span
+                    className="absolute flex items-center justify-center font-mono font-bold text-black bg-brand-mint rounded-full shadow-sm"
+                    style={{
+                      top: "3px",
+                      right: "3px",
+                      minWidth: "15px",
+                      height: "15px",
+                      padding: "0 3px",
+                      fontSize: "8.5px",
+                    }}
+                    aria-hidden="true"
+                  >
+                    {unreadMessagesCount > 99 ? "99+" : unreadMessagesCount}
+                  </span>
+                )}
+              </Link>
+
+              {/* ── LEADERBOARD RANK CAPSULE ── */}
               <Link
                 to="/leaderboard"
                 aria-label={
-                  position?.rank ? `Leaderboard rank #${position.rank}` : "Global Leaderboard"
+                  position?.rank
+                    ? `Leaderboard — your rank is #${position.rank}`
+                    : "Global Leaderboard"
                 }
-                title="View Leaderboard"
-                className={`flex items-center justify-center gap-1.5 h-8 w-8 sm:w-auto px-0 sm:px-2.5 rounded-lg border transition-all active:scale-95 touch-manipulation focus-ring select-none text-xs ${isRouteActive("leaderboard")
-                    ? "bg-amber-400/[0.12] border-amber-400/35 text-amber-300"
-                    : "bg-white/[0.03] border-white/[0.08] hover:border-amber-400/30 text-white/90"
-                  }`}
+                title="Leaderboard"
+                className="flex items-center gap-1.5 rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+                style={{
+                  padding: "4px 9px",
+                  background: leaderboardActive
+                    ? "rgba(251,191,36,0.1)"
+                    : "rgba(255,255,255,0.03)",
+                  border: leaderboardActive
+                    ? "1px solid rgba(251,191,36,0.25)"
+                    : "1px solid rgba(255,255,255,0.07)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(251,191,36,0.22)";
+                  e.currentTarget.style.background = "rgba(251,191,36,0.07)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = leaderboardActive
+                    ? "rgba(251,191,36,0.25)"
+                    : "rgba(255,255,255,0.07)";
+                  e.currentTarget.style.background = leaderboardActive
+                    ? "rgba(251,191,36,0.1)"
+                    : "rgba(255,255,255,0.03)";
+                }}
               >
                 <Trophy
-                  className="w-3.5 h-3.5 text-amber-400 shrink-0"
+                  style={{ width: "13px", height: "13px", color: "rgba(251,191,36,0.8)" }}
                   aria-hidden="true"
                 />
                 {position?.rank ? (
-                  <span className="hidden sm:inline text-[11px] font-mono font-bold tabular-nums text-white">
+                  <span
+                    className="font-mono font-bold tabular-nums"
+                    style={{ fontSize: "11px", color: "rgba(255,255,255,0.85)" }}
+                  >
                     #{position.rank}
                   </span>
                 ) : (
-                  <span className="hidden lg:inline text-[11px] font-mono text-text-muted">
+                  <span
+                    className="hidden lg:inline font-mono"
+                    style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)" }}
+                  >
                     Rank
                   </span>
                 )}
               </Link>
 
-              {/* Notifications Bell */}
+              {/* ── NOTIFICATIONS ── */}
               <NotificationBell className="shrink-0" />
 
-              {/* User Profile Menu or Guest Sign In */}
+              {/* ── PROFILE MENU ── */}
               {user ? (
-                <div className="relative" ref={profileDropdownRef}>
+                <div className="relative ml-0.5" ref={profileDropdownRef}>
                   <button
                     ref={profileButtonRef}
                     type="button"
                     onClick={() => setIsProfileOpen((prev) => !prev)}
                     aria-expanded={isProfileOpen}
                     aria-haspopup="true"
-                    aria-label="User account menu"
-                    className="flex items-center gap-2 p-1 rounded-lg hover:bg-white/[0.04] transition-colors focus-ring cursor-pointer group"
+                    aria-label="Open profile menu"
+                    className="flex items-center gap-2 rounded-lg transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50 group"
+                    style={{ padding: "3px 6px 3px 3px" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                   >
-                    <div className="relative w-7 h-7 rounded-full border border-brand-mint/30 overflow-hidden flex items-center justify-center bg-gradient-to-br from-brand-mint/20 to-brand-navy/60 shadow-sm shrink-0">
+                    {/* Avatar */}
+                    <div
+                      className="relative flex items-center justify-center overflow-hidden transition-transform duration-200 group-hover:scale-[1.03]"
+                      style={{
+                        width: "28px",
+                        height: "28px",
+                        borderRadius: "50%",
+                        background: "linear-gradient(135deg, rgba(159,213,178,0.2) 0%, rgba(18,49,76,0.6) 100%)",
+                        border: "1.5px solid rgba(159,213,178,0.25)",
+                      }}
+                    >
                       {avatarUrl ? (
-                        <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                        <img src={avatarUrl} alt="" aria-hidden="true" className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-[9px] font-mono font-bold text-brand-mint">
+                        <span
+                          className="font-mono font-bold text-brand-mint"
+                          style={{ fontSize: "9px" }}
+                        >
                           {userInitials}
                         </span>
                       )}
                     </div>
 
-                    <span className="hidden xl:block text-xs font-medium text-white/90 group-hover:text-brand-mint transition-colors max-w-[90px] truncate text-left">
+                    {/* Name — only at wide screens */}
+                    <span
+                      className="hidden xl:block max-w-[80px] truncate text-left transition-colors duration-150 text-white/70 group-hover:text-white/90"
+                      style={{ fontSize: "12px", fontWeight: 500 }}
+                    >
                       {user?.name || "Account"}
                     </span>
 
                     <ChevronDown
-                      className={`hidden xl:block w-3 h-3 text-text-faint group-hover:text-white transition-transform duration-200 ${isProfileOpen ? "rotate-180 text-brand-mint" : ""
-                        }`}
+                      className={`hidden xl:block transition-transform duration-200 ${isProfileOpen ? "rotate-180" : ""}`}
+                      style={{ width: "11px", height: "11px", color: "rgba(255,255,255,0.3)" }}
                       aria-hidden="true"
                     />
                   </button>
 
-                  {/* Profile Command Menu Card */}
+                  {/* Profile dropdown */}
                   <AnimatePresence>
                     {isProfileOpen && (
                       <motion.div
-                        initial={{ opacity: 0, y: 6, scale: 0.98 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 4, scale: 0.98 }}
-                        transition={{ duration: 0.14, ease: "easeOut" }}
-                        className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#0D1625]/98 border border-white/[0.09] backdrop-blur-2xl shadow-2xl p-2 z-50 divide-y divide-white/[0.05]"
+                        {...dropdownMotion}
+                        className="absolute right-0 mt-1.5 z-50"
+                        style={{
+                          width: "240px",
+                          background: "rgba(10,16,30,0.98)",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                          borderRadius: "14px",
+                          backdropFilter: "blur(24px)",
+                          boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.3)",
+                          padding: "8px",
+                        }}
                       >
-                        {/* User Identity Header */}
-                        <div className="px-3 py-2.5">
-                          <p className="text-xs font-bold text-white truncate leading-tight">
+                        {/* Identity header */}
+                        <div
+                          className="px-2.5 py-2.5 mb-1"
+                          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+                        >
+                          <p
+                            className="font-semibold text-white truncate leading-tight"
+                            style={{ fontSize: "12.5px" }}
+                          >
                             {user?.name || "Professional"}
                           </p>
-                          <p className="text-[10px] font-mono text-text-muted truncate mt-0.5 leading-tight">
+                          <p
+                            className="font-mono text-white/40 truncate leading-tight mt-0.5"
+                            style={{ fontSize: "10px" }}
+                          >
                             @{user?.username || "profile"}
                           </p>
-
-                          {/* Restrained Role Badge (Role != Verification) */}
-                          <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-md bg-white/[0.05] border border-white/[0.1] text-text-secondary text-[9px] font-mono uppercase tracking-wider font-semibold">
+                          <div
+                            className="mt-2 inline-flex items-center font-mono font-semibold uppercase tracking-wider"
+                            style={{
+                              padding: "2px 7px",
+                              fontSize: "8.5px",
+                              borderRadius: "5px",
+                              background: "rgba(255,255,255,0.05)",
+                              border: "1px solid rgba(255,255,255,0.08)",
+                              color: "rgba(255,255,255,0.4)",
+                            }}
+                          >
                             {normalizedRole}
                           </div>
                         </div>
 
-                        {/* Profile Quick Links */}
-                        <div className="py-1 space-y-0.5">
-                          <Link
-                            to="/profile"
-                            onClick={() => setIsProfileOpen(false)}
-                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
-                          >
-                            <User className="w-3.5 h-3.5 text-text-muted" aria-hidden="true" />
-                            <span>My Profile</span>
-                          </Link>
-                          <Link
-                            to="/profile/portfolio"
-                            onClick={() => setIsProfileOpen(false)}
-                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
-                          >
-                            <Layers className="w-3.5 h-3.5 text-text-muted" aria-hidden="true" />
-                            <span>Portfolio</span>
-                          </Link>
-                          <Link
-                            to="/profile/verification"
-                            onClick={() => setIsProfileOpen(false)}
-                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
-                          >
-                            <ShieldCheck className="w-3.5 h-3.5 text-text-muted" aria-hidden="true" />
-                            <span>Verification Center</span>
-                          </Link>
-                          <Link
-                            to="/profile/edit"
-                            onClick={() => setIsProfileOpen(false)}
-                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
-                          >
-                            <Settings className="w-3.5 h-3.5 text-text-muted" aria-hidden="true" />
-                            <span>Account Settings</span>
-                          </Link>
-                          <Link
-                            to="/active-sessions"
-                            onClick={() => setIsProfileOpen(false)}
-                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
-                          >
-                            <ShieldAlert className="w-3.5 h-3.5 text-text-muted" aria-hidden="true" />
-                            <span>Active Sessions</span>
-                          </Link>
+                        {/* Links */}
+                        <div className="space-y-0.5 mb-1">
+                          {[
+                            { to: "/profile", icon: User, label: "My Profile" },
+                            { to: "/profile/portfolio", icon: Layers, label: "Portfolio" },
+                            { to: "/profile/verification", icon: ShieldCheck, label: "Verification Center" },
+                            { to: "/profile/edit", icon: Settings, label: "Account Settings" },
+                            { to: "/active-sessions", icon: ShieldAlert, label: "Active Sessions" },
+                          ].map(({ to, icon: Icon, label }) => (
+                            <Link
+                              key={to}
+                              to={to}
+                              onClick={() => setIsProfileOpen(false)}
+                              className="flex items-center gap-2.5 rounded-xl transition-all duration-150 text-white/55 hover:text-white hover:bg-white/[0.04]"
+                              style={{ padding: "7px 10px" }}
+                            >
+                              <Icon style={{ width: "13px", height: "13px" }} aria-hidden="true" />
+                              <span style={{ fontSize: "12px" }}>{label}</span>
+                            </Link>
+                          ))}
                         </div>
 
-                        {/* Sign Out Action */}
-                        <div className="pt-1">
+                        {/* Sign out */}
+                        <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "6px" }}>
                           <button
                             type="button"
                             onClick={() => {
                               setIsProfileOpen(false);
                               onRequestLogout?.();
                             }}
-                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors cursor-pointer"
+                            className="w-full flex items-center gap-2.5 rounded-xl transition-all duration-150 cursor-pointer"
+                            style={{
+                              padding: "7px 10px",
+                              fontSize: "12px",
+                              color: "rgba(248,113,113,0.8)",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = "rgba(239,68,68,0.08)";
+                              e.currentTarget.style.color = "rgba(252,165,165,0.9)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "transparent";
+                              e.currentTarget.style.color = "rgba(248,113,113,0.8)";
+                            }}
                           >
-                            <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
+                            <LogOut style={{ width: "13px", height: "13px" }} aria-hidden="true" />
                             <span>Sign Out</span>
                           </button>
                         </div>
@@ -547,21 +766,19 @@ export default function MainNavbar({
                   </AnimatePresence>
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <Link
-                    to="/login"
-                    className="zn-btn-primary text-xs py-1.5 px-3.5 flex items-center gap-1.5 shadow-sm font-semibold cursor-pointer"
-                  >
-                    <span>Sign In</span>
-                  </Link>
-                </div>
+                <Link
+                  to="/login"
+                  className="zn-btn-primary text-xs py-1.5 px-3.5 flex items-center gap-1.5 shadow-sm font-semibold cursor-pointer ml-1"
+                >
+                  Sign In
+                </Link>
               )}
             </div>
           </div>
         </div>
       </header>
 
-      {/* Global Quick Search Dialog Modal (Cmd+K) */}
+      {/* Global Quick Search Dialog */}
       <QuickSearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
