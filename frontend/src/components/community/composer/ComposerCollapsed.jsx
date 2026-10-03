@@ -61,7 +61,7 @@ export default function ComposerCollapsed({
             className="min-h-[44px] px-3 py-1.5 rounded-xl text-xs font-medium text-text-muted hover:text-brand-mint hover:bg-brand-mint/10 transition-colors flex items-center gap-2 cursor-pointer"
             aria-label="Attach Photo"
           >
-            <Image className="w-4 h-4 text-emerald-400" />
+            <Image className="w-4 h-4 text-brand-mint" />
             <span className="font-medium">Photo</span>
           </button>
 
@@ -72,7 +72,7 @@ export default function ComposerCollapsed({
             className="min-h-[44px] px-3 py-1.5 rounded-xl text-xs font-medium text-text-muted hover:text-brand-mint hover:bg-brand-mint/10 transition-colors flex items-center gap-2 cursor-pointer"
             aria-label="Attach Video"
           >
-            <Video className="w-4 h-4 text-teal-400" />
+            <Video className="w-4 h-4 text-brand-mint/80" />
             <span className="font-medium">Video</span>
           </button>
 
@@ -80,19 +80,19 @@ export default function ComposerCollapsed({
           <button
             type="button"
             onClick={onQuestionClick || onExpand}
-            className="min-h-[44px] px-3 py-1.5 rounded-xl text-xs font-medium text-text-muted hover:text-brand-mint hover:bg-brand-mint/10 transition-colors flex items-center gap-2 cursor-pointer"
+            className="min-h-[44px] px-3 py-1.5 rounded-xl text-xs font-medium text-text-muted hover:text-brand-yellow hover:bg-brand-yellow/10 transition-colors flex items-center gap-2 cursor-pointer"
             aria-label="Ask a Question"
           >
-            <HelpCircle className="w-4 h-4 text-amber-400" />
+            <HelpCircle className="w-4 h-4 text-brand-yellow" />
             <span className="hidden xs:inline font-medium">Question</span>
           </button>
         </div>
 
-        {/* Post Button */}
+        {/* Post Button — Brand Energy Gradient */}
         <button
           type="button"
           onClick={onExpand}
-          className="min-h-[44px] px-4 py-2 rounded-xl bg-brand-mint/10 hover:bg-brand-mint text-brand-mint hover:text-[#0B111E] text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+          className="min-h-[44px] px-4 py-2 rounded-xl bg-gradient-to-r from-brand-mint to-brand-yellow text-[#070B14] font-bold text-xs hover:brightness-105 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shadow-[0_0_12px_rgba(159,213,178,0.25)]"
           aria-label="Open post composer"
         >
           <Send className="w-3.5 h-3.5" />

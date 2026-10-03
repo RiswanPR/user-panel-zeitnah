@@ -69,7 +69,7 @@ export default function CreateActionModal({
         >
           {/* Header */}
           <div className="flex items-center justify-between pb-3 mb-2 border-b border-white/[0.08]">
-            <h3 id="create-action-title" className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
+            <h3 id="create-action-title" className="text-sm font-bold font-heading text-white tracking-tight flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-brand-mint" />
               <span>Create</span>
             </h3>
@@ -98,7 +98,7 @@ export default function CreateActionModal({
                 <PlusSquare className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-white group-hover:text-brand-mint transition-colors">
+                <p className="text-xs font-bold font-heading text-white group-hover:text-brand-mint transition-colors">
                   New Post
                 </p>
                 <p className="text-[10px] text-text-muted">
@@ -116,11 +116,11 @@ export default function CreateActionModal({
               }}
               className="w-full min-h-[48px] px-4 py-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-brand-mint/30 flex items-center gap-3 transition-all cursor-pointer group text-left"
             >
-              <div className="w-9 h-9 rounded-xl bg-emerald-400/10 border border-emerald-400/20 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-mint/15 to-brand-yellow/10 border border-brand-mint/20 flex items-center justify-center text-brand-mint group-hover:scale-105 transition-transform">
                 <PlayCircle className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">
+                <p className="text-xs font-bold font-heading text-white group-hover:text-brand-mint transition-colors">
                   Add to Story
                 </p>
                 <p className="text-[10px] text-text-muted">

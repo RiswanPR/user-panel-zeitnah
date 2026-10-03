@@ -150,7 +150,7 @@ export default function PostActions({
             type="button"
             data-testid="post-share-btn"
             onClick={handleShare}
-            className="min-h-[44px] min-w-[44px] flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-text-muted hover:bg-white/[0.04] hover:text-white transition-all duration-150 cursor-pointer active:scale-[0.96]"
+            className="min-h-[44px] min-w-[44px] flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-text-muted hover:bg-brand-mint/10 hover:text-brand-mint transition-all duration-150 cursor-pointer active:scale-[0.96]"
             aria-label="Share post"
             title="Copy link to post"
           >
@@ -159,7 +159,7 @@ export default function PostActions({
           </button>
         </div>
 
-        {/* Bookmark Button */}
+        {/* Bookmark Button — Brand Yellow Accent */}
         <button
           id={`bookmark-btn-${postId}`}
           data-testid="post-bookmark-btn"
@@ -167,7 +167,7 @@ export default function PostActions({
           onClick={onToggleBookmark}
           className={`min-h-[44px] min-w-[44px] p-2.5 rounded-xl transition-all duration-150 flex items-center justify-center cursor-pointer active:scale-[0.96] ${
             isSaved
-              ? 'text-amber-400 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/25'
+              ? 'text-brand-yellow bg-brand-yellow/10 hover:bg-brand-yellow/20 border border-brand-yellow/30 shadow-[0_0_12px_rgba(246,237,74,0.18)]'
               : 'text-text-muted hover:bg-white/[0.04] hover:text-white'
           }`}
           aria-label={isSaved ? 'Remove bookmark' : 'Bookmark post'}

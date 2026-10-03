@@ -21,6 +21,7 @@ import { formatRelativeTime } from '../../../utils/communityFormatters';
 import { groupStoriesByUser } from '../../../utils/storyGrouping';
 import { AuthContext } from '../../../context/AuthContext';
 import toast from 'react-hot-toast';
+import BrandAmbientShape from '../ui/BrandAmbientShape';
 
 const STORY_DURATION_MS = 5000;
 
@@ -189,7 +190,7 @@ export default function StoryViewer({
       }
 
       // If video, calculate progress based on video playback currentTime if available
-      let newProgress = 0;
+      let newProgress;
       if (videoRef.current && videoRef.current.duration) {
         newProgress = Math.min(
           100,
@@ -345,16 +346,12 @@ export default function StoryViewer({
           <X className="w-5 h-5" />
         </button>
 
-        {/* Ambient Blurred Media / Color Background */}
-        {mediaUrl ? (
+        {/* Ambient Brand & Blurred Media Background */}
+        <BrandAmbientShape variant="viewer" opacity={0.9} />
+        {mediaUrl && (
           <div
-            className="absolute inset-0 bg-cover bg-center blur-3xl opacity-15 pointer-events-none scale-110 transition-all duration-700 select-none overflow-hidden"
+            className="absolute inset-0 bg-cover bg-center blur-3xl opacity-20 pointer-events-none scale-110 transition-all duration-700 select-none overflow-hidden"
             style={{ backgroundImage: `url(${mediaUrl})` }}
-            aria-hidden="true"
-          />
-        ) : (
-          <div
-            className="absolute inset-0 blur-3xl opacity-15 pointer-events-none scale-110 transition-all duration-700 select-none overflow-hidden bg-gradient-to-tr from-purple-700 via-indigo-900 to-cyan-900"
             aria-hidden="true"
           />
         )}
@@ -380,7 +377,7 @@ export default function StoryViewer({
                 <div
                   className={`h-full transition-all ease-linear ${
                     idx === currentStoryIndex
-                      ? 'bg-gradient-to-r from-emerald-400 via-teal-300 to-indigo-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]'
+                      ? 'bg-gradient-to-r from-brand-mint via-brand-mint to-brand-yellow shadow-[0_0_8px_rgba(159,213,178,0.7)]'
                       : 'bg-white'
                   }`}
                   style={{
@@ -524,7 +521,7 @@ export default function StoryViewer({
               <div
                 className={`w-full h-full flex items-center justify-center p-8 text-center ${
                   currentStory.backgroundColor ||
-                  'bg-gradient-to-br from-purple-600 via-indigo-700 to-slate-900'
+                  'bg-gradient-to-br from-[#12314C] via-[#0B1A28] to-[#070B14]'
                 }`}
               >
                 <p className="text-xl sm:text-2xl font-bold text-white leading-relaxed drop-shadow-md max-w-sm">
@@ -569,7 +566,7 @@ export default function StoryViewer({
               <button
                 type="submit"
                 disabled={!replyText.trim() || isSubmittingReply}
-                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-brand-mint text-[#0B111E] hover:bg-brand-mint/90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shrink-0 shadow-md"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-gradient-to-r from-brand-mint to-brand-yellow text-[#070B14] hover:brightness-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shrink-0 shadow-md font-bold"
                 aria-label="Send reply"
               >
                 <Send className="w-4 h-4 stroke-[2.5]" />

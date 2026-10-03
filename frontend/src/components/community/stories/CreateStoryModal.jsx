@@ -143,7 +143,7 @@ export default function CreateStoryModal({ isOpen, onClose }) {
       abortControllerRef.current = null;
     }
     setState('selected');
-    setIsSubmittingRef(false);
+    isSubmittingRef.current = false;
     setUploadProgress(0);
     setStatusMessage('');
     toast('Upload cancelled', { icon: 'ℹ️' });

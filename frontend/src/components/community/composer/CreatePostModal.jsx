@@ -25,6 +25,7 @@ import { getUploadUrl } from '../../../utils/courseUi';
 import { useCreatePost, useAIImproveText, useAISuggestTags } from '../../../hooks/useCommunity';
 import { communityApi } from '../../../services/communityApi';
 import toast from 'react-hot-toast';
+import BrandAmbientShape from '../ui/BrandAmbientShape';
 
 const DRAFT_STORAGE_KEY = 'zeitnah_post_draft';
 
@@ -545,7 +546,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
                   className={`min-h-[38px] px-4 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer disabled:opacity-50 ${
                     createPostMutation.isPending || isUploading
                       ? 'community-shimmer-btn text-[#070B14]'
-                      : 'bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 text-[#070B14] hover:shadow-[0_0_18px_rgba(52,211,153,0.38)] hover:brightness-105 active:scale-95'
+                      : 'bg-gradient-to-r from-brand-mint to-brand-yellow text-[#070B14] hover:shadow-[0_0_20px_rgba(159,213,178,0.45),0_0_14px_rgba(246,237,74,0.25)] hover:brightness-105 active:scale-95'
                   }`}
                 >
                   {createPostMutation.isPending || isUploading ? 'Publishing...' : 'Publish'}
@@ -608,24 +609,26 @@ export default function CreatePostModal({ isOpen, onClose }) {
           {step === 'SELECT' && (
             <div
               id="media-dropzone"
-              className="flex-1 flex flex-col items-center justify-center p-8 sm:p-12 text-center min-h-[380px] sm:min-h-[460px]"
+              className="relative flex-1 flex flex-col items-center justify-center p-8 sm:p-12 text-center min-h-[380px] sm:min-h-[460px] overflow-hidden"
             >
-              <div className="w-20 h-20 rounded-3xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-text-muted mb-5 shadow-inner">
+              <BrandAmbientShape variant="composer" opacity={0.5} />
+
+              <div className="relative z-10 w-20 h-20 rounded-3xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-text-muted mb-5 shadow-inner">
                 <UploadCloud className="w-10 h-10 text-brand-mint" />
               </div>
 
-              <h3 className="text-base sm:text-lg font-bold text-white mb-2">
+              <h3 className="relative z-10 text-base sm:text-lg font-bold text-white mb-2">
                 Drag photos and videos here
               </h3>
-              <p className="text-xs text-text-muted max-w-sm mb-6 leading-relaxed">
+              <p className="relative z-10 text-xs text-text-muted max-w-sm mb-6 leading-relaxed">
                 Share technical field showcases, project blueprints, or questions with the verified Zeitnah network.
               </p>
 
-              <div className="flex flex-col sm:flex-row items-center gap-3">
+              <div className="relative z-10 flex flex-col sm:flex-row items-center gap-3">
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="min-h-[44px] px-6 py-2.5 rounded-xl bg-brand-mint text-bg-base font-bold text-xs hover:bg-brand-mint/90 transition-all shadow-md cursor-pointer"
+                  className="min-h-[44px] px-6 py-2.5 rounded-xl bg-gradient-to-r from-brand-mint to-brand-yellow text-[#070B14] font-bold text-xs hover:brightness-105 transition-all shadow-[0_0_16px_rgba(159,213,178,0.25)] cursor-pointer"
                 >
                   Select from computer
                 </button>

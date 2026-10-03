@@ -1749,10 +1749,11 @@ html, body {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   PHASE 5.1 — COMMUNITY PREMIUM GRADIENT & AURORA SYSTEM
+   ZEITNAH BRAND COMMUNITY GRADIENT & AMBIENT SYSTEM
+   Foundation: Navy (#12314C) 70% | Mint (#9FD5B2) 20% | Yellow (#F6ED4A) 10%
    ═══════════════════════════════════════════════════════════════ */
 
-/* Global atmospheric aurora lighting for Community */
+/* Community Canvas — Deep navy foundation with restrained mint/yellow atmospheric radiance */
 .community-aurora-bg {
   position: relative;
   min-height: 100%;
@@ -1763,11 +1764,44 @@ html, body {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(circle at 14% 6%, rgba(80, 220, 180, 0.075), transparent 32%),
-    radial-gradient(circle at 86% 16%, rgba(129, 140, 248, 0.065), transparent 35%),
-    radial-gradient(circle at 50% 60%, rgba(56, 189, 248, 0.04), transparent 42%);
+    radial-gradient(ellipse 65% 45% at 18% 4%, rgba(159, 213, 178, 0.065), transparent 60%),
+    radial-gradient(ellipse 55% 40% at 85% 15%, rgba(18, 49, 76, 0.55), transparent 65%),
+    radial-gradient(circle at 60% 75%, rgba(246, 237, 74, 0.032), transparent 50%),
+    radial-gradient(ellipse 70% 50% at 50% 100%, rgba(18, 49, 76, 0.35), transparent 70%);
   pointer-events: none;
   z-index: 0;
+}
+
+/* ── Brand Gradient Primitives ── */
+
+/* Primary Premium Gradient: Deep Navy → Mint */
+.zn-gradient-primary {
+  background: linear-gradient(135deg, #12314C 0%, #9FD5B2 100%);
+}
+
+/* Secondary Energy Gradient: Mint → Yellow */
+.zn-gradient-energy {
+  background: linear-gradient(135deg, #9FD5B2 0%, #F6ED4A 100%);
+}
+
+/* Cinematic Dark Gradient: Deep Navy → Near-black base */
+.zn-gradient-cinematic {
+  background: linear-gradient(180deg, #12314C 0%, #070B14 100%);
+}
+
+/* White Editorial Gradient: Subtle white highlight → Mint */
+.zn-gradient-editorial {
+  background: linear-gradient(135deg, #FFFFFF 0%, #9FD5B2 100%);
+}
+
+/* Story Ring Brand Gradient: Navy → Mint → Yellow */
+.zn-gradient-ring {
+  background: linear-gradient(135deg, #12314C 0%, #9FD5B2 58%, #F6ED4A 100%);
+}
+
+/* Story Ring Viewed: Subtle Muted Navy/Mint */
+.zn-gradient-ring-seen {
+  background: linear-gradient(135deg, rgba(18, 49, 76, 0.5) 0%, rgba(159, 213, 178, 0.22) 100%);
 }
 
 /* Premium card surface system */
@@ -1788,15 +1822,15 @@ html, body {
 
 /* Glass rail container */
 .community-glass-rail {
-  background: linear-gradient(135deg, rgba(15, 23, 38, 0.75) 0%, rgba(11, 17, 30, 0.85) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, rgba(18, 49, 76, 0.5) 0%, rgba(11, 17, 30, 0.85) 100%);
+  border: 1px solid rgba(159, 213, 178, 0.12);
   backdrop-filter: blur(24px) saturate(1.2);
   -webkit-backdrop-filter: blur(24px) saturate(1.2);
   box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.35);
   border-radius: 22px;
 }
 
-/* Premium gradient Create button */
+/* Premium Brand Energy Gradient Create button (#9FD5B2 → #F6ED4A) */
 .community-btn-create {
   display: inline-flex;
   align-items: center;
@@ -1808,17 +1842,17 @@ html, body {
   font-weight: 700;
   font-size: 0.8125rem;
   letter-spacing: 0.02em;
-  background: linear-gradient(135deg, #9FD5B2 0%, #38BDF8 100%);
+  background: linear-gradient(135deg, #9FD5B2 0%, #F6ED4A 100%);
   color: #070B14;
   border: none;
   cursor: pointer;
-  box-shadow: 0 0 20px rgba(159, 213, 178, 0.28), 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 18px rgba(159, 213, 178, 0.32), 0 4px 12px rgba(0, 0, 0, 0.3);
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
 }
 
 .community-btn-create:hover {
-  box-shadow: 0 0 28px rgba(159, 213, 178, 0.45), 0 6px 18px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 0 26px rgba(159, 213, 178, 0.45), 0 0 16px rgba(246, 237, 74, 0.25), 0 6px 18px rgba(0, 0, 0, 0.35);
   transform: translateY(-1px);
 }
 
@@ -1826,33 +1860,127 @@ html, body {
   transform: translateY(0) scale(0.97);
 }
 
-/* Shimmer animation for publishing CTAs */
+/* Shimmer animation for publishing CTAs — Mint → Yellow → White */
 @keyframes communityShimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
 
 .community-shimmer-btn {
-  background: linear-gradient(90deg, #9FD5B2 0%, #38BDF8 45%, #818CF8 55%, #9FD5B2 100%);
+  background: linear-gradient(90deg, #9FD5B2 0%, #F6ED4A 45%, #FFFFFF 55%, #9FD5B2 100%);
   background-size: 200% 100%;
   animation: communityShimmer 2.2s linear infinite;
 }
 
-/* Story Ring Gradients */
+/* Story Ring Gradients — Brand Aligned */
 .community-ring-unseen {
-  background: linear-gradient(135deg, #9FD5B2 0%, #38BDF8 50%, #818CF8 100%);
-  box-shadow: 0 0 16px rgba(56, 189, 248, 0.32);
+  background: linear-gradient(135deg, #12314C 0%, #9FD5B2 58%, #F6ED4A 100%);
+  box-shadow: 0 0 14px rgba(159, 213, 178, 0.28);
 }
 
 .community-ring-own {
-  background: linear-gradient(135deg, #F6ED4A 0%, #FB923C 50%, #F43F5E 100%);
-  box-shadow: 0 0 16px rgba(251, 146, 60, 0.32);
+  background: linear-gradient(135deg, #9FD5B2 0%, #F6ED4A 100%);
+  box-shadow: 0 0 14px rgba(246, 237, 74, 0.25);
 }
 
 /* Active Segment in Story Viewer */
 .community-progress-active {
-  background: linear-gradient(90deg, #9FD5B2 0%, #38BDF8 60%, #818CF8 100%);
+  background: linear-gradient(90deg, #9FD5B2 0%, #F6ED4A 100%);
   box-shadow: 0 0 8px rgba(159, 213, 178, 0.5);
+}
+
+/* Thin Luxury Gradient Border Utility */
+.zn-border-gradient {
+  position: relative;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+.zn-border-gradient::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(159, 213, 178, 0.4) 0%, rgba(246, 237, 74, 0.2) 50%, rgba(18, 49, 76, 0.3) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ── Button System ── */
+.zn-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.625rem 1.25rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  background: linear-gradient(135deg, #9FD5B2 0%, #F6ED4A 100%);
+  color: #070B14;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 16px rgba(159, 213, 178, 0.28);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.zn-btn-primary:hover {
+  box-shadow: 0 0 24px rgba(159, 213, 178, 0.4), 0 0 16px rgba(246, 237, 74, 0.25);
+  transform: translateY(-1px);
+}
+
+.zn-btn-primary:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.zn-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.625rem 1.25rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  background: rgba(18, 49, 76, 0.35);
+  color: #FFFFFF;
+  border: 1px solid rgba(159, 213, 178, 0.28);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.zn-btn-secondary:hover {
+  background: rgba(18, 49, 76, 0.55);
+  border-color: rgba(159, 213, 178, 0.5);
+  color: #9FD5B2;
+}
+
+.zn-btn-tertiary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.625rem 1rem;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 0.8125rem;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.zn-btn-tertiary:hover {
+  color: #9FD5B2;
+  background: rgba(159, 213, 178, 0.06);
 }
 
 /* Respect reduced motion */

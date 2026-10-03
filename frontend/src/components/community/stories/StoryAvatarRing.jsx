@@ -52,14 +52,14 @@ export default function StoryAvatarRing({
         }
       }}
     >
-      {/* Outer Ring with Seen / Unseen Distinction & Aurora Gradients */}
+      {/* Outer Ring with Seen / Unseen Distinction & Zeitnah Brand Gradients */}
       <div
         className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-full transition-all duration-200 group-hover:scale-[1.04] ${
           !unseen
-            ? 'p-[2px] bg-white/[0.12] ring-1 ring-white/10 opacity-75 group-hover:opacity-100 group-hover:ring-white/25'
+            ? 'p-[2px] bg-gradient-to-tr from-[#12314C]/70 via-white/[0.1] to-[#9FD5B2]/20 ring-1 ring-white/10 opacity-75 group-hover:opacity-100 group-hover:ring-brand-mint/20'
             : isOwnStory
-            ? 'p-[2.5px] bg-gradient-to-tr from-[#F6ED4A] via-[#FB923C] to-[#F43F5E] shadow-[0_0_12px_rgba(251,146,60,0.25)] ring-1 ring-amber-400/35'
-            : 'p-[2.5px] bg-gradient-to-tr from-emerald-400 via-cyan-400 to-indigo-500 shadow-[0_0_12px_rgba(56,189,248,0.22)] ring-1 ring-brand-mint/30'
+            ? 'p-[2.5px] bg-gradient-to-tr from-[#12314C] via-brand-mint to-[#F6ED4A] shadow-[0_0_14px_rgba(246,237,74,0.25)] ring-1 ring-brand-yellow/40'
+            : 'p-[2.5px] bg-gradient-to-tr from-[#12314C] via-brand-mint to-[#F6ED4A] shadow-[0_0_14px_rgba(159,213,178,0.3)] ring-1 ring-brand-mint/40'
         }`}
       >
         {/* Inner Avatar Container */}

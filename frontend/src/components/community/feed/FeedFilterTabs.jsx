@@ -22,7 +22,7 @@ export default function FeedFilterTabs({
     <div
       role="tablist"
       aria-label="Feed content filters"
-      className={`flex items-center gap-1.5 p-1 bg-[#0B111E]/90 border border-white/[0.08] rounded-xl backdrop-blur-xl overflow-x-auto scrollbar-none ${className}`}
+      className={`flex items-center gap-1.5 p-1 bg-[#12314C]/35 border border-white/[0.08] rounded-xl backdrop-blur-xl overflow-x-auto scrollbar-none ${className}`}
     >
       {tabs.map((tab, index) => {
         const isActive = activeFilter === tab.id;
@@ -59,7 +59,7 @@ export default function FeedFilterTabs({
             {isActive && (
               <motion.div
                 layoutId="active-feed-tab"
-                className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-teal-500/15 to-indigo-500/20 border border-brand-mint/35 rounded-lg shadow-[0_0_14px_rgba(52,211,153,0.18)]"
+                className="absolute inset-0 bg-gradient-to-r from-[#12314C] via-[#12314C]/85 to-[#9FD5B2]/25 border border-brand-mint/45 rounded-lg shadow-[0_0_14px_rgba(159,213,178,0.22)]"
                 transition={{ type: 'spring', stiffness: 450, damping: 32 }}
               />
             )}

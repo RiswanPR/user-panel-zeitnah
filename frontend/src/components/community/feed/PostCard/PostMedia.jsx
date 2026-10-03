@@ -158,7 +158,7 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
           </div>
         )}
 
-        {/* Double-Tap Heart Burst Animation with Radiant Aurora Glow */}
+        {/* Double-Tap Heart Burst Animation with Radiant Mint -> Yellow Brand Glow */}
         <AnimatePresence>
           {showHeartBurst && (
             <motion.div
@@ -166,15 +166,28 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
               animate={
                 shouldReduceMotion
                    ? { opacity: [0, 1, 0] }
-                   : { scale: [0, 1.15, 1], opacity: [0, 1, 0] }
+                   : { scale: [0, 1.12, 1], opacity: [0, 1, 0] }
               }
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.5, ease: 'easeOut' }}
+              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
               className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none"
             >
               <div className="relative flex items-center justify-center">
-                <div className="absolute w-28 h-28 rounded-full bg-gradient-to-tr from-brand-mint/30 via-rose-500/40 to-indigo-500/30 blur-xl" />
-                <Heart className="w-20 h-20 text-rose-500 fill-rose-500 drop-shadow-[0_0_24px_rgba(244,63,94,0.75)] relative z-10" />
+                <div className="absolute w-28 h-28 rounded-full bg-gradient-to-tr from-brand-mint/40 via-brand-yellow/30 to-transparent blur-xl" />
+                <svg width="80" height="80" viewBox="0 0 24 24" className="relative z-10 drop-shadow-[0_0_20px_rgba(159,213,178,0.7)]">
+                  <defs>
+                    <linearGradient id="brand-doubletap-heart" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#9FD5B2" />
+                      <stop offset="100%" stopColor="#F6ED4A" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
+                    fill="url(#brand-doubletap-heart)"
+                    stroke="#FFFFFF"
+                    strokeWidth="0.8"
+                  />
+                </svg>
               </div>
             </motion.div>
           )}

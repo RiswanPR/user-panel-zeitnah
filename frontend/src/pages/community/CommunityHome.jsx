@@ -24,6 +24,7 @@ import {
 } from '../../utils/communityFormatters';
 import { groupStoriesByUser } from '../../utils/storyGrouping';
 import { Sparkles, Users, GraduationCap, Globe, AlertCircle } from 'lucide-react';
+import BrandAmbientShape from '../../components/community/ui/BrandAmbientShape';
 
 /**
  * CommunityHome — Phase 2D Discovery & Feed Intelligence UX
@@ -136,7 +137,10 @@ export default function CommunityHome() {
   }, []);
 
   return (
-    <div className="w-full community-aurora-bg">
+    <div className="relative w-full max-w-full overflow-x-hidden community-aurora-bg">
+      {/* Brand Ambient Canvas Contour Curves */}
+      <BrandAmbientShape variant="canvas" opacity={0.6} />
+
       {/* ── Story Modal & Viewer Overlays ── */}
       {selectedGroupIndex !== null && allGroups.length > 0 && (
         <StoryViewer
@@ -219,7 +223,7 @@ export default function CommunityHome() {
 
           {/* Active Topic Banner if filtering by topic */}
           {activeTopic && (
-            <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-brand-mint/10 border border-brand-mint/25 text-xs text-white">
+            <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#12314C]/70 to-[#9FD5B2]/15 border border-brand-mint/30 text-xs text-white">
               <span className="flex items-center gap-1.5 font-medium">
                 Filtering by topic: <strong className="text-brand-mint">#{activeTopic}</strong>
               </span>

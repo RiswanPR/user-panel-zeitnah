@@ -78,8 +78,8 @@ export default function StoryRail({
               className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full transition-transform duration-200 group-hover:scale-[1.04] ${
                 hasOwnStory
                   ? currentUserGroup.hasUnseenStories
-                    ? 'p-[2.5px] bg-gradient-to-tr from-[#F6ED4A] via-[#FB923C] to-[#F43F5E] shadow-[0_0_12px_rgba(251,146,60,0.25)] ring-1 ring-amber-400/35'
-                    : 'p-[2px] bg-white/[0.12] ring-1 ring-white/10 opacity-80 group-hover:opacity-100'
+                    ? 'p-[2.5px] bg-gradient-to-tr from-[#12314C] via-brand-mint to-[#F6ED4A] shadow-[0_0_14px_rgba(246,237,74,0.25)] ring-1 ring-brand-yellow/40'
+                    : 'p-[2px] bg-gradient-to-tr from-[#12314C]/70 via-white/[0.1] to-[#9FD5B2]/20 ring-1 ring-white/10 opacity-80 group-hover:opacity-100 group-hover:ring-brand-mint/20'
                   : 'p-[2px] bg-white/[0.08] border-2 border-dashed border-white/20 group-hover:border-brand-mint/60'
               }`}
             >
@@ -99,14 +99,14 @@ export default function StoryRail({
               </div>
             </div>
 
-            {/* '+' Badge with gradient fill */}
+            {/* '+' Badge with Mint to Yellow Energy Gradient */}
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onAddStory?.();
               }}
-              className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-[#070B14] flex items-center justify-center ring-2 ring-[#0B111E] shadow-sm hover:scale-110 active:scale-95 transition-all cursor-pointer"
+              className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-gradient-to-br from-brand-mint to-brand-yellow text-[#070B14] flex items-center justify-center ring-2 ring-[#0B111E] shadow-sm hover:scale-110 active:scale-95 transition-all cursor-pointer font-bold"
               title="Add to story"
               aria-label="Add to story"
             >
