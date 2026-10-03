@@ -11,6 +11,7 @@ import VerifyRegisterOtp from "./pages/auth/VerifyRegisterOtp";
 
 // Context
 import { ToastProvider } from "./components/ui/Toast";
+import { Toaster } from 'react-hot-toast';
 import { NotificationProvider } from "./context/NotificationContext";
 import { MessagingProvider } from "./context/MessagingContext";
 
@@ -57,6 +58,7 @@ const OpportunityInboxPage = lazyWithRetry(() => import("./pages/opportunities/O
 const Home = lazyWithRetry(() => import("./pages/home/Home"));
 const AboutPage = lazyWithRetry(() => import("./pages/about/AboutPage"));
 const CommunityHome = lazyWithRetry(() => import("./pages/community/CommunityHome"));
+const SavedPostsPage = lazyWithRetry(() => import("./pages/community/SavedPostsPage"));
 
 import ProtectedRoute from "./components/common/ProtectedRoute/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";
@@ -109,6 +111,18 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            style: {
+              background: '#0B111E',
+              color: '#fff',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '0.75rem',
+              fontSize: '0.875rem',
+            },
+          }}
+        />
         <NotificationProvider>
           <MessagingProvider>
             <BrowserRouter>
@@ -197,6 +211,7 @@ function App() {
                 <Route path="/network/spaces/:slugOrId" element={<Suspense fallback={<PageLoader />}><LearningSpaceDetailPage /></Suspense>} />
                 <Route path="/network/spaces/:slugOrId/discussions/:discussionId" element={<Suspense fallback={<PageLoader />}><DiscussionDetailPage /></Suspense>} />
                 <Route path="/community" element={<Suspense fallback={<PageLoader />}><CommunityHome /></Suspense>} />
+                <Route path="/community/saved" element={<Suspense fallback={<PageLoader />}><SavedPostsPage /></Suspense>} />
                 <Route path="/messages" element={<Suspense fallback={<PageLoader />}><MessagesPage /></Suspense>} />
                 <Route path="/messages/:conversationId" element={<Suspense fallback={<PageLoader />}><MessagesPage /></Suspense>} />
                 <Route path="/notifications" element={<Suspense fallback={<PageLoader />}><NotificationsPage /></Suspense>} />

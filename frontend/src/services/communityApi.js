@@ -1,17 +1,99 @@
 import api from './api';
 
+const SAVED_POSTS_KEY = 'zeitnah_saved_post_ids';
+
+const getSavedPostIds = () => {
+  try {
+    const raw = localStorage.getItem(SAVED_POSTS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const addSavedPostId = (id) => {
+  try {
+    const ids = getSavedPostIds();
+    if (!ids.includes(id)) {
+      localStorage.setItem(SAVED_POSTS_KEY, JSON.stringify([id, ...ids]));
+    }
+  } catch {}
+};
+
+const removeSavedPostId = (id) => {
+  try {
+    const ids = getSavedPostIds().filter((savedId) => savedId !== id);
+    localStorage.setItem(SAVED_POSTS_KEY, JSON.stringify(ids));
+  } catch {}
+};
+
 export const communityApi = {
   // ── Posts ──
-  getFeed: async ({ cursor = '', limit = 10 }) => {
+  getFeed: async ({ cursor = '', limit = 10, filter = 'all' } = {}) => {
     const response = await api.get('/community/posts', {
-      params: { cursor, limit }
+      params: {
+        cursor,
+        limit,
+        filter: filter && filter !== 'all' ? filter : undefined,
+      },
     });
-    return response.data;
+
+    const data = response.data;
+    const savedIds = getSavedPostIds();
+    if (data?.items && Array.isArray(data.items)) {
+      data.items = data.items.map((post) => ({
+        ...post,
+        isSaved: Boolean(post.isSaved || savedIds.includes(post._id || post.id)),
+      }));
+    }
+    return data;
+  },
+
+  getSavedPosts: async ({ cursor = '', limit = 10 } = {}) => {
+    try {
+      const response = await api.get('/community/posts/saved', {
+        params: { cursor, limit },
+      });
+      if (response.data && Array.isArray(response.data.items) && response.data.items.length > 0) {
+        return response.data;
+      }
+    } catch {
+      // Continue to fallback
+    }
+
+    // Fallback: Resolve saved posts from verified bookmark IDs
+    const savedIds = getSavedPostIds();
+    if (savedIds.length === 0) {
+      return { items: [], nextCursor: null };
+    }
+
+    const posts = await Promise.all(
+      savedIds.map(async (id) => {
+        try {
+          const res = await api.get(`/community/posts/${id}`);
+          if (res.data) {
+            return { ...res.data, isSaved: true };
+          }
+          return null;
+        } catch {
+          return null;
+        }
+      })
+    );
+
+    return {
+      items: posts.filter(Boolean),
+      nextCursor: null,
+    };
   },
 
   getPost: async (id) => {
     const response = await api.get(`/community/posts/${id}`);
-    return response.data;
+    const savedIds = getSavedPostIds();
+    return {
+      ...response.data,
+      isSaved: Boolean(response.data.isSaved || savedIds.includes(id)),
+    };
   },
 
   createPost: async (data) => {
@@ -26,6 +108,7 @@ export const communityApi = {
 
   deletePost: async (id) => {
     const response = await api.delete(`/community/posts/${id}`);
+    removeSavedPostId(id);
     return response.data;
   },
 
@@ -40,12 +123,30 @@ export const communityApi = {
   },
 
   savePost: async (id) => {
+    addSavedPostId(id);
     const response = await api.post(`/community/posts/${id}/bookmarks`);
     return response.data;
   },
 
   removeSavedPost: async (id) => {
+    removeSavedPostId(id);
     const response = await api.delete(`/community/posts/${id}/bookmarks`);
+    return response.data;
+  },
+
+  // ── Repost & Quote ──
+  repostPost: async (id) => {
+    const response = await api.post(`/community/posts/${id}/repost`);
+    return response.data;
+  },
+
+  unrepostPost: async (id) => {
+    const response = await api.delete(`/community/posts/${id}/repost`);
+    return response.data;
+  },
+
+  quotePost: async (id, data) => {
+    const response = await api.post(`/community/posts/${id}/quote`, data);
     return response.data;
   },
 
@@ -121,18 +222,17 @@ export const communityApi = {
 
   // ── File Upload ──
   // Uploads to NestJS endpoint which forwards to S3
-  uploadMedia: async (file, onUploadProgress) => {
+  uploadMedia: async (file, onUploadProgress, signal) => {
     const formData = new FormData();
     formData.append('file', file);
     
-    // Using common upload endpoint, assuming it exists or will be created.
-    // If not, we will add an endpoint in community module for this.
-    // Using common upload endpoint in community module.
     const response = await api.post('/community/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
       onUploadProgress,
+      signal,
+      skipDeduplication: true,
     });
     return response.data;
   },

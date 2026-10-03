@@ -1,0 +1,357 @@
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import {
+  ZoomIn,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
+import MediaLightbox from './MediaLightbox';
+
+/**
+ * PostMedia — Instagram-style media-first component.
+ * Features:
+ * - Multi-image swipeable carousel (touch swipe on mobile, arrow controls on desktop)
+ * - Pagination indicator badge (1/N) and bottom dots
+ * - Double-tap to like with radiant heart-burst animation
+ * - Auto-pausing video via IntersectionObserver and mutual playback control
+ * - Responsive aspect ratios (4:5, 1:1, 16:9) with layout-shift prevention
+ */
+export default function PostMedia({ media = [], onDoubleTapLike }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedMedia, setSelectedMedia] = useState(null);
+  const [failedMedia, setFailedMedia] = useState({});
+  const [loadedImages, setLoadedImages] = useState({});
+  const [showHeartBurst, setShowHeartBurst] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+
+  const videoRefs = useRef({});
+  const lastTapRef = useRef(0);
+  const touchStartXRef = useRef(0);
+  const touchStartYRef = useRef(0);
+  const touchEndXRef = useRef(0);
+  const touchEndYRef = useRef(0);
+  const shouldReduceMotion = useReducedMotion();
+
+  const handleMediaError = useCallback((idx) => {
+    setFailedMedia((prev) => ({ ...prev, [idx]: true }));
+  }, []);
+
+  const handleImageLoad = useCallback((idx) => {
+    setLoadedImages((prev) => ({ ...prev, [idx]: true }));
+  }, []);
+
+  // Double-tap media handler for Instagram-style like
+  const handleMediaTap = useCallback(() => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
+
+    if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+      // Double tap triggered
+      setShowHeartBurst(true);
+      setTimeout(() => setShowHeartBurst(false), 900);
+      if (onDoubleTapLike) {
+        onDoubleTapLike();
+      }
+      lastTapRef.current = 0;
+    } else {
+      lastTapRef.current = now;
+    }
+  }, [onDoubleTapLike]);
+
+  // Touch handlers for mobile swipe vs vertical scroll
+  const handleTouchStart = (e) => {
+    if (e.touches && e.touches[0]) {
+      touchStartXRef.current = e.touches[0].clientX;
+      touchStartYRef.current = e.touches[0].clientY;
+      touchEndXRef.current = e.touches[0].clientX;
+      touchEndYRef.current = e.touches[0].clientY;
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches && e.touches[0]) {
+      touchEndXRef.current = e.touches[0].clientX;
+      touchEndYRef.current = e.touches[0].clientY;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartXRef.current || !touchEndXRef.current) return;
+    const diffX = touchStartXRef.current - touchEndXRef.current;
+    const diffY = touchStartYRef.current - touchEndYRef.current;
+    const SWIPE_THRESHOLD = 45;
+
+    // Distinguish horizontal swipe from vertical scrolling
+    if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(diffX) > Math.abs(diffY)) {
+      lastTapRef.current = 0; // Prevent accidental double tap after horizontal swipe
+      if (diffX > 0 && currentIndex < media.length - 1) {
+        // Swiped left -> next
+        setCurrentIndex((prev) => prev + 1);
+      } else if (diffX < 0 && currentIndex > 0) {
+        // Swiped right -> prev
+        setCurrentIndex((prev) => prev - 1);
+      }
+    }
+
+    touchStartXRef.current = 0;
+    touchEndXRef.current = 0;
+    touchStartYRef.current = 0;
+    touchEndYRef.current = 0;
+  };
+
+  // Auto-pause video when scrolled out of viewport
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return;
+
+    const currentRefs = Object.values(videoRefs.current).filter(Boolean);
+    if (!currentRefs.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting && !entry.target.paused) {
+            entry.target.pause();
+          }
+        });
+      },
+      { threshold: 0.25 }
+    );
+
+    currentRefs.forEach((vid) => observer.observe(vid));
+    return () => observer.disconnect();
+  }, [media]);
+
+  // Preload adjacent carousel images for smooth transitions
+  useEffect(() => {
+    if (!Array.isArray(media) || media.length <= 1) return;
+    media.forEach((item, idx) => {
+      if (Math.abs(idx - currentIndex) <= 1 && item?.url && item?.type !== 'video') {
+        const img = new Image();
+        img.src = item.url;
+      }
+    });
+  }, [currentIndex, media]);
+
+  if (!media || media.length === 0) return null;
+
+  const isMulti = media.length > 1;
+  const currentItem = media[currentIndex] || media[0];
+
+  return (
+    <>
+      <div
+        data-testid="post-media-container"
+        aria-label="Double tap to like"
+        className="relative my-3 -mx-4 sm:mx-0 rounded-none sm:rounded-2xl overflow-hidden bg-[#070B14] border-y sm:border border-white/[0.08] select-none group"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Carousel Counter Badge (e.g. 1/3) */}
+        {isMulti && (
+          <div className="absolute top-3 right-3 z-20 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[11px] font-mono font-medium text-white/90 shadow-sm border border-white/10 pointer-events-none">
+            {currentIndex + 1} / {media.length}
+          </div>
+        )}
+
+        {/* Double-Tap Heart Burst Animation */}
+        <AnimatePresence>
+          {showHeartBurst && (
+            <motion.div
+              initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0, opacity: 0 }}
+              animate={
+                shouldReduceMotion
+                  ? { opacity: [0, 1, 0] }
+                  : { scale: [0, 1.3, 1], opacity: [0, 1, 0] }
+              }
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.85, ease: 'easeOut' }}
+              className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none"
+            >
+              <Heart className="w-24 h-24 text-rose-500 fill-rose-500 drop-shadow-[0_0_24px_rgba(244,63,94,0.7)]" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Media Presentation Container */}
+        <div
+          onClick={handleMediaTap}
+          className="relative w-full min-h-[260px] sm:min-h-[320px] max-h-[640px] flex items-center justify-center bg-[#070B14] overflow-hidden"
+        >
+          {media.map((item, idx) => {
+            const isVideo = item.type === 'video';
+            const hasError = failedMedia[idx];
+            const isLoaded = loadedImages[idx];
+            const isCurrent = idx === currentIndex;
+
+            if (!isCurrent && isMulti) return null;
+
+            if (hasError) {
+              return (
+                <div
+                  key={idx}
+                  className="w-full h-64 bg-[#0E1726] flex flex-col items-center justify-center p-4 text-center text-text-muted"
+                  role="status"
+                  aria-label="Media attachment could not be loaded"
+                >
+                  <AlertCircle className="w-6 h-6 text-text-faint mb-2" />
+                  <span className="text-xs">Media unavailable</span>
+                </div>
+              );
+            }
+
+            if (isVideo) {
+              return (
+                <div
+                  key={idx}
+                  className="relative w-full h-full max-h-[620px] aspect-video sm:aspect-auto flex items-center justify-center bg-black overflow-hidden"
+                >
+                  <video
+                    ref={(el) => {
+                      if (el) videoRefs.current[idx] = el;
+                    }}
+                    src={item.url}
+                    poster={item.thumbnailUrl || undefined}
+                    controls
+                    muted={isMuted}
+                    playsInline
+                    preload="metadata"
+                    onPlay={(e) => {
+                      // Mutual playback defense: pause other videos
+                      document.querySelectorAll('video').forEach((v) => {
+                        if (v !== e.target && !v.paused) v.pause();
+                      });
+                    }}
+                    onError={() => handleMediaError(idx)}
+                    className="w-full h-full object-contain max-h-[620px]"
+                  />
+
+                  {/* Volume Mute/Unmute Overlay */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMuted((prev) => !prev);
+                      const vid = videoRefs.current[idx];
+                      if (vid) vid.muted = !isMuted;
+                    }}
+                    className="absolute bottom-3 right-3 p-2 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm transition-all cursor-pointer z-10"
+                    aria-label={isMuted ? 'Unmute video' : 'Mute video'}
+                  >
+                    {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                  </button>
+                </div>
+              );
+            }
+
+            // Image Item (Portrait 4:5, Square 1:1, Landscape 16:9)
+            return (
+              <div
+                key={idx}
+                className="relative w-full h-full flex items-center justify-center overflow-hidden"
+                role="img"
+                aria-label={`Post media ${idx + 1} of ${media.length}`}
+              >
+                {!isLoaded && (
+                  <div
+                    className="absolute inset-0 bg-[#0E1726] animate-pulse"
+                    aria-hidden="true"
+                  />
+                )}
+
+                <img
+                  src={item.url}
+                  alt={item.caption || item.alt || `Media attachment ${idx + 1}`}
+                  onLoad={() => handleImageLoad(idx)}
+                  onError={() => handleMediaError(idx)}
+                  loading="lazy"
+                  decoding="async"
+                  className={`w-full max-h-[640px] object-contain sm:object-cover transition-opacity duration-300 ${
+                    isLoaded ? 'opacity-100' : 'opacity-0'
+                  }`}
+                />
+
+                {/* Enlarge Hint Button */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedMedia(item);
+                  }}
+                  className="absolute top-3 left-3 p-2 rounded-full bg-black/50 hover:bg-black/80 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"
+                  aria-label="Enlarge image"
+                  title="Enlarge"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Carousel Desktop Navigation Arrows */}
+        {isMulti && (
+          <>
+            {currentIndex > 0 && (
+              <button
+                type="button"
+                data-testid="carousel-prev-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentIndex((prev) => Math.max(prev - 1, 0));
+                }}
+                className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 text-white items-center justify-center backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 transition-all cursor-pointer z-20 shadow-md"
+                aria-label="Previous media"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+            )}
+
+            {currentIndex < media.length - 1 && (
+              <button
+                type="button"
+                data-testid="carousel-next-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentIndex((prev) => Math.min(prev + 1, media.length - 1));
+                }}
+                className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 text-white items-center justify-center backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 transition-all cursor-pointer z-20 shadow-md"
+                aria-label="Next media"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            )}
+
+            {/* Bottom Pagination Dots */}
+            <div
+              className="absolute bottom-2.5 inset-x-0 flex items-center justify-center gap-1.5 z-20 pointer-events-none"
+              aria-hidden="true"
+            >
+              {media.map((_, dotIdx) => (
+                <span
+                  key={dotIdx}
+                  className={`transition-all duration-200 rounded-full shadow-sm ${
+                    dotIdx === currentIndex
+                      ? 'w-2 h-2 bg-brand-mint'
+                      : 'w-1.5 h-1.5 bg-white/40'
+                  }`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Lightbox Modal */}
+      <MediaLightbox
+        isOpen={Boolean(selectedMedia)}
+        onClose={() => setSelectedMedia(null)}
+        mediaItem={selectedMedia}
+      />
+    </>
+  );
+}

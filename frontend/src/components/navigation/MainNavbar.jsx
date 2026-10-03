@@ -214,7 +214,7 @@ export default function MainNavbar({
 
               {/* ── DESKTOP PRIMARY LINKS (Courses FIRST, Role-Aware Career item) ── */}
               <nav
-                className="hidden md:flex items-center gap-1"
+                className="hidden md:flex items-center gap-0.5 lg:gap-1"
                 aria-label="Desktop primary navigation"
               >
                 {primaryLinks.map((item) => {
@@ -226,10 +226,11 @@ export default function MainNavbar({
                       key={item.key}
                       to={item.path}
                       aria-current={active ? "page" : undefined}
-                      className={`relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 select-none group focus-ring ${active
+                      className={`relative flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 select-none group focus-ring ${active
                           ? "text-white font-semibold"
                           : "text-text-secondary hover:text-white hover:bg-white/[0.04]"
                         }`}
+                      title={item.label}
                     >
                       {/* Active Background Pill */}
                       {active && (
@@ -251,7 +252,7 @@ export default function MainNavbar({
                         aria-hidden="true"
                       />
 
-                      <span className="relative z-10 leading-none">{item.label}</span>
+                      <span className="relative z-10 leading-none hidden lg:inline">{item.label}</span>
 
                       {/* Unread message count badge */}
                       {item.badge > 0 && (
@@ -272,21 +273,47 @@ export default function MainNavbar({
                     aria-expanded={isMoreOpen}
                     aria-haspopup="true"
                     aria-label="More platform navigation"
-                    className={`relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 select-none group cursor-pointer focus-ring ${isMoreOpen || isAnyMoreLinkActive
+                    title="More navigation"
+                    className={`relative flex items-center gap-1.5 px-2 lg:px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 select-none group cursor-pointer focus-ring ${
+                      isAnyMoreLinkActive
+                        ? "text-white font-semibold"
+                        : isMoreOpen
                         ? "text-white bg-white/[0.06] border border-white/[0.1]"
                         : "text-text-secondary hover:text-white hover:bg-white/[0.04]"
-                      }`}
+                    }`}
                   >
-                    <span className="leading-none">More</span>
-                    {unreadOpportunitiesCount > 0 && (
-                      <span
-                        className="w-1.5 h-1.5 rounded-full bg-brand-mint shadow-sm"
-                        aria-hidden="true"
+                    {/* Active Background Pill when any More item is active */}
+                    {isAnyMoreLinkActive && (
+                      <motion.div
+                        layoutId={shouldReduceMotion ? undefined : "desktop-navbar-active-pill"}
+                        className="absolute inset-0 rounded-lg bg-brand-mint/15 border border-brand-mint/30 shadow-sm pointer-events-none"
+                        transition={{ type: "spring", stiffness: 450, damping: 32 }}
                       />
                     )}
+
+                    <span className="relative z-10 leading-none hidden lg:inline">More</span>
+
+                    {/* Active Mint Dot or Unread Badge */}
+                    {isAnyMoreLinkActive ? (
+                      <span
+                        className="relative z-10 w-1.5 h-1.5 rounded-full bg-brand-mint shadow-sm"
+                        aria-hidden="true"
+                      />
+                    ) : unreadOpportunitiesCount > 0 ? (
+                      <span
+                        className="relative z-10 w-1.5 h-1.5 rounded-full bg-brand-mint shadow-sm"
+                        aria-hidden="true"
+                      />
+                    ) : null}
+
                     <ChevronDown
-                      className={`w-3 h-3 text-text-faint group-hover:text-white transition-transform duration-200 ${isMoreOpen ? "rotate-180 text-brand-mint" : ""
-                        }`}
+                      className={`w-3 h-3 relative z-10 transition-transform duration-200 ${
+                        isMoreOpen
+                          ? "rotate-180 text-brand-mint"
+                          : isAnyMoreLinkActive
+                          ? "text-brand-mint"
+                          : "text-text-faint group-hover:text-white"
+                      }`}
                       aria-hidden="true"
                     />
                   </button>
@@ -358,13 +385,13 @@ export default function MainNavbar({
                 type="button"
                 onClick={() => setIsSearchOpen(true)}
                 aria-label="Search platform (Cmd+K)"
-                className="flex items-center gap-2 h-8 px-2.5 rounded-lg border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.16] text-text-muted hover:text-white transition-all cursor-pointer focus-ring text-xs"
+                className="flex items-center justify-center gap-2 h-8 w-8 sm:w-auto px-0 sm:px-2.5 rounded-lg border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.16] text-text-muted hover:text-white transition-all cursor-pointer focus-ring text-xs"
               >
-                <Search className="w-3.5 h-3.5 text-brand-mint" aria-hidden="true" />
+                <Search className="w-3.5 h-3.5 text-brand-mint shrink-0" aria-hidden="true" />
                 <span className="hidden xl:inline text-[11px] font-normal text-text-muted">
                   Search...
                 </span>
-                <kbd className="inline-flex items-center px-1.5 py-0.5 text-[9px] font-mono rounded bg-white/[0.06] text-text-faint border border-white/[0.08] leading-none">
+                <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[9px] font-mono rounded bg-white/[0.06] text-text-faint border border-white/[0.08] leading-none">
                   ⌘K
                 </kbd>
               </button>
@@ -376,7 +403,7 @@ export default function MainNavbar({
                   position?.rank ? `Leaderboard rank #${position.rank}` : "Global Leaderboard"
                 }
                 title="View Leaderboard"
-                className={`flex items-center gap-1.5 h-8 px-2.5 rounded-lg border transition-all active:scale-95 touch-manipulation focus-ring select-none text-xs ${isRouteActive("leaderboard")
+                className={`flex items-center justify-center gap-1.5 h-8 w-8 sm:w-auto px-0 sm:px-2.5 rounded-lg border transition-all active:scale-95 touch-manipulation focus-ring select-none text-xs ${isRouteActive("leaderboard")
                     ? "bg-amber-400/[0.12] border-amber-400/35 text-amber-300"
                     : "bg-white/[0.03] border-white/[0.08] hover:border-amber-400/30 text-white/90"
                   }`}
@@ -386,7 +413,7 @@ export default function MainNavbar({
                   aria-hidden="true"
                 />
                 {position?.rank ? (
-                  <span className="text-[11px] font-mono font-bold tabular-nums text-white">
+                  <span className="hidden sm:inline text-[11px] font-mono font-bold tabular-nums text-white">
                     #{position.rank}
                   </span>
                 ) : (

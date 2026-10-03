@@ -19,8 +19,17 @@ export class Post {
   @Prop({ type: String, required: true, index: true })
   authorId: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String, default: '' })
   content: string;
+
+  @Prop({ type: String, default: 'original', index: true })
+  postType: 'original' | 'repost' | 'quote';
+
+  @Prop({ type: String, index: true })
+  originalPostId?: string;
+
+  @Prop({ type: String })
+  quoteText?: string;
 
   @Prop({ type: String, enum: PostType, required: true })
   type: PostType;
@@ -71,6 +80,7 @@ export class Post {
       comments: 0,
       shares: 0,
       views: 0,
+      reposts: 0,
     },
   })
   stats: {
@@ -81,6 +91,7 @@ export class Post {
     comments: number;
     shares: number;
     views: number;
+    reposts: number;
   };
 
   @Prop({ type: Boolean, default: false })
@@ -110,6 +121,16 @@ PostSchema.index({ createdAt: -1 });
 PostSchema.index({ audience: 1, courseId: 1, createdAt: -1 });
 // Highly optimized index for the main feed query
 PostSchema.index({ isDeleted: 1, createdAt: -1, audience: 1 });
+// Reposts & Quote posts queries and idempotency lookup
+PostSchema.index({ originalPostId: 1, authorId: 1, postType: 1, isDeleted: 1 });
+PostSchema.index(
+  { originalPostId: 1, authorId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { postType: 'repost', isDeleted: false },
+  },
+);
+PostSchema.index({ postType: 1, createdAt: -1 });
 
 @Schema({ timestamps: true, collection: 'community_post_media' })
 export class PostMedia {

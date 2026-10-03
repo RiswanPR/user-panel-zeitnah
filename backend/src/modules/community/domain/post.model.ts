@@ -38,6 +38,11 @@ export interface IPost {
   courseId?: string; // If audience is COURSE
   batchId?: string; // If audience is BATCH
 
+  postType?: 'original' | 'repost' | 'quote';
+  originalPostId?: string;
+  quoteText?: string;
+  originalPost?: any;
+
   media?: IPostMedia[];
 
   pollOptions?: IPollOption[];
@@ -54,6 +59,7 @@ export interface IPost {
     comments: number;
     shares: number;
     views: number;
+    reposts: number;
   };
 
   isPinned: boolean;

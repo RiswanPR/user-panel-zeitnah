@@ -34,7 +34,8 @@ export class StoryController {
   @ApiOperation({ summary: 'Upload a new story' })
   async createStory(@Req() req, @Body() data: CreateStoryDto) {
     const userId = this.getUserId(req);
-    return this.storyService.createStory(userId, data);
+    const isAdmin = req.user?.role === 'admin';
+    return this.storyService.createStory(userId, data, isAdmin);
   }
 
   @Get()

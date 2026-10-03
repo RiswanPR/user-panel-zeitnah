@@ -4,12 +4,25 @@ import toast from 'react-hot-toast';
 
 // ── FEED & POSTS ──
 
-export function useCommunityFeed() {
+export function useCommunityFeed({ filter = 'all' } = {}) {
   return useInfiniteQuery({
-    queryKey: ['community', 'feed'],
-    queryFn: ({ pageParam = '' }) => communityApi.getFeed({ cursor: pageParam, limit: 10 }),
+    queryKey: ['community', 'feed', { filter }],
+    queryFn: ({ pageParam = '' }) => communityApi.getFeed({ cursor: pageParam, limit: 10, filter }),
     getNextPageParam: (lastPage) => lastPage?.nextCursor || undefined,
     initialPageParam: '',
+    staleTime: 1000 * 60 * 2, // 2 min cache freshness prevents tab-switch refetches
+    gcTime: 1000 * 60 * 10, // 10 min cache retention
+  });
+}
+
+export function useSavedPosts() {
+  return useInfiniteQuery({
+    queryKey: ['community', 'saved'],
+    queryFn: ({ pageParam = '' }) => communityApi.getSavedPosts({ cursor: pageParam, limit: 10 }),
+    getNextPageParam: (lastPage) => lastPage?.nextCursor || undefined,
+    initialPageParam: '',
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
   });
 }
 
@@ -19,7 +32,8 @@ export function useCreatePost() {
   return useMutation({
     mutationFn: communityApi.createPost,
     onSuccess: (post) => {
-      queryClient.setQueryData(['community', 'feed'], (oldData) => {
+      // Prepend to active feed query
+      queryClient.setQueriesData({ queryKey: ['community', 'feed'] }, (oldData) => {
         if (!oldData || !oldData.pages) return oldData;
         const newPages = [...oldData.pages];
         if (newPages.length > 0) {
@@ -27,13 +41,17 @@ export function useCreatePost() {
             ...newPages[0],
             items: [post, ...newPages[0].items.filter((p) => (p._id || p.id) !== (post._id || post.id))],
           };
+        } else {
+          newPages.push({ items: [post], nextCursor: null });
         }
         return { ...oldData, pages: newPages };
       });
+      queryClient.invalidateQueries({ queryKey: ['community', 'feed'] });
       toast.success('Post published!');
     },
-    onError: () => {
-      toast.error('Failed to create post. Please try again.');
+    onError: (err) => {
+      const msg = err?.response?.data?.message || 'Failed to create post. Please try again.';
+      toast.error(msg);
     },
   });
 }
@@ -44,8 +62,8 @@ export function useDeletePost() {
   return useMutation({
     mutationFn: communityApi.deletePost,
     onSuccess: (_, postId) => {
-      queryClient.setQueryData(['community', 'feed'], (oldData) => {
-        if (!oldData) return oldData;
+      const filterOut = (oldData) => {
+        if (!oldData || !oldData.pages) return oldData;
         return {
           ...oldData,
           pages: oldData.pages.map((page) => ({
@@ -53,7 +71,9 @@ export function useDeletePost() {
             items: page.items.filter((item) => (item._id || item.id) !== postId),
           })),
         };
-      });
+      };
+      queryClient.setQueriesData({ queryKey: ['community', 'feed'] }, filterOut);
+      queryClient.setQueriesData({ queryKey: ['community', 'saved'] }, filterOut);
       toast.success('Post deleted');
     },
     onError: () => {
@@ -68,12 +88,14 @@ export function useReactToPost() {
   return useMutation({
     mutationFn: ({ postId, type }) => communityApi.reactToPost(postId, { type }),
     onMutate: async ({ postId, type }) => {
-      await queryClient.cancelQueries({ queryKey: ['community', 'feed'] });
-      const previousFeed = queryClient.getQueryData(['community', 'feed']);
+      await queryClient.cancelQueries({ queryKey: ['community'] });
 
-      // Optimistically toggle reaction in the feed
-      queryClient.setQueryData(['community', 'feed'], (oldData) => {
-        if (!oldData) return oldData;
+      // Snapshot previous cache for exact rollback
+      const previousFeed = queryClient.getQueriesData({ queryKey: ['community', 'feed'] });
+      const previousSaved = queryClient.getQueriesData({ queryKey: ['community', 'saved'] });
+
+      const toggleLike = (oldData) => {
+        if (!oldData || !oldData.pages) return oldData;
         return {
           ...oldData,
           pages: oldData.pages.map((page) => ({
@@ -100,14 +122,16 @@ export function useReactToPost() {
             }),
           })),
         };
-      });
+      };
 
-      return { previousFeed };
+      queryClient.setQueriesData({ queryKey: ['community', 'feed'] }, toggleLike);
+      queryClient.setQueriesData({ queryKey: ['community', 'saved'] }, toggleLike);
+
+      return { previousFeed, previousSaved };
     },
     onSuccess: (data, { postId }) => {
-      // Reconcile with actual server reaction state
-      queryClient.setQueryData(['community', 'feed'], (oldData) => {
-        if (!oldData) return oldData;
+      const reconcile = (oldData) => {
+        if (!oldData || !oldData.pages) return oldData;
         return {
           ...oldData,
           pages: oldData.pages.map((page) => ({
@@ -129,13 +153,23 @@ export function useReactToPost() {
             }),
           })),
         };
-      });
+      };
+      queryClient.setQueriesData({ queryKey: ['community', 'feed'] }, reconcile);
+      queryClient.setQueriesData({ queryKey: ['community', 'saved'] }, reconcile);
     },
-    onError: (err, variables, context) => {
+    onError: (_, __, context) => {
+      // Rollback to previous queries snapshot
       if (context?.previousFeed) {
-        queryClient.setQueryData(['community', 'feed'], context.previousFeed);
+        context.previousFeed.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
       }
-      toast.error('Failed to update reaction');
+      if (context?.previousSaved) {
+        context.previousSaved.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      toast.error('Unable to update reaction. Please check your connection.');
     },
   });
 }
@@ -147,9 +181,13 @@ export function useSavePost() {
 
   return useMutation({
     mutationFn: (postId) => communityApi.savePost(postId),
-    onSuccess: (_, postId) => {
-      queryClient.setQueryData(['community', 'feed'], (oldData) => {
-        if (!oldData) return oldData;
+    onMutate: async (postId) => {
+      await queryClient.cancelQueries({ queryKey: ['community'] });
+      const previousFeed = queryClient.getQueriesData({ queryKey: ['community', 'feed'] });
+      const previousSaved = queryClient.getQueriesData({ queryKey: ['community', 'saved'] });
+
+      const updateSaved = (oldData) => {
+        if (!oldData || !oldData.pages) return oldData;
         return {
           ...oldData,
           pages: oldData.pages.map((page) => ({
@@ -162,10 +200,28 @@ export function useSavePost() {
             }),
           })),
         };
-      });
+      };
+
+      queryClient.setQueriesData({ queryKey: ['community', 'feed'] }, updateSaved);
+      queryClient.setQueriesData({ queryKey: ['community', 'saved'] }, updateSaved);
+
+      return { previousFeed, previousSaved };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['community', 'saved'] });
       toast.success('Post saved to bookmarks');
     },
-    onError: () => {
+    onError: (_, __, context) => {
+      if (context?.previousFeed) {
+        context.previousFeed.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      if (context?.previousSaved) {
+        context.previousSaved.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
       toast.error('Failed to save post');
     },
   });
@@ -176,9 +232,13 @@ export function useRemoveSavedPost() {
 
   return useMutation({
     mutationFn: (postId) => communityApi.removeSavedPost(postId),
-    onSuccess: (_, postId) => {
-      queryClient.setQueryData(['community', 'feed'], (oldData) => {
-        if (!oldData) return oldData;
+    onMutate: async (postId) => {
+      await queryClient.cancelQueries({ queryKey: ['community'] });
+      const previousFeed = queryClient.getQueriesData({ queryKey: ['community', 'feed'] });
+      const previousSaved = queryClient.getQueriesData({ queryKey: ['community', 'saved'] });
+
+      const updateUnsaved = (oldData) => {
+        if (!oldData || !oldData.pages) return oldData;
         return {
           ...oldData,
           pages: oldData.pages.map((page) => ({
@@ -191,11 +251,246 @@ export function useRemoveSavedPost() {
             }),
           })),
         };
-      });
+      };
+
+      queryClient.setQueriesData({ queryKey: ['community', 'feed'] }, updateUnsaved);
+      queryClient.setQueriesData({ queryKey: ['community', 'saved'] }, updateUnsaved);
+
+      return { previousFeed, previousSaved };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['community', 'saved'] });
       toast.success('Post removed from bookmarks');
     },
-    onError: () => {
+    onError: (_, __, context) => {
+      if (context?.previousFeed) {
+        context.previousFeed.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      if (context?.previousSaved) {
+        context.previousSaved.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
       toast.error('Failed to remove saved post');
+    },
+  });
+}
+
+// ── REPOSTS & QUOTES ──
+
+export function useRepostPost() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (postId) => communityApi.repostPost(postId),
+    onMutate: async (postId) => {
+      await queryClient.cancelQueries({ queryKey: ['community'] });
+      const previousFeed = queryClient.getQueriesData({ queryKey: ['community', 'feed'] });
+      const previousSaved = queryClient.getQueriesData({ queryKey: ['community', 'saved'] });
+
+      const toggleRepost = (oldData) => {
+        if (!oldData || !oldData.pages) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            items: page.items.map((item) => {
+              const id = item._id || item.id;
+              const isTarget = id === postId || item.originalPostId === postId || item.originalPost?._id === postId;
+              if (isTarget) {
+                const wasReposted = !!item.isRepostedByMe;
+                const currentReposts = item.stats?.reposts || 0;
+                return {
+                  ...item,
+                  isRepostedByMe: true,
+                  stats: {
+                    ...item.stats,
+                    reposts: wasReposted ? currentReposts : currentReposts + 1,
+                  },
+                };
+              }
+              return item;
+            }),
+          })),
+        };
+      };
+
+      queryClient.setQueriesData({ queryKey: ['community', 'feed'] }, toggleRepost);
+      queryClient.setQueriesData({ queryKey: ['community', 'saved'] }, toggleRepost);
+
+      return { previousFeed, previousSaved };
+    },
+    onSuccess: (data, postId) => {
+      const reconcile = (oldData) => {
+        if (!oldData || !oldData.pages) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            items: page.items.map((item) => {
+              const id = item._id || item.id;
+              const isTarget = id === postId || item.originalPostId === postId || item.originalPost?._id === postId;
+              if (isTarget) {
+                return {
+                  ...item,
+                  isRepostedByMe: true,
+                  stats: {
+                    ...item.stats,
+                    reposts: data?.repostsCount ?? ((item.stats?.reposts || 0) + 1),
+                  },
+                };
+              }
+              return item;
+            }),
+          })),
+        };
+      };
+      queryClient.setQueriesData({ queryKey: ['community', 'feed'] }, reconcile);
+      queryClient.setQueriesData({ queryKey: ['community', 'saved'] }, reconcile);
+      toast.success('Post reposted to feed');
+    },
+    onError: (err, _, context) => {
+      if (context?.previousFeed) {
+        context.previousFeed.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      if (context?.previousSaved) {
+        context.previousSaved.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      const msg = err?.response?.data?.message || 'Failed to repost. Try again.';
+      toast.error(msg);
+    },
+  });
+}
+
+export function useUnrepostPost() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (postId) => communityApi.unrepostPost(postId),
+    onMutate: async (postId) => {
+      await queryClient.cancelQueries({ queryKey: ['community'] });
+      const previousFeed = queryClient.getQueriesData({ queryKey: ['community', 'feed'] });
+      const previousSaved = queryClient.getQueriesData({ queryKey: ['community', 'saved'] });
+
+      const toggleUnrepost = (oldData) => {
+        if (!oldData || !oldData.pages) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            items: page.items.map((item) => {
+              const id = item._id || item.id;
+              const isTarget = id === postId || item.originalPostId === postId || item.originalPost?._id === postId;
+              if (isTarget) {
+                const currentReposts = item.stats?.reposts || 1;
+                return {
+                  ...item,
+                  isRepostedByMe: false,
+                  stats: {
+                    ...item.stats,
+                    reposts: Math.max(0, currentReposts - 1),
+                  },
+                };
+              }
+              return item;
+            }),
+          })),
+        };
+      };
+
+      queryClient.setQueriesData({ queryKey: ['community', 'feed'] }, toggleUnrepost);
+      queryClient.setQueriesData({ queryKey: ['community', 'saved'] }, toggleUnrepost);
+
+      return { previousFeed, previousSaved };
+    },
+    onSuccess: (data, postId) => {
+      const reconcile = (oldData) => {
+        if (!oldData || !oldData.pages) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            items: page.items.map((item) => {
+              const id = item._id || item.id;
+              const isTarget = id === postId || item.originalPostId === postId || item.originalPost?._id === postId;
+              if (isTarget) {
+                return {
+                  ...item,
+                  isRepostedByMe: false,
+                  stats: {
+                    ...item.stats,
+                    reposts: data?.repostsCount ?? Math.max(0, (item.stats?.reposts || 1) - 1),
+                  },
+                };
+              }
+              return item;
+            }),
+          })),
+        };
+      };
+      queryClient.setQueriesData({ queryKey: ['community', 'feed'] }, reconcile);
+      queryClient.setQueriesData({ queryKey: ['community', 'saved'] }, reconcile);
+      toast.success('Repost removed');
+    },
+    onError: (err, _, context) => {
+      if (context?.previousFeed) {
+        context.previousFeed.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      if (context?.previousSaved) {
+        context.previousSaved.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      const msg = err?.response?.data?.message || 'Failed to remove repost';
+      toast.error(msg);
+    },
+  });
+}
+
+export function useQuotePost() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ postId, content, audience, courseId }) =>
+      communityApi.quotePost(postId, { content, audience, courseId }),
+    onSuccess: (newPost, { postId }) => {
+      queryClient.setQueriesData({ queryKey: ['community', 'feed'] }, (oldData) => {
+        if (!oldData || !oldData.pages) return oldData;
+        const newPages = [...oldData.pages];
+        if (newPages.length > 0) {
+          const updatedItems = newPages[0].items.map((item) => {
+            const id = item._id || item.id;
+            if (id === postId || item.originalPostId === postId || item.originalPost?._id === postId) {
+              return {
+                ...item,
+                stats: {
+                  ...item.stats,
+                  reposts: (item.stats?.reposts || 0) + 1,
+                },
+              };
+            }
+            return item;
+          });
+          newPages[0] = {
+            ...newPages[0],
+            items: [newPost, ...updatedItems.filter((p) => (p._id || p.id) !== (newPost._id || newPost.id))],
+          };
+        }
+        return { ...oldData, pages: newPages };
+      });
+      toast.success('Quote post published!');
+    },
+    onError: (err) => {
+      const msg = err?.response?.data?.message || 'Failed to publish quote post';
+      toast.error(msg);
     },
   });
 }
@@ -207,6 +502,9 @@ export function useComments(postId, enabled = true) {
     queryKey: ['community', 'comments', postId],
     queryFn: () => communityApi.getComments(postId, { limit: 50 }),
     enabled: Boolean(postId && enabled),
+    staleTime: 1000 * 30, // 30s cache
+    gcTime: 1000 * 60 * 5, // 5 min
+    retry: 1,
   });
 }
 
@@ -294,6 +592,9 @@ export function useActiveStories() {
   return useQuery({
     queryKey: ['community', 'stories'],
     queryFn: communityApi.getActiveStories,
+    staleTime: 1000 * 60 * 3, // 3 min cache freshness
+    gcTime: 1000 * 60 * 10,
+    retry: 1,
   });
 }
 

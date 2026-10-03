@@ -175,3 +175,43 @@ export class ReactionDto {
   @IsNotEmpty()
   type: string; // like, love, celebrate, insightful
 }
+
+export class QuotePostDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(5000)
+  @Transform(({ value }) =>
+    typeof value === 'string'
+      ? sanitizeHtml(value, {
+          allowedTags: [
+            'b',
+            'i',
+            'em',
+            'strong',
+            'a',
+            'p',
+            'br',
+            'ul',
+            'ol',
+            'li',
+            'h1',
+            'h2',
+            'h3',
+          ],
+          allowedAttributes: { a: ['href', 'target', 'rel'] },
+        })
+      : value,
+  )
+  content: string;
+
+  @ApiPropertyOptional({ enum: PostAudience })
+  @IsEnum(PostAudience)
+  @IsOptional()
+  audience?: PostAudience;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  courseId?: string;
+}

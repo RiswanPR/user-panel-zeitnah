@@ -17,7 +17,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { PostService } from '../services/post.service';
-import { CreatePostDto, UpdatePostDto, ReactionDto } from '../dto/post.dto';
+import { CreatePostDto, UpdatePostDto, ReactionDto, QuotePostDto } from '../dto/post.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { CommunityOwnershipGuard } from '../guards/community-ownership.guard';
 
@@ -36,21 +36,44 @@ export class PostController {
   @ApiOperation({ summary: 'Create a new post' })
   async createPost(@Req() req, @Body() data: CreatePostDto) {
     const userId = this.getUserId(req);
-    return this.postService.createPost(userId, data);
+    const isAdmin = req.user?.role === 'admin';
+    return this.postService.createPost(userId, data, isAdmin);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get community feed' })
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'cursor', required: false })
+  @ApiQuery({ name: 'filter', required: false })
   async getFeed(
+    @Req() req,
+    @Query('limit') limit: number,
+    @Query('cursor') cursor: string,
+    @Query('filter') filter: string,
+  ) {
+    const userId = this.getUserId(req);
+    const courseIds = (req.user?.enrolledCourses || []).map((c: any) => c.courseId || c._id || c);
+    return this.postService.getFeed(
+      userId,
+      courseIds,
+      limit ? Number(limit) : 10,
+      cursor,
+      filter,
+    );
+  }
+
+  @Get('saved')
+  @ApiOperation({ summary: 'Get saved posts for current user' })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'cursor', required: false })
+  async getSavedPosts(
     @Req() req,
     @Query('limit') limit: number,
     @Query('cursor') cursor: string,
   ) {
     const userId = this.getUserId(req);
-    const courseIds = [];
-    return this.postService.getFeed(
+    const courseIds = (req.user?.enrolledCourses || []).map((c: any) => c.courseId || c._id || c);
+    return this.postService.getSavedPosts(
       userId,
       courseIds,
       limit ? Number(limit) : 10,
@@ -133,5 +156,34 @@ export class PostController {
     const userId = this.getUserId(req);
     const result = await this.postService.removeSavedPost(id, userId);
     return { success: true, ...result, message: 'Post removed from saved' };
+  }
+
+  @Post(':id/repost')
+  @ApiOperation({ summary: 'Repost a community post' })
+  async repostPost(@Req() req, @Param('id') id: string) {
+    const userId = this.getUserId(req);
+    const courseIds = (req.user?.enrolledCourses || []).map((c: any) => c.courseId || c._id || c);
+    const role = req.user?.role || 'student';
+    return this.postService.repostPost(id, userId, courseIds, role);
+  }
+
+  @Delete(':id/repost')
+  @ApiOperation({ summary: 'Remove a repost' })
+  async unrepostPost(@Req() req, @Param('id') id: string) {
+    const userId = this.getUserId(req);
+    return this.postService.unrepostPost(id, userId);
+  }
+
+  @Post(':id/quote')
+  @ApiOperation({ summary: 'Quote a community post' })
+  async quotePost(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() data: QuotePostDto,
+  ) {
+    const userId = this.getUserId(req);
+    const courseIds = (req.user?.enrolledCourses || []).map((c: any) => c.courseId || c._id || c);
+    const role = req.user?.role || 'student';
+    return this.postService.quotePost(id, userId, data, courseIds, role);
   }
 }

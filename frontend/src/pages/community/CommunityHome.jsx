@@ -1,28 +1,88 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useContext, useMemo } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import FeedFilterTabs from '../../components/community/feed/FeedFilterTabs';
 import Composer from '../../components/community/Composer';
 import PostCard from '../../components/community/PostCard';
-import StoryViewer from '../../components/community/StoryViewer';
-import CreateStoryModal from '../../components/community/CreateStoryModal';
+import StoryViewer from '../../components/community/stories/StoryViewer';
+import StoryRail from '../../components/community/stories/StoryRail';
+import CreateStoryModal from '../../components/community/stories/CreateStoryModal';
+import CommentDrawer from '../../components/community/comments/CommentDrawer';
+import CommunityHeader from '../../components/community/header/CommunityHeader';
+import CreateActionModal from '../../components/community/composer/CreateActionModal';
+import CreatePostModal from '../../components/community/composer/CreatePostModal';
+import DiscoverySidebar from '../../components/community/discovery/DiscoverySidebar';
+import MobileDiscoveryDrawer from '../../components/community/discovery/MobileDiscoveryDrawer';
+import EmptyState from '../../components/ui/EmptyState';
+import { SkeletonCard } from '../../components/ui/Skeleton';
 import { useCommunityFeed, useActiveStories } from '../../hooks/useCommunity';
 import { useIntersectionObserver } from '../../hooks/useIntersectionObserver';
-import { Sparkles, MessageSquare, Plus } from 'lucide-react';
+import { AuthContext } from '../../context/AuthContext';
+import {
+  normalizeFeedFilter,
+  extractTrendingTopics,
+  sanitizeTag,
+} from '../../utils/communityFormatters';
+import { Sparkles, Users, GraduationCap, Globe, AlertCircle } from 'lucide-react';
 
+/**
+ * CommunityHome — Phase 2D Discovery & Feed Intelligence UX
+ *
+ * Features:
+ * - URL-driven feed filter state (/community?feed=all|following|cohort)
+ * - Isolated TanStack Query cache per filter
+ * - Dedicated empty states per filter (All, Following, Cohort)
+ * - Deterministic trending topics extracted from real posts without fake metrics
+ * - Desktop Discovery sidebar (>=1280px) and Mobile Discovery Drawer (<1280px)
+ * - Seamless integration with platform QuickSearch (⌘K)
+ * - Preserved single CommentDrawer & StoryRail orchestration
+ */
 export default function CommunityHome() {
+  const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // ── URL Feed Filter State ──
+  const activeFilter = normalizeFeedFilter(searchParams.get('feed'));
+
+  const handleFilterChange = useCallback(
+    (filterId) => {
+      const nextParams = new URLSearchParams(searchParams);
+      if (filterId === 'all') {
+        nextParams.delete('feed');
+      } else {
+        nextParams.set('feed', filterId);
+      }
+      setSearchParams(nextParams, { replace: false });
+    },
+    [searchParams, setSearchParams]
+  );
+
+  // ── Modals & Overlays State ──
   const [activeStoryIndex, setActiveStoryIndex] = useState(null);
   const [isCreateStoryModalOpen, setIsCreateStoryModalOpen] = useState(false);
+  const [isCreateActionOpen, setIsCreateActionOpen] = useState(false);
+  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
+  const [isMobileDiscoveryOpen, setIsMobileDiscoveryOpen] = useState(false);
+  const [activeCommentPost, setActiveCommentPost] = useState(null);
+  const [activeTopic, setActiveTopic] = useState(null);
+
+  const currentUserId = user?._id || user?.id || user?.userId;
+  const hasCohort = Boolean(user?.enrolledCourses && user.enrolledCourses.length > 0);
 
   // ── Fetch Stories ──
   const { data: storiesData, isLoading: storiesLoading } = useActiveStories();
   const stories = storiesData || [];
 
-  // ── Fetch Feed ──
+  // ── Fetch Feed per Filter ──
   const {
     data: feedData,
     isLoading: feedLoading,
+    isError: feedError,
+    refetch: refetchFeed,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useCommunityFeed();
+  } = useCommunityFeed({ filter: activeFilter });
 
   // Infinite Scroll Trigger
   const { targetRef } = useIntersectionObserver({
@@ -34,10 +94,45 @@ export default function CommunityHome() {
     }, [hasNextPage, isFetchingNextPage, fetchNextPage]),
   });
 
-  const posts = feedData?.pages?.flatMap((page) => page.items) || [];
+  const rawPosts = useMemo(() => {
+    return feedData?.pages?.flatMap((page) => page.items) || [];
+  }, [feedData]);
+
+  // Real Trending Topics extracted from active posts
+  const trendingTopics = useMemo(() => {
+    return extractTrendingTopics(rawPosts);
+  }, [rawPosts]);
+
+  // Filter posts by active topic if selected
+  const displayedPosts = useMemo(() => {
+    if (!activeTopic) return rawPosts;
+    const cleanActive = sanitizeTag(activeTopic);
+    return rawPosts.filter((post) => {
+      if (!post) return false;
+      const tags = (post.tags || []).map(sanitizeTag);
+      const hashtags = (post.hashtags || []).map(sanitizeTag);
+      const contentMatches = (post.content || '').toLowerCase().includes(`#${cleanActive}`);
+      return tags.includes(cleanActive) || hashtags.includes(cleanActive) || contentMatches;
+    });
+  }, [rawPosts, activeTopic]);
+
+  const handleEmptyStateAction = useCallback(() => {
+    const composer = document.getElementById('composer-textarea');
+    if (composer) {
+      composer.focus();
+      composer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, []);
+
+  const handleOpenSearch = useCallback(() => {
+    window.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true })
+    );
+  }, []);
 
   return (
-    <div className="max-w-2xl mx-auto px-3.5 sm:px-6 py-5 sm:py-8 space-y-6">
+    <div className="w-full">
+      {/* ── Story Modal & Viewer Overlays ── */}
       {activeStoryIndex !== null && stories.length > 0 && (
         <StoryViewer
           stories={stories}
@@ -51,132 +146,186 @@ export default function CommunityHome() {
         onClose={() => setIsCreateStoryModalOpen(false)}
       />
 
-      {/* ── Stories Strip ── */}
-      <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 scrollbar-none px-1">
-        {/* Create Story Button */}
-        <div
-          onClick={() => setIsCreateStoryModalOpen(true)}
-          className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group"
-          role="button"
-          tabIndex={0}
-          aria-label="Create a new story"
-        >
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-dashed border-white/[0.18] flex items-center justify-center bg-white/[0.02] group-hover:border-brand-mint/60 group-hover:bg-brand-mint/5 transition-all">
-            <Plus className="w-5 h-5 text-text-muted group-hover:text-brand-mint transition-colors" />
-          </div>
-          <span className="text-[11px] font-medium text-text-muted group-hover:text-white transition-colors">
-            Add Story
-          </span>
-        </div>
+      {/* ── Instagram-Style Quick Create Chooser ── */}
+      <CreateActionModal
+        isOpen={isCreateActionOpen}
+        onClose={() => setIsCreateActionOpen(false)}
+        onSelectPost={() => setIsCreatePostOpen(true)}
+        onSelectStory={() => setIsCreateStoryModalOpen(true)}
+      />
 
-        {/* Stories List */}
-        {storiesLoading ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex flex-col items-center gap-1.5 shrink-0 animate-pulse">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/[0.04] border border-white/[0.06]" />
-              <div className="w-10 h-2 bg-white/[0.04] rounded-full" />
-            </div>
-          ))
-        ) : (
-          stories.map((story, idx) => {
-            const authorName =
-              story.author?.name || story.author?.displayName || 'Member';
-            const avatarUrl = story.author?.avatar;
-            const initials = authorName.slice(0, 2).toUpperCase();
+      {/* ── Multi-Step Post Publishing Flow ── */}
+      <CreatePostModal
+        isOpen={isCreatePostOpen}
+        onClose={() => setIsCreatePostOpen(false)}
+      />
 
-            return (
-              <div
-                key={story._id || story.id || idx}
-                onClick={() => setActiveStoryIndex(idx)}
-                className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group"
-                role="button"
-                tabIndex={0}
-                aria-label={`View story by ${authorName}`}
-              >
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full p-[2px] bg-gradient-to-tr from-brand-mint via-brand-yellow to-brand-mint/40 group-hover:scale-105 transition-transform">
-                  <div className="w-full h-full rounded-full bg-[#0E1726] border-2 border-[#070B14] overflow-hidden flex items-center justify-center">
-                    {avatarUrl ? (
-                      <img
-                        src={avatarUrl}
-                        alt={authorName}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <span className="text-[11px] font-bold text-brand-mint">
-                        {initials}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <span className="text-[11px] font-medium text-text-muted group-hover:text-white transition-colors truncate max-w-[64px]">
-                  {authorName.split(' ')[0]}
-                </span>
-              </div>
-            );
-          })
-        )}
+      {/* ── Centralized Comment Drawer (Desktop Right Drawer / Mobile Bottom Sheet) ── */}
+      <CommentDrawer
+        isOpen={Boolean(activeCommentPost)}
+        post={activeCommentPost}
+        onClose={() => setActiveCommentPost(null)}
+      />
+
+      {/* ── Mobile Discovery Drawer ── */}
+      <MobileDiscoveryDrawer
+        isOpen={isMobileDiscoveryOpen}
+        onClose={() => setIsMobileDiscoveryOpen(false)}
+        topics={trendingTopics}
+        activeTopic={activeTopic}
+        onSelectTopic={setActiveTopic}
+        onOpenSearch={handleOpenSearch}
+      />
+
+      {/* ── Editorial Page Header with Create, Search & Saved Actions ── */}
+      <CommunityHeader
+        onOpenCreate={() => setIsCreateActionOpen(true)}
+        onOpenSearch={handleOpenSearch}
+        onOpenMobileDiscovery={() => setIsMobileDiscoveryOpen(true)}
+      />
+
+      {/* ── Stories Strip (Spanning full width) ── */}
+      <div className="mb-6">
+        <StoryRail
+          stories={stories}
+          isLoading={storiesLoading}
+          onAddStory={() => setIsCreateStoryModalOpen(true)}
+          onSelectStory={setActiveStoryIndex}
+          currentUserId={currentUserId}
+        />
       </div>
 
-      {/* ── Post Composer ── */}
-      <Composer />
+      {/* ── Responsive Layout Grid (Main Feed + Desktop Discovery Sidebar) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_340px] gap-8 items-start">
+        {/* ── PRIMARY COLUMN (Feed Filters, Composer, Filtered Feed) ── */}
+        <div className="space-y-6 min-w-0" id={`feed-panel-${activeFilter}`}>
+          {/* ── Feed Filter Tabs ── */}
+          <FeedFilterTabs
+            activeFilter={activeFilter}
+            onChangeFilter={handleFilterChange}
+            hasCohort={hasCohort}
+          />
 
-      {/* ── Feed ── */}
-      <div className="space-y-4">
-        {feedLoading ? (
-          // Skeleton loading
-          Array.from({ length: 3 }).map((_, i) => (
-            <div
-              key={i}
-              className="bg-[#0B111E]/80 border border-white/[0.06] rounded-2xl p-5 space-y-4 animate-pulse"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/[0.06]" />
-                <div className="space-y-2 flex-1">
-                  <div className="w-28 h-3.5 bg-white/[0.06] rounded-full" />
-                  <div className="w-20 h-2.5 bg-white/[0.04] rounded-full" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="w-full h-3 bg-white/[0.04] rounded-full" />
-                <div className="w-3/4 h-3 bg-white/[0.04] rounded-full" />
-              </div>
+          {/* Active Topic Banner if filtering by topic */}
+          {activeTopic && (
+            <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-brand-mint/10 border border-brand-mint/25 text-xs text-white">
+              <span className="flex items-center gap-1.5 font-medium">
+                Filtering by topic: <strong className="text-brand-mint">#{activeTopic}</strong>
+              </span>
+              <button
+                type="button"
+                onClick={() => setActiveTopic(null)}
+                className="text-text-muted hover:text-white underline cursor-pointer"
+              >
+                Show all
+              </button>
             </div>
-          ))
-        ) : (
-          <>
-            {posts.map((post) => (
-              <PostCard key={post._id || post.id} post={post} />
-            ))}
+          )}
 
-            {/* Infinite Scroll Trigger */}
-            {hasNextPage && (
-              <div ref={targetRef} className="py-8 flex justify-center">
-                <div className="w-6 h-6 border-2 border-brand-mint/30 border-t-brand-mint rounded-full animate-spin" />
-              </div>
-            )}
+          {/* ── Post Composer ── */}
+          <Composer onOpenModal={() => setIsCreatePostOpen(true)} />
 
-            {!hasNextPage && posts.length > 0 && (
-              <div className="text-center py-8">
-                <p className="text-xs text-text-faint">
-                  You're all caught up with the community feed.
-                </p>
-              </div>
-            )}
+          {/* ── Feed Section ── */}
+          <div className="space-y-4">
+            {feedLoading ? (
+              // Design-system Shimmer Skeletons
+              Array.from({ length: 3 }).map((_, i) => (
+                <SkeletonCard key={i} className="bg-[#0B111E]/80 border-white/[0.08]" />
+              ))
+            ) : feedError ? (
+              <EmptyState
+                icon={AlertCircle}
+                title="We couldn't load the community."
+                description="We encountered an issue retrieving the community feed. Please check your network connection and try again."
+                action={() => refetchFeed()}
+                actionLabel="Try again"
+              />
+            ) : (
+              <>
+                {displayedPosts.map((post) => {
+                  const postId = post._id || post.id;
+                  const isCurrentActivePost = Boolean(
+                    activeCommentPost &&
+                    (activeCommentPost._id || activeCommentPost.id) === postId
+                  );
 
-            {!feedLoading && posts.length === 0 && (
-              <div className="bg-[#0B111E]/80 border border-white/[0.08] rounded-2xl p-10 sm:p-14 text-center space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-brand-mint/10 border border-brand-mint/20 flex items-center justify-center mx-auto text-brand-mint">
-                  <Sparkles className="w-6 h-6" />
-                </div>
-                <h3 className="text-base sm:text-lg font-bold text-white">No posts yet</h3>
-                <p className="text-xs sm:text-sm text-text-muted max-w-sm mx-auto">
-                  Be the first to share an insight, engineering discussion, or project update with the Zeitnah community!
-                </p>
-              </div>
+                  return (
+                    <PostCard
+                      key={postId}
+                      post={post}
+                      onOpenComments={setActiveCommentPost}
+                      isActiveCommentPost={isCurrentActivePost}
+                    />
+                  );
+                })}
+
+                {/* Infinite Scroll Trigger */}
+                {hasNextPage && (
+                  <div ref={targetRef} className="py-8 flex justify-center">
+                    <div className="w-6 h-6 border-2 border-brand-mint/30 border-t-brand-mint rounded-full animate-spin" />
+                  </div>
+                )}
+
+                {!hasNextPage && displayedPosts.length > 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-xs text-text-faint">
+                      You're all caught up with the {activeFilter === 'all' ? 'community' : activeFilter} feed.
+                    </p>
+                  </div>
+                )}
+
+                {/* Intentional Empty States per Filter */}
+                {!feedLoading && displayedPosts.length === 0 && (
+                  <>
+                    {activeFilter === 'following' ? (
+                      <EmptyState
+                        icon={Users}
+                        title="Your following feed is quiet"
+                        description="Follow engineers, peers, and mentors across the network to personalize what you see in this feed."
+                        action={() => navigate('/network')}
+                        actionLabel="Discover People"
+                      />
+                    ) : activeFilter === 'cohort' ? (
+                      <EmptyState
+                        icon={GraduationCap}
+                        title="Your cohort hasn't posted yet"
+                        description="Start the conversation with your enrolled course batch, faculty, and academic peers."
+                        action={handleEmptyStateAction}
+                        actionLabel="Create a Post"
+                      />
+                    ) : activeTopic ? (
+                      <EmptyState
+                        icon={Sparkles}
+                        title={`No posts found for #${activeTopic}`}
+                        description="Be the first to publish a post tagged with this discipline or project topic."
+                        action={() => setActiveTopic(null)}
+                        actionLabel="View all posts"
+                      />
+                    ) : (
+                      <EmptyState
+                        icon={Globe}
+                        title="The community is getting started"
+                        description="Be one of the first people to share an engineering insight, project update, or technical question with the global Zeitnah network."
+                        action={handleEmptyStateAction}
+                        actionLabel="Create a Post"
+                      />
+                    )}
+                  </>
+                )}
+              </>
             )}
-          </>
-        )}
+          </div>
+        </div>
+
+        {/* ── SECONDARY COLUMN (Desktop Discovery Sidebar >=1024px) ── */}
+        <div className="hidden lg:block">
+          <DiscoverySidebar
+            topics={trendingTopics}
+            activeTopic={activeTopic}
+            onSelectTopic={setActiveTopic}
+            onOpenSearch={handleOpenSearch}
+          />
+        </div>
       </div>
     </div>
   );

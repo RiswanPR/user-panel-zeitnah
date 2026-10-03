@@ -1,5 +1,8 @@
 const apiBaseUrl =
-  (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE_URL) || "https://zeitnahacademy.com/api";
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE_URL) ||
+  (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? "http://localhost:3000/api"
+    : "https://zeitnahacademy.com/api");
 
 const uploadBaseUrl = apiBaseUrl.replace(/\/api\/?$/, "");
 const bunnyLibraryId = (typeof import.meta !== "undefined" && import.meta.env?.VITE_BUNNY_LIBRARY_ID)?.trim();

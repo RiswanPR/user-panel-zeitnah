@@ -2,58 +2,146 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
   Logger,
+  Optional,
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { StoryRepository } from '../repositories/mongo-story.repository';
 import { CreateStoryDto } from '../dto/story.dto';
 import { CommunityGateway } from '../gateways/community.gateway';
+import { SignedUrlService } from '../../../common/aws/signed-url.service';
+import { CommunityS3Service } from './community-s3.service';
 
 @Injectable()
 export class StoryService {
   private readonly logger = new Logger(StoryService.name);
+  private readonly inFlightStoryRequests = new Map<string, Promise<any>>();
 
   constructor(
     private readonly storyRepository: StoryRepository,
     private readonly communityGateway: CommunityGateway,
+    @Optional() private readonly signedUrlService?: SignedUrlService,
+    @Optional() private readonly communityS3Service?: CommunityS3Service,
   ) {}
 
-  async createStory(userId: string, data: CreateStoryDto): Promise<any> {
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24); // 24 hours from now
+  private async resolveStoryMedia(story: any): Promise<void> {
+    if (!this.signedUrlService || !story) return;
+    const media = story.media || story.mediaUrl;
+    if (story.media?.url && (story.media.url.includes('.amazonaws.com') || !story.media.url.startsWith('http'))) {
+      try {
+        const cleanUrl = story.media.url.split('?')[0];
+        const signed = await this.signedUrlService.generateSignedImageUrl(cleanUrl, 86400 * 7);
+        if (signed) story.media.url = signed;
+      } catch {}
+    }
+  }
 
-    const createdStory = await this.storyRepository.create({
-      authorId: userId,
-      type: data.type,
-      text: data.text,
-      backgroundColor: data.backgroundColor,
-      link: data.link,
-      courseTag: data.courseTag,
-      expiresAt,
-    });
+  async createStory(userId: string, data: CreateStoryDto, isAdmin: boolean = false): Promise<any> {
+    const fingerprint = `${userId}:${data.text || ''}:${data.mediaUrl || ''}`;
+    if (this.inFlightStoryRequests.has(fingerprint)) {
+      return await this.inFlightStoryRequests.get(fingerprint);
+    }
 
-    if (data.mediaUrl) {
-      await this.storyRepository.createMedia({
-        storyId: createdStory._id,
-        url: data.mediaUrl,
-        type: data.mediaType || 'image',
-        duration: data.mediaDuration,
+    const execution = async () => {
+      let cleanMediaUrl: string | undefined = undefined;
+
+      if (data.mediaUrl) {
+        const rawUrl = data.mediaUrl.trim();
+        if (!rawUrl) {
+          throw new BadRequestException('Story media URL cannot be empty');
+        }
+
+        // Authoritative Media Ownership & Path Traversal Check (Sections 5, 6, 14)
+        if (this.communityS3Service) {
+          this.communityS3Service.validateMediaOwnership(rawUrl, userId, isAdmin);
+        } else {
+          let decoded = rawUrl;
+          try {
+            let prev = '';
+            while (decoded !== prev) {
+              prev = decoded;
+              decoded = decodeURIComponent(decoded);
+            }
+          } catch {
+            throw new BadRequestException('Malformed media URL encoding');
+          }
+          if (decoded.includes('..') || decoded.includes('\\')) {
+            throw new ForbiddenException('Invalid file key: path traversal detected');
+          }
+          if (decoded.includes('community/uploads/')) {
+            const expected = `community/uploads/${userId}/`;
+            if (!isAdmin && !decoded.includes(expected)) {
+              throw new ForbiddenException('You cannot use media belonging to another user');
+            }
+          }
+        }
+
+        cleanMediaUrl = rawUrl.split('?')[0];
+      }
+
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24); // 24 hours from now
+
+      const createdStory = await this.storyRepository.create({
+        authorId: userId,
+        type: data.type,
+        text: data.text,
+        backgroundColor: data.backgroundColor,
+        link: data.link,
+        courseTag: data.courseTag,
+        expiresAt,
       });
+
+      if (cleanMediaUrl) {
+        await this.storyRepository.createMedia({
+          storyId: createdStory._id,
+          url: cleanMediaUrl,
+          type: data.mediaType || 'image',
+          duration: data.mediaDuration,
+        });
+      }
+
+      const populatedStory = await this.storyRepository.findByIdPopulated(
+        createdStory._id,
+      );
+
+      if (populatedStory) {
+        this.communityGateway.emitStoryCreated(populatedStory);
+      }
+
+      const result = populatedStory || createdStory;
+      if (result) {
+        await this.resolveStoryMedia(result);
+      }
+
+      return result;
+    };
+
+    const promise = execution();
+    this.inFlightStoryRequests.set(fingerprint, promise);
+    try {
+      return await promise;
+    } finally {
+      const timer = setTimeout(() => {
+        this.inFlightStoryRequests.delete(fingerprint);
+      }, 2000);
+      timer.unref?.();
     }
-
-    const populatedStory = await this.storyRepository.findByIdPopulated(
-      createdStory._id,
-    );
-
-    if (populatedStory) {
-      this.communityGateway.emitStoryCreated(populatedStory);
-    }
-
-    return populatedStory || createdStory;
   }
 
   async getActiveFeed(): Promise<any[]> {
-    return this.storyRepository.getActiveStories();
+    const stories = await this.storyRepository.getActiveStories();
+    if (this.signedUrlService && Array.isArray(stories)) {
+      for (const group of stories) {
+        if (Array.isArray(group?.stories)) {
+          for (const s of group.stories) {
+            await this.resolveStoryMedia(s);
+          }
+        }
+      }
+    }
+    return stories;
   }
 
   async trackView(storyId: string, userId: string): Promise<void> {
@@ -61,7 +149,11 @@ export class StoryService {
   }
 
   async getStoryById(id: string): Promise<any> {
-    return this.storyRepository.findByIdPopulated(id);
+    const story = await this.storyRepository.findByIdPopulated(id);
+    if (story) {
+      await this.resolveStoryMedia(story);
+    }
+    return story;
   }
 
   async deleteStory(

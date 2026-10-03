@@ -68,6 +68,14 @@ export default function MainLayout({ children }) {
     return false;
   };
 
+  const isMoreRouteActive =
+    location.pathname.startsWith("/community") ||
+    location.pathname.startsWith("/leaderboard") ||
+    location.pathname.startsWith("/career-intelligence") ||
+    location.pathname.startsWith("/profile/portfolio") ||
+    location.pathname.startsWith("/profile/verification") ||
+    location.pathname.startsWith("/admin/businesses");
+
   // Authoritative mobile active conversation check: suppress bottom nav inside active chat
   const isMessagesActiveConversation =
     location.pathname.startsWith("/messages") &&
@@ -229,16 +237,32 @@ export default function MainLayout({ children }) {
                 aria-haspopup="dialog"
                 aria-label="More navigation options"
                 className={`relative flex flex-col items-center justify-center py-1 px-3 min-h-[46px] min-w-[54px] rounded-xl transition-all focus-ring touch-manipulation cursor-pointer ${
-                  isMobileMoreOpen ? "text-brand-mint" : "text-text-muted"
+                  isMobileMoreOpen || isMoreRouteActive ? "text-brand-mint font-semibold" : "text-text-muted"
                 }`}
               >
+                {(isMobileMoreOpen || isMoreRouteActive) && (
+                  <motion.div
+                    layoutId={shouldReduceMotion ? undefined : "mobile-nav-active"}
+                    className="absolute inset-0 rounded-xl bg-brand-mint/12 border border-brand-mint/25"
+                    transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                  />
+                )}
                 <div className="relative z-10">
-                  <MoreHorizontal className="w-5 h-5" aria-hidden="true" />
+                  <MoreHorizontal
+                    className={`w-5 h-5 transition-colors ${
+                      isMobileMoreOpen || isMoreRouteActive ? "text-brand-mint" : "text-text-muted"
+                    }`}
+                    aria-hidden="true"
+                  />
                   {(unreadOpportunitiesCount > 0 || unreadNotifCount > 0) && (
                     <span className="absolute -top-1 -right-1.5 w-2 h-2 rounded-full bg-brand-mint shadow-sm" />
                   )}
                 </div>
-                <span className="text-[10px] mt-0.5 relative z-10 font-semibold tracking-tight text-text-faint">
+                <span
+                  className={`text-[10px] mt-0.5 relative z-10 font-semibold tracking-tight ${
+                    isMobileMoreOpen || isMoreRouteActive ? "text-brand-mint" : "text-text-faint"
+                  }`}
+                >
                   More
                 </span>
               </button>
