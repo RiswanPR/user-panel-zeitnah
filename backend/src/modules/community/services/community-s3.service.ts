@@ -13,10 +13,10 @@ import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 
-const execPromise = promisify(exec);
+const execFilePromise = promisify(execFile);
 
 @Injectable()
 export class CommunityS3Service {
@@ -146,33 +146,67 @@ export class CommunityS3Service {
     }
 
     try {
-      // 1. Try ffprobe container format duration
+      // 1. Try ffprobe container format duration using safe argument array & timeout
       try {
-        const { stdout } = await execPromise(
-          `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${targetPath}"`,
+        const { stdout } = await execFilePromise(
+          'ffprobe',
+          [
+            '-v',
+            'error',
+            '-show_entries',
+            'format=duration',
+            '-of',
+            'default=noprint_wrappers=1:nokey=1',
+            targetPath,
+          ],
+          { timeout: 20000, maxBuffer: 10 * 1024 * 1024 },
         );
         const dur = parseFloat(stdout.trim());
         if (!isNaN(dur) && dur > 0) {
           return dur;
         }
-      } catch (ffprobeErr) {
-        // Fallback to stream duration or ffmpeg inspection below
+      } catch (ffprobeErr: any) {
+        this.logger.debug?.(
+          `ffprobe format duration check skipped/failed: ${ffprobeErr.message}`,
+        );
       }
 
-      // 2. Try ffprobe video stream duration
+      // 2. Try ffprobe video stream duration using safe argument array & timeout
       try {
-        const { stdout } = await execPromise(
-          `ffprobe -v error -select_streams v:0 -show_entries stream=duration -of default=noprint_wrappers=1:nokey=1 "${targetPath}"`,
+        const { stdout } = await execFilePromise(
+          'ffprobe',
+          [
+            '-v',
+            'error',
+            '-select_streams',
+            'v:0',
+            '-show_entries',
+            'stream=duration',
+            '-of',
+            'default=noprint_wrappers=1:nokey=1',
+            targetPath,
+          ],
+          { timeout: 20000, maxBuffer: 10 * 1024 * 1024 },
         );
         const dur = parseFloat(stdout.trim());
         if (!isNaN(dur) && dur > 0) {
           return dur;
         }
-      } catch {}
+      } catch (streamErr: any) {
+        this.logger.debug?.(
+          `ffprobe stream duration check skipped/failed: ${streamErr.message}`,
+        );
+      }
 
-      // 3. Fallback to ffmpeg output parsing
+      // 3. Fallback to ffmpeg stderr inspection using safe argument array & timeout
       try {
-        const { stderr } = await execPromise(`ffmpeg -i "${targetPath}" 2>&1 || true`);
+        const result = await execFilePromise(
+          'ffmpeg',
+          ['-i', targetPath],
+          { timeout: 20000, maxBuffer: 10 * 1024 * 1024 },
+        ).catch((err: any) => ({ stderr: err.stderr || '' }));
+
+        const stderr = (result as any).stderr || '';
         const match = stderr.match(/Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)/);
         if (match) {
           const hours = parseFloat(match[1]);
@@ -184,6 +218,10 @@ export class CommunityS3Service {
           }
         }
       } catch {}
+
+      this.logger.warn(
+        `VIDEO_DURATION_PROBE_FAILED: Target="${path.basename(targetPath)}", Exists=${fs.existsSync(targetPath)}`,
+      );
 
       // Fail-closed: duration cannot be verified
       throw new BadRequestException({
@@ -204,8 +242,10 @@ export class CommunityS3Service {
    */
   async generateVideoPoster(videoPath: string, posterPath: string): Promise<boolean> {
     try {
-      await execPromise(
-        `ffmpeg -y -ss 00:00:01 -i "${videoPath}" -frames:v 1 -q:v 2 "${posterPath}"`,
+      await execFilePromise(
+        'ffmpeg',
+        ['-y', '-ss', '00:00:01', '-i', videoPath, '-frames:v', '1', '-q:v', '2', posterPath],
+        { timeout: 20000 },
       );
       if (fs.existsSync(posterPath) && fs.statSync(posterPath).size > 0) {
         return true;
@@ -213,8 +253,10 @@ export class CommunityS3Service {
     } catch {
       // If video is shorter than 1s, try 0s
       try {
-        await execPromise(
-          `ffmpeg -y -ss 00:00:00 -i "${videoPath}" -frames:v 1 -q:v 2 "${posterPath}"`,
+        await execFilePromise(
+          'ffmpeg',
+          ['-y', '-ss', '00:00:00', '-i', videoPath, '-frames:v', '1', '-q:v', '2', posterPath],
+          { timeout: 20000 },
         );
         if (fs.existsSync(posterPath) && fs.statSync(posterPath).size > 0) {
           return true;
@@ -234,8 +276,10 @@ export class CommunityS3Service {
    */
   async optimizeImage(inputPath: string, outputPath: string): Promise<boolean> {
     try {
-      await execPromise(
-        `ffmpeg -y -i "${inputPath}" -vf "scale='min(2048,iw)':-2" -map_metadata -1 "${outputPath}"`,
+      await execFilePromise(
+        'ffmpeg',
+        ['-y', '-i', inputPath, '-vf', "scale='min(2048,iw)':-2", '-map_metadata', '-1', outputPath],
+        { timeout: 20000 },
       );
       if (fs.existsSync(outputPath) && fs.statSync(outputPath).size > 0) {
         return true;
