@@ -162,7 +162,7 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, onOpenReel }) {
       initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: shouldReduceMotion ? 0.05 : 0.18, ease: 'easeOut' }}
-      className="zn-card bg-[#0B111E] border border-white/[0.08] hover:border-white/[0.14] rounded-none sm:rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.3)] mb-4 sm:mb-6 group overflow-hidden transition-all duration-200"
+      className="zn-card bg-[#090E1A] sm:bg-[#0B111E] border-y border-white/[0.06] border-x-0 sm:border sm:border-white/[0.06] sm:hover:border-white/[0.12] rounded-none sm:rounded-2xl sm:shadow-[0_2px_16px_rgba(0,0,0,0.25)] mb-3 sm:mb-6 group overflow-hidden transition-all duration-200"
     >
       {/* 0. Repost Attribution Header if post is a repost */}
       {isRepost && (
@@ -268,7 +268,7 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, onOpenReel }) {
               <button
                 type="button"
                 onClick={handleToggleComments}
-                className="text-xs text-text-muted hover:text-white transition-colors block text-left cursor-pointer select-none"
+                className="text-xs text-text-muted/75 hover:text-white transition-colors block text-left cursor-pointer select-none"
                 aria-label={`View all ${commentCount} comments`}
               >
                 View all {commentCount.toLocaleString()} {commentCount === 1 ? 'comment' : 'comments'}
@@ -277,7 +277,7 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, onOpenReel }) {
           )}
 
           {/* 6. TIMESTAMP & METADATA FOOTER */}
-          <div className="px-3.5 sm:px-4 pb-3 pt-1 text-[11px] font-normal text-text-faint/80 uppercase tracking-wider select-none">
+          <div className="px-3.5 sm:px-4 pb-3.5 pt-1 text-[10px] sm:text-[11px] font-normal text-text-faint/70 uppercase tracking-wider select-none">
             {formatRelativeTime(displayPost.createdAt)}
           </div>
         </>

@@ -87,7 +87,7 @@ export default function PostHeader({
           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             <Link
               to={authorProfileUrl}
-              className="text-xs sm:text-sm font-semibold text-white hover:text-brand-mint transition-colors truncate max-w-[170px] sm:max-w-xs"
+              className="text-[13px] sm:text-sm font-semibold text-white hover:text-brand-mint transition-colors truncate max-w-[170px] sm:max-w-xs tracking-[-0.01em]"
             >
               {authorName}
             </Link>
@@ -105,16 +105,16 @@ export default function PostHeader({
             )}
           </div>
 
-          <p className="text-[11px] text-text-muted mt-0.5 flex items-center gap-1 font-normal">
+          <p className="text-[11px] text-text-muted/70 mt-0.5 flex items-center gap-1 font-normal">
             {authorUsername && (
               <>
-                <span className="truncate max-w-[110px] text-text-muted/90">{authorUsername}</span>
+                <span className="truncate max-w-[110px] text-text-muted/80">{authorUsername}</span>
                 <span className="text-white/20">·</span>
               </>
             )}
             <span>{formatRelativeTime(post?.createdAt)}</span>
             <span className="text-white/20">·</span>
-            <span className="capitalize text-text-muted/80">
+            <span className="capitalize text-text-muted/65">
               {audienceLabel === 'PUBLIC' ? 'Public' : audienceLabel === 'COURSE' ? 'Course' : 'Private'}
             </span>
           </p>
@@ -128,7 +128,7 @@ export default function PostHeader({
           data-testid="post-options-btn"
           type="button"
           onClick={() => setShowMenu((prev) => !prev)}
-          className="min-w-[44px] min-h-[44px] p-2 text-text-muted hover:text-white hover:bg-white/[0.06] rounded-full transition-colors cursor-pointer flex items-center justify-center focus:outline-none focus:ring-1 focus:ring-brand-mint"
+          className="min-w-[44px] min-h-[44px] p-2 text-text-muted/75 hover:text-white hover:bg-white/[0.05] rounded-full transition-colors cursor-pointer flex items-center justify-center focus:outline-none focus:ring-1 focus:ring-brand-mint/40"
           aria-label="Post options"
           aria-expanded={showMenu}
         >
@@ -142,7 +142,7 @@ export default function PostHeader({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: -4 }}
               transition={{ duration: 0.12 }}
-              className="absolute right-0 top-full mt-1 w-36 bg-[#0E1726] border border-white/[0.1] rounded-xl shadow-2xl z-30 py-1 overflow-hidden"
+              className="absolute right-0 top-full mt-1 w-36 bg-[#0E1726]/95 backdrop-blur-xl border border-white/[0.1] rounded-xl shadow-2xl z-30 py-1 overflow-hidden"
             >
               <button
                 type="button"

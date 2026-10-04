@@ -16,6 +16,45 @@ import {
 import MediaLightbox from './MediaLightbox';
 
 /**
+ * Resolves media presentation mode (portrait 4:5, square 1:1, landscape 16:9).
+ * Derives from detected element metrics or explicit metadata on the media item.
+ */
+function resolveMediaAspectType(item, detectedType) {
+  if (detectedType) return detectedType;
+
+  // Inspect any explicit metadata or dimensions on the media item
+  const w = item?.width || item?.metadata?.width;
+  const h = item?.height || item?.metadata?.height;
+  const rawRatio = item?.aspectRatio || item?.metadata?.aspectRatio || (w && h ? w / h : null);
+
+  if (rawRatio) {
+    let num = null;
+    if (typeof rawRatio === 'string') {
+      if (rawRatio.includes(':')) {
+        const [rw, rh] = rawRatio.split(':').map(Number);
+        if (rw && rh) num = rw / rh;
+      } else if (rawRatio.includes('/')) {
+        const [rw, rh] = rawRatio.split('/').map(Number);
+        if (rw && rh) num = rw / rh;
+      } else {
+        num = parseFloat(rawRatio);
+      }
+    } else if (typeof rawRatio === 'number') {
+      num = rawRatio;
+    }
+
+    if (num && !Number.isNaN(num)) {
+      if (num > 1.2) return 'landscape';
+      if (num >= 0.85 && num <= 1.2) return 'square';
+      return 'portrait';
+    }
+  }
+
+  // Pre-load reservation: videos default to 4:5 portrait social presentation, images to landscape (aspect-video)
+  return item?.type === 'video' ? 'portrait' : 'landscape';
+}
+
+/**
  * PostMedia — Instagram-inspired media-first social presentation component.
  *
  * Core Features:
@@ -82,9 +121,9 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
     if (e?.target?.naturalWidth && e?.target?.naturalHeight) {
       const ratio = e.target.naturalWidth / e.target.naturalHeight;
       let type = 'portrait';
-      if (ratio > 1.25) {
+      if (ratio > 1.2) {
         type = 'landscape';
-      } else if (ratio >= 0.85 && ratio <= 1.25) {
+      } else if (ratio >= 0.85 && ratio <= 1.2) {
         type = 'square';
       } else {
         type = 'portrait';
@@ -99,9 +138,9 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
     if (w && h) {
       const ratio = w / h;
       let type = 'portrait';
-      if (ratio > 1.25) {
+      if (ratio > 1.2) {
         type = 'landscape';
-      } else if (ratio >= 0.85 && ratio <= 1.25) {
+      } else if (ratio >= 0.85 && ratio <= 1.2) {
         type = 'square';
       } else {
         type = 'portrait';
@@ -317,7 +356,7 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
           }
         }}
         onDoubleClick={handleDoubleClick}
-        className="relative my-0 sm:my-0 rounded-none sm:rounded-none overflow-hidden bg-[#070B14] border-y sm:border-y border-white/[0.06] select-none group transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50 aspect-video"
+        className="relative my-0 overflow-hidden bg-[#070B14] border-y border-white/[0.04] select-none group transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -371,7 +410,7 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
             const hasError = failedMedia[idx];
             const isLoaded = loadedImages[idx];
             const isCurrent = idx === currentIndex;
-            const aspectType = aspectTypes[idx] || (isVideo ? 'portrait' : 'landscape');
+            const aspectType = resolveMediaAspectType(item, aspectTypes[idx]);
 
             if (!isCurrent && isMulti) return null;
 
@@ -404,10 +443,23 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
             if (isVideo) {
               const frameAspectClass =
                 aspectType === 'portrait'
-                  ? 'aspect-[4/5] sm:aspect-[9/16] max-h-[580px]'
+                  ? 'aspect-[4/5]'
                   : aspectType === 'square'
-                  ? 'aspect-square max-h-[520px]'
-                  : 'aspect-video max-h-[460px]';
+                  ? 'aspect-square'
+                  : 'aspect-video';
+
+              const videoFitClass =
+                aspectType === 'portrait'
+                  ? 'object-cover object-center'
+                  : aspectType === 'square'
+                  ? 'object-cover object-center'
+                  : 'object-contain object-center';
+
+              const objectPosition =
+                item.objectPosition ||
+                item.focalPoint ||
+                item.metadata?.objectPosition ||
+                'center';
 
               return (
                 <div
@@ -420,11 +472,11 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
                       if (el) videoRefs.current[idx] = el;
                     }}
                     src={item.url}
-                    poster={item.thumbnailUrl || undefined}
+                    poster={item.thumbnailUrl || item.posterUrl || undefined}
                     muted={isMuted}
                     playsInline
                     loop
-                    preload="metadata"
+                    preload="none"
                     onLoadedMetadata={(e) => handleVideoMetadata(idx, e)}
                     onTimeUpdate={(e) => handleTimeUpdate(idx, e)}
                     onPlay={(e) => {
@@ -436,11 +488,12 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
                     }}
                     onPause={() => setIsPlaying(false)}
                     onError={() => handleMediaError(idx)}
-                    className="w-full h-full object-contain pointer-events-none select-none"
+                    style={{ objectPosition }}
+                    className={`w-full h-full ${videoFitClass} pointer-events-none select-none`}
                     aria-label="Community video"
                   />
 
-                  {/* Watch Reel Contextual Pill (Opens existing Reels viewer) */}
+                  {/* Watch Reel Contextual Discovery Affordance */}
                   {postId && (
                     <button
                       type="button"
@@ -452,11 +505,11 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
                           navigate(`/community/reels/${postId}`);
                         }
                       }}
-                      className="min-h-[36px] absolute top-3 left-3 px-3 py-1.5 rounded-full bg-black/60 hover:bg-black/85 text-white backdrop-blur-md border border-white/15 text-xs font-semibold flex items-center gap-1.5 transition-all hover:scale-105 cursor-pointer z-20 shadow-lg group-hover:border-brand-mint/50"
+                      className="absolute top-3 left-3 h-7 px-2.5 rounded-full bg-black/45 hover:bg-black/75 text-white/90 hover:text-white backdrop-blur-md border border-white/10 hover:border-brand-mint/40 text-[11px] font-medium tracking-wide flex items-center gap-1.5 transition-all duration-150 cursor-pointer z-20 shadow-sm"
                       aria-label="Open fullscreen reel"
                       title="Watch Reel"
                     >
-                      <Sparkles className="w-3.5 h-3.5 text-brand-mint" />
+                      <Sparkles className="w-3 h-3 text-brand-mint" />
                       <span>Watch Reel</span>
                     </button>
                   )}
@@ -485,8 +538,8 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
                   {/* Play Overlay Button if paused */}
                   {!isPlaying && !tapActionIcon && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                      <div className="w-14 h-14 rounded-full bg-black/55 backdrop-blur-md border border-white/15 flex items-center justify-center text-white shadow-xl transition-transform group-hover:scale-110">
-                        <Play className="w-7 h-7 fill-current ml-0.5 opacity-90" />
+                      <div className="w-13 h-13 rounded-full bg-black/50 backdrop-blur-md border border-white/15 flex items-center justify-center text-white/95 shadow-xl transition-transform duration-200 group-hover:scale-105">
+                        <Play className="w-6 h-6 fill-current ml-0.5 opacity-90" />
                       </div>
                     </div>
                   )}
@@ -500,19 +553,19 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
                       const vid = videoRefs.current[idx];
                       if (vid) vid.muted = !isMuted;
                     }}
-                    className="min-h-[44px] min-w-[44px] absolute bottom-3 right-3 p-2.5 rounded-full bg-black/60 hover:bg-black/85 text-white backdrop-blur-md border border-white/10 transition-all cursor-pointer z-20 flex items-center justify-center shadow-lg"
+                    className="min-h-[44px] min-w-[44px] absolute bottom-3 right-3 p-2 rounded-full bg-black/50 hover:bg-black/80 text-white/90 hover:text-white backdrop-blur-md border border-white/10 transition-all duration-150 cursor-pointer z-20 flex items-center justify-center shadow-md"
                     aria-label={isMuted ? 'Unmute video' : 'Mute video'}
                   >
                     {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-brand-mint" />}
                   </button>
 
                   {/* Subtle Hairline Video Progress Bar */}
-                  <div className="absolute bottom-0 inset-x-0 h-1 bg-white/15 z-20 overflow-hidden pointer-events-none">
+                  <div className="absolute bottom-0 inset-x-0 h-[2px] bg-white/10 z-20 overflow-hidden pointer-events-none">
                     <div
                       ref={(el) => {
                         if (el) progressRefs.current[idx] = el;
                       }}
-                      className="h-full w-full bg-gradient-to-r from-brand-mint via-brand-yellow to-brand-mint origin-left transform scale-x-0 will-change-transform shadow-[0_0_6px_rgba(159,213,178,0.7)]"
+                      className="h-full w-full bg-brand-mint origin-left transform scale-x-0 will-change-transform shadow-[0_0_6px_rgba(159,213,178,0.7)]"
                     />
                   </div>
                 </div>
@@ -522,16 +575,16 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
             // Image Item (Portrait 4:5, Square 1:1, Landscape 16:9)
             const imgAspectClass =
               aspectType === 'portrait'
-                ? 'max-h-[580px]'
+                ? 'aspect-[4/5]'
                 : aspectType === 'square'
-                ? 'aspect-square max-h-[520px]'
-                : 'max-h-[460px]';
+                ? 'aspect-square'
+                : 'aspect-video';
 
             return (
               <div
                 key={idx}
                 onClick={() => handleMediaTap(idx, false)}
-                className={`relative w-full ${imgAspectClass} flex items-center justify-center overflow-hidden cursor-pointer`}
+                className={`relative w-full ${imgAspectClass} flex items-center justify-center overflow-hidden cursor-pointer bg-black/40`}
                 role="img"
                 aria-label={`Post media ${idx + 1} of ${media.length}`}
               >
@@ -549,7 +602,7 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
                   onError={() => handleMediaError(idx)}
                   loading="lazy"
                   decoding="async"
-                  className={`w-full h-full object-contain sm:object-cover transition-all duration-300 sm:group-hover:scale-[1.005] ${
+                  className={`w-full h-full object-contain transition-all duration-300 sm:group-hover:scale-[1.005] ${
                     isLoaded ? 'opacity-100' : 'opacity-0'
                   }`}
                 />

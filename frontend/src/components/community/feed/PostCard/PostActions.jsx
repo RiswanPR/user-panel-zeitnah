@@ -176,9 +176,9 @@ export default function PostActions({
 
       {/* 2. Engagement Metadata Line (Clean, Calm Hierarchy) */}
       {(reactionCount > 0 || repostCount > 0) && (
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-white/95 pt-1.5 pb-0.5">
+        <div className="flex items-center gap-1.5 text-xs text-white/95 pt-1.5 pb-0.5 select-none">
           {reactionCount > 0 && (
-            <span>
+            <span className="font-semibold tracking-[-0.01em]">
               {reactionCount.toLocaleString()} {reactionCount === 1 ? 'like' : 'likes'}
             </span>
           )}
@@ -186,7 +186,7 @@ export default function PostActions({
             <span className="text-white/20">·</span>
           )}
           {repostCount > 0 && (
-            <span className="text-text-muted font-normal">
+            <span className="text-text-muted/80 font-normal">
               {repostCount.toLocaleString()} {repostCount === 1 ? 'repost' : 'reposts'}
             </span>
           )}

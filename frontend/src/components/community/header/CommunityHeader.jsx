@@ -30,9 +30,13 @@ export default function CommunityHeader({
           </h1>
           <span className="w-1.5 h-1.5 rounded-full bg-brand-mint shadow-[0_0_10px_rgba(159,213,178,0.7)] shrink-0" />
         </div>
-        <div className="h-[2px] w-9 sm:w-12 bg-gradient-to-r from-brand-mint via-[#D4E37A]/60 to-transparent rounded-full mt-1.5 opacity-80" />
-        <p className="text-xs text-text-muted mt-1.5 font-normal tracking-wide truncate hidden sm:block">
-          Discover engineering insights, blueprints and moments
+        <div className="h-[2px] w-8 sm:w-10 bg-gradient-to-r from-brand-mint via-[#D4E37A]/50 to-transparent rounded-full mt-1.5 opacity-80" />
+        <p className="text-xs text-text-muted/80 mt-1 font-medium tracking-wide flex items-center gap-1.5 select-none">
+          <span>Build</span>
+          <span className="text-brand-mint/50">·</span>
+          <span>Connect</span>
+          <span className="text-brand-mint/50">·</span>
+          <span>Discover</span>
         </p>
       </div>
 

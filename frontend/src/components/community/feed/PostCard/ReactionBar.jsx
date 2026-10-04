@@ -189,23 +189,21 @@ export default function ReactionBar({
           // Prevent browser context menu on long press
           if (isLongPressRef.current) e.preventDefault();
         }}
-        className={`min-h-[44px] min-w-[44px] px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer focus:outline-none focus:ring-1 focus:ring-brand-mint/40 ${
+        className={`min-h-[44px] min-w-[44px] p-2 rounded-full text-xs font-semibold flex items-center justify-center transition-all duration-150 cursor-pointer active:scale-90 motion-reduce:transform-none focus:outline-none focus:ring-1 focus:ring-brand-mint/40 ${
           isLiked
-            ? `${activeReaction?.color || 'text-rose-500'} bg-white/[0.06] hover:bg-white/[0.1]`
-            : 'text-text-muted hover:bg-white/[0.04] hover:text-white'
+            ? `${activeReaction?.color || 'text-rose-500'} bg-white/[0.05]`
+            : 'text-text-muted hover:text-white hover:bg-white/[0.05]'
         }`}
         aria-label={isLiked ? `Remove ${activeReaction?.label || 'Like'}` : 'React to post'}
         aria-haspopup="true"
         aria-expanded={showPicker}
+        title={isLiked ? (activeReaction?.label || 'Liked') : 'Like'}
       >
         <ActiveIcon
-          className={`w-4 h-4 transition-transform duration-200 active:scale-125 ${
+          className={`w-5 h-5 transition-transform duration-150 active:scale-125 motion-reduce:transform-none ${
             isLiked ? (activeReaction?.fill || 'fill-current') : ''
           }`}
         />
-        <span className="hidden sm:inline font-medium">
-          {activeReaction ? activeReaction.label : 'Like'}
-        </span>
       </button>
     </div>
   );

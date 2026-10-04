@@ -3,6 +3,29 @@ import { Sparkles } from 'lucide-react';
 
 const CHAR_LIMIT = 260;
 
+function renderFormattedText(text) {
+  if (!text) return null;
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  return parts.map((part, i) => {
+    if (part.match(urlRegex)) {
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="text-brand-mint hover:underline break-all"
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
+}
+
 /**
  * PostContent — Editorial caption and body typography for Zeitnah Community posts.
  * Implements line clamping, 'more' toggle, hashtags, and AI summaries.
@@ -23,7 +46,7 @@ export default function PostContent({
     : content;
 
   return (
-    <div className={isMediaPost ? 'mt-2.5 px-0.5' : 'my-2.5'}>
+    <div className={isMediaPost ? 'mt-1.5 px-0.5' : 'my-2.5'}>
       {/* AI Summary Highlight if available */}
       {aiSummary && (
         <div className="mb-3 p-3 bg-brand-mint/10 border border-brand-mint/20 rounded-xl">
@@ -41,14 +64,14 @@ export default function PostContent({
       {content && (
         <div className="leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere] max-w-prose">
           {isMediaPost ? (
-            <p className="text-xs sm:text-sm text-slate-200/90 leading-[1.65]">
+            <p className="text-[13px] sm:text-sm text-slate-200/90 leading-[1.6]">
               <span className="font-semibold text-white mr-1.5">{authorName}</span>
-              {displayedContent}
+              <span className="font-normal">{renderFormattedText(displayedContent)}</span>
               {isLong && (
                 <button
                   type="button"
                   onClick={() => setIsExpanded((prev) => !prev)}
-                  className="text-xs font-medium text-brand-mint/90 hover:text-brand-mint transition-colors ml-1.5 cursor-pointer focus:outline-none focus:underline"
+                  className="text-xs font-normal text-text-muted/80 hover:text-white transition-colors ml-1.5 cursor-pointer focus:outline-none focus:underline"
                   aria-expanded={isExpanded}
                 >
                   {isExpanded ? 'less' : 'more'}
@@ -57,14 +80,14 @@ export default function PostContent({
             </p>
           ) : (
             <div>
-              <p className="text-[15px] sm:text-[16px] text-slate-100 font-normal leading-[1.68] tracking-[-0.01em]">
-                {displayedContent}
+              <p className="text-[14px] sm:text-[15px] text-slate-100 font-normal leading-[1.65] tracking-[-0.01em]">
+                {renderFormattedText(displayedContent)}
               </p>
               {isLong && (
                 <button
                   type="button"
                   onClick={() => setIsExpanded((prev) => !prev)}
-                  className="text-xs font-medium text-brand-mint hover:text-brand-mint/80 transition-colors pt-1.5 cursor-pointer focus:outline-none focus:underline block"
+                  className="text-xs font-normal text-text-muted hover:text-white transition-colors pt-1.5 cursor-pointer focus:outline-none focus:underline block"
                   aria-expanded={isExpanded}
                 >
                   {isExpanded ? 'Show less' : 'Read more'}
@@ -77,11 +100,11 @@ export default function PostContent({
 
       {/* Hashtag Badges */}
       {tags && tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mt-2">
+        <div className="flex flex-wrap gap-1.5 mt-1.5">
           {tags.map((tag, idx) => (
             <span
               key={`${tag}-${idx}`}
-              className="text-[12px] font-medium text-brand-mint/80 hover:text-brand-mint hover:underline transition-colors cursor-pointer select-none"
+              className="text-[12px] font-normal text-brand-mint/75 hover:text-brand-mint hover:underline transition-colors cursor-pointer select-none"
             >
               #{tag.replace(/^#/, '')}
             </span>
