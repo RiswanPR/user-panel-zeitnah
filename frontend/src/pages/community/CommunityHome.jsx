@@ -299,10 +299,11 @@ export default function CommunityHome() {
         />
       </div>
 
-      {/* ── Responsive Layout Grid (Main Feed + Desktop Discovery Sidebar) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_340px] gap-8 items-start">
-        {/* ── PRIMARY COLUMN (Community Feed) ── */}
-        <div className="space-y-4 min-w-0" id={`feed-panel-${activeFilter}`}>
+      {/* ── Responsive Centered Container (Main Feed ~620px + Desktop Discovery Sidebar) ── */}
+      <div className="max-w-[1020px] mx-auto px-0 sm:px-4 lg:px-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,620px)_340px] justify-center gap-8 items-start">
+          {/* ── PRIMARY COLUMN (Community Feed) ── */}
+          <div className="w-full max-w-[620px] mx-auto space-y-4 min-w-0" id={`feed-panel-${activeFilter}`}>
           {/* Active Topic Banner if filtering by topic */}
           {activeTopic && (
             <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#12314C]/70 to-[#9FD5B2]/15 border border-brand-mint/30 text-xs text-white">
@@ -452,5 +453,6 @@ export default function CommunityHome() {
         </div>
       </div>
     </div>
+  </div>
   );
 }

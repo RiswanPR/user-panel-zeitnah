@@ -60,12 +60,12 @@ export default function PostHeader({
   const audienceLabel = String(post?.audience || 'PUBLIC').toUpperCase();
 
   return (
-    <div className="flex items-start justify-between gap-3 mb-3.5">
+    <div className="flex items-center justify-between gap-3 h-14 px-3.5 sm:px-4 border-b border-white/[0.04]">
       {/* Author Identity */}
       <div className="flex items-center gap-3 min-w-0">
         <Link
           to={authorProfileUrl}
-          className="w-10 h-10 sm:w-11 sm:h-11 rounded-full shrink-0 overflow-hidden ring-1 ring-white/10 hover:ring-brand-mint/40 bg-[#0E1726] flex items-center justify-center transition-all duration-200"
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-full shrink-0 overflow-hidden ring-1 ring-white/10 hover:ring-brand-mint/40 bg-[#0E1726] flex items-center justify-center transition-all duration-200"
           aria-label={`View ${authorName}'s profile`}
         >
           {authorAvatar && !imgError ? (
@@ -83,23 +83,17 @@ export default function PostHeader({
           )}
         </Link>
 
-        <div className="min-w-0">
+        <div className="min-w-0 leading-tight">
           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             <Link
               to={authorProfileUrl}
-              className="text-sm sm:text-[15px] font-semibold text-slate-100 hover:text-brand-mint transition-colors truncate max-w-[180px] sm:max-w-xs"
+              className="text-xs sm:text-sm font-semibold text-white hover:text-brand-mint transition-colors truncate max-w-[170px] sm:max-w-xs"
             >
               {authorName}
             </Link>
 
-            {authorUsername && (
-              <span className="hidden sm:inline text-xs text-text-muted/80 font-normal truncate max-w-[120px]">
-                {authorUsername}
-              </span>
-            )}
-
             {author?.role && author.role.toLowerCase() !== 'student' && (
-              <Badge variant="mint" size="sm" className="py-0 px-1.5 h-4 text-[10px] capitalize font-medium">
+              <Badge variant="mint" size="sm" className="py-0 px-1.5 h-3.5 text-[9px] capitalize font-medium">
                 {author.role}
               </Badge>
             )}
@@ -111,10 +105,16 @@ export default function PostHeader({
             )}
           </div>
 
-          <p className="text-xs text-text-muted/80 mt-0.5 flex items-center gap-1.5 font-normal">
+          <p className="text-[11px] text-text-muted mt-0.5 flex items-center gap-1 font-normal">
+            {authorUsername && (
+              <>
+                <span className="truncate max-w-[110px] text-text-muted/90">{authorUsername}</span>
+                <span className="text-white/20">·</span>
+              </>
+            )}
             <span>{formatRelativeTime(post?.createdAt)}</span>
-            <span className="text-white/20">•</span>
-            <span className="capitalize text-text-muted/80 text-[11px]">
+            <span className="text-white/20">·</span>
+            <span className="capitalize text-text-muted/80">
               {audienceLabel === 'PUBLIC' ? 'Public' : audienceLabel === 'COURSE' ? 'Course' : 'Private'}
             </span>
           </p>
@@ -132,7 +132,7 @@ export default function PostHeader({
           aria-label="Post options"
           aria-expanded={showMenu}
         >
-          <MoreHorizontal className="w-5 h-5" />
+          <MoreHorizontal className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
 
         <AnimatePresence>

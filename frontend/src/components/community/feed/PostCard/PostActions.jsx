@@ -81,10 +81,10 @@ export default function PostActions({
   const repostCount = post?.stats?.reposts || 0;
 
   return (
-    <div className="pt-1">
+    <div className="pt-2 px-3.5 sm:px-4">
       {/* 1. Primary Action Row */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="flex items-center gap-0.5 sm:gap-1 -ml-2 sm:-ml-2.5">
           {/* Reaction Trigger & Picker */}
           <ReactionBar
             postId={postId}
@@ -99,16 +99,16 @@ export default function PostActions({
             data-testid="post-comment-btn"
             type="button"
             onClick={onToggleComments}
-            className={`min-h-[44px] min-w-[44px] flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-[0.96] motion-reduce:transform-none ${
+            className={`min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-full text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-90 motion-reduce:transform-none ${
               showComments
-                ? 'text-brand-mint bg-brand-mint/10 border border-brand-mint/20'
-                : 'text-text-muted hover:bg-white/[0.04] hover:text-white'
+                ? 'text-brand-mint bg-brand-mint/10'
+                : 'text-text-muted hover:text-white hover:bg-white/[0.05]'
             }`}
             aria-label="Toggle comments"
             aria-expanded={showComments}
+            title="Comment"
           >
-            <MessageCircle className="w-4 h-4" />
-            <span className="hidden sm:inline font-medium">Comment</span>
+            <MessageCircle className="w-5 h-5" />
           </button>
 
           {/* Repost Action Button & Accessible Menu */}
@@ -121,18 +121,15 @@ export default function PostActions({
               onClick={() => setShowRepostMenu((prev) => !prev)}
               aria-haspopup="menu"
               aria-expanded={showRepostMenu}
-              className={`min-h-[44px] min-w-[44px] flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-[0.96] motion-reduce:transform-none ${
+              className={`min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-full text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-90 motion-reduce:transform-none ${
                 isReposted
-                  ? 'text-brand-mint bg-brand-mint/10 hover:bg-brand-mint/20 border border-brand-mint/20'
-                  : 'text-text-muted hover:bg-white/[0.04] hover:text-white'
+                  ? 'text-brand-mint bg-brand-mint/10'
+                  : 'text-text-muted hover:text-white hover:bg-white/[0.05]'
               }`}
               aria-label={isReposted ? 'Reposted. Click to change' : 'Repost or quote post'}
               title={isReposted ? 'Reposted' : 'Repost'}
             >
-              <Repeat2 className={`w-4 h-4 ${isReposted ? 'text-brand-mint' : ''}`} />
-              <span className="hidden sm:inline font-medium">
-                {isReposted ? 'Reposted' : 'Repost'}
-              </span>
+              <Repeat2 className={`w-5 h-5 ${isReposted ? 'text-brand-mint' : ''}`} />
             </button>
 
             <RepostMenu
@@ -151,12 +148,11 @@ export default function PostActions({
             type="button"
             data-testid="post-share-btn"
             onClick={handleShare}
-            className="min-h-[44px] min-w-[44px] flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-text-muted hover:bg-brand-mint/10 hover:text-brand-mint transition-all duration-150 cursor-pointer active:scale-[0.96] motion-reduce:transform-none"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-full text-xs font-semibold text-text-muted hover:text-white hover:bg-white/[0.05] transition-all duration-150 cursor-pointer active:scale-90 motion-reduce:transform-none"
             aria-label="Share post"
             title="Copy link to post"
           >
-            <Share2 className="w-4 h-4" />
-            <span className="hidden sm:inline font-medium">Share</span>
+            <Share2 className="w-5 h-5" />
           </button>
         </div>
 
@@ -166,28 +162,28 @@ export default function PostActions({
           data-testid="post-bookmark-btn"
           type="button"
           onClick={onToggleBookmark}
-          className={`min-h-[44px] min-w-[44px] p-2.5 rounded-xl transition-all duration-150 flex items-center justify-center cursor-pointer active:scale-[0.96] motion-reduce:transform-none ${
+          className={`min-h-[44px] min-w-[44px] -mr-2 sm:-mr-2.5 p-2 rounded-full transition-all duration-150 flex items-center justify-center cursor-pointer active:scale-90 motion-reduce:transform-none ${
             isSaved
-              ? 'text-brand-yellow bg-brand-yellow/10 hover:bg-brand-yellow/20 border border-brand-yellow/30 shadow-[0_0_12px_rgba(246,237,74,0.18)]'
-              : 'text-text-muted hover:bg-white/[0.04] hover:text-white'
+              ? 'text-brand-yellow hover:text-brand-yellow/90'
+              : 'text-text-muted hover:text-white hover:bg-white/[0.05]'
           }`}
           aria-label={isSaved ? 'Remove bookmark' : 'Bookmark post'}
           title={isSaved ? 'Saved' : 'Save'}
         >
-          <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
+          <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
         </button>
       </div>
 
       {/* 2. Engagement Metadata Line (Clean, Calm Hierarchy) */}
       {(reactionCount > 0 || repostCount > 0) && (
-        <div className="flex items-center gap-2 text-xs font-semibold text-white/90 pt-2 px-1">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-white/95 pt-1.5 pb-0.5">
           {reactionCount > 0 && (
             <span>
-              {reactionCount.toLocaleString()} {reactionCount === 1 ? 'reaction' : 'reactions'}
+              {reactionCount.toLocaleString()} {reactionCount === 1 ? 'like' : 'likes'}
             </span>
           )}
           {reactionCount > 0 && repostCount > 0 && (
-            <span className="text-white/20">•</span>
+            <span className="text-white/20">·</span>
           )}
           {repostCount > 0 && (
             <span className="text-text-muted font-normal">

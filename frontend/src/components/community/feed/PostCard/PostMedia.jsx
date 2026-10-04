@@ -8,22 +8,28 @@ import {
   ChevronRight,
   Volume2,
   VolumeX,
+  Play,
+  Pause,
   RefreshCw,
   Sparkles,
 } from 'lucide-react';
 import MediaLightbox from './MediaLightbox';
 
 /**
- * PostMedia — Instagram-style media-first component.
- * Features:
+ * PostMedia — Instagram-inspired media-first social presentation component.
+ *
+ * Core Features:
+ * - Social-native video player (no bulky native browser controls)
+ * - Autoplay when visible via IntersectionObserver (muted by default)
+ * - Single active playback enforcement (mutual defense against audio clash)
+ * - Responsive aspect ratio intelligence (portrait 4:5/9:16, landscape 16:9, square 1:1)
+ * - Contextual 'Watch Reel' pill for short-video immersion
+ * - Double-tap / double-click like with radiant heart-burst animation
+ * - Hairline hardware-accelerated video progress indicator without 60fps React rerenders
  * - Multi-image swipeable carousel (touch swipe on mobile, arrow controls on desktop)
- * - Pagination indicator badge (1/N) and bottom dots
- * - Double-tap / double-click to like with radiant heart-burst animation
- * - Auto-pausing video via IntersectionObserver and mutual playback control
- * - Responsive aspect ratios (4:5, 1:1, 16:9) with layout-shift prevention
- * - Graceful error states with inline retry
+ * - Preloading adjacent images (Math.abs(idx - currentIndex) <= 1)
+ * - Zero layout shift geometry reservation (aspect-video base class)
  * - Video memory safety and decoder disposal on unmount
- * - Seamless entry to /community/reels for immersive short video consumption
  */
 export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenReel }) {
   const navigate = useNavigate();
@@ -33,10 +39,15 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
   const [loadedImages, setLoadedImages] = useState({});
   const [showHeartBurst, setShowHeartBurst] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [tapActionIcon, setTapActionIcon] = useState(null); // 'play' | 'pause'
+  const [aspectTypes, setAspectTypes] = useState({}); // { [idx]: 'portrait' | 'landscape' | 'square' }
 
   const containerRef = useRef(null);
   const videoRefs = useRef({});
+  const progressRefs = useRef({});
   const lastTapRef = useRef(0);
+  const tapTimeoutRef = useRef(null);
   const touchStartXRef = useRef(0);
   const touchStartYRef = useRef(0);
   const touchEndXRef = useRef(0);
@@ -66,27 +77,95 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
     }
   }, []);
 
-  const handleImageLoad = useCallback((idx) => {
+  const handleImageLoad = useCallback((idx, e) => {
     setLoadedImages((prev) => ({ ...prev, [idx]: true }));
+    if (e?.target?.naturalWidth && e?.target?.naturalHeight) {
+      const ratio = e.target.naturalWidth / e.target.naturalHeight;
+      let type = 'portrait';
+      if (ratio > 1.25) {
+        type = 'landscape';
+      } else if (ratio >= 0.85 && ratio <= 1.25) {
+        type = 'square';
+      } else {
+        type = 'portrait';
+      }
+      setAspectTypes((prev) => ({ ...prev, [idx]: type }));
+    }
   }, []);
 
-  // Double-tap media handler for Instagram-style like
-  const handleMediaTap = useCallback(() => {
-    const now = Date.now();
-    const DOUBLE_TAP_DELAY = 300;
-
-    if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
-      // Double tap triggered
-      setShowHeartBurst(true);
-      setTimeout(() => setShowHeartBurst(false), 550);
-      if (onDoubleTapLike) {
-        onDoubleTapLike();
+  const handleVideoMetadata = useCallback((idx, e) => {
+    const w = e.target.videoWidth;
+    const h = e.target.videoHeight;
+    if (w && h) {
+      const ratio = w / h;
+      let type = 'portrait';
+      if (ratio > 1.25) {
+        type = 'landscape';
+      } else if (ratio >= 0.85 && ratio <= 1.25) {
+        type = 'square';
+      } else {
+        type = 'portrait';
       }
-      lastTapRef.current = 0;
-    } else {
-      lastTapRef.current = now;
+      setAspectTypes((prev) => ({ ...prev, [idx]: type }));
     }
-  }, [onDoubleTapLike]);
+  }, []);
+
+  const toggleVideoPlayback = useCallback((idx) => {
+    const vid = videoRefs.current[idx];
+    if (!vid) return;
+
+    if (vid.paused) {
+      vid
+        .play()
+        .then(() => {
+          setIsPlaying(true);
+          setTapActionIcon('play');
+          setTimeout(() => setTapActionIcon(null), 450);
+          document.querySelectorAll('video').forEach((v) => {
+            if (v !== vid && !v.paused) v.pause();
+          });
+        })
+        .catch(() => {
+          setIsPlaying(false);
+        });
+    } else {
+      vid.pause();
+      setIsPlaying(false);
+      setTapActionIcon('pause');
+      setTimeout(() => setTapActionIcon(null), 450);
+    }
+  }, []);
+
+  // Double-tap media handler for Instagram-style like with single-tap play toggle
+  const handleMediaTap = useCallback(
+    (idx, isVideo) => {
+      const now = Date.now();
+      const DOUBLE_TAP_DELAY = 280;
+
+      if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+        // Double tap triggered
+        if (tapTimeoutRef.current) {
+          clearTimeout(tapTimeoutRef.current);
+          tapTimeoutRef.current = null;
+        }
+        setShowHeartBurst(true);
+        setTimeout(() => setShowHeartBurst(false), 550);
+        if (onDoubleTapLike) {
+          onDoubleTapLike();
+        }
+        lastTapRef.current = 0;
+      } else {
+        lastTapRef.current = now;
+        if (isVideo) {
+          tapTimeoutRef.current = setTimeout(() => {
+            toggleVideoPlayback(idx);
+            lastTapRef.current = 0;
+          }, DOUBLE_TAP_DELAY);
+        }
+      }
+    },
+    [onDoubleTapLike, toggleVideoPlayback]
+  );
 
   // Desktop double-click to like
   const handleDoubleClick = useCallback(
@@ -152,12 +231,32 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (!entry.isIntersecting && !entry.target.paused) {
-            entry.target.pause();
+          const vid = entry.target;
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+            // Autoplay only when in center of viewport and muted
+            const playPromise = vid.play();
+            if (playPromise !== undefined) {
+              playPromise
+                .then(() => {
+                  setIsPlaying(true);
+                  // Mutual playback defense: pause other playing videos
+                  document.querySelectorAll('video').forEach((v) => {
+                    if (v !== vid && !v.paused) v.pause();
+                  });
+                })
+                .catch(() => {
+                  setIsPlaying(false);
+                });
+            }
+          } else {
+            if (!vid.paused) {
+              vid.pause();
+              setIsPlaying(false);
+            }
           }
         });
       },
-      { threshold: 0.25 }
+      { threshold: [0.25, 0.5] }
     );
 
     currentRefs.forEach((vid) => observer.observe(vid));
@@ -186,6 +285,16 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
     });
   }, [currentIndex, media]);
 
+  // Direct DOM transform update on video timeupdate without 60fps React rerenders
+  const handleTimeUpdate = (idx, e) => {
+    const bar = progressRefs.current[idx];
+    if (!bar) return;
+    const dur = e.target.duration;
+    if (!dur || Number.isNaN(dur)) return;
+    const progress = Math.min(Math.max(e.target.currentTime / dur, 0), 1);
+    bar.style.transform = `scaleX(${progress})`;
+  };
+
   if (!media || media.length === 0) return null;
 
   const isMulti = media.length > 1;
@@ -208,17 +317,14 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
           }
         }}
         onDoubleClick={handleDoubleClick}
-        className="relative my-3 -mx-4 sm:mx-0 rounded-none sm:rounded-2xl overflow-hidden bg-[#070B14] border-y sm:border border-white/[0.08] select-none group transition-all duration-300 hover:brightness-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50"
+        className="relative my-0 sm:my-0 rounded-none sm:rounded-none overflow-hidden bg-[#070B14] border-y sm:border-y border-white/[0.06] select-none group transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50 aspect-video"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Subtle Ambient Brand Edge Integration */}
-        <div className="absolute inset-0 pointer-events-none rounded-none sm:rounded-2xl ring-1 ring-inset ring-brand-mint/[0.06] z-10" />
-
         {/* Carousel Counter Badge (e.g. 1/3) */}
         {isMulti && (
-          <div className="absolute top-3 right-3 z-20 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[11px] font-mono font-medium text-white/90 shadow-sm border border-white/10 pointer-events-none">
+          <div className="absolute top-3 right-3 z-20 px-2.5 py-1 rounded-full bg-black/65 backdrop-blur-md text-[11px] font-mono font-medium text-white/95 shadow-md border border-white/10 pointer-events-none">
             {currentIndex + 1} / {media.length}
           </div>
         )}
@@ -231,7 +337,7 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
               animate={
                 shouldReduceMotion
                   ? { opacity: [0, 1, 0] }
-                  : { scale: [0, 1.12, 1], opacity: [0, 1, 0] }
+                  : { scale: [0, 1.15, 1], opacity: [0, 1, 0] }
               }
               exit={{ opacity: 0 }}
               transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
@@ -239,7 +345,7 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
             >
               <div className="relative flex items-center justify-center">
                 <div className="absolute w-28 h-28 rounded-full bg-gradient-to-tr from-brand-mint/40 via-brand-yellow/30 to-transparent blur-xl" />
-                <svg width="80" height="80" viewBox="0 0 24 24" className="relative z-10 drop-shadow-[0_0_20px_rgba(159,213,178,0.7)]">
+                <svg width="84" height="84" viewBox="0 0 24 24" className="relative z-10 drop-shadow-[0_0_24px_rgba(159,213,178,0.8)]">
                   <defs>
                     <linearGradient id="brand-doubletap-heart" x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor="#9FD5B2" />
@@ -259,15 +365,13 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
         </AnimatePresence>
 
         {/* Media Presentation Container */}
-        <div
-          onClick={handleMediaTap}
-          className="relative w-full min-h-[260px] sm:min-h-[320px] max-h-[640px] flex items-center justify-center bg-[#070B14] overflow-hidden"
-        >
+        <div className="relative w-full flex items-center justify-center bg-[#070B14] overflow-hidden">
           {media.map((item, idx) => {
             const isVideo = item.type === 'video';
             const hasError = failedMedia[idx];
             const isLoaded = loadedImages[idx];
             const isCurrent = idx === currentIndex;
+            const aspectType = aspectTypes[idx] || (isVideo ? 'portrait' : 'landscape');
 
             if (!isCurrent && isMulti) return null;
 
@@ -298,10 +402,18 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
             }
 
             if (isVideo) {
+              const frameAspectClass =
+                aspectType === 'portrait'
+                  ? 'aspect-[4/5] sm:aspect-[9/16] max-h-[580px]'
+                  : aspectType === 'square'
+                  ? 'aspect-square max-h-[520px]'
+                  : 'aspect-video max-h-[460px]';
+
               return (
                 <div
                   key={idx}
-                  className="relative w-full h-full max-h-[620px] aspect-video sm:aspect-auto flex items-center justify-center bg-black overflow-hidden"
+                  onClick={() => handleMediaTap(idx, true)}
+                  className={`relative w-full ${frameAspectClass} flex items-center justify-center bg-black overflow-hidden cursor-pointer`}
                 >
                   <video
                     ref={(el) => {
@@ -309,21 +421,26 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
                     }}
                     src={item.url}
                     poster={item.thumbnailUrl || undefined}
-                    controls
                     muted={isMuted}
                     playsInline
+                    loop
                     preload="metadata"
+                    onLoadedMetadata={(e) => handleVideoMetadata(idx, e)}
+                    onTimeUpdate={(e) => handleTimeUpdate(idx, e)}
                     onPlay={(e) => {
+                      setIsPlaying(true);
                       // Mutual playback defense: pause other videos
                       document.querySelectorAll('video').forEach((v) => {
                         if (v !== e.target && !v.paused) v.pause();
                       });
                     }}
+                    onPause={() => setIsPlaying(false)}
                     onError={() => handleMediaError(idx)}
-                    className="w-full h-full object-contain max-h-[620px]"
+                    className="w-full h-full object-contain pointer-events-none select-none"
+                    aria-label="Community video"
                   />
 
-                  {/* Watch Reel Button Overlay */}
+                  {/* Watch Reel Contextual Pill (Opens existing Reels viewer) */}
                   {postId && (
                     <button
                       type="button"
@@ -335,7 +452,7 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
                           navigate(`/community/reels/${postId}`);
                         }
                       }}
-                      className="min-h-[38px] absolute top-3 left-3 px-3 py-1.5 rounded-full bg-black/65 hover:bg-black/85 text-white backdrop-blur-md border border-white/15 text-xs font-semibold flex items-center gap-1.5 transition-all hover:scale-105 cursor-pointer z-10 shadow-lg group-hover:border-brand-mint/50"
+                      className="min-h-[36px] absolute top-3 left-3 px-3 py-1.5 rounded-full bg-black/60 hover:bg-black/85 text-white backdrop-blur-md border border-white/15 text-xs font-semibold flex items-center gap-1.5 transition-all hover:scale-105 cursor-pointer z-20 shadow-lg group-hover:border-brand-mint/50"
                       aria-label="Open fullscreen reel"
                       title="Watch Reel"
                     >
@@ -344,8 +461,37 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
                     </button>
                   )}
 
+                  {/* Play/Pause Central Tap Indicator */}
+                  <AnimatePresence>
+                    {tapActionIcon && (
+                      <motion.div
+                        initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.6, opacity: 0 }}
+                        animate={shouldReduceMotion ? { opacity: 1 } : { scale: 1, opacity: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.18 }}
+                        className="absolute inset-0 flex items-center justify-center pointer-events-none z-20"
+                      >
+                        <div className="w-14 h-14 rounded-full bg-black/65 backdrop-blur-md border border-white/15 flex items-center justify-center text-white shadow-2xl">
+                          {tapActionIcon === 'play' ? (
+                            <Play className="w-7 h-7 fill-current ml-0.5" />
+                          ) : (
+                            <Pause className="w-7 h-7 fill-current" />
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
-                  {/* Volume Mute/Unmute Overlay */}
+                  {/* Play Overlay Button if paused */}
+                  {!isPlaying && !tapActionIcon && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                      <div className="w-14 h-14 rounded-full bg-black/55 backdrop-blur-md border border-white/15 flex items-center justify-center text-white shadow-xl transition-transform group-hover:scale-110">
+                        <Play className="w-7 h-7 fill-current ml-0.5 opacity-90" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Volume Mute/Unmute Overlay Control */}
                   <button
                     type="button"
                     onClick={(e) => {
@@ -354,21 +500,38 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
                       const vid = videoRefs.current[idx];
                       if (vid) vid.muted = !isMuted;
                     }}
-                    className="min-h-[44px] min-w-[44px] absolute bottom-3 right-3 p-2.5 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm transition-all cursor-pointer z-10 flex items-center justify-center"
+                    className="min-h-[44px] min-w-[44px] absolute bottom-3 right-3 p-2.5 rounded-full bg-black/60 hover:bg-black/85 text-white backdrop-blur-md border border-white/10 transition-all cursor-pointer z-20 flex items-center justify-center shadow-lg"
                     aria-label={isMuted ? 'Unmute video' : 'Mute video'}
                   >
-                    {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                    {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-brand-mint" />}
                   </button>
+
+                  {/* Subtle Hairline Video Progress Bar */}
+                  <div className="absolute bottom-0 inset-x-0 h-1 bg-white/15 z-20 overflow-hidden pointer-events-none">
+                    <div
+                      ref={(el) => {
+                        if (el) progressRefs.current[idx] = el;
+                      }}
+                      className="h-full w-full bg-gradient-to-r from-brand-mint via-brand-yellow to-brand-mint origin-left transform scale-x-0 will-change-transform shadow-[0_0_6px_rgba(159,213,178,0.7)]"
+                    />
+                  </div>
                 </div>
               );
             }
 
-
             // Image Item (Portrait 4:5, Square 1:1, Landscape 16:9)
+            const imgAspectClass =
+              aspectType === 'portrait'
+                ? 'max-h-[580px]'
+                : aspectType === 'square'
+                ? 'aspect-square max-h-[520px]'
+                : 'max-h-[460px]';
+
             return (
               <div
                 key={idx}
-                className="relative w-full h-full flex items-center justify-center overflow-hidden"
+                onClick={() => handleMediaTap(idx, false)}
+                className={`relative w-full ${imgAspectClass} flex items-center justify-center overflow-hidden cursor-pointer`}
                 role="img"
                 aria-label={`Post media ${idx + 1} of ${media.length}`}
               >
@@ -382,11 +545,11 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
                 <img
                   src={item.url}
                   alt={item.caption || item.alt || `Media attachment ${idx + 1}`}
-                  onLoad={() => handleImageLoad(idx)}
+                  onLoad={(e) => handleImageLoad(idx, e)}
                   onError={() => handleMediaError(idx)}
                   loading="lazy"
                   decoding="async"
-                  className={`w-full max-h-[640px] object-contain sm:object-cover transition-all duration-300 sm:group-hover:scale-[1.005] ${
+                  className={`w-full h-full object-contain sm:object-cover transition-all duration-300 sm:group-hover:scale-[1.005] ${
                     isLoaded ? 'opacity-100' : 'opacity-0'
                   }`}
                 />

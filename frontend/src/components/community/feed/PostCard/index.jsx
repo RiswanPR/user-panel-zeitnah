@@ -162,14 +162,18 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, onOpenReel }) {
       initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: shouldReduceMotion ? 0.05 : 0.18, ease: 'easeOut' }}
-      className="zn-card bg-[#0B111E] border border-white/[0.07] hover:border-brand-mint/20 hover:bg-[#0D1424] rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.25)] p-4 sm:p-5 mb-4 group overflow-hidden transition-colors duration-200"
+      className="zn-card bg-[#0B111E] border border-white/[0.08] hover:border-white/[0.14] rounded-none sm:rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.3)] mb-4 sm:mb-6 group overflow-hidden transition-all duration-200"
     >
       {/* 0. Repost Attribution Header if post is a repost */}
-      {isRepost && <RepostAttribution author={post.author} />}
+      {isRepost && (
+        <div className="px-3.5 sm:px-4 pt-3 pb-1 border-b border-white/[0.04]">
+          <RepostAttribution author={post.author} />
+        </div>
+      )}
 
       {/* If original post is deleted/inaccessible */}
       {isOriginalDeleted ? (
-        <div className="my-2 p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs text-text-muted flex items-center justify-between select-none">
+        <div className="m-3.5 p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs text-text-muted flex items-center justify-between select-none">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-text-muted/60" aria-hidden="true" />
             <span>Original post unavailable</span>
@@ -188,7 +192,7 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, onOpenReel }) {
         </div>
       ) : (
         <>
-          {/* 1. AUTHOR: Header & Identity */}
+          {/* 1. AUTHOR: Header & Identity (~54px) */}
           <PostHeader
             post={displayPost}
             postId={isRepost ? postId : targetActionPostId}
@@ -199,18 +203,7 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, onOpenReel }) {
             onReport={handleReport}
           />
 
-          {/* 2. CONTENT: Caption / Body / AI Summary */}
-          {displayPost.content && (
-            <PostContent
-              author={displayPost.author}
-              content={displayPost.content}
-              aiSummary={displayPost.aiSummary}
-              tags={!hasMedia ? displayPost.tags : undefined}
-              isMediaPost={false}
-            />
-          )}
-
-          {/* 3. MEDIA: Media-First High-Impact Presentation */}
+          {/* 2. MEDIA: Primary Visual Anchor for media posts */}
           {hasMedia && (
             <PostMedia
               media={displayPost.media}
@@ -220,25 +213,27 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, onOpenReel }) {
             />
           )}
 
-
-          {/* 4. META / TOPIC: Hashtags for media posts */}
-          {hasMedia && displayPost.tags && displayPost.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 px-0.5 my-2">
-              {displayPost.tags.map((tag, idx) => (
-                <span
-                  key={`${tag}-${idx}`}
-                  className="text-[12px] font-medium text-brand-mint/80 hover:text-brand-mint hover:underline transition-colors cursor-pointer select-none"
-                >
-                  #{tag.replace(/^#/, '')}
-                </span>
-              ))}
+          {/* Non-media text-first body */}
+          {!hasMedia && displayPost.content && (
+            <div className="px-3.5 sm:px-4 py-3">
+              <PostContent
+                author={displayPost.author}
+                content={displayPost.content}
+                aiSummary={displayPost.aiSummary}
+                tags={displayPost.tags}
+                isMediaPost={false}
+              />
             </div>
           )}
 
           {/* Quoted Post Embed (if quote post) */}
-          {isQuote && <QuotedPost originalPost={post.originalPost} />}
+          {isQuote && (
+            <div className="px-3.5 sm:px-4 my-2">
+              <QuotedPost originalPost={post.originalPost} />
+            </div>
+          )}
 
-          {/* 5. ACTIONS & ENGAGEMENT: Unified Interaction Bar */}
+          {/* 3. ACTIONS & ENGAGEMENT: Unified Interaction Bar (Placed directly under media) */}
           <PostActions
             postId={targetActionPostId}
             post={displayPost}
@@ -254,17 +249,37 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, onOpenReel }) {
             isRepostPending={isRepostPending}
           />
 
-          {/* 6. COMMENTS: Quick Teaser to open CommentDrawer */}
-          {commentCount > 0 && onOpenComments && (
-            <button
-              type="button"
-              onClick={handleToggleComments}
-              className="text-xs text-text-muted hover:text-white pt-1.5 px-1 transition-colors block text-left cursor-pointer select-none"
-              aria-label={`View all ${commentCount} comments`}
-            >
-              View all {commentCount.toLocaleString()} {commentCount === 1 ? 'comment' : 'comments'}
-            </button>
+          {/* 4. CAPTION & HASHTAGS (Under actions for media posts) */}
+          {hasMedia && (displayPost.content || (displayPost.tags && displayPost.tags.length > 0)) && (
+            <div className="px-3.5 sm:px-4 pt-1 pb-1">
+              <PostContent
+                author={displayPost.author}
+                content={displayPost.content}
+                aiSummary={displayPost.aiSummary}
+                tags={displayPost.tags}
+                isMediaPost={true}
+              />
+            </div>
           )}
+
+          {/* 5. COMMENTS: Quick Teaser to open CommentDrawer */}
+          {commentCount > 0 && onOpenComments && (
+            <div className="px-3.5 sm:px-4 py-0.5">
+              <button
+                type="button"
+                onClick={handleToggleComments}
+                className="text-xs text-text-muted hover:text-white transition-colors block text-left cursor-pointer select-none"
+                aria-label={`View all ${commentCount} comments`}
+              >
+                View all {commentCount.toLocaleString()} {commentCount === 1 ? 'comment' : 'comments'}
+              </button>
+            </div>
+          )}
+
+          {/* 6. TIMESTAMP & METADATA FOOTER */}
+          <div className="px-3.5 sm:px-4 pb-3 pt-1 text-[11px] font-normal text-text-faint/80 uppercase tracking-wider select-none">
+            {formatRelativeTime(displayPost.createdAt)}
+          </div>
         </>
       )}
 
