@@ -16,6 +16,7 @@ const StoryViewer = lazyWithRetry(() => import('../../components/community/stori
 const CreateStoryModal = lazyWithRetry(() => import('../../components/community/stories/CreateStoryModal'));
 const CreatePostModal = lazyWithRetry(() => import('../../components/community/composer/CreatePostModal'));
 const CreateActionModal = lazyWithRetry(() => import('../../components/community/composer/CreateActionModal'));
+const ReelStudioModal = lazyWithRetry(() => import('../../components/community/composer/ReelStudioModal'));
 const CommentDrawer = lazyWithRetry(() => import('../../components/community/comments/CommentDrawer'));
 const CommunitySearchModal = lazyWithRetry(() => import('../../components/community/discovery/CommunitySearchModal'));
 const MobileDiscoveryDrawer = lazyWithRetry(() => import('../../components/community/discovery/MobileDiscoveryDrawer'));
@@ -42,7 +43,7 @@ import FeatureErrorBoundary from '../../components/common/FeatureErrorBoundary';
  * - Seamless integration with platform QuickSearch (⌘K)
  * - Preserved single CommentDrawer & StoryRail orchestration
  */
-export default function CommunityHome() {
+export default function CommunityHome({ initialCreateMode } = {}) {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -55,6 +56,7 @@ export default function CommunityHome() {
   const [isCreateStoryModalOpen, setIsCreateStoryModalOpen] = useState(false);
   const [isCreateActionOpen, setIsCreateActionOpen] = useState(false);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
+  const [isCreateReelOpen, setIsCreateReelOpen] = useState(false);
   const [isMobileDiscoveryOpen, setIsMobileDiscoveryOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeCommentPost, setActiveCommentPost] = useState(null);
@@ -157,20 +159,72 @@ export default function CommunityHome() {
     }
   }, []);
 
+  // Handle opening creation studios with route synchronization
+  const handleOpenCreatePost = useCallback(() => {
+    setIsCreatePostOpen(true);
+    if (!window.location.pathname.startsWith('/community/create/post')) {
+      window.history.pushState(null, '', '/community/create/post');
+    }
+  }, []);
+
+  const handleCloseCreatePost = useCallback(() => {
+    setIsCreatePostOpen(false);
+    if (window.location.pathname.startsWith('/community/create/post')) {
+      window.history.replaceState(null, '', '/community');
+    }
+  }, []);
+
+  const handleOpenCreateReel = useCallback(() => {
+    setIsCreateReelOpen(true);
+    if (!window.location.pathname.startsWith('/community/create/reel')) {
+      window.history.pushState(null, '', '/community/create/reel');
+    }
+  }, []);
+
+  const handleCloseCreateReel = useCallback(() => {
+    setIsCreateReelOpen(false);
+    if (window.location.pathname.startsWith('/community/create/reel')) {
+      window.history.replaceState(null, '', '/community');
+    }
+  }, []);
+
+  // Initial deep-link mount for /community/create/post and /community/create/reel
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path === '/community/create/post' || initialCreateMode === 'post') {
+      setIsCreatePostOpen(true);
+    } else if (path === '/community/create/reel' || initialCreateMode === 'reel') {
+      setIsCreateReelOpen(true);
+    }
+  }, [initialCreateMode]);
+
   // Back button popstate listener
   useEffect(() => {
     const handlePopState = () => {
-      if (!window.location.pathname.startsWith('/community/reels') && activeReelPostId) {
+      const path = window.location.pathname;
+      if (!path.startsWith('/community/reels') && activeReelPostId) {
         setActiveReelPostId(null);
+      }
+      if (!path.startsWith('/community/create/post') && isCreatePostOpen) {
+        setIsCreatePostOpen(false);
+      }
+      if (!path.startsWith('/community/create/reel') && isCreateReelOpen) {
+        setIsCreateReelOpen(false);
+      }
+      if (path === '/community/create/post') {
+        setIsCreatePostOpen(true);
+      }
+      if (path === '/community/create/reel') {
+        setIsCreateReelOpen(true);
       }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [activeReelPostId]);
+  }, [activeReelPostId, isCreatePostOpen, isCreateReelOpen]);
 
   const handleEmptyStateAction = useCallback(() => {
-    setIsCreatePostOpen(true);
-  }, []);
+    handleOpenCreatePost();
+  }, [handleOpenCreatePost]);
 
   const handleOpenSearch = useCallback(() => {
     setIsSearchOpen(true);
@@ -212,21 +266,31 @@ export default function CommunityHome() {
             />
           )}
 
-          {/* ── Instagram-Style Quick Create Chooser ── */}
+          {/* ── Premium Quick Create Chooser (Post vs Reel) ── */}
           {isCreateActionOpen && (
             <CreateActionModal
               isOpen={isCreateActionOpen}
               onClose={() => setIsCreateActionOpen(false)}
-              onSelectPost={() => setIsCreatePostOpen(true)}
+              onSelectPost={handleOpenCreatePost}
+              onSelectReel={handleOpenCreateReel}
               onSelectStory={() => setIsCreateStoryModalOpen(true)}
             />
           )}
 
-          {/* ── Multi-Step Post Publishing Flow ── */}
+          {/* ── Post Studio Shell ── */}
           {isCreatePostOpen && (
             <CreatePostModal
               isOpen={isCreatePostOpen}
-              onClose={() => setIsCreatePostOpen(false)}
+              onClose={handleCloseCreatePost}
+            />
+          )}
+
+          {/* ── Reel Studio Shell ── */}
+          {isCreateReelOpen && (
+            <ReelStudioModal
+              isOpen={isCreateReelOpen}
+              onClose={handleCloseCreateReel}
+              onSuccess={() => refetchFeed()}
             />
           )}
 

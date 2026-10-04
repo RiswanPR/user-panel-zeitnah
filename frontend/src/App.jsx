@@ -214,6 +214,8 @@ function App() {
                 <Route path="/network/spaces/:slugOrId" element={<Suspense fallback={<PageLoader />}><LearningSpaceDetailPage /></Suspense>} />
                 <Route path="/network/spaces/:slugOrId/discussions/:discussionId" element={<Suspense fallback={<PageLoader />}><DiscussionDetailPage /></Suspense>} />
                 <Route path="/community" element={<Suspense fallback={<PageLoader />}><CommunityHome /></Suspense>} />
+                <Route path="/community/create/post" element={<Suspense fallback={<PageLoader />}><CommunityHome initialCreateMode="post" /></Suspense>} />
+                <Route path="/community/create/reel" element={<Suspense fallback={<PageLoader />}><CommunityHome initialCreateMode="reel" /></Suspense>} />
                 <Route path="/community/saved" element={<Suspense fallback={<PageLoader />}><SavedPostsPage /></Suspense>} />
                 <Route path="/community/reels" element={<Suspense fallback={<PageLoader />}><ReelsPage /></Suspense>} />
                 <Route path="/community/reels/:postId" element={<Suspense fallback={<PageLoader />}><ReelsPage /></Suspense>} />
