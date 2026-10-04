@@ -91,12 +91,15 @@ export class PostService {
         throw new BadRequestException(`Invalid media type: ${mediaType}`);
       }
 
-      // Check authoritative size limits if provided
-      if (mediaType === 'image' && m.size && m.size > 15 * 1024 * 1024) {
-        throw new BadRequestException('Image exceeds authoritative size limit of 15MB');
+      // Check authoritative size & duration limits if provided
+      if (mediaType === 'image' && m.size && m.size > 8 * 1024 * 1024) {
+        throw new BadRequestException('Photo must be 8 MB or smaller.');
       }
-      if (mediaType === 'video' && m.size && m.size > 50 * 1024 * 1024) {
-        throw new BadRequestException('Video exceeds authoritative size limit of 50MB');
+      if (mediaType === 'video' && m.size && m.size > 1024 * 1024 * 1024) {
+        throw new BadRequestException('Video must be 1 GB or smaller.');
+      }
+      if (mediaType === 'video' && (m as any).duration && (m as any).duration > 90) {
+        throw new BadRequestException('Video must be 90 seconds or shorter.');
       }
 
       // Authoritative Media Ownership & Path Traversal Check (Section 5 & 6)

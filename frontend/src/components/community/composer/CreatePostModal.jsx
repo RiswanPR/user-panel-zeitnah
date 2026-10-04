@@ -260,22 +260,72 @@ export default function CreatePostModal({ isOpen, onClose }) {
   };
 
   // ── Step 1: File Selection & Pre-Validation ──
-  const handleFilesAdded = (e) => {
+  const handleFilesAdded = async (e) => {
     const incomingFiles = Array.from(e.target.files || []);
     if (!incomingFiles.length) return;
 
+    // Helper to inspect client-side video duration for immediate UX feedback
+    const checkBrowserDuration = (file) => {
+      return new Promise((resolve) => {
+        try {
+          const video = document.createElement('video');
+          video.preload = 'metadata';
+          const objUrl = URL.createObjectURL(file);
+          video.onloadedmetadata = () => {
+            URL.revokeObjectURL(objUrl);
+            resolve(video.duration);
+          };
+          video.onerror = () => {
+            URL.revokeObjectURL(objUrl);
+            resolve(null);
+          };
+          video.src = objUrl;
+        } catch {
+          resolve(null);
+        }
+      });
+    };
+
     // Security & pre-validation checks
     for (const file of incomingFiles) {
-      if (file.size > 50 * 1024 * 1024) {
+      const ext = (file.name || '').split('.').pop()?.toLowerCase();
+      const isImage = file.type.startsWith('image/') || ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(ext);
+      const isVideo = file.type.startsWith('video/') || ['mp4', 'mov', 'webm'].includes(ext);
+
+      // Photo size limit: 8 MiB / 8 MB user-facing
+      if (isImage && file.size > 8 * 1024 * 1024) {
+        toast.error('Photo must be 8 MB or smaller.');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+
+      // Video size limit: 1 GiB / 1 GB user-facing
+      if (isVideo && file.size > 1024 * 1024 * 1024) {
+        toast.error('Video must be 1 GB or smaller.');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+
+      // Video duration limit: 90 seconds
+      if (isVideo) {
+        const duration = await checkBrowserDuration(file);
+        if (duration !== null && duration > 90) {
+          toast.error('Video must be 90 seconds or shorter.');
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          return;
+        }
+      }
+
+      // Fallback document limit: 50MB
+      if (!isImage && !isVideo && file.size > 50 * 1024 * 1024) {
         toast.error(`"${file.name}" exceeds the 50MB file size limit.`);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
 
-      const ext = (file.name || '').split('.').pop()?.toLowerCase();
       const isAllowed =
-        file.type.startsWith('image/') ||
-        file.type.startsWith('video/') ||
+        isImage ||
+        isVideo ||
         file.type.includes('pdf') ||
         ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'mp4', 'mov', 'webm', 'pdf'].includes(ext);
 
@@ -373,6 +423,11 @@ export default function CreatePostModal({ isOpen, onClose }) {
                   ((i + filePercent / 100) / files.length) * 85
                 );
                 setUploadProgress(totalPercent);
+
+                const loadedMB = (progressEvent.loaded / (1024 * 1024)).toFixed(1);
+                const totalMB = (progressEvent.total / (1024 * 1024)).toFixed(1);
+                const fileTypeLabel = item.type === 'video' ? 'video' : 'media';
+                setUploadStatusText(`Uploading ${fileTypeLabel} ${i + 1} of ${files.length} (${loadedMB} MB / ${totalMB} MB)...`);
               }
             },
             abortControllerRef.current?.signal
@@ -452,7 +507,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
       if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') {
         errMsg = 'Upload cancelled.';
       } else if (err?.response?.status === 413) {
-        errMsg = 'File exceeds maximum upload size limit.';
+        errMsg = err?.response?.data?.message || 'File exceeds maximum upload size limit.';
       } else if (err?.response?.status === 401) {
         errMsg = 'Your session has expired. Please sign in again.';
       } else if (

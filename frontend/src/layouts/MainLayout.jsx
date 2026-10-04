@@ -22,6 +22,7 @@ import PlatformAnnouncementBanner from "../components/announcements/PlatformAnno
 import MobileMoreDrawer from "../components/navigation/MobileMoreDrawer";
 import MainNavbar from "../components/navigation/MainNavbar";
 import Footer from "../components/navigation/Footer";
+import OnboardingOverlay from "../components/onboarding/OnboardingOverlay";
 import { getPrimaryCareerNavigation } from "../utils/roleNavigation";
 
 export default function MainLayout({ children }) {
@@ -116,6 +117,7 @@ export default function MainLayout({ children }) {
               {/* 1. Courses (First) */}
               <Link
                 to="/courses"
+                data-tour="learning"
                 aria-current={isRouteActive("courses") ? "page" : undefined}
                 className="relative flex flex-col items-center justify-center py-1 px-3 min-h-[46px] min-w-[54px] rounded-xl transition-all focus-ring touch-manipulation"
               >
@@ -143,6 +145,7 @@ export default function MainLayout({ children }) {
               {/* 2. Community */}
               <Link
                 to="/community"
+                data-tour="community"
                 aria-current={isRouteActive("community") ? "page" : undefined}
                 className="relative flex flex-col items-center justify-center py-1 px-3 min-h-[46px] min-w-[54px] rounded-xl transition-all focus-ring touch-manipulation"
               >
@@ -170,6 +173,7 @@ export default function MainLayout({ children }) {
               {/* 3. Network */}
               <Link
                 to="/network"
+                data-tour="network"
                 aria-current={isRouteActive("network") ? "page" : undefined}
                 className="relative flex flex-col items-center justify-center py-1 px-3 min-h-[46px] min-w-[54px] rounded-xl transition-all focus-ring touch-manipulation"
               >
@@ -197,6 +201,7 @@ export default function MainLayout({ children }) {
               {/* 4. Role-Aware Career Item (Manage Business for Recruiter/Founder, Jobs for others) */}
               <Link
                 to={careerItem.path}
+                data-tour="opportunities"
                 aria-current={isRouteActive(careerItem.key) ? "page" : undefined}
                 className="relative flex flex-col items-center justify-center py-1 px-3 min-h-[46px] min-w-[54px] rounded-xl transition-all focus-ring touch-manipulation"
               >
@@ -312,6 +317,7 @@ export default function MainLayout({ children }) {
       <NotificationDrawer />
       <CookieConsentBanner />
       <UsernameClaimModal />
+      <OnboardingOverlay />
     </div>
   );
 }

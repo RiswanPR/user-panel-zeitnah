@@ -1,6 +1,6 @@
 /// <reference types="jest" />
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException, BadRequestException, PayloadTooLargeException } from '@nestjs/common';
 import { PostService } from './services/post.service';
 import { CommentService } from './services/comment.service';
 import { CommunityS3Service } from './services/community-s3.service';
@@ -281,31 +281,47 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
   describe('Phase 4.2: Upload Limits & Magic Bytes Verification', () => {
     const validReq = { user: { userId: 'user-123', role: 'student' } };
 
-    it('rejects image files exceeding 15MB', async () => {
+    it('rejects image files exceeding 8 MiB with PayloadTooLargeException (413)', async () => {
       const oversizedImage = {
         fieldname: 'file',
         originalname: 'large.jpg',
         mimetype: 'image/jpeg',
-        size: 16 * 1024 * 1024,
+        size: 8 * 1024 * 1024 + 1,
         buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0]),
       } as any;
 
       await expect(
         uploadController.uploadFile(oversizedImage, validReq),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(PayloadTooLargeException);
     });
 
-    it('rejects video files exceeding 50MB', async () => {
+    it('rejects video files exceeding 1 GiB with PayloadTooLargeException (413)', async () => {
       const oversizedVideo = {
         fieldname: 'file',
         originalname: 'large.mp4',
         mimetype: 'video/mp4',
-        size: 51 * 1024 * 1024,
+        size: 1024 * 1024 * 1024 + 1,
         buffer: Buffer.from([0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70]),
       } as any;
 
       await expect(
         uploadController.uploadFile(oversizedVideo, validReq),
+      ).rejects.toThrow(PayloadTooLargeException);
+    });
+
+    it('rejects video files exceeding 90 seconds duration with BadRequestException (400)', async () => {
+      const longVideo = {
+        fieldname: 'file',
+        originalname: 'long.mp4',
+        mimetype: 'video/mp4',
+        size: 10 * 1024 * 1024,
+        buffer: Buffer.from([0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70]),
+      } as any;
+
+      jest.spyOn(communityS3Service, 'getVideoDuration').mockResolvedValue(91);
+
+      await expect(
+        uploadController.uploadFile(longVideo, validReq),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -467,11 +483,29 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('rejects oversized image in post media if size specified exceeds 15MB', async () => {
+    it('rejects oversized image in post media if size specified exceeds 8 MiB', async () => {
       await expect(
         postService.createPost('user-123', {
           content: 'Oversized',
-          media: [{ url: 'https://example.com/image.jpg', type: 'image', size: 16 * 1024 * 1024 }],
+          media: [{ url: 'https://example.com/image.jpg', type: 'image', size: 8 * 1024 * 1024 + 1 }],
+        } as any),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects oversized video in post media if size specified exceeds 1 GiB', async () => {
+      await expect(
+        postService.createPost('user-123', {
+          content: 'Oversized video',
+          media: [{ url: 'https://example.com/video.mp4', type: 'video', size: 1024 * 1024 * 1024 + 1 }],
+        } as any),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects video in post media if duration exceeds 90 seconds', async () => {
+      await expect(
+        postService.createPost('user-123', {
+          content: 'Long video',
+          media: [{ url: 'https://example.com/video.mp4', type: 'video', duration: 91 }],
         } as any),
       ).rejects.toThrow(BadRequestException);
     });

@@ -127,6 +127,27 @@ export class Post {
 }
 
 export const PostSchema = SchemaFactory.createForClass(Post);
+
+// Defensive canonicalization hooks: guarantee type and audience are canonical uppercase
+// before Mongoose schema validation runs, preventing "type: text is not a valid enum value"
+PostSchema.pre('validate', function () {
+  if (this.type && typeof this.type === 'string') {
+    (this as any).type = (this.type as string).toUpperCase() as PostType;
+  }
+  if (this.audience && typeof this.audience === 'string') {
+    (this as any).audience = (this.audience as string).toUpperCase() as PostAudience;
+  }
+});
+
+PostSchema.pre('save', function () {
+  if (this.type && typeof this.type === 'string') {
+    (this as any).type = (this.type as string).toUpperCase() as PostType;
+  }
+  if (this.audience && typeof this.audience === 'string') {
+    (this as any).audience = (this.audience as string).toUpperCase() as PostAudience;
+  }
+});
+
 PostSchema.index({ createdAt: -1 });
 PostSchema.index({ audience: 1, courseId: 1, createdAt: -1 });
 // Highly optimized index for the main feed query

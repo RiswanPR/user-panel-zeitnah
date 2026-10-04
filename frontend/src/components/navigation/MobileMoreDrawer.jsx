@@ -15,9 +15,11 @@ import {
   LogOut,
   MessageSquare,
   ChevronRight,
+  Compass,
 } from "lucide-react";
 import { getUploadUrl } from "../../utils/courseUi";
 import { normalizeUserRole, isAdmin } from "../../utils/roleNavigation";
+import { useOnboarding } from "../../context/OnboardingContext";
 
 /**
  * Zeitnah 3.0 Mobile "More" Command Sheet
@@ -38,6 +40,7 @@ export default function MobileMoreDrawer({
   unreadMessagesCount = 0,
 }) {
   const location = useLocation();
+  const { startTour } = useOnboarding();
 
   // Close on route change
   useEffect(() => {
@@ -154,6 +157,15 @@ export default function MobileMoreDrawer({
             icon: ShieldAlert,
             desc: "Device management & security audit",
           },
+          {
+            label: "Product Tour",
+            icon: Compass,
+            desc: "Interactive walkthrough of Zeitnah",
+            isAction: true,
+            onClick: () => {
+              startTour({ reset: true });
+            },
+          },
         ],
       },
     ];
@@ -173,7 +185,7 @@ export default function MobileMoreDrawer({
     }
 
     return groups;
-  }, [adminUser, unreadMessagesCount]);
+  }, [adminUser, unreadMessagesCount, startTour]);
 
   return (
     <AnimatePresence>
@@ -368,8 +380,62 @@ export default function MobileMoreDrawer({
                       {group.items.map((item) => {
                         const Icon = item.icon;
                         const isActive =
-                          location.pathname === item.path ||
-                          location.pathname.startsWith(`${item.path}/`);
+                          item.path &&
+                          (location.pathname === item.path ||
+                            location.pathname.startsWith(`${item.path}/`));
+
+                        if (item.isAction) {
+                          return (
+                            <button
+                              key={item.label}
+                              type="button"
+                              onClick={() => {
+                                onClose();
+                                item.onClick?.();
+                              }}
+                              className="w-full flex items-center gap-3 rounded-xl transition-all duration-150 touch-manipulation text-left cursor-pointer"
+                              style={{
+                                padding: "10px 12px",
+                                minHeight: "48px",
+                                background: "rgba(255,255,255,0.025)",
+                                border: "1px solid rgba(255,255,255,0.05)",
+                              }}
+                            >
+                              <div
+                                className="flex items-center justify-center shrink-0 rounded-lg"
+                                style={{
+                                  width: "32px",
+                                  height: "32px",
+                                  background: "rgba(159,213,178,0.12)",
+                                  color: "rgba(159,213,178,0.9)",
+                                }}
+                              >
+                                <Icon style={{ width: "14px", height: "14px" }} aria-hidden="true" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p
+                                  className="font-medium truncate leading-tight"
+                                  style={{
+                                    fontSize: "13px",
+                                    color: "rgba(255,255,255,0.8)",
+                                  }}
+                                >
+                                  {item.label}
+                                </p>
+                                <p
+                                  className="truncate leading-tight mt-0.5"
+                                  style={{ fontSize: "10.5px", color: "rgba(255,255,255,0.3)" }}
+                                >
+                                  {item.desc}
+                                </p>
+                              </div>
+                              <ChevronRight
+                                style={{ width: "13px", height: "13px", color: "rgba(255,255,255,0.2)" }}
+                                aria-hidden="true"
+                              />
+                            </button>
+                          );
+                        }
 
                         return (
                           <Link

@@ -17,8 +17,9 @@ import toast from 'react-hot-toast';
 
 const ALLOWED_IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
 const ALLOWED_VIDEO_EXTS = ['mp4', 'webm', 'mov'];
-const MAX_IMAGE_SIZE_BYTES = 15 * 1024 * 1024; // 15MB
-const MAX_VIDEO_SIZE_BYTES = 50 * 1024 * 1024; // 50MB
+const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8MB
+const MAX_VIDEO_SIZE_BYTES = 1024 * 1024 * 1024; // 1GB
+const MAX_VIDEO_DURATION_SECONDS = 90;
 
 const BACKGROUND_COLORS = [
   'bg-gradient-to-br from-[#12314C] via-[#0C2033] to-[#070B14]',
@@ -96,14 +97,24 @@ export default function CreateStoryModal({ isOpen, onClose }) {
     }
 
     if (isImage && selectedFile.size > MAX_IMAGE_SIZE_BYTES) {
-      return 'This image is too large (max 15MB). Please choose a smaller image.';
+      return 'Photo must be 8 MB or smaller.';
     }
 
     if (isVideo && selectedFile.size > MAX_VIDEO_SIZE_BYTES) {
-      return 'This video is too large (max 50MB). Please choose a smaller video.';
+      return 'Video must be 1 GB or smaller.';
     }
 
     return null;
+  };
+
+  const applySelectedFile = (selectedFile) => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setFile(selectedFile);
+    setUploadedUrl(null);
+    const objectUrl = URL.createObjectURL(selectedFile);
+    setPreviewUrl(objectUrl);
+    setState('selected');
+    setErrorMessage(null);
   };
 
   const handleFileSelect = (e) => {
@@ -113,17 +124,34 @@ export default function CreateStoryModal({ isOpen, onClose }) {
     const validationError = validateFile(selectedFile);
     if (validationError) {
       toast.error(validationError);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    const ext = (selectedFile.name.split('.').pop() || '').toLowerCase();
+    const isVideo = selectedFile.type.startsWith('video/') || ALLOWED_VIDEO_EXTS.includes(ext);
 
-    setFile(selectedFile);
-    setUploadedUrl(null); // Reset previously uploaded url when new file chosen
-    const objectUrl = URL.createObjectURL(selectedFile);
-    setPreviewUrl(objectUrl);
-    setState('selected');
-    setErrorMessage(null);
+    if (isVideo) {
+      const tempVideo = document.createElement('video');
+      tempVideo.preload = 'metadata';
+      const objUrl = URL.createObjectURL(selectedFile);
+      tempVideo.onloadedmetadata = () => {
+        URL.revokeObjectURL(objUrl);
+        if (tempVideo.duration > MAX_VIDEO_DURATION_SECONDS) {
+          toast.error('Video must be 90 seconds or shorter.');
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          return;
+        }
+        applySelectedFile(selectedFile);
+      };
+      tempVideo.onerror = () => {
+        URL.revokeObjectURL(objUrl);
+        applySelectedFile(selectedFile);
+      };
+      return;
+    }
+
+    applySelectedFile(selectedFile);
   };
 
   const handleRemoveMedia = () => {

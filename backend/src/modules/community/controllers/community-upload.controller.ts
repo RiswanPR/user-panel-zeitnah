@@ -5,6 +5,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  PayloadTooLargeException,
   Delete,
   Body,
   Req,
@@ -19,6 +20,34 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { CommunityS3Service } from '../services/community-s3.service';
+import * as multer from 'multer';
+import * as os from 'os';
+import * as path from 'path';
+import * as fs from 'fs';
+import { v4 as uuidv4 } from 'uuid';
+
+export const COMMUNITY_UPLOAD_LIMITS = {
+  MAX_IMAGE_SIZE: 8 * 1024 * 1024, // 8 MiB (exact binary)
+  MAX_VIDEO_SIZE: 1024 * 1024 * 1024, // 1 GiB (exact binary)
+  MAX_VIDEO_DURATION_SECONDS: 90, // 90 seconds
+  MAX_DOCUMENT_SIZE: 50 * 1024 * 1024, // 50 MiB
+};
+
+const communityDiskStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(os.tmpdir(), 'zeitnah-community-uploads');
+    if (!fs.existsSync(uploadDir)) {
+      try {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      } catch {}
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    cb(null, `${uuidv4()}${ext}`);
+  },
+});
 
 @ApiTags('Community Uploads')
 @ApiBearerAuth()
@@ -29,6 +58,14 @@ export class CommunityUploadController {
 
   private getUserId(req: any): string {
     return String(req.user?.userId || req.user?.id || req.user?._id || '');
+  }
+
+  private cleanupTempFile(file: any): void {
+    if (file?.path && fs.existsSync(file.path)) {
+      try {
+        fs.unlinkSync(file.path);
+      } catch {}
+    }
   }
 
   @Post()
@@ -45,7 +82,14 @@ export class CommunityUploadController {
       },
     },
   })
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: communityDiskStorage,
+      limits: {
+        fileSize: COMMUNITY_UPLOAD_LIMITS.MAX_VIDEO_SIZE, // 1 GiB cap for the upload route
+      },
+    }),
+  )
   async uploadFile(@UploadedFile() file: Express.Multer.File, @Req() req: any) {
     if (!file) {
       throw new BadRequestException('File is required');
@@ -53,6 +97,7 @@ export class CommunityUploadController {
 
     const userId = this.getUserId(req);
     if (!userId) {
+      this.cleanupTempFile(file);
       throw new BadRequestException('Authenticated user required');
     }
 
@@ -71,24 +116,11 @@ export class CommunityUploadController {
     ];
 
     if (!allowedMimeTypes.includes(file.mimetype)) {
+      this.cleanupTempFile(file);
       throw new BadRequestException(`Unsupported file type: ${file.mimetype}`);
     }
 
-    // Authoritative upload limits (Section 6 & 8)
-    if (file.mimetype.startsWith('image/') && file.size > 15 * 1024 * 1024) {
-      throw new BadRequestException('Image too large (max 15MB)');
-    }
-
-    if (file.mimetype.startsWith('video/') && file.size > 50 * 1024 * 1024) {
-      throw new BadRequestException('Video too large (max 50MB)');
-    }
-
-    if (file.size > 50 * 1024 * 1024) {
-      // 50MB global cap
-      throw new BadRequestException('File too large (max 50MB)');
-    }
-
-    // MIME / Extension consistency check (Section 10)
+    // MIME / Extension consistency check
     if (file.originalname) {
       const extMatch = file.originalname.match(/\.([a-zA-Z0-9]+)$/);
       if (extMatch) {
@@ -98,6 +130,7 @@ export class CommunityUploadController {
           '.js', '.jsx', '.ts', '.tsx', '.html', '.htm', '.jar', '.vbs',
         ];
         if (DANGEROUS_EXTENSIONS.includes(ext)) {
+          this.cleanupTempFile(file);
           throw new BadRequestException('Forbidden file extension detected');
         }
 
@@ -116,6 +149,7 @@ export class CommunityUploadController {
 
         const allowedExts = MIME_EXTENSION_MAP[file.mimetype];
         if (allowedExts && !allowedExts.includes(ext)) {
+          this.cleanupTempFile(file);
           throw new BadRequestException(
             `File extension ${ext} does not match declared MIME type ${file.mimetype}`,
           );
@@ -123,96 +157,55 @@ export class CommunityUploadController {
       }
     }
 
-    // File signature / magic bytes validation (Section 5 & 9)
-    this.validateMagicBytes(file);
+    // Authoritative upload limits
+    if (file.mimetype.startsWith('image/') && file.size > COMMUNITY_UPLOAD_LIMITS.MAX_IMAGE_SIZE) {
+      this.cleanupTempFile(file);
+      throw new PayloadTooLargeException({
+        code: 'FILE_TOO_LARGE',
+        message: 'Photo must be 8 MB or smaller.',
+      });
+    }
 
-    return this.s3Service.uploadCommunityMedia(file, userId);
+    if (file.mimetype.startsWith('video/') && file.size > COMMUNITY_UPLOAD_LIMITS.MAX_VIDEO_SIZE) {
+      this.cleanupTempFile(file);
+      throw new PayloadTooLargeException({
+        code: 'FILE_TOO_LARGE',
+        message: 'Video must be 1 GB or smaller.',
+      });
+    }
+
+    if (
+      !file.mimetype.startsWith('image/') &&
+      !file.mimetype.startsWith('video/') &&
+      file.size > COMMUNITY_UPLOAD_LIMITS.MAX_DOCUMENT_SIZE
+    ) {
+      this.cleanupTempFile(file);
+      throw new PayloadTooLargeException({
+        code: 'FILE_TOO_LARGE',
+        message: 'File too large (max 50MB)',
+      });
+    }
+
+    // File signature / magic bytes validation
+    try {
+      this.validateMagicBytes(file);
+    } catch (err) {
+      this.cleanupTempFile(file);
+      throw err;
+    }
+
+    try {
+      return await this.s3Service.uploadCommunityMedia(file, userId);
+    } finally {
+      this.cleanupTempFile(file);
+    }
   }
 
   /**
    * Validates file signature / magic bytes to distinguish real media from renamed malicious binaries.
    */
-  private validateMagicBytes(file: Express.Multer.File): void {
-    if (!file.buffer || file.buffer.length < 4) {
-      throw new BadRequestException('Invalid or empty file content');
-    }
-
-    const buf = file.buffer;
-    const mime = file.mimetype;
-
-    // JPEG: FF D8 FF
-    if (mime === 'image/jpeg') {
-      if (buf[0] !== 0xff || buf[1] !== 0xd8 || buf[2] !== 0xff) {
-        throw new BadRequestException('File content does not match JPEG signature');
-      }
-    }
-    // PNG: 89 50 4E 47 0D 0A 1A 0A
-    else if (mime === 'image/png') {
-      if (
-        buf[0] !== 0x89 ||
-        buf[1] !== 0x50 ||
-        buf[2] !== 0x4e ||
-        buf[3] !== 0x47
-      ) {
-        throw new BadRequestException('File content does not match PNG signature');
-      }
-    }
-    // GIF: 47 49 46 38
-    else if (mime === 'image/gif') {
-      if (
-        buf[0] !== 0x47 ||
-        buf[1] !== 0x49 ||
-        buf[2] !== 0x46 ||
-        buf[3] !== 0x38
-      ) {
-        throw new BadRequestException('File content does not match GIF signature');
-      }
-    }
-    // WEBP: RIFF at 0..3 and WEBP at 8..11
-    else if (mime === 'image/webp') {
-      const isRiff =
-        buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46;
-      const isWebp =
-        buf.length >= 12 &&
-        buf[8] === 0x57 &&
-        buf[9] === 0x45 &&
-        buf[10] === 0x42 &&
-        buf[11] === 0x50;
-      if (!isRiff || !isWebp) {
-        throw new BadRequestException('File content does not match WEBP signature');
-      }
-    }
-    // PDF: %PDF (25 50 44 46)
-    else if (mime === 'application/pdf') {
-      if (
-        buf[0] !== 0x25 ||
-        buf[1] !== 0x50 ||
-        buf[2] !== 0x44 ||
-        buf[3] !== 0x46
-      ) {
-        throw new BadRequestException('File content does not match PDF signature');
-      }
-    }
-    // MP4 / MOV: ftyp or moov box at bytes 4..8
-    else if (mime === 'video/mp4' || mime === 'video/quicktime') {
-      if (buf.length >= 8) {
-        const tag = buf.toString('ascii', 4, 8);
-        if (tag !== 'ftyp' && tag !== 'moov') {
-          throw new BadRequestException('File content does not match MP4/MOV signature');
-        }
-      }
-    }
-    // WEBM: 1A 45 DF A3 (EBML header)
-    else if (mime === 'video/webm') {
-      if (
-        buf[0] !== 0x1a ||
-        buf[1] !== 0x45 ||
-        buf[2] !== 0xdf ||
-        buf[3] !== 0xa3
-      ) {
-        throw new BadRequestException('File content does not match WebM signature');
-      }
-    }
+  public validateMagicBytes(file: Express.Multer.File | { buffer?: Buffer; path?: string; mimetype: string }): void {
+    this.s3Service.validateMagicBytes(file);
   }
 
   @Delete()

@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Trophy,
   MessageSquare,
+  Compass,
 } from "lucide-react";
 import NotificationBell from "../notifications/NotificationBell";
 import QuickSearchModal from "./QuickSearchModal";
@@ -21,6 +22,7 @@ import {
   getPrimaryNavLinks,
   getMoreNavSections,
 } from "../../utils/roleNavigation";
+import { useOnboarding } from "../../context/OnboardingContext";
 
 /**
  * ZEITNAH — PREMIUM NAVBAR 3.0
@@ -48,6 +50,7 @@ export default function MainNavbar({
 }) {
   const location = useLocation();
   const shouldReduceMotion = useReducedMotion();
+  const { startTour } = useOnboarding();
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -265,6 +268,13 @@ export default function MainNavbar({
                       to={item.path}
                       aria-current={active ? "page" : undefined}
                       title={item.label}
+                      data-tour={
+                        item.key === 'courses'
+                          ? 'learning'
+                          : item.key === 'jobs' || item.key === 'manage-business'
+                          ? 'opportunities'
+                          : item.key
+                      }
                       className={`relative flex items-center gap-1.5 rounded-lg select-none transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50 group ${
                         active
                           ? "text-white"
@@ -505,115 +515,118 @@ export default function MainNavbar({
                 </kbd>
               </button>
 
-              {/* ── MESSAGES ── */}
-              <Link
-                to="/messages"
-                aria-label={
-                  unreadMessagesCount > 0
-                    ? `Messages, ${unreadMessagesCount} unread`
-                    : "Messages"
-                }
-                title="Messages"
-                className="relative flex items-center justify-center rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50 group"
-                style={{
-                  width: "34px",
-                  height: "34px",
-                  color: messagesActive ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.45)",
-                  background: messagesActive ? "rgba(255,255,255,0.07)" : "transparent",
-                }}
-                onMouseEnter={(e) => {
-                  if (!messagesActive) {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-                    e.currentTarget.style.color = "rgba(255,255,255,0.8)";
+              {/* ── CONNECTED HUB: MESSAGES + LEADERBOARD + NOTIFICATIONS ── */}
+              <div data-tour="connected" className="flex items-center gap-1">
+                {/* ── MESSAGES ── */}
+                <Link
+                  to="/messages"
+                  aria-label={
+                    unreadMessagesCount > 0
+                      ? `Messages, ${unreadMessagesCount} unread`
+                      : "Messages"
                   }
-                }}
-                onMouseLeave={(e) => {
-                  if (!messagesActive) {
-                    e.currentTarget.style.background = "transparent";
-                    e.currentTarget.style.color = "rgba(255,255,255,0.45)";
-                  }
-                }}
-              >
-                <MessageSquare style={{ width: "16px", height: "16px" }} aria-hidden="true" />
+                  title="Messages"
+                  className="relative flex items-center justify-center rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50 group"
+                  style={{
+                    width: "34px",
+                    height: "34px",
+                    color: messagesActive ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.45)",
+                    background: messagesActive ? "rgba(255,255,255,0.07)" : "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!messagesActive) {
+                      e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                      e.currentTarget.style.color = "rgba(255,255,255,0.8)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!messagesActive) {
+                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.color = "rgba(255,255,255,0.45)";
+                    }
+                  }}
+                >
+                  <MessageSquare style={{ width: "16px", height: "16px" }} aria-hidden="true" />
 
-                {/* Unread badge */}
-                {unreadMessagesCount > 0 && (
-                  <span
-                    className="absolute flex items-center justify-center font-mono font-bold text-black bg-brand-mint rounded-full shadow-sm"
-                    style={{
-                      top: "3px",
-                      right: "3px",
-                      minWidth: "15px",
-                      height: "15px",
-                      padding: "0 3px",
-                      fontSize: "8.5px",
-                    }}
+                  {/* Unread badge */}
+                  {unreadMessagesCount > 0 && (
+                    <span
+                      className="absolute flex items-center justify-center font-mono font-bold text-black bg-brand-mint rounded-full shadow-sm"
+                      style={{
+                        top: "3px",
+                        right: "3px",
+                        minWidth: "15px",
+                        height: "15px",
+                        padding: "0 3px",
+                        fontSize: "8.5px",
+                      }}
+                      aria-hidden="true"
+                    >
+                      {unreadMessagesCount > 99 ? "99+" : unreadMessagesCount}
+                    </span>
+                  )}
+                </Link>
+
+                {/* ── LEADERBOARD RANK CAPSULE ── */}
+                <Link
+                  to="/leaderboard"
+                  aria-label={
+                    position?.rank
+                      ? `Leaderboard — your rank is #${position.rank}`
+                      : "Global Leaderboard"
+                  }
+                  title="Leaderboard"
+                  className="flex items-center gap-1.5 rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+                  style={{
+                    padding: "4px 9px",
+                    background: leaderboardActive
+                      ? "rgba(251,191,36,0.1)"
+                      : "rgba(255,255,255,0.03)",
+                    border: leaderboardActive
+                      ? "1px solid rgba(251,191,36,0.25)"
+                      : "1px solid rgba(255,255,255,0.07)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "rgba(251,191,36,0.22)";
+                    e.currentTarget.style.background = "rgba(251,191,36,0.07)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = leaderboardActive
+                      ? "rgba(251,191,36,0.25)"
+                      : "rgba(255,255,255,0.07)";
+                    e.currentTarget.style.background = leaderboardActive
+                      ? "rgba(251,191,36,0.1)"
+                      : "rgba(255,255,255,0.03)";
+                  }}
+                >
+                  <Trophy
+                    style={{ width: "13px", height: "13px", color: "rgba(251,191,36,0.8)" }}
                     aria-hidden="true"
-                  >
-                    {unreadMessagesCount > 99 ? "99+" : unreadMessagesCount}
-                  </span>
-                )}
-              </Link>
+                  />
+                  {position?.rank ? (
+                    <span
+                      className="font-mono font-bold tabular-nums"
+                      style={{ fontSize: "11px", color: "rgba(255,255,255,0.85)" }}
+                    >
+                      #{position.rank}
+                    </span>
+                  ) : (
+                    <span
+                      className="hidden lg:inline font-mono"
+                      style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)" }}
+                    >
+                      Rank
+                    </span>
+                  )}
+                </Link>
 
-              {/* ── LEADERBOARD RANK CAPSULE ── */}
-              <Link
-                to="/leaderboard"
-                aria-label={
-                  position?.rank
-                    ? `Leaderboard — your rank is #${position.rank}`
-                    : "Global Leaderboard"
-                }
-                title="Leaderboard"
-                className="flex items-center gap-1.5 rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
-                style={{
-                  padding: "4px 9px",
-                  background: leaderboardActive
-                    ? "rgba(251,191,36,0.1)"
-                    : "rgba(255,255,255,0.03)",
-                  border: leaderboardActive
-                    ? "1px solid rgba(251,191,36,0.25)"
-                    : "1px solid rgba(255,255,255,0.07)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(251,191,36,0.22)";
-                  e.currentTarget.style.background = "rgba(251,191,36,0.07)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = leaderboardActive
-                    ? "rgba(251,191,36,0.25)"
-                    : "rgba(255,255,255,0.07)";
-                  e.currentTarget.style.background = leaderboardActive
-                    ? "rgba(251,191,36,0.1)"
-                    : "rgba(255,255,255,0.03)";
-                }}
-              >
-                <Trophy
-                  style={{ width: "13px", height: "13px", color: "rgba(251,191,36,0.8)" }}
-                  aria-hidden="true"
-                />
-                {position?.rank ? (
-                  <span
-                    className="font-mono font-bold tabular-nums"
-                    style={{ fontSize: "11px", color: "rgba(255,255,255,0.85)" }}
-                  >
-                    #{position.rank}
-                  </span>
-                ) : (
-                  <span
-                    className="hidden lg:inline font-mono"
-                    style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)" }}
-                  >
-                    Rank
-                  </span>
-                )}
-              </Link>
-
-              {/* ── NOTIFICATIONS ── */}
-              <NotificationBell className="shrink-0" />
+                {/* ── NOTIFICATIONS ── */}
+                <NotificationBell className="shrink-0" />
+              </div>
 
               {/* ── PROFILE MENU ── */}
               {user ? (
-                <div className="relative ml-0.5" ref={profileDropdownRef}>
+                <div className="relative ml-0.5" ref={profileDropdownRef} data-tour="profile">
                   <button
                     ref={profileButtonRef}
                     type="button"
@@ -732,6 +745,18 @@ export default function MainNavbar({
                               <span style={{ fontSize: "12px" }}>{label}</span>
                             </Link>
                           ))}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsProfileOpen(false);
+                              startTour({ reset: true });
+                            }}
+                            className="w-full flex items-center gap-2.5 rounded-xl transition-all duration-150 text-white/55 hover:text-white hover:bg-white/[0.04] text-left cursor-pointer"
+                            style={{ padding: "7px 10px" }}
+                          >
+                            <Compass style={{ width: "13px", height: "13px", color: "rgba(159,213,178,0.85)" }} aria-hidden="true" />
+                            <span style={{ fontSize: "12px" }}>Product Tour</span>
+                          </button>
                         </div>
 
                         {/* Sign out */}

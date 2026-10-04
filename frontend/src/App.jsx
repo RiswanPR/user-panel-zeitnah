@@ -14,6 +14,7 @@ import { ToastProvider } from "./components/ui/Toast";
 import { Toaster } from 'react-hot-toast';
 import { NotificationProvider } from "./context/NotificationContext";
 import { MessagingProvider } from "./context/MessagingContext";
+import { OnboardingProvider } from "./context/OnboardingContext";
 
 // Error Capture & Troubleshoot
 import { initErrorCapture } from "./utils/errorCapture";
@@ -126,8 +127,9 @@ function App() {
         <NotificationProvider>
           <MessagingProvider>
             <BrowserRouter>
-              <NativeBridgeHandler />
-              <Routes>
+              <OnboardingProvider>
+                <NativeBridgeHandler />
+                <Routes>
 
               {/* PUBLIC AUTHENTICATION ROUTES */}
               <Route path="/login" element={<Login />} />
@@ -265,7 +267,8 @@ function App() {
             </Routes>
             {/* Global Troubleshoot Error Reporter */}
             <TroubleshootReporter />
-          </BrowserRouter>
+          </OnboardingProvider>
+        </BrowserRouter>
           </MessagingProvider>
         </NotificationProvider>
       </ToastProvider>
