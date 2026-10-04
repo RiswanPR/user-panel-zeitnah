@@ -1,7 +1,5 @@
 import { useState, useCallback, useContext, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import FeedFilterTabs from '../../components/community/feed/FeedFilterTabs';
-import Composer from '../../components/community/Composer';
 import PostCard from '../../components/community/PostCard';
 import StoryViewer from '../../components/community/stories/StoryViewer';
 import StoryRail from '../../components/community/stories/StoryRail';
@@ -41,23 +39,10 @@ import BrandAmbientShape from '../../components/community/ui/BrandAmbientShape';
 export default function CommunityHome() {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
   // ── URL Feed Filter State ──
   const activeFilter = normalizeFeedFilter(searchParams.get('feed'));
-
-  const handleFilterChange = useCallback(
-    (filterId) => {
-      const nextParams = new URLSearchParams(searchParams);
-      if (filterId === 'all') {
-        nextParams.delete('feed');
-      } else {
-        nextParams.set('feed', filterId);
-      }
-      setSearchParams(nextParams, { replace: false });
-    },
-    [searchParams, setSearchParams]
-  );
 
   // ── Modals & Overlays State ──
   const [selectedGroupIndex, setSelectedGroupIndex] = useState(null);
@@ -69,7 +54,6 @@ export default function CommunityHome() {
   const [activeTopic, setActiveTopic] = useState(null);
 
   const currentUserId = user?._id || user?.id || user?.userId;
-  const hasCohort = Boolean(user?.enrolledCourses && user.enrolledCourses.length > 0);
 
   // ── Fetch Stories & Group (1 User = 1 Icon) ──
   const { data: storiesData, isLoading: storiesLoading } = useActiveStories();
@@ -128,11 +112,7 @@ export default function CommunityHome() {
   }, [rawPosts, activeTopic]);
 
   const handleEmptyStateAction = useCallback(() => {
-    const composer = document.getElementById('composer-textarea');
-    if (composer) {
-      composer.focus();
-      composer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+    setIsCreatePostOpen(true);
   }, []);
 
   const handleOpenSearch = useCallback(() => {
@@ -217,15 +197,8 @@ export default function CommunityHome() {
 
       {/* ── Responsive Layout Grid (Main Feed + Desktop Discovery Sidebar) ── */}
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_340px] gap-8 items-start">
-        {/* ── PRIMARY COLUMN (Feed Filters, Composer, Filtered Feed) ── */}
-        <div className="space-y-6 min-w-0" id={`feed-panel-${activeFilter}`}>
-          {/* ── Feed Filter Tabs ── */}
-          <FeedFilterTabs
-            activeFilter={activeFilter}
-            onChangeFilter={handleFilterChange}
-            hasCohort={hasCohort}
-          />
-
+        {/* ── PRIMARY COLUMN (Community Feed) ── */}
+        <div className="space-y-4 min-w-0" id={`feed-panel-${activeFilter}`}>
           {/* Active Topic Banner if filtering by topic */}
           {activeTopic && (
             <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#12314C]/70 to-[#9FD5B2]/15 border border-brand-mint/30 text-xs text-white">
@@ -241,9 +214,6 @@ export default function CommunityHome() {
               </button>
             </div>
           )}
-
-          {/* ── Post Composer ── */}
-          <Composer onOpenModal={() => setIsCreatePostOpen(true)} />
 
           {/* ── Feed Section ── */}
           <div className="space-y-4">
