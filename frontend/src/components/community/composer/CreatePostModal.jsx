@@ -506,8 +506,10 @@ export default function CreatePostModal({ isOpen, onClose }) {
       let errMsg = 'Failed to share post. Please try again.';
       if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') {
         errMsg = 'Upload cancelled.';
+      } else if (err?.response?.data?.message) {
+        errMsg = err.response.data.message;
       } else if (err?.response?.status === 413) {
-        errMsg = err?.response?.data?.message || 'File exceeds maximum upload size limit.';
+        errMsg = 'File exceeds maximum upload size limit.';
       } else if (err?.response?.status === 401) {
         errMsg = 'Your session has expired. Please sign in again.';
       } else if (
@@ -515,8 +517,6 @@ export default function CreatePostModal({ isOpen, onClose }) {
         (typeof navigator !== 'undefined' && !navigator.onLine)
       ) {
         errMsg = 'Network connection error. Please check your internet connection.';
-      } else if (err?.response?.data?.message) {
-        errMsg = err.response.data.message;
       }
       setUploadError(errMsg);
       toast.error(errMsg);

@@ -470,6 +470,8 @@ export default function CreateStoryModal({ isOpen, onClose }) {
       let userMsg = "Zeitnah couldn't publish this story right now. Please try again.";
       if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') {
         userMsg = 'Upload cancelled.';
+      } else if (err?.response?.data?.message) {
+        userMsg = err.response.data.message;
       } else if (err?.response?.status === 413) {
         userMsg = 'File exceeds maximum upload size limit.';
       } else if (err?.response?.status === 401) {
@@ -479,8 +481,6 @@ export default function CreateStoryModal({ isOpen, onClose }) {
         (typeof navigator !== 'undefined' && !navigator.onLine)
       ) {
         userMsg = "We couldn't upload this story. Check your connection and try again.";
-      } else if (err?.response?.data?.message) {
-        userMsg = err.response.data.message;
       }
 
       setErrorMessage(userMsg);
