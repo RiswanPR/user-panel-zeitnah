@@ -16,6 +16,24 @@ export function useCommunityFeed({ filter = 'all' } = {}) {
   });
 }
 
+export function useCommunityVideoFeed() {
+  return useInfiniteQuery({
+    queryKey: ['community', 'feed', { filter: 'video' }],
+    queryFn: ({ pageParam = '' }) => communityApi.getVideoFeed({ cursor: pageParam, limit: 10 }),
+    getNextPageParam: (lastPage) => lastPage?.nextCursor || undefined,
+    initialPageParam: '',
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
+  });
+}
+
+export function useRecordPostView() {
+  return useMutation({
+    mutationFn: (postId) => communityApi.recordPostView(postId),
+  });
+}
+
+
 export function useCommunitySearch({ query = '', type = 'all', enabled = true } = {}) {
   const cleanQ = (query || '').trim();
   return useQuery({

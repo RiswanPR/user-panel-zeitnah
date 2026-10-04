@@ -60,6 +60,7 @@ const Home = lazyWithRetry(() => import("./pages/home/Home"));
 const AboutPage = lazyWithRetry(() => import("./pages/about/AboutPage"));
 const CommunityHome = lazyWithRetry(() => import("./pages/community/CommunityHome"));
 const SavedPostsPage = lazyWithRetry(() => import("./pages/community/SavedPostsPage"));
+const ReelsPage = lazyWithRetry(() => import("./pages/community/ReelsPage"));
 
 import ProtectedRoute from "./components/common/ProtectedRoute/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";
@@ -214,6 +215,8 @@ function App() {
                 <Route path="/network/spaces/:slugOrId/discussions/:discussionId" element={<Suspense fallback={<PageLoader />}><DiscussionDetailPage /></Suspense>} />
                 <Route path="/community" element={<Suspense fallback={<PageLoader />}><CommunityHome /></Suspense>} />
                 <Route path="/community/saved" element={<Suspense fallback={<PageLoader />}><SavedPostsPage /></Suspense>} />
+                <Route path="/community/reels" element={<Suspense fallback={<PageLoader />}><ReelsPage /></Suspense>} />
+                <Route path="/community/reels/:postId" element={<Suspense fallback={<PageLoader />}><ReelsPage /></Suspense>} />
                 <Route path="/messages" element={<Suspense fallback={<PageLoader />}><MessagesPage /></Suspense>} />
                 <Route path="/messages/:conversationId" element={<Suspense fallback={<PageLoader />}><MessagesPage /></Suspense>} />
                 <Route path="/notifications" element={<Suspense fallback={<PageLoader />}><NotificationsPage /></Suspense>} />

@@ -30,7 +30,7 @@ import QuotedPost from '../../reposts/QuotedPost';
  * Premium Instagram-level social feed core implementing the clear hierarchy:
  * AUTHOR → CONTENT → MEDIA → META / TOPIC → ACTIONS → ENGAGEMENT → COMMENTS
  */
-function PostCard({ post, onOpenComments, isActiveCommentPost }) {
+function PostCard({ post, onOpenComments, isActiveCommentPost, onOpenReel }) {
   const { user } = useContext(AuthContext);
   const [localShowComments, setLocalShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
@@ -212,8 +212,14 @@ function PostCard({ post, onOpenComments, isActiveCommentPost }) {
 
           {/* 3. MEDIA: Media-First High-Impact Presentation */}
           {hasMedia && (
-            <PostMedia media={displayPost.media} onDoubleTapLike={handleDoubleTapLike} />
+            <PostMedia
+              media={displayPost.media}
+              postId={targetActionPostId}
+              onDoubleTapLike={handleDoubleTapLike}
+              onOpenReel={onOpenReel}
+            />
           )}
+
 
           {/* 4. META / TOPIC: Hashtags for media posts */}
           {hasMedia && displayPost.tags && displayPost.tags.length > 0 && (

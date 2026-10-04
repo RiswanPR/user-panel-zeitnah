@@ -83,6 +83,9 @@ export default function MainLayout({ children }) {
     (Boolean(new URLSearchParams(location.search).get("c")) ||
       location.pathname.replace(/\/+$/, "").length > "/messages".length);
 
+  // Suppress bottom nav inside immersive Reels viewer
+  const isReelsActive = location.pathname.startsWith("/community/reels");
+
   // Authoritative career item based on role (Manage Business for Recruiter/Founder, Jobs for others)
   const careerItem = getPrimaryCareerNavigation(user);
   const CareerIcon = careerItem.icon;
@@ -110,7 +113,7 @@ export default function MainLayout({ children }) {
           1. Courses  2. Network  3. Messages  4. Jobs  5. More
           Suppressed inside active mobile conversation
           ═══════════════════════════════════════════════ */}
-        {!isMessagesActiveConversation && (
+        {!isMessagesActiveConversation && !isReelsActive && (
           <div className="fixed bottom-0 inset-x-0 z-40 md:hidden pb-[env(safe-area-inset-bottom)] pointer-events-none">
             <div className="mx-3 mb-2.5 px-2 py-1.5 rounded-2xl bg-[#0B111E]/95 border border-white/[0.1] backdrop-blur-2xl shadow-[0_-8px_32px_rgba(0,0,0,0.5)] pointer-events-auto">
             <nav className="flex items-center justify-around" aria-label="Mobile Bottom Navigation">

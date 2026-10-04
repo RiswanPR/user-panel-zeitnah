@@ -6,6 +6,7 @@ import {
   Briefcase,
   Search,
   ExternalLink,
+  Film,
 } from 'lucide-react';
 import PremiumCard from '../../ui/PremiumCard';
 
@@ -26,6 +27,12 @@ export default function DiscoveryLinks({ onOpenSearch }) {
   };
 
   const links = [
+    {
+      to: '/community/reels',
+      label: 'Community Reels',
+      description: 'Immersive short-video feed & media',
+      icon: Film,
+    },
     {
       to: '/community/saved',
       label: 'Saved Posts',

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Search, Compass, Bookmark, Sparkles } from 'lucide-react';
+import { Search, Compass, Bookmark, Sparkles, Film } from 'lucide-react';
 import BrandAmbientShape from '../ui/BrandAmbientShape';
 
 /**
@@ -51,6 +51,17 @@ export default function CommunityHeader({
             <span className="font-bold text-xs tracking-wide">Create</span>
           </button>
         )}
+
+        {/* Reels Shortcut */}
+        <Link
+          to="/community/reels"
+          className="min-h-[40px] px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-[#12314C]/30 hover:bg-[#12314C]/50 border border-white/[0.08] hover:border-brand-mint/30 text-xs font-medium text-text-secondary hover:text-white transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+          title="Watch Reels"
+          aria-label="Watch Reels"
+        >
+          <Film className="w-3.5 h-3.5 text-brand-mint" />
+          <span className="hidden md:inline">Reels</span>
+        </Link>
 
         {/* Saved Posts Shortcut */}
         <Link

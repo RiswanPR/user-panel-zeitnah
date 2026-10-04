@@ -51,6 +51,19 @@ export const communityApi = {
     return data;
   },
 
+  getVideoFeed: async ({ cursor = '', limit = 10 } = {}) => {
+    return communityApi.getFeed({ cursor, limit, filter: 'video' });
+  },
+
+  recordPostView: async (postId) => {
+    try {
+      const response = await api.post(`/community/posts/${postId}/view`);
+      return response.data;
+    } catch {
+      return null;
+    }
+  },
+
   // ── Search & Discovery ──
   searchCommunity: async ({ q, type = 'all', limit = 10, signal } = {}) => {
     if (!q || !q.trim()) {

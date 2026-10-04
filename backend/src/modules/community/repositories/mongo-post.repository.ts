@@ -95,6 +95,22 @@ export class PostRepository extends BaseRepository<PostDocument> {
       if (courseIds.length > 0) {
         matchStage.courseId = { $in: courseIds };
       }
+    } else if (filter === 'video' || filter === 'reels') {
+      matchStage.$or = [
+        { audience: 'PUBLIC' },
+        ...(courseIds.length > 0 ? [{ audience: 'COURSE', courseId: { $in: courseIds } }] : []),
+      ];
+      const videoCondition = {
+        $or: [
+          { type: 'VIDEO' },
+          { 'media.type': 'video' },
+        ],
+      };
+      if (matchStage.$and) {
+        matchStage.$and.push(videoCondition);
+      } else {
+        matchStage.$and = [videoCondition];
+      }
     } else {
       matchStage.$or = [
         { audience: 'PUBLIC' },
@@ -1345,5 +1361,20 @@ export class PostRepository extends BaseRepository<PostDocument> {
         { $inc: { 'stats.reposts': delta } },
       );
     }
+  }
+
+  async updateStats(
+    id: string,
+    stat: string,
+    increment: number,
+  ): Promise<void> {
+    const idMatches: any[] = [id];
+    if (Types.ObjectId.isValid(id)) {
+      idMatches.push(new Types.ObjectId(id));
+    }
+    await this.postModel.updateMany(
+      { _id: { $in: idMatches } },
+      { $inc: { [`stats.${String(stat)}`]: increment } },
+    );
   }
 }

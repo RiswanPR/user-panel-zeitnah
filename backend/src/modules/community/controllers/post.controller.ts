@@ -216,4 +216,11 @@ export class PostController {
     const role = req.user?.role || 'student';
     return this.postService.quotePost(id, userId, data, courseIds, role);
   }
+
+  @Post(':id/view')
+  @ApiOperation({ summary: 'Record a meaningful view on a community post / video' })
+  async recordPostView(@Req() req, @Param('id') id: string) {
+    const userId = this.getUserId(req);
+    return this.postService.recordPostView(id, userId);
+  }
 }

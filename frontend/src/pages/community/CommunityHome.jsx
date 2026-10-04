@@ -19,6 +19,7 @@ const CreateActionModal = lazyWithRetry(() => import('../../components/community
 const CommentDrawer = lazyWithRetry(() => import('../../components/community/comments/CommentDrawer'));
 const CommunitySearchModal = lazyWithRetry(() => import('../../components/community/discovery/CommunitySearchModal'));
 const MobileDiscoveryDrawer = lazyWithRetry(() => import('../../components/community/discovery/MobileDiscoveryDrawer'));
+const ReelsViewer = lazyWithRetry(() => import('../../components/community/reels/ReelsViewer'));
 import {
   normalizeFeedFilter,
   extractTrendingTopics,
@@ -58,6 +59,7 @@ export default function CommunityHome() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeCommentPost, setActiveCommentPost] = useState(null);
   const [activeTopic, setActiveTopic] = useState(null);
+  const [activeReelPostId, setActiveReelPostId] = useState(null);
 
   const currentUserId = user?._id || user?.id || user?.userId;
 
@@ -132,6 +134,39 @@ export default function CommunityHome() {
       return tags.includes(cleanActive) || hashtags.includes(cleanActive) || contentMatches;
     });
   }, [rawPosts, activeTopic]);
+
+  // Video posts available in the active feed for instant Reels playback
+  const feedVideoPosts = useMemo(() => {
+    return displayedPosts.filter(
+      (p) =>
+        p &&
+        (p.type === 'VIDEO' ||
+          (Array.isArray(p.media) && p.media.some((m) => m?.type === 'video')))
+    );
+  }, [displayedPosts]);
+
+  const handleOpenReel = useCallback((postId) => {
+    setActiveReelPostId(postId);
+    window.history.pushState(null, '', `/community/reels/${postId}`);
+  }, []);
+
+  const handleCloseReel = useCallback(() => {
+    setActiveReelPostId(null);
+    if (window.location.pathname.startsWith('/community/reels')) {
+      window.history.replaceState(null, '', '/community');
+    }
+  }, []);
+
+  // Back button popstate listener
+  useEffect(() => {
+    const handlePopState = () => {
+      if (!window.location.pathname.startsWith('/community/reels') && activeReelPostId) {
+        setActiveReelPostId(null);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [activeReelPostId]);
 
   const handleEmptyStateAction = useCallback(() => {
     setIsCreatePostOpen(true);
@@ -226,6 +261,18 @@ export default function CommunityHome() {
               onOpenSearch={handleOpenSearch}
             />
           )}
+
+          {/* ── Immersive Reels Viewer Overlay ── */}
+          {Boolean(activeReelPostId) && (
+            <ReelsViewer
+              posts={feedVideoPosts}
+              initialPostId={activeReelPostId}
+              onClose={handleCloseReel}
+              onFetchNextPage={fetchNextPage}
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+            />
+          )}
         </Suspense>
       </FeatureErrorBoundary>
 
@@ -305,6 +352,7 @@ export default function CommunityHome() {
                       post={post}
                       onOpenComments={setActiveCommentPost}
                       isActiveCommentPost={isCurrentActivePost}
+                      onOpenReel={handleOpenReel}
                     />
                   );
                 })}

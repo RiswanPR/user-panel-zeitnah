@@ -422,6 +422,16 @@ export class PostService {
     return this.postRepository.removeSavedPost(postId, userId);
   }
 
+  async recordPostView(postId: string, userId: string): Promise<{ success: boolean; views: number }> {
+    const post = await this.postRepository.findById(postId);
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
+    await this.postRepository.updateStats(postId, 'views', 1);
+    const updated = await this.postRepository.findById(postId);
+    return { success: true, views: updated?.stats?.views || 1 };
+  }
+
   // Phase 3A.1 Helper: Course access verification
   private verifyPostAccess(
     post: any,

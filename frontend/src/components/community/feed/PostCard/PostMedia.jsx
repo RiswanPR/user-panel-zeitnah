@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   ZoomIn,
@@ -8,6 +9,7 @@ import {
   Volume2,
   VolumeX,
   RefreshCw,
+  Sparkles,
 } from 'lucide-react';
 import MediaLightbox from './MediaLightbox';
 
@@ -21,8 +23,10 @@ import MediaLightbox from './MediaLightbox';
  * - Responsive aspect ratios (4:5, 1:1, 16:9) with layout-shift prevention
  * - Graceful error states with inline retry
  * - Video memory safety and decoder disposal on unmount
+ * - Seamless entry to /community/reels for immersive short video consumption
  */
-export default function PostMedia({ media = [], onDoubleTapLike }) {
+export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenReel }) {
+  const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [failedMedia, setFailedMedia] = useState({});
@@ -319,6 +323,28 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
                     className="w-full h-full object-contain max-h-[620px]"
                   />
 
+                  {/* Watch Reel Button Overlay */}
+                  {postId && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onOpenReel) {
+                          onOpenReel(postId);
+                        } else {
+                          navigate(`/community/reels/${postId}`);
+                        }
+                      }}
+                      className="min-h-[38px] absolute top-3 left-3 px-3 py-1.5 rounded-full bg-black/65 hover:bg-black/85 text-white backdrop-blur-md border border-white/15 text-xs font-semibold flex items-center gap-1.5 transition-all hover:scale-105 cursor-pointer z-10 shadow-lg group-hover:border-brand-mint/50"
+                      aria-label="Open fullscreen reel"
+                      title="Watch Reel"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-brand-mint" />
+                      <span>Watch Reel</span>
+                    </button>
+                  )}
+
+
                   {/* Volume Mute/Unmute Overlay */}
                   <button
                     type="button"
@@ -336,6 +362,7 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
                 </div>
               );
             }
+
 
             // Image Item (Portrait 4:5, Square 1:1, Landscape 16:9)
             return (
