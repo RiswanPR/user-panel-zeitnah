@@ -42,8 +42,10 @@ export class PostRepository extends BaseRepository<PostDocument> {
     limit?: number;
     cursor?: string;
     filter?: string;
+    search?: string;
+    tag?: string;
   }): Promise<{ items: any[]; nextCursor: string | null }> {
-    const { userId, courseIds = [], limit = 10, cursor, filter } = params;
+    const { userId, courseIds = [], limit = 10, cursor, filter, search, tag } = params;
 
     const matchStage: any = {
       isDeleted: false,
@@ -100,14 +102,88 @@ export class PostRepository extends BaseRepository<PostDocument> {
       ];
     }
 
-    if (cursor) {
+    // Tag / Hashtag filter
+    if (tag && tag.trim()) {
+      const cleanTag = tag.trim().replace(/^#+/, '').toLowerCase();
+      const escapedTag = cleanTag.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+      const tagCondition = {
+        $or: [
+          { tags: { $in: [cleanTag, `#${cleanTag}`] } },
+          { hashtags: { $in: [cleanTag, `#${cleanTag}`] } },
+          { content: { $regex: `#${escapedTag}\\b`, $options: 'i' } },
+        ],
+      };
+      if (matchStage.$and) {
+        matchStage.$and.push(tagCondition);
+      } else if (matchStage.$or) {
+        matchStage.$and = [{ $or: matchStage.$or }, tagCondition];
+        delete matchStage.$or;
+      } else {
+        matchStage.$and = [tagCondition];
+      }
+    }
+
+    // Text search query
+    if (search && search.trim()) {
+      const cleanSearch = search.trim();
+      const escapedSearch = cleanSearch.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+      const searchRegex = new RegExp(escapedSearch, 'i');
+      const tagForm = cleanSearch.replace(/^#+/, '').toLowerCase();
+      const searchCondition = {
+        $or: [
+          { content: { $regex: searchRegex } },
+          { tags: { $in: [tagForm, `#${tagForm}`] } },
+          { hashtags: { $in: [tagForm, `#${tagForm}`] } },
+        ],
+      };
+      if (matchStage.$and) {
+        matchStage.$and.push(searchCondition);
+      } else if (matchStage.$or) {
+        matchStage.$and = [{ $or: matchStage.$or }, searchCondition];
+        delete matchStage.$or;
+      } else {
+        matchStage.$and = [searchCondition];
+      }
+    }
+
+    const isTrending = filter === 'trending';
+
+    if (!isTrending && cursor) {
       matchStage.createdAt = { $lt: new Date(cursor) };
+    }
+
+    let skipCount = 0;
+    if (isTrending && cursor && cursor.startsWith('offset:')) {
+      skipCount = parseInt(cursor.replace('offset:', ''), 10) || 0;
     }
 
     const pipeline: any[] = [
       { $match: matchStage },
-      { $sort: { createdAt: -1 } },
-      { $limit: limit + 1 },
+      ...(isTrending
+        ? [
+            {
+              $addFields: {
+                engagementScore: {
+                  $add: [
+                    { $ifNull: ['$stats.likes', 0] },
+                    { $ifNull: ['$stats.loves', 0] },
+                    { $ifNull: ['$stats.celebrates', 0] },
+                    { $ifNull: ['$stats.insightfuls', 0] },
+                    { $multiply: [{ $ifNull: ['$stats.comments', 0] }, 2] },
+                    { $multiply: [{ $ifNull: ['$stats.reposts', 0] }, 3] },
+                    { $multiply: [{ $ifNull: ['$stats.shares', 0] }, 1.5] },
+                  ],
+                },
+              },
+            },
+            { $sort: { engagementScore: -1, createdAt: -1 } },
+            ...(skipCount > 0 ? [{ $skip: skipCount }] : []),
+            { $limit: limit + 1 },
+          ]
+        : [
+            { $sort: { createdAt: -1 } },
+            { $limit: limit + 1 },
+          ]),
 
       // 1. Populate Author from `users` collection safely
       {
@@ -440,13 +516,204 @@ export class PostRepository extends BaseRepository<PostDocument> {
     let nextCursor: string | null = null;
     if (posts.length > limit) {
       const nextItem = posts.pop();
-      nextCursor = nextItem.createdAt ? new Date(nextItem.createdAt).toISOString() : null;
+      if (isTrending) {
+        nextCursor = `offset:${skipCount + limit}`;
+      } else {
+        nextCursor = nextItem.createdAt ? new Date(nextItem.createdAt).toISOString() : null;
+      }
     }
 
     return {
       items: posts,
       nextCursor,
     };
+  }
+
+  // Unified Community Search: Posts, People, and Topics with verified real data
+  async searchCommunity(params: {
+    userId?: string;
+    courseIds?: string[];
+    query: string;
+    type?: 'all' | 'posts' | 'people' | 'topics';
+    limit?: number;
+  }): Promise<{
+    posts: any[];
+    people: any[];
+    topics: Array<{ tag: string; count: number }>;
+  }> {
+    const { userId, courseIds = [], query, type = 'all', limit = 10 } = params;
+    const cleanQuery = (query || '').trim();
+    if (!cleanQuery) {
+      return { posts: [], people: [], topics: [] };
+    }
+
+    const escapedQuery = cleanQuery.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+    const queryRegex = new RegExp(escapedQuery, 'i');
+
+    const results: { posts: any[]; people: any[]; topics: any[] } = {
+      posts: [],
+      people: [],
+      topics: [],
+    };
+
+    const tasks: Promise<void>[] = [];
+
+    // 1. Search Posts (using findFeed pipeline for 100% full hydration & access safety)
+    if (type === 'all' || type === 'posts') {
+      tasks.push(
+        (async () => {
+          const feedResult = await this.findFeed({
+            userId,
+            courseIds,
+            limit,
+            search: cleanQuery,
+          });
+          results.posts = feedResult.items || [];
+        })(),
+      );
+    }
+
+    // 2. Search People
+    if (type === 'all' || type === 'people') {
+      tasks.push(
+        (async () => {
+          const userMatches = await this.postModel.db
+            .collection('users')
+            .find({
+              'account_Status.isDeleted': { $ne: true },
+              'account_Status.isBlocked': { $ne: true },
+              profileVisibility: { $ne: 'PRIVATE' },
+              $or: [
+                { name: { $regex: queryRegex } },
+                { username: { $regex: queryRegex } },
+                { 'profile.headline': { $regex: queryRegex } },
+                { headline: { $regex: queryRegex } },
+                { primaryDiscipline: { $regex: queryRegex } },
+                { primaryRole: { $regex: queryRegex } },
+              ],
+            })
+            .project({
+              _id: 1,
+              name: 1,
+              username: 1,
+              avatar: 1,
+              role: 1,
+              primaryRole: 1,
+              headline: 1,
+              'profile.headline': 1,
+              primaryDiscipline: 1,
+              'gamification.rank': 1,
+              'gamification.level': 1,
+            })
+            .limit(limit)
+            .toArray();
+
+          let connectionMap = new Map<string, string>();
+          if (userId && userMatches.length > 0) {
+            const peerIds = userMatches.map((u: any) => String(u._id));
+            const connDocs = await this.postModel.db
+              .collection('network_connections')
+              .find({
+                $or: [
+                  { requesterId: userId, recipientId: { $in: peerIds } },
+                  { recipientId: userId, requesterId: { $in: peerIds } },
+                ],
+              })
+              .toArray();
+
+            for (const c of connDocs) {
+              const otherId = String(c.requesterId) === String(userId) ? String(c.recipientId) : String(c.requesterId);
+              if (c.status === 'accepted') {
+                connectionMap.set(otherId, 'connected');
+              } else if (c.status === 'pending') {
+                connectionMap.set(
+                  otherId,
+                  String(c.requesterId) === String(userId) ? 'outgoing_pending' : 'incoming_pending',
+                );
+              }
+            }
+          }
+
+          results.people = userMatches.map((u: any) => {
+            const uId = String(u._id);
+            return {
+              _id: uId,
+              id: uId,
+              name: u.name || 'Zeitnah Member',
+              username: u.username || '',
+              avatar: u.avatar || '',
+              role: u.primaryRole || u.role || 'MEMBER',
+              headline: u.headline || u.profile?.headline || u.primaryDiscipline || '',
+              connectionStatus: connectionMap.get(uId) || 'none',
+              gamification: u.gamification || null,
+            };
+          });
+        })(),
+      );
+    }
+
+    // 3. Search Topics / Hashtags
+    if (type === 'all' || type === 'topics') {
+      tasks.push(
+        (async () => {
+          const audienceOr: any[] = [
+            { audience: 'PUBLIC' },
+            ...(courseIds.length > 0 ? [{ audience: 'COURSE', courseId: { $in: courseIds } }] : []),
+          ];
+          if (userId) audienceOr.push({ authorId: userId });
+
+          const topicAgg = await this.postModel.aggregate([
+            {
+              $match: {
+                isDeleted: false,
+                $or: audienceOr,
+              },
+            },
+            {
+              $project: {
+                allTags: {
+                  $concatArrays: [
+                    { $ifNull: ['$tags', []] },
+                    { $ifNull: ['$hashtags', []] },
+                  ],
+                },
+              },
+            },
+            { $unwind: '$allTags' },
+            {
+              $project: {
+                cleanTag: {
+                  $toLower: {
+                    $replaceAll: { input: '$allTags', find: '#', replacement: '' },
+                  },
+                },
+              },
+            },
+            {
+              $match: {
+                cleanTag: { $regex: queryRegex },
+              },
+            },
+            {
+              $group: {
+                _id: '$cleanTag',
+                count: { $sum: 1 },
+              },
+            },
+            { $sort: { count: -1 } },
+            { $limit: limit },
+          ]);
+
+          results.topics = topicAgg.map((t: any) => ({
+            tag: t._id,
+            count: t.count,
+          }));
+        })(),
+      );
+    }
+
+    await Promise.all(tasks);
+    return results;
   }
 
   // Retrieve single populated post

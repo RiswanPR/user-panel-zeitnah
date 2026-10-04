@@ -15,6 +15,16 @@ import { communityApi } from '../../../services/communityApi';
 import { useCreateStory } from '../../../hooks/useCommunity';
 import toast from 'react-hot-toast';
 
+// Subcomponents for Premium Story Editor
+import StoryEditorCanvas from './editor/StoryEditorCanvas';
+import StoryEditorToolbar from './editor/StoryEditorToolbar';
+import StoryDrawingControls from './editor/StoryDrawingControls';
+import StoryTextEditorModal from './editor/StoryTextEditorModal';
+import StoryStickerPicker from './editor/StoryStickerPicker';
+import StoryFilterPicker from './editor/StoryFilterPicker';
+import StoryDiscardDialog from './editor/StoryDiscardDialog';
+import { rasterizeStoryImage } from './editor/rasterizeStory';
+
 const ALLOWED_IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
 const ALLOWED_VIDEO_EXTS = ['mp4', 'webm', 'mov'];
 const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8MB
@@ -31,8 +41,22 @@ const BACKGROUND_COLORS = [
 ];
 
 /**
- * Story Publishing State Machine:
- * 'idle' -> 'selected' -> 'uploading' -> 'uploaded' -> 'publishing' -> 'published' | 'failed'
+ * CreateStoryModal — Instagram-level Story creation, editing, and publishing.
+ *
+ * Supports:
+ * - Media selection (photos <= 8MB, videos <= 1GB, duration <= 90s)
+ * - Text stories with curated background gradients
+ * - Live 9:16 composition canvas
+ * - Text overlays (draggable, styled, colored, background pill)
+ * - Drawing pen (color palette, stroke widths, undo, clear)
+ * - Curated stickers (draggable, removable)
+ * - Tonal photo mood filters (Vivid, Cinema, Warm, Noir)
+ * - Audio mute toggle for video stories
+ * - WYSIWYG offscreen canvas rasterization
+ * - Upload progress tracking with abortable cancel
+ * - Idempotency key tracking
+ * - Draft protection ("Discard story?" confirmation)
+ * - Full memory safety (object URL revocation & decoder cleanup)
  */
 export default function CreateStoryModal({ isOpen, onClose }) {
   const [tab, setTab] = useState('media'); // 'media' | 'text'
@@ -44,8 +68,32 @@ export default function CreateStoryModal({ isOpen, onClose }) {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [uploadedUrl, setUploadedUrl] = useState(null);
 
-  // State machine & progress
-  const [state, setState] = useState('idle'); // idle | selected | uploading | uploaded | publishing | published | failed
+  // Editor Tools & Overlays State
+  const [activeTool, setActiveTool] = useState(null); // 'text' | 'draw' | 'sticker' | 'filter' | null
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const [selectedFilter, setSelectedFilter] = useState('none');
+
+  // Drawing state
+  const [drawingColor, setDrawingColor] = useState('#00F5A0');
+  const [drawingStrokeWidth, setDrawingStrokeWidth] = useState(6);
+  const [drawingPaths, setDrawingPaths] = useState([]);
+
+  // Text overlay state
+  const [textOverlays, setTextOverlays] = useState([]);
+  const [editingTextOverlay, setEditingTextOverlay] = useState(null);
+  const [isTextEditorOpen, setIsTextEditorOpen] = useState(false);
+
+  // Sticker state
+  const [stickers, setStickers] = useState([]);
+  const [isStickerPickerOpen, setIsStickerPickerOpen] = useState(false);
+
+  // Discard Confirmation Dialog State
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+
+  // Publishing State Machine:
+  // 'idle' -> 'selected' -> 'uploading' -> 'uploaded' -> 'publishing' -> 'published' | 'failed'
+  const [state, setState] = useState('idle');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState(null);
@@ -59,13 +107,18 @@ export default function CreateStoryModal({ isOpen, onClose }) {
   const shouldReduceMotion = useReducedMotion();
   const createStoryMutation = useCreateStory();
 
-  const handleClose = useCallback(() => {
-    // Abort active upload if in-flight
+  // Determine whether there are unsaved edits
+  const hasUnsavedEdits = Boolean(
+    (tab === 'media' && (file || textOverlays.length > 0 || drawingPaths.length > 0 || stickers.length > 0 || selectedFilter !== 'none')) ||
+    (tab === 'text' && text.trim().length > 0)
+  );
+
+  // Pure cleanup function
+  const executeCleanup = useCallback(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
-    // Clean up preview blob URL
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
     }
@@ -77,6 +130,13 @@ export default function CreateStoryModal({ isOpen, onClose }) {
     setFile(null);
     setPreviewUrl(null);
     setUploadedUrl(null);
+    setActiveTool(null);
+    setIsPreviewMode(false);
+    setSelectedFilter('none');
+    setDrawingPaths([]);
+    setTextOverlays([]);
+    setStickers([]);
+    setShowDiscardConfirm(false);
     setState('idle');
     setUploadProgress(0);
     setErrorMessage(null);
@@ -84,6 +144,17 @@ export default function CreateStoryModal({ isOpen, onClose }) {
     if (fileInputRef.current) fileInputRef.current.value = '';
     onClose?.();
   }, [previewUrl, onClose]);
+
+  // Handle Close with draft safety check
+  const handleClose = useCallback(() => {
+    if (state === 'uploading' || state === 'publishing') return;
+
+    if (hasUnsavedEdits && state !== 'published') {
+      setShowDiscardConfirm(true);
+    } else {
+      executeCleanup();
+    }
+  }, [hasUnsavedEdits, state, executeCleanup]);
 
   const validateFile = (selectedFile) => {
     if (!selectedFile) return 'Please select a photo or video.';
@@ -111,6 +182,14 @@ export default function CreateStoryModal({ isOpen, onClose }) {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setFile(selectedFile);
     setUploadedUrl(null);
+    // Reset overlays for new media
+    setDrawingPaths([]);
+    setTextOverlays([]);
+    setStickers([]);
+    setSelectedFilter('none');
+    setActiveTool(null);
+    setIsPreviewMode(false);
+
     const objectUrl = URL.createObjectURL(selectedFile);
     setPreviewUrl(objectUrl);
     setState('selected');
@@ -135,6 +214,7 @@ export default function CreateStoryModal({ isOpen, onClose }) {
       const tempVideo = document.createElement('video');
       tempVideo.preload = 'metadata';
       const objUrl = URL.createObjectURL(selectedFile);
+
       tempVideo.onloadedmetadata = () => {
         URL.revokeObjectURL(objUrl);
         if (tempVideo.duration > MAX_VIDEO_DURATION_SECONDS) {
@@ -144,6 +224,7 @@ export default function CreateStoryModal({ isOpen, onClose }) {
         }
         applySelectedFile(selectedFile);
       };
+
       tempVideo.onerror = () => {
         URL.revokeObjectURL(objUrl);
         applySelectedFile(selectedFile);
@@ -159,6 +240,11 @@ export default function CreateStoryModal({ isOpen, onClose }) {
     setFile(null);
     setPreviewUrl(null);
     setUploadedUrl(null);
+    setDrawingPaths([]);
+    setTextOverlays([]);
+    setStickers([]);
+    setSelectedFilter('none');
+    setActiveTool(null);
     setState('idle');
     setUploadProgress(0);
     setErrorMessage(null);
@@ -177,6 +263,85 @@ export default function CreateStoryModal({ isOpen, onClose }) {
     toast('Upload cancelled', { icon: 'ℹ️' });
   };
 
+  const handleResetEdits = () => {
+    setDrawingPaths([]);
+    setTextOverlays([]);
+    setStickers([]);
+    setSelectedFilter('none');
+    setActiveTool(null);
+    toast.success('Edits reset');
+  };
+
+  // ── Text Overlay Handlers ──
+  const handleOpenAddText = () => {
+    setEditingTextOverlay(null);
+    setIsTextEditorOpen(true);
+  };
+
+  const handleEditTextOverlay = (overlay) => {
+    setEditingTextOverlay(overlay);
+    setIsTextEditorOpen(true);
+  };
+
+  const handleSaveTextOverlay = (overlayData) => {
+    setTextOverlays((prev) => {
+      const exists = prev.some((o) => o.id === overlayData.id);
+      if (exists) {
+        return prev.map((o) => (o.id === overlayData.id ? overlayData : o));
+      }
+      return [...prev, overlayData];
+    });
+    setIsTextEditorOpen(false);
+    setEditingTextOverlay(null);
+  };
+
+  const handleUpdateTextOverlay = (id, updates) => {
+    setTextOverlays((prev) =>
+      prev.map((o) => (o.id === id ? { ...o, ...updates } : o))
+    );
+  };
+
+  const handleRemoveTextOverlay = (id) => {
+    setTextOverlays((prev) => prev.filter((o) => o.id !== id));
+  };
+
+  // ── Sticker Handlers ──
+  const handleAddSticker = (emoji) => {
+    const newSticker = {
+      id: `sticker_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      emoji,
+      x: 0.5,
+      y: 0.5,
+      scale: 44,
+    };
+    setStickers((prev) => [...prev, newSticker]);
+    setIsStickerPickerOpen(false);
+  };
+
+  const handleUpdateSticker = (id, updates) => {
+    setStickers((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, ...updates } : s))
+    );
+  };
+
+  const handleRemoveSticker = (id) => {
+    setStickers((prev) => prev.filter((s) => s.id !== id));
+  };
+
+  // ── Drawing Handlers ──
+  const handleAddDrawingPath = (path) => {
+    setDrawingPaths((prev) => [...prev, path]);
+  };
+
+  const handleUndoDrawing = () => {
+    setDrawingPaths((prev) => prev.slice(0, -1));
+  };
+
+  const handleClearDrawing = () => {
+    setDrawingPaths([]);
+  };
+
+  // ── Submit / Publish Flow ──
   const handleSubmit = async () => {
     if (isSubmittingRef.current || state === 'uploading' || state === 'publishing') {
       return;
@@ -218,8 +383,37 @@ export default function CreateStoryModal({ isOpen, onClose }) {
           setStatusMessage('Uploading story media...');
           abortControllerRef.current = new AbortController();
 
+          let fileToUpload = file;
+
+          // If it's an image with edits (drawings, text overlays, stickers, filters),
+          // composite into a high-fidelity output image before uploading!
+          const hasImageEdits =
+            !isVideo &&
+            (drawingPaths.length > 0 ||
+              textOverlays.length > 0 ||
+              stickers.length > 0 ||
+              selectedFilter !== 'none');
+
+          if (hasImageEdits && previewUrl) {
+            setStatusMessage('Compositing story...');
+            try {
+              fileToUpload = await rasterizeStoryImage({
+                imageSrc: previewUrl,
+                filter: selectedFilter,
+                drawingPaths,
+                textOverlays,
+                stickers,
+                fileName: file.name,
+              });
+            } catch (err) {
+              console.warn('Canvas rasterization fallback to original file:', err);
+              fileToUpload = file;
+            }
+          }
+
+          setStatusMessage('Uploading story media...');
           const uploadRes = await communityApi.uploadMedia(
-            file,
+            fileToUpload,
             (progressEvent) => {
               if (progressEvent.total) {
                 const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -267,7 +461,7 @@ export default function CreateStoryModal({ isOpen, onClose }) {
       idempotencyKeyRef.current = null;
 
       setTimeout(() => {
-        handleClose();
+        executeCleanup();
       }, 500);
     } catch (err) {
       isSubmittingRef.current = false;
@@ -306,7 +500,15 @@ export default function CreateStoryModal({ isOpen, onClose }) {
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && state !== 'uploading' && state !== 'publishing') {
-        handleClose();
+        if (isTextEditorOpen) {
+          setIsTextEditorOpen(false);
+        } else if (isStickerPickerOpen) {
+          setIsStickerPickerOpen(false);
+        } else if (activeTool === 'draw') {
+          setActiveTool(null);
+        } else {
+          handleClose();
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -318,18 +520,26 @@ export default function CreateStoryModal({ isOpen, onClose }) {
         previousActiveElementRef.current.focus();
       }
     };
-  }, [isOpen, state, handleClose]);
+  }, [isOpen, state, isTextEditorOpen, isStickerPickerOpen, activeTool, handleClose]);
 
   if (!isOpen) return null;
   if (typeof document === 'undefined') return null;
 
   const isBusy = state === 'uploading' || state === 'publishing';
-  const isVideo = file?.type?.startsWith('video/') || false;
+  const isVideo =
+    file?.type?.startsWith('video/') ||
+    ALLOWED_VIDEO_EXTS.includes((file?.name?.split('.').pop() || '').toLowerCase());
+  const hasEdits = Boolean(
+    drawingPaths.length > 0 ||
+      textOverlays.length > 0 ||
+      stickers.length > 0 ||
+      selectedFilter !== 'none'
+  );
 
   return createPortal(
     <AnimatePresence>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md select-none"
+        className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/90 backdrop-blur-md select-none"
         role="dialog"
         aria-modal="true"
         aria-label="Create story"
@@ -350,13 +560,18 @@ export default function CreateStoryModal({ isOpen, onClose }) {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 16 }}
           transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-          className="relative w-full max-w-md bg-[#0B111E] border border-white/[0.1] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]"
+          className="relative w-full max-w-md bg-[#0B111E] border border-white/[0.1] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[96vh]"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 sm:p-4.5 border-b border-white/[0.06]">
+          <div className="flex items-center justify-between p-3.5 sm:p-4 border-b border-white/[0.06] bg-[#0B111E]/80 backdrop-blur-md z-30">
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
-                Create Story
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                <span>Create Story</span>
+                {isPreviewMode && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 uppercase font-semibold">
+                    Preview
+                  </span>
+                )}
               </h2>
               <p className="text-[11px] text-text-muted">
                 Visible to community members for 24 hours
@@ -373,8 +588,8 @@ export default function CreateStoryModal({ isOpen, onClose }) {
             </button>
           </div>
 
-          {/* Creation Mode Tabs */}
-          {!isBusy && (
+          {/* Creation Mode Tabs (Only when no media selected) */}
+          {!previewUrl && !isBusy && (
             <div className="flex px-4 pt-3 gap-2">
               <button
                 type="button"
@@ -401,37 +616,42 @@ export default function CreateStoryModal({ isOpen, onClose }) {
             </div>
           )}
 
-          {/* Body Section */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Main Body Section */}
+          <div className="relative flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 flex flex-col items-center justify-center">
             {/* ── Media Mode ── */}
             {tab === 'media' && (
-              <div className="space-y-3">
+              <div className="w-full relative flex flex-col items-center justify-center">
                 {previewUrl ? (
-                  // Preview Container (9:16 aspect ratio)
-                  <div className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-black border border-white/[0.1] flex items-center justify-center shadow-inner">
-                    {isVideo ? (
-                      <video
-                        src={previewUrl}
-                        className="w-full h-full object-cover"
-                        controls
-                        autoPlay
-                        loop
-                        muted
-                      />
-                    ) : (
-                      <img
-                        src={previewUrl}
-                        alt="Story preview"
-                        className="w-full h-full object-cover"
-                      />
-                    )}
+                  <div className="relative w-full flex items-center justify-center">
+                    {/* The 9:16 Interactive Canvas */}
+                    <StoryEditorCanvas
+                      file={file}
+                      previewUrl={previewUrl}
+                      isVideo={isVideo}
+                      filter={selectedFilter}
+                      isMuted={isMuted}
+                      drawingPaths={drawingPaths}
+                      onAddDrawingPath={handleAddDrawingPath}
+                      isDrawingMode={activeTool === 'draw'}
+                      drawingColor={drawingColor}
+                      drawingStrokeWidth={drawingStrokeWidth}
+                      textOverlays={textOverlays}
+                      onUpdateTextOverlay={handleUpdateTextOverlay}
+                      onRemoveTextOverlay={handleRemoveTextOverlay}
+                      onEditTextOverlay={handleEditTextOverlay}
+                      stickers={stickers}
+                      onUpdateSticker={handleUpdateSticker}
+                      onRemoveSticker={handleRemoveSticker}
+                      isPreviewMode={isPreviewMode}
+                    />
 
-                    {!isBusy && (
-                      <div className="absolute top-3 right-3 flex items-center gap-2">
+                    {/* Quick Media Actions: Change & Delete */}
+                    {!isBusy && !isPreviewMode && (
+                      <div className="absolute top-3 right-3 flex items-center gap-2 z-30">
                         <button
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
-                          className="px-2.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md text-white text-xs font-medium border border-white/20 transition-all cursor-pointer shadow-md"
+                          className="min-h-[44px] px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md text-white text-xs font-semibold border border-white/20 transition-all cursor-pointer shadow-md flex items-center justify-center"
                         >
                           Change
                         </button>
@@ -446,12 +666,35 @@ export default function CreateStoryModal({ isOpen, onClose }) {
                         </button>
                       </div>
                     )}
+
+                    {/* Drawing Controls Overlay */}
+                    {activeTool === 'draw' && (
+                      <StoryDrawingControls
+                        color={drawingColor}
+                        strokeWidth={drawingStrokeWidth}
+                        onColorChange={setDrawingColor}
+                        onStrokeWidthChange={setDrawingStrokeWidth}
+                        onUndo={handleUndoDrawing}
+                        onClear={handleClearDrawing}
+                        onDone={() => setActiveTool(null)}
+                      />
+                    )}
+
+                    {/* Filters Strip Overlay */}
+                    {activeTool === 'filter' && (
+                      <StoryFilterPicker
+                        selectedFilter={selectedFilter}
+                        onSelectFilter={(f) => {
+                          setSelectedFilter(f);
+                        }}
+                      />
+                    )}
                   </div>
                 ) : (
-                  // Large Premium Dropzone
+                  // Large Premium Dropzone with Native Camera/Gallery support
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="aspect-[9/16] rounded-2xl border-2 border-dashed border-white/[0.12] hover:border-brand-mint/60 bg-white/[0.02] hover:bg-white/[0.04] transition-all flex flex-col items-center justify-center p-6 text-center cursor-pointer group"
+                    className="aspect-[9/16] w-full max-h-[76vh] rounded-2xl border-2 border-dashed border-white/[0.12] hover:border-brand-mint/60 bg-white/[0.02] hover:bg-white/[0.04] transition-all flex flex-col items-center justify-center p-6 text-center cursor-pointer group"
                     role="button"
                     tabIndex={0}
                     aria-label="Upload photo or video for story"
@@ -469,9 +712,9 @@ export default function CreateStoryModal({ isOpen, onClose }) {
                       Choose photo or video
                     </h3>
                     <p className="text-xs text-text-muted max-w-[240px] leading-relaxed">
-                      Photos up to 15MB, vertical videos up to 50MB
+                      Photos up to 8 MB, vertical videos up to 1 GB (max 90s)
                     </p>
-                    <span className="mt-4 px-3.5 py-1.5 rounded-xl bg-white/[0.06] group-hover:bg-brand-mint group-hover:text-[#0B111E] text-xs font-semibold text-white transition-all">
+                    <span className="mt-4 min-h-[44px] px-4 py-2 rounded-xl bg-white/[0.06] group-hover:bg-brand-mint group-hover:text-[#0B111E] text-xs font-semibold text-white transition-all flex items-center justify-center">
                       Browse files
                     </span>
                   </div>
@@ -490,10 +733,9 @@ export default function CreateStoryModal({ isOpen, onClose }) {
 
             {/* ── Text Mode ── */}
             {tab === 'text' && (
-              <div className="space-y-4">
-                {/* Live Preview Container */}
+              <div className="w-full space-y-4">
                 <div
-                  className={`aspect-[9/16] rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-inner transition-colors duration-300 ${bgColor}`}
+                  className={`aspect-[9/16] max-h-[76vh] rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-inner transition-colors duration-300 ${bgColor}`}
                 >
                   <textarea
                     value={text}
@@ -538,7 +780,7 @@ export default function CreateStoryModal({ isOpen, onClose }) {
 
             {/* Progress / Status Display during upload & publish */}
             {isBusy && (
-              <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-2">
+              <div className="w-full p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-2">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-medium text-white flex items-center gap-1.5">
                     <RefreshCw className="w-3.5 h-3.5 animate-spin text-brand-mint" />
@@ -565,7 +807,7 @@ export default function CreateStoryModal({ isOpen, onClose }) {
                     <button
                       type="button"
                       onClick={handleCancelUpload}
-                      className="text-[11px] text-rose-400 hover:text-rose-300 font-medium cursor-pointer"
+                      className="min-h-[44px] px-3 text-xs text-rose-400 hover:text-rose-300 font-medium cursor-pointer flex items-center"
                     >
                       Cancel upload
                     </button>
@@ -576,7 +818,7 @@ export default function CreateStoryModal({ isOpen, onClose }) {
 
             {/* Error Banner with Specific Action */}
             {errorMessage && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 flex items-start gap-2.5 text-xs text-rose-300">
+              <div className="w-full p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 flex items-start gap-2.5 text-xs text-rose-300">
                 <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <p className="leading-snug">{errorMessage}</p>
@@ -585,8 +827,32 @@ export default function CreateStoryModal({ isOpen, onClose }) {
             )}
           </div>
 
+          {/* Bottom Toolbar for Media Mode when Media is Selected */}
+          {tab === 'media' && previewUrl && !isBusy && (
+            <StoryEditorToolbar
+              isVideo={isVideo}
+              isMuted={isMuted}
+              onToggleMute={() => setIsMuted((m) => !m)}
+              activeTool={activeTool}
+              onSelectTool={(tool) => {
+                if (tool === 'text') {
+                  handleOpenAddText();
+                } else if (tool === 'sticker') {
+                  setIsStickerPickerOpen(true);
+                } else {
+                  setActiveTool(tool);
+                }
+              }}
+              isPreviewMode={isPreviewMode}
+              onTogglePreview={() => setIsPreviewMode((p) => !p)}
+              hasEdits={hasEdits}
+              onResetEdits={handleResetEdits}
+              disabled={isBusy}
+            />
+          )}
+
           {/* Action Footer */}
-          <div className="p-4 border-t border-white/[0.06] bg-[#0E1726]/60 flex items-center gap-2">
+          <div className="p-3.5 sm:p-4 border-t border-white/[0.06] bg-[#0E1726]/60 flex items-center gap-2">
             <button
               type="button"
               onClick={handleClose}
@@ -633,6 +899,31 @@ export default function CreateStoryModal({ isOpen, onClose }) {
             </button>
           </div>
         </motion.div>
+
+        {/* Text Overlay Editor Modal */}
+        <StoryTextEditorModal
+          isOpen={isTextEditorOpen}
+          initialData={editingTextOverlay}
+          onSave={handleSaveTextOverlay}
+          onCancel={() => {
+            setIsTextEditorOpen(false);
+            setEditingTextOverlay(null);
+          }}
+        />
+
+        {/* Stickers Selection Modal */}
+        <StoryStickerPicker
+          isOpen={isStickerPickerOpen}
+          onSelectSticker={handleAddSticker}
+          onClose={() => setIsStickerPickerOpen(false)}
+        />
+
+        {/* Draft Protection Discard Confirmation */}
+        <StoryDiscardDialog
+          isOpen={showDiscardConfirm}
+          onKeepEditing={() => setShowDiscardConfirm(false)}
+          onDiscard={() => executeCleanup()}
+        />
       </div>
     </AnimatePresence>,
     document.body

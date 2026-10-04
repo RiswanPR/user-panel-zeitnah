@@ -99,7 +99,7 @@ export default function PostActions({
             data-testid="post-comment-btn"
             type="button"
             onClick={onToggleComments}
-            className={`min-h-[44px] min-w-[44px] flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-[0.96] ${
+            className={`min-h-[44px] min-w-[44px] flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-[0.96] motion-reduce:transform-none ${
               showComments
                 ? 'text-brand-mint bg-brand-mint/10 border border-brand-mint/20'
                 : 'text-text-muted hover:bg-white/[0.04] hover:text-white'
@@ -121,7 +121,7 @@ export default function PostActions({
               onClick={() => setShowRepostMenu((prev) => !prev)}
               aria-haspopup="menu"
               aria-expanded={showRepostMenu}
-              className={`min-h-[44px] min-w-[44px] flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-[0.96] ${
+              className={`min-h-[44px] min-w-[44px] flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-[0.96] motion-reduce:transform-none ${
                 isReposted
                   ? 'text-brand-mint bg-brand-mint/10 hover:bg-brand-mint/20 border border-brand-mint/20'
                   : 'text-text-muted hover:bg-white/[0.04] hover:text-white'
@@ -151,7 +151,7 @@ export default function PostActions({
             type="button"
             data-testid="post-share-btn"
             onClick={handleShare}
-            className="min-h-[44px] min-w-[44px] flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-text-muted hover:bg-brand-mint/10 hover:text-brand-mint transition-all duration-150 cursor-pointer active:scale-[0.96]"
+            className="min-h-[44px] min-w-[44px] flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-text-muted hover:bg-brand-mint/10 hover:text-brand-mint transition-all duration-150 cursor-pointer active:scale-[0.96] motion-reduce:transform-none"
             aria-label="Share post"
             title="Copy link to post"
           >
@@ -166,7 +166,7 @@ export default function PostActions({
           data-testid="post-bookmark-btn"
           type="button"
           onClick={onToggleBookmark}
-          className={`min-h-[44px] min-w-[44px] p-2.5 rounded-xl transition-all duration-150 flex items-center justify-center cursor-pointer active:scale-[0.96] ${
+          className={`min-h-[44px] min-w-[44px] p-2.5 rounded-xl transition-all duration-150 flex items-center justify-center cursor-pointer active:scale-[0.96] motion-reduce:transform-none ${
             isSaved
               ? 'text-brand-yellow bg-brand-yellow/10 hover:bg-brand-yellow/20 border border-brand-yellow/30 shadow-[0_0_12px_rgba(246,237,74,0.18)]'
               : 'text-text-muted hover:bg-white/[0.04] hover:text-white'

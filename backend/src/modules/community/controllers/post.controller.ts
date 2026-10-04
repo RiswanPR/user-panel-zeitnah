@@ -49,11 +49,15 @@ export class PostController {
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'cursor', required: false })
   @ApiQuery({ name: 'filter', required: false })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'tag', required: false })
   async getFeed(
     @Req() req,
     @Query('limit') limit: number,
     @Query('cursor') cursor: string,
     @Query('filter') filter: string,
+    @Query('search') search: string,
+    @Query('tag') tag: string,
   ) {
     const userId = this.getUserId(req);
     const courseIds = (req.user?.enrolledCourses || []).map((c: any) => c.courseId || c._id || c);
@@ -63,6 +67,8 @@ export class PostController {
       limit ? Number(limit) : 10,
       cursor,
       filter,
+      search,
+      tag,
     );
   }
 
@@ -83,6 +89,26 @@ export class PostController {
       limit ? Number(limit) : 10,
       cursor,
     );
+  }
+
+  @Get('search')
+  @ApiOperation({ summary: 'Search community posts, people, and topics' })
+  @ApiQuery({ name: 'q', required: true })
+  @ApiQuery({ name: 'type', required: false, enum: ['all', 'posts', 'people', 'topics'] })
+  @ApiQuery({ name: 'limit', required: false })
+  async searchCommunity(
+    @Req() req,
+    @Query('q') q: string,
+    @Query('type') type: 'all' | 'posts' | 'people' | 'topics' = 'all',
+    @Query('limit') limit: number = 10,
+  ) {
+    const userId = this.getUserId(req);
+    const courseIds = (req.user?.enrolledCourses || []).map((c: any) => c.courseId || c._id || c);
+    return this.postService.searchCommunity(userId, courseIds, {
+      q,
+      type,
+      limit: limit ? Number(limit) : 10,
+    });
   }
 
   @Get(':id')

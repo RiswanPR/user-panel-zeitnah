@@ -1,6 +1,6 @@
-import { useState, useContext, memo } from 'react';
+import { useState, useContext, memo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Send, Loader2, Trash2, AlertCircle } from 'lucide-react';
 import { AuthContext } from '../../../../context/AuthContext';
 import {
@@ -26,14 +26,15 @@ import RepostAttribution from '../../reposts/RepostAttribution';
 import QuotedPost from '../../reposts/QuotedPost';
 
 /**
- * PostCard — Orchestrator component for Zeitnah Community posts
- * Integrates PostHeader, PostContent, PostMedia, PostActions, RepostAttribution, QuotedPost,
- * and preserves inline comments fallback until Phase 2C CommentDrawer.
+ * PostCard — Orchestrator component for Zeitnah Community posts.
+ * Premium Instagram-level social feed core implementing the clear hierarchy:
+ * AUTHOR → CONTENT → MEDIA → META / TOPIC → ACTIONS → ENGAGEMENT → COMMENTS
  */
 function PostCard({ post, onOpenComments, isActiveCommentPost }) {
   const { user } = useContext(AuthContext);
   const [localShowComments, setLocalShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
+  const shouldReduceMotion = useReducedMotion();
 
   const reactMutation = useReactToPost();
   const deleteMutation = useDeletePost();
@@ -83,55 +84,55 @@ function PostCard({ post, onOpenComments, isActiveCommentPost }) {
   const createCommentMutation = useCreateComment();
   const deleteCommentMutation = useDeleteComment();
 
-  const handleToggleComments = () => {
+  const handleToggleComments = useCallback(() => {
     if (onOpenComments) {
       onOpenComments(displayPost);
     } else {
       setLocalShowComments((prev) => !prev);
     }
-  };
+  }, [onOpenComments, displayPost]);
 
-  const handleReact = (reactionId) => {
+  const handleReact = useCallback((reactionId) => {
     reactMutation.mutate({ postId: targetActionPostId, type: reactionId });
-  };
+  }, [reactMutation, targetActionPostId]);
 
-  const handleDoubleTapLike = () => {
+  const handleDoubleTapLike = useCallback(() => {
     if (!isLiked) {
       reactMutation.mutate({ postId: targetActionPostId, type: 'like' });
     }
-  };
+  }, [isLiked, reactMutation, targetActionPostId]);
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     const confirmMessage = isRepost
       ? 'Are you sure you want to remove this repost?'
       : 'Are you sure you want to delete this post?';
     if (window.confirm(confirmMessage)) {
       deleteMutation.mutate(postId);
     }
-  };
+  }, [isRepost, deleteMutation, postId]);
 
-  const handleToggleBookmark = () => {
+  const handleToggleBookmark = useCallback(() => {
     if (isSaved) {
       unsaveMutation.mutate(targetActionPostId);
     } else {
       saveMutation.mutate(targetActionPostId);
     }
-  };
+  }, [isSaved, unsaveMutation, saveMutation, targetActionPostId]);
 
   const isRepostPending = repostMutation.isPending || unrepostMutation.isPending;
 
-  const handleToggleRepost = () => {
+  const handleToggleRepost = useCallback(() => {
     if (isRepostPending) return;
     if (isReposted) {
       unrepostMutation.mutate(canonicalPostId);
     } else {
       repostMutation.mutate(canonicalPostId);
     }
-  };
+  }, [isRepostPending, isReposted, unrepostMutation, repostMutation, canonicalPostId]);
 
-  const handleReport = () => {
+  const handleReport = useCallback(() => {
     toast.success('Thank you. Post flagged for moderation review.');
-  };
+  }, []);
 
   const handleAddComment = (e) => {
     e.preventDefault();
@@ -150,18 +151,18 @@ function PostCard({ post, onOpenComments, isActiveCommentPost }) {
     );
   };
 
-  const handleDeleteComment = (commentId) => {
+  const handleDeleteComment = useCallback((commentId) => {
     if (window.confirm('Delete this comment?')) {
       deleteCommentMutation.mutate({ commentId, postId: targetActionPostId });
     }
-  };
+  }, [deleteCommentMutation, targetActionPostId]);
 
   return (
     <motion.article
-      layout
-      initial={{ opacity: 0, y: 14 }}
+      initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="zn-card bg-[#0B111E] border border-white/[0.07] hover:border-brand-mint/20 hover:bg-[#0D1424] rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.25)] p-4 sm:p-5 mb-4 group overflow-hidden transition-all duration-200"
+      transition={{ duration: shouldReduceMotion ? 0.05 : 0.18, ease: 'easeOut' }}
+      className="zn-card bg-[#0B111E] border border-white/[0.07] hover:border-brand-mint/20 hover:bg-[#0D1424] rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.25)] p-4 sm:p-5 mb-4 group overflow-hidden transition-colors duration-200"
     >
       {/* 0. Repost Attribution Header if post is a repost */}
       {isRepost && <RepostAttribution author={post.author} />}
@@ -187,7 +188,7 @@ function PostCard({ post, onOpenComments, isActiveCommentPost }) {
         </div>
       ) : (
         <>
-          {/* 1. Header: Author Identity & Post Options */}
+          {/* 1. AUTHOR: Header & Identity */}
           <PostHeader
             post={displayPost}
             postId={isRepost ? postId : targetActionPostId}
@@ -198,69 +199,56 @@ function PostCard({ post, onOpenComments, isActiveCommentPost }) {
             onReport={handleReport}
           />
 
-          {hasMedia ? (
-            <>
-              {/* Media-First Presentation: Media dominates */}
-              <PostMedia media={displayPost.media} onDoubleTapLike={handleDoubleTapLike} />
-
-              {/* Actions Row */}
-              <PostActions
-                postId={targetActionPostId}
-                post={displayPost}
-                isLiked={isLiked}
-                myReactionType={myReactionType}
-                isSaved={isSaved}
-                isReposted={isReposted}
-                showComments={isCommentsActive}
-                onReact={handleReact}
-                onToggleComments={handleToggleComments}
-                onToggleBookmark={handleToggleBookmark}
-                onToggleRepost={handleToggleRepost}
-                isRepostPending={isRepostPending}
-              />
-
-              {/* Author Caption & Tags */}
-              <PostContent
-                author={displayPost.author}
-                content={displayPost.content}
-                aiSummary={displayPost.aiSummary}
-                tags={displayPost.tags}
-                isMediaPost={true}
-              />
-            </>
-          ) : (
-            <>
-              {/* Text-First / Editorial Presentation */}
-              <PostContent
-                author={displayPost.author}
-                content={displayPost.content}
-                aiSummary={displayPost.aiSummary}
-                tags={displayPost.tags}
-                isMediaPost={false}
-              />
-
-              {/* Quoted Post Embed (if quote post) */}
-              {isQuote && <QuotedPost originalPost={post.originalPost} />}
-
-              {/* Actions Row */}
-              <PostActions
-                postId={targetActionPostId}
-                post={displayPost}
-                isLiked={isLiked}
-                myReactionType={myReactionType}
-                isSaved={isSaved}
-                isReposted={isReposted}
-                showComments={isCommentsActive}
-                onReact={handleReact}
-                onToggleComments={handleToggleComments}
-                onToggleBookmark={handleToggleBookmark}
-                onToggleRepost={handleToggleRepost}
-                isRepostPending={isRepostPending}
-              />
-            </>
+          {/* 2. CONTENT: Caption / Body / AI Summary */}
+          {displayPost.content && (
+            <PostContent
+              author={displayPost.author}
+              content={displayPost.content}
+              aiSummary={displayPost.aiSummary}
+              tags={!hasMedia ? displayPost.tags : undefined}
+              isMediaPost={false}
+            />
           )}
 
-          {/* Comments Preview Teaser */}
+          {/* 3. MEDIA: Media-First High-Impact Presentation */}
+          {hasMedia && (
+            <PostMedia media={displayPost.media} onDoubleTapLike={handleDoubleTapLike} />
+          )}
+
+          {/* 4. META / TOPIC: Hashtags for media posts */}
+          {hasMedia && displayPost.tags && displayPost.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 px-0.5 my-2">
+              {displayPost.tags.map((tag, idx) => (
+                <span
+                  key={`${tag}-${idx}`}
+                  className="text-[12px] font-medium text-brand-mint/80 hover:text-brand-mint hover:underline transition-colors cursor-pointer select-none"
+                >
+                  #{tag.replace(/^#/, '')}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Quoted Post Embed (if quote post) */}
+          {isQuote && <QuotedPost originalPost={post.originalPost} />}
+
+          {/* 5. ACTIONS & ENGAGEMENT: Unified Interaction Bar */}
+          <PostActions
+            postId={targetActionPostId}
+            post={displayPost}
+            isLiked={isLiked}
+            myReactionType={myReactionType}
+            isSaved={isSaved}
+            isReposted={isReposted}
+            showComments={isCommentsActive}
+            onReact={handleReact}
+            onToggleComments={handleToggleComments}
+            onToggleBookmark={handleToggleBookmark}
+            onToggleRepost={handleToggleRepost}
+            isRepostPending={isRepostPending}
+          />
+
+          {/* 6. COMMENTS: Quick Teaser to open CommentDrawer */}
           {commentCount > 0 && onOpenComments && (
             <button
               type="button"
@@ -274,7 +262,7 @@ function PostCard({ post, onOpenComments, isActiveCommentPost }) {
         </>
       )}
 
-      {/* 5. Standalone Inline Comments (Active only if no parent CommentDrawer is provided) */}
+      {/* Standalone Inline Comments (Active only if no parent CommentDrawer is provided) */}
       <AnimatePresence>
         {!onOpenComments && localShowComments && !isOriginalDeleted && (
           <motion.section
@@ -423,4 +411,3 @@ export default memo(PostCard, (prevProps, nextProps) => {
     prevProps.post?.originalPost?._id === nextProps.post?.originalPost?._id
   );
 });
-

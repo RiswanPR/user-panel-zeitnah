@@ -282,12 +282,40 @@ export class PostService {
     limit: number = 10,
     cursor?: string,
     filter?: string,
+    search?: string,
+    tag?: string,
   ) {
-    const feed: any = await this.postRepository.findFeed({ userId, courseIds, limit, cursor, filter });
+    const feed: any = await this.postRepository.findFeed({
+      userId,
+      courseIds,
+      limit,
+      cursor,
+      filter,
+      search,
+      tag,
+    });
     if (feed && Array.isArray(feed.items)) {
       await this.resolveMediaUrls(feed.items);
     }
     return feed;
+  }
+
+  async searchCommunity(
+    userId: string,
+    courseIds: string[],
+    options: { q: string; type?: 'all' | 'posts' | 'people' | 'topics'; limit?: number },
+  ) {
+    const results = await this.postRepository.searchCommunity({
+      userId,
+      courseIds,
+      query: options.q,
+      type: options.type,
+      limit: options.limit ? Math.min(Math.max(1, Number(options.limit)), 30) : 10,
+    });
+    if (results.posts && Array.isArray(results.posts)) {
+      await this.resolveMediaUrls(results.posts);
+    }
+    return results;
   }
 
   async getSavedPosts(

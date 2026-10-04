@@ -162,6 +162,8 @@ PostSchema.index(
   },
 );
 PostSchema.index({ postType: 1, createdAt: -1 });
+PostSchema.index({ tags: 1 });
+PostSchema.index({ hashtags: 1 });
 
 @Schema({ timestamps: true, collection: 'community_post_media' })
 export class PostMedia {

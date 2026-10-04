@@ -1,28 +1,33 @@
-import { useState, useCallback, useContext, useMemo } from 'react';
+import { useState, useEffect, useCallback, useContext, useMemo, Suspense } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import PostCard from '../../components/community/PostCard';
-import StoryViewer from '../../components/community/stories/StoryViewer';
 import StoryRail from '../../components/community/stories/StoryRail';
-import CreateStoryModal from '../../components/community/stories/CreateStoryModal';
-import CommentDrawer from '../../components/community/comments/CommentDrawer';
 import CommunityHeader from '../../components/community/header/CommunityHeader';
-import CreateActionModal from '../../components/community/composer/CreateActionModal';
-import CreatePostModal from '../../components/community/composer/CreatePostModal';
 import DiscoverySidebar from '../../components/community/discovery/DiscoverySidebar';
-import MobileDiscoveryDrawer from '../../components/community/discovery/MobileDiscoveryDrawer';
 import EmptyState from '../../components/ui/EmptyState';
-import { SkeletonCard } from '../../components/ui/Skeleton';
+import PostCardSkeleton from '../../components/community/feed/PostCard/PostCardSkeleton';
 import { useCommunityFeed, useActiveStories } from '../../hooks/useCommunity';
 import { useIntersectionObserver } from '../../hooks/useIntersectionObserver';
 import { AuthContext } from '../../context/AuthContext';
+import lazyWithRetry from '../../utils/lazyWithRetry';
+
+// Code-split heavy modals and drawers to keep initial CommunityHome bundle lean
+const StoryViewer = lazyWithRetry(() => import('../../components/community/stories/StoryViewer'));
+const CreateStoryModal = lazyWithRetry(() => import('../../components/community/stories/CreateStoryModal'));
+const CreatePostModal = lazyWithRetry(() => import('../../components/community/composer/CreatePostModal'));
+const CreateActionModal = lazyWithRetry(() => import('../../components/community/composer/CreateActionModal'));
+const CommentDrawer = lazyWithRetry(() => import('../../components/community/comments/CommentDrawer'));
+const CommunitySearchModal = lazyWithRetry(() => import('../../components/community/discovery/CommunitySearchModal'));
+const MobileDiscoveryDrawer = lazyWithRetry(() => import('../../components/community/discovery/MobileDiscoveryDrawer'));
 import {
   normalizeFeedFilter,
   extractTrendingTopics,
   sanitizeTag,
 } from '../../utils/communityFormatters';
 import { groupStoriesByUser } from '../../utils/storyGrouping';
-import { Sparkles, Users, GraduationCap, Globe, AlertCircle } from 'lucide-react';
+import { Sparkles, Users, GraduationCap, Globe, AlertCircle, Flame } from 'lucide-react';
 import BrandAmbientShape from '../../components/community/ui/BrandAmbientShape';
+import FeatureErrorBoundary from '../../components/common/FeatureErrorBoundary';
 
 /**
  * CommunityHome — Phase 2D Discovery & Feed Intelligence UX
@@ -50,6 +55,7 @@ export default function CommunityHome() {
   const [isCreateActionOpen, setIsCreateActionOpen] = useState(false);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [isMobileDiscoveryOpen, setIsMobileDiscoveryOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeCommentPost, setActiveCommentPost] = useState(null);
   const [activeTopic, setActiveTopic] = useState(null);
 
@@ -77,11 +83,13 @@ export default function CommunityHome() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    isFetchNextPageError,
   } = useCommunityFeed({ filter: activeFilter });
 
-  // Infinite Scroll Trigger
+  // Infinite Scroll Trigger with prefetch margin
   const { targetRef } = useIntersectionObserver({
     threshold: 0.1,
+    rootMargin: '250px',
     onIntersect: useCallback(() => {
       if (hasNextPage && !isFetchingNextPage) {
         fetchNextPage();
@@ -90,7 +98,21 @@ export default function CommunityHome() {
   });
 
   const rawPosts = useMemo(() => {
-    return feedData?.pages?.flatMap((page) => page.items) || [];
+    const pages = feedData?.pages || [];
+    const seen = new Set();
+    const result = [];
+    for (const page of pages) {
+      if (!page?.items) continue;
+      for (const post of page.items) {
+        if (!post) continue;
+        const id = post._id || post.id;
+        if (id && !seen.has(id)) {
+          seen.add(id);
+          result.push(post);
+        }
+      }
+    }
+    return result;
   }, [feedData]);
 
   // Real Trending Topics extracted from active posts
@@ -116,9 +138,19 @@ export default function CommunityHome() {
   }, []);
 
   const handleOpenSearch = useCallback(() => {
-    window.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true })
-    );
+    setIsSearchOpen(true);
+  }, []);
+
+  // Keyboard shortcut (⌘K / Ctrl+K) for Community Search
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, []);
 
   return (
@@ -126,51 +158,76 @@ export default function CommunityHome() {
       {/* Brand Ambient Canvas Contour Curves */}
       <BrandAmbientShape variant="canvas" opacity={0.6} />
 
-      {/* ── Story Modal & Viewer Overlays ── */}
-      {selectedGroupIndex !== null && allGroups.length > 0 && (
-        <StoryViewer
-          userGroups={allGroups}
-          initialUserIndex={selectedGroupIndex}
-          initialStoryIndex={0}
-          onClose={() => setSelectedGroupIndex(null)}
-        />
-      )}
+      {/* ── Story Modal & Viewer Overlays (Code-split with Suspense & FeatureErrorBoundary) ── */}
+      <FeatureErrorBoundary featureName="Community Overlay">
+        <Suspense fallback={null}>
+          {selectedGroupIndex !== null && allGroups.length > 0 && (
+            <StoryViewer
+              userGroups={allGroups}
+              initialUserIndex={selectedGroupIndex}
+              initialStoryIndex={0}
+              onClose={() => setSelectedGroupIndex(null)}
+            />
+          )}
 
-      <CreateStoryModal
-        isOpen={isCreateStoryModalOpen}
-        onClose={() => setIsCreateStoryModalOpen(false)}
-      />
+          {isCreateStoryModalOpen && (
+            <CreateStoryModal
+              isOpen={isCreateStoryModalOpen}
+              onClose={() => setIsCreateStoryModalOpen(false)}
+            />
+          )}
 
-      {/* ── Instagram-Style Quick Create Chooser ── */}
-      <CreateActionModal
-        isOpen={isCreateActionOpen}
-        onClose={() => setIsCreateActionOpen(false)}
-        onSelectPost={() => setIsCreatePostOpen(true)}
-        onSelectStory={() => setIsCreateStoryModalOpen(true)}
-      />
+          {/* ── Instagram-Style Quick Create Chooser ── */}
+          {isCreateActionOpen && (
+            <CreateActionModal
+              isOpen={isCreateActionOpen}
+              onClose={() => setIsCreateActionOpen(false)}
+              onSelectPost={() => setIsCreatePostOpen(true)}
+              onSelectStory={() => setIsCreateStoryModalOpen(true)}
+            />
+          )}
 
-      {/* ── Multi-Step Post Publishing Flow ── */}
-      <CreatePostModal
-        isOpen={isCreatePostOpen}
-        onClose={() => setIsCreatePostOpen(false)}
-      />
+          {/* ── Multi-Step Post Publishing Flow ── */}
+          {isCreatePostOpen && (
+            <CreatePostModal
+              isOpen={isCreatePostOpen}
+              onClose={() => setIsCreatePostOpen(false)}
+            />
+          )}
 
-      {/* ── Centralized Comment Drawer (Desktop Right Drawer / Mobile Bottom Sheet) ── */}
-      <CommentDrawer
-        isOpen={Boolean(activeCommentPost)}
-        post={activeCommentPost}
-        onClose={() => setActiveCommentPost(null)}
-      />
+          {/* ── Centralized Comment Drawer (Desktop Right Drawer / Mobile Bottom Sheet) ── */}
+          {Boolean(activeCommentPost) && (
+            <CommentDrawer
+              isOpen={Boolean(activeCommentPost)}
+              post={activeCommentPost}
+              onClose={() => setActiveCommentPost(null)}
+            />
+          )}
 
-      {/* ── Mobile Discovery Drawer ── */}
-      <MobileDiscoveryDrawer
-        isOpen={isMobileDiscoveryOpen}
-        onClose={() => setIsMobileDiscoveryOpen(false)}
-        topics={trendingTopics}
-        activeTopic={activeTopic}
-        onSelectTopic={setActiveTopic}
-        onOpenSearch={handleOpenSearch}
-      />
+          {/* ── Community Unified Search Modal ── */}
+          {isSearchOpen && (
+            <CommunitySearchModal
+              isOpen={isSearchOpen}
+              onClose={() => setIsSearchOpen(false)}
+              onSelectTopic={setActiveTopic}
+              onOpenComments={setActiveCommentPost}
+            />
+          )}
+
+          {/* ── Mobile Discovery Drawer ── */}
+          {isMobileDiscoveryOpen && (
+            <MobileDiscoveryDrawer
+              isOpen={isMobileDiscoveryOpen}
+              onClose={() => setIsMobileDiscoveryOpen(false)}
+              topics={trendingTopics}
+              activeTopic={activeTopic}
+              activeFilter={activeFilter}
+              onSelectTopic={setActiveTopic}
+              onOpenSearch={handleOpenSearch}
+            />
+          )}
+        </Suspense>
+      </FeatureErrorBoundary>
 
       {/* ── Editorial Page Header with Create, Search & Saved Actions ── */}
       <CommunityHeader
@@ -204,6 +261,9 @@ export default function CommunityHome() {
             <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#12314C]/70 to-[#9FD5B2]/15 border border-brand-mint/30 text-xs text-white">
               <span className="flex items-center gap-1.5 font-medium">
                 Filtering by topic: <strong className="text-brand-mint">#{activeTopic}</strong>
+                <span className="text-text-muted font-normal">
+                  ({displayedPosts.length} {displayedPosts.length === 1 ? 'post' : 'posts'})
+                </span>
               </span>
               <button
                 type="button"
@@ -218,9 +278,9 @@ export default function CommunityHome() {
           {/* ── Feed Section ── */}
           <div className="space-y-4">
             {feedLoading ? (
-              // Design-system Shimmer Skeletons
+              // High-fidelity PostCard Skeletons
               Array.from({ length: 3 }).map((_, i) => (
-                <SkeletonCard key={i} className="bg-[#0B111E]/80 border-white/[0.08]" />
+                <PostCardSkeleton key={i} />
               ))
             ) : feedError ? (
               <EmptyState
@@ -249,10 +309,27 @@ export default function CommunityHome() {
                   );
                 })}
 
-                {/* Infinite Scroll Trigger */}
+                {/* Infinite Scroll Trigger & Bottom Loading / Error States */}
                 {hasNextPage && (
-                  <div ref={targetRef} className="py-8 flex justify-center">
-                    <div className="w-6 h-6 border-2 border-brand-mint/30 border-t-brand-mint rounded-full animate-spin" />
+                  <div ref={targetRef} className="py-4">
+                    {isFetchingNextPage ? (
+                      <div className="space-y-4">
+                        <PostCardSkeleton />
+                      </div>
+                    ) : isFetchNextPageError ? (
+                      <div className="text-center py-5 px-4 bg-white/[0.02] border border-white/[0.06] rounded-2xl">
+                        <p className="text-xs text-text-muted mb-2.5">Couldn't load more posts.</p>
+                        <button
+                          type="button"
+                          onClick={() => fetchNextPage()}
+                          className="min-h-[44px] min-w-[44px] px-4 py-2 bg-brand-mint text-bg-base font-semibold rounded-xl text-xs hover:opacity-90 transition-opacity cursor-pointer inline-flex items-center gap-1.5"
+                        >
+                          Try again
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="h-4" />
+                    )}
                   </div>
                 )}
 
@@ -280,6 +357,14 @@ export default function CommunityHome() {
                         icon={GraduationCap}
                         title="Your cohort hasn't posted yet"
                         description="Start the conversation with your enrolled course batch, faculty, and academic peers."
+                        action={handleEmptyStateAction}
+                        actionLabel="Create a Post"
+                      />
+                    ) : activeFilter === 'trending' ? (
+                      <EmptyState
+                        icon={Flame}
+                        title="No trending discussions yet"
+                        description="Discussions with community reactions, comments, and reposts will be ranked and showcased here."
                         action={handleEmptyStateAction}
                         actionLabel="Create a Post"
                       />
@@ -312,6 +397,7 @@ export default function CommunityHome() {
           <DiscoverySidebar
             topics={trendingTopics}
             activeTopic={activeTopic}
+            activeFilter={activeFilter}
             onSelectTopic={setActiveTopic}
             onOpenSearch={handleOpenSearch}
           />

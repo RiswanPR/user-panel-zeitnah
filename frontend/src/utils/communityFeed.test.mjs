@@ -527,6 +527,266 @@ test("Community Feed, Comments & Stories — Phase 2C Verification", async (t) =
     const apiContent = fs.readFileSync(path.resolve("src/services/communityApi.js"), "utf8");
     assert.ok(apiContent.includes("config.headers = { 'Idempotency-Key': idempotencyKey };"), "communityApi must attach Idempotency-Key header");
   });
+
+  // ── Phase 1 Instagram-Level Feed Core Verification Tests ──
+  await t.test("Phase 1: verifies PostCardSkeleton exists with matching geometry", () => {
+    const skeletonFile = path.resolve("src/components/community/feed/PostCard/PostCardSkeleton.jsx");
+    assert.ok(fs.existsSync(skeletonFile), "PostCardSkeleton.jsx must exist");
+    const content = fs.readFileSync(skeletonFile, "utf8");
+    assert.ok(content.includes("aspect-video"), "PostCardSkeleton must include media aspect ratio placeholder");
+    assert.ok(content.includes("shimmer"), "PostCardSkeleton must use design-system shimmer");
+  });
+
+  await t.test("Phase 1: verifies PostMedia desktop double-click to like and graceful retry recovery", () => {
+    const mediaContent = fs.readFileSync(path.resolve("src/components/community/feed/PostCard/PostMedia.jsx"), "utf8");
+    assert.ok(mediaContent.includes("onDoubleClick={handleDoubleClick}"), "PostMedia must support desktop double-click to like");
+    assert.ok(mediaContent.includes("Media couldn't be loaded."), "PostMedia must display graceful media error message");
+    assert.ok(mediaContent.includes("handleRetryMedia"), "PostMedia must support inline retry recovery on failed media");
+  });
+
+  await t.test("Phase 1: verifies PostMedia video memory safety and decoder disposal on unmount", () => {
+    const mediaContent = fs.readFileSync(path.resolve("src/components/community/feed/PostCard/PostMedia.jsx"), "utf8");
+    assert.ok(mediaContent.includes("observer.disconnect()"), "PostMedia must disconnect IntersectionObserver on unmount");
+    assert.ok(mediaContent.includes("vid.pause()"), "PostMedia must pause videos on unmount cleanup");
+  });
+
+  await t.test("Phase 1: verifies CommunityHome post deduplication and next-page error recovery", () => {
+    const homeContent = fs.readFileSync(path.resolve("src/pages/community/CommunityHome.jsx"), "utf8");
+    assert.ok(homeContent.includes("PostCardSkeleton"), "CommunityHome must render PostCardSkeleton on initial load and pagination");
+    assert.ok(homeContent.includes("seen.has(id)"), "CommunityHome must deduplicate posts across feed pages");
+    assert.ok(homeContent.includes("rootMargin: '250px'"), "CommunityHome must prefetch next page before bottom sentinel");
+    assert.ok(homeContent.includes("isFetchNextPageError"), "CommunityHome must track next-page error state");
+    assert.ok(homeContent.includes("Couldn't load more posts."), "CommunityHome must display inline retry state for next-page error");
+  });
+
+  await t.test("Phase 1: verifies useCreateComment and useDeleteComment optimistic feed synchronization", () => {
+    const hooksContent = fs.readFileSync(path.resolve("src/hooks/useCommunity.js"), "utf8");
+    assert.ok(hooksContent.includes("queryClient.setQueriesData({ queryKey: ['community', 'feed'] }, incrementComment)"), "useCreateComment must increment feed post comment count optimistically");
+    assert.ok(hooksContent.includes("queryClient.setQueriesData({ queryKey: ['community', 'feed'] }, decrementComment)"), "useDeleteComment must decrement feed post comment count optimistically");
+    assert.ok(hooksContent.includes("isOptimistic: true"), "useCreateComment must mark optimistic comment preview");
+  });
+
+  await t.test("Phase 1: verifies ReactionBar keyboard arrow navigation accessibility", () => {
+    const reactionContent = fs.readFileSync(path.resolve("src/components/community/feed/PostCard/ReactionBar.jsx"), "utf8");
+    assert.ok(reactionContent.includes("handleTriggerKeyDown"), "ReactionBar must handle keyboard trigger navigation");
+    assert.ok(reactionContent.includes("handlePickerKeyDown"), "ReactionBar must handle picker arrow navigation");
+  });
+
+  // ── Phase 2 Instagram-Level Stories Experience Verification Tests ──
+  await t.test("Phase 2: verifies StoryRail desktop scroll chevrons and momentum touch container", () => {
+    const railContent = fs.readFileSync(path.resolve("src/components/community/stories/StoryRail.jsx"), "utf8");
+    assert.ok(railContent.includes("canScrollLeft"), "StoryRail must track canScrollLeft for desktop navigation");
+    assert.ok(railContent.includes("canScrollRight"), "StoryRail must track canScrollRight for desktop navigation");
+    assert.ok(railContent.includes("scrollBy"), "StoryRail must support programmatic chevron scrolling");
+    assert.ok(railContent.includes("overflow-x-auto"), "StoryRail must use smooth horizontal scroll container");
+  });
+
+  await t.test("Phase 2: verifies StoryViewer hold-to-pause suppression and downward swipe dismissal", () => {
+    const viewerContent = fs.readFileSync(path.resolve("src/components/community/stories/StoryViewer.jsx"), "utf8");
+    assert.ok(viewerContent.includes("holdTimerRef"), "StoryViewer must use hold timer for press-and-hold pause");
+    assert.ok(viewerContent.includes("isHoldRef.current = true"), "StoryViewer must set isHoldRef on hold duration threshold");
+    assert.ok(viewerContent.includes("dragY"), "StoryViewer must track dragY for downward swipe dismissal");
+    assert.ok(viewerContent.includes("handleTouchMove"), "StoryViewer must handle touch move gestures");
+  });
+
+  await t.test("Phase 2: verifies StoryViewer video progress tracking and adjacent preloading", () => {
+    const viewerContent = fs.readFileSync(path.resolve("src/components/community/stories/StoryViewer.jsx"), "utf8");
+    assert.ok(viewerContent.includes("videoRef.current.currentTime / videoRef.current.duration"), "StoryViewer video progress must track actual video playback");
+    assert.ok(viewerContent.includes("img.src = nextUrl"), "StoryViewer must preload next story image");
+  });
+
+  await t.test("Phase 2: verifies StoryViewer quick reactions and communityApi reaction integration", () => {
+    const viewerContent = fs.readFileSync(path.resolve("src/components/community/stories/StoryViewer.jsx"), "utf8");
+    assert.ok(viewerContent.includes("QUICK_REACTIONS"), "StoryViewer must define quick reactions");
+    assert.ok(viewerContent.includes("handleQuickReaction"), "StoryViewer must provide handleQuickReaction handler");
+
+    const apiContent = fs.readFileSync(path.resolve("src/services/communityApi.js"), "utf8");
+    assert.ok(apiContent.includes("reactToStory"), "communityApi must implement reactToStory endpoint");
+
+    const hooksContent = fs.readFileSync(path.resolve("src/hooks/useCommunity.js"), "utf8");
+    assert.ok(hooksContent.includes("useReactToStory"), "useCommunity must export useReactToStory mutation hook");
+  });
+
+  await t.test("Phase 2: verifies StoryViewer media error recovery and memory cleanup", () => {
+    const viewerContent = fs.readFileSync(path.resolve("src/components/community/stories/StoryViewer.jsx"), "utf8");
+    assert.ok(viewerContent.includes("handleRetryMedia"), "StoryViewer must provide retry handler for media failure");
+    assert.ok(viewerContent.includes("Story couldn't be loaded."), "StoryViewer must show user-friendly error fallback");
+    assert.ok(viewerContent.includes("vid.removeAttribute('src')"), "StoryViewer must release video src decoder memory on unmount");
+    assert.ok(viewerContent.includes("vid.load()"), "StoryViewer must invoke load() to clear native video buffers");
+  });
+
+  await t.test("Phase 2: verifies useViewStory optimistic cache update", () => {
+    const hooksContent = fs.readFileSync(path.resolve("src/hooks/useCommunity.js"), "utf8");
+    assert.ok(hooksContent.includes("onMutate: async (storyId)"), "useViewStory must have optimistic onMutate handler");
+    assert.ok(hooksContent.includes("isViewed: true"), "useViewStory must mark story viewed optimistically");
+  });
+
+  // ── Phase 3 Instagram-Level Story Creation / Editor Verification Tests ──
+  await t.test("Phase 3: verifies StoryRail Add Story entry affordance and 44x44 touch targets", () => {
+    const railContent = fs.readFileSync(path.resolve("src/components/community/stories/StoryRail.jsx"), "utf8");
+    assert.ok(railContent.includes("onAddStory"), "StoryRail must provide onAddStory trigger");
+    assert.ok(railContent.includes("after:min-w-[44px] after:min-h-[44px]"), "StoryRail add button must ensure 44x44 minimum touch target");
+  });
+
+  await t.test("Phase 3: verifies CreateStoryModal media constraints (8MB image, 1GB video, 90s duration)", () => {
+    const modalContent = fs.readFileSync(path.resolve("src/components/community/stories/CreateStoryModal.jsx"), "utf8");
+    assert.ok(modalContent.includes("8 * 1024 * 1024"), "CreateStoryModal must enforce 8MB image limit");
+    assert.ok(modalContent.includes("1024 * 1024 * 1024"), "CreateStoryModal must enforce 1GB video limit");
+    assert.ok(modalContent.includes("MAX_VIDEO_DURATION_SECONDS = 90"), "CreateStoryModal must define 90s video duration limit");
+    assert.ok(modalContent.includes("tempVideo.duration > MAX_VIDEO_DURATION_SECONDS"), "CreateStoryModal must check video duration via metadata");
+  });
+
+  await t.test("Phase 3: verifies CreateStoryModal duplicate submission guard, retry recovery, and upload cancellation", () => {
+    const modalContent = fs.readFileSync(path.resolve("src/components/community/stories/CreateStoryModal.jsx"), "utf8");
+    assert.ok(modalContent.includes("isSubmittingRef.current = true"), "CreateStoryModal must guard against duplicate submissions");
+    assert.ok(modalContent.includes("abortControllerRef.current.abort()"), "CreateStoryModal must support aborting in-flight uploads");
+    assert.ok(modalContent.includes("setState('failed')"), "CreateStoryModal must transition to failed state on error");
+    assert.ok(modalContent.includes("Retry Publishing") || modalContent.includes("Retry Upload"), "CreateStoryModal must offer retry options on failure");
+  });
+
+  await t.test("Phase 3: verifies CreateStoryModal draft protection and object URL memory cleanup", () => {
+    const modalContent = fs.readFileSync(path.resolve("src/components/community/stories/CreateStoryModal.jsx"), "utf8");
+    assert.ok(modalContent.includes("hasUnsavedEdits"), "CreateStoryModal must detect unsaved edits");
+    assert.ok(modalContent.includes("StoryDiscardDialog"), "CreateStoryModal must mount StoryDiscardDialog for draft safety");
+    assert.ok(modalContent.includes("URL.revokeObjectURL(previewUrl)"), "CreateStoryModal must revoke object URLs on cleanup");
+  });
+
+  await t.test("Phase 3: verifies StoryEditor subcomponents and rasterization engine exist", () => {
+    const editorDir = path.resolve("src/components/community/stories/editor");
+    assert.ok(fs.existsSync(path.join(editorDir, "rasterizeStory.js")), "rasterizeStory.js must exist");
+    assert.ok(fs.existsSync(path.join(editorDir, "StoryEditorCanvas.jsx")), "StoryEditorCanvas.jsx must exist");
+    assert.ok(fs.existsSync(path.join(editorDir, "StoryEditorToolbar.jsx")), "StoryEditorToolbar.jsx must exist");
+    assert.ok(fs.existsSync(path.join(editorDir, "StoryDrawingControls.jsx")), "StoryDrawingControls.jsx must exist");
+    assert.ok(fs.existsSync(path.join(editorDir, "StoryTextEditorModal.jsx")), "StoryTextEditorModal.jsx must exist");
+    assert.ok(fs.existsSync(path.join(editorDir, "StoryStickerPicker.jsx")), "StoryStickerPicker.jsx must exist");
+    assert.ok(fs.existsSync(path.join(editorDir, "StoryFilterPicker.jsx")), "StoryFilterPicker.jsx must exist");
+    assert.ok(fs.existsSync(path.join(editorDir, "StoryDiscardDialog.jsx")), "StoryDiscardDialog.jsx must exist");
+
+    const rasterizeContent = fs.readFileSync(path.join(editorDir, "rasterizeStory.js"), "utf8");
+    assert.ok(rasterizeContent.includes("targetWidth = 1080"), "rasterizeStory must use 1080p 9:16 target canvas");
+    assert.ok(rasterizeContent.includes("canvas.toBlob"), "rasterizeStory must export canvas to Blob");
+  });
+
+  await t.test("Phase 3: verifies useCreateStory invalidates and updates stories cache", () => {
+    const hooksContent = fs.readFileSync(path.resolve("src/hooks/useCommunity.js"), "utf8");
+    assert.ok(hooksContent.includes("queryClient.invalidateQueries({ queryKey: ['community', 'stories'] })"), "useCreateStory must invalidate stories query on success");
+  });
+
+  // ══════════════════════════════════════════════════
+  // PHASE 4 — DISCOVERY + EXPLORE + SEARCH + SOCIAL INTERACTION
+  // ══════════════════════════════════════════════════
+
+  await t.test("Phase 4: validates normalizeFeedFilter supports trending and saved feeds with safe fallback", () => {
+    assert.equal(normalizeFeedFilter("all"), "all");
+    assert.equal(normalizeFeedFilter("following"), "following");
+    assert.equal(normalizeFeedFilter("cohort"), "cohort");
+    assert.equal(normalizeFeedFilter("trending"), "trending");
+    assert.equal(normalizeFeedFilter("saved"), "saved");
+    assert.equal(normalizeFeedFilter("TRENDING"), "trending");
+    assert.equal(normalizeFeedFilter("unknown_filter"), "all");
+    assert.equal(normalizeFeedFilter(null), "all");
+    assert.equal(normalizeFeedFilter(undefined), "all");
+  });
+
+  await t.test("Phase 4: verifies communityApi searchCommunity endpoint and AbortSignal support", () => {
+    const apiContent = fs.readFileSync(path.resolve("src/services/communityApi.js"), "utf8");
+    assert.ok(apiContent.includes("searchCommunity: async"), "communityApi must implement searchCommunity method");
+    assert.ok(apiContent.includes("/community/posts/search"), "searchCommunity must query /community/posts/search");
+    assert.ok(apiContent.includes("signal,"), "searchCommunity must pass AbortSignal for stale request cancellation");
+    assert.ok(apiContent.includes("search,"), "communityApi.getFeed must accept search parameter");
+    assert.ok(apiContent.includes("tag,"), "communityApi.getFeed must accept tag parameter");
+  });
+
+  await t.test("Phase 4: verifies useCommunitySearch hook configuration and query isolation", () => {
+    const hooksContent = fs.readFileSync(path.resolve("src/hooks/useCommunity.js"), "utf8");
+    assert.ok(hooksContent.includes("export function useCommunitySearch"), "useCommunity must export useCommunitySearch");
+    assert.ok(hooksContent.includes("['community', 'search', { query: cleanQ, type }]"), "useCommunitySearch must isolate query cache by query and type");
+    assert.ok(hooksContent.includes("cleanQ.length >= 2"), "useCommunitySearch must enforce min 2 character query length");
+  });
+
+  await t.test("Phase 4: verifies CommunitySearchModal architecture, debouncing, recent searches, and accessibility", () => {
+    const searchModalPath = path.resolve("src/components/community/discovery/CommunitySearchModal.jsx");
+    assert.ok(fs.existsSync(searchModalPath), "CommunitySearchModal.jsx must exist");
+    const modalContent = fs.readFileSync(searchModalPath, "utf8");
+
+    // Debouncing & stale request cancellation
+    assert.ok(modalContent.includes("300"), "CommunitySearchModal must debounce input with 300ms window");
+    assert.ok(modalContent.includes("debounceTimerRef"), "CommunitySearchModal must use ref-based debounce timer");
+
+    // Recent searches localStorage engine
+    assert.ok(modalContent.includes("zeitnah_recent_community_searches"), "CommunitySearchModal must key recent searches appropriately");
+    assert.ok(modalContent.includes("MAX_RECENT_SEARCHES = 6"), "CommunitySearchModal must cap recent searches at 6 entries");
+    assert.ok(modalContent.includes("removeRecentSearch"), "CommunitySearchModal must support removing individual recent searches");
+    assert.ok(modalContent.includes("clearRecentSearches"), "CommunitySearchModal must support clearing all recent search history");
+
+    // Accessibility and keyboard navigation
+    assert.ok(modalContent.includes('role="dialog"'), "CommunitySearchModal must implement dialog role");
+    assert.ok(modalContent.includes('aria-modal="true"'), "CommunitySearchModal must implement aria-modal");
+    assert.ok(modalContent.includes("e.key === 'Escape'"), "CommunitySearchModal must dismiss on Escape key");
+    assert.ok(modalContent.includes("min-h-[46px]") || modalContent.includes("min-h-[44px]"), "CommunitySearchModal must guarantee minimum 44px touch targets");
+
+    // Category Tabs
+    assert.ok(modalContent.includes("'all'"), "CommunitySearchModal must include All category tab");
+    assert.ok(modalContent.includes("'posts'"), "CommunitySearchModal must include Posts category tab");
+    assert.ok(modalContent.includes("'people'"), "CommunitySearchModal must include People category tab");
+    assert.ok(modalContent.includes("'topics'"), "CommunitySearchModal must include Topics category tab");
+  });
+
+  await t.test("Phase 4: verifies PeopleCard canonical profile routing, avatar, role, and optimistic connection action", () => {
+    const peopleCardPath = path.resolve("src/components/community/discovery/PeopleCard.jsx");
+    assert.ok(fs.existsSync(peopleCardPath), "PeopleCard.jsx must exist");
+    const cardContent = fs.readFileSync(peopleCardPath, "utf8");
+
+    assert.ok(cardContent.includes("getCanonicalProfileUrl"), "PeopleCard must route through canonical profile URLs");
+    assert.ok(cardContent.includes("networkApi.sendConnectionRequest"), "PeopleCard must dispatch connection request via networkApi");
+    assert.ok(cardContent.includes("setConnectionStatus('outgoing_pending')"), "PeopleCard must optimistically transition to pending state");
+    assert.ok(cardContent.includes("setConnectionStatus('none')"), "PeopleCard must roll back connection status on mutation failure");
+    assert.ok(cardContent.includes("min-h-[36px]") || cardContent.includes("min-h-[44px]"), "PeopleCard must ensure touch-friendly button targets");
+  });
+
+  await t.test("Phase 4: verifies DiscoverySidebar desktop search trigger, trending discussions toggle, and real peer discovery", () => {
+    const sidebarContent = fs.readFileSync(path.resolve("src/components/community/discovery/DiscoverySidebar.jsx"), "utf8");
+    assert.ok(sidebarContent.includes("onOpenSearch"), "DiscoverySidebar must expose search trigger");
+    assert.ok(sidebarContent.includes("Trending Discussions"), "DiscoverySidebar must provide Trending Discussions shortcut");
+    assert.ok(sidebarContent.includes("/community?feed=trending"), "Trending Discussions shortcut must route to trending feed");
+    assert.ok(sidebarContent.includes("networkApi.getPeople"), "DiscoverySidebar must fetch real verified peers via networkApi");
+    assert.ok(sidebarContent.includes("<PeopleCard"), "DiscoverySidebar must render PeopleCard for discovered peers");
+  });
+
+  await t.test("Phase 4: verifies MobileDiscoveryDrawer mobile search trigger, trending shortcut, and real peer discovery", () => {
+    const drawerContent = fs.readFileSync(path.resolve("src/components/community/discovery/MobileDiscoveryDrawer.jsx"), "utf8");
+    assert.ok(drawerContent.includes("onOpenSearch"), "MobileDiscoveryDrawer must expose search trigger");
+    assert.ok(drawerContent.includes("Trending Discussions"), "MobileDiscoveryDrawer must provide Trending Discussions toggle");
+    assert.ok(drawerContent.includes("networkApi.getPeople"), "MobileDiscoveryDrawer must fetch real peers via networkApi");
+    assert.ok(drawerContent.includes("PeopleCard"), "MobileDiscoveryDrawer must render PeopleCard");
+    assert.ok(drawerContent.includes("min-h-[44px]"), "MobileDiscoveryDrawer must ensure >=44x44 touch targets");
+  });
+
+  await t.test("Phase 4: verifies CommunityHeader accessible search trigger across all viewports", () => {
+    const headerContent = fs.readFileSync(path.resolve("src/components/community/header/CommunityHeader.jsx"), "utf8");
+    assert.ok(headerContent.includes("onOpenSearch"), "CommunityHeader must invoke onOpenSearch");
+    assert.ok(headerContent.includes("min-w-[40px]"), "CommunityHeader search button must provide touch-accessible target");
+  });
+
+  await t.test("Phase 4: verifies CommunityHome mounts CommunitySearchModal, global ⌘K shortcut, topic filtering, and trending empty state", () => {
+    const homeContent = fs.readFileSync(path.resolve("src/pages/community/CommunityHome.jsx"), "utf8");
+    assert.ok(homeContent.includes("<CommunitySearchModal"), "CommunityHome must mount CommunitySearchModal");
+    assert.ok(homeContent.includes("isSearchOpen"), "CommunityHome must maintain isSearchOpen state");
+    assert.ok(homeContent.includes("e.key.toLowerCase() === 'k'"), "CommunityHome must bind global ⌘K / Ctrl+K keyboard shortcut");
+    assert.ok(homeContent.includes("Filtering by topic:"), "CommunityHome must display dedicated Active Topic filter banner");
+    assert.ok(homeContent.includes("No trending discussions yet"), "CommunityHome must define intentional trending feed empty state");
+    assert.ok(homeContent.includes("<StoryRail"), "CommunityHome must strictly preserve StoryRail");
+    assert.ok(homeContent.includes("<CommentDrawer"), "CommunityHome must strictly preserve single CommentDrawer orchestration");
+  });
+
+  await t.test("Phase 4: verifies PostActions social interaction polish (Web Share API, clipboard fallback, optimistic bookmark)", () => {
+    const postActionsContent = fs.readFileSync(path.resolve("src/components/community/feed/PostCard/PostActions.jsx"), "utf8");
+    assert.ok(postActionsContent.includes("navigator.share"), "PostActions must use Web Share API when available");
+    assert.ok(postActionsContent.includes("navigator.clipboard.writeText"), "PostActions must fallback to clipboard writeText");
+    assert.ok(postActionsContent.includes("toast.success('Link copied')"), "PostActions must notify user with 'Link copied' toast");
+    assert.ok(postActionsContent.includes("onToggleBookmark"), "PostActions must support bookmark toggle");
+    assert.ok(postActionsContent.includes("min-h-[44px]"), "PostActions buttons must have 44px minimum touch targets");
+  });
 });
 
 

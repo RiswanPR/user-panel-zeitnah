@@ -75,16 +75,16 @@ export default function CommunityHeader({
           <span className="hidden md:inline">Discover</span>
         </button>
 
-        {/* Search Shortcut Trigger (Desktop & Tablet) */}
+        {/* Search Shortcut Trigger (Accessible on all viewports) */}
         <button
           type="button"
           onClick={onOpenSearch}
-          className="hidden sm:flex min-h-[40px] px-3 sm:px-3.5 py-1.5 rounded-xl bg-[#12314C]/30 hover:bg-[#12314C]/50 border border-white/[0.08] hover:border-brand-mint/30 text-xs text-text-secondary hover:text-white transition-all items-center gap-1.5 cursor-pointer shrink-0"
-          aria-label="Search platform"
-          title="Search (⌘K)"
+          className="min-h-[40px] min-w-[40px] px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-[#12314C]/30 hover:bg-[#12314C]/50 border border-white/[0.08] hover:border-brand-mint/30 text-xs text-text-secondary hover:text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+          aria-label="Search community"
+          title="Search community"
         >
-          <Search className="w-3.5 h-3.5 text-text-muted" />
-          <span className="hidden md:inline">Search</span>
+          <Search className="w-3.5 h-3.5 text-brand-mint" />
+          <span className="hidden md:inline font-medium">Search</span>
           <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-mono rounded bg-white/[0.06] text-text-faint">
             ⌘K
           </kbd>

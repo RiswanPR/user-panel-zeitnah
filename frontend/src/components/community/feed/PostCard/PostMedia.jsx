@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Volume2,
   VolumeX,
+  RefreshCw,
 } from 'lucide-react';
 import MediaLightbox from './MediaLightbox';
 
@@ -15,9 +16,11 @@ import MediaLightbox from './MediaLightbox';
  * Features:
  * - Multi-image swipeable carousel (touch swipe on mobile, arrow controls on desktop)
  * - Pagination indicator badge (1/N) and bottom dots
- * - Double-tap to like with radiant heart-burst animation
+ * - Double-tap / double-click to like with radiant heart-burst animation
  * - Auto-pausing video via IntersectionObserver and mutual playback control
  * - Responsive aspect ratios (4:5, 1:1, 16:9) with layout-shift prevention
+ * - Graceful error states with inline retry
+ * - Video memory safety and decoder disposal on unmount
  */
 export default function PostMedia({ media = [], onDoubleTapLike }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -27,6 +30,7 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
   const [showHeartBurst, setShowHeartBurst] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
 
+  const containerRef = useRef(null);
   const videoRefs = useRef({});
   const lastTapRef = useRef(0);
   const touchStartXRef = useRef(0);
@@ -37,6 +41,25 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
 
   const handleMediaError = useCallback((idx) => {
     setFailedMedia((prev) => ({ ...prev, [idx]: true }));
+  }, []);
+
+  const handleRetryMedia = useCallback((idx) => {
+    setFailedMedia((prev) => {
+      const next = { ...prev };
+      delete next[idx];
+      return next;
+    });
+    setLoadedImages((prev) => {
+      const next = { ...prev };
+      delete next[idx];
+      return next;
+    });
+    const vid = videoRefs.current[idx];
+    if (vid) {
+      try {
+        vid.load();
+      } catch {}
+    }
   }, []);
 
   const handleImageLoad = useCallback((idx) => {
@@ -60,6 +83,19 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
       lastTapRef.current = now;
     }
   }, [onDoubleTapLike]);
+
+  // Desktop double-click to like
+  const handleDoubleClick = useCallback(
+    (e) => {
+      e.stopPropagation();
+      setShowHeartBurst(true);
+      setTimeout(() => setShowHeartBurst(false), 550);
+      if (onDoubleTapLike) {
+        onDoubleTapLike();
+      }
+    },
+    [onDoubleTapLike]
+  );
 
   // Touch handlers for mobile swipe vs vertical scroll
   const handleTouchStart = (e) => {
@@ -102,7 +138,7 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
     touchEndYRef.current = 0;
   };
 
-  // Auto-pause video when scrolled out of viewport
+  // Auto-pause video when scrolled out of viewport & Memory cleanup
   useEffect(() => {
     if (typeof IntersectionObserver === 'undefined') return;
 
@@ -121,7 +157,18 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
     );
 
     currentRefs.forEach((vid) => observer.observe(vid));
-    return () => observer.disconnect();
+
+    return () => {
+      observer.disconnect();
+      // Memory cleanup: release active video resources on unmount
+      currentRefs.forEach((vid) => {
+        if (!vid.paused) {
+          try {
+            vid.pause();
+          } catch {}
+        }
+      });
+    };
   }, [media]);
 
   // Preload adjacent carousel images for smooth transitions
@@ -142,6 +189,7 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
   return (
     <>
       <div
+        ref={containerRef}
         data-testid="post-media-container"
         aria-label="Double tap to like"
         tabIndex={isMulti ? 0 : undefined}
@@ -155,6 +203,7 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
             setCurrentIndex((prev) => Math.min(prev + 1, media.length - 1));
           }
         }}
+        onDoubleClick={handleDoubleClick}
         className="relative my-3 -mx-4 sm:mx-0 rounded-none sm:rounded-2xl overflow-hidden bg-[#070B14] border-y sm:border border-white/[0.08] select-none group transition-all duration-300 hover:brightness-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -177,8 +226,8 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
               initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0, opacity: 0 }}
               animate={
                 shouldReduceMotion
-                   ? { opacity: [0, 1, 0] }
-                   : { scale: [0, 1.12, 1], opacity: [0, 1, 0] }
+                  ? { opacity: [0, 1, 0] }
+                  : { scale: [0, 1.12, 1], opacity: [0, 1, 0] }
               }
               exit={{ opacity: 0 }}
               transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
@@ -227,7 +276,19 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
                   aria-label="Media attachment could not be loaded"
                 >
                   <AlertCircle className="w-6 h-6 text-text-faint mb-2" />
-                  <span className="text-xs">Media unavailable</span>
+                  <span className="text-xs mb-2.5">Media couldn't be loaded.</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRetryMedia(idx);
+                    }}
+                    className="min-h-[44px] min-w-[44px] px-3.5 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-xs font-semibold text-white transition-colors cursor-pointer flex items-center gap-1.5"
+                    aria-label="Retry loading media"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Retry</span>
+                  </button>
                 </div>
               );
             }
@@ -267,7 +328,7 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
                       const vid = videoRefs.current[idx];
                       if (vid) vid.muted = !isMuted;
                     }}
-                    className="absolute bottom-3 right-3 p-2 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm transition-all cursor-pointer z-10"
+                    className="min-h-[44px] min-w-[44px] absolute bottom-3 right-3 p-2.5 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm transition-all cursor-pointer z-10 flex items-center justify-center"
                     aria-label={isMuted ? 'Unmute video' : 'Mute video'}
                   >
                     {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
@@ -310,7 +371,7 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
                     e.stopPropagation();
                     setSelectedMedia(item);
                   }}
-                  className="absolute top-3 left-3 p-2 rounded-full bg-black/50 hover:bg-black/80 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"
+                  className="min-h-[44px] min-w-[44px] absolute top-3 left-3 p-2 rounded-full bg-black/50 hover:bg-black/80 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity cursor-pointer z-10 flex items-center justify-center"
                   aria-label="Enlarge image"
                   title="Enlarge"
                 >
@@ -332,7 +393,7 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
                   e.stopPropagation();
                   setCurrentIndex((prev) => Math.max(prev - 1, 0));
                 }}
-                className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 text-white items-center justify-center backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus:outline-none focus:ring-2 focus:ring-brand-mint transition-all cursor-pointer z-20 shadow-md"
+                className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/85 text-white items-center justify-center backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus:outline-none focus:ring-2 focus:ring-brand-mint transition-all cursor-pointer z-20 shadow-md"
                 aria-label="Previous media"
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -347,7 +408,7 @@ export default function PostMedia({ media = [], onDoubleTapLike }) {
                   e.stopPropagation();
                   setCurrentIndex((prev) => Math.min(prev + 1, media.length - 1));
                 }}
-                className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 text-white items-center justify-center backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus:outline-none focus:ring-2 focus:ring-brand-mint transition-all cursor-pointer z-20 shadow-md"
+                className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/85 text-white items-center justify-center backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus:outline-none focus:ring-2 focus:ring-brand-mint transition-all cursor-pointer z-20 shadow-md"
                 aria-label="Next media"
               >
                 <ChevronRight className="w-5 h-5" />

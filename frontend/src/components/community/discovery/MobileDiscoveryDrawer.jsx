@@ -1,13 +1,18 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { X, Compass } from 'lucide-react';
+import { X, Compass, Search, Flame, Users } from 'lucide-react';
 import TrendingTopics from './TrendingTopics';
 import DiscoveryLinks from './DiscoveryLinks';
+import PeopleCard from './PeopleCard';
+import PremiumCard from '../../ui/PremiumCard';
+import { useSuggestedPeople } from '../../../hooks/useCommunity';
+import { networkApi } from '../../../services/networkApi';
 
 /**
- * MobileDiscoveryDrawer — Contextual bottom sheet for discovering topics
- * and verified resources on mobile viewports (<1280px / 768px).
+ * MobileDiscoveryDrawer — Contextual bottom sheet for discovering topics,
+ * people, and verified resources on mobile viewports (<1024px).
  * Implements full modal accessibility, focus management, and body scroll lock.
  */
 export default function MobileDiscoveryDrawer({
@@ -15,12 +20,19 @@ export default function MobileDiscoveryDrawer({
   onClose,
   topics = [],
   activeTopic = null,
+  activeFilter = 'all',
   onSelectTopic,
   onOpenSearch,
 }) {
   const drawerRef = useRef(null);
   const previousActiveElementRef = useRef(null);
   const shouldReduceMotion = useReducedMotion();
+
+  // Real verified peer discovery via networkApi.getPeople backed by TanStack Query cache
+  const { data: suggestedPeople = [] } = useSuggestedPeople({
+    limit: 3,
+    fetcher: networkApi.getPeople,
+  });
 
   // Focus management & body scroll lock
   useEffect(() => {
@@ -123,6 +135,45 @@ export default function MobileDiscoveryDrawer({
 
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+              {/* 1. Quick Search Action */}
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  if (onOpenSearch) onOpenSearch();
+                }}
+                className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] hover:border-brand-mint/40 text-left transition-all duration-150 flex items-center justify-between group cursor-pointer text-xs text-text-muted"
+                aria-label="Open community search"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Search className="w-4 h-4 text-brand-mint" />
+                  <span>Search posts, peers, topics...</span>
+                </div>
+              </button>
+
+              {/* 2. Trending Feed Toggle */}
+              <Link
+                to={activeFilter === 'trending' ? '/community' : '/community?feed=trending'}
+                onClick={onClose}
+                className={`
+                  flex items-center justify-between px-3.5 py-2.5 rounded-xl border transition-all duration-150
+                  ${
+                    activeFilter === 'trending'
+                      ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 font-bold'
+                      : 'bg-white/[0.025] hover:bg-white/[0.05] border-white/[0.06] text-text-secondary'
+                  }
+                `}
+              >
+                <div className="flex items-center gap-2">
+                  <Flame className="w-4 h-4 text-amber-400" />
+                  <span className="text-xs">Trending Discussions</span>
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.05]">
+                  {activeFilter === 'trending' ? 'Active' : 'View'}
+                </span>
+              </Link>
+
+              {/* 3. Trending Topics */}
               <TrendingTopics
                 topics={topics}
                 activeTopic={activeTopic}
@@ -131,6 +182,32 @@ export default function MobileDiscoveryDrawer({
                   onClose();
                 }}
               />
+
+              {/* 4. Suggested People */}
+              {suggestedPeople.length > 0 && (
+                <PremiumCard variant="panel" padding="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                      <Users className="w-3.5 h-3.5 text-brand-mint" />
+                      <span>People to Discover</span>
+                    </h4>
+                    <Link
+                      to="/network"
+                      onClick={onClose}
+                      className="text-[11px] text-text-muted hover:text-brand-mint transition-colors"
+                    >
+                      See all
+                    </Link>
+                  </div>
+                  <div className="space-y-2">
+                    {suggestedPeople.map((person) => (
+                      <PeopleCard key={person._id || person.id} person={person} compact />
+                    ))}
+                  </div>
+                </PremiumCard>
+              )}
+
+              {/* 5. Platform Exploration Links */}
               <DiscoveryLinks
                 onOpenSearch={() => {
                   onClose();

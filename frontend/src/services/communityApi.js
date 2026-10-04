@@ -29,12 +29,14 @@ const removeSavedPostId = (id) => {
 
 export const communityApi = {
   // ── Posts ──
-  getFeed: async ({ cursor = '', limit = 10, filter = 'all' } = {}) => {
+  getFeed: async ({ cursor = '', limit = 10, filter = 'all', search, tag, } = {}) => {
     const response = await api.get('/community/posts', {
       params: {
-        cursor,
+        cursor: cursor || undefined,
         limit,
         filter: filter && filter !== 'all' ? filter : undefined,
+        search: search || undefined,
+        tag: tag || undefined,
       },
     });
 
@@ -42,6 +44,30 @@ export const communityApi = {
     const savedIds = getSavedPostIds();
     if (data?.items && Array.isArray(data.items)) {
       data.items = data.items.map((post) => ({
+        ...post,
+        isSaved: Boolean(post.isSaved || savedIds.includes(post._id || post.id)),
+      }));
+    }
+    return data;
+  },
+
+  // ── Search & Discovery ──
+  searchCommunity: async ({ q, type = 'all', limit = 10, signal } = {}) => {
+    if (!q || !q.trim()) {
+      return { posts: [], people: [], topics: [] };
+    }
+    const response = await api.get('/community/posts/search', {
+      params: {
+        q: q.trim(),
+        type: type !== 'all' ? type : undefined,
+        limit,
+      },
+      signal,
+    });
+    const data = response.data || { posts: [], people: [], topics: [] };
+    const savedIds = getSavedPostIds();
+    if (data.posts && Array.isArray(data.posts)) {
+      data.posts = data.posts.map((post) => ({
         ...post,
         isSaved: Boolean(post.isSaved || savedIds.includes(post._id || post.id)),
       }));
@@ -183,6 +209,11 @@ export const communityApi = {
 
   replyToStory: async (id, data) => {
     const response = await api.post(`/community/stories/${id}/reply`, data);
+    return response.data;
+  },
+
+  reactToStory: async (id, reactionData) => {
+    const response = await api.post(`/community/stories/${id}/reactions`, reactionData);
     return response.data;
   },
 

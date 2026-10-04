@@ -122,11 +122,11 @@ export function getPrimaryCareerNavigation(user) {
  * Recruiter/Founder: [Courses, Network, Messages, Manage Business]
  *
  * @param {object|null|undefined} user
- * @param {object} options
- * @param {number} options.unreadMessagesCount
+ * @param {object} [options]
+ * @param {number} [options.unreadMessagesCount]
  * @returns {Array<object>}
  */
-export function getPrimaryNavLinks(user, { unreadMessagesCount = 0 } = {}) {
+export function getPrimaryNavLinks(user, { unreadMessagesCount: _unreadMessagesCount = 0 } = {}) {
   const careerItem = getPrimaryCareerNavigation(user);
 
   return [

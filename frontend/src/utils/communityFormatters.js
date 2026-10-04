@@ -56,7 +56,7 @@ export function sanitizeTag(tag) {
  * @returns {'all'|'following'|'cohort'}
  */
 export function normalizeFeedFilter(filterParam) {
-  const allowed = ['all', 'following', 'cohort'];
+  const allowed = ['all', 'following', 'cohort', 'trending', 'saved'];
   if (filterParam && allowed.includes(filterParam.toLowerCase())) {
     return filterParam.toLowerCase();
   }

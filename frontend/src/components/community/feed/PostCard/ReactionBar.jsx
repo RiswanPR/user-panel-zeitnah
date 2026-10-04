@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Heart, Flame, Star, Lightbulb } from 'lucide-react';
 
 const REACTIONS = [
@@ -23,6 +23,18 @@ export default function ReactionBar({
   const pickerRef = useRef(null);
   const touchTimerRef = useRef(null);
   const isLongPressRef = useRef(false);
+  const buttonRefs = useRef([]);
+  const shouldReduceMotion = useReducedMotion();
+
+  // Cleanup dangling touch timers on unmount
+  useEffect(() => {
+    return () => {
+      if (touchTimerRef.current) {
+        clearTimeout(touchTimerRef.current);
+        touchTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // Close picker on outside click or ESC
   useEffect(() => {
@@ -65,6 +77,32 @@ export default function ReactionBar({
     handleSelectReaction(myReactionType || 'like');
   };
 
+  // Keyboard navigation on main trigger
+  const handleTriggerKeyDown = (e) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      setShowPicker(true);
+      setTimeout(() => {
+        if (buttonRefs.current[0]) {
+          buttonRefs.current[0].focus();
+        }
+      }, 50);
+    }
+  };
+
+  // Keyboard navigation inside reaction picker
+  const handlePickerKeyDown = (e, index) => {
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      const nextIdx = (index + 1) % REACTIONS.length;
+      buttonRefs.current[nextIdx]?.focus();
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const prevIdx = (index - 1 + REACTIONS.length) % REACTIONS.length;
+      buttonRefs.current[prevIdx]?.focus();
+    }
+  };
+
   // Touch handlers for mobile long-press (400ms)
   const handleTouchStart = () => {
     isLongPressRef.current = false;
@@ -100,22 +138,30 @@ export default function ReactionBar({
       <AnimatePresence>
         {showPicker && (
           <motion.div
-            initial={{ opacity: 0, y: 8, scale: 0.9 }}
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 6, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.9 }}
-            transition={{ type: 'spring', damping: 20, stiffness: 350 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 6, scale: 0.95 }}
+            transition={
+              shouldReduceMotion
+                ? { duration: 0.05 }
+                : { type: 'spring', damping: 24, stiffness: 380 }
+            }
             className="absolute bottom-full left-0 mb-2 bg-[#0E1726]/95 backdrop-blur-xl border border-white/[0.12] rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.5)] p-1.5 flex items-center gap-1 z-30 ring-1 ring-white/10"
             role="toolbar"
             aria-label="Choose a reaction"
           >
-            {REACTIONS.map((r) => {
+            {REACTIONS.map((r, idx) => {
               const isSelected = myReactionType === r.id;
               return (
                 <button
                   key={r.id}
+                  ref={(el) => {
+                    buttonRefs.current[idx] = el;
+                  }}
                   type="button"
                   onClick={() => handleSelectReaction(r.id)}
-                  className={`min-w-[44px] min-h-[44px] w-11 h-11 rounded-full flex items-center justify-center hover:bg-white/[0.1] active:scale-95 transition-all transform hover:scale-125 cursor-pointer ${
+                  onKeyDown={(e) => handlePickerKeyDown(e, idx)}
+                  className={`min-w-[44px] min-h-[44px] w-11 h-11 rounded-full flex items-center justify-center hover:bg-white/[0.1] active:scale-95 transition-all transform hover:scale-125 motion-reduce:hover:scale-100 motion-reduce:transform-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-mint/50 ${
                     r.color
                   } ${isSelected ? 'bg-white/[0.08] ring-1 ring-white/20' : ''}`}
                   title={r.label}
@@ -135,6 +181,7 @@ export default function ReactionBar({
         data-testid="post-like-btn"
         type="button"
         onClick={handleDefaultClick}
+        onKeyDown={handleTriggerKeyDown}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchMove}
@@ -142,7 +189,7 @@ export default function ReactionBar({
           // Prevent browser context menu on long press
           if (isLongPressRef.current) e.preventDefault();
         }}
-        className={`min-h-[44px] min-w-[44px] px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+        className={`min-h-[44px] min-w-[44px] px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer focus:outline-none focus:ring-1 focus:ring-brand-mint/40 ${
           isLiked
             ? `${activeReaction?.color || 'text-rose-500'} bg-white/[0.06] hover:bg-white/[0.1]`
             : 'text-text-muted hover:bg-white/[0.04] hover:text-white'

@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { communityApi } from '../services/communityApi';
+import { networkApi } from '../services/networkApi';
 import toast from 'react-hot-toast';
 
 // ── FEED & POSTS ──
@@ -12,6 +13,38 @@ export function useCommunityFeed({ filter = 'all' } = {}) {
     initialPageParam: '',
     staleTime: 1000 * 60 * 2, // 2 min cache freshness prevents tab-switch refetches
     gcTime: 1000 * 60 * 10, // 10 min cache retention
+  });
+}
+
+export function useCommunitySearch({ query = '', type = 'all', enabled = true } = {}) {
+  const cleanQ = (query || '').trim();
+  return useQuery({
+    queryKey: ['community', 'search', { query: cleanQ, type }],
+    queryFn: ({ signal }) =>
+      communityApi.searchCommunity({ q: cleanQ, type, limit: 15, signal }),
+    enabled: Boolean(enabled && cleanQ.length >= 2),
+    staleTime: 1000 * 30, // 30 seconds
+    gcTime: 1000 * 60 * 5,
+  });
+}
+
+export function useSuggestedPeople({ limit = 3, fetcher = networkApi.getPeople } = {}) {
+  return useQuery({
+    queryKey: ['network', 'people', 'suggested', { limit }],
+    queryFn: async () => {
+      const fn = fetcher || networkApi.getPeople;
+      const res = await fn({ limit });
+      const list = Array.isArray(res)
+        ? res
+        : Array.isArray(res?.data)
+        ? res.data
+        : Array.isArray(res?.people)
+        ? res.people
+        : [];
+      return list.slice(0, limit);
+    },
+    staleTime: 1000 * 60 * 5, // 5 min cache prevents duplicate network calls across sidebar & drawer
+    gcTime: 1000 * 60 * 15,
   });
 }
 
@@ -88,7 +121,10 @@ export function useReactToPost() {
   return useMutation({
     mutationFn: ({ postId, type }) => communityApi.reactToPost(postId, { type }),
     onMutate: async ({ postId, type }) => {
-      await queryClient.cancelQueries({ queryKey: ['community'] });
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: ['community', 'feed'] }),
+        queryClient.cancelQueries({ queryKey: ['community', 'saved'] }),
+      ]);
 
       // Snapshot previous cache for exact rollback
       const previousFeed = queryClient.getQueriesData({ queryKey: ['community', 'feed'] });
@@ -182,7 +218,10 @@ export function useSavePost() {
   return useMutation({
     mutationFn: (postId) => communityApi.savePost(postId),
     onMutate: async (postId) => {
-      await queryClient.cancelQueries({ queryKey: ['community'] });
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: ['community', 'feed'] }),
+        queryClient.cancelQueries({ queryKey: ['community', 'saved'] }),
+      ]);
       const previousFeed = queryClient.getQueriesData({ queryKey: ['community', 'feed'] });
       const previousSaved = queryClient.getQueriesData({ queryKey: ['community', 'saved'] });
 
@@ -233,7 +272,10 @@ export function useRemoveSavedPost() {
   return useMutation({
     mutationFn: (postId) => communityApi.removeSavedPost(postId),
     onMutate: async (postId) => {
-      await queryClient.cancelQueries({ queryKey: ['community'] });
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: ['community', 'feed'] }),
+        queryClient.cancelQueries({ queryKey: ['community', 'saved'] }),
+      ]);
       const previousFeed = queryClient.getQueriesData({ queryKey: ['community', 'feed'] });
       const previousSaved = queryClient.getQueriesData({ queryKey: ['community', 'saved'] });
 
@@ -286,7 +328,10 @@ export function useRepostPost() {
   return useMutation({
     mutationFn: (postId) => communityApi.repostPost(postId),
     onMutate: async (postId) => {
-      await queryClient.cancelQueries({ queryKey: ['community'] });
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: ['community', 'feed'] }),
+        queryClient.cancelQueries({ queryKey: ['community', 'saved'] }),
+      ]);
       const previousFeed = queryClient.getQueriesData({ queryKey: ['community', 'feed'] });
       const previousSaved = queryClient.getQueriesData({ queryKey: ['community', 'saved'] });
 
@@ -374,7 +419,10 @@ export function useUnrepostPost() {
   return useMutation({
     mutationFn: (postId) => communityApi.unrepostPost(postId),
     onMutate: async (postId) => {
-      await queryClient.cancelQueries({ queryKey: ['community'] });
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: ['community', 'feed'] }),
+        queryClient.cancelQueries({ queryKey: ['community', 'saved'] }),
+      ]);
       const previousFeed = queryClient.getQueriesData({ queryKey: ['community', 'feed'] });
       const previousSaved = queryClient.getQueriesData({ queryKey: ['community', 'saved'] });
 
@@ -513,13 +561,31 @@ export function useCreateComment() {
 
   return useMutation({
     mutationFn: ({ postId, data }) => communityApi.createComment(postId, data),
-    onSuccess: (newComment, { postId }) => {
+    onMutate: async ({ postId, data }) => {
+      await queryClient.cancelQueries({ queryKey: ['community', 'comments', postId] });
+
+      const previousComments = queryClient.getQueryData(['community', 'comments', postId]) || [];
+      const previousFeed = queryClient.getQueriesData({ queryKey: ['community', 'feed'] });
+      const previousSaved = queryClient.getQueriesData({ queryKey: ['community', 'saved'] });
+
+      const tempId = `temp-${Date.now()}`;
+      const optimisticComment = {
+        _id: tempId,
+        id: tempId,
+        postId,
+        content: data.content,
+        createdAt: new Date().toISOString(),
+        isOptimistic: true,
+      };
+
       queryClient.setQueryData(['community', 'comments', postId], (old = []) => {
-        return [...old, newComment];
+        const arr = Array.isArray(old) ? old : (old?.comments || old?.data || []);
+        return [...arr, optimisticComment];
       });
-      // Increment comment count on post in feed
-      queryClient.setQueryData(['community', 'feed'], (oldData) => {
-        if (!oldData) return oldData;
+
+      // Increment comment count on post across all active feeds
+      const incrementComment = (oldData) => {
+        if (!oldData || !oldData.pages) return oldData;
         return {
           ...oldData,
           pages: oldData.pages.map((page) => ({
@@ -538,11 +604,36 @@ export function useCreateComment() {
             }),
           })),
         };
+      };
+
+      queryClient.setQueriesData({ queryKey: ['community', 'feed'] }, incrementComment);
+      queryClient.setQueriesData({ queryKey: ['community', 'saved'] }, incrementComment);
+
+      return { previousComments, previousFeed, previousSaved, tempId };
+    },
+    onSuccess: (newComment, { postId }, context) => {
+      queryClient.setQueryData(['community', 'comments', postId], (old = []) => {
+        const arr = Array.isArray(old) ? old : (old?.comments || old?.data || []);
+        return arr.map((c) => (c._id === context?.tempId || c.id === context?.tempId ? newComment : c));
       });
       toast.success('Comment posted!');
     },
-    onError: () => {
-      toast.error('Failed to post comment');
+    onError: (err, { postId }, context) => {
+      if (context?.previousComments) {
+        queryClient.setQueryData(['community', 'comments', postId], context.previousComments);
+      }
+      if (context?.previousFeed) {
+        context.previousFeed.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      if (context?.previousSaved) {
+        context.previousSaved.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      const msg = err?.response?.data?.message || 'Failed to post comment';
+      toast.error(msg);
     },
   });
 }
@@ -551,14 +642,22 @@ export function useDeleteComment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ commentId, postId }) => communityApi.deleteComment(commentId),
-    onSuccess: (_, { commentId, postId }) => {
+    mutationFn: ({ commentId }) => communityApi.deleteComment(commentId),
+    onMutate: async ({ commentId, postId }) => {
+      await queryClient.cancelQueries({ queryKey: ['community', 'comments', postId] });
+
+      const previousComments = queryClient.getQueryData(['community', 'comments', postId]) || [];
+      const previousFeed = queryClient.getQueriesData({ queryKey: ['community', 'feed'] });
+      const previousSaved = queryClient.getQueriesData({ queryKey: ['community', 'saved'] });
+
       queryClient.setQueryData(['community', 'comments', postId], (old = []) => {
-        return old.filter((c) => (c._id || c.id) !== commentId);
+        const arr = Array.isArray(old) ? old : (old?.comments || old?.data || []);
+        return arr.filter((c) => (c._id || c.id) !== commentId);
       });
-      // Decrement comment count on post in feed
-      queryClient.setQueryData(['community', 'feed'], (oldData) => {
-        if (!oldData) return oldData;
+
+      // Decrement comment count on post across all active feeds
+      const decrementComment = (oldData) => {
+        if (!oldData || !oldData.pages) return oldData;
         return {
           ...oldData,
           pages: oldData.pages.map((page) => ({
@@ -577,14 +676,35 @@ export function useDeleteComment() {
             }),
           })),
         };
-      });
+      };
+
+      queryClient.setQueriesData({ queryKey: ['community', 'feed'] }, decrementComment);
+      queryClient.setQueriesData({ queryKey: ['community', 'saved'] }, decrementComment);
+
+      return { previousComments, previousFeed, previousSaved };
+    },
+    onSuccess: () => {
       toast.success('Comment deleted');
     },
-    onError: () => {
+    onError: (err, { postId }, context) => {
+      if (context?.previousComments) {
+        queryClient.setQueryData(['community', 'comments', postId], context.previousComments);
+      }
+      if (context?.previousFeed) {
+        context.previousFeed.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      if (context?.previousSaved) {
+        context.previousSaved.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
       toast.error('Failed to delete comment');
     },
   });
 }
+
 
 // ── STORIES ──
 
@@ -618,6 +738,18 @@ export function useViewStory() {
 
   return useMutation({
     mutationFn: communityApi.viewStory,
+    onMutate: async (storyId) => {
+      // Optimistically mark story as viewed in active stories cache
+      queryClient.setQueryData(['community', 'stories'], (oldData = []) => {
+        if (!Array.isArray(oldData)) return oldData;
+        return oldData.map((s) => {
+          if ((s._id || s.id) === storyId) {
+            return { ...s, isViewed: true };
+          }
+          return s;
+        });
+      });
+    },
     onSuccess: (_, storyId) => {
       queryClient.setQueryData(['community', 'stories'], (oldData = []) => {
         if (!Array.isArray(oldData)) return oldData;
@@ -631,6 +763,13 @@ export function useViewStory() {
     },
   });
 }
+
+export function useReactToStory() {
+  return useMutation({
+    mutationFn: ({ storyId, type }) => communityApi.reactToStory(storyId, { type }),
+  });
+}
+
 
 // ── AI ──
 

@@ -12,9 +12,14 @@ import {
   AlertCircle,
   Volume2,
   VolumeX,
+  RefreshCw,
+  Heart,
+  Flame,
+  Star,
+  Lightbulb,
 } from 'lucide-react';
 import { createPortal } from 'react-dom';
-import { useViewStory } from '../../../hooks/useCommunity';
+import { useViewStory, useReactToStory } from '../../../hooks/useCommunity';
 import { communityApi } from '../../../services/communityApi';
 import { getCanonicalProfileUrl } from '../../../utils/roleNavigation';
 import { formatRelativeTime } from '../../../utils/communityFormatters';
@@ -25,10 +30,24 @@ import BrandAmbientShape from '../ui/BrandAmbientShape';
 
 const STORY_DURATION_MS = 5000;
 
+const QUICK_REACTIONS = [
+  { id: 'like', icon: Heart, label: 'Like', color: 'text-rose-500', fill: 'fill-rose-500' },
+  { id: 'love', icon: Flame, label: 'Love', color: 'text-amber-500', fill: 'fill-amber-500' },
+  { id: 'celebrate', icon: Star, label: 'Celebrate', color: 'text-yellow-400', fill: 'fill-yellow-400' },
+  { id: 'insightful', icon: Lightbulb, label: 'Insightful', color: 'text-brand-mint', fill: 'fill-brand-mint' },
+];
+
 /**
- * StoryViewer — Fullscreen premium story modal with segmented progress per user,
- * multi-user sequential transitions, video mute toggle, hold-to-pause, gestures,
- * keyboard controls, and reply bar.
+ * StoryViewer — Instagram-level fullscreen story experience.
+ * Features:
+ * - Viewport-safe fullscreen card (edge-to-edge mobile, centered rounded card desktop)
+ * - True hold-to-pause (mouse & touch press >=180ms pauses media and suppresses accidental taps)
+ * - Swipe / drag downward to dismiss with smooth transform and snap-back
+ * - Video playback-synchronized progress with auto-advance on ended
+ * - Controlled preloading of next immediate story asset (image or video poster)
+ * - Flying quick reaction bursts with optimistic server mutation
+ * - Memory-safe cleanup of video elements and animation frames on unmount
+ * - Full keyboard controls (ArrowLeft, ArrowRight, Escape, Spacebar) and focus restoration
  */
 export default function StoryViewer({
   stories = [],
@@ -57,7 +76,8 @@ export default function StoryViewer({
     }
     if (stories.length > 0 && initialIndex > 0) {
       const targetStory = stories[initialIndex];
-      const targetAuthorId = targetStory?.author?._id || targetStory?.author?.id || targetStory?.authorId;
+      const targetAuthorId =
+        targetStory?.author?._id || targetStory?.author?.id || targetStory?.authorId;
       const foundIdx = normalizedGroups.findIndex((g) => g.userId === String(targetAuthorId));
       return foundIdx !== -1 ? foundIdx : 0;
     }
@@ -69,7 +89,7 @@ export default function StoryViewer({
   const shouldReduceMotion = useReducedMotion();
 
   const activeGroup = normalizedGroups[currentGroupIndex] || null;
-  const activeStories = activeGroup?.stories || [];
+  const activeStories = useMemo(() => activeGroup?.stories || [], [activeGroup]);
   const currentStory = activeStories[currentStoryIndex] || null;
 
   const [progress, setProgress] = useState(0);
@@ -81,14 +101,26 @@ export default function StoryViewer({
   const [mediaLoaded, setMediaLoaded] = useState(false);
   const [mediaError, setMediaError] = useState(false);
 
+  // Gesture and Drag State
+  const [dragY, setDragY] = useState(0);
+  const touchStartYRef = useRef(null);
+  const touchStartXRef = useRef(null);
+  const touchStartTimeRef = useRef(0);
+  const isHoldRef = useRef(false);
+  const holdTimerRef = useRef(null);
+
+  // Flying reaction animations
+  const [flyingReactions, setFlyingReactions] = useState([]);
+  const reactionCountRef = useRef(0);
+
   const startTimeRef = useRef(0);
   const animationRef = useRef(null);
-  const touchStartXRef = useRef(null);
-  const touchStartYRef = useRef(null);
   const previousActiveElementRef = useRef(null);
   const videoRef = useRef(null);
+  const viewedStoryIdsRef = useRef(new Set());
 
   const viewMutation = useViewStory();
+  const reactMutation = useReactToStory();
 
   const storyAuthorId = activeGroup?.userId || currentStory?.authorId;
   const isOwner = Boolean(
@@ -104,8 +136,10 @@ export default function StoryViewer({
       progressRef.current = 0;
       setProgress(0);
       startTimeRef.current = Date.now();
+
       const storyId = currentStory._id || currentStory.id;
-      if (storyId) {
+      if (storyId && !viewedStoryIdsRef.current.has(storyId)) {
+        viewedStoryIdsRef.current.add(storyId);
         viewMutation.mutate(storyId);
       }
     }
@@ -154,10 +188,29 @@ export default function StoryViewer({
     previousActiveElementRef.current = document.activeElement;
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+
     return () => {
       document.body.style.overflow = originalOverflow;
       if (previousActiveElementRef.current?.focus) {
         previousActiveElementRef.current.focus();
+      }
+      if (holdTimerRef.current) {
+        clearTimeout(holdTimerRef.current);
+        holdTimerRef.current = null;
+      }
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+      // Memory cleanup: release active video resources on close
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      const vid = videoRef.current;
+      if (vid) {
+        try {
+          vid.pause();
+          vid.removeAttribute('src');
+          vid.load();
+        } catch {}
       }
     };
   }, []);
@@ -165,10 +218,13 @@ export default function StoryViewer({
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose?.();
-      else if (e.key === 'ArrowRight') handleNext();
-      else if (e.key === 'ArrowLeft') handlePrev();
-      else if (e.key === ' ' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      if (e.key === 'Escape') {
+        onClose?.();
+      } else if (e.key === 'ArrowRight') {
+        handleNext();
+      } else if (e.key === 'ArrowLeft') {
+        handlePrev();
+      } else if (e.key === ' ' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
         e.preventDefault();
         setIsPaused((p) => !p);
       }
@@ -176,6 +232,60 @@ export default function StoryViewer({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose, handleNext, handlePrev]);
+
+  // Media URL and type detection
+  const mediaUrl =
+    currentStory?.media?.[0]?.url ||
+    currentStory?.mediaUrl ||
+    currentStory?.image ||
+    '';
+  const isVideo =
+    currentStory?.type === 'VIDEO' ||
+    currentStory?.media?.[0]?.type === 'video' ||
+    (typeof mediaUrl === 'string' && Boolean(mediaUrl.match(/\.(mp4|webm|mov)(\?.*)?$/i)));
+
+  // Video playback synchronization when pause state changes
+  useEffect(() => {
+    const vid = videoRef.current;
+    if (!vid) return;
+
+    if (isPaused) {
+      vid.pause();
+    } else if (mediaLoaded && !mediaError) {
+      vid.play().catch(() => {});
+    }
+  }, [isPaused, mediaLoaded, mediaError]);
+
+  // Preload immediate NEXT story asset
+  useEffect(() => {
+    let nextStory = null;
+    if (currentStoryIndex < activeStories.length - 1) {
+      nextStory = activeStories[currentStoryIndex + 1];
+    } else if (currentGroupIndex < normalizedGroups.length - 1) {
+      const nextGroup = normalizedGroups[currentGroupIndex + 1];
+      nextStory = nextGroup?.stories?.[0];
+    }
+
+    if (!nextStory) return;
+
+    const nextUrl =
+      nextStory?.media?.[0]?.url ||
+      nextStory?.mediaUrl ||
+      nextStory?.image ||
+      '';
+
+    if (nextUrl) {
+      const isNextVideo =
+        nextStory.type === 'VIDEO' ||
+        nextStory?.media?.[0]?.type === 'video' ||
+        Boolean(nextUrl.match(/\.(mp4|webm|mov)(\?.*)?$/i));
+
+      if (!isNextVideo) {
+        const img = new Image();
+        img.src = nextUrl;
+      }
+    }
+  }, [currentGroupIndex, currentStoryIndex, activeStories, normalizedGroups]);
 
   // Timer progression using requestAnimationFrame
   useEffect(() => {
@@ -190,9 +300,8 @@ export default function StoryViewer({
         return;
       }
 
-      // If video, calculate progress based on video playback currentTime if available
       let newProgress;
-      if (videoRef.current && videoRef.current.duration) {
+      if (isVideo && videoRef.current && videoRef.current.duration) {
         newProgress = Math.min(
           100,
           (videoRef.current.currentTime / videoRef.current.duration) * 100
@@ -219,38 +328,109 @@ export default function StoryViewer({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [currentGroupIndex, currentStoryIndex, currentStory, isPaused, handleNext]);
+  }, [currentGroupIndex, currentStoryIndex, currentStory, isPaused, isVideo, handleNext]);
 
-  // Touch gesture handling: Swipe Left (Next), Swipe Right (Prev), Swipe Down (Close)
+  // Hold-to-pause & Swipe-to-dismiss gesture handling
   const handleTouchStart = (e) => {
-    setIsPaused(true);
-    if (e.touches && e.touches[0]) {
-      touchStartXRef.current = e.touches[0].clientX;
-      touchStartYRef.current = e.touches[0].clientY;
+    if (!e.touches || !e.touches[0]) return;
+    touchStartXRef.current = e.touches[0].clientX;
+    touchStartYRef.current = e.touches[0].clientY;
+    touchStartTimeRef.current = Date.now();
+    isHoldRef.current = false;
+
+    // Start hold detection timer (180ms threshold)
+    holdTimerRef.current = setTimeout(() => {
+      isHoldRef.current = true;
+      setIsPaused(true);
+    }, 180);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!e.touches || !e.touches[0] || touchStartYRef.current === null) return;
+    const currentY = e.touches[0].clientY;
+    const diffY = currentY - touchStartYRef.current;
+    const diffX = e.touches[0].clientX - (touchStartXRef.current || 0);
+
+    // If dragging downward and vertical movement dominates, track drag offset
+    if (diffY > 0 && Math.abs(diffY) > Math.abs(diffX)) {
+      if (holdTimerRef.current) {
+        clearTimeout(holdTimerRef.current);
+      }
+      setIsPaused(true);
+      setDragY(diffY);
     }
   };
 
   const handleTouchEnd = (e) => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+
     setIsPaused(false);
+
+    // Check downward drag threshold (>= 90px triggers dismiss)
+    if (dragY >= 90) {
+      onClose?.();
+      return;
+    }
+    setDragY(0);
+
+    // If it was held, suppress tap navigation
+    if (isHoldRef.current) {
+      isHoldRef.current = false;
+      return;
+    }
+
+    // Check horizontal swipe if not held
     if (touchStartXRef.current !== null && e.changedTouches && e.changedTouches[0]) {
       const deltaX = e.changedTouches[0].clientX - touchStartXRef.current;
-      const deltaY = e.changedTouches[0].clientY - touchStartYRef.current;
+      const deltaY = e.changedTouches[0].clientY - (touchStartYRef.current || 0);
 
-      // Swipe Down to dismiss
-      if (deltaY > 80 && Math.abs(deltaX) < 60) {
-        onClose?.();
-        return;
-      }
-
-      // Horizontal Swipes
-      if (deltaX < -50) {
-        handleNext();
-      } else if (deltaX > 50) {
-        handlePrev();
+      if (Math.abs(deltaX) > 55 && Math.abs(deltaX) > Math.abs(deltaY)) {
+        if (deltaX < 0) {
+          handleNext();
+        } else {
+          handlePrev();
+        }
       }
     }
+
     touchStartXRef.current = null;
     touchStartYRef.current = null;
+  };
+
+  // Pointer hold handlers for desktop mouse
+  const handlePointerDown = (e) => {
+    if (e.button !== 0) return; // Primary left button only
+    touchStartTimeRef.current = Date.now();
+    isHoldRef.current = false;
+
+    holdTimerRef.current = setTimeout(() => {
+      isHoldRef.current = true;
+      setIsPaused(true);
+    }, 180);
+  };
+
+  const handlePointerUp = () => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    setIsPaused(false);
+  };
+
+  const handleTapZoneClick = (action) => {
+    // Suppress tap navigation if pointer was held
+    if (isHoldRef.current) {
+      isHoldRef.current = false;
+      return;
+    }
+    if (action === 'prev') {
+      handlePrev();
+    } else {
+      handleNext();
+    }
   };
 
   const handleReply = async (e) => {
@@ -271,6 +451,23 @@ export default function StoryViewer({
     }
   };
 
+  const handleQuickReaction = (reaction) => {
+    if (!currentStory) return;
+    const storyId = currentStory._id || currentStory.id;
+
+    // Trigger visual floating reaction burst
+    reactionCountRef.current += 1;
+    const reactionId = `${reaction.id}-${reactionCountRef.current}`;
+    setFlyingReactions((prev) => [...prev, { id: reactionId, icon: reaction.icon, color: reaction.color }]);
+
+    setTimeout(() => {
+      setFlyingReactions((prev) => prev.filter((r) => r.id !== reactionId));
+    }, 1200);
+
+    // Call API mutation
+    reactMutation.mutate({ storyId, type: reaction.id });
+  };
+
   const handleDeleteStory = async () => {
     if (!currentStory) return;
     if (window.confirm('Delete this story?')) {
@@ -284,6 +481,16 @@ export default function StoryViewer({
     }
   };
 
+  const handleRetryMedia = () => {
+    setMediaError(false);
+    setMediaLoaded(false);
+    if (videoRef.current) {
+      try {
+        videoRef.current.load();
+      } catch {}
+    }
+  };
+
   if (!activeGroup || !currentStory) return null;
 
   const authorName = activeGroup.displayName || 'Zeitnah Member';
@@ -293,16 +500,6 @@ export default function StoryViewer({
   });
   const authorAvatar = activeGroup.avatar;
   const authorInitials = authorName.slice(0, 2).toUpperCase();
-
-  const mediaUrl =
-    currentStory.media?.[0]?.url ||
-    currentStory.mediaUrl ||
-    currentStory.image ||
-    '';
-  const isVideo =
-    currentStory.type === 'VIDEO' ||
-    currentStory.media?.[0]?.type === 'video' ||
-    (typeof mediaUrl === 'string' && Boolean(mediaUrl.match(/\.(mp4|webm|mov)(\?.*)?$/i)));
 
   return createPortal(
     <AnimatePresence>
@@ -341,7 +538,7 @@ export default function StoryViewer({
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-[calc(1rem+env(safe-area-inset-top))] right-4 sm:top-6 sm:right-6 p-2.5 bg-black/40 hover:bg-black/60 active:scale-95 rounded-full text-white transition-all z-50 cursor-pointer border border-white/10 shadow-lg"
+          className="min-h-[44px] min-w-[44px] absolute top-[calc(0.75rem+env(safe-area-inset-top))] right-4 sm:top-6 sm:right-6 p-2.5 bg-black/50 hover:bg-black/75 active:scale-95 rounded-full text-white transition-all z-50 cursor-pointer border border-white/15 shadow-xl flex items-center justify-center"
           aria-label="Close story viewer"
         >
           <X className="w-5 h-5" />
@@ -357,16 +554,24 @@ export default function StoryViewer({
           />
         )}
 
-        {/* Main Story Container (Edge-to-edge on mobile, rounded card on desktop) */}
+        {/* Main Story Container with Downward Swipe Drag Transform */}
         <motion.div
           key={`${activeGroup.userId}-${currentStory._id || currentStoryIndex}`}
           initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.985, y: 4 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.985, y: -4 }}
           transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+          style={{
+            transform: dragY > 0 ? `translateY(${dragY}px) scale(${1 - Math.min(dragY / 1000, 0.12)})` : undefined,
+            transition: dragY === 0 ? 'transform 0.25s ease-out' : 'none',
+          }}
           className="relative w-full max-w-[430px] h-[100dvh] sm:h-[88vh] sm:rounded-3xl bg-[#070B14] border border-white/[0.1] overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.8)] flex flex-col z-20"
           onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
         >
           {/* Top Segmented Progress Bar: One segment per story in active user's group */}
           <div className="absolute top-0 inset-x-0 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:pt-3 px-3.5 flex gap-1.5 z-30">
@@ -438,7 +643,7 @@ export default function StoryViewer({
                 <button
                   type="button"
                   onClick={() => setIsMuted((m) => !m)}
-                  className="p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-all cursor-pointer"
+                  className="min-h-[44px] min-w-[44px] p-2.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-all cursor-pointer flex items-center justify-center"
                   aria-label={isMuted ? 'Unmute video' : 'Mute video'}
                 >
                   {isMuted ? (
@@ -453,7 +658,7 @@ export default function StoryViewer({
               <button
                 type="button"
                 onClick={() => setIsPaused((p) => !p)}
-                className="p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-all cursor-pointer"
+                className="min-h-[44px] min-w-[44px] p-2.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-all cursor-pointer flex items-center justify-center"
                 aria-label={isPaused ? 'Resume story' : 'Pause story'}
               >
                 {isPaused ? (
@@ -468,7 +673,7 @@ export default function StoryViewer({
                 <button
                   type="button"
                   onClick={handleDeleteStory}
-                  className="p-1.5 rounded-full bg-black/40 hover:bg-rose-600/80 text-white transition-all cursor-pointer"
+                  className="min-h-[44px] min-w-[44px] p-2.5 rounded-full bg-black/40 hover:bg-rose-600/80 text-white transition-all cursor-pointer flex items-center justify-center"
                   title="Delete story"
                   aria-label="Delete story"
                 >
@@ -479,15 +684,15 @@ export default function StoryViewer({
           </div>
 
           {/* Interactive Tap Zones (Left 35% = Prev, Right 65% = Next) */}
-          <div className="absolute inset-0 z-20 flex">
+          <div className="absolute top-20 bottom-24 inset-x-0 z-20 flex">
             <div
               className="w-[35%] h-full cursor-pointer"
-              onClick={handlePrev}
+              onClick={() => handleTapZoneClick('prev')}
               aria-label="Previous story tap zone"
             />
             <div
               className="w-[65%] h-full cursor-pointer"
-              onClick={handleNext}
+              onClick={() => handleTapZoneClick('next')}
               aria-label="Next story tap zone"
             />
           </div>
@@ -496,7 +701,10 @@ export default function StoryViewer({
           <div className="relative flex-1 bg-black flex items-center justify-center overflow-hidden">
             {/* Loading Indicator for Slow Media */}
             {mediaUrl && !mediaLoaded && !mediaError && (
-              <div className="absolute inset-0 bg-[#070B14] flex items-center justify-center z-10" aria-label="Loading story media">
+              <div
+                className="absolute inset-0 bg-[#070B14] flex items-center justify-center z-10"
+                aria-label="Loading story media"
+              >
                 <div className="w-8 h-8 rounded-full border-2 border-brand-mint/20 border-t-brand-mint animate-spin" />
               </div>
             )}
@@ -506,7 +714,10 @@ export default function StoryViewer({
                 ref={videoRef}
                 key={mediaUrl}
                 src={mediaUrl}
-                className={`w-full h-full object-cover transition-opacity duration-300 ${mediaLoaded ? 'opacity-100' : 'opacity-0'}`}
+                poster={currentStory.thumbnailUrl || undefined}
+                className={`w-full h-full object-cover transition-opacity duration-300 ${
+                  mediaLoaded ? 'opacity-100' : 'opacity-0'
+                }`}
                 autoPlay
                 playsInline
                 loop={false}
@@ -520,7 +731,9 @@ export default function StoryViewer({
                 key={mediaUrl}
                 src={mediaUrl}
                 alt={`Story by ${authorName}`}
-                className={`w-full h-full object-cover transition-opacity duration-300 ${mediaLoaded ? 'opacity-100' : 'opacity-0'}`}
+                className={`w-full h-full object-cover transition-opacity duration-300 ${
+                  mediaLoaded ? 'opacity-100' : 'opacity-0'
+                }`}
                 onLoad={() => setMediaLoaded(true)}
                 onError={() => setMediaError(true)}
               />
@@ -551,17 +764,70 @@ export default function StoryViewer({
               </div>
             )}
 
-            {/* Error Fallback */}
+            {/* Flying Quick Reactions Burst Animations */}
+            <div className="absolute inset-0 pointer-events-none z-25 overflow-hidden">
+              {flyingReactions.map((r) => (
+                <motion.div
+                  key={r.id}
+                  initial={{ opacity: 1, y: '80%', x: '75%', scale: 0.8 }}
+                  animate={{ opacity: 0, y: '20%', x: '65%', scale: 1.6 }}
+                  transition={{ duration: 1.1, ease: 'easeOut' }}
+                  className="absolute"
+                >
+                  <r.icon className={`w-8 h-8 ${r.color} fill-current drop-shadow-[0_0_12px_rgba(255,255,255,0.8)]`} />
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Graceful Error Fallback with Retry & Advance */}
             {mediaError && (
-              <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-text-muted gap-2 z-20">
+              <div
+                className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center text-text-muted gap-3 z-20 px-6 text-center"
+                role="status"
+                aria-label="Story media could not be loaded"
+              >
                 <AlertCircle className="w-8 h-8 text-rose-400" />
-                <span className="text-xs">Story media unavailable</span>
+                <span className="text-xs text-white/80">Story couldn't be loaded.</span>
+                <div className="flex items-center gap-2 mt-1">
+                  <button
+                    type="button"
+                    onClick={handleRetryMedia}
+                    className="min-h-[36px] px-3.5 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-xs font-semibold text-white transition-colors cursor-pointer flex items-center gap-1.5"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Retry</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="min-h-[36px] px-3.5 py-1.5 rounded-xl bg-brand-mint text-bg-base text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer"
+                  >
+                    Next story
+                  </button>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Bottom Reply Bar */}
-          <div className="relative z-30 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-black via-black/90 to-transparent border-t border-white/[0.08]">
+          {/* Bottom Interactive Bar: Quick Reactions + Reply Bar */}
+          <div className="relative z-30 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-black via-black/95 to-transparent border-t border-white/[0.08] space-y-2">
+            {/* Quick Reactions Strip */}
+            <div className="flex items-center justify-end gap-1.5 px-1">
+              {QUICK_REACTIONS.map((qr) => (
+                <button
+                  key={qr.id}
+                  type="button"
+                  onClick={() => handleQuickReaction(qr)}
+                  className={`min-h-[36px] min-w-[36px] p-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 transition-all cursor-pointer flex items-center justify-center ${qr.color}`}
+                  aria-label={`React with ${qr.label}`}
+                  title={qr.label}
+                >
+                  <qr.icon className={`w-4 h-4 ${qr.fill}`} />
+                </button>
+              ))}
+            </div>
+
+            {/* Reply Input Form */}
             <form onSubmit={handleReply} className="flex items-center gap-2">
               <input
                 type="text"

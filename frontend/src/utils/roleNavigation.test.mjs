@@ -81,30 +81,32 @@ describe('Role Navigation Logic & Regression Tests', () => {
   it('generates expected primary navigation items for Normal User vs Recruiter/Founder', () => {
     const studentLinks = getPrimaryNavLinks({ primaryRole: 'STUDENT' });
     const studentKeys = studentLinks.map((l) => l.key);
-    assert.deepEqual(studentKeys, ['courses', 'network', 'messages', 'jobs']);
+    assert.deepEqual(studentKeys, ['courses', 'community', 'network', 'jobs']);
 
     const recruiterLinks = getPrimaryNavLinks({ primaryRole: 'RECRUITER' });
     const recruiterKeys = recruiterLinks.map((l) => l.key);
-    assert.deepEqual(recruiterKeys, ['courses', 'network', 'messages', 'manage-business']);
+    assert.deepEqual(recruiterKeys, ['courses', 'community', 'network', 'manage-business']);
 
     // Ensure Jobs is NOT in recruiter primary links
     assert.equal(recruiterKeys.includes('jobs'), false);
     // Ensure Manage Business is NOT in student primary links
     assert.equal(studentKeys.includes('manage-business'), false);
+    // Ensure Community is unconditionally present in primary navigation
+    assert.equal(studentKeys.includes('community'), true);
+    assert.equal(recruiterKeys.includes('community'), true);
   });
 
-  it('handles unread message badges safely', () => {
+  it('handles primary nav links options and unread message parameter safely', () => {
+    // When messages was moved to Connected Hub in MainNavbar, getPrimaryNavLinks retains parameter safety
     const linksWithBadge = getPrimaryNavLinks({ primaryRole: 'STUDENT' }, { unreadMessagesCount: 5 });
-    const msgLink = linksWithBadge.find((l) => l.key === 'messages');
-    assert.equal(msgLink.badge, 5);
+    assert.equal(Array.isArray(linksWithBadge), true);
+    assert.equal(linksWithBadge.length, 4);
 
     const linksInvalidBadge = getPrimaryNavLinks({ primaryRole: 'STUDENT' }, { unreadMessagesCount: -3 });
-    const msgLinkInvalid = linksInvalidBadge.find((l) => l.key === 'messages');
-    assert.equal(msgLinkInvalid.badge, 0);
+    assert.equal(Array.isArray(linksInvalidBadge), true);
 
     const linksNullBadge = getPrimaryNavLinks({ primaryRole: 'STUDENT' }, { unreadMessagesCount: null });
-    const msgLinkNull = linksNullBadge.find((l) => l.key === 'messages');
-    assert.equal(msgLinkNull.badge, 0);
+    assert.equal(Array.isArray(linksNullBadge), true);
   });
 
   it('guarantees ZERO DUPLICATION between primary navigation and More sections', () => {
