@@ -13,6 +13,8 @@ import { NotificationsService } from '../../notifications/notifications.service'
 import { SignedUrlService } from '../../../common/aws/signed-url.service';
 import { CommunityS3Service } from './community-s3.service';
 import { CommunityIdempotencyService } from './community-idempotency.service';
+import { CommunityMediaJobService } from './community-media-job.service';
+import { CommunityMusicService } from './community-music.service';
 import { PostType, PostAudience } from '../domain/post.model';
 
 @Injectable()
@@ -28,6 +30,8 @@ export class PostService {
     @Optional() private readonly signedUrlService?: SignedUrlService,
     @Optional() private readonly communityS3Service?: CommunityS3Service,
     @Optional() private readonly communityIdempotencyService?: CommunityIdempotencyService,
+    @Optional() private readonly mediaJobService?: CommunityMediaJobService,
+    @Optional() private readonly musicService?: CommunityMusicService,
   ) {}
 
   private async resolveMediaUrls(posts: any[]): Promise<any[]> {
@@ -50,19 +54,38 @@ export class PostService {
             }
           } catch {}
         }
+        if (m?.processedUrl && (m.processedUrl.includes('.amazonaws.com') || !m.processedUrl.startsWith('http'))) {
+          try {
+            const cleanProcessed = m.processedUrl.split('?')[0];
+            const signed = await this.signedUrlService.generateSignedVideoUrl(cleanProcessed, 86400 * 7);
+            if (signed) {
+              m.processedUrl = signed;
+            }
+          } catch {}
+        }
+        if (m?.posterUrl && (m.posterUrl.includes('.amazonaws.com') || !m.posterUrl.startsWith('http'))) {
+          try {
+            const cleanPoster = m.posterUrl.split('?')[0];
+            const signed = await this.signedUrlService.generateSignedImageUrl(cleanPoster, 86400 * 7);
+            if (signed) {
+              m.posterUrl = signed;
+            }
+          } catch {}
+        }
       }
     }
     return posts;
   }
 
   /**
-   * Authoritative validation and normalization for post media (Sections 5, 6, 8, 13).
+   * Authoritative validation and normalization for post media (Sections 5, 6, 8, 13, 34, 38).
+   * Strictly enforces that any video with a mediaId MUST be READY before publication.
    */
-  private validateAndNormalizeMedia(
+  private async validateAndNormalizeMedia(
     mediaList: any[],
     userId: string,
     isAdmin: boolean = false,
-  ): any[] {
+  ): Promise<any[]> {
     if (!Array.isArray(mediaList) || mediaList.length === 0) return [];
 
     // Max 10 items (Section 8 & 13)
@@ -105,6 +128,12 @@ export class PostService {
       // Authoritative Media Ownership & Path Traversal Check (Section 5 & 6)
       if (this.communityS3Service) {
         this.communityS3Service.validateMediaOwnership(rawUrl, userId, isAdmin);
+        if (m.processedUrl && typeof m.processedUrl === 'string') {
+          this.communityS3Service.validateMediaOwnership(m.processedUrl, userId, isAdmin);
+        }
+        if (m.posterUrl && typeof m.posterUrl === 'string') {
+          this.communityS3Service.validateMediaOwnership(m.posterUrl, userId, isAdmin);
+        }
       } else {
         // Fallback validation when communityS3Service is unprovided in isolated tests
         let decoded = rawUrl;
@@ -128,6 +157,55 @@ export class PostService {
         }
       }
 
+      // Publish Race Condition & Ready Status Enforcement (Section 34 & 38)
+      let finalProcessedUrl = m.processedUrl;
+      let finalPosterUrl = m.posterUrl;
+      let finalDuration = m.duration;
+      let finalWidth = m.width;
+      let finalHeight = m.height;
+      let resolvedAudioConfig = m.audioConfig;
+
+      if (mediaType === 'video' && m.mediaId && this.mediaJobService) {
+        const job = await this.mediaJobService.getJobByMediaId(m.mediaId);
+        if (job) {
+          if (!isAdmin && job.userId !== userId) {
+            throw new ForbiddenException('You cannot publish media belonging to another user');
+          }
+
+          if (job.status === 'PROCESSING' || job.status === 'QUEUED') {
+            throw new BadRequestException({
+              code: 'MEDIA_NOT_READY',
+              message: 'Video is still being optimized. Please wait until processing is complete before publishing.',
+            });
+          }
+
+          if (job.status === 'FAILED') {
+            throw new BadRequestException({
+              code: 'MEDIA_PROCESSING_FAILED',
+              message: job.errorMessage || 'Video processing failed. Please retry processing or choose another video.',
+            });
+          }
+
+          if (job.status === 'READY') {
+            finalProcessedUrl = job.outputUrl || finalProcessedUrl;
+            finalPosterUrl = job.posterUrl || job.customCoverUrl || finalPosterUrl;
+            finalDuration = job.outputDuration || finalDuration;
+            finalWidth = job.outputWidth || finalWidth;
+            finalHeight = job.outputHeight || finalHeight;
+            if (job.audioConfig && !resolvedAudioConfig) {
+              resolvedAudioConfig = job.audioConfig;
+            }
+          }
+        }
+      }
+
+      // Authoritative Server-side Audio Config Validation (Section 24)
+      if (resolvedAudioConfig && this.musicService) {
+        resolvedAudioConfig = await this.musicService.validateAndResolveAudioConfig(
+          resolvedAudioConfig,
+        );
+      }
+
       // Clean ephemeral query parameters (e.g. ?X-Amz-Signature=...) before storing in DB
       const cleanUrl = rawUrl.split('?')[0];
 
@@ -140,6 +218,18 @@ export class PostService {
         ...m,
         url: cleanUrl,
         type: mediaType,
+        duration: finalDuration,
+        width: finalWidth,
+        height: finalHeight,
+        posterUrl: finalPosterUrl ? finalPosterUrl.split('?')[0] : undefined,
+        thumbnailUrl: finalPosterUrl
+          ? finalPosterUrl.split('?')[0]
+          : m.thumbnailUrl
+          ? m.thumbnailUrl.split('?')[0]
+          : undefined,
+        processedUrl: finalProcessedUrl ? finalProcessedUrl.split('?')[0] : undefined,
+        mediaId: m.mediaId,
+        audioConfig: resolvedAudioConfig,
       });
     }
 
@@ -190,8 +280,8 @@ export class PostService {
     }
 
     const execution = async () => {
-      // Validate and normalize media first before creating post (Section 5, 6, 8, 13)
-      const validatedMedia = this.validateAndNormalizeMedia(data.media || [], userId, isAdmin);
+      // Validate and normalize media first before creating post (Section 5, 6, 8, 13, 34, 38)
+      const validatedMedia = await this.validateAndNormalizeMedia(data.media || [], userId, isAdmin);
 
       const audienceVal = ((data.audience || 'PUBLIC').toUpperCase() as PostAudience);
       const typeVal = ((data.type || (validatedMedia.length > 0 ? validatedMedia[0].type : 'TEXT')).toUpperCase() as PostType);
@@ -352,7 +442,7 @@ export class PostService {
     }
 
     if ((data as any).media) {
-      this.validateAndNormalizeMedia((data as any).media, userId, role === 'admin');
+      await this.validateAndNormalizeMedia((data as any).media, userId, role === 'admin');
     }
 
     await this.postRepository.update(id, { ...data, isEdited: true });

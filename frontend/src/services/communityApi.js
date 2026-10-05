@@ -274,11 +274,28 @@ export const communityApi = {
     return response.data;
   },
 
-  // ── File Upload ──
-  // Uploads to NestJS endpoint which forwards to S3
-  uploadMedia: async (file, onUploadProgress, signal) => {
+  // ── File Upload & Video Processing ──
+  // uploadMedia: async (file, onUploadProgress, signal)
+  uploadMedia: async (file, onUploadProgress, signal, options = {}) => {
     const formData = new FormData();
     formData.append('file', file);
+    if (options && typeof options === 'object') {
+      if (options.trimStart !== undefined && options.trimStart !== null) {
+        formData.append('trimStart', String(options.trimStart));
+      }
+      if (options.trimEnd !== undefined && options.trimEnd !== null) {
+        formData.append('trimEnd', String(options.trimEnd));
+      }
+      if (options.customCoverUrl) {
+        formData.append('customCoverUrl', String(options.customCoverUrl));
+      }
+      if (options.isReel) {
+        formData.append('isReel', 'true');
+      }
+      if (options.audioConfig) {
+        formData.append('audioConfig', JSON.stringify(options.audioConfig));
+      }
+    }
     
     const response = await api.post('/community/upload', formData, {
       headers: {
@@ -288,6 +305,54 @@ export const communityApi = {
       signal,
       skipDeduplication: true,
     });
+    return response.data;
+  },
+
+  getMediaProcessingStatus: async (mediaId, signal) => {
+    const response = await api.get(`/community/media/${mediaId}/status`, {
+      signal,
+      skipDeduplication: true,
+    });
+    return response.data;
+  },
+
+  retryMediaProcessing: async (mediaId) => {
+    const options = arguments[1] || {};
+    const response = await api.post(`/community/media/${mediaId}/retry`, options, {
+      skipDeduplication: true,
+    });
+    return response.data;
+  },
+
+  // ── Music Catalog & Audio Foundation (Phase 3C) ──
+  getMusicCatalog: async ({ category, mood, limit = 20, cursor, skip } = {}) => {
+    const response = await api.get('/community/music', {
+      params: {
+        category: category && category !== 'ALL' ? category : undefined,
+        mood: mood || undefined,
+        limit,
+        cursor: cursor || undefined,
+        skip: skip || undefined,
+      },
+    });
+    return response.data;
+  },
+
+  searchMusic: async ({ q, category, mood, limit = 20, signal } = {}) => {
+    const response = await api.get('/community/music/search', {
+      params: {
+        q: q ? q.trim() : undefined,
+        category: category && category !== 'ALL' ? category : undefined,
+        mood: mood || undefined,
+        limit,
+      },
+      signal,
+    });
+    return response.data;
+  },
+
+  getMusicTrack: async (id) => {
+    const response = await api.get(`/community/music/${id}`);
     return response.data;
   },
 

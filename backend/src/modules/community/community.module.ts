@@ -25,6 +25,14 @@ import {
   CommunityPublishIdempotencySchema,
 } from './schemas/idempotency.schema';
 import {
+  CommunityMediaJob,
+  CommunityMediaJobSchema,
+} from './schemas/media-job.schema';
+import {
+  CommunityMusic,
+  CommunityMusicSchema,
+} from './schemas/music.schema';
+import {
   Comment,
   CommentSchema,
   CommentReaction,
@@ -106,6 +114,9 @@ import { CommunityGamificationService } from './services/community-gamification.
 import { CommunityAIService } from './services/community-ai.service';
 import { CommunityModerationService } from './services/community-moderation.service';
 import { CommunityEventService } from './services/community-event.service';
+import { CommunityVideoProcessorService } from './services/community-video-processor.service';
+import { CommunityMediaJobService } from './services/community-media-job.service';
+import { CommunityMusicService } from './services/community-music.service';
 import { AwsModule } from '../../common/aws/aws.module';
 
 // Controllers
@@ -118,6 +129,8 @@ import { GamificationController } from './controllers/gamification.controller';
 import { ModerationController } from './controllers/moderation.controller';
 import { AIController } from './controllers/ai.controller';
 import { CommunityUploadController } from './controllers/community-upload.controller';
+import { CommunityMediaController } from './controllers/community-media.controller';
+import { CommunityMusicController } from './controllers/community-music.controller';
 
 // Gateways
 import { CommunityGateway } from './gateways/community.gateway';
@@ -169,6 +182,14 @@ import { User, UserSchema } from '../auth/schemas/user.schema';
         name: CommunityPublishIdempotency.name,
         schema: CommunityPublishIdempotencySchema,
       },
+      {
+        name: CommunityMediaJob.name,
+        schema: CommunityMediaJobSchema,
+      },
+      {
+        name: CommunityMusic.name,
+        schema: CommunityMusicSchema,
+      },
     ]),
     AwsModule,
     JwtModule.register({ secret: process.env.JWT_SECRET || 'secret' }),
@@ -183,6 +204,8 @@ import { User, UserSchema } from '../auth/schemas/user.schema';
     ModerationController,
     AIController,
     CommunityUploadController,
+    CommunityMediaController,
+    CommunityMusicController,
   ],
   providers: [
     PostRepository,
@@ -202,6 +225,9 @@ import { User, UserSchema } from '../auth/schemas/user.schema';
     CommunityAIService,
     CommunityModerationService,
     CommunityEventService,
+    CommunityVideoProcessorService,
+    CommunityMediaJobService,
+    CommunityMusicService,
 
     CommunityGateway,
   ],
@@ -216,6 +242,9 @@ import { User, UserSchema } from '../auth/schemas/user.schema';
     CommunityGamificationService,
     CommunityModerationService,
     CommunityEventService,
+    CommunityVideoProcessorService,
+    CommunityMediaJobService,
+    CommunityMusicService,
     CommunityGateway,
   ],
 })

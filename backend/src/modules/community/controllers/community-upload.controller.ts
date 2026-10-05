@@ -26,6 +26,10 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 
+import { Optional } from '@nestjs/common';
+import { CommunityMediaJobService } from '../services/community-media-job.service';
+import { CommunityMusicService } from '../services/community-music.service';
+
 export const COMMUNITY_UPLOAD_LIMITS = {
   MAX_IMAGE_SIZE: 8 * 1024 * 1024, // 8 MiB (exact binary)
   MAX_VIDEO_SIZE: 1024 * 1024 * 1024, // 1 GiB (exact binary)
@@ -54,7 +58,11 @@ const communityDiskStorage = multer.diskStorage({
 @UseGuards(JwtAuthGuard)
 @Controller('community/upload')
 export class CommunityUploadController {
-  constructor(private readonly s3Service: CommunityS3Service) {}
+  constructor(
+    private readonly s3Service: CommunityS3Service,
+    @Optional() private readonly mediaJobService?: CommunityMediaJobService,
+    @Optional() private readonly musicService?: CommunityMusicService,
+  ) {}
 
   private getUserId(req: any): string {
     return String(req.user?.userId || req.user?.id || req.user?._id || '');
@@ -195,7 +203,65 @@ export class CommunityUploadController {
     }
 
     try {
-      return await this.s3Service.uploadCommunityMedia(file, userId);
+      const uploadResult: any = await this.s3Service.uploadCommunityMedia(file, userId);
+
+      // If video and mediaJobService is available, create asynchronous processing job
+      if (file.mimetype.startsWith('video/') && this.mediaJobService) {
+        const body = req?.body || {};
+        const trimStart = body.trimStart !== undefined && body.trimStart !== '' ? Number(body.trimStart) : undefined;
+        const trimEnd = body.trimEnd !== undefined && body.trimEnd !== '' ? Number(body.trimEnd) : undefined;
+        const customCoverUrl = typeof body.customCoverUrl === 'string' ? body.customCoverUrl : undefined;
+
+        const sourceKey = uploadResult.key || `community/originals/${userId}/${uploadResult.url.split('/').pop()?.split('?')[0]}`;
+
+        let parsedAudioConfig: any = undefined;
+        if (body.audioConfig) {
+          try {
+            parsedAudioConfig = typeof body.audioConfig === 'string' ? JSON.parse(body.audioConfig) : body.audioConfig;
+          } catch {}
+        } else if (body.audioMode || body.musicId) {
+          parsedAudioConfig = {
+            audioMode: body.audioMode,
+            musicId: body.musicId,
+            sourceStart: body.sourceStart !== undefined && body.sourceStart !== '' ? Number(body.sourceStart) : undefined,
+            sourceEnd: body.sourceEnd !== undefined && body.sourceEnd !== '' ? Number(body.sourceEnd) : undefined,
+            originalVolume: body.originalVolume !== undefined && body.originalVolume !== '' ? Number(body.originalVolume) : undefined,
+            musicVolume: body.musicVolume !== undefined && body.musicVolume !== '' ? Number(body.musicVolume) : undefined,
+          };
+        }
+
+        if (parsedAudioConfig && this.musicService) {
+          parsedAudioConfig = await this.musicService.validateAndResolveAudioConfig(
+            parsedAudioConfig,
+            req.user?.username,
+          );
+        }
+
+        const job = await this.mediaJobService.createJob({
+          userId,
+          sourceKey,
+          sourceUrl: uploadResult.url,
+          mimeType: uploadResult.mimeType,
+          sourceSize: uploadResult.size,
+          sourceDuration: uploadResult.duration,
+          trimStart,
+          trimEnd,
+          customCoverUrl,
+          audioConfig: parsedAudioConfig,
+        });
+
+        return {
+          ...uploadResult,
+          mediaId: job.mediaId,
+          jobId: job._id,
+          status: 'QUEUED',
+        };
+      }
+
+      return {
+        ...uploadResult,
+        status: 'NOT_REQUIRED',
+      };
     } finally {
       this.cleanupTempFile(file);
     }

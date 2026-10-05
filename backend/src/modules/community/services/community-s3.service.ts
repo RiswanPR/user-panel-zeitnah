@@ -303,6 +303,7 @@ export class CommunityS3Service {
     userId: string,
   ): Promise<{
     url: string;
+    key?: string;
     size: number;
     mimeType: string;
     duration?: number;
@@ -315,7 +316,9 @@ export class CommunityS3Service {
     const sanitizedOriginalName = (file.originalname || 'file')
       .replace(/[^a-zA-Z0-9._-]/g, '_')
       .slice(-60);
-    const fileName = `community/uploads/${userId}/${uuidv4()}-${sanitizedOriginalName}`;
+    const isVideo = file.mimetype.startsWith('video/');
+    const folder = isVideo ? 'originals' : 'uploads';
+    const fileName = `community/${folder}/${userId}/${uuidv4()}-${sanitizedOriginalName}`;
 
     let duration: number | undefined = undefined;
     let thumbnailUrl: string | undefined = undefined;
@@ -433,6 +436,7 @@ export class CommunityS3Service {
 
       return {
         url: fileUrl,
+        key: fileName,
         size: uploadSize,
         mimeType: file.mimetype,
         duration,
@@ -579,16 +583,23 @@ export class CommunityS3Service {
         throw new ForbiddenException('Invalid S3 key: root access is forbidden');
       }
 
-      // Security Check: Enforce that the target key resides in community/uploads/
-      if (!key.startsWith('community/uploads/')) {
+      // Security Check: Enforce that the target key resides in authorized community directories
+      const allowedPrefixes = [
+        'community/uploads/',
+        'community/originals/',
+        'community/processed/',
+        'community/posters/',
+      ];
+      const matchedPrefix = allowedPrefixes.find((p) => key.startsWith(p));
+      if (!matchedPrefix) {
         throw new ForbiddenException(
           'Target resource is not in authorized community uploads directory',
         );
       }
 
-      // Security Check (IDOR prevention): Key MUST start with community/uploads/<userId>/ unless admin
-      const expectedPrefix = `community/uploads/${userId}/`;
-      if (!isAdmin && !key.startsWith(expectedPrefix)) {
+      // Security Check (IDOR prevention): Key MUST start with <prefix><userId>/ unless admin
+      const expectedUserPrefix = `${matchedPrefix}${userId}/`;
+      if (!isAdmin && !key.startsWith(expectedUserPrefix)) {
         this.logger.warn(
           `Security violation: User ${userId} attempted to access S3 object '${key}' belonging to another entity`,
         );

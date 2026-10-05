@@ -17,6 +17,7 @@ import {
   ExternalLink,
   Flag,
   Check,
+  Music2,
 } from 'lucide-react';
 import ReelProgressBar from './ReelProgressBar';
 import { getCanonicalProfileUrl } from '../../../utils/roleNavigation';
@@ -74,8 +75,8 @@ function ReelItem({
   const videoMedia = Array.isArray(post?.media)
     ? post.media.find((m) => m?.type === 'video') || post.media[0]
     : null;
-  const videoUrl = videoMedia?.url || '';
-  const posterUrl = videoMedia?.thumbnailUrl || videoMedia?.posterUrl || '';
+  const videoUrl = videoMedia?.processedUrl || videoMedia?.url || '';
+  const posterUrl = videoMedia?.posterUrl || videoMedia?.thumbnailUrl || '';
 
   const isLiked = Boolean(post?.isLikedByMe);
   const isSaved = Boolean(post?.isSaved);
@@ -652,6 +653,16 @@ function ReelItem({
               ))}
             </div>
           )}
+
+          {/* Audio & Music Attribution Pill (Section 3 & 22) */}
+          <div className="flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 w-fit max-w-[260px] text-white/90 select-none">
+            <Music2 className="w-3 h-3 text-brand-mint shrink-0" />
+            <span className="text-[11px] font-medium truncate">
+              {videoMedia?.audioConfig?.musicTitle
+                ? `${videoMedia.audioConfig.musicTitle} · ${videoMedia.audioConfig.musicArtist || 'Soundtrack'}`
+                : (videoMedia?.audioConfig?.originalAudioName || `Original audio · ${authorHandle || authorName}`)}
+            </span>
+          </div>
         </div>
 
         {/* ── REAL-TIME LIGHTWEIGHT PROGRESS BAR ── */}

@@ -11,6 +11,24 @@ export type PollDocument = Poll & Document;
 export type PollOptionDocument = PollOption & Document;
 export type PollVoteDocument = PollVote & Document;
 
+export type ReelAudioSourceType = 'ORIGINAL' | 'MUSIC';
+export type ReelAudioMode = 'ORIGINAL_ONLY' | 'MUSIC_ONLY' | 'MIXED';
+
+export interface ReelAudioConfig {
+  audioMode: ReelAudioMode;
+  sourceType?: ReelAudioSourceType;
+  musicId?: string;
+  musicTitle?: string;
+  musicArtist?: string;
+  musicCoverUrl?: string;
+  sourceStart?: number;
+  sourceEnd?: number;
+  originalVolume?: number;
+  musicVolume?: number;
+  originalAudioName?: string;
+  attributionText?: string;
+}
+
 @Schema({ timestamps: true, collection: 'community_posts' })
 export class Post {
   @Prop({ type: String, default: () => uuidv4() })
@@ -60,6 +78,12 @@ export class Post {
         type: { type: String, default: 'image' },
         size: { type: Number },
         mimeType: { type: String },
+        duration: { type: Number },
+        posterUrl: { type: String },
+        thumbnailUrl: { type: String },
+        processedUrl: { type: String },
+        mediaId: { type: String },
+        audioConfig: { type: Object },
       },
     ],
     default: [],
@@ -69,6 +93,12 @@ export class Post {
     type: string;
     size?: number;
     mimeType?: string;
+    duration?: number;
+    posterUrl?: string;
+    thumbnailUrl?: string;
+    processedUrl?: string;
+    mediaId?: string;
+    audioConfig?: ReelAudioConfig;
   }>;
 
   @Prop({ type: [String], default: [] })
@@ -193,6 +223,21 @@ export class PostMedia {
 
   @Prop({ type: Number })
   duration?: number; // for videos
+
+  @Prop({ type: String })
+  posterUrl?: string;
+
+  @Prop({ type: String })
+  thumbnailUrl?: string;
+
+  @Prop({ type: String })
+  processedUrl?: string;
+
+  @Prop({ type: String })
+  mediaId?: string;
+
+  @Prop({ type: Object })
+  audioConfig?: ReelAudioConfig;
 
   @Prop({ type: Date })
   deletedAt?: Date;

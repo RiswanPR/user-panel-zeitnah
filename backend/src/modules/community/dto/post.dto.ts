@@ -35,6 +35,97 @@ export class CreatePostMediaDto {
   @IsString()
   @IsOptional()
   mimeType?: string;
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  duration?: number;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  posterUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  thumbnailUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  processedUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  mediaId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  audioConfig?: AudioConfigDto;
+}
+
+export class AudioConfigDto {
+  @ApiPropertyOptional({ enum: ['ORIGINAL_ONLY', 'MUSIC_ONLY', 'MIXED'] })
+  @IsEnum(['ORIGINAL_ONLY', 'MUSIC_ONLY', 'MIXED'])
+  @IsOptional()
+  audioMode?: 'ORIGINAL_ONLY' | 'MUSIC_ONLY' | 'MIXED';
+
+  @ApiPropertyOptional({ enum: ['ORIGINAL', 'MUSIC'] })
+  @IsEnum(['ORIGINAL', 'MUSIC'])
+  @IsOptional()
+  sourceType?: 'ORIGINAL' | 'MUSIC';
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  musicId?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  musicTitle?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  musicArtist?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  musicCoverUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  sourceStart?: number;
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  sourceEnd?: number;
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  originalVolume?: number;
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  musicVolume?: number;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  originalAudioName?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  attributionText?: string;
 }
 
 export class CreatePollOptionDto {
