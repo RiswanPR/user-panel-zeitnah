@@ -15,59 +15,66 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import sanitizeHtml from 'sanitize-html';
 import { PostType, PostAudience } from '../domain/post.model';
 
-export class CreatePostMediaDto {
-  @ApiProperty()
-  @IsUrl()
-  @IsNotEmpty()
-  url: string;
+export class AudioConfigDto {
+  @ApiPropertyOptional({ enum: ['ORIGINAL_ONLY', 'MUSIC_ONLY', 'MIXED'] })
+  @IsEnum(['ORIGINAL_ONLY', 'MUSIC_ONLY', 'MIXED'])
+  @IsOptional()
+  audioMode?: 'ORIGINAL_ONLY' | 'MUSIC_ONLY' | 'MIXED';
 
-  @ApiProperty()
+  @ApiPropertyOptional({ enum: ['ORIGINAL', 'MUSIC'] })
+  @IsEnum(['ORIGINAL', 'MUSIC'])
+  @IsOptional()
+  sourceType?: 'ORIGINAL' | 'MUSIC';
+
+  @ApiPropertyOptional()
   @IsString()
-  @IsNotEmpty()
-  type: string; // image, video, document
+  @IsOptional()
+  musicId?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  musicTitle?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  musicArtist?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  musicCoverUrl?: string;
 
   @ApiPropertyOptional()
   @IsNumber()
   @IsOptional()
-  size?: number;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  mimeType?: string;
+  sourceStart?: number;
 
   @ApiPropertyOptional()
   @IsNumber()
   @IsOptional()
-  duration?: number;
+  sourceEnd?: number;
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  originalVolume?: number;
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  musicVolume?: number;
 
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
-  posterUrl?: string;
+  originalAudioName?: string;
 
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
-  thumbnailUrl?: string;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  processedUrl?: string;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  mediaId?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  audioConfig?: AudioConfigDto;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  editorConfig?: EditorConfigDto;
+  attributionText?: string;
 }
 
 export class EditorLayerDto {
@@ -174,73 +181,70 @@ export class EditorConfigDto {
   @IsOptional()
   version?: number;
 
-  @ApiProperty({ type: [EditorLayerDto] })
+  @ApiProperty({ type: () => [EditorLayerDto] })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => EditorLayerDto)
   layers: EditorLayerDto[];
 }
 
-export class AudioConfigDto {
-  @ApiPropertyOptional({ enum: ['ORIGINAL_ONLY', 'MUSIC_ONLY', 'MIXED'] })
-  @IsEnum(['ORIGINAL_ONLY', 'MUSIC_ONLY', 'MIXED'])
-  @IsOptional()
-  audioMode?: 'ORIGINAL_ONLY' | 'MUSIC_ONLY' | 'MIXED';
+export class CreatePostMediaDto {
+  @ApiProperty()
+  @IsUrl()
+  @IsNotEmpty()
+  url: string;
 
-  @ApiPropertyOptional({ enum: ['ORIGINAL', 'MUSIC'] })
-  @IsEnum(['ORIGINAL', 'MUSIC'])
-  @IsOptional()
-  sourceType?: 'ORIGINAL' | 'MUSIC';
-
-  @ApiPropertyOptional()
+  @ApiProperty()
   @IsString()
-  @IsOptional()
-  musicId?: string;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  musicTitle?: string;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  musicArtist?: string;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  musicCoverUrl?: string;
+  @IsNotEmpty()
+  type: string; // image, video, document
 
   @ApiPropertyOptional()
   @IsNumber()
   @IsOptional()
-  sourceStart?: number;
-
-  @ApiPropertyOptional()
-  @IsNumber()
-  @IsOptional()
-  sourceEnd?: number;
-
-  @ApiPropertyOptional()
-  @IsNumber()
-  @IsOptional()
-  originalVolume?: number;
-
-  @ApiPropertyOptional()
-  @IsNumber()
-  @IsOptional()
-  musicVolume?: number;
+  size?: number;
 
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
-  originalAudioName?: string;
+  mimeType?: string;
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  duration?: number;
 
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
-  attributionText?: string;
+  posterUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  thumbnailUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  processedUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  mediaId?: string;
+
+  @ApiPropertyOptional({ type: () => AudioConfigDto })
+  @ValidateNested()
+  @Type(() => AudioConfigDto)
+  @IsOptional()
+  audioConfig?: AudioConfigDto;
+
+  @ApiPropertyOptional({ type: () => EditorConfigDto })
+  @ValidateNested()
+  @Type(() => EditorConfigDto)
+  @IsOptional()
+  editorConfig?: EditorConfigDto;
 }
 
 export class CreatePollOptionDto {
