@@ -1097,7 +1097,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
       const updatedPost = await this.postModel.findByIdAndUpdate(
         postId,
         updateObj,
-        { new: true },
+        { returnDocument: 'after' },
       );
       return {
         success: true,
@@ -1123,7 +1123,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
       const updatedPost = await this.postModel.findByIdAndUpdate(
         postId,
         updateObj,
-        { new: true },
+        { returnDocument: 'after' },
       );
       return {
         success: true,
@@ -1146,7 +1146,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
     const updatedPost = await this.postModel.findByIdAndUpdate(
       postId,
       updateObj,
-      { new: true },
+      { returnDocument: 'after' },
     );
 
     return {
@@ -1181,7 +1181,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
       const updatedPost = await this.postModel.findByIdAndUpdate(
         postId,
         updateObj,
-        { new: true },
+        { returnDocument: 'after' },
       );
       return {
         success: true,
@@ -1287,7 +1287,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
             },
           },
           {
-            new: true,        // return the updated document
+            returnDocument: 'after',        // return the updated document
             runValidators: true, // validate with canonical values AFTER $set
           },
         )

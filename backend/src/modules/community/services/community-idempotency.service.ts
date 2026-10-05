@@ -204,7 +204,7 @@ export class CommunityIdempotencyService {
       {
         $set: { updatedAt: new Date() },
       },
-      { new: true },
+      { returnDocument: 'after' },
     );
 
     if (reclaimed) {

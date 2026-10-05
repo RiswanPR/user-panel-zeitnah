@@ -300,7 +300,7 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
         },
         {
           sort: { createdAt: 1 },
-          new: true,
+          returnDocument: 'after',
         },
       );
 
