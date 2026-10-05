@@ -23,6 +23,10 @@ import {
   Image,
   Info,
   Music2,
+  Type,
+  Smile,
+  Subtitles,
+  Layers,
 } from 'lucide-react';
 import { AuthContext } from '../../../context/AuthContext';
 import { getUploadUrl } from '../../../utils/courseUi';
@@ -34,6 +38,11 @@ import ReelTimeline from './ReelTimeline';
 import ReelCoverSelector from './ReelCoverSelector';
 import ReelAudioPicker from './ReelAudioPicker';
 import PostAudienceSelector from './PostAudienceSelector';
+import ReelOverlayStage from './ReelOverlayStage';
+import ReelTextEditor from './ReelTextEditor';
+import ReelStickerPicker from './ReelStickerPicker';
+import ReelCaptionEditor from './ReelCaptionEditor';
+import ReelLayerPanel from './ReelLayerPanel';
 
 const POPULAR_REEL_HASHTAGS = [
   'structures',
@@ -45,6 +54,8 @@ const POPULAR_REEL_HASHTAGS = [
   'infrastructure',
   'zeitnah',
 ];
+
+const REEL_DRAFT_KEY = 'zeitnah_reel_editor_draft_v1';
 
 /**
  * ReelStudioModal — Creator-grade Reel Creation Studio for Zeitnah Community (Phase 3A):
@@ -93,6 +104,16 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess }) {
   const [originalVolume, setOriginalVolume] = useState(1.0);
   const [musicVolume, setMusicVolume] = useState(1.0);
   const [isAudioPickerOpen, setIsAudioPickerOpen] = useState(false);
+
+  // Editor Layers State (Phase 3D)
+  const [editorLayers, setEditorLayers] = useState([]);
+  const [activeLayerId, setActiveLayerId] = useState(null);
+  const [isTextEditorOpen, setIsTextEditorOpen] = useState(false);
+  const [editingTextLayer, setEditingTextLayer] = useState(null);
+  const [isStickerPickerOpen, setIsStickerPickerOpen] = useState(false);
+  const [isCaptionEditorOpen, setIsCaptionEditorOpen] = useState(false);
+  const [editingCaptionLayer, setEditingCaptionLayer] = useState(null);
+  const [isLayerPanelOpen, setIsLayerPanelOpen] = useState(false);
 
   // Details State
   const [caption, setCaption] = useState('');
@@ -194,6 +215,14 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess }) {
       setUploadedMediaData(null);
       setProcessingMediaId(null);
       setIsProcessingRetryable(false);
+      setEditorLayers([]);
+      setActiveLayerId(null);
+      setIsTextEditorOpen(false);
+      setEditingTextLayer(null);
+      setIsStickerPickerOpen(false);
+      setIsCaptionEditorOpen(false);
+      setEditingCaptionLayer(null);
+      setIsLayerPanelOpen(false);
       setUploadError(null);
       setShowDiscardDialog(false);
       isPublishingRef.current = false;
@@ -208,6 +237,56 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess }) {
     },
     [cleanupResources, uploadedMediaData]
   );
+
+  // Draft restore on open (Phase 3D Section 34 & 67)
+  useEffect(() => {
+    if (isOpen) {
+      try {
+        const saved = localStorage.getItem(REEL_DRAFT_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && typeof parsed === 'object') {
+            if (parsed.caption && !caption) setCaption(parsed.caption);
+            if (Array.isArray(parsed.tags) && tags.length === 0) setTags(parsed.tags);
+            if (parsed.audience) setAudience(parsed.audience);
+            if (Array.isArray(parsed.editorLayers) && editorLayers.length === 0) {
+              setEditorLayers(parsed.editorLayers);
+            }
+            if (parsed.audioMode) setAudioMode(parsed.audioMode);
+            if (parsed.selectedMusic) setSelectedMusic(parsed.selectedMusic);
+            if (typeof parsed.originalVolume === 'number') setOriginalVolume(parsed.originalVolume);
+            if (typeof parsed.musicVolume === 'number') setMusicVolume(parsed.musicVolume);
+            if (typeof parsed.trimStart === 'number') setTrimStart(parsed.trimStart);
+            if (typeof parsed.trimEnd === 'number') setTrimEnd(parsed.trimEnd);
+          }
+        }
+      } catch {}
+    }
+  }, [isOpen]);
+
+  // Draft autosave effect
+  useEffect(() => {
+    if (!isOpen) return;
+    try {
+      if (caption.trim() || tags.length > 0 || editorLayers.length > 0 || selectedMusic) {
+        localStorage.setItem(
+          REEL_DRAFT_KEY,
+          JSON.stringify({
+            caption,
+            tags,
+            audience,
+            editorLayers,
+            audioMode,
+            selectedMusic,
+            originalVolume,
+            musicVolume,
+            trimStart,
+            trimEnd,
+          })
+        );
+      }
+    } catch {}
+  }, [isOpen, caption, tags, audience, editorLayers, audioMode, selectedMusic, originalVolume, musicVolume, trimStart, trimEnd]);
 
   // Focus trap & body scroll lock
   useEffect(() => {
@@ -252,7 +331,15 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess }) {
   });
 
   // Check if user has unsaved work
-  const hasUnsavedChanges = Boolean(selectedFile || caption.trim() || tags.length > 0);
+  const hasUnsavedChanges = Boolean(
+    selectedFile ||
+    caption.trim() ||
+    tags.length > 0 ||
+    editorLayers.length > 0 ||
+    selectedMusic ||
+    trimStart > 0 ||
+    trimEnd > 0
+  );
 
   const handleAttemptClose = () => {
     if (status === 'UPLOADING' || status === 'VALIDATING' || status === 'PUBLISHING') {
@@ -268,9 +355,108 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess }) {
   };
 
   const handleConfirmDiscard = () => {
+    try {
+      localStorage.removeItem(REEL_DRAFT_KEY);
+    } catch {}
     setShowDiscardDialog(false);
     resetStudio(true);
     onClose();
+  };
+
+  // Phase 3D: Layer Management Handlers
+  const handleOpenAddText = () => {
+    if (editorLayers.length >= 10) {
+      toast.error('Maximum 10 layers allowed per Reel.');
+      return;
+    }
+    setEditingTextLayer(null);
+    setIsTextEditorOpen(true);
+  };
+
+  const handleSaveTextLayer = (layerData) => {
+    setEditorLayers((prev) => {
+      const exists = prev.some((l) => l.id === layerData.id);
+      if (exists) {
+        return prev.map((l) => (l.id === layerData.id ? { ...l, ...layerData } : l));
+      }
+      if (prev.length >= 10) {
+        toast.error('Maximum 10 layers allowed per Reel.');
+        return prev;
+      }
+      return [...prev, layerData];
+    });
+    setActiveLayerId(layerData.id);
+    setIsTextEditorOpen(false);
+    setEditingTextLayer(null);
+  };
+
+  const handleOpenStickerPicker = () => {
+    if (editorLayers.length >= 10) {
+      toast.error('Maximum 10 layers allowed per Reel.');
+      return;
+    }
+    setIsStickerPickerOpen(true);
+  };
+
+  const handleSelectSticker = (stickerLayer) => {
+    setEditorLayers((prev) => {
+      if (prev.length >= 10) {
+        toast.error('Maximum 10 layers allowed per Reel.');
+        return prev;
+      }
+      return [...prev, stickerLayer];
+    });
+    setActiveLayerId(stickerLayer.id);
+    setIsStickerPickerOpen(false);
+  };
+
+  const handleOpenAddCaption = () => {
+    if (editorLayers.length >= 10) {
+      toast.error('Maximum 10 layers allowed per Reel.');
+      return;
+    }
+    setEditingCaptionLayer(null);
+    setIsCaptionEditorOpen(true);
+  };
+
+  const handleSaveCaptionLayer = (layerData) => {
+    setEditorLayers((prev) => {
+      const exists = prev.some((l) => l.id === layerData.id);
+      if (exists) {
+        return prev.map((l) => (l.id === layerData.id ? { ...l, ...layerData } : l));
+      }
+      if (prev.length >= 10) {
+        toast.error('Maximum 10 layers allowed per Reel.');
+        return prev;
+      }
+      return [...prev, layerData];
+    });
+    setActiveLayerId(layerData.id);
+    setIsCaptionEditorOpen(false);
+    setEditingCaptionLayer(null);
+  };
+
+  const handleUpdateLayer = (layerId, updates) => {
+    setEditorLayers((prev) =>
+      prev.map((l) => (l.id === layerId ? { ...l, ...updates } : l))
+    );
+  };
+
+  const handleDeleteLayer = (layerId) => {
+    setEditorLayers((prev) => prev.filter((l) => l.id !== layerId));
+    if (activeLayerId === layerId) {
+      setActiveLayerId(null);
+    }
+  };
+
+  const handleEditLayer = (layer) => {
+    if (layer.type === 'TEXT') {
+      setEditingTextLayer(layer);
+      setIsTextEditorOpen(true);
+    } else if (layer.type === 'CAPTION') {
+      setEditingCaptionLayer(layer);
+      setIsCaptionEditorOpen(true);
+    }
   };
 
   // Inspect video duration and dimensions via browser DOM
@@ -583,7 +769,41 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess }) {
         originalAudioName: user?.username ? `Original audio · @${user.username}` : 'Original audio',
       };
 
-      await communityApi.retryMediaProcessing(processingMediaId);
+      const editorConfigPayload =
+        editorLayers.length > 0
+          ? {
+              version: 1,
+              layers: editorLayers.map((l) => ({
+                id: l.id,
+                type: l.type,
+                start: Number(l.start),
+                end: Number(l.end),
+                x: Number(l.x),
+                y: Number(l.y),
+                scale: l.scale !== undefined ? Number(l.scale) : 1.0,
+                rotation: l.rotation !== undefined ? Number(l.rotation) : 0,
+                opacity: l.opacity !== undefined ? Number(l.opacity) : 1.0,
+                content: l.content || undefined,
+                fontFamily: l.fontFamily || undefined,
+                fontSize: l.fontSize !== undefined ? Number(l.fontSize) : undefined,
+                fontWeight: l.fontWeight || undefined,
+                textAlign: l.textAlign || undefined,
+                color: l.color || undefined,
+                backgroundColor: l.backgroundColor || undefined,
+                backgroundOpacity:
+                  l.backgroundOpacity !== undefined ? Number(l.backgroundOpacity) : undefined,
+                shadow: l.shadow !== undefined ? Boolean(l.shadow) : undefined,
+                stickerId: l.stickerId || undefined,
+                style: l.style || undefined,
+              })),
+            }
+          : undefined;
+
+      // communityApi.retryMediaProcessing(processingMediaId)
+      await communityApi.retryMediaProcessing(processingMediaId, {
+        audioConfig: audioConfigPayload,
+        editorConfig: editorConfigPayload,
+      });
 
       const processedResult = await pollStatusUntilReady(
         processingMediaId,
@@ -611,7 +831,13 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess }) {
       await createPostMutation.mutateAsync({
         content: caption.trim(),
         type: 'VIDEO',
-        media: [mediaItem],
+        media: [
+          {
+            ...mediaItem,
+            audioConfig: audioConfigPayload,
+            editorConfig: editorConfigPayload,
+          },
+        ],
         tags,
         audience,
         idempotencyKey: idempotencyKeyRef.current,
@@ -620,6 +846,10 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess }) {
       setUploadProgress(100);
       setStatus('PUBLISHED');
       toast.success('Reel published to Community!');
+
+      try {
+        localStorage.removeItem(REEL_DRAFT_KEY);
+      } catch {}
 
       idempotencyKeyRef.current = null;
       resetStudio(false);
@@ -675,6 +905,36 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess }) {
           originalAudioName: user?.username ? `Original audio · @${user.username}` : 'Original audio',
         };
 
+        const editorConfigPayload =
+          editorLayers.length > 0
+            ? {
+                version: 1,
+                layers: editorLayers.map((l) => ({
+                  id: l.id,
+                  type: l.type,
+                  start: Number(l.start),
+                  end: Number(l.end),
+                  x: Number(l.x),
+                  y: Number(l.y),
+                  scale: l.scale !== undefined ? Number(l.scale) : 1.0,
+                  rotation: l.rotation !== undefined ? Number(l.rotation) : 0,
+                  opacity: l.opacity !== undefined ? Number(l.opacity) : 1.0,
+                  content: l.content || undefined,
+                  fontFamily: l.fontFamily || undefined,
+                  fontSize: l.fontSize !== undefined ? Number(l.fontSize) : undefined,
+                  fontWeight: l.fontWeight || undefined,
+                  textAlign: l.textAlign || undefined,
+                  color: l.color || undefined,
+                  backgroundColor: l.backgroundColor || undefined,
+                  backgroundOpacity:
+                    l.backgroundOpacity !== undefined ? Number(l.backgroundOpacity) : undefined,
+                  shadow: l.shadow !== undefined ? Boolean(l.shadow) : undefined,
+                  stickerId: l.stickerId || undefined,
+                  style: l.style || undefined,
+                })),
+              }
+            : undefined;
+
         const response = await communityApi.uploadMedia(
           selectedFile,
           (progressEvent) => {
@@ -692,6 +952,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess }) {
             trimEnd,
             isReel: true,
             audioConfig: audioConfigPayload,
+            editorConfig: editorConfigPayload,
           }
         );
 
@@ -780,6 +1041,36 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess }) {
         originalAudioName: user?.username ? `Original audio · @${user.username}` : 'Original audio',
       };
 
+      const editorConfigPayload =
+        editorLayers.length > 0
+          ? {
+              version: 1,
+              layers: editorLayers.map((l) => ({
+                id: l.id,
+                type: l.type,
+                start: Number(l.start),
+                end: Number(l.end),
+                x: Number(l.x),
+                y: Number(l.y),
+                scale: l.scale !== undefined ? Number(l.scale) : 1.0,
+                rotation: l.rotation !== undefined ? Number(l.rotation) : 0,
+                opacity: l.opacity !== undefined ? Number(l.opacity) : 1.0,
+                content: l.content || undefined,
+                fontFamily: l.fontFamily || undefined,
+                fontSize: l.fontSize !== undefined ? Number(l.fontSize) : undefined,
+                fontWeight: l.fontWeight || undefined,
+                textAlign: l.textAlign || undefined,
+                color: l.color || undefined,
+                backgroundColor: l.backgroundColor || undefined,
+                backgroundOpacity:
+                  l.backgroundOpacity !== undefined ? Number(l.backgroundOpacity) : undefined,
+                shadow: l.shadow !== undefined ? Boolean(l.shadow) : undefined,
+                stickerId: l.stickerId || undefined,
+                style: l.style || undefined,
+              })),
+            }
+          : undefined;
+
       await createPostMutation.mutateAsync({
         content: caption.trim(),
         type: 'VIDEO',
@@ -787,6 +1078,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess }) {
           {
             ...mediaItem,
             audioConfig: audioConfigPayload,
+            editorConfig: editorConfigPayload,
           },
         ],
         tags,
@@ -797,6 +1089,10 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess }) {
       setUploadProgress(100);
       setStatus('PUBLISHED');
       toast.success('Reel published to Community!');
+
+      try {
+        localStorage.removeItem(REEL_DRAFT_KEY);
+      } catch {}
 
       idempotencyKeyRef.current = null;
       resetStudio(false);
@@ -1072,12 +1368,24 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess }) {
                     className="w-full h-full object-cover cursor-pointer"
                   />
 
+                  {/* Phase 3D: Interactive Reel Overlay Stage */}
+                  <ReelOverlayStage
+                    layers={editorLayers}
+                    activeLayerId={activeLayerId}
+                    currentTime={currentTime}
+                    duration={trimEnd > trimStart ? trimEnd - trimStart : videoDuration}
+                    onSelectLayer={setActiveLayerId}
+                    onUpdateLayer={handleUpdateLayer}
+                    onDeleteLayer={handleDeleteLayer}
+                    onEditLayer={handleEditLayer}
+                  />
+
                   {/* Play / Pause Central Overlay Button */}
                   {!isPlaying && (
                     <button
                       type="button"
                       onClick={togglePlayPause}
-                      className="absolute inset-0 m-auto w-14 h-14 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:scale-105 transition-all cursor-pointer shadow-lg"
+                      className="absolute inset-0 m-auto w-14 h-14 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:scale-105 transition-all cursor-pointer shadow-lg z-20"
                       aria-label="Play video"
                     >
                       <Play className="w-6 h-6 ml-0.5 fill-current" />
@@ -1107,10 +1415,60 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess }) {
                   </div>
 
                   {/* Metadata Tag on Stage */}
-                  <div className="absolute bottom-3 left-3 px-2 py-0.5 rounded-full bg-black/65 backdrop-blur-md text-[10px] font-mono text-white/90 border border-white/10 select-none">
+                  <div className="absolute bottom-3 left-3 px-2 py-0.5 rounded-full bg-black/65 backdrop-blur-md text-[10px] font-mono text-white/90 border border-white/10 select-none z-20">
                     {videoDimensions.width > 0 && `${videoDimensions.width}×${videoDimensions.height} · `}
                     {formatFileSize(selectedFile?.size)}
                   </div>
+                </div>
+
+                {/* Phase 3D: Creator Tools Bar (Text, Sticker, Caption, Layers) */}
+                <div className="w-full max-w-[480px] p-2 rounded-2xl bg-[#09111F] border border-white/[0.08] flex items-center justify-between gap-1.5 shadow-md shrink-0">
+                  <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
+                    <button
+                      type="button"
+                      id="reel-add-text-btn"
+                      onClick={handleOpenAddText}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-semibold text-white hover:text-brand-mint transition-colors cursor-pointer shrink-0"
+                    >
+                      <Type className="w-3.5 h-3.5 text-brand-mint" />
+                      <span>Text</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      id="reel-add-sticker-btn"
+                      onClick={handleOpenStickerPicker}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-semibold text-white hover:text-brand-yellow transition-colors cursor-pointer shrink-0"
+                    >
+                      <Smile className="w-3.5 h-3.5 text-brand-yellow" />
+                      <span>Sticker</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      id="reel-add-caption-btn"
+                      onClick={handleOpenAddCaption}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-semibold text-white hover:text-sky-400 transition-colors cursor-pointer shrink-0"
+                    >
+                      <Subtitles className="w-3.5 h-3.5 text-sky-400" />
+                      <span>Caption</span>
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    id="reel-manage-layers-btn"
+                    onClick={() => setIsLayerPanelOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-semibold text-white hover:text-indigo-400 transition-colors cursor-pointer shrink-0"
+                  >
+                    <Layers className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>Layers</span>
+                    {editorLayers.length > 0 && (
+                      <span className="ml-1 px-1.5 py-0.2 rounded-full bg-brand-mint text-[#070B14] font-bold text-[10px]">
+                        {editorLayers.length}
+                      </span>
+                    )}
+                  </button>
                 </div>
 
                 {/* Timeline & Scrubber & Trim Section */}
@@ -1127,6 +1485,9 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess }) {
                     audioMode={audioMode}
                     musicStart={musicStart}
                     musicEnd={musicEnd}
+                    layers={editorLayers}
+                    activeLayerId={activeLayerId}
+                    onSelectLayer={setActiveLayerId}
                   />
 
                   {/* Audio & Music Selection Trigger (Phase 3C) */}
@@ -1454,6 +1815,55 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess }) {
             setMusicVolume={setMusicVolume}
             reelDuration={trimEnd > trimStart ? trimEnd - trimStart : videoDuration}
             creatorHandle={user?.username || ''}
+          />
+
+          {/* ── Text Overlay Editor Modal/Drawer (Phase 3D) ── */}
+          <ReelTextEditor
+            isOpen={isTextEditorOpen}
+            initialLayer={editingTextLayer}
+            duration={trimEnd > trimStart ? trimEnd - trimStart : videoDuration}
+            currentTime={currentTime}
+            onSave={handleSaveTextLayer}
+            onClose={() => {
+              setIsTextEditorOpen(false);
+              setEditingTextLayer(null);
+            }}
+          />
+
+          {/* ── Sticker Picker Drawer (Phase 3D) ── */}
+          <ReelStickerPicker
+            isOpen={isStickerPickerOpen}
+            duration={trimEnd > trimStart ? trimEnd - trimStart : videoDuration}
+            currentTime={currentTime}
+            onSelectSticker={handleSelectSticker}
+            onClose={() => setIsStickerPickerOpen(false)}
+          />
+
+          {/* ── Caption Editor Modal/Drawer (Phase 3D) ── */}
+          <ReelCaptionEditor
+            isOpen={isCaptionEditorOpen}
+            initialLayer={editingCaptionLayer}
+            duration={trimEnd > trimStart ? trimEnd - trimStart : videoDuration}
+            currentTime={currentTime}
+            onSave={handleSaveCaptionLayer}
+            onClose={() => {
+              setIsCaptionEditorOpen(false);
+              setEditingCaptionLayer(null);
+            }}
+          />
+
+          {/* ── Layer Manager Panel (Phase 3D) ── */}
+          <ReelLayerPanel
+            isOpen={isLayerPanelOpen}
+            layers={editorLayers}
+            activeLayerId={activeLayerId}
+            onSelectLayer={setActiveLayerId}
+            onEditLayer={handleEditLayer}
+            onDeleteLayer={handleDeleteLayer}
+            onOpenTextEditor={handleOpenAddText}
+            onOpenStickerPicker={handleOpenStickerPicker}
+            onOpenCaptionEditor={handleOpenAddCaption}
+            onClose={() => setIsLayerPanelOpen(false)}
           />
         </motion.div>
       </div>

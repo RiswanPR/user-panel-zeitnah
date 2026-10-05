@@ -237,6 +237,16 @@ export class CommunityUploadController {
           );
         }
 
+        let parsedEditorConfig: any = undefined;
+        if (body.editorConfig) {
+          try {
+            parsedEditorConfig =
+              typeof body.editorConfig === 'string'
+                ? JSON.parse(body.editorConfig)
+                : body.editorConfig;
+          } catch {}
+        }
+
         const job = await this.mediaJobService.createJob({
           userId,
           sourceKey,
@@ -248,6 +258,7 @@ export class CommunityUploadController {
           trimEnd,
           customCoverUrl,
           audioConfig: parsedAudioConfig,
+          editorConfig: parsedEditorConfig,
         });
 
         return {

@@ -32,10 +32,23 @@ export interface AudioMixOptions {
   musicVolume?: number;
 }
 
+export interface OverlayAssetItem {
+  layerId: string;
+  localPath: string;
+  x: number; // normalized 0..1
+  y: number; // normalized 0..1
+  scale?: number;
+  rotation?: number;
+  opacity?: number;
+  start: number;
+  end: number;
+}
+
 export interface TranscodeOptions {
   trimStart?: number;
   trimEnd?: number;
   audioConfig?: AudioMixOptions;
+  overlayAssets?: OverlayAssetItem[];
 }
 
 export interface TranscodeResult {
@@ -317,7 +330,139 @@ export class CommunityVideoProcessorService {
 
     let ffmpegArgs: string[] = [];
 
-    if (hasMusic && audioMode === 'MUSIC_ONLY') {
+    // Phase 3D: Multi-layer Overlays (Text, Stickers, Captions)
+    const validOverlays = (options.overlayAssets || [])
+      .filter((ov) => ov && ov.localPath && fs.existsSync(ov.localPath))
+      .slice(0, 10);
+
+    if (validOverlays.length > 0) {
+      const firstOverlayInputIdx = hasMusic ? 2 : 1;
+      const videoFilters: string[] = [];
+      videoFilters.push(`[0:v]${scaleFilter}[v0]`);
+
+      for (let idx = 0; idx < validOverlays.length; idx++) {
+        const ov = validOverlays[idx];
+        const inTag = idx === 0 ? 'v0' : `v_ov_${idx}`;
+        const outTag = idx === validOverlays.length - 1 ? 'vout' : `v_ov_${idx + 1}`;
+        const inputIdx = firstOverlayInputIdx + idx;
+        const cx = Math.max(0, Math.min(Number(ov.x ?? 0.5), 1.0));
+        const cy = Math.max(0, Math.min(Number(ov.y ?? 0.5), 1.0));
+        const st = Math.max(0, Number(ov.start ?? 0));
+        const en = Math.min(targetDuration, Math.max(st + 0.1, Number(ov.end ?? targetDuration)));
+
+        videoFilters.push(
+          `[${inTag}][${inputIdx}:v]overlay=x=(main_w*${cx.toFixed(4)}-overlay_w/2):y=(main_h*${cy.toFixed(4)}-overlay_h/2):enable='between(t,${st.toFixed(3)},${en.toFixed(3)})'[${outTag}]`,
+        );
+      }
+
+      let audioFilter = '';
+      let hasAudioOut = false;
+
+      if (hasMusic && audioMode === 'MUSIC_ONLY') {
+        audioFilter = `[1:a]volume=${musicVol.toFixed(2)}[aout]`;
+        hasAudioOut = true;
+      } else if (hasMusic && audioMode === 'MIXED') {
+        if (probe.hasAudio) {
+          audioFilter = `[0:a]volume=${origVol.toFixed(2)}[a0];[1:a]volume=${musicVol.toFixed(2)}[a1];[a0][a1]amix=inputs=2:duration=first:dropout_transition=2[aout]`;
+        } else {
+          audioFilter = `[1:a]volume=${musicVol.toFixed(2)}[aout]`;
+        }
+        hasAudioOut = true;
+      } else {
+        if (probe.hasAudio) {
+          audioFilter = `[0:a]volume=${origVol.toFixed(2)}[aout]`;
+          hasAudioOut = true;
+        } else {
+          hasAudioOut = false;
+        }
+      }
+
+      const filterComplex = videoFilters.join(';') + (audioFilter ? ';' + audioFilter : '');
+      const overlayInputArgs: string[] = [];
+      for (const ov of validOverlays) {
+        overlayInputArgs.push('-i', ov.localPath);
+      }
+
+      if (hasMusic) {
+        const musicStart = Math.max(0, Number(audioConfig?.musicStart ?? 0));
+        const musicEnd =
+          audioConfig?.musicEnd !== undefined && Number(audioConfig.musicEnd) > musicStart
+            ? Number(audioConfig.musicEnd)
+            : musicStart + targetDuration;
+
+        ffmpegArgs = [
+          '-y',
+          '-ss',
+          trimStart.toFixed(3),
+          '-to',
+          trimEnd.toFixed(3),
+          '-i',
+          sourcePath,
+          '-ss',
+          musicStart.toFixed(3),
+          ...(musicEnd > musicStart ? ['-to', musicEnd.toFixed(3)] : []),
+          '-i',
+          audioConfig!.musicPath!,
+          ...overlayInputArgs,
+          '-filter_complex',
+          filterComplex,
+          '-map',
+          '[vout]',
+          ...(hasAudioOut
+            ? ['-map', '[aout]', '-c:a', 'aac', '-b:a', '128k', '-ar', '48000', '-ac', '2']
+            : ['-an']),
+          '-c:v',
+          'libx264',
+          '-preset',
+          'medium',
+          '-crf',
+          '23',
+          '-pix_fmt',
+          'yuv420p',
+          '-shortest',
+          '-sn',
+          '-dn',
+          '-map_metadata',
+          '-1',
+          '-movflags',
+          '+faststart',
+          outputPath,
+        ];
+      } else {
+        ffmpegArgs = [
+          '-y',
+          '-ss',
+          trimStart.toFixed(3),
+          '-to',
+          trimEnd.toFixed(3),
+          '-i',
+          sourcePath,
+          ...overlayInputArgs,
+          '-filter_complex',
+          filterComplex,
+          '-map',
+          '[vout]',
+          ...(hasAudioOut
+            ? ['-map', '[aout]', '-c:a', 'aac', '-b:a', '128k', '-ar', '48000', '-ac', '2']
+            : ['-an']),
+          '-c:v',
+          'libx264',
+          '-preset',
+          'medium',
+          '-crf',
+          '23',
+          '-pix_fmt',
+          'yuv420p',
+          '-sn',
+          '-dn',
+          '-map_metadata',
+          '-1',
+          '-movflags',
+          '+faststart',
+          outputPath,
+        ];
+      }
+    } else if (hasMusic && audioMode === 'MUSIC_ONLY') {
       // 1. MUSIC_ONLY MODE (Section 27)
       const musicStart = Math.max(0, Number(audioConfig?.musicStart ?? 0));
       const musicEnd =

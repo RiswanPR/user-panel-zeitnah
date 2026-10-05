@@ -75,6 +75,7 @@ export class CommunityMediaController {
       trimStart: effectiveBody?.trimStart !== undefined ? Number(effectiveBody.trimStart) : undefined,
       trimEnd: effectiveBody?.trimEnd !== undefined ? Number(effectiveBody.trimEnd) : undefined,
       audioConfig: resolvedAudioConfig,
+      editorConfig: effectiveBody?.editorConfig,
     });
     return {
       mediaId: job.mediaId,

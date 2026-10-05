@@ -64,6 +64,121 @@ export class CreatePostMediaDto {
   @ApiPropertyOptional()
   @IsOptional()
   audioConfig?: AudioConfigDto;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  editorConfig?: EditorConfigDto;
+}
+
+export class EditorLayerDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  id: string;
+
+  @ApiProperty({ enum: ['TEXT', 'STICKER', 'CAPTION'] })
+  @IsEnum(['TEXT', 'STICKER', 'CAPTION'])
+  type: 'TEXT' | 'STICKER' | 'CAPTION';
+
+  @ApiProperty()
+  @IsNumber()
+  start: number;
+
+  @ApiProperty()
+  @IsNumber()
+  end: number;
+
+  @ApiProperty()
+  @IsNumber()
+  x: number;
+
+  @ApiProperty()
+  @IsNumber()
+  y: number;
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  scale?: number;
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  rotation?: number;
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  opacity?: number;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  @MaxLength(300)
+  content?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  fontFamily?: string;
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  fontSize?: number;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  fontWeight?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  textAlign?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  color?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  backgroundColor?: string;
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  backgroundOpacity?: number;
+
+  @ApiPropertyOptional()
+  @IsBoolean()
+  @IsOptional()
+  shadow?: boolean;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  stickerId?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  style?: string;
+}
+
+export class EditorConfigDto {
+  @ApiPropertyOptional({ default: 1 })
+  @IsNumber()
+  @IsOptional()
+  version?: number;
+
+  @ApiProperty({ type: [EditorLayerDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => EditorLayerDto)
+  layers: EditorLayerDto[];
 }
 
 export class AudioConfigDto {

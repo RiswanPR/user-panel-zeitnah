@@ -15,6 +15,7 @@ import { CommunityS3Service } from './community-s3.service';
 import { CommunityIdempotencyService } from './community-idempotency.service';
 import { CommunityMediaJobService } from './community-media-job.service';
 import { CommunityMusicService } from './community-music.service';
+import { CommunityStickerService } from './community-sticker.service';
 import { PostType, PostAudience } from '../domain/post.model';
 
 @Injectable()
@@ -32,6 +33,7 @@ export class PostService {
     @Optional() private readonly communityIdempotencyService?: CommunityIdempotencyService,
     @Optional() private readonly mediaJobService?: CommunityMediaJobService,
     @Optional() private readonly musicService?: CommunityMusicService,
+    @Optional() private readonly stickerService?: CommunityStickerService,
   ) {}
 
   private async resolveMediaUrls(posts: any[]): Promise<any[]> {
@@ -164,6 +166,7 @@ export class PostService {
       let finalWidth = m.width;
       let finalHeight = m.height;
       let resolvedAudioConfig = m.audioConfig;
+      let resolvedEditorConfig = m.editorConfig;
 
       if (mediaType === 'video' && m.mediaId && this.mediaJobService) {
         const job = await this.mediaJobService.getJobByMediaId(m.mediaId);
@@ -195,6 +198,9 @@ export class PostService {
             if (job.audioConfig && !resolvedAudioConfig) {
               resolvedAudioConfig = job.audioConfig;
             }
+            if (job.editorConfig && !resolvedEditorConfig) {
+              resolvedEditorConfig = job.editorConfig;
+            }
           }
         }
       }
@@ -204,6 +210,11 @@ export class PostService {
         resolvedAudioConfig = await this.musicService.validateAndResolveAudioConfig(
           resolvedAudioConfig,
         );
+      }
+
+      // Authoritative Server-side Editor Config Validation (Phase 3D)
+      if (resolvedEditorConfig) {
+        resolvedEditorConfig = this.validateAndNormalizeEditorConfig(resolvedEditorConfig, finalDuration);
       }
 
       // Clean ephemeral query parameters (e.g. ?X-Amz-Signature=...) before storing in DB
@@ -230,10 +241,140 @@ export class PostService {
         processedUrl: finalProcessedUrl ? finalProcessedUrl.split('?')[0] : undefined,
         mediaId: m.mediaId,
         audioConfig: resolvedAudioConfig,
+        editorConfig: resolvedEditorConfig,
       });
     }
 
     return normalized;
+  }
+
+  public validateAndNormalizeEditorConfig(config: any, maxDuration = 90): any {
+    if (!config || typeof config !== 'object') {
+      throw new BadRequestException('Editor configuration must be an object');
+    }
+    if (!Array.isArray(config.layers)) {
+      throw new BadRequestException('Editor layers must be an array');
+    }
+    if (config.layers.length > 10) {
+      throw new BadRequestException('Maximum 10 editor layers allowed per Reel');
+    }
+
+    const normalizedLayers = config.layers.map((layer: any, idx: number) => {
+      if (!layer || typeof layer !== 'object') {
+        throw new BadRequestException(`Layer at index ${idx} is invalid`);
+      }
+      if (!layer.id || typeof layer.id !== 'string') {
+        throw new BadRequestException(`Layer at index ${idx} must have a valid string id`);
+      }
+      const type = String(layer.type || '').toUpperCase();
+      if (!['TEXT', 'STICKER', 'CAPTION'].includes(type)) {
+        throw new BadRequestException(`Invalid layer type: ${type}`);
+      }
+
+      const start = Number(layer.start);
+      const end = Number(layer.end);
+      if (isNaN(start) || start < 0) {
+        throw new BadRequestException(`Layer ${layer.id} start time must be >= 0`);
+      }
+      if (isNaN(end) || end <= start) {
+        throw new BadRequestException(`Layer ${layer.id} end time must be greater than start time`);
+      }
+      if (maxDuration && end > maxDuration + 0.5) {
+        throw new BadRequestException(`Layer ${layer.id} timing (${end.toFixed(1)}s) exceeds video duration (${maxDuration.toFixed(1)}s)`);
+      }
+
+      const x = Math.max(0, Math.min(Number(layer.x ?? 0.5), 1.0));
+      const y = Math.max(0, Math.min(Number(layer.y ?? 0.5), 1.0));
+      const scale = Math.max(0.2, Math.min(Number(layer.scale ?? 1.0), 3.0));
+      const rotation = Math.max(-360, Math.min(Number(layer.rotation ?? 0), 360));
+      const opacity = Math.max(0, Math.min(Number(layer.opacity ?? 1.0), 1.0));
+
+      if (type === 'STICKER') {
+        if (!layer.stickerId || typeof layer.stickerId !== 'string') {
+          throw new BadRequestException(`Sticker layer ${layer.id} requires a valid stickerId`);
+        }
+        if (this.stickerService && !this.stickerService.isValidStickerId(layer.stickerId)) {
+          throw new BadRequestException(`Sticker ${layer.stickerId} does not exist or is inactive`);
+        }
+        return {
+          id: layer.id,
+          type: 'STICKER',
+          stickerId: layer.stickerId,
+          start,
+          end,
+          x,
+          y,
+          scale,
+          rotation,
+          opacity,
+        };
+      }
+
+      // TEXT or CAPTION
+      const content = String(layer.content || '').replace(/<[^>]*>?/gm, '').trim();
+      if (!content) {
+        throw new BadRequestException(`${type} layer ${layer.id} content cannot be empty`);
+      }
+      if (content.length > 300) {
+        throw new BadRequestException(`${type} layer ${layer.id} exceeds maximum 300 characters limit`);
+      }
+
+      if (type === 'CAPTION') {
+        const style = ['CLASSIC', 'BOLD', 'MINIMAL', 'HIGHLIGHT'].includes(String(layer.style).toUpperCase())
+          ? String(layer.style).toUpperCase()
+          : 'CLASSIC';
+        return {
+          id: layer.id,
+          type: 'CAPTION',
+          content,
+          style,
+          start,
+          end,
+          x,
+          y,
+          scale,
+          opacity,
+        };
+      }
+
+      // TEXT
+      const fontFamily = ['Inter', 'System Sans', 'Serif', 'Mono'].includes(layer.fontFamily)
+        ? layer.fontFamily
+        : 'Inter';
+      const fontSize = Math.max(12, Math.min(Number(layer.fontSize) || 24, 72));
+      const fontWeight = ['normal', 'bold', '800'].includes(layer.fontWeight) ? layer.fontWeight : 'bold';
+      const textAlign = ['left', 'center', 'right'].includes(layer.textAlign) ? layer.textAlign : 'center';
+      const color = typeof layer.color === 'string' && layer.color.startsWith('#') ? layer.color : '#FFFFFF';
+      const backgroundColor = typeof layer.backgroundColor === 'string' && layer.backgroundColor.startsWith('#') ? layer.backgroundColor : '#000000';
+      const backgroundOpacity = Math.max(0, Math.min(Number(layer.backgroundOpacity ?? 0.6), 1.0));
+      const shadow = Boolean(layer.shadow);
+
+      return {
+        id: layer.id,
+        type: 'TEXT',
+        content,
+        fontFamily,
+        fontSize,
+        fontWeight,
+        textAlign,
+        color,
+        backgroundColor,
+        backgroundOpacity,
+        shadow,
+        start,
+        end,
+        x,
+        y,
+        scale,
+        rotation,
+        opacity,
+      };
+    });
+
+    return {
+      version: Number(config.version) || 1,
+      layers: normalizedLayers,
+    };
   }
 
   async createPost(

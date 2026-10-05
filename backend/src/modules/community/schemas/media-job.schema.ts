@@ -115,6 +115,33 @@ export class CommunityMediaJob {
     attributionText?: string;
   };
 
+  @Prop({ type: Object })
+  editorConfig?: {
+    version: number;
+    layers: Array<{
+      id: string;
+      type: 'TEXT' | 'STICKER' | 'CAPTION';
+      start: number;
+      end: number;
+      x: number;
+      y: number;
+      scale?: number;
+      rotation?: number;
+      opacity?: number;
+      content?: string;
+      fontFamily?: string;
+      fontSize?: number;
+      fontWeight?: string;
+      textAlign?: string;
+      color?: string;
+      backgroundColor?: string;
+      backgroundOpacity?: number;
+      shadow?: boolean;
+      stickerId?: string;
+      style?: string;
+    }>;
+  };
+
   @Prop({ type: String })
   errorCode?: string;
 

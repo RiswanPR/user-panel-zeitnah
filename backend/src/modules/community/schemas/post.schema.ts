@@ -29,6 +29,39 @@ export interface ReelAudioConfig {
   attributionText?: string;
 }
 
+export type ReelEditorLayerType = 'TEXT' | 'STICKER' | 'CAPTION';
+
+export interface ReelEditorLayer {
+  id: string;
+  type: ReelEditorLayerType;
+  start: number;
+  end: number;
+  x: number;
+  y: number;
+  scale?: number;
+  rotation?: number;
+  opacity?: number;
+  // Text & Caption specific
+  content?: string;
+  fontFamily?: 'Inter' | 'System Sans' | 'Serif' | 'Mono' | string;
+  fontSize?: number;
+  fontWeight?: 'normal' | 'bold' | '800' | string;
+  textAlign?: 'left' | 'center' | 'right' | string;
+  color?: string;
+  backgroundColor?: string;
+  backgroundOpacity?: number;
+  shadow?: boolean;
+  // Sticker specific
+  stickerId?: string;
+  // Caption style preset
+  style?: 'CLASSIC' | 'BOLD' | 'MINIMAL' | 'HIGHLIGHT' | string;
+}
+
+export interface ReelEditorConfig {
+  version: number;
+  layers: ReelEditorLayer[];
+}
+
 @Schema({ timestamps: true, collection: 'community_posts' })
 export class Post {
   @Prop({ type: String, default: () => uuidv4() })
@@ -84,6 +117,7 @@ export class Post {
         processedUrl: { type: String },
         mediaId: { type: String },
         audioConfig: { type: Object },
+        editorConfig: { type: Object },
       },
     ],
     default: [],
@@ -99,6 +133,7 @@ export class Post {
     processedUrl?: string;
     mediaId?: string;
     audioConfig?: ReelAudioConfig;
+    editorConfig?: ReelEditorConfig;
   }>;
 
   @Prop({ type: [String], default: [] })
@@ -238,6 +273,9 @@ export class PostMedia {
 
   @Prop({ type: Object })
   audioConfig?: ReelAudioConfig;
+
+  @Prop({ type: Object })
+  editorConfig?: ReelEditorConfig;
 
   @Prop({ type: Date })
   deletedAt?: Date;

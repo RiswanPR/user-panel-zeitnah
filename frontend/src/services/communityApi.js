@@ -295,6 +295,9 @@ export const communityApi = {
       if (options.audioConfig) {
         formData.append('audioConfig', JSON.stringify(options.audioConfig));
       }
+      if (options.editorConfig) {
+        formData.append('editorConfig', JSON.stringify(options.editorConfig));
+      }
     }
     
     const response = await api.post('/community/upload', formData, {
@@ -316,8 +319,9 @@ export const communityApi = {
     return response.data;
   },
 
-  retryMediaProcessing: async (mediaId) => {
-    const options = arguments[1] || {};
+  // retryMediaProcessing: async (mediaId)
+  retryMediaProcessing: async (mediaId, ...rest) => {
+    const options = rest[0] || {};
     const response = await api.post(`/community/media/${mediaId}/retry`, options, {
       skipDeduplication: true,
     });
@@ -353,6 +357,18 @@ export const communityApi = {
 
   getMusicTrack: async (id) => {
     const response = await api.get(`/community/music/${id}`);
+    return response.data;
+  },
+
+  // ── Sticker Catalog & Assets (Phase 3D) ──
+  getStickers: async ({ category, limit = 20, cursor } = {}) => {
+    const response = await api.get('/community/stickers', {
+      params: {
+        category: category && category !== 'ALL' ? category : undefined,
+        limit,
+        cursor: cursor || undefined,
+      },
+    });
     return response.data;
   },
 

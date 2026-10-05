@@ -16,6 +16,8 @@ import {
 } from '../schemas/media-job.schema';
 import { CommunityVideoProcessorService } from './community-video-processor.service';
 import { CommunityMusicService } from './community-music.service';
+import { CommunityStickerService } from './community-sticker.service';
+import { renderTextLayerPng, renderStickerPng } from './community-overlay-rasterizer';
 import { S3Service } from '../../../common/aws/s3.service';
 import { SignedUrlService } from '../../../common/aws/signed-url.service';
 import {
@@ -47,6 +49,7 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
     private readonly s3Service: S3Service,
     @Optional() private readonly signedUrlService?: SignedUrlService,
     @Optional() private readonly musicService?: CommunityMusicService,
+    @Optional() private readonly stickerService?: CommunityStickerService,
   ) {}
 
   onModuleInit() {
@@ -100,6 +103,7 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
     trimEnd?: number;
     customCoverUrl?: string;
     audioConfig?: any;
+    editorConfig?: any;
   }): Promise<CommunityMediaJobDocument> {
     const mediaId = uuidv4();
     const job = await this.jobModel.create({
@@ -114,6 +118,7 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
       trimEnd: params.trimEnd !== undefined && params.trimEnd !== null ? Number(params.trimEnd) : undefined,
       customCoverUrl: params.customCoverUrl,
       audioConfig: params.audioConfig,
+      editorConfig: params.editorConfig,
       status: 'QUEUED',
       attempts: 0,
       maxAttempts: 3,
@@ -177,7 +182,7 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
     mediaId: string,
     requestingUserId: string,
     isAdmin = false,
-    options?: { trimStart?: number; trimEnd?: number; audioConfig?: any },
+    options?: { trimStart?: number; trimEnd?: number; audioConfig?: any; editorConfig?: any },
   ): Promise<CommunityMediaJobDocument> {
     const job = await this.getJobByMediaId(mediaId);
     if (!job) {
@@ -192,7 +197,8 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
       options && (
         (options.trimStart !== undefined && options.trimStart !== job.trimStart) ||
         (options.trimEnd !== undefined && options.trimEnd !== job.trimEnd) ||
-        (options.audioConfig !== undefined && JSON.stringify(options.audioConfig) !== JSON.stringify(job.audioConfig))
+        (options.audioConfig !== undefined && JSON.stringify(options.audioConfig) !== JSON.stringify(job.audioConfig)) ||
+        (options.editorConfig !== undefined && JSON.stringify(options.editorConfig) !== JSON.stringify(job.editorConfig))
       ),
     );
 
@@ -213,10 +219,11 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
       );
     }
 
-    // Apply any updated trim or audio config
+    // Apply any updated trim, audio or editor config
     if (options?.trimStart !== undefined) job.trimStart = Number(options.trimStart) || 0;
     if (options?.trimEnd !== undefined) job.trimEnd = Number(options.trimEnd);
     if (options?.audioConfig !== undefined) job.audioConfig = options.audioConfig;
+    if (options?.editorConfig !== undefined) job.editorConfig = options.editorConfig;
 
     // Reset job state for retry
     job.status = 'QUEUED';
@@ -242,6 +249,7 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
             trimStart: job.trimStart,
             trimEnd: job.trimEnd,
             audioConfig: job.audioConfig,
+            editorConfig: job.editorConfig,
           },
         },
       );
@@ -359,7 +367,9 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
         const statFs = fs.statfsSync(jobDir);
         const availableBytes = Number(statFs.bavail) * Number(statFs.bsize);
         const requiredEstimateBytes =
-          Math.max((job.sourceSize || 0) * 2, 50 * 1024 * 1024) + 200 * 1024 * 1024;
+          Math.max((job.sourceSize || 0) * 2, 50 * 1024 * 1024) +
+          200 * 1024 * 1024 +
+          (job.editorConfig?.layers?.length || 0) * 2 * 1024 * 1024;
 
         if (availableBytes < requiredEstimateBytes) {
           const availMB = (availableBytes / (1024 * 1024)).toFixed(1);
@@ -448,9 +458,85 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
         }
       }
 
-      // 3. FFprobe validation & real server-side trim + H.264/AAC transcode with audio mixing + poster generation
+      // 2b. Phase 3D: Resolve and render multi-layer overlay assets (Text, Stickers, Captions)
+      const overlayAssets: Array<{
+        layerId: string;
+        localPath: string;
+        x: number;
+        y: number;
+        scale?: number;
+        rotation?: number;
+        opacity?: number;
+        start: number;
+        end: number;
+      }> = [];
+
+      const editorLayers = job.editorConfig?.layers || [];
+      if (Array.isArray(editorLayers) && editorLayers.length > 0) {
+        const safeLayers = editorLayers.slice(0, 10);
+        for (const layer of safeLayers) {
+          if (!layer || !layer.id) continue;
+          const sanitizedId = String(layer.id).replace(/[^a-zA-Z0-9_-]/g, '');
+          const layerPngPath = path.join(jobDir, `overlay_${sanitizedId}.png`);
+
+          if (layer.type === 'STICKER' && layer.stickerId) {
+            if (this.stickerService) {
+              try {
+                const asset = this.stickerService.resolveStickerAsset(layer.stickerId, jobDir);
+                if (asset && fs.existsSync(asset.filePath)) {
+                  overlayAssets.push({
+                    layerId: layer.id,
+                    localPath: asset.filePath,
+                    x: Number(layer.x ?? 0.5),
+                    y: Number(layer.y ?? 0.5),
+                    scale: layer.scale,
+                    rotation: layer.rotation,
+                    opacity: layer.opacity,
+                    start: Number(layer.start ?? 0),
+                    end: Number(layer.end ?? 30),
+                  });
+                }
+              } catch (stkErr: any) {
+                this.logger.warn(`Failed to resolve sticker ${layer.stickerId}: ${stkErr.message}`);
+              }
+            } else {
+              renderStickerPng(layer.stickerId, layerPngPath);
+              if (fs.existsSync(layerPngPath)) {
+                overlayAssets.push({
+                  layerId: layer.id,
+                  localPath: layerPngPath,
+                  x: Number(layer.x ?? 0.5),
+                  y: Number(layer.y ?? 0.5),
+                  scale: layer.scale,
+                  rotation: layer.rotation,
+                  opacity: layer.opacity,
+                  start: Number(layer.start ?? 0),
+                  end: Number(layer.end ?? 30),
+                });
+              }
+            }
+          } else if (layer.type === 'TEXT' || layer.type === 'CAPTION') {
+            renderTextLayerPng(layer, layerPngPath);
+            if (fs.existsSync(layerPngPath)) {
+              overlayAssets.push({
+                layerId: layer.id,
+                localPath: layerPngPath,
+                x: Number(layer.x ?? 0.5),
+                y: Number(layer.y ?? 0.5),
+                scale: layer.scale,
+                rotation: layer.rotation,
+                opacity: layer.opacity,
+                start: Number(layer.start ?? 0),
+                end: Number(layer.end ?? 30),
+              });
+            }
+          }
+        }
+      }
+
+      // 3. FFprobe validation & real server-side trim + H.264/AAC transcode with audio mixing + overlays + poster generation
       this.logger.log(
-        `Executing video transcode & trim for MediaId="${job.mediaId}", Size=${downloadedStat.size}, AudioMode=${audioConfig?.audioMode || 'ORIGINAL_ONLY'}, HasMusic=${Boolean(musicLocalPath)}`,
+        `Executing video transcode & trim for MediaId="${job.mediaId}", Size=${downloadedStat.size}, AudioMode=${audioConfig?.audioMode || 'ORIGINAL_ONLY'}, HasMusic=${Boolean(musicLocalPath)}, Overlays=${overlayAssets.length}`,
       );
 
       const transcodeResult = await this.videoProcessor.processVideo(
@@ -460,6 +546,7 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
         {
           trimStart: job.trimStart,
           trimEnd: job.trimEnd,
+          overlayAssets: overlayAssets.length > 0 ? overlayAssets : undefined,
           audioConfig: musicLocalPath
             ? {
                 audioMode: audioConfig?.audioMode,

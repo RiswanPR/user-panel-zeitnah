@@ -1,5 +1,5 @@
 import { useRef, useCallback, memo } from 'react';
-import { Scissors, Clock, Music2 } from 'lucide-react';
+import { Scissors, Clock, Music2, Layers } from 'lucide-react';
 
 const formatSeconds = (sec) => {
   if (!sec && sec !== 0) return '00:00';
@@ -14,6 +14,7 @@ const formatSeconds = (sec) => {
  * - Interactive non-destructive trim window (trimStart to trimEnd)
  * - Boundary enforcement (trimStart >= 0, trimEnd <= duration, min 1s, max 90s)
  * - Lightweight audio layer track visualization (Phase 3C)
+ * - Visual overlay layers track visualization and selection (Phase 3D)
  * - Accessible keyboard seek and ARIA slider semantics
  * - Lightweight DOM-friendly rendering to prevent expensive re-renders
  */
@@ -29,6 +30,9 @@ function ReelTimeline({
   audioMode = 'ORIGINAL_ONLY',
   musicStart = 0,
   musicEnd = 30,
+  layers = [],
+  activeLayerId = null,
+  onSelectLayer,
 }) {
   const trackRef = useRef(null);
   const safeDuration = duration > 0 ? duration : 1;
@@ -181,6 +185,53 @@ function ReelTimeline({
                 width: `${Math.max(0, rightPercent - leftPercent)}%`,
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Visual Overlay Layers Track (Phase 3D) */}
+      {layers && layers.length > 0 && (
+        <div className="pt-1 space-y-1">
+          <div className="flex items-center justify-between text-[11px] text-text-muted">
+            <span className="flex items-center gap-1.5 text-brand-mint font-medium">
+              <Layers className="w-3 h-3 shrink-0" />
+              <span>Layers ({layers.length})</span>
+            </span>
+            <span className="text-[10px] text-text-faint">Click layer to seek</span>
+          </div>
+          <div className="relative h-3 w-full rounded-md bg-[#060D18] border border-white/[0.08] overflow-hidden">
+            {layers.map((layer) => {
+              const layerStart = Math.max(0, Number(layer.start ?? 0));
+              const layerEnd = Math.min(safeDuration, Number(layer.end ?? safeDuration));
+              const lLeft = Math.max(0, Math.min(100, (layerStart / safeDuration) * 100));
+              const lWidth = Math.max(1, Math.min(100 - lLeft, ((layerEnd - layerStart) / safeDuration) * 100));
+              const isSelected = activeLayerId === layer.id;
+
+              return (
+                <div
+                  key={layer.id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectLayer?.(layer.id);
+                    onSeek?.(layerStart);
+                  }}
+                  title={`${layer.type}: ${formatSeconds(layerStart)} - ${formatSeconds(layerEnd)}`}
+                  className={`absolute top-0 bottom-0 rounded-xs cursor-pointer transition-all ${
+                    layer.type === 'TEXT'
+                      ? 'bg-brand-mint/80 hover:bg-brand-mint'
+                      : layer.type === 'STICKER'
+                      ? 'bg-brand-yellow/80 hover:bg-brand-yellow'
+                      : layer.type === 'CAPTION'
+                      ? 'bg-sky-400/80 hover:bg-sky-400'
+                      : 'bg-indigo-400/80 hover:bg-indigo-400'
+                  } ${isSelected ? 'ring-1 ring-white shadow-xs z-10' : 'opacity-85'}`}
+                  style={{
+                    left: `${lLeft}%`,
+                    width: `${lWidth}%`,
+                  }}
+                />
+              );
+            })}
           </div>
         </div>
       )}

@@ -131,6 +131,8 @@ import { AIController } from './controllers/ai.controller';
 import { CommunityUploadController } from './controllers/community-upload.controller';
 import { CommunityMediaController } from './controllers/community-media.controller';
 import { CommunityMusicController } from './controllers/community-music.controller';
+import { CommunityStickerController } from './controllers/community-sticker.controller';
+import { CommunityStickerService } from './services/community-sticker.service';
 
 // Gateways
 import { CommunityGateway } from './gateways/community.gateway';
@@ -206,6 +208,7 @@ import { User, UserSchema } from '../auth/schemas/user.schema';
     CommunityUploadController,
     CommunityMediaController,
     CommunityMusicController,
+    CommunityStickerController,
   ],
   providers: [
     PostRepository,
@@ -228,6 +231,7 @@ import { User, UserSchema } from '../auth/schemas/user.schema';
     CommunityVideoProcessorService,
     CommunityMediaJobService,
     CommunityMusicService,
+    CommunityStickerService,
 
     CommunityGateway,
   ],
@@ -245,6 +249,7 @@ import { User, UserSchema } from '../auth/schemas/user.schema';
     CommunityVideoProcessorService,
     CommunityMediaJobService,
     CommunityMusicService,
+    CommunityStickerService,
     CommunityGateway,
   ],
 })
