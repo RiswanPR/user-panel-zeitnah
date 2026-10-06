@@ -24,6 +24,7 @@ import { communityApi } from '../../../services/communityApi';
 import { getCanonicalProfileUrl } from '../../../utils/roleNavigation';
 import { formatRelativeTime } from '../../../utils/communityFormatters';
 import { groupStoriesByUser } from '../../../utils/storyGrouping';
+import { getUploadUrl } from '../../../utils/courseUi';
 import { AuthContext } from '../../../context/AuthContext';
 import toast from 'react-hot-toast';
 import BrandAmbientShape from '../ui/BrandAmbientShape';
@@ -92,6 +93,9 @@ export default function StoryViewer({
   const activeStories = useMemo(() => activeGroup?.stories || [], [activeGroup]);
   const currentStory = activeStories[currentStoryIndex] || null;
 
+  const rawAuthorAvatar = activeGroup?.avatar || activeGroup?.avatarUrl || activeGroup?.profileImage;
+  const authorAvatar = getUploadUrl(rawAuthorAvatar);
+
   const [progress, setProgress] = useState(0);
   const progressRef = useRef(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -100,6 +104,11 @@ export default function StoryViewer({
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
   const [mediaLoaded, setMediaLoaded] = useState(false);
   const [mediaError, setMediaError] = useState(false);
+  const [avatarImgError, setAvatarImgError] = useState(false);
+
+  useEffect(() => {
+    setAvatarImgError(false);
+  }, [authorAvatar]);
 
   // Gesture and Drag State
   const [dragY, setDragY] = useState(0);
@@ -498,7 +507,6 @@ export default function StoryViewer({
     id: activeGroup.userId,
     username: activeGroup.username,
   });
-  const authorAvatar = activeGroup.avatar;
   const authorInitials = authorName.slice(0, 2).toUpperCase();
 
   return createPortal(
@@ -608,10 +616,11 @@ export default function StoryViewer({
               aria-label={`View ${authorName}'s profile`}
             >
               <div className="w-9 h-9 rounded-full bg-[#0E1726] border border-white/[0.2] overflow-hidden flex items-center justify-center shrink-0">
-                {authorAvatar ? (
+                {authorAvatar && !avatarImgError ? (
                   <img
                     src={authorAvatar}
                     alt={authorName}
+                    onError={() => setAvatarImgError(true)}
                     className="w-full h-full object-cover"
                   />
                 ) : (

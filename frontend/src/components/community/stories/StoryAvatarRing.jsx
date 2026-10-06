@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getUploadUrl } from '../../../utils/courseUi';
 
 /**
  * StoryAvatarRing — Renders a story author avatar with vibrant unread gradient rings
@@ -18,15 +19,21 @@ export default function StoryAvatarRing({
   const group = userGroup || (story ? {
     userId: story.author?._id || story.author?.id || story.authorId,
     displayName: story.author?.name || story.author?.displayName || 'Member',
-    avatar: story.author?.avatar,
+    avatar: story.author?.avatar || story.author?.profileImage || story.author?.avatarUrl,
     stories: [story],
     hasUnseenStories: !isSeen,
   } : null);
 
+  const rawAvatar = group?.avatar || group?.avatarUrl || group?.profileImage;
+  const avatarUrl = getUploadUrl(rawAvatar);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [avatarUrl]);
+
   if (!group) return null;
 
   const authorName = group.displayName || 'Member';
-  const avatarUrl = group.avatar;
   const storiesCount = Array.isArray(group.stories) ? group.stories.length : 1;
   const unseen = group.hasUnseenStories ?? !isSeen;
 

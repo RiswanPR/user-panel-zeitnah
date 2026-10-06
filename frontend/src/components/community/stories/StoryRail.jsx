@@ -3,6 +3,7 @@ import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Skeleton, SkeletonCircle } from '../../ui/Skeleton';
 import StoryAvatarRing from './StoryAvatarRing';
 import { groupStoriesByUser } from '../../../utils/storyGrouping';
+import { getUploadUrl } from '../../../utils/courseUi';
 
 /**
  * StoryRail — Media-first horizontal story rail with one icon per user,
@@ -23,6 +24,13 @@ export default function StoryRail({
   const railRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [currentUserImgError, setCurrentUserImgError] = useState(false);
+
+  const resolvedCurrentUserAvatar = getUploadUrl(currentUserAvatar);
+
+  useEffect(() => {
+    setCurrentUserImgError(false);
+  }, [resolvedCurrentUserAvatar]);
 
   // Normalize & group flat stories by user
   const { currentUserGroup, userGroups } = useMemo(() => {
@@ -144,10 +152,11 @@ export default function StoryRail({
               }`}
             >
               <div className="w-full h-full rounded-full bg-[#0E1726] border-2 border-[#0B111E] overflow-hidden flex items-center justify-center">
-                {currentUserAvatar ? (
+                {resolvedCurrentUserAvatar && !currentUserImgError ? (
                   <img
-                    src={currentUserAvatar}
+                    src={resolvedCurrentUserAvatar}
                     alt={currentUserName}
+                    onError={() => setCurrentUserImgError(true)}
                     className="w-full h-full object-cover"
                     loading="lazy"
                   />

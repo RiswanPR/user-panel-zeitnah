@@ -386,6 +386,44 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
       expect(mockStoryRepository.create).not.toHaveBeenCalled();
     });
 
+    it('signs author avatar in getActiveFeed for S3 profile avatar keys without N+1 calls', async () => {
+      const mockSignedService = {
+        generateSignedImageUrl: jest.fn().mockImplementation(async (key: string) => `https://signed.amazonaws.com/${key}`),
+      };
+      const customStoryService = new StoryService(
+        mockStoryRepository as any,
+        mockGateway as any,
+        mockSignedService as any,
+      );
+
+      mockStoryRepository.getActiveStories.mockResolvedValue([
+        {
+          _id: 'story-1',
+          authorId: 'user-1',
+          author: {
+            id: 'user-1',
+            name: 'Riyas',
+            avatar: 'profiles/user-1-avatar.jpg',
+          },
+        },
+        {
+          _id: 'story-2',
+          authorId: 'user-1',
+          author: {
+            id: 'user-1',
+            name: 'Riyas',
+            avatar: 'profiles/user-1-avatar.jpg',
+          },
+        },
+      ]);
+
+      const feed = await customStoryService.getActiveFeed();
+      expect(feed[0].author.avatar).toBe('https://signed.amazonaws.com/profiles/user-1-avatar.jpg');
+      expect(feed[1].author.avatar).toBe('https://signed.amazonaws.com/profiles/user-1-avatar.jpg');
+      // Must be called exactly once due to avatarCache deduplication
+      expect(mockSignedService.generateSignedImageUrl).toHaveBeenCalledTimes(1);
+    });
+
     it('rejects path traversal attempts in media URLs', async () => {
       const traversalUrls = [
         '../secret.jpg',

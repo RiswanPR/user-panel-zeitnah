@@ -27,7 +27,10 @@ export class StoryService {
     @Optional() private readonly communityIdempotencyService?: CommunityIdempotencyService,
   ) {}
 
-  private async resolveStoryMedia(story: any): Promise<void> {
+  private async resolveStoryMedia(
+    story: any,
+    avatarCache?: Map<string, string>,
+  ): Promise<void> {
     if (!this.signedUrlService || !story) return;
 
     // Resolve array of media items in story.media
@@ -52,6 +55,26 @@ export class StoryService {
         const cleanUrl = story.mediaUrl.split('?')[0];
         const signed = await this.signedUrlService.generateSignedImageUrl(cleanUrl, 86400 * 7);
         if (signed) story.mediaUrl = signed;
+      } catch {}
+    }
+
+    // Resolve author avatar if present and an S3 key or relative/unresolved S3 URL
+    if (
+      story.author?.avatar &&
+      typeof story.author.avatar === 'string' &&
+      (story.author.avatar.includes('.amazonaws.com') || !story.author.avatar.startsWith('http'))
+    ) {
+      try {
+        const cleanAvatar = story.author.avatar.split('?')[0];
+        if (avatarCache && avatarCache.has(cleanAvatar)) {
+          story.author.avatar = avatarCache.get(cleanAvatar);
+        } else {
+          const signed = await this.signedUrlService.generateSignedImageUrl(cleanAvatar, 86400 * 7);
+          if (signed) {
+            story.author.avatar = signed;
+            if (avatarCache) avatarCache.set(cleanAvatar, signed);
+          }
+        }
       } catch {}
     }
   }
@@ -178,9 +201,10 @@ export class StoryService {
   async getActiveFeed(): Promise<any[]> {
     const stories = await this.storyRepository.getActiveStories();
     if (this.signedUrlService && Array.isArray(stories)) {
+      const avatarCache = new Map<string, string>();
       for (const story of stories) {
         if (story) {
-          await this.resolveStoryMedia(story);
+          await this.resolveStoryMedia(story, avatarCache);
         }
       }
     }

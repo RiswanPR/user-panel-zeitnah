@@ -52,7 +52,7 @@ export function groupStoriesByUser(
         userId: authorId,
         username: author.username || '',
         displayName: author.name || author.displayName || 'Zeitnah Member',
-        avatar: author.avatar || '',
+        avatar: author.avatar || author.profileImage || author.avatarUrl || author.profilePicture || '',
         role: author.role || 'student',
         verified: !!author.verified,
         isCurrentUser,

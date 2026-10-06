@@ -46,7 +46,7 @@ export class StoryRepository extends BaseRepository<StoryDocument> {
         name: authorObj.name || 'Zeitnah Member',
         displayName: authorObj.name || 'Zeitnah Member',
         username: authorObj.username || '',
-        avatar: authorObj.avatar || '',
+        avatar: authorObj.avatar || authorObj.profileImage || '',
         role: authorObj.role || 'student',
         verified: !!authorObj.verified,
       },
@@ -82,7 +82,7 @@ export class StoryRepository extends BaseRepository<StoryDocument> {
                 $match: {
                   $expr: {
                     $or: [
-                      { $eq: ['$_id', { $toObjectId: '$$authorStr' }] },
+                      { $eq: ['$_id', { $convert: { input: '$$authorStr', to: 'objectId', onError: null, onNull: null } }] },
                       { $eq: [{ $toString: '$_id' }, '$$authorStr'] },
                     ],
                   },
@@ -94,6 +94,7 @@ export class StoryRepository extends BaseRepository<StoryDocument> {
                   name: 1,
                   username: 1,
                   avatar: 1,
+                  profileImage: 1,
                   headline: 1,
                   role: 1,
                   verified: 1,
@@ -130,7 +131,7 @@ export class StoryRepository extends BaseRepository<StoryDocument> {
                 $match: {
                   $expr: {
                     $or: [
-                      { $eq: ['$_id', { $toObjectId: '$$authorStr' }] },
+                      { $eq: ['$_id', { $convert: { input: '$$authorStr', to: 'objectId', onError: null, onNull: null } }] },
                       { $eq: [{ $toString: '$_id' }, '$$authorStr'] },
                     ],
                   },
@@ -142,6 +143,7 @@ export class StoryRepository extends BaseRepository<StoryDocument> {
                   name: 1,
                   username: 1,
                   avatar: 1,
+                  profileImage: 1,
                   headline: 1,
                   role: 1,
                   verified: 1,

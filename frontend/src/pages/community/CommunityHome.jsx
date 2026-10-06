@@ -377,7 +377,7 @@ export default function CommunityHome({ initialCreateMode } = {}) {
                 setSelectedGroupIndex(idx !== -1 ? idx : 0);
               }}
               currentUserId={currentUserId}
-              currentUserAvatar={user?.avatar || user?.profilePicture || user?.avatarUrl}
+              currentUserAvatar={user?.avatar || user?.profilePicture || user?.avatarUrl || user?.profileImage}
               currentUserName={user?.name || user?.username || 'You'}
             />
 
