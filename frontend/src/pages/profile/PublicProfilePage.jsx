@@ -546,6 +546,28 @@ export default function PublicProfilePage() {
             </Link>
           </div>
 
+          {/* Community Creator Activity Card */}
+          <div className="rounded-3xl border border-white/[0.08] bg-[#0A0F18]/90 backdrop-blur-xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center gap-2.5">
+              <Sparkles className="w-5 h-5 text-brand-mint" />
+              <h3 className="font-heading font-bold text-white text-base">
+                Community Presence
+              </h3>
+            </div>
+
+            <p className="text-xs text-text-muted leading-relaxed">
+              Explore {student.name}'s community discussions, technical posts, and vertical video reels.
+            </p>
+
+            <Link
+              to="/community?feed=all"
+              className="w-full zn-btn-secondary text-xs py-2.5 flex items-center justify-center gap-1.5 cursor-pointer font-semibold"
+            >
+              <span>Explore Community Feed</span>
+              <ExternalLink className="w-3.5 h-3.5 text-brand-mint" />
+            </Link>
+          </div>
+
           {/* Social Proof & Endorsement CTA */}
           {!isOwnProfile && (
             <div className="rounded-3xl border border-white/[0.08] bg-gradient-to-br from-rose-500/10 via-transparent to-transparent p-6 shadow-sm space-y-3">

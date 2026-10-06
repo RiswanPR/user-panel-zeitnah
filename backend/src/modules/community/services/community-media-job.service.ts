@@ -366,12 +366,15 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
       try {
         const statFs = fs.statfsSync(jobDir);
         const availableBytes = Number(statFs.bavail) * Number(statFs.bsize);
-        const requiredEstimateBytes =
-          Math.max((job.sourceSize || 0) * 2, 50 * 1024 * 1024) +
-          200 * 1024 * 1024 +
-          (job.editorConfig?.layers?.length || 0) * 2 * 1024 * 1024;
+        const safeSourceSize = Math.max(0, Number(job.sourceSize) || 0);
+        const safeLayerCount = Math.max(0, Math.min(Number(job.editorConfig?.layers?.length) || 0, 10));
 
-        if (availableBytes < requiredEstimateBytes) {
+        const requiredEstimateBytes =
+          Math.max(safeSourceSize * 1.5, 100 * 1024 * 1024) +
+          150 * 1024 * 1024 +
+          safeLayerCount * 5 * 1024 * 1024;
+
+        if (!isNaN(availableBytes) && availableBytes < requiredEstimateBytes) {
           const availMB = (availableBytes / (1024 * 1024)).toFixed(1);
           const reqMB = (requiredEstimateBytes / (1024 * 1024)).toFixed(1);
           this.logger.error(
@@ -487,11 +490,11 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
                   overlayAssets.push({
                     layerId: layer.id,
                     localPath: asset.filePath,
-                    x: Number(layer.x ?? 0.5),
-                    y: Number(layer.y ?? 0.5),
-                    scale: layer.scale,
-                    rotation: layer.rotation,
-                    opacity: layer.opacity,
+                    x: Math.max(0, Math.min(Number(layer.x ?? 0.5), 1.0)),
+                    y: Math.max(0, Math.min(Number(layer.y ?? 0.5), 1.0)),
+                    scale: layer.scale !== undefined ? Number(layer.scale) : 1.0,
+                    rotation: layer.rotation !== undefined ? Number(layer.rotation) : 0,
+                    opacity: layer.opacity !== undefined ? Number(layer.opacity) : 1.0,
                     start: Number(layer.start ?? 0),
                     end: Number(layer.end ?? 30),
                   });
@@ -500,35 +503,43 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
                 this.logger.warn(`Failed to resolve sticker ${layer.stickerId}: ${stkErr.message}`);
               }
             } else {
-              renderStickerPng(layer.stickerId, layerPngPath);
+              try {
+                renderStickerPng(layer.stickerId, layerPngPath);
+                if (fs.existsSync(layerPngPath)) {
+                  overlayAssets.push({
+                    layerId: layer.id,
+                    localPath: layerPngPath,
+                    x: Math.max(0, Math.min(Number(layer.x ?? 0.5), 1.0)),
+                    y: Math.max(0, Math.min(Number(layer.y ?? 0.5), 1.0)),
+                    scale: layer.scale !== undefined ? Number(layer.scale) : 1.0,
+                    rotation: layer.rotation !== undefined ? Number(layer.rotation) : 0,
+                    opacity: layer.opacity !== undefined ? Number(layer.opacity) : 1.0,
+                    start: Number(layer.start ?? 0),
+                    end: Number(layer.end ?? 30),
+                  });
+                }
+              } catch (stkErr: any) {
+                this.logger.warn(`Failed to render sticker ${layer.stickerId}: ${stkErr.message}`);
+              }
+            }
+          } else if (layer.type === 'TEXT' || layer.type === 'CAPTION') {
+            try {
+              renderTextLayerPng(layer, layerPngPath);
               if (fs.existsSync(layerPngPath)) {
                 overlayAssets.push({
                   layerId: layer.id,
                   localPath: layerPngPath,
-                  x: Number(layer.x ?? 0.5),
-                  y: Number(layer.y ?? 0.5),
-                  scale: layer.scale,
-                  rotation: layer.rotation,
-                  opacity: layer.opacity,
+                  x: Math.max(0, Math.min(Number(layer.x ?? 0.5), 1.0)),
+                  y: Math.max(0, Math.min(Number(layer.y ?? 0.5), 1.0)),
+                  scale: layer.scale !== undefined ? Number(layer.scale) : 1.0,
+                  rotation: layer.rotation !== undefined ? Number(layer.rotation) : 0,
+                  opacity: layer.opacity !== undefined ? Number(layer.opacity) : 1.0,
                   start: Number(layer.start ?? 0),
                   end: Number(layer.end ?? 30),
                 });
               }
-            }
-          } else if (layer.type === 'TEXT' || layer.type === 'CAPTION') {
-            renderTextLayerPng(layer, layerPngPath);
-            if (fs.existsSync(layerPngPath)) {
-              overlayAssets.push({
-                layerId: layer.id,
-                localPath: layerPngPath,
-                x: Number(layer.x ?? 0.5),
-                y: Number(layer.y ?? 0.5),
-                scale: layer.scale,
-                rotation: layer.rotation,
-                opacity: layer.opacity,
-                start: Number(layer.start ?? 0),
-                end: Number(layer.end ?? 30),
-              });
+            } catch (txtErr: any) {
+              this.logger.warn(`Failed to render text overlay ${layer.id}: ${txtErr.message}`);
             }
           }
         }

@@ -151,6 +151,9 @@ export class CommunityStickerService {
    * Validates if a sticker ID exists and is active.
    */
   isValidStickerId(id: string): boolean {
+    if (!id || typeof id !== 'string') return false;
+    // Strictly reject paths, traversal, URLs, and data URLs
+    if (/[\/\\]|\.\.|^https?:|^data:/i.test(id)) return false;
     return Boolean(this.getStickerById(id));
   }
 
@@ -158,6 +161,9 @@ export class CommunityStickerService {
    * Resolves or renders a sticker PNG file to a deterministic local path.
    */
   resolveStickerAsset(stickerId: string, outputDir?: string): { filePath: string; width: number; height: number } {
+    if (!this.isValidStickerId(stickerId)) {
+      throw new NotFoundException(`Sticker ${stickerId} does not exist or is inactive.`);
+    }
     const sticker = this.getStickerById(stickerId);
     if (!sticker) {
       throw new NotFoundException(`Sticker ${stickerId} does not exist or is inactive.`);

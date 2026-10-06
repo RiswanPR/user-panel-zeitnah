@@ -51,8 +51,13 @@ export const communityApi = {
     return data;
   },
 
-  getVideoFeed: async ({ cursor = '', limit = 10 } = {}) => {
-    return communityApi.getFeed({ cursor, limit, filter: 'video' });
+  getVideoFeed: async ({ cursor = '', limit = 10, filter = 'video' } = {}) => {
+    return communityApi.getFeed({ cursor, limit, filter });
+  },
+
+  getCreatorInsights: async () => {
+    const response = await api.get('/community/posts/creator/insights');
+    return response.data;
   },
 
   recordPostView: async (postId) => {

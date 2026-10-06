@@ -1,5 +1,5 @@
 import { useMemo, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { communityApi } from '../../services/communityApi';
 import { useCommunityVideoFeed } from '../../hooks/useCommunity';
@@ -22,12 +22,21 @@ const ReelPageLoader = () => (
  * Responsibilities:
  * - Direct deep-link handling: loads initial target post by ID if provided.
  * - Video feed ingestion: streams video posts with infinite cursor pagination.
+ * - Discovery tabs: Latest vs Trending Reels.
  * - Deduplication & ordering: guarantees target post is loaded seamlessly at the active position.
  * - Clean teardown & back navigation preservation.
  */
 export default function ReelsPage() {
   const { postId } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const activeTab = searchParams.get('tab') === 'trending' ? 'trending' : 'latest';
+  const videoFilter = activeTab === 'trending' ? 'reels_trending' : 'video';
+
+  const handleChangeTab = (newTab) => {
+    setSearchParams(newTab === 'trending' ? { tab: 'trending' } : {});
+  };
 
   // 1. If deep-linked directly to a specific post, fetch that post individually
   const { data: directPost, isLoading: isDirectPostLoading } = useQuery({
@@ -37,14 +46,14 @@ export default function ReelsPage() {
     staleTime: 1000 * 60 * 5,
   });
 
-  // 2. Fetch the video feed
+  // 2. Fetch the video feed with the active discovery filter
   const {
     data: feedData,
     isLoading: isFeedLoading,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useCommunityVideoFeed();
+  } = useCommunityVideoFeed({ filter: videoFilter });
 
   // 3. Assemble and deduplicate video posts
   const videoPosts = useMemo(() => {
@@ -107,6 +116,8 @@ export default function ReelsPage() {
       onFetchNextPage={fetchNextPage}
       hasNextPage={hasNextPage}
       isFetchingNextPage={isFetchingNextPage}
+      activeTab={activeTab}
+      onChangeTab={handleChangeTab}
     />
   );
 }

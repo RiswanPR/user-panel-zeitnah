@@ -16,7 +16,7 @@ export class CommunityMediaJob {
   @Prop({ type: String, default: () => uuidv4() })
   _id: string;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   mediaId: string;
 
   @Prop({ type: String, required: true, index: true })

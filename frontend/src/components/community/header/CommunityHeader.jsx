@@ -11,6 +11,7 @@ export default function CommunityHeader({
   onOpenCreate,
   onOpenSearch,
   onOpenMobileDiscovery,
+  onOpenInsights,
 }) {
   return (
     <header
@@ -77,6 +78,20 @@ export default function CommunityHeader({
           <Bookmark className="w-3.5 h-3.5 text-brand-yellow" />
           <span className="hidden md:inline">Saved</span>
         </Link>
+
+        {/* Creator Insights Modal Trigger */}
+        {onOpenInsights && (
+          <button
+            type="button"
+            onClick={onOpenInsights}
+            className="min-h-[40px] px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-[#12314C]/30 hover:bg-[#12314C]/50 border border-white/[0.08] hover:border-cyan-400/30 text-xs font-medium text-text-secondary hover:text-white transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+            title="Creator Insights"
+            aria-label="View Creator Insights"
+          >
+            <BarChart2 className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden md:inline">Insights</span>
+          </button>
+        )}
 
         {/* Mobile Discovery Drawer Trigger (<1024px) */}
         <button

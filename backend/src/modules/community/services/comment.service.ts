@@ -45,16 +45,18 @@ export class CommentService {
     // Notify post author if commenter is not the author
     if (post.authorId && String(post.authorId) !== String(userId)) {
       try {
+        const isReel = post.type === 'VIDEO' || (Array.isArray(post.media) && post.media.some((m: any) => m?.type === 'video'));
+        const targetUrl = isReel ? `/community/reels/${postId}` : `/community#${postId}`;
         await this.notificationsService.createNotification({
           recipientId: post.authorId,
           actorId: userId,
           type: 'COMMUNITY_COMMENT',
           category: 'community',
           priority: 'NORMAL',
-          title: 'New comment on your post',
-          message: 'Someone commented on your post',
-          actionUrl: '/community',
-          targetUrl: '/community',
+          title: isReel ? 'New comment on your reel' : 'New comment on your post',
+          message: isReel ? 'Someone commented on your reel' : 'Someone commented on your post',
+          actionUrl: targetUrl,
+          targetUrl: targetUrl,
         });
       } catch (e) {
         // best effort notification

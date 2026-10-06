@@ -95,7 +95,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
       if (courseIds.length > 0) {
         matchStage.courseId = { $in: courseIds };
       }
-    } else if (filter === 'video' || filter === 'reels') {
+    } else if (filter === 'video' || filter === 'reels' || filter === 'reels_trending') {
       matchStage.$or = [
         { audience: 'PUBLIC' },
         ...(courseIds.length > 0 ? [{ audience: 'COURSE', courseId: { $in: courseIds } }] : []),
@@ -162,7 +162,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
       }
     }
 
-    const isTrending = filter === 'trending';
+    const isTrending = filter === 'trending' || filter === 'reels_trending';
 
     if (!isTrending && cursor) {
       matchStage.createdAt = { $lt: new Date(cursor) };
@@ -1376,5 +1376,121 @@ export class PostRepository extends BaseRepository<PostDocument> {
       { _id: { $in: idMatches } },
       { $inc: { [`stats.${String(stat)}`]: increment } },
     );
+  }
+
+  async getCreatorInsights(userId: string): Promise<{
+    overview: {
+      totalPosts: number;
+      totalReels: number;
+      totalViews: number;
+      totalLikes: number;
+      totalComments: number;
+      totalShares: number;
+      totalReposts: number;
+      totalFollowers: number;
+    };
+    topPosts: any[];
+  }> {
+    const authorMatches: any[] = [userId];
+    if (Types.ObjectId.isValid(userId)) {
+      authorMatches.push(new Types.ObjectId(userId));
+    }
+
+    const matchFilter: any = {
+      authorId: { $in: authorMatches },
+      isDeleted: { $ne: true },
+    };
+
+    const [statsResult, topPostsResult, followersCount] = await Promise.all([
+      this.postModel.aggregate([
+        { $match: matchFilter },
+        {
+          $group: {
+            _id: null,
+            totalPosts: { $sum: 1 },
+            totalReels: {
+              $sum: {
+                $cond: [
+                  {
+                    $or: [
+                      { $eq: ['$type', 'VIDEO'] },
+                      {
+                        $gt: [
+                          {
+                            $size: {
+                              $filter: {
+                                input: { $ifNull: ['$media', []] },
+                                as: 'm',
+                                cond: { $eq: ['$$m.type', 'video'] },
+                              },
+                            },
+                          },
+                          0,
+                        ],
+                      },
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+            totalViews: { $sum: { $ifNull: ['$stats.views', 0] } },
+            totalLikes: {
+              $sum: {
+                $add: [
+                  { $ifNull: ['$stats.likes', 0] },
+                  { $ifNull: ['$stats.loves', 0] },
+                  { $ifNull: ['$stats.celebrates', 0] },
+                  { $ifNull: ['$stats.insightfuls', 0] },
+                ],
+              },
+            },
+            totalComments: { $sum: { $ifNull: ['$stats.comments', 0] } },
+            totalShares: { $sum: { $ifNull: ['$stats.shares', 0] } },
+            totalReposts: { $sum: { $ifNull: ['$stats.reposts', 0] } },
+          },
+        },
+      ]),
+      this.postModel
+        .find(matchFilter)
+        .sort({ 'stats.views': -1, createdAt: -1 })
+        .limit(3)
+        .select('_id content type media stats createdAt audience postType')
+        .lean(),
+      this.postModel.db
+        .collection('network_connections')
+        .countDocuments({
+          $or: [
+            { recipientId: userId, status: 'accepted' },
+            ...(Types.ObjectId.isValid(userId) ? [{ recipientId: new Types.ObjectId(userId), status: 'accepted' }] : []),
+          ],
+        })
+        .catch(() => 0),
+    ]);
+
+    const stats = statsResult[0] || {
+      totalPosts: 0,
+      totalReels: 0,
+      totalViews: 0,
+      totalLikes: 0,
+      totalComments: 0,
+      totalShares: 0,
+      totalReposts: 0,
+    };
+
+    return {
+      overview: {
+        totalPosts: stats.totalPosts || 0,
+        totalReels: stats.totalReels || 0,
+        totalViews: stats.totalViews || 0,
+        totalLikes: stats.totalLikes || 0,
+        totalComments: stats.totalComments || 0,
+        totalShares: stats.totalShares || 0,
+        totalReposts: stats.totalReposts || 0,
+        totalFollowers: followersCount || 0,
+      },
+      topPosts: topPostsResult || [],
+    };
   }
 }

@@ -111,6 +111,13 @@ export class PostController {
     });
   }
 
+  @Get('creator/insights')
+  @ApiOperation({ summary: 'Get creator activity and engagement insights' })
+  async getCreatorInsights(@Req() req) {
+    const userId = this.getUserId(req);
+    return this.postService.getCreatorInsights(userId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a post by ID' })
   async getPost(@Req() req, @Param('id') id: string) {

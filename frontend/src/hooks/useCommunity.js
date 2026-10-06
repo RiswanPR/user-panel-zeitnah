@@ -16,13 +16,22 @@ export function useCommunityFeed({ filter = 'all' } = {}) {
   });
 }
 
-export function useCommunityVideoFeed() {
+export function useCommunityVideoFeed({ filter = 'video' } = {}) {
   return useInfiniteQuery({
-    queryKey: ['community', 'feed', { filter: 'video' }],
-    queryFn: ({ pageParam = '' }) => communityApi.getVideoFeed({ cursor: pageParam, limit: 10 }),
+    queryKey: ['community', 'feed', { filter }],
+    queryFn: ({ pageParam = '' }) => communityApi.getVideoFeed({ cursor: pageParam, limit: 10, filter }),
     getNextPageParam: (lastPage) => lastPage?.nextCursor || undefined,
     initialPageParam: '',
     staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
+  });
+}
+
+export function useCreatorInsights() {
+  return useQuery({
+    queryKey: ['community', 'creator', 'insights'],
+    queryFn: () => communityApi.getCreatorInsights(),
+    staleTime: 1000 * 60 * 2, // 2 minutes
     gcTime: 1000 * 60 * 10,
   });
 }

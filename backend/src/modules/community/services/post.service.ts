@@ -16,6 +16,7 @@ import { CommunityIdempotencyService } from './community-idempotency.service';
 import { CommunityMediaJobService } from './community-media-job.service';
 import { CommunityMusicService } from './community-music.service';
 import { CommunityStickerService } from './community-sticker.service';
+import { VALID_CURATED_STICKER_IDS } from './community-overlay-rasterizer';
 import { PostType, PostAudience } from '../domain/post.model';
 
 @Injectable()
@@ -170,10 +171,15 @@ export class PostService {
 
       if (mediaType === 'video' && m.mediaId && this.mediaJobService) {
         const job = await this.mediaJobService.getJobByMediaId(m.mediaId);
-        if (job) {
-          if (!isAdmin && job.userId !== userId) {
-            throw new ForbiddenException('You cannot publish media belonging to another user');
-          }
+        if (!job) {
+          throw new BadRequestException({
+            code: 'MEDIA_NOT_FOUND',
+            message: 'Referenced media processing job not found.',
+          });
+        }
+        if (!isAdmin && job.userId !== userId) {
+          throw new ForbiddenException('You cannot publish media belonging to another user');
+        }
 
           if (job.status === 'PROCESSING' || job.status === 'QUEUED') {
             throw new BadRequestException({
@@ -202,7 +208,6 @@ export class PostService {
               resolvedEditorConfig = job.editorConfig;
             }
           }
-        }
       }
 
       // Authoritative Server-side Audio Config Validation (Section 24)
@@ -293,7 +298,12 @@ export class PostService {
         if (!layer.stickerId || typeof layer.stickerId !== 'string') {
           throw new BadRequestException(`Sticker layer ${layer.id} requires a valid stickerId`);
         }
-        if (this.stickerService && !this.stickerService.isValidStickerId(layer.stickerId)) {
+        const isValid = this.stickerService
+          ? this.stickerService.isValidStickerId(layer.stickerId)
+          : !/[\/\\]|\.\.|^https?:|^data:/i.test(layer.stickerId) &&
+            (VALID_CURATED_STICKER_IDS as readonly string[]).includes(layer.stickerId);
+
+        if (!isValid) {
           throw new BadRequestException(`Sticker ${layer.stickerId} does not exist or is inactive`);
         }
         return {
@@ -562,6 +572,14 @@ export class PostService {
     return saved;
   }
 
+  async getCreatorInsights(userId: string): Promise<any> {
+    const insights = await this.postRepository.getCreatorInsights(userId);
+    if (insights && Array.isArray(insights.topPosts)) {
+      await this.resolveMediaUrls(insights.topPosts);
+    }
+    return insights;
+  }
+
   async getPostById(id: string, userId?: string): Promise<any> {
     const post = await this.postRepository.findByIdPopulated(id, userId);
     if (post) {
@@ -621,16 +639,18 @@ export class PostService {
       const post = await this.postRepository.findById(postId);
       if (post && post.authorId && String(post.authorId) !== String(userId)) {
         try {
+          const isReel = post.type === 'VIDEO' || (Array.isArray(post.media) && post.media.some((m: any) => m?.type === 'video'));
+          const targetUrl = isReel ? `/community/reels/${postId}` : `/community#${postId}`;
           await this.notificationsService.createNotification({
             recipientId: post.authorId,
             actorId: userId,
             type: 'COMMUNITY_REACTION',
             category: 'community',
             priority: 'NORMAL',
-            title: 'New reaction on your post',
-            message: 'Someone reacted to your post',
-            actionUrl: '/community',
-            targetUrl: '/community',
+            title: isReel ? 'New reaction on your reel' : 'New reaction on your post',
+            message: isReel ? 'Someone reacted to your reel' : 'Someone reacted to your post',
+            actionUrl: targetUrl,
+            targetUrl: targetUrl,
           });
         } catch (e) {
           // best-effort

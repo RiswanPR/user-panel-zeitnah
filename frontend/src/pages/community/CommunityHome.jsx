@@ -21,6 +21,8 @@ const CommentDrawer = lazyWithRetry(() => import('../../components/community/com
 const CommunitySearchModal = lazyWithRetry(() => import('../../components/community/discovery/CommunitySearchModal'));
 const MobileDiscoveryDrawer = lazyWithRetry(() => import('../../components/community/discovery/MobileDiscoveryDrawer'));
 const ReelsViewer = lazyWithRetry(() => import('../../components/community/reels/ReelsViewer'));
+const CreatorInsightsModal = lazyWithRetry(() => import('../../components/community/creator/CreatorInsightsModal'));
+import CommunityComposerEntry from '../../components/community/composer/CommunityComposerEntry';
 import {
   normalizeFeedFilter,
   extractTrendingTopics,
@@ -62,6 +64,7 @@ export default function CommunityHome({ initialCreateMode } = {}) {
   const [activeCommentPost, setActiveCommentPost] = useState(null);
   const [activeTopic, setActiveTopic] = useState(null);
   const [activeReelPostId, setActiveReelPostId] = useState(null);
+  const [isInsightsOpen, setIsInsightsOpen] = useState(false);
 
   const currentUserId = user?._id || user?.id || user?.userId;
 
@@ -337,6 +340,14 @@ export default function CommunityHome({ initialCreateMode } = {}) {
               isFetchingNextPage={isFetchingNextPage}
             />
           )}
+
+          {/* ── Creator Insights Modal ── */}
+          {isInsightsOpen && (
+            <CreatorInsightsModal
+              isOpen={isInsightsOpen}
+              onClose={() => setIsInsightsOpen(false)}
+            />
+          )}
         </Suspense>
       </FeatureErrorBoundary>
 
@@ -345,6 +356,7 @@ export default function CommunityHome({ initialCreateMode } = {}) {
         onOpenCreate={() => setIsCreateActionOpen(true)}
         onOpenSearch={handleOpenSearch}
         onOpenMobileDiscovery={() => setIsMobileDiscoveryOpen(true)}
+        onOpenInsights={() => setIsInsightsOpen(true)}
       />
 
       {/* ── Stories Strip (Spanning full width) ── */}
@@ -368,6 +380,14 @@ export default function CommunityHome({ initialCreateMode } = {}) {
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,620px)_340px] justify-center gap-8 items-start">
           {/* ── PRIMARY COLUMN (Community Feed) ── */}
           <div className="w-full max-w-[620px] mx-auto space-y-4 min-w-0" id={`feed-panel-${activeFilter}`}>
+          {/* Phase 3: Premium Inline Creation Entry Point */}
+          <CommunityComposerEntry
+            user={user}
+            onOpenCreatePost={handleOpenCreatePost}
+            onOpenCreateReel={handleOpenCreateReel}
+            onOpenCreateStory={() => setIsCreateStoryModalOpen(true)}
+          />
+
           {/* Active Topic Banner if filtering by topic */}
           {activeTopic && (
             <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#12314C]/70 to-[#9FD5B2]/15 border border-brand-mint/30 text-xs text-white">

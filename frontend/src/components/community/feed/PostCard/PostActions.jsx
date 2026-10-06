@@ -79,6 +79,7 @@ export default function PostActions({
 
   const reactionCount = post?.stats?.likes || 0;
   const repostCount = post?.stats?.reposts || 0;
+  const viewCount = post?.stats?.views || 0;
 
   return (
     <div className="pt-2 px-3.5 sm:px-4">
@@ -175,7 +176,7 @@ export default function PostActions({
       </div>
 
       {/* 2. Engagement Metadata Line (Clean, Calm Hierarchy) */}
-      {(reactionCount > 0 || repostCount > 0) && (
+      {(reactionCount > 0 || repostCount > 0 || viewCount > 0) && (
         <div className="flex items-center gap-1.5 text-xs text-white/95 pt-1.5 pb-0.5 select-none">
           {reactionCount > 0 && (
             <span className="font-semibold tracking-[-0.01em]">
@@ -188,6 +189,14 @@ export default function PostActions({
           {repostCount > 0 && (
             <span className="text-text-muted/80 font-normal">
               {repostCount.toLocaleString()} {repostCount === 1 ? 'repost' : 'reposts'}
+            </span>
+          )}
+          {(reactionCount > 0 || repostCount > 0) && viewCount > 0 && (
+            <span className="text-white/20">·</span>
+          )}
+          {viewCount > 0 && (
+            <span className="text-text-muted/70 font-normal">
+              {viewCount.toLocaleString()} {viewCount === 1 ? 'view' : 'views'}
             </span>
           )}
         </div>

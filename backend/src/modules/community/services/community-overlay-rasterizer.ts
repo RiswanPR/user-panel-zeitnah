@@ -262,7 +262,7 @@ export function renderTextLayerPng(
   options: OverlayLayerRenderOptions,
   targetFilePath: string,
 ): { width: number; height: number; filePath: string } {
-  const rawText = String(options.content || '').replace(/<[^>]*>?/gm, '').trim() || 'Zeitnah';
+  const rawText = String(options.content || '').replace(/<[^>]*>?/gm, '').trim().slice(0, 300) || 'Zeitnah';
   const fontSize = Math.max(12, Math.min(Number(options.fontSize) || 24, 72));
   const isBold = options.fontWeight === 'bold' || options.fontWeight === '800';
 
@@ -271,27 +271,45 @@ export function renderTextLayerPng(
   const charWidth = GLYPH_WIDTH * scale;
   const charHeight = GLYPH_HEIGHT * scale;
 
-  // Word wrap text into lines (max 30 chars per line for readability)
-  const words = rawText.split(/\s+/);
+  // Word wrap text into lines (max 32 chars per line, chunk words >28 chars, max 6 lines)
+  const rawWords = rawText.split(/\s+/);
+  const words: string[] = [];
+  for (const w of rawWords) {
+    if (w.length > 28) {
+      for (let i = 0; i < w.length; i += 28) {
+        words.push(w.slice(i, i + 28));
+      }
+    } else {
+      words.push(w);
+    }
+  }
+
   const lines: string[] = [];
   let currentLine = '';
+  const MAX_LINES = 6;
 
   for (const word of words) {
     if ((currentLine + ' ' + word).trim().length <= 32) {
       currentLine = (currentLine + ' ' + word).trim();
     } else {
       if (currentLine) lines.push(currentLine);
+      if (lines.length >= MAX_LINES) break;
       currentLine = word;
     }
   }
-  if (currentLine) lines.push(currentLine);
+  if (currentLine && lines.length < MAX_LINES) {
+    lines.push(currentLine);
+  }
+  if (lines.length === 0) {
+    lines.push('Zeitnah');
+  }
 
   const maxLineLength = Math.max(...lines.map((l) => l.length), 4);
   const paddingX = Math.round(24 * scale);
   const paddingY = Math.round(14 * scale);
 
-  const cardWidth = Math.max(120, maxLineLength * charWidth + paddingX * 2);
-  const cardHeight = Math.max(50, lines.length * (charHeight + 4 * scale) + paddingY * 2);
+  const cardWidth = Math.min(900, Math.max(120, maxLineLength * charWidth + paddingX * 2));
+  const cardHeight = Math.min(600, Math.max(50, lines.length * (charHeight + 4 * scale) + paddingY * 2));
 
   const buf = Buffer.alloc(cardWidth * cardHeight * 4); // RGBA
 
@@ -419,6 +437,21 @@ export function renderTextLayerPng(
   return { width: cardWidth, height: cardHeight, filePath: targetFilePath };
 }
 
+export const VALID_CURATED_STICKER_IDS = [
+  'zn-verified',
+  'zn-logo',
+  'fire',
+  'heart',
+  'star',
+  'sparkles',
+  'thumbs-up',
+  'trophy',
+  'party',
+  'rocket',
+  'bulb',
+  'check',
+] as const;
+
 /**
  * Curated built-in sticker rendering to transparent PNG.
  */
@@ -427,6 +460,19 @@ export function renderStickerPng(
   targetFilePath: string,
   size = 140,
 ): { width: number; height: number; filePath: string } {
+  if (!stickerId || typeof stickerId !== 'string') {
+    throw new Error('Sticker ID must be a non-empty string');
+  }
+
+  // Reject paths, URLs, data URLs, non-alphanumeric/hyphen IDs
+  if (/[\/\\]|\.\.|^https?:|^data:/i.test(stickerId)) {
+    throw new Error(`Invalid sticker ID "${stickerId}": external URLs and filesystem paths are forbidden`);
+  }
+
+  if (!VALID_CURATED_STICKER_IDS.includes(stickerId as any)) {
+    throw new Error(`Unknown sticker ID "${stickerId}". Only curated catalog stickers are permitted.`);
+  }
+
   const buf = Buffer.alloc(size * size * 4); // RGBA
   const cx = size / 2;
   const cy = size / 2;

@@ -9,6 +9,7 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
+  Flame,
 } from 'lucide-react';
 import ReelItem from './ReelItem';
 import CommentDrawer from '../comments/CommentDrawer';
@@ -30,6 +31,7 @@ import {
  * - Direct deep-link synchronization via URL history state.
  * - Full keyboard controls: ArrowUp, ArrowDown, Spacebar, Escape, Mute (M).
  * - Centralized CommentDrawer integration with automatic playback pausing.
+ * - Discovery navigation: Latest vs Trending tab selector.
  */
 export default function ReelsViewer({
   posts = [],
@@ -38,6 +40,8 @@ export default function ReelsViewer({
   onFetchNextPage,
   hasNextPage = false,
   isFetchingNextPage = false,
+  activeTab = 'latest',
+  onChangeTab,
 }) {
   const navigate = useNavigate();
   const shouldReduceMotion = useReducedMotion();
@@ -222,13 +226,41 @@ export default function ReelsViewer({
           </span>
         </button>
 
-        {/* Center: Zeitnah Reels Branding */}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/[0.08] shadow-sm">
-          <Sparkles className="w-3.5 h-3.5 text-brand-mint" />
-          <span className="text-xs font-bold tracking-wide uppercase bg-gradient-to-r from-brand-mint via-brand-yellow to-brand-mint bg-clip-text text-transparent">
-            Reels
-          </span>
-        </div>
+        {/* Center: Discovery Segmented Toggle or Branding */}
+        {onChangeTab ? (
+          <div className="pointer-events-auto flex items-center p-1 rounded-full bg-black/60 backdrop-blur-md border border-white/[0.1] shadow-lg">
+            <button
+              type="button"
+              onClick={() => onChangeTab('latest')}
+              className={`min-h-[36px] px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === 'latest'
+                  ? 'bg-brand-mint text-bg-base shadow-sm'
+                  : 'text-text-muted hover:text-white'
+              }`}
+            >
+              Latest
+            </button>
+            <button
+              type="button"
+              onClick={() => onChangeTab('trending')}
+              className={`min-h-[36px] px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer ${
+                activeTab === 'trending'
+                  ? 'bg-brand-mint text-bg-base shadow-sm'
+                  : 'text-text-muted hover:text-white'
+              }`}
+            >
+              <Flame className="w-3 h-3 text-brand-yellow" />
+              <span>Trending</span>
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/[0.08] shadow-sm">
+            <Sparkles className="w-3.5 h-3.5 text-brand-mint" />
+            <span className="text-xs font-bold tracking-wide uppercase bg-gradient-to-r from-brand-mint via-brand-yellow to-brand-mint bg-clip-text text-transparent">
+              Reels
+            </span>
+          </div>
+        )}
 
         {/* Right: Close (X) & Audio Indicator */}
         <div className="flex items-center gap-2 pointer-events-auto">

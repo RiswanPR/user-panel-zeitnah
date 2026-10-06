@@ -70,6 +70,10 @@ export class CommunityVideoProcessorService {
   public readonly MAX_SOURCE_SIZE_BYTES = 1024 * 1024 * 1024; // 1 GiB
   public readonly PROCESS_TIMEOUT_MS = Number(process.env.COMMUNITY_FFMPEG_TIMEOUT_MS) || 180000; // 3 minutes or configurable
 
+  public get processTimeoutMs(): number {
+    return Number(process.env.COMMUNITY_FFMPEG_TIMEOUT_MS) || this.PROCESS_TIMEOUT_MS || 180000;
+  }
+
   /**
    * Executes a child process with safe argument arrays, SIGTERM timeout, and SIGKILL fallback
    * to guarantee no orphaned FFmpeg/FFprobe processes remain.
@@ -86,6 +90,7 @@ export class CommunityVideoProcessorService {
       let isDone = false;
       let killTimer: NodeJS.Timeout | null = null;
       let timeoutTimer: NodeJS.Timeout | null = null;
+      const maxBuf = options.maxBuffer || 128 * 1024;
 
       const cleanup = () => {
         if (timeoutTimer) clearTimeout(timeoutTimer);
@@ -109,9 +114,15 @@ export class CommunityVideoProcessorService {
 
       child.stdout?.on('data', (chunk) => {
         stdout += chunk.toString();
+        if (stdout.length > maxBuf) {
+          stdout = stdout.slice(-maxBuf);
+        }
       });
       child.stderr?.on('data', (chunk) => {
         stderr += chunk.toString();
+        if (stderr.length > maxBuf) {
+          stderr = stderr.slice(-maxBuf);
+        }
       });
 
       child.on('error', (err) => {
@@ -350,8 +361,35 @@ export class CommunityVideoProcessorService {
         const st = Math.max(0, Number(ov.start ?? 0));
         const en = Math.min(targetDuration, Math.max(st + 0.1, Number(ov.end ?? targetDuration)));
 
+        const scale = Math.max(0.2, Math.min(Number(ov.scale ?? 1.0), 3.0));
+        const rotationDeg = Number(ov.rotation ?? 0);
+        const opacity = Math.max(0, Math.min(Number(ov.opacity ?? 1.0), 1.0));
+
+        // Build overlay prep transform chain (scale, rotate, opacity)
+        const prepTag = `ov_prep_${idx}`;
+        const prepFilters: string[] = ['format=rgba'];
+
+        if (Math.abs(scale - 1.0) > 0.01) {
+          prepFilters.push(
+            `scale='max(2,trunc(iw*${scale.toFixed(3)}/2)*2)':'max(2,trunc(ih*${scale.toFixed(3)}/2)*2)'`,
+          );
+        }
+
+        const normalizedDeg = ((rotationDeg % 360) + 360) % 360;
+        if (normalizedDeg > 0.01 && normalizedDeg < 359.99) {
+          const rotRad = ((normalizedDeg * Math.PI) / 180).toFixed(4);
+          prepFilters.push(
+            `rotate=${rotRad}:c=none:ow='rotw(${rotRad})':oh='roth(${rotRad})'`,
+          );
+        }
+
+        if (opacity < 0.99) {
+          prepFilters.push(`colorchannelmixer=aa=${opacity.toFixed(2)}`);
+        }
+
+        videoFilters.push(`[${inputIdx}:v]${prepFilters.join(',')}[${prepTag}]`);
         videoFilters.push(
-          `[${inTag}][${inputIdx}:v]overlay=x=(main_w*${cx.toFixed(4)}-overlay_w/2):y=(main_h*${cy.toFixed(4)}-overlay_h/2):enable='between(t,${st.toFixed(3)},${en.toFixed(3)})'[${outTag}]`,
+          `[${inTag}][${prepTag}]overlay=x=(main_w*${cx.toFixed(4)}-overlay_w/2):y=(main_h*${cy.toFixed(4)}-overlay_h/2):enable='between(t,${st.toFixed(3)},${en.toFixed(3)})'[${outTag}]`,
         );
       }
 
@@ -359,13 +397,13 @@ export class CommunityVideoProcessorService {
       let hasAudioOut = false;
 
       if (hasMusic && audioMode === 'MUSIC_ONLY') {
-        audioFilter = `[1:a]volume=${musicVol.toFixed(2)}[aout]`;
+        audioFilter = `[1:a]volume=${musicVol.toFixed(2)},apad[aout]`;
         hasAudioOut = true;
       } else if (hasMusic && audioMode === 'MIXED') {
         if (probe.hasAudio) {
-          audioFilter = `[0:a]volume=${origVol.toFixed(2)}[a0];[1:a]volume=${musicVol.toFixed(2)}[a1];[a0][a1]amix=inputs=2:duration=first:dropout_transition=2[aout]`;
+          audioFilter = `[0:a]volume=${origVol.toFixed(2)}[a0];[1:a]volume=${musicVol.toFixed(2)},apad[a1];[a0][a1]amix=inputs=2:duration=first:dropout_transition=2[aout]`;
         } else {
-          audioFilter = `[1:a]volume=${musicVol.toFixed(2)}[aout]`;
+          audioFilter = `[1:a]volume=${musicVol.toFixed(2)},apad[aout]`;
         }
         hasAudioOut = true;
       } else {
@@ -419,7 +457,8 @@ export class CommunityVideoProcessorService {
           '23',
           '-pix_fmt',
           'yuv420p',
-          '-shortest',
+          '-t',
+          targetDuration.toFixed(3),
           '-sn',
           '-dn',
           '-map_metadata',
@@ -453,6 +492,8 @@ export class CommunityVideoProcessorService {
           '23',
           '-pix_fmt',
           'yuv420p',
+          '-t',
+          targetDuration.toFixed(3),
           '-sn',
           '-dn',
           '-map_metadata',
@@ -506,8 +547,9 @@ export class CommunityVideoProcessorService {
         '-ac',
         '2',
         '-af',
-        `volume=${musicVol.toFixed(2)}`,
-        '-shortest',
+        `volume=${musicVol.toFixed(2)},apad`,
+        '-t',
+        targetDuration.toFixed(3),
         '-sn',
         '-dn',
         '-map_metadata',
@@ -562,8 +604,9 @@ export class CommunityVideoProcessorService {
           '-ac',
           '2',
           '-af',
-          `volume=${musicVol.toFixed(2)}`,
-          '-shortest',
+          `volume=${musicVol.toFixed(2)},apad`,
+          '-t',
+          targetDuration.toFixed(3),
           '-sn',
           '-dn',
           '-map_metadata',
@@ -574,7 +617,7 @@ export class CommunityVideoProcessorService {
         ];
       } else {
         // Both video audio and music stream exist: mix using FFmpeg amix filter
-        const filterComplex = `[0:v]${scaleFilter}[vout];[0:a]volume=${origVol.toFixed(2)}[a0];[1:a]volume=${musicVol.toFixed(2)}[a1];[a0][a1]amix=inputs=2:duration=first:dropout_transition=2[aout]`;
+        const filterComplex = `[0:v]${scaleFilter}[vout];[0:a]volume=${origVol.toFixed(2)}[a0];[1:a]volume=${musicVol.toFixed(2)},apad[a1];[a0][a1]amix=inputs=2:duration=first:dropout_transition=2[aout]`;
 
         ffmpegArgs = [
           '-y',
@@ -611,7 +654,8 @@ export class CommunityVideoProcessorService {
           '48000',
           '-ac',
           '2',
-          '-shortest',
+          '-t',
+          targetDuration.toFixed(3),
           '-sn',
           '-dn',
           '-map_metadata',
@@ -650,6 +694,8 @@ export class CommunityVideoProcessorService {
         '-pix_fmt',
         'yuv420p',
         ...audioArgs,
+        '-t',
+        targetDuration.toFixed(3),
         '-sn',
         '-dn',
         '-map_metadata',
@@ -662,7 +708,7 @@ export class CommunityVideoProcessorService {
 
     try {
       await this.runChildProcess('ffmpeg', ffmpegArgs, {
-        timeout: this.PROCESS_TIMEOUT_MS,
+        timeout: this.processTimeoutMs,
       });
     } catch (ffmpegErr: any) {
       this.logger.error(
