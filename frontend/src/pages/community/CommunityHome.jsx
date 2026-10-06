@@ -151,16 +151,19 @@ export default function CommunityHome({ initialCreateMode } = {}) {
   }, [displayedPosts]);
 
   const handleOpenReel = useCallback((postId) => {
-    setActiveReelPostId(postId);
-    window.history.pushState(null, '', `/community/reels/${postId}`);
-  }, []);
+    if (postId) {
+      navigate(`/community/reels/${postId}`);
+    } else {
+      navigate('/community/reels');
+    }
+  }, [navigate]);
 
   const handleCloseReel = useCallback(() => {
     setActiveReelPostId(null);
     if (window.location.pathname.startsWith('/community/reels')) {
-      window.history.replaceState(null, '', '/community');
+      navigate('/community', { replace: true });
     }
-  }, []);
+  }, [navigate]);
 
   // Handle opening creation studios with route synchronization
   const handleOpenCreatePost = useCallback(() => {

@@ -193,4 +193,14 @@ test('Phase 4.1: Community Production Hardening, Reel UX & Profile Integration T
       'PublicProfilePage must link to Community Reels'
     );
   });
+
+  await t.test('Feed to Reel Route Flow: verifies CommunityHome handleOpenReel navigates directly to /community/reels/:postId', () => {
+    const homePath = path.resolve('src/pages/community/CommunityHome.jsx');
+    const content = fs.readFileSync(homePath, 'utf8');
+
+    assert.ok(
+      content.includes('navigate(`/community/reels/${postId}`)'),
+      'CommunityHome handleOpenReel must navigate to canonical reels route'
+    );
+  });
 });
