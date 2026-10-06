@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Search, Compass, Bookmark, Sparkles, Film } from 'lucide-react';
+import { Search, Compass, Bookmark, Sparkles, Film, BarChart2 } from 'lucide-react';
 import BrandAmbientShape from '../ui/BrandAmbientShape';
 
 /**
