@@ -274,11 +274,11 @@ export default function MainLayout({ children }) {
 
         {/* ═══════════════════════════════════════════════
           MAIN CONTENT AREA (Spacious, Expansive Full Width)
-          Adaptive full-height for active messaging conversations
+          Adaptive full-height for active messaging conversations & immersive reels
           ═══════════════════════════════════════════════ */}
         <main
           className={`flex-1 min-w-0 relative z-10 ${
-            isMessagesActiveConversation
+            isMessagesActiveConversation || isReelsActive
               ? 'pb-0'
               : location.pathname.startsWith('/messages')
               ? 'pb-20 md:pb-0'
@@ -287,22 +287,28 @@ export default function MainLayout({ children }) {
         >
           <div
             className={
-              location.pathname.startsWith('/messages')
+              isReelsActive
+                ? 'w-full h-full p-0 max-w-none'
+                : location.pathname.startsWith('/messages')
                 ? 'w-full h-full'
                 : 'max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7'
             }
           >
             <FeatureErrorBoundary featureName="Page Content">
-              <PageTransition key={location.pathname}>
-                {children || <Outlet />}
-              </PageTransition>
+              {isReelsActive ? (
+                children || <Outlet />
+              ) : (
+                <PageTransition key={location.pathname}>
+                  {children || <Outlet />}
+                </PageTransition>
+              )}
             </FeatureErrorBoundary>
           </div>
         </main>
       </div>
 
-      {/* ── Global Platform Footer (hidden on mobile, suppressed in full-height messaging) ── */}
-      {!isMessagesActiveConversation && !location.pathname.startsWith('/messages') && (
+      {/* ── Global Platform Footer (hidden on mobile, suppressed in full-height messaging & reels) ── */}
+      {!isMessagesActiveConversation && !location.pathname.startsWith('/messages') && !isReelsActive && (
         <Footer />
       )}
 

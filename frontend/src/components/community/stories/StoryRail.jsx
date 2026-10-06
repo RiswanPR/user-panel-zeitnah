@@ -81,7 +81,7 @@ export default function StoryRail({
   return (
     <section
       aria-label="Community Stories"
-      className="relative p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-[#0C1524]/90 via-[#0B1220]/85 to-[#0C1524]/90 border border-white/[0.08] backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:border-brand-mint/20 transition-all select-none overflow-hidden group/rail"
+      className="relative p-2.5 sm:p-3 rounded-2xl bg-gradient-to-r from-[#0C1524]/90 via-[#0B1220]/85 to-[#0C1524]/90 border border-white/[0.08] backdrop-blur-2xl shadow-[0_4px_20px_rgba(0,0,0,0.25)] hover:border-brand-mint/20 transition-all select-none overflow-hidden group/rail"
     >
       {/* Top subtle ambient light bar */}
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-mint/25 to-transparent pointer-events-none" />

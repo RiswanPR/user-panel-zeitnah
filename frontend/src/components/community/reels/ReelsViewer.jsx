@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import ReelItem from './ReelItem';
 import CommentDrawer from '../comments/CommentDrawer';
+import { AuthContext } from '../../../context/AuthContext';
 import {
   useReactToPost,
   useSavePost,
@@ -42,7 +43,10 @@ export default function ReelsViewer({
   isFetchingNextPage = false,
   activeTab = 'latest',
   onChangeTab,
+  currentUserId: propCurrentUserId,
 }) {
+  const { user } = useContext(AuthContext) || {};
+  const currentUserId = propCurrentUserId || user?._id || user?.id || user?.userId;
   const navigate = useNavigate();
   const shouldReduceMotion = useReducedMotion();
   const scrollContainerRef = useRef(null);
@@ -212,17 +216,17 @@ export default function ReelsViewer({
     <div className="fixed inset-0 z-50 bg-[#05070D] flex flex-col items-center justify-center select-none overflow-hidden overscroll-none">
 
       {/* ── TOP HEADER (Mobile Floating Back & Desktop Control Bar) ── */}
-      <div className="absolute top-0 inset-x-0 z-40 p-3 sm:p-4 flex items-center justify-between pointer-events-none">
+      <div className="absolute top-0 inset-x-0 z-40 p-3 sm:p-4 pt-[max(12px,env(safe-area-inset-top,12px))] flex items-center justify-between pointer-events-none">
         {/* Left: Back Action */}
         <button
           type="button"
           onClick={handleClose}
-          className="pointer-events-auto min-h-[44px] min-w-[44px] px-3.5 py-2 rounded-2xl bg-black/55 hover:bg-black/80 text-white backdrop-blur-xl border border-white/10 flex items-center gap-1.5 shadow-2xl transition-all hover:scale-105 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-mint"
+          className="pointer-events-auto min-h-[44px] min-w-[44px] px-3.5 py-2 rounded-2xl bg-black/60 hover:bg-black/85 text-white backdrop-blur-xl border border-white/10 flex items-center gap-1.5 shadow-2xl transition-all hover:scale-105 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-mint"
           aria-label="Back to Zeitnah Community"
         >
           <ArrowLeft className="w-4 h-4 text-brand-mint" />
           <span className="text-xs font-semibold text-white/95">
-            Zeitnah
+            Community
           </span>
         </button>
 
@@ -339,6 +343,7 @@ export default function ReelsViewer({
                 isActive={isItemActive}
                 isMounted={isMounted}
                 isMuted={isMuted}
+                currentUserId={currentUserId}
                 onToggleMute={() => setIsMuted((prev) => !prev)}
                 onOpenComments={() => setActiveCommentPost(post)}
                 onLike={handleLike}

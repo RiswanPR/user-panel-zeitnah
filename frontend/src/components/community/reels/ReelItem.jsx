@@ -23,6 +23,7 @@ import ReelProgressBar from './ReelProgressBar';
 import { getCanonicalProfileUrl } from '../../../utils/roleNavigation';
 import { getUploadUrl } from '../../../utils/courseUi';
 import toast from 'react-hot-toast';
+import RelationshipAction from '../../network/RelationshipAction';
 
 /**
  * ReelItem — Individual short-video reel card.
@@ -38,6 +39,7 @@ function ReelItem({
   isActive,
   isMounted,
   isMuted,
+  currentUserId,
   onToggleMute,
   onOpenComments,
   onLike,
@@ -66,10 +68,14 @@ function ReelItem({
 
   const postId = post?._id || post?.id;
   const author = post?.author || {};
+  const authorTargetId = author?._id || author?.id || post?.authorId || post?.userId;
   const authorName = author?.name || author?.username || 'Community Member';
   const authorHandle = author?.username ? `@${author.username.replace(/^@/, '')}` : '';
   const authorAvatar = author?.avatar || author?.profilePicture || author?.avatarUrl;
   const profileUrl = getCanonicalProfileUrl(author);
+  const canConnect = Boolean(
+    authorTargetId && currentUserId && String(authorTargetId) !== String(currentUserId)
+  );
 
   // Extract video media item (supports first video item or main media)
   const videoMedia = Array.isArray(post?.media)
@@ -410,10 +416,10 @@ function ReelItem({
 
         {/* Ambient Top & Bottom Readable Gradients */}
         <div className="absolute top-0 inset-x-0 h-28 bg-gradient-to-b from-black/60 via-black/20 to-transparent pointer-events-none z-10" />
-        <div className="absolute bottom-0 inset-x-0 h-44 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none z-10" />
+        <div className="absolute bottom-0 inset-x-0 h-52 bg-gradient-to-t from-black/95 via-black/60 to-transparent pointer-events-none z-10" />
 
         {/* ── RIGHT-SIDE ACTION RAIL ── */}
-        <div className="absolute right-3 bottom-14 z-20 flex flex-col items-center gap-4 select-none">
+        <div className="absolute right-3 bottom-[max(44px,calc(32px+env(safe-area-inset-bottom,16px)))] z-20 flex flex-col items-center gap-3.5 select-none">
           {/* Like Button */}
           <button
             type="button"
@@ -421,7 +427,7 @@ function ReelItem({
               e.stopPropagation();
               if (onLike) onLike(post);
             }}
-            className="flex flex-col items-center gap-1 group cursor-pointer focus:outline-none"
+            className="min-h-[44px] min-w-[44px] flex flex-col items-center justify-center gap-1 group cursor-pointer focus:outline-none"
             aria-label={isLiked ? 'Unlike reel' : 'Like reel'}
           >
             <div
@@ -449,7 +455,7 @@ function ReelItem({
               e.stopPropagation();
               if (onOpenComments) onOpenComments(post);
             }}
-            className="flex flex-col items-center gap-1 group cursor-pointer focus:outline-none"
+            className="min-h-[44px] min-w-[44px] flex flex-col items-center justify-center gap-1 group cursor-pointer focus:outline-none"
             aria-label={`Comments (${commentsCount})`}
           >
             <div className="w-11 h-11 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white backdrop-blur-md transition-transform group-hover:scale-105">
@@ -467,7 +473,7 @@ function ReelItem({
               e.stopPropagation();
               handleShare();
             }}
-            className="flex flex-col items-center gap-1 group cursor-pointer focus:outline-none"
+            className="min-h-[44px] min-w-[44px] flex flex-col items-center justify-center gap-1 group cursor-pointer focus:outline-none"
             aria-label="Share reel"
           >
             <div className="w-11 h-11 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white backdrop-blur-md transition-transform group-hover:scale-105">
@@ -489,7 +495,7 @@ function ReelItem({
               e.stopPropagation();
               if (onToggleSave) onToggleSave(post);
             }}
-            className="flex flex-col items-center gap-1 group cursor-pointer focus:outline-none"
+            className="min-h-[44px] min-w-[44px] flex flex-col items-center justify-center gap-1 group cursor-pointer focus:outline-none"
             aria-label={isSaved ? 'Remove from saved' : 'Save reel'}
           >
             <div
@@ -517,7 +523,7 @@ function ReelItem({
               e.stopPropagation();
               if (onToggleMute) onToggleMute();
             }}
-            className="w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white backdrop-blur-md transition-transform hover:scale-105 focus:outline-none cursor-pointer mt-1"
+            className="min-h-[44px] min-w-[44px] p-2.5 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white backdrop-blur-md transition-transform hover:scale-105 focus:outline-none cursor-pointer mt-0.5"
             aria-label={isMuted ? 'Unmute audio' : 'Mute audio'}
             title={isMuted ? 'Unmute' : 'Mute'}
           >
@@ -532,7 +538,7 @@ function ReelItem({
                 e.stopPropagation();
                 setShowMoreMenu((prev) => !prev);
               }}
-              className="w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center text-white/80 hover:text-white backdrop-blur-md transition-colors focus:outline-none cursor-pointer"
+              className="min-h-[44px] min-w-[44px] p-2.5 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center text-white/80 hover:text-white backdrop-blur-md transition-colors focus:outline-none cursor-pointer"
               aria-label="More options"
             >
               <MoreHorizontal className="w-4 h-4" />
@@ -580,49 +586,64 @@ function ReelItem({
         </div>
 
         {/* ── BOTTOM-LEFT CREATOR & CAPTION OVERLAY ── */}
-        <div className="absolute left-3 bottom-4 right-16 z-20 text-left pointer-events-auto">
-          {/* Creator Profile Link */}
-          <Link
-            to={profileUrl}
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-2.5 mb-2 group focus:outline-none"
-          >
-            <div className="w-10 h-10 rounded-full ring-2 ring-brand-mint/60 p-0.5 overflow-hidden bg-bg-base shrink-0 transition-transform group-hover:scale-105">
-              {authorAvatar ? (
-                <img
-                  src={getUploadUrl(authorAvatar)}
-                  alt={authorName}
-                  className="w-full h-full rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full rounded-full bg-brand-mint/20 flex items-center justify-center text-brand-mint text-xs font-bold">
-                  {authorName[0]?.toUpperCase() || 'Z'}
+        <div className="absolute left-3 bottom-[max(16px,env(safe-area-inset-bottom,16px))] right-16 z-20 text-left pointer-events-auto">
+          {/* Creator Profile Link & Relationship Action Row */}
+          <div className="flex items-center gap-2.5 mb-2 flex-wrap">
+            <Link
+              to={profileUrl}
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-2.5 group focus:outline-none min-w-0"
+              aria-label={`View ${authorName}'s public profile`}
+            >
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full ring-2 ring-brand-mint/70 p-0.5 overflow-hidden bg-bg-base shrink-0 transition-transform group-hover:scale-105 shadow-md">
+                {authorAvatar ? (
+                  <img
+                    src={getUploadUrl(authorAvatar)}
+                    alt={authorName}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full rounded-full bg-brand-mint/20 flex items-center justify-center text-brand-mint text-xs font-bold">
+                    {authorName[0]?.toUpperCase() || 'Z'}
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0 flex flex-col justify-center">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-sm font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] truncate group-hover:text-brand-mint transition-colors">
+                    {authorName}
+                  </span>
+                  {(author?.primaryRole || author?.role === 'admin') && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/90 font-medium tracking-tight backdrop-blur-sm border border-white/10">
+                      {author?.role === 'admin' ? 'Admin' : author.primaryRole}
+                    </span>
+                  )}
                 </div>
-              )}
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-semibold text-white drop-shadow-md truncate group-hover:text-brand-mint transition-colors">
-                  {authorName}
-                </span>
-                {author?.role === 'admin' && (
-                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-brand-mint/20 text-brand-mint font-semibold">
-                    Admin
+                {authorHandle && (
+                  <span className="text-xs text-white/80 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] block truncate font-medium">
+                    {authorHandle}
                   </span>
                 )}
               </div>
-              {authorHandle && (
-                <span className="text-xs text-white/70 drop-shadow-sm block truncate">
-                  {authorHandle}
-                </span>
-              )}
-            </div>
-          </Link>
+            </Link>
 
-          {/* Caption Text with Expand / Collapse */}
+            {/* Canonical Relationship Action (Connect / Request Sent / Connected) */}
+            {canConnect && (
+              <div onClick={(e) => e.stopPropagation()} className="shrink-0 ml-1">
+                <RelationshipAction
+                  targetUserId={authorTargetId}
+                  targetUsername={author?.username}
+                  studentName={authorName}
+                  variant="compact"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Caption Text with Multiline & Expand / Collapse */}
           {post?.content && (
-            <div className="text-xs text-white/90 drop-shadow leading-relaxed mb-2 pr-2">
-              <p className={isCaptionExpanded ? '' : 'line-clamp-2'}>
+            <div className="text-xs text-white/95 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] leading-relaxed mb-2 pr-2">
+              <p className={isCaptionExpanded ? 'whitespace-pre-line break-words max-h-48 overflow-y-auto' : 'line-clamp-2 whitespace-pre-line break-words'}>
                 {post.content}
               </p>
               {post.content.length > 80 && (
@@ -632,7 +653,7 @@ function ReelItem({
                     e.stopPropagation();
                     setIsCaptionExpanded((prev) => !prev);
                   }}
-                  className="text-white/60 hover:text-white font-semibold text-[11px] mt-0.5 underline cursor-pointer"
+                  className="text-brand-mint hover:text-white font-semibold text-[11px] mt-0.5 underline cursor-pointer focus:outline-none"
                 >
                   {isCaptionExpanded ? 'less' : 'more'}
                 </button>
@@ -642,11 +663,11 @@ function ReelItem({
 
           {/* Hashtags / Topics */}
           {Array.isArray(post?.tags) && post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {post.tags.slice(0, 3).map((tag, idx) => (
+            <div className="flex flex-wrap gap-1.5 mb-1.5">
+              {post.tags.slice(0, 4).map((tag, idx) => (
                 <span
                   key={idx}
-                  className="text-[11px] font-medium text-brand-mint/90 hover:text-brand-mint transition-colors cursor-pointer select-none drop-shadow"
+                  className="text-[11px] font-semibold text-brand-mint hover:text-white transition-colors cursor-pointer select-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
                 >
                   #{tag.replace(/^#/, '')}
                 </span>
@@ -655,9 +676,9 @@ function ReelItem({
           )}
 
           {/* Audio & Music Attribution Pill (Section 3 & 22) */}
-          <div className="flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 w-fit max-w-[260px] text-white/90 select-none">
+          <div className="flex items-center gap-1.5 mt-1.5 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md border border-white/10 w-fit max-w-[260px] text-white/90 select-none shadow-sm">
             <Music2 className="w-3 h-3 text-brand-mint shrink-0" />
-            <span className="text-[11px] font-medium truncate">
+            <span className="text-[11px] font-medium truncate drop-shadow-sm">
               {videoMedia?.audioConfig?.musicTitle
                 ? `${videoMedia.audioConfig.musicTitle} · ${videoMedia.audioConfig.musicArtist || 'Soundtrack'}`
                 : (videoMedia?.audioConfig?.originalAudioName || `Original audio · ${authorHandle || authorName}`)}

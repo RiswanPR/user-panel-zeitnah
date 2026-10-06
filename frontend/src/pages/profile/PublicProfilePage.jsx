@@ -559,13 +559,22 @@ export default function PublicProfilePage() {
               Explore {student.name}'s community discussions, technical posts, and vertical video reels.
             </p>
 
-            <Link
-              to="/community?feed=all"
-              className="w-full zn-btn-secondary text-xs py-2.5 flex items-center justify-center gap-1.5 cursor-pointer font-semibold"
-            >
-              <span>Explore Community Feed</span>
-              <ExternalLink className="w-3.5 h-3.5 text-brand-mint" />
-            </Link>
+            <div className="flex flex-col gap-2 pt-1">
+              <Link
+                to="/community?feed=all"
+                className="w-full zn-btn-secondary text-xs py-2.5 flex items-center justify-center gap-1.5 cursor-pointer font-semibold"
+              >
+                <span>Explore Community Posts</span>
+                <ExternalLink className="w-3.5 h-3.5 text-brand-mint" />
+              </Link>
+              <Link
+                to="/community/reels"
+                className="w-full py-2.5 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-semibold text-white/90 hover:text-white flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <span>Watch Community Reels</span>
+                <Sparkles className="w-3.5 h-3.5 text-brand-yellow" />
+              </Link>
+            </div>
           </div>
 
           {/* Social Proof & Endorsement CTA */}

@@ -359,34 +359,32 @@ export default function CommunityHome({ initialCreateMode } = {}) {
         onOpenInsights={() => setIsInsightsOpen(true)}
       />
 
-      {/* ── Stories Strip (Spanning full width) ── */}
-      <div className="mb-6">
-        <StoryRail
-          stories={stories}
-          isLoading={storiesLoading}
-          onAddStory={() => setIsCreateStoryModalOpen(true)}
-          onSelectGroup={(group) => {
-            const idx = allGroups.findIndex((g) => g.userId === group.userId);
-            setSelectedGroupIndex(idx !== -1 ? idx : 0);
-          }}
-          currentUserId={currentUserId}
-          currentUserAvatar={user?.avatar || user?.profilePicture || user?.avatarUrl}
-          currentUserName={user?.name || user?.username || 'You'}
-        />
-      </div>
-
       {/* ── Responsive Centered Container (Main Feed ~620px + Desktop Discovery Sidebar) ── */}
-      <div className="max-w-[1020px] mx-auto px-0 sm:px-4 lg:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,620px)_340px] justify-center gap-8 items-start">
+      <div className="max-w-[1020px] mx-auto px-0 sm:px-4 lg:px-6 mt-4 sm:mt-5">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,620px)_340px] justify-center gap-6 lg:gap-8 items-start">
           {/* ── PRIMARY COLUMN (Community Feed) ── */}
-          <div className="w-full max-w-[620px] mx-auto space-y-4 min-w-0" id={`feed-panel-${activeFilter}`}>
-          {/* Phase 3: Premium Inline Creation Entry Point */}
-          <CommunityComposerEntry
-            user={user}
-            onOpenCreatePost={handleOpenCreatePost}
-            onOpenCreateReel={handleOpenCreateReel}
-            onOpenCreateStory={() => setIsCreateStoryModalOpen(true)}
-          />
+          <div className="w-full max-w-[620px] mx-auto space-y-3.5 min-w-0" id={`feed-panel-${activeFilter}`}>
+            {/* ── Stories Strip (Snug within feed column, eliminating empty horizontal void) ── */}
+            <StoryRail
+              stories={stories}
+              isLoading={storiesLoading}
+              onAddStory={() => setIsCreateStoryModalOpen(true)}
+              onSelectGroup={(group) => {
+                const idx = allGroups.findIndex((g) => g.userId === group.userId);
+                setSelectedGroupIndex(idx !== -1 ? idx : 0);
+              }}
+              currentUserId={currentUserId}
+              currentUserAvatar={user?.avatar || user?.profilePicture || user?.avatarUrl}
+              currentUserName={user?.name || user?.username || 'You'}
+            />
+
+            {/* Phase 3: Premium Inline Creation Entry Point */}
+            <CommunityComposerEntry
+              user={user}
+              onOpenCreatePost={handleOpenCreatePost}
+              onOpenCreateReel={handleOpenCreateReel}
+              onOpenCreateStory={() => setIsCreateStoryModalOpen(true)}
+            />
 
           {/* Active Topic Banner if filtering by topic */}
           {activeTopic && (
