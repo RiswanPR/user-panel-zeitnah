@@ -18,6 +18,8 @@ import { CommunityMusicService } from './community-music.service';
 import { CommunityStickerService } from './community-sticker.service';
 import { VALID_CURATED_STICKER_IDS } from './community-overlay-rasterizer';
 import { PostType, PostAudience } from '../domain/post.model';
+import { OrganizationsService } from '../../organizations/organizations.service';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class PostService {
@@ -35,6 +37,7 @@ export class PostService {
     @Optional() private readonly mediaJobService?: CommunityMediaJobService,
     @Optional() private readonly musicService?: CommunityMusicService,
     @Optional() private readonly stickerService?: CommunityStickerService,
+    @Optional() private readonly organizationsService?: OrganizationsService,
   ) {}
 
   private async resolveMediaUrls(posts: any[]): Promise<any[]> {
@@ -450,6 +453,15 @@ export class PostService {
         pollExpiresAt: data.pollExpiresAt,
       };
 
+      if (data.organizationId) {
+        if (this.organizationsService) {
+          await this.organizationsService.validateCompanyPublishingAccess(userId, data.organizationId);
+        } else if (!Types.ObjectId.isValid(data.organizationId)) {
+          throw new BadRequestException('Invalid organization ID');
+        }
+        postData.organizationId = data.organizationId;
+      }
+
       const createdPost = await this.postRepository.create(postData);
 
       if (validatedMedia.length > 0) {
@@ -525,7 +537,16 @@ export class PostService {
     filter?: string,
     search?: string,
     tag?: string,
+    organizationId?: string,
   ) {
+    if (organizationId) {
+      if (this.organizationsService) {
+        await this.organizationsService.validateCompanyFeedAccess(userId, organizationId);
+      } else if (!Types.ObjectId.isValid(organizationId)) {
+        throw new BadRequestException('Invalid organization ID');
+      }
+    }
+
     const feed: any = await this.postRepository.findFeed({
       userId,
       courseIds,
@@ -534,6 +555,7 @@ export class PostService {
       filter,
       search,
       tag,
+      organizationId,
     });
     if (feed && Array.isArray(feed.items)) {
       await this.resolveMediaUrls(feed.items);

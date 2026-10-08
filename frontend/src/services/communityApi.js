@@ -29,7 +29,7 @@ const removeSavedPostId = (id) => {
 
 export const communityApi = {
   // ── Posts ──
-  getFeed: async ({ cursor = '', limit = 10, filter = 'all', search, tag, } = {}) => {
+  getFeed: async ({ cursor = '', limit = 10, filter = 'all', search, tag, organizationId } = {}) => {
     const response = await api.get('/community/posts', {
       params: {
         cursor: cursor || undefined,
@@ -37,6 +37,7 @@ export const communityApi = {
         filter: filter && filter !== 'all' ? filter : undefined,
         search: search || undefined,
         tag: tag || undefined,
+        organizationId: organizationId || undefined,
       },
     });
 

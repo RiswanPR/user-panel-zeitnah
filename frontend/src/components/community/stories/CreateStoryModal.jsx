@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { communityApi } from '../../../services/communityApi';
 import { useCreateStory } from '../../../hooks/useCommunity';
+import { useActiveProfile } from '../../../context/ActiveProfileContext';
+import BusinessLogo from '../../business/BusinessLogo';
 import toast from 'react-hot-toast';
 
 // Subcomponents for Premium Story Editor
@@ -58,7 +60,32 @@ const BACKGROUND_COLORS = [
  * - Draft protection ("Discard story?" confirmation)
  * - Full memory safety (object URL revocation & decoder cleanup)
  */
-export default function CreateStoryModal({ isOpen, onClose }) {
+export default function CreateStoryModal({ isOpen, onClose, publishingContext: propPublishingContext }) {
+  const { activeProfileType, activeBusinessId, business } = useActiveProfile();
+  const [capturedPublishingContext, setCapturedPublishingContext] = useState(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setCapturedPublishingContext(
+        propPublishingContext || {
+          profileType: activeProfileType || 'personal',
+          organizationId: activeProfileType === 'business' ? activeBusinessId : null,
+          organization: activeProfileType === 'business' ? business : null,
+        }
+      );
+    }
+  }, [isOpen]);
+
+  const effectivePublishingContext = capturedPublishingContext || propPublishingContext || {
+    profileType: activeProfileType || 'personal',
+    organizationId: activeProfileType === 'business' ? activeBusinessId : null,
+    organization: activeProfileType === 'business' ? business : null,
+  };
+  const isBusinessMode =
+    effectivePublishingContext?.profileType === 'business' &&
+    Boolean(effectivePublishingContext?.organizationId);
+  const activeOrganization = effectivePublishingContext?.organization || business;
+
   const [tab, setTab] = useState('media'); // 'media' | 'text'
   const [text, setText] = useState('');
   const [bgColor, setBgColor] = useState(BACKGROUND_COLORS[0]);
@@ -448,6 +475,7 @@ export default function CreateStoryModal({ isOpen, onClose }) {
         mediaUrl: finalMediaUrl || undefined,
         mediaType: storyType === 'VIDEO' ? 'video' : 'image',
         mediaDuration: 0,
+        organizationId: isBusinessMode ? effectivePublishingContext.organizationId : undefined,
         idempotencyKey: idempotencyKeyRef.current,
       };
 
@@ -573,9 +601,25 @@ export default function CreateStoryModal({ isOpen, onClose }) {
                   </span>
                 )}
               </h2>
-              <p className="text-[11px] text-text-muted">
-                Visible to community members for 24 hours
-              </p>
+              {isBusinessMode && activeOrganization ? (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <BusinessLogo
+                    logo={activeOrganization.logo}
+                    name={activeOrganization.name}
+                    className="w-4 h-4 rounded-sm object-cover border border-brand-mint/40"
+                  />
+                  <span className="text-[11px] font-semibold text-brand-mint truncate max-w-[180px]">
+                    {activeOrganization.name}
+                  </span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-brand-mint/20 text-brand-mint border border-brand-mint/30 uppercase font-bold tracking-wider">
+                    Company Story
+                  </span>
+                </div>
+              ) : (
+                <p className="text-[11px] text-text-muted">
+                  Visible to community members for 24 hours
+                </p>
+              )}
             </div>
             <button
               type="button"

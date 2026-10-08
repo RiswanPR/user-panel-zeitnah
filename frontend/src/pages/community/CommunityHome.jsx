@@ -9,6 +9,8 @@ import PostCardSkeleton from '../../components/community/feed/PostCard/PostCardS
 import { useCommunityFeed, useActiveStories } from '../../hooks/useCommunity';
 import { useIntersectionObserver } from '../../hooks/useIntersectionObserver';
 import { AuthContext } from '../../context/AuthContext';
+import { useActiveProfile } from '../../context/ActiveProfileContext';
+import CompanyFeedHeader from '../../components/community/header/CompanyFeedHeader';
 import lazyWithRetry from '../../utils/lazyWithRetry';
 
 // Code-split heavy modals and drawers to keep initial CommunityHome bundle lean
@@ -29,7 +31,7 @@ import {
   sanitizeTag,
 } from '../../utils/communityFormatters';
 import { groupStoriesByUser } from '../../utils/storyGrouping';
-import { Sparkles, Users, GraduationCap, Globe, AlertCircle, Flame } from 'lucide-react';
+import { Sparkles, Users, GraduationCap, Globe, AlertCircle, Flame, Building2 } from 'lucide-react';
 import BrandAmbientShape from '../../components/community/ui/BrandAmbientShape';
 import FeatureErrorBoundary from '../../components/common/FeatureErrorBoundary';
 
@@ -47,6 +49,12 @@ import FeatureErrorBoundary from '../../components/common/FeatureErrorBoundary';
  */
 export default function CommunityHome({ initialCreateMode } = {}) {
   const { user } = useContext(AuthContext);
+  const {
+    activeProfileType,
+    activeBusinessId,
+    business,
+    isBusinessMode,
+  } = useActiveProfile();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -81,7 +89,7 @@ export default function CommunityHome({ initialCreateMode } = {}) {
     return groupStoriesByUser(stories, currentUserId);
   }, [stories, currentUserId]);
 
-  // ── Fetch Feed per Filter ──
+  // ── Fetch Feed per Filter & Active Profile ──
   const {
     data: feedData,
     isLoading: feedLoading,
@@ -91,7 +99,11 @@ export default function CommunityHome({ initialCreateMode } = {}) {
     hasNextPage,
     isFetchingNextPage,
     isFetchNextPageError,
-  } = useCommunityFeed({ filter: activeFilter });
+  } = useCommunityFeed({
+    filter: activeFilter,
+    activeProfileType,
+    activeBusinessId,
+  });
 
   // Infinite Scroll Trigger with prefetch margin
   const { targetRef } = useIntersectionObserver({
@@ -165,13 +177,29 @@ export default function CommunityHome({ initialCreateMode } = {}) {
     }
   }, [navigate]);
 
+  const [creationPublishingContext, setCreationPublishingContext] = useState(null);
+
+  const getSnapshotPublishingContext = useCallback(() => {
+    return {
+      profileType: activeProfileType || 'personal',
+      organizationId: activeProfileType === 'business' ? activeBusinessId : null,
+      organization: activeProfileType === 'business' ? business : null,
+    };
+  }, [activeProfileType, activeBusinessId, business]);
+
+  const handleOpenCreateAction = useCallback(() => {
+    setCreationPublishingContext(getSnapshotPublishingContext());
+    setIsCreateActionOpen(true);
+  }, [getSnapshotPublishingContext]);
+
   // Handle opening creation studios with route synchronization
   const handleOpenCreatePost = useCallback(() => {
+    setCreationPublishingContext(getSnapshotPublishingContext());
     setIsCreatePostOpen(true);
     if (!window.location.pathname.startsWith('/community/create/post')) {
       window.history.pushState(null, '', '/community/create/post');
     }
-  }, []);
+  }, [getSnapshotPublishingContext]);
 
   const handleCloseCreatePost = useCallback(() => {
     setIsCreatePostOpen(false);
@@ -181,11 +209,12 @@ export default function CommunityHome({ initialCreateMode } = {}) {
   }, []);
 
   const handleOpenCreateReel = useCallback(() => {
+    setCreationPublishingContext(getSnapshotPublishingContext());
     setIsCreateReelOpen(true);
     if (!window.location.pathname.startsWith('/community/create/reel')) {
       window.history.pushState(null, '', '/community/create/reel');
     }
-  }, []);
+  }, [getSnapshotPublishingContext]);
 
   const handleCloseCreateReel = useCallback(() => {
     setIsCreateReelOpen(false);
@@ -193,6 +222,11 @@ export default function CommunityHome({ initialCreateMode } = {}) {
       window.history.replaceState(null, '', '/community');
     }
   }, []);
+
+  const handleOpenCreateStory = useCallback(() => {
+    setCreationPublishingContext(getSnapshotPublishingContext());
+    setIsCreateStoryModalOpen(true);
+  }, [getSnapshotPublishingContext]);
 
   // Initial deep-link mount for /community/create/post and /community/create/reel
   useEffect(() => {
@@ -269,6 +303,7 @@ export default function CommunityHome({ initialCreateMode } = {}) {
             <CreateStoryModal
               isOpen={isCreateStoryModalOpen}
               onClose={() => setIsCreateStoryModalOpen(false)}
+              publishingContext={creationPublishingContext}
             />
           )}
 
@@ -279,7 +314,8 @@ export default function CommunityHome({ initialCreateMode } = {}) {
               onClose={() => setIsCreateActionOpen(false)}
               onSelectPost={handleOpenCreatePost}
               onSelectReel={handleOpenCreateReel}
-              onSelectStory={() => setIsCreateStoryModalOpen(true)}
+              onSelectStory={handleOpenCreateStory}
+              publishingContext={creationPublishingContext}
             />
           )}
 
@@ -288,6 +324,7 @@ export default function CommunityHome({ initialCreateMode } = {}) {
             <CreatePostModal
               isOpen={isCreatePostOpen}
               onClose={handleCloseCreatePost}
+              publishingContext={creationPublishingContext}
             />
           )}
 
@@ -297,6 +334,7 @@ export default function CommunityHome({ initialCreateMode } = {}) {
               isOpen={isCreateReelOpen}
               onClose={handleCloseCreateReel}
               onSuccess={() => refetchFeed()}
+              publishingContext={creationPublishingContext}
             />
           )}
 
@@ -354,39 +392,51 @@ export default function CommunityHome({ initialCreateMode } = {}) {
         </Suspense>
       </FeatureErrorBoundary>
 
-      {/* ── Editorial Page Header with Create, Search & Saved Actions ── */}
-      <CommunityHeader
-        onOpenCreate={() => setIsCreateActionOpen(true)}
-        onOpenSearch={handleOpenSearch}
-        onOpenMobileDiscovery={() => setIsMobileDiscoveryOpen(true)}
-        onOpenInsights={() => setIsInsightsOpen(true)}
-      />
+      {/* ── Page Header: Company Feed Header in Business Mode, CommunityHeader in Personal Mode ── */}
+      {isBusinessMode ? (
+        <CompanyFeedHeader
+          business={business}
+          onOpenSearch={handleOpenSearch}
+          onOpenCreate={handleOpenCreateAction}
+        />
+      ) : (
+        <CommunityHeader
+          onOpenCreate={handleOpenCreateAction}
+          onOpenSearch={handleOpenSearch}
+          onOpenMobileDiscovery={() => setIsMobileDiscoveryOpen(true)}
+          onOpenInsights={() => setIsInsightsOpen(true)}
+        />
+      )}
 
       {/* ── Responsive Centered Container (Main Feed ~620px + Desktop Discovery Sidebar) ── */}
       <div className="max-w-[1020px] mx-auto px-0 sm:px-4 lg:px-6 mt-4 sm:mt-5">
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,620px)_340px] justify-center gap-6 lg:gap-8 items-start">
           {/* ── PRIMARY COLUMN (Community Feed) ── */}
           <div className="w-full max-w-[620px] mx-auto space-y-3.5 min-w-0" id={`feed-panel-${activeFilter}`}>
-            {/* ── Stories Strip (Snug within feed column, eliminating empty horizontal void) ── */}
-            <StoryRail
-              stories={stories}
-              isLoading={storiesLoading}
-              onAddStory={() => setIsCreateStoryModalOpen(true)}
-              onSelectGroup={(group) => {
-                const idx = allGroups.findIndex((g) => g.userId === group.userId);
-                setSelectedGroupIndex(idx !== -1 ? idx : 0);
-              }}
-              currentUserId={currentUserId}
-              currentUserAvatar={user?.avatar || user?.profilePicture || user?.avatarUrl || user?.profileImage}
-              currentUserName={user?.name || user?.username || 'You'}
-            />
+            {/* ── Stories Strip (Snug within feed column, personal mode only) ── */}
+            {!isBusinessMode && (
+              <StoryRail
+                stories={stories}
+                isLoading={storiesLoading}
+                onAddStory={() => setIsCreateStoryModalOpen(true)}
+                onSelectGroup={(group) => {
+                  const idx = allGroups.findIndex((g) => g.userId === group.userId);
+                  setSelectedGroupIndex(idx !== -1 ? idx : 0);
+                }}
+                currentUserId={currentUserId}
+                currentUserAvatar={user?.avatar || user?.profilePicture || user?.avatarUrl || user?.profileImage}
+                currentUserName={user?.name || user?.username || 'You'}
+              />
+            )}
 
-            {/* Phase 3: Premium Inline Creation Entry Point */}
+            {/* Inline Creation Entry Point (Supports both Personal and Business active modes) */}
             <CommunityComposerEntry
               user={user}
+              business={isBusinessMode ? business : null}
+              publishingContext={getSnapshotPublishingContext()}
               onOpenCreatePost={handleOpenCreatePost}
               onOpenCreateReel={handleOpenCreateReel}
-              onOpenCreateStory={() => setIsCreateStoryModalOpen(true)}
+              onOpenCreateStory={handleOpenCreateStory}
             />
 
           {/* Active Topic Banner if filtering by topic */}
@@ -475,10 +525,18 @@ export default function CommunityHome({ initialCreateMode } = {}) {
                   </div>
                 )}
 
-                {/* Intentional Empty States per Filter */}
+                {/* Intentional Empty States per Filter & Mode */}
                 {!feedLoading && displayedPosts.length === 0 && (
                   <>
-                    {activeFilter === 'following' ? (
+                    {isBusinessMode ? (
+                      <EmptyState
+                        icon={Building2}
+                        title="No posts yet"
+                        description="Your company hasn't shared anything here yet."
+                        action={handleEmptyStateAction}
+                        actionLabel="Create a Post"
+                      />
+                    ) : activeFilter === 'following' ? (
                       <EmptyState
                         icon={Users}
                         title="Your following feed is quiet"

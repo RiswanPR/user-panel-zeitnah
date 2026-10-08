@@ -6,6 +6,9 @@ import {
   isBusinessProfileEligible,
   getBusinessProfileUrl,
   getPrimaryBusiness,
+  findBusinessById,
+  isBusinessSelectable,
+  getActiveBusiness,
 } from './businessProfile.js';
 
 describe('Business Profile Foundation — Data Mapping & Normalization', () => {
@@ -522,5 +525,480 @@ describe('Phase 2 — Personal ↔ Business Profile Switcher State & Behavior', 
 
     assert.equal(mobileButtonLabel, 'Switch to Personal');
     assert.equal(mobileActiveText, 'Active: Zeitnah Academy');
+  });
+});
+
+describe('Phase 2.5 — Multi-Business Profile Active Context & Switching', () => {
+  const sampleUserA = { userId: 'user-aaa', name: 'Alice Founder', username: 'alice' };
+  const sampleUserB = { userId: 'user-bbb', name: 'Bob Engineer', username: 'bob' };
+
+  const companyA = {
+    _id: 'org-aaa-111',
+    name: 'Zeitnah Academy',
+    slug: 'zeitnah-academy',
+    logo: 'organizations/logos/zeitnah.png',
+    status: 'APPROVED',
+    verificationStatus: 'VERIFIED',
+  };
+
+  const companyB = {
+    _id: 'org-bbb-222',
+    name: 'ABC Technologies',
+    slug: 'abctech',
+    logo: 'organizations/logos/abctech.png',
+    status: 'APPROVED',
+    verificationStatus: 'VERIFIED',
+  };
+
+  const companyC = {
+    _id: 'org-ccc-333',
+    name: 'XYZ Solutions',
+    slug: 'xyzsolutions',
+    logo: 'organizations/logos/xyz.png',
+    status: 'APPROVED',
+    verificationStatus: 'VERIFIED',
+  };
+
+  function createMultiBusinessStateMachine({ user, organizations = [], initialStorage = {} }) {
+    const userId = user?.userId || user?._id || user?.id;
+    const storageKey = userId ? `zeitnah_active_profile_${userId}` : null;
+    let storage = { ...initialStorage };
+    let currentOrgs = [...organizations];
+
+    const getEligibleBusinesses = () =>
+      currentOrgs.map(normalizeBusinessProfile).filter(Boolean).filter(isBusinessProfileEligible);
+
+    let activeProfileType = 'personal';
+    let activeBusinessId = null;
+
+    // Hydrate from storage
+    if (storageKey && storage[storageKey]) {
+      let persisted = storage[storageKey];
+      if (typeof persisted === 'string') {
+        try {
+          persisted = JSON.parse(persisted);
+        } catch {
+          persisted = null;
+        }
+      }
+      if (persisted?.type === 'business' && persisted?.businessId) {
+        const match = findBusinessById(getEligibleBusinesses(), persisted.businessId);
+        if (match) {
+          activeProfileType = 'business';
+          activeBusinessId = match.id;
+        } else {
+          activeProfileType = 'personal';
+          activeBusinessId = null;
+        }
+      }
+    }
+
+    return {
+      get activeProfileType() {
+        return activeProfileType;
+      },
+      get activeProfileMode() {
+        return activeProfileType; // Backward-compat alias
+      },
+      get activeBusinessId() {
+        return activeBusinessId;
+      },
+      get isPersonalMode() {
+        return activeProfileType === 'personal';
+      },
+      get isBusinessMode() {
+        return activeProfileType === 'business';
+      },
+      get businesses() {
+        return getEligibleBusinesses();
+      },
+      get hasBusinessProfile() {
+        return getEligibleBusinesses().length > 0;
+      },
+      get business() {
+        if (activeProfileType !== 'business' || !activeBusinessId) return null;
+        return findBusinessById(getEligibleBusinesses(), activeBusinessId);
+      },
+      get businessIdentity() {
+        const biz = this.business;
+        return biz ? normalizeBusinessIdentity(biz) : null;
+      },
+      switchToBusiness(requestedId) {
+        const eligible = getEligibleBusinesses();
+        if (eligible.length === 0) return false;
+
+        let target = null;
+        if (requestedId) {
+          target = findBusinessById(eligible, requestedId);
+        } else {
+          target = (activeBusinessId && findBusinessById(eligible, activeBusinessId)) || eligible[0];
+        }
+        if (!target) return false;
+
+        activeProfileType = 'business';
+        activeBusinessId = target.id;
+        if (storageKey) {
+          storage[storageKey] = JSON.stringify({ type: 'business', businessId: target.id });
+        }
+        return true;
+      },
+      switchToPersonal() {
+        activeProfileType = 'personal';
+        activeBusinessId = null;
+        if (storageKey) {
+          storage[storageKey] = JSON.stringify({ type: 'personal', businessId: null });
+        }
+        return true;
+      },
+      switchProfile(profile) {
+        if (!profile || profile === 'personal' || profile?.type === 'personal') {
+          return this.switchToPersonal();
+        }
+        const bId = typeof profile === 'string' ? profile : (profile?.businessId || profile?.id);
+        return this.switchToBusiness(bId);
+      },
+      updateOrganizations(newOrgs) {
+        currentOrgs = [...newOrgs];
+        const eligible = getEligibleBusinesses();
+        if (activeProfileType === 'business') {
+          if (!activeBusinessId || !findBusinessById(eligible, activeBusinessId)) {
+            activeProfileType = 'personal';
+            activeBusinessId = null;
+            if (storageKey) {
+              storage[storageKey] = JSON.stringify({ type: 'personal', businessId: null });
+            }
+          }
+        }
+      },
+      onLogout() {
+        activeProfileType = 'personal';
+        activeBusinessId = null;
+        if (storageKey) {
+          delete storage[storageKey];
+        }
+      },
+      getStorage() {
+        return storage;
+      },
+    };
+  }
+
+  // ─── Utility Helpers ───
+  it('1. findBusinessById finds by valid _id or id and returns normalized business', () => {
+    const list = [companyA, companyB];
+    const found = findBusinessById(list, 'org-bbb-222');
+    assert.ok(found);
+    assert.equal(found.id, 'org-bbb-222');
+    assert.equal(found.name, 'ABC Technologies');
+
+    // Missing or invalid returns null
+    assert.equal(findBusinessById(list, 'nonexistent-id'), null);
+    assert.equal(findBusinessById(list, null), null);
+    assert.equal(findBusinessById([], 'org-aaa-111'), null);
+  });
+
+  it('2. isBusinessSelectable accurately determines eligibility with valid ID', () => {
+    assert.equal(isBusinessSelectable(companyA), true);
+    assert.equal(isBusinessSelectable({ ...companyA, status: 'SUSPENDED' }), false);
+    assert.equal(isBusinessSelectable({ ...companyA, status: 'REJECTED' }), false);
+    assert.equal(isBusinessSelectable({ name: 'No ID Org' }), false);
+    assert.equal(isBusinessSelectable(null), false);
+  });
+
+  it('3. getActiveBusiness retrieves exact business matching activeBusinessId', () => {
+    const list = [companyA, companyB, companyC];
+    const active = getActiveBusiness(list, 'org-ccc-333');
+    assert.ok(active);
+    assert.equal(active.id, 'org-ccc-333');
+    assert.equal(active.name, 'XYZ Solutions');
+
+    assert.equal(getActiveBusiness(list, null), null);
+    assert.equal(getActiveBusiness(list, 'unknown'), null);
+  });
+
+  // ─── Edge Case Matrix (Section 21) ───
+  it('CASE 1: No business profiles defaults to Personal only', () => {
+    const machine = createMultiBusinessStateMachine({ user: sampleUserA, organizations: [] });
+    assert.equal(machine.activeProfileType, 'personal');
+    assert.equal(machine.activeBusinessId, null);
+    assert.equal(machine.hasBusinessProfile, false);
+    assert.equal(machine.businesses.length, 0);
+    assert.equal(machine.switchToBusiness('org-aaa-111'), false);
+  });
+
+  it('CASE 2: One business has Personal + Business A available', () => {
+    const machine = createMultiBusinessStateMachine({ user: sampleUserA, organizations: [companyA] });
+    assert.equal(machine.businesses.length, 1);
+    assert.equal(machine.businesses[0].name, 'Zeitnah Academy');
+    assert.equal(machine.hasBusinessProfile, true);
+    assert.equal(machine.isPersonalMode, true);
+
+    const switched = machine.switchToBusiness(companyA._id);
+    assert.equal(switched, true);
+    assert.equal(machine.activeProfileType, 'business');
+    assert.equal(machine.activeBusinessId, 'org-aaa-111');
+    assert.equal(machine.business.name, 'Zeitnah Academy');
+  });
+
+  it('CASE 3: Two businesses has Personal + Business A + Business B available', () => {
+    const machine = createMultiBusinessStateMachine({ user: sampleUserA, organizations: [companyA, companyB] });
+    assert.equal(machine.businesses.length, 2);
+    assert.equal(machine.businesses[0].id, 'org-aaa-111');
+    assert.equal(machine.businesses[1].id, 'org-bbb-222');
+  });
+
+  it('CASE 4: Three or more businesses has all eligible businesses available', () => {
+    const machine = createMultiBusinessStateMachine({
+      user: sampleUserA,
+      organizations: [companyA, companyB, companyC],
+    });
+    assert.equal(machine.businesses.length, 3);
+    assert.deepEqual(machine.businesses.map((b) => b.id), [
+      'org-aaa-111',
+      'org-bbb-222',
+      'org-ccc-333',
+    ]);
+  });
+
+  it('CASE 5 & 6: Switch A → B and B → C updates activeBusinessId reliably', () => {
+    const machine = createMultiBusinessStateMachine({
+      user: sampleUserA,
+      organizations: [companyA, companyB, companyC],
+    });
+
+    // 1. Switch to Company A
+    machine.switchToBusiness(companyA._id);
+    assert.equal(machine.activeProfileType, 'business');
+    assert.equal(machine.activeBusinessId, 'org-aaa-111');
+    assert.equal(machine.business.name, 'Zeitnah Academy');
+
+    // 2. Switch A → B
+    machine.switchToBusiness(companyB._id);
+    assert.equal(machine.activeProfileType, 'business');
+    assert.equal(machine.activeBusinessId, 'org-bbb-222');
+    assert.equal(machine.business.name, 'ABC Technologies');
+    assert.equal(machine.businessIdentity.name, 'ABC Technologies');
+    assert.equal(machine.businessIdentity.username, 'abctech');
+
+    // 3. Switch B → C
+    machine.switchToBusiness(companyC._id);
+    assert.equal(machine.activeProfileType, 'business');
+    assert.equal(machine.activeBusinessId, 'org-ccc-333');
+    assert.equal(machine.business.name, 'XYZ Solutions');
+    assert.equal(machine.businessIdentity.name, 'XYZ Solutions');
+  });
+
+  it('CASE 7: Business → Personal restores activeProfileType = personal and activeBusinessId = null', () => {
+    const machine = createMultiBusinessStateMachine({
+      user: sampleUserA,
+      organizations: [companyA, companyB],
+    });
+    machine.switchToBusiness(companyB._id);
+    assert.equal(machine.activeBusinessId, 'org-bbb-222');
+
+    machine.switchToPersonal();
+    assert.equal(machine.activeProfileType, 'personal');
+    assert.equal(machine.activeBusinessId, null);
+    assert.equal(machine.business, null);
+    assert.equal(machine.businessIdentity, null);
+    assert.equal(machine.isPersonalMode, true);
+    assert.equal(machine.isBusinessMode, false);
+  });
+
+  it('CASE 8: Persist Business B restores Business B upon hydration', () => {
+    const storageKey = 'zeitnah_active_profile_user-aaa';
+    const machine = createMultiBusinessStateMachine({
+      user: sampleUserA,
+      organizations: [companyA, companyB],
+      initialStorage: {
+        [storageKey]: JSON.stringify({ type: 'business', businessId: 'org-bbb-222' }),
+      },
+    });
+
+    assert.equal(machine.activeProfileType, 'business');
+    assert.equal(machine.activeBusinessId, 'org-bbb-222');
+    assert.equal(machine.business.name, 'ABC Technologies');
+  });
+
+  it('CASE 9: Persist Business B falls back to Personal when Business B is no longer available', () => {
+    const storageKey = 'zeitnah_active_profile_user-aaa';
+    // Company B is no longer in the user's authorized organizations list (e.g. membership revoked)
+    const machine = createMultiBusinessStateMachine({
+      user: sampleUserA,
+      organizations: [companyA], // Only companyA remains
+      initialStorage: {
+        [storageKey]: JSON.stringify({ type: 'business', businessId: 'org-bbb-222' }),
+      },
+    });
+
+    // MUST NOT silently switch to companyA! Must fall back strictly to Personal!
+    assert.equal(machine.activeProfileType, 'personal');
+    assert.equal(machine.activeBusinessId, null);
+    assert.equal(machine.isPersonalMode, true);
+  });
+
+  it('CASE 10: Persist invalid/random business ID falls back to Personal', () => {
+    const storageKey = 'zeitnah_active_profile_user-aaa';
+    const machine = createMultiBusinessStateMachine({
+      user: sampleUserA,
+      organizations: [companyA, companyB],
+      initialStorage: {
+        [storageKey]: JSON.stringify({ type: 'business', businessId: 'attacker-random-id-999' }),
+      },
+    });
+
+    assert.equal(machine.activeProfileType, 'personal');
+    assert.equal(machine.activeBusinessId, null);
+  });
+
+  it('CASE 11: Logout resets state to personal, clears activeBusinessId and storage', () => {
+    const machine = createMultiBusinessStateMachine({
+      user: sampleUserA,
+      organizations: [companyA, companyB],
+    });
+    machine.switchToBusiness(companyB._id);
+    assert.equal(machine.activeBusinessId, 'org-bbb-222');
+
+    machine.onLogout();
+    assert.equal(machine.activeProfileType, 'personal');
+    assert.equal(machine.activeBusinessId, null);
+    const storage = machine.getStorage();
+    assert.equal(storage['zeitnah_active_profile_user-aaa'], undefined);
+  });
+
+  it('CASE 12: Business state is strictly isolated between User A and User B', () => {
+    const sharedStorage = {};
+    const machineA = createMultiBusinessStateMachine({
+      user: sampleUserA,
+      organizations: [companyA, companyB],
+      initialStorage: sharedStorage,
+    });
+    machineA.switchToBusiness(companyB._id);
+    const updatedStorageA = machineA.getStorage();
+
+    // User B logs in (has no businesses or different business)
+    const machineB = createMultiBusinessStateMachine({
+      user: sampleUserB,
+      organizations: [companyC],
+      initialStorage: updatedStorageA,
+    });
+
+    // User B must start in Personal mode and never inherit User A's active business!
+    assert.equal(machineB.activeProfileType, 'personal');
+    assert.equal(machineB.activeBusinessId, null);
+    assert.equal(updatedStorageA['zeitnah_active_profile_user-bbb'], undefined);
+  });
+
+  it('CASE 13: User with many businesses exposes all businesses without corruption', () => {
+    const tenBusinesses = Array.from({ length: 10 }, (_, i) => ({
+      _id: `org-test-${i + 1}`,
+      name: `Enterprise Company ${i + 1}`,
+      slug: `enterprise-${i + 1}`,
+      status: 'APPROVED',
+      verificationStatus: 'VERIFIED',
+    }));
+
+    const machine = createMultiBusinessStateMachine({
+      user: sampleUserA,
+      organizations: tenBusinesses,
+    });
+
+    assert.equal(machine.businesses.length, 10);
+    // User can select the 10th business directly
+    const switched = machine.switchToBusiness('org-test-10');
+    assert.equal(switched, true);
+    assert.equal(machine.activeBusinessId, 'org-test-10');
+    assert.equal(machine.business.name, 'Enterprise Company 10');
+  });
+
+  it('CASE 14: Backward compatibility — switchToBusiness with no arguments selects primary business', () => {
+    const machine = createMultiBusinessStateMachine({
+      user: sampleUserA,
+      organizations: [companyA, companyB],
+    });
+    const switched = machine.switchToBusiness();
+    assert.equal(switched, true);
+    assert.equal(machine.activeBusinessId, 'org-aaa-111');
+    assert.equal(machine.business.name, 'Zeitnah Academy');
+  });
+
+  it('CASE 15: Backward compatibility — activeProfileMode is an alias for activeProfileType', () => {
+    const machine = createMultiBusinessStateMachine({
+      user: sampleUserA,
+      organizations: [companyA],
+    });
+    assert.equal(machine.activeProfileMode, 'personal');
+    machine.switchToBusiness(companyA._id);
+    assert.equal(machine.activeProfileMode, 'business');
+    assert.equal(machine.activeProfileType, 'business');
+  });
+
+  it('CASE 16: switchProfile helper dispatches personal and business correctly', () => {
+    const machine = createMultiBusinessStateMachine({
+      user: sampleUserA,
+      organizations: [companyA, companyB],
+    });
+
+    // Switch to business B via object
+    machine.switchProfile({ type: 'business', businessId: 'org-bbb-222' });
+    assert.equal(machine.activeBusinessId, 'org-bbb-222');
+
+    // Switch to business A via string ID
+    machine.switchProfile('org-aaa-111');
+    assert.equal(machine.activeBusinessId, 'org-aaa-111');
+
+    // Switch to personal
+    machine.switchProfile('personal');
+    assert.equal(machine.activeProfileType, 'personal');
+    assert.equal(machine.activeBusinessId, null);
+  });
+
+  it('CASE 17: UI Contract — Profile switcher item state resolution for multi-business', () => {
+    const machine = createMultiBusinessStateMachine({
+      user: sampleUserA,
+      organizations: [companyA, companyB, companyC],
+    });
+
+    // Helper simulating ProfileSwitcher list generation
+    const generateSwitcherItems = (state) => [
+      {
+        id: 'personal',
+        type: 'personal',
+        label: sampleUserA.name,
+        subtitle: `@${sampleUserA.username}`,
+        isActive: state.isPersonalMode,
+      },
+      ...state.businesses.map((biz) => ({
+        id: biz.id,
+        type: 'business',
+        label: biz.name,
+        subtitle: `@${biz.slug}`,
+        isActive: state.isBusinessMode && state.activeBusinessId === biz.id,
+      })),
+    ];
+
+    // 1. In Personal mode
+    const itemsPersonal = generateSwitcherItems(machine);
+    assert.equal(itemsPersonal.length, 4);
+    assert.equal(itemsPersonal[0].isActive, true);
+    assert.equal(itemsPersonal[1].isActive, false);
+    assert.equal(itemsPersonal[2].isActive, false);
+    assert.equal(itemsPersonal[3].isActive, false);
+
+    // 2. In Company B mode
+    machine.switchToBusiness(companyB._id);
+    const itemsB = generateSwitcherItems(machine);
+    assert.equal(itemsB[0].isActive, false);
+    assert.equal(itemsB[1].isActive, false);
+    assert.equal(itemsB[2].isActive, true); // Company B is active
+    assert.equal(itemsB[3].isActive, false);
+
+    // 3. In Company C mode
+    machine.switchToBusiness(companyC._id);
+    const itemsC = generateSwitcherItems(machine);
+    assert.equal(itemsC[0].isActive, false);
+    assert.equal(itemsC[1].isActive, false);
+    assert.equal(itemsC[2].isActive, false);
+    assert.equal(itemsC[3].isActive, true); // Company C is active
   });
 });

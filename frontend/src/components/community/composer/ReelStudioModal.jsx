@@ -29,9 +29,11 @@ import {
   Layers,
 } from 'lucide-react';
 import { AuthContext } from '../../../context/AuthContext';
+import { useActiveProfile } from '../../../context/ActiveProfileContext';
 import { getUploadUrl } from '../../../utils/courseUi';
 import { useCreatePost } from '../../../hooks/useCommunity';
 import { communityApi } from '../../../services/communityApi';
+import BusinessLogo from '../../business/BusinessLogo';
 import toast from 'react-hot-toast';
 
 import ReelTimeline from './ReelTimeline';
@@ -70,9 +72,39 @@ const REEL_DRAFT_KEY = 'zeitnah_reel_editor_draft_v1';
  * - Duplicate submission prevention with idempotencyKeyRef
  * - Full memory safety (URL.revokeObjectURL on replace/unmount)
  */
-export default function ReelStudioModal({ isOpen, onClose, onSuccess }) {
+export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishingContext: propPublishingContext }) {
   const { user } = useContext(AuthContext);
+  const activeProfile = useActiveProfile?.() || {};
   const shouldReduceMotion = useReducedMotion();
+
+  // Capture publishing identity when Reel Studio session begins to prevent in-flight profile mutation
+  const [capturedPublishingContext, setCapturedPublishingContext] = useState(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (propPublishingContext) {
+        setCapturedPublishingContext(propPublishingContext);
+      } else {
+        const isBiz = activeProfile.activeProfileType === 'business' && Boolean(activeProfile.activeBusinessId);
+        setCapturedPublishingContext(
+          isBiz
+            ? {
+                profileType: 'business',
+                organizationId: activeProfile.activeBusinessId,
+                organization: activeProfile.business,
+              }
+            : {
+                profileType: 'personal',
+                organizationId: null,
+                organization: null,
+              }
+        );
+      }
+    }
+  }, [isOpen, propPublishingContext, activeProfile.activeProfileType, activeProfile.activeBusinessId, activeProfile.business]);
+
+  const isBusinessMode = capturedPublishingContext?.profileType === 'business' && Boolean(capturedPublishingContext?.organizationId);
+  const currentBusiness = capturedPublishingContext?.organization;
 
   // Processing-Aware State Machine:
   // 'SELECT' | 'READY' | 'UPLOADING' | 'UPLOADED' | 'VALIDATING' | 'READY_TO_PUBLISH' | 'PUBLISHING' | 'PUBLISHED' | 'ERROR'
@@ -1084,6 +1116,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess }) {
         tags,
         audience,
         idempotencyKey: idempotencyKeyRef.current,
+        organizationId: capturedPublishingContext?.organizationId || undefined,
       });
 
       setUploadProgress(100);
@@ -1558,21 +1591,47 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess }) {
               <div className="w-full lg:w-[380px] border-t lg:border-t-0 lg:border-l border-white/[0.08] bg-[#09111F]/50 p-4 sm:p-6 space-y-5 overflow-y-auto">
                 {/* Author Info */}
                 <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#0E1726] border border-white/[0.1] overflow-hidden flex items-center justify-center text-xs font-bold text-brand-mint shrink-0">
-                      {avatarUrl ? (
-                        <img src={avatarUrl} alt={user?.name || 'You'} className="w-full h-full object-cover" />
-                      ) : (
-                        userInitials
-                      )}
+                  {isBusinessMode ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#0E1726] border border-white/[0.1] overflow-hidden flex items-center justify-center shrink-0">
+                        <BusinessLogo
+                          logo={currentBusiness?.logo}
+                          name={currentBusiness?.name || 'Company'}
+                          size="md"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs sm:text-sm font-bold text-white">
+                            {currentBusiness?.name || 'Company'}
+                          </p>
+                          <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-brand-yellow/15 text-brand-yellow border border-brand-yellow/30">
+                            Company Reel
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-text-muted">
+                          {currentBusiness?.slug ? `@${currentBusiness.slug.replace(/^@/, '')}` : 'Business Profile'} · <span className="text-brand-yellow font-medium">Reel</span>
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs sm:text-sm font-bold text-white">{user?.name || 'You'}</p>
-                      <p className="text-[11px] text-text-muted">
-                        {user?.username ? `@${user.username}` : 'Verified Member'} · <span className="text-brand-yellow font-medium">Reel</span>
-                      </p>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[#0E1726] border border-white/[0.1] overflow-hidden flex items-center justify-center text-xs font-bold text-brand-mint shrink-0">
+                        {avatarUrl ? (
+                          <img src={avatarUrl} alt={user?.name || 'You'} className="w-full h-full object-cover" />
+                        ) : (
+                          userInitials
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs sm:text-sm font-bold text-white">{user?.name || 'You'}</p>
+                        <p className="text-[11px] text-text-muted">
+                          {user?.username ? `@${user.username}` : 'Verified Member'} · <span className="text-brand-yellow font-medium">Reel</span>
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <PostAudienceSelector audience={audience} onChange={setAudience} />
                 </div>

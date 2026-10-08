@@ -2,20 +2,28 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 import useBusinessProfile from '../hooks/useBusinessProfile';
 import { AuthContext } from './AuthContext';
 import storage from '../services/storage';
+import {
+  findBusinessById,
+  isBusinessProfileEligible,
+  normalizeBusinessIdentity,
+} from '../utils/businessProfile';
 
 export const ActiveProfileContext = createContext(null);
 
-const STORAGE_KEY_PREFIX = 'zeitnah_active_profile_mode_';
+const STORAGE_KEY_PREFIX = 'zeitnah_active_profile_';
+const LEGACY_STORAGE_KEY_PREFIX = 'zeitnah_active_profile_mode_';
 
 /**
- * ActiveProfileProvider — Phase 2 Personal ↔ Business Profile Switcher Context
+ * ActiveProfileProvider — Phase 2.5 Multi-Business Profile Active Context
  *
  * Requirements:
- * 1. Default activeProfileMode is strictly 'personal'.
- * 2. Allows safe switching between 'personal' and 'business' identities for authenticated users with eligible businesses.
- * 3. Never permits switching to business if no eligible business exists or if business is suspended/rejected.
- * 4. Automatically falls back to 'personal' if business becomes unavailable or on logout.
- * 5. Reuses Phase 1 useBusinessProfile() and React Query cache without creating new requests.
+ * 1. Exactly ONE active profile at a time (Personal OR specific Business).
+ * 2. Active profile state represented by activeProfileType ('personal' | 'business')
+ *    and activeBusinessId (null | string).
+ * 3. Supports explicit switching between Personal and any eligible business owned/managed by user.
+ * 4. Only organizations verified as eligible and present in authorized endpoint can become active.
+ * 5. Automatic safety fallback to Personal if active business is suspended, rejected, or removed.
+ * 6. User-namespaced persistence ensures no identity leaks between user sessions.
  */
 export function ActiveProfileProvider({ children }) {
   const auth = useContext(AuthContext);
@@ -23,135 +31,252 @@ export function ActiveProfileProvider({ children }) {
   const currentUserId = user?.id || user?.userId || user?._id;
 
   const {
-    hasBusiness,
-    isEligible,
-    business,
-    businessIdentity,
-    businesses,
+    businesses: allNormalizedBusinesses,
+    primaryBusiness,
     isLoading,
     isError,
     error,
     refetch,
   } = useBusinessProfile();
 
+  // All eligible businesses available for profile switching
+  const businesses = useMemo(() => {
+    if (!Array.isArray(allNormalizedBusinesses)) return [];
+    return allNormalizedBusinesses.filter(isBusinessProfileEligible);
+  }, [allNormalizedBusinesses]);
+
+  const hasBusinessProfile = businesses.length > 0;
+
   const storageKey = currentUserId ? `${STORAGE_KEY_PREFIX}${currentUserId}` : null;
+  const legacyStorageKey = currentUserId ? `${LEGACY_STORAGE_KEY_PREFIX}${currentUserId}` : null;
 
-  // Initial state: default strictly to 'personal'
-  const [activeProfileMode, setActiveProfileMode] = useState('personal');
+  // Active state: exactly one profile active
+  const [activeProfileType, setActiveProfileType] = useState('personal');
+  const [activeBusinessId, setActiveBusinessId] = useState(null);
 
-  // Sync / hydrate from storage on mount or when user changes
+  // Sync / hydrate from storage on mount or when user/businesses change
   useEffect(() => {
     if (!currentUserId || !storageKey) {
-      setActiveProfileMode('personal');
+      setActiveProfileType('personal');
+      setActiveBusinessId(null);
       return;
     }
 
     try {
-      const persisted = storage.getItem(storageKey);
-      if (persisted === 'business' && hasBusiness && isEligible && business) {
-        setActiveProfileMode('business');
+      let persisted = storage.getItem(storageKey);
+
+      // Fallback check for legacy storage key from Phase 2
+      if (!persisted && legacyStorageKey) {
+        const legacyVal = storage.getItem(legacyStorageKey);
+        if (legacyVal === 'business' && hasBusinessProfile) {
+          persisted = { type: 'business', businessId: businesses[0]?.id };
+        }
+      }
+
+      if (typeof persisted === 'string') {
+        try {
+          persisted = JSON.parse(persisted);
+        } catch {
+          // If stored as plain string 'business' or 'personal'
+          if (persisted === 'business' && hasBusinessProfile) {
+            persisted = { type: 'business', businessId: businesses[0]?.id };
+          } else {
+            persisted = { type: 'personal', businessId: null };
+          }
+        }
+      }
+
+      if (persisted?.type === 'business' && persisted?.businessId) {
+        const matchingBiz = findBusinessById(businesses, persisted.businessId);
+        if (matchingBiz) {
+          setActiveProfileType('business');
+          setActiveBusinessId(matchingBiz.id);
+          return;
+        }
+        // If persisted businessId does NOT match any eligible business, fall back safely to personal!
+        setActiveProfileType('personal');
+        setActiveBusinessId(null);
+        try {
+          storage.setItem(storageKey, JSON.stringify({ type: 'personal', businessId: null }));
+        } catch {}
       } else {
-        setActiveProfileMode('personal');
+        setActiveProfileType('personal');
+        setActiveBusinessId(null);
       }
     } catch {
-      setActiveProfileMode('personal');
+      setActiveProfileType('personal');
+      setActiveBusinessId(null);
     }
-  }, [currentUserId, storageKey, hasBusiness, isEligible, business]);
+  }, [currentUserId, storageKey, legacyStorageKey, businesses, hasBusinessProfile]);
 
-  // Automatic safety fallback: If business is no longer eligible, revert to personal
+  // Automatic safety fallback: If currently in business mode, but active business is no longer available/eligible
   useEffect(() => {
-    if (activeProfileMode === 'business') {
-      if (!isLoading && (!hasBusiness || !isEligible || !business)) {
-        setActiveProfileMode('personal');
-        if (storageKey) {
-          try {
-            storage.setItem(storageKey, 'personal');
-          } catch {}
+    if (activeProfileType === 'business') {
+      if (!isLoading) {
+        if (!activeBusinessId || !findBusinessById(businesses, activeBusinessId)) {
+          setActiveProfileType('personal');
+          setActiveBusinessId(null);
+          if (storageKey) {
+            try {
+              storage.setItem(storageKey, JSON.stringify({ type: 'personal', businessId: null }));
+            } catch {}
+          }
         }
       }
     }
-  }, [activeProfileMode, hasBusiness, isEligible, business, isLoading, storageKey]);
+  }, [activeProfileType, activeBusinessId, businesses, isLoading, storageKey]);
 
   // Handle cross-tab or global logout cleanup
   useEffect(() => {
     const handleLogout = () => {
-      setActiveProfileMode('personal');
+      setActiveProfileType('personal');
+      setActiveBusinessId(null);
       if (storageKey) {
         try {
           storage.removeItem(storageKey);
+        } catch {}
+      }
+      if (legacyStorageKey) {
+        try {
+          storage.removeItem(legacyStorageKey);
         } catch {}
       }
     };
 
     window.addEventListener('zeitnah:auth:logout', handleLogout);
     return () => window.removeEventListener('zeitnah:auth:logout', handleLogout);
-  }, [storageKey]);
+  }, [storageKey, legacyStorageKey]);
 
-  // Switch to business identity
-  const switchToBusiness = useCallback(() => {
-    if (!hasBusiness || !isEligible || !business) {
-      return false;
-    }
-    setActiveProfileMode('business');
-    if (storageKey) {
-      try {
-        storage.setItem(storageKey, 'business');
-      } catch {}
-    }
-    return true;
-  }, [hasBusiness, isEligible, business, storageKey]);
+  // Switch to a specific business by ID (or primary if not specified)
+  const switchToBusiness = useCallback(
+    (requestedBusinessId) => {
+      if (!hasBusinessProfile || businesses.length === 0) {
+        return false;
+      }
+
+      // If specific ID requested, validate it exists in eligible businesses
+      let targetBiz = null;
+      if (requestedBusinessId) {
+        targetBiz = findBusinessById(businesses, requestedBusinessId);
+      } else {
+        // Fallback for backward compatibility (pick currently selected or primary)
+        targetBiz = (activeBusinessId && findBusinessById(businesses, activeBusinessId)) || businesses[0];
+      }
+
+      if (!targetBiz) {
+        return false;
+      }
+
+      setActiveProfileType('business');
+      setActiveBusinessId(targetBiz.id);
+
+      if (storageKey) {
+        try {
+          storage.setItem(
+            storageKey,
+            JSON.stringify({ type: 'business', businessId: targetBiz.id })
+          );
+        } catch {}
+      }
+      return true;
+    },
+    [businesses, hasBusinessProfile, activeBusinessId, storageKey]
+  );
 
   // Switch to personal identity
   const switchToPersonal = useCallback(() => {
-    setActiveProfileMode('personal');
+    setActiveProfileType('personal');
+    setActiveBusinessId(null);
+
     if (storageKey) {
       try {
-        storage.setItem(storageKey, 'personal');
+        storage.setItem(
+          storageKey,
+          JSON.stringify({ type: 'personal', businessId: null })
+        );
       } catch {}
     }
+    return true;
   }, [storageKey]);
+
+  // Generalized switchProfile
+  const switchProfile = useCallback(
+    (profile) => {
+      if (!profile || profile === 'personal' || profile?.type === 'personal') {
+        return switchToPersonal();
+      }
+      const bId = typeof profile === 'string' ? profile : (profile?.businessId || profile?.id);
+      return switchToBusiness(bId);
+    },
+    [switchToPersonal, switchToBusiness]
+  );
 
   // Toggle helper
   const toggleProfileMode = useCallback(() => {
-    if (activeProfileMode === 'personal') {
+    if (activeProfileType === 'personal') {
       return switchToBusiness();
     } else {
-      switchToPersonal();
-      return true;
+      return switchToPersonal();
     }
-  }, [activeProfileMode, switchToBusiness, switchToPersonal]);
+  }, [activeProfileType, switchToBusiness, switchToPersonal]);
 
-  const hasBusinessProfile = Boolean(hasBusiness && isEligible && business);
+  // Currently active business object
+  const activeBusiness = useMemo(() => {
+    if (activeProfileType !== 'business' || !activeBusinessId) {
+      return null;
+    }
+    return findBusinessById(businesses, activeBusinessId);
+  }, [activeProfileType, activeBusinessId, businesses]);
+
+  // Currently active business identity
+  const businessIdentity = useMemo(() => {
+    if (!activeBusiness) return null;
+    return normalizeBusinessIdentity(activeBusiness);
+  }, [activeBusiness]);
 
   const contextValue = useMemo(
     () => ({
-      activeProfileMode,
-      isPersonalMode: activeProfileMode === 'personal',
-      isBusinessMode: activeProfileMode === 'business',
-      hasBusinessProfile,
-      hasBusiness,
-      isEligible,
-      business,
+      // Profile Model
+      activeProfileType,
+      activeProfileMode: activeProfileType, // Backward-compat alias
+      activeBusinessId,
+      isPersonalMode: activeProfileType === 'personal',
+      isBusinessMode: activeProfileType === 'business',
+
+      // Business Entities
+      business: activeBusiness,
       businessIdentity,
-      businesses,
+      businesses, // all eligible businesses
+      allBusinesses: allNormalizedBusinesses || [],
+      primaryBusiness: primaryBusiness || businesses[0] || null,
+      hasBusinessProfile,
+      hasBusiness: hasBusinessProfile, // Backward-compat alias
+      isEligible: Boolean(activeBusiness && isBusinessProfileEligible(activeBusiness)),
+
+      // Switching Actions
       switchToPersonal,
       switchToBusiness,
+      switchProfile,
       toggleProfileMode,
+
+      // Async Query State
       isLoading,
       isError,
       error,
       refetchBusiness: refetch,
     }),
     [
-      activeProfileMode,
-      hasBusinessProfile,
-      hasBusiness,
-      isEligible,
-      business,
+      activeProfileType,
+      activeBusinessId,
+      activeBusiness,
       businessIdentity,
       businesses,
+      allNormalizedBusinesses,
+      primaryBusiness,
+      hasBusinessProfile,
       switchToPersonal,
       switchToBusiness,
+      switchProfile,
       toggleProfileMode,
       isLoading,
       isError,
@@ -175,7 +300,9 @@ export function useActiveProfile() {
   if (!context) {
     // Graceful fallback for isolated test environments
     return {
+      activeProfileType: 'personal',
       activeProfileMode: 'personal',
+      activeBusinessId: null,
       isPersonalMode: true,
       isBusinessMode: false,
       hasBusinessProfile: false,
@@ -184,8 +311,11 @@ export function useActiveProfile() {
       business: null,
       businessIdentity: null,
       businesses: [],
-      switchToPersonal: () => {},
+      allBusinesses: [],
+      primaryBusiness: null,
+      switchToPersonal: () => true,
       switchToBusiness: () => false,
+      switchProfile: () => false,
       toggleProfileMode: () => false,
       isLoading: false,
       isError: false,

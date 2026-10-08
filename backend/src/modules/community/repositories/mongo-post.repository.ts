@@ -44,8 +44,9 @@ export class PostRepository extends BaseRepository<PostDocument> {
     filter?: string;
     search?: string;
     tag?: string;
+    organizationId?: string;
   }): Promise<{ items: any[]; nextCursor: string | null }> {
-    const { userId, courseIds = [], limit = 10, cursor, filter, search, tag } = params;
+    const { userId, courseIds = [], limit = 10, cursor, filter, search, tag, organizationId } = params;
 
     const matchStage: any = {
       isDeleted: false,
@@ -162,6 +163,40 @@ export class PostRepository extends BaseRepository<PostDocument> {
       }
     }
 
+    // Scope feed by Organization ID (Phase 3 Company Feed)
+    if (organizationId && organizationId.trim()) {
+      const cleanOrgId = organizationId.trim();
+      const orgMatches: any[] = [cleanOrgId];
+      if (Types.ObjectId.isValid(cleanOrgId)) {
+        orgMatches.push(new Types.ObjectId(cleanOrgId));
+      }
+      const orgCondition = { organizationId: { $in: orgMatches } };
+      if (matchStage.$and) {
+        matchStage.$and.push(orgCondition);
+      } else if (matchStage.$or) {
+        matchStage.$and = [{ $or: matchStage.$or }, orgCondition];
+        delete matchStage.$or;
+      } else {
+        matchStage.organizationId = { $in: orgMatches };
+      }
+    } else {
+      // Personal Feed: Strictly exclude business posts to prevent mixing
+      const personalCondition = {
+        $or: [
+          { organizationId: { $exists: false } },
+          { organizationId: null },
+        ],
+      };
+      if (matchStage.$and) {
+        matchStage.$and.push(personalCondition);
+      } else if (matchStage.$or) {
+        matchStage.$and = [{ $or: matchStage.$or }, personalCondition];
+        delete matchStage.$or;
+      } else {
+        matchStage.$and = [personalCondition];
+      }
+    }
+
     const isTrending = filter === 'trending' || filter === 'reels_trending';
 
     if (!isTrending && cursor) {
@@ -241,6 +276,61 @@ export class PostRepository extends BaseRepository<PostDocument> {
       {
         $project: {
           authorList: 0,
+        },
+      },
+
+      // 1.5. Populate Organization from `organizations` collection safely (Phase 3 Company Feed)
+      {
+        $lookup: {
+          from: 'organizations',
+          let: { orgStr: '$organizationId' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $ne: ['$$orgStr', null] },
+                    {
+                      $or: [
+                        { $eq: ['$_id', { $convert: { input: '$$orgStr', to: 'objectId', onError: null, onNull: null } }] },
+                        { $eq: [{ $toString: '$_id' }, '$$orgStr'] },
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+            {
+              $project: {
+                _id: 1,
+                name: 1,
+                slug: 1,
+                logo: 1,
+                type: 1,
+                industry: 1,
+                status: 1,
+                verificationStatus: 1,
+                visibility: 1,
+              },
+            },
+          ],
+          as: 'orgList',
+        },
+      },
+      {
+        $addFields: {
+          organization: {
+            $cond: {
+              if: { $and: ['$organizationId', { $gt: [{ $size: '$orgList' }, 0] }] },
+              then: { $arrayElemAt: ['$orgList', 0] },
+              else: null,
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          orgList: 0,
         },
       },
 
@@ -785,6 +875,60 @@ export class PostRepository extends BaseRepository<PostDocument> {
       },
       {
         $project: { authorList: 0 },
+      },
+      // 1.5. Populate Organization from `organizations` collection safely (Phase 3 Company Feed)
+      {
+        $lookup: {
+          from: 'organizations',
+          let: { orgStr: '$organizationId' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $ne: ['$$orgStr', null] },
+                    {
+                      $or: [
+                        { $eq: ['$_id', { $convert: { input: '$$orgStr', to: 'objectId', onError: null, onNull: null } }] },
+                        { $eq: [{ $toString: '$_id' }, '$$orgStr'] },
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+            {
+              $project: {
+                _id: 1,
+                name: 1,
+                slug: 1,
+                logo: 1,
+                type: 1,
+                industry: 1,
+                status: 1,
+                verificationStatus: 1,
+                visibility: 1,
+              },
+            },
+          ],
+          as: 'orgList',
+        },
+      },
+      {
+        $addFields: {
+          organization: {
+            $cond: {
+              if: { $and: ['$organizationId', { $gt: [{ $size: '$orgList' }, 0] }] },
+              then: { $arrayElemAt: ['$orgList', 0] },
+              else: null,
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          orgList: 0,
+        },
       },
       // 2. Populate Media from community_post_media if embedded media is empty
       {

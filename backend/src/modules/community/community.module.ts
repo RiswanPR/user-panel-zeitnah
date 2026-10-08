@@ -137,11 +137,13 @@ import { CommunityStickerService } from './services/community-sticker.service';
 // Gateways
 import { CommunityGateway } from './gateways/community.gateway';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { OrganizationsModule } from '../organizations/organizations.module';
 import { User, UserSchema } from '../auth/schemas/user.schema';
 
 @Module({
   imports: [
     NotificationsModule,
+    OrganizationsModule,
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Post.name, schema: PostSchema },

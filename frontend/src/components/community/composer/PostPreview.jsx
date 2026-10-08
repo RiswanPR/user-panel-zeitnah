@@ -47,6 +47,8 @@ function renderPreviewText(text) {
  * Reuses the visual grammar of Community PostCard (Author, Content, Media/Carousel, Poll, Engagement)
  * without triggering real API mutations, network metrics, or view tracking.
  */
+import BusinessLogo from '../../business/BusinessLogo';
+
 export default function PostPreview({
   user,
   content,
@@ -58,12 +60,19 @@ export default function PostPreview({
   pollDurationDays,
   aspectRatio,
   rotation,
+  publishingContext,
+  organization,
 }) {
   const [activeMediaIdx, setActiveMediaIdx] = useState(0);
   const [selectedPollOption, setSelectedPollOption] = useState(null);
 
-  const authorName = user?.name || 'You';
-  const authorHandle = user?.username ? `@${user.username}` : '@creator';
+  const isBusiness = Boolean(organization || publishingContext?.profileType === 'business');
+  const business = organization || publishingContext?.organization;
+
+  const authorName = isBusiness ? (business?.name || 'Company') : (user?.name || 'You');
+  const authorHandle = isBusiness
+    ? (business?.slug ? `@${business.slug.replace(/^@/, '')}` : '@business')
+    : (user?.username ? `@${user.username}` : '@creator');
   const avatarUrl = user?.avatar ? getUploadUrl(user.avatar) : null;
   const userInitials = authorName
     .split(' ')
@@ -83,16 +92,32 @@ export default function PostPreview({
       {/* 1. AUTHOR HEADER */}
       <div className="flex items-center justify-between p-4 border-b border-white/[0.06]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/[0.1] overflow-hidden flex items-center justify-center font-bold text-xs text-brand-mint shrink-0">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={authorName} className="w-full h-full object-cover" />
-            ) : (
-              userInitials
-            )}
-          </div>
+          {isBusiness ? (
+            <div className="w-10 h-10 rounded-xl bg-[#0E1726] border border-white/[0.1] overflow-hidden flex items-center justify-center shrink-0">
+              <BusinessLogo
+                logo={business?.logo}
+                name={authorName}
+                size="md"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/[0.1] overflow-hidden flex items-center justify-center font-bold text-xs text-brand-mint shrink-0">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={authorName} className="w-full h-full object-cover" />
+              ) : (
+                userInitials
+              )}
+            </div>
+          )}
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs sm:text-sm font-bold text-white">{authorName}</span>
+              {isBusiness && (
+                <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-brand-mint/15 text-brand-mint border border-brand-mint/30">
+                  Company
+                </span>
+              )}
               <span className="text-[10px] text-brand-mint px-1.5 py-0.2 rounded bg-brand-mint/10 border border-brand-mint/20 font-medium">
                 {audience || 'PUBLIC'}
               </span>

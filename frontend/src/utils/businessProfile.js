@@ -149,3 +149,56 @@ export function getPrimaryBusiness(organizations) {
 
   return null;
 }
+
+/**
+ * Safely looks up a business by ID from a list of normalized businesses or organizations.
+ *
+ * @param {Array<object>|null|undefined} businesses
+ * @param {string|number|null|undefined} businessId
+ * @returns {object|null}
+ */
+export function findBusinessById(businesses, businessId) {
+  if (!Array.isArray(businesses) || !businessId) {
+    return null;
+  }
+  const targetId = String(businessId).trim();
+  if (!targetId) return null;
+
+  for (const item of businesses) {
+    if (!item) continue;
+    const itemId = String(item._id || item.id || '');
+    if (itemId === targetId) {
+      return normalizeBusinessProfile(item);
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Validates if an organization is selectable as an active business profile.
+ * An organization is selectable if it is eligible and has a non-empty ID.
+ *
+ * @param {object|null|undefined} organization
+ * @returns {boolean}
+ */
+export function isBusinessSelectable(organization) {
+  if (!organization || typeof organization !== 'object') {
+    return false;
+  }
+  const rawId = organization._id || organization.id;
+  if (!rawId) return false;
+  return isBusinessProfileEligible(organization);
+}
+
+/**
+ * Resolves the currently active business profile from the eligible businesses list and active business ID.
+ *
+ * @param {Array<object>|null|undefined} businesses
+ * @param {string|null|undefined} activeBusinessId
+ * @returns {object|null}
+ */
+export function getActiveBusiness(businesses, activeBusinessId) {
+  if (!activeBusinessId) return null;
+  return findBusinessById(businesses, activeBusinessId);
+}

@@ -7,12 +7,14 @@ import {
   Optional,
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { Types } from 'mongoose';
 import { StoryRepository } from '../repositories/mongo-story.repository';
 import { CreateStoryDto } from '../dto/story.dto';
 import { CommunityGateway } from '../gateways/community.gateway';
 import { SignedUrlService } from '../../../common/aws/signed-url.service';
 import { CommunityS3Service } from './community-s3.service';
 import { CommunityIdempotencyService } from './community-idempotency.service';
+import { OrganizationsService } from '../../organizations/organizations.service';
 
 @Injectable()
 export class StoryService {
@@ -25,6 +27,7 @@ export class StoryService {
     @Optional() private readonly signedUrlService?: SignedUrlService,
     @Optional() private readonly communityS3Service?: CommunityS3Service,
     @Optional() private readonly communityIdempotencyService?: CommunityIdempotencyService,
+    @Optional() private readonly organizationsService?: OrganizationsService,
   ) {}
 
   private async resolveStoryMedia(
@@ -151,6 +154,14 @@ export class StoryService {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 24); // 24 hours from now
 
+      if (data.organizationId) {
+        if (this.organizationsService) {
+          await this.organizationsService.validateCompanyPublishingAccess(userId, data.organizationId);
+        } else if (!Types.ObjectId.isValid(data.organizationId)) {
+          throw new BadRequestException('Invalid organization ID');
+        }
+      }
+
       const createdStory = await this.storyRepository.create({
         authorId: userId,
         type: data.type,
@@ -159,6 +170,7 @@ export class StoryService {
         link: data.link,
         courseTag: data.courseTag,
         expiresAt,
+        organizationId: data.organizationId,
       });
 
       if (cleanMediaUrl) {

@@ -5,6 +5,8 @@ import { MoreHorizontal, Flag, Trash2, Check } from 'lucide-react';
 import Badge from '../../../ui/Badge';
 import { getCanonicalProfileUrl } from '../../../../utils/roleNavigation';
 import { formatRelativeTime } from '../../../../utils/communityFormatters';
+import BusinessLogo from '../../../business/BusinessLogo';
+import { getBusinessProfileUrl } from '../../../../utils/businessProfile';
 
 /**
  * PostHeader — Polished author identity and post options dropdown
@@ -22,10 +24,19 @@ export default function PostHeader({
   const [imgError, setImgError] = useState(false);
   const menuRef = useRef(null);
 
-  const authorName = author?.name || author?.displayName || 'Zeitnah Member';
-  const authorProfileUrl = getCanonicalProfileUrl(author);
-  const authorAvatar = author?.avatar;
-  const authorUsername = author?.username ? `@${author.username.replace(/^@/, '')}` : null;
+  const isBusinessPost = Boolean(post?.organization);
+  const org = post?.organization;
+
+  const authorName = isBusinessPost
+    ? (org?.name || 'Company')
+    : (author?.name || author?.displayName || 'Zeitnah Member');
+  const authorProfileUrl = isBusinessPost
+    ? getBusinessProfileUrl(org)
+    : getCanonicalProfileUrl(author);
+  const authorAvatar = isBusinessPost ? (org?.logo || null) : author?.avatar;
+  const authorUsername = isBusinessPost
+    ? (org?.slug ? `@${org.slug.replace(/^@/, '')}` : null)
+    : (author?.username ? `@${author.username.replace(/^@/, '')}` : null);
 
   const authorInitials = authorName
     .split(' ')
@@ -68,7 +79,14 @@ export default function PostHeader({
           className="w-9 h-9 sm:w-10 sm:h-10 rounded-full shrink-0 overflow-hidden ring-1 ring-white/10 hover:ring-brand-mint/40 bg-[#0E1726] flex items-center justify-center transition-all duration-200"
           aria-label={`View ${authorName}'s profile`}
         >
-          {authorAvatar && !imgError ? (
+          {isBusinessPost ? (
+            <BusinessLogo
+              logo={org?.logo}
+              name={authorName}
+              size="sm"
+              className="w-full h-full rounded-full"
+            />
+          ) : authorAvatar && !imgError ? (
             <img
               src={authorAvatar}
               alt={authorName}
@@ -92,11 +110,15 @@ export default function PostHeader({
               {authorName}
             </Link>
 
-            {author?.role && author.role.toLowerCase() !== 'student' && (
+            {isBusinessPost ? (
+              <Badge variant="mint" size="sm" className="py-0 px-1.5 h-3.5 text-[9px] font-semibold tracking-wide">
+                Company
+              </Badge>
+            ) : author?.role && author.role.toLowerCase() !== 'student' ? (
               <Badge variant="mint" size="sm" className="py-0 px-1.5 h-3.5 text-[9px] capitalize font-medium">
                 {author.role}
               </Badge>
-            )}
+            ) : null}
 
             {post?.acceptedAnswerId && (
               <div className="bg-brand-mint/15 text-brand-mint px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider flex items-center gap-0.5 border border-brand-mint/20">

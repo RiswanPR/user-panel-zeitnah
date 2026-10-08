@@ -5,10 +5,25 @@ import toast from 'react-hot-toast';
 
 // ── FEED & POSTS ──
 
-export function useCommunityFeed({ filter = 'all' } = {}) {
+export function useCommunityFeed({
+  filter = 'all',
+  activeProfileType = 'personal',
+  activeBusinessId = null,
+} = {}) {
+  const isBusiness = activeProfileType === 'business' && Boolean(activeBusinessId);
+  const queryKey = isBusiness
+    ? ['community', 'feed', 'business', activeBusinessId, { filter }]
+    : ['community', 'feed', 'personal', { filter }];
+
   return useInfiniteQuery({
-    queryKey: ['community', 'feed', { filter }],
-    queryFn: ({ pageParam = '' }) => communityApi.getFeed({ cursor: pageParam, limit: 10, filter }),
+    queryKey,
+    queryFn: ({ pageParam = '' }) =>
+      communityApi.getFeed({
+        cursor: pageParam,
+        limit: 10,
+        filter,
+        organizationId: isBusiness ? activeBusinessId : undefined,
+      }),
     getNextPageParam: (lastPage) => lastPage?.nextCursor || undefined,
     initialPageParam: '',
     staleTime: 1000 * 60 * 2, // 2 min cache freshness prevents tab-switch refetches

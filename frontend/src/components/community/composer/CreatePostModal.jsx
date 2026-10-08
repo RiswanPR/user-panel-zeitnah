@@ -29,9 +29,11 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { AuthContext } from '../../../context/AuthContext';
+import { useActiveProfile } from '../../../context/ActiveProfileContext';
 import { getUploadUrl } from '../../../utils/courseUi';
 import { useCreatePost } from '../../../hooks/useCommunity';
 import { communityApi } from '../../../services/communityApi';
+import BusinessLogo from '../../business/BusinessLogo';
 import toast from 'react-hot-toast';
 import BrandAmbientShape from '../ui/BrandAmbientShape';
 
@@ -69,9 +71,39 @@ const EMOJIS = ['🚀', '💡', '🏗️', '📐', '👏', '🔥', '✅', '✨']
  * - Reliable local draft autosave & restore safeguards
  * - Explicit publishing state machine with AbortController cancellation & S3 cleanup on discard
  */
-export default function CreatePostModal({ isOpen, onClose }) {
+export default function CreatePostModal({ isOpen, onClose, publishingContext: propPublishingContext }) {
   const { user } = useContext(AuthContext);
+  const activeProfile = useActiveProfile?.() || {};
   const shouldReduceMotion = useReducedMotion();
+
+  // Capture publishing identity when creation session begins to prevent mid-flight profile shifts
+  const [capturedPublishingContext, setCapturedPublishingContext] = useState(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (propPublishingContext) {
+        setCapturedPublishingContext(propPublishingContext);
+      } else {
+        const isBiz = activeProfile.activeProfileType === 'business' && Boolean(activeProfile.activeBusinessId);
+        setCapturedPublishingContext(
+          isBiz
+            ? {
+                profileType: 'business',
+                organizationId: activeProfile.activeBusinessId,
+                organization: activeProfile.business,
+              }
+            : {
+                profileType: 'personal',
+                organizationId: null,
+                organization: null,
+              }
+        );
+      }
+    }
+  }, [isOpen, propPublishingContext, activeProfile.activeProfileType, activeProfile.activeBusinessId, activeProfile.business]);
+
+  const isBusinessMode = capturedPublishingContext?.profileType === 'business' && Boolean(capturedPublishingContext?.organizationId);
+  const currentBusiness = capturedPublishingContext?.organization;
 
   // Mode: 'EDIT' | 'PREVIEW'
   const [viewMode, setViewMode] = useState('EDIT');
@@ -145,15 +177,26 @@ export default function CreatePostModal({ isOpen, onClose }) {
     : 'Z';
   const avatarUrl = user?.avatar ? getUploadUrl(user.avatar) : null;
 
+  const draftStorageKey = useMemo(() => {
+    if (isBusinessMode && effectivePublishingContext?.organizationId) {
+      return `${DRAFT_STORAGE_KEY}_business_${effectivePublishingContext.organizationId}`;
+    }
+    return `${DRAFT_STORAGE_KEY}_personal`;
+  }, [isBusinessMode, effectivePublishingContext?.organizationId]);
+
   // Check for saved draft on mount
   useEffect(() => {
     try {
-      const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+      const savedDraft =
+        localStorage.getItem(draftStorageKey) ||
+        (!isBusinessMode ? localStorage.getItem(DRAFT_STORAGE_KEY) : null);
       if (savedDraft) {
         setHasExistingDraft(true);
+      } else {
+        setHasExistingDraft(false);
       }
     } catch {}
-  }, [isOpen]);
+  }, [isOpen, draftStorageKey, isBusinessMode]);
 
   // Focus trap & body scroll lock
   useEffect(() => {
@@ -183,8 +226,10 @@ export default function CreatePostModal({ isOpen, onClose }) {
     autosaveTimerRef.current = setTimeout(() => {
       try {
         localStorage.setItem(
-          DRAFT_STORAGE_KEY,
+          draftStorageKey,
           JSON.stringify({
+            profileType: isBusinessMode ? 'business' : 'personal',
+            organizationId: isBusinessMode ? effectivePublishingContext?.organizationId : null,
             content,
             tags,
             audience,
@@ -205,7 +250,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [content, tags, audience, location, altText, showPoll, pollQuestion, pollOptions, pollDurationDays, files.length, isOpen, isUploading]);
+  }, [content, tags, audience, location, altText, showPoll, pollQuestion, pollOptions, pollDurationDays, files.length, isOpen, isUploading, draftStorageKey, isBusinessMode, effectivePublishingContext?.organizationId]);
 
   // Topic suggestions query debounce
   useEffect(() => {
@@ -237,7 +282,9 @@ export default function CreatePostModal({ isOpen, onClose }) {
   // Restore draft
   const handleRestoreDraft = () => {
     try {
-      const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+      const raw =
+        localStorage.getItem(draftStorageKey) ||
+        (!isBusinessMode ? localStorage.getItem(DRAFT_STORAGE_KEY) : null);
       if (raw) {
         const draft = JSON.parse(raw);
         if (draft.content) setContent(draft.content);
@@ -266,7 +313,8 @@ export default function CreatePostModal({ isOpen, onClose }) {
 
   const handleDiscardSavedDraft = () => {
     try {
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      localStorage.removeItem(draftStorageKey);
+      if (!isBusinessMode) localStorage.removeItem(DRAFT_STORAGE_KEY);
     } catch {}
     setHasExistingDraft(false);
   };
@@ -356,8 +404,10 @@ export default function CreatePostModal({ isOpen, onClose }) {
   const handleSaveDraft = () => {
     try {
       localStorage.setItem(
-        DRAFT_STORAGE_KEY,
+        draftStorageKey,
         JSON.stringify({
+          profileType: isBusinessMode ? 'business' : 'personal',
+          organizationId: isBusinessMode ? effectivePublishingContext?.organizationId : null,
           content,
           tags,
           audience,
@@ -382,7 +432,8 @@ export default function CreatePostModal({ isOpen, onClose }) {
   const handleDiscardDraft = () => {
     idempotencyKeyRef.current = null;
     try {
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      localStorage.removeItem(draftStorageKey);
+      if (!isBusinessMode) localStorage.removeItem(DRAFT_STORAGE_KEY);
     } catch {}
     resetState(true);
     onClose();
@@ -700,6 +751,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
         media: uploadedMedia,
         tags,
         idempotencyKey: idempotencyKeyRef.current,
+        organizationId: capturedPublishingContext?.organizationId || undefined,
       };
 
       if (hasValidPoll) {
@@ -719,7 +771,8 @@ export default function CreatePostModal({ isOpen, onClose }) {
       idempotencyKeyRef.current = null;
 
       try {
-        localStorage.removeItem(DRAFT_STORAGE_KEY);
+        localStorage.removeItem(draftStorageKey);
+        if (!isBusinessMode) localStorage.removeItem(DRAFT_STORAGE_KEY);
       } catch {}
 
       setTimeout(() => {
@@ -956,6 +1009,8 @@ export default function CreatePostModal({ isOpen, onClose }) {
                 pollDurationDays={pollDurationDays}
                 aspectRatio={aspectRatio}
                 rotation={rotation}
+                publishingContext={capturedPublishingContext}
+                organization={currentBusiness}
               />
             </div>
           ) : (
@@ -979,21 +1034,47 @@ export default function CreatePostModal({ isOpen, onClose }) {
               >
                 {/* Author Info Bar */}
                 <div className="flex items-center justify-between gap-3 shrink-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#0E1726] border border-white/[0.1] overflow-hidden flex items-center justify-center text-xs font-bold text-brand-mint shrink-0">
-                      {avatarUrl ? (
-                        <img src={avatarUrl} alt={user?.name || 'You'} className="w-full h-full object-cover" />
-                      ) : (
-                        userInitials
-                      )}
+                  {isBusinessMode ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#0E1726] border border-white/[0.1] overflow-hidden flex items-center justify-center shrink-0">
+                        <BusinessLogo
+                          logo={currentBusiness?.logo}
+                          name={currentBusiness?.name || 'Company'}
+                          size="md"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs sm:text-sm font-bold text-white">
+                            {currentBusiness?.name || 'Company'}
+                          </p>
+                          <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-brand-mint/15 text-brand-mint border border-brand-mint/30">
+                            Company
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-text-muted">
+                          {currentBusiness?.slug ? `@${currentBusiness.slug.replace(/^@/, '')}` : 'Business Profile'} · <span className="text-brand-mint font-medium">{audience}</span>
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs sm:text-sm font-bold text-white">{user?.name || 'You'}</p>
-                      <p className="text-[11px] text-text-muted">
-                        {user?.username ? `@${user.username}` : 'Verified Member'} · <span className="text-brand-mint font-medium">{audience}</span>
-                      </p>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[#0E1726] border border-white/[0.1] overflow-hidden flex items-center justify-center text-xs font-bold text-brand-mint shrink-0">
+                        {avatarUrl ? (
+                          <img src={avatarUrl} alt={user?.name || 'You'} className="w-full h-full object-cover" />
+                        ) : (
+                          userInitials
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs sm:text-sm font-bold text-white">{user?.name || 'You'}</p>
+                        <p className="text-[11px] text-text-muted">
+                          {user?.username ? `@${user.username}` : 'Verified Member'} · <span className="text-brand-mint font-medium">{audience}</span>
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Audience Selector on top */}
                   <PostAudienceSelector audience={audience} onChange={setAudience} />

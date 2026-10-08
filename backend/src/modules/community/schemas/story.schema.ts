@@ -53,6 +53,9 @@ export class Story {
   @Prop({ type: Date, required: true, index: true })
   expiresAt: Date;
 
+  @Prop({ type: String, index: true })
+  organizationId?: string;
+
   @Prop({ type: Boolean, default: false })
   isDeleted: boolean;
 
@@ -62,6 +65,7 @@ export class Story {
 
 export const StorySchema = SchemaFactory.createForClass(Story);
 StorySchema.index({ authorId: 1, expiresAt: 1 });
+StorySchema.index({ organizationId: 1, expiresAt: 1 });
 
 @Schema({ timestamps: true, collection: 'community_story_media' })
 export class StoryMedia {

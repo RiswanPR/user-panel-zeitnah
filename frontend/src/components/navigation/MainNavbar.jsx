@@ -28,6 +28,7 @@ import { useOnboarding } from "../../context/OnboardingContext";
 import { useActiveProfile } from "../../context/ActiveProfileContext";
 import BusinessLogo from "../business/BusinessLogo";
 import { getBusinessProfileUrl } from "../../utils/businessProfile";
+import ProfileSwitcher from "./ProfileSwitcher";
 
 /**
  * ZEITNAH — PREMIUM NAVBAR 3.0
@@ -799,62 +800,13 @@ export default function MainNavbar({
                           </div>
                         </div>
 
-                        {/* Profile Switcher Action (if user has an eligible business) */}
+                        {/* Profile Switcher (Personal + Multiple Business Profiles) */}
                         {hasBusinessProfile && (
                           <div
                             className="px-1 py-1 mb-1"
                             style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
                           >
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (isBusinessMode) {
-                                  switchToPersonal();
-                                } else {
-                                  switchToBusiness();
-                                }
-                              }}
-                              className="w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-xl transition-all duration-150 cursor-pointer text-left group hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-mint/50"
-                              style={{
-                                background: isBusinessMode
-                                  ? "rgba(18,49,76,0.3)"
-                                  : "rgba(159,213,178,0.07)",
-                                border: isBusinessMode
-                                  ? "1px solid rgba(255,255,255,0.09)"
-                                  : "1px solid rgba(159,213,178,0.2)",
-                              }}
-                              aria-label={isBusinessMode ? "Switch to Personal" : "Switch to Business"}
-                            >
-                              <div className="flex items-center gap-2 min-w-0">
-                                <ArrowRightLeft
-                                  style={{
-                                    width: "13px",
-                                    height: "13px",
-                                    color: isBusinessMode ? "rgba(255,255,255,0.7)" : "#9FD5B2",
-                                    flexShrink: 0,
-                                  }}
-                                  aria-hidden="true"
-                                />
-                                <span
-                                  className="truncate font-medium transition-colors"
-                                  style={{
-                                    fontSize: "12px",
-                                    color: isBusinessMode ? "rgba(255,255,255,0.9)" : "#9FD5B2",
-                                  }}
-                                >
-                                  {isBusinessMode ? "Switch to Personal" : "Switch to Business"}
-                                </span>
-                              </div>
-                              <span
-                                className="font-mono text-[8.5px] uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0 font-medium"
-                                style={{
-                                  background: isBusinessMode ? "rgba(255,255,255,0.06)" : "rgba(159,213,178,0.15)",
-                                  color: isBusinessMode ? "rgba(255,255,255,0.5)" : "#9FD5B2",
-                                }}
-                              >
-                                {isBusinessMode ? "Personal" : "Business"}
-                              </span>
-                            </button>
+                            <ProfileSwitcher user={user} />
                           </div>
                         )}
 

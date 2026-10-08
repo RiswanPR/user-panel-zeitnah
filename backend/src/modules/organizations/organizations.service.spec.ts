@@ -1,12 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
 import {
   Organization,
   OrganizationType,
   OrganizationVerificationStatus,
   BusinessStatus,
+  OrganizationVisibility,
 } from './schemas/organization.schema';
 import {
   OrganizationMembership,
@@ -375,6 +376,196 @@ describe('OrganizationsService', () => {
       expect(existingOrg.logo).toBe('');
       expect(mockUploadService.deleteFile).toHaveBeenCalledWith('organizations/logos/existing-to-remove.png');
       expect(existingOrg.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('validateCompanyFeedAccess (Phase 3 Company Feed)', () => {
+    const testUserId = new Types.ObjectId().toString();
+
+    it('throws BadRequestException for invalid organization ID format', async () => {
+      await expect(
+        service.validateCompanyFeedAccess(testUserId, 'invalid-id-xyz'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws NotFoundException when organization is not found', async () => {
+      const nonExistentOrgId = new Types.ObjectId().toString();
+      mockOrgModel.findById.mockReturnValueOnce({
+        lean: jest.fn().mockResolvedValueOnce(null),
+      });
+
+      await expect(
+        service.validateCompanyFeedAccess(testUserId, nonExistentOrgId),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ForbiddenException when organization is suspended or rejected', async () => {
+      const orgId = new Types.ObjectId().toString();
+      mockOrgModel.findById.mockReturnValueOnce({
+        lean: jest.fn().mockResolvedValueOnce({
+          _id: orgId,
+          name: 'Suspended Org',
+          status: BusinessStatus.SUSPENDED,
+        }),
+      });
+
+      await expect(
+        service.validateCompanyFeedAccess(testUserId, orgId),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws ForbiddenException when private organization is accessed by non-member', async () => {
+      const orgId = new Types.ObjectId().toString();
+      const otherUser = new Types.ObjectId().toString();
+      mockOrgModel.findById.mockReturnValueOnce({
+        lean: jest.fn().mockResolvedValueOnce({
+          _id: orgId,
+          name: 'Private Corp',
+          status: BusinessStatus.APPROVED,
+          visibility: OrganizationVisibility.PRIVATE,
+          createdBy: new Types.ObjectId(otherUser),
+        }),
+      });
+      mockMembershipModel.findOne = jest.fn().mockResolvedValueOnce(null);
+
+      await expect(
+        service.validateCompanyFeedAccess(testUserId, orgId),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('allows access to public approved organization', async () => {
+      const orgId = new Types.ObjectId().toString();
+      const orgDoc = {
+        _id: orgId,
+        name: 'Public Enterprise',
+        status: BusinessStatus.APPROVED,
+        visibility: OrganizationVisibility.PUBLIC,
+        createdBy: new Types.ObjectId(),
+      };
+      mockOrgModel.findById.mockReturnValueOnce({
+        lean: jest.fn().mockResolvedValueOnce(orgDoc),
+      });
+
+      const result = await service.validateCompanyFeedAccess(testUserId, orgId);
+      expect(result).toBeDefined();
+      expect(result.name).toBe('Public Enterprise');
+    });
+
+    it('allows access to private organization for authorized member', async () => {
+      const orgId = new Types.ObjectId().toString();
+      const orgDoc = {
+        _id: orgId,
+        name: 'Private Member Org',
+        status: BusinessStatus.APPROVED,
+        visibility: OrganizationVisibility.PRIVATE,
+        createdBy: new Types.ObjectId(),
+      };
+      mockOrgModel.findById.mockReturnValueOnce({
+        lean: jest.fn().mockResolvedValueOnce(orgDoc),
+      });
+      mockMembershipModel.findOne = jest.fn().mockResolvedValueOnce({
+        _id: new Types.ObjectId(),
+        role: OrganizationRole.ADMIN,
+        status: MembershipStatus.ACTIVE,
+      });
+
+      const result = await service.validateCompanyFeedAccess(testUserId, orgId);
+      expect(result).toBeDefined();
+      expect(result.name).toBe('Private Member Org');
+    });
+  });
+
+  describe('validateCompanyPublishingAccess (Phase 4 Business Create)', () => {
+    const testUserId = new Types.ObjectId().toString();
+
+    it('throws BadRequestException for invalid organization ID', async () => {
+      await expect(
+        service.validateCompanyPublishingAccess(testUserId, 'invalid-id'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws NotFoundException when organization is not found', async () => {
+      const orgId = new Types.ObjectId().toString();
+      mockOrgModel.findById.mockReturnValueOnce({
+        lean: jest.fn().mockResolvedValueOnce(null),
+      });
+
+      await expect(
+        service.validateCompanyPublishingAccess(testUserId, orgId),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ForbiddenException when organization is suspended or rejected', async () => {
+      const orgId = new Types.ObjectId().toString();
+      mockOrgModel.findById.mockReturnValueOnce({
+        lean: jest.fn().mockResolvedValueOnce({
+          _id: orgId,
+          name: 'Suspended Org',
+          status: BusinessStatus.SUSPENDED,
+        }),
+      });
+
+      await expect(
+        service.validateCompanyPublishingAccess(testUserId, orgId),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws ForbiddenException when user is neither creator nor active member', async () => {
+      const orgId = new Types.ObjectId().toString();
+      const otherUser = new Types.ObjectId().toString();
+      mockOrgModel.findById.mockReturnValueOnce({
+        lean: jest.fn().mockResolvedValueOnce({
+          _id: orgId,
+          name: 'Target Company',
+          status: BusinessStatus.APPROVED,
+          createdBy: new Types.ObjectId(otherUser),
+        }),
+      });
+      mockMembershipModel.findOne = jest.fn().mockResolvedValueOnce(null);
+
+      await expect(
+        service.validateCompanyPublishingAccess(testUserId, orgId),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('allows publishing for the creator of the company', async () => {
+      const orgId = new Types.ObjectId().toString();
+      const orgDoc = {
+        _id: orgId,
+        name: 'Creator Company',
+        status: BusinessStatus.APPROVED,
+        createdBy: new Types.ObjectId(testUserId),
+      };
+      mockOrgModel.findById.mockReturnValueOnce({
+        lean: jest.fn().mockResolvedValueOnce(orgDoc),
+      });
+
+      const result = await service.validateCompanyPublishingAccess(testUserId, orgId);
+      expect(result).toBeDefined();
+      expect(result.name).toBe('Creator Company');
+    });
+
+    it('allows publishing for an active member of the company', async () => {
+      const orgId = new Types.ObjectId().toString();
+      const otherUser = new Types.ObjectId().toString();
+      const orgDoc = {
+        _id: orgId,
+        name: 'Member Company',
+        status: BusinessStatus.APPROVED,
+        createdBy: new Types.ObjectId(otherUser),
+      };
+      mockOrgModel.findById.mockReturnValueOnce({
+        lean: jest.fn().mockResolvedValueOnce(orgDoc),
+      });
+      mockMembershipModel.findOne = jest.fn().mockResolvedValueOnce({
+        _id: new Types.ObjectId(),
+        role: OrganizationRole.ADMIN,
+        status: MembershipStatus.ACTIVE,
+      });
+
+      const result = await service.validateCompanyPublishingAccess(testUserId, orgId);
+      expect(result).toBeDefined();
+      expect(result.name).toBe('Member Company');
     });
   });
 });

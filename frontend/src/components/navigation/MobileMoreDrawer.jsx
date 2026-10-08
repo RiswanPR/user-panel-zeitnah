@@ -25,6 +25,7 @@ import { useOnboarding } from "../../context/OnboardingContext";
 import { useActiveProfile } from "../../context/ActiveProfileContext";
 import BusinessLogo from "../business/BusinessLogo";
 import { getBusinessProfileUrl } from "../../utils/businessProfile";
+import ProfileSwitcher from "./ProfileSwitcher";
 
 /**
  * Zeitnah 3.0 Mobile "More" Command Sheet
@@ -402,70 +403,13 @@ export default function MobileMoreDrawer({
               </button>
             </div>
 
-            {/* Mobile Profile Switcher Action (if user has an eligible business) */}
+            {/* Mobile Profile Switcher (Personal + Multiple Business Profiles) */}
             {hasBusinessProfile && (
               <div
                 className="px-4 py-2"
                 style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
               >
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (isBusinessMode) {
-                      switchToPersonal();
-                    } else {
-                      switchToBusiness();
-                    }
-                  }}
-                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 touch-manipulation cursor-pointer text-left active:scale-[0.99] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-mint/50"
-                  style={{
-                    background: isBusinessMode
-                      ? "rgba(18,49,76,0.35)"
-                      : "rgba(159,213,178,0.08)",
-                    border: isBusinessMode
-                      ? "1px solid rgba(255,255,255,0.1)"
-                      : "1px solid rgba(159,213,178,0.22)",
-                  }}
-                  aria-label={isBusinessMode ? "Switch to Personal" : "Switch to Business"}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <ArrowRightLeft
-                      style={{
-                        width: "15px",
-                        height: "15px",
-                        color: isBusinessMode ? "rgba(255,255,255,0.7)" : "#9FD5B2",
-                        flexShrink: 0,
-                      }}
-                      aria-hidden="true"
-                    />
-                    <div>
-                      <p
-                        className="font-medium truncate leading-tight"
-                        style={{
-                          fontSize: "13px",
-                          color: isBusinessMode ? "rgba(255,255,255,0.9)" : "#9FD5B2",
-                        }}
-                      >
-                        {isBusinessMode ? "Switch to Personal" : "Switch to Business"}
-                      </p>
-                      <p
-                        className="font-mono text-white/40 truncate leading-tight mt-0.5"
-                        style={{ fontSize: "10px" }}
-                      >
-                        {isBusinessMode ? `Active: ${business?.name || "Business"}` : "Active: Personal Profile"}
-                      </p>
-                    </div>
-                  </div>
-                  <span
-                    className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded shrink-0 font-medium"
-                    style={{
-                      background: isBusinessMode ? "rgba(255,255,255,0.06)" : "rgba(159,213,178,0.15)",
-                      color: isBusinessMode ? "rgba(255,255,255,0.5)" : "#9FD5B2",
-                    }}
-                  >
-                    {isBusinessMode ? "Personal" : "Business"}
-                  </span>
-                </button>
+                <ProfileSwitcher user={user} />
               </div>
             )}
 

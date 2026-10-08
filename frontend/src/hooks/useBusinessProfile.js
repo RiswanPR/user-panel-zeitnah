@@ -46,12 +46,20 @@ export function useBusinessProfile({ enabled = true } = {}) {
       .filter(Boolean);
   }, [rawBusinesses]);
 
+  const eligibleBusinesses = useMemo(() => {
+    return businesses.filter(isBusinessProfileEligible);
+  }, [businesses]);
+
+  const primaryBusiness = useMemo(() => {
+    return eligibleBusinesses.length > 0 ? eligibleBusinesses[0] : null;
+  }, [eligibleBusinesses]);
+
   const activeRawBusiness = Array.isArray(rawBusinesses) && rawBusinesses.length > 0 ? rawBusinesses[0] : null;
   const business = useMemo(() => normalizeBusinessProfile(activeRawBusiness), [activeRawBusiness]);
   const businessIdentity = useMemo(() => normalizeBusinessIdentity(activeRawBusiness), [activeRawBusiness]);
   const isEligible = useMemo(() => isBusinessProfileEligible(activeRawBusiness), [activeRawBusiness]);
 
-  const hasBusiness = Boolean(business && business.id);
+  const hasBusiness = Boolean(eligibleBusinesses.length > 0);
 
   return {
     hasBusiness,
@@ -59,6 +67,8 @@ export function useBusinessProfile({ enabled = true } = {}) {
     business,
     businessIdentity,
     businesses,
+    eligibleBusinesses,
+    primaryBusiness,
     rawBusiness: activeRawBusiness,
     rawBusinesses,
     isLoading,

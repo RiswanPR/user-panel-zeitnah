@@ -968,4 +968,105 @@ export class OrganizationsService {
 
     return membership;
   }
+
+  /**
+   * Authoritative validation of company feed access (Phase 3 Company Feed).
+   * Verifies organization existence, status, and membership/visibility permissions to prevent IDOR.
+   */
+  async validateCompanyFeedAccess(userId: string, orgId: string): Promise<any> {
+    if (!orgId || typeof orgId !== 'string' || !Types.ObjectId.isValid(orgId.trim())) {
+      throw new BadRequestException('Invalid organization ID');
+    }
+
+    const cleanOrgId = orgId.trim();
+    const org = await this.orgModel.findById(cleanOrgId).lean();
+    if (!org) {
+      throw new NotFoundException('Organization not found');
+    }
+
+    // Check organization operational status
+    if (org.status === BusinessStatus.SUSPENDED || org.status === BusinessStatus.REJECTED) {
+      throw new ForbiddenException('Organization is suspended or unavailable');
+    }
+
+    // Determine viewer membership / ownership status
+    const isCreator = String(org.createdBy) === String(userId);
+    let isMember = isCreator;
+
+    if (!isMember && userId && Types.ObjectId.isValid(userId)) {
+      const membership = await this.membershipModel.findOne({
+        organizationId: org._id,
+        userId: new Types.ObjectId(userId),
+        status: MembershipStatus.ACTIVE,
+      });
+      if (membership) {
+        isMember = true;
+      }
+    }
+
+    // IDOR / Private Business Protection:
+    // If organization is private, only active members or creator can view its feed
+    if (org.visibility === OrganizationVisibility.PRIVATE && !isMember) {
+      throw new ForbiddenException(
+        'You do not have permission to access this organization feed',
+      );
+    }
+
+    // If organization is in draft/pending status, only members/creators can access its feed
+    const isApproved =
+      org.status === BusinessStatus.APPROVED ||
+      org.verificationStatus === OrganizationVerificationStatus.VERIFIED;
+    if (!isApproved && !isMember) {
+      throw new ForbiddenException(
+        'You do not have permission to access this organization feed',
+      );
+    }
+
+    return org;
+  }
+
+  /**
+   * Authoritative validation of company publishing access (Phase 4 Business Create).
+   * Verifies organization existence, active operational status, and creator ownership / active membership.
+   */
+  async validateCompanyPublishingAccess(userId: string, orgId: string): Promise<any> {
+    if (!orgId || typeof orgId !== 'string' || !Types.ObjectId.isValid(orgId.trim())) {
+      throw new BadRequestException('Invalid organization ID');
+    }
+
+    const cleanOrgId = orgId.trim();
+    const org = await this.orgModel.findById(cleanOrgId).lean();
+    if (!org) {
+      throw new NotFoundException('Organization not found');
+    }
+
+    // Check organization operational status: suspended or rejected businesses are blocked
+    if (org.status === BusinessStatus.SUSPENDED || org.status === BusinessStatus.REJECTED) {
+      throw new ForbiddenException('Organization is suspended or unavailable');
+    }
+
+    // Check creator ownership
+    const isCreator = String(org.createdBy) === String(userId);
+    let isAuthorizedMember = isCreator;
+
+    if (!isAuthorizedMember && userId && Types.ObjectId.isValid(userId)) {
+      const membership = await this.membershipModel.findOne({
+        organizationId: org._id,
+        userId: new Types.ObjectId(userId),
+        status: MembershipStatus.ACTIVE,
+      });
+
+      if (membership) {
+        isAuthorizedMember = true;
+      }
+    }
+
+    if (!isAuthorizedMember) {
+      throw new ForbiddenException(
+        'You do not have permission to publish content for this organization',
+      );
+    }
+
+    return org;
+  }
 }

@@ -51,6 +51,7 @@ export class PostController {
   @ApiQuery({ name: 'filter', required: false })
   @ApiQuery({ name: 'search', required: false })
   @ApiQuery({ name: 'tag', required: false })
+  @ApiQuery({ name: 'organizationId', required: false })
   async getFeed(
     @Req() req,
     @Query('limit') limit: number,
@@ -58,6 +59,7 @@ export class PostController {
     @Query('filter') filter: string,
     @Query('search') search: string,
     @Query('tag') tag: string,
+    @Query('organizationId') organizationId?: string,
   ) {
     const userId = this.getUserId(req);
     const courseIds = (req.user?.enrolledCourses || []).map((c: any) => c.courseId || c._id || c);
@@ -69,6 +71,7 @@ export class PostController {
       filter,
       search,
       tag,
+      organizationId,
     );
   }
 

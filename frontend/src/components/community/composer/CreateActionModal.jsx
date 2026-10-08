@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { X, Sparkles, Film, FileText, ChevronRight, PlayCircle } from 'lucide-react';
+import { useActiveProfile } from '../../../context/ActiveProfileContext';
 
 /**
  * CreateActionModal — Premium Create Entry Experience for Zeitnah Community:
@@ -18,7 +19,18 @@ export default function CreateActionModal({
   onSelectPost,
   onSelectReel,
   onSelectStory,
+  publishingContext: propPublishingContext,
 }) {
+  const { activeProfileType, activeBusinessId, business } = useActiveProfile();
+  const effectivePublishingContext = propPublishingContext || {
+    profileType: activeProfileType || 'personal',
+    organizationId: activeProfileType === 'business' ? activeBusinessId : null,
+    organization: activeProfileType === 'business' ? business : null,
+  };
+  const isBusinessMode =
+    effectivePublishingContext?.profileType === 'business' &&
+    Boolean(effectivePublishingContext?.organizationId);
+  const activeOrganization = effectivePublishingContext?.organization || business;
   const modalRef = useRef(null);
   const previousActiveElementRef = useRef(null);
   const shouldReduceMotion = useReducedMotion();
@@ -85,12 +97,24 @@ export default function CreateActionModal({
                 <Sparkles className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-bold font-heading text-white tracking-tight">
-                  Create
+                <h3 className="text-sm font-bold font-heading text-white tracking-tight flex items-center gap-2">
+                  <span>Create</span>
+                  {isBusinessMode && activeOrganization && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-mint/20 text-brand-mint border border-brand-mint/30 uppercase font-bold tracking-wider">
+                      Company Mode
+                    </span>
+                  )}
                 </h3>
-                <p className="text-[11px] text-text-muted hidden sm:block">
-                  Zeitnah Community Publishing
-                </p>
+                {isBusinessMode && activeOrganization ? (
+                  <p className="text-[11px] text-text-muted flex items-center gap-1.5 mt-0.5">
+                    <span>Publishing as</span>
+                    <span className="text-brand-mint font-semibold truncate max-w-[200px]">{activeOrganization.name}</span>
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-text-muted hidden sm:block">
+                    Zeitnah Community Publishing
+                  </p>
+                )}
               </div>
             </div>
 
@@ -111,10 +135,14 @@ export default function CreateActionModal({
               id="create-chooser-title"
               className="text-xl sm:text-2xl font-extrabold font-heading text-white tracking-tight"
             >
-              What do you want to share?
+              {isBusinessMode && activeOrganization
+                ? `What would ${activeOrganization.name} like to share?`
+                : 'What do you want to share?'}
             </h2>
             <p className="text-xs sm:text-sm text-text-muted mt-1.5 leading-relaxed">
-              Choose your format to start creating for the Zeitnah engineering community.
+              {isBusinessMode && activeOrganization
+                ? `Choose your format to publish on behalf of ${activeOrganization.name}.`
+                : 'Choose your format to start creating for the Zeitnah engineering community.'}
             </p>
           </div>
 

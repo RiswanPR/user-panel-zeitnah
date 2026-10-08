@@ -57,6 +57,11 @@ export class CreateStoryDto {
   @IsString()
   @IsOptional()
   idempotencyKey?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  organizationId?: string;
 }
 
 export class StoryReplyDto {

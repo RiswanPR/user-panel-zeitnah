@@ -25,10 +25,23 @@ export class StoryRepository extends BaseRepository<StoryDocument> {
 
   private formatStory(s: any): any {
     const authorObj = s.authorData?.[0] || {};
+    const orgObj = s.organizationData?.[0] || null;
     return {
       _id: s._id,
       id: s._id,
       authorId: s.authorId,
+      organizationId: s.organizationId || null,
+      organization: orgObj?._id
+        ? {
+            _id: String(orgObj._id),
+            id: String(orgObj._id),
+            name: orgObj.name,
+            slug: orgObj.slug,
+            logo: orgObj.logo,
+            isVerified: Boolean(orgObj.isVerified),
+            status: orgObj.status,
+          }
+        : null,
       type: s.type,
       text: s.text || '',
       backgroundColor: s.backgroundColor || '',
@@ -104,6 +117,40 @@ export class StoryRepository extends BaseRepository<StoryDocument> {
             as: 'authorData',
           },
         },
+        {
+          $lookup: {
+            from: 'organizations',
+            let: { orgStr: '$organizationId' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $ne: ['$$orgStr', null] },
+                      {
+                        $or: [
+                          { $eq: ['$_id', { $convert: { input: '$$orgStr', to: 'objectId', onError: null, onNull: null } }] },
+                          { $eq: [{ $toString: '$_id' }, '$$orgStr'] },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              },
+              {
+                $project: {
+                  _id: 1,
+                  name: 1,
+                  slug: 1,
+                  logo: 1,
+                  isVerified: 1,
+                  status: 1,
+                },
+              },
+            ],
+            as: 'organizationData',
+          },
+        },
       ])
       .exec();
 
@@ -151,6 +198,40 @@ export class StoryRepository extends BaseRepository<StoryDocument> {
               },
             ],
             as: 'authorData',
+          },
+        },
+        {
+          $lookup: {
+            from: 'organizations',
+            let: { orgStr: '$organizationId' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $ne: ['$$orgStr', null] },
+                      {
+                        $or: [
+                          { $eq: ['$_id', { $convert: { input: '$$orgStr', to: 'objectId', onError: null, onNull: null } }] },
+                          { $eq: [{ $toString: '$_id' }, '$$orgStr'] },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              },
+              {
+                $project: {
+                  _id: 1,
+                  name: 1,
+                  slug: 1,
+                  logo: 1,
+                  isVerified: 1,
+                  status: 1,
+                },
+              },
+            ],
+            as: 'organizationData',
           },
         },
       ])

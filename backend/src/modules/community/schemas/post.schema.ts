@@ -70,6 +70,9 @@ export class Post {
   @Prop({ type: String, required: true, index: true })
   authorId: string;
 
+  @Prop({ type: String, index: true })
+  organizationId?: string;
+
   @Prop({ type: String, default: '' })
   content: string;
 
@@ -217,6 +220,8 @@ PostSchema.index({ createdAt: -1 });
 PostSchema.index({ audience: 1, courseId: 1, createdAt: -1 });
 // Highly optimized index for the main feed query
 PostSchema.index({ isDeleted: 1, createdAt: -1, audience: 1 });
+// Highly optimized index for company feed query (Phase 3)
+PostSchema.index({ organizationId: 1, isDeleted: 1, createdAt: -1 });
 // Reposts & Quote posts queries and idempotency lookup
 PostSchema.index({ originalPostId: 1, authorId: 1, postType: 1, isDeleted: 1 });
 PostSchema.index(

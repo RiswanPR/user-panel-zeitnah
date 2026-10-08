@@ -300,6 +300,11 @@ export class CreatePostDto {
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
+  organizationId?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
   batchId?: string;
 
   @ApiPropertyOptional({ type: [CreatePostMediaDto] })
