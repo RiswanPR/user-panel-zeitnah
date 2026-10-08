@@ -1,5 +1,5 @@
-import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useMemo, Suspense } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Building2,
@@ -13,12 +13,37 @@ import {
   ExternalLink,
   ChevronRight,
   AlertCircle,
+  Sparkles,
+  Settings,
+  Radio,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { organizationService } from '../../services/organizationService';
 import { opportunityService } from '../../services/opportunityService';
+import { useActiveProfile } from '../../context/ActiveProfileContext';
+import lazyWithRetry from '../../utils/lazyWithRetry';
+
+const CreateActionModal = lazyWithRetry(() => import('../../components/community/composer/CreateActionModal'));
+const CreatePostModal = lazyWithRetry(() => import('../../components/community/composer/CreatePostModal'));
+const ReelStudioModal = lazyWithRetry(() => import('../../components/community/composer/ReelStudioModal'));
+const CreateStoryModal = lazyWithRetry(() => import('../../components/community/stories/CreateStoryModal'));
 
 export default function PublicBusinessProfilePage() {
   const { slug } = useParams();
+  const navigate = useNavigate();
+
+  const {
+    businesses,
+    activeProfileType,
+    activeBusinessId,
+    switchToBusiness,
+  } = useActiveProfile();
+
+  // Creation modal states
+  const [isCreateActionOpen, setIsCreateActionOpen] = useState(false);
+  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
+  const [isCreateReelOpen, setIsCreateReelOpen] = useState(false);
+  const [isCreateStoryOpen, setIsCreateStoryOpen] = useState(false);
 
   // Fetch business details
   const {
@@ -45,6 +70,50 @@ export default function PublicBusinessProfilePage() {
   });
 
   const jobs = jobsData?.data || [];
+
+  const businessId = business?._id || business?.id;
+  const isMyBusiness = useMemo(() => {
+    if (!businesses || !businessId) return false;
+    return businesses.some(
+      (b) =>
+        String(b.id || b._id) === String(businessId) ||
+        (b.slug && business.slug && b.slug.toLowerCase() === business.slug.toLowerCase())
+    );
+  }, [businesses, businessId, business?.slug]);
+
+  const isActiveProfile =
+    isMyBusiness &&
+    activeProfileType === 'business' &&
+    String(activeBusinessId) === String(businessId);
+
+  const publishingContext = useMemo(() => {
+    if (!business) return null;
+    return {
+      profileType: 'business',
+      organizationId: businessId,
+      organization: business,
+    };
+  }, [business, businessId]);
+
+  const handleViewCompanyFeed = () => {
+    if (isMyBusiness && businessId) {
+      switchToBusiness(businessId);
+    }
+    navigate('/community');
+  };
+
+  const handleSwitchToThisBusiness = () => {
+    if (businessId) {
+      const switched = switchToBusiness(businessId);
+      if (switched) {
+        toast.success(`Switched active profile to ${business.name}`);
+      }
+    }
+  };
+
+  const handleOpenCreate = () => {
+    setIsCreateActionOpen(true);
+  };
 
   if (loadingOrg) {
     return (
@@ -136,20 +205,76 @@ export default function PublicBusinessProfilePage() {
             </div>
           </div>
 
-          {business.website && (
-            <div className="shrink-0 self-start">
+          {/* Header Action Shortcuts */}
+          <div className="shrink-0 self-start flex flex-wrap items-center gap-2">
+            {business.website && (
               <a
                 href={business.website}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-semibold text-white border border-white/[0.08] transition-colors"
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-semibold text-white border border-white/[0.08] transition-colors"
               >
-                <Globe className="w-4 h-4 text-brand-mint" />
-                <span>Visit Website</span>
+                <Globe className="w-3.5 h-3.5 text-brand-mint" />
+                <span>Website</span>
                 <ExternalLink className="w-3 h-3 text-white/40" />
               </a>
-            </div>
-          )}
+            )}
+
+            {/* View Company Feed (Community) */}
+            <button
+              type="button"
+              onClick={handleViewCompanyFeed}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-semibold text-white border border-white/[0.08] hover:border-brand-mint/30 transition-all cursor-pointer"
+              title={`View ${business.name} Company Feed in Community`}
+              aria-label={`View ${business.name} Company Feed in Community`}
+            >
+              <Radio className="w-3.5 h-3.5 text-brand-mint" />
+              <span>Company Feed</span>
+            </button>
+
+            {/* Owner / Member specific actions */}
+            {isMyBusiness && (
+              <>
+                {isActiveProfile ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-brand-mint/15 text-brand-mint border border-brand-mint/30 text-xs font-semibold select-none">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Active Profile</span>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleSwitchToThisBusiness}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.08] hover:bg-brand-mint/20 text-xs font-semibold text-white hover:text-brand-mint border border-white/10 hover:border-brand-mint/30 transition-all cursor-pointer"
+                    title={`Switch active profile to ${business.name}`}
+                  >
+                    <span>Switch to Profile</span>
+                  </button>
+                )}
+
+                {/* Create content for this business */}
+                <button
+                  type="button"
+                  onClick={handleOpenCreate}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-mint text-bg-base hover:bg-brand-mint/90 text-xs font-bold transition-all cursor-pointer shadow-sm shadow-brand-mint/20"
+                  aria-label={`Create content as ${business.name}`}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Create</span>
+                </button>
+
+                {/* Manage Business link */}
+                <Link
+                  to="/manage-business"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-semibold text-text-muted hover:text-white border border-white/[0.08] transition-colors"
+                  title="Manage Business"
+                  aria-label="Manage Business"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Manage</span>
+                </Link>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Highlight Metrics */}
@@ -308,6 +433,58 @@ export default function PublicBusinessProfilePage() {
           </div>
         </div>
       </div>
+      {/* ── Studio Modals when launching creation directly from Business Profile ── */}
+      {isMyBusiness && (
+        <Suspense fallback={null}>
+          {isCreateActionOpen && (
+            <CreateActionModal
+              isOpen={isCreateActionOpen}
+              onClose={() => setIsCreateActionOpen(false)}
+              onSelectPost={() => {
+                setIsCreateActionOpen(false);
+                setIsCreatePostOpen(true);
+              }}
+              onSelectReel={() => {
+                setIsCreateActionOpen(false);
+                setIsCreateReelOpen(true);
+              }}
+              onSelectStory={() => {
+                setIsCreateActionOpen(false);
+                setIsCreateStoryOpen(true);
+              }}
+              publishingContext={publishingContext}
+            />
+          )}
+
+          {isCreatePostOpen && (
+            <CreatePostModal
+              isOpen={isCreatePostOpen}
+              onClose={() => setIsCreatePostOpen(false)}
+              publishingContext={publishingContext}
+            />
+          )}
+
+          {isCreateReelOpen && (
+            <ReelStudioModal
+              isOpen={isCreateReelOpen}
+              onClose={() => setIsCreateReelOpen(false)}
+              onSuccess={() => {
+                toast.success('Reel published to Company Feed!');
+                navigate('/community');
+              }}
+              publishingContext={publishingContext}
+            />
+          )}
+
+          {isCreateStoryOpen && (
+            <CreateStoryModal
+              isOpen={isCreateStoryOpen}
+              onClose={() => setIsCreateStoryOpen(false)}
+              publishingContext={publishingContext}
+            />
+          )}
+        </Suspense>
+      )}
     </div>
   );
 }

@@ -42,19 +42,27 @@ export function groupStoriesByUser(
 
     seenStoryIds.add(storyId);
 
+    const isBusinessStory = Boolean(story.organization || (story.organizationId && typeof story.organization === 'object'));
+    const org = story.organization;
     const author = story.author || {};
-    const authorId = String(author._id || author.id || story.authorId || '');
+    const authorId = isBusinessStory && story.organizationId
+      ? `org_${story.organizationId}`
+      : String(author._id || author.id || story.authorId || '');
     if (!authorId) continue;
 
     if (!userMap.has(authorId)) {
-      const isCurrentUser = Boolean(currentUserId && String(currentUserId) === authorId);
+      const isCurrentUser = isBusinessStory
+        ? false
+        : Boolean(currentUserId && String(currentUserId) === authorId);
       userMap.set(authorId, {
         userId: authorId,
-        username: author.username || '',
-        displayName: author.name || author.displayName || 'Zeitnah Member',
-        avatar: author.avatar || author.profileImage || author.avatarUrl || author.profilePicture || '',
-        role: author.role || 'student',
-        verified: !!author.verified,
+        username: isBusinessStory && org?.slug ? org.slug : (author.username || ''),
+        displayName: isBusinessStory && org?.name ? org.name : (author.name || author.displayName || 'Zeitnah Member'),
+        avatar: isBusinessStory && org?.logo ? org.logo : (author.avatar || author.profileImage || author.avatarUrl || author.profilePicture || ''),
+        role: isBusinessStory ? 'company' : (author.role || 'student'),
+        verified: isBusinessStory ? Boolean(org?.isVerified) : !!author.verified,
+        isBusiness: isBusinessStory,
+        organization: org || null,
         isCurrentUser,
         stories: [],
         latestStoryAt: new Date(0),

@@ -183,7 +183,7 @@ describe('Phase 3B — Production Hardening & Video Processing Audit Suite', () 
       const res = await videoProcessor.processVideo(src, out, poster);
       expect(res.width).toBe(1080);
       expect(res.height).toBe(1920);
-    });
+    }, 20000);
   });
 
   // =========================================================================

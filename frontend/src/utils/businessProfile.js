@@ -120,7 +120,8 @@ export function getBusinessProfileUrl(target) {
   if (!target) {
     return '/businesses';
   }
-  const rawSlug = typeof target === 'string' ? target : target?.slug;
+  const rawSlug =
+    typeof target === 'string' ? target : (target?.slug || target?._id || target?.id);
   if (!rawSlug || typeof rawSlug !== 'string') {
     return '/businesses';
   }

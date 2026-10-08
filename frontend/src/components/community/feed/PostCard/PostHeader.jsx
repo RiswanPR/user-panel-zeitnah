@@ -24,14 +24,14 @@ export default function PostHeader({
   const [imgError, setImgError] = useState(false);
   const menuRef = useRef(null);
 
-  const isBusinessPost = Boolean(post?.organization);
+  const isBusinessPost = Boolean(post?.organization || post?.organizationId);
   const org = post?.organization;
 
   const authorName = isBusinessPost
     ? (org?.name || 'Company')
     : (author?.name || author?.displayName || 'Zeitnah Member');
   const authorProfileUrl = isBusinessPost
-    ? getBusinessProfileUrl(org)
+    ? getBusinessProfileUrl(org || post?.organizationId)
     : getCanonicalProfileUrl(author);
   const authorAvatar = isBusinessPost ? (org?.logo || null) : author?.avatar;
   const authorUsername = isBusinessPost

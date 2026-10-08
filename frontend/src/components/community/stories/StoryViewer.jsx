@@ -22,6 +22,8 @@ import { createPortal } from 'react-dom';
 import { useViewStory, useReactToStory } from '../../../hooks/useCommunity';
 import { communityApi } from '../../../services/communityApi';
 import { getCanonicalProfileUrl } from '../../../utils/roleNavigation';
+import { getBusinessProfileUrl } from '../../../utils/businessProfile';
+import BusinessLogo from '../../business/BusinessLogo';
 import { formatRelativeTime } from '../../../utils/communityFormatters';
 import { groupStoriesByUser } from '../../../utils/storyGrouping';
 import { getUploadUrl } from '../../../utils/courseUi';
@@ -502,11 +504,17 @@ export default function StoryViewer({
 
   if (!activeGroup || !currentStory) return null;
 
-  const authorName = activeGroup.displayName || 'Zeitnah Member';
-  const authorProfileUrl = getCanonicalProfileUrl({
-    id: activeGroup.userId,
-    username: activeGroup.username,
-  });
+  const isBusinessStory = Boolean(currentStory?.organization);
+  const org = currentStory?.organization;
+  const authorName = isBusinessStory
+    ? (org?.name || 'Company')
+    : (activeGroup.displayName || 'Zeitnah Member');
+  const authorProfileUrl = isBusinessStory
+    ? getBusinessProfileUrl(org)
+    : getCanonicalProfileUrl({
+        id: activeGroup.userId,
+        username: activeGroup.username,
+      });
   const authorInitials = authorName.slice(0, 2).toUpperCase();
 
   return createPortal(
@@ -616,7 +624,14 @@ export default function StoryViewer({
               aria-label={`View ${authorName}'s profile`}
             >
               <div className="w-9 h-9 rounded-full bg-[#0E1726] border border-white/[0.2] overflow-hidden flex items-center justify-center shrink-0">
-                {authorAvatar && !avatarImgError ? (
+                {isBusinessStory ? (
+                  <BusinessLogo
+                    logo={org?.logo}
+                    name={authorName}
+                    size="sm"
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : authorAvatar && !avatarImgError ? (
                   <img
                     src={authorAvatar}
                     alt={authorName}
@@ -634,6 +649,11 @@ export default function StoryViewer({
                   <h4 className="text-xs sm:text-sm font-bold text-white drop-shadow-sm truncate max-w-[160px]">
                     {authorName}
                   </h4>
+                  {isBusinessStory && (
+                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-brand-mint/20 text-brand-mint border border-brand-mint/30 uppercase font-semibold">
+                      Company
+                    </span>
+                  )}
                   {activeStories.length > 1 && (
                     <span className="text-[10px] text-white/50 font-normal">
                       {currentStoryIndex + 1}/{activeStories.length}

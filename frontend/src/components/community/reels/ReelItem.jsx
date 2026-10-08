@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import ReelProgressBar from './ReelProgressBar';
 import { getCanonicalProfileUrl } from '../../../utils/roleNavigation';
+import { getBusinessProfileUrl } from '../../../utils/businessProfile';
+import BusinessLogo from '../../business/BusinessLogo';
 import { getUploadUrl } from '../../../utils/courseUi';
 import toast from 'react-hot-toast';
 import RelationshipAction from '../../network/RelationshipAction';
@@ -67,15 +69,28 @@ function ReelItem({
   const playTimeTrackerRef = useRef({ startTime: 0, accumulatedSeconds: 0, hasCountedView: false });
 
   const postId = post?._id || post?.id;
+  const isBusinessReel = Boolean(post?.organization);
+  const org = post?.organization;
+
   const author = post?.author || {};
   const authorTargetId = author?._id || author?.id || post?.authorId || post?.userId;
-  const authorName = author?.name || author?.username || 'Community Member';
-  const authorHandle = author?.username ? `@${author.username.replace(/^@/, '')}` : '';
-  const authorAvatar = author?.avatar || author?.profilePicture || author?.avatarUrl;
-  const profileUrl = getCanonicalProfileUrl(author);
-  const canConnect = Boolean(
-    authorTargetId && currentUserId && String(authorTargetId) !== String(currentUserId)
-  );
+  const authorName = isBusinessReel
+    ? (org?.name || 'Company')
+    : (author?.name || author?.username || 'Community Member');
+  const authorHandle = isBusinessReel
+    ? (org?.slug ? `@${org.slug.replace(/^@/, '')}` : '')
+    : (author?.username ? `@${author.username.replace(/^@/, '')}` : '');
+  const authorAvatar = isBusinessReel
+    ? (org?.logo || null)
+    : (author?.avatar || author?.profilePicture || author?.avatarUrl);
+  const profileUrl = isBusinessReel
+    ? getBusinessProfileUrl(org)
+    : getCanonicalProfileUrl(author);
+  const canConnect = isBusinessReel
+    ? false
+    : Boolean(
+        authorTargetId && currentUserId && String(authorTargetId) !== String(currentUserId)
+      );
 
   // Extract video media item (supports first video item or main media)
   const videoMedia = Array.isArray(post?.media)
@@ -596,7 +611,14 @@ function ReelItem({
               aria-label={`View ${authorName}'s public profile`}
             >
               <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full ring-2 ring-brand-mint/70 p-0.5 overflow-hidden bg-bg-base shrink-0 transition-transform group-hover:scale-105 shadow-md">
-                {authorAvatar ? (
+                {isBusinessReel ? (
+                  <BusinessLogo
+                    logo={org?.logo}
+                    name={authorName}
+                    size="sm"
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : authorAvatar ? (
                   <img
                     src={getUploadUrl(authorAvatar)}
                     alt={authorName}
@@ -613,11 +635,15 @@ function ReelItem({
                   <span className="text-sm font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] truncate group-hover:text-brand-mint transition-colors">
                     {authorName}
                   </span>
-                  {(author?.primaryRole || author?.role === 'admin') && (
+                  {isBusinessReel ? (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-brand-mint/20 text-brand-mint font-semibold tracking-tight backdrop-blur-sm border border-brand-mint/30 uppercase">
+                      Company
+                    </span>
+                  ) : (author?.primaryRole || author?.role === 'admin') ? (
                     <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/90 font-medium tracking-tight backdrop-blur-sm border border-white/10">
                       {author?.role === 'admin' ? 'Admin' : author.primaryRole}
                     </span>
-                  )}
+                  ) : null}
                 </div>
                 {authorHandle && (
                   <span className="text-xs text-white/80 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] block truncate font-medium">
