@@ -902,7 +902,7 @@ function ClassView() {
       cleanup();
       playerRef.current = null;
     };
-  }, [activeClassId, data?.class?._id, data?.class?.vdoCipher?.otp]);
+  }, [activeClassId, data?.class?._id]);
 
   // VdoCipher reload handler
   const handleVdoReload = useCallback(async () => {
