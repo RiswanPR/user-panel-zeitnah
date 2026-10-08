@@ -71,11 +71,13 @@ export default function VideoStage({
           ) : videoUrl ? (
             <>
               <iframe
+                key={videoUrl}
                 ref={iframeRef}
                 src={videoUrl}
                 className="h-full w-full block border-0"
-                allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                allow="encrypted-media *; autoplay *; fullscreen *; picture-in-picture *"
                 allowFullScreen
+                loading="eager"
                 title={classTitle || 'Video Lecture'}
               />
               {vdoPlayerError && (
@@ -84,10 +86,16 @@ export default function VideoStage({
                     <WifiOff className="w-6 h-6" />
                   </div>
                   <h3 className="text-base sm:text-lg font-bold mb-2">
-                    Video Stream Interrupted
+                    {typeof vdoPlayerError === 'string' && vdoPlayerError.includes('Protected')
+                      ? 'Protected Content Notice'
+                      : typeof vdoPlayerError === 'string' && vdoPlayerError.includes('Domain')
+                      ? 'Domain Authorization Notice'
+                      : 'Video Stream Interrupted'}
                   </h3>
                   <p className="text-xs sm:text-sm text-white/60 text-center max-w-sm mb-5">
-                    Stream interrupted by network jitter. Click below to fetch a fresh authenticated session.
+                    {typeof vdoPlayerError === 'string'
+                      ? vdoPlayerError
+                      : 'Stream session was interrupted. Click below to fetch a fresh authenticated session.'}
                   </p>
                   <button
                     type="button"

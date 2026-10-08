@@ -107,6 +107,14 @@ export function getClassVideoSource(courseType, videoSource) {
 }
 
 export function getVdoCipherEmbedUrl(vdoCipher) {
+  if (!vdoCipher) {
+    return null;
+  }
+
+  if (typeof vdoCipher === "string" && vdoCipher.startsWith("http")) {
+    return vdoCipher;
+  }
+
   if (
     !vdoCipher?.otp ||
     !vdoCipher?.playbackInfo

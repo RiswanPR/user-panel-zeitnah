@@ -1,7 +1,7 @@
 import test, { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { normalizeLesson, normalizeCurriculum, getContinueLearningUrl } from './courseCurriculum.js';
-import { formatDuration, parseDurationToSeconds } from './courseUi.js';
+import { formatDuration, parseDurationToSeconds, getVdoCipherEmbedUrl, getClassVideoSource } from './courseUi.js';
 
 /**
  * Pure helper functions mirroring the LMS logic for comprehensive unit testing
@@ -668,6 +668,29 @@ describe('ZEITNAH LMS — Premium Learning Workspace Unit Tests', () => {
       // When closed (cleanup):
       bodyOverflow = original;
       assert.strictEqual(bodyOverflow, '');
+    });
+
+    it('VDOCIPHER EMBED URL: Correctly formats parameters and handles edge cases', () => {
+      assert.strictEqual(getVdoCipherEmbedUrl(null), null);
+      assert.strictEqual(getVdoCipherEmbedUrl(undefined), null);
+      assert.strictEqual(getVdoCipherEmbedUrl({}), null);
+      assert.strictEqual(getVdoCipherEmbedUrl({ otp: 'test-otp' }), null);
+      assert.strictEqual(getVdoCipherEmbedUrl({ playbackInfo: 'test-info' }), null);
+      
+      const fullUrl = 'https://player.vdocipher.com/v2/?otp=existing&playbackInfo=existing';
+      assert.strictEqual(getVdoCipherEmbedUrl(fullUrl), fullUrl);
+
+      const generated = getVdoCipherEmbedUrl({ otp: '12345', playbackInfo: 'abcdef' });
+      assert.strictEqual(generated, 'https://player.vdocipher.com/v2/?otp=12345&playbackInfo=abcdef');
+    });
+
+    it('VIDEO SOURCE RESOLUTION: Correctly resolves source priority between S3 and VdoCipher', () => {
+      assert.strictEqual(getClassVideoSource('recording', ''), 's3');
+      assert.strictEqual(getClassVideoSource('online', 's3'), 's3');
+      assert.strictEqual(getClassVideoSource('online', 'aws'), 's3');
+      assert.strictEqual(getClassVideoSource('course', 'vdocipher'), 'vdocipher');
+      assert.strictEqual(getClassVideoSource('course', 'vdo'), 'vdocipher');
+      assert.strictEqual(getClassVideoSource('online', ''), 'vdocipher');
     });
   });
 });

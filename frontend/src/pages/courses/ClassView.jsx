@@ -811,15 +811,32 @@ function ClassView() {
         player.video.addEventListener("seeked", onSeeked);
         player.video.addEventListener("ended", onEnded);
 
-        const onVideoError = () => {
-          const err = player.video.error;
-          if (err && err.code !== 1) {
-            console.error("VdoCipher player video error:", err.code, err.message);
-            setVdoPlayerError(true);
+        const handlePlayerError = (err) => {
+          const code = err?.code || player?.video?.error?.code;
+          const msg = err?.message || player?.video?.error?.message || err?.payload?.message || "";
+          console.warn("[VdoCipher] Player error intercepted:", code, msg, err);
+
+          if (code === 60072014 || msg.toLowerCase().includes("domain")) {
+            setVdoPlayerError(
+              "Domain authorization notice: This domain must be allowed in VdoCipher dashboard settings. Click below to refresh the stream."
+            );
+          } else if (code === 4 || msg.toLowerCase().includes("drm") || msg.toLowerCase().includes("license") || msg.toLowerCase().includes("protected")) {
+            setVdoPlayerError(
+              "Protected content could not be verified. If using Incognito/Private mode, please switch to a normal window, or allow Protected Content in Chrome Site Settings."
+            );
+          } else if (code && code !== 1) {
+            setVdoPlayerError(
+              "Playback session was interrupted. Click below to fetch a fresh authenticated session."
+            );
           }
         };
 
-        player.video.addEventListener("error", onVideoError);
+        player.video.addEventListener("error", handlePlayerError);
+        if (player.api && typeof player.api.addEventListener === "function") {
+          try {
+            player.api.addEventListener("error", handlePlayerError);
+          } catch {}
+        }
         window.addEventListener("pagehide", onPageHide);
         document.addEventListener("visibilitychange", onVisibilityChange);
 
@@ -831,7 +848,12 @@ function ClassView() {
           player.video.removeEventListener("pause", onPause);
           player.video.removeEventListener("seeked", onSeeked);
           player.video.removeEventListener("ended", onEnded);
-          player.video.removeEventListener("error", onVideoError);
+          player.video.removeEventListener("error", handlePlayerError);
+          if (player.api && typeof player.api.removeEventListener === "function") {
+            try {
+              player.api.removeEventListener("error", handlePlayerError);
+            } catch {}
+          }
           window.removeEventListener("pagehide", onPageHide);
           document.removeEventListener("visibilitychange", onVisibilityChange);
           void persistProgress({ force: true });
@@ -848,7 +870,7 @@ function ClassView() {
       cleanup();
       playerRef.current = null;
     };
-  }, [activeClassId, data?.class?._id]);
+  }, [activeClassId, data?.class?._id, data?.class?.vdoCipher?.otp]);
 
   // VdoCipher reload handler
   const handleVdoReload = useCallback(async () => {

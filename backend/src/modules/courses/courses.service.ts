@@ -299,11 +299,18 @@ export class CoursesService {
     }
 
     try {
+      const postBody: Record<string, any> = {
+        ttl: 3600,
+      };
+
+      const customWhitelist = process.env.VDOCIPHER_WHITELIST_HREF?.trim();
+      if (customWhitelist) {
+        postBody.whitelisthref = customWhitelist;
+      }
+
       const { data } = await axios.post(
         `https://dev.vdocipher.com/api/videos/${encodeURIComponent(videoId)}/otp`,
-        {
-          ttl: 300,
-        },
+        postBody,
         {
           headers: {
             Accept: 'application/json',
