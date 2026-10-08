@@ -69,7 +69,7 @@ function ReelItem({
   const playTimeTrackerRef = useRef({ startTime: 0, accumulatedSeconds: 0, hasCountedView: false });
 
   const postId = post?._id || post?.id;
-  const isBusinessReel = Boolean(post?.organization);
+  const isBusinessReel = Boolean(post?.organization || post?.organizationId);
   const org = post?.organization;
 
   const author = post?.author || {};
@@ -84,7 +84,7 @@ function ReelItem({
     ? (org?.logo || null)
     : (author?.avatar || author?.profilePicture || author?.avatarUrl);
   const profileUrl = isBusinessReel
-    ? getBusinessProfileUrl(org)
+    ? getBusinessProfileUrl(org || post?.organizationId)
     : getCanonicalProfileUrl(author);
   const canConnect = isBusinessReel
     ? false

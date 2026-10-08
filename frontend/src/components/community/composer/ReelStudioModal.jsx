@@ -103,8 +103,21 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
     }
   }, [isOpen, propPublishingContext, activeProfile.activeProfileType, activeProfile.activeBusinessId, activeProfile.business]);
 
-  const isBusinessMode = capturedPublishingContext?.profileType === 'business' && Boolean(capturedPublishingContext?.organizationId);
-  const currentBusiness = capturedPublishingContext?.organization;
+  const effectivePublishingContext = capturedPublishingContext || propPublishingContext || {
+    profileType: activeProfile.activeProfileType || 'personal',
+    organizationId: activeProfile.activeProfileType === 'business' ? activeProfile.activeBusinessId : null,
+    organization: activeProfile.activeProfileType === 'business' ? activeProfile.business : null,
+  };
+
+  const isBusinessMode =
+    effectivePublishingContext?.profileType === 'business' &&
+    Boolean(effectivePublishingContext?.organizationId);
+  const currentBusiness = effectivePublishingContext?.organization || activeProfile.business;
+
+  const reelDraftKey =
+    isBusinessMode && effectivePublishingContext?.organizationId
+      ? `${REEL_DRAFT_KEY}_business_${effectivePublishingContext.organizationId}`
+      : `${REEL_DRAFT_KEY}_personal`;
 
   // Processing-Aware State Machine:
   // 'SELECT' | 'READY' | 'UPLOADING' | 'UPLOADED' | 'VALIDATING' | 'READY_TO_PUBLISH' | 'PUBLISHING' | 'PUBLISHED' | 'ERROR'
@@ -274,7 +287,9 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
   useEffect(() => {
     if (isOpen) {
       try {
-        const saved = localStorage.getItem(REEL_DRAFT_KEY);
+        const saved =
+          localStorage.getItem(reelDraftKey) ||
+          (!isBusinessMode ? localStorage.getItem(REEL_DRAFT_KEY) : null);
         if (saved) {
           const parsed = JSON.parse(saved);
           if (parsed && typeof parsed === 'object') {
@@ -294,7 +309,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
         }
       } catch {}
     }
-  }, [isOpen]);
+  }, [isOpen, reelDraftKey, isBusinessMode]);
 
   // Draft autosave effect
   useEffect(() => {
@@ -302,7 +317,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
     try {
       if (caption.trim() || tags.length > 0 || editorLayers.length > 0 || selectedMusic) {
         localStorage.setItem(
-          REEL_DRAFT_KEY,
+          reelDraftKey,
           JSON.stringify({
             caption,
             tags,
@@ -388,7 +403,8 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
 
   const handleConfirmDiscard = () => {
     try {
-      localStorage.removeItem(REEL_DRAFT_KEY);
+      localStorage.removeItem(reelDraftKey);
+      if (!isBusinessMode) localStorage.removeItem(REEL_DRAFT_KEY);
     } catch {}
     setShowDiscardDialog(false);
     resetStudio(true);
@@ -880,7 +896,8 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
       toast.success('Reel published to Community!');
 
       try {
-        localStorage.removeItem(REEL_DRAFT_KEY);
+        localStorage.removeItem(reelDraftKey);
+        if (!isBusinessMode) localStorage.removeItem(REEL_DRAFT_KEY);
       } catch {}
 
       idempotencyKeyRef.current = null;
@@ -1116,7 +1133,10 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
         tags,
         audience,
         idempotencyKey: idempotencyKeyRef.current,
-        organizationId: capturedPublishingContext?.organizationId || undefined,
+        organizationId:
+          isBusinessMode && effectivePublishingContext?.organizationId
+            ? effectivePublishingContext.organizationId
+            : undefined,
       });
 
       setUploadProgress(100);
@@ -1124,7 +1144,8 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
       toast.success('Reel published to Community!');
 
       try {
-        localStorage.removeItem(REEL_DRAFT_KEY);
+        localStorage.removeItem(reelDraftKey);
+        if (!isBusinessMode) localStorage.removeItem(REEL_DRAFT_KEY);
       } catch {}
 
       idempotencyKeyRef.current = null;
@@ -1212,7 +1233,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                 <button
                   type="button"
                   onClick={handlePublishReel}
-                  disabled={isPublishingRef.current || createPostMutation.isPending}
+                  disabled={createPostMutation.isPending}
                   className="sm:hidden px-3.5 py-1.5 rounded-xl bg-brand-mint text-[#070B14] font-bold text-xs hover:opacity-90 disabled:opacity-40 transition-all cursor-pointer"
                 >
                   Post
@@ -1789,7 +1810,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                   type="button"
                   id="publish-reel-btn"
                   onClick={handlePublishReel}
-                  disabled={isPublishingRef.current || createPostMutation.isPending || !selectedFile}
+                  disabled={createPostMutation.isPending || !selectedFile}
                   className={`min-h-[42px] px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md cursor-pointer disabled:opacity-50 ${
                     createPostMutation.isPending
                       ? 'community-shimmer-btn text-[#070B14]'

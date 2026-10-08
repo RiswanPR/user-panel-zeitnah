@@ -504,13 +504,13 @@ export default function StoryViewer({
 
   if (!activeGroup || !currentStory) return null;
 
-  const isBusinessStory = Boolean(currentStory?.organization);
+  const isBusinessStory = Boolean(currentStory?.organization || currentStory?.organizationId);
   const org = currentStory?.organization;
   const authorName = isBusinessStory
     ? (org?.name || 'Company')
     : (activeGroup.displayName || 'Zeitnah Member');
   const authorProfileUrl = isBusinessStory
-    ? getBusinessProfileUrl(org)
+    ? getBusinessProfileUrl(org || currentStory?.organizationId)
     : getCanonicalProfileUrl({
         id: activeGroup.userId,
         username: activeGroup.username,

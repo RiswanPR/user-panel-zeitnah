@@ -77,9 +77,9 @@ export default function PublicBusinessProfilePage() {
     return businesses.some(
       (b) =>
         String(b.id || b._id) === String(businessId) ||
-        (b.slug && business.slug && b.slug.toLowerCase() === business.slug.toLowerCase())
+        (b.slug && business?.slug && b.slug.toLowerCase() === business.slug.toLowerCase())
     );
-  }, [businesses, businessId, business?.slug]);
+  }, [businesses, businessId, business]);
 
   const isActiveProfile =
     isMyBusiness &&

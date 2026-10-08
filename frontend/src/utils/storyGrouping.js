@@ -42,11 +42,12 @@ export function groupStoriesByUser(
 
     seenStoryIds.add(storyId);
 
-    const isBusinessStory = Boolean(story.organization || (story.organizationId && typeof story.organization === 'object'));
     const org = story.organization;
+    const orgId = story.organizationId || org?._id || org?.id;
+    const isBusinessStory = Boolean(org || story.organizationId);
     const author = story.author || {};
-    const authorId = isBusinessStory && story.organizationId
-      ? `org_${story.organizationId}`
+    const authorId = isBusinessStory && orgId
+      ? `org_${orgId}`
       : String(author._id || author.id || story.authorId || '');
     if (!authorId) continue;
 

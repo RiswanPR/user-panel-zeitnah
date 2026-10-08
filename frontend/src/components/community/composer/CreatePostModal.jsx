@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useContext } from 'react';
+import { useState, useRef, useEffect, useCallback, useContext, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
@@ -102,8 +102,16 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
     }
   }, [isOpen, propPublishingContext, activeProfile.activeProfileType, activeProfile.activeBusinessId, activeProfile.business]);
 
-  const isBusinessMode = capturedPublishingContext?.profileType === 'business' && Boolean(capturedPublishingContext?.organizationId);
-  const currentBusiness = capturedPublishingContext?.organization;
+  const effectivePublishingContext = capturedPublishingContext || propPublishingContext || {
+    profileType: activeProfile.activeProfileType || 'personal',
+    organizationId: activeProfile.activeProfileType === 'business' ? activeProfile.activeBusinessId : null,
+    organization: activeProfile.activeProfileType === 'business' ? activeProfile.business : null,
+  };
+
+  const isBusinessMode =
+    effectivePublishingContext?.profileType === 'business' &&
+    Boolean(effectivePublishingContext?.organizationId);
+  const currentBusiness = effectivePublishingContext?.organization || activeProfile.business;
 
   // Mode: 'EDIT' | 'PREVIEW'
   const [viewMode, setViewMode] = useState('EDIT');
@@ -751,7 +759,10 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
         media: uploadedMedia,
         tags,
         idempotencyKey: idempotencyKeyRef.current,
-        organizationId: capturedPublishingContext?.organizationId || undefined,
+        organizationId:
+          isBusinessMode && effectivePublishingContext?.organizationId
+            ? effectivePublishingContext.organizationId
+            : undefined,
       };
 
       if (hasValidPoll) {

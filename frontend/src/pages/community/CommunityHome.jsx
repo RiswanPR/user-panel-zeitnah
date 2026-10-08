@@ -232,11 +232,13 @@ export default function CommunityHome({ initialCreateMode } = {}) {
   useEffect(() => {
     const path = window.location.pathname;
     if (path === '/community/create/post' || initialCreateMode === 'post') {
+      setCreationPublishingContext(getSnapshotPublishingContext());
       setIsCreatePostOpen(true);
     } else if (path === '/community/create/reel' || initialCreateMode === 'reel') {
+      setCreationPublishingContext(getSnapshotPublishingContext());
       setIsCreateReelOpen(true);
     }
-  }, [initialCreateMode]);
+  }, [initialCreateMode, getSnapshotPublishingContext]);
 
   // Back button popstate listener
   useEffect(() => {
@@ -252,15 +254,17 @@ export default function CommunityHome({ initialCreateMode } = {}) {
         setIsCreateReelOpen(false);
       }
       if (path === '/community/create/post') {
+        setCreationPublishingContext(getSnapshotPublishingContext());
         setIsCreatePostOpen(true);
       }
       if (path === '/community/create/reel') {
+        setCreationPublishingContext(getSnapshotPublishingContext());
         setIsCreateReelOpen(true);
       }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [activeReelPostId, isCreatePostOpen, isCreateReelOpen]);
+  }, [activeReelPostId, isCreatePostOpen, isCreateReelOpen, getSnapshotPublishingContext]);
 
   const handleEmptyStateAction = useCallback(() => {
     handleOpenCreatePost();
@@ -418,7 +422,7 @@ export default function CommunityHome({ initialCreateMode } = {}) {
               <StoryRail
                 stories={stories}
                 isLoading={storiesLoading}
-                onAddStory={() => setIsCreateStoryModalOpen(true)}
+                onAddStory={handleOpenCreateStory}
                 onSelectGroup={(group) => {
                   const idx = allGroups.findIndex((g) => g.userId === group.userId);
                   setSelectedGroupIndex(idx !== -1 ? idx : 0);
