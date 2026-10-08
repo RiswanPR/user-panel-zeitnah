@@ -28,6 +28,11 @@ import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../components/ui/Toast";
 import storage, { getDeviceId, getBrowserFingerprint } from "../../services/storage";
 import { getErrorBuffer, getBrowserInfo } from "../../utils/errorCapture";
+import {
+  runPwaVideoDiagnostics,
+  recordOtpStatus,
+  recordVdoError,
+} from "../../utils/pwaVideoDiagnostics";
 
 // Modular Classroom Components
 import LearningHeader from "../../components/classroom/LearningHeader";
@@ -241,6 +246,11 @@ function ClassView() {
     }
   });
 
+  // PWA Video Diagnostic Telemetry Probe on mount
+  useEffect(() => {
+    void runPwaVideoDiagnostics();
+  }, []);
+
   const handleToggleAutoPlay = (val) => {
     setAutoPlayNext(val);
     try {
@@ -356,6 +366,14 @@ function ClassView() {
         classPayload.course?.type,
         classPayload.class?.videoSource
       );
+
+      // Diagnostic: Record OTP/playbackInfo fetch metadata without logging secrets
+      recordOtpStatus({
+        status: classRes.status,
+        hasOtp: Boolean(classPayload.class?.vdoCipher?.otp),
+        hasPlaybackInfo: Boolean(classPayload.class?.vdoCipher?.playbackInfo),
+        videoSource,
+      });
 
       // 2. Parallelize Safe Background Requests (VR-002)
       const parallelRequests = [];
@@ -812,6 +830,7 @@ function ClassView() {
         player.video.addEventListener("ended", onEnded);
 
         const handlePlayerError = (err) => {
+          recordVdoError(err);
           const code = err?.code || player?.video?.error?.code;
           const msg = err?.message || player?.video?.error?.message || err?.payload?.message || "";
           console.warn("[VdoCipher] Player error intercepted:", code, msg, err);
@@ -831,12 +850,24 @@ function ClassView() {
           }
         };
 
+        const handlePostMessage = (event) => {
+          if (event?.origin && event.origin.includes("vdocipher.com")) {
+            try {
+              const payload = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+              if (payload && (payload.event === "error" || payload.type === "error" || payload.error)) {
+                recordVdoError(payload);
+              }
+            } catch {}
+          }
+        };
+
         player.video.addEventListener("error", handlePlayerError);
         if (player.api && typeof player.api.addEventListener === "function") {
           try {
             player.api.addEventListener("error", handlePlayerError);
           } catch {}
         }
+        window.addEventListener("message", handlePostMessage);
         window.addEventListener("pagehide", onPageHide);
         document.addEventListener("visibilitychange", onVisibilityChange);
 
@@ -854,6 +885,7 @@ function ClassView() {
               player.api.removeEventListener("error", handlePlayerError);
             } catch {}
           }
+          window.removeEventListener("message", handlePostMessage);
           window.removeEventListener("pagehide", onPageHide);
           document.removeEventListener("visibilitychange", onVisibilityChange);
           void persistProgress({ force: true });
