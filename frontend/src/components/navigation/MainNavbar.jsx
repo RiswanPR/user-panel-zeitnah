@@ -13,6 +13,8 @@ import {
   Trophy,
   MessageSquare,
   Compass,
+  ArrowRightLeft,
+  Building2,
 } from "lucide-react";
 import NotificationBell from "../notifications/NotificationBell";
 import QuickSearchModal from "./QuickSearchModal";
@@ -23,6 +25,9 @@ import {
   getMoreNavSections,
 } from "../../utils/roleNavigation";
 import { useOnboarding } from "../../context/OnboardingContext";
+import { useActiveProfile } from "../../context/ActiveProfileContext";
+import BusinessLogo from "../business/BusinessLogo";
+import { getBusinessProfileUrl } from "../../utils/businessProfile";
 
 /**
  * ZEITNAH — PREMIUM NAVBAR 3.0
@@ -51,6 +56,15 @@ export default function MainNavbar({
   const location = useLocation();
   const shouldReduceMotion = useReducedMotion();
   const { startTour } = useOnboarding();
+  const {
+    activeProfileMode,
+    isPersonalMode,
+    isBusinessMode,
+    hasBusinessProfile,
+    business,
+    switchToPersonal,
+    switchToBusiness,
+  } = useActiveProfile();
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -640,34 +654,51 @@ export default function MainNavbar({
                     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                   >
                     {/* Avatar */}
-                    <div
-                      className="relative flex items-center justify-center overflow-hidden transition-transform duration-200 group-hover:scale-[1.03]"
-                      style={{
-                        width: "28px",
-                        height: "28px",
-                        borderRadius: "50%",
-                        background: "linear-gradient(135deg, rgba(159,213,178,0.2) 0%, rgba(18,49,76,0.6) 100%)",
-                        border: "1.5px solid rgba(159,213,178,0.25)",
-                      }}
-                    >
-                      {avatarUrl ? (
-                        <img src={avatarUrl} alt="" aria-hidden="true" className="w-full h-full object-cover" />
-                      ) : (
-                        <span
-                          className="font-mono font-bold text-brand-mint"
-                          style={{ fontSize: "9px" }}
-                        >
-                          {userInitials}
-                        </span>
-                      )}
-                    </div>
+                    {isBusinessMode && business ? (
+                      <div
+                        className="relative flex items-center justify-center overflow-hidden transition-transform duration-200 group-hover:scale-[1.03]"
+                        style={{
+                          width: "28px",
+                          height: "28px",
+                        }}
+                      >
+                        <BusinessLogo
+                          logo={business.logo}
+                          name={business.name}
+                          size="xs"
+                          className="!w-7 !h-7 !rounded-lg border-[1.5px] border-brand-mint/35"
+                        />
+                      </div>
+                    ) : (
+                      <div
+                        className="relative flex items-center justify-center overflow-hidden transition-transform duration-200 group-hover:scale-[1.03]"
+                        style={{
+                          width: "28px",
+                          height: "28px",
+                          borderRadius: "50%",
+                          background: "linear-gradient(135deg, rgba(159,213,178,0.2) 0%, rgba(18,49,76,0.6) 100%)",
+                          border: "1.5px solid rgba(159,213,178,0.25)",
+                        }}
+                      >
+                        {avatarUrl ? (
+                          <img src={avatarUrl} alt="" aria-hidden="true" className="w-full h-full object-cover" />
+                        ) : (
+                          <span
+                            className="font-mono font-bold text-brand-mint"
+                            style={{ fontSize: "9px" }}
+                          >
+                            {userInitials}
+                          </span>
+                        )}
+                      </div>
+                    )}
 
                     {/* Name — only at wide screens */}
                     <span
                       className="hidden xl:block max-w-[80px] truncate text-left transition-colors duration-150 text-white/70 group-hover:text-white/90"
                       style={{ fontSize: "12px", fontWeight: 500 }}
                     >
-                      {user?.name || "Account"}
+                      {isBusinessMode && business ? business.name : (user?.name || "Account")}
                     </span>
 
                     <ChevronDown
@@ -698,42 +729,152 @@ export default function MainNavbar({
                           className="px-2.5 py-2.5 mb-1"
                           style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
                         >
-                          <p
-                            className="font-semibold text-white truncate leading-tight"
-                            style={{ fontSize: "12.5px" }}
-                          >
-                            {user?.name || "Professional"}
-                          </p>
-                          <p
-                            className="font-mono text-white/40 truncate leading-tight mt-0.5"
-                            style={{ fontSize: "10px" }}
-                          >
-                            @{user?.username || "profile"}
-                          </p>
-                          <div
-                            className="mt-2 inline-flex items-center font-mono font-semibold uppercase tracking-wider"
-                            style={{
-                              padding: "2px 7px",
-                              fontSize: "8.5px",
-                              borderRadius: "5px",
-                              background: "rgba(255,255,255,0.05)",
-                              border: "1px solid rgba(255,255,255,0.08)",
-                              color: "rgba(255,255,255,0.4)",
-                            }}
-                          >
-                            {normalizedRole}
+                          <div className="flex items-center gap-2.5 mb-2">
+                            {isBusinessMode && business ? (
+                              <BusinessLogo
+                                logo={business.logo}
+                                name={business.name}
+                                size="sm"
+                                className="shrink-0"
+                              />
+                            ) : (
+                              <div
+                                className="shrink-0 flex items-center justify-center overflow-hidden"
+                                style={{
+                                  width: "32px",
+                                  height: "32px",
+                                  borderRadius: "50%",
+                                  background: "linear-gradient(135deg, rgba(159,213,178,0.2) 0%, rgba(18,49,76,0.6) 100%)",
+                                  border: "1.5px solid rgba(159,213,178,0.25)",
+                                }}
+                              >
+                                {avatarUrl ? (
+                                  <img src={avatarUrl} alt="" aria-hidden="true" className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="font-mono font-bold text-brand-mint text-xs">
+                                    {userInitials}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <p
+                                className="font-semibold text-white truncate leading-tight"
+                                style={{ fontSize: "12.5px" }}
+                              >
+                                {isBusinessMode && business ? business.name : (user?.name || "Professional")}
+                              </p>
+                              <p
+                                className="font-mono text-white/40 truncate leading-tight mt-0.5"
+                                style={{ fontSize: "10px" }}
+                              >
+                                {isBusinessMode && business
+                                  ? `@${business.slug || "business"}`
+                                  : `@${user?.username || "profile"}`}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-1.5">
+                            <div
+                              className="inline-flex items-center font-mono font-semibold uppercase tracking-wider"
+                              style={{
+                                padding: "2px 7px",
+                                fontSize: "8.5px",
+                                borderRadius: "5px",
+                                background: isBusinessMode ? "rgba(159,213,178,0.12)" : "rgba(255,255,255,0.05)",
+                                border: isBusinessMode ? "1px solid rgba(159,213,178,0.25)" : "1px solid rgba(255,255,255,0.08)",
+                                color: isBusinessMode ? "#9FD5B2" : "rgba(255,255,255,0.4)",
+                              }}
+                            >
+                              {isBusinessMode ? "Business Profile" : "Personal Profile"}
+                            </div>
+                            {!isBusinessMode && (
+                              <span
+                                className="font-mono text-[8px] text-white/30 uppercase tracking-wider"
+                              >
+                                {normalizedRole}
+                              </span>
+                            )}
                           </div>
                         </div>
 
+                        {/* Profile Switcher Action (if user has an eligible business) */}
+                        {hasBusinessProfile && (
+                          <div
+                            className="px-1 py-1 mb-1"
+                            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (isBusinessMode) {
+                                  switchToPersonal();
+                                } else {
+                                  switchToBusiness();
+                                }
+                              }}
+                              className="w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-xl transition-all duration-150 cursor-pointer text-left group hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-mint/50"
+                              style={{
+                                background: isBusinessMode
+                                  ? "rgba(18,49,76,0.3)"
+                                  : "rgba(159,213,178,0.07)",
+                                border: isBusinessMode
+                                  ? "1px solid rgba(255,255,255,0.09)"
+                                  : "1px solid rgba(159,213,178,0.2)",
+                              }}
+                              aria-label={isBusinessMode ? "Switch to Personal" : "Switch to Business"}
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <ArrowRightLeft
+                                  style={{
+                                    width: "13px",
+                                    height: "13px",
+                                    color: isBusinessMode ? "rgba(255,255,255,0.7)" : "#9FD5B2",
+                                    flexShrink: 0,
+                                  }}
+                                  aria-hidden="true"
+                                />
+                                <span
+                                  className="truncate font-medium transition-colors"
+                                  style={{
+                                    fontSize: "12px",
+                                    color: isBusinessMode ? "rgba(255,255,255,0.9)" : "#9FD5B2",
+                                  }}
+                                >
+                                  {isBusinessMode ? "Switch to Personal" : "Switch to Business"}
+                                </span>
+                              </div>
+                              <span
+                                className="font-mono text-[8.5px] uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0 font-medium"
+                                style={{
+                                  background: isBusinessMode ? "rgba(255,255,255,0.06)" : "rgba(159,213,178,0.15)",
+                                  color: isBusinessMode ? "rgba(255,255,255,0.5)" : "#9FD5B2",
+                                }}
+                              >
+                                {isBusinessMode ? "Personal" : "Business"}
+                              </span>
+                            </button>
+                          </div>
+                        )}
+
                         {/* Links */}
                         <div className="space-y-0.5 mb-1">
-                          {[
-                            { to: "/profile", icon: User, label: "My Profile" },
-                            { to: "/profile/portfolio", icon: Layers, label: "Portfolio" },
-                            { to: "/profile/verification", icon: ShieldCheck, label: "Verification Center" },
-                            { to: "/profile/edit", icon: Settings, label: "Account Settings" },
-                            { to: "/active-sessions", icon: ShieldAlert, label: "Active Sessions" },
-                          ].map(({ to, icon: Icon, label }) => (
+                          {(isBusinessMode && business
+                            ? [
+                                { to: getBusinessProfileUrl(business), icon: Building2, label: "Business Profile" },
+                                { to: "/manage-business", icon: Layers, label: "Manage Business" },
+                                { to: "/profile/edit", icon: Settings, label: "Account Settings" },
+                                { to: "/active-sessions", icon: ShieldAlert, label: "Active Sessions" },
+                              ]
+                            : [
+                                { to: "/profile", icon: User, label: "My Profile" },
+                                { to: "/profile/portfolio", icon: Layers, label: "Portfolio" },
+                                { to: "/profile/verification", icon: ShieldCheck, label: "Verification Center" },
+                                { to: "/profile/edit", icon: Settings, label: "Account Settings" },
+                                { to: "/active-sessions", icon: ShieldAlert, label: "Active Sessions" },
+                              ]
+                          ).map(({ to, icon: Icon, label }) => (
                             <Link
                               key={to}
                               to={to}

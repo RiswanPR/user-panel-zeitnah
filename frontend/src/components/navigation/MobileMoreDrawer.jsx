@@ -16,10 +16,15 @@ import {
   MessageSquare,
   ChevronRight,
   Compass,
+  ArrowRightLeft,
+  Building2,
 } from "lucide-react";
 import { getUploadUrl } from "../../utils/courseUi";
 import { normalizeUserRole, isAdmin } from "../../utils/roleNavigation";
 import { useOnboarding } from "../../context/OnboardingContext";
+import { useActiveProfile } from "../../context/ActiveProfileContext";
+import BusinessLogo from "../business/BusinessLogo";
+import { getBusinessProfileUrl } from "../../utils/businessProfile";
 
 /**
  * Zeitnah 3.0 Mobile "More" Command Sheet
@@ -41,6 +46,15 @@ export default function MobileMoreDrawer({
 }) {
   const location = useLocation();
   const { startTour } = useOnboarding();
+  const {
+    activeProfileMode,
+    isPersonalMode,
+    isBusinessMode,
+    hasBusinessProfile,
+    business,
+    switchToPersonal,
+    switchToBusiness,
+  } = useActiveProfile();
 
   // Close on route change
   useEffect(() => {
@@ -139,12 +153,29 @@ export default function MobileMoreDrawer({
       {
         title: "ACCOUNT",
         items: [
-          {
-            label: "My Profile",
-            path: "/profile",
-            icon: User,
-            desc: "Public profile & biographical overview",
-          },
+          ...(isBusinessMode && business
+            ? [
+                {
+                  label: "Business Profile",
+                  path: getBusinessProfileUrl(business),
+                  icon: Building2,
+                  desc: "Public company presence & showcase",
+                },
+                {
+                  label: "Manage Business",
+                  path: "/manage-business",
+                  icon: Layers,
+                  desc: "Business settings, overview & jobs",
+                },
+              ]
+            : [
+                {
+                  label: "My Profile",
+                  path: "/profile",
+                  icon: User,
+                  desc: "Public profile & biographical overview",
+                },
+              ]),
           {
             label: "Account Settings",
             path: "/profile/edit",
@@ -239,7 +270,7 @@ export default function MobileMoreDrawer({
             >
               {user ? (
                 <Link
-                  to="/profile"
+                  to={isBusinessMode && business ? getBusinessProfileUrl(business) : "/profile"}
                   onClick={onClose}
                   className="flex items-center gap-3 flex-1 min-w-0 rounded-2xl transition-all duration-150 touch-manipulation"
                   style={{
@@ -250,45 +281,64 @@ export default function MobileMoreDrawer({
                   onTouchStart={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.045)"; }}
                   onTouchEnd={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.025)"; }}
                 >
-                  {/* Avatar */}
-                  <div
-                    className="shrink-0 flex items-center justify-center overflow-hidden"
-                    style={{
-                      width: "40px",
-                      height: "40px",
-                      borderRadius: "50%",
-                      background: "linear-gradient(135deg, rgba(159,213,178,0.2), rgba(18,49,76,0.6))",
-                      border: "1.5px solid rgba(159,213,178,0.25)",
-                    }}
-                  >
-                    {avatarUrl ? (
-                      <img
-                        src={avatarUrl}
-                        alt={user?.name || "Avatar"}
-                        className="w-full h-full object-cover"
+                  {/* Avatar / BusinessLogo */}
+                  {isBusinessMode && business ? (
+                    <div
+                      className="shrink-0 flex items-center justify-center overflow-hidden"
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                      }}
+                    >
+                      <BusinessLogo
+                        logo={business.logo}
+                        name={business.name}
+                        size="sm"
+                        className="!w-10 !h-10 !rounded-xl border-[1.5px] border-brand-mint/35"
                       />
-                    ) : (
-                      <span
-                        className="font-mono font-bold text-brand-mint"
-                        style={{ fontSize: "12px" }}
-                      >
-                        {userInitials}
-                      </span>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <div
+                      className="shrink-0 flex items-center justify-center overflow-hidden"
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        borderRadius: "50%",
+                        background: "linear-gradient(135deg, rgba(159,213,178,0.2), rgba(18,49,76,0.6))",
+                        border: "1.5px solid rgba(159,213,178,0.25)",
+                      }}
+                    >
+                      {avatarUrl ? (
+                        <img
+                          src={avatarUrl}
+                          alt={user?.name || "Avatar"}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span
+                          className="font-mono font-bold text-brand-mint"
+                          style={{ fontSize: "12px" }}
+                        >
+                          {userInitials}
+                        </span>
+                      )}
+                    </div>
+                  )}
 
                   <div className="min-w-0 flex-1">
                     <p
                       className="font-semibold text-white truncate leading-tight"
                       style={{ fontSize: "13px" }}
                     >
-                      {user?.name || "Professional"}
+                      {isBusinessMode && business ? business.name : (user?.name || "Professional")}
                     </p>
                     <p
                       className="font-mono text-white/40 truncate leading-tight mt-0.5"
                       style={{ fontSize: "10.5px" }}
                     >
-                      @{user?.username || "profile"}
+                      {isBusinessMode && business
+                        ? `@${business.slug || "business"}`
+                        : `@${user?.username || "profile"}`}
                     </p>
                     <div
                       className="mt-1.5 inline-flex items-center font-mono font-semibold uppercase tracking-wider"
@@ -296,12 +346,12 @@ export default function MobileMoreDrawer({
                         padding: "2px 7px",
                         fontSize: "8px",
                         borderRadius: "5px",
-                        background: "rgba(255,255,255,0.05)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        color: "rgba(255,255,255,0.35)",
+                        background: isBusinessMode ? "rgba(159,213,178,0.12)" : "rgba(255,255,255,0.05)",
+                        border: isBusinessMode ? "1px solid rgba(159,213,178,0.25)" : "1px solid rgba(255,255,255,0.08)",
+                        color: isBusinessMode ? "#9FD5B2" : "rgba(255,255,255,0.35)",
                       }}
                     >
-                      {normalizedRole}
+                      {isBusinessMode ? "Business Profile" : normalizedRole}
                     </div>
                   </div>
 
@@ -351,6 +401,73 @@ export default function MobileMoreDrawer({
                 <X style={{ width: "15px", height: "15px" }} aria-hidden="true" />
               </button>
             </div>
+
+            {/* Mobile Profile Switcher Action (if user has an eligible business) */}
+            {hasBusinessProfile && (
+              <div
+                className="px-4 py-2"
+                style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isBusinessMode) {
+                      switchToPersonal();
+                    } else {
+                      switchToBusiness();
+                    }
+                  }}
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 touch-manipulation cursor-pointer text-left active:scale-[0.99] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-mint/50"
+                  style={{
+                    background: isBusinessMode
+                      ? "rgba(18,49,76,0.35)"
+                      : "rgba(159,213,178,0.08)",
+                    border: isBusinessMode
+                      ? "1px solid rgba(255,255,255,0.1)"
+                      : "1px solid rgba(159,213,178,0.22)",
+                  }}
+                  aria-label={isBusinessMode ? "Switch to Personal" : "Switch to Business"}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <ArrowRightLeft
+                      style={{
+                        width: "15px",
+                        height: "15px",
+                        color: isBusinessMode ? "rgba(255,255,255,0.7)" : "#9FD5B2",
+                        flexShrink: 0,
+                      }}
+                      aria-hidden="true"
+                    />
+                    <div>
+                      <p
+                        className="font-medium truncate leading-tight"
+                        style={{
+                          fontSize: "13px",
+                          color: isBusinessMode ? "rgba(255,255,255,0.9)" : "#9FD5B2",
+                        }}
+                      >
+                        {isBusinessMode ? "Switch to Personal" : "Switch to Business"}
+                      </p>
+                      <p
+                        className="font-mono text-white/40 truncate leading-tight mt-0.5"
+                        style={{ fontSize: "10px" }}
+                      >
+                        {isBusinessMode ? `Active: ${business?.name || "Business"}` : "Active: Personal Profile"}
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded shrink-0 font-medium"
+                    style={{
+                      background: isBusinessMode ? "rgba(255,255,255,0.06)" : "rgba(159,213,178,0.15)",
+                      color: isBusinessMode ? "rgba(255,255,255,0.5)" : "#9FD5B2",
+                    }}
+                  >
+                    {isBusinessMode ? "Personal" : "Business"}
+                  </span>
+                </button>
+              </div>
+            )}
 
             {/* Scrollable navigation body */}
             <div
