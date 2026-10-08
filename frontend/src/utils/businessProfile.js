@@ -130,6 +130,91 @@ export function getBusinessProfileUrl(target) {
 }
 
 /**
+ * Resolves canonical business identity (name, slug, logo, profileUrl, isVerified)
+ * from a story or content entity across:
+ * 1. Populated organization object
+ * 2. Active profile businesses or known businesses list
+ * 3. Fallback to raw organizationId
+ *
+ * @param {object} params
+ * @param {object|null} [params.organization]
+ * @param {string|null} [params.organizationId]
+ * @param {Array<object>} [params.knownOrganizations]
+ * @returns {object|null}
+ */
+export function resolveCanonicalBusinessIdentity({
+  organization = null,
+  organizationId = null,
+  knownOrganizations = [],
+} = {}) {
+  const rawOrgId =
+    organizationId && typeof organizationId === 'object'
+      ? (organizationId._id || organizationId.id)
+      : organizationId;
+  const org =
+    organization && typeof organization === 'object'
+      ? organization
+      : (organizationId && typeof organizationId === 'object' ? organizationId : null);
+  const targetId = String(rawOrgId || org?._id || org?.id || '').trim();
+
+  // If neither organization nor targetId exists, not a business entity
+  if (!org && !targetId) {
+    return null;
+  }
+
+  // Case 1: Populated organization object has name and/or slug
+  if (org && (org.name || org.slug)) {
+    const slug = org.slug ? String(org.slug).trim().toLowerCase() : '';
+    const name = org.name ? String(org.name).trim() : 'Company';
+    const logo = org.logo || '';
+    const isVerified = Boolean(org.isVerified);
+    return {
+      id: targetId || String(org._id || org.id || ''),
+      name,
+      slug: slug || null,
+      logo,
+      profileUrl: getBusinessProfileUrl(slug || org),
+      isVerified,
+      status: org.status || null,
+      isResolved: true,
+    };
+  }
+
+  // Case 2: Resolve from known organizations (e.g. user's businesses or cache)
+  if (targetId && Array.isArray(knownOrganizations) && knownOrganizations.length > 0) {
+    const matched = findBusinessById(knownOrganizations, targetId);
+    if (matched) {
+      return {
+        id: matched.id,
+        name: matched.name,
+        slug: matched.slug || null,
+        logo: matched.logo || '',
+        profileUrl: getBusinessProfileUrl(matched.slug || matched.id),
+        isVerified: matched.isVerified,
+        status: matched.status || null,
+        isResolved: true,
+      };
+    }
+  }
+
+  // Case 3: Fallback when only raw organization ID is available
+  if (targetId) {
+    return {
+      id: targetId,
+      name: 'Company',
+      slug: null,
+      logo: null,
+      profileUrl: getBusinessProfileUrl(targetId),
+      isVerified: false,
+      status: null,
+      isResolved: false,
+    };
+  }
+
+  return null;
+}
+
+/**
  * Safely resolves the primary business profile from a list of user organizations.
  *
  * @param {Array<object>|null|undefined} organizations

@@ -12,7 +12,8 @@
 export function groupStoriesByUser(
   stories = [],
   currentUserId = null,
-  viewedStoryIds = new Set()
+  viewedStoryIds = new Set(),
+  knownOrganizations = []
 ) {
   if (!Array.isArray(stories) || stories.length === 0) {
     return {
@@ -20,6 +21,24 @@ export function groupStoriesByUser(
       userGroups: [],
       allGroups: [],
     };
+  }
+
+  // Build lookup index for known organizations (e.g. from active user businesses or populated stories)
+  const knownOrgMap = new Map();
+  if (Array.isArray(knownOrganizations)) {
+    for (const item of knownOrganizations) {
+      if (item && (item.id || item._id)) {
+        knownOrgMap.set(String(item.id || item._id), item);
+      }
+    }
+  }
+  for (const s of stories) {
+    if (s?.organization && typeof s.organization === 'object') {
+      const oId = String(s.organizationId || s.organization._id || s.organization.id || '');
+      if (oId && !knownOrgMap.has(oId)) {
+        knownOrgMap.set(oId, s.organization);
+      }
+    }
   }
 
   const now = new Date();
@@ -42,9 +61,24 @@ export function groupStoriesByUser(
 
     seenStoryIds.add(storyId);
 
-    const org = story.organization;
-    const orgId = story.organizationId || org?._id || org?.id;
-    const isBusinessStory = Boolean(org || story.organizationId);
+    const rawOrgId =
+      story.organizationId && typeof story.organizationId === 'object'
+        ? (story.organizationId._id || story.organizationId.id)
+        : story.organizationId;
+    const directOrg =
+      story.organization && typeof story.organization === 'object'
+        ? story.organization
+        : (story.organizationId && typeof story.organizationId === 'object'
+            ? story.organizationId
+            : null);
+    const orgId = rawOrgId || directOrg?._id || directOrg?.id;
+    const isBusinessStory = Boolean(directOrg || rawOrgId);
+    const resolvedOrg = directOrg || (orgId ? knownOrgMap.get(String(orgId)) : null);
+
+    if (resolvedOrg && !story.organization) {
+      story.organization = resolvedOrg;
+    }
+
     const author = story.author || {};
     const authorId = isBusinessStory && orgId
       ? `org_${orgId}`
@@ -57,13 +91,14 @@ export function groupStoriesByUser(
         : Boolean(currentUserId && String(currentUserId) === authorId);
       userMap.set(authorId, {
         userId: authorId,
-        username: isBusinessStory && org?.slug ? org.slug : (author.username || ''),
-        displayName: isBusinessStory && org?.name ? org.name : (author.name || author.displayName || 'Zeitnah Member'),
-        avatar: isBusinessStory && org?.logo ? org.logo : (author.avatar || author.profileImage || author.avatarUrl || author.profilePicture || ''),
+        username: isBusinessStory && resolvedOrg?.slug ? resolvedOrg.slug : (author.username || ''),
+        displayName: isBusinessStory && resolvedOrg?.name ? resolvedOrg.name : (author.name || author.displayName || 'Zeitnah Member'),
+        avatar: isBusinessStory && resolvedOrg?.logo ? resolvedOrg.logo : (author.avatar || author.profileImage || author.avatarUrl || author.profilePicture || ''),
         role: isBusinessStory ? 'company' : (author.role || 'student'),
-        verified: isBusinessStory ? Boolean(org?.isVerified) : !!author.verified,
+        verified: isBusinessStory ? Boolean(resolvedOrg?.isVerified) : !!author.verified,
         isBusiness: isBusinessStory,
-        organization: org || null,
+        organization: resolvedOrg || null,
+        organizationId: isBusinessStory && orgId ? String(orgId) : null,
         isCurrentUser,
         stories: [],
         latestStoryAt: new Date(0),
@@ -72,6 +107,21 @@ export function groupStoriesByUser(
     }
 
     const group = userMap.get(authorId);
+    if (isBusinessStory && resolvedOrg) {
+      if (!group.organization) group.organization = resolvedOrg;
+      if (resolvedOrg.name && (!group.displayName || group.displayName === 'Zeitnah Member' || group.displayName === author.name)) {
+        group.displayName = resolvedOrg.name;
+      }
+      if (resolvedOrg.slug && (!group.username || group.username === author.username)) {
+        group.username = resolvedOrg.slug;
+      }
+      if (resolvedOrg.logo && (!group.avatar || group.avatar === author.avatar)) {
+        group.avatar = resolvedOrg.logo;
+      }
+      if (resolvedOrg.isVerified !== undefined) {
+        group.verified = Boolean(resolvedOrg.isVerified);
+      }
+    }
     group.stories.push(story);
 
     const storyDate = new Date(story.createdAt || 0);

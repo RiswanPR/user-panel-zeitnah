@@ -53,6 +53,7 @@ export default function CommunityHome({ initialCreateMode } = {}) {
     activeProfileType,
     activeBusinessId,
     business,
+    businesses,
     isBusinessMode,
   } = useActiveProfile();
   const navigate = useNavigate();
@@ -86,8 +87,8 @@ export default function CommunityHome({ initialCreateMode } = {}) {
   }, [storiesData]);
 
   const { allGroups } = useMemo(() => {
-    return groupStoriesByUser(stories, currentUserId);
-  }, [stories, currentUserId]);
+    return groupStoriesByUser(stories, currentUserId, undefined, businesses);
+  }, [stories, currentUserId, businesses]);
 
   // ── Fetch Feed per Filter & Active Profile ──
   const {

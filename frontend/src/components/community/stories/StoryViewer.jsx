@@ -17,12 +17,20 @@ import {
   Flame,
   Star,
   Lightbulb,
+  Building2,
 } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useViewStory, useReactToStory } from '../../../hooks/useCommunity';
 import { communityApi } from '../../../services/communityApi';
+import { organizationService } from '../../../services/organizationService';
+import { useActiveProfile } from '../../../context/ActiveProfileContext';
 import { getCanonicalProfileUrl } from '../../../utils/roleNavigation';
-import { getBusinessProfileUrl } from '../../../utils/businessProfile';
+import {
+  getBusinessProfileUrl,
+  resolveCanonicalBusinessIdentity,
+  findBusinessById,
+} from '../../../utils/businessProfile';
 import BusinessLogo from '../../business/BusinessLogo';
 import { formatRelativeTime } from '../../../utils/communityFormatters';
 import { groupStoriesByUser } from '../../../utils/storyGrouping';
@@ -97,6 +105,74 @@ export default function StoryViewer({
 
   const rawAuthorAvatar = activeGroup?.avatar || activeGroup?.avatarUrl || activeGroup?.profileImage;
   const authorAvatar = getUploadUrl(rawAuthorAvatar);
+
+  // ── Business Identity & Metadata Resolution ──
+  const { businesses } = useActiveProfile();
+
+  const isBusinessStory = Boolean(
+    currentStory?.organization ||
+    currentStory?.organizationId ||
+    activeGroup?.isBusiness ||
+    activeGroup?.organization ||
+    activeGroup?.organizationId
+  );
+
+  const directOrg =
+    (currentStory?.organization && typeof currentStory.organization === 'object'
+      ? currentStory.organization
+      : (activeGroup?.organization && typeof activeGroup.organization === 'object'
+          ? activeGroup.organization
+          : null));
+
+  const targetOrgId = useMemo(() => {
+    if (!isBusinessStory) return null;
+    const raw =
+      currentStory?.organizationId ||
+      activeGroup?.organizationId ||
+      directOrg?._id ||
+      directOrg?.id ||
+      null;
+    return raw ? String(raw) : null;
+  }, [isBusinessStory, currentStory?.organizationId, activeGroup?.organizationId, directOrg]);
+
+  const hasCompleteDirectMetadata = Boolean(directOrg?.name && (directOrg?.slug || directOrg?.logo));
+
+  const matchedUserBusiness = useMemo(() => {
+    if (!targetOrgId || hasCompleteDirectMetadata) return null;
+    return findBusinessById(businesses, targetOrgId);
+  }, [targetOrgId, hasCompleteDirectMetadata, businesses]);
+
+  const {
+    data: fetchedOrg,
+    isLoading: isOrgLoading,
+  } = useQuery({
+    queryKey: ['public-business', targetOrgId],
+    queryFn: () => organizationService.getOrganizationBySlug(targetOrgId),
+    enabled: Boolean(
+      isBusinessStory &&
+      targetOrgId &&
+      !hasCompleteDirectMetadata &&
+      !matchedUserBusiness
+    ),
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const effectiveBusinessIdentity = useMemo(() => {
+    if (!isBusinessStory) return null;
+    const sourceOrg = directOrg || matchedUserBusiness || fetchedOrg || null;
+    return resolveCanonicalBusinessIdentity({
+      organization: sourceOrg,
+      organizationId: targetOrgId,
+      knownOrganizations: businesses,
+    });
+  }, [isBusinessStory, directOrg, matchedUserBusiness, fetchedOrg, targetOrgId, businesses]);
+
+  const isBusinessLoading = Boolean(
+    isBusinessStory &&
+    targetOrgId &&
+    !effectiveBusinessIdentity?.isResolved &&
+    isOrgLoading
+  );
 
   const [progress, setProgress] = useState(0);
   const progressRef = useRef(0);
@@ -504,18 +580,17 @@ export default function StoryViewer({
 
   if (!activeGroup || !currentStory) return null;
 
-  const isBusinessStory = Boolean(currentStory?.organization || currentStory?.organizationId);
-  const org = currentStory?.organization;
   const authorName = isBusinessStory
-    ? (org?.name || 'Company')
+    ? (effectiveBusinessIdentity?.name || 'Company')
     : (activeGroup.displayName || 'Zeitnah Member');
   const authorProfileUrl = isBusinessStory
-    ? getBusinessProfileUrl(org || currentStory?.organizationId)
+    ? (effectiveBusinessIdentity?.profileUrl || getBusinessProfileUrl(targetOrgId))
     : getCanonicalProfileUrl({
         id: activeGroup.userId,
         username: activeGroup.username,
       });
   const authorInitials = authorName.slice(0, 2).toUpperCase();
+  const authorLogo = isBusinessStory ? (effectiveBusinessIdentity?.logo || null) : null;
 
   return createPortal(
     <AnimatePresence>
@@ -618,19 +693,31 @@ export default function StoryViewer({
           {/* Author Header */}
           <div className="absolute top-[calc(1.75rem+env(safe-area-inset-top))] sm:top-6 inset-x-0 px-4 flex items-center justify-between z-30">
             <Link
-              to={authorProfileUrl}
-              onClick={onClose}
-              className="flex items-center gap-2.5 hover:opacity-90 transition-opacity min-w-0"
-              aria-label={`View ${authorName}'s profile`}
+              to={isBusinessLoading ? '#' : authorProfileUrl}
+              onClick={isBusinessLoading ? (e) => e.preventDefault() : onClose}
+              className={`flex items-center gap-2.5 hover:opacity-90 transition-opacity min-w-0 ${
+                isBusinessLoading ? 'pointer-events-none' : ''
+              }`}
+              aria-label={
+                isBusinessLoading
+                  ? 'Loading business profile...'
+                  : `View ${authorName}'s profile`
+              }
             >
               <div className="w-9 h-9 rounded-full bg-[#0E1726] border border-white/[0.2] overflow-hidden flex items-center justify-center shrink-0">
                 {isBusinessStory ? (
-                  <BusinessLogo
-                    logo={org?.logo}
-                    name={authorName}
-                    size="sm"
-                    className="w-full h-full rounded-full object-cover"
-                  />
+                  isBusinessLoading ? (
+                    <div className="w-full h-full bg-white/10 animate-pulse flex items-center justify-center">
+                      <Building2 className="w-4 h-4 text-white/40" />
+                    </div>
+                  ) : (
+                    <BusinessLogo
+                      logo={authorLogo}
+                      name={authorName}
+                      size="sm"
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  )
                 ) : authorAvatar && !avatarImgError ? (
                   <img
                     src={authorAvatar}
@@ -646,9 +733,13 @@ export default function StoryViewer({
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <h4 className="text-xs sm:text-sm font-bold text-white drop-shadow-sm truncate max-w-[160px]">
-                    {authorName}
-                  </h4>
+                  {isBusinessStory && isBusinessLoading ? (
+                    <div className="h-4 w-28 bg-white/20 rounded animate-pulse my-0.5" />
+                  ) : (
+                    <h4 className="text-xs sm:text-sm font-bold text-white drop-shadow-sm truncate max-w-[160px]">
+                      {authorName}
+                    </h4>
+                  )}
                   {isBusinessStory && (
                     <span className="text-[9px] px-1.5 py-0.2 rounded bg-brand-mint/20 text-brand-mint border border-brand-mint/30 uppercase font-semibold">
                       Company

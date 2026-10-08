@@ -429,7 +429,11 @@ export class OrganizationsService {
    */
   async getOrganizationBySlug(slug: string, viewerUserId?: string) {
     const cleanSlug = slug.toLowerCase().trim();
-    const org = await this.orgModel.findOne({ slug: cleanSlug }).lean();
+    let org = await this.orgModel.findOne({ slug: cleanSlug }).lean();
+
+    if (!org && Types.ObjectId.isValid(slug)) {
+      org = await this.orgModel.findById(slug).lean();
+    }
 
     if (!org) {
       throw new NotFoundException(`Organization '${slug}' not found`);

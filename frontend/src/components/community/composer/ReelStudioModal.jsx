@@ -1233,7 +1233,8 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                 <button
                   type="button"
                   onClick={handlePublishReel}
-                  disabled={createPostMutation.isPending}
+                  // eslint-disable-next-line react-hooks/refs
+                  disabled={isPublishingRef.current || createPostMutation.isPending}
                   className="sm:hidden px-3.5 py-1.5 rounded-xl bg-brand-mint text-[#070B14] font-bold text-xs hover:opacity-90 disabled:opacity-40 transition-all cursor-pointer"
                 >
                   Post
@@ -1810,7 +1811,8 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                   type="button"
                   id="publish-reel-btn"
                   onClick={handlePublishReel}
-                  disabled={createPostMutation.isPending || !selectedFile}
+                  // eslint-disable-next-line react-hooks/refs
+                  disabled={isPublishingRef.current || createPostMutation.isPending || !selectedFile}
                   className={`min-h-[42px] px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md cursor-pointer disabled:opacity-50 ${
                     createPostMutation.isPending
                       ? 'community-shimmer-btn text-[#070B14]'

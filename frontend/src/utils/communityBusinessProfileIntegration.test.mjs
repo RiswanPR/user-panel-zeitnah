@@ -4,6 +4,7 @@ import {
   normalizeBusinessProfile,
   normalizeBusinessIdentity,
   getBusinessProfileUrl,
+  resolveCanonicalBusinessIdentity,
 } from './businessProfile.js';
 import { groupStoriesByUser } from './storyGrouping.js';
 
@@ -210,15 +211,20 @@ describe('Phase 5 — Content Identity & Historical Isolation', () => {
   }
 
   // Simulates StoryViewer identity resolution
-  function resolveStoryViewerIdentity(story) {
-    const isBusinessStory = Boolean(story?.organization);
+  function resolveStoryViewerIdentity(story, knownOrganizations = []) {
+    const isBusinessStory = Boolean(story?.organization || story?.organizationId);
     if (isBusinessStory) {
-      const org = story.organization;
+      const resolved = resolveCanonicalBusinessIdentity({
+        organization: story.organization,
+        organizationId: story.organizationId,
+        knownOrganizations,
+      });
       return {
         isBusiness: true,
-        authorName: org.name || 'Company',
-        authorProfileUrl: getBusinessProfileUrl(org),
-        authorAvatar: org.logo || null,
+        authorName: resolved?.name || 'Company',
+        authorProfileUrl: resolved?.profileUrl || getBusinessProfileUrl(story.organizationId),
+        authorAvatar: resolved?.logo || null,
+        isResolved: Boolean(resolved?.isResolved),
       };
     }
     return {
@@ -330,7 +336,7 @@ describe('Phase 5 — Content Identity & Historical Isolation', () => {
     assert.equal(reelIdentity.canConnect, true);
   });
 
-  it('Story identity: resolves business story with company profile link in StoryViewer', () => {
+  it('Story identity: resolves business story with company profile link in StoryViewer (populated organization)', () => {
     const businessStory = {
       _id: 'story-101',
       authorId: personalUser._id,
@@ -343,6 +349,75 @@ describe('Phase 5 — Content Identity & Historical Isolation', () => {
     assert.equal(storyIdentity.isBusiness, true);
     assert.equal(storyIdentity.authorName, 'Zeitnah Labs');
     assert.equal(storyIdentity.authorProfileUrl, '/businesses/zeitnah-labs');
+    assert.equal(storyIdentity.isResolved, true);
+  });
+
+  it('Story identity: resolves lean organization payload using known organizations (canonical slug URL)', () => {
+    const leanStoryA = {
+      _id: 'story-lean-1',
+      authorId: personalUser._id,
+      organizationId: companyA._id,
+      text: 'Lean story from Academy',
+    };
+
+    const storyIdentity = resolveStoryViewerIdentity(leanStoryA, [companyA, companyB]);
+    assert.equal(storyIdentity.isBusiness, true);
+    assert.equal(storyIdentity.authorName, 'Zeitnah Academy');
+    assert.equal(storyIdentity.authorProfileUrl, '/businesses/zeitnah-academy');
+    assert.equal(storyIdentity.authorAvatar, companyA.logo);
+    assert.equal(storyIdentity.isResolved, true);
+  });
+
+  it('Story identity: preserves personal story identity when neither organization nor organizationId exists', () => {
+    const personalStory = {
+      _id: 'story-pers-1',
+      authorId: personalUser._id,
+      author: personalUser,
+      organizationId: null,
+      organization: null,
+      text: 'Personal engineering thought',
+    };
+
+    const storyIdentity = resolveStoryViewerIdentity(personalStory);
+    assert.equal(storyIdentity.isBusiness, false);
+    assert.equal(storyIdentity.authorName, 'Alice Developer');
+    assert.equal(storyIdentity.authorProfileUrl, '/profile/alice_dev');
+  });
+
+  it('Story identity: isolates multiple businesses (Company A vs Company B lean payloads)', () => {
+    const leanStoryA = {
+      _id: 'story-lean-a',
+      authorId: personalUser._id,
+      organizationId: companyA._id,
+    };
+    const leanStoryB = {
+      _id: 'story-lean-b',
+      authorId: personalUser._id,
+      organizationId: companyB._id,
+    };
+
+    const identityA = resolveStoryViewerIdentity(leanStoryA, [companyA, companyB]);
+    const identityB = resolveStoryViewerIdentity(leanStoryB, [companyA, companyB]);
+
+    assert.equal(identityA.authorName, 'Zeitnah Academy');
+    assert.equal(identityA.authorProfileUrl, '/businesses/zeitnah-academy');
+
+    assert.equal(identityB.authorName, 'Zeitnah Labs');
+    assert.equal(identityB.authorProfileUrl, '/businesses/zeitnah-labs');
+  });
+
+  it('Story identity: safely falls back without crash when organization cannot be resolved', () => {
+    const unresolvableStory = {
+      _id: 'story-unknown-1',
+      authorId: personalUser._id,
+      organizationId: '6601unknown99999999999999',
+    };
+
+    const identity = resolveStoryViewerIdentity(unresolvableStory, []);
+    assert.equal(identity.isBusiness, true);
+    assert.equal(identity.authorName, 'Company');
+    assert.equal(identity.authorProfileUrl, '/businesses/6601unknown99999999999999');
+    assert.equal(identity.isResolved, false);
   });
 });
 
@@ -394,6 +469,54 @@ describe('Phase 5 — Story Grouping by Organization vs User', () => {
     assert.ok(personalGroup, 'Must have a personal group');
     assert.equal(personalGroup.displayName, 'Chris Personal');
     assert.equal(personalGroup.stories.length, 1);
+  });
+
+  it('groups business stories when organization is referenced via organization._id or organization.id', () => {
+    const storyWithUnderscoreId = {
+      _id: 'story-u1',
+      authorId: 'author-alice',
+      organization: { _id: 'org-id-1', name: 'Company Underscore' },
+    };
+    const storyWithPlainId = {
+      _id: 'story-p1',
+      authorId: 'author-bob',
+      organization: { id: 'org-id-2', name: 'Company Plain' },
+    };
+
+    const { userGroups } = groupStoriesByUser([storyWithUnderscoreId, storyWithPlainId]);
+    assert.equal(userGroups.length, 2);
+
+    const group1 = userGroups.find(g => g.userId === 'org_org-id-1');
+    assert.ok(group1);
+    assert.equal(group1.displayName, 'Company Underscore');
+
+    const group2 = userGroups.find(g => g.userId === 'org_org-id-2');
+    assert.ok(group2);
+    assert.equal(group2.displayName, 'Company Plain');
+  });
+
+  it('populates lean story in business group from subsequent story metadata', () => {
+    const leanStory = {
+      _id: 'story-lean-seq',
+      authorId: 'author-emp1',
+      organizationId: companyA._id,
+      createdAt: '2026-10-08T10:00:00Z',
+    };
+    const richStory = {
+      _id: 'story-rich-seq',
+      authorId: 'author-emp2',
+      organizationId: companyA._id,
+      organization: companyA,
+      createdAt: '2026-10-08T11:00:00Z',
+    };
+
+    const { userGroups } = groupStoriesByUser([leanStory, richStory]);
+    assert.equal(userGroups.length, 1);
+    const group = userGroups[0];
+    assert.equal(group.displayName, 'Zeitnah Academy');
+    assert.equal(group.username, 'zeitnah-academy');
+    assert.equal(group.avatar, companyA.logo);
+    assert.equal(group.stories[0].organization.name, 'Zeitnah Academy');
   });
 });
 
