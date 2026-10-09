@@ -62,6 +62,11 @@ export function ActiveProfileProvider({ children }) {
       return;
     }
 
+    // Do NOT wipe persisted profile or fall back while businesses are still loading from API
+    if (isLoading) {
+      return;
+    }
+
     try {
       let persisted = storage.getItem(storageKey);
 
@@ -107,7 +112,7 @@ export function ActiveProfileProvider({ children }) {
       setActiveProfileType('personal');
       setActiveBusinessId(null);
     }
-  }, [currentUserId, storageKey, legacyStorageKey, businesses, hasBusinessProfile]);
+  }, [currentUserId, storageKey, legacyStorageKey, businesses, hasBusinessProfile, isLoading]);
 
   // Automatic safety fallback: If currently in business mode, but active business is no longer available/eligible
   useEffect(() => {
@@ -155,13 +160,9 @@ export function ActiveProfileProvider({ children }) {
       }
 
       // If specific ID requested, validate it exists in eligible businesses
-      let targetBiz = null;
-      if (requestedBusinessId) {
-        targetBiz = findBusinessById(businesses, requestedBusinessId);
-      } else {
-        // Fallback for backward compatibility (pick currently selected or primary)
-        targetBiz = (activeBusinessId && findBusinessById(businesses, activeBusinessId)) || businesses[0];
-      }
+      const targetBiz = requestedBusinessId
+        ? findBusinessById(businesses, requestedBusinessId)
+        : ((activeBusinessId && findBusinessById(businesses, activeBusinessId)) || businesses[0]);
 
       if (!targetBiz) {
         return false;

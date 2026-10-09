@@ -255,4 +255,134 @@ describe('Community Company Feed — Phase 3 Backend Scoping & Authorization', (
       );
     });
   });
+
+  describe('4. Real MongoPostRepository findFeed Aggregation Pipeline Scoping & Regression', () => {
+    let repo: PostRepository;
+    let capturedPipeline: any[] = [];
+    const mockRealPostModel: any = {
+      aggregate: jest.fn().mockImplementation((pipeline) => {
+        capturedPipeline = pipeline;
+        return {
+          exec: jest.fn().mockResolvedValue([
+            { _id: 'post-1', organizationId: companyAId, createdAt: new Date() },
+          ]),
+        };
+      }),
+      db: {
+        collection: jest.fn().mockReturnValue({
+          find: jest.fn().mockReturnValue({
+            toArray: jest.fn().mockResolvedValue([]),
+          }),
+        }),
+      },
+    };
+    const mockSavedModel: any = {
+      find: jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue([]),
+        }),
+      }),
+    };
+
+    beforeEach(() => {
+      capturedPipeline = [];
+      repo = new PostRepository(
+        mockRealPostModel,
+        {} as any,
+        {} as any,
+        mockSavedModel,
+        {} as any,
+        {} as any,
+      );
+    });
+
+    it('scopes Company Feed to active organizationId and isDeleted: false without personal audience filters', async () => {
+      await repo.findFeed({
+        userId: userA,
+        organizationId: companyAId,
+        filter: 'all',
+      });
+
+      expect(capturedPipeline.length).toBeGreaterThan(0);
+      const matchStage = capturedPipeline[0].$match;
+
+      expect(matchStage.isDeleted).toBe(false);
+      expect(matchStage.organizationId).toBeDefined();
+      expect(matchStage.organizationId.$in).toEqual(
+        expect.arrayContaining([companyAId, new Types.ObjectId(companyAId)]),
+      );
+      // Crucial: Must NOT contain personal audience restrictions
+      expect(matchStage.$or).toBeUndefined();
+      expect(matchStage.authorId).toBeUndefined();
+    });
+
+    it('guarantees Company Feed is not restricted to current user authorId', async () => {
+      await repo.findFeed({
+        userId: userA,
+        organizationId: companyAId,
+        filter: 'all',
+      });
+
+      const matchStage = capturedPipeline[0].$match;
+      expect(matchStage.authorId).toBeUndefined();
+    });
+
+    it('scopes Company Feed correctly even if personal URL filter (following/cohort) was passed', async () => {
+      await repo.findFeed({
+        userId: userA,
+        organizationId: companyAId,
+        filter: 'following',
+      });
+
+      const matchStage = capturedPipeline[0].$match;
+      // Company feed must not search personal connections or restrict authorId
+      expect(matchStage.authorId).toBeUndefined();
+      expect(matchStage.organizationId.$in).toEqual(
+        expect.arrayContaining([companyAId, new Types.ObjectId(companyAId)]),
+      );
+    });
+
+    it('preserves Personal Feed scoping and strictly excludes business posts when organizationId is absent', async () => {
+      await repo.findFeed({
+        userId: userA,
+        filter: 'all',
+      });
+
+      const matchStage = capturedPipeline[0].$match;
+      expect(matchStage.isDeleted).toBe(false);
+      // Personal feed must exclude business posts
+      expect(matchStage.$and).toBeDefined();
+      const personalCond = matchStage.$and.find((c: any) =>
+        Array.isArray(c.$or) &&
+        c.$or.some((item: any) => item.organizationId !== undefined),
+      );
+      expect(personalCond).toBeDefined();
+      expect(personalCond.$or).toEqual([
+        { organizationId: { $exists: false } },
+        { organizationId: null },
+      ]);
+    });
+
+    it('isolates Company A query from Company B query', async () => {
+      await repo.findFeed({
+        userId: userA,
+        organizationId: companyAId,
+      });
+      const matchStageA = capturedPipeline[0].$match;
+
+      await repo.findFeed({
+        userId: userB,
+        organizationId: companyBId,
+      });
+      const matchStageB = capturedPipeline[0].$match;
+
+      expect(matchStageA.organizationId.$in).toEqual(
+        expect.arrayContaining([companyAId]),
+      );
+      expect(matchStageB.organizationId.$in).toEqual(
+        expect.arrayContaining([companyBId]),
+      );
+      expect(matchStageA.organizationId.$in).not.toEqual(matchStageB.organizationId.$in);
+    });
+  });
 });

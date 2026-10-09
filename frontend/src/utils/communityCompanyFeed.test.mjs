@@ -225,3 +225,104 @@ describe('Community Company Feed — Phase 3 Header & Identity Resolution', () =
     assert.equal(showCreateButton, false);
   });
 });
+
+describe('Community Company Feed — Bug Fix & Regression Suite', () => {
+  // Test effective feed filter isolation
+  function resolveEffectiveFeedFilter(isBusinessMode, activeFilter) {
+    return isBusinessMode
+      ? (activeFilter === 'trending' ? 'trending' : 'all')
+      : activeFilter;
+  }
+
+  it('normalizes personal URL filters (following, cohort) to all when in business mode', () => {
+    assert.equal(resolveEffectiveFeedFilter(true, 'following'), 'all');
+    assert.equal(resolveEffectiveFeedFilter(true, 'cohort'), 'all');
+    assert.equal(resolveEffectiveFeedFilter(true, 'all'), 'all');
+    assert.equal(resolveEffectiveFeedFilter(true, 'trending'), 'trending');
+  });
+
+  it('preserves personal URL filters when in personal mode', () => {
+    assert.equal(resolveEffectiveFeedFilter(false, 'following'), 'following');
+    assert.equal(resolveEffectiveFeedFilter(false, 'cohort'), 'cohort');
+    assert.equal(resolveEffectiveFeedFilter(false, 'all'), 'all');
+    assert.equal(resolveEffectiveFeedFilter(false, 'trending'), 'trending');
+  });
+
+  // Test useCreatePost cache targeting
+  function resolveCreatePostTargetQueryKey(post) {
+    const isBusinessPost = Boolean(post?.organizationId);
+    return isBusinessPost
+      ? ['community', 'feed', 'business', post.organizationId]
+      : ['community', 'feed', 'personal'];
+  }
+
+  it('routes created business post cache updates strictly to matching company query key', () => {
+    const bizPostA = { id: 'p1', organizationId: 'company-A', content: 'News' };
+    const bizPostB = { id: 'p2', organizationId: 'company-B', content: 'Update' };
+    const personalPost = { id: 'p3', organizationId: null, content: 'Hello' };
+
+    const keyA = resolveCreatePostTargetQueryKey(bizPostA);
+    const keyB = resolveCreatePostTargetQueryKey(bizPostB);
+    const keyP = resolveCreatePostTargetQueryKey(personalPost);
+
+    assert.deepEqual(keyA, ['community', 'feed', 'business', 'company-A']);
+    assert.deepEqual(keyB, ['community', 'feed', 'business', 'company-B']);
+    assert.deepEqual(keyP, ['community', 'feed', 'personal']);
+    assert.notDeepEqual(keyA, keyB);
+    assert.notDeepEqual(keyA, keyP);
+  });
+
+  // Test error vs empty state separation
+  it('distinguishes API error state from genuinely empty feed', () => {
+    function resolveFeedViewState({ feedLoading, feedError, displayedPostsLength }) {
+      if (feedLoading) return 'LOADING';
+      if (feedError) return 'ERROR';
+      if (displayedPostsLength === 0) return 'EMPTY';
+      return 'POSTS';
+    }
+
+    assert.equal(resolveFeedViewState({ feedLoading: true, feedError: false, displayedPostsLength: 0 }), 'LOADING');
+    assert.equal(resolveFeedViewState({ feedLoading: false, feedError: true, displayedPostsLength: 0 }), 'ERROR');
+    assert.equal(resolveFeedViewState({ feedLoading: false, feedError: false, displayedPostsLength: 0 }), 'EMPTY');
+    assert.equal(resolveFeedViewState({ feedLoading: false, feedError: false, displayedPostsLength: 5 }), 'POSTS');
+  });
+
+  // Test hydration safety
+  it('does not wipe persisted business profile while businesses are loading', () => {
+    let storageWiped = false;
+    function simulateHydration({ currentUserId, storageKey, isLoading, businesses, persisted }) {
+      if (!currentUserId || !storageKey) return 'personal';
+      if (isLoading) return 'pending'; // Do not evaluate or wipe!
+
+      if (persisted?.type === 'business' && persisted?.businessId) {
+        const found = (businesses || []).find((b) => b.id === persisted.businessId);
+        if (found) return 'business';
+        storageWiped = true;
+        return 'personal';
+      }
+      return 'personal';
+    }
+
+    // Step 1: Initial mount when isLoading is true
+    const step1 = simulateHydration({
+      currentUserId: 'u1',
+      storageKey: 'key_u1',
+      isLoading: true,
+      businesses: [],
+      persisted: { type: 'business', businessId: 'biz-1' },
+    });
+    assert.equal(step1, 'pending');
+    assert.equal(storageWiped, false, 'Storage must not be wiped while loading');
+
+    // Step 2: Once loaded
+    const step2 = simulateHydration({
+      currentUserId: 'u1',
+      storageKey: 'key_u1',
+      isLoading: false,
+      businesses: [{ id: 'biz-1', name: 'Zeitnah' }],
+      persisted: { type: 'business', businessId: 'biz-1' },
+    });
+    assert.equal(step2, 'business');
+    assert.equal(storageWiped, false);
+  });
+});

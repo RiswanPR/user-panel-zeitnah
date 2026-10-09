@@ -52,71 +52,113 @@ export class PostRepository extends BaseRepository<PostDocument> {
       isDeleted: false,
     };
 
-    if (filter === 'saved') {
-      if (!userId) return { items: [], nextCursor: null };
-      const savedDocs = await this.savedPostModel.find({ userId }).select('postId').lean();
-      const savedPostIds = savedDocs.map((d: any) => String(d.postId)).filter(Boolean);
-      if (savedPostIds.length === 0) return { items: [], nextCursor: null };
-      const idMatches: any[] = [];
-      for (const pid of savedPostIds) {
-        idMatches.push(pid);
-        if (Types.ObjectId.isValid(pid)) {
-          idMatches.push(new Types.ObjectId(pid));
-        }
+    const isCompanyFeed = Boolean(organizationId && organizationId.trim());
+
+    if (isCompanyFeed) {
+      const cleanOrgId = organizationId!.trim();
+      const orgMatches: any[] = [cleanOrgId];
+      if (Types.ObjectId.isValid(cleanOrgId)) {
+        orgMatches.push(new Types.ObjectId(cleanOrgId));
       }
-      matchStage._id = { $in: idMatches };
-      matchStage.$or = [
-        { audience: 'PUBLIC' },
-        { authorId: userId },
-        ...(courseIds.length > 0 ? [{ audience: 'COURSE', courseId: { $in: courseIds } }] : []),
-      ];
-    } else if (filter === 'following') {
-      if (!userId) return { items: [], nextCursor: null };
-      const connFilter = {
-        $or: [
-          { recipientId: userId, status: 'accepted' },
-          { requesterId: userId, status: { $in: ['accepted', 'pending'] } },
-        ],
-      };
-      const connections = await this.postModel.db.collection('network_connections').find(connFilter).toArray();
-      const followingUserIds = connections.map((c: any) =>
-        String(c.requesterId) === String(userId) ? String(c.recipientId) : String(c.requesterId)
-      ).filter(Boolean);
-      if (followingUserIds.length === 0) return { items: [], nextCursor: null };
-      const authorMatches: any[] = [];
-      for (const aid of followingUserIds) {
-        authorMatches.push(aid);
-        if (Types.ObjectId.isValid(aid)) {
-          authorMatches.push(new Types.ObjectId(aid));
-        }
-      }
-      matchStage.authorId = { $in: authorMatches };
-    } else if (filter === 'cohort') {
-      matchStage.audience = 'COURSE';
-      if (courseIds.length > 0) {
-        matchStage.courseId = { $in: courseIds };
-      }
-    } else if (filter === 'video' || filter === 'reels' || filter === 'reels_trending') {
-      matchStage.$or = [
-        { audience: 'PUBLIC' },
-        ...(courseIds.length > 0 ? [{ audience: 'COURSE', courseId: { $in: courseIds } }] : []),
-      ];
-      const videoCondition = {
-        $or: [
-          { type: 'VIDEO' },
-          { 'media.type': 'video' },
-        ],
-      };
-      if (matchStage.$and) {
-        matchStage.$and.push(videoCondition);
-      } else {
+      matchStage.organizationId = { $in: orgMatches };
+
+      // In Company Feed, support video/reels content type filtering
+      if (filter === 'video' || filter === 'reels' || filter === 'reels_trending') {
+        const videoCondition = {
+          $or: [
+            { type: 'VIDEO' },
+            { 'media.type': 'video' },
+          ],
+        };
         matchStage.$and = [videoCondition];
       }
+      // Note: Company Feed is NOT restricted to personal 'following' network connections,
+      // personal 'cohort' course communities, or personal 'PUBLIC'/'COURSE' audience scoping.
+      // Posts published under the company belong to the company feed.
     } else {
-      matchStage.$or = [
-        { audience: 'PUBLIC' },
-        ...(courseIds.length > 0 ? [{ audience: 'COURSE', courseId: { $in: courseIds } }] : []),
-      ];
+      // Personal Feed: Strictly exclude business posts to prevent mixing
+      const personalCondition = {
+        $or: [
+          { organizationId: { $exists: false } },
+          { organizationId: null },
+        ],
+      };
+
+      if (filter === 'saved') {
+        if (!userId) return { items: [], nextCursor: null };
+        const savedDocs = await this.savedPostModel.find({ userId }).select('postId').lean();
+        const savedPostIds = savedDocs.map((d: any) => String(d.postId)).filter(Boolean);
+        if (savedPostIds.length === 0) return { items: [], nextCursor: null };
+        const idMatches: any[] = [];
+        for (const pid of savedPostIds) {
+          idMatches.push(pid);
+          if (Types.ObjectId.isValid(pid)) {
+            idMatches.push(new Types.ObjectId(pid));
+          }
+        }
+        matchStage._id = { $in: idMatches };
+        matchStage.$or = [
+          { audience: 'PUBLIC' },
+          { authorId: userId },
+          ...(courseIds.length > 0 ? [{ audience: 'COURSE', courseId: { $in: courseIds } }] : []),
+        ];
+      } else if (filter === 'following') {
+        if (!userId) return { items: [], nextCursor: null };
+        const connFilter = {
+          $or: [
+            { recipientId: userId, status: 'accepted' },
+            { requesterId: userId, status: { $in: ['accepted', 'pending'] } },
+          ],
+        };
+        const connections = await this.postModel.db.collection('network_connections').find(connFilter).toArray();
+        const followingUserIds = connections.map((c: any) =>
+          String(c.requesterId) === String(userId) ? String(c.recipientId) : String(c.requesterId)
+        ).filter(Boolean);
+        if (followingUserIds.length === 0) return { items: [], nextCursor: null };
+        const authorMatches: any[] = [];
+        for (const aid of followingUserIds) {
+          authorMatches.push(aid);
+          if (Types.ObjectId.isValid(aid)) {
+            authorMatches.push(new Types.ObjectId(aid));
+          }
+        }
+        matchStage.authorId = { $in: authorMatches };
+      } else if (filter === 'cohort') {
+        matchStage.audience = 'COURSE';
+        if (courseIds.length > 0) {
+          matchStage.courseId = { $in: courseIds };
+        }
+      } else if (filter === 'video' || filter === 'reels' || filter === 'reels_trending') {
+        matchStage.$or = [
+          { audience: 'PUBLIC' },
+          ...(courseIds.length > 0 ? [{ audience: 'COURSE', courseId: { $in: courseIds } }] : []),
+        ];
+        const videoCondition = {
+          $or: [
+            { type: 'VIDEO' },
+            { 'media.type': 'video' },
+          ],
+        };
+        if (matchStage.$and) {
+          matchStage.$and.push(videoCondition);
+        } else {
+          matchStage.$and = [videoCondition];
+        }
+      } else {
+        matchStage.$or = [
+          { audience: 'PUBLIC' },
+          ...(courseIds.length > 0 ? [{ audience: 'COURSE', courseId: { $in: courseIds } }] : []),
+        ];
+      }
+
+      if (matchStage.$and) {
+        matchStage.$and.push(personalCondition);
+      } else if (matchStage.$or) {
+        matchStage.$and = [{ $or: matchStage.$or }, personalCondition];
+        delete matchStage.$or;
+      } else {
+        matchStage.$and = [personalCondition];
+      }
     }
 
     // Tag / Hashtag filter
@@ -160,40 +202,6 @@ export class PostRepository extends BaseRepository<PostDocument> {
         delete matchStage.$or;
       } else {
         matchStage.$and = [searchCondition];
-      }
-    }
-
-    // Scope feed by Organization ID (Phase 3 Company Feed)
-    if (organizationId && organizationId.trim()) {
-      const cleanOrgId = organizationId.trim();
-      const orgMatches: any[] = [cleanOrgId];
-      if (Types.ObjectId.isValid(cleanOrgId)) {
-        orgMatches.push(new Types.ObjectId(cleanOrgId));
-      }
-      const orgCondition = { organizationId: { $in: orgMatches } };
-      if (matchStage.$and) {
-        matchStage.$and.push(orgCondition);
-      } else if (matchStage.$or) {
-        matchStage.$and = [{ $or: matchStage.$or }, orgCondition];
-        delete matchStage.$or;
-      } else {
-        matchStage.organizationId = { $in: orgMatches };
-      }
-    } else {
-      // Personal Feed: Strictly exclude business posts to prevent mixing
-      const personalCondition = {
-        $or: [
-          { organizationId: { $exists: false } },
-          { organizationId: null },
-        ],
-      };
-      if (matchStage.$and) {
-        matchStage.$and.push(personalCondition);
-      } else if (matchStage.$or) {
-        matchStage.$and = [{ $or: matchStage.$or }, personalCondition];
-        delete matchStage.$or;
-      } else {
-        matchStage.$and = [personalCondition];
       }
     }
 

@@ -90,6 +90,10 @@ export default function CommunityHome({ initialCreateMode } = {}) {
     return groupStoriesByUser(stories, currentUserId, undefined, businesses);
   }, [stories, currentUserId, businesses]);
 
+  const effectiveFeedFilter = isBusinessMode
+    ? (activeFilter === 'trending' ? 'trending' : 'all')
+    : activeFilter;
+
   // ── Fetch Feed per Filter & Active Profile ──
   const {
     data: feedData,
@@ -101,7 +105,7 @@ export default function CommunityHome({ initialCreateMode } = {}) {
     isFetchingNextPage,
     isFetchNextPageError,
   } = useCommunityFeed({
-    filter: activeFilter,
+    filter: effectiveFeedFilter,
     activeProfileType,
     activeBusinessId,
   });

@@ -107,8 +107,13 @@ export function useCreatePost() {
   return useMutation({
     mutationFn: communityApi.createPost,
     onSuccess: (post) => {
-      // Prepend to active feed query
-      queryClient.setQueriesData({ queryKey: ['community', 'feed'] }, (oldData) => {
+      const isBusinessPost = Boolean(post?.organizationId);
+      const targetQueryKey = isBusinessPost
+        ? ['community', 'feed', 'business', post.organizationId]
+        : ['community', 'feed', 'personal'];
+
+      // Prepend to matching feed query only to avoid cross-feed contamination
+      queryClient.setQueriesData({ queryKey: targetQueryKey }, (oldData) => {
         if (!oldData || !oldData.pages) return oldData;
         const newPages = [...oldData.pages];
         if (newPages.length > 0) {
@@ -121,6 +126,7 @@ export function useCreatePost() {
         }
         return { ...oldData, pages: newPages };
       });
+      queryClient.invalidateQueries({ queryKey: targetQueryKey });
       queryClient.invalidateQueries({ queryKey: ['community', 'feed'] });
       toast.success('Post published!');
     },

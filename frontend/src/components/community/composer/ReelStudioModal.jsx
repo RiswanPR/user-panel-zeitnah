@@ -889,6 +889,10 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
         tags,
         audience,
         idempotencyKey: idempotencyKeyRef.current,
+        organizationId:
+          isBusinessMode && effectivePublishingContext?.organizationId
+            ? effectivePublishingContext.organizationId
+            : undefined,
       });
 
       setUploadProgress(100);
