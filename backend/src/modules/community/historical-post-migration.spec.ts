@@ -58,7 +58,8 @@ describe('Historical Business Post Migration — Safety & Reversibility Test Sui
       {
         _id: 'post-qs-intake',
         authorId: founderId,
-        content: '🚨 OCTOBER QS BATCH INTAKE Build your career in Quantity Surveying with Zeitnah.',
+        content:
+          '🚨 OCTOBER QS BATCH INTAKE Build your career in Quantity Surveying with Zeitnah.',
         isDeleted: false,
         audience: 'PUBLIC',
         type: 'VIDEO',
@@ -67,7 +68,8 @@ describe('Historical Business Post Migration — Safety & Reversibility Test Sui
       {
         _id: 'post-land-survey',
         authorId: founderId,
-        content: 'Diploma in land surveying Modern equipment- DGPS, TOTAL STATION',
+        content:
+          'Diploma in land surveying Modern equipment- DGPS, TOTAL STATION',
         isDeleted: false,
         audience: 'PUBLIC',
         type: 'IMAGE',
@@ -114,11 +116,16 @@ describe('Historical Business Post Migration — Safety & Reversibility Test Sui
           return {
             findOne: jest.fn(async (query: any) => {
               if (query._id) {
-                return mockOrgs.find((o) => String(o._id) === String(query._id)) || null;
+                return (
+                  mockOrgs.find((o) => String(o._id) === String(query._id)) ||
+                  null
+                );
               }
               if (query.$or) {
                 for (const condition of query.$or) {
-                  const found = mockOrgs.find((o) => String(o._id) === String(condition._id));
+                  const found = mockOrgs.find(
+                    (o) => String(o._id) === String(condition._id),
+                  );
                   if (found) return found;
                 }
               }
@@ -133,7 +140,10 @@ describe('Historical Business Post Migration — Safety & Reversibility Test Sui
                 mockUsers.find(
                   (u) =>
                     String(u._id) === String(query._id) ||
-                    (query.$or && query.$or.some((c: any) => String(c._id) === String(u._id))),
+                    (query.$or &&
+                      query.$or.some(
+                        (c: any) => String(c._id) === String(u._id),
+                      )),
                 ) || null
               );
             }),
@@ -153,15 +163,26 @@ describe('Historical Business Post Migration — Safety & Reversibility Test Sui
               }),
             }),
             findOne: jest.fn(async (query: any) => {
-              return mockPosts.find((p) => String(p._id) === String(query._id)) || null;
+              return (
+                mockPosts.find((p) => String(p._id) === String(query._id)) ||
+                null
+              );
             }),
             updateOne: jest.fn(async (filter: any, update: any) => {
-              const post = mockPosts.find((p) => String(p._id) === String(filter._id));
+              const post = mockPosts.find(
+                (p) => String(p._id) === String(filter._id),
+              );
               if (!post) return { matchedCount: 0, modifiedCount: 0 };
-              if (filter.isDeleted !== undefined && post.isDeleted !== filter.isDeleted) {
+              if (
+                filter.isDeleted !== undefined &&
+                post.isDeleted !== filter.isDeleted
+              ) {
                 return { matchedCount: 0, modifiedCount: 0 };
               }
-              if (filter.organizationId !== undefined && post.organizationId !== filter.organizationId) {
+              if (
+                filter.organizationId !== undefined &&
+                post.organizationId !== filter.organizationId
+              ) {
                 return { matchedCount: 0, modifiedCount: 0 };
               }
               if (update.$set) {
@@ -200,13 +221,19 @@ describe('Historical Business Post Migration — Safety & Reversibility Test Sui
 
     it('rejects if organization does not exist', async () => {
       await expect(
-        validateTargetOrganization(mockDb, { ...targetOrgConfig, id: 'non-existent-id' }),
+        validateTargetOrganization(mockDb, {
+          ...targetOrgConfig,
+          id: 'non-existent-id',
+        }),
       ).rejects.toThrow('Target organization not found');
     });
 
     it('rejects if organization name does not match', async () => {
       await expect(
-        validateTargetOrganization(mockDb, { ...targetOrgConfig, name: 'Wrong Academy' }),
+        validateTargetOrganization(mockDb, {
+          ...targetOrgConfig,
+          name: 'Wrong Academy',
+        }),
       ).rejects.toThrow('Organization name mismatch');
     });
 
@@ -222,22 +249,40 @@ describe('Historical Business Post Migration — Safety & Reversibility Test Sui
 
   describe('2. Read-Only Discovery and Preview', () => {
     it('correctly classifies eligible course posts vs personal/excluded posts', async () => {
-      const preview = await discoverAndPreviewCandidates(mockDb, targetOrgConfig);
+      const preview = await discoverAndPreviewCandidates(
+        mockDb,
+        targetOrgConfig,
+      );
 
       expect(preview.eligibleCount).toBe(2);
-      expect(preview.eligiblePostIds).toEqual(['post-qs-intake', 'post-land-survey']);
+      expect(preview.eligiblePostIds).toEqual([
+        'post-qs-intake',
+        'post-land-survey',
+      ]);
 
-      const congratsPost = preview.candidates.find((c) => c.id === 'post-congrats');
+      const congratsPost = preview.candidates.find(
+        (c) => c.id === 'post-congrats',
+      );
       expect(congratsPost?.isEligible).toBe(false);
-      expect(congratsPost?.exclusionReason).toContain('Personal congratulatory shoutout');
+      expect(congratsPost?.exclusionReason).toContain(
+        'Personal congratulatory shoutout',
+      );
 
-      const otherAuthorPost = preview.candidates.find((c) => c.id === 'post-other-author');
+      const otherAuthorPost = preview.candidates.find(
+        (c) => c.id === 'post-other-author',
+      );
       expect(otherAuthorPost?.isEligible).toBe(false);
-      expect(otherAuthorPost?.exclusionReason).toContain('does not match target organization owner');
+      expect(otherAuthorPost?.exclusionReason).toContain(
+        'does not match target organization owner',
+      );
 
-      const alreadyOrgPost = preview.candidates.find((c) => c.id === 'post-already-org');
+      const alreadyOrgPost = preview.candidates.find(
+        (c) => c.id === 'post-already-org',
+      );
       expect(alreadyOrgPost?.isEligible).toBe(false);
-      expect(alreadyOrgPost?.exclusionReason).toContain('already assigned to organizationId');
+      expect(alreadyOrgPost?.exclusionReason).toContain(
+        'already assigned to organizationId',
+      );
     });
   });
 
@@ -274,7 +319,9 @@ describe('Historical Business Post Migration — Safety & Reversibility Test Sui
           targetOrg: targetOrgConfig,
           approvedPostIds: ['non-existent-post'],
         }),
-      ).rejects.toThrow('Prevalidation failed: Post ID non-existent-post not found');
+      ).rejects.toThrow(
+        'Prevalidation failed: Post ID non-existent-post not found',
+      );
     });
 
     it('rejects soft-deleted posts during prevalidation', async () => {
@@ -313,7 +360,9 @@ describe('Historical Business Post Migration — Safety & Reversibility Test Sui
       const backupDir = path.join(testTmpDir, 'backups');
       const journalDir = path.join(testTmpDir, 'journals');
 
-      const originalPost = { ...mockPosts.find((p) => p._id === 'post-qs-intake') };
+      const originalPost = {
+        ...mockPosts.find((p) => p._id === 'post-qs-intake'),
+      };
 
       const result = await executeControlledMigration(mockDb, {
         dryRun: false,
@@ -326,10 +375,12 @@ describe('Historical Business Post Migration — Safety & Reversibility Test Sui
       expect(result.successfulCount).toBe(2);
       expect(result.failedCount).toBe(0);
       expect(result.backupFile).toBeDefined();
-      expect(fs.existsSync(result.backupFile!)).toBe(true);
+      expect(fs.existsSync(result.backupFile)).toBe(true);
 
       // Verify backup contents
-      const backupContent = JSON.parse(fs.readFileSync(result.backupFile!, 'utf8'));
+      const backupContent = JSON.parse(
+        fs.readFileSync(result.backupFile, 'utf8'),
+      );
       expect(backupContent.documentCount).toBe(2);
       expect(backupContent.documents[0]._id).toBe('post-qs-intake');
 
@@ -359,17 +410,25 @@ describe('Historical Business Post Migration — Safety & Reversibility Test Sui
         journalDir,
       });
 
-      const postAfterMigration = mockPosts.find((p) => p._id === 'post-qs-intake');
+      const postAfterMigration = mockPosts.find(
+        (p) => p._id === 'post-qs-intake',
+      );
       expect(postAfterMigration.organizationId).toBe(targetOrgConfig.id);
 
       // Now execute rollback
-      const rollbackResult = await executeRollback(mockDb, result.backupFile!, false);
+      const rollbackResult = await executeRollback(
+        mockDb,
+        result.backupFile,
+        false,
+      );
       expect(rollbackResult.attempted).toBe(1);
       expect(rollbackResult.restored).toBe(1);
       expect(rollbackResult.failed).toBe(0);
 
       // Verify organizationId has been restored (unset)
-      const postAfterRollback = mockPosts.find((p) => p._id === 'post-qs-intake');
+      const postAfterRollback = mockPosts.find(
+        (p) => p._id === 'post-qs-intake',
+      );
       expect(postAfterRollback.organizationId).toBeUndefined();
     });
 
@@ -389,10 +448,16 @@ describe('Historical Business Post Migration — Safety & Reversibility Test Sui
       const post = mockPosts.find((p) => p._id === 'post-qs-intake');
       post.organizationId = 'reassigned-org-id';
 
-      const rollbackResult = await executeRollback(mockDb, result.backupFile!, false);
+      const rollbackResult = await executeRollback(
+        mockDb,
+        result.backupFile,
+        false,
+      );
       expect(rollbackResult.failed).toBe(1);
       expect(rollbackResult.restored).toBe(0);
-      expect(rollbackResult.errors[0]).toContain('organizationId has changed since migration');
+      expect(rollbackResult.errors[0]).toContain(
+        'organizationId has changed since migration',
+      );
     });
   });
 });

@@ -32,7 +32,9 @@ export class CommunityS3Service {
    * Reads only first 32 bytes from disk or buffer to ensure zero heap buffering for large files.
    */
   validateMagicBytes(
-    file: Express.Multer.File | { buffer?: Buffer; path?: string; mimetype: string },
+    file:
+      | Express.Multer.File
+      | { buffer?: Buffer; path?: string; mimetype: string },
   ): void {
     let buf: Buffer;
     if (file.buffer && file.buffer.length >= 4) {
@@ -57,7 +59,9 @@ export class CommunityS3Service {
     // JPEG: FF D8 FF
     if (mime === 'image/jpeg') {
       if (buf[0] !== 0xff || buf[1] !== 0xd8 || buf[2] !== 0xff) {
-        throw new BadRequestException('File content does not match JPEG signature');
+        throw new BadRequestException(
+          'File content does not match JPEG signature',
+        );
       }
     }
     // PNG: 89 50 4E 47 0D 0A 1A 0A
@@ -68,7 +72,9 @@ export class CommunityS3Service {
         buf[2] !== 0x4e ||
         buf[3] !== 0x47
       ) {
-        throw new BadRequestException('File content does not match PNG signature');
+        throw new BadRequestException(
+          'File content does not match PNG signature',
+        );
       }
     }
     // GIF: 47 49 46 38
@@ -79,13 +85,18 @@ export class CommunityS3Service {
         buf[2] !== 0x46 ||
         buf[3] !== 0x38
       ) {
-        throw new BadRequestException('File content does not match GIF signature');
+        throw new BadRequestException(
+          'File content does not match GIF signature',
+        );
       }
     }
     // WEBP: RIFF at 0..3 and WEBP at 8..11
     else if (mime === 'image/webp') {
       const isRiff =
-        buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46;
+        buf[0] === 0x52 &&
+        buf[1] === 0x49 &&
+        buf[2] === 0x46 &&
+        buf[3] === 0x46;
       const isWebp =
         buf.length >= 12 &&
         buf[8] === 0x57 &&
@@ -93,7 +104,9 @@ export class CommunityS3Service {
         buf[10] === 0x42 &&
         buf[11] === 0x50;
       if (!isRiff || !isWebp) {
-        throw new BadRequestException('File content does not match WEBP signature');
+        throw new BadRequestException(
+          'File content does not match WEBP signature',
+        );
       }
     }
     // PDF: %PDF (25 50 44 46)
@@ -104,7 +117,9 @@ export class CommunityS3Service {
         buf[2] !== 0x44 ||
         buf[3] !== 0x46
       ) {
-        throw new BadRequestException('File content does not match PDF signature');
+        throw new BadRequestException(
+          'File content does not match PDF signature',
+        );
       }
     }
     // MP4 / MOV: ftyp or moov box at bytes 4..8
@@ -112,7 +127,9 @@ export class CommunityS3Service {
       if (buf.length >= 8) {
         const tag = buf.toString('ascii', 4, 8);
         if (tag !== 'ftyp' && tag !== 'moov') {
-          throw new BadRequestException('File content does not match MP4/MOV signature');
+          throw new BadRequestException(
+            'File content does not match MP4/MOV signature',
+          );
         }
       }
     }
@@ -124,7 +141,9 @@ export class CommunityS3Service {
         buf[2] !== 0xdf ||
         buf[3] !== 0xa3
       ) {
-        throw new BadRequestException('File content does not match WebM signature');
+        throw new BadRequestException(
+          'File content does not match WebM signature',
+        );
       }
     }
   }
@@ -200,11 +219,10 @@ export class CommunityS3Service {
 
       // 3. Fallback to ffmpeg stderr inspection using safe argument array & timeout
       try {
-        const result = await execFilePromise(
-          'ffmpeg',
-          ['-i', targetPath],
-          { timeout: 20000, maxBuffer: 10 * 1024 * 1024 },
-        ).catch((err: any) => ({ stderr: err.stderr || '' }));
+        const result = await execFilePromise('ffmpeg', ['-i', targetPath], {
+          timeout: 20000,
+          maxBuffer: 10 * 1024 * 1024,
+        }).catch((err: any) => ({ stderr: err.stderr || '' }));
 
         const stderr = (result as any).stderr || '';
         const match = stderr.match(/Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)/);
@@ -226,7 +244,8 @@ export class CommunityS3Service {
       // Fail-closed: duration cannot be verified
       throw new BadRequestException({
         code: 'INVALID_VIDEO',
-        message: 'Could not verify video duration. Please upload a valid video file.',
+        message:
+          'Could not verify video duration. Please upload a valid video file.',
       });
     } finally {
       if (tempPath && fs.existsSync(tempPath)) {
@@ -240,11 +259,25 @@ export class CommunityS3Service {
   /**
    * Generates a video poster thumbnail at 1s (or 0s) to serve as a fast video preview poster.
    */
-  async generateVideoPoster(videoPath: string, posterPath: string): Promise<boolean> {
+  async generateVideoPoster(
+    videoPath: string,
+    posterPath: string,
+  ): Promise<boolean> {
     try {
       await execFilePromise(
         'ffmpeg',
-        ['-y', '-ss', '00:00:01', '-i', videoPath, '-frames:v', '1', '-q:v', '2', posterPath],
+        [
+          '-y',
+          '-ss',
+          '00:00:01',
+          '-i',
+          videoPath,
+          '-frames:v',
+          '1',
+          '-q:v',
+          '2',
+          posterPath,
+        ],
         { timeout: 20000 },
       );
       if (fs.existsSync(posterPath) && fs.statSync(posterPath).size > 0) {
@@ -255,7 +288,18 @@ export class CommunityS3Service {
       try {
         await execFilePromise(
           'ffmpeg',
-          ['-y', '-ss', '00:00:00', '-i', videoPath, '-frames:v', '1', '-q:v', '2', posterPath],
+          [
+            '-y',
+            '-ss',
+            '00:00:00',
+            '-i',
+            videoPath,
+            '-frames:v',
+            '1',
+            '-q:v',
+            '2',
+            posterPath,
+          ],
           { timeout: 20000 },
         );
         if (fs.existsSync(posterPath) && fs.statSync(posterPath).size > 0) {
@@ -278,7 +322,16 @@ export class CommunityS3Service {
     try {
       await execFilePromise(
         'ffmpeg',
-        ['-y', '-i', inputPath, '-vf', "scale='min(2048,iw)':-2", '-map_metadata', '-1', outputPath],
+        [
+          '-y',
+          '-i',
+          inputPath,
+          '-vf',
+          "scale='min(2048,iw)':-2",
+          '-map_metadata',
+          '-1',
+          outputPath,
+        ],
         { timeout: 20000 },
       );
       if (fs.existsSync(outputPath) && fs.statSync(outputPath).size > 0) {
@@ -354,7 +407,10 @@ export class CommunityS3Service {
         // Generate video poster thumbnail if we have a path on disk
         if (uploadFilePath) {
           tempThumbFile = path.join(os.tmpdir(), `thumb-${uuidv4()}.jpg`);
-          const hasThumb = await this.generateVideoPoster(uploadFilePath, tempThumbFile);
+          const hasThumb = await this.generateVideoPoster(
+            uploadFilePath,
+            tempThumbFile,
+          );
           if (hasThumb && fs.existsSync(tempThumbFile)) {
             const thumbKey = `community/uploads/${userId}/${uuidv4()}-poster.jpg`;
             const thumbSize = fs.statSync(tempThumbFile).size;
@@ -369,10 +425,11 @@ export class CommunityS3Service {
             thumbnailUrl = `https://${this.s3Service.bucketName}.s3.${this.s3Service.region}.amazonaws.com/${thumbKey}`;
             if (this.signedUrlService) {
               try {
-                const signedThumb = await this.signedUrlService.generateSignedImageUrl(
-                  thumbKey,
-                  86400 * 7,
-                );
+                const signedThumb =
+                  await this.signedUrlService.generateSignedImageUrl(
+                    thumbKey,
+                    86400 * 7,
+                  );
                 if (signedThumb) thumbnailUrl = signedThumb;
               } catch {}
             }
@@ -430,7 +487,9 @@ export class CommunityS3Service {
             fileUrl = signed;
           }
         } catch (err: any) {
-          this.logger.warn(`Could not presign community media URL: ${err.message}`);
+          this.logger.warn(
+            `Could not presign community media URL: ${err.message}`,
+          );
         }
       }
 
@@ -550,14 +609,18 @@ export class CommunityS3Service {
           const expectedBucket = this.s3Service.bucketName?.toLowerCase();
           if (expectedBucket) {
             const bucketInSubdomain = hostname.startsWith(`${expectedBucket}.`);
-            const bucketInPath = parsed.pathname.startsWith(`/${expectedBucket}/`);
+            const bucketInPath = parsed.pathname.startsWith(
+              `/${expectedBucket}/`,
+            );
             if (!bucketInSubdomain && !bucketInPath) {
               throw new ForbiddenException(
                 'Media URL does not match authorized S3 bucket',
               );
             }
             if (bucketInPath) {
-              parsed.pathname = parsed.pathname.slice(expectedBucket.length + 1);
+              parsed.pathname = parsed.pathname.slice(
+                expectedBucket.length + 1,
+              );
             }
           }
         }
@@ -580,7 +643,9 @@ export class CommunityS3Service {
         key === 'community/uploads' ||
         key === 'community/uploads/'
       ) {
-        throw new ForbiddenException('Invalid S3 key: root access is forbidden');
+        throw new ForbiddenException(
+          'Invalid S3 key: root access is forbidden',
+        );
       }
 
       // Security Check: Enforce that the target key resides in authorized community directories
@@ -631,11 +696,19 @@ export class CommunityS3Service {
 
       await this.s3Service.s3Client.send(command);
     } catch (error: any) {
-      if (error instanceof ForbiddenException || error instanceof BadRequestException) {
+      if (
+        error instanceof ForbiddenException ||
+        error instanceof BadRequestException
+      ) {
         throw error;
       }
-      this.logger.error(`Failed to delete S3 media ${fileUrl}: ${error.message}`, error.stack);
-      throw new InternalServerErrorException('Failed to delete media from storage');
+      this.logger.error(
+        `Failed to delete S3 media ${fileUrl}: ${error.message}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException(
+        'Failed to delete media from storage',
+      );
     }
   }
 }

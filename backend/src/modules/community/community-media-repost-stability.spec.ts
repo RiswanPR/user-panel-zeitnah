@@ -29,7 +29,8 @@ describe('Community Media + Repost Stability Suite', () => {
 
     beforeAll(() => {
       // Compile model from actual PostSchema
-      PostModel = mongoose.models.TestPost || mongoose.model('TestPost', PostSchema);
+      PostModel =
+        mongoose.models.TestPost || mongoose.model('TestPost', PostSchema);
     });
 
     it('repost doc with lowercase type="text" and audience="public" is canonicalized to "TEXT" and "PUBLIC" without enum validation error', async () => {
@@ -55,7 +56,9 @@ describe('Community Media + Repost Stability Suite', () => {
         audience: 'PUBLIC',
       });
 
-      await expect(invalidDoc.validate()).rejects.toThrow(mongoose.Error.ValidationError);
+      await expect(invalidDoc.validate()).rejects.toThrow(
+        mongoose.Error.ValidationError,
+      );
     });
 
     it('preserves original post reference, author, and canonical TEXT type when reposting', async () => {
@@ -107,7 +110,10 @@ describe('Community Media + Repost Stability Suite', () => {
         stats: { ...originalPost.stats, reposts: 4 },
       });
 
-      const result = await postService.repostPost('original-post-456', 'reposting-user-id');
+      const result = await postService.repostPost(
+        'original-post-456',
+        'reposting-user-id',
+      );
 
       expect(result.success).toBe(true);
       expect(result.isReposted).toBe(true);
@@ -118,7 +124,10 @@ describe('Community Media + Repost Stability Suite', () => {
           audience: 'PUBLIC',
         }),
       );
-      expect(mockPostRepo.adjustRepostCount).toHaveBeenCalledWith('original-post-456', 1);
+      expect(mockPostRepo.adjustRepostCount).toHaveBeenCalledWith(
+        'original-post-456',
+        1,
+      );
     });
 
     it('rejects repost of a deleted or nonexistent post with NotFoundException', async () => {
@@ -130,20 +139,34 @@ describe('Community Media + Repost Stability Suite', () => {
         providers: [
           PostService,
           { provide: PostRepository, useValue: mockPostRepo },
-          { provide: CommunityGateway, useValue: { emitPostCreated: jest.fn() } },
-          { provide: NotificationsService, useValue: { createNotification: jest.fn() } },
+          {
+            provide: CommunityGateway,
+            useValue: { emitPostCreated: jest.fn() },
+          },
+          {
+            provide: NotificationsService,
+            useValue: { createNotification: jest.fn() },
+          },
         ],
       }).compile();
 
       const postService = module.get<PostService>(PostService);
-      await expect(postService.repostPost('missing-post-id', 'user-1')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        postService.repostPost('missing-post-id', 'user-1'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('enforces idempotency: reposting an already reposted post returns existing state without duplicate', async () => {
-      const original = { _id: 'post-abc', authorId: 'author-1', stats: { reposts: 2 } };
-      const existingRepost = { _id: 'repost-abc', authorId: 'reposter-1', originalPostId: 'post-abc' };
+      const original = {
+        _id: 'post-abc',
+        authorId: 'author-1',
+        stats: { reposts: 2 },
+      };
+      const existingRepost = {
+        _id: 'repost-abc',
+        authorId: 'reposter-1',
+        originalPostId: 'post-abc',
+      };
 
       const mockPostRepo = {
         findById: jest.fn().mockResolvedValue(original),
@@ -157,8 +180,14 @@ describe('Community Media + Repost Stability Suite', () => {
         providers: [
           PostService,
           { provide: PostRepository, useValue: mockPostRepo },
-          { provide: CommunityGateway, useValue: { emitPostCreated: jest.fn() } },
-          { provide: NotificationsService, useValue: { createNotification: jest.fn() } },
+          {
+            provide: CommunityGateway,
+            useValue: { emitPostCreated: jest.fn() },
+          },
+          {
+            provide: NotificationsService,
+            useValue: { createNotification: jest.fn() },
+          },
         ],
       }).compile();
 
@@ -190,7 +219,10 @@ describe('Community Media + Repost Stability Suite', () => {
       jest.clearAllMocks();
 
       mockS3Client.send.mockImplementation(async (command: any) => {
-        if (command?.input?.Body && typeof command.input.Body.resume === 'function') {
+        if (
+          command?.input?.Body &&
+          typeof command.input.Body.resume === 'function'
+        ) {
           // If Body is a ReadStream, consume it to completion
           await new Promise((resolve) => {
             command.input.Body.on('end', resolve);
@@ -209,12 +241,16 @@ describe('Community Media + Repost Stability Suite', () => {
         ],
       }).compile();
 
-      uploadController = module.get<CommunityUploadController>(CommunityUploadController);
+      uploadController = module.get<CommunityUploadController>(
+        CommunityUploadController,
+      );
       s3Service = module.get<CommunityS3Service>(CommunityS3Service);
 
       // Default mock for ffmpeg helpers so tests run cleanly and fast in unit test runner
       jest.spyOn(s3Service as any, 'optimizeImage').mockResolvedValue(false);
-      jest.spyOn(s3Service as any, 'generateVideoPoster').mockResolvedValue(null);
+      jest
+        .spyOn(s3Service as any, 'generateVideoPoster')
+        .mockResolvedValue(null);
     });
 
     // --- PHOTO / IMAGE TESTS ---
@@ -392,7 +428,9 @@ describe('Community Media + Repost Stability Suite', () => {
 
     it('12. Duration validation cannot be bypassed by client-supplied duration', async () => {
       // Server calls getVideoDuration which probes the actual media, ignoring client params
-      const durationSpy = jest.spyOn(s3Service, 'getVideoDuration').mockResolvedValue(120);
+      const durationSpy = jest
+        .spyOn(s3Service, 'getVideoDuration')
+        .mockResolvedValue(120);
 
       const file = {
         fieldname: 'file',
@@ -410,13 +448,21 @@ describe('Community Media + Repost Stability Suite', () => {
 
     it('14. Temporary/orphaned disk upload is cleaned up on completion or error', async () => {
       // Create a real temp file on disk to simulate Multer disk storage
-      const tempFilePath = path.join(os.tmpdir(), `test-temp-${Date.now()}.mp4`);
-      fs.writeFileSync(tempFilePath, Buffer.from([0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70]));
+      const tempFilePath = path.join(
+        os.tmpdir(),
+        `test-temp-${Date.now()}.mp4`,
+      );
+      fs.writeFileSync(
+        tempFilePath,
+        Buffer.from([0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70]),
+      );
 
       expect(fs.existsSync(tempFilePath)).toBe(true);
 
       // Force an error in duration check
-      jest.spyOn(s3Service, 'getVideoDuration').mockRejectedValue(new Error('Corrupt file'));
+      jest
+        .spyOn(s3Service, 'getVideoDuration')
+        .mockRejectedValue(new Error('Corrupt file'));
 
       const file = {
         fieldname: 'file',
@@ -426,22 +472,33 @@ describe('Community Media + Repost Stability Suite', () => {
         path: tempFilePath,
       } as any;
 
-      await expect(uploadController.uploadFile(file, validReq)).rejects.toThrow();
+      await expect(
+        uploadController.uploadFile(file, validReq),
+      ).rejects.toThrow();
 
       // Controller must clean up temp file in finally block
       expect(fs.existsSync(tempFilePath)).toBe(false);
     });
 
     it('15. Large video upload uses file.path stream instead of loading full buffer into memory', async () => {
-      const tempFilePath = path.join(os.tmpdir(), `test-stream-${Date.now()}.mp4`);
-      fs.writeFileSync(tempFilePath, Buffer.from([0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70]));
+      const tempFilePath = path.join(
+        os.tmpdir(),
+        `test-stream-${Date.now()}.mp4`,
+      );
+      fs.writeFileSync(
+        tempFilePath,
+        Buffer.from([0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70]),
+      );
 
       jest.spyOn(s3Service, 'getVideoDuration').mockResolvedValue(30);
 
       let sendParamsReceived: any = null;
       mockS3Client.send.mockImplementation(async (command: any) => {
         sendParamsReceived = command.input;
-        if (command?.input?.Body && typeof command.input.Body.resume === 'function') {
+        if (
+          command?.input?.Body &&
+          typeof command.input.Body.resume === 'function'
+        ) {
           await new Promise((resolve) => {
             command.input.Body.on('end', resolve);
             command.input.Body.on('error', resolve);

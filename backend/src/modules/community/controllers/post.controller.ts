@@ -17,7 +17,12 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { PostService } from '../services/post.service';
-import { CreatePostDto, UpdatePostDto, ReactionDto, QuotePostDto } from '../dto/post.dto';
+import {
+  CreatePostDto,
+  UpdatePostDto,
+  ReactionDto,
+  QuotePostDto,
+} from '../dto/post.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { CommunityOwnershipGuard } from '../guards/community-ownership.guard';
 
@@ -62,7 +67,9 @@ export class PostController {
     @Query('organizationId') organizationId?: string,
   ) {
     const userId = this.getUserId(req);
-    const courseIds = (req.user?.enrolledCourses || []).map((c: any) => c.courseId || c._id || c);
+    const courseIds = (req.user?.enrolledCourses || []).map(
+      (c: any) => c.courseId || c._id || c,
+    );
     return this.postService.getFeed(
       userId,
       courseIds,
@@ -85,7 +92,9 @@ export class PostController {
     @Query('cursor') cursor: string,
   ) {
     const userId = this.getUserId(req);
-    const courseIds = (req.user?.enrolledCourses || []).map((c: any) => c.courseId || c._id || c);
+    const courseIds = (req.user?.enrolledCourses || []).map(
+      (c: any) => c.courseId || c._id || c,
+    );
     return this.postService.getSavedPosts(
       userId,
       courseIds,
@@ -97,7 +106,11 @@ export class PostController {
   @Get('search')
   @ApiOperation({ summary: 'Search community posts, people, and topics' })
   @ApiQuery({ name: 'q', required: true })
-  @ApiQuery({ name: 'type', required: false, enum: ['all', 'posts', 'people', 'topics'] })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    enum: ['all', 'posts', 'people', 'topics'],
+  })
   @ApiQuery({ name: 'limit', required: false })
   async searchCommunity(
     @Req() req,
@@ -106,7 +119,9 @@ export class PostController {
     @Query('limit') limit: number = 10,
   ) {
     const userId = this.getUserId(req);
-    const courseIds = (req.user?.enrolledCourses || []).map((c: any) => c.courseId || c._id || c);
+    const courseIds = (req.user?.enrolledCourses || []).map(
+      (c: any) => c.courseId || c._id || c,
+    );
     return this.postService.searchCommunity(userId, courseIds, {
       q,
       type,
@@ -202,7 +217,9 @@ export class PostController {
   @ApiOperation({ summary: 'Repost a community post' })
   async repostPost(@Req() req, @Param('id') id: string) {
     const userId = this.getUserId(req);
-    const courseIds = (req.user?.enrolledCourses || []).map((c: any) => c.courseId || c._id || c);
+    const courseIds = (req.user?.enrolledCourses || []).map(
+      (c: any) => c.courseId || c._id || c,
+    );
     const role = req.user?.role || 'student';
     return this.postService.repostPost(id, userId, courseIds, role);
   }
@@ -222,13 +239,17 @@ export class PostController {
     @Body() data: QuotePostDto,
   ) {
     const userId = this.getUserId(req);
-    const courseIds = (req.user?.enrolledCourses || []).map((c: any) => c.courseId || c._id || c);
+    const courseIds = (req.user?.enrolledCourses || []).map(
+      (c: any) => c.courseId || c._id || c,
+    );
     const role = req.user?.role || 'student';
     return this.postService.quotePost(id, userId, data, courseIds, role);
   }
 
   @Post(':id/view')
-  @ApiOperation({ summary: 'Record a meaningful view on a community post / video' })
+  @ApiOperation({
+    summary: 'Record a meaningful view on a community post / video',
+  })
   async recordPostView(@Req() req, @Param('id') id: string) {
     const userId = this.getUserId(req);
     return this.postService.recordPostView(id, userId);

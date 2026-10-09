@@ -124,10 +124,7 @@ export class OrganizationsController {
       },
     }),
   )
-  async uploadLogo(
-    @Req() req: any,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
+  async uploadLogo(@Req() req: any, @UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('No logo file provided');
     }

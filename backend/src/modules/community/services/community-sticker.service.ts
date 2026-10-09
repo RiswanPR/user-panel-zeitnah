@@ -113,12 +113,16 @@ export class CommunityStickerService {
   /**
    * Retrieves active curated stickers with optional category filtering and cursor pagination.
    */
-  getStickerCatalog(options: { category?: string; limit?: number; cursor?: string } = {}) {
+  getStickerCatalog(
+    options: { category?: string; limit?: number; cursor?: string } = {},
+  ) {
     const limit = Math.max(1, Math.min(Number(options.limit) || 20, 50));
     let items = CURATED_STICKERS.filter((s) => s.isActive);
 
     if (options.category && options.category !== 'ALL') {
-      items = items.filter((s) => s.category.toUpperCase() === options.category!.toUpperCase());
+      items = items.filter(
+        (s) => s.category.toUpperCase() === options.category.toUpperCase(),
+      );
     }
 
     let startIndex = 0;
@@ -129,11 +133,21 @@ export class CommunityStickerService {
 
     const paginated = items.slice(startIndex, startIndex + limit);
     const hasMore = startIndex + limit < items.length;
-    const nextCursor = hasMore && paginated.length > 0 ? paginated[paginated.length - 1].id : null;
+    const nextCursor =
+      hasMore && paginated.length > 0
+        ? paginated[paginated.length - 1].id
+        : null;
 
     return {
       items: paginated,
-      categories: ['ALL', 'ZEITNAH', 'REACTIONS', 'CELEBRATION', 'EMOJI', 'SHAPES'],
+      categories: [
+        'ALL',
+        'ZEITNAH',
+        'REACTIONS',
+        'CELEBRATION',
+        'EMOJI',
+        'SHAPES',
+      ],
       total: items.length,
       nextCursor,
     };
@@ -160,20 +174,30 @@ export class CommunityStickerService {
   /**
    * Resolves or renders a sticker PNG file to a deterministic local path.
    */
-  resolveStickerAsset(stickerId: string, outputDir?: string): { filePath: string; width: number; height: number } {
+  resolveStickerAsset(
+    stickerId: string,
+    outputDir?: string,
+  ): { filePath: string; width: number; height: number } {
     if (!this.isValidStickerId(stickerId)) {
-      throw new NotFoundException(`Sticker ${stickerId} does not exist or is inactive.`);
+      throw new NotFoundException(
+        `Sticker ${stickerId} does not exist or is inactive.`,
+      );
     }
     const sticker = this.getStickerById(stickerId);
     if (!sticker) {
-      throw new NotFoundException(`Sticker ${stickerId} does not exist or is inactive.`);
+      throw new NotFoundException(
+        `Sticker ${stickerId} does not exist or is inactive.`,
+      );
     }
 
     const targetDir = outputDir || this.stickerCacheDir;
     fs.mkdirSync(targetDir, { recursive: true });
     const targetFilePath = path.join(targetDir, `sticker_${sticker.id}.png`);
 
-    if (!fs.existsSync(targetFilePath) || fs.statSync(targetFilePath).size === 0) {
+    if (
+      !fs.existsSync(targetFilePath) ||
+      fs.statSync(targetFilePath).size === 0
+    ) {
       renderStickerPng(sticker.id, targetFilePath, 140);
     }
 

@@ -7,6 +7,7 @@ import { CommentRepository } from './repositories/mongo-comment.repository';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CommunityGateway } from './gateways/community.gateway';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { ForbiddenException } from '@nestjs/common';
 import { Types } from 'mongoose';
 
 describe('Phase 4: Community Feed & Creator Experience 2.0', () => {
@@ -39,6 +40,9 @@ describe('Phase 4: Community Feed & Creator Experience 2.0', () => {
       create: jest.fn(),
       findByIdPopulated: jest.fn(),
       countByPost: jest.fn(),
+      findById: jest.fn(),
+      softDelete: jest.fn(),
+      update: jest.fn(),
     };
 
     mockNotificationsService = {
@@ -130,7 +134,9 @@ describe('Phase 4: Community Feed & Creator Experience 2.0', () => {
       const req = { user: { userId: 'creator-123' } };
       const response = await postController.getCreatorInsights(req);
 
-      expect(mockPostRepository.getCreatorInsights).toHaveBeenCalledWith('creator-123');
+      expect(mockPostRepository.getCreatorInsights).toHaveBeenCalledWith(
+        'creator-123',
+      );
       expect(response).toEqual(mockInsights);
       expect(response.overview.totalViews).toBe(3500);
       expect(response.overview.totalFollowers).toBe(95);
@@ -235,11 +241,9 @@ describe('Phase 4: Community Feed & Creator Experience 2.0', () => {
         content: 'Awesome reel!',
       });
 
-      await commentService.createComment(
-        'commenter-user',
-        'reel-video-1',
-        { content: 'Awesome reel!' } as any,
-      );
+      await commentService.createComment('commenter-user', 'reel-video-1', {
+        content: 'Awesome reel!',
+      });
 
       expect(mockNotificationsService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -250,6 +254,81 @@ describe('Phase 4: Community Feed & Creator Experience 2.0', () => {
           targetUrl: '/community/reels/reel-video-1',
         }),
       );
+    });
+  });
+
+  describe('Comment & Post Authorization Regression (ObjectId & String Identity)', () => {
+    it('allows comment author to delete comment when authorId is an ObjectId', async () => {
+      const authorObjectId = new Types.ObjectId();
+      const commentId = new Types.ObjectId().toString();
+      mockCommentRepository.findById.mockResolvedValue({
+        _id: commentId,
+        authorId: authorObjectId,
+        postId: 'post-1',
+      });
+      mockCommentRepository.softDelete.mockResolvedValue(true);
+      mockPostRepository.update.mockResolvedValue(true);
+
+      const result = await commentService.deleteComment(
+        commentId,
+        authorObjectId.toString(),
+        'user',
+      );
+      expect(result).toBe(true);
+    });
+
+    it('blocks non-author from deleting comment', async () => {
+      const commentId = new Types.ObjectId().toString();
+      mockCommentRepository.findById.mockResolvedValue({
+        _id: commentId,
+        authorId: 'author-123',
+        postId: 'post-1',
+      });
+
+      await expect(
+        commentService.deleteComment(commentId, 'intruder-456', 'user'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('allows post author to update post when authorId is an ObjectId', async () => {
+      const authorObjectId = new Types.ObjectId();
+      const postId = new Types.ObjectId().toString();
+      mockPostRepository.findById.mockResolvedValue({
+        _id: postId,
+        authorId: authorObjectId,
+      });
+      mockPostRepository.update.mockResolvedValue(true);
+      mockPostRepository.findByIdPopulated.mockResolvedValue({
+        _id: postId,
+        authorId: authorObjectId,
+        content: 'Updated content',
+      });
+
+      const result = await postService.updatePost(
+        postId,
+        authorObjectId.toString(),
+        'user',
+        { content: 'Updated content' } as any,
+      );
+      expect(result).toBeDefined();
+      expect(result.content).toBe('Updated content');
+    });
+
+    it('blocks non-author from editing post', async () => {
+      const postId = new Types.ObjectId().toString();
+      mockPostRepository.findById.mockResolvedValue({
+        _id: postId,
+        authorId: 'author-123',
+      });
+
+      await expect(
+        postService.updatePost(
+          postId,
+          'intruder-456',
+          'user',
+          { content: 'Hacked' } as any,
+        ),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 });

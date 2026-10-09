@@ -37,7 +37,9 @@ export class ModerationController {
     @Body('notes') notes?: string,
   ) {
     this.checkModerator(req);
-    const userId = String(req.user?.userId || req.user?.id || req.user?._id || '');
+    const userId = String(
+      req.user?.userId || req.user?.id || req.user?._id || '',
+    );
     return this.modService.resolveReport(reportId, userId, action, notes);
   }
 
@@ -48,7 +50,9 @@ export class ModerationController {
     @Body('reason') reason: string,
   ) {
     this.checkModerator(req);
-    const userId = String(req.user?.userId || req.user?.id || req.user?._id || '');
+    const userId = String(
+      req.user?.userId || req.user?.id || req.user?._id || '',
+    );
     return this.modService.hidePost(postId, userId, reason);
   }
 }

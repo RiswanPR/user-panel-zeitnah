@@ -1,7 +1,11 @@
 /// <reference types="jest" />
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { CommunityVideoProcessorService } from './services/community-video-processor.service';
 import { CommunityMediaJobService } from './services/community-media-job.service';
 import { CommunityMediaController } from './controllers/community-media.controller';
@@ -29,8 +33,16 @@ describe('Community Video Processing & Transcoding Pipeline (Phase 3B)', () => {
   };
 
   const mockSignedUrlService = {
-    generateSignedImageUrl: jest.fn().mockImplementation((key) => Promise.resolve(`https://signed-cdn.com/${key}`)),
-    generateSignedVideoUrl: jest.fn().mockImplementation((key) => Promise.resolve(`https://signed-cdn.com/${key}`)),
+    generateSignedImageUrl: jest
+      .fn()
+      .mockImplementation((key) =>
+        Promise.resolve(`https://signed-cdn.com/${key}`),
+      ),
+    generateSignedVideoUrl: jest
+      .fn()
+      .mockImplementation((key) =>
+        Promise.resolve(`https://signed-cdn.com/${key}`),
+      ),
   };
 
   // Mock Mongoose model for CommunityMediaJob
@@ -53,7 +65,10 @@ describe('Community Video Processing & Transcoding Pipeline (Phase 3B)', () => {
 
     // Default mock implementation that safely consumes read streams
     mockS3Client.send.mockImplementation(async (command: any) => {
-      if (command?.input?.Body && typeof command.input.Body.resume === 'function') {
+      if (
+        command?.input?.Body &&
+        typeof command.input.Body.resume === 'function'
+      ) {
         await new Promise((resolve) => {
           command.input.Body.on('end', resolve);
           command.input.Body.on('error', resolve);
@@ -68,21 +83,33 @@ describe('Community Video Processing & Transcoding Pipeline (Phase 3B)', () => {
       providers: [
         CommunityVideoProcessorService,
         CommunityMediaJobService,
-        { provide: getModelToken(CommunityMediaJob.name), useValue: mockJobModel },
+        {
+          provide: getModelToken(CommunityMediaJob.name),
+          useValue: mockJobModel,
+        },
         { provide: S3Service, useValue: mockS3Service },
         { provide: SignedUrlService, useValue: mockSignedUrlService },
       ],
     }).compile();
 
-    videoProcessor = module.get<CommunityVideoProcessorService>(CommunityVideoProcessorService);
+    videoProcessor = module.get<CommunityVideoProcessorService>(
+      CommunityVideoProcessorService,
+    );
     jobService = module.get<CommunityMediaJobService>(CommunityMediaJobService);
-    mediaController = module.get<CommunityMediaController>(CommunityMediaController);
+    mediaController = module.get<CommunityMediaController>(
+      CommunityMediaController,
+    );
   });
 
   describe('1. Video Processor — Validation & FFprobe Invariants', () => {
     it('rejects empty or nonexistent video files', async () => {
-      const nonExistent = path.join(os.tmpdir(), `non-existent-${Date.now()}.mp4`);
-      await expect(videoProcessor.probeMedia(nonExistent)).rejects.toThrow(BadRequestException);
+      const nonExistent = path.join(
+        os.tmpdir(),
+        `non-existent-${Date.now()}.mp4`,
+      );
+      await expect(videoProcessor.probeMedia(nonExistent)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('rejects empty 0-byte video files', async () => {
@@ -90,7 +117,9 @@ describe('Community Video Processing & Transcoding Pipeline (Phase 3B)', () => {
       fs.writeFileSync(emptyFile, Buffer.alloc(0));
 
       try {
-        await expect(videoProcessor.probeMedia(emptyFile)).rejects.toThrow(BadRequestException);
+        await expect(videoProcessor.probeMedia(emptyFile)).rejects.toThrow(
+          BadRequestException,
+        );
       } finally {
         if (fs.existsSync(emptyFile)) fs.unlinkSync(emptyFile);
       }
@@ -111,14 +140,20 @@ describe('Community Video Processing & Transcoding Pipeline (Phase 3B)', () => {
       });
 
       await expect(
-        videoProcessor.processVideo(testFile, 'out.mp4', 'poster.jpg', { trimStart: 10, trimEnd: 5 }),
+        videoProcessor.processVideo(testFile, 'out.mp4', 'poster.jpg', {
+          trimStart: 10,
+          trimEnd: 5,
+        }),
       ).rejects.toThrow(BadRequestException);
 
       if (fs.existsSync(testFile)) fs.unlinkSync(testFile);
     });
 
     it('validates trim parameters: trim duration must be >= 0.5s and <= 90s', async () => {
-      const testFile = path.join(os.tmpdir(), `probe-trim-short-${Date.now()}.mp4`);
+      const testFile = path.join(
+        os.tmpdir(),
+        `probe-trim-short-${Date.now()}.mp4`,
+      );
       fs.writeFileSync(testFile, Buffer.from('mock video bytes'));
 
       jest.spyOn(videoProcessor, 'probeMedia').mockResolvedValue({
@@ -133,7 +168,10 @@ describe('Community Video Processing & Transcoding Pipeline (Phase 3B)', () => {
 
       // Too short (< 0.5s)
       await expect(
-        videoProcessor.processVideo(testFile, 'out.mp4', 'poster.jpg', { trimStart: 1.0, trimEnd: 1.2 }),
+        videoProcessor.processVideo(testFile, 'out.mp4', 'poster.jpg', {
+          trimStart: 1.0,
+          trimEnd: 1.2,
+        }),
       ).rejects.toThrow(BadRequestException);
 
       if (fs.existsSync(testFile)) fs.unlinkSync(testFile);
@@ -154,7 +192,10 @@ describe('Community Video Processing & Transcoding Pipeline (Phase 3B)', () => {
       });
 
       await expect(
-        videoProcessor.processVideo(testFile, 'out.mp4', 'poster.jpg', { trimStart: 0, trimEnd: 95 }),
+        videoProcessor.processVideo(testFile, 'out.mp4', 'poster.jpg', {
+          trimStart: 0,
+          trimEnd: 95,
+        }),
       ).rejects.toThrow(BadRequestException);
 
       if (fs.existsSync(testFile)) fs.unlinkSync(testFile);
@@ -163,12 +204,15 @@ describe('Community Video Processing & Transcoding Pipeline (Phase 3B)', () => {
 
   describe('2. Job Lifecycle & Atomic Worker Claiming', () => {
     it('creates a media job in QUEUED status with proper metadata', async () => {
-      mockJobModel.create.mockImplementation((dto) => Promise.resolve(mockJobDoc(dto)));
+      mockJobModel.create.mockImplementation((dto) =>
+        Promise.resolve(mockJobDoc(dto)),
+      );
 
       const job = await jobService.createJob({
         userId: 'user-creator-1',
         sourceKey: 'community/originals/user-creator-1/reel-123.mp4',
-        sourceUrl: 'https://test-community-bucket.s3.amazonaws.com/community/originals/user-creator-1/reel-123.mp4',
+        sourceUrl:
+          'https://test-community-bucket.s3.amazonaws.com/community/originals/user-creator-1/reel-123.mp4',
         mimeType: 'video/mp4',
         sourceSize: 10 * 1024 * 1024,
         sourceDuration: 25,
@@ -205,7 +249,9 @@ describe('Community Video Processing & Transcoding Pipeline (Phase 3B)', () => {
         .mockResolvedValueOnce(null); // Second worker gets null (no duplicate claim)
 
       // Spy on executeJob to avoid real disk S3 network operations in concurrency test
-      const executeSpy = jest.spyOn<any, any>(jobService, 'executeJob').mockResolvedValue(undefined);
+      const executeSpy = jest
+        .spyOn<any, any>(jobService, 'executeJob')
+        .mockResolvedValue(undefined);
 
       await jobService.processNextJobs();
 
@@ -261,7 +307,10 @@ describe('Community Video Processing & Transcoding Pipeline (Phase 3B)', () => {
           stream.push(null);
           return { Body: stream };
         }
-        if (command?.input?.Body && typeof command.input.Body.resume === 'function') {
+        if (
+          command?.input?.Body &&
+          typeof command.input.Body.resume === 'function'
+        ) {
           await new Promise((resolve) => {
             command.input.Body.on('end', resolve);
             command.input.Body.on('error', resolve);
@@ -272,18 +321,20 @@ describe('Community Video Processing & Transcoding Pipeline (Phase 3B)', () => {
       });
 
       // Mock videoProcessor.processVideo
-      jest.spyOn(videoProcessor, 'processVideo').mockImplementation(async (src, out, poster) => {
-        fs.writeFileSync(out, 'processed-mp4-data');
-        fs.writeFileSync(poster, 'poster-jpg-data');
-        return {
-          outputPath: out,
-          posterPath: poster,
-          duration: 9.0,
-          width: 720,
-          height: 1280,
-          size: 1024,
-        };
-      });
+      jest
+        .spyOn(videoProcessor, 'processVideo')
+        .mockImplementation(async (src, out, poster) => {
+          fs.writeFileSync(out, 'processed-mp4-data');
+          fs.writeFileSync(poster, 'poster-jpg-data');
+          return {
+            outputPath: out,
+            posterPath: poster,
+            duration: 9.0,
+            width: 720,
+            height: 1280,
+            size: 1024,
+          };
+        });
 
       mockJobModel.updateOne.mockResolvedValue({ modifiedCount: 1 });
 
@@ -337,7 +388,10 @@ describe('Community Video Processing & Transcoding Pipeline (Phase 3B)', () => {
 
       // Force a permanent error in processVideo (e.g. video >90s or no video stream)
       jest.spyOn(videoProcessor, 'processVideo').mockRejectedValue(
-        new BadRequestException({ code: 'VIDEO_TOO_LONG', message: 'Video exceeds 90s' }),
+        new BadRequestException({
+          code: 'VIDEO_TOO_LONG',
+          message: 'Video exceeds 90s',
+        }),
       );
 
       await (jobService as any).executeJob(fakeJob);
@@ -411,9 +465,12 @@ describe('Community Video Processing & Transcoding Pipeline (Phase 3B)', () => {
 
       mockJobModel.findOne.mockResolvedValue(failedJob);
 
-      const res = await mediaController.retryMediaProcessing('media-retryable', {
-        user: { userId: 'user-owner', role: 'student' },
-      });
+      const res = await mediaController.retryMediaProcessing(
+        'media-retryable',
+        {
+          user: { userId: 'user-owner', role: 'student' },
+        },
+      );
 
       expect(failedJob.status).toBe('QUEUED');
       expect(failedJob.attempts).toBe(0);
@@ -428,7 +485,8 @@ describe('Community Video Processing & Transcoding Pipeline (Phase 3B)', () => {
         userId: 'user-owner',
         status: 'FAILED',
         isPermanentFailure: true,
-        errorMessage: 'The uploaded file does not contain a valid video stream.',
+        errorMessage:
+          'The uploaded file does not contain a valid video stream.',
       });
 
       mockJobModel.findOne.mockResolvedValue(permanentFailedJob);

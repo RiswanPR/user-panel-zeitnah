@@ -442,6 +442,7 @@ export function useRepostPost() {
       };
       queryClient.setQueriesData({ queryKey: ['community', 'feed'] }, reconcile);
       queryClient.setQueriesData({ queryKey: ['community', 'saved'] }, reconcile);
+      queryClient.invalidateQueries({ queryKey: ['community', 'feed'] });
       toast.success('Post reposted to feed');
     },
     onError: (err, _, context) => {
@@ -558,30 +559,53 @@ export function useQuotePost() {
     mutationFn: ({ postId, content, audience, courseId }) =>
       communityApi.quotePost(postId, { content, audience, courseId }),
     onSuccess: (newPost, { postId }) => {
-      queryClient.setQueriesData({ queryKey: ['community', 'feed'] }, (oldData) => {
+      const isBusinessPost = Boolean(newPost?.organizationId);
+      const targetQueryKey = isBusinessPost
+        ? ['community', 'feed', 'business', newPost.organizationId]
+        : ['community', 'feed', 'personal'];
+
+      // 1. Update repost count on the original post across all cached feeds & saved posts
+      const incrementRepostCount = (oldData) => {
+        if (!oldData || !oldData.pages) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            items: page.items.map((item) => {
+              const id = item._id || item.id;
+              if (id === postId || item.originalPostId === postId || item.originalPost?._id === postId) {
+                return {
+                  ...item,
+                  stats: {
+                    ...item.stats,
+                    reposts: (item.stats?.reposts || 0) + 1,
+                  },
+                };
+              }
+              return item;
+            }),
+          })),
+        };
+      };
+      queryClient.setQueriesData({ queryKey: ['community', 'feed'] }, incrementRepostCount);
+      queryClient.setQueriesData({ queryKey: ['community', 'saved'] }, incrementRepostCount);
+
+      // 2. Prepend the new quote post strictly to its target feed to avoid cross-feed contamination
+      queryClient.setQueriesData({ queryKey: targetQueryKey }, (oldData) => {
         if (!oldData || !oldData.pages) return oldData;
         const newPages = [...oldData.pages];
         if (newPages.length > 0) {
-          const updatedItems = newPages[0].items.map((item) => {
-            const id = item._id || item.id;
-            if (id === postId || item.originalPostId === postId || item.originalPost?._id === postId) {
-              return {
-                ...item,
-                stats: {
-                  ...item.stats,
-                  reposts: (item.stats?.reposts || 0) + 1,
-                },
-              };
-            }
-            return item;
-          });
           newPages[0] = {
             ...newPages[0],
-            items: [newPost, ...updatedItems.filter((p) => (p._id || p.id) !== (newPost._id || newPost.id))],
+            items: [newPost, ...newPages[0].items.filter((p) => (p._id || p.id) !== (newPost._id || newPost.id))],
           };
+        } else {
+          newPages.push({ items: [newPost], nextCursor: null });
         }
         return { ...oldData, pages: newPages };
       });
+      queryClient.invalidateQueries({ queryKey: targetQueryKey });
+      queryClient.invalidateQueries({ queryKey: ['community', 'feed'] });
       toast.success('Quote post published!');
     },
     onError: (err) => {

@@ -1,6 +1,11 @@
 /// <reference types="jest" />
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException, NotFoundException, BadRequestException, PayloadTooLargeException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  NotFoundException,
+  BadRequestException,
+  PayloadTooLargeException,
+} from '@nestjs/common';
 import { PostService } from './services/post.service';
 import { CommentService } from './services/comment.service';
 import { CommunityS3Service } from './services/community-s3.service';
@@ -98,7 +103,9 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
     commentService = module.get<CommentService>(CommentService);
     storyService = module.get<StoryService>(StoryService);
     communityS3Service = module.get<CommunityS3Service>(CommunityS3Service);
-    uploadController = module.get<CommunityUploadController>(CommunityUploadController);
+    uploadController = module.get<CommunityUploadController>(
+      CommunityUploadController,
+    );
   });
 
   describe('Post Creation & Author Population', () => {
@@ -132,7 +139,10 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
 
       expect(mockPostRepository.create).toHaveBeenCalled();
       expect(mockPostRepository.createMedia).toHaveBeenCalled();
-      expect(mockPostRepository.findByIdPopulated).toHaveBeenCalledWith('post-1', userId);
+      expect(mockPostRepository.findByIdPopulated).toHaveBeenCalledWith(
+        'post-1',
+        userId,
+      );
       expect(result).toEqual(populatedPost);
       expect(result.author.username).toBe('janedoe');
     });
@@ -140,27 +150,44 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
 
   describe('Post Authorization & Ownership Enforcement', () => {
     it('allows author to delete their own post', async () => {
-      mockPostRepository.findById.mockResolvedValue({ _id: 'post-1', authorId: 'user-1' });
+      mockPostRepository.findById.mockResolvedValue({
+        _id: 'post-1',
+        authorId: 'user-1',
+      });
       mockPostRepository.softDelete.mockResolvedValue(true);
 
-      const success = await postService.deletePost('post-1', 'user-1', 'student');
+      const success = await postService.deletePost(
+        'post-1',
+        'user-1',
+        'student',
+      );
       expect(success).toBe(true);
       expect(mockPostRepository.softDelete).toHaveBeenCalledWith('post-1');
     });
 
     it('allows admin to delete another user post', async () => {
-      mockPostRepository.findById.mockResolvedValue({ _id: 'post-1', authorId: 'user-1' });
+      mockPostRepository.findById.mockResolvedValue({
+        _id: 'post-1',
+        authorId: 'user-1',
+      });
       mockPostRepository.softDelete.mockResolvedValue(true);
 
-      const success = await postService.deletePost('post-1', 'admin-99', 'admin');
+      const success = await postService.deletePost(
+        'post-1',
+        'admin-99',
+        'admin',
+      );
       expect(success).toBe(true);
     });
 
     it('rejects another student from deleting post (ForbiddenException)', async () => {
-      mockPostRepository.findById.mockResolvedValue({ _id: 'post-1', authorId: 'user-1' });
+      mockPostRepository.findById.mockResolvedValue({
+        _id: 'post-1',
+        authorId: 'user-1',
+      });
 
       await expect(
-        postService.deletePost('post-1', 'attacker-user-2', 'student')
+        postService.deletePost('post-1', 'attacker-user-2', 'student'),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -173,7 +200,10 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
         myReactionType: 'like',
         stats: { likes: 1 },
       });
-      mockPostRepository.findById.mockResolvedValue({ _id: 'post-1', authorId: 'author-user-1' });
+      mockPostRepository.findById.mockResolvedValue({
+        _id: 'post-1',
+        authorId: 'author-user-1',
+      });
 
       await postService.addReaction('post-1', 'reactor-user-2', 'like');
 
@@ -182,7 +212,7 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
           recipientId: 'author-user-1',
           actorId: 'reactor-user-2',
           type: 'COMMUNITY_REACTION',
-        })
+        }),
       );
     });
 
@@ -193,17 +223,25 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
         myReactionType: 'like',
         stats: { likes: 1 },
       });
-      mockPostRepository.findById.mockResolvedValue({ _id: 'post-1', authorId: 'author-user-1' });
+      mockPostRepository.findById.mockResolvedValue({
+        _id: 'post-1',
+        authorId: 'author-user-1',
+      });
 
       await postService.addReaction('post-1', 'author-user-1', 'like');
 
-      expect(mockNotificationsService.createNotification).not.toHaveBeenCalled();
+      expect(
+        mockNotificationsService.createNotification,
+      ).not.toHaveBeenCalled();
     });
   });
 
   describe('Comment Operations & Author Resolution', () => {
     it('creates comment and returns populated author data immediately', async () => {
-      mockPostRepository.findById.mockResolvedValue({ _id: 'post-1', authorId: 'author-1' });
+      mockPostRepository.findById.mockResolvedValue({
+        _id: 'post-1',
+        authorId: 'author-1',
+      });
       mockCommentRepository.create.mockResolvedValue({ _id: 'comment-1' });
       const populatedComment = {
         _id: 'comment-1',
@@ -216,11 +254,17 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
           avatar: 'https://example.com/bob.jpg',
         },
       };
-      mockCommentRepository.findByIdPopulated.mockResolvedValue(populatedComment);
+      mockCommentRepository.findByIdPopulated.mockResolvedValue(
+        populatedComment,
+      );
 
-      const result = await commentService.createComment('commenter-2', 'post-1', {
-        content: 'Great post!',
-      });
+      const result = await commentService.createComment(
+        'commenter-2',
+        'post-1',
+        {
+          content: 'Great post!',
+        },
+      );
 
       expect(result).toEqual(populatedComment);
       expect(mockNotificationsService.createNotification).toHaveBeenCalledWith(
@@ -228,7 +272,7 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
           recipientId: 'author-1',
           actorId: 'commenter-2',
           type: 'COMMUNITY_COMMENT',
-        })
+        }),
       );
     });
 
@@ -239,7 +283,7 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
       });
 
       await expect(
-        commentService.deleteComment('comment-1', 'attacker-user', 'student')
+        commentService.deleteComment('comment-1', 'attacker-user', 'student'),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -251,7 +295,7 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
         'https://test-bucket.s3.eu-central-1.amazonaws.com/community/uploads/user-123/test-image.jpg';
 
       await expect(
-        communityS3Service.deleteCommunityMedia(userFileUrl, 'user-123', false)
+        communityS3Service.deleteCommunityMedia(userFileUrl, 'user-123', false),
       ).resolves.not.toThrow();
 
       expect(mockS3Client.send).toHaveBeenCalled();
@@ -262,7 +306,11 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
         'https://test-bucket.s3.eu-central-1.amazonaws.com/community/uploads/victim-456/private-doc.pdf';
 
       await expect(
-        communityS3Service.deleteCommunityMedia(victimFileUrl, 'attacker-user-123', false)
+        communityS3Service.deleteCommunityMedia(
+          victimFileUrl,
+          'attacker-user-123',
+          false,
+        ),
       ).rejects.toThrow(ForbiddenException);
 
       expect(mockS3Client.send).not.toHaveBeenCalled();
@@ -273,7 +321,11 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
         'https://test-bucket.s3.eu-central-1.amazonaws.com/community/uploads/user-123/../../system-config.json';
 
       await expect(
-        communityS3Service.deleteCommunityMedia(traversalUrl, 'user-123', false)
+        communityS3Service.deleteCommunityMedia(
+          traversalUrl,
+          'user-123',
+          false,
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -361,7 +413,8 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
     const userB = 'user-B';
 
     it('rejects post creation when User B attempts to attach User A S3 media object', async () => {
-      const foreignMediaUrl = 'https://test-bucket.s3.eu-central-1.amazonaws.com/community/uploads/user-A/private.jpg';
+      const foreignMediaUrl =
+        'https://test-bucket.s3.eu-central-1.amazonaws.com/community/uploads/user-A/private.jpg';
 
       await expect(
         postService.createPost(userB, {
@@ -374,7 +427,8 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
     });
 
     it('rejects story creation when User B attempts to attach User A S3 media object', async () => {
-      const foreignMediaUrl = 'https://test-bucket.s3.eu-central-1.amazonaws.com/community/uploads/user-A/story.jpg';
+      const foreignMediaUrl =
+        'https://test-bucket.s3.eu-central-1.amazonaws.com/community/uploads/user-A/story.jpg';
 
       await expect(
         storyService.createStory(userB, {
@@ -388,7 +442,11 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
 
     it('signs author avatar in getActiveFeed for S3 profile avatar keys without N+1 calls', async () => {
       const mockSignedService = {
-        generateSignedImageUrl: jest.fn().mockImplementation(async (key: string) => `https://signed.amazonaws.com/${key}`),
+        generateSignedImageUrl: jest
+          .fn()
+          .mockImplementation(
+            async (key: string) => `https://signed.amazonaws.com/${key}`,
+          ),
       };
       const customStoryService = new StoryService(
         mockStoryRepository as any,
@@ -418,8 +476,12 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
       ]);
 
       const feed = await customStoryService.getActiveFeed();
-      expect(feed[0].author.avatar).toBe('https://signed.amazonaws.com/profiles/user-1-avatar.jpg');
-      expect(feed[1].author.avatar).toBe('https://signed.amazonaws.com/profiles/user-1-avatar.jpg');
+      expect(feed[0].author.avatar).toBe(
+        'https://signed.amazonaws.com/profiles/user-1-avatar.jpg',
+      );
+      expect(feed[1].author.avatar).toBe(
+        'https://signed.amazonaws.com/profiles/user-1-avatar.jpg',
+      );
       // Must be called exactly once due to avatarCache deduplication
       expect(mockSignedService.generateSignedImageUrl).toHaveBeenCalledTimes(1);
     });
@@ -445,7 +507,8 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
     });
 
     it('rejects foreign S3 bucket URLs outside the authorized bucket', async () => {
-      const foreignBucketUrl = 'https://attacker-bucket.s3.eu-central-1.amazonaws.com/community/uploads/user-123/pic.jpg';
+      const foreignBucketUrl =
+        'https://attacker-bucket.s3.eu-central-1.amazonaws.com/community/uploads/user-123/pic.jpg';
 
       await expect(
         postService.createPost('user-123', {
@@ -459,7 +522,12 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
       await expect(
         postService.createPost('user-123', {
           content: 'Root access test',
-          media: [{ url: 'https://test-bucket.s3.eu-central-1.amazonaws.com/', type: 'image' }],
+          media: [
+            {
+              url: 'https://test-bucket.s3.eu-central-1.amazonaws.com/',
+              type: 'image',
+            },
+          ],
         } as any),
       ).rejects.toThrow(ForbiddenException);
 
@@ -475,12 +543,20 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
       const userMediaWithSignature =
         'https://test-bucket.s3.eu-central-1.amazonaws.com/community/uploads/user-123/my-photo.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=abc123';
 
-      mockPostRepository.create.mockResolvedValue({ _id: 'post-new-1', authorId: 'user-123' });
+      mockPostRepository.create.mockResolvedValue({
+        _id: 'post-new-1',
+        authorId: 'user-123',
+      });
       mockPostRepository.findByIdPopulated.mockResolvedValue({
         _id: 'post-new-1',
         authorId: 'user-123',
         content: 'Valid user post',
-        media: [{ url: 'https://test-bucket.s3.eu-central-1.amazonaws.com/community/uploads/user-123/my-photo.jpg', type: 'image' }],
+        media: [
+          {
+            url: 'https://test-bucket.s3.eu-central-1.amazonaws.com/community/uploads/user-123/my-photo.jpg',
+            type: 'image',
+          },
+        ],
       });
 
       const result = await postService.createPost('user-123', {
@@ -525,7 +601,13 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
       await expect(
         postService.createPost('user-123', {
           content: 'Oversized',
-          media: [{ url: 'https://example.com/image.jpg', type: 'image', size: 8 * 1024 * 1024 + 1 }],
+          media: [
+            {
+              url: 'https://example.com/image.jpg',
+              type: 'image',
+              size: 8 * 1024 * 1024 + 1,
+            },
+          ],
         } as any),
       ).rejects.toThrow(BadRequestException);
     });
@@ -534,7 +616,13 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
       await expect(
         postService.createPost('user-123', {
           content: 'Oversized video',
-          media: [{ url: 'https://example.com/video.mp4', type: 'video', size: 1024 * 1024 * 1024 + 1 }],
+          media: [
+            {
+              url: 'https://example.com/video.mp4',
+              type: 'video',
+              size: 1024 * 1024 * 1024 + 1,
+            },
+          ],
         } as any),
       ).rejects.toThrow(BadRequestException);
     });
@@ -543,13 +631,22 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
       await expect(
         postService.createPost('user-123', {
           content: 'Long video',
-          media: [{ url: 'https://example.com/video.mp4', type: 'video', duration: 91 }],
+          media: [
+            {
+              url: 'https://example.com/video.mp4',
+              type: 'video',
+              duration: 91,
+            },
+          ],
         } as any),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('deduplicates identical media URLs in the same post', async () => {
-      mockPostRepository.create.mockResolvedValue({ _id: 'post-dup', authorId: 'user-123' });
+      mockPostRepository.create.mockResolvedValue({
+        _id: 'post-dup',
+        authorId: 'user-123',
+      });
       mockPostRepository.findByIdPopulated.mockResolvedValue({
         _id: 'post-dup',
         media: [{ url: 'https://example.com/same.jpg', type: 'image' }],
@@ -581,9 +678,9 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
         buffer: Buffer.from([0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70]),
       } as any;
 
-      await expect(uploadController.uploadFile(mismatchedFile, validReq)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        uploadController.uploadFile(mismatchedFile, validReq),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('rejects upload with dangerous executable extension despite innocent MIME', async () => {
@@ -595,9 +692,9 @@ describe('Community Phase 1 - Stability, Security & Core Workflows', () => {
         buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0]),
       } as any;
 
-      await expect(uploadController.uploadFile(scriptFile, validReq)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        uploadController.uploadFile(scriptFile, validReq),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 

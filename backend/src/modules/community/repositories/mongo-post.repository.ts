@@ -46,7 +46,16 @@ export class PostRepository extends BaseRepository<PostDocument> {
     tag?: string;
     organizationId?: string;
   }): Promise<{ items: any[]; nextCursor: string | null }> {
-    const { userId, courseIds = [], limit = 10, cursor, filter, search, tag, organizationId } = params;
+    const {
+      userId,
+      courseIds = [],
+      limit = 10,
+      cursor,
+      filter,
+      search,
+      tag,
+      organizationId,
+    } = params;
 
     const matchStage: any = {
       isDeleted: false,
@@ -55,7 +64,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
     const isCompanyFeed = Boolean(organizationId && organizationId.trim());
 
     if (isCompanyFeed) {
-      const cleanOrgId = organizationId!.trim();
+      const cleanOrgId = organizationId.trim();
       const orgMatches: any[] = [cleanOrgId];
       if (Types.ObjectId.isValid(cleanOrgId)) {
         orgMatches.push(new Types.ObjectId(cleanOrgId));
@@ -63,12 +72,13 @@ export class PostRepository extends BaseRepository<PostDocument> {
       matchStage.organizationId = { $in: orgMatches };
 
       // In Company Feed, support video/reels content type filtering
-      if (filter === 'video' || filter === 'reels' || filter === 'reels_trending') {
+      if (
+        filter === 'video' ||
+        filter === 'reels' ||
+        filter === 'reels_trending'
+      ) {
         const videoCondition = {
-          $or: [
-            { type: 'VIDEO' },
-            { 'media.type': 'video' },
-          ],
+          $or: [{ type: 'VIDEO' }, { 'media.type': 'video' }],
         };
         matchStage.$and = [videoCondition];
       }
@@ -81,13 +91,19 @@ export class PostRepository extends BaseRepository<PostDocument> {
         $or: [
           { organizationId: { $exists: false } },
           { organizationId: null },
+          { organizationId: '' },
         ],
       };
 
       if (filter === 'saved') {
         if (!userId) return { items: [], nextCursor: null };
-        const savedDocs = await this.savedPostModel.find({ userId }).select('postId').lean();
-        const savedPostIds = savedDocs.map((d: any) => String(d.postId)).filter(Boolean);
+        const savedDocs = await this.savedPostModel
+          .find({ userId })
+          .select('postId')
+          .lean();
+        const savedPostIds = savedDocs
+          .map((d: any) => String(d.postId))
+          .filter(Boolean);
         if (savedPostIds.length === 0) return { items: [], nextCursor: null };
         const idMatches: any[] = [];
         for (const pid of savedPostIds) {
@@ -100,7 +116,9 @@ export class PostRepository extends BaseRepository<PostDocument> {
         matchStage.$or = [
           { audience: 'PUBLIC' },
           { authorId: userId },
-          ...(courseIds.length > 0 ? [{ audience: 'COURSE', courseId: { $in: courseIds } }] : []),
+          ...(courseIds.length > 0
+            ? [{ audience: 'COURSE', courseId: { $in: courseIds } }]
+            : []),
         ];
       } else if (filter === 'following') {
         if (!userId) return { items: [], nextCursor: null };
@@ -110,11 +128,19 @@ export class PostRepository extends BaseRepository<PostDocument> {
             { requesterId: userId, status: { $in: ['accepted', 'pending'] } },
           ],
         };
-        const connections = await this.postModel.db.collection('network_connections').find(connFilter).toArray();
-        const followingUserIds = connections.map((c: any) =>
-          String(c.requesterId) === String(userId) ? String(c.recipientId) : String(c.requesterId)
-        ).filter(Boolean);
-        if (followingUserIds.length === 0) return { items: [], nextCursor: null };
+        const connections = await this.postModel.db
+          .collection('network_connections')
+          .find(connFilter)
+          .toArray();
+        const followingUserIds = connections
+          .map((c: any) =>
+            String(c.requesterId) === String(userId)
+              ? String(c.recipientId)
+              : String(c.requesterId),
+          )
+          .filter(Boolean);
+        if (followingUserIds.length === 0)
+          return { items: [], nextCursor: null };
         const authorMatches: any[] = [];
         for (const aid of followingUserIds) {
           authorMatches.push(aid);
@@ -128,16 +154,19 @@ export class PostRepository extends BaseRepository<PostDocument> {
         if (courseIds.length > 0) {
           matchStage.courseId = { $in: courseIds };
         }
-      } else if (filter === 'video' || filter === 'reels' || filter === 'reels_trending') {
+      } else if (
+        filter === 'video' ||
+        filter === 'reels' ||
+        filter === 'reels_trending'
+      ) {
         matchStage.$or = [
           { audience: 'PUBLIC' },
-          ...(courseIds.length > 0 ? [{ audience: 'COURSE', courseId: { $in: courseIds } }] : []),
+          ...(courseIds.length > 0
+            ? [{ audience: 'COURSE', courseId: { $in: courseIds } }]
+            : []),
         ];
         const videoCondition = {
-          $or: [
-            { type: 'VIDEO' },
-            { 'media.type': 'video' },
-          ],
+          $or: [{ type: 'VIDEO' }, { 'media.type': 'video' }],
         };
         if (matchStage.$and) {
           matchStage.$and.push(videoCondition);
@@ -147,7 +176,9 @@ export class PostRepository extends BaseRepository<PostDocument> {
       } else {
         matchStage.$or = [
           { audience: 'PUBLIC' },
-          ...(courseIds.length > 0 ? [{ audience: 'COURSE', courseId: { $in: courseIds } }] : []),
+          ...(courseIds.length > 0
+            ? [{ audience: 'COURSE', courseId: { $in: courseIds } }]
+            : []),
         ];
       }
 
@@ -185,7 +216,10 @@ export class PostRepository extends BaseRepository<PostDocument> {
     // Text search query
     if (search && search.trim()) {
       const cleanSearch = search.trim();
-      const escapedSearch = cleanSearch.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+      const escapedSearch = cleanSearch.replace(
+        /[-[\]{}()*+?.,\\^$|#\s]/g,
+        '\\$&',
+      );
       const searchRegex = new RegExp(escapedSearch, 'i');
       const tagForm = cleanSearch.replace(/^#+/, '').toLowerCase();
       const searchCondition = {
@@ -208,7 +242,10 @@ export class PostRepository extends BaseRepository<PostDocument> {
     const isTrending = filter === 'trending' || filter === 'reels_trending';
 
     if (!isTrending && cursor) {
-      matchStage.createdAt = { $lt: new Date(cursor) };
+      const cursorDate = new Date(cursor);
+      if (!isNaN(cursorDate.getTime())) {
+        matchStage.createdAt = { $lt: cursorDate };
+      }
     }
 
     let skipCount = 0;
@@ -239,10 +276,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
             ...(skipCount > 0 ? [{ $skip: skipCount }] : []),
             { $limit: limit + 1 },
           ]
-        : [
-            { $sort: { createdAt: -1 } },
-            { $limit: limit + 1 },
-          ]),
+        : [{ $sort: { createdAt: -1 } }, { $limit: limit + 1 }]),
 
       // 1. Populate Author from `users` collection safely
       {
@@ -254,7 +288,19 @@ export class PostRepository extends BaseRepository<PostDocument> {
               $match: {
                 $expr: {
                   $or: [
-                    { $eq: ['$_id', { $convert: { input: '$$authorStr', to: 'objectId', onError: null, onNull: null } }] },
+                    {
+                      $eq: [
+                        '$_id',
+                        {
+                          $convert: {
+                            input: '$$authorStr',
+                            to: 'objectId',
+                            onError: null,
+                            onNull: null,
+                          },
+                        },
+                      ],
+                    },
                     { $eq: [{ $toString: '$_id' }, '$$authorStr'] },
                   ],
                 },
@@ -300,7 +346,19 @@ export class PostRepository extends BaseRepository<PostDocument> {
                     { $ne: ['$$orgStr', null] },
                     {
                       $or: [
-                        { $eq: ['$_id', { $convert: { input: '$$orgStr', to: 'objectId', onError: null, onNull: null } }] },
+                        {
+                          $eq: [
+                            '$_id',
+                            {
+                              $convert: {
+                                input: '$$orgStr',
+                                to: 'objectId',
+                                onError: null,
+                                onNull: null,
+                              },
+                            },
+                          ],
+                        },
                         { $eq: [{ $toString: '$_id' }, '$$orgStr'] },
                       ],
                     },
@@ -329,7 +387,9 @@ export class PostRepository extends BaseRepository<PostDocument> {
         $addFields: {
           organization: {
             $cond: {
-              if: { $and: ['$organizationId', { $gt: [{ $size: '$orgList' }, 0] }] },
+              if: {
+                $and: ['$organizationId', { $gt: [{ $size: '$orgList' }, 0] }],
+              },
               then: { $arrayElemAt: ['$orgList', 0] },
               else: null,
             },
@@ -432,7 +492,19 @@ export class PostRepository extends BaseRepository<PostDocument> {
                     $match: {
                       $expr: {
                         $or: [
-                          { $eq: ['$_id', { $convert: { input: '$$origAuthorStr', to: 'objectId', onError: null, onNull: null } }] },
+                          {
+                            $eq: [
+                              '$_id',
+                              {
+                                $convert: {
+                                  input: '$$origAuthorStr',
+                                  to: 'objectId',
+                                  onError: null,
+                                  onNull: null,
+                                },
+                              },
+                            ],
+                          },
                           { $eq: [{ $toString: '$_id' }, '$$origAuthorStr'] },
                         ],
                       },
@@ -472,7 +544,9 @@ export class PostRepository extends BaseRepository<PostDocument> {
         $addFields: {
           originalPost: {
             $cond: {
-              if: { $gt: [{ $size: { $ifNull: ['$originalPostList', []] } }, 0] },
+              if: {
+                $gt: [{ $size: { $ifNull: ['$originalPostList', []] } }, 0],
+              },
               then: { $arrayElemAt: ['$originalPostList', 0] },
               else: null,
             },
@@ -587,7 +661,12 @@ export class PostRepository extends BaseRepository<PostDocument> {
                       {
                         $or: [
                           { $eq: ['$originalPostId', '$$postIdStr'] },
-                          { $eq: [{ $toString: '$originalPostId' }, '$$postIdStr'] },
+                          {
+                            $eq: [
+                              { $toString: '$originalPostId' },
+                              '$$postIdStr',
+                            ],
+                          },
                         ],
                       },
                       {
@@ -633,7 +712,9 @@ export class PostRepository extends BaseRepository<PostDocument> {
       if (isTrending) {
         nextCursor = `offset:${skipCount + limit}`;
       } else {
-        nextCursor = nextItem.createdAt ? new Date(nextItem.createdAt).toISOString() : null;
+        nextCursor = nextItem.createdAt
+          ? new Date(nextItem.createdAt).toISOString()
+          : null;
       }
     }
 
@@ -722,7 +803,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
             .limit(limit)
             .toArray();
 
-          let connectionMap = new Map<string, string>();
+          const connectionMap = new Map<string, string>();
           if (userId && userMatches.length > 0) {
             const peerIds = userMatches.map((u: any) => String(u._id));
             const connDocs = await this.postModel.db
@@ -736,13 +817,18 @@ export class PostRepository extends BaseRepository<PostDocument> {
               .toArray();
 
             for (const c of connDocs) {
-              const otherId = String(c.requesterId) === String(userId) ? String(c.recipientId) : String(c.requesterId);
+              const otherId =
+                String(c.requesterId) === String(userId)
+                  ? String(c.recipientId)
+                  : String(c.requesterId);
               if (c.status === 'accepted') {
                 connectionMap.set(otherId, 'connected');
               } else if (c.status === 'pending') {
                 connectionMap.set(
                   otherId,
-                  String(c.requesterId) === String(userId) ? 'outgoing_pending' : 'incoming_pending',
+                  String(c.requesterId) === String(userId)
+                    ? 'outgoing_pending'
+                    : 'incoming_pending',
                 );
               }
             }
@@ -757,7 +843,8 @@ export class PostRepository extends BaseRepository<PostDocument> {
               username: u.username || '',
               avatar: u.avatar || '',
               role: u.primaryRole || u.role || 'MEMBER',
-              headline: u.headline || u.profile?.headline || u.primaryDiscipline || '',
+              headline:
+                u.headline || u.profile?.headline || u.primaryDiscipline || '',
               connectionStatus: connectionMap.get(uId) || 'none',
               gamification: u.gamification || null,
             };
@@ -772,7 +859,9 @@ export class PostRepository extends BaseRepository<PostDocument> {
         (async () => {
           const audienceOr: any[] = [
             { audience: 'PUBLIC' },
-            ...(courseIds.length > 0 ? [{ audience: 'COURSE', courseId: { $in: courseIds } }] : []),
+            ...(courseIds.length > 0
+              ? [{ audience: 'COURSE', courseId: { $in: courseIds } }]
+              : []),
           ];
           if (userId) audienceOr.push({ authorId: userId });
 
@@ -798,7 +887,11 @@ export class PostRepository extends BaseRepository<PostDocument> {
               $project: {
                 cleanTag: {
                   $toLower: {
-                    $replaceAll: { input: '$allTags', find: '#', replacement: '' },
+                    $replaceAll: {
+                      input: '$allTags',
+                      find: '#',
+                      replacement: '',
+                    },
                   },
                 },
               },
@@ -854,7 +947,19 @@ export class PostRepository extends BaseRepository<PostDocument> {
               $match: {
                 $expr: {
                   $or: [
-                    { $eq: ['$_id', { $convert: { input: '$$authorStr', to: 'objectId', onError: null, onNull: null } }] },
+                    {
+                      $eq: [
+                        '$_id',
+                        {
+                          $convert: {
+                            input: '$$authorStr',
+                            to: 'objectId',
+                            onError: null,
+                            onNull: null,
+                          },
+                        },
+                      ],
+                    },
                     { $eq: [{ $toString: '$_id' }, '$$authorStr'] },
                   ],
                 },
@@ -897,7 +1002,19 @@ export class PostRepository extends BaseRepository<PostDocument> {
                     { $ne: ['$$orgStr', null] },
                     {
                       $or: [
-                        { $eq: ['$_id', { $convert: { input: '$$orgStr', to: 'objectId', onError: null, onNull: null } }] },
+                        {
+                          $eq: [
+                            '$_id',
+                            {
+                              $convert: {
+                                input: '$$orgStr',
+                                to: 'objectId',
+                                onError: null,
+                                onNull: null,
+                              },
+                            },
+                          ],
+                        },
                         { $eq: [{ $toString: '$_id' }, '$$orgStr'] },
                       ],
                     },
@@ -926,7 +1043,9 @@ export class PostRepository extends BaseRepository<PostDocument> {
         $addFields: {
           organization: {
             $cond: {
-              if: { $and: ['$organizationId', { $gt: [{ $size: '$orgList' }, 0] }] },
+              if: {
+                $and: ['$organizationId', { $gt: [{ $size: '$orgList' }, 0] }],
+              },
               then: { $arrayElemAt: ['$orgList', 0] },
               else: null,
             },
@@ -1026,7 +1145,19 @@ export class PostRepository extends BaseRepository<PostDocument> {
                     $match: {
                       $expr: {
                         $or: [
-                          { $eq: ['$_id', { $convert: { input: '$$origAuthorStr', to: 'objectId', onError: null, onNull: null } }] },
+                          {
+                            $eq: [
+                              '$_id',
+                              {
+                                $convert: {
+                                  input: '$$origAuthorStr',
+                                  to: 'objectId',
+                                  onError: null,
+                                  onNull: null,
+                                },
+                              },
+                            ],
+                          },
                           { $eq: [{ $toString: '$_id' }, '$$origAuthorStr'] },
                         ],
                       },
@@ -1066,7 +1197,9 @@ export class PostRepository extends BaseRepository<PostDocument> {
         $addFields: {
           originalPost: {
             $cond: {
-              if: { $gt: [{ $size: { $ifNull: ['$originalPostList', []] } }, 0] },
+              if: {
+                $gt: [{ $size: { $ifNull: ['$originalPostList', []] } }, 0],
+              },
               then: { $arrayElemAt: ['$originalPostList', 0] },
               else: null,
             },
@@ -1145,13 +1278,20 @@ export class PostRepository extends BaseRepository<PostDocument> {
                           {
                             $or: [
                               { $eq: ['$originalPostId', '$$postIdStr'] },
-                              { $eq: [{ $toString: '$originalPostId' }, '$$postIdStr'] },
+                              {
+                                $eq: [
+                                  { $toString: '$originalPostId' },
+                                  '$$postIdStr',
+                                ],
+                              },
                             ],
                           },
                           {
                             $or: [
                               { $eq: ['$authorId', viewerUserId] },
-                              { $eq: [{ $toString: '$authorId' }, viewerUserId] },
+                              {
+                                $eq: [{ $toString: '$authorId' }, viewerUserId],
+                              },
                             ],
                           },
                           { $eq: ['$postType', 'repost'] },
@@ -1355,7 +1495,10 @@ export class PostRepository extends BaseRepository<PostDocument> {
   }
 
   // Real bookmark persistence
-  async savePost(postId: string, userId: string): Promise<{ success: boolean; isSaved: boolean }> {
+  async savePost(
+    postId: string,
+    userId: string,
+  ): Promise<{ success: boolean; isSaved: boolean }> {
     const existing = await this.savedPostModel.findOne({ postId, userId });
     if (!existing) {
       await new this.savedPostModel({ postId, userId }).save();
@@ -1363,13 +1506,19 @@ export class PostRepository extends BaseRepository<PostDocument> {
     return { success: true, isSaved: true };
   }
 
-  async removeSavedPost(postId: string, userId: string): Promise<{ success: boolean; isSaved: boolean }> {
+  async removeSavedPost(
+    postId: string,
+    userId: string,
+  ): Promise<{ success: boolean; isSaved: boolean }> {
     await this.savedPostModel.deleteOne({ postId, userId });
     return { success: true, isSaved: false };
   }
 
   // Phase 3A: Repost & Quote Helpers
-  async findActiveRepost(originalPostId: string, authorId: string): Promise<any> {
+  async findActiveRepost(
+    originalPostId: string,
+    authorId: string,
+  ): Promise<any> {
     const origMatches: any[] = [originalPostId];
     if (Types.ObjectId.isValid(originalPostId)) {
       origMatches.push(new Types.ObjectId(originalPostId));
@@ -1405,7 +1554,9 @@ export class PostRepository extends BaseRepository<PostDocument> {
     }
 
     // Canonical enum values — always uppercase, always valid
-    const audienceEnum = ((data.audience || PostAudience.PUBLIC).toUpperCase() as PostAudience);
+    const audienceEnum = (
+      data.audience || PostAudience.PUBLIC
+    ).toUpperCase() as PostAudience;
     const typeEnum = PostType.TEXT; // Repost documents always use TEXT
 
     // Check if a soft-deleted repost already exists for this pair to reuse the document
@@ -1439,7 +1590,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
             },
           },
           {
-            returnDocument: 'after',        // return the updated document
+            returnDocument: 'after', // return the updated document
             runValidators: true, // validate with canonical values AFTER $set
           },
         )
@@ -1475,7 +1626,10 @@ export class PostRepository extends BaseRepository<PostDocument> {
     return post.save();
   }
 
-  async removeRepost(originalPostId: string, authorId: string): Promise<boolean> {
+  async removeRepost(
+    originalPostId: string,
+    authorId: string,
+  ): Promise<boolean> {
     const origMatches: any[] = [originalPostId];
     if (Types.ObjectId.isValid(originalPostId)) {
       origMatches.push(new Types.ObjectId(originalPostId));
@@ -1615,7 +1769,14 @@ export class PostRepository extends BaseRepository<PostDocument> {
         .countDocuments({
           $or: [
             { recipientId: userId, status: 'accepted' },
-            ...(Types.ObjectId.isValid(userId) ? [{ recipientId: new Types.ObjectId(userId), status: 'accepted' }] : []),
+            ...(Types.ObjectId.isValid(userId)
+              ? [
+                  {
+                    recipientId: new Types.ObjectId(userId),
+                    status: 'accepted',
+                  },
+                ]
+              : []),
           ],
         })
         .catch(() => 0),

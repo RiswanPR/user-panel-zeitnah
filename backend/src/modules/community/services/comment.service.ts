@@ -45,16 +45,25 @@ export class CommentService {
     // Notify post author if commenter is not the author
     if (post.authorId && String(post.authorId) !== String(userId)) {
       try {
-        const isReel = post.type === 'VIDEO' || (Array.isArray(post.media) && post.media.some((m: any) => m?.type === 'video'));
-        const targetUrl = isReel ? `/community/reels/${postId}` : `/community#${postId}`;
+        const isReel =
+          post.type === 'VIDEO' ||
+          (Array.isArray(post.media) &&
+            post.media.some((m: any) => m?.type === 'video'));
+        const targetUrl = isReel
+          ? `/community/reels/${postId}`
+          : `/community#${postId}`;
         await this.notificationsService.createNotification({
           recipientId: post.authorId,
           actorId: userId,
           type: 'COMMUNITY_COMMENT',
           category: 'community',
           priority: 'NORMAL',
-          title: isReel ? 'New comment on your reel' : 'New comment on your post',
-          message: isReel ? 'Someone commented on your reel' : 'Someone commented on your post',
+          title: isReel
+            ? 'New comment on your reel'
+            : 'New comment on your post',
+          message: isReel
+            ? 'Someone commented on your reel'
+            : 'Someone commented on your post',
           actionUrl: targetUrl,
           targetUrl: targetUrl,
         });
@@ -81,7 +90,7 @@ export class CommentService {
   ): Promise<any> {
     const comment = await this.commentRepository.findById(id);
     if (!comment) throw new NotFoundException('Comment not found');
-    if (comment.authorId !== userId) {
+    if (String(comment.authorId) !== String(userId)) {
       throw new ForbiddenException('Unauthorized to update this comment');
     }
 
@@ -97,7 +106,7 @@ export class CommentService {
     const comment = await this.commentRepository.findById(id);
     if (!comment) throw new NotFoundException('Comment not found');
 
-    if (comment.authorId !== userId && role !== 'admin') {
+    if (String(comment.authorId) !== String(userId) && role !== 'admin') {
       throw new ForbiddenException('Unauthorized to delete this comment');
     }
 

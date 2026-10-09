@@ -48,7 +48,9 @@ export class CommunityMediaController {
   }
 
   @Post(':mediaId/retry')
-  @ApiOperation({ summary: 'Retry failed media processing using the stored source asset' })
+  @ApiOperation({
+    summary: 'Retry failed media processing using the stored source asset',
+  })
   @ApiParam({ name: 'mediaId', description: 'Unique media identifier' })
   async retryMediaProcessing(
     @Param('mediaId') mediaId: string,
@@ -65,15 +67,22 @@ export class CommunityMediaController {
 
     let resolvedAudioConfig = effectiveBody?.audioConfig;
     if (resolvedAudioConfig && this.musicService) {
-      resolvedAudioConfig = await this.musicService.validateAndResolveAudioConfig(
-        resolvedAudioConfig,
-        req?.user?.username,
-      );
+      resolvedAudioConfig =
+        await this.musicService.validateAndResolveAudioConfig(
+          resolvedAudioConfig,
+          req?.user?.username,
+        );
     }
 
     const job = await this.jobService.retryJob(mediaId, userId, isAdmin, {
-      trimStart: effectiveBody?.trimStart !== undefined ? Number(effectiveBody.trimStart) : undefined,
-      trimEnd: effectiveBody?.trimEnd !== undefined ? Number(effectiveBody.trimEnd) : undefined,
+      trimStart:
+        effectiveBody?.trimStart !== undefined
+          ? Number(effectiveBody.trimStart)
+          : undefined,
+      trimEnd:
+        effectiveBody?.trimEnd !== undefined
+          ? Number(effectiveBody.trimEnd)
+          : undefined,
       audioConfig: resolvedAudioConfig,
       editorConfig: effectiveBody?.editorConfig,
     });

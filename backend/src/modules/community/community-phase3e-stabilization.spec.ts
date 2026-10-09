@@ -1,4 +1,8 @@
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -53,7 +57,10 @@ describe('Community Phase 3E — Advanced Reel Editor Hardening & Production Sta
   };
 
   beforeAll(() => {
-    tempDir = path.join(os.tmpdir(), `p3e_test_${Date.now()}_${Math.random().toString(36).slice(2)}`);
+    tempDir = path.join(
+      os.tmpdir(),
+      `p3e_test_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+    );
     fs.mkdirSync(tempDir, { recursive: true });
 
     videoProcessor = new CommunityVideoProcessorService();
@@ -84,49 +91,55 @@ describe('Community Phase 3E — Advanced Reel Editor Hardening & Production Sta
   // ==========================================
   describe('A. Coordinate & Transform Parity (Browser ↔ FFmpeg)', () => {
     it('generates consistent center coordinates for centered text (x=0.5, y=0.5)', () => {
-      const config = postService.validateAndNormalizeEditorConfig({
-        version: 1,
-        layers: [
-          {
-            id: 'center-text',
-            type: 'TEXT',
-            content: 'Centered Headline',
-            x: 0.5,
-            y: 0.5,
-            start: 0,
-            end: 5,
-          },
-        ],
-      }, 10);
+      const config = postService.validateAndNormalizeEditorConfig(
+        {
+          version: 1,
+          layers: [
+            {
+              id: 'center-text',
+              type: 'TEXT',
+              content: 'Centered Headline',
+              x: 0.5,
+              y: 0.5,
+              start: 0,
+              end: 5,
+            },
+          ],
+        },
+        10,
+      );
 
       expect(config.layers[0].x).toBe(0.5);
       expect(config.layers[0].y).toBe(0.5);
     });
 
     it('generates consistent center coordinates for safe-zone boundaries (top-left and bottom-right)', () => {
-      const config = postService.validateAndNormalizeEditorConfig({
-        version: 1,
-        layers: [
-          {
-            id: 'top-left',
-            type: 'TEXT',
-            content: 'Top Left Tag',
-            x: 0.05,
-            y: 0.08,
-            start: 0,
-            end: 4,
-          },
-          {
-            id: 'bottom-right',
-            type: 'TEXT',
-            content: 'Bottom Right Credit',
-            x: 0.95,
-            y: 0.92,
-            start: 0,
-            end: 4,
-          },
-        ],
-      }, 10);
+      const config = postService.validateAndNormalizeEditorConfig(
+        {
+          version: 1,
+          layers: [
+            {
+              id: 'top-left',
+              type: 'TEXT',
+              content: 'Top Left Tag',
+              x: 0.05,
+              y: 0.08,
+              start: 0,
+              end: 4,
+            },
+            {
+              id: 'bottom-right',
+              type: 'TEXT',
+              content: 'Bottom Right Credit',
+              x: 0.95,
+              y: 0.92,
+              start: 0,
+              end: 4,
+            },
+          ],
+        },
+        10,
+      );
 
       expect(config.layers[0].x).toBe(0.05);
       expect(config.layers[0].y).toBe(0.08);
@@ -142,9 +155,20 @@ describe('Community Phase 3E — Advanced Reel Editor Hardening & Production Sta
       // 1. Synthetic 2s portrait video (720x1280)
       await runFfmpeg([
         '-y',
-        '-f', 'lavfi', '-i', 'color=c=navy:s=720x1280:d=2',
-        '-f', 'lavfi', '-i', 'sine=f=440:d=2',
-        '-c:v', 'libx264', '-c:a', 'aac', '-t', '2',
+        '-f',
+        'lavfi',
+        '-i',
+        'color=c=navy:s=720x1280:d=2',
+        '-f',
+        'lavfi',
+        '-i',
+        'sine=f=440:d=2',
+        '-c:v',
+        'libx264',
+        '-c:a',
+        'aac',
+        '-t',
+        '2',
         testSource,
       ]);
 
@@ -235,9 +259,12 @@ describe('Community Phase 3E — Advanced Reel Editor Hardening & Production Sta
       expect(result.height).toBe(1280);
 
       const probe = await runFfprobe([
-        '-v', 'error',
-        '-show_entries', 'stream=codec_name,width,height:format=duration',
-        '-of', 'json',
+        '-v',
+        'error',
+        '-show_entries',
+        'stream=codec_name,width,height:format=duration',
+        '-of',
+        'json',
         result.outputPath,
       ]);
       expect(probe.streams[0].codec_name).toBe('h264');
@@ -318,7 +345,8 @@ describe('Community Phase 3E — Advanced Reel Editor Hardening & Production Sta
         {
           id: 'xss-strip',
           type: 'TEXT',
-          content: '<script>alert("xss")</script><img src="x" onerror="steal()"/>Safe Text',
+          content:
+            '<script>alert("xss")</script><img src="x" onerror="steal()"/>Safe Text',
           fontSize: 24,
           start: 0,
           end: 2,
@@ -343,26 +371,38 @@ describe('Community Phase 3E — Advanced Reel Editor Hardening & Production Sta
     });
 
     it('rejects unknown sticker IDs', () => {
-      expect(stickerService.isValidStickerId('unknown-sticker-999')).toBe(false);
+      expect(stickerService.isValidStickerId('unknown-sticker-999')).toBe(
+        false,
+      );
       expect(stickerService.isValidStickerId('')).toBe(false);
     });
 
     it('strictly rejects filesystem path traversal in sticker IDs', () => {
       expect(stickerService.isValidStickerId('../../etc/passwd')).toBe(false);
       expect(stickerService.isValidStickerId('/etc/shadow')).toBe(false);
-      expect(stickerService.isValidStickerId('..\\windows\\system32')).toBe(false);
+      expect(stickerService.isValidStickerId('..\\windows\\system32')).toBe(
+        false,
+      );
     });
 
     it('strictly rejects external URLs and data URLs in sticker IDs', () => {
-      expect(stickerService.isValidStickerId('https://evil.com/malicious.png')).toBe(false);
-      expect(stickerService.isValidStickerId('http://localhost:8080/exploit')).toBe(false);
-      expect(stickerService.isValidStickerId('data:image/svg+xml;base64,PHN2Zz4=')).toBe(false);
+      expect(
+        stickerService.isValidStickerId('https://evil.com/malicious.png'),
+      ).toBe(false);
+      expect(
+        stickerService.isValidStickerId('http://localhost:8080/exploit'),
+      ).toBe(false);
+      expect(
+        stickerService.isValidStickerId('data:image/svg+xml;base64,PHN2Zz4='),
+      ).toBe(false);
     });
 
     it('renderStickerPng throws error when given malicious or unknown sticker IDs', () => {
       const outPng = path.join(tempDir, 'invalid_stk.png');
       expect(() => renderStickerPng('../../etc/passwd', outPng)).toThrow();
-      expect(() => renderStickerPng('https://evil.com/x.svg', outPng)).toThrow();
+      expect(() =>
+        renderStickerPng('https://evil.com/x.svg', outPng),
+      ).toThrow();
       expect(() => renderStickerPng('unknown-sticker-123', outPng)).toThrow();
     });
   });
@@ -442,23 +482,46 @@ describe('Community Phase 3E — Advanced Reel Editor Hardening & Production Sta
 
       await runFfmpeg([
         '-y',
-        '-f', 'lavfi', '-i', 'color=c=purple:s=640x360:d=3',
-        '-f', 'lavfi', '-i', 'sine=f=440:d=3',
-        '-c:v', 'libx264', '-c:a', 'aac', '-t', '3',
+        '-f',
+        'lavfi',
+        '-i',
+        'color=c=purple:s=640x360:d=3',
+        '-f',
+        'lavfi',
+        '-i',
+        'sine=f=440:d=3',
+        '-c:v',
+        'libx264',
+        '-c:a',
+        'aac',
+        '-t',
+        '3',
         testVideo3s,
       ]);
 
       await runFfmpeg([
         '-y',
-        '-f', 'lavfi', '-i', 'sine=f=880:d=1',
-        '-c:a', 'aac', '-t', '1',
+        '-f',
+        'lavfi',
+        '-i',
+        'sine=f=880:d=1',
+        '-c:a',
+        'aac',
+        '-t',
+        '1',
         shortAudio1s,
       ]);
 
       await runFfmpeg([
         '-y',
-        '-f', 'lavfi', '-i', 'sine=f=220:d=6',
-        '-c:a', 'aac', '-t', '6',
+        '-f',
+        'lavfi',
+        '-i',
+        'sine=f=220:d=6',
+        '-c:a',
+        'aac',
+        '-t',
+        '6',
         longAudio6s,
       ]);
     });
@@ -553,7 +616,10 @@ describe('Community Phase 3E — Advanced Reel Editor Hardening & Production Sta
     it('bounds stdout and stderr in runChildProcess to prevent memory leaks', async () => {
       const { stdout } = await videoProcessor.runChildProcess(
         'node',
-        ['-e', 'for (let i = 0; i < 5000; i++) process.stdout.write("x".repeat(100));'],
+        [
+          '-e',
+          'for (let i = 0; i < 5000; i++) process.stdout.write("x".repeat(100));',
+        ],
         { maxBuffer: 1024 },
       );
 
@@ -570,7 +636,10 @@ describe('Community Phase 3E — Advanced Reel Editor Hardening & Production Sta
 
       for (const val of testCases) {
         const safeSourceSize = Math.max(0, Number(val) || 0);
-        const safeLayerCount = Math.max(0, Math.min(Number(undefined) || 0, 10));
+        const safeLayerCount = Math.max(
+          0,
+          Math.min(Number(undefined) || 0, 10),
+        );
 
         const requiredEstimateBytes =
           Math.max(safeSourceSize * 1.5, 100 * 1024 * 1024) +
@@ -745,7 +814,9 @@ describe('Community Phase 3E — Advanced Reel Editor Hardening & Production Sta
         mockJobService as any,
       );
 
-      const normalized = await (testPostService as any).validateAndNormalizeMedia(
+      const normalized = await (
+        testPostService as any
+      ).validateAndNormalizeMedia(
         [
           {
             url: 'https://cdn.zeitnah.com/v.mp4',
@@ -758,8 +829,12 @@ describe('Community Phase 3E — Advanced Reel Editor Hardening & Production Sta
       );
 
       expect(normalized).toHaveLength(1);
-      expect(normalized[0].processedUrl).toBe('https://cdn.zeitnah.com/processed_final.mp4');
-      expect(normalized[0].posterUrl).toBe('https://cdn.zeitnah.com/poster_final.jpg');
+      expect(normalized[0].processedUrl).toBe(
+        'https://cdn.zeitnah.com/processed_final.mp4',
+      );
+      expect(normalized[0].posterUrl).toBe(
+        'https://cdn.zeitnah.com/poster_final.jpg',
+      );
       expect(normalized[0].duration).toBe(15.2);
     });
   });
@@ -769,13 +844,11 @@ describe('Community Phase 3E — Advanced Reel Editor Hardening & Production Sta
   // ==========================================
   describe('I. Backward Compatibility', () => {
     it('allows legacy media without editorConfig or audioConfig to validate cleanly', async () => {
-      const testPostService = new PostService(
-        {} as any,
-        {} as any,
-        {} as any,
-      );
+      const testPostService = new PostService({} as any, {} as any, {} as any);
 
-      const normalized = await (testPostService as any).validateAndNormalizeMedia(
+      const normalized = await (
+        testPostService as any
+      ).validateAndNormalizeMedia(
         [
           {
             url: 'https://cdn.zeitnah.com/legacy_video.mp4',
@@ -788,7 +861,9 @@ describe('Community Phase 3E — Advanced Reel Editor Hardening & Production Sta
       );
 
       expect(normalized).toHaveLength(1);
-      expect(normalized[0].url).toBe('https://cdn.zeitnah.com/legacy_video.mp4');
+      expect(normalized[0].url).toBe(
+        'https://cdn.zeitnah.com/legacy_video.mp4',
+      );
       expect(normalized[0].editorConfig).toBeUndefined();
       expect(normalized[0].audioConfig).toBeUndefined();
     });

@@ -95,7 +95,9 @@ describe('Community DTO Initialization & TDZ Regression (Production Fix)', () =>
       expect(errors).toHaveLength(0);
       expect(dto.media?.[0].audioConfig).toBeInstanceOf(AudioConfigDto);
       expect(dto.media?.[0].editorConfig).toBeInstanceOf(EditorConfigDto);
-      expect(dto.media?.[0].editorConfig?.layers?.[0]).toBeInstanceOf(EditorLayerDto);
+      expect(dto.media?.[0].editorConfig?.layers?.[0]).toBeInstanceOf(
+        EditorLayerDto,
+      );
     });
 
     it('should reject invalid AudioConfigDto audioMode', async () => {

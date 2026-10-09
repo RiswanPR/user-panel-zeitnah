@@ -54,8 +54,8 @@ export class StoryRepository extends BaseRepository<StoryDocument> {
       media: s.media || [],
       mediaUrl: s.media?.[0]?.url || s.mediaUrl || '',
       author: {
-        _id: authorObj._id ? String(authorObj._id) : (s.authorId || ''),
-        id: authorObj._id ? String(authorObj._id) : (s.authorId || ''),
+        _id: authorObj._id ? String(authorObj._id) : s.authorId || '',
+        id: authorObj._id ? String(authorObj._id) : s.authorId || '',
         name: authorObj.name || 'Zeitnah Member',
         displayName: authorObj.name || 'Zeitnah Member',
         username: authorObj.username || '',
@@ -95,7 +95,19 @@ export class StoryRepository extends BaseRepository<StoryDocument> {
                 $match: {
                   $expr: {
                     $or: [
-                      { $eq: ['$_id', { $convert: { input: '$$authorStr', to: 'objectId', onError: null, onNull: null } }] },
+                      {
+                        $eq: [
+                          '$_id',
+                          {
+                            $convert: {
+                              input: '$$authorStr',
+                              to: 'objectId',
+                              onError: null,
+                              onNull: null,
+                            },
+                          },
+                        ],
+                      },
                       { $eq: [{ $toString: '$_id' }, '$$authorStr'] },
                     ],
                   },
@@ -129,7 +141,19 @@ export class StoryRepository extends BaseRepository<StoryDocument> {
                       { $ne: ['$$orgStr', null] },
                       {
                         $or: [
-                          { $eq: ['$_id', { $convert: { input: '$$orgStr', to: 'objectId', onError: null, onNull: null } }] },
+                          {
+                            $eq: [
+                              '$_id',
+                              {
+                                $convert: {
+                                  input: '$$orgStr',
+                                  to: 'objectId',
+                                  onError: null,
+                                  onNull: null,
+                                },
+                              },
+                            ],
+                          },
                           { $eq: [{ $toString: '$_id' }, '$$orgStr'] },
                         ],
                       },
@@ -178,7 +202,19 @@ export class StoryRepository extends BaseRepository<StoryDocument> {
                 $match: {
                   $expr: {
                     $or: [
-                      { $eq: ['$_id', { $convert: { input: '$$authorStr', to: 'objectId', onError: null, onNull: null } }] },
+                      {
+                        $eq: [
+                          '$_id',
+                          {
+                            $convert: {
+                              input: '$$authorStr',
+                              to: 'objectId',
+                              onError: null,
+                              onNull: null,
+                            },
+                          },
+                        ],
+                      },
                       { $eq: [{ $toString: '$_id' }, '$$authorStr'] },
                     ],
                   },
@@ -212,7 +248,19 @@ export class StoryRepository extends BaseRepository<StoryDocument> {
                       { $ne: ['$$orgStr', null] },
                       {
                         $or: [
-                          { $eq: ['$_id', { $convert: { input: '$$orgStr', to: 'objectId', onError: null, onNull: null } }] },
+                          {
+                            $eq: [
+                              '$_id',
+                              {
+                                $convert: {
+                                  input: '$$orgStr',
+                                  to: 'objectId',
+                                  onError: null,
+                                  onNull: null,
+                                },
+                              },
+                            ],
+                          },
                           { $eq: [{ $toString: '$_id' }, '$$orgStr'] },
                         ],
                       },

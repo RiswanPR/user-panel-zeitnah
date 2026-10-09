@@ -5,11 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 export type CommunityMediaJobDocument = CommunityMediaJob & Document;
 
 export type MediaProcessingStatus =
-  | 'QUEUED'
-  | 'PROCESSING'
-  | 'READY'
-  | 'FAILED'
-  | 'NOT_REQUIRED';
+  'QUEUED' | 'PROCESSING' | 'READY' | 'FAILED' | 'NOT_REQUIRED';
 
 @Schema({ timestamps: true, collection: 'community_media_jobs' })
 export class CommunityMediaJob {

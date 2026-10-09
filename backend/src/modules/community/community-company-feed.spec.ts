@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PostService } from './services/post.service';
 import { PostController } from './controllers/post.controller';
 import { PostRepository } from './repositories/mongo-post.repository';
@@ -92,28 +96,35 @@ describe('Community Company Feed — Phase 3 Backend Scoping & Authorization', (
     };
 
     mockOrgService = {
-      validateCompanyFeedAccess: jest.fn().mockImplementation(async (userId, orgId) => {
-        if (!Types.ObjectId.isValid(orgId)) {
-          throw new BadRequestException('Invalid organization ID');
-        }
-        if (orgId === 'non-existent-id' || orgId === nonExistentOrgId) {
-          throw new NotFoundException('Organization not found');
-        }
-        if (orgId === suspendedOrgId) {
-          throw new ForbiddenException('Organization is suspended or unavailable');
-        }
-        if (orgId === companyBId && userId === userA) {
-          // IDOR: User A trying to access private Company B
-          throw new ForbiddenException('You do not have permission to access this organization feed');
-        }
-        return {
-          _id: orgId,
-          name: orgId === companyAId ? 'Company A Inc' : 'Company B Corp',
-          slug: orgId === companyAId ? 'comp-a' : 'comp-b',
-          status: BusinessStatus.APPROVED,
-          visibility: OrganizationVisibility.PUBLIC,
-        };
-      }),
+      validateCompanyFeedAccess: jest
+        .fn()
+        .mockImplementation(async (userId, orgId) => {
+          if (!Types.ObjectId.isValid(orgId)) {
+            throw new BadRequestException('Invalid organization ID');
+          }
+          if (orgId === 'non-existent-id' || orgId === nonExistentOrgId) {
+            throw new NotFoundException('Organization not found');
+          }
+          if (orgId === suspendedOrgId) {
+            throw new ForbiddenException(
+              'Organization is suspended or unavailable',
+            );
+          }
+          if (orgId === companyBId && userId === userA) {
+            // IDOR: User A trying to access private Company B
+            throw new ForbiddenException(
+              'You do not have permission to access this organization feed',
+            );
+          }
+          return {
+            _id: orgId,
+            name: orgId === companyAId ? 'Company A Inc' : 'Company B Corp',
+            slug: orgId === companyAId ? 'comp-a' : 'comp-b',
+            status: BusinessStatus.APPROVED,
+            visibility: OrganizationVisibility.PUBLIC,
+          };
+        }),
+      validateCompanyPublishingAccess: jest.fn().mockResolvedValue(true),
     };
 
     mockGateway = {
@@ -156,9 +167,21 @@ describe('Community Company Feed — Phase 3 Backend Scoping & Authorization', (
     });
 
     it('returns Company A feed strictly scoped to companyAId', async () => {
-      const feed = await postService.getFeed(userA, [], 10, undefined, 'all', undefined, undefined, companyAId);
+      const feed = await postService.getFeed(
+        userA,
+        [],
+        10,
+        undefined,
+        'all',
+        undefined,
+        undefined,
+        companyAId,
+      );
 
-      expect(mockOrgService.validateCompanyFeedAccess).toHaveBeenCalledWith(userA, companyAId);
+      expect(mockOrgService.validateCompanyFeedAccess).toHaveBeenCalledWith(
+        userA,
+        companyAId,
+      );
       expect(mockPostRepo.findFeed).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: userA,
@@ -171,9 +194,21 @@ describe('Community Company Feed — Phase 3 Backend Scoping & Authorization', (
     });
 
     it('returns Company B feed strictly scoped to companyBId without mixing Company A or Personal posts', async () => {
-      const feed = await postService.getFeed(userB, [], 10, undefined, 'all', undefined, undefined, companyBId);
+      const feed = await postService.getFeed(
+        userB,
+        [],
+        10,
+        undefined,
+        'all',
+        undefined,
+        undefined,
+        companyBId,
+      );
 
-      expect(mockOrgService.validateCompanyFeedAccess).toHaveBeenCalledWith(userB, companyBId);
+      expect(mockOrgService.validateCompanyFeedAccess).toHaveBeenCalledWith(
+        userB,
+        companyBId,
+      );
       expect(mockPostRepo.findFeed).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: userB,
@@ -186,18 +221,47 @@ describe('Community Company Feed — Phase 3 Backend Scoping & Authorization', (
     });
 
     it('guarantees Company A and Company B feeds return distinct, non-overlapping content', async () => {
-      const feedA = await postService.getFeed(userA, [], 10, undefined, 'all', undefined, undefined, companyAId);
-      const feedB = await postService.getFeed(userB, [], 10, undefined, 'all', undefined, undefined, companyBId);
+      const feedA = await postService.getFeed(
+        userA,
+        [],
+        10,
+        undefined,
+        'all',
+        undefined,
+        undefined,
+        companyAId,
+      );
+      const feedB = await postService.getFeed(
+        userB,
+        [],
+        10,
+        undefined,
+        'all',
+        undefined,
+        undefined,
+        companyBId,
+      );
 
       expect(feedA.items[0]._id).not.toBe(feedB.items[0]._id);
-      expect(feedA.items[0].organizationId).not.toBe(feedB.items[0].organizationId);
+      expect(feedA.items[0].organizationId).not.toBe(
+        feedB.items[0].organizationId,
+      );
     });
   });
 
   describe('2. Security, Authorization & IDOR Protection', () => {
     it('blocks unauthorized access to private company feed with 403 Forbidden (IDOR Protection)', async () => {
       await expect(
-        postService.getFeed(userA, [], 10, undefined, 'all', undefined, undefined, companyBId),
+        postService.getFeed(
+          userA,
+          [],
+          10,
+          undefined,
+          'all',
+          undefined,
+          undefined,
+          companyBId,
+        ),
       ).rejects.toThrow(ForbiddenException);
 
       expect(mockPostRepo.findFeed).not.toHaveBeenCalled();
@@ -205,7 +269,16 @@ describe('Community Company Feed — Phase 3 Backend Scoping & Authorization', (
 
     it('blocks access to suspended organization feed with 403 Forbidden', async () => {
       await expect(
-        postService.getFeed(userA, [], 10, undefined, 'all', undefined, undefined, suspendedOrgId),
+        postService.getFeed(
+          userA,
+          [],
+          10,
+          undefined,
+          'all',
+          undefined,
+          undefined,
+          suspendedOrgId,
+        ),
       ).rejects.toThrow(ForbiddenException);
 
       expect(mockPostRepo.findFeed).not.toHaveBeenCalled();
@@ -213,7 +286,16 @@ describe('Community Company Feed — Phase 3 Backend Scoping & Authorization', (
 
     it('rejects invalid organization ID format with 400 Bad Request', async () => {
       await expect(
-        postService.getFeed(userA, [], 10, undefined, 'all', undefined, undefined, 'invalid-id-format!'),
+        postService.getFeed(
+          userA,
+          [],
+          10,
+          undefined,
+          'all',
+          undefined,
+          undefined,
+          'invalid-id-format!',
+        ),
       ).rejects.toThrow(BadRequestException);
 
       expect(mockPostRepo.findFeed).not.toHaveBeenCalled();
@@ -221,7 +303,16 @@ describe('Community Company Feed — Phase 3 Backend Scoping & Authorization', (
 
     it('returns 404 Not Found when organization does not exist', async () => {
       await expect(
-        postService.getFeed(userA, [], 10, undefined, 'all', undefined, undefined, nonExistentOrgId),
+        postService.getFeed(
+          userA,
+          [],
+          10,
+          undefined,
+          'all',
+          undefined,
+          undefined,
+          nonExistentOrgId,
+        ),
       ).rejects.toThrow(NotFoundException);
 
       expect(mockPostRepo.findFeed).not.toHaveBeenCalled();
@@ -233,7 +324,10 @@ describe('Community Company Feed — Phase 3 Backend Scoping & Authorization', (
       const req = { user: { userId: userA, enrolledCourses: [] } };
       await postController.getFeed(req, 10, '', 'all', '', '', companyAId);
 
-      expect(mockOrgService.validateCompanyFeedAccess).toHaveBeenCalledWith(userA, companyAId);
+      expect(mockOrgService.validateCompanyFeedAccess).toHaveBeenCalledWith(
+        userA,
+        companyAId,
+      );
       expect(mockPostRepo.findFeed).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: userA,
@@ -264,7 +358,11 @@ describe('Community Company Feed — Phase 3 Backend Scoping & Authorization', (
         capturedPipeline = pipeline;
         return {
           exec: jest.fn().mockResolvedValue([
-            { _id: 'post-1', organizationId: companyAId, createdAt: new Date() },
+            {
+              _id: 'post-1',
+              organizationId: companyAId,
+              createdAt: new Date(),
+            },
           ]),
         };
       }),
@@ -352,15 +450,41 @@ describe('Community Company Feed — Phase 3 Backend Scoping & Authorization', (
       expect(matchStage.isDeleted).toBe(false);
       // Personal feed must exclude business posts
       expect(matchStage.$and).toBeDefined();
-      const personalCond = matchStage.$and.find((c: any) =>
-        Array.isArray(c.$or) &&
-        c.$or.some((item: any) => item.organizationId !== undefined),
+      const personalCond = matchStage.$and.find(
+        (c: any) =>
+          Array.isArray(c.$or) &&
+          c.$or.some((item: any) => item.organizationId !== undefined),
       );
       expect(personalCond).toBeDefined();
       expect(personalCond.$or).toEqual([
         { organizationId: { $exists: false } },
         { organizationId: null },
+        { organizationId: '' },
       ]);
+    });
+
+    it('gracefully ignores invalid date cursors without creating NaN match conditions', async () => {
+      await repo.findFeed({
+        userId: userA,
+        filter: 'all',
+        cursor: 'invalid-date-string-or-null',
+      });
+
+      const matchStage = capturedPipeline[0].$match;
+      expect(matchStage.createdAt).toBeUndefined();
+    });
+
+    it('correctly sets createdAt when valid ISO date cursor is passed', async () => {
+      const validIso = '2026-10-09T12:00:00.000Z';
+      await repo.findFeed({
+        userId: userA,
+        filter: 'all',
+        cursor: validIso,
+      });
+
+      const matchStage = capturedPipeline[0].$match;
+      expect(matchStage.createdAt).toBeDefined();
+      expect(matchStage.createdAt.$lt).toEqual(new Date(validIso));
     });
 
     it('isolates Company A query from Company B query', async () => {
@@ -382,7 +506,66 @@ describe('Community Company Feed — Phase 3 Backend Scoping & Authorization', (
       expect(matchStageB.organizationId.$in).toEqual(
         expect.arrayContaining([companyBId]),
       );
-      expect(matchStageA.organizationId.$in).not.toEqual(matchStageB.organizationId.$in);
+      expect(matchStageA.organizationId.$in).not.toEqual(
+        matchStageB.organizationId.$in,
+      );
+    });
+  });
+
+  describe('5. Post Authorization & Ownership Normalization Regression', () => {
+    it('allows author to delete post when authorId is an ObjectId instance', async () => {
+      const authorObjectId = new Types.ObjectId();
+      const postId = new Types.ObjectId().toString();
+      mockPostRepo.findById.mockResolvedValue({
+        _id: postId,
+        authorId: authorObjectId,
+      });
+      mockPostRepo.softDelete = jest.fn().mockResolvedValue(true);
+
+      const result = await postService.deletePost(
+        postId,
+        authorObjectId.toString(),
+        'user',
+      );
+      expect(result).toBe(true);
+    });
+
+    it('allows organization publishing authority to delete company post even if not original author', async () => {
+      const authorId = new Types.ObjectId().toString();
+      const orgOwnerId = new Types.ObjectId().toString();
+      const postId = new Types.ObjectId().toString();
+      mockPostRepo.findById.mockResolvedValue({
+        _id: postId,
+        authorId: authorId,
+        organizationId: companyAId,
+      });
+      mockPostRepo.softDelete = jest.fn().mockResolvedValue(true);
+      mockOrgService.validateCompanyPublishingAccess.mockResolvedValue(true);
+
+      const result = await postService.deletePost(
+        postId,
+        orgOwnerId,
+        'user',
+      );
+      expect(result).toBe(true);
+      expect(mockOrgService.validateCompanyPublishingAccess).toHaveBeenCalledWith(
+        orgOwnerId,
+        companyAId,
+      );
+    });
+
+    it('blocks non-owner non-admin user without org authority from deleting post', async () => {
+      const authorId = new Types.ObjectId().toString();
+      const otherUserId = new Types.ObjectId().toString();
+      const postId = new Types.ObjectId().toString();
+      mockPostRepo.findById.mockResolvedValue({
+        _id: postId,
+        authorId: authorId,
+      });
+
+      await expect(
+        postService.deletePost(postId, otherUserId, 'user'),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 });

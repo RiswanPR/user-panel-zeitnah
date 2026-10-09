@@ -64,14 +64,17 @@ export class CommunityMusicService implements OnModuleInit {
     }
 
     if (query.mood && query.mood.trim()) {
-      filter.mood = { $regex: new RegExp(`^${this.escapeRegex(query.mood.trim())}$`, 'i') };
+      filter.mood = {
+        $regex: new RegExp(`^${this.escapeRegex(query.mood.trim())}$`, 'i'),
+      };
     }
 
     if (query.cursor) {
       filter.createdAt = { $lt: new Date(query.cursor) };
     }
 
-    const skip = !query.cursor && query.skip ? Math.max(0, Number(query.skip)) : 0;
+    const skip =
+      !query.cursor && query.skip ? Math.max(0, Number(query.skip)) : 0;
 
     const [items, total] = await Promise.all([
       this.musicModel
@@ -87,7 +90,9 @@ export class CommunityMusicService implements OnModuleInit {
     const paginatedItems = hasNext ? items.slice(0, limit) : items;
     const nextCursor =
       hasNext && paginatedItems.length > 0
-        ? (paginatedItems[paginatedItems.length - 1] as any).createdAt?.toISOString() || null
+        ? (
+            paginatedItems[paginatedItems.length - 1] as any
+          ).createdAt?.toISOString() || null
         : null;
 
     return {
@@ -112,7 +117,9 @@ export class CommunityMusicService implements OnModuleInit {
     }
 
     if (query.mood && query.mood.trim()) {
-      filter.mood = { $regex: new RegExp(`^${this.escapeRegex(query.mood.trim())}$`, 'i') };
+      filter.mood = {
+        $regex: new RegExp(`^${this.escapeRegex(query.mood.trim())}$`, 'i'),
+      };
     }
 
     const q = (query.q || '').trim();
@@ -149,7 +156,9 @@ export class CommunityMusicService implements OnModuleInit {
 
     const track = await this.musicModel.findById(id).exec();
     if (!track || !track.isActive) {
-      throw new NotFoundException(`Music track with ID ${id} not found or inactive`);
+      throw new NotFoundException(
+        `Music track with ID ${id} not found or inactive`,
+      );
     }
 
     return track;
@@ -178,8 +187,8 @@ export class CommunityMusicService implements OnModuleInit {
     }
 
     // Validate volume parameters
-    let originalVolume = Number(rawConfig.originalVolume ?? 1.0);
-    let musicVolume = Number(rawConfig.musicVolume ?? 1.0);
+    const originalVolume = Number(rawConfig.originalVolume ?? 1.0);
+    const musicVolume = Number(rawConfig.musicVolume ?? 1.0);
 
     if (isNaN(originalVolume) || originalVolume < 0 || originalVolume > 1) {
       throw new BadRequestException({
@@ -272,7 +281,9 @@ export class CommunityMusicService implements OnModuleInit {
       const count = await this.musicModel.countDocuments().exec();
       if (count > 0) return;
 
-      this.logger.log('Seeding initial Community Music foundation catalog (Royalty-Free / Test Audio)...');
+      this.logger.log(
+        'Seeding initial Community Music foundation catalog (Royalty-Free / Test Audio)...',
+      );
 
       const seedTracks: Partial<CommunityMusic>[] = [
         {
@@ -302,7 +313,8 @@ export class CommunityMusicService implements OnModuleInit {
           tags: ['ambient', 'minimal', 'focus', 'chill'],
           audioKey: 'community/music/track-zeitnah-chill-02/audio.mp3',
           audioUrl: 'https://cdn.zeitnah.app/music/deep-architecture.mp3',
-          coverUrl: 'https://cdn.zeitnah.app/music/covers/deep-architecture.jpg',
+          coverUrl:
+            'https://cdn.zeitnah.app/music/covers/deep-architecture.jpg',
           licenseType: 'ROYALTY_FREE',
           attributionRequired: false,
           isActive: true,
@@ -318,10 +330,12 @@ export class CommunityMusicService implements OnModuleInit {
           tags: ['inspiring', 'cinematic', 'construction', 'builders'],
           audioKey: 'community/music/track-zeitnah-inspiring-03/audio.mp3',
           audioUrl: 'https://cdn.zeitnah.app/music/horizon-blueprint.mp3',
-          coverUrl: 'https://cdn.zeitnah.app/music/covers/horizon-blueprint.jpg',
+          coverUrl:
+            'https://cdn.zeitnah.app/music/covers/horizon-blueprint.jpg',
           licenseType: 'ROYALTY_FREE',
           attributionRequired: true,
-          attributionText: 'Horizon Blueprint by Aura Vector (Royalty-Free CC-BY)',
+          attributionText:
+            'Horizon Blueprint by Aura Vector (Royalty-Free CC-BY)',
           isActive: true,
         },
         {
@@ -343,7 +357,9 @@ export class CommunityMusicService implements OnModuleInit {
       ];
 
       await this.musicModel.insertMany(seedTracks);
-      this.logger.log(`Successfully seeded ${seedTracks.length} music catalog tracks.`);
+      this.logger.log(
+        `Successfully seeded ${seedTracks.length} music catalog tracks.`,
+      );
     } catch (err: any) {
       this.logger.warn(`Could not seed initial music catalog: ${err.message}`);
     }

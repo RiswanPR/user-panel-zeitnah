@@ -1,4 +1,8 @@
-import { BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { CommunityMusicService } from './services/community-music.service';
 import { CommunityVideoProcessorService } from './services/community-video-processor.service';
 import { CommunityMediaJobService } from './services/community-media-job.service';
@@ -20,7 +24,10 @@ describe('Phase 3C — Audio & Music Foundation Test Suite', () => {
   const tempFilesToClean: string[] = [];
 
   const createTempPath = (prefix: string, ext: string) => {
-    const p = path.join(os.tmpdir(), `p3c_test_${prefix}_${Date.now()}_${Math.random().toString(36).slice(2)}${ext}`);
+    const p = path.join(
+      os.tmpdir(),
+      `p3c_test_${prefix}_${Date.now()}_${Math.random().toString(36).slice(2)}${ext}`,
+    );
     tempFilesToClean.push(p);
     return p;
   };
@@ -35,14 +42,25 @@ describe('Phase 3C — Audio & Music Foundation Test Suite', () => {
           limit: (limitCount: number) => ({
             exec: async () => {
               let res = inMemoryTracks.filter((t) => {
-                if (filter.isActive !== undefined && t.isActive !== filter.isActive) return false;
-                if (filter.category && t.category !== filter.category) return false;
+                if (
+                  filter.isActive !== undefined &&
+                  t.isActive !== filter.isActive
+                )
+                  return false;
+                if (filter.category && t.category !== filter.category)
+                  return false;
                 if (filter.$or) {
                   const match = filter.$or.some((cond: any) => {
-                    if (cond.title && cond.title.$regex) return cond.title.$regex.test(t.title);
-                    if (cond.artist && cond.artist.$regex) return cond.artist.$regex.test(t.artist);
-                    if (cond.album && cond.album.$regex) return cond.album.$regex.test(t.album || '');
-                    if (cond.tags && cond.tags.$in) return t.tags?.some((tag: string) => cond.tags.$in[0].test(tag));
+                    if (cond.title && cond.title.$regex)
+                      return cond.title.$regex.test(t.title);
+                    if (cond.artist && cond.artist.$regex)
+                      return cond.artist.$regex.test(t.artist);
+                    if (cond.album && cond.album.$regex)
+                      return cond.album.$regex.test(t.album || '');
+                    if (cond.tags && cond.tags.$in)
+                      return t.tags?.some((tag: string) =>
+                        cond.tags.$in[0].test(tag),
+                      );
                     return false;
                   });
                   if (!match) return false;
@@ -58,14 +76,25 @@ describe('Phase 3C — Audio & Music Foundation Test Suite', () => {
           exec: async () => {
             return inMemoryTracks
               .filter((t) => {
-                if (filter.isActive !== undefined && t.isActive !== filter.isActive) return false;
-                if (filter.category && t.category !== filter.category) return false;
+                if (
+                  filter.isActive !== undefined &&
+                  t.isActive !== filter.isActive
+                )
+                  return false;
+                if (filter.category && t.category !== filter.category)
+                  return false;
                 if (filter.$or) {
                   return filter.$or.some((cond: any) => {
-                    if (cond.title && cond.title.$regex) return cond.title.$regex.test(t.title);
-                    if (cond.artist && cond.artist.$regex) return cond.artist.$regex.test(t.artist);
-                    if (cond.album && cond.album.$regex) return cond.album.$regex.test(t.album || '');
-                    if (cond.tags && cond.tags.$in) return t.tags?.some((tag: string) => cond.tags.$in[0].test(tag));
+                    if (cond.title && cond.title.$regex)
+                      return cond.title.$regex.test(t.title);
+                    if (cond.artist && cond.artist.$regex)
+                      return cond.artist.$regex.test(t.artist);
+                    if (cond.album && cond.album.$regex)
+                      return cond.album.$regex.test(t.album || '');
+                    if (cond.tags && cond.tags.$in)
+                      return t.tags?.some((tag: string) =>
+                        cond.tags.$in[0].test(tag),
+                      );
                     return false;
                   });
                 }
@@ -79,7 +108,8 @@ describe('Phase 3C — Audio & Music Foundation Test Suite', () => {
     countDocuments: (filter: any) => ({
       exec: async () => {
         return inMemoryTracks.filter((t) => {
-          if (filter.isActive !== undefined && t.isActive !== filter.isActive) return false;
+          if (filter.isActive !== undefined && t.isActive !== filter.isActive)
+            return false;
           if (filter.category && t.category !== filter.category) return false;
           return true;
         }).length;
@@ -90,11 +120,14 @@ describe('Phase 3C — Audio & Music Foundation Test Suite', () => {
     }),
     findOne: (query: any) => ({
       exec: async () => {
-        return inMemoryTracks.find((t) => {
-          if (query._id && t._id !== query._id) return false;
-          if (query.isActive !== undefined && t.isActive !== query.isActive) return false;
-          return true;
-        }) || null;
+        return (
+          inMemoryTracks.find((t) => {
+            if (query._id && t._id !== query._id) return false;
+            if (query.isActive !== undefined && t.isActive !== query.isActive)
+              return false;
+            return true;
+          }) || null
+        );
       },
     }),
     insertMany: async (items: any[]) => {
@@ -104,7 +137,7 @@ describe('Phase 3C — Audio & Music Foundation Test Suite', () => {
   };
 
   // Mock Media Job Model
-  let inMemoryJobs: any[] = [];
+  const inMemoryJobs: any[] = [];
   const mockJobModel: any = {
     create: async (data: any) => {
       const doc = { ...data, _id: `job-${Date.now()}`, createdAt: new Date() };
@@ -151,7 +184,8 @@ describe('Phase 3C — Audio & Music Foundation Test Suite', () => {
       createdMediaStore.push(...items);
       return items;
     },
-    findById: async (id: string) => createdPostsStore.find((p) => p._id === id) || null,
+    findById: async (id: string) =>
+      createdPostsStore.find((p) => p._id === id) || null,
     findByIdPopulated: async (id: string) => {
       const p = createdPostsStore.find((post) => post._id === id);
       if (!p) return null;
@@ -275,14 +309,16 @@ describe('Phase 3C — Audio & Music Foundation Test Suite', () => {
 
     it('4. strictly excludes inactive tracks from catalog, search, and direct lookup', async () => {
       const catalog = await musicService.getCatalog({});
-      expect(catalog.items.some((t) => t._id === 'track-inactive-3')).toBe(false);
+      expect(catalog.items.some((t) => t._id === 'track-inactive-3')).toBe(
+        false,
+      );
 
       const search = await musicService.searchMusic({ q: 'Disabled' });
       expect(search.items.length).toBe(0);
 
-      await expect(musicService.getTrackById('track-inactive-3')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        musicService.getTrackById('track-inactive-3'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -395,7 +431,9 @@ describe('Phase 3C — Audio & Music Foundation Test Suite', () => {
       // Must use canonical DB title, ignoring client-provided spoofed title
       expect(resolved?.musicTitle).toBe('Acoustic Horizon');
       expect(resolved?.musicArtist).toBe('Aurora Sound');
-      expect(resolved?.attributionText).toBe('Acoustic Horizon by Aurora Sound');
+      expect(resolved?.attributionText).toBe(
+        'Acoustic Horizon by Aurora Sound',
+      );
       expect(resolved?.sourceStart).toBe(5);
       expect(resolved?.sourceEnd).toBe(35);
     });
@@ -433,18 +471,23 @@ describe('Phase 3C — Audio & Music Foundation Test Suite', () => {
       const out = createTempPath('mixed_out', '.mp4');
       const poster = createTempPath('mixed_poster', '.jpg');
 
-      const result = await videoProcessor.processVideo(videoWithAudio, out, poster, {
-        trimStart: 0,
-        trimEnd: 4,
-        audioConfig: {
-          audioMode: 'MIXED',
-          musicPath: musicTrack10s,
-          musicStart: 2,
-          musicEnd: 6,
-          originalVolume: 0.5,
-          musicVolume: 0.8,
+      const result = await videoProcessor.processVideo(
+        videoWithAudio,
+        out,
+        poster,
+        {
+          trimStart: 0,
+          trimEnd: 4,
+          audioConfig: {
+            audioMode: 'MIXED',
+            musicPath: musicTrack10s,
+            musicStart: 2,
+            musicEnd: 6,
+            originalVolume: 0.5,
+            musicVolume: 0.8,
+          },
         },
-      });
+      );
 
       expect(fs.existsSync(result.outputPath)).toBe(true);
       expect(result.duration).toBeGreaterThanOrEqual(3.5);
@@ -461,17 +504,22 @@ describe('Phase 3C — Audio & Music Foundation Test Suite', () => {
       const out = createTempPath('music_only_out', '.mp4');
       const poster = createTempPath('music_only_poster', '.jpg');
 
-      const result = await videoProcessor.processVideo(videoWithAudio, out, poster, {
-        trimStart: 0,
-        trimEnd: 3,
-        audioConfig: {
-          audioMode: 'MUSIC_ONLY',
-          musicPath: musicTrack10s,
-          musicStart: 1,
-          musicEnd: 4,
-          musicVolume: 1.0,
+      const result = await videoProcessor.processVideo(
+        videoWithAudio,
+        out,
+        poster,
+        {
+          trimStart: 0,
+          trimEnd: 3,
+          audioConfig: {
+            audioMode: 'MUSIC_ONLY',
+            musicPath: musicTrack10s,
+            musicStart: 1,
+            musicEnd: 4,
+            musicVolume: 1.0,
+          },
         },
-      });
+      );
 
       expect(fs.existsSync(result.outputPath)).toBe(true);
       const probe = await videoProcessor.probeMedia(result.outputPath);
@@ -485,18 +533,23 @@ describe('Phase 3C — Audio & Music Foundation Test Suite', () => {
       const out = createTempPath('no_audio_mixed_out', '.mp4');
       const poster = createTempPath('no_audio_mixed_poster', '.jpg');
 
-      const result = await videoProcessor.processVideo(videoWithoutAudio, out, poster, {
-        trimStart: 0,
-        trimEnd: 4,
-        audioConfig: {
-          audioMode: 'MIXED',
-          musicPath: musicTrack10s,
-          musicStart: 0,
-          musicEnd: 4,
-          originalVolume: 0.5,
-          musicVolume: 1.0,
+      const result = await videoProcessor.processVideo(
+        videoWithoutAudio,
+        out,
+        poster,
+        {
+          trimStart: 0,
+          trimEnd: 4,
+          audioConfig: {
+            audioMode: 'MIXED',
+            musicPath: musicTrack10s,
+            musicStart: 0,
+            musicEnd: 4,
+            originalVolume: 0.5,
+            musicVolume: 1.0,
+          },
         },
-      });
+      );
 
       expect(fs.existsSync(result.outputPath)).toBe(true);
       const probe = await videoProcessor.probeMedia(result.outputPath);
@@ -508,14 +561,19 @@ describe('Phase 3C — Audio & Music Foundation Test Suite', () => {
       const out = createTempPath('orig_only_out', '.mp4');
       const poster = createTempPath('orig_only_poster', '.jpg');
 
-      const result = await videoProcessor.processVideo(videoWithAudio, out, poster, {
-        trimStart: 1,
-        trimEnd: 3,
-        audioConfig: {
-          audioMode: 'ORIGINAL_ONLY',
-          originalVolume: 0.7,
+      const result = await videoProcessor.processVideo(
+        videoWithAudio,
+        out,
+        poster,
+        {
+          trimStart: 1,
+          trimEnd: 3,
+          audioConfig: {
+            audioMode: 'ORIGINAL_ONLY',
+            originalVolume: 0.7,
+          },
         },
-      });
+      );
 
       expect(fs.existsSync(result.outputPath)).toBe(true);
       const probe = await videoProcessor.probeMedia(result.outputPath);
@@ -541,9 +599,14 @@ describe('Phase 3C — Audio & Music Foundation Test Suite', () => {
       });
 
       // Update to MIXED on retry
-      const updatedJob = await mediaJobService.retryJob(job.mediaId, 'user-1', false, {
-        audioConfig: { audioMode: 'MIXED', musicId: 'track-active-1' },
-      });
+      const updatedJob = await mediaJobService.retryJob(
+        job.mediaId,
+        'user-1',
+        false,
+        {
+          audioConfig: { audioMode: 'MIXED', musicId: 'track-active-1' },
+        },
+      );
 
       expect(updatedJob.status).toBe('QUEUED');
       expect(updatedJob.audioConfig?.audioMode).toBe('MIXED');
@@ -627,7 +690,9 @@ describe('Phase 3C — Audio & Music Foundation Test Suite', () => {
         ],
       });
 
-      expect(legacyPost.media[0].url).toBe('https://cdn.zeitnah.app/legacy.mp4');
+      expect(legacyPost.media[0].url).toBe(
+        'https://cdn.zeitnah.app/legacy.mp4',
+      );
       expect(legacyPost.media[0].audioConfig).toBeUndefined();
     });
   });

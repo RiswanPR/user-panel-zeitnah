@@ -26,7 +26,8 @@ export class StoryService {
     private readonly communityGateway: CommunityGateway,
     @Optional() private readonly signedUrlService?: SignedUrlService,
     @Optional() private readonly communityS3Service?: CommunityS3Service,
-    @Optional() private readonly communityIdempotencyService?: CommunityIdempotencyService,
+    @Optional()
+    private readonly communityIdempotencyService?: CommunityIdempotencyService,
     @Optional() private readonly organizationsService?: OrganizationsService,
   ) {}
 
@@ -39,10 +40,16 @@ export class StoryService {
     // Resolve array of media items in story.media
     if (Array.isArray(story.media)) {
       for (const m of story.media) {
-        if (m?.url && (m.url.includes('.amazonaws.com') || !m.url.startsWith('http'))) {
+        if (
+          m?.url &&
+          (m.url.includes('.amazonaws.com') || !m.url.startsWith('http'))
+        ) {
           try {
             const cleanUrl = m.url.split('?')[0];
-            const signed = await this.signedUrlService.generateSignedImageUrl(cleanUrl, 86400 * 7);
+            const signed = await this.signedUrlService.generateSignedImageUrl(
+              cleanUrl,
+              86400 * 7,
+            );
             if (signed) m.url = signed;
           } catch {}
         }
@@ -52,11 +59,15 @@ export class StoryService {
     // Resolve direct mediaUrl property if present
     if (
       typeof story.mediaUrl === 'string' &&
-      (story.mediaUrl.includes('.amazonaws.com') || !story.mediaUrl.startsWith('http'))
+      (story.mediaUrl.includes('.amazonaws.com') ||
+        !story.mediaUrl.startsWith('http'))
     ) {
       try {
         const cleanUrl = story.mediaUrl.split('?')[0];
-        const signed = await this.signedUrlService.generateSignedImageUrl(cleanUrl, 86400 * 7);
+        const signed = await this.signedUrlService.generateSignedImageUrl(
+          cleanUrl,
+          86400 * 7,
+        );
         if (signed) story.mediaUrl = signed;
       } catch {}
     }
@@ -65,14 +76,18 @@ export class StoryService {
     if (
       story.author?.avatar &&
       typeof story.author.avatar === 'string' &&
-      (story.author.avatar.includes('.amazonaws.com') || !story.author.avatar.startsWith('http'))
+      (story.author.avatar.includes('.amazonaws.com') ||
+        !story.author.avatar.startsWith('http'))
     ) {
       try {
         const cleanAvatar = story.author.avatar.split('?')[0];
         if (avatarCache && avatarCache.has(cleanAvatar)) {
           story.author.avatar = avatarCache.get(cleanAvatar);
         } else {
-          const signed = await this.signedUrlService.generateSignedImageUrl(cleanAvatar, 86400 * 7);
+          const signed = await this.signedUrlService.generateSignedImageUrl(
+            cleanAvatar,
+            86400 * 7,
+          );
           if (signed) {
             story.author.avatar = signed;
             if (avatarCache) avatarCache.set(cleanAvatar, signed);
@@ -125,7 +140,11 @@ export class StoryService {
 
         // Authoritative Media Ownership & Path Traversal Check (Sections 5, 6, 14)
         if (this.communityS3Service) {
-          this.communityS3Service.validateMediaOwnership(rawUrl, userId, isAdmin);
+          this.communityS3Service.validateMediaOwnership(
+            rawUrl,
+            userId,
+            isAdmin,
+          );
         } else {
           let decoded = rawUrl;
           try {
@@ -138,12 +157,16 @@ export class StoryService {
             throw new BadRequestException('Malformed media URL encoding');
           }
           if (decoded.includes('..') || decoded.includes('\\')) {
-            throw new ForbiddenException('Invalid file key: path traversal detected');
+            throw new ForbiddenException(
+              'Invalid file key: path traversal detected',
+            );
           }
           if (decoded.includes('community/uploads/')) {
             const expected = `community/uploads/${userId}/`;
             if (!isAdmin && !decoded.includes(expected)) {
-              throw new ForbiddenException('You cannot use media belonging to another user');
+              throw new ForbiddenException(
+                'You cannot use media belonging to another user',
+              );
             }
           }
         }
@@ -156,7 +179,10 @@ export class StoryService {
 
       if (data.organizationId) {
         if (this.organizationsService) {
-          await this.organizationsService.validateCompanyPublishingAccess(userId, data.organizationId);
+          await this.organizationsService.validateCompanyPublishingAccess(
+            userId,
+            data.organizationId,
+          );
         } else if (!Types.ObjectId.isValid(data.organizationId)) {
           throw new BadRequestException('Invalid organization ID');
         }
@@ -243,7 +269,21 @@ export class StoryService {
     const story = await this.storyRepository.findById(id);
     if (!story) throw new NotFoundException('Story not found');
 
-    if (story.authorId !== userId && role !== 'admin') {
+    const isAuthor = String(story.authorId) === String(userId);
+    let isOrgAdmin = false;
+    if (!isAuthor && story.organizationId && this.organizationsService) {
+      try {
+        await this.organizationsService.validateCompanyPublishingAccess(
+          userId,
+          story.organizationId,
+        );
+        isOrgAdmin = true;
+      } catch {
+        isOrgAdmin = false;
+      }
+    }
+
+    if (!isAuthor && !isOrgAdmin && role !== 'admin') {
       throw new ForbiddenException('Unauthorized to delete this story');
     }
 

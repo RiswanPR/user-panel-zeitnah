@@ -25,7 +25,10 @@ import { Types } from 'mongoose';
 export class PostService {
   // In-flight locks & short-window duplicate publish protection (Section 12)
   private readonly inFlightPostRequests = new Map<string, Promise<any>>();
-  private readonly recentPostsCache = new Map<string, { post: any; timestamp: number }>();
+  private readonly recentPostsCache = new Map<
+    string,
+    { post: any; timestamp: number }
+  >();
 
   constructor(
     private readonly postRepository: PostRepository,
@@ -33,7 +36,8 @@ export class PostService {
     private readonly notificationsService: NotificationsService,
     @Optional() private readonly signedUrlService?: SignedUrlService,
     @Optional() private readonly communityS3Service?: CommunityS3Service,
-    @Optional() private readonly communityIdempotencyService?: CommunityIdempotencyService,
+    @Optional()
+    private readonly communityIdempotencyService?: CommunityIdempotencyService,
     @Optional() private readonly mediaJobService?: CommunityMediaJobService,
     @Optional() private readonly musicService?: CommunityMusicService,
     @Optional() private readonly stickerService?: CommunityStickerService,
@@ -47,32 +51,54 @@ export class PostService {
       const mediaList = [
         ...(Array.isArray(post.media) ? post.media : []),
         ...(Array.isArray(post.quotedPost?.media) ? post.quotedPost.media : []),
-        ...(Array.isArray(post.originalPost?.media) ? post.originalPost.media : []),
+        ...(Array.isArray(post.originalPost?.media)
+          ? post.originalPost.media
+          : []),
       ];
       for (const m of mediaList) {
-        if (m?.url && (m.url.includes('.amazonaws.com') || !m.url.startsWith('http'))) {
+        if (
+          m?.url &&
+          (m.url.includes('.amazonaws.com') || !m.url.startsWith('http'))
+        ) {
           try {
             // Strip any stale ephemeral query parameters to obtain canonical base S3 key or URL
             const cleanUrl = m.url.split('?')[0];
-            const signed = await this.signedUrlService.generateSignedImageUrl(cleanUrl, 86400 * 7);
+            const signed = await this.signedUrlService.generateSignedImageUrl(
+              cleanUrl,
+              86400 * 7,
+            );
             if (signed) {
               m.url = signed;
             }
           } catch {}
         }
-        if (m?.processedUrl && (m.processedUrl.includes('.amazonaws.com') || !m.processedUrl.startsWith('http'))) {
+        if (
+          m?.processedUrl &&
+          (m.processedUrl.includes('.amazonaws.com') ||
+            !m.processedUrl.startsWith('http'))
+        ) {
           try {
             const cleanProcessed = m.processedUrl.split('?')[0];
-            const signed = await this.signedUrlService.generateSignedVideoUrl(cleanProcessed, 86400 * 7);
+            const signed = await this.signedUrlService.generateSignedVideoUrl(
+              cleanProcessed,
+              86400 * 7,
+            );
             if (signed) {
               m.processedUrl = signed;
             }
           } catch {}
         }
-        if (m?.posterUrl && (m.posterUrl.includes('.amazonaws.com') || !m.posterUrl.startsWith('http'))) {
+        if (
+          m?.posterUrl &&
+          (m.posterUrl.includes('.amazonaws.com') ||
+            !m.posterUrl.startsWith('http'))
+        ) {
           try {
             const cleanPoster = m.posterUrl.split('?')[0];
-            const signed = await this.signedUrlService.generateSignedImageUrl(cleanPoster, 86400 * 7);
+            const signed = await this.signedUrlService.generateSignedImageUrl(
+              cleanPoster,
+              86400 * 7,
+            );
             if (signed) {
               m.posterUrl = signed;
             }
@@ -127,7 +153,7 @@ export class PostService {
       if (mediaType === 'video' && m.size && m.size > 1024 * 1024 * 1024) {
         throw new BadRequestException('Video must be 1 GB or smaller.');
       }
-      if (mediaType === 'video' && (m as any).duration && (m as any).duration > 90) {
+      if (mediaType === 'video' && m.duration && m.duration > 90) {
         throw new BadRequestException('Video must be 90 seconds or shorter.');
       }
 
@@ -135,10 +161,18 @@ export class PostService {
       if (this.communityS3Service) {
         this.communityS3Service.validateMediaOwnership(rawUrl, userId, isAdmin);
         if (m.processedUrl && typeof m.processedUrl === 'string') {
-          this.communityS3Service.validateMediaOwnership(m.processedUrl, userId, isAdmin);
+          this.communityS3Service.validateMediaOwnership(
+            m.processedUrl,
+            userId,
+            isAdmin,
+          );
         }
         if (m.posterUrl && typeof m.posterUrl === 'string') {
-          this.communityS3Service.validateMediaOwnership(m.posterUrl, userId, isAdmin);
+          this.communityS3Service.validateMediaOwnership(
+            m.posterUrl,
+            userId,
+            isAdmin,
+          );
         }
       } else {
         // Fallback validation when communityS3Service is unprovided in isolated tests
@@ -153,12 +187,16 @@ export class PostService {
           throw new BadRequestException('Malformed media URL encoding');
         }
         if (decoded.includes('..') || decoded.includes('\\')) {
-          throw new ForbiddenException('Invalid file key: path traversal detected');
+          throw new ForbiddenException(
+            'Invalid file key: path traversal detected',
+          );
         }
         if (decoded.includes('community/uploads/')) {
           const expected = `community/uploads/${userId}/`;
           if (!isAdmin && !decoded.includes(expected)) {
-            throw new ForbiddenException('You cannot use media belonging to another user');
+            throw new ForbiddenException(
+              'You cannot use media belonging to another user',
+            );
           }
         }
       }
@@ -181,48 +219,58 @@ export class PostService {
           });
         }
         if (!isAdmin && job.userId !== userId) {
-          throw new ForbiddenException('You cannot publish media belonging to another user');
+          throw new ForbiddenException(
+            'You cannot publish media belonging to another user',
+          );
         }
 
-          if (job.status === 'PROCESSING' || job.status === 'QUEUED') {
-            throw new BadRequestException({
-              code: 'MEDIA_NOT_READY',
-              message: 'Video is still being optimized. Please wait until processing is complete before publishing.',
-            });
-          }
+        if (job.status === 'PROCESSING' || job.status === 'QUEUED') {
+          throw new BadRequestException({
+            code: 'MEDIA_NOT_READY',
+            message:
+              'Video is still being optimized. Please wait until processing is complete before publishing.',
+          });
+        }
 
-          if (job.status === 'FAILED') {
-            throw new BadRequestException({
-              code: 'MEDIA_PROCESSING_FAILED',
-              message: job.errorMessage || 'Video processing failed. Please retry processing or choose another video.',
-            });
-          }
+        if (job.status === 'FAILED') {
+          throw new BadRequestException({
+            code: 'MEDIA_PROCESSING_FAILED',
+            message:
+              job.errorMessage ||
+              'Video processing failed. Please retry processing or choose another video.',
+          });
+        }
 
-          if (job.status === 'READY') {
-            finalProcessedUrl = job.outputUrl || finalProcessedUrl;
-            finalPosterUrl = job.posterUrl || job.customCoverUrl || finalPosterUrl;
-            finalDuration = job.outputDuration || finalDuration;
-            finalWidth = job.outputWidth || finalWidth;
-            finalHeight = job.outputHeight || finalHeight;
-            if (job.audioConfig && !resolvedAudioConfig) {
-              resolvedAudioConfig = job.audioConfig;
-            }
-            if (job.editorConfig && !resolvedEditorConfig) {
-              resolvedEditorConfig = job.editorConfig;
-            }
+        if (job.status === 'READY') {
+          finalProcessedUrl = job.outputUrl || finalProcessedUrl;
+          finalPosterUrl =
+            job.posterUrl || job.customCoverUrl || finalPosterUrl;
+          finalDuration = job.outputDuration || finalDuration;
+          finalWidth = job.outputWidth || finalWidth;
+          finalHeight = job.outputHeight || finalHeight;
+          if (job.audioConfig && !resolvedAudioConfig) {
+            resolvedAudioConfig = job.audioConfig;
           }
+          if (job.editorConfig && !resolvedEditorConfig) {
+            resolvedEditorConfig = job.editorConfig;
+          }
+        }
       }
 
       // Authoritative Server-side Audio Config Validation (Section 24)
       if (resolvedAudioConfig && this.musicService) {
-        resolvedAudioConfig = await this.musicService.validateAndResolveAudioConfig(
-          resolvedAudioConfig,
-        );
+        resolvedAudioConfig =
+          await this.musicService.validateAndResolveAudioConfig(
+            resolvedAudioConfig,
+          );
       }
 
       // Authoritative Server-side Editor Config Validation (Phase 3D)
       if (resolvedEditorConfig) {
-        resolvedEditorConfig = this.validateAndNormalizeEditorConfig(resolvedEditorConfig, finalDuration);
+        resolvedEditorConfig = this.validateAndNormalizeEditorConfig(
+          resolvedEditorConfig,
+          finalDuration,
+        );
       }
 
       // Clean ephemeral query parameters (e.g. ?X-Amz-Signature=...) before storing in DB
@@ -244,9 +292,11 @@ export class PostService {
         thumbnailUrl: finalPosterUrl
           ? finalPosterUrl.split('?')[0]
           : m.thumbnailUrl
-          ? m.thumbnailUrl.split('?')[0]
+            ? m.thumbnailUrl.split('?')[0]
+            : undefined,
+        processedUrl: finalProcessedUrl
+          ? finalProcessedUrl.split('?')[0]
           : undefined,
-        processedUrl: finalProcessedUrl ? finalProcessedUrl.split('?')[0] : undefined,
         mediaId: m.mediaId,
         audioConfig: resolvedAudioConfig,
         editorConfig: resolvedEditorConfig,
@@ -264,7 +314,9 @@ export class PostService {
       throw new BadRequestException('Editor layers must be an array');
     }
     if (config.layers.length > 10) {
-      throw new BadRequestException('Maximum 10 editor layers allowed per Reel');
+      throw new BadRequestException(
+        'Maximum 10 editor layers allowed per Reel',
+      );
     }
 
     const normalizedLayers = config.layers.map((layer: any, idx: number) => {
@@ -272,7 +324,9 @@ export class PostService {
         throw new BadRequestException(`Layer at index ${idx} is invalid`);
       }
       if (!layer.id || typeof layer.id !== 'string') {
-        throw new BadRequestException(`Layer at index ${idx} must have a valid string id`);
+        throw new BadRequestException(
+          `Layer at index ${idx} must have a valid string id`,
+        );
       }
       const type = String(layer.type || '').toUpperCase();
       if (!['TEXT', 'STICKER', 'CAPTION'].includes(type)) {
@@ -282,32 +336,47 @@ export class PostService {
       const start = Number(layer.start);
       const end = Number(layer.end);
       if (isNaN(start) || start < 0) {
-        throw new BadRequestException(`Layer ${layer.id} start time must be >= 0`);
+        throw new BadRequestException(
+          `Layer ${layer.id} start time must be >= 0`,
+        );
       }
       if (isNaN(end) || end <= start) {
-        throw new BadRequestException(`Layer ${layer.id} end time must be greater than start time`);
+        throw new BadRequestException(
+          `Layer ${layer.id} end time must be greater than start time`,
+        );
       }
       if (maxDuration && end > maxDuration + 0.5) {
-        throw new BadRequestException(`Layer ${layer.id} timing (${end.toFixed(1)}s) exceeds video duration (${maxDuration.toFixed(1)}s)`);
+        throw new BadRequestException(
+          `Layer ${layer.id} timing (${end.toFixed(1)}s) exceeds video duration (${maxDuration.toFixed(1)}s)`,
+        );
       }
 
       const x = Math.max(0, Math.min(Number(layer.x ?? 0.5), 1.0));
       const y = Math.max(0, Math.min(Number(layer.y ?? 0.5), 1.0));
       const scale = Math.max(0.2, Math.min(Number(layer.scale ?? 1.0), 3.0));
-      const rotation = Math.max(-360, Math.min(Number(layer.rotation ?? 0), 360));
+      const rotation = Math.max(
+        -360,
+        Math.min(Number(layer.rotation ?? 0), 360),
+      );
       const opacity = Math.max(0, Math.min(Number(layer.opacity ?? 1.0), 1.0));
 
       if (type === 'STICKER') {
         if (!layer.stickerId || typeof layer.stickerId !== 'string') {
-          throw new BadRequestException(`Sticker layer ${layer.id} requires a valid stickerId`);
+          throw new BadRequestException(
+            `Sticker layer ${layer.id} requires a valid stickerId`,
+          );
         }
         const isValid = this.stickerService
           ? this.stickerService.isValidStickerId(layer.stickerId)
           : !/[\/\\]|\.\.|^https?:|^data:/i.test(layer.stickerId) &&
-            (VALID_CURATED_STICKER_IDS as readonly string[]).includes(layer.stickerId);
+            (VALID_CURATED_STICKER_IDS as readonly string[]).includes(
+              layer.stickerId,
+            );
 
         if (!isValid) {
-          throw new BadRequestException(`Sticker ${layer.stickerId} does not exist or is inactive`);
+          throw new BadRequestException(
+            `Sticker ${layer.stickerId} does not exist or is inactive`,
+          );
         }
         return {
           id: layer.id,
@@ -324,16 +393,24 @@ export class PostService {
       }
 
       // TEXT or CAPTION
-      const content = String(layer.content || '').replace(/<[^>]*>?/gm, '').trim();
+      const content = String(layer.content || '')
+        .replace(/<[^>]*>?/gm, '')
+        .trim();
       if (!content) {
-        throw new BadRequestException(`${type} layer ${layer.id} content cannot be empty`);
+        throw new BadRequestException(
+          `${type} layer ${layer.id} content cannot be empty`,
+        );
       }
       if (content.length > 300) {
-        throw new BadRequestException(`${type} layer ${layer.id} exceeds maximum 300 characters limit`);
+        throw new BadRequestException(
+          `${type} layer ${layer.id} exceeds maximum 300 characters limit`,
+        );
       }
 
       if (type === 'CAPTION') {
-        const style = ['CLASSIC', 'BOLD', 'MINIMAL', 'HIGHLIGHT'].includes(String(layer.style).toUpperCase())
+        const style = ['CLASSIC', 'BOLD', 'MINIMAL', 'HIGHLIGHT'].includes(
+          String(layer.style).toUpperCase(),
+        )
           ? String(layer.style).toUpperCase()
           : 'CLASSIC';
         return {
@@ -351,15 +428,31 @@ export class PostService {
       }
 
       // TEXT
-      const fontFamily = ['Inter', 'System Sans', 'Serif', 'Mono'].includes(layer.fontFamily)
+      const fontFamily = ['Inter', 'System Sans', 'Serif', 'Mono'].includes(
+        layer.fontFamily,
+      )
         ? layer.fontFamily
         : 'Inter';
       const fontSize = Math.max(12, Math.min(Number(layer.fontSize) || 24, 72));
-      const fontWeight = ['normal', 'bold', '800'].includes(layer.fontWeight) ? layer.fontWeight : 'bold';
-      const textAlign = ['left', 'center', 'right'].includes(layer.textAlign) ? layer.textAlign : 'center';
-      const color = typeof layer.color === 'string' && layer.color.startsWith('#') ? layer.color : '#FFFFFF';
-      const backgroundColor = typeof layer.backgroundColor === 'string' && layer.backgroundColor.startsWith('#') ? layer.backgroundColor : '#000000';
-      const backgroundOpacity = Math.max(0, Math.min(Number(layer.backgroundOpacity ?? 0.6), 1.0));
+      const fontWeight = ['normal', 'bold', '800'].includes(layer.fontWeight)
+        ? layer.fontWeight
+        : 'bold';
+      const textAlign = ['left', 'center', 'right'].includes(layer.textAlign)
+        ? layer.textAlign
+        : 'center';
+      const color =
+        typeof layer.color === 'string' && layer.color.startsWith('#')
+          ? layer.color
+          : '#FFFFFF';
+      const backgroundColor =
+        typeof layer.backgroundColor === 'string' &&
+        layer.backgroundColor.startsWith('#')
+          ? layer.backgroundColor
+          : '#000000';
+      const backgroundOpacity = Math.max(
+        0,
+        Math.min(Number(layer.backgroundOpacity ?? 0.6), 1.0),
+      );
       const shadow = Boolean(layer.shadow);
 
       return {
@@ -417,7 +510,10 @@ export class PostService {
   ): Promise<any> {
     // In-flight locks & short-window duplicate publish protection (Section 12):
     // Deduplicate rapid concurrent submissions / enter spam
-    const mediaFingerprint = (data.media || []).map((m: any) => m.url).sort().join(',');
+    const mediaFingerprint = (data.media || [])
+      .map((m: any) => m.url)
+      .sort()
+      .join(',');
     const fingerprint = clientKey
       ? `${userId}:key:${clientKey}`
       : `${userId}:${data.content?.trim() || ''}:${mediaFingerprint}:${data.courseId || ''}`;
@@ -435,10 +531,19 @@ export class PostService {
 
     const execution = async () => {
       // Validate and normalize media first before creating post (Section 5, 6, 8, 13, 34, 38)
-      const validatedMedia = await this.validateAndNormalizeMedia(data.media || [], userId, isAdmin);
+      const validatedMedia = await this.validateAndNormalizeMedia(
+        data.media || [],
+        userId,
+        isAdmin,
+      );
 
-      const audienceVal = ((data.audience || 'PUBLIC').toUpperCase() as PostAudience);
-      const typeVal = ((data.type || (validatedMedia.length > 0 ? validatedMedia[0].type : 'TEXT')).toUpperCase() as PostType);
+      const audienceVal = (
+        data.audience || 'PUBLIC'
+      ).toUpperCase() as PostAudience;
+      const typeVal = (
+        data.type ||
+        (validatedMedia.length > 0 ? validatedMedia[0].type : 'TEXT')
+      ).toUpperCase() as PostType;
 
       const postData: any = {
         authorId: userId,
@@ -455,7 +560,10 @@ export class PostService {
 
       if (data.organizationId) {
         if (this.organizationsService) {
-          await this.organizationsService.validateCompanyPublishingAccess(userId, data.organizationId);
+          await this.organizationsService.validateCompanyPublishingAccess(
+            userId,
+            data.organizationId,
+          );
         } else if (!Types.ObjectId.isValid(data.organizationId)) {
           throw new BadRequestException('Invalid organization ID');
         }
@@ -515,9 +623,14 @@ export class PostService {
     try {
       const result = await promise;
       if (!clientKey) {
-        this.recentPostsCache.set(fingerprint, { post: result, timestamp: Date.now() });
+        this.recentPostsCache.set(fingerprint, {
+          post: result,
+          timestamp: Date.now(),
+        });
         const timer = setTimeout(() => {
-          if (this.recentPostsCache.get(fingerprint)?.post?._id === result?._id) {
+          if (
+            this.recentPostsCache.get(fingerprint)?.post?._id === result?._id
+          ) {
             this.recentPostsCache.delete(fingerprint);
           }
         }, 5000);
@@ -541,7 +654,10 @@ export class PostService {
   ) {
     if (organizationId) {
       if (this.organizationsService) {
-        await this.organizationsService.validateCompanyFeedAccess(userId, organizationId);
+        await this.organizationsService.validateCompanyFeedAccess(
+          userId,
+          organizationId,
+        );
       } else if (!Types.ObjectId.isValid(organizationId)) {
         throw new BadRequestException('Invalid organization ID');
       }
@@ -566,14 +682,20 @@ export class PostService {
   async searchCommunity(
     userId: string,
     courseIds: string[],
-    options: { q: string; type?: 'all' | 'posts' | 'people' | 'topics'; limit?: number },
+    options: {
+      q: string;
+      type?: 'all' | 'posts' | 'people' | 'topics';
+      limit?: number;
+    },
   ) {
     const results = await this.postRepository.searchCommunity({
       userId,
       courseIds,
       query: options.q,
       type: options.type,
-      limit: options.limit ? Math.min(Math.max(1, Number(options.limit)), 30) : 10,
+      limit: options.limit
+        ? Math.min(Math.max(1, Number(options.limit)), 30)
+        : 10,
     });
     if (results.posts && Array.isArray(results.posts)) {
       await this.resolveMediaUrls(results.posts);
@@ -587,7 +709,13 @@ export class PostService {
     limit: number = 10,
     cursor?: string,
   ) {
-    const saved: any = await this.postRepository.findFeed({ userId, courseIds, limit, cursor, filter: 'saved' });
+    const saved: any = await this.postRepository.findFeed({
+      userId,
+      courseIds,
+      limit,
+      cursor,
+      filter: 'saved',
+    });
     if (saved && Array.isArray(saved.items)) {
       await this.resolveMediaUrls(saved.items);
     }
@@ -618,12 +746,31 @@ export class PostService {
   ): Promise<any> {
     const post = await this.postRepository.findById(id);
     if (!post) throw new NotFoundException('Post not found');
-    if (post.authorId !== userId && role !== 'admin') {
+
+    const isAuthor = String(post.authorId) === String(userId);
+    let isOrgAdmin = false;
+    if (!isAuthor && post.organizationId && this.organizationsService) {
+      try {
+        await this.organizationsService.validateCompanyPublishingAccess(
+          userId,
+          post.organizationId,
+        );
+        isOrgAdmin = true;
+      } catch {
+        isOrgAdmin = false;
+      }
+    }
+
+    if (!isAuthor && !isOrgAdmin && role !== 'admin') {
       throw new ForbiddenException('Unauthorized to edit this post');
     }
 
     if ((data as any).media) {
-      await this.validateAndNormalizeMedia((data as any).media, userId, role === 'admin');
+      await this.validateAndNormalizeMedia(
+        (data as any).media,
+        userId,
+        role === 'admin',
+      );
     }
 
     await this.postRepository.update(id, { ...data, isEdited: true });
@@ -638,11 +785,28 @@ export class PostService {
     const post = await this.postRepository.findById(id);
     if (!post) throw new NotFoundException('Post not found');
 
-    if (post.authorId !== userId && role !== 'admin') {
+    const isAuthor = String(post.authorId) === String(userId);
+    let isOrgAdmin = false;
+    if (!isAuthor && post.organizationId && this.organizationsService) {
+      try {
+        await this.organizationsService.validateCompanyPublishingAccess(
+          userId,
+          post.organizationId,
+        );
+        isOrgAdmin = true;
+      } catch {
+        isOrgAdmin = false;
+      }
+    }
+
+    if (!isAuthor && !isOrgAdmin && role !== 'admin') {
       throw new ForbiddenException('Unauthorized to delete this post');
     }
 
-    if ((post.postType === 'repost' || post.postType === 'quote') && post.originalPostId) {
+    if (
+      (post.postType === 'repost' || post.postType === 'quote') &&
+      post.originalPostId
+    ) {
       await this.postRepository.adjustRepostCount(post.originalPostId, -1);
     }
 
@@ -661,16 +825,25 @@ export class PostService {
       const post = await this.postRepository.findById(postId);
       if (post && post.authorId && String(post.authorId) !== String(userId)) {
         try {
-          const isReel = post.type === 'VIDEO' || (Array.isArray(post.media) && post.media.some((m: any) => m?.type === 'video'));
-          const targetUrl = isReel ? `/community/reels/${postId}` : `/community#${postId}`;
+          const isReel =
+            post.type === 'VIDEO' ||
+            (Array.isArray(post.media) &&
+              post.media.some((m: any) => m?.type === 'video'));
+          const targetUrl = isReel
+            ? `/community/reels/${postId}`
+            : `/community#${postId}`;
           await this.notificationsService.createNotification({
             recipientId: post.authorId,
             actorId: userId,
             type: 'COMMUNITY_REACTION',
             category: 'community',
             priority: 'NORMAL',
-            title: isReel ? 'New reaction on your reel' : 'New reaction on your post',
-            message: isReel ? 'Someone reacted to your reel' : 'Someone reacted to your post',
+            title: isReel
+              ? 'New reaction on your reel'
+              : 'New reaction on your post',
+            message: isReel
+              ? 'Someone reacted to your reel'
+              : 'Someone reacted to your post',
             actionUrl: targetUrl,
             targetUrl: targetUrl,
           });
@@ -695,7 +868,10 @@ export class PostService {
     return this.postRepository.removeSavedPost(postId, userId);
   }
 
-  async recordPostView(postId: string, userId: string): Promise<{ success: boolean; views: number }> {
+  async recordPostView(
+    postId: string,
+    userId: string,
+  ): Promise<{ success: boolean; views: number }> {
     const post = await this.postRepository.findById(postId);
     if (!post) {
       throw new NotFoundException('Post not found');
@@ -713,7 +889,13 @@ export class PostService {
     role?: string,
   ): void {
     if (!post) return;
-    if (role === 'admin' || role === 'ADMIN' || role === 'teacher' || role === 'TEACHER') return;
+    if (
+      role === 'admin' ||
+      role === 'ADMIN' ||
+      role === 'teacher' ||
+      role === 'TEACHER'
+    )
+      return;
     if (String(post.authorId) === String(userId)) return;
 
     const audience = String(post.audience || '').toUpperCase();
@@ -754,9 +936,15 @@ export class PostService {
     }
 
     // Idempotency: check if user already has an active repost of this canonical post
-    const existing = await this.postRepository.findActiveRepost(canonicalPostId, userId);
+    const existing = await this.postRepository.findActiveRepost(
+      canonicalPostId,
+      userId,
+    );
     if (existing) {
-      const populated = await this.postRepository.findByIdPopulated(canonicalPostId, userId);
+      const populated = await this.postRepository.findByIdPopulated(
+        canonicalPostId,
+        userId,
+      );
       return {
         success: true,
         message: 'Already reposted',
@@ -773,7 +961,7 @@ export class PostService {
       createdRepost = await this.postRepository.createRepost({
         originalPostId: canonicalPostId,
         authorId: userId,
-        audience: ((canonicalPost.audience || 'PUBLIC').toUpperCase() as PostAudience),
+        audience: (canonicalPost.audience || 'PUBLIC').toUpperCase(),
         courseId: canonicalPost.courseId,
         batchId: canonicalPost.batchId,
       });
@@ -782,9 +970,15 @@ export class PostService {
       await this.postRepository.adjustRepostCount(canonicalPostId, 1);
     } catch (err: any) {
       if (err?.code === 11000 || err?.name === 'MongoServerError') {
-        const existingAfterRace = await this.postRepository.findActiveRepost(canonicalPostId, userId);
+        const existingAfterRace = await this.postRepository.findActiveRepost(
+          canonicalPostId,
+          userId,
+        );
         if (existingAfterRace) {
-          const populated = await this.postRepository.findByIdPopulated(canonicalPostId, userId);
+          const populated = await this.postRepository.findByIdPopulated(
+            canonicalPostId,
+            userId,
+          );
           return {
             success: true,
             message: 'Already reposted',
@@ -799,7 +993,10 @@ export class PostService {
     }
 
     // Send notification to canonical post author (skip if self)
-    if (canonicalPost.authorId && String(canonicalPost.authorId) !== String(userId)) {
+    if (
+      canonicalPost.authorId &&
+      String(canonicalPost.authorId) !== String(userId)
+    ) {
       try {
         await this.notificationsService.createNotification({
           recipientId: canonicalPost.authorId,
@@ -818,7 +1015,10 @@ export class PostService {
       }
     }
 
-    const populatedCanonical = await this.postRepository.findByIdPopulated(canonicalPostId, userId);
+    const populatedCanonical = await this.postRepository.findByIdPopulated(
+      canonicalPostId,
+      userId,
+    );
 
     return {
       success: true,
@@ -837,18 +1037,27 @@ export class PostService {
       canonicalPostId = target.originalPostId;
     }
 
-    const removed = await this.postRepository.removeRepost(canonicalPostId, userId);
+    const removed = await this.postRepository.removeRepost(
+      canonicalPostId,
+      userId,
+    );
     if (removed) {
       await this.postRepository.adjustRepostCount(canonicalPostId, -1);
     }
 
-    const populatedCanonical = await this.postRepository.findByIdPopulated(canonicalPostId, userId);
+    const populatedCanonical = await this.postRepository.findByIdPopulated(
+      canonicalPostId,
+      userId,
+    );
 
     return {
       success: true,
       message: 'Repost removed successfully',
       isReposted: false,
-      repostsCount: Math.max(0, (populatedCanonical?.stats?.reposts ?? ((target?.stats?.reposts || 1) - 1))),
+      repostsCount: Math.max(
+        0,
+        populatedCanonical?.stats?.reposts ?? (target?.stats?.reposts || 1) - 1,
+      ),
       post: populatedCanonical,
     };
   }
@@ -892,7 +1101,11 @@ export class PostService {
       postType: 'quote',
       originalPostId: canonicalPostId,
       type: PostType.TEXT,
-      audience: (((data.audience || canonicalPost.audience || 'PUBLIC')).toUpperCase() as PostAudience),
+      audience: (
+        data.audience ||
+        canonicalPost.audience ||
+        'PUBLIC'
+      ).toUpperCase() as PostAudience,
       courseId: data.courseId || canonicalPost.courseId,
       hashtags: [],
       mentions: [],
@@ -913,7 +1126,10 @@ export class PostService {
     await this.postRepository.adjustRepostCount(canonicalPostId, 1);
 
     // Send notification to canonical post author (skip if self)
-    if (canonicalPost.authorId && String(canonicalPost.authorId) !== String(userId)) {
+    if (
+      canonicalPost.authorId &&
+      String(canonicalPost.authorId) !== String(userId)
+    ) {
       try {
         await this.notificationsService.createNotification({
           recipientId: canonicalPost.authorId,

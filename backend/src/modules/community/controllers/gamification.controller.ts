@@ -11,7 +11,9 @@ export class GamificationController {
 
   @Get()
   async getProfile(@Req() req: any) {
-    const userId = String(req.user?.userId || req.user?.id || req.user?._id || '');
+    const userId = String(
+      req.user?.userId || req.user?.id || req.user?._id || '',
+    );
     return this.gamificationService.getProfile(userId);
   }
 }

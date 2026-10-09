@@ -17,7 +17,10 @@ import {
 import { CommunityVideoProcessorService } from './community-video-processor.service';
 import { CommunityMusicService } from './community-music.service';
 import { CommunityStickerService } from './community-sticker.service';
-import { renderTextLayerPng, renderStickerPng } from './community-overlay-rasterizer';
+import {
+  renderTextLayerPng,
+  renderStickerPng,
+} from './community-overlay-rasterizer';
 import { S3Service } from '../../../common/aws/s3.service';
 import { SignedUrlService } from '../../../common/aws/signed-url.service';
 import {
@@ -38,8 +41,10 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
   private readonly workerId = `worker-${uuidv4().slice(0, 8)}`;
   private activeJobsCount = 0;
   public readonly MAX_CONCURRENT_JOBS = 2;
-  public readonly MAX_CLUSTER_CONCURRENT_JOBS = Number(process.env.COMMUNITY_MAX_CLUSTER_CONCURRENT_JOBS) || 2;
-  public readonly STALE_THRESHOLD_MS = Number(process.env.COMMUNITY_STALE_JOB_THRESHOLD_MS) || 2 * 60 * 1000; // 2 minutes with active 15s heartbeats
+  public readonly MAX_CLUSTER_CONCURRENT_JOBS =
+    Number(process.env.COMMUNITY_MAX_CLUSTER_CONCURRENT_JOBS) || 2;
+  public readonly STALE_THRESHOLD_MS =
+    Number(process.env.COMMUNITY_STALE_JOB_THRESHOLD_MS) || 2 * 60 * 1000; // 2 minutes with active 15s heartbeats
   private isShuttingDown = false;
 
   constructor(
@@ -74,7 +79,10 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
       await this.recoverStaleJobs();
       await this.processNextJobs();
     } catch (err: any) {
-      this.logger.error(`Error in media worker tick: ${err.message}`, err.stack);
+      this.logger.error(
+        `Error in media worker tick: ${err.message}`,
+        err.stack,
+      );
     }
   }
 
@@ -115,7 +123,10 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
       sourceSize: params.sourceSize,
       sourceDuration: params.sourceDuration,
       trimStart: Number(params.trimStart) || 0,
-      trimEnd: params.trimEnd !== undefined && params.trimEnd !== null ? Number(params.trimEnd) : undefined,
+      trimEnd:
+        params.trimEnd !== undefined && params.trimEnd !== null
+          ? Number(params.trimEnd)
+          : undefined,
       customCoverUrl: params.customCoverUrl,
       audioConfig: params.audioConfig,
       editorConfig: params.editorConfig,
@@ -136,7 +147,9 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
   /**
    * Retrieves a job by mediaId.
    */
-  async getJobByMediaId(mediaId: string): Promise<CommunityMediaJobDocument | null> {
+  async getJobByMediaId(
+    mediaId: string,
+  ): Promise<CommunityMediaJobDocument | null> {
     if (!mediaId) return null;
     return this.jobModel.findOne({ mediaId });
   }
@@ -182,7 +195,12 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
     mediaId: string,
     requestingUserId: string,
     isAdmin = false,
-    options?: { trimStart?: number; trimEnd?: number; audioConfig?: any; editorConfig?: any },
+    options?: {
+      trimStart?: number;
+      trimEnd?: number;
+      audioConfig?: any;
+      editorConfig?: any;
+    },
   ): Promise<CommunityMediaJobDocument> {
     const job = await this.getJobByMediaId(mediaId);
     if (!job) {
@@ -194,12 +212,16 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
     }
 
     const hasConfigChanged = Boolean(
-      options && (
-        (options.trimStart !== undefined && options.trimStart !== job.trimStart) ||
+      options &&
+      ((options.trimStart !== undefined &&
+        options.trimStart !== job.trimStart) ||
         (options.trimEnd !== undefined && options.trimEnd !== job.trimEnd) ||
-        (options.audioConfig !== undefined && JSON.stringify(options.audioConfig) !== JSON.stringify(job.audioConfig)) ||
-        (options.editorConfig !== undefined && JSON.stringify(options.editorConfig) !== JSON.stringify(job.editorConfig))
-      ),
+        (options.audioConfig !== undefined &&
+          JSON.stringify(options.audioConfig) !==
+            JSON.stringify(job.audioConfig)) ||
+        (options.editorConfig !== undefined &&
+          JSON.stringify(options.editorConfig) !==
+            JSON.stringify(job.editorConfig))),
     );
 
     if (job.status === 'READY' && !hasConfigChanged) {
@@ -207,7 +229,10 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
     }
 
     // Rapid double-click idempotency: if already in queue or processing and config hasn't changed, return existing job (Section 33)
-    if ((job.status === 'QUEUED' || job.status === 'PROCESSING') && !hasConfigChanged) {
+    if (
+      (job.status === 'QUEUED' || job.status === 'PROCESSING') &&
+      !hasConfigChanged
+    ) {
       this.triggerWorker();
       return job;
     }
@@ -220,10 +245,13 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
     }
 
     // Apply any updated trim, audio or editor config
-    if (options?.trimStart !== undefined) job.trimStart = Number(options.trimStart) || 0;
+    if (options?.trimStart !== undefined)
+      job.trimStart = Number(options.trimStart) || 0;
     if (options?.trimEnd !== undefined) job.trimEnd = Number(options.trimEnd);
-    if (options?.audioConfig !== undefined) job.audioConfig = options.audioConfig;
-    if (options?.editorConfig !== undefined) job.editorConfig = options.editorConfig;
+    if (options?.audioConfig !== undefined)
+      job.audioConfig = options.audioConfig;
+    if (options?.editorConfig !== undefined)
+      job.editorConfig = options.editorConfig;
 
     // Reset job state for retry
     job.status = 'QUEUED';
@@ -255,7 +283,9 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
       );
     }
 
-    this.logger.log(`MEDIA_JOB_RETRY_INITIATED: MediaId="${mediaId}", JobId="${job._id}"`);
+    this.logger.log(
+      `MEDIA_JOB_RETRY_INITIATED: MediaId="${mediaId}", JobId="${job._id}"`,
+    );
     this.triggerWorker();
     return job;
   }
@@ -317,7 +347,10 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
       // Execute asynchronously in background
       this.executeJob(job)
         .catch((err) => {
-          this.logger.error(`Job execution fatal wrapper error: ${err.message}`, err.stack);
+          this.logger.error(
+            `Job execution fatal wrapper error: ${err.message}`,
+            err.stack,
+          );
         })
         .finally(() => {
           this.activeJobsCount--;
@@ -355,7 +388,9 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
           { $set: { lockedAt: new Date() } },
         );
       } catch (hbErr: any) {
-        this.logger.warn(`Heartbeat update failed for Job ${job._id}: ${hbErr.message}`);
+        this.logger.warn(
+          `Heartbeat update failed for Job ${job._id}: ${hbErr.message}`,
+        );
       }
     }, 15000);
 
@@ -367,7 +402,10 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
         const statFs = fs.statfsSync(jobDir);
         const availableBytes = Number(statFs.bavail) * Number(statFs.bsize);
         const safeSourceSize = Math.max(0, Number(job.sourceSize) || 0);
-        const safeLayerCount = Math.max(0, Math.min(Number(job.editorConfig?.layers?.length) || 0, 10));
+        const safeLayerCount = Math.max(
+          0,
+          Math.min(Number(job.editorConfig?.layers?.length) || 0, 10),
+        );
 
         const requiredEstimateBytes =
           Math.max(safeSourceSize * 1.5, 100 * 1024 * 1024) +
@@ -380,7 +418,9 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
           this.logger.error(
             `DISK_SPACE_EXHAUSTION_PREVENTED: JobId="${job._id}", AvailableDisk=${availMB}MB, RequiredEstimate=${reqMB}MB. Failing gracefully.`,
           );
-          throw new Error('Temporary storage space is temporarily constrained. Please retry in a few moments.');
+          throw new Error(
+            'Temporary storage space is temporarily constrained. Please retry in a few moments.',
+          );
         }
       } catch (statErr: any) {
         if (statErr.message?.includes('constrained')) throw statErr;
@@ -388,7 +428,9 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
       }
 
       // 1. Download source from S3 safely via stream (no memory buffering)
-      this.logger.log(`Downloading source from S3 for MediaId="${job.mediaId}", Key="${job.sourceKey}"`);
+      this.logger.log(
+        `Downloading source from S3 for MediaId="${job.mediaId}", Key="${job.sourceKey}"`,
+      );
       const getCommand = new GetObjectCommand({
         Bucket: this.s3Service.bucketName,
         Key: job.sourceKey,
@@ -408,7 +450,11 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
       }
 
       // Validate downloaded size against recorded source size if available (Section 4)
-      if (job.sourceSize && job.sourceSize > 0 && downloadedStat.size !== job.sourceSize) {
+      if (
+        job.sourceSize &&
+        job.sourceSize > 0 &&
+        downloadedStat.size !== job.sourceSize
+      ) {
         throw new Error(
           `Downloaded source file size (${downloadedStat.size} bytes) does not match expected size (${job.sourceSize} bytes).`,
         );
@@ -420,14 +466,19 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
 
       if (
         audioConfig?.musicId &&
-        (audioConfig.audioMode === 'MUSIC_ONLY' || audioConfig.audioMode === 'MIXED')
+        (audioConfig.audioMode === 'MUSIC_ONLY' ||
+          audioConfig.audioMode === 'MIXED')
       ) {
         let musicTrack: any = null;
         if (this.musicService) {
           try {
-            musicTrack = await this.musicService.getTrackById(audioConfig.musicId);
+            musicTrack = await this.musicService.getTrackById(
+              audioConfig.musicId,
+            );
           } catch (mErr: any) {
-            this.logger.warn(`Could not resolve musicId ${audioConfig.musicId}: ${mErr.message}`);
+            this.logger.warn(
+              `Could not resolve musicId ${audioConfig.musicId}: ${mErr.message}`,
+            );
           }
         }
 
@@ -444,11 +495,15 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
                 Bucket: this.s3Service.bucketName,
                 Key: musicTrack.audioKey,
               });
-              const musicS3Res = await this.s3Service.s3Client.send(musicGetCmd);
+              const musicS3Res =
+                await this.s3Service.s3Client.send(musicGetCmd);
               if (musicS3Res.Body) {
                 const musicWriteStream = fs.createWriteStream(tempMusicPath);
                 await pipeline(musicS3Res.Body as any, musicWriteStream);
-                if (fs.existsSync(tempMusicPath) && fs.statSync(tempMusicPath).size > 0) {
+                if (
+                  fs.existsSync(tempMusicPath) &&
+                  fs.statSync(tempMusicPath).size > 0
+                ) {
                   musicLocalPath = tempMusicPath;
                 }
               }
@@ -485,22 +540,30 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
           if (layer.type === 'STICKER' && layer.stickerId) {
             if (this.stickerService) {
               try {
-                const asset = this.stickerService.resolveStickerAsset(layer.stickerId, jobDir);
+                const asset = this.stickerService.resolveStickerAsset(
+                  layer.stickerId,
+                  jobDir,
+                );
                 if (asset && fs.existsSync(asset.filePath)) {
                   overlayAssets.push({
                     layerId: layer.id,
                     localPath: asset.filePath,
                     x: Math.max(0, Math.min(Number(layer.x ?? 0.5), 1.0)),
                     y: Math.max(0, Math.min(Number(layer.y ?? 0.5), 1.0)),
-                    scale: layer.scale !== undefined ? Number(layer.scale) : 1.0,
-                    rotation: layer.rotation !== undefined ? Number(layer.rotation) : 0,
-                    opacity: layer.opacity !== undefined ? Number(layer.opacity) : 1.0,
+                    scale:
+                      layer.scale !== undefined ? Number(layer.scale) : 1.0,
+                    rotation:
+                      layer.rotation !== undefined ? Number(layer.rotation) : 0,
+                    opacity:
+                      layer.opacity !== undefined ? Number(layer.opacity) : 1.0,
                     start: Number(layer.start ?? 0),
                     end: Number(layer.end ?? 30),
                   });
                 }
               } catch (stkErr: any) {
-                this.logger.warn(`Failed to resolve sticker ${layer.stickerId}: ${stkErr.message}`);
+                this.logger.warn(
+                  `Failed to resolve sticker ${layer.stickerId}: ${stkErr.message}`,
+                );
               }
             } else {
               try {
@@ -511,15 +574,20 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
                     localPath: layerPngPath,
                     x: Math.max(0, Math.min(Number(layer.x ?? 0.5), 1.0)),
                     y: Math.max(0, Math.min(Number(layer.y ?? 0.5), 1.0)),
-                    scale: layer.scale !== undefined ? Number(layer.scale) : 1.0,
-                    rotation: layer.rotation !== undefined ? Number(layer.rotation) : 0,
-                    opacity: layer.opacity !== undefined ? Number(layer.opacity) : 1.0,
+                    scale:
+                      layer.scale !== undefined ? Number(layer.scale) : 1.0,
+                    rotation:
+                      layer.rotation !== undefined ? Number(layer.rotation) : 0,
+                    opacity:
+                      layer.opacity !== undefined ? Number(layer.opacity) : 1.0,
                     start: Number(layer.start ?? 0),
                     end: Number(layer.end ?? 30),
                   });
                 }
               } catch (stkErr: any) {
-                this.logger.warn(`Failed to render sticker ${layer.stickerId}: ${stkErr.message}`);
+                this.logger.warn(
+                  `Failed to render sticker ${layer.stickerId}: ${stkErr.message}`,
+                );
               }
             }
           } else if (layer.type === 'TEXT' || layer.type === 'CAPTION') {
@@ -532,14 +600,18 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
                   x: Math.max(0, Math.min(Number(layer.x ?? 0.5), 1.0)),
                   y: Math.max(0, Math.min(Number(layer.y ?? 0.5), 1.0)),
                   scale: layer.scale !== undefined ? Number(layer.scale) : 1.0,
-                  rotation: layer.rotation !== undefined ? Number(layer.rotation) : 0,
-                  opacity: layer.opacity !== undefined ? Number(layer.opacity) : 1.0,
+                  rotation:
+                    layer.rotation !== undefined ? Number(layer.rotation) : 0,
+                  opacity:
+                    layer.opacity !== undefined ? Number(layer.opacity) : 1.0,
                   start: Number(layer.start ?? 0),
                   end: Number(layer.end ?? 30),
                 });
               }
             } catch (txtErr: any) {
-              this.logger.warn(`Failed to render text overlay ${layer.id}: ${txtErr.message}`);
+              this.logger.warn(
+                `Failed to render text overlay ${layer.id}: ${txtErr.message}`,
+              );
             }
           }
         }
@@ -612,7 +684,11 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
           Key: processedKey,
         }),
       );
-      if (videoHead && videoHead.ContentLength !== undefined && videoHead.ContentLength <= 0) {
+      if (
+        videoHead &&
+        videoHead.ContentLength !== undefined &&
+        videoHead.ContentLength <= 0
+      ) {
         throw new Error('Verified S3 video object is empty (0 bytes).');
       }
 
@@ -623,7 +699,11 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
             Key: posterKey,
           }),
         );
-        if (posterHead && posterHead.ContentLength !== undefined && posterHead.ContentLength <= 0) {
+        if (
+          posterHead &&
+          posterHead.ContentLength !== undefined &&
+          posterHead.ContentLength <= 0
+        ) {
           throw new Error('Verified S3 poster object is empty (0 bytes).');
         }
       }
@@ -634,19 +714,23 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
 
       if (this.signedUrlService) {
         try {
-          const signedVideo = await this.signedUrlService.generateSignedVideoUrl(
-            processedKey,
-            86400 * 7,
-          );
+          const signedVideo =
+            await this.signedUrlService.generateSignedVideoUrl(
+              processedKey,
+              86400 * 7,
+            );
           if (signedVideo) playbackUrl = signedVideo;
 
-          const signedPoster = await this.signedUrlService.generateSignedImageUrl(
-            posterKey,
-            86400 * 7,
-          );
+          const signedPoster =
+            await this.signedUrlService.generateSignedImageUrl(
+              posterKey,
+              86400 * 7,
+            );
           if (signedPoster) posterUrl = signedPoster;
         } catch (signErr: any) {
-          this.logger.warn(`Could not presign processed URLs: ${signErr.message}`);
+          this.logger.warn(
+            `Could not presign processed URLs: ${signErr.message}`,
+          );
         }
       }
 
@@ -704,8 +788,8 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
             errorCode: isPermanent
               ? 'PERMANENT_MEDIA_ERROR'
               : willRetry
-              ? 'TRANSIENT_ERROR'
-              : 'MAX_ATTEMPTS_EXCEEDED',
+                ? 'TRANSIENT_ERROR'
+                : 'MAX_ATTEMPTS_EXCEEDED',
             errorMessage: friendlyMessage,
             isPermanentFailure: isPermanent,
             lockedAt: null,
@@ -726,7 +810,9 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
           fs.rmSync(jobDir, { recursive: true, force: true });
         }
       } catch (cleanErr: any) {
-        this.logger.warn(`Failed to clean up job temp dir ${jobDir}: ${cleanErr.message}`);
+        this.logger.warn(
+          `Failed to clean up job temp dir ${jobDir}: ${cleanErr.message}`,
+        );
       }
     }
   }
@@ -773,7 +859,8 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
         $set: {
           status: 'FAILED',
           errorCode: 'TIMEOUT_EXCEEDED',
-          errorMessage: 'Video processing timed out and exceeded maximum retries.',
+          errorMessage:
+            'Video processing timed out and exceeded maximum retries.',
           lockedAt: null,
           lockedBy: null,
         },
@@ -787,4 +874,3 @@ export class CommunityMediaJobService implements OnModuleInit, OnModuleDestroy {
     }
   }
 }
-

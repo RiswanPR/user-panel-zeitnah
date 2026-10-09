@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
 import {
   Organization,
@@ -28,13 +32,29 @@ describe('OrganizationsService', () => {
   let mockSignedUrlService: any;
 
   // Helper buffers with valid magic numbers
-  const validPngBuffer = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x01]);
-  const validJpgBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46]);
+  const validPngBuffer = Buffer.from([
+    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x01,
+  ]);
+  const validJpgBuffer = Buffer.from([
+    0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46,
+  ]);
   const validWebpBuffer = Buffer.from([
-    0x52, 0x49, 0x46, 0x46, // RIFF
-    0x20, 0x00, 0x00, 0x00,
-    0x57, 0x45, 0x42, 0x50, // WEBP
-    0x56, 0x50, 0x38, 0x20,
+    0x52,
+    0x49,
+    0x46,
+    0x46, // RIFF
+    0x20,
+    0x00,
+    0x00,
+    0x00,
+    0x57,
+    0x45,
+    0x42,
+    0x50, // WEBP
+    0x56,
+    0x50,
+    0x38,
+    0x20,
   ]);
   const invalidBuffer = Buffer.from([0x00, 0x01, 0x02, 0x03]);
 
@@ -109,7 +129,9 @@ describe('OrganizationsService', () => {
     };
 
     mockSignedUrlService = {
-      generateSignedImageUrl: jest.fn().mockImplementation((k) => `https://cdn.zeitnah.com/${k}`),
+      generateSignedImageUrl: jest
+        .fn()
+        .mockImplementation((k) => `https://cdn.zeitnah.com/${k}`),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -162,12 +184,14 @@ describe('OrganizationsService', () => {
 
       expect(result).toBeDefined();
       expect(result.success).toBe(true);
-      expect(result.url).toContain('https://cdn.zeitnah.com/organizations/logos/');
+      expect(result.url).toContain(
+        'https://cdn.zeitnah.com/organizations/logos/',
+      );
       expect(result.key).toMatch(/^organizations\/logos\/.+\.png$/);
       expect(mockUploadService.uploadFile).toHaveBeenCalledWith(
         result.key,
         mockFile.buffer,
-        'image/png'
+        'image/png',
       );
     });
 
@@ -218,7 +242,9 @@ describe('OrganizationsService', () => {
         size: validPngBuffer.length,
       };
 
-      await expect(service.uploadLogo(userId, mockFile)).rejects.toThrow(ForbiddenException);
+      await expect(service.uploadLogo(userId, mockFile)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should allow platform admin to upload business logo regardless of primaryRole', async () => {
@@ -245,7 +271,9 @@ describe('OrganizationsService', () => {
         size: 0,
       };
 
-      await expect(service.uploadLogo(userId, mockFile)).rejects.toThrow(BadRequestException);
+      await expect(service.uploadLogo(userId, mockFile)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should reject file exceeding 5 MB limit', async () => {
@@ -259,7 +287,9 @@ describe('OrganizationsService', () => {
         size: largeBuffer.length,
       };
 
-      await expect(service.uploadLogo(userId, mockFile)).rejects.toThrow(BadRequestException);
+      await expect(service.uploadLogo(userId, mockFile)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should reject unsupported MIME type (e.g. application/pdf, image/gif)', async () => {
@@ -269,7 +299,9 @@ describe('OrganizationsService', () => {
         size: validPngBuffer.length,
       };
 
-      await expect(service.uploadLogo(userId, mockFile)).rejects.toThrow(BadRequestException);
+      await expect(service.uploadLogo(userId, mockFile)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should reject file when binary magic numbers do not match MIME type (spoofed extension)', async () => {
@@ -279,7 +311,9 @@ describe('OrganizationsService', () => {
         size: invalidBuffer.length,
       };
 
-      await expect(service.uploadLogo(userId, mockFile)).rejects.toThrow(BadRequestException);
+      await expect(service.uploadLogo(userId, mockFile)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -289,7 +323,8 @@ describe('OrganizationsService', () => {
     it('should create business with uploaded logo reference', async () => {
       mockOrgModel.findOne.mockReturnValueOnce(null); // slug available
 
-      const logoUrl = 'https://cdn.zeitnah.com/organizations/logos/user-123.png';
+      const logoUrl =
+        'https://cdn.zeitnah.com/organizations/logos/user-123.png';
       const created = await service.createOrganization(userId, {
         name: 'Apex Infrastructure Ltd',
         logo: logoUrl,
@@ -301,7 +336,7 @@ describe('OrganizationsService', () => {
         expect.objectContaining({
           name: 'Apex Infrastructure Ltd',
           logo: logoUrl,
-        })
+        }),
       );
     });
 
@@ -318,7 +353,7 @@ describe('OrganizationsService', () => {
         expect.objectContaining({
           name: 'Bare Business',
           logo: '',
-        })
+        }),
       );
     });
 
@@ -335,7 +370,7 @@ describe('OrganizationsService', () => {
       expect(mockOrgModel.create).toHaveBeenCalledWith(
         expect.objectContaining({
           logo: externalUrl,
-        })
+        }),
       );
     });
 
@@ -349,13 +384,16 @@ describe('OrganizationsService', () => {
       };
       mockOrgModel.findById.mockResolvedValueOnce(existingOrg);
 
-      const newLogoUrl = 'https://cdn.zeitnah.com/organizations/logos/new-logo-key.png';
+      const newLogoUrl =
+        'https://cdn.zeitnah.com/organizations/logos/new-logo-key.png';
       await service.updateOrganization(userId, orgId, {
         logo: newLogoUrl,
       });
 
       expect(existingOrg.logo).toBe(newLogoUrl);
-      expect(mockUploadService.deleteFile).toHaveBeenCalledWith('organizations/logos/old-logo-key.png');
+      expect(mockUploadService.deleteFile).toHaveBeenCalledWith(
+        'organizations/logos/old-logo-key.png',
+      );
       expect(existingOrg.save).toHaveBeenCalled();
     });
 
@@ -374,7 +412,9 @@ describe('OrganizationsService', () => {
       });
 
       expect(existingOrg.logo).toBe('');
-      expect(mockUploadService.deleteFile).toHaveBeenCalledWith('organizations/logos/existing-to-remove.png');
+      expect(mockUploadService.deleteFile).toHaveBeenCalledWith(
+        'organizations/logos/existing-to-remove.png',
+      );
       expect(existingOrg.save).toHaveBeenCalled();
     });
   });
@@ -540,7 +580,10 @@ describe('OrganizationsService', () => {
         lean: jest.fn().mockResolvedValueOnce(orgDoc),
       });
 
-      const result = await service.validateCompanyPublishingAccess(testUserId, orgId);
+      const result = await service.validateCompanyPublishingAccess(
+        testUserId,
+        orgId,
+      );
       expect(result).toBeDefined();
       expect(result.name).toBe('Creator Company');
     });
@@ -563,7 +606,10 @@ describe('OrganizationsService', () => {
         status: MembershipStatus.ACTIVE,
       });
 
-      const result = await service.validateCompanyPublishingAccess(testUserId, orgId);
+      const result = await service.validateCompanyPublishingAccess(
+        testUserId,
+        orgId,
+      );
       expect(result).toBeDefined();
       expect(result.name).toBe('Member Company');
     });

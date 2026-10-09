@@ -25,11 +25,27 @@ export class CommunityMusicController {
 
   @Get()
   @ApiOperation({ summary: 'Browse active music catalog with pagination' })
-  @ApiQuery({ name: 'category', required: false, description: 'Category filter (e.g. UPBEAT, CHILL, FOCUS)' })
+  @ApiQuery({
+    name: 'category',
+    required: false,
+    description: 'Category filter (e.g. UPBEAT, CHILL, FOCUS)',
+  })
   @ApiQuery({ name: 'mood', required: false, description: 'Mood filter' })
-  @ApiQuery({ name: 'limit', required: false, description: 'Number of tracks to return (default: 20)' })
-  @ApiQuery({ name: 'cursor', required: false, description: 'Cursor timestamp for pagination' })
-  @ApiQuery({ name: 'skip', required: false, description: 'Offset for pagination' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Number of tracks to return (default: 20)',
+  })
+  @ApiQuery({
+    name: 'cursor',
+    required: false,
+    description: 'Cursor timestamp for pagination',
+  })
+  @ApiQuery({
+    name: 'skip',
+    required: false,
+    description: 'Offset for pagination',
+  })
   async getCatalog(
     @Query('category') category?: string,
     @Query('mood') mood?: string,
@@ -47,11 +63,21 @@ export class CommunityMusicController {
   }
 
   @Get('search')
-  @ApiOperation({ summary: 'Search active music catalog by title, artist, or tags' })
+  @ApiOperation({
+    summary: 'Search active music catalog by title, artist, or tags',
+  })
   @ApiQuery({ name: 'q', required: false, description: 'Search query string' })
-  @ApiQuery({ name: 'category', required: false, description: 'Category filter' })
+  @ApiQuery({
+    name: 'category',
+    required: false,
+    description: 'Category filter',
+  })
   @ApiQuery({ name: 'mood', required: false, description: 'Mood filter' })
-  @ApiQuery({ name: 'limit', required: false, description: 'Number of results (default: 20)' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Number of results (default: 20)',
+  })
   async searchMusic(
     @Query('q') q?: string,
     @Query('category') category?: string,

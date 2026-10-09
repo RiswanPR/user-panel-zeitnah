@@ -15,7 +15,9 @@ describe('Mongoose `new` Option Deprecation Migration Suite', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    emitWarningSpy = jest.spyOn(process, 'emitWarning').mockImplementation(() => {});
+    emitWarningSpy = jest
+      .spyOn(process, 'emitWarning')
+      .mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -43,7 +45,7 @@ describe('Mongoose `new` Option Deprecation Migration Suite', () => {
 
       const options = query.getOptions();
       expect(options.returnDocument).toBe('after');
-      expect((options as any).new).toBeUndefined();
+      expect(options.new).toBeUndefined();
 
       // Trigger Mongoose internal query preparation & option validation
       try {
@@ -53,7 +55,9 @@ describe('Mongoose `new` Option Deprecation Migration Suite', () => {
       }
 
       expect(emitWarningSpy).not.toHaveBeenCalledWith(
-        expect.stringContaining('the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated'),
+        expect.stringContaining(
+          'the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated',
+        ),
         expect.anything(),
       );
     });
@@ -80,7 +84,9 @@ describe('Mongoose `new` Option Deprecation Migration Suite', () => {
       }
 
       expect(emitWarningSpy).toHaveBeenCalledWith(
-        expect.stringContaining('the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated'),
+        expect.stringContaining(
+          'the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated',
+        ),
         expect.anything(),
       );
     });
@@ -104,23 +110,35 @@ describe('Mongoose `new` Option Deprecation Migration Suite', () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           CommunityMediaJobService,
-          { provide: getModelToken(CommunityMediaJob.name), useValue: mockJobModel },
+          {
+            provide: getModelToken(CommunityMediaJob.name),
+            useValue: mockJobModel,
+          },
           {
             provide: CommunityVideoProcessorService,
             useValue: { probeMedia: jest.fn(), processVideo: jest.fn() },
           },
           {
             provide: S3Service,
-            useValue: { s3Client: { send: jest.fn() }, bucketName: 'test', region: 'us-east-1' },
+            useValue: {
+              s3Client: { send: jest.fn() },
+              bucketName: 'test',
+              region: 'us-east-1',
+            },
           },
           {
             provide: SignedUrlService,
-            useValue: { generateSignedVideoUrl: jest.fn(), generateSignedImageUrl: jest.fn() },
+            useValue: {
+              generateSignedVideoUrl: jest.fn(),
+              generateSignedImageUrl: jest.fn(),
+            },
           },
         ],
       }).compile();
 
-      jobService = module.get<CommunityMediaJobService>(CommunityMediaJobService);
+      jobService = module.get<CommunityMediaJobService>(
+        CommunityMediaJobService,
+      );
     });
 
     it('claims queued job with returnDocument: "after" and sort: { createdAt: 1 } without deprecated new option', async () => {
@@ -137,7 +155,9 @@ describe('Mongoose `new` Option Deprecation Migration Suite', () => {
         .mockResolvedValueOnce(claimedJob)
         .mockResolvedValueOnce(null);
 
-      const executeSpy = jest.spyOn<any, any>(jobService, 'executeJob').mockResolvedValue(undefined);
+      const executeSpy = jest
+        .spyOn<any, any>(jobService, 'executeJob')
+        .mockResolvedValue(undefined);
 
       await jobService.processNextJobs();
 
@@ -313,7 +333,9 @@ describe('Mongoose `new` Option Deprecation Migration Suite', () => {
     };
 
     beforeEach(() => {
-      idempotencyService = new CommunityIdempotencyService(mockIdempotencyModel);
+      idempotencyService = new CommunityIdempotencyService(
+        mockIdempotencyModel,
+      );
     });
 
     it('reclaims stale pending lock using returnDocument: "after" without deprecated new option', async () => {
@@ -351,7 +373,9 @@ describe('Mongoose `new` Option Deprecation Migration Suite', () => {
         };
         mockIdempotencyModel.findOneAndUpdate.mockResolvedValue(reclaimedDoc);
 
-        const mockExecute = jest.fn().mockResolvedValue({ _id: 'new-post-999' });
+        const mockExecute = jest
+          .fn()
+          .mockResolvedValue({ _id: 'new-post-999' });
 
         const executionPromise = idempotencyService.executeWithIdempotency(
           'user-reclaim-1',
@@ -380,7 +404,8 @@ describe('Mongoose `new` Option Deprecation Migration Suite', () => {
           { returnDocument: 'after' },
         );
 
-        const calledOptions = mockIdempotencyModel.findOneAndUpdate.mock.calls[0][2];
+        const calledOptions =
+          mockIdempotencyModel.findOneAndUpdate.mock.calls[0][2];
         expect(calledOptions.returnDocument).toBe('after');
         expect(calledOptions.new).toBeUndefined();
       } finally {

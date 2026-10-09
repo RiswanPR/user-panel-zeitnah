@@ -92,19 +92,14 @@ export async function validateTargetOrganization(
   const { ObjectId } = require('mongodb');
   try {
     orgDoc = await orgColl.findOne({
-      $or: [
-        { _id: new ObjectId(config.id) },
-        { _id: config.id as any },
-      ],
+      $or: [{ _id: new ObjectId(config.id) }, { _id: config.id as any }],
     });
   } catch (err) {
     orgDoc = await orgColl.findOne({ _id: config.id });
   }
 
   if (!orgDoc) {
-    throw new Error(
-      `Target organization not found for ID: ${config.id}`,
-    );
+    throw new Error(`Target organization not found for ID: ${config.id}`);
   }
 
   if (orgDoc.name !== config.name) {
@@ -142,7 +137,10 @@ export async function discoverAndPreviewCandidates(
   const userColl = db.collection('users');
 
   // Discover all active posts
-  const posts = await postColl.find({ isDeleted: false }).sort({ createdAt: -1 }).toArray();
+  const posts = await postColl
+    .find({ isDeleted: false })
+    .sort({ createdAt: -1 })
+    .toArray();
 
   const candidates: CandidatePostSummary[] = [];
 
@@ -152,7 +150,9 @@ export async function discoverAndPreviewCandidates(
       try {
         const { ObjectId } = require('mongodb');
         const user = await userColl.findOne(
-          { $or: [{ _id: new ObjectId(post.authorId) }, { _id: post.authorId }] },
+          {
+            $or: [{ _id: new ObjectId(post.authorId) }, { _id: post.authorId }],
+          },
           { projection: { name: 1, role: 1 } },
         );
         if (user?.name) authorName = user.name;
@@ -160,7 +160,10 @@ export async function discoverAndPreviewCandidates(
     }
 
     const contentText = (post.content || '').trim();
-    const excerpt = contentText.length > 80 ? contentText.substring(0, 80) + '...' : contentText;
+    const excerpt =
+      contentText.length > 80
+        ? contentText.substring(0, 80) + '...'
+        : contentText;
     const mediaCount = Array.isArray(post.media) ? post.media.length : 0;
 
     let isEligible = false;
@@ -172,7 +175,10 @@ export async function discoverAndPreviewCandidates(
       exclusionReason = 'Post is soft-deleted (isDeleted: true)';
     }
     // Rule 2: Exclude if already has non-null organizationId
-    else if (post.organizationId !== undefined && post.organizationId !== null) {
+    else if (
+      post.organizationId !== undefined &&
+      post.organizationId !== null
+    ) {
       exclusionReason = `Post already assigned to organizationId: ${post.organizationId}`;
     }
     // Rule 3: Exclude if author does not match target org creator/owner
@@ -197,15 +203,22 @@ export async function discoverAndPreviewCandidates(
 
       if (isCourseAnnouncement) {
         isEligible = true;
-      } else if (lower.includes('team zeitnah') || lower.includes('proudly announcing our platform')) {
+      } else if (
+        lower.includes('team zeitnah') ||
+        lower.includes('proudly announcing our platform')
+      ) {
         requiresReview = true;
-        exclusionReason = 'Flagged for manual review: platform welcome/announcement post rather than specific course intake';
+        exclusionReason =
+          'Flagged for manual review: platform welcome/announcement post rather than specific course intake';
       } else if (lower.includes('congrats') || lower.includes('jibin')) {
-        exclusionReason = 'Personal congratulatory shoutout, not an official academy course announcement';
+        exclusionReason =
+          'Personal congratulatory shoutout, not an official academy course announcement';
       } else if (lower.includes('road topo')) {
-        exclusionReason = 'Technical survey file/document post without explicit course announcement copy';
+        exclusionReason =
+          'Technical survey file/document post without explicit course announcement copy';
       } else {
-        exclusionReason = 'Content does not match academy course announcement criteria';
+        exclusionReason =
+          'Content does not match academy course announcement criteria';
       }
     }
 
@@ -213,7 +226,9 @@ export async function discoverAndPreviewCandidates(
       id: String(post._id),
       authorId: String(post.authorId),
       authorName,
-      currentOrganizationId: post.organizationId ? String(post.organizationId) : null,
+      currentOrganizationId: post.organizationId
+        ? String(post.organizationId)
+        : null,
       contentExcerpt: excerpt,
       type: post.type,
       audience: post.audience,
@@ -227,7 +242,9 @@ export async function discoverAndPreviewCandidates(
   }
 
   const eligiblePosts = candidates.filter((c) => c.isEligible);
-  const excludedPosts = candidates.filter((c) => !c.isEligible && !c.requiresReview);
+  const excludedPosts = candidates.filter(
+    (c) => !c.isEligible && !c.requiresReview,
+  );
   const ambiguousPosts = candidates.filter((c) => c.requiresReview);
 
   return {
@@ -337,7 +354,8 @@ export async function executeControlledMigration(
   }
 
   // Step 2: Create Full Document Backup before writing
-  const effectiveBackupDir = backupDir || path.resolve(process.cwd(), 'backups/community_posts');
+  const effectiveBackupDir =
+    backupDir || path.resolve(process.cwd(), 'backups/community_posts');
   if (!fs.existsSync(effectiveBackupDir)) {
     fs.mkdirSync(effectiveBackupDir, { recursive: true });
   }
@@ -374,14 +392,18 @@ export async function executeControlledMigration(
     result.attemptedCount++;
     const postId = String(post._id);
     const wasOriginallyAbsent = !('organizationId' in post);
-    const previousOrgId = post.organizationId !== undefined ? post.organizationId : null;
+    const previousOrgId =
+      post.organizationId !== undefined ? post.organizationId : null;
 
     try {
       const updateResult = await postColl.updateOne(
         {
           _id: postId,
           isDeleted: false,
-          $or: [{ organizationId: { $exists: false } }, { organizationId: null }],
+          $or: [
+            { organizationId: { $exists: false } },
+            { organizationId: null },
+          ],
         },
         {
           $set: { organizationId: targetOrg.id },
@@ -442,12 +464,18 @@ export async function executeControlledMigration(
   }
 
   // Step 4: Write Journal
-  const effectiveJournalDir = journalDir || path.resolve(process.cwd(), 'backups/migration_journals');
+  const effectiveJournalDir =
+    journalDir || path.resolve(process.cwd(), 'backups/migration_journals');
   if (!fs.existsSync(effectiveJournalDir)) {
     fs.mkdirSync(effectiveJournalDir, { recursive: true });
   }
-  const journalFilePath = path.join(effectiveJournalDir, `journal_${runId}.json`);
-  fs.writeFileSync(journalFilePath, JSON.stringify(result, null, 2), { mode: 0o600 });
+  const journalFilePath = path.join(
+    effectiveJournalDir,
+    `journal_${runId}.json`,
+  );
+  fs.writeFileSync(journalFilePath, JSON.stringify(result, null, 2), {
+    mode: 0o600,
+  });
   result.journalFile = journalFilePath;
 
   return result;
@@ -512,7 +540,10 @@ export async function executeRollback(
         ? { $unset: { organizationId: '' } }
         : { $set: { organizationId: null } };
 
-      const res = await postColl.updateOne({ _id: postId, organizationId: targetOrgId }, updateOp);
+      const res = await postColl.updateOne(
+        { _id: postId, organizationId: targetOrgId },
+        updateOp,
+      );
       if (res.modifiedCount !== 1) {
         throw new Error(`Rollback update failed for ${postId}`);
       }

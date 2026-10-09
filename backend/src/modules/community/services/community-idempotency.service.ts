@@ -29,13 +29,15 @@ export class CommunityIdempotencyService {
    */
   computeFingerprint(userId: string, operation: string, payload: any): string {
     const normalizedMedia = Array.isArray(payload.media)
-      ? payload.media.map((m: any) => ({
-          url: (m?.url || '').split('?')[0].trim(),
-          type: m?.type || 'image',
-        })).sort((a: any, b: any) => a.url.localeCompare(b.url))
+      ? payload.media
+          .map((m: any) => ({
+            url: (m?.url || '').split('?')[0].trim(),
+            type: m?.type || 'image',
+          }))
+          .sort((a: any, b: any) => a.url.localeCompare(b.url))
       : payload.mediaUrl
-      ? [(payload.mediaUrl || '').split('?')[0].trim()]
-      : [];
+        ? [(payload.mediaUrl || '').split('?')[0].trim()]
+        : [];
 
     const normalizedTags = Array.isArray(payload.tags)
       ? [...payload.tags].sort()
@@ -81,7 +83,12 @@ export class CommunityIdempotencyService {
     execute: () => Promise<T>,
   ): Promise<T> {
     // If the database model is unavailable or no key is supplied, run direct execution
-    if (!this.idempotencyModel || !idempotencyKey || typeof idempotencyKey !== 'string' || !idempotencyKey.trim()) {
+    if (
+      !this.idempotencyModel ||
+      !idempotencyKey ||
+      typeof idempotencyKey !== 'string' ||
+      !idempotencyKey.trim()
+    ) {
       return execute();
     }
 
@@ -108,7 +115,10 @@ export class CommunityIdempotencyService {
         // Record already exists for this (userId, operation, idempotencyKey)
         isLeader = false;
       } else {
-        this.logger.error(`Error attempting to acquire idempotency lock: ${err.message}`, err.stack);
+        this.logger.error(
+          `Error attempting to acquire idempotency lock: ${err.message}`,
+          err.stack,
+        );
         // Fallback to direct execution on unexpected DB error to avoid blocking the user
         return execute();
       }
@@ -158,7 +168,8 @@ export class CommunityIdempotencyService {
       throw new ConflictException({
         statusCode: 409,
         error: 'Conflict',
-        message: 'Idempotency key has already been used with a different request payload.',
+        message:
+          'Idempotency key has already been used with a different request payload.',
         code: 'IDEMPOTENCY_PAYLOAD_MISMATCH',
       });
     }
@@ -211,7 +222,7 @@ export class CommunityIdempotencyService {
       try {
         const result = await execute();
         await this.idempotencyModel.updateOne(
-          { _id: reclaimed._id as any },
+          { _id: reclaimed._id },
           {
             $set: {
               status: 'COMPLETED',
@@ -223,13 +234,15 @@ export class CommunityIdempotencyService {
         return result;
       } catch (err) {
         await this.idempotencyModel.updateOne(
-          { _id: reclaimed._id as any },
+          { _id: reclaimed._id },
           { $set: { status: 'FAILED' } },
         );
         throw err;
       }
     }
 
-    throw new RequestTimeoutException('Timeout waiting for concurrent publish operation to complete.');
+    throw new RequestTimeoutException(
+      'Timeout waiting for concurrent publish operation to complete.',
+    );
   }
 }

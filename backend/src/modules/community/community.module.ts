@@ -28,10 +28,7 @@ import {
   CommunityMediaJob,
   CommunityMediaJobSchema,
 } from './schemas/media-job.schema';
-import {
-  CommunityMusic,
-  CommunityMusicSchema,
-} from './schemas/music.schema';
+import { CommunityMusic, CommunityMusicSchema } from './schemas/music.schema';
 import {
   Comment,
   CommentSchema,

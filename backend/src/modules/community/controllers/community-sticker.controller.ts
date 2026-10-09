@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -22,9 +17,21 @@ export class CommunityStickerController {
 
   @Get()
   @ApiOperation({ summary: 'Get curated sticker catalog' })
-  @ApiQuery({ name: 'category', required: false, description: 'Filter by sticker category' })
-  @ApiQuery({ name: 'limit', required: false, description: 'Number of stickers to return' })
-  @ApiQuery({ name: 'cursor', required: false, description: 'Cursor for pagination' })
+  @ApiQuery({
+    name: 'category',
+    required: false,
+    description: 'Filter by sticker category',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Number of stickers to return',
+  })
+  @ApiQuery({
+    name: 'cursor',
+    required: false,
+    description: 'Cursor for pagination',
+  })
   async getStickers(
     @Query('category') category?: string,
     @Query('limit') limit?: number,

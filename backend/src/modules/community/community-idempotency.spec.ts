@@ -1,6 +1,9 @@
 /// <reference types="jest" />
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConflictException, InternalServerErrorException } from '@nestjs/common';
+import {
+  ConflictException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { CommunityIdempotencyService } from './services/community-idempotency.service';
 import { CommunityPublishIdempotency } from './schemas/idempotency.schema';
@@ -28,7 +31,9 @@ describe('Phase 4.4: Production Deployment Verification & Durable Server-Side Id
           r.idempotencyKey === doc.idempotencyKey,
       );
       if (exists) {
-        const duplicateError: any = new Error('E11000 duplicate key error collection');
+        const duplicateError: any = new Error(
+          'E11000 duplicate key error collection',
+        );
         duplicateError.code = 11000;
         throw duplicateError;
       }
@@ -181,7 +186,10 @@ describe('Phase 4.4: Production Deployment Verification & Durable Server-Side Id
       const userId = 'user-retry-1';
       const idempotencyKey = 'retry-key-456';
 
-      mockPostRepository.create.mockResolvedValue({ _id: 'post-200', authorId: userId });
+      mockPostRepository.create.mockResolvedValue({
+        _id: 'post-200',
+        authorId: userId,
+      });
       mockPostRepository.findByIdPopulated.mockResolvedValue({
         _id: 'post-200',
         authorId: userId,
@@ -191,12 +199,22 @@ describe('Phase 4.4: Production Deployment Verification & Durable Server-Side Id
       const payload = { content: 'Retry post' } as any;
 
       // First call: initial publish
-      const res1 = await postService.createPost(userId, payload, false, idempotencyKey);
+      const res1 = await postService.createPost(
+        userId,
+        payload,
+        false,
+        idempotencyKey,
+      );
       expect(res1._id).toBe('post-200');
       expect(mockPostRepository.create).toHaveBeenCalledTimes(1);
 
       // Second call: client network retry with same idempotency key
-      const res2 = await postService.createPost(userId, payload, false, idempotencyKey);
+      const res2 = await postService.createPost(
+        userId,
+        payload,
+        false,
+        idempotencyKey,
+      );
       expect(res2._id).toBe('post-200');
       // Must NOT call repository create again
       expect(mockPostRepository.create).toHaveBeenCalledTimes(1);
@@ -207,7 +225,9 @@ describe('Phase 4.4: Production Deployment Verification & Durable Server-Side Id
       const idempotencyKey = 'key-mismatch-789';
 
       mockPostRepository.create.mockResolvedValue({ _id: 'post-300' });
-      mockPostRepository.findByIdPopulated.mockResolvedValue({ _id: 'post-300' });
+      mockPostRepository.findByIdPopulated.mockResolvedValue({
+        _id: 'post-300',
+      });
 
       // First publish with payload A
       await postService.createPost(
@@ -243,9 +263,19 @@ describe('Phase 4.4: Production Deployment Verification & Durable Server-Side Id
       const payload = { content: 'Hello' } as any;
 
       // Post A with key-A
-      const postA = await postService.createPost(userId, payload, false, 'key-A');
+      const postA = await postService.createPost(
+        userId,
+        payload,
+        false,
+        'key-A',
+      );
       // Post B with key-B
-      const postB = await postService.createPost(userId, payload, false, 'key-B');
+      const postB = await postService.createPost(
+        userId,
+        payload,
+        false,
+        'key-B',
+      );
 
       expect(postA._id).toBe('post-seq-1');
       expect(postB._id).toBe('post-seq-2');
@@ -289,10 +319,17 @@ describe('Phase 4.4: Production Deployment Verification & Durable Server-Side Id
       const userId = 'user-fail-1';
       const idempotencyKey = 'fail-key-001';
 
-      mockPostRepository.create.mockRejectedValueOnce(new Error('Database disk full'));
+      mockPostRepository.create.mockRejectedValueOnce(
+        new Error('Database disk full'),
+      );
 
       await expect(
-        postService.createPost(userId, { content: 'Will fail' } as any, false, idempotencyKey),
+        postService.createPost(
+          userId,
+          { content: 'Will fail' } as any,
+          false,
+          idempotencyKey,
+        ),
       ).rejects.toThrow('Database disk full');
 
       expect(dbRecords[0].status).toBe('FAILED');

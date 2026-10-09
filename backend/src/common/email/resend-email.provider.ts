@@ -110,8 +110,7 @@ export class ResendEmailProvider implements EmailProvider {
 
     const timeoutMs = options.timeoutMs || 7000;
     const defaultFrom =
-      process.env.RESEND_FROM_EMAIL ||
-      'Zeitnah <onboarding@resend.dev>';
+      process.env.RESEND_FROM_EMAIL || 'Zeitnah <onboarding@resend.dev>';
     const payload = {
       from: options.from || defaultFrom,
       to: options.to,

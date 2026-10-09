@@ -89,7 +89,8 @@ export class Post {
     type: String,
     enum: Object.values(PostType),
     required: true,
-    set: (v: string) => (typeof v === 'string' ? (v.toUpperCase() as PostType) : v),
+    set: (v: string) =>
+      typeof v === 'string' ? (v.toUpperCase() as PostType) : v,
   })
   type: PostType;
 
@@ -97,7 +98,8 @@ export class Post {
     type: String,
     enum: Object.values(PostAudience),
     required: true,
-    set: (v: string) => (typeof v === 'string' ? (v.toUpperCase() as PostAudience) : v),
+    set: (v: string) =>
+      typeof v === 'string' ? (v.toUpperCase() as PostAudience) : v,
   })
   audience: PostAudience;
 
@@ -203,7 +205,9 @@ PostSchema.pre('validate', function () {
     (this as any).type = (this.type as string).toUpperCase() as PostType;
   }
   if (this.audience && typeof this.audience === 'string') {
-    (this as any).audience = (this.audience as string).toUpperCase() as PostAudience;
+    (this as any).audience = (
+      this.audience as string
+    ).toUpperCase() as PostAudience;
   }
 });
 
@@ -212,7 +216,9 @@ PostSchema.pre('save', function () {
     (this as any).type = (this.type as string).toUpperCase() as PostType;
   }
   if (this.audience && typeof this.audience === 'string') {
-    (this as any).audience = (this.audience as string).toUpperCase() as PostAudience;
+    (this as any).audience = (
+      this.audience as string
+    ).toUpperCase() as PostAudience;
   }
 });
 

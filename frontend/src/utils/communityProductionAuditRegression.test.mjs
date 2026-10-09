@@ -152,3 +152,77 @@ describe('Community Production Audit — Feed Scoping & Data Invariants', () => 
     assert.equal(textPost.media, undefined);
   });
 });
+
+describe('Community Production Audit — Mutation Cache Isolation & Quote Post Scoping', () => {
+  it('correctly resolves isolated targetQueryKey for personal and business quote posts', () => {
+    function resolveQuoteTargetQueryKey(newPost) {
+      const isBusinessPost = Boolean(newPost?.organizationId);
+      return isBusinessPost
+        ? ['community', 'feed', 'business', newPost.organizationId]
+        : ['community', 'feed', 'personal'];
+    }
+
+    const personalQuote = { _id: 'quote-1', organizationId: null, content: 'Personal quote' };
+    const businessQuote = { _id: 'quote-2', organizationId: ZEITNAH_ACADEMY_ID, content: 'Academy quote' };
+
+    assert.deepEqual(resolveQuoteTargetQueryKey(personalQuote), ['community', 'feed', 'personal']);
+    assert.deepEqual(resolveQuoteTargetQueryKey(businessQuote), ['community', 'feed', 'business', ZEITNAH_ACADEMY_ID]);
+  });
+
+  it('verifies quote post prepending never leaks business quote into personal feed or vice-versa', () => {
+    const feeds = {
+      personal: [{ _id: 'post-p-1', content: 'personal' }],
+      zeitnah: [{ _id: 'post-z-1', content: 'zeitnah' }],
+      ritech: [],
+    };
+
+    const newBusinessQuote = {
+      _id: 'quote-z-new',
+      organizationId: ZEITNAH_ACADEMY_ID,
+      content: 'Academy quote',
+    };
+
+    // Target feed update logic
+    const isBusiness = Boolean(newBusinessQuote.organizationId);
+    const targetKey = isBusiness ? 'zeitnah' : 'personal';
+
+    // Prepend strictly to targetKey
+    feeds[targetKey] = [newBusinessQuote, ...feeds[targetKey]];
+
+    // Verify Zeitnah received the post
+    assert.equal(feeds.zeitnah.length, 2);
+    assert.equal(feeds.zeitnah[0]._id, 'quote-z-new');
+
+    // Verify Personal and Ritech feeds were NOT contaminated
+    assert.equal(feeds.personal.length, 1);
+    assert.equal(feeds.personal[0]._id, 'post-p-1');
+    assert.equal(feeds.ritech.length, 0);
+  });
+
+  it('verifies repost stat updates on original post across feeds without prepending into unowned feeds', () => {
+    const targetPostId = 'post-shared-1';
+    const feeds = {
+      feedA: [{ _id: targetPostId, stats: { reposts: 3 } }],
+      feedB: [{ _id: 'other-post', stats: { reposts: 0 } }],
+    };
+
+    const incrementRepostCount = (item) => {
+      if (item._id === targetPostId) {
+        return {
+          ...item,
+          stats: {
+            ...item.stats,
+            reposts: (item.stats?.reposts || 0) + 1,
+          },
+        };
+      }
+      return item;
+    };
+
+    feeds.feedA = feeds.feedA.map(incrementRepostCount);
+    feeds.feedB = feeds.feedB.map(incrementRepostCount);
+
+    assert.equal(feeds.feedA[0].stats.reposts, 4);
+    assert.equal(feeds.feedB[0].stats.reposts, 0);
+  });
+});

@@ -36,8 +36,8 @@ export class CommentRepository extends BaseRepository<CommentDocument> {
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
       author: {
-        _id: authorObj._id ? String(authorObj._id) : (c.authorId || ''),
-        id: authorObj._id ? String(authorObj._id) : (c.authorId || ''),
+        _id: authorObj._id ? String(authorObj._id) : c.authorId || '',
+        id: authorObj._id ? String(authorObj._id) : c.authorId || '',
         name: authorObj.name || 'Zeitnah Member',
         displayName: authorObj.name || 'Zeitnah Member',
         username: authorObj.username || '',

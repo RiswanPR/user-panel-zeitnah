@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { spawn } from 'child_process';
 import * as fs from 'fs';
 
@@ -68,10 +64,15 @@ export class CommunityVideoProcessorService {
   public readonly MAX_VIDEO_DURATION_SECONDS = 90;
   public readonly MIN_VIDEO_DURATION_SECONDS = 0.5;
   public readonly MAX_SOURCE_SIZE_BYTES = 1024 * 1024 * 1024; // 1 GiB
-  public readonly PROCESS_TIMEOUT_MS = Number(process.env.COMMUNITY_FFMPEG_TIMEOUT_MS) || 180000; // 3 minutes or configurable
+  public readonly PROCESS_TIMEOUT_MS =
+    Number(process.env.COMMUNITY_FFMPEG_TIMEOUT_MS) || 180000; // 3 minutes or configurable
 
   public get processTimeoutMs(): number {
-    return Number(process.env.COMMUNITY_FFMPEG_TIMEOUT_MS) || this.PROCESS_TIMEOUT_MS || 180000;
+    return (
+      Number(process.env.COMMUNITY_FFMPEG_TIMEOUT_MS) ||
+      this.PROCESS_TIMEOUT_MS ||
+      180000
+    );
   }
 
   /**
@@ -100,12 +101,16 @@ export class CommunityVideoProcessorService {
       if (options.timeout && options.timeout > 0) {
         timeoutTimer = setTimeout(() => {
           if (isDone) return;
-          this.logger.warn(`Process ${binary} timed out after ${options.timeout}ms. Sending SIGTERM.`);
+          this.logger.warn(
+            `Process ${binary} timed out after ${options.timeout}ms. Sending SIGTERM.`,
+          );
           child.kill('SIGTERM');
           // SIGKILL fallback after 3 seconds
           killTimer = setTimeout(() => {
             if (!isDone) {
-              this.logger.error(`Process ${binary} did not exit after SIGTERM. Sending SIGKILL.`);
+              this.logger.error(
+                `Process ${binary} did not exit after SIGTERM. Sending SIGKILL.`,
+              );
               child.kill('SIGKILL');
             }
           }, 3000);
@@ -137,9 +142,15 @@ export class CommunityVideoProcessorService {
         isDone = true;
         cleanup();
         if (signal === 'SIGTERM' || signal === 'SIGKILL') {
-          reject(new Error(`Process ${binary} timed out after ${options.timeout}ms (killed by ${signal})`));
+          reject(
+            new Error(
+              `Process ${binary} timed out after ${options.timeout}ms (killed by ${signal})`,
+            ),
+          );
         } else if (code !== 0) {
-          const err: any = new Error(`Process ${binary} exited with code ${code}: ${stderr.slice(-500)}`);
+          const err: any = new Error(
+            `Process ${binary} exited with code ${code}: ${stderr.slice(-500)}`,
+          );
           err.code = code;
           err.stderr = stderr;
           reject(err);
@@ -191,9 +202,13 @@ export class CommunityVideoProcessorService {
       const streams = parsed.streams || [];
       const format = parsed.format || {};
 
-      const videoStream = streams.find(
-        (s: any) => s.codec_type === 'video' && s.codec_name !== 'png' && s.codec_name !== 'mjpeg',
-      ) || streams.find((s: any) => s.codec_type === 'video');
+      const videoStream =
+        streams.find(
+          (s: any) =>
+            s.codec_type === 'video' &&
+            s.codec_name !== 'png' &&
+            s.codec_name !== 'mjpeg',
+        ) || streams.find((s: any) => s.codec_type === 'video');
 
       if (!videoStream) {
         throw new BadRequestException({
@@ -227,12 +242,12 @@ export class CommunityVideoProcessorService {
 
       // Detect rotation metadata from Display Matrix side data or stream tags (Section 24)
       const rotationSideData = (videoStream.side_data_list || []).find(
-        (s: any) => s.side_data_type === 'Display Matrix' && s.rotation !== undefined,
+        (s: any) =>
+          s.side_data_type === 'Display Matrix' && s.rotation !== undefined,
       );
       const rotateTag = videoStream.tags?.rotate;
-      const rotationAngle = Math.abs(
-        Number(rotationSideData?.rotation ?? rotateTag ?? 0),
-      ) % 360;
+      const rotationAngle =
+        Math.abs(Number(rotationSideData?.rotation ?? rotateTag ?? 0)) % 360;
 
       const isRotated90or270 = rotationAngle === 90 || rotationAngle === 270;
       const effectiveWidth = isRotated90or270
@@ -247,12 +262,22 @@ export class CommunityVideoProcessorService {
         width: effectiveWidth,
         height: effectiveHeight,
         videoCodec: String(videoStream.codec_name || 'unknown'),
-        audioCodec: audioStream?.codec_name ? String(audioStream.codec_name) : undefined,
+        audioCodec: audioStream?.codec_name
+          ? String(audioStream.codec_name)
+          : undefined,
         hasAudio: Boolean(audioStream),
-        sampleRate: audioStream?.sample_rate ? Number(audioStream.sample_rate) : undefined,
-        channels: audioStream?.channels ? Number(audioStream.channels) : undefined,
-        audioBitrate: audioStream?.bit_rate ? Number(audioStream.bit_rate) : undefined,
-        audioDuration: audioStream?.duration ? parseFloat(audioStream.duration) : undefined,
+        sampleRate: audioStream?.sample_rate
+          ? Number(audioStream.sample_rate)
+          : undefined,
+        channels: audioStream?.channels
+          ? Number(audioStream.channels)
+          : undefined,
+        audioBitrate: audioStream?.bit_rate
+          ? Number(audioStream.bit_rate)
+          : undefined,
+        audioDuration: audioStream?.duration
+          ? parseFloat(audioStream.duration)
+          : undefined,
         formatName: String(format.format_name || 'unknown'),
         size: stat.size,
         bitrate: format.bit_rate ? Number(format.bit_rate) : undefined,
@@ -262,10 +287,13 @@ export class CommunityVideoProcessorService {
       if (err instanceof BadRequestException) {
         throw err;
       }
-      this.logger.error(`ffprobe inspection failed on ${filePath}: ${err.message}`);
+      this.logger.error(
+        `ffprobe inspection failed on ${filePath}: ${err.message}`,
+      );
       throw new BadRequestException({
         code: 'INVALID_VIDEO',
-        message: 'Could not verify media streams. The video file may be corrupt or in an unsupported format.',
+        message:
+          'Could not verify media streams. The video file may be corrupt or in an unsupported format.',
       });
     }
   }
@@ -287,9 +315,13 @@ export class CommunityVideoProcessorService {
     let trimStart = Number(options.trimStart);
     if (isNaN(trimStart) || trimStart < 0) trimStart = 0;
 
-    let trimEnd = options.trimEnd !== undefined && options.trimEnd !== null && !isNaN(Number(options.trimEnd)) && Number(options.trimEnd) > 0
-      ? Number(options.trimEnd)
-      : probe.duration;
+    let trimEnd =
+      options.trimEnd !== undefined &&
+      options.trimEnd !== null &&
+      !isNaN(Number(options.trimEnd)) &&
+      Number(options.trimEnd) > 0
+        ? Number(options.trimEnd)
+        : probe.duration;
 
     // Guard upper bound
     if (trimEnd > probe.duration) {
@@ -333,11 +365,20 @@ export class CommunityVideoProcessorService {
 
     // Audio & Music Mixing options (Section 25, 26, 27, 28)
     const audioConfig = options.audioConfig;
-    const hasMusic = Boolean(audioConfig?.musicPath && fs.existsSync(audioConfig.musicPath));
-    const audioMode = audioConfig?.audioMode || (hasMusic ? 'MIXED' : 'ORIGINAL_ONLY');
+    const hasMusic = Boolean(
+      audioConfig?.musicPath && fs.existsSync(audioConfig.musicPath),
+    );
+    const audioMode =
+      audioConfig?.audioMode || (hasMusic ? 'MIXED' : 'ORIGINAL_ONLY');
 
-    const origVol = Math.max(0, Math.min(Number(audioConfig?.originalVolume ?? 1.0), 1.0));
-    const musicVol = Math.max(0, Math.min(Number(audioConfig?.musicVolume ?? 1.0), 1.0));
+    const origVol = Math.max(
+      0,
+      Math.min(Number(audioConfig?.originalVolume ?? 1.0), 1.0),
+    );
+    const musicVol = Math.max(
+      0,
+      Math.min(Number(audioConfig?.musicVolume ?? 1.0), 1.0),
+    );
 
     let ffmpegArgs: string[] = [];
 
@@ -354,12 +395,16 @@ export class CommunityVideoProcessorService {
       for (let idx = 0; idx < validOverlays.length; idx++) {
         const ov = validOverlays[idx];
         const inTag = idx === 0 ? 'v0' : `v_ov_${idx}`;
-        const outTag = idx === validOverlays.length - 1 ? 'vout' : `v_ov_${idx + 1}`;
+        const outTag =
+          idx === validOverlays.length - 1 ? 'vout' : `v_ov_${idx + 1}`;
         const inputIdx = firstOverlayInputIdx + idx;
         const cx = Math.max(0, Math.min(Number(ov.x ?? 0.5), 1.0));
         const cy = Math.max(0, Math.min(Number(ov.y ?? 0.5), 1.0));
         const st = Math.max(0, Number(ov.start ?? 0));
-        const en = Math.min(targetDuration, Math.max(st + 0.1, Number(ov.end ?? targetDuration)));
+        const en = Math.min(
+          targetDuration,
+          Math.max(st + 0.1, Number(ov.end ?? targetDuration)),
+        );
 
         const scale = Math.max(0.2, Math.min(Number(ov.scale ?? 1.0), 3.0));
         const rotationDeg = Number(ov.rotation ?? 0);
@@ -387,7 +432,9 @@ export class CommunityVideoProcessorService {
           prepFilters.push(`colorchannelmixer=aa=${opacity.toFixed(2)}`);
         }
 
-        videoFilters.push(`[${inputIdx}:v]${prepFilters.join(',')}[${prepTag}]`);
+        videoFilters.push(
+          `[${inputIdx}:v]${prepFilters.join(',')}[${prepTag}]`,
+        );
         videoFilters.push(
           `[${inTag}][${prepTag}]overlay=x=(main_w*${cx.toFixed(4)}-overlay_w/2):y=(main_h*${cy.toFixed(4)}-overlay_h/2):enable='between(t,${st.toFixed(3)},${en.toFixed(3)})'[${outTag}]`,
         );
@@ -415,7 +462,8 @@ export class CommunityVideoProcessorService {
         }
       }
 
-      const filterComplex = videoFilters.join(';') + (audioFilter ? ';' + audioFilter : '');
+      const filterComplex =
+        videoFilters.join(';') + (audioFilter ? ';' + audioFilter : '');
       const overlayInputArgs: string[] = [];
       for (const ov of validOverlays) {
         overlayInputArgs.push('-i', ov.localPath);
@@ -424,7 +472,8 @@ export class CommunityVideoProcessorService {
       if (hasMusic) {
         const musicStart = Math.max(0, Number(audioConfig?.musicStart ?? 0));
         const musicEnd =
-          audioConfig?.musicEnd !== undefined && Number(audioConfig.musicEnd) > musicStart
+          audioConfig?.musicEnd !== undefined &&
+          Number(audioConfig.musicEnd) > musicStart
             ? Number(audioConfig.musicEnd)
             : musicStart + targetDuration;
 
@@ -440,14 +489,25 @@ export class CommunityVideoProcessorService {
           musicStart.toFixed(3),
           ...(musicEnd > musicStart ? ['-to', musicEnd.toFixed(3)] : []),
           '-i',
-          audioConfig!.musicPath!,
+          audioConfig.musicPath,
           ...overlayInputArgs,
           '-filter_complex',
           filterComplex,
           '-map',
           '[vout]',
           ...(hasAudioOut
-            ? ['-map', '[aout]', '-c:a', 'aac', '-b:a', '128k', '-ar', '48000', '-ac', '2']
+            ? [
+                '-map',
+                '[aout]',
+                '-c:a',
+                'aac',
+                '-b:a',
+                '128k',
+                '-ar',
+                '48000',
+                '-ac',
+                '2',
+              ]
             : ['-an']),
           '-c:v',
           'libx264',
@@ -482,7 +542,18 @@ export class CommunityVideoProcessorService {
           '-map',
           '[vout]',
           ...(hasAudioOut
-            ? ['-map', '[aout]', '-c:a', 'aac', '-b:a', '128k', '-ar', '48000', '-ac', '2']
+            ? [
+                '-map',
+                '[aout]',
+                '-c:a',
+                'aac',
+                '-b:a',
+                '128k',
+                '-ar',
+                '48000',
+                '-ac',
+                '2',
+              ]
             : ['-an']),
           '-c:v',
           'libx264',
@@ -507,7 +578,8 @@ export class CommunityVideoProcessorService {
       // 1. MUSIC_ONLY MODE (Section 27)
       const musicStart = Math.max(0, Number(audioConfig?.musicStart ?? 0));
       const musicEnd =
-        audioConfig?.musicEnd !== undefined && Number(audioConfig.musicEnd) > musicStart
+        audioConfig?.musicEnd !== undefined &&
+        Number(audioConfig.musicEnd) > musicStart
           ? Number(audioConfig.musicEnd)
           : musicStart + targetDuration;
 
@@ -523,7 +595,7 @@ export class CommunityVideoProcessorService {
         musicStart.toFixed(3),
         ...(musicEnd > musicStart ? ['-to', musicEnd.toFixed(3)] : []),
         '-i',
-        audioConfig!.musicPath!,
+        audioConfig.musicPath,
         '-map',
         '0:v:0',
         '-vf',
@@ -562,7 +634,8 @@ export class CommunityVideoProcessorService {
       // 2. MIXED MODE (Section 26)
       const musicStart = Math.max(0, Number(audioConfig?.musicStart ?? 0));
       const musicEnd =
-        audioConfig?.musicEnd !== undefined && Number(audioConfig.musicEnd) > musicStart
+        audioConfig?.musicEnd !== undefined &&
+        Number(audioConfig.musicEnd) > musicStart
           ? Number(audioConfig.musicEnd)
           : musicStart + targetDuration;
 
@@ -580,7 +653,7 @@ export class CommunityVideoProcessorService {
           musicStart.toFixed(3),
           ...(musicEnd > musicStart ? ['-to', musicEnd.toFixed(3)] : []),
           '-i',
-          audioConfig!.musicPath!,
+          audioConfig.musicPath,
           '-map',
           '0:v:0',
           '-vf',
@@ -631,7 +704,7 @@ export class CommunityVideoProcessorService {
           musicStart.toFixed(3),
           ...(musicEnd > musicStart ? ['-to', musicEnd.toFixed(3)] : []),
           '-i',
-          audioConfig!.musicPath!,
+          audioConfig.musicPath,
           '-filter_complex',
           filterComplex,
           '-map',
@@ -668,9 +741,33 @@ export class CommunityVideoProcessorService {
     } else {
       // 3. ORIGINAL_ONLY MODE (Section 28) - Existing Phase 3B pipeline preserved
       const audioArgs = probe.hasAudio
-        ? (origVol !== 1.0
-            ? ['-map', '0:a:0', '-c:a', 'aac', '-b:a', '128k', '-ar', '48000', '-ac', '2', '-af', `volume=${origVol.toFixed(2)}`]
-            : ['-map', '0:a:0', '-c:a', 'aac', '-b:a', '128k', '-ar', '48000', '-ac', '2'])
+        ? origVol !== 1.0
+          ? [
+              '-map',
+              '0:a:0',
+              '-c:a',
+              'aac',
+              '-b:a',
+              '128k',
+              '-ar',
+              '48000',
+              '-ac',
+              '2',
+              '-af',
+              `volume=${origVol.toFixed(2)}`,
+            ]
+          : [
+              '-map',
+              '0:a:0',
+              '-c:a',
+              'aac',
+              '-b:a',
+              '128k',
+              '-ar',
+              '48000',
+              '-ac',
+              '2',
+            ]
         : ['-an'];
 
       ffmpegArgs = [
@@ -722,7 +819,10 @@ export class CommunityVideoProcessorService {
     await this.generatePosterFromVideo(outputPath, posterPath);
 
     // Verify output with FFprobe
-    const verified = await this.verifyProcessedOutput(outputPath, targetDuration);
+    const verified = await this.verifyProcessedOutput(
+      outputPath,
+      targetDuration,
+    );
 
     return {
       outputPath,
@@ -744,10 +844,22 @@ export class CommunityVideoProcessorService {
     timestampSeconds = 0.5,
   ): Promise<boolean> {
     try {
-      const ts = timestampSeconds > 0 ? timestampSeconds.toFixed(3) : '00:00:00.000';
+      const ts =
+        timestampSeconds > 0 ? timestampSeconds.toFixed(3) : '00:00:00.000';
       await this.runChildProcess(
         'ffmpeg',
-        ['-y', '-ss', ts, '-i', videoPath, '-frames:v', '1', '-q:v', '2', posterPath],
+        [
+          '-y',
+          '-ss',
+          ts,
+          '-i',
+          videoPath,
+          '-frames:v',
+          '1',
+          '-q:v',
+          '2',
+          posterPath,
+        ],
         { timeout: 30000 },
       );
 
@@ -759,14 +871,27 @@ export class CommunityVideoProcessorService {
       try {
         await this.runChildProcess(
           'ffmpeg',
-          ['-y', '-ss', '00:00:00.000', '-i', videoPath, '-frames:v', '1', '-q:v', '2', posterPath],
+          [
+            '-y',
+            '-ss',
+            '00:00:00.000',
+            '-i',
+            videoPath,
+            '-frames:v',
+            '1',
+            '-q:v',
+            '2',
+            posterPath,
+          ],
           { timeout: 30000 },
         );
         if (fs.existsSync(posterPath) && fs.statSync(posterPath).size > 0) {
           return true;
         }
       } catch (err: any) {
-        this.logger.warn(`Failed to generate poster thumbnail from ${videoPath}: ${err.message}`);
+        this.logger.warn(
+          `Failed to generate poster thumbnail from ${videoPath}: ${err.message}`,
+        );
       }
     }
     return false;
@@ -779,7 +904,12 @@ export class CommunityVideoProcessorService {
   async verifyProcessedOutput(
     outputPath: string,
     expectedDuration: number,
-  ): Promise<{ duration: number; width: number; height: number; size: number }> {
+  ): Promise<{
+    duration: number;
+    width: number;
+    height: number;
+    size: number;
+  }> {
     if (!fs.existsSync(outputPath)) {
       throw new Error('Transcoded output file was not created on disk.');
     }
@@ -804,16 +934,24 @@ export class CommunityVideoProcessorService {
     );
 
     const parsed = JSON.parse(stdout);
-    const videoStream = (parsed.streams || []).find((s: any) => s.codec_name === 'h264');
+    const videoStream = (parsed.streams || []).find(
+      (s: any) => s.codec_name === 'h264',
+    );
     if (!videoStream) {
-      throw new Error('Processed output does not contain an H.264 video stream.');
+      throw new Error(
+        'Processed output does not contain an H.264 video stream.',
+      );
     }
 
     if (videoStream.pix_fmt && videoStream.pix_fmt !== 'yuv420p') {
-      this.logger.warn(`Processed output pixel format is ${videoStream.pix_fmt}, expected yuv420p`);
+      this.logger.warn(
+        `Processed output pixel format is ${videoStream.pix_fmt}, expected yuv420p`,
+      );
     }
 
-    const outDuration = parseFloat(parsed.format?.duration || videoStream.duration || '0');
+    const outDuration = parseFloat(
+      parsed.format?.duration || videoStream.duration || '0',
+    );
     if (isNaN(outDuration) || outDuration <= 0) {
       throw new Error('Processed output duration could not be determined.');
     }
@@ -822,7 +960,9 @@ export class CommunityVideoProcessorService {
     const height = Number(videoStream.height) || 0;
 
     if (width % 2 !== 0 || height % 2 !== 0) {
-      throw new Error(`Output dimensions (${width}x${height}) must be even integers for H.264 encoder.`);
+      throw new Error(
+        `Output dimensions (${width}x${height}) must be even integers for H.264 encoder.`,
+      );
     }
 
     // Tolerance check (within 1.5 seconds of target)
@@ -840,4 +980,3 @@ export class CommunityVideoProcessorService {
     };
   }
 }
-

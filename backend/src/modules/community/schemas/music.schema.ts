@@ -64,7 +64,8 @@ export class CommunityMusic {
   isActive: boolean;
 }
 
-export const CommunityMusicSchema = SchemaFactory.createForClass(CommunityMusic);
+export const CommunityMusicSchema =
+  SchemaFactory.createForClass(CommunityMusic);
 
 // Performant compound index for listing active tracks by category / recency
 CommunityMusicSchema.index({ isActive: 1, category: 1, createdAt: -1 });

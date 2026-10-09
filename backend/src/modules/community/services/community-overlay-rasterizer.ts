@@ -46,7 +46,11 @@ function crc32(buf: Buffer): number {
 /**
  * Encodes an RGBA Buffer into a valid PNG file buffer.
  */
-export function encodeRgbaToPng(width: number, height: number, rgbaBuffer: Buffer): Buffer {
+export function encodeRgbaToPng(
+  width: number,
+  height: number,
+  rgbaBuffer: Buffer,
+): Buffer {
   const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(width, 0);
@@ -190,67 +194,171 @@ function getGlyphBitmask(charCode: number): number[] {
   // Punctuation & symbols
   switch (charCode) {
     case 33: // !
-      mask[4] = 0x10; mask[5] = 0x10; mask[6] = 0x10; mask[7] = 0x10; mask[9] = 0x10; break;
+      mask[4] = 0x10;
+      mask[5] = 0x10;
+      mask[6] = 0x10;
+      mask[7] = 0x10;
+      mask[9] = 0x10;
+      break;
     case 34: // "
-      mask[3] = 0x28; mask[4] = 0x28; break;
+      mask[3] = 0x28;
+      mask[4] = 0x28;
+      break;
     case 35: // #
-      mask[4] = 0x28; mask[5] = 0x7c; mask[6] = 0x28; mask[7] = 0x7c; mask[8] = 0x28; break;
+      mask[4] = 0x28;
+      mask[5] = 0x7c;
+      mask[6] = 0x28;
+      mask[7] = 0x7c;
+      mask[8] = 0x28;
+      break;
     case 36: // $
-      mask[3] = 0x10; mask[4] = 0x3c; mask[5] = 0x50; mask[6] = 0x38; mask[7] = 0x14; mask[8] = 0x78; mask[9] = 0x10; break;
+      mask[3] = 0x10;
+      mask[4] = 0x3c;
+      mask[5] = 0x50;
+      mask[6] = 0x38;
+      mask[7] = 0x14;
+      mask[8] = 0x78;
+      mask[9] = 0x10;
+      break;
     case 38: // &
-      mask[4] = 0x30; mask[5] = 0x48; mask[6] = 0x30; mask[7] = 0x4a; mask[8] = 0x44; mask[9] = 0x3a; break;
+      mask[4] = 0x30;
+      mask[5] = 0x48;
+      mask[6] = 0x30;
+      mask[7] = 0x4a;
+      mask[8] = 0x44;
+      mask[9] = 0x3a;
+      break;
     case 39: // '
-      mask[3] = 0x10; mask[4] = 0x10; break;
+      mask[3] = 0x10;
+      mask[4] = 0x10;
+      break;
     case 40: // (
-      mask[3] = 0x08; mask[4] = 0x10; mask[5] = 0x20; mask[6] = 0x20; mask[7] = 0x20; mask[8] = 0x10; mask[9] = 0x08; break;
+      mask[3] = 0x08;
+      mask[4] = 0x10;
+      mask[5] = 0x20;
+      mask[6] = 0x20;
+      mask[7] = 0x20;
+      mask[8] = 0x10;
+      mask[9] = 0x08;
+      break;
     case 41: // )
-      mask[3] = 0x20; mask[4] = 0x10; mask[5] = 0x08; mask[6] = 0x08; mask[7] = 0x08; mask[8] = 0x10; mask[9] = 0x20; break;
+      mask[3] = 0x20;
+      mask[4] = 0x10;
+      mask[5] = 0x08;
+      mask[6] = 0x08;
+      mask[7] = 0x08;
+      mask[8] = 0x10;
+      mask[9] = 0x20;
+      break;
     case 42: // *
-      mask[4] = 0x10; mask[5] = 0x54; mask[6] = 0x38; mask[7] = 0x54; mask[8] = 0x10; break;
+      mask[4] = 0x10;
+      mask[5] = 0x54;
+      mask[6] = 0x38;
+      mask[7] = 0x54;
+      mask[8] = 0x10;
+      break;
     case 43: // +
-      mask[5] = 0x10; mask[6] = 0x10; mask[7] = 0x7c; mask[8] = 0x10; mask[9] = 0x10; break;
+      mask[5] = 0x10;
+      mask[6] = 0x10;
+      mask[7] = 0x7c;
+      mask[8] = 0x10;
+      mask[9] = 0x10;
+      break;
     case 44: // ,
-      mask[9] = 0x10; mask[10] = 0x10; mask[11] = 0x20; break;
+      mask[9] = 0x10;
+      mask[10] = 0x10;
+      mask[11] = 0x20;
+      break;
     case 45: // -
-      mask[7] = 0x7c; break;
+      mask[7] = 0x7c;
+      break;
     case 46: // .
-      mask[9] = 0x10; break;
+      mask[9] = 0x10;
+      break;
     case 47: // /
-      mask[4] = 0x04; mask[5] = 0x08; mask[6] = 0x10; mask[7] = 0x20; mask[8] = 0x40; break;
+      mask[4] = 0x04;
+      mask[5] = 0x08;
+      mask[6] = 0x10;
+      mask[7] = 0x20;
+      mask[8] = 0x40;
+      break;
     case 58: // :
-      mask[6] = 0x10; mask[9] = 0x10; break;
+      mask[6] = 0x10;
+      mask[9] = 0x10;
+      break;
     case 59: // ;
-      mask[6] = 0x10; mask[9] = 0x10; mask[10] = 0x20; break;
+      mask[6] = 0x10;
+      mask[9] = 0x10;
+      mask[10] = 0x20;
+      break;
     case 60: // <
-      mask[5] = 0x08; mask[6] = 0x10; mask[7] = 0x20; mask[8] = 0x10; mask[9] = 0x08; break;
+      mask[5] = 0x08;
+      mask[6] = 0x10;
+      mask[7] = 0x20;
+      mask[8] = 0x10;
+      mask[9] = 0x08;
+      break;
     case 61: // =
-      mask[6] = 0x7c; mask[8] = 0x7c; break;
+      mask[6] = 0x7c;
+      mask[8] = 0x7c;
+      break;
     case 62: // >
-      mask[5] = 0x20; mask[6] = 0x10; mask[7] = 0x08; mask[8] = 0x10; mask[9] = 0x20; break;
+      mask[5] = 0x20;
+      mask[6] = 0x10;
+      mask[7] = 0x08;
+      mask[8] = 0x10;
+      mask[9] = 0x20;
+      break;
     case 63: // ?
-      mask[4] = 0x38; mask[5] = 0x44; mask[6] = 0x08; mask[7] = 0x10; mask[9] = 0x10; break;
+      mask[4] = 0x38;
+      mask[5] = 0x44;
+      mask[6] = 0x08;
+      mask[7] = 0x10;
+      mask[9] = 0x10;
+      break;
     case 64: // @
-      mask[4] = 0x38; mask[5] = 0x44; mask[6] = 0x5c; mask[7] = 0x54; mask[8] = 0x4c; mask[9] = 0x38; break;
+      mask[4] = 0x38;
+      mask[5] = 0x44;
+      mask[6] = 0x5c;
+      mask[7] = 0x54;
+      mask[8] = 0x4c;
+      mask[9] = 0x38;
+      break;
     default:
-      mask[6] = 0x38; mask[7] = 0x38; break;
+      mask[6] = 0x38;
+      mask[7] = 0x38;
+      break;
   }
   return mask;
 }
 
-function parseHexColor(hex: string, defaultR = 255, defaultG = 255, defaultB = 255): [number, number, number] {
+function parseHexColor(
+  hex: string,
+  defaultR = 255,
+  defaultG = 255,
+  defaultB = 255,
+): [number, number, number] {
   if (!hex || typeof hex !== 'string') return [defaultR, defaultG, defaultB];
   const clean = hex.replace('#', '').trim();
   if (clean.length === 3) {
     const r = parseInt(clean[0] + clean[0], 16);
     const g = parseInt(clean[1] + clean[1], 16);
     const b = parseInt(clean[2] + clean[2], 16);
-    return [isNaN(r) ? defaultR : r, isNaN(g) ? defaultG : g, isNaN(b) ? defaultB : b];
+    return [
+      isNaN(r) ? defaultR : r,
+      isNaN(g) ? defaultG : g,
+      isNaN(b) ? defaultB : b,
+    ];
   }
   if (clean.length >= 6) {
     const r = parseInt(clean.substring(0, 2), 16);
     const g = parseInt(clean.substring(2, 4), 16);
     const b = parseInt(clean.substring(4, 6), 16);
-    return [isNaN(r) ? defaultR : r, isNaN(g) ? defaultG : g, isNaN(b) ? defaultB : b];
+    return [
+      isNaN(r) ? defaultR : r,
+      isNaN(g) ? defaultG : g,
+      isNaN(b) ? defaultB : b,
+    ];
   }
   return [defaultR, defaultG, defaultB];
 }
@@ -262,7 +370,11 @@ export function renderTextLayerPng(
   options: OverlayLayerRenderOptions,
   targetFilePath: string,
 ): { width: number; height: number; filePath: string } {
-  const rawText = String(options.content || '').replace(/<[^>]*>?/gm, '').trim().slice(0, 300) || 'Zeitnah';
+  const rawText =
+    String(options.content || '')
+      .replace(/<[^>]*>?/gm, '')
+      .trim()
+      .slice(0, 300) || 'Zeitnah';
   const fontSize = Math.max(12, Math.min(Number(options.fontSize) || 24, 72));
   const isBold = options.fontWeight === 'bold' || options.fontWeight === '800';
 
@@ -308,15 +420,33 @@ export function renderTextLayerPng(
   const paddingX = Math.round(24 * scale);
   const paddingY = Math.round(14 * scale);
 
-  const cardWidth = Math.min(900, Math.max(120, maxLineLength * charWidth + paddingX * 2));
-  const cardHeight = Math.min(600, Math.max(50, lines.length * (charHeight + 4 * scale) + paddingY * 2));
+  const cardWidth = Math.min(
+    900,
+    Math.max(120, maxLineLength * charWidth + paddingX * 2),
+  );
+  const cardHeight = Math.min(
+    600,
+    Math.max(50, lines.length * (charHeight + 4 * scale) + paddingY * 2),
+  );
 
   const buf = Buffer.alloc(cardWidth * cardHeight * 4); // RGBA
 
   // Styling & Colors
-  let [fgR, fgG, fgB] = parseHexColor(options.color || '#FFFFFF', 255, 255, 255);
-  let [bgR, bgG, bgB] = parseHexColor(options.backgroundColor || '#070B14', 7, 11, 20);
-  let bgAlpha = Math.round(Math.max(0, Math.min(Number(options.backgroundOpacity ?? 0.75), 1.0)) * 255);
+  let [fgR, fgG, fgB] = parseHexColor(
+    options.color || '#FFFFFF',
+    255,
+    255,
+    255,
+  );
+  let [bgR, bgG, bgB] = parseHexColor(
+    options.backgroundColor || '#070B14',
+    7,
+    11,
+    20,
+  );
+  let bgAlpha = Math.round(
+    Math.max(0, Math.min(Number(options.backgroundOpacity ?? 0.75), 1.0)) * 255,
+  );
 
   // Caption Preset Styles
   if (options.type === 'CAPTION') {
@@ -351,10 +481,31 @@ export function renderTextLayerPng(
     for (let y = 0; y < cardHeight; y++) {
       for (let x = 0; x < cardWidth; x++) {
         let inside = true;
-        if (x < radius && y < radius && (x - radius) ** 2 + (y - radius) ** 2 > radius ** 2) inside = false;
-        if (x > cardWidth - radius && y < radius && (x - (cardWidth - radius)) ** 2 + (y - radius) ** 2 > radius ** 2) inside = false;
-        if (x < radius && y > cardHeight - radius && (x - radius) ** 2 + (y - (cardHeight - radius)) ** 2 > radius ** 2) inside = false;
-        if (x > cardWidth - radius && y > cardHeight - radius && (x - (cardWidth - radius)) ** 2 + (y - (cardHeight - radius)) ** 2 > radius ** 2) inside = false;
+        if (
+          x < radius &&
+          y < radius &&
+          (x - radius) ** 2 + (y - radius) ** 2 > radius ** 2
+        )
+          inside = false;
+        if (
+          x > cardWidth - radius &&
+          y < radius &&
+          (x - (cardWidth - radius)) ** 2 + (y - radius) ** 2 > radius ** 2
+        )
+          inside = false;
+        if (
+          x < radius &&
+          y > cardHeight - radius &&
+          (x - radius) ** 2 + (y - (cardHeight - radius)) ** 2 > radius ** 2
+        )
+          inside = false;
+        if (
+          x > cardWidth - radius &&
+          y > cardHeight - radius &&
+          (x - (cardWidth - radius)) ** 2 + (y - (cardHeight - radius)) ** 2 >
+            radius ** 2
+        )
+          inside = false;
 
         if (inside) {
           const idx = (y * cardWidth + x) * 4;
@@ -466,11 +617,15 @@ export function renderStickerPng(
 
   // Reject paths, URLs, data URLs, non-alphanumeric/hyphen IDs
   if (/[\/\\]|\.\.|^https?:|^data:/i.test(stickerId)) {
-    throw new Error(`Invalid sticker ID "${stickerId}": external URLs and filesystem paths are forbidden`);
+    throw new Error(
+      `Invalid sticker ID "${stickerId}": external URLs and filesystem paths are forbidden`,
+    );
   }
 
   if (!VALID_CURATED_STICKER_IDS.includes(stickerId as any)) {
-    throw new Error(`Unknown sticker ID "${stickerId}". Only curated catalog stickers are permitted.`);
+    throw new Error(
+      `Unknown sticker ID "${stickerId}". Only curated catalog stickers are permitted.`,
+    );
   }
 
   const buf = Buffer.alloc(size * size * 4); // RGBA
@@ -494,8 +649,26 @@ export function renderStickerPng(
         }
       }
       // White checkmark lines
-      drawThickLine(buf, size, cx - 18, cy + 2, cx - 4, cy + 16, 6, [255, 255, 255, 255]);
-      drawThickLine(buf, size, cx - 4, cy + 16, cx + 22, cy - 14, 6, [255, 255, 255, 255]);
+      drawThickLine(
+        buf,
+        size,
+        cx - 18,
+        cy + 2,
+        cx - 4,
+        cy + 16,
+        6,
+        [255, 255, 255, 255],
+      );
+      drawThickLine(
+        buf,
+        size,
+        cx - 4,
+        cy + 16,
+        cx + 22,
+        cy - 14,
+        6,
+        [255, 255, 255, 255],
+      );
       break;
     }
     case 'zn-logo': {
@@ -514,9 +687,36 @@ export function renderStickerPng(
         }
       }
       // Bright Z letter
-      drawThickLine(buf, size, cx - 18, cy - 18, cx + 18, cy - 18, 5, [16, 185, 129, 255]);
-      drawThickLine(buf, size, cx + 18, cy - 18, cx - 18, cy + 18, 5, [16, 185, 129, 255]);
-      drawThickLine(buf, size, cx - 18, cy + 18, cx + 18, cy + 18, 5, [16, 185, 129, 255]);
+      drawThickLine(
+        buf,
+        size,
+        cx - 18,
+        cy - 18,
+        cx + 18,
+        cy - 18,
+        5,
+        [16, 185, 129, 255],
+      );
+      drawThickLine(
+        buf,
+        size,
+        cx + 18,
+        cy - 18,
+        cx - 18,
+        cy + 18,
+        5,
+        [16, 185, 129, 255],
+      );
+      drawThickLine(
+        buf,
+        size,
+        cx - 18,
+        cy + 18,
+        cx + 18,
+        cy + 18,
+        5,
+        [16, 185, 129, 255],
+      );
       break;
     }
     case 'heart': {
@@ -541,7 +741,7 @@ export function renderStickerPng(
     case 'star': {
       // Golden 5-point Star
       const rOuter = size * 0.44;
-      const rInner = size * 0.20;
+      const rInner = size * 0.2;
       for (let y = 0; y < size; y++) {
         for (let x = 0; x < size; x++) {
           const dx = x - cx;
@@ -617,8 +817,26 @@ export function renderStickerPng(
         }
       }
       // Center star/cross
-      drawThickLine(buf, size, cx - 18, cy, cx + 18, cy, 6, [255, 255, 255, 255]);
-      drawThickLine(buf, size, cx, cy - 18, cx, cy + 18, 6, [255, 255, 255, 255]);
+      drawThickLine(
+        buf,
+        size,
+        cx - 18,
+        cy,
+        cx + 18,
+        cy,
+        6,
+        [255, 255, 255, 255],
+      );
+      drawThickLine(
+        buf,
+        size,
+        cx,
+        cy - 18,
+        cx,
+        cy + 18,
+        6,
+        [255, 255, 255, 255],
+      );
       break;
     }
   }

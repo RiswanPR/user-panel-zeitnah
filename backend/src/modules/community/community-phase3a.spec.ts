@@ -1,6 +1,10 @@
 /// <reference types="jest" />
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PostService } from './services/post.service';
 import { PostRepository } from './repositories/mongo-post.repository';
 import { CommunityGateway } from './gateways/community.gateway';
@@ -76,19 +80,30 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
       mockPostRepository.findById.mockResolvedValue(originalPost);
       mockPostRepository.findActiveRepost.mockResolvedValue(null);
       mockPostRepository.createRepost.mockResolvedValue(createdRepost);
-      mockPostRepository.findByIdPopulated.mockResolvedValue(populatedCanonical);
+      mockPostRepository.findByIdPopulated.mockResolvedValue(
+        populatedCanonical,
+      );
 
-      const result = await postService.repostPost('post-100', 'reposting-user-2');
+      const result = await postService.repostPost(
+        'post-100',
+        'reposting-user-2',
+      );
 
       expect(mockPostRepository.findById).toHaveBeenCalledWith('post-100');
-      expect(mockPostRepository.findActiveRepost).toHaveBeenCalledWith('post-100', 'reposting-user-2');
+      expect(mockPostRepository.findActiveRepost).toHaveBeenCalledWith(
+        'post-100',
+        'reposting-user-2',
+      );
       expect(mockPostRepository.createRepost).toHaveBeenCalledWith(
         expect.objectContaining({
           originalPostId: 'post-100',
           authorId: 'reposting-user-2',
         }),
       );
-      expect(mockPostRepository.adjustRepostCount).toHaveBeenCalledWith('post-100', 1);
+      expect(mockPostRepository.adjustRepostCount).toHaveBeenCalledWith(
+        'post-100',
+        1,
+      );
       expect(mockNotificationsService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
           recipientId: 'author-user-1',
@@ -121,7 +136,10 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
       mockPostRepository.findActiveRepost.mockResolvedValue(existingRepost);
       mockPostRepository.findByIdPopulated.mockResolvedValue(originalPost);
 
-      const result = await postService.repostPost('post-100', 'reposting-user-2');
+      const result = await postService.repostPost(
+        'post-100',
+        'reposting-user-2',
+      );
 
       expect(mockPostRepository.createRepost).not.toHaveBeenCalled();
       expect(mockPostRepository.adjustRepostCount).not.toHaveBeenCalled();
@@ -144,10 +162,19 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
         stats: { reposts: 2 },
       });
 
-      const result = await postService.unrepostPost('post-100', 'reposting-user-2');
+      const result = await postService.unrepostPost(
+        'post-100',
+        'reposting-user-2',
+      );
 
-      expect(mockPostRepository.removeRepost).toHaveBeenCalledWith('post-100', 'reposting-user-2');
-      expect(mockPostRepository.adjustRepostCount).toHaveBeenCalledWith('post-100', -1);
+      expect(mockPostRepository.removeRepost).toHaveBeenCalledWith(
+        'post-100',
+        'reposting-user-2',
+      );
+      expect(mockPostRepository.adjustRepostCount).toHaveBeenCalledWith(
+        'post-100',
+        -1,
+      );
       expect(result.success).toBe(true);
       expect(result.isReposted).toBe(false);
       expect(result.repostsCount).toBe(2);
@@ -175,7 +202,9 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
 
       await postService.repostPost('post-self', 'user-same');
 
-      expect(mockNotificationsService.createNotification).not.toHaveBeenCalled();
+      expect(
+        mockNotificationsService.createNotification,
+      ).not.toHaveBeenCalled();
     });
 
     /**
@@ -207,12 +236,19 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
         audience: 'PUBLIC', // Must always be canonical uppercase
       };
 
-      mockPostRepository.findById.mockResolvedValue(originalPostWithLowercaseAudience);
+      mockPostRepository.findById.mockResolvedValue(
+        originalPostWithLowercaseAudience,
+      );
       mockPostRepository.findActiveRepost.mockResolvedValue(null);
       mockPostRepository.createRepost.mockResolvedValue(createdRepost);
-      mockPostRepository.findByIdPopulated.mockResolvedValue(originalPostWithLowercaseAudience);
+      mockPostRepository.findByIdPopulated.mockResolvedValue(
+        originalPostWithLowercaseAudience,
+      );
 
-      const result = await postService.repostPost('post-regression-lowercase', 'user-regression');
+      const result = await postService.repostPost(
+        'post-regression-lowercase',
+        'user-regression',
+      );
 
       // CRITICAL: audience must be uppercased before reaching createRepost
       expect(mockPostRepository.createRepost).toHaveBeenCalledWith(
@@ -241,7 +277,7 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
         { stored: 'batch', expected: 'BATCH' },
         { stored: 'BATCH', expected: 'BATCH' },
         { stored: undefined, expected: 'PUBLIC' }, // fallback
-        { stored: null, expected: 'PUBLIC' },       // fallback
+        { stored: null, expected: 'PUBLIC' }, // fallback
       ];
 
       for (const { stored, expected } of audienceInputs) {
@@ -259,17 +295,20 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
 
         mockPostRepository.findById.mockResolvedValue(post);
         mockPostRepository.findActiveRepost.mockResolvedValue(null);
-        mockPostRepository.createRepost.mockResolvedValue({ _id: 'repost-aud' });
+        mockPostRepository.createRepost.mockResolvedValue({
+          _id: 'repost-aud',
+        });
         mockPostRepository.findByIdPopulated.mockResolvedValue(post);
 
-        await postService.repostPost('post-aud-test', 'user-aud-tester', ['course-test-123']);
+        await postService.repostPost('post-aud-test', 'user-aud-tester', [
+          'course-test-123',
+        ]);
 
         const call = mockPostRepository.createRepost.mock.calls[0][0];
         expect(call.audience).toBe(expected);
       }
     });
   });
-
 
   describe('2. Quote Post Capabilities', () => {
     it('creates a quote post with commentary and links canonical original post', async () => {
@@ -297,9 +336,13 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
         originalPost,
       });
 
-      const result = await postService.quotePost('post-original', 'user-quoter', {
-        content: 'This is an important point for global communities.',
-      });
+      const result = await postService.quotePost(
+        'post-original',
+        'user-quoter',
+        {
+          content: 'This is an important point for global communities.',
+        },
+      );
 
       expect(mockPostRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -309,7 +352,10 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
           content: 'This is an important point for global communities.',
         }),
       );
-      expect(mockPostRepository.adjustRepostCount).toHaveBeenCalledWith('post-original', 1);
+      expect(mockPostRepository.adjustRepostCount).toHaveBeenCalledWith(
+        'post-original',
+        1,
+      );
       expect(mockNotificationsService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
           recipientId: 'author-jane',
@@ -332,7 +378,9 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
       mockPostRepository.findById.mockResolvedValue(originalPost);
 
       await expect(
-        postService.quotePost('post-original', 'user-quoter', { content: '   ' }),
+        postService.quotePost('post-original', 'user-quoter', {
+          content: '   ',
+        }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -343,7 +391,9 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
       });
 
       await expect(
-        postService.quotePost('post-deleted', 'user-quoter', { content: 'Nice thought' }),
+        postService.quotePost('post-deleted', 'user-quoter', {
+          content: 'Nice thought',
+        }),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -383,7 +433,10 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
           authorId: 'author-C',
         }),
       );
-      expect(mockPostRepository.adjustRepostCount).toHaveBeenCalledWith('post-root-A', 1);
+      expect(mockPostRepository.adjustRepostCount).toHaveBeenCalledWith(
+        'post-root-A',
+        1,
+      );
     });
 
     it('resolves canonical root when user quotes a repost', async () => {
@@ -408,7 +461,9 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
       });
 
       mockPostRepository.create.mockResolvedValue({ _id: 'quote-C' });
-      mockPostRepository.findByIdPopulated.mockResolvedValue({ _id: 'quote-C' });
+      mockPostRepository.findByIdPopulated.mockResolvedValue({
+        _id: 'quote-C',
+      });
 
       await postService.quotePost('post-repost-B', 'author-C', {
         content: 'Quoting what user B reshared',
@@ -436,10 +491,19 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
       mockPostRepository.findById.mockResolvedValue(repostDoc);
       mockPostRepository.softDelete.mockResolvedValue(true);
 
-      const deleted = await postService.deletePost('repost-to-delete', 'user-reposter', 'student');
+      const deleted = await postService.deletePost(
+        'repost-to-delete',
+        'user-reposter',
+        'student',
+      );
 
-      expect(mockPostRepository.adjustRepostCount).toHaveBeenCalledWith('post-original-canon', -1);
-      expect(mockPostRepository.softDelete).toHaveBeenCalledWith('repost-to-delete');
+      expect(mockPostRepository.adjustRepostCount).toHaveBeenCalledWith(
+        'post-original-canon',
+        -1,
+      );
+      expect(mockPostRepository.softDelete).toHaveBeenCalledWith(
+        'repost-to-delete',
+      );
       expect(deleted).toBe(true);
     });
 
@@ -454,10 +518,19 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
       mockPostRepository.findById.mockResolvedValue(quoteDoc);
       mockPostRepository.softDelete.mockResolvedValue(true);
 
-      const deleted = await postService.deletePost('quote-to-delete', 'user-quoter', 'student');
+      const deleted = await postService.deletePost(
+        'quote-to-delete',
+        'user-quoter',
+        'student',
+      );
 
-      expect(mockPostRepository.adjustRepostCount).toHaveBeenCalledWith('post-original-canon', -1);
-      expect(mockPostRepository.softDelete).toHaveBeenCalledWith('quote-to-delete');
+      expect(mockPostRepository.adjustRepostCount).toHaveBeenCalledWith(
+        'post-original-canon',
+        -1,
+      );
+      expect(mockPostRepository.softDelete).toHaveBeenCalledWith(
+        'quote-to-delete',
+      );
       expect(deleted).toBe(true);
     });
 
@@ -490,7 +563,12 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
       mockPostRepository.findById.mockResolvedValue(coursePost);
 
       await expect(
-        postService.repostPost('post-course-secret', 'unauthorized-student', ['course-node-201'], 'student'),
+        postService.repostPost(
+          'post-course-secret',
+          'unauthorized-student',
+          ['course-node-201'],
+          'student',
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -506,7 +584,9 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
 
       mockPostRepository.findById.mockResolvedValue(coursePost);
       mockPostRepository.findActiveRepost.mockResolvedValue(null);
-      mockPostRepository.createRepost.mockResolvedValue({ _id: 'repost-allowed' });
+      mockPostRepository.createRepost.mockResolvedValue({
+        _id: 'repost-allowed',
+      });
       mockPostRepository.findByIdPopulated.mockResolvedValue(coursePost);
 
       const res = await postService.repostPost(
@@ -558,7 +638,9 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
 
       mockPostRepository.findById.mockResolvedValue(originalPost);
       // First check returns null (both requests started simultaneously)
-      mockPostRepository.findActiveRepost.mockResolvedValueOnce(null).mockResolvedValueOnce(existingRepost);
+      mockPostRepository.findActiveRepost
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(existingRepost);
 
       const mongoDuplicateError: any = new Error('E11000 duplicate key error');
       mongoDuplicateError.code = 11000;
@@ -606,7 +688,7 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
           originalPostId: uuidPostId,
           authorId: 'user-uuid-actor',
           audience: 'PUBLIC',
-        })
+        }),
       );
     });
 
@@ -626,10 +708,14 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
       }));
       mockPostRepository.findByIdPopulated.mockResolvedValue(originalPost);
 
-      const res = await postService.quotePost('post-quote-uuid', 'quoter-user', {
-        content: 'Fascinating engineering design benchmark',
-        audience: 'public' as any,
-      });
+      const res = await postService.quotePost(
+        'post-quote-uuid',
+        'quoter-user',
+        {
+          content: 'Fascinating engineering design benchmark',
+          audience: 'public' as any,
+        },
+      );
 
       expect(res).toBeDefined();
       expect(mockPostRepository.create).toHaveBeenCalledWith(
@@ -638,7 +724,7 @@ describe('Community Phase 3A - Reposts & Quote Posts', () => {
           audience: 'PUBLIC',
           postType: 'quote',
           originalPostId: 'post-quote-uuid',
-        })
+        }),
       );
     });
   });

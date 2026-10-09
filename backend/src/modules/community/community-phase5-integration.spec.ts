@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PostService } from './services/post.service';
 import { StoryService } from './services/story.service';
 import { PostController } from './controllers/post.controller';
@@ -11,7 +15,10 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { Types } from 'mongoose';
 import { PostAudience, PostType } from './domain/post.model';
 import { StoryType } from './domain/story.model';
-import { BusinessStatus, OrganizationVisibility } from '../organizations/schemas/organization.schema';
+import {
+  BusinessStatus,
+  OrganizationVisibility,
+} from '../organizations/schemas/organization.schema';
 
 describe('Community Phase 5 — Business Profile ↔ Company Feed Integration Spec', () => {
   let postService: PostService;
@@ -161,42 +168,56 @@ describe('Community Phase 5 — Business Profile ↔ Company Feed Integration Sp
     };
 
     mockOrgService = {
-      validateCompanyFeedAccess: jest.fn().mockImplementation(async (userId, orgId) => {
-        if (!Types.ObjectId.isValid(orgId)) {
-          throw new BadRequestException('Invalid organization ID');
-        }
-        if (orgId === nonExistentCompanyId) {
-          throw new NotFoundException('Organization not found');
-        }
-        if (orgId === suspendedCompanyId) {
-          throw new ForbiddenException('Organization is suspended or unavailable');
-        }
-        return {
-          _id: orgId,
-          name: orgId === companyAId ? 'Zeitnah Academy' : 'Zeitnah Labs',
-          slug: orgId === companyAId ? 'zeitnah-academy' : 'zeitnah-labs',
-          status: BusinessStatus.APPROVED,
-          visibility: OrganizationVisibility.PUBLIC,
-        };
-      }),
-      validateCompanyPublishingAccess: jest.fn().mockImplementation(async (userId, orgId) => {
-        if (!Types.ObjectId.isValid(orgId)) {
-          throw new BadRequestException('Invalid organization ID');
-        }
-        if (orgId === nonExistentCompanyId) {
-          throw new NotFoundException('Organization not found');
-        }
-        if (orgId === suspendedCompanyId) {
-          throw new ForbiddenException('Organization is suspended or unavailable');
-        }
-        if (orgId === companyAId && userId === userA) {
-          return { _id: companyAId, name: 'Zeitnah Academy', createdBy: userA };
-        }
-        if (orgId === companyBId && userId === userB) {
-          return { _id: companyBId, name: 'Zeitnah Labs', createdBy: userB };
-        }
-        throw new ForbiddenException('You do not have permission to publish content for this organization');
-      }),
+      validateCompanyFeedAccess: jest
+        .fn()
+        .mockImplementation(async (userId, orgId) => {
+          if (!Types.ObjectId.isValid(orgId)) {
+            throw new BadRequestException('Invalid organization ID');
+          }
+          if (orgId === nonExistentCompanyId) {
+            throw new NotFoundException('Organization not found');
+          }
+          if (orgId === suspendedCompanyId) {
+            throw new ForbiddenException(
+              'Organization is suspended or unavailable',
+            );
+          }
+          return {
+            _id: orgId,
+            name: orgId === companyAId ? 'Zeitnah Academy' : 'Zeitnah Labs',
+            slug: orgId === companyAId ? 'zeitnah-academy' : 'zeitnah-labs',
+            status: BusinessStatus.APPROVED,
+            visibility: OrganizationVisibility.PUBLIC,
+          };
+        }),
+      validateCompanyPublishingAccess: jest
+        .fn()
+        .mockImplementation(async (userId, orgId) => {
+          if (!Types.ObjectId.isValid(orgId)) {
+            throw new BadRequestException('Invalid organization ID');
+          }
+          if (orgId === nonExistentCompanyId) {
+            throw new NotFoundException('Organization not found');
+          }
+          if (orgId === suspendedCompanyId) {
+            throw new ForbiddenException(
+              'Organization is suspended or unavailable',
+            );
+          }
+          if (orgId === companyAId && userId === userA) {
+            return {
+              _id: companyAId,
+              name: 'Zeitnah Academy',
+              createdBy: userA,
+            };
+          }
+          if (orgId === companyBId && userId === userB) {
+            return { _id: companyBId, name: 'Zeitnah Labs', createdBy: userB };
+          }
+          throw new ForbiddenException(
+            'You do not have permission to publish content for this organization',
+          );
+        }),
     };
 
     mockGateway = {
@@ -228,23 +249,47 @@ describe('Community Phase 5 — Business Profile ↔ Company Feed Integration Sp
 
   describe('Feed Access & Organization Scoping', () => {
     it('returns Company A feed items with correct company identity attached', async () => {
-      const feed = await postService.getFeed(userA, [], 10, undefined, 'all', undefined, undefined, companyAId);
+      const feed = await postService.getFeed(
+        userA,
+        [],
+        10,
+        undefined,
+        'all',
+        undefined,
+        undefined,
+        companyAId,
+      );
 
       expect(feed.items).toHaveLength(1);
       expect(feed.items[0].organizationId).toBe(companyAId);
       expect(feed.items[0].organization.name).toBe('Zeitnah Academy');
       expect(feed.items[0].organization.slug).toBe('zeitnah-academy');
-      expect(mockOrgService.validateCompanyFeedAccess).toHaveBeenCalledWith(userA, companyAId);
+      expect(mockOrgService.validateCompanyFeedAccess).toHaveBeenCalledWith(
+        userA,
+        companyAId,
+      );
     });
 
     it('returns Company B feed items independently from Company A', async () => {
-      const feed = await postService.getFeed(userB, [], 10, undefined, 'all', undefined, undefined, companyBId);
+      const feed = await postService.getFeed(
+        userB,
+        [],
+        10,
+        undefined,
+        'all',
+        undefined,
+        undefined,
+        companyBId,
+      );
 
       expect(feed.items).toHaveLength(1);
       expect(feed.items[0].organizationId).toBe(companyBId);
       expect(feed.items[0].organization.name).toBe('Zeitnah Labs');
       expect(feed.items[0].organization.slug).toBe('zeitnah-labs');
-      expect(mockOrgService.validateCompanyFeedAccess).toHaveBeenCalledWith(userB, companyBId);
+      expect(mockOrgService.validateCompanyFeedAccess).toHaveBeenCalledWith(
+        userB,
+        companyBId,
+      );
     });
 
     it('returns Personal feed items when organizationId is omitted', async () => {
@@ -258,13 +303,31 @@ describe('Community Phase 5 — Business Profile ↔ Company Feed Integration Sp
 
     it('rejects feed access for invalid or non-existent organization ID', async () => {
       await expect(
-        postService.getFeed(userA, [], 10, undefined, 'all', undefined, undefined, nonExistentCompanyId),
+        postService.getFeed(
+          userA,
+          [],
+          10,
+          undefined,
+          'all',
+          undefined,
+          undefined,
+          nonExistentCompanyId,
+        ),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('rejects feed access for suspended organization', async () => {
       await expect(
-        postService.getFeed(userA, [], 10, undefined, 'all', undefined, undefined, suspendedCompanyId),
+        postService.getFeed(
+          userA,
+          [],
+          10,
+          undefined,
+          'all',
+          undefined,
+          undefined,
+          suspendedCompanyId,
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -278,7 +341,9 @@ describe('Community Phase 5 — Business Profile ↔ Company Feed Integration Sp
         organizationId: companyAId,
       });
 
-      expect(mockOrgService.validateCompanyPublishingAccess).toHaveBeenCalledWith(userA, companyAId);
+      expect(
+        mockOrgService.validateCompanyPublishingAccess,
+      ).toHaveBeenCalledWith(userA, companyAId);
       const call = mockPostRepo.create.mock.calls[0][0];
       expect(call.authorId).toBe(userA);
       expect(call.organizationId).toBe(companyAId);
@@ -303,7 +368,9 @@ describe('Community Phase 5 — Business Profile ↔ Company Feed Integration Sp
         organizationId: companyAId,
       });
 
-      expect(mockOrgService.validateCompanyPublishingAccess).toHaveBeenCalledWith(userA, companyAId);
+      expect(
+        mockOrgService.validateCompanyPublishingAccess,
+      ).toHaveBeenCalledWith(userA, companyAId);
       const call = mockStoryRepo.create.mock.calls[0][0];
       expect(call.authorId).toBe(userA);
       expect(call.organizationId).toBe(companyAId);
@@ -316,7 +383,9 @@ describe('Community Phase 5 — Business Profile ↔ Company Feed Integration Sp
         text: 'Personal quick status',
       });
 
-      expect(mockOrgService.validateCompanyPublishingAccess).not.toHaveBeenCalled();
+      expect(
+        mockOrgService.validateCompanyPublishingAccess,
+      ).not.toHaveBeenCalled();
       const call = mockStoryRepo.create.mock.calls[0][0];
       expect(call.authorId).toBe(userA);
       expect(call.organizationId).toBeUndefined();

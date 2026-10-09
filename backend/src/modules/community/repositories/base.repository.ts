@@ -14,7 +14,9 @@ export abstract class BaseRepository<T extends Document> {
     if (Types.ObjectId.isValid(id)) {
       matches.push(new Types.ObjectId(id));
     }
-    return this.model.findOne({ _id: { $in: matches }, isDeleted: false }).exec();
+    return this.model
+      .findOne({ _id: { $in: matches }, isDeleted: false })
+      .exec();
   }
 
   async findOne(filterQuery: any): Promise<T | null> {

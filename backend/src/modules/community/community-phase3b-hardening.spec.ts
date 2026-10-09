@@ -19,7 +19,10 @@ describe('Phase 3B — Production Hardening & Video Processing Audit Suite', () 
   const tempFilesToClean: string[] = [];
 
   const createTempPath = (prefix: string, ext: string) => {
-    const p = path.join(os.tmpdir(), `p3b_audit_${prefix}_${Date.now()}_${Math.random().toString(36).slice(2)}${ext}`);
+    const p = path.join(
+      os.tmpdir(),
+      `p3b_audit_${prefix}_${Date.now()}_${Math.random().toString(36).slice(2)}${ext}`,
+    );
     tempFilesToClean.push(p);
     return p;
   };
@@ -77,7 +80,9 @@ describe('Phase 3B — Production Hardening & Video Processing Audit Suite', () 
       expect(Math.abs(parseFloat(vStream.duration) - 5.0)).toBeLessThan(0.3);
       expect(Math.abs(parseFloat(aStream.duration) - 5.0)).toBeLessThan(0.3);
       // Audio-video duration delta must be within 100ms
-      expect(Math.abs(parseFloat(vStream.duration) - parseFloat(aStream.duration))).toBeLessThan(0.1);
+      expect(
+        Math.abs(parseFloat(vStream.duration) - parseFloat(aStream.duration)),
+      ).toBeLessThan(0.1);
     });
 
     it('trims 0s to 5s correctly', async () => {
@@ -128,7 +133,9 @@ describe('Phase 3B — Production Hardening & Video Processing Audit Suite', () 
   describe('2. Aspect Ratio & Resolution Policies', () => {
     it('Portrait 720x1280: preserves aspect ratio, bounds <= 1080x1920, even dimensions', async () => {
       const src = createTempPath('src_port_720', '.mp4');
-      execSync(`ffmpeg -y -v error -f lavfi -i testsrc=duration=0.5:size=720x1280:rate=30 -c:v libx264 ${src}`);
+      execSync(
+        `ffmpeg -y -v error -f lavfi -i testsrc=duration=0.5:size=720x1280:rate=30 -c:v libx264 ${src}`,
+      );
       const out = createTempPath('out_port_720', '.mp4');
       const poster = createTempPath('post_port_720', '.jpg');
 
@@ -141,7 +148,9 @@ describe('Phase 3B — Production Hardening & Video Processing Audit Suite', () 
 
     it('Landscape 1920x1080: preserves 16:9, no forced portrait crop, no upscaling', async () => {
       const src = createTempPath('src_land_1080', '.mp4');
-      execSync(`ffmpeg -y -v error -f lavfi -i testsrc=duration=0.5:size=1920x1080:rate=30 -c:v libx264 ${src}`);
+      execSync(
+        `ffmpeg -y -v error -f lavfi -i testsrc=duration=0.5:size=1920x1080:rate=30 -c:v libx264 ${src}`,
+      );
       const out = createTempPath('out_land_1080', '.mp4');
       const poster = createTempPath('post_land_1080', '.jpg');
 
@@ -154,7 +163,9 @@ describe('Phase 3B — Production Hardening & Video Processing Audit Suite', () 
 
     it('Square 1080x1080: remains 1:1 square, no distortion', async () => {
       const src = createTempPath('src_sq_1080', '.mp4');
-      execSync(`ffmpeg -y -v error -f lavfi -i testsrc=duration=0.5:size=1080x1080:rate=30 -c:v libx264 ${src}`);
+      execSync(
+        `ffmpeg -y -v error -f lavfi -i testsrc=duration=0.5:size=1080x1080:rate=30 -c:v libx264 ${src}`,
+      );
       const out = createTempPath('out_sq_1080', '.mp4');
       const poster = createTempPath('post_sq_1080', '.jpg');
 
@@ -165,7 +176,9 @@ describe('Phase 3B — Production Hardening & Video Processing Audit Suite', () 
 
     it('Small 360x640: does NOT upscale to 1080x1920', async () => {
       const src = createTempPath('src_small_360', '.mp4');
-      execSync(`ffmpeg -y -v error -f lavfi -i testsrc=duration=0.5:size=360x640:rate=30 -c:v libx264 ${src}`);
+      execSync(
+        `ffmpeg -y -v error -f lavfi -i testsrc=duration=0.5:size=360x640:rate=30 -c:v libx264 ${src}`,
+      );
       const out = createTempPath('out_small_360', '.mp4');
       const poster = createTempPath('post_small_360', '.jpg');
 
@@ -176,7 +189,9 @@ describe('Phase 3B — Production Hardening & Video Processing Audit Suite', () 
 
     it('High-Res 4K Portrait 2160x3840: downscales and bounds to 1080x1920', async () => {
       const src = createTempPath('src_4k_port', '.mp4');
-      execSync(`ffmpeg -y -v error -f lavfi -i testsrc=duration=0.5:size=2160x3840:rate=30 -c:v libx264 ${src}`);
+      execSync(
+        `ffmpeg -y -v error -f lavfi -i testsrc=duration=0.5:size=2160x3840:rate=30 -c:v libx264 ${src}`,
+      );
       const out = createTempPath('out_4k_port', '.mp4');
       const poster = createTempPath('post_4k_port', '.jpg');
 
@@ -192,10 +207,14 @@ describe('Phase 3B — Production Hardening & Video Processing Audit Suite', () 
   describe('3. Rotated Media, Audio Profiles & Posters', () => {
     it('Rotated video with display matrix 90 deg: probe and output are upright 9:16 portrait', async () => {
       const baseSrc = createTempPath('base_land', '.mp4');
-      execSync(`ffmpeg -y -v error -f lavfi -i testsrc=duration=0.5:size=1920x1080:rate=30 -c:v libx264 ${baseSrc}`);
+      execSync(
+        `ffmpeg -y -v error -f lavfi -i testsrc=duration=0.5:size=1920x1080:rate=30 -c:v libx264 ${baseSrc}`,
+      );
 
       const src = createTempPath('src_rot90', '.mp4');
-      execSync(`ffmpeg -y -v error -display_rotation:v:0 90 -i ${baseSrc} -c copy ${src}`);
+      execSync(
+        `ffmpeg -y -v error -display_rotation:v:0 90 -i ${baseSrc} -c copy ${src}`,
+      );
 
       const probe = await videoProcessor.probeMedia(src);
       expect(probe.rotation).toBe(90);
@@ -212,7 +231,9 @@ describe('Phase 3B — Production Hardening & Video Processing Audit Suite', () 
 
     it('No-audio video: succeeds with -an, output valid with zero audio streams', async () => {
       const src = createTempPath('src_no_audio', '.mp4');
-      execSync(`ffmpeg -y -v error -f lavfi -i testsrc=duration=1:size=640x360:rate=30 -an -c:v libx264 ${src}`);
+      execSync(
+        `ffmpeg -y -v error -f lavfi -i testsrc=duration=1:size=640x360:rate=30 -an -c:v libx264 ${src}`,
+      );
 
       const out = createTempPath('out_no_audio', '.mp4');
       const poster = createTempPath('post_no_audio', '.jpg');
@@ -220,7 +241,9 @@ describe('Phase 3B — Production Hardening & Video Processing Audit Suite', () 
       const res = await videoProcessor.processVideo(src, out, poster);
       expect(res.duration).toBeGreaterThan(0.5);
 
-      const probeJson = execSync(`ffprobe -v error -show_entries stream=codec_type -of json ${out}`).toString();
+      const probeJson = execSync(
+        `ffprobe -v error -show_entries stream=codec_type -of json ${out}`,
+      ).toString();
       const streams = JSON.parse(probeJson).streams;
       const audioStreams = streams.filter((s: any) => s.codec_type === 'audio');
       expect(audioStreams.length).toBe(0);
@@ -228,7 +251,9 @@ describe('Phase 3B — Production Hardening & Video Processing Audit Suite', () 
 
     it('Poster generation: creates non-zero JPEG image from processed video', async () => {
       const src = createTempPath('src_poster_test', '.mp4');
-      execSync(`ffmpeg -y -v error -f lavfi -i testsrc=duration=2:size=640x360:rate=30 -c:v libx264 ${src}`);
+      execSync(
+        `ffmpeg -y -v error -f lavfi -i testsrc=duration=2:size=640x360:rate=30 -c:v libx264 ${src}`,
+      );
       const poster = createTempPath('poster_test_out', '.jpg');
 
       const ok = await videoProcessor.generatePosterFromVideo(src, poster, 0.5);
@@ -261,17 +286,29 @@ describe('Phase 3B — Production Hardening & Video Processing Audit Suite', () 
         getJobByMediaId: jest.fn(),
       };
       mockPostRepo = {
-        create: jest.fn().mockImplementation((data) => Promise.resolve({ _id: 'post-123', ...data })),
+        create: jest
+          .fn()
+          .mockImplementation((data) =>
+            Promise.resolve({ _id: 'post-123', ...data }),
+          ),
         createMedia: jest.fn().mockResolvedValue([]),
-        findByIdPopulated: jest.fn().mockImplementation((id) => Promise.resolve({ _id: id, media: [] })),
+        findByIdPopulated: jest
+          .fn()
+          .mockImplementation((id) => Promise.resolve({ _id: id, media: [] })),
       };
 
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           PostService,
           { provide: PostRepository, useValue: mockPostRepo },
-          { provide: CommunityGateway, useValue: { emitPostCreated: jest.fn() } },
-          { provide: NotificationsService, useValue: { sendNotification: jest.fn() } },
+          {
+            provide: CommunityGateway,
+            useValue: { emitPostCreated: jest.fn() },
+          },
+          {
+            provide: NotificationsService,
+            useValue: { sendNotification: jest.fn() },
+          },
           { provide: CommunityMediaJobService, useValue: mockJobService },
         ],
       }).compile();
@@ -396,7 +433,8 @@ describe('Phase 3B — Production Hardening & Video Processing Audit Suite', () 
       expect(mockPostRepo.createMedia).toHaveBeenCalledWith(
         expect.arrayContaining([
           expect.objectContaining({
-            processedUrl: 'https://bucket.s3.amazonaws.com/processed_canonical.mp4',
+            processedUrl:
+              'https://bucket.s3.amazonaws.com/processed_canonical.mp4',
             posterUrl: 'https://bucket.s3.amazonaws.com/poster_canonical.jpg',
             duration: 8.5,
             width: 1080,

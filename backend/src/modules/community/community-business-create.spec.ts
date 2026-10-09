@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PostService } from './services/post.service';
 import { StoryService } from './services/story.service';
 import { PostRepository } from './repositories/mongo-post.repository';
@@ -65,29 +69,41 @@ describe('Community Business Content Creation — Phase 4 Backend Validation', (
           organizationId: null,
         });
       }),
+      findById: jest.fn(),
+      softDelete: jest.fn().mockResolvedValue(true),
       getActiveStories: jest.fn(),
     };
 
     mockOrgService = {
-      validateCompanyPublishingAccess: jest.fn().mockImplementation(async (userId, orgId) => {
-        if (!Types.ObjectId.isValid(orgId)) {
-          throw new BadRequestException('Invalid organization ID');
-        }
-        if (orgId === nonExistentCompanyId) {
-          throw new NotFoundException('Organization not found');
-        }
-        if (orgId === suspendedCompanyId) {
-          throw new ForbiddenException('Organization is suspended or unavailable');
-        }
-        if (orgId === companyAId && userId === userA) {
-          return { _id: companyAId, name: 'Company A Inc', createdBy: userA };
-        }
-        if (orgId === companyBId && userId === userB) {
-          return { _id: companyBId, name: 'Company B Corp', createdBy: userB };
-        }
-        // Cross-company unauthorized publishing attempt
-        throw new ForbiddenException('You do not have permission to publish content for this organization');
-      }),
+      validateCompanyPublishingAccess: jest
+        .fn()
+        .mockImplementation(async (userId, orgId) => {
+          if (!Types.ObjectId.isValid(orgId)) {
+            throw new BadRequestException('Invalid organization ID');
+          }
+          if (orgId === nonExistentCompanyId) {
+            throw new NotFoundException('Organization not found');
+          }
+          if (orgId === suspendedCompanyId) {
+            throw new ForbiddenException(
+              'Organization is suspended or unavailable',
+            );
+          }
+          if (orgId === companyAId && userId === userA) {
+            return { _id: companyAId, name: 'Company A Inc', createdBy: userA };
+          }
+          if (orgId === companyBId && userId === userB) {
+            return {
+              _id: companyBId,
+              name: 'Company B Corp',
+              createdBy: userB,
+            };
+          }
+          // Cross-company unauthorized publishing attempt
+          throw new ForbiddenException(
+            'You do not have permission to publish content for this organization',
+          );
+        }),
     };
 
     mockGateway = {
@@ -128,7 +144,9 @@ describe('Community Business Content Creation — Phase 4 Backend Validation', (
       expect(createdPayload.authorId).toBe(userA);
       expect(createdPayload.content).toBe('Personal engineering insight');
       expect(createdPayload.organizationId).toBeUndefined();
-      expect(mockOrgService.validateCompanyPublishingAccess).not.toHaveBeenCalled();
+      expect(
+        mockOrgService.validateCompanyPublishingAccess,
+      ).not.toHaveBeenCalled();
     });
 
     it('creates business post with activeBusinessId attached', async () => {
@@ -140,7 +158,9 @@ describe('Community Business Content Creation — Phase 4 Backend Validation', (
       });
 
       expect(result).toBeDefined();
-      expect(mockOrgService.validateCompanyPublishingAccess).toHaveBeenCalledWith(userA, companyAId);
+      expect(
+        mockOrgService.validateCompanyPublishingAccess,
+      ).toHaveBeenCalledWith(userA, companyAId);
       expect(mockPostRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           authorId: userA,
@@ -237,7 +257,9 @@ describe('Community Business Content Creation — Phase 4 Backend Validation', (
       });
 
       expect(result).toBeDefined();
-      expect(mockOrgService.validateCompanyPublishingAccess).toHaveBeenCalledWith(userA, companyAId);
+      expect(
+        mockOrgService.validateCompanyPublishingAccess,
+      ).toHaveBeenCalledWith(userA, companyAId);
       expect(mockPostRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           authorId: userA,
@@ -284,7 +306,9 @@ describe('Community Business Content Creation — Phase 4 Backend Validation', (
       });
 
       expect(result).toBeDefined();
-      expect(mockOrgService.validateCompanyPublishingAccess).toHaveBeenCalledWith(userA, companyAId);
+      expect(
+        mockOrgService.validateCompanyPublishingAccess,
+      ).toHaveBeenCalledWith(userA, companyAId);
       expect(mockStoryRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           authorId: userA,
@@ -356,6 +380,60 @@ describe('Community Business Content Creation — Phase 4 Backend Validation', (
           organizationId: companyBId,
         }),
       );
+    });
+  });
+
+  describe('Story Deletion Authorization Regression (ObjectId & String Identity & Org Manager)', () => {
+    it('allows story author to delete story when authorId is an ObjectId', async () => {
+      const authorObjectId = new Types.ObjectId();
+      const storyId = new Types.ObjectId().toString();
+      mockStoryRepo.findById.mockResolvedValue({
+        _id: storyId,
+        authorId: authorObjectId,
+      });
+
+      const result = await storyService.deleteStory(
+        storyId,
+        authorObjectId.toString(),
+        'user',
+      );
+      expect(result).toBe(true);
+    });
+
+    it('allows organization publishing authority to delete company story even if not author', async () => {
+      const authorId = userB;
+      const orgOwnerId = userA;
+      const storyId = new Types.ObjectId().toString();
+      mockStoryRepo.findById.mockResolvedValue({
+        _id: storyId,
+        authorId,
+        organizationId: companyAId,
+      });
+
+      const result = await storyService.deleteStory(
+        storyId,
+        orgOwnerId,
+        'user',
+      );
+      expect(result).toBe(true);
+      expect(mockOrgService.validateCompanyPublishingAccess).toHaveBeenCalledWith(
+        orgOwnerId,
+        companyAId,
+      );
+    });
+
+    it('blocks non-owner non-admin user without org authority from deleting story', async () => {
+      const authorId = new Types.ObjectId().toString();
+      const otherUserId = new Types.ObjectId().toString();
+      const storyId = new Types.ObjectId().toString();
+      mockStoryRepo.findById.mockResolvedValue({
+        _id: storyId,
+        authorId,
+      });
+
+      await expect(
+        storyService.deleteStory(storyId, otherUserId, 'user'),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 });

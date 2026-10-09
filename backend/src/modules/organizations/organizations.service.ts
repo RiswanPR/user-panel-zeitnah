@@ -978,7 +978,11 @@ export class OrganizationsService {
    * Verifies organization existence, status, and membership/visibility permissions to prevent IDOR.
    */
   async validateCompanyFeedAccess(userId: string, orgId: string): Promise<any> {
-    if (!orgId || typeof orgId !== 'string' || !Types.ObjectId.isValid(orgId.trim())) {
+    if (
+      !orgId ||
+      typeof orgId !== 'string' ||
+      !Types.ObjectId.isValid(orgId.trim())
+    ) {
       throw new BadRequestException('Invalid organization ID');
     }
 
@@ -989,7 +993,10 @@ export class OrganizationsService {
     }
 
     // Check organization operational status
-    if (org.status === BusinessStatus.SUSPENDED || org.status === BusinessStatus.REJECTED) {
+    if (
+      org.status === BusinessStatus.SUSPENDED ||
+      org.status === BusinessStatus.REJECTED
+    ) {
       throw new ForbiddenException('Organization is suspended or unavailable');
     }
 
@@ -1033,8 +1040,15 @@ export class OrganizationsService {
    * Authoritative validation of company publishing access (Phase 4 Business Create).
    * Verifies organization existence, active operational status, and creator ownership / active membership.
    */
-  async validateCompanyPublishingAccess(userId: string, orgId: string): Promise<any> {
-    if (!orgId || typeof orgId !== 'string' || !Types.ObjectId.isValid(orgId.trim())) {
+  async validateCompanyPublishingAccess(
+    userId: string,
+    orgId: string,
+  ): Promise<any> {
+    if (
+      !orgId ||
+      typeof orgId !== 'string' ||
+      !Types.ObjectId.isValid(orgId.trim())
+    ) {
       throw new BadRequestException('Invalid organization ID');
     }
 
@@ -1045,7 +1059,10 @@ export class OrganizationsService {
     }
 
     // Check organization operational status: suspended or rejected businesses are blocked
-    if (org.status === BusinessStatus.SUSPENDED || org.status === BusinessStatus.REJECTED) {
+    if (
+      org.status === BusinessStatus.SUSPENDED ||
+      org.status === BusinessStatus.REJECTED
+    ) {
       throw new ForbiddenException('Organization is suspended or unavailable');
     }
 
