@@ -23,6 +23,10 @@ import {
   OrganizationRole,
   MembershipStatus,
 } from './schemas/organization-membership.schema';
+import {
+  OrganizationFollow,
+  OrganizationFollowDocument,
+} from './schemas/organization-follow.schema';
 import { User, UserDocument } from '../auth/schemas/user.schema';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { v4 as uuidv4 } from 'uuid';
@@ -33,6 +37,7 @@ import {
   OpportunityDocument,
   OpportunityStatus,
 } from '../opportunities/schemas/opportunity.schema';
+import { NotificationsService } from '../notifications/notifications.service';
 
 export interface CreateOrganizationDto {
   name: string;
@@ -90,11 +95,16 @@ export class OrganizationsService {
     @InjectModel(Opportunity.name)
     private readonly oppModel?: Model<OpportunityDocument>,
     @Optional()
+    @InjectModel(OrganizationFollow.name)
+    private readonly followModel?: Model<OrganizationFollowDocument>,
+    @Optional()
     private readonly auditLogsService?: AuditLogsService,
     @Optional()
     private readonly uploadService?: UploadService,
     @Optional()
     private readonly signedUrlService?: SignedUrlService,
+    @Optional()
+    private readonly notificationsService?: NotificationsService,
   ) {}
 
   /**
@@ -464,6 +474,27 @@ export class OrganizationsService {
       status: MembershipStatus.ACTIVE,
     });
 
+    const followersCount = this.followModel
+      ? await this.followModel.countDocuments({
+          organizationId: org._id,
+        })
+      : 0;
+
+    let isFollowing = false;
+    let notificationsEnabled = false;
+    if (viewerUserId && Types.ObjectId.isValid(viewerUserId) && this.followModel) {
+      const follow = await this.followModel
+        .findOne({
+          organizationId: org._id,
+          userId: new Types.ObjectId(viewerUserId),
+        })
+        .lean();
+      if (follow) {
+        isFollowing = true;
+        notificationsEnabled = Boolean(follow.notificationsEnabled);
+      }
+    }
+
     let activeJobCount = 0;
     if (this.oppModel?.countDocuments) {
       activeJobCount = await this.oppModel.countDocuments({
@@ -479,6 +510,9 @@ export class OrganizationsService {
         org.verificationStatus === OrganizationVerificationStatus.VERIFIED,
       isAuthorizedViewer,
       memberCount,
+      followersCount,
+      isFollowing,
+      notificationsEnabled,
       activeJobCount,
     };
   }
@@ -500,6 +534,12 @@ export class OrganizationsService {
       status: MembershipStatus.ACTIVE,
     });
 
+    const followersCount = this.followModel
+      ? await this.followModel.countDocuments({
+          organizationId: org._id,
+        })
+      : 0;
+
     let activeJobCount = 0;
     if (this.oppModel?.countDocuments) {
       activeJobCount = await this.oppModel.countDocuments({
@@ -514,6 +554,7 @@ export class OrganizationsService {
         org.status === BusinessStatus.APPROVED ||
         org.verificationStatus === OrganizationVerificationStatus.VERIFIED,
       memberCount,
+      followersCount,
       activeJobCount,
     };
   }
@@ -1058,10 +1099,12 @@ export class OrganizationsService {
       throw new NotFoundException('Organization not found');
     }
 
-    // Check organization operational status: suspended or rejected businesses are blocked
+    // Check organization operational status: suspended, rejected, or deleted businesses are blocked
     if (
       org.status === BusinessStatus.SUSPENDED ||
-      org.status === BusinessStatus.REJECTED
+      org.status === BusinessStatus.REJECTED ||
+      (org as any).status === 'DELETED' ||
+      (org as any).isDeleted === true
     ) {
       throw new ForbiddenException('Organization is suspended or unavailable');
     }
@@ -1089,5 +1132,326 @@ export class OrganizationsService {
     }
 
     return org;
+  }
+
+  /**
+   * Helper: Resolve an organization by either ObjectId or Slug
+   */
+  async resolveOrganization(idOrSlug: string): Promise<any> {
+    if (!idOrSlug || typeof idOrSlug !== 'string') {
+      throw new BadRequestException('Invalid organization identifier');
+    }
+    const clean = idOrSlug.trim();
+    let org = null;
+    if (Types.ObjectId.isValid(clean)) {
+      org = await this.orgModel.findById(clean).lean();
+    }
+    if (!org) {
+      org = await this.orgModel.findOne({ slug: clean.toLowerCase() }).lean();
+    }
+    if (!org) {
+      throw new NotFoundException('Organization not found');
+    }
+    return org;
+  }
+
+  /**
+   * Follow an eligible public organization (Phase 3 Feature A)
+   */
+  async followOrganization(userId: string, idOrSlug: string) {
+    if (!userId || !Types.ObjectId.isValid(userId)) {
+      throw new BadRequestException('Invalid user ID');
+    }
+    const org = await this.resolveOrganization(idOrSlug);
+    const orgId = org._id;
+
+    // Check organization eligibility:
+    // Only public, approved/verified, non-suspended, non-deleted organizations can be followed
+    const isPublic = org.visibility === OrganizationVisibility.PUBLIC;
+    const isSuspendedOrRejected =
+      org.status === BusinessStatus.SUSPENDED ||
+      org.status === BusinessStatus.REJECTED;
+    const isDeleted = (org as any).isDeleted === true;
+    const isApproved =
+      org.status === BusinessStatus.APPROVED ||
+      org.verificationStatus === OrganizationVerificationStatus.VERIFIED;
+
+    if (!isPublic || isSuspendedOrRejected || isDeleted || !isApproved) {
+      throw new BadRequestException(
+        'Organization is not eligible to be followed',
+      );
+    }
+
+    // Prevent self-following (cannot follow an organization you created)
+    if (String(org.createdBy) === String(userId)) {
+      throw new BadRequestException('Cannot follow your own organization');
+    }
+
+    const userObjId = new Types.ObjectId(userId);
+    const orgObjId = new Types.ObjectId(String(orgId));
+
+    if (this.followModel) {
+      await this.followModel.findOneAndUpdate(
+        { userId: userObjId, organizationId: orgObjId },
+        {
+          $setOnInsert: {
+            userId: userObjId,
+            organizationId: orgObjId,
+            notificationsEnabled: true,
+          },
+        },
+        { upsert: true, new: true },
+      );
+    }
+
+    const followersCount = this.followModel
+      ? await this.followModel.countDocuments({ organizationId: orgObjId })
+      : 0;
+
+    return {
+      success: true,
+      isFollowing: true,
+      notificationsEnabled: true,
+      followersCount,
+      organizationId: String(orgObjId),
+    };
+  }
+
+  /**
+   * Unfollow an organization (Phase 3 Feature A)
+   */
+  async unfollowOrganization(userId: string, idOrSlug: string) {
+    if (!userId || !Types.ObjectId.isValid(userId)) {
+      throw new BadRequestException('Invalid user ID');
+    }
+    const org = await this.resolveOrganization(idOrSlug);
+    const orgObjId = new Types.ObjectId(String(org._id));
+    const userObjId = new Types.ObjectId(userId);
+
+    if (this.followModel) {
+      await this.followModel.deleteOne({
+        userId: userObjId,
+        organizationId: orgObjId,
+      });
+    }
+
+    const followersCount = this.followModel
+      ? await this.followModel.countDocuments({ organizationId: orgObjId })
+      : 0;
+
+    return {
+      success: true,
+      isFollowing: false,
+      notificationsEnabled: false,
+      followersCount,
+      organizationId: String(orgObjId),
+    };
+  }
+
+  /**
+   * Get follow status and follower count (Phase 3 Feature A)
+   */
+  async getFollowStatus(userId: string | undefined, idOrSlug: string) {
+    const org = await this.resolveOrganization(idOrSlug);
+    const orgObjId = new Types.ObjectId(String(org._id));
+
+    let isFollowing = false;
+    let notificationsEnabled = false;
+
+    if (userId && Types.ObjectId.isValid(userId) && this.followModel) {
+      const follow = await this.followModel
+        .findOne({
+          userId: new Types.ObjectId(userId),
+          organizationId: orgObjId,
+        })
+        .lean();
+      if (follow) {
+        isFollowing = true;
+        notificationsEnabled = Boolean(follow.notificationsEnabled);
+      }
+    }
+
+    const followersCount = this.followModel
+      ? await this.followModel.countDocuments({ organizationId: orgObjId })
+      : 0;
+
+    return {
+      isFollowing,
+      notificationsEnabled,
+      followersCount,
+      organizationId: String(orgObjId),
+    };
+  }
+
+  /**
+   * Update per-company notification preferences (Phase 3 Feature D)
+   */
+  async updateNotificationPreferences(
+    userId: string,
+    idOrSlug: string,
+    notificationsEnabled: boolean,
+  ) {
+    if (!userId || !Types.ObjectId.isValid(userId)) {
+      throw new BadRequestException('Invalid user ID');
+    }
+    const org = await this.resolveOrganization(idOrSlug);
+    const orgObjId = new Types.ObjectId(String(org._id));
+    const userObjId = new Types.ObjectId(userId);
+
+    if (!this.followModel) {
+      return { success: true, notificationsEnabled };
+    }
+
+    const follow = await this.followModel.findOne({
+      userId: userObjId,
+      organizationId: orgObjId,
+    });
+
+    if (!follow) {
+      throw new BadRequestException(
+        'You must follow this organization to configure its notification preferences',
+      );
+    }
+
+    follow.notificationsEnabled = Boolean(notificationsEnabled);
+    await follow.save();
+
+    return {
+      success: true,
+      isFollowing: true,
+      notificationsEnabled: follow.notificationsEnabled,
+      organizationId: String(orgObjId),
+    };
+  }
+
+  /**
+   * Get all followed organizations for the current user (Phase 3 Feature D)
+   */
+  async getMyFollowedOrganizations(userId: string) {
+    if (!userId || !Types.ObjectId.isValid(userId) || !this.followModel) {
+      return [];
+    }
+
+    const follows = await this.followModel
+      .find({ userId: new Types.ObjectId(userId) })
+      .populate({
+        path: 'organizationId',
+        select:
+          'name slug logo type industry description status visibility verificationStatus',
+      })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return follows
+      .filter((f: any) => {
+        const org = f.organizationId;
+        return (
+          org &&
+          org.visibility === OrganizationVisibility.PUBLIC &&
+          org.status !== BusinessStatus.SUSPENDED &&
+          org.status !== BusinessStatus.REJECTED &&
+          (org as any).isDeleted !== true
+        );
+      })
+      .map((f: any) => ({
+        organization: f.organizationId,
+        notificationsEnabled: Boolean(f.notificationsEnabled),
+        followedAt: f.createdAt,
+      }));
+  }
+
+  /**
+   * Get array of followed organization ObjectIds for a user
+   */
+  async getFollowedOrganizationIds(userId: string): Promise<Types.ObjectId[]> {
+    if (!userId || !Types.ObjectId.isValid(userId) || !this.followModel) {
+      return [];
+    }
+    return this.followModel.distinct('organizationId', {
+      userId: new Types.ObjectId(userId),
+    });
+  }
+
+  /**
+   * Notify opted-in followers when an organization publishes a new Community post (Phase 3 Feature D)
+   */
+  async notifyFollowersOfNewPost(post: any, organization?: any) {
+    if (!this.followModel || !this.notificationsService || !post) return;
+    const orgId = post.organizationId;
+    if (!orgId) return;
+
+    try {
+      const orgObjId = new Types.ObjectId(String(orgId));
+      const followers = await this.followModel
+        .find({
+          organizationId: orgObjId,
+          notificationsEnabled: true,
+        })
+        .lean();
+
+      if (!followers || followers.length === 0) return;
+
+      const org =
+        organization || (await this.orgModel.findById(orgObjId).lean());
+      if (!org) return;
+
+      // Ensure organization is eligible
+      if (
+        org.visibility !== OrganizationVisibility.PUBLIC ||
+        org.status === BusinessStatus.SUSPENDED ||
+        org.status === BusinessStatus.REJECTED
+      ) {
+        return;
+      }
+
+      const orgName = org.name || 'Organization';
+      const cleanContent = (post.content || '').trim();
+      const contentPreview = cleanContent
+        ? cleanContent.length > 70
+          ? `${cleanContent.slice(0, 70)}...`
+          : cleanContent
+        : 'published a new post';
+
+      const postIdStr = String(post._id || post.id || '');
+
+      for (const follower of followers) {
+        const followerUserIdStr = String(follower.userId);
+        // Do not notify author if they are also following their company
+        if (followerUserIdStr === String(post.authorId)) continue;
+
+        try {
+          // Check follower's global notification preferences
+          const prefs =
+            await this.notificationsService.getPreferences(followerUserIdStr);
+          if (prefs && prefs.inAppNotifications === false) {
+            continue; // Global opt-out takes absolute precedence
+          }
+
+          const idempotencyKey = `company_post_${postIdStr}_${followerUserIdStr}`;
+
+          await this.notificationsService.createNotification({
+            recipientId: follower.userId,
+            actorId: post.authorId,
+            type: 'company_post',
+            category: 'community',
+            priority: 'NORMAL',
+            title: `New post from ${orgName}`,
+            message: `${orgName}: "${contentPreview}"`,
+            actionUrl: `/community?organizationId=${String(org._id)}`,
+            targetUrl: `/community?organizationId=${String(org._id)}`,
+            idempotencyKey,
+            metadata: {
+              organizationId: String(org._id),
+              organizationName: orgName,
+              postId: postIdStr,
+            },
+          });
+        } catch {
+          // Best effort per follower, continue loop
+        }
+      }
+    } catch {
+      // Best-effort follower notification dispatch
+    }
   }
 }

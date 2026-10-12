@@ -186,6 +186,17 @@ export class ModerationService {
 
     const reporterObjId = new Types.ObjectId(reporterId);
 
+    // Deduplication policy: if an existing pending report exists from this reporter for this target, return it
+    const existing = await this.reportModel.findOne({
+      reporterId: reporterObjId,
+      targetType: dto.targetType,
+      targetId: dto.targetId.trim(),
+      status: ReportStatus.PENDING,
+    });
+    if (existing) {
+      return existing;
+    }
+
     return this.reportModel.create({
       reporterId: reporterObjId,
       targetType: dto.targetType,

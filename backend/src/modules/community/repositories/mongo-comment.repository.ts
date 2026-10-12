@@ -52,14 +52,20 @@ export class CommentRepository extends BaseRepository<CommentDocument> {
     postId: string,
     limit: number,
     skip: number = 0,
+    excludedUserIds: string[] = [],
   ): Promise<any[]> {
+    const matchFilter: any = {
+      postId: String(postId),
+      isDeleted: false,
+    };
+    if (Array.isArray(excludedUserIds) && excludedUserIds.length > 0) {
+      matchFilter.authorId = { $nin: excludedUserIds };
+    }
+
     const comments = await this.commentModel
       .aggregate([
         {
-          $match: {
-            postId: String(postId),
-            isDeleted: false,
-          },
+          $match: matchFilter,
         },
         { $sort: { isAcceptedAnswer: -1, createdAt: 1 } },
         { $skip: skip },

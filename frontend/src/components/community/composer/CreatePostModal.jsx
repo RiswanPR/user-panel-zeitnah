@@ -27,6 +27,8 @@ import {
   Globe,
   Users,
   BookOpen,
+  ChevronDown,
+  Building2,
 } from 'lucide-react';
 import { AuthContext } from '../../../context/AuthContext';
 import { useActiveProfile } from '../../../context/ActiveProfileContext';
@@ -172,6 +174,10 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
   const idempotencyKeyRef = useRef(null);
   const autosaveTimerRef = useRef(null);
 
+  // Identity switcher menu
+  const [showIdentityMenu, setShowIdentityMenu] = useState(false);
+  const identityMenuRef = useRef(null);
+
   const createPostMutation = useCreatePost();
 
   const userInitials = user?.name
@@ -205,6 +211,19 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
       }
     } catch {}
   }, [isOpen, draftStorageKey, isBusinessMode]);
+
+  // Click outside listener for identity switcher menu
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (identityMenuRef.current && !identityMenuRef.current.contains(e.target)) {
+        setShowIdentityMenu(false);
+      }
+    }
+    if (showIdentityMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showIdentityMenu]);
 
   // Focus trap & body scroll lock
   useEffect(() => {
@@ -1043,9 +1062,136 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                   }
                 }}
               >
-                {/* Author Info Bar */}
+                {/* Author Info Bar with Profile Switching */}
                 <div className="flex items-center justify-between gap-3 shrink-0">
-                  {isBusinessMode ? (
+                  {activeProfile?.businesses?.length > 0 ? (
+                    <div className="relative" ref={identityMenuRef}>
+                      <button
+                        type="button"
+                        onClick={() => setShowIdentityMenu((prev) => !prev)}
+                        className="flex items-center gap-3 p-1.5 -ml-1.5 rounded-2xl hover:bg-white/[0.04] transition-all text-left cursor-pointer group border border-transparent hover:border-white/[0.08]"
+                        aria-label="Switch publishing profile"
+                        aria-expanded={showIdentityMenu}
+                      >
+                        {isBusinessMode ? (
+                          <div className="w-10 h-10 rounded-xl bg-[#0E1726] border border-white/[0.1] overflow-hidden flex items-center justify-center shrink-0">
+                            <BusinessLogo
+                              logo={currentBusiness?.logo}
+                              name={currentBusiness?.name || 'Company'}
+                              size="md"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-[#0E1726] border border-white/[0.1] overflow-hidden flex items-center justify-center text-xs font-bold text-brand-mint shrink-0">
+                            {avatarUrl ? (
+                              <img src={avatarUrl} alt={user?.name || 'You'} className="w-full h-full object-cover" />
+                            ) : (
+                              userInitials
+                            )}
+                          </div>
+                        )}
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-xs sm:text-sm font-bold text-white group-hover:text-brand-mint transition-colors">
+                              {isBusinessMode ? (currentBusiness?.name || 'Company') : (user?.name || 'You')}
+                            </p>
+                            <span className={`inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold ${
+                              isBusinessMode
+                                ? 'bg-brand-mint/15 text-brand-mint border border-brand-mint/30'
+                                : 'bg-white/[0.06] text-text-muted border border-white/[0.08]'
+                            }`}>
+                              {isBusinessMode ? 'Company' : 'Personal'}
+                            </span>
+                            <ChevronDown className="w-3.5 h-3.5 text-text-muted group-hover:text-white transition-colors" />
+                          </div>
+                          <p className="text-[11px] text-text-muted">
+                            {isBusinessMode
+                              ? (currentBusiness?.slug ? `@${currentBusiness.slug.replace(/^@/, '')}` : 'Business Profile')
+                              : (user?.username ? `@${user.username}` : 'Personal Profile')
+                            } · <span className="text-brand-mint font-medium">{audience}</span>
+                          </p>
+                        </div>
+                      </button>
+
+                      {/* Identity selection menu */}
+                      <AnimatePresence>
+                        {showIdentityMenu && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                            transition={{ duration: 0.12 }}
+                            className="absolute top-full left-0 mt-2 w-64 rounded-2xl bg-[#0E1726] border border-white/[0.1] shadow-2xl z-30 p-2 overflow-hidden"
+                          >
+                            <div className="px-2.5 py-1.5 text-[11px] font-semibold text-text-muted uppercase tracking-wider">
+                              Publishing as
+                            </div>
+                            
+                            {/* Personal Option */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCapturedPublishingContext({
+                                  profileType: 'personal',
+                                  organizationId: null,
+                                  organization: null,
+                                });
+                                setShowIdentityMenu(false);
+                              }}
+                              className={`w-full flex items-center gap-2.5 p-2 rounded-xl text-left transition-colors cursor-pointer ${
+                                !isBusinessMode ? 'bg-white/[0.08] text-white' : 'hover:bg-white/[0.04] text-text-muted hover:text-white'
+                              }`}
+                            >
+                              <div className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/[0.08] overflow-hidden flex items-center justify-center shrink-0 text-xs font-bold text-brand-mint">
+                                {avatarUrl ? (
+                                  <img src={avatarUrl} alt={user?.name || 'You'} className="w-full h-full object-cover" />
+                                ) : (
+                                  userInitials
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold truncate">{user?.name || 'Personal Profile'}</p>
+                                <p className="text-[10px] text-text-muted truncate">Personal Account</p>
+                              </div>
+                              {!isBusinessMode && <Check className="w-4 h-4 text-brand-mint shrink-0" />}
+                            </button>
+
+                            {/* Business Options */}
+                            {activeProfile.businesses.map((biz) => {
+                              const isSelected = isBusinessMode && String(effectivePublishingContext?.organizationId) === String(biz.id);
+                              return (
+                                <button
+                                  key={biz.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setCapturedPublishingContext({
+                                      profileType: 'business',
+                                      organizationId: biz.id,
+                                      organization: biz,
+                                    });
+                                    setShowIdentityMenu(false);
+                                  }}
+                                  className={`w-full flex items-center gap-2.5 p-2 rounded-xl text-left transition-colors cursor-pointer mt-1 ${
+                                    isSelected ? 'bg-white/[0.08] text-white' : 'hover:bg-white/[0.04] text-text-muted hover:text-white'
+                                  }`}
+                                >
+                                  <div className="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/[0.08] overflow-hidden flex items-center justify-center shrink-0">
+                                    <BusinessLogo logo={biz.logo} name={biz.name} size="sm" className="w-full h-full object-cover" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-bold truncate">{biz.name}</p>
+                                    <p className="text-[10px] text-brand-mint truncate">Company Profile</p>
+                                  </div>
+                                  {isSelected && <Check className="w-4 h-4 text-brand-mint shrink-0" />}
+                                </button>
+                              );
+                            })}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  ) : isBusinessMode ? (
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-[#0E1726] border border-white/[0.1] overflow-hidden flex items-center justify-center shrink-0">
                         <BusinessLogo

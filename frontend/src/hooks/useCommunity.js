@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { communityApi } from '../services/communityApi';
 import { networkApi } from '../services/networkApi';
+import organizationService from '../services/organizationService';
 import toast from 'react-hot-toast';
 
 // ── FEED & POSTS ──
@@ -9,9 +10,15 @@ export function useCommunityFeed({
   filter = 'all',
   activeProfileType = 'personal',
   activeBusinessId = null,
+  organizationId = null,
 } = {}) {
-  const isBusiness = activeProfileType === 'business' && Boolean(activeBusinessId);
-  const queryKey = isBusiness
+  const effectiveOrgId = organizationId || (activeProfileType === 'business' ? activeBusinessId : null);
+  const isDedicatedOrgFeed = Boolean(organizationId);
+  const isBusiness = !isDedicatedOrgFeed && activeProfileType === 'business' && Boolean(activeBusinessId);
+
+  const queryKey = isDedicatedOrgFeed
+    ? ['community', 'feed', 'organization', organizationId, { filter }]
+    : isBusiness
     ? ['community', 'feed', 'business', activeBusinessId, { filter }]
     : ['community', 'feed', 'personal', { filter }];
 
@@ -22,7 +29,7 @@ export function useCommunityFeed({
         cursor: pageParam,
         limit: 10,
         filter,
-        organizationId: isBusiness ? activeBusinessId : undefined,
+        organizationId: effectiveOrgId || undefined,
       }),
     getNextPageParam: (lastPage) => lastPage?.nextCursor || undefined,
     initialPageParam: '',
@@ -128,11 +135,68 @@ export function useCreatePost() {
       });
       queryClient.invalidateQueries({ queryKey: targetQueryKey });
       queryClient.invalidateQueries({ queryKey: ['community', 'feed'] });
+      if (isBusinessPost) {
+        queryClient.invalidateQueries({
+          queryKey: ['community', 'feed', 'organization', post.organizationId],
+        });
+        queryClient.invalidateQueries({ queryKey: ['public-business'] });
+      }
+      const isVideo =
+        post?.type === 'VIDEO' ||
+        (Array.isArray(post?.media) &&
+          post.media.some((m) => m?.type === 'video'));
+      if (isVideo) {
+        queryClient.invalidateQueries({
+          queryKey: ['community', 'feed', { filter: 'video' }],
+        });
+        queryClient.invalidateQueries({ queryKey: ['reels'] });
+      }
       toast.success('Post published!');
     },
     onError: (err) => {
       const msg = err?.response?.data?.message || 'Failed to create post. Please try again.';
       toast.error(msg);
+    },
+  });
+}
+
+export function useUpdatePost() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ postId, data }) => communityApi.updatePost(postId, data),
+    onSuccess: (updatedPost) => {
+      const postId = updatedPost?._id || updatedPost?.id;
+      const updateInFeed = (oldData) => {
+        if (!oldData || !oldData.pages) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            items: page.items.map((item) =>
+              (item._id || item.id) === postId
+                ? { ...item, ...updatedPost }
+                : item,
+            ),
+          })),
+        };
+      };
+      queryClient.setQueriesData(
+        { queryKey: ['community', 'feed'] },
+        updateInFeed,
+      );
+      queryClient.setQueriesData(
+        { queryKey: ['community', 'saved'] },
+        updateInFeed,
+      );
+      queryClient.invalidateQueries({
+        queryKey: ['community', 'post', postId],
+      });
+      queryClient.invalidateQueries({ queryKey: ['public-business'] });
+      toast.success('Post updated');
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || 'Failed to update post');
     },
   });
 }
@@ -155,6 +219,9 @@ export function useDeletePost() {
       };
       queryClient.setQueriesData({ queryKey: ['community', 'feed'] }, filterOut);
       queryClient.setQueriesData({ queryKey: ['community', 'saved'] }, filterOut);
+      queryClient.invalidateQueries({ queryKey: ['community', 'feed'] });
+      queryClient.invalidateQueries({ queryKey: ['community', 'saved'] });
+      queryClient.invalidateQueries({ queryKey: ['public-business'] });
       toast.success('Post deleted');
     },
     onError: () => {
@@ -856,3 +923,119 @@ export function useAISuggestTags() {
     mutationFn: communityApi.suggestTags,
   });
 }
+
+// ── ORGANIZATION FOLLOW & NOTIFICATIONS (Phase 3) ──
+
+export function useOrganizationFollow(orgId, { initialData } = {}) {
+  const queryClient = useQueryClient();
+
+  const {
+    data: followStatus,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ['organization', 'follow', orgId],
+    queryFn: () => organizationService.getFollowStatus(orgId),
+    enabled: Boolean(orgId),
+    initialData,
+    staleTime: 1000 * 30, // 30s freshness
+  });
+
+  const followMutation = useMutation({
+    mutationFn: () => organizationService.followOrganization(orgId),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['organization', 'follow', orgId], data);
+      queryClient.invalidateQueries({ queryKey: ['public-business'] });
+      queryClient.invalidateQueries({ queryKey: ['community', 'feed'] });
+      queryClient.invalidateQueries({ queryKey: ['organizations', 'followed'] });
+      toast.success('Following organization');
+    },
+    onError: (err) => {
+      toast.error(
+        err?.response?.data?.message || 'Failed to follow organization',
+      );
+    },
+  });
+
+  const unfollowMutation = useMutation({
+    mutationFn: () => organizationService.unfollowOrganization(orgId),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['organization', 'follow', orgId], data);
+      queryClient.invalidateQueries({ queryKey: ['public-business'] });
+      queryClient.invalidateQueries({ queryKey: ['community', 'feed'] });
+      queryClient.invalidateQueries({ queryKey: ['organizations', 'followed'] });
+      toast.success('Unfollowed organization');
+    },
+    onError: (err) => {
+      toast.error(
+        err?.response?.data?.message || 'Failed to unfollow organization',
+      );
+    },
+  });
+
+  const updateNotificationsMutation = useMutation({
+    mutationFn: (notificationsEnabled) =>
+      organizationService.updateNotificationPreferences(orgId, {
+        notificationsEnabled,
+      }),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['organization', 'follow', orgId], (old) => ({
+        ...(old || {}),
+        notificationsEnabled: data.notificationsEnabled,
+      }));
+      queryClient.invalidateQueries({ queryKey: ['organizations', 'followed'] });
+      toast.success(
+        data.notificationsEnabled
+          ? 'Notifications enabled'
+          : 'Notifications disabled',
+      );
+    },
+    onError: (err) => {
+      toast.error(
+        err?.response?.data?.message ||
+          'Failed to update notification settings',
+      );
+    },
+  });
+
+  const isFollowing = Boolean(followStatus?.isFollowing);
+  const notificationsEnabled = Boolean(followStatus?.notificationsEnabled);
+  const followersCount = Number(followStatus?.followersCount) || 0;
+
+  const toggleFollow = () => {
+    if (followMutation.isPending || unfollowMutation.isPending) return;
+    if (isFollowing) {
+      unfollowMutation.mutate();
+    } else {
+      followMutation.mutate();
+    }
+  };
+
+  const toggleNotifications = () => {
+    if (updateNotificationsMutation.isPending || !isFollowing) return;
+    updateNotificationsMutation.mutate(!notificationsEnabled);
+  };
+
+  return {
+    isFollowing,
+    notificationsEnabled,
+    followersCount,
+    isLoading,
+    isError,
+    isPending: followMutation.isPending || unfollowMutation.isPending,
+    isUpdatingNotifications: updateNotificationsMutation.isPending,
+    toggleFollow,
+    toggleNotifications,
+    refetch,
+  };
+}
+
+export function useMyFollowedOrganizations() {
+  return useQuery({
+    queryKey: ['organizations', 'followed'],
+    queryFn: () => organizationService.getMyFollowedOrganizations(),
+    staleTime: 1000 * 60, // 1 min
+  });
+}
+

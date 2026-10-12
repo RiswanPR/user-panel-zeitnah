@@ -36,9 +36,14 @@ export abstract class BaseRepository<T extends Document> {
   }
 
   async softDelete(id: string): Promise<boolean> {
+    if (!id) return false;
+    const matches: any[] = [id];
+    if (Types.ObjectId.isValid(id)) {
+      matches.push(new Types.ObjectId(id));
+    }
     const result = await this.model
       .updateOne(
-        { _id: id },
+        { _id: { $in: matches }, isDeleted: false },
         {
           $set: { isDeleted: true, deletedAt: new Date() },
         },

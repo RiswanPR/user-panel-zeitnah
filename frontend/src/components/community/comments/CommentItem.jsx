@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Trash2, Reply, Flag } from 'lucide-react';
 import { getCanonicalProfileUrl } from '../../../utils/roleNavigation';
 import { formatRelativeTime } from '../../../utils/communityFormatters';
-import toast from 'react-hot-toast';
+import ReportModal from '../../network/ReportModal';
 
 /**
  * CommentItem — Displays an individual comment with author identity,
@@ -13,10 +13,12 @@ export default function CommentItem({
   comment,
   currentUserId,
   isAdmin,
+  canModerate,
   onReply,
   onDelete,
 }) {
   const [imgError, setImgError] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   const commentId = comment._id || comment.id;
   const author = comment.author;
@@ -37,9 +39,7 @@ export default function CommentItem({
       String(currentUserId) === String(comment.authorId || author?._id || author?.id)
   );
 
-  const handleReport = () => {
-    toast.success('Thank you. Comment flagged for moderation review.');
-  };
+  const canDelete = Boolean(onDelete && (isOwner || isAdmin || canModerate));
 
   return (
     <div
@@ -111,7 +111,7 @@ export default function CommentItem({
 
           <button
             type="button"
-            onClick={handleReport}
+            onClick={() => setIsReportModalOpen(true)}
             className="min-h-[32px] inline-flex items-center gap-1 text-[11px] font-medium text-text-muted hover:text-white transition-colors cursor-pointer opacity-60 hover:opacity-100"
             aria-label="Report comment"
             title="Report comment"
@@ -119,13 +119,13 @@ export default function CommentItem({
             <Flag className="w-3 h-3" />
           </button>
 
-          {(isOwner || isAdmin) && onDelete && (
+          {canDelete && (
             <button
               type="button"
               onClick={() => onDelete(commentId)}
               className="min-h-[32px] inline-flex items-center gap-1 text-[11px] font-medium text-text-muted hover:text-rose-400 transition-colors ml-auto cursor-pointer"
               aria-label="Delete comment"
-              title="Delete comment"
+              title={isOwner ? 'Delete comment' : 'Moderate comment'}
             >
               <Trash2 className="w-3 h-3" />
               <span>Delete</span>
@@ -133,6 +133,16 @@ export default function CommentItem({
           )}
         </div>
       </div>
+
+      {isReportModalOpen && (
+        <ReportModal
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          targetType="COMMUNITY"
+          targetId={String(commentId)}
+          targetName={authorName ? `Comment by ${authorName}` : 'Comment'}
+        />
+      )}
     </div>
   );
 }

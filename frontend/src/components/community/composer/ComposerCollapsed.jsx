@@ -1,9 +1,11 @@
 import { Image, Video, HelpCircle, Send } from 'lucide-react';
 import BrandAmbientShape from '../ui/BrandAmbientShape';
+import BusinessLogo from '../../business/BusinessLogo';
 
 /**
  * ComposerCollapsed — Compact media-first composer bar.
  * Matches Section 18 specification with avatar prompt and Photo/Video/Question/Post triggers.
+ * Fully supports Personal and Company active profile modes.
  */
 export default function ComposerCollapsed({
   avatarUrl,
@@ -12,6 +14,8 @@ export default function ComposerCollapsed({
   onMediaClick,
   onVideoClick,
   onQuestionClick,
+  isBusinessMode = false,
+  business = null,
 }) {
   return (
     <div
@@ -25,27 +29,51 @@ export default function ComposerCollapsed({
           onExpand();
         }
       }}
-      aria-label="Create a post"
+      aria-label={
+        isBusinessMode && business
+          ? `Create a post as ${business.name}`
+          : 'Create a post'
+      }
     >
       {/* Organic Z Ambient Accent on Hover */}
       <BrandAmbientShape variant="composer" intensity="subtle" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       {/* Top Input Trigger Row */}
       <div className="flex items-center gap-3 mb-3">
-        {/* User Avatar */}
-        <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#0E1726] ring-1 ring-white/[0.1] group-hover:ring-brand-mint/40 shrink-0 overflow-hidden flex items-center justify-center transition-all duration-200">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-          ) : (
-            <span className="text-xs font-bold text-brand-mint select-none tracking-wider">
-              {userInitials}
-            </span>
-          )}
-        </div>
+        {/* User or Company Avatar */}
+        {isBusinessMode && business ? (
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#0E1726] ring-1 ring-brand-mint/30 group-hover:ring-brand-mint/60 shrink-0 overflow-hidden flex items-center justify-center transition-all duration-200">
+            <BusinessLogo
+              logo={business.logo}
+              name={business.name}
+              size="md"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#0E1726] ring-1 ring-white/[0.1] group-hover:ring-brand-mint/40 shrink-0 overflow-hidden flex items-center justify-center transition-all duration-200">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-xs font-bold text-brand-mint select-none tracking-wider">
+                {userInitials}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Prompt Field */}
         <div className="flex-1 min-w-0">
-          <div className="w-full px-4 py-2.5 rounded-xl bg-white/[0.03] group-hover:bg-white/[0.06] border border-white/[0.06] text-text-faint text-xs sm:text-sm font-normal truncate transition-all">
-            Share something with the community...
+          <div className="w-full px-4 py-2.5 rounded-xl bg-white/[0.03] group-hover:bg-white/[0.06] border border-white/[0.06] text-text-faint text-xs sm:text-sm font-normal truncate transition-all flex items-center justify-between">
+            <span className="truncate">
+              {isBusinessMode && business
+                ? `What would ${business.name} like to share?`
+                : 'Share something with the community...'}
+            </span>
+            {isBusinessMode && business && (
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-brand-mint/15 text-brand-mint font-semibold uppercase tracking-wider shrink-0 border border-brand-mint/20 hidden sm:inline-block ml-2">
+                Company
+              </span>
+            )}
           </div>
         </div>
       </div>

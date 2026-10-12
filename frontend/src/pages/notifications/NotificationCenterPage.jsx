@@ -12,8 +12,11 @@ import {
   RefreshCw,
   X,
   ShieldCheck,
+  Building2,
+  Bell,
 } from 'lucide-react';
 import notificationService from '../../services/notificationService';
+import organizationService from '../../services/organizationService';
 import { useNotifications } from '../../context/NotificationContext';
 import NotificationItem from '../../components/notifications/NotificationItem';
 import { SkeletonCard } from '../../components/ui/Skeleton';
@@ -91,6 +94,29 @@ export default function NotificationCenterPage() {
     },
     onError: (err) => {
       toast.error('Update failed', err.response?.data?.message || 'Could not update preferences.');
+    },
+  });
+
+  const { data: followedOrgsData = [] } = useQuery({
+    queryKey: ['organizations', 'followed'],
+    queryFn: () => organizationService.getMyFollowedOrganizations(),
+    enabled: isPreferencesOpen,
+  });
+
+  const toggleCompanyNotificationMutation = useMutation({
+    mutationFn: ({ orgId, notificationsEnabled }) =>
+      organizationService.updateNotificationPreferences(orgId, {
+        notificationsEnabled,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['organizations', 'followed'] });
+      toast.success('Updated', 'Company notification setting saved.');
+    },
+    onError: (err) => {
+      toast.error(
+        'Update failed',
+        err.response?.data?.message || 'Could not update setting.',
+      );
     },
   });
 
@@ -374,6 +400,87 @@ export default function NotificationCenterPage() {
                       </div>
                     );
                   })}
+
+                  {/* Followed Organizations Notification Settings (Phase 3 Feature D) */}
+                  <div className="pt-2 border-t border-white/[0.06] space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                        <Building2 className="w-3.5 h-3.5 text-brand-mint" />
+                        <span>Followed Organizations</span>
+                      </span>
+                      <span className="text-[11px] text-text-muted">
+                        Post alerts
+                      </span>
+                    </div>
+
+                    {followedOrgsData.length === 0 ? (
+                      <p className="text-[11px] text-text-muted italic bg-white/[0.02] p-2.5 rounded-xl border border-white/[0.04]">
+                        You are not following any organizations yet. Visit Network &gt; Organizations to discover partners.
+                      </p>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        {followedOrgsData.map((item) => {
+                          const org = item.organization;
+                          if (!org) return null;
+                          const orgId = org._id || org.id;
+                          return (
+                            <div
+                              key={orgId}
+                              className="flex items-center justify-between p-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02]"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-6 h-6 rounded-lg bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 overflow-hidden">
+                                  {org.logo ? (
+                                    <img
+                                      src={org.logo}
+                                      alt={org.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <Building2 className="w-3.5 h-3.5 text-brand-mint" />
+                                  )}
+                                </div>
+                                <span className="text-xs font-medium text-white truncate max-w-[180px]">
+                                  {org.name}
+                                </span>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  toggleCompanyNotificationMutation.mutate({
+                                    orgId,
+                                    notificationsEnabled:
+                                      !item.notificationsEnabled,
+                                  })
+                                }
+                                disabled={
+                                  toggleCompanyNotificationMutation.isPending
+                                }
+                                className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-lg border transition-all cursor-pointer ${
+                                  item.notificationsEnabled
+                                    ? 'bg-brand-mint/15 text-brand-mint border-brand-mint/30 hover:bg-brand-mint/25'
+                                    : 'bg-white/[0.04] text-text-muted border-white/[0.08] hover:text-white'
+                                }`}
+                              >
+                                {item.notificationsEnabled ? (
+                                  <>
+                                    <Bell className="w-3 h-3" />
+                                    <span>Enabled</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <BellOff className="w-3 h-3" />
+                                    <span>Muted</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Security Notice */}
                   <div className="flex items-start gap-2.5 p-3 rounded-xl border border-rose-500/20 bg-rose-500/5 text-rose-300 text-xs">

@@ -12,6 +12,7 @@ export default function CommentList({
   isError,
   currentUserId,
   isAdmin,
+  canModerate,
   onReply,
   onDelete,
   onRetry,
@@ -71,6 +72,7 @@ export default function CommentList({
           comment={comment}
           currentUserId={currentUserId}
           isAdmin={isAdmin}
+          canModerate={canModerate}
           onReply={onReply}
           onDelete={onDelete}
         />

@@ -35,6 +35,88 @@ export class PostRepository extends BaseRepository<PostDocument> {
     super(postModel);
   }
 
+  public parseFeedCursor(cursor?: string): {
+    cursorDate?: Date;
+    cursorId?: string;
+  } | null {
+    if (!cursor || typeof cursor !== 'string') return null;
+    const clean = cursor.trim();
+    if (!clean || clean.startsWith('offset:')) return null;
+
+    // Support prefixed base64 cursor (e.g. c_eyJ0Ijoi...})
+    if (clean.startsWith('c_')) {
+      try {
+        const decoded = Buffer.from(clean.slice(2), 'base64').toString('utf8');
+        const parsed = JSON.parse(decoded);
+        if (parsed.t) {
+          const d = new Date(parsed.t);
+          if (!isNaN(d.getTime())) {
+            return {
+              cursorDate: d,
+              cursorId: parsed.id ? String(parsed.id) : undefined,
+            };
+          }
+        }
+      } catch {}
+    }
+
+    // Support compound cursor format: <isoDate>_<postId>
+    if (clean.includes('_')) {
+      const splitIdx = clean.indexOf('_');
+      const dateStr = clean.slice(0, splitIdx);
+      const idStr = clean.slice(splitIdx + 1);
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime()) && idStr) {
+        return {
+          cursorDate: d,
+          cursorId: idStr,
+        };
+      }
+    }
+
+    // Support legacy plain ISO date string
+    const d = new Date(clean);
+    if (!isNaN(d.getTime())) {
+      return {
+        cursorDate: d,
+      };
+    }
+
+    return null;
+  }
+
+  private async getEligiblePublicOrganizationIds(): Promise<any[]> {
+    try {
+      const orgCollection = this.postModel?.db?.collection('organizations');
+      if (!orgCollection) return [];
+
+      const docs = await orgCollection
+        .find({
+          visibility: 'PUBLIC',
+          status: { $nin: ['SUSPENDED', 'REJECTED', 'DELETED'] },
+          isDeleted: { $ne: true },
+          $or: [
+            { status: 'APPROVED' },
+            { verificationStatus: 'VERIFIED' },
+          ],
+        })
+        .toArray();
+
+      const idMatches: any[] = [];
+      for (const doc of docs) {
+        if (!doc || !doc._id) continue;
+        const idStr = String(doc._id);
+        idMatches.push(idStr);
+        if (Types.ObjectId.isValid(idStr)) {
+          idMatches.push(new Types.ObjectId(idStr));
+        }
+      }
+      return idMatches;
+    } catch {
+      return [];
+    }
+  }
+
   // Optimized Aggregation Pipeline to populate author, media, viewer reaction and saved state
   async findFeed(params: {
     userId?: string;
@@ -45,6 +127,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
     search?: string;
     tag?: string;
     organizationId?: string;
+    excludedUserIds?: string[];
   }): Promise<{ items: any[]; nextCursor: string | null }> {
     const {
       userId,
@@ -55,11 +138,27 @@ export class PostRepository extends BaseRepository<PostDocument> {
       search,
       tag,
       organizationId,
+      excludedUserIds = [],
     } = params;
 
     const matchStage: any = {
       isDeleted: false,
     };
+
+    const appendCondition = (cond: any) => {
+      if (matchStage.$and) {
+        matchStage.$and.push(cond);
+      } else if (matchStage.$or) {
+        matchStage.$and = [{ $or: matchStage.$or }, cond];
+        delete matchStage.$or;
+      } else {
+        matchStage.$and = [cond];
+      }
+    };
+
+    if (Array.isArray(excludedUserIds) && excludedUserIds.length > 0) {
+      appendCondition({ authorId: { $nin: excludedUserIds } });
+    }
 
     const isCompanyFeed = Boolean(organizationId && organizationId.trim());
 
@@ -80,18 +179,66 @@ export class PostRepository extends BaseRepository<PostDocument> {
         const videoCondition = {
           $or: [{ type: 'VIDEO' }, { 'media.type': 'video' }],
         };
-        matchStage.$and = [videoCondition];
+        appendCondition(videoCondition);
       }
-      // Note: Company Feed is NOT restricted to personal 'following' network connections,
-      // personal 'cohort' course communities, or personal 'PUBLIC'/'COURSE' audience scoping.
-      // Posts published under the company belong to the company feed.
+
+      // Check if current viewer is the company creator or an active team member
+      let isOrgAuthorizedViewer = false;
+      if (userId && Types.ObjectId.isValid(userId)) {
+        try {
+          const orgFilter: any = {
+            _id: Types.ObjectId.isValid(cleanOrgId)
+              ? new Types.ObjectId(cleanOrgId)
+              : cleanOrgId,
+          };
+          const orgDoc = await this.postModel.db
+            .collection('organizations')
+            .findOne(orgFilter);
+          if (orgDoc && String(orgDoc.createdBy) === String(userId)) {
+            isOrgAuthorizedViewer = true;
+          } else {
+            const memberFilter: any = {
+              organizationId: Types.ObjectId.isValid(cleanOrgId)
+                ? new Types.ObjectId(cleanOrgId)
+                : cleanOrgId,
+              userId: new Types.ObjectId(userId),
+              status: 'ACTIVE',
+            };
+            const memberDoc = await this.postModel.db
+              .collection('organization_memberships')
+              .findOne(memberFilter);
+            if (memberDoc) {
+              isOrgAuthorizedViewer = true;
+            }
+          }
+        } catch {}
+      }
+
+      // External / public visitors can strictly only see PUBLIC company posts
+      if (!isOrgAuthorizedViewer) {
+        appendCondition({ audience: 'PUBLIC' });
+      }
     } else {
-      // Personal Feed: Strictly exclude business posts to prevent mixing
       const personalCondition = {
         $or: [
           { organizationId: { $exists: false } },
           { organizationId: null },
           { organizationId: '' },
+        ],
+      };
+
+      const personalAudience = {
+        $and: [
+          personalCondition,
+          {
+            $or: [
+              { audience: 'PUBLIC' },
+              ...(userId ? [{ authorId: userId }] : []),
+              ...(courseIds.length > 0
+                ? [{ audience: 'COURSE', courseId: { $in: courseIds } }]
+                : []),
+            ],
+          },
         ],
       };
 
@@ -113,34 +260,85 @@ export class PostRepository extends BaseRepository<PostDocument> {
           }
         }
         matchStage._id = { $in: idMatches };
-        matchStage.$or = [
-          { audience: 'PUBLIC' },
-          { authorId: userId },
-          ...(courseIds.length > 0
-            ? [{ audience: 'COURSE', courseId: { $in: courseIds } }]
-            : []),
-        ];
+
+        const eligibleOrgIds = await this.getEligiblePublicOrganizationIds();
+        const companyAudience =
+          eligibleOrgIds.length > 0
+            ? {
+                $and: [
+                  { organizationId: { $in: eligibleOrgIds } },
+                  { audience: 'PUBLIC' },
+                ],
+              }
+            : null;
+
+        const generalAudience = companyAudience
+          ? { $or: [personalAudience, companyAudience] }
+          : personalAudience;
+
+        appendCondition(generalAudience);
       } else if (filter === 'following') {
         if (!userId) return { items: [], nextCursor: null };
+        const userMatches: any[] = [userId];
+        if (Types.ObjectId.isValid(userId)) {
+          userMatches.push(new Types.ObjectId(userId));
+        }
+
+        // 1. Followed individuals from network_connections
         const connFilter = {
           $or: [
-            { recipientId: userId, status: 'accepted' },
-            { requesterId: userId, status: { $in: ['accepted', 'pending'] } },
+            { recipientId: { $in: userMatches }, status: 'accepted' },
+            {
+              requesterId: { $in: userMatches },
+              status: { $in: ['accepted', 'pending'] },
+            },
           ],
         };
         const connections = await this.postModel.db
           .collection('network_connections')
           .find(connFilter)
           .toArray();
+        const currentUserIdStr = String(userId);
         const followingUserIds = connections
-          .map((c: any) =>
-            String(c.requesterId) === String(userId)
-              ? String(c.recipientId)
-              : String(c.requesterId),
-          )
+          .map((c: any) => {
+            const reqStr = String(c.requesterId);
+            const recStr = String(c.recipientId);
+            return reqStr === currentUserIdStr ? recStr : reqStr;
+          })
+          .filter((id: string) => id && id !== currentUserIdStr);
+
+        // 2. Followed public companies from organization_follows
+        const followDocs = await this.postModel.db
+          .collection('organization_follows')
+          .find({ userId: { $in: userMatches } })
+          .toArray();
+        const followedOrgIdStrs = followDocs
+          .map((f: any) => String(f.organizationId))
           .filter(Boolean);
-        if (followingUserIds.length === 0)
+
+        const eligibleOrgIds = await this.getEligiblePublicOrganizationIds();
+        const eligibleOrgIdStrs = new Set(
+          eligibleOrgIds.map((id) => String(id)),
+        );
+
+        const followedEligibleOrgIds: any[] = [];
+        for (const fOrgId of followedOrgIdStrs) {
+          if (eligibleOrgIdStrs.has(fOrgId)) {
+            followedEligibleOrgIds.push(fOrgId);
+            if (Types.ObjectId.isValid(fOrgId)) {
+              followedEligibleOrgIds.push(new Types.ObjectId(fOrgId));
+            }
+          }
+        }
+
+        // If user follows neither individuals nor companies, return empty
+        if (
+          followingUserIds.length === 0 &&
+          followedEligibleOrgIds.length === 0
+        ) {
           return { items: [], nextCursor: null };
+        }
+
         const authorMatches: any[] = [];
         for (const aid of followingUserIds) {
           authorMatches.push(aid);
@@ -148,47 +346,92 @@ export class PostRepository extends BaseRepository<PostDocument> {
             authorMatches.push(new Types.ObjectId(aid));
           }
         }
-        matchStage.authorId = { $in: authorMatches };
+
+        if (authorMatches.length > 0 && followedEligibleOrgIds.length > 0) {
+          const personalFollowingCondition = {
+            authorId: { $in: authorMatches },
+            ...personalCondition,
+            $or: [
+              { audience: 'PUBLIC' },
+              ...(courseIds.length > 0
+                ? [{ audience: 'COURSE', courseId: { $in: courseIds } }]
+                : []),
+            ],
+          };
+          const companyFollowingCondition = {
+            organizationId: { $in: followedEligibleOrgIds },
+            audience: 'PUBLIC',
+          };
+          appendCondition({
+            $or: [personalFollowingCondition, companyFollowingCondition],
+          });
+        } else if (authorMatches.length > 0) {
+          matchStage.authorId = { $in: authorMatches };
+          appendCondition(personalCondition);
+          appendCondition({
+            $or: [
+              { audience: 'PUBLIC' },
+              ...(courseIds.length > 0
+                ? [{ audience: 'COURSE', courseId: { $in: courseIds } }]
+                : []),
+            ],
+          });
+        } else if (followedEligibleOrgIds.length > 0) {
+          matchStage.organizationId = { $in: followedEligibleOrgIds };
+          appendCondition({ audience: 'PUBLIC' });
+        }
       } else if (filter === 'cohort') {
         matchStage.audience = 'COURSE';
         if (courseIds.length > 0) {
           matchStage.courseId = { $in: courseIds };
         }
+        appendCondition(personalCondition);
+      } else if (filter === 'personal') {
+        appendCondition(personalAudience);
       } else if (
         filter === 'video' ||
         filter === 'reels' ||
         filter === 'reels_trending'
       ) {
-        matchStage.$or = [
-          { audience: 'PUBLIC' },
-          ...(courseIds.length > 0
-            ? [{ audience: 'COURSE', courseId: { $in: courseIds } }]
-            : []),
-        ];
         const videoCondition = {
           $or: [{ type: 'VIDEO' }, { 'media.type': 'video' }],
         };
-        if (matchStage.$and) {
-          matchStage.$and.push(videoCondition);
-        } else {
-          matchStage.$and = [videoCondition];
-        }
-      } else {
-        matchStage.$or = [
-          { audience: 'PUBLIC' },
-          ...(courseIds.length > 0
-            ? [{ audience: 'COURSE', courseId: { $in: courseIds } }]
-            : []),
-        ];
-      }
+        appendCondition(videoCondition);
 
-      if (matchStage.$and) {
-        matchStage.$and.push(personalCondition);
-      } else if (matchStage.$or) {
-        matchStage.$and = [{ $or: matchStage.$or }, personalCondition];
-        delete matchStage.$or;
+        const eligibleOrgIds = await this.getEligiblePublicOrganizationIds();
+        const companyAudience =
+          eligibleOrgIds.length > 0
+            ? {
+                $and: [
+                  { organizationId: { $in: eligibleOrgIds } },
+                  { audience: 'PUBLIC' },
+                ],
+              }
+            : null;
+
+        const generalAudience = companyAudience
+          ? { $or: [personalAudience, companyAudience] }
+          : personalAudience;
+
+        appendCondition(generalAudience);
       } else {
-        matchStage.$and = [personalCondition];
+        // General Community Feed: filter === 'all' or default / trending
+        const eligibleOrgIds = await this.getEligiblePublicOrganizationIds();
+        const companyAudience =
+          eligibleOrgIds.length > 0
+            ? {
+                $and: [
+                  { organizationId: { $in: eligibleOrgIds } },
+                  { audience: 'PUBLIC' },
+                ],
+              }
+            : null;
+
+        const generalAudience = companyAudience
+          ? { $or: [personalAudience, companyAudience] }
+          : personalAudience;
+
+        appendCondition(generalAudience);
       }
     }
 
@@ -203,14 +446,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
           { content: { $regex: `#${escapedTag}\\b`, $options: 'i' } },
         ],
       };
-      if (matchStage.$and) {
-        matchStage.$and.push(tagCondition);
-      } else if (matchStage.$or) {
-        matchStage.$and = [{ $or: matchStage.$or }, tagCondition];
-        delete matchStage.$or;
-      } else {
-        matchStage.$and = [tagCondition];
-      }
+      appendCondition(tagCondition);
     }
 
     // Text search query
@@ -229,28 +465,31 @@ export class PostRepository extends BaseRepository<PostDocument> {
           { hashtags: { $in: [tagForm, `#${tagForm}`] } },
         ],
       };
-      if (matchStage.$and) {
-        matchStage.$and.push(searchCondition);
-      } else if (matchStage.$or) {
-        matchStage.$and = [{ $or: matchStage.$or }, searchCondition];
-        delete matchStage.$or;
-      } else {
-        matchStage.$and = [searchCondition];
-      }
+      appendCondition(searchCondition);
     }
 
     const isTrending = filter === 'trending' || filter === 'reels_trending';
 
-    if (!isTrending && cursor) {
-      const cursorDate = new Date(cursor);
-      if (!isNaN(cursorDate.getTime())) {
-        matchStage.createdAt = { $lt: cursorDate };
-      }
-    }
-
     let skipCount = 0;
     if (isTrending && cursor && cursor.startsWith('offset:')) {
       skipCount = parseInt(cursor.replace('offset:', ''), 10) || 0;
+    } else if (!isTrending && cursor) {
+      const parsed = this.parseFeedCursor(cursor);
+      if (parsed) {
+        if (parsed.cursorDate && parsed.cursorId) {
+          appendCondition({
+            $or: [
+              { createdAt: { $lt: parsed.cursorDate } },
+              {
+                createdAt: parsed.cursorDate,
+                _id: { $lt: parsed.cursorId },
+              },
+            ],
+          });
+        } else if (parsed.cursorDate) {
+          matchStage.createdAt = { $lt: parsed.cursorDate };
+        }
+      }
     }
 
     const pipeline: any[] = [
@@ -272,11 +511,11 @@ export class PostRepository extends BaseRepository<PostDocument> {
                 },
               },
             },
-            { $sort: { engagementScore: -1, createdAt: -1 } },
+            { $sort: { engagementScore: -1, createdAt: -1, _id: -1 } },
             ...(skipCount > 0 ? [{ $skip: skipCount }] : []),
             { $limit: limit + 1 },
           ]
-        : [{ $sort: { createdAt: -1 } }, { $limit: limit + 1 }]),
+        : [{ $sort: { createdAt: -1, _id: -1 } }, { $limit: limit + 1 }]),
 
       // 1. Populate Author from `users` collection safely
       {
@@ -708,13 +947,16 @@ export class PostRepository extends BaseRepository<PostDocument> {
 
     let nextCursor: string | null = null;
     if (posts.length > limit) {
-      const nextItem = posts.pop();
+      posts.pop();
       if (isTrending) {
         nextCursor = `offset:${skipCount + limit}`;
       } else {
-        nextCursor = nextItem.createdAt
-          ? new Date(nextItem.createdAt).toISOString()
-          : null;
+        const lastItem = posts[posts.length - 1];
+        if (lastItem && lastItem.createdAt) {
+          const isoDate = new Date(lastItem.createdAt).toISOString();
+          const id = lastItem._id ? String(lastItem._id) : '';
+          nextCursor = id ? `${isoDate}_${id}` : isoDate;
+        }
       }
     }
 
@@ -731,12 +973,20 @@ export class PostRepository extends BaseRepository<PostDocument> {
     query: string;
     type?: 'all' | 'posts' | 'people' | 'topics';
     limit?: number;
+    excludedUserIds?: string[];
   }): Promise<{
     posts: any[];
     people: any[];
     topics: Array<{ tag: string; count: number }>;
   }> {
-    const { userId, courseIds = [], query, type = 'all', limit = 10 } = params;
+    const {
+      userId,
+      courseIds = [],
+      query,
+      type = 'all',
+      limit = 10,
+      excludedUserIds = [],
+    } = params;
     const cleanQuery = (query || '').trim();
     if (!cleanQuery) {
       return { posts: [], people: [], topics: [] };
@@ -762,6 +1012,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
             courseIds,
             limit,
             search: cleanQuery,
+            excludedUserIds,
           });
           results.posts = feedResult.items || [];
         })(),
@@ -772,21 +1023,28 @@ export class PostRepository extends BaseRepository<PostDocument> {
     if (type === 'all' || type === 'people') {
       tasks.push(
         (async () => {
+          const userFilter: any = {
+            'account_Status.isDeleted': { $ne: true },
+            'account_Status.isBlocked': { $ne: true },
+            profileVisibility: { $ne: 'PRIVATE' },
+            $or: [
+              { name: { $regex: queryRegex } },
+              { username: { $regex: queryRegex } },
+              { 'profile.headline': { $regex: queryRegex } },
+              { headline: { $regex: queryRegex } },
+              { primaryDiscipline: { $regex: queryRegex } },
+              { primaryRole: { $regex: queryRegex } },
+            ],
+          };
+          if (Array.isArray(excludedUserIds) && excludedUserIds.length > 0) {
+            const excludedObjIds = excludedUserIds.map((id) =>
+              Types.ObjectId.isValid(id) ? new Types.ObjectId(id) : id,
+            );
+            userFilter._id = { $nin: excludedObjIds };
+          }
           const userMatches = await this.postModel.db
             .collection('users')
-            .find({
-              'account_Status.isDeleted': { $ne: true },
-              'account_Status.isBlocked': { $ne: true },
-              profileVisibility: { $ne: 'PRIVATE' },
-              $or: [
-                { name: { $regex: queryRegex } },
-                { username: { $regex: queryRegex } },
-                { 'profile.headline': { $regex: queryRegex } },
-                { headline: { $regex: queryRegex } },
-                { primaryDiscipline: { $regex: queryRegex } },
-                { primaryRole: { $regex: queryRegex } },
-              ],
-            })
+            .find(userFilter)
             .project({
               _id: 1,
               name: 1,

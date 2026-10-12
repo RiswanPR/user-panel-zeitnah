@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useContext, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthContext } from '../../../context/AuthContext';
+import { useActiveProfile } from '../../../context/ActiveProfileContext';
 import { getUploadUrl } from '../../../utils/courseUi';
 import { useCreatePost, useAIImproveText, useAISuggestTags } from '../../../hooks/useCommunity';
 import { communityApi } from '../../../services/communityApi';
@@ -14,9 +15,11 @@ import CreatePostModal from './CreatePostModal';
  * CommunityComposer — Orchestrator for Zeitnah Community post creation
  * Manages collapsed vs expanded state with smooth layout transitions,
  * file uploads, AI assistance, tag generation, and audience selection.
+ * Fully supports Personal and Company active profile modes.
  */
 export default function CommunityComposer({ onOpenModal }) {
   const { user } = useContext(AuthContext);
+  const { isBusinessMode, business, activeBusinessId } = useActiveProfile();
   const [content, setContent] = useState('');
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState('');
@@ -255,14 +258,20 @@ export default function CommunityComposer({ onOpenModal }) {
           : 'IMAGE'
         : 'TEXT';
 
+    const payload = {
+      content: content.trim(),
+      audience,
+      type: postType,
+      media: attachedFiles,
+      tags,
+    };
+
+    if (isBusinessMode && (activeBusinessId || business?._id || business?.id)) {
+      payload.organizationId = activeBusinessId || business?._id || business?.id;
+    }
+
     createPostMutation.mutate(
-      {
-        content: content.trim(),
-        audience,
-        type: postType,
-        media: attachedFiles,
-        tags,
-      },
+      payload,
       {
         onSuccess: () => {
           setContent('');
@@ -278,6 +287,18 @@ export default function CommunityComposer({ onOpenModal }) {
       }
     );
   };
+
+  const publishingContext = isBusinessMode && business
+    ? {
+        profileType: 'business',
+        organizationId: activeBusinessId || business._id || business.id,
+        organization: business,
+      }
+    : {
+        profileType: 'personal',
+        organizationId: null,
+        organization: null,
+      };
 
   return (
     <motion.div
@@ -297,6 +318,8 @@ export default function CommunityComposer({ onOpenModal }) {
             <ComposerCollapsed
               avatarUrl={avatarUrl}
               userInitials={userInitials}
+              isBusinessMode={isBusinessMode}
+              business={business}
               onExpand={() => {
                 if (onOpenModal) onOpenModal();
                 else setIsModalOpen(true);
@@ -326,6 +349,8 @@ export default function CommunityComposer({ onOpenModal }) {
             <ComposerExpanded
               avatarUrl={avatarUrl}
               userInitials={userInitials}
+              isBusinessMode={isBusinessMode}
+              business={business}
               content={content}
               setContent={setContent}
               audience={audience}
@@ -361,6 +386,7 @@ export default function CommunityComposer({ onOpenModal }) {
       <CreatePostModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        publishingContext={publishingContext}
       />
     </motion.div>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, Suspense } from 'react';
+import React, { useState, useMemo, useContext, Suspense } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -16,21 +16,47 @@ import {
   Sparkles,
   Settings,
   Radio,
+  UserPlus,
+  UserCheck,
+  Bell,
+  BellOff,
+  Loader2,
+  MessageSquare,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { organizationService } from '../../services/organizationService';
 import { opportunityService } from '../../services/opportunityService';
+import { AuthContext } from '../../context/AuthContext';
 import { useActiveProfile } from '../../context/ActiveProfileContext';
+import {
+  useCommunityFeed,
+  useOrganizationFollow,
+} from '../../hooks/useCommunity';
+import PostCard from '../../components/community/PostCard';
+import PostCardSkeleton from '../../components/community/feed/PostCard/PostCardSkeleton';
+import EmptyState from '../../components/ui/EmptyState';
 import lazyWithRetry from '../../utils/lazyWithRetry';
 
-const CreateActionModal = lazyWithRetry(() => import('../../components/community/composer/CreateActionModal'));
-const CreatePostModal = lazyWithRetry(() => import('../../components/community/composer/CreatePostModal'));
-const ReelStudioModal = lazyWithRetry(() => import('../../components/community/composer/ReelStudioModal'));
-const CreateStoryModal = lazyWithRetry(() => import('../../components/community/stories/CreateStoryModal'));
+const CommentDrawer = lazyWithRetry(() =>
+  import('../../components/community/comments/CommentDrawer'),
+);
+const CreateActionModal = lazyWithRetry(() =>
+  import('../../components/community/composer/CreateActionModal'),
+);
+const CreatePostModal = lazyWithRetry(() =>
+  import('../../components/community/composer/CreatePostModal'),
+);
+const ReelStudioModal = lazyWithRetry(() =>
+  import('../../components/community/composer/ReelStudioModal'),
+);
+const CreateStoryModal = lazyWithRetry(() =>
+  import('../../components/community/stories/CreateStoryModal'),
+);
 
 export default function PublicBusinessProfilePage() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
 
   const {
     businesses,
@@ -38,6 +64,10 @@ export default function PublicBusinessProfilePage() {
     activeBusinessId,
     switchToBusiness,
   } = useActiveProfile();
+
+  // Active view tab in details section: 'posts' | 'about'
+  const [activeTab, setActiveTab] = useState('posts');
+  const [activeCommentPost, setActiveCommentPost] = useState(null);
 
   // Creation modal states
   const [isCreateActionOpen, setIsCreateActionOpen] = useState(false);
@@ -56,11 +86,61 @@ export default function PublicBusinessProfilePage() {
     enabled: !!slug,
   });
 
-  // Fetch open active jobs for this business
+  const businessId = business?._id || business?.id;
+
+  // Organization Follow Hook (Phase 3 Feature A & D)
   const {
-    data: jobsData,
-    isLoading: loadingJobs,
-  } = useQuery({
+    isFollowing,
+    notificationsEnabled,
+    followersCount,
+    isPending: isFollowPending,
+    isUpdatingNotifications,
+    toggleFollow,
+    toggleNotifications,
+  } = useOrganizationFollow(businessId, {
+    initialData: business
+      ? {
+          isFollowing: Boolean(business.isFollowing),
+          notificationsEnabled: Boolean(business.notificationsEnabled),
+          followersCount: Number(business.followersCount) || 0,
+        }
+      : undefined,
+  });
+
+  // Dedicated Company Post Feed Hook (Phase 3 Feature B)
+  const {
+    data: feedData,
+    isLoading: feedLoading,
+    isError: feedError,
+    refetch: refetchFeed,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useCommunityFeed({
+    organizationId: businessId,
+    filter: 'all',
+  });
+
+  const feedPosts = useMemo(() => {
+    const pages = feedData?.pages || [];
+    const seen = new Set();
+    const result = [];
+    for (const page of pages) {
+      if (!page?.items) continue;
+      for (const post of page.items) {
+        if (!post) continue;
+        const id = post._id || post.id;
+        if (id && !seen.has(id)) {
+          seen.add(id);
+          result.push(post);
+        }
+      }
+    }
+    return result;
+  }, [feedData]);
+
+  // Fetch open active jobs for this business
+  const { data: jobsData, isLoading: loadingJobs } = useQuery({
     queryKey: ['business-public-jobs', business?._id],
     queryFn: () =>
       opportunityService.getOpportunities({
@@ -71,13 +151,14 @@ export default function PublicBusinessProfilePage() {
 
   const jobs = jobsData?.data || [];
 
-  const businessId = business?._id || business?.id;
   const isMyBusiness = useMemo(() => {
     if (!businesses || !businessId) return false;
     return businesses.some(
       (b) =>
         String(b.id || b._id) === String(businessId) ||
-        (b.slug && business?.slug && b.slug.toLowerCase() === business.slug.toLowerCase())
+        (b.slug &&
+          business?.slug &&
+          b.slug.toLowerCase() === business.slug.toLowerCase()),
     );
   }, [businesses, businessId, business]);
 
@@ -95,11 +176,30 @@ export default function PublicBusinessProfilePage() {
     };
   }, [business, businessId]);
 
-  const handleViewCompanyFeed = () => {
-    if (isMyBusiness && businessId) {
-      switchToBusiness(businessId);
+  const handleToggleFollow = () => {
+    if (!user) {
+      toast.error('Please sign in to follow this organization');
+      navigate('/login');
+      return;
     }
-    navigate('/community');
+    toggleFollow();
+  };
+
+  const handleToggleNotifications = () => {
+    if (!user) {
+      toast.error('Please sign in to configure notifications');
+      navigate('/login');
+      return;
+    }
+    toggleNotifications();
+  };
+
+  const handleViewCompanyFeed = () => {
+    setActiveTab('posts');
+    const feedElem = document.getElementById('company-content-tabs');
+    if (feedElem) {
+      feedElem.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   const handleSwitchToThisBusiness = () => {
@@ -147,7 +247,8 @@ export default function PublicBusinessProfilePage() {
     );
   }
 
-  const isVerified = business.isVerified || business.verificationStatus === 'VERIFIED';
+  const isVerified =
+    business.isVerified || business.verificationStatus === 'VERIFIED';
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -220,13 +321,72 @@ export default function PublicBusinessProfilePage() {
               </a>
             )}
 
-            {/* View Company Feed (Community) */}
+            {/* Follow / Unfollow & Notification Controls (Phase 3 Feature A & D) */}
+            {!isMyBusiness && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleToggleFollow}
+                  disabled={isFollowPending}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm disabled:opacity-50 ${
+                    isFollowing
+                      ? 'bg-white/[0.08] hover:bg-red-500/15 text-brand-mint hover:text-red-400 border border-brand-mint/30 hover:border-red-500/30'
+                      : 'bg-brand-mint text-bg-base hover:bg-brand-mint/90 shadow-brand-mint/20'
+                  }`}
+                  title={isFollowing ? 'Unfollow organization' : 'Follow organization'}
+                  aria-label={isFollowing ? 'Unfollow organization' : 'Follow organization'}
+                >
+                  {isFollowPending ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : isFollowing ? (
+                    <UserCheck className="w-3.5 h-3.5" />
+                  ) : (
+                    <UserPlus className="w-3.5 h-3.5" />
+                  )}
+                  <span>{isFollowing ? 'Following' : 'Follow'}</span>
+                </button>
+
+                {/* Per-Company Notification Bell (Phase 3 Feature D) */}
+                {isFollowing && (
+                  <button
+                    type="button"
+                    onClick={handleToggleNotifications}
+                    disabled={isUpdatingNotifications}
+                    className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                      notificationsEnabled
+                        ? 'bg-brand-mint/15 text-brand-mint border-brand-mint/30 hover:bg-brand-mint/25'
+                        : 'bg-white/[0.05] text-text-muted border-white/[0.08] hover:text-white hover:bg-white/[0.1]'
+                    }`}
+                    title={
+                      notificationsEnabled
+                        ? 'Post notifications enabled (click to mute)'
+                        : 'Post notifications muted (click to enable)'
+                    }
+                    aria-label="Toggle company post notifications"
+                  >
+                    {isUpdatingNotifications ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : notificationsEnabled ? (
+                      <Bell className="w-3.5 h-3.5" />
+                    ) : (
+                      <BellOff className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                )}
+              </>
+            )}
+
+            {/* View Company Feed Shortcut */}
             <button
               type="button"
               onClick={handleViewCompanyFeed}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-semibold text-white border border-white/[0.08] hover:border-brand-mint/30 transition-all cursor-pointer"
-              title={`View ${business.name} Company Feed in Community`}
-              aria-label={`View ${business.name} Company Feed in Community`}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                activeTab === 'posts'
+                  ? 'bg-brand-mint/15 text-brand-mint border-brand-mint/30'
+                  : 'bg-white/[0.05] hover:bg-white/[0.1] text-white border-white/[0.08] hover:border-brand-mint/30'
+              }`}
+              title={`View ${business.name} Company Posts`}
+              aria-label={`View ${business.name} Company Posts`}
             >
               <Radio className="w-3.5 h-3.5 text-brand-mint" />
               <span>Company Feed</span>
@@ -278,7 +438,13 @@ export default function PublicBusinessProfilePage() {
         </div>
 
         {/* Highlight Metrics */}
-        <div className="pt-6 border-t border-white/[0.06] grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+        <div className="pt-6 border-t border-white/[0.06] grid grid-cols-2 sm:grid-cols-5 gap-4 text-xs">
+          <div>
+            <span className="text-[11px] text-text-muted block">Followers</span>
+            <span className="font-semibold text-brand-mint mt-0.5 block">
+              {followersCount || 0} followers
+            </span>
+          </div>
           <div>
             <span className="text-[11px] text-text-muted block">Company Size</span>
             <span className="font-semibold text-white mt-0.5 block">
@@ -299,92 +465,229 @@ export default function PublicBusinessProfilePage() {
           </div>
           <div>
             <span className="text-[11px] text-text-muted block">Active Opportunities</span>
-            <span className="font-semibold text-brand-mint mt-0.5 block">
+            <span className="font-semibold text-white mt-0.5 block">
               {jobs.length} active jobs
             </span>
           </div>
         </div>
       </div>
 
+      {/* ── Content View Tabs ── */}
+      <div
+        id="company-content-tabs"
+        className="flex items-center gap-2 border-b border-white/[0.08] pb-3"
+      >
+        <button
+          type="button"
+          onClick={() => setActiveTab('posts')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'posts'
+              ? 'bg-brand-mint text-bg-base shadow-sm shadow-brand-mint/20'
+              : 'text-text-muted hover:text-white bg-white/[0.03] hover:bg-white/[0.06]'
+          }`}
+        >
+          <Radio className="w-3.5 h-3.5" />
+          <span>Company Posts ({feedPosts.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('about')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'about'
+              ? 'bg-brand-mint text-bg-base shadow-sm shadow-brand-mint/20'
+              : 'text-text-muted hover:text-white bg-white/[0.03] hover:bg-white/[0.06]'
+          }`}
+        >
+          <Building2 className="w-3.5 h-3.5" />
+          <span>About & Jobs ({jobs.length})</span>
+        </button>
+      </div>
+
       {/* ── Details Grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column (2 cols): About, Specializations, Open Jobs */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* About */}
-          <div className="space-y-3">
-            <h3 className="text-base font-bold font-heading text-white">About Organization</h3>
-            <p className="text-sm text-white/80 leading-relaxed whitespace-pre-line">
-              {business.description ||
-                'Leading infrastructure and engineering services provider, collaborating with technical talent and executing critical projects.'}
-            </p>
-          </div>
-
-          {/* Infrastructure Specializations */}
-          {business.infrastructureSpecializations?.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-base font-bold font-heading text-white">
-                Infrastructure Specializations
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {business.infrastructureSpecializations.map((spec) => (
-                  <span
-                    key={spec}
-                    className="px-3.5 py-1.5 rounded-xl bg-brand-mint/15 text-brand-mint border border-brand-mint/30 text-xs font-semibold"
+        {/* Left Column (2 cols): Tab Content */}
+        <div className="lg:col-span-2 space-y-6">
+          {activeTab === 'posts' ? (
+            /* ── Embedded Public Company Feed (Phase 3 Feature B) ── */
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold font-heading text-white flex items-center gap-2">
+                  <Radio className="w-4 h-4 text-brand-mint" />
+                  <span>Posts from {business.name}</span>
+                </h3>
+                {isMyBusiness && (
+                  <button
+                    type="button"
+                    onClick={handleOpenCreate}
+                    className="text-xs font-semibold text-brand-mint hover:underline inline-flex items-center gap-1 cursor-pointer"
                   >
-                    {spec}
-                  </span>
-                ))}
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Publish Post</span>
+                  </button>
+                )}
+              </div>
+
+              {feedLoading ? (
+                Array.from({ length: 2 }).map((_, i) => (
+                  <PostCardSkeleton key={i} />
+                ))
+              ) : feedError ? (
+                <EmptyState
+                  icon={AlertCircle}
+                  title="Couldn't load company feed"
+                  description="We were unable to load posts for this business. Please try again."
+                  action={() => refetchFeed()}
+                  actionLabel="Try again"
+                />
+              ) : feedPosts.length === 0 ? (
+                <div className="p-12 rounded-3xl bg-[#111116] border border-white/[0.08] text-center space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto text-text-muted">
+                    <MessageSquare className="w-6 h-6 text-brand-mint" />
+                  </div>
+                  <h4 className="text-sm font-bold text-white">No posts published yet</h4>
+                  <p className="text-xs text-text-muted max-w-sm mx-auto leading-relaxed">
+                    {business.name} has not published any public Community updates yet. Follow to receive notifications when new updates arrive.
+                  </p>
+                  {!isFollowing && !isMyBusiness && (
+                    <button
+                      type="button"
+                      onClick={handleToggleFollow}
+                      disabled={isFollowPending}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-mint text-bg-base text-xs font-bold hover:bg-brand-mint/90 transition-all cursor-pointer shadow-sm shadow-brand-mint/20 mt-2"
+                    >
+                      <UserPlus className="w-3.5 h-3.5" />
+                      <span>Follow {business.name}</span>
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {feedPosts.map((post) => {
+                    const postId = post._id || post.id;
+                    const isCurrentActivePost = Boolean(
+                      activeCommentPost &&
+                        (activeCommentPost._id || activeCommentPost.id) === postId,
+                    );
+                    return (
+                      <PostCard
+                        key={postId}
+                        post={post}
+                        onOpenComments={setActiveCommentPost}
+                        isActiveCommentPost={isCurrentActivePost}
+                      />
+                    );
+                  })}
+
+                  {/* Infinite pagination trigger / button */}
+                  {hasNextPage && (
+                    <div className="py-4 text-center">
+                      <button
+                        type="button"
+                        onClick={() => fetchNextPage()}
+                        disabled={isFetchingNextPage}
+                        className="px-4 py-2 bg-white/[0.05] hover:bg-white/[0.1] text-white border border-white/[0.08] rounded-xl text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
+                      >
+                        {isFetchingNextPage ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Loading more...</span>
+                          </>
+                        ) : (
+                          <span>Load more posts</span>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          ) : (
+            /* ── About & Jobs Tab Content ── */
+            <div className="space-y-8">
+              {/* About */}
+              <div className="space-y-3">
+                <h3 className="text-base font-bold font-heading text-white">
+                  About Organization
+                </h3>
+                <p className="text-sm text-white/80 leading-relaxed whitespace-pre-line">
+                  {business.description ||
+                    'Leading infrastructure and engineering services provider, collaborating with technical talent and executing critical projects.'}
+                </p>
+              </div>
+
+              {/* Infrastructure Specializations */}
+              {business.infrastructureSpecializations?.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-base font-bold font-heading text-white">
+                    Infrastructure Specializations
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {business.infrastructureSpecializations.map((spec) => (
+                      <span
+                        key={spec}
+                        className="px-3.5 py-1.5 rounded-xl bg-brand-mint/15 text-brand-mint border border-brand-mint/30 text-xs font-semibold"
+                      >
+                        {spec}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Open Active Jobs */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-bold font-heading text-white flex items-center gap-2">
+                    <Briefcase className="w-4 h-4 text-brand-mint" />
+                    <span>Open Infrastructure Jobs ({jobs.length})</span>
+                  </h3>
+                </div>
+
+                {loadingJobs ? (
+                  <div className="py-8 text-center text-text-muted text-xs">
+                    Loading job listings...
+                  </div>
+                ) : jobs.length === 0 ? (
+                  <div className="p-8 rounded-2xl bg-white/[0.02] border border-white/[0.06] text-center text-text-muted text-xs">
+                    No active openings currently available from this business.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {jobs.map((job) => (
+                      <div
+                        key={job.id}
+                        className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/30 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                      >
+                        <div className="space-y-1">
+                          <h4 className="font-bold text-sm text-white">
+                            {job.title}
+                          </h4>
+                          <p className="text-xs text-text-muted flex items-center gap-2">
+                            <span className="text-cyan-300 font-semibold">
+                              {job.discipline}
+                            </span>
+                            <span>•</span>
+                            <span>{job.workMode}</span>
+                            <span>•</span>
+                            <span>{job.location}</span>
+                          </p>
+                        </div>
+
+                        <Link
+                          to={`/jobs/${job.id}`}
+                          className="flex items-center gap-1 px-4 py-2 rounded-xl bg-brand-mint text-black font-bold text-xs shadow-md shadow-brand-mint/15 self-end sm:self-center"
+                        >
+                          <span>View & Apply</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
-
-          {/* Open Active Jobs */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold font-heading text-white flex items-center gap-2">
-                <Briefcase className="w-4 h-4 text-brand-mint" />
-                <span>Open Infrastructure Jobs ({jobs.length})</span>
-              </h3>
-            </div>
-
-            {loadingJobs ? (
-              <div className="py-8 text-center text-text-muted text-xs">
-                Loading job listings...
-              </div>
-            ) : jobs.length === 0 ? (
-              <div className="p-8 rounded-2xl bg-white/[0.02] border border-white/[0.06] text-center text-text-muted text-xs">
-                No active openings currently available from this business.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {jobs.map((job) => (
-                  <div
-                    key={job.id}
-                    className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/30 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                  >
-                    <div className="space-y-1">
-                      <h4 className="font-bold text-sm text-white">{job.title}</h4>
-                      <p className="text-xs text-text-muted flex items-center gap-2">
-                        <span className="text-cyan-300 font-semibold">{job.discipline}</span>
-                        <span>•</span>
-                        <span>{job.workMode}</span>
-                        <span>•</span>
-                        <span>{job.location}</span>
-                      </p>
-                    </div>
-
-                    <Link
-                      to={`/jobs/${job.id}`}
-                      className="flex items-center gap-1 px-4 py-2 rounded-xl bg-brand-mint text-black font-bold text-xs shadow-md shadow-brand-mint/15 self-end sm:self-center"
-                    >
-                      <span>View & Apply</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Right Column: Contact & Information */}
@@ -397,20 +700,26 @@ export default function PublicBusinessProfilePage() {
             {business.businessEmail && (
               <div>
                 <span className="text-text-muted block text-[11px]">Email</span>
-                <span className="text-white font-medium">{business.businessEmail}</span>
+                <span className="text-white font-medium">
+                  {business.businessEmail}
+                </span>
               </div>
             )}
 
             {business.businessPhone && (
               <div>
                 <span className="text-text-muted block text-[11px]">Phone</span>
-                <span className="text-white font-medium">{business.businessPhone}</span>
+                <span className="text-white font-medium">
+                  {business.businessPhone}
+                </span>
               </div>
             )}
 
             {business.officeLocation && (
               <div>
-                <span className="text-text-muted block text-[11px]">Headquarters Address</span>
+                <span className="text-text-muted block text-[11px]">
+                  Headquarters Address
+                </span>
                 <span className="text-white font-medium leading-relaxed block">
                   {business.officeLocation}
                 </span>
@@ -433,6 +742,18 @@ export default function PublicBusinessProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* ── Comment Drawer ── */}
+      {activeCommentPost && (
+        <Suspense fallback={null}>
+          <CommentDrawer
+            post={activeCommentPost}
+            isOpen={Boolean(activeCommentPost)}
+            onClose={() => setActiveCommentPost(null)}
+          />
+        </Suspense>
+      )}
+
       {/* ── Studio Modals when launching creation directly from Business Profile ── */}
       {isMyBusiness && (
         <Suspense fallback={null}>

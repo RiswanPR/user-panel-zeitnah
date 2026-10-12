@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { X, MessageCircle } from 'lucide-react';
 import { AuthContext } from '../../../context/AuthContext';
+import { useActiveProfile } from '../../../context/ActiveProfileContext';
 import { useComments, useCreateComment, useDeleteComment } from '../../../hooks/useCommunity';
 import { getUploadUrl } from '../../../utils/courseUi';
 import CommentList from './CommentList';
@@ -15,6 +16,7 @@ import CommentInput from './CommentInput';
  */
 export default function CommentDrawer({ isOpen, post, onClose }) {
   const { user } = useContext(AuthContext);
+  const activeProfile = useActiveProfile?.() || {};
   const [commentText, setCommentText] = useState('');
   const [replyingTo, setReplyingTo] = useState(null);
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
@@ -30,7 +32,25 @@ export default function CommentDrawer({ isOpen, post, onClose }) {
 
   const postId = post?._id || post?.id;
   const currentUserId = user?._id || user?.id || user?.userId;
-  const isAdmin = user?.role === 'admin' || user?.primaryRole === 'ADMIN';
+  const isAdmin =
+    user?.role === 'admin' ||
+    user?.primaryRole === 'ADMIN' ||
+    user?.role === 'superadmin' ||
+    user?.role === 'teacher';
+
+  const postAuthorId = post?.authorId || post?.author?._id || post?.author?.id;
+  const isPostOwner = Boolean(
+    currentUserId && postAuthorId && String(currentUserId) === String(postAuthorId)
+  );
+
+  const businesses = activeProfile.businesses || [];
+  const postOrgId = post?.organizationId || post?.organization?._id || post?.organization?.id;
+  const isCompanyManager = Boolean(
+    postOrgId &&
+    businesses.some((b) => String(b._id || b.id) === String(postOrgId))
+  );
+
+  const canModerate = Boolean(isAdmin || isPostOwner || isCompanyManager);
 
   // Only fetch comments when the drawer is open for this specific post
   const {
@@ -103,10 +123,18 @@ export default function CommentDrawer({ isOpen, post, onClose }) {
       }
     }
 
+    const payload = {
+      content: contentToSubmit,
+    };
+    const parentCommentId = replyingTo?._id || replyingTo?.id;
+    if (parentCommentId) {
+      payload.parentId = String(parentCommentId);
+    }
+
     createCommentMutation.mutate(
       {
         postId,
-        data: { content: contentToSubmit },
+        data: payload,
       },
       {
         onSuccess: () => {
@@ -243,6 +271,7 @@ export default function CommentDrawer({ isOpen, post, onClose }) {
                 isError={isError}
                 currentUserId={currentUserId}
                 isAdmin={isAdmin}
+                canModerate={canModerate}
                 onReply={handleReplyTo}
                 onDelete={handleDeleteComment}
                 onRetry={refetch}

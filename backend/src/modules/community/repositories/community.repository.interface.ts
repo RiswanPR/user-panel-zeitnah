@@ -17,11 +17,16 @@ export interface IPostRepository {
   ): Promise<IPost>;
   findById(id: string): Promise<IPost | null>;
   findFeed(params: {
-    userId: string;
-    courseIds: string[];
-    limit: number;
+    userId?: string;
+    courseIds?: string[];
+    limit?: number;
     cursor?: string;
-  }): Promise<{ items: IPost[]; nextCursor: string | null }>;
+    filter?: string;
+    search?: string;
+    tag?: string;
+    organizationId?: string;
+    excludedUserIds?: string[];
+  }): Promise<{ items: any[]; nextCursor: string | null }>;
 
   updateStats(
     id: string,

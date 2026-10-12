@@ -19,6 +19,7 @@ import { CommunityStickerService } from './community-sticker.service';
 import { VALID_CURATED_STICKER_IDS } from './community-overlay-rasterizer';
 import { PostType, PostAudience } from '../domain/post.model';
 import { OrganizationsService } from '../../organizations/organizations.service';
+import { ModerationService } from '../../moderation/moderation.service';
 import { Types } from 'mongoose';
 
 @Injectable()
@@ -42,6 +43,7 @@ export class PostService {
     @Optional() private readonly musicService?: CommunityMusicService,
     @Optional() private readonly stickerService?: CommunityStickerService,
     @Optional() private readonly organizationsService?: OrganizationsService,
+    @Optional() private readonly moderationService?: ModerationService,
   ) {}
 
   private async resolveMediaUrls(posts: any[]): Promise<any[]> {
@@ -558,16 +560,21 @@ export class PostService {
         pollExpiresAt: data.pollExpiresAt,
       };
 
-      if (data.organizationId) {
+      const cleanOrgId =
+        typeof data.organizationId === 'string'
+          ? data.organizationId.trim()
+          : null;
+
+      if (cleanOrgId) {
         if (this.organizationsService) {
           await this.organizationsService.validateCompanyPublishingAccess(
             userId,
-            data.organizationId,
+            cleanOrgId,
           );
-        } else if (!Types.ObjectId.isValid(data.organizationId)) {
+        } else if (!Types.ObjectId.isValid(cleanOrgId)) {
           throw new BadRequestException('Invalid organization ID');
         }
-        postData.organizationId = data.organizationId;
+        postData.organizationId = cleanOrgId;
       }
 
       const createdPost = await this.postRepository.create(postData);
@@ -607,6 +614,17 @@ export class PostService {
           populatedPost.courseId,
           populatedPost,
         );
+      }
+
+      // Notify company followers if this is an eligible public organization post (Phase 3 Feature D)
+      if (
+        cleanOrgId &&
+        postData.audience === 'PUBLIC' &&
+        typeof this.organizationsService?.notifyFollowersOfNewPost === 'function'
+      ) {
+        this.organizationsService
+          .notifyFollowersOfNewPost(createdPost)
+          .catch(() => {});
       }
 
       const postToReturn = populatedPost || createdPost;
@@ -663,6 +681,16 @@ export class PostService {
       }
     }
 
+    let excludedUserIds: string[] = [];
+    if (userId && this.moderationService) {
+      try {
+        excludedUserIds =
+          await this.moderationService.getExcludedUserIds(userId);
+      } catch {
+        excludedUserIds = [];
+      }
+    }
+
     const feed: any = await this.postRepository.findFeed({
       userId,
       courseIds,
@@ -672,6 +700,7 @@ export class PostService {
       search,
       tag,
       organizationId,
+      excludedUserIds,
     });
     if (feed && Array.isArray(feed.items)) {
       await this.resolveMediaUrls(feed.items);
@@ -688,6 +717,16 @@ export class PostService {
       limit?: number;
     },
   ) {
+    let excludedUserIds: string[] = [];
+    if (userId && this.moderationService) {
+      try {
+        excludedUserIds =
+          await this.moderationService.getExcludedUserIds(userId);
+      } catch {
+        excludedUserIds = [];
+      }
+    }
+
     const results = await this.postRepository.searchCommunity({
       userId,
       courseIds,
@@ -696,6 +735,7 @@ export class PostService {
       limit: options.limit
         ? Math.min(Math.max(1, Number(options.limit)), 30)
         : 10,
+      excludedUserIds,
     });
     if (results.posts && Array.isArray(results.posts)) {
       await this.resolveMediaUrls(results.posts);
@@ -709,12 +749,23 @@ export class PostService {
     limit: number = 10,
     cursor?: string,
   ) {
+    let excludedUserIds: string[] = [];
+    if (userId && this.moderationService) {
+      try {
+        excludedUserIds =
+          await this.moderationService.getExcludedUserIds(userId);
+      } catch {
+        excludedUserIds = [];
+      }
+    }
+
     const saved: any = await this.postRepository.findFeed({
       userId,
       courseIds,
       limit,
       cursor,
       filter: 'saved',
+      excludedUserIds,
     });
     if (saved && Array.isArray(saved.items)) {
       await this.resolveMediaUrls(saved.items);
@@ -732,9 +783,19 @@ export class PostService {
 
   async getPostById(id: string, userId?: string): Promise<any> {
     const post = await this.postRepository.findByIdPopulated(id, userId);
-    if (post) {
-      await this.resolveMediaUrls([post]);
+    if (!post || post.isDeleted) {
+      throw new NotFoundException('Post not found');
     }
+    if (userId && this.moderationService && post.authorId) {
+      const isBlocked = await this.moderationService.hasBlockRelationship(
+        userId,
+        String(post.authorId),
+      );
+      if (isBlocked) {
+        throw new NotFoundException('Post not found');
+      }
+    }
+    await this.resolveMediaUrls([post]);
     return post;
   }
 
@@ -773,7 +834,15 @@ export class PostService {
       );
     }
 
-    await this.postRepository.update(id, { ...data, isEdited: true });
+    const updatePayload: any = { isEdited: true };
+    if (data.content !== undefined) {
+      updatePayload.content = data.content;
+    }
+    if (data.isPinned !== undefined) {
+      updatePayload.isPinned = Boolean(data.isPinned);
+    }
+
+    await this.postRepository.update(id, updatePayload);
     const updated = await this.postRepository.findByIdPopulated(id, userId);
     if (updated) {
       await this.resolveMediaUrls([updated]);
@@ -818,11 +887,27 @@ export class PostService {
     userId: string,
     type: string,
   ): Promise<any> {
+    const post = await this.postRepository.findById(postId);
+    if (!post || post.isDeleted) {
+      throw new NotFoundException('Post not found');
+    }
+
+    if (this.moderationService && post.authorId) {
+      const isBlocked = await this.moderationService.hasBlockRelationship(
+        userId,
+        String(post.authorId),
+      );
+      if (isBlocked) {
+        throw new ForbiddenException(
+          'Interaction is unavailable between blocked users',
+        );
+      }
+    }
+
     const result = await this.postRepository.addReaction(postId, userId, type);
 
     // Send notification if user added reaction and is not the author
     if (result.action === 'added') {
-      const post = await this.postRepository.findById(postId);
       if (post && post.authorId && String(post.authorId) !== String(userId)) {
         try {
           const isReel =
@@ -921,6 +1006,18 @@ export class PostService {
     }
 
     this.verifyPostAccess(target, userId, courseIds, role);
+
+    if (this.moderationService && target.authorId) {
+      const isBlocked = await this.moderationService.hasBlockRelationship(
+        userId,
+        String(target.authorId),
+      );
+      if (isBlocked) {
+        throw new ForbiddenException(
+          'Interaction is unavailable between blocked users',
+        );
+      }
+    }
 
     // Nesting protection: if target is a repost, resolve canonical original
     let canonicalPostId = id;
@@ -1075,6 +1172,18 @@ export class PostService {
     }
 
     this.verifyPostAccess(target, userId, courseIds, role);
+
+    if (this.moderationService && target.authorId) {
+      const isBlocked = await this.moderationService.hasBlockRelationship(
+        userId,
+        String(target.authorId),
+      );
+      if (isBlocked) {
+        throw new ForbiddenException(
+          'Interaction is unavailable between blocked users',
+        );
+      }
+    }
 
     // Nesting protection: if target is a repost, embed canonical original
     let canonicalPostId = id;

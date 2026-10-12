@@ -11,6 +11,7 @@ import {
   Hash,
   Loader2,
 } from 'lucide-react';
+import BusinessLogo from '../../business/BusinessLogo';
 
 const AUDIENCE_OPTIONS = [
   {
@@ -31,6 +32,7 @@ const AUDIENCE_OPTIONS = [
  * ComposerExpanded — Full expanded state for post creation
  * Includes audience selector, auto-resizing textarea, media previews,
  * upload progress, tag management, AI assist, and mobile-friendly action bar.
+ * Fully supports Personal and Company active profile modes.
  */
 export default function ComposerExpanded({
   avatarUrl,
@@ -62,6 +64,8 @@ export default function ComposerExpanded({
   handleCancel,
   handleSubmit,
   isSubmitting,
+  isBusinessMode = false,
+  business = null,
 }) {
   const tagInputRef = useRef(null);
   const audienceMenuRef = useRef(null);
@@ -92,7 +96,16 @@ export default function ComposerExpanded({
     <div className="bg-[#0B111E]/95 backdrop-blur-xl border border-brand-mint/30 rounded-2xl shadow-[0_4px_32px_rgba(0,0,0,0.4),0_0_24px_rgba(0,255,180,0.06)] p-4 sm:p-5 transition-all">
       {/* Header Bar */}
       <div className="flex items-center justify-between pb-3 border-b border-white/[0.08] mb-3.5">
-        <h3 className="text-sm font-semibold text-white tracking-tight">Create post</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-white tracking-tight">
+            {isBusinessMode && business ? `Publish as ${business.name}` : 'Create post'}
+          </h3>
+          {isBusinessMode && business && (
+            <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-brand-mint/15 text-brand-mint border border-brand-mint/30">
+              Company
+            </span>
+          )}
+        </div>
         <button
           type="button"
           onClick={handleCancel}
@@ -104,16 +117,27 @@ export default function ComposerExpanded({
       </div>
 
       <div className="flex gap-3 sm:gap-4 items-start">
-        {/* User Avatar */}
-        <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#0E1726] ring-1 ring-white/[0.1] shrink-0 overflow-hidden flex items-center justify-center">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-          ) : (
-            <span className="text-xs font-bold text-brand-mint select-none tracking-wider">
-              {userInitials}
-            </span>
-          )}
-        </div>
+        {/* User / Company Avatar */}
+        {isBusinessMode && business ? (
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#0E1726] ring-1 ring-brand-mint/30 shrink-0 overflow-hidden flex items-center justify-center">
+            <BusinessLogo
+              logo={business.logo}
+              name={business.name}
+              size="md"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#0E1726] ring-1 ring-white/[0.1] shrink-0 overflow-hidden flex items-center justify-center">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-xs font-bold text-brand-mint select-none tracking-wider">
+                {userInitials}
+              </span>
+            )}
+          </div>
+        )}
 
         <div className="flex-1 min-w-0">
           {/* Audience Selector */}
@@ -174,7 +198,11 @@ export default function ComposerExpanded({
                 handleSubmit();
               }
             }}
-            placeholder="What's happening? Share insights, questions, or showcases..."
+            placeholder={
+              isBusinessMode && business
+                ? `What would ${business.name} like to share? Announcements, insights, or updates...`
+                : "What's happening? Share insights, questions, or showcases..."
+            }
             className="w-full bg-transparent border-none text-sm sm:text-[15px] text-white placeholder-text-faint focus:outline-none resize-none min-h-[90px] leading-relaxed"
             rows={3}
             autoFocus

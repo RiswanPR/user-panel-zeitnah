@@ -48,14 +48,17 @@ export class CommentController {
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'skip', required: false })
   async getComments(
+    @Req() req,
     @Param('postId') postId: string,
     @Query('limit') limit: number,
     @Query('skip') skip: number,
   ) {
+    const userId = this.getUserId(req);
     return this.commentService.getCommentsByPost(
       postId,
       limit ? Number(limit) : 20,
       skip ? Number(skip) : 0,
+      userId,
     );
   }
 

@@ -242,6 +242,7 @@ function App() {
                 />
                 <Route path="/businesses" element={<Suspense fallback={<PageLoader />}><BusinessDiscoveryPage /></Suspense>} />
                 <Route path="/businesses/:slug" element={<Suspense fallback={<PageLoader />}><PublicBusinessProfilePage /></Suspense>} />
+                <Route path="/business/:slug" element={<Suspense fallback={<PageLoader />}><PublicBusinessProfilePage /></Suspense>} />
                 <Route
                   path="/admin/businesses"
                   element={

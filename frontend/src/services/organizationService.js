@@ -69,6 +69,31 @@ export const organizationService = {
     const res = await api.post(`/organizations/${id}/members`, data);
     return res.data;
   },
+
+  async followOrganization(id) {
+    const res = await api.post(`/organizations/${id}/follow`);
+    return res.data;
+  },
+
+  async unfollowOrganization(id) {
+    const res = await api.delete(`/organizations/${id}/follow`);
+    return res.data;
+  },
+
+  async getFollowStatus(id) {
+    const res = await api.get(`/organizations/${id}/follow-status`);
+    return res.data;
+  },
+
+  async updateNotificationPreferences(id, data) {
+    const res = await api.patch(`/organizations/${id}/notification-preferences`, data);
+    return res.data;
+  },
+
+  async getMyFollowedOrganizations() {
+    const res = await api.get('/organizations/followed');
+    return res.data;
+  },
 };
 
 export default organizationService;

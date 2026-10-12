@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Param,
   Body,
   Query,
@@ -129,6 +130,45 @@ export class OrganizationsController {
       throw new BadRequestException('No logo file provided');
     }
     return this.orgService.uploadLogo(req.user.userId, file);
+  }
+
+  @Get('followed')
+  @UseGuards(JwtAuthGuard)
+  async getMyFollowedOrganizations(@Req() req: any) {
+    return this.orgService.getMyFollowedOrganizations(req.user.userId);
+  }
+
+  @Post(':id/follow')
+  @UseGuards(JwtAuthGuard)
+  async followOrganization(@Req() req: any, @Param('id') id: string) {
+    return this.orgService.followOrganization(req.user.userId, id);
+  }
+
+  @Delete(':id/follow')
+  @UseGuards(JwtAuthGuard)
+  async unfollowOrganization(@Req() req: any, @Param('id') id: string) {
+    return this.orgService.unfollowOrganization(req.user.userId, id);
+  }
+
+  @Get(':id/follow-status')
+  @UseGuards(OptionalJwtAuthGuard)
+  async getFollowStatus(@Req() req: any, @Param('id') id: string) {
+    const viewerId = req.user?.userId;
+    return this.orgService.getFollowStatus(viewerId, id);
+  }
+
+  @Patch(':id/notification-preferences')
+  @UseGuards(JwtAuthGuard)
+  async updateNotificationPreferences(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() body: { notificationsEnabled: boolean },
+  ) {
+    return this.orgService.updateNotificationPreferences(
+      req.user.userId,
+      id,
+      body.notificationsEnabled,
+    );
   }
 
   @Get(':slug')

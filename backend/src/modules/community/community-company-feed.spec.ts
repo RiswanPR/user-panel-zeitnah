@@ -76,7 +76,7 @@ describe('Community Company Feed — Phase 3 Backend Scoping & Authorization', (
             nextCursor: null,
           });
         }
-        // Personal feed (no organizationId)
+        // General Community feed (no organizationId)
         return Promise.resolve({
           items: [
             {
@@ -84,6 +84,19 @@ describe('Community Company Feed — Phase 3 Backend Scoping & Authorization', (
               authorId: userA,
               content: 'Personal technical post',
               organization: null,
+              createdAt: new Date().toISOString(),
+            },
+            {
+              _id: 'post-company-a-1',
+              authorId: userA,
+              organizationId: companyAId,
+              content: 'Company A engineering announcement',
+              organization: {
+                _id: companyAId,
+                name: 'Company A Inc',
+                slug: 'comp-a',
+                logo: 'https://example.com/a.png',
+              },
               createdAt: new Date().toISOString(),
             },
           ],
@@ -151,7 +164,7 @@ describe('Community Company Feed — Phase 3 Backend Scoping & Authorization', (
   });
 
   describe('1. Personal vs Company Feed Scoping', () => {
-    it('returns only personal posts when organizationId is omitted (Personal Feed)', async () => {
+    it('returns both personal posts and eligible public company posts in general feed when organizationId is omitted', async () => {
       const feed = await postService.getFeed(userA, [], 10, undefined, 'all');
 
       expect(mockOrgService.validateCompanyFeedAccess).not.toHaveBeenCalled();
@@ -161,9 +174,18 @@ describe('Community Company Feed — Phase 3 Backend Scoping & Authorization', (
           organizationId: undefined,
         }),
       );
-      expect(feed.items).toHaveLength(1);
-      expect(feed.items[0]._id).toBe('post-personal-1');
-      expect(feed.items[0].organization).toBeNull();
+      expect(feed.items).toHaveLength(2);
+      expect(
+        feed.items.some(
+          (p: any) => p._id === 'post-personal-1' && p.organization === null,
+        ),
+      ).toBe(true);
+      expect(
+        feed.items.some(
+          (p: any) =>
+            p._id === 'post-company-a-1' && p.organizationId === companyAId,
+        ),
+      ).toBe(true);
     });
 
     it('returns Company A feed strictly scoped to companyAId', async () => {
@@ -440,7 +462,29 @@ describe('Community Company Feed — Phase 3 Backend Scoping & Authorization', (
       );
     });
 
-    it('preserves Personal Feed scoping and strictly excludes business posts when organizationId is absent', async () => {
+    it('includes eligible public company posts alongside personal posts in general feed (filter: all)', async () => {
+      mockRealPostModel.db.collection.mockImplementation((collName: string) => {
+        if (collName === 'organizations') {
+          return {
+            find: jest.fn().mockReturnValue({
+              toArray: jest.fn().mockResolvedValue([
+                {
+                  _id: companyAId,
+                  visibility: 'PUBLIC',
+                  status: 'APPROVED',
+                  isDeleted: false,
+                },
+              ]),
+            }),
+          };
+        }
+        return {
+          find: jest.fn().mockReturnValue({
+            toArray: jest.fn().mockResolvedValue([]),
+          }),
+        };
+      });
+
       await repo.findFeed({
         userId: userA,
         filter: 'all',
@@ -448,19 +492,181 @@ describe('Community Company Feed — Phase 3 Backend Scoping & Authorization', (
 
       const matchStage = capturedPipeline[0].$match;
       expect(matchStage.isDeleted).toBe(false);
-      // Personal feed must exclude business posts
       expect(matchStage.$and).toBeDefined();
-      const personalCond = matchStage.$and.find(
-        (c: any) =>
-          Array.isArray(c.$or) &&
-          c.$or.some((item: any) => item.organizationId !== undefined),
+
+      // Verify audience condition includes both personal and company clauses
+      const audienceCond = matchStage.$and.find((c: any) =>
+        Array.isArray(c.$or),
       );
-      expect(personalCond).toBeDefined();
-      expect(personalCond.$or).toEqual([
+      expect(audienceCond).toBeDefined();
+      expect(audienceCond.$or).toHaveLength(2);
+
+      // Branch 1: Personal posts
+      const personalBranch = audienceCond.$or[0];
+      expect(personalBranch.$and[0].$or).toEqual([
         { organizationId: { $exists: false } },
         { organizationId: null },
         { organizationId: '' },
       ]);
+
+      // Branch 2: Public Company posts
+      const companyBranch = audienceCond.$or[1];
+      expect(companyBranch.$and[0].organizationId.$in).toEqual(
+        expect.arrayContaining([companyAId, new Types.ObjectId(companyAId)]),
+      );
+      expect(companyBranch.$and[1].audience).toBe('PUBLIC');
+    });
+
+    it('strictly excludes company posts when personal-only filter is requested (filter: personal)', async () => {
+      await repo.findFeed({
+        userId: userA,
+        filter: 'personal',
+      });
+
+      const matchStage = capturedPipeline[0].$match;
+      expect(matchStage.isDeleted).toBe(false);
+      expect(matchStage.$and).toBeDefined();
+      const personalCond = matchStage.$and.find(
+        (c: any) =>
+          c.$and &&
+          Array.isArray(c.$and[0]?.$or) &&
+          c.$and[0].$or.some((item: any) => item.organizationId !== undefined),
+      );
+      expect(personalCond).toBeDefined();
+      expect(personalCond.$and[0].$or).toEqual([
+        { organizationId: { $exists: false } },
+        { organizationId: null },
+        { organizationId: '' },
+      ]);
+    });
+
+    it('excludes ineligible company posts (suspended, rejected, deleted, private) from general feed', async () => {
+      mockRealPostModel.db.collection.mockImplementation((collName: string) => {
+        if (collName === 'organizations') {
+          return {
+            find: jest.fn().mockReturnValue({
+              toArray: jest.fn().mockResolvedValue([]), // No eligible organizations
+            }),
+          };
+        }
+        return {
+          find: jest.fn().mockReturnValue({
+            toArray: jest.fn().mockResolvedValue([]),
+          }),
+        };
+      });
+
+      await repo.findFeed({
+        userId: userA,
+        filter: 'all',
+      });
+
+      const matchStage = capturedPipeline[0].$match;
+      expect(matchStage.isDeleted).toBe(false);
+      // When no organizations are eligible, only personal posts branch is included
+      expect(matchStage.$and).toBeDefined();
+      const personalOnlyAudience = matchStage.$and.find(
+        (c: any) => c.$and && Array.isArray(c.$and[0]?.$or),
+      );
+      expect(personalOnlyAudience).toBeDefined();
+      expect(personalOnlyAudience.$and[0].$or).toEqual([
+        { organizationId: { $exists: false } },
+        { organizationId: null },
+        { organizationId: '' },
+      ]);
+    });
+
+    it('properly queries network_connections using Types.ObjectId for following feed', async () => {
+      const mockFind = jest.fn().mockReturnValue({
+        toArray: jest.fn().mockResolvedValue([
+          {
+            requesterId: new Types.ObjectId(userA),
+            recipientId: new Types.ObjectId(userB),
+            status: 'accepted',
+          },
+        ]),
+      });
+      mockRealPostModel.db.collection.mockImplementation((collName: string) => {
+        if (collName === 'network_connections') {
+          return { find: mockFind };
+        }
+        return {
+          find: jest.fn().mockReturnValue({
+            toArray: jest.fn().mockResolvedValue([]),
+          }),
+        };
+      });
+
+      await repo.findFeed({
+        userId: userA,
+        filter: 'following',
+      });
+
+      expect(mockFind).toHaveBeenCalled();
+      const connQuery = mockFind.mock.calls[0][0];
+      expect(connQuery.$or[0].recipientId.$in).toEqual(
+        expect.arrayContaining([userA, new Types.ObjectId(userA)]),
+      );
+      expect(connQuery.$or[1].requesterId.$in).toEqual(
+        expect.arrayContaining([userA, new Types.ObjectId(userA)]),
+      );
+
+      const matchStage = capturedPipeline[0].$match;
+      expect(matchStage.authorId.$in).toEqual(
+        expect.arrayContaining([userB, new Types.ObjectId(userB)]),
+      );
+    });
+
+    it('handles compound cursor with date and ID tie-breaker deterministically', async () => {
+      const validIso = '2026-10-09T12:00:00.000Z';
+      const postId = 'post-uuid-tie-breaker';
+      const compoundCursor = `${validIso}_${postId}`;
+
+      await repo.findFeed({
+        userId: userA,
+        filter: 'all',
+        cursor: compoundCursor,
+      });
+
+      const matchStage = capturedPipeline[0].$match;
+      expect(matchStage.$and).toBeDefined();
+      const cursorCond = matchStage.$and.find(
+        (c: any) =>
+          Array.isArray(c.$or) &&
+          c.$or.some(
+            (item: any) =>
+              item.createdAt?.$lt !== undefined || item._id?.$lt !== undefined,
+          ),
+      );
+      expect(cursorCond).toBeDefined();
+      expect(cursorCond.$or[0].createdAt.$lt).toEqual(new Date(validIso));
+      expect(cursorCond.$or[1].createdAt).toEqual(new Date(validIso));
+      expect(cursorCond.$or[1]._id.$lt).toEqual(postId);
+    });
+
+    it('generates compound nextCursor with ISO date and ID from the last returned item', async () => {
+      const date1 = new Date('2026-10-09T12:00:00.000Z');
+      const date2 = new Date('2026-10-09T12:00:00.000Z'); // Identical timestamp
+      const mockPosts = [
+        { _id: 'post-1', createdAt: date1 },
+        { _id: 'post-2', createdAt: date2 }, // Last item of limit=2
+        { _id: 'post-3', createdAt: new Date('2026-10-09T11:00:00.000Z') }, // Extra item (limit + 1)
+      ];
+
+      mockRealPostModel.aggregate.mockReturnValueOnce({
+        exec: jest.fn().mockResolvedValue([...mockPosts]),
+      });
+
+      const result = await repo.findFeed({
+        userId: userA,
+        filter: 'all',
+        limit: 2,
+      });
+
+      expect(result.items).toHaveLength(2);
+      expect(result.items[0]._id).toBe('post-1');
+      expect(result.items[1]._id).toBe('post-2');
+      expect(result.nextCursor).toBe(`${date2.toISOString()}_post-2`);
     });
 
     it('gracefully ignores invalid date cursors without creating NaN match conditions', async () => {

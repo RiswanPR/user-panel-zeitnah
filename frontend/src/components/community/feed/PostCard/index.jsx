@@ -16,6 +16,8 @@ import {
 } from '../../../../hooks/useCommunity';
 import { getCanonicalProfileUrl } from '../../../../utils/roleNavigation';
 import { formatRelativeTime } from '../../../../utils/communityFormatters';
+import { useActiveProfile } from '../../../../context/ActiveProfileContext';
+import ReportModal from '../../../network/ReportModal';
 import toast from 'react-hot-toast';
 
 import PostHeader from './PostHeader';
@@ -32,8 +34,10 @@ import QuotedPost from '../../reposts/QuotedPost';
  */
 function PostCard({ post, onOpenComments, isActiveCommentPost, onOpenReel }) {
   const { user } = useContext(AuthContext);
+  const activeProfile = useActiveProfile?.() || {};
   const [localShowComments, setLocalShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
 
   const reactMutation = useReactToPost();
@@ -49,7 +53,20 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, onOpenReel }) {
   const isOwner = Boolean(
     currentUserId && postAuthorId && String(currentUserId) === String(postAuthorId)
   );
-  const isAdmin = user?.role === 'admin' || user?.primaryRole === 'ADMIN';
+  const isAdmin =
+    user?.role === 'admin' ||
+    user?.primaryRole === 'ADMIN' ||
+    user?.role === 'superadmin' ||
+    user?.teacher;
+
+  const businesses = activeProfile.businesses || [];
+  const postOrgId = post.organizationId || post.organization?._id || post.organization?.id;
+  const isCompanyManager = Boolean(
+    postOrgId &&
+    businesses.some((b) => String(b._id || b.id) === String(postOrgId))
+  );
+
+  const canModerate = Boolean(isAdmin || isOwner || isCompanyManager);
 
   const isRepost = post.postType === 'repost';
   const isQuote = post.postType === 'quote';
@@ -131,7 +148,7 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, onOpenReel }) {
   }, [isRepostPending, isReposted, unrepostMutation, repostMutation, canonicalPostId]);
 
   const handleReport = useCallback(() => {
-    toast.success('Thank you. Post flagged for moderation review.');
+    setIsReportModalOpen(true);
   }, []);
 
   const handleAddComment = (e) => {
@@ -381,12 +398,13 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, onOpenReel }) {
                             <span className="text-[10px] text-text-faint">
                               {formatRelativeTime(comment.createdAt)}
                             </span>
-                            {(isCommentOwner || isAdmin) && (
+                            {(isCommentOwner || canModerate) && (
                               <button
                                 type="button"
                                 onClick={() => handleDeleteComment(commentId)}
                                 className="text-text-faint hover:text-rose-400 p-0.5 transition-colors cursor-pointer"
                                 aria-label="Delete comment"
+                                title={isCommentOwner ? 'Delete comment' : 'Moderate comment'}
                               >
                                 <Trash2 className="w-3 h-3" />
                               </button>
@@ -405,6 +423,16 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, onOpenReel }) {
           </motion.section>
         )}
       </AnimatePresence>
+
+      {isReportModalOpen && (
+        <ReportModal
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          targetType="COMMUNITY"
+          targetId={String(canonicalPostId)}
+          targetName={displayPost?.author?.name ? `Post by ${displayPost.author.name}` : 'Community Post'}
+        />
+      )}
     </motion.article>
   );
 }
