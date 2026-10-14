@@ -42,7 +42,9 @@ export class ErrorReportsController {
   @Get()
   @UseGuards(JwtAuthGuard)
   findAll(@Req() req: AuthenticatedRequest, @Query() query: any) {
-    if (req.user.role !== 'admin') {
+    const isAdmin =
+      req.user?.role === 'admin' || req.user?.primaryRole === 'ADMIN';
+    if (!isAdmin) {
       throw new ForbiddenException('Admin access required');
     }
     return this.errorReportsService.findAll(query);
@@ -55,7 +57,9 @@ export class ErrorReportsController {
     @Param('id') id: string,
     @Body() updateData: any,
   ) {
-    if (req.user.role !== 'admin') {
+    const isAdmin =
+      req.user?.role === 'admin' || req.user?.primaryRole === 'ADMIN';
+    if (!isAdmin) {
       throw new ForbiddenException('Admin access required');
     }
     return this.errorReportsService.update(id, updateData);

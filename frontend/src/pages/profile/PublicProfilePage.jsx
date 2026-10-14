@@ -21,6 +21,7 @@ import { useToast } from "../../components/ui/Toast";
 import coreProfileService from "../../services/coreProfileService";
 import projectsService from "../../services/projectsService";
 import { isRecruiterOrFounder } from "../../utils/roleNavigation";
+import { isFieldVisibleOnPublicProfile } from "../../utils/profileNormalization";
 
 // Reusable Profile Components
 import ProfileHero from "../../components/profile/ProfileHero";
@@ -212,11 +213,12 @@ export default function PublicProfilePage() {
   };
 
   // Privacy filters (respect user's privacySettings unless it's own profile)
-  const isExpVisible = isOwnProfile || student?.privacySettings?.experienceVisibility !== "PRIVATE";
-  const isEduVisible = isOwnProfile || student?.privacySettings?.educationVisibility !== "PRIVATE";
-  const isProjectsVisible = isOwnProfile || student?.privacySettings?.projectsVisibility !== "PRIVATE";
-  const isCertVisible = isOwnProfile || student?.privacySettings?.certificationsVisibility !== "PRIVATE";
+  const isExpVisible = isFieldVisibleOnPublicProfile(student?.privacySettings, "experience", isOwnProfile);
+  const isEduVisible = isFieldVisibleOnPublicProfile(student?.privacySettings, "education", isOwnProfile);
+  const isProjectsVisible = isFieldVisibleOnPublicProfile(student?.privacySettings, "projects", isOwnProfile);
+  const isCertVisible = isFieldVisibleOnPublicProfile(student?.privacySettings, "certifications", isOwnProfile);
   const canSendOpportunity = Boolean(authUser && isRecruiterOrFounder(authUser) && !isOwnProfile);
+
 
   // Dynamically compute available sections based strictly on actual populated data
   const availableSections = useMemo(() => {

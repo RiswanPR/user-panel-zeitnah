@@ -7,6 +7,7 @@ import {
   Optional,
 } from '@nestjs/common';
 import { escapeRegex } from '../../common/utils/regex.util';
+import { normalizeCanonicalPrimaryRole } from '../../common/utils/role-normalization.util';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import {
@@ -118,10 +119,9 @@ export class OrganizationsService {
     if (this.userModel?.findById) {
       const user = await this.userModel.findById(userId);
       if (user) {
-        const primaryRole = (user.primaryRole || '').toUpperCase();
-        const isRecruiterOrFounder =
-          primaryRole === 'RECRUITER' || primaryRole === 'FOUNDER';
-        const isAdmin = user.role === 'admin';
+        const normalizedRole = normalizeCanonicalPrimaryRole(user.primaryRole);
+        const isRecruiterOrFounder = normalizedRole === 'RECRUITER';
+        const isAdmin = user.role === 'admin' || user.primaryRole === 'ADMIN';
 
         if (!isRecruiterOrFounder && !isAdmin) {
           throw new ForbiddenException(
@@ -282,10 +282,9 @@ export class OrganizationsService {
     if (this.userModel?.findById) {
       const user = await this.userModel.findById(userId);
       if (user) {
-        const primaryRole = (user.primaryRole || '').toUpperCase();
-        const isRecruiterOrFounder =
-          primaryRole === 'RECRUITER' || primaryRole === 'FOUNDER';
-        const isAdmin = user.role === 'admin';
+        const normalizedRole = normalizeCanonicalPrimaryRole(user.primaryRole);
+        const isRecruiterOrFounder = normalizedRole === 'RECRUITER';
+        const isAdmin = user.role === 'admin' || user.primaryRole === 'ADMIN';
 
         if (!isRecruiterOrFounder && !isAdmin) {
           throw new ForbiddenException(

@@ -49,7 +49,9 @@ export class OrganizationsController {
     @Req() req: any,
     @Query() query: AdminBusinessQueryDto,
   ) {
-    if (req.user.role !== 'admin') {
+    const isAdmin =
+      req.user?.role === 'admin' || req.user?.primaryRole === 'ADMIN';
+    if (!isAdmin) {
       throw new ForbiddenException('Admin access required');
     }
     return this.orgService.getOrganizationsForAdmin(query);
@@ -58,7 +60,9 @@ export class OrganizationsController {
   @Patch('admin/:id/approve')
   @UseGuards(JwtAuthGuard)
   async approveOrganization(@Req() req: any, @Param('id') id: string) {
-    if (req.user.role !== 'admin') {
+    const isAdmin =
+      req.user?.role === 'admin' || req.user?.primaryRole === 'ADMIN';
+    if (!isAdmin) {
       throw new ForbiddenException('Admin access required');
     }
     return this.orgService.approveOrganization(req.user.userId, id);
@@ -71,7 +75,9 @@ export class OrganizationsController {
     @Param('id') id: string,
     @Body() body: { reason: string },
   ) {
-    if (req.user.role !== 'admin') {
+    const isAdmin =
+      req.user?.role === 'admin' || req.user?.primaryRole === 'ADMIN';
+    if (!isAdmin) {
       throw new ForbiddenException('Admin access required');
     }
     return this.orgService.rejectOrganization(req.user.userId, id, body.reason);
@@ -84,7 +90,9 @@ export class OrganizationsController {
     @Param('id') id: string,
     @Body() body: { reason: string },
   ) {
-    if (req.user.role !== 'admin') {
+    const isAdmin =
+      req.user?.role === 'admin' || req.user?.primaryRole === 'ADMIN';
+    if (!isAdmin) {
       throw new ForbiddenException('Admin access required');
     }
     return this.orgService.suspendOrganization(

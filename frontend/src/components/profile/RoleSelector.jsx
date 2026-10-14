@@ -1,5 +1,6 @@
 import { GraduationCap, Briefcase, Compass, Search, Rocket, ShieldCheck, Lock } from "lucide-react";
 import { USER_SELECTABLE_ROLES } from "../../constants/infrastructureTaxonomy";
+import { normalizeUserRole } from "../../utils/roleNavigation";
 
 const ROLE_ICONS = {
   STUDENT: GraduationCap,
@@ -15,7 +16,8 @@ export default function RoleSelector({
   isAssignedEducator = false,
   disabled = false,
 }) {
-  const normalizedValue = (value || "STUDENT").toUpperCase();
+  const normalizedValue = normalizeUserRole(value);
+  const rawRole = (typeof value === "string" ? value : value?.primaryRole || value?.role || "").trim().toUpperCase();
 
   // If the user already has the Educator role assigned by an admin:
   if (isAssignedEducator || normalizedValue === "EDUCATOR") {
@@ -52,7 +54,21 @@ export default function RoleSelector({
         <span className="text-[11px] text-text-muted">Infrastructure Identity</span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      {(rawRole === "MENTOR" || rawRole === "FOUNDER") && (
+        <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/25 flex items-start gap-2.5">
+          <Compass className="w-4 h-4 text-purple-300 shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <p className="text-xs font-semibold text-purple-200">
+              Standardized Role: {normalizedValue === "PROFESSIONAL" ? "Professional" : "Recruiter"}
+            </p>
+            <p className="text-[11px] text-purple-300/80">
+              Your legacy {rawRole.toLowerCase()} role is canonically mapped to {normalizedValue.toLowerCase()}. Mentorship capabilities and organization management permissions remain fully preserved.
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {USER_SELECTABLE_ROLES.map((role) => {
           const Icon = ROLE_ICONS[role.value] || Briefcase;
           const isSelected = normalizedValue === role.value;

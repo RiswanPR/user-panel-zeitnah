@@ -13,6 +13,7 @@ import {
   Share2,
   Check,
   Eye,
+  Compass,
 } from "lucide-react";
 import { getUploadUrl } from "../../utils/courseUi";
 import RelationshipAction from "./RelationshipAction";
@@ -201,6 +202,15 @@ export default function InfrastructurePeopleCard({
         {/* Role Tag & Experience */}
         <div className="mt-2 flex items-center justify-center gap-1.5 flex-wrap">
           <EcosystemRoleBadge role={normalizeUserRole(person)} size="xs" />
+          {(person.mentorship?.isAvailableForMentorship || person.availability === "AVAILABLE_FOR_MENTORSHIP") && (
+            <span
+              className="text-[10px] font-medium text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full inline-flex items-center gap-1"
+              title="Available for Mentorship"
+            >
+              <Compass className="w-2.5 h-2.5 text-emerald-300" aria-hidden="true" />
+              Mentor
+            </span>
+          )}
           {expLabel && (
             <span className="text-[10px] font-mono text-text-muted/80 bg-white/[0.03] border border-white/[0.06] px-1.5 py-0.2 rounded-md">
               {expLabel}

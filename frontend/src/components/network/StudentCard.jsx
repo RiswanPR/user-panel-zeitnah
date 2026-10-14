@@ -7,6 +7,7 @@ import RelationshipAction from "./RelationshipAction";
 import EcosystemRoleBadge from "./EcosystemRoleBadge";
 import AvailabilityBadge from "./AvailabilityBadge";
 import { normalizeUserRole, getCanonicalProfileUrl, getProfileIdentifier } from "../../utils/roleNavigation";
+import ProfileAvatar from "../profile/ProfileAvatar";
 
 /**
  * Derives user initials from full name.
@@ -65,37 +66,17 @@ export default function StudentCard({ student, onPreview }) {
       <div>
         {/* Header: Avatar + Identity */}
         <div className="flex items-start gap-3.5">
-          {/* Avatar */}
-          <div className="relative h-13 w-13 shrink-0">
-            <div className="h-13 w-13 rounded-2xl border border-brand-mint/25 bg-gradient-to-br from-brand-mint/20 via-brand-navy/30 to-bg-card flex items-center justify-center overflow-hidden shadow-inner group-hover:border-brand-mint/40 transition-colors">
-              {avatarSrc ? (
-                <img
-                  src={avatarSrc}
-                  alt={student.name}
-                  onError={() => setAvatarError(true)}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <span className="text-sm font-heading font-bold text-brand-mint">
-                  {initials}
-                </span>
-              )}
-            </div>
-            {/* Verified badge or active status */}
-            {student.isVerified ? (
-              <span
-                className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-bg-base shadow-sm"
-                title="Verified Student"
-              >
-                <ShieldCheck className="h-3 w-3" />
-              </span>
-            ) : student.isActive ? (
-              <span
-                className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-bg-surface bg-brand-mint shadow-sm"
-                aria-hidden="true"
-              />
-            ) : null}
-          </div>
+          {/* Avatar with Availability Frame */}
+          <ProfileAvatar
+            src={student.avatar}
+            name={student.name}
+            initials={initials}
+            size="md"
+            availability={student.availability}
+            isVerified={student.isVerified}
+            showVerificationBadge={true}
+            isActive={student.isActive}
+          />
 
           {/* Name & Username */}
           <div className="min-w-0 flex-1">

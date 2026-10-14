@@ -444,6 +444,7 @@ describe('Production Remediation P0–P3 Verification Suite', () => {
       };
 
       mockReportModel = {
+        findOne: jest.fn().mockResolvedValue(null),
         create: jest.fn().mockResolvedValue({ _id: new Types.ObjectId() }),
       };
 

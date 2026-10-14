@@ -74,6 +74,10 @@ import {
   ReviewVerificationRequestDto,
 } from './dto/verification.dto';
 import { NotificationsService } from '../notifications/notifications.service';
+import {
+  normalizeCanonicalPrimaryRole,
+  CANONICAL_COMMUNITY_ROLES,
+} from '../../common/utils/role-normalization.util';
 
 /**
  * Canonical to legacy role compatibility mapping.
@@ -88,18 +92,44 @@ export function mapPrimaryRoleToLegacyRole(
   if (currentLegacyRole === 'admin' || currentLegacyRole === 'superuser') {
     return currentLegacyRole;
   }
-  const normalized = (primaryRole || 'STUDENT').trim().toUpperCase();
+  const normalized = normalizeCanonicalPrimaryRole(primaryRole) || 'STUDENT';
   switch (normalized) {
     case 'EDUCATOR':
       return 'teacher';
     case 'RECRUITER':
-    case 'FOUNDER':
       return 'recruiter';
+    case 'ADMIN':
+      return 'admin';
     case 'STUDENT':
     case 'PROFESSIONAL':
-    case 'MENTOR':
     default:
       return 'student';
+  }
+}
+
+/**
+ * Normalizes professional availability into canonical choices:
+ * - OPEN_TO_HIRING (hiring talent)
+ * - OPEN_TO_WORK (looking for employment / opportunities)
+ * - NOT_AVAILABLE (not currently available)
+ * while safely preserving legacy intent.
+ */
+export function normalizeAvailability(raw?: string): string {
+  if (!raw) return 'NOT_AVAILABLE';
+  const val = String(raw).trim().toUpperCase();
+  switch (val) {
+    case 'OPEN_TO_HIRING':
+      return 'OPEN_TO_HIRING';
+    case 'OPEN_TO_WORK':
+    case 'OPEN_TO_OPPORTUNITIES':
+    case 'AVAILABLE_FOR_COLLABORATION':
+    case 'AVAILABLE_FOR_MENTORSHIP':
+      return 'OPEN_TO_WORK';
+    case 'NOT_AVAILABLE':
+    case 'NOT_CURRENTLY_AVAILABLE':
+      return 'NOT_AVAILABLE';
+    default:
+      return 'NOT_AVAILABLE';
   }
 }
 
@@ -609,19 +639,28 @@ export class ProfileService {
       }),
     );
 
-    const privacy = userObj.privacySettings || {
-      experience: 'PUBLIC',
-      education: 'PUBLIC',
-      projects: 'PUBLIC',
-      certifications: 'PUBLIC',
-      careerPreferences: 'PRIVATE',
-      contactInfo: 'NETWORK',
-    };
+    const rawPrivacy = userObj.privacySettings || {};
+    // Conservative resolution: check canonical and legacy visibility keys
+    const isExpPrivate =
+      rawPrivacy.experience === 'PRIVATE' ||
+      rawPrivacy.experienceVisibility === 'PRIVATE';
+    const isEduPrivate =
+      rawPrivacy.education === 'PRIVATE' ||
+      rawPrivacy.educationVisibility === 'PRIVATE';
+    const isCertPrivate =
+      rawPrivacy.certifications === 'PRIVATE' ||
+      rawPrivacy.certificationsVisibility === 'PRIVATE';
+    const isProjectsPrivate =
+      rawPrivacy.projects === 'PRIVATE' ||
+      rawPrivacy.projectsVisibility === 'PRIVATE';
+    const isCareerPrefsPublic =
+      rawPrivacy.careerPreferences === 'PUBLIC' ||
+      rawPrivacy.careerPreferencesVisibility === 'PUBLIC';
 
-    const isExpVisible = privacy.experience !== 'PRIVATE';
-    const isEduVisible = privacy.education !== 'PRIVATE';
-    const isCertVisible = privacy.certifications !== 'PRIVATE';
-    const isCareerPrefsVisible = privacy.careerPreferences === 'PUBLIC';
+    const isExpVisible = !isExpPrivate;
+    const isEduVisible = !isEduPrivate;
+    const isCertVisible = !isCertPrivate;
+    const isCareerPrefsVisible = isCareerPrefsPublic;
 
     return {
       user: {
@@ -653,7 +692,19 @@ export class ProfileService {
         careerPreferences: isCareerPrefsVisible
           ? userObj.careerPreferences
           : null,
-        privacySettings: userObj.privacySettings,
+        privacySettings: {
+          experience: isExpVisible ? 'PUBLIC' : 'PRIVATE',
+          education: isEduVisible ? 'PUBLIC' : 'PRIVATE',
+          certifications: isCertVisible ? 'PUBLIC' : 'PRIVATE',
+          projects: isProjectsPrivate ? 'PRIVATE' : 'PUBLIC',
+          careerPreferences: isCareerPrefsVisible ? 'PUBLIC' : 'PRIVATE',
+          experienceVisibility: isExpVisible ? 'PUBLIC' : 'PRIVATE',
+          educationVisibility: isEduVisible ? 'PUBLIC' : 'PRIVATE',
+          certificationsVisibility: isCertVisible ? 'PUBLIC' : 'PRIVATE',
+          projectsVisibility: isProjectsPrivate ? 'PRIVATE' : 'PUBLIC',
+          careerPreferencesVisibility: isCareerPrefsVisible ? 'PUBLIC' : 'PRIVATE',
+        },
+
         recommendations: signedRecommendations,
         publicProfilePublished: Boolean(userObj.publicProfilePublished),
         role: userObj.role,
@@ -663,7 +714,7 @@ export class ProfileService {
         ),
         primaryRole: userObj.primaryRole || 'STUDENT',
         capabilities: userObj.capabilities || ['STUDENT'],
-        availability: userObj.availability || 'NOT_CURRENTLY_AVAILABLE',
+        availability: normalizeAvailability(userObj.availability),
         professionalInterests: userObj.professionalInterests || [],
         discoverableToRecruiters: Boolean(userObj.discoverableToRecruiters),
         profileVisibility: userObj.profileVisibility || 'PUBLIC',
@@ -727,6 +778,7 @@ export class ProfileService {
     await user.save();
 
     const userObj = user.toObject() as any;
+    userObj.availability = normalizeAvailability(userObj.availability);
     if (userObj.avatar) {
       userObj.avatar = await this.signedUrlService.generateSignedImageUrl(
         userObj.avatar,
@@ -774,26 +826,21 @@ export class ProfileService {
     const incomingRole =
       data.primaryRole !== undefined ? data.primaryRole : data.role;
     if (incomingRole !== undefined) {
-      const normalizedRole = String(incomingRole).trim().toUpperCase();
-      const validRoles = [
-        'STUDENT',
-        'EDUCATOR',
-        'PROFESSIONAL',
-        'MENTOR',
-        'RECRUITER',
-        'FOUNDER',
-      ];
-      if (!validRoles.includes(normalizedRole)) {
+      const normalizedRole = normalizeCanonicalPrimaryRole(incomingRole);
+      if (!normalizedRole || normalizedRole === 'ADMIN') {
         throw new BadRequestException(
-          `Invalid profile role: '${incomingRole}'. Must be one of: student, educator, professional, mentor, recruiter, founder.`,
+          `Invalid profile role: '${incomingRole}'. Must be one of: student, educator, professional, recruiter.`,
         );
       }
 
-      const isAdmin =
-        requesterRole === 'admin' || requesterRole === 'superuser';
-      const currentRoleNormalized = String(user.primaryRole || 'STUDENT')
+      const cleanRequesterRole = String(requesterRole || '')
         .trim()
-        .toUpperCase();
+        .toLowerCase();
+      const isAdmin =
+        cleanRequesterRole === 'admin' || cleanRequesterRole === 'superuser';
+      const currentRoleNormalized =
+        normalizeCanonicalPrimaryRole(user.primaryRole || 'STUDENT') ||
+        'STUDENT';
 
       // Enforce: User cannot self-assign educator role
       if (normalizedRole === 'EDUCATOR' && !isAdmin) {
@@ -833,24 +880,41 @@ export class ProfileService {
       user.yearsOfExperience = Math.max(0, Number(data.yearsOfExperience) || 0);
     }
     if (data.structuredSkills !== undefined) {
+      const incomingSkills = data.structuredSkills as any;
+      const tech =
+        incomingSkills.technicalSkills ??
+        incomingSkills.technical ??
+        incomingSkills.technicalCalculations;
+      const soft =
+        incomingSkills.softwareSkills ??
+        incomingSkills.software ??
+        incomingSkills.softwareTools;
+      const ind =
+        incomingSkills.industrySkills ??
+        incomingSkills.industry ??
+        incomingSkills.industryStandards;
+      const prof =
+        incomingSkills.professionalSkills ??
+        incomingSkills.professional ??
+        incomingSkills.professionalLeadership;
+
       user.structuredSkills = {
-        technicalSkills: Array.isArray(data.structuredSkills.technicalSkills)
-          ? data.structuredSkills.technicalSkills
+        technicalSkills: Array.isArray(tech)
+          ? tech
           : user.structuredSkills?.technicalSkills || [],
-        softwareSkills: Array.isArray(data.structuredSkills.softwareSkills)
-          ? data.structuredSkills.softwareSkills
+        softwareSkills: Array.isArray(soft)
+          ? soft
           : user.structuredSkills?.softwareSkills || [],
-        industrySkills: Array.isArray(data.structuredSkills.industrySkills)
-          ? data.structuredSkills.industrySkills
+        industrySkills: Array.isArray(ind)
+          ? ind
           : user.structuredSkills?.industrySkills || [],
-        professionalSkills: Array.isArray(
-          data.structuredSkills.professionalSkills,
-        )
-          ? data.structuredSkills.professionalSkills
+        professionalSkills: Array.isArray(prof)
+          ? prof
           : user.structuredSkills?.professionalSkills || [],
       };
     }
     if (data.careerPreferences !== undefined) {
+      const incomingPrefs = data.careerPreferences as any;
       const existingPrefs = user.careerPreferences || {
         openToOpportunities: false,
         preferredRoles: [],
@@ -866,70 +930,155 @@ export class ProfileService {
         },
         availability: '',
       };
+
+      const preferredRoles =
+        incomingPrefs.preferredRoles ??
+        incomingPrefs.targetRoles ??
+        existingPrefs.preferredRoles ??
+        [];
+      const preferredSectors =
+        incomingPrefs.preferredSectors ??
+        incomingPrefs.preferredInfrastructureSectors ??
+        existingPrefs.preferredSectors ??
+        [];
+      const openToOpportunities =
+        incomingPrefs.openToOpportunities !== undefined
+          ? Boolean(incomingPrefs.openToOpportunities)
+          : incomingPrefs.activelyLooking !== undefined
+          ? Boolean(incomingPrefs.activelyLooking)
+          : existingPrefs.openToOpportunities;
+      const preferredWorkMode =
+        incomingPrefs.preferredWorkMode ??
+        (Array.isArray(incomingPrefs.workModes) && incomingPrefs.workModes[0]) ??
+        existingPrefs.preferredWorkMode ??
+        'On-site';
+      const availability =
+        incomingPrefs.availability ??
+        incomingPrefs.noticePeriod ??
+        existingPrefs.availability ??
+        '';
+
+      const rawSalary =
+        incomingPrefs.expectedSalaryRange ??
+        incomingPrefs.expectedSalary ??
+        existingPrefs.expectedSalaryRange;
+      const minSalary = Number(
+        rawSalary?.min ?? existingPrefs.expectedSalaryRange?.min ?? 0,
+      );
+      const maxSalary = Number(
+        rawSalary?.max ?? existingPrefs.expectedSalaryRange?.max ?? 0,
+      );
+      const currency =
+        rawSalary?.currency ||
+        existingPrefs.expectedSalaryRange?.currency ||
+        'INR';
+      const period =
+        rawSalary?.period ||
+        existingPrefs.expectedSalaryRange?.period ||
+        'yearly';
+
       user.careerPreferences = {
-        openToOpportunities:
-          data.careerPreferences.openToOpportunities !== undefined
-            ? Boolean(data.careerPreferences.openToOpportunities)
-            : existingPrefs.openToOpportunities,
-        preferredRoles:
-          data.careerPreferences.preferredRoles ||
-          existingPrefs.preferredRoles ||
-          [],
-        preferredSectors:
-          data.careerPreferences.preferredSectors ||
-          existingPrefs.preferredSectors ||
-          [],
-        preferredLocations:
-          data.careerPreferences.preferredLocations ||
-          existingPrefs.preferredLocations ||
-          [],
-        preferredWorkMode:
-          data.careerPreferences.preferredWorkMode ||
-          existingPrefs.preferredWorkMode ||
-          'On-site',
+        openToOpportunities,
+        preferredRoles: Array.isArray(preferredRoles) ? preferredRoles : [],
+        preferredSectors: Array.isArray(preferredSectors)
+          ? preferredSectors
+          : [],
+        preferredLocations: Array.isArray(incomingPrefs.preferredLocations)
+          ? incomingPrefs.preferredLocations
+          : existingPrefs.preferredLocations || [],
+        preferredWorkMode,
         preferredEmploymentType:
-          data.careerPreferences.preferredEmploymentType ||
+          incomingPrefs.preferredEmploymentType ||
           existingPrefs.preferredEmploymentType ||
           'Full-time',
         expectedSalaryRange: {
-          min: Number(
-            data.careerPreferences.expectedSalaryRange?.min ??
-              existingPrefs.expectedSalaryRange?.min ??
-              0,
-          ),
-          max: Number(
-            data.careerPreferences.expectedSalaryRange?.max ??
-              existingPrefs.expectedSalaryRange?.max ??
-              0,
-          ),
-          currency:
-            data.careerPreferences.expectedSalaryRange?.currency ||
-            existingPrefs.expectedSalaryRange?.currency ||
-            'INR',
-          period:
-            data.careerPreferences.expectedSalaryRange?.period ||
-            existingPrefs.expectedSalaryRange?.period ||
-            'yearly',
+          min: isNaN(minSalary) ? 0 : minSalary,
+          max: isNaN(maxSalary) ? 0 : maxSalary,
+          currency,
+          period,
         },
-        availability:
-          data.careerPreferences.availability ||
-          existingPrefs.availability ||
-          '',
+        availability,
         recruiterDiscovery:
-          data.careerPreferences.recruiterDiscovery ||
+          incomingPrefs.recruiterDiscovery ||
           (existingPrefs as any).recruiterDiscovery ||
           'VISIBLE_ALL_RECRUITERS',
       };
     }
     if (data.privacySettings !== undefined) {
+      const incomingPrivacy = data.privacySettings as any;
+      const existingPrivacy = user.privacySettings || {
+        experience: 'PUBLIC',
+        education: 'PUBLIC',
+        projects: 'PUBLIC',
+        certifications: 'PUBLIC',
+        careerPreferences: 'PRIVATE',
+        contactInfo: 'NETWORK',
+        messaging: 'ANYONE',
+        readReceipts: true,
+        onlinePresence: true,
+      };
+
+      const exp =
+        incomingPrivacy.experience ??
+        incomingPrivacy.experienceVisibility ??
+        existingPrivacy.experience ??
+        'PUBLIC';
+      const edu =
+        incomingPrivacy.education ??
+        incomingPrivacy.educationVisibility ??
+        existingPrivacy.education ??
+        'PUBLIC';
+      const proj =
+        incomingPrivacy.projects ??
+        incomingPrivacy.projectsVisibility ??
+        existingPrivacy.projects ??
+        'PUBLIC';
+      const cert =
+        incomingPrivacy.certifications ??
+        incomingPrivacy.certificationsVisibility ??
+        existingPrivacy.certifications ??
+        'PUBLIC';
+      const career =
+        incomingPrivacy.careerPreferences ??
+        incomingPrivacy.careerPreferencesVisibility ??
+        existingPrivacy.careerPreferences ??
+        'PRIVATE';
+      const contact =
+        incomingPrivacy.contactInfo ??
+        incomingPrivacy.contactInfoVisibility ??
+        existingPrivacy.contactInfo ??
+        'NETWORK';
+      const messaging =
+        incomingPrivacy.messaging ??
+        existingPrivacy.messaging ??
+        'ANYONE';
+      const readReceipts =
+        incomingPrivacy.readReceipts ??
+        existingPrivacy.readReceipts ??
+        true;
+      const onlinePresence =
+        incomingPrivacy.onlinePresence ??
+        existingPrivacy.onlinePresence ??
+        true;
+
       user.privacySettings = {
-        ...user.privacySettings,
-        ...data.privacySettings,
+        ...existingPrivacy,
+        experience: String(exp).toUpperCase(),
+        education: String(edu).toUpperCase(),
+        projects: String(proj).toUpperCase(),
+        certifications: String(cert).toUpperCase(),
+        careerPreferences: String(career).toUpperCase(),
+        contactInfo: String(contact).toUpperCase(),
+        messaging,
+        readReceipts: Boolean(readReceipts),
+        onlinePresence: Boolean(onlinePresence),
       };
     }
 
+
     if (data.capabilities !== undefined) user.capabilities = data.capabilities;
-    if (data.availability !== undefined) user.availability = data.availability;
+    if (data.availability !== undefined)
+      user.availability = normalizeAvailability(data.availability);
     if (data.professionalInterests !== undefined)
       user.professionalInterests = data.professionalInterests;
     if (data.discoverableToRecruiters !== undefined)
@@ -960,6 +1109,7 @@ export class ProfileService {
     this.triggerCandidateMatchInvalidation(userId);
 
     const userObj = user.toObject() as any;
+    userObj.availability = normalizeAvailability(userObj.availability);
     if (userObj.avatar) {
       userObj.avatar = await this.signedUrlService.generateSignedImageUrl(
         userObj.avatar,
@@ -1630,10 +1780,10 @@ export class ProfileService {
     newRole: string,
   ) {
     const admin = await this.userModel.findById(adminUserId);
-    if (
-      !admin ||
-      (admin.role !== 'admin' && (admin as any).role !== 'superuser')
-    ) {
+    const cleanAdminRole = String(admin.role || '')
+      .trim()
+      .toLowerCase();
+    if (cleanAdminRole !== 'admin' && cleanAdminRole !== 'superuser') {
       throw new ForbiddenException('Only administrators can assign roles.');
     }
 
@@ -1642,20 +1792,10 @@ export class ProfileService {
       throw new NotFoundException('Target user not found.');
     }
 
-    const normalizedRole = String(newRole || '')
-      .trim()
-      .toUpperCase();
-    const validRoles = [
-      'STUDENT',
-      'EDUCATOR',
-      'PROFESSIONAL',
-      'MENTOR',
-      'RECRUITER',
-      'FOUNDER',
-    ];
-    if (!validRoles.includes(normalizedRole)) {
+    const normalizedRole = normalizeCanonicalPrimaryRole(newRole);
+    if (!normalizedRole || normalizedRole === 'ADMIN') {
       throw new BadRequestException(
-        `Invalid role: ${newRole}. Must be one of: student, educator, professional, mentor, recruiter, founder.`,
+        `Invalid role: ${newRole}. Must be one of: student, educator, professional, recruiter.`,
       );
     }
 
@@ -1916,7 +2056,7 @@ export class ProfileService {
         location: user.location,
         yearsOfExperience: user.yearsOfExperience || 0,
         badges: verificationsSummary,
-        availability: user.availability,
+        availability: normalizeAvailability(user.availability),
       },
       about: user.portfolio?.customBio || user.bio || '',
       featuredProjects,
@@ -2549,7 +2689,11 @@ export class ProfileService {
     if (!request) throw new NotFoundException('Verification request not found');
 
     const isCandidateOwner = String(request.userId) === String(requesterUserId);
-    const isAdmin = requesterRole === 'admin' || requesterRole === 'superuser';
+    const cleanRequesterRole = String(requesterRole || '')
+      .trim()
+      .toLowerCase();
+    const isAdmin =
+      cleanRequesterRole === 'admin' || cleanRequesterRole === 'superuser';
 
     if (!isCandidateOwner && !isAdmin) {
       throw new ForbiddenException(

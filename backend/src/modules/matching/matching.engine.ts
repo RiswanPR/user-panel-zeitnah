@@ -740,6 +740,7 @@ export function calculateMatch(
   // ── 15. Availability ─────────────────────────────────────────────
   const isOpen =
     candidate.careerPreferences?.openToOpportunities ||
+    candidate.availability === 'OPEN_TO_WORK' ||
     candidate.availability === 'OPEN_TO_OPPORTUNITIES';
   const availScore = isOpen ? 100 : 30;
   dimensionScores.push({

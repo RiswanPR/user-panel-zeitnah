@@ -52,7 +52,9 @@ export class TroubleshootController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    if (req.user?.role !== 'admin') {
+    const isAdmin =
+      req.user?.role === 'admin' || req.user?.primaryRole === 'ADMIN';
+    if (!isAdmin) {
       throw new ForbiddenException('Admin access required');
     }
     return this.troubleshootService.findReports({

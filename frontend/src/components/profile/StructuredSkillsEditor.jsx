@@ -5,25 +5,71 @@ import {
   DEFAULT_STRUCTURED_SKILLS,
 } from "../../constants/infrastructureTaxonomy";
 
+import { normalizeStructuredSkills } from "../../utils/profileNormalization";
+
 const CATEGORY_TABS = [
-  { id: "software", label: "Software Skills", icon: Cpu, desc: "Engineering design, BIM, CAD, and scheduling tools" },
-  { id: "technical", label: "Technical Skills", icon: Code2, desc: "Core technical, calculation, and design capabilities" },
-  { id: "industry", label: "Industry Skills", icon: Wrench, desc: "Contract frameworks, safety standards, and QA/QC procedures" },
-  { id: "professional", label: "Professional Skills", icon: Shield, desc: "Leadership, stakeholder management, and team collaboration" },
+  {
+    id: "softwareSkills",
+    legacyKey: "software",
+    altKey: "softwareTools",
+    label: "Software Skills",
+    icon: Cpu,
+    desc: "Engineering design, BIM, CAD, and scheduling tools",
+  },
+  {
+    id: "technicalSkills",
+    legacyKey: "technical",
+    altKey: "technicalCalculations",
+    label: "Technical Skills",
+    icon: Code2,
+    desc: "Core technical, calculation, and design capabilities",
+  },
+  {
+    id: "industrySkills",
+    legacyKey: "industry",
+    altKey: "industryStandards",
+    label: "Industry Skills",
+    icon: Wrench,
+    desc: "Contract frameworks, safety standards, and QA/QC procedures",
+  },
+  {
+    id: "professionalSkills",
+    legacyKey: "professional",
+    altKey: "professionalLeadership",
+    label: "Professional Skills",
+    icon: Shield,
+    desc: "Leadership, stakeholder management, and team collaboration",
+  },
 ];
 
 export default function StructuredSkillsEditor({
-  structuredSkills = { technical: [], software: [], industry: [], professional: [] },
+  structuredSkills = {
+    technicalSkills: [],
+    softwareSkills: [],
+    industrySkills: [],
+    professionalSkills: [],
+  },
   setStructuredSkills,
   flatSkills = [],
   setFlatSkills,
   onChangeDirty,
 }) {
-  const [activeTab, setActiveTab] = useState("software");
+  const [activeTab, setActiveTab] = useState("softwareSkills");
   const [inputVal, setInputVal] = useState("");
 
-  const currentCategoryList = structuredSkills[activeTab] || [];
-  const currentDefaults = DEFAULT_STRUCTURED_SKILLS[activeTab] || [];
+  const currentTabMeta =
+    CATEGORY_TABS.find((c) => c.id === activeTab) || CATEGORY_TABS[0];
+
+  const currentCategoryList =
+    structuredSkills[activeTab] ||
+    structuredSkills[currentTabMeta.legacyKey] ||
+    structuredSkills[currentTabMeta.altKey] ||
+    [];
+
+  const currentDefaults =
+    DEFAULT_STRUCTURED_SKILLS[activeTab] ||
+    DEFAULT_STRUCTURED_SKILLS[currentTabMeta.legacyKey] ||
+    [];
 
   const handleAddSkill = (skillName) => {
     const trimmed = (skillName || inputVal).trim();
@@ -34,10 +80,12 @@ export default function StructuredSkillsEditor({
     }
 
     const updatedCategory = [...currentCategoryList, trimmed];
-    const newStructured = {
+    const newStructured = normalizeStructuredSkills({
       ...structuredSkills,
       [activeTab]: updatedCategory,
-    };
+      [currentTabMeta.legacyKey]: updatedCategory,
+      [currentTabMeta.altKey]: updatedCategory,
+    });
     setStructuredSkills(newStructured);
 
     // Also sync to flat skills array without duplicates
@@ -51,14 +99,21 @@ export default function StructuredSkillsEditor({
 
   const handleRemoveSkill = (skillToRemove) => {
     const updatedCategory = currentCategoryList.filter((s) => s !== skillToRemove);
-    const newStructured = {
+    const newStructured = normalizeStructuredSkills({
       ...structuredSkills,
       [activeTab]: updatedCategory,
-    };
+      [currentTabMeta.legacyKey]: updatedCategory,
+      [currentTabMeta.altKey]: updatedCategory,
+    });
     setStructuredSkills(newStructured);
 
     // Also remove from flatSkills if no other category has it
-    const remainingAll = Object.entries(newStructured).flatMap(([k, list]) => list);
+    const remainingAll = [
+      ...(newStructured.softwareSkills || []),
+      ...(newStructured.technicalSkills || []),
+      ...(newStructured.industrySkills || []),
+      ...(newStructured.professionalSkills || []),
+    ];
     if (!remainingAll.some((s) => s.toLowerCase() === skillToRemove.toLowerCase())) {
       setFlatSkills(flatSkills.filter((s) => s !== skillToRemove));
     }
@@ -67,10 +122,11 @@ export default function StructuredSkillsEditor({
   };
 
   const totalSkillCount =
-    (structuredSkills.software?.length || 0) +
-    (structuredSkills.technical?.length || 0) +
-    (structuredSkills.industry?.length || 0) +
-    (structuredSkills.professional?.length || 0);
+    (structuredSkills.softwareSkills?.length || structuredSkills.software?.length || 0) +
+    (structuredSkills.technicalSkills?.length || structuredSkills.technical?.length || 0) +
+    (structuredSkills.industrySkills?.length || structuredSkills.industry?.length || 0) +
+    (structuredSkills.professionalSkills?.length || structuredSkills.professional?.length || 0);
+
 
   return (
     <div className="space-y-6">

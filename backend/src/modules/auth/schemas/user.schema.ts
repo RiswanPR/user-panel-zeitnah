@@ -1,6 +1,17 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 import { Document } from 'mongoose';
+import {
+  normalizeCanonicalPrimaryRole,
+  CANONICAL_COMMUNITY_ROLES,
+  CanonicalCommunityRole,
+} from '../../../common/utils/role-normalization.util';
+
+export {
+  normalizeCanonicalPrimaryRole,
+  CANONICAL_COMMUNITY_ROLES,
+  CanonicalCommunityRole,
+};
 
 export type UserDocument = User & Document;
 
@@ -448,8 +459,11 @@ export class User {
 
   // PROFESSIONAL AVAILABILITY
   @Prop({
-    default: 'NOT_CURRENTLY_AVAILABLE',
+    default: 'NOT_AVAILABLE',
     enum: [
+      'OPEN_TO_HIRING',
+      'OPEN_TO_WORK',
+      'NOT_AVAILABLE',
       'OPEN_TO_OPPORTUNITIES',
       'AVAILABLE_FOR_MENTORSHIP',
       'AVAILABLE_FOR_COLLABORATION',
@@ -1198,7 +1212,8 @@ UserSchema.pre('validate', function () {
   }
 
   if (this.primaryRole) {
-    this.primaryRole = String(this.primaryRole).trim().toUpperCase();
+    const canonical = normalizeCanonicalPrimaryRole(this.primaryRole);
+    this.primaryRole = canonical || String(this.primaryRole).trim().toUpperCase();
   } else if (this.role) {
     const cleanRole = String(this.role).trim().toLowerCase();
     if (cleanRole === 'teacher') this.primaryRole = 'EDUCATOR';
@@ -1221,7 +1236,9 @@ UserSchema.pre(['findOneAndUpdate', 'updateOne'], function () {
     }
   }
   if (target.primaryRole) {
-    target.primaryRole = String(target.primaryRole).trim().toUpperCase();
+    const canonical = normalizeCanonicalPrimaryRole(target.primaryRole);
+    target.primaryRole =
+      canonical || String(target.primaryRole).trim().toUpperCase();
   }
 });
 

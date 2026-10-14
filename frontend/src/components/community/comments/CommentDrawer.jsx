@@ -35,6 +35,7 @@ export default function CommentDrawer({ isOpen, post, onClose }) {
   const isAdmin =
     user?.role === 'admin' ||
     user?.primaryRole === 'ADMIN' ||
+    user?.primaryRole === 'EDUCATOR' ||
     user?.role === 'superadmin' ||
     user?.role === 'teacher';
 

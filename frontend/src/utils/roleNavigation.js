@@ -11,52 +11,91 @@ import {
   Globe,
 } from "lucide-react";
 
+export const CANONICAL_COMMUNITY_ROLES = [
+  "STUDENT",
+  "PROFESSIONAL",
+  "RECRUITER",
+  "EDUCATOR",
+];
+
+export const SYSTEM_ADMIN_ROLE = "ADMIN";
+
+/**
+ * Checks if a given role is one of the four authoritative community roles.
+ *
+ * @param {unknown} role
+ * @returns {boolean}
+ */
+export function isCanonicalCommunityRole(role) {
+  if (typeof role !== "string") return false;
+  return CANONICAL_COMMUNITY_ROLES.includes(role.trim().toUpperCase());
+}
+
 /**
  * CANONICAL ROLE ENGINE — ZEITNAH USER PANEL
  *
+ * Authoritative Canonical Community Roles:
+ * - STUDENT: Studying civil, structural, BIM, architecture, or infrastructure disciplines.
+ * - PROFESSIONAL: Practicing infrastructure engineering or AEC professional.
+ * - RECRUITER: Hiring talent for infrastructure, AEC, EPC, and engineering firms.
+ * - EDUCATOR: Faculty, institutional trainer, or academic leader (Admin-assigned only).
+ *
+ * System Privilege Roles:
+ * - ADMIN: System administration and platform governance (Separate system identity).
+ *
+ * Legacy Ingestion Mappings:
+ * - FOUNDER / founder -> RECRUITER
+ * - MENTOR / mentor -> PROFESSIONAL
+ * - TEACHER / teacher -> EDUCATOR
+ * - SUPERUSER / superuser -> ADMIN
+ *
  * Rules:
  * 1. Exactly ONE canonical platform identity role: primaryRole.
- * 2. Allowed platform roles:
- *    - STUDENT
- *    - PROFESSIONAL
- *    - MENTOR
- *    - RECRUITER
- *    - FOUNDER
- *    - EDUCATOR
- *    (ADMIN is a separate system identity)
- * 3. COURSE ENROLLMENT IS NOT A ROLE.
- *    Course enrollment must NEVER influence role normalization or career navigation.
- * 4. primaryRole is always checked first and has absolute priority over legacy role.
- * 5. Safely handles strings, objects, null, undefined, and case variations.
+ * 2. Course enrollment is NOT a role and must NEVER influence role normalization.
+ * 3. primaryRole is always checked first and has absolute priority over legacy role.
+ * 4. Safely handles strings, objects, null, undefined, and case variations.
  *
  * @param {object|string|null|undefined} user
+ * @param {string} [fallback="STUDENT"]
  * @returns {string} Normalized canonical role in UPPERCASE
  */
-export function normalizeUserRole(user) {
+export function normalizeUserRole(user, fallback = "STUDENT") {
   if (!user) {
-    return "STUDENT";
+    return fallback;
   }
 
-  // Handle direct string input
-  if (typeof user === "string") {
-    const trimmed = user.trim().toUpperCase();
-    if (trimmed === "TEACHER") return "EDUCATOR";
-    return trimmed || "STUDENT";
-  }
+  // Handle direct string input or user object with primaryRole / role
+  const rawRole =
+    typeof user === "string" ? user : user.primaryRole || user.role;
 
-  // primaryRole is ALWAYS checked first and takes priority
-  const rawRole = user.primaryRole || user.role;
   if (!rawRole || typeof rawRole !== "string") {
-    return "STUDENT";
+    return fallback;
   }
 
-  const trimmed = rawRole.trim().toUpperCase();
-  // Safe backward compatibility: legacy 'teacher' maps to canonical 'EDUCATOR'
-  if (trimmed === "TEACHER") {
-    return "EDUCATOR";
-  }
+  const clean = rawRole.trim().toUpperCase();
+  switch (clean) {
+    case "STUDENT":
+      return "STUDENT";
 
-  return trimmed || "STUDENT";
+    case "PROFESSIONAL":
+    case "MENTOR":
+      return "PROFESSIONAL";
+
+    case "RECRUITER":
+    case "FOUNDER":
+      return "RECRUITER";
+
+    case "EDUCATOR":
+    case "TEACHER":
+      return "EDUCATOR";
+
+    case "ADMIN":
+    case "SUPERUSER":
+      return "ADMIN";
+
+    default:
+      return fallback;
+  }
 }
 
 /**

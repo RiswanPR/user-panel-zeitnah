@@ -225,12 +225,18 @@ export class LearningSpacesService {
         { teachers: userObjId },
         { ownerId: userObjId },
       ];
-    } else if (role === 'student' && filter !== 'discover') {
+    } else if (
+      (role === 'student' || role === 'STUDENT') &&
+      filter !== 'discover'
+    ) {
       matchConditions.$or = [
         { communityId: { $in: joinedCommunityIds } },
         { accessMode: 'open' },
       ];
-    } else if (role === 'teacher' && filter !== 'discover') {
+    } else if (
+      (role === 'teacher' || role === 'EDUCATOR') &&
+      filter !== 'discover'
+    ) {
       matchConditions.$or = [
         { teachers: userObjId },
         { ownerId: userObjId },

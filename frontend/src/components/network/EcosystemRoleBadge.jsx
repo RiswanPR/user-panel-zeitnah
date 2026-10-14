@@ -1,4 +1,5 @@
-import { GraduationCap, Briefcase, BookOpen, Compass, Search, Rocket } from "lucide-react";
+import { GraduationCap, Briefcase, BookOpen, Compass, Search, Rocket, ShieldCheck } from "lucide-react";
+import { normalizeUserRole } from "../../utils/roleNavigation";
 
 const ROLE_CONFIG = {
   STUDENT: {
@@ -23,11 +24,11 @@ const ROLE_CONFIG = {
     borderColor: "border-blue-500/20",
   },
   MENTOR: {
-    label: "Mentor",
-    icon: Compass,
-    bgColor: "bg-emerald-500/10",
-    textColor: "text-emerald-300",
-    borderColor: "border-emerald-500/20",
+    label: "Professional",
+    icon: Briefcase,
+    bgColor: "bg-purple-500/10",
+    textColor: "text-purple-300",
+    borderColor: "border-purple-500/20",
   },
   RECRUITER: {
     label: "Recruiter",
@@ -37,16 +38,23 @@ const ROLE_CONFIG = {
     borderColor: "border-amber-500/20",
   },
   FOUNDER: {
-    label: "Founder",
-    icon: Rocket,
-    bgColor: "bg-rose-500/10",
-    textColor: "text-rose-300",
-    borderColor: "border-rose-500/20",
+    label: "Recruiter",
+    icon: Search,
+    bgColor: "bg-amber-500/10",
+    textColor: "text-amber-300",
+    borderColor: "border-amber-500/20",
+  },
+  ADMIN: {
+    label: "Admin",
+    icon: ShieldCheck,
+    bgColor: "bg-red-500/10",
+    textColor: "text-red-300",
+    borderColor: "border-red-500/20",
   },
 };
 
 export default function EcosystemRoleBadge({ role, size = "sm", showIcon = true }) {
-  const normalized = (role || "STUDENT").toUpperCase();
+  const normalized = normalizeUserRole(role);
   const config = ROLE_CONFIG[normalized] || ROLE_CONFIG.STUDENT;
   const Icon = config.icon;
 

@@ -797,7 +797,7 @@ describe('ProfileService', () => {
       expect(mockUser.primaryRole).toBe('PROFESSIONAL');
     });
 
-    it('Mentor can select mentor role', async () => {
+    it('Legacy Mentor role selection safely normalizes to canonical PROFESSIONAL', async () => {
       const mockUser: any = {
         _id: 'user_1',
         primaryRole: 'STUDENT',
@@ -808,7 +808,30 @@ describe('ProfileService', () => {
       mockUserModel.findById.mockResolvedValue(mockUser);
 
       await service.updateProfile('user_1', { primaryRole: 'mentor' });
-      expect(mockUser.primaryRole).toBe('MENTOR');
+      expect(mockUser.primaryRole).toBe('PROFESSIONAL');
+    });
+
+    it('Mentorship capability, preferences, and topics remain preserved when normalizing role', async () => {
+      const mockUser: any = {
+        _id: 'user_1',
+        primaryRole: 'STUDENT',
+        mentorship: {
+          isAvailableForMentorship: true,
+          topics: ['Structural BIM', 'Bridge Engineering'],
+          maxMentees: 3,
+          availabilityNotes: 'Evenings and weekends',
+        },
+        toObject: () => ({ ...mockUser }),
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await service.updateProfile('user_1', { primaryRole: 'mentor' });
+      expect(mockUser.primaryRole).toBe('PROFESSIONAL');
+      expect(mockUser.mentorship.isAvailableForMentorship).toBe(true);
+      expect(mockUser.mentorship.topics).toEqual(['Structural BIM', 'Bridge Engineering']);
+      expect(mockUser.mentorship.maxMentees).toBe(3);
     });
 
     it('Recruiter can select recruiter role', async () => {
@@ -825,7 +848,7 @@ describe('ProfileService', () => {
       expect(mockUser.primaryRole).toBe('RECRUITER');
     });
 
-    it('Founder can select founder role', async () => {
+    it('Legacy Founder role selection safely normalizes to canonical RECRUITER', async () => {
       const mockUser: any = {
         _id: 'user_1',
         primaryRole: 'STUDENT',
@@ -836,7 +859,7 @@ describe('ProfileService', () => {
       mockUserModel.findById.mockResolvedValue(mockUser);
 
       await service.updateProfile('user_1', { primaryRole: 'founder' });
-      expect(mockUser.primaryRole).toBe('FOUNDER');
+      expect(mockUser.primaryRole).toBe('RECRUITER');
     });
 
     it('User cannot assign themselves educator role (rejected with 403 Forbidden)', async () => {
@@ -852,6 +875,21 @@ describe('ProfileService', () => {
       await expect(
         service.updateProfile('user_1', { primaryRole: 'educator' }, 'student'),
       ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('User cannot assign themselves admin role (rejected with 400 BadRequest)', async () => {
+      const mockUser: any = {
+        _id: 'user_1',
+        primaryRole: 'STUDENT',
+        toObject: () => ({ ...mockUser }),
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await expect(
+        service.updateProfile('user_1', { primaryRole: 'ADMIN' }, 'student'),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('Admin can assign educator role to user', async () => {
@@ -882,6 +920,68 @@ describe('ProfileService', () => {
       expect(mockTargetUser.role).toBe('teacher');
       expect(mockTargetUser.save).toHaveBeenCalled();
       expect(mockAuditLogsService.record).toHaveBeenCalled();
+    });
+
+    it('Admin with uppercase role "ADMIN" can assign educator role to user', async () => {
+      const mockAdmin: any = {
+        _id: 'admin_1',
+        role: 'ADMIN',
+      };
+      const mockTargetUser: any = {
+        _id: 'user_target',
+        username: 'profmary',
+        primaryRole: 'STUDENT',
+        role: 'student',
+        save: jest.fn().mockResolvedValue(true),
+      };
+
+      mockUserModel.findById
+        .mockResolvedValueOnce(mockAdmin)
+        .mockResolvedValueOnce(mockTargetUser);
+
+      const res = await service.adminAssignRole(
+        'admin_1',
+        'user_target',
+        'educator',
+      );
+
+      expect(res.success).toBe(true);
+      expect(mockTargetUser.primaryRole).toBe('EDUCATOR');
+      expect(mockTargetUser.role).toBe('teacher');
+      expect(mockTargetUser.save).toHaveBeenCalled();
+    });
+
+    it('Non-admin cannot assign educator role (rejected with 403 Forbidden)', async () => {
+      const mockNonAdmin: any = {
+        _id: 'user_regular',
+        role: 'student',
+      };
+
+      mockUserModel.findById.mockResolvedValueOnce(mockNonAdmin);
+
+      await expect(
+        service.adminAssignRole('user_regular', 'user_target', 'educator'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('Admin with uppercase "ADMIN" requesterRole can update educator role in updateProfile', async () => {
+      const mockEducator: any = {
+        _id: 'user_edu',
+        primaryRole: 'EDUCATOR',
+        toObject: () => ({ ...mockEducator }),
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockEducator);
+
+      const res = await service.updateProfile(
+        'user_edu',
+        { primaryRole: 'PROFESSIONAL' },
+        'ADMIN',
+      );
+
+      expect(mockEducator.primaryRole).toBe('PROFESSIONAL');
+      expect(mockEducator.role).toBe('student');
     });
 
     it('Educator cannot remove or change administrator-assigned role', async () => {
@@ -1026,5 +1126,187 @@ describe('ProfileService', () => {
       // Public discipline should be present
       expect(res.user.primaryDiscipline).toBe('Site Engineering');
     });
+
+    it('Private fields are masked in getPublicProfile when legacy privacy keys are used', async () => {
+      const mockUserDoc: any = {
+        _id: 'user_legacy_priv',
+        name: 'Legacy Private Engineer',
+        username: 'legacypriv',
+        avatar: '',
+        headline: 'Planning Engineer',
+        primaryDiscipline: 'Planning & Scheduling',
+        experience: [{ id: 'exp_2', role: 'Planning Lead', organization: 'EPC Corp' }],
+        education: [{ id: 'edu_1', institution: 'IIT', qualification: 'B.Tech' }],
+        certifications: [{ id: 'cert_1', name: 'P6 Specialist' }],
+        careerPreferences: {
+          openToOpportunities: true,
+          preferredRoles: ['Project Controls Lead'],
+        },
+        privacySettings: {
+          experienceVisibility: 'PRIVATE',
+          educationVisibility: 'PRIVATE',
+          certificationsVisibility: 'PRIVATE',
+          careerPreferencesVisibility: 'PRIVATE',
+        },
+        toObject: () => ({
+          _id: 'user_legacy_priv',
+          name: 'Legacy Private Engineer',
+          username: 'legacypriv',
+          avatar: '',
+          headline: 'Planning Engineer',
+          primaryDiscipline: 'Planning & Scheduling',
+          experience: [{ id: 'exp_2', role: 'Planning Lead', organization: 'EPC Corp' }],
+          education: [{ id: 'edu_1', institution: 'IIT', qualification: 'B.Tech' }],
+          certifications: [{ id: 'cert_1', name: 'P6 Specialist' }],
+          careerPreferences: {
+            openToOpportunities: true,
+            preferredRoles: ['Project Controls Lead'],
+          },
+          privacySettings: {
+            experienceVisibility: 'PRIVATE',
+            educationVisibility: 'PRIVATE',
+            certificationsVisibility: 'PRIVATE',
+            careerPreferencesVisibility: 'PRIVATE',
+          },
+        }),
+      };
+
+      mockUserModel.findOne.mockReturnValue({
+        select: jest.fn().mockResolvedValue(mockUserDoc),
+      });
+
+      const res = await service.getPublicProfile('legacypriv');
+      expect(res.user.experience).toEqual([]);
+      expect(res.user.education).toEqual([]);
+      expect(res.user.certifications).toEqual([]);
+      expect(res.user.careerPreferences).toBeNull();
+      // privacySettings returned should expose both canonical and legacy aliases
+      expect(res.user.privacySettings.experience).toBe('PRIVATE');
+      expect(res.user.privacySettings.experienceVisibility).toBe('PRIVATE');
+    });
+
+    it('updateProfile normalizes legacy structured skills, career preferences, and privacy keys', async () => {
+      const mockUser: any = {
+        _id: 'user_123',
+        name: 'Normalizing User',
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+        toObject: jest.fn().mockReturnValue({ _id: 'user_123', name: 'Normalizing User' }),
+      };
+
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await service.updateProfile('user_123', {
+        structuredSkills: {
+          softwareTools: ['Primavera P6', 'Revit'],
+          technicalCalculations: ['Concrete Design'],
+          industryStandards: ['FIDIC'],
+          professionalLeadership: ['Coordination'],
+        } as any,
+        careerPreferences: {
+          targetRoles: ['Chief Engineer'],
+          preferredInfrastructureSectors: ['Highways'],
+          expectedSalary: { min: 100000, max: 150000, currency: 'USD' },
+          activelyLooking: true,
+          workModes: ['Remote'],
+        } as any,
+        privacySettings: {
+          experienceVisibility: 'PRIVATE',
+          educationVisibility: 'PUBLIC',
+        } as any,
+      });
+
+      // Verify canonical structuredSkills normalization
+      expect(mockUser.structuredSkills.softwareSkills).toEqual(['Primavera P6', 'Revit']);
+      expect(mockUser.structuredSkills.technicalSkills).toEqual(['Concrete Design']);
+      expect(mockUser.structuredSkills.industrySkills).toEqual(['FIDIC']);
+      expect(mockUser.structuredSkills.professionalSkills).toEqual(['Coordination']);
+
+      // Verify canonical careerPreferences normalization
+      expect(mockUser.careerPreferences.preferredRoles).toEqual(['Chief Engineer']);
+      expect(mockUser.careerPreferences.preferredSectors).toEqual(['Highways']);
+      expect(mockUser.careerPreferences.expectedSalaryRange.min).toBe(100000);
+      expect(mockUser.careerPreferences.expectedSalaryRange.max).toBe(150000);
+      expect(mockUser.careerPreferences.expectedSalaryRange.currency).toBe('USD');
+      expect(mockUser.careerPreferences.openToOpportunities).toBe(true);
+      expect(mockUser.careerPreferences.preferredWorkMode).toBe('Remote');
+
+      // Verify canonical privacySettings normalization
+      expect(mockUser.privacySettings.experience).toBe('PRIVATE');
+      expect(mockUser.privacySettings.education).toBe('PUBLIC');
+    });
+
+    it('User can save and reload OPEN_TO_HIRING, OPEN_TO_WORK, and NOT_AVAILABLE availability', async () => {
+      const mockUser: any = {
+        _id: 'user_avail_1',
+        name: 'Availability Tester',
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+        toObject: jest.fn().mockImplementation(function() { return { ...this }; }),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      // 1. OPEN_TO_HIRING
+      await service.updateProfile('user_avail_1', { availability: 'OPEN_TO_HIRING' });
+      expect(mockUser.availability).toBe('OPEN_TO_HIRING');
+
+      // 2. OPEN_TO_WORK
+      await service.updateProfile('user_avail_1', { availability: 'OPEN_TO_WORK' });
+      expect(mockUser.availability).toBe('OPEN_TO_WORK');
+
+      // 3. NOT_AVAILABLE
+      await service.updateProfile('user_avail_1', { availability: 'NOT_AVAILABLE' });
+      expect(mockUser.availability).toBe('NOT_AVAILABLE');
+    });
+
+    it('Legacy availability values are safely mapped to new options on write and read', async () => {
+      const mockUser: any = {
+        _id: 'user_legacy_avail',
+        name: 'Legacy Avail User',
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+        toObject: jest.fn().mockImplementation(function() { return { ...this }; }),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      // OPEN_TO_OPPORTUNITIES -> OPEN_TO_WORK
+      await service.updateProfile('user_legacy_avail', { availability: 'OPEN_TO_OPPORTUNITIES' });
+      expect(mockUser.availability).toBe('OPEN_TO_WORK');
+
+      // AVAILABLE_FOR_COLLABORATION -> OPEN_TO_WORK
+      await service.updateProfile('user_legacy_avail', { availability: 'AVAILABLE_FOR_COLLABORATION' });
+      expect(mockUser.availability).toBe('OPEN_TO_WORK');
+
+      // AVAILABLE_FOR_MENTORSHIP -> OPEN_TO_WORK
+      await service.updateProfile('user_legacy_avail', { availability: 'AVAILABLE_FOR_MENTORSHIP' });
+      expect(mockUser.availability).toBe('OPEN_TO_WORK');
+
+      // NOT_CURRENTLY_AVAILABLE -> NOT_AVAILABLE
+      await service.updateProfile('user_legacy_avail', { availability: 'NOT_CURRENTLY_AVAILABLE' });
+      expect(mockUser.availability).toBe('NOT_AVAILABLE');
+    });
+
+    it('Availability status does not grant recruiter authorization or change primaryRole', async () => {
+      const mockUser: any = {
+        _id: 'user_student_hiring',
+        primaryRole: 'STUDENT',
+        role: 'student',
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+        toObject: jest.fn().mockImplementation(function() { return { ...this }; }),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      // Student sets availability to OPEN_TO_HIRING
+      await service.updateProfile('user_student_hiring', {
+        availability: 'OPEN_TO_HIRING',
+      });
+
+      // Role must remain STUDENT, not escalated to RECRUITER or ADMIN
+      expect(mockUser.availability).toBe('OPEN_TO_HIRING');
+      expect(mockUser.primaryRole).toBe('STUDENT');
+      expect(mockUser.role).toBe('student');
+    });
   });
 });
+

@@ -53,6 +53,13 @@ import {
   INFRASTRUCTURE_SOFTWARE,
 } from "../../constants/infrastructureTaxonomy";
 import { normalizeUserRole } from "../../utils/roleNavigation";
+import { PROFILE_QUERY_KEYS } from "../../constants/profileQueryKeys";
+import {
+  normalizeStructuredSkills,
+  normalizeCareerPreferences,
+  normalizePrivacySettings,
+  normalizeAvailability,
+} from "../../utils/profileNormalization";
 
 const MAX_BIO_LENGTH = 1000;
 
@@ -101,7 +108,7 @@ export default function EditProfile() {
 
   // Role & Ecosystem
   const [primaryRole, setPrimaryRole] = useState("STUDENT");
-  const [availability, setAvailability] = useState("NOT_CURRENTLY_AVAILABLE");
+  const [availability, setAvailability] = useState("NOT_AVAILABLE");
   const [discoverableToRecruiters, setDiscoverableToRecruiters] = useState(false);
   const [profileVisibility, setProfileVisibility] = useState("PUBLIC");
 
@@ -112,36 +119,21 @@ export default function EditProfile() {
   const [yearsOfExperience, setYearsOfExperience] = useState(0);
 
   // Skills
-  const [structuredSkills, setStructuredSkills] = useState({
-    softwareTools: [],
-    technicalCalculations: [],
-    industryStandards: [],
-    professionalLeadership: [],
-  });
+  const [structuredSkills, setStructuredSkills] = useState(
+    normalizeStructuredSkills({})
+  );
   const [flatSkills, setFlatSkills] = useState([]);
 
   // Career Preferences
-  const [careerPreferences, setCareerPreferences] = useState({
-    targetRoles: [],
-    preferredLocations: [],
-    workModes: [],
-    openToRelocation: false,
-    expectedSalary: { min: "", max: "", currency: "INR" },
-    expectedContractRate: { min: "", max: "", currency: "USD", rateType: "HOURLY" },
-    noticePeriod: "IMMEDIATE",
-    activelyLooking: false,
-    visaSponsorshipRequired: false,
-  });
+  const [careerPreferences, setCareerPreferences] = useState(
+    normalizeCareerPreferences({})
+  );
 
   // Privacy Settings
-  const [privacySettings, setPrivacySettings] = useState({
-    hideSalaryPreferences: false,
-    hideContactInfoFromPublic: false,
-    showEmailToConnectionsOnly: true,
-    showPhoneToConnectionsOnly: true,
-    allowRecommendationRequests: true,
-    showExactLocationToPublic: false,
-  });
+  const [privacySettings, setPrivacySettings] = useState(
+    normalizePrivacySettings({})
+  );
+
 
   // Dirty State Protection
   const [isDirty, setIsDirty] = useState(false);
@@ -247,25 +239,25 @@ export default function EditProfile() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["profile", "me"],
+    queryKey: PROFILE_QUERY_KEYS.ME,
     queryFn: () => coreProfileService.getMyProfile(),
     staleTime: 1000 * 60 * 5,
   });
 
   const { data: completionData } = useQuery({
-    queryKey: ["myProfileCompletion"],
+    queryKey: PROFILE_QUERY_KEYS.COMPLETION,
     queryFn: () => coreProfileService.getProfileCompletion(),
     staleTime: 1000 * 60 * 2,
   });
 
   const { data: projectsData } = useQuery({
-    queryKey: ["projects", "my"],
+    queryKey: PROFILE_QUERY_KEYS.PROJECTS_MY,
     queryFn: () => projectsService.getMyProjects(),
     staleTime: 1000 * 60 * 5,
   });
 
   const { data: recommendationsData } = useQuery({
-    queryKey: ["profile", "recommendations"],
+    queryKey: PROFILE_QUERY_KEYS.RECOMMENDATIONS_MY,
     queryFn: () => coreProfileService.getMyRecommendations(),
     staleTime: 1000 * 60 * 5,
   });
@@ -292,8 +284,8 @@ export default function EditProfile() {
       setLocation(profile.location || "");
       setIndustry(profile.industry || "");
       setBio(profile.bio || "");
-      setPrimaryRole(profile.primaryRole || "STUDENT");
-      setAvailability(profile.availability || "NOT_CURRENTLY_AVAILABLE");
+      setPrimaryRole(normalizeUserRole(profile));
+      setAvailability(normalizeAvailability(profile.availability));
       setDiscoverableToRecruiters(Boolean(profile.discoverableToRecruiters));
       setProfileVisibility(profile.profileVisibility || "PUBLIC");
 
@@ -304,43 +296,22 @@ export default function EditProfile() {
       setYearsOfExperience(profile.yearsOfExperience || 0);
 
       if (profile.structuredSkills) {
-        setStructuredSkills({
-          softwareTools: Array.isArray(profile.structuredSkills.softwareTools) ? profile.structuredSkills.softwareTools : [],
-          technicalCalculations: Array.isArray(profile.structuredSkills.technicalCalculations) ? profile.structuredSkills.technicalCalculations : [],
-          industryStandards: Array.isArray(profile.structuredSkills.industryStandards) ? profile.structuredSkills.industryStandards : [],
-          professionalLeadership: Array.isArray(profile.structuredSkills.professionalLeadership) ? profile.structuredSkills.professionalLeadership : [],
-        });
+        setStructuredSkills(normalizeStructuredSkills(profile.structuredSkills));
       }
       setFlatSkills(Array.isArray(profile.skills) ? profile.skills : []);
 
       if (profile.careerPreferences) {
-        setCareerPreferences({
-          targetRoles: Array.isArray(profile.careerPreferences.targetRoles) ? profile.careerPreferences.targetRoles : [],
-          preferredLocations: Array.isArray(profile.careerPreferences.preferredLocations) ? profile.careerPreferences.preferredLocations : [],
-          workModes: Array.isArray(profile.careerPreferences.workModes) ? profile.careerPreferences.workModes : [],
-          openToRelocation: Boolean(profile.careerPreferences.openToRelocation),
-          expectedSalary: profile.careerPreferences.expectedSalary || { min: "", max: "", currency: "INR" },
-          expectedContractRate: profile.careerPreferences.expectedContractRate || { min: "", max: "", currency: "USD", rateType: "HOURLY" },
-          noticePeriod: profile.careerPreferences.noticePeriod || "IMMEDIATE",
-          activelyLooking: Boolean(profile.careerPreferences.activelyLooking),
-          visaSponsorshipRequired: Boolean(profile.careerPreferences.visaSponsorshipRequired),
-        });
+        setCareerPreferences(normalizeCareerPreferences(profile.careerPreferences));
       }
 
       if (profile.privacySettings) {
-        setPrivacySettings({
-          hideSalaryPreferences: Boolean(profile.privacySettings.hideSalaryPreferences),
-          hideContactInfoFromPublic: Boolean(profile.privacySettings.hideContactInfoFromPublic),
-          showEmailToConnectionsOnly: Boolean(profile.privacySettings.showEmailToConnectionsOnly),
-          showPhoneToConnectionsOnly: Boolean(profile.privacySettings.showPhoneToConnectionsOnly),
-          allowRecommendationRequests: Boolean(profile.privacySettings.allowRecommendationRequests),
-          showExactLocationToPublic: Boolean(profile.privacySettings.showExactLocationToPublic),
-        });
+        setPrivacySettings(normalizePrivacySettings(profile.privacySettings));
       }
 
       setIsDirty(false);
     }
   }, [profile]);
+
 
   const notifyMilestones = (newlyAwarded) => {
     if (Array.isArray(newlyAwarded) && newlyAwarded.length > 0) {
@@ -354,18 +325,28 @@ export default function EditProfile() {
     }
   };
 
+  // Query invalidation helper ensuring synchronized cache state across Profile overview and studio
+  const invalidateProfileQueries = () => {
+    queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEYS.ME });
+    queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEYS.COMPLETION });
+    queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEYS.MY_PROFILE_LEGACY });
+  };
+
   // Comprehensive profile mutation
   const updateMutation = useMutation({
     mutationFn: (payload) => coreProfileService.updateMyProfile(payload),
     onSuccess: (res) => {
-      queryClient.setQueryData(["myProfile"], (old) => {
+      queryClient.setQueryData(PROFILE_QUERY_KEYS.ME, (old) => {
         if (!old) return old;
-        const currentProfile = old.profile || old;
-        const updatedProfile = { ...currentProfile, ...(res.profile || res) };
-        return old.profile ? { ...old, profile: updatedProfile } : updatedProfile;
+        const currentProfile = old.user || old.profile || old;
+        const updatedUser = { ...currentProfile, ...(res.user || res.profile || res) };
+        return {
+          ...old,
+          user: updatedUser,
+          completion: res.completion || old.completion,
+        };
       });
-      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
-      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
+      invalidateProfileQueries();
 
       if (res?.user && updateUser) {
         updateUser(res.user);
@@ -391,8 +372,7 @@ export default function EditProfile() {
   const avatarMutation = useMutation({
     mutationFn: (file) => coreProfileService.uploadAvatar(file),
     onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
-      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
+      invalidateProfileQueries();
       if (res?.avatar) {
         if (updateUser) updateUser({ avatar: res.avatar });
         if (setUser && authUser) setUser({ ...authUser, avatar: res.avatar });
@@ -409,8 +389,7 @@ export default function EditProfile() {
   const bannerMutation = useMutation({
     mutationFn: (file) => coreProfileService.uploadBackground(file),
     onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
-      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
+      invalidateProfileQueries();
       if (res?.backgroundImage && updateUser) {
         updateUser({ backgroundImage: res.backgroundImage });
       }
@@ -426,7 +405,7 @@ export default function EditProfile() {
   const removeBannerMutation = useMutation({
     mutationFn: () => coreProfileService.removeBackground(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+      invalidateProfileQueries();
       toast.success("Banner removed", "Your custom banner was removed.");
     },
     onError: (err) => {
@@ -438,8 +417,7 @@ export default function EditProfile() {
   const addExpMutation = useMutation({
     mutationFn: (payload) => coreProfileService.addExperience(payload),
     onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
-      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
+      invalidateProfileQueries();
       setIsExpModalOpen(false);
       resetExpForm();
       toast.success("Experience added", "Your professional role has been added.");
@@ -451,8 +429,7 @@ export default function EditProfile() {
   const updateExpMutation = useMutation({
     mutationFn: ({ id, payload }) => coreProfileService.updateExperience(id, payload),
     onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
-      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
+      invalidateProfileQueries();
       setIsExpModalOpen(false);
       resetExpForm();
       toast.success("Experience updated", "Your professional role was saved.");
@@ -464,8 +441,7 @@ export default function EditProfile() {
   const deleteExpMutation = useMutation({
     mutationFn: (id) => coreProfileService.deleteExperience(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
-      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
+      invalidateProfileQueries();
       toast.success("Deleted", "Experience record removed.");
     },
     onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to delete experience."),
@@ -480,8 +456,9 @@ export default function EditProfile() {
       return projectsService.createProject(payload);
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ["myProjects"] });
-      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
+      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEYS.PROJECTS_MY });
+      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEYS.MY_PROJECTS_LEGACY });
+      invalidateProfileQueries();
       setIsProjectModalOpen(false);
       setEditingProject(null);
       toast.success("Project saved", "Infrastructure project details stored.");
@@ -493,8 +470,9 @@ export default function EditProfile() {
   const deleteProjectMutation = useMutation({
     mutationFn: (id) => projectsService.deleteProject(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["myProjects"] });
-      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
+      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEYS.PROJECTS_MY });
+      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEYS.MY_PROJECTS_LEGACY });
+      invalidateProfileQueries();
       toast.success("Deleted", "Project record removed.");
     },
     onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to delete project."),
@@ -504,8 +482,7 @@ export default function EditProfile() {
   const addEduMutation = useMutation({
     mutationFn: (payload) => coreProfileService.addEducation(payload),
     onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
-      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
+      invalidateProfileQueries();
       setIsEduModalOpen(false);
       resetEduForm();
       toast.success("Education added", "Academic qualification added.");
@@ -517,8 +494,7 @@ export default function EditProfile() {
   const updateEduMutation = useMutation({
     mutationFn: ({ id, payload }) => coreProfileService.updateEducation(id, payload),
     onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
-      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
+      invalidateProfileQueries();
       setIsEduModalOpen(false);
       resetEduForm();
       toast.success("Education updated", "Academic qualification updated.");
@@ -530,8 +506,7 @@ export default function EditProfile() {
   const deleteEduMutation = useMutation({
     mutationFn: (id) => coreProfileService.deleteEducation(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
-      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
+      invalidateProfileQueries();
       toast.success("Deleted", "Education record removed.");
     },
     onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to delete education."),
@@ -541,8 +516,7 @@ export default function EditProfile() {
   const addCertMutation = useMutation({
     mutationFn: (payload) => coreProfileService.addCertification(payload),
     onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
-      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
+      invalidateProfileQueries();
       setIsCertModalOpen(false);
       resetCertForm();
       toast.success("Certification added", "Credential record stored.");
@@ -554,8 +528,7 @@ export default function EditProfile() {
   const updateCertMutation = useMutation({
     mutationFn: ({ id, payload }) => coreProfileService.updateCertification(id, payload),
     onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
-      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
+      invalidateProfileQueries();
       setIsCertModalOpen(false);
       resetCertForm();
       toast.success("Certification updated", "Credential record updated.");
@@ -567,8 +540,7 @@ export default function EditProfile() {
   const deleteCertMutation = useMutation({
     mutationFn: (id) => coreProfileService.deleteCertification(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
-      queryClient.invalidateQueries({ queryKey: ["myProfileCompletion"] });
+      invalidateProfileQueries();
       toast.success("Deleted", "Certification record removed.");
     },
     onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to delete certification."),
@@ -578,7 +550,9 @@ export default function EditProfile() {
   const updateRecStatusMutation = useMutation({
     mutationFn: ({ id, status }) => coreProfileService.updateRecommendationStatus(id, status),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["myRecommendations"] });
+      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEYS.RECOMMENDATIONS_MY });
+      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEYS.MY_RECOMMENDATIONS_LEGACY });
+      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEYS.ME });
       toast.success("Updated", "Recommendation visibility updated.");
     },
     onError: (err) => toast.error("Action failed", err.response?.data?.message),
@@ -587,7 +561,9 @@ export default function EditProfile() {
   const deleteRecMutation = useMutation({
     mutationFn: (id) => coreProfileService.deleteRecommendation(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["myRecommendations"] });
+      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEYS.RECOMMENDATIONS_MY });
+      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEYS.MY_RECOMMENDATIONS_LEGACY });
+      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEYS.ME });
       toast.success("Deleted", "Recommendation removed.");
     },
     onError: (err) => toast.error("Action failed", err.response?.data?.message),
@@ -597,14 +573,19 @@ export default function EditProfile() {
   const publishMutation = useMutation({
     mutationFn: (published) => coreProfileService.setPublicProfilePublishState(published),
     onSuccess: (res) => {
-      queryClient.setQueryData(["myProfile"], (old) => {
+      queryClient.setQueryData(PROFILE_QUERY_KEYS.ME, (old) => {
         if (!old) return old;
+        const currentProfile = old.user || old.profile || old;
         return {
           ...old,
-          publicProfilePublished: res.published,
+          user: {
+            ...currentProfile,
+            publicProfilePublished: res.published,
+          },
           completion: res.completion || old.completion,
         };
       });
+      invalidateProfileQueries();
       toast.success(res.published ? "Profile published!" : "Profile unpublished", res.message);
       notifyMilestones(res.newlyAwarded);
     },
@@ -706,7 +687,7 @@ export default function EditProfile() {
     updateMutation.mutate({
       headline: headline.trim(),
       currentRole: currentRole.trim(),
-      primaryRole,
+      primaryRole: normalizeUserRole(primaryRole),
       availability,
       yearsOfExperience: Number(yearsOfExperience) || 0,
       preferredLocations,
@@ -728,21 +709,56 @@ export default function EditProfile() {
 
   const handleSaveSkills = (e) => {
     e.preventDefault();
+    const normalized = normalizeStructuredSkills(structuredSkills);
     updateMutation.mutate({
-      structuredSkills,
+      structuredSkills: {
+        technicalSkills: normalized.technicalSkills,
+        softwareSkills: normalized.softwareSkills,
+        industrySkills: normalized.industrySkills,
+        professionalSkills: normalized.professionalSkills,
+      },
       skills: flatSkills,
     });
   };
 
   const handleSaveCareerPreferences = (e) => {
     e.preventDefault();
+    const normalizedPrefs = normalizeCareerPreferences(careerPreferences);
+    const normalizedPrivacy = normalizePrivacySettings(privacySettings);
     updateMutation.mutate({
-      careerPreferences,
-      privacySettings,
+      careerPreferences: {
+        openToOpportunities: normalizedPrefs.openToOpportunities,
+        preferredRoles: normalizedPrefs.preferredRoles,
+        preferredSectors: normalizedPrefs.preferredSectors,
+        preferredLocations: normalizedPrefs.preferredLocations,
+        preferredWorkMode: normalizedPrefs.preferredWorkMode,
+        preferredEmploymentType: normalizedPrefs.preferredEmploymentType,
+        expectedSalaryRange: normalizedPrefs.expectedSalaryRange,
+        availability: normalizedPrefs.availability,
+        recruiterDiscovery: normalizedPrefs.recruiterDiscovery,
+      },
+      privacySettings: {
+        experience: normalizedPrivacy.experience,
+        education: normalizedPrivacy.education,
+        projects: normalizedPrivacy.projects,
+        certifications: normalizedPrivacy.certifications,
+        careerPreferences: normalizedPrivacy.careerPreferences,
+        contactInfo: normalizedPrivacy.contactInfo,
+        messaging: normalizedPrivacy.messaging,
+        readReceipts: normalizedPrivacy.readReceipts,
+        onlinePresence: normalizedPrivacy.onlinePresence,
+        experienceVisibility: normalizedPrivacy.experience,
+        educationVisibility: normalizedPrivacy.education,
+        projectsVisibility: normalizedPrivacy.projects,
+        certificationsVisibility: normalizedPrivacy.certifications,
+        careerPreferencesVisibility: normalizedPrivacy.careerPreferences,
+        contactInfoVisibility: normalizedPrivacy.contactInfo,
+      },
       discoverableToRecruiters,
       profileVisibility,
     });
   };
+
 
   const handleSaveExp = (e) => {
     e.preventDefault();
@@ -1340,11 +1356,13 @@ export default function EditProfile() {
                       }}
                       className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated/70 border border-white/[0.08] focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30 focus:outline-none text-sm text-white transition-colors cursor-pointer"
                     >
-                      <option value="NOT_CURRENTLY_AVAILABLE">Not Currently Available</option>
-                      <option value="OPEN_TO_OPPORTUNITIES">Open to Opportunities</option>
-                      <option value="AVAILABLE_FOR_MENTORSHIP">Available for Mentorship</option>
-                      <option value="AVAILABLE_FOR_COLLABORATION">Available for Collaboration</option>
+                      <option value="NOT_AVAILABLE">Not Available — Not currently seeking roles or hiring</option>
+                      <option value="OPEN_TO_WORK">Open to Work — Looking for employment or opportunities</option>
+                      <option value="OPEN_TO_HIRING">Open to Hiring — Hiring talent for projects or companies</option>
                     </select>
+                    <span className="text-[11px] text-text-muted mt-1 block">
+                      Displays an active frame and status indicator on your avatar across the directory and profile hero.
+                    </span>
                   </div>
                 </div>
 

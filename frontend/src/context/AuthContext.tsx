@@ -173,11 +173,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const setAuthUser: React.Dispatch<React.SetStateAction<AuthUser | null>> = (value) => {
+    setUser((prev) => {
+      const next = typeof value === "function" ? (value as (prev: AuthUser | null) => AuthUser | null)(prev) : value;
+      if (!next) return null;
+      return {
+        ...next,
+        primaryRole: normalizeUserRole(next),
+      };
+    });
+  };
+
   const updateUser = (fields: Record<string, any>) => {
     setUser((prev) => {
       if (!prev) return prev;
       const updated = { ...prev, ...fields };
-      if (updated.primaryRole) {
+      if (updated.primaryRole || updated.role) {
         updated.primaryRole = normalizeUserRole(updated);
       }
       return updated;
@@ -188,7 +199,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     <AuthContext.Provider
       value={{
         user,
-        setUser,
+        setUser: setAuthUser,
         updateUser,
         loading,
         logout,

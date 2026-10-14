@@ -54,16 +54,55 @@ export const INFRASTRUCTURE_SOFTWARE = [
   "MicroStation",
 ];
 
+export const CANONICAL_COMMUNITY_ROLES = [
+  "STUDENT",
+  "PROFESSIONAL",
+  "RECRUITER",
+  "EDUCATOR",
+];
+
 export const PROFILE_ROLES = [
   { value: "STUDENT", label: "Student", description: "Studying civil, structural, BIM, architecture, or infrastructure disciplines." },
   { value: "PROFESSIONAL", label: "Professional", description: "Currently working in infrastructure engineering or construction." },
-  { value: "MENTOR", label: "Mentor", description: "Experienced infrastructure leader guiding emerging talent." },
   { value: "RECRUITER", label: "Recruiter", description: "Hiring talent for infrastructure, AEC, EPC, and engineering firms." },
-  { value: "FOUNDER", label: "Founder", description: "Founder of an infrastructure, construction, or AEC startup/enterprise." },
   { value: "EDUCATOR", label: "Educator", description: "Faculty or institutional trainer (Assigned by Zeitnah administrators only).", adminOnly: true },
+  { value: "MENTOR", label: "Mentor", description: "Experienced infrastructure leader guiding emerging talent.", legacyRole: true, canonicalMapping: "PROFESSIONAL" },
+  { value: "FOUNDER", label: "Founder", description: "Founder of an infrastructure, construction, or AEC startup/enterprise.", legacyRole: true, canonicalMapping: "RECRUITER" },
 ];
 
-export const USER_SELECTABLE_ROLES = PROFILE_ROLES.filter((r) => !r.adminOnly);
+export const USER_SELECTABLE_ROLES = PROFILE_ROLES.filter((r) => !r.adminOnly && !r.legacyRole);
+
+export const DISCOVERY_ROLE_FILTERS = [
+  { value: "STUDENT", label: "Students" },
+  { value: "PROFESSIONAL", label: "Professionals" },
+  { value: "RECRUITER", label: "Recruiters" },
+  { value: "EDUCATOR", label: "Educators" },
+  { value: "MENTOR", label: "Mentors", isCapability: true },
+];
+
+export const AVAILABILITY_STATUSES = [
+  {
+    value: "OPEN_TO_WORK",
+    label: "Open to Work",
+    description: "Looking for employment or opportunities.",
+    badgeLabel: "Open to Work",
+    color: "blue",
+  },
+  {
+    value: "OPEN_TO_HIRING",
+    label: "Open to Hiring",
+    description: "Hiring talent for infrastructure projects and companies.",
+    badgeLabel: "Hiring Talent",
+    color: "green",
+  },
+  {
+    value: "NOT_AVAILABLE",
+    label: "Not Available",
+    description: "Not currently available for roles or hiring.",
+    badgeLabel: "Not Available",
+    color: "neutral",
+  },
+];
 
 export const EMPLOYMENT_TYPES = [
   "Full-time",
@@ -106,24 +145,40 @@ export const DISCIPLINE_SPECIALIZATIONS = {
   "Infrastructure Consultancy": ["Feasibility Studies", "Technical Due Diligence", "Master Planning", "Regulatory Approval Liaison", "Environmental Impact Assessment"],
 };
 
+const DEFAULT_SOFTWARE_SKILLS = [
+  "AutoCAD", "Civil 3D", "Revit", "Navisworks", "Primavera P6",
+  "MS Project", "STAAD.Pro", "ETABS", "SAP2000", "Tekla", "GIS", "CostX", "Synchro 4D"
+];
+
+const DEFAULT_TECHNICAL_SKILLS = [
+  "Structural Analysis", "Reinforced Concrete Design", "Quantity Takeoffs",
+  "Geotechnical Modeling", "Highway Geometry", "Hydrology & Drainage", "BIM Modeling"
+];
+
+const DEFAULT_INDUSTRY_SKILLS = [
+  "FIDIC Contracts", "Site Supervision", "QA/QC Procedures",
+  "Bar Bending Schedule (BBS)", "Bill of Quantities (BOQ)", "Safety / OSHA Standards"
+];
+
+const DEFAULT_PROFESSIONAL_SKILLS = [
+  "Project Leadership", "Stakeholder Management", "Team Coordination",
+  "Risk Mitigation", "Technical Reporting", "Client Negotiation"
+];
+
 export const DEFAULT_STRUCTURED_SKILLS = {
-  software: [
-    "AutoCAD", "Civil 3D", "Revit", "Navisworks", "Primavera P6",
-    "MS Project", "STAAD.Pro", "ETABS", "SAP2000", "Tekla", "GIS", "CostX", "Synchro 4D"
-  ],
-  technical: [
-    "Structural Analysis", "Reinforced Concrete Design", "Quantity Takeoffs",
-    "Geotechnical Modeling", "Highway Geometry", "Hydrology & Drainage", "BIM Modeling"
-  ],
-  industry: [
-    "FIDIC Contracts", "Site Supervision", "QA/QC Procedures",
-    "Bar Bending Schedule (BBS)", "Bill of Quantities (BOQ)", "Safety / OSHA Standards"
-  ],
-  professional: [
-    "Project Leadership", "Stakeholder Management", "Team Coordination",
-    "Risk Mitigation", "Technical Reporting", "Client Negotiation"
-  ],
+  // Canonical backend keys
+  softwareSkills: DEFAULT_SOFTWARE_SKILLS,
+  technicalSkills: DEFAULT_TECHNICAL_SKILLS,
+  industrySkills: DEFAULT_INDUSTRY_SKILLS,
+  professionalSkills: DEFAULT_PROFESSIONAL_SKILLS,
+
+  // Legacy keys
+  software: DEFAULT_SOFTWARE_SKILLS,
+  technical: DEFAULT_TECHNICAL_SKILLS,
+  industry: DEFAULT_INDUSTRY_SKILLS,
+  professional: DEFAULT_PROFESSIONAL_SKILLS,
 };
+
 
 export const INFRASTRUCTURE_SPECIALIZATIONS = [
   "Construction",

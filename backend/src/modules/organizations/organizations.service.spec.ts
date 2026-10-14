@@ -614,4 +614,57 @@ describe('OrganizationsService', () => {
       expect(result.name).toBe('Member Company');
     });
   });
+
+  describe('Phase 2A Role Standardization & Organization Authorization', () => {
+    it('Recruiters without active organization membership cannot update another organization', async () => {
+      const orgId = new Types.ObjectId().toString();
+      const nonMemberRecruiterId = new Types.ObjectId().toString();
+
+      // Non-member: no active membership record
+      mockMembershipModel.findOne = jest.fn().mockResolvedValueOnce(null);
+
+      await expect(
+        service.updateOrganization(nonMemberRecruiterId, orgId, {
+          name: 'Unauthorized Attempt',
+        }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('Existing organization owners retain their resource-level permissions', async () => {
+      const orgId = new Types.ObjectId().toString();
+      const ownerId = new Types.ObjectId().toString();
+
+      mockMembershipModel.findOne = jest.fn().mockResolvedValueOnce({
+        _id: new Types.ObjectId(),
+        role: OrganizationRole.OWNER,
+        status: MembershipStatus.ACTIVE,
+      });
+
+      const updated = await service.updateOrganization(ownerId, orgId, {
+        name: 'Authorized Owner Update',
+      });
+
+      expect(updated).toBeDefined();
+    });
+
+    it('Legacy Founder identity safely normalizes to Recruiter and permits business creation', async () => {
+      const founderUserId = new Types.ObjectId().toString();
+
+      mockUserModel.findById = jest.fn().mockResolvedValueOnce({
+        _id: new Types.ObjectId(founderUserId),
+        primaryRole: 'FOUNDER', // legacy founder value
+        role: 'recruiter',
+      });
+
+      mockOrgModel.findOne = jest.fn().mockResolvedValueOnce(null); // slug available
+
+      const created = await service.createOrganization(founderUserId, {
+        name: 'New Founder Venture',
+        type: OrganizationType.STARTUP,
+      });
+
+      expect(created).toBeDefined();
+      expect(created.name).toBe('New Founder Venture');
+    });
+  });
 });

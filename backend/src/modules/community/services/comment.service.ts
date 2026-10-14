@@ -184,8 +184,14 @@ export class CommentService {
     const isPostOwner = Boolean(
       post && post.authorId && String(post.authorId) === String(userId),
     );
+    const cleanRole = String(role || '').trim().toUpperCase();
     const isAdmin =
-      role === 'admin' || role === 'superadmin' || role === 'teacher';
+      role === 'admin' ||
+      role === 'superadmin' ||
+      role === 'teacher' ||
+      cleanRole === 'ADMIN' ||
+      cleanRole === 'SUPERADMIN' ||
+      cleanRole === 'EDUCATOR';
 
     let isOrgManager = false;
     if (

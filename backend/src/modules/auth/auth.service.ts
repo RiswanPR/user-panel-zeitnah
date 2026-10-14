@@ -23,6 +23,7 @@ import { JwtService } from '@nestjs/jwt';
 import { EmailService } from '../../common/email/email.service';
 import { ResendEmailProvider } from '../../common/email/resend-email.provider';
 import { isReservedDocumentationDomain } from '../../common/utils/email-validation.util';
+import { normalizeCanonicalPrimaryRole } from '../../common/utils/role-normalization.util';
 import {
   generateOtpEmailHtml,
   generateSuspiciousLoginEmailHtml,
@@ -429,7 +430,7 @@ export class AuthService {
   }
 
   private async generateAuthTokens(user: UserDocument, deviceId: string) {
-    const canonicalPrimaryRole = (
+    const rawRole =
       user.primaryRole ||
       (user.role === 'teacher'
         ? 'EDUCATOR'
@@ -437,10 +438,11 @@ export class AuthService {
           ? 'RECRUITER'
           : user.role === 'admin'
             ? 'ADMIN'
-            : 'STUDENT')
-    )
-      .trim()
-      .toUpperCase();
+            : 'STUDENT');
+
+    const canonicalPrimaryRole =
+      normalizeCanonicalPrimaryRole(rawRole) ||
+      (user.role === 'admin' ? 'ADMIN' : 'STUDENT');
 
     const payload = {
       userId: user._id.toString(),
@@ -834,18 +836,17 @@ export class AuthService {
 
         usernameClaimed: Boolean(user.usernameClaimed),
 
-        primaryRole: (
-          user.primaryRole ||
-          (user.role === 'teacher'
-            ? 'EDUCATOR'
-            : user.role === 'recruiter'
-              ? 'RECRUITER'
-              : user.role === 'admin'
-                ? 'ADMIN'
-                : 'STUDENT')
-        )
-          .trim()
-          .toUpperCase(),
+        primaryRole:
+          normalizeCanonicalPrimaryRole(
+            user.primaryRole ||
+            (user.role === 'teacher'
+              ? 'EDUCATOR'
+              : user.role === 'recruiter'
+                ? 'RECRUITER'
+                : user.role === 'admin'
+                  ? 'ADMIN'
+                  : 'STUDENT'),
+          ) || 'STUDENT',
 
         role: user.role,
 
@@ -1242,18 +1243,17 @@ export class AuthService {
 
         usernameClaimed: Boolean(user.usernameClaimed),
 
-        primaryRole: (
-          user.primaryRole ||
-          (user.role === 'teacher'
-            ? 'EDUCATOR'
-            : user.role === 'recruiter'
-              ? 'RECRUITER'
-              : user.role === 'admin'
-                ? 'ADMIN'
-                : 'STUDENT')
-        )
-          .trim()
-          .toUpperCase(),
+        primaryRole:
+          normalizeCanonicalPrimaryRole(
+            user.primaryRole ||
+            (user.role === 'teacher'
+              ? 'EDUCATOR'
+              : user.role === 'recruiter'
+                ? 'RECRUITER'
+                : user.role === 'admin'
+                  ? 'ADMIN'
+                  : 'STUDENT'),
+          ) || (user.role === 'admin' ? 'ADMIN' : 'STUDENT'),
 
         role: user.role,
       },
@@ -1395,18 +1395,17 @@ export class AuthService {
 
         usernameClaimed: Boolean(user.usernameClaimed),
 
-        primaryRole: (
-          user.primaryRole ||
-          (user.role === 'teacher'
-            ? 'EDUCATOR'
-            : user.role === 'recruiter'
-              ? 'RECRUITER'
-              : user.role === 'admin'
-                ? 'ADMIN'
-                : 'STUDENT')
-        )
-          .trim()
-          .toUpperCase(),
+        primaryRole:
+          normalizeCanonicalPrimaryRole(
+            user.primaryRole ||
+            (user.role === 'teacher'
+              ? 'EDUCATOR'
+              : user.role === 'recruiter'
+                ? 'RECRUITER'
+                : user.role === 'admin'
+                  ? 'ADMIN'
+                  : 'STUDENT'),
+          ) || (user.role === 'admin' ? 'ADMIN' : 'STUDENT'),
 
         role: user.role,
       },

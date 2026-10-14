@@ -159,7 +159,7 @@ export class ProfileController {
     return this.profileService.updateProfile(
       req.user.userId,
       body,
-      req.user?.primaryRole || req.user?.role,
+      req.user?.role || req.user?.primaryRole,
     );
   }
 

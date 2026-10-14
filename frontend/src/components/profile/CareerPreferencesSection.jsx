@@ -38,43 +38,77 @@ export default function CareerPreferencesSection({
   const [locInput, setLocInput] = useState("");
 
   const updatePref = (key, val) => {
-    setCareerPreferences({
+    const updated = {
       ...careerPreferences,
       [key]: val,
-    });
+    };
+    if (key === "preferredInfrastructureSectors") {
+      updated.preferredSectors = val;
+    } else if (key === "preferredSectors") {
+      updated.preferredInfrastructureSectors = val;
+    } else if (key === "preferredRoles") {
+      updated.targetRoles = val;
+    } else if (key === "targetRoles") {
+      updated.preferredRoles = val;
+    }
+    setCareerPreferences(updated);
     if (onChangeDirty) onChangeDirty();
   };
 
   const updatePrivacy = (key, val) => {
-    setPrivacySettings({
+    const updated = {
       ...privacySettings,
       [key]: val,
-    });
+    };
+    if (key === "experienceVisibility" || key === "experience") {
+      updated.experience = val;
+      updated.experienceVisibility = val;
+    } else if (key === "educationVisibility" || key === "education") {
+      updated.education = val;
+      updated.educationVisibility = val;
+    } else if (key === "projectsVisibility" || key === "projects") {
+      updated.projects = val;
+      updated.projectsVisibility = val;
+    } else if (key === "certificationsVisibility" || key === "certifications") {
+      updated.certifications = val;
+      updated.certificationsVisibility = val;
+    } else if (key === "careerPreferencesVisibility" || key === "careerPreferences") {
+      updated.careerPreferences = val;
+      updated.careerPreferencesVisibility = val;
+    } else if (key === "contactInfoVisibility" || key === "contactInfo") {
+      updated.contactInfo = val;
+      updated.contactInfoVisibility = val;
+    }
+    setPrivacySettings(updated);
     if (onChangeDirty) onChangeDirty();
   };
 
   const handleAddRole = (role) => {
     const val = (role || roleInput).trim();
     if (!val) return;
-    const current = careerPreferences.preferredRoles || [];
+    const current = careerPreferences.preferredRoles || careerPreferences.targetRoles || [];
     if (current.some((r) => r.toLowerCase() === val.toLowerCase())) return;
     updatePref("preferredRoles", [...current, val]);
     setRoleInput("");
   };
 
   const handleRemoveRole = (roleToRemove) => {
-    const current = careerPreferences.preferredRoles || [];
+    const current = careerPreferences.preferredRoles || careerPreferences.targetRoles || [];
     updatePref("preferredRoles", current.filter((r) => r !== roleToRemove));
   };
 
   const handleToggleSector = (sector) => {
-    const current = careerPreferences.preferredInfrastructureSectors || [];
+    const current =
+      careerPreferences.preferredSectors ||
+      careerPreferences.preferredInfrastructureSectors ||
+      [];
     if (current.includes(sector)) {
-      updatePref("preferredInfrastructureSectors", current.filter((s) => s !== sector));
+      updatePref("preferredSectors", current.filter((s) => s !== sector));
     } else {
-      updatePref("preferredInfrastructureSectors", [...current, sector]);
+      updatePref("preferredSectors", [...current, sector]);
     }
   };
+
 
   const handleAddLocation = (loc) => {
     const val = (loc || locInput).trim();
@@ -338,8 +372,8 @@ export default function CareerPreferencesSection({
               <span className="text-[11px] text-text-muted">Work & project timeline</span>
             </div>
             <select
-              value={privacySettings.experienceVisibility || "PUBLIC"}
-              onChange={(e) => updatePrivacy("experienceVisibility", e.target.value)}
+              value={privacySettings.experience || privacySettings.experienceVisibility || "PUBLIC"}
+              onChange={(e) => updatePrivacy("experience", e.target.value)}
               className="px-2.5 py-1.5 rounded-lg bg-bg-base border border-border-default text-xs text-white focus:outline-none cursor-pointer"
             >
               <option value="PUBLIC">Public</option>
@@ -353,8 +387,8 @@ export default function CareerPreferencesSection({
               <span className="text-[11px] text-text-muted">Degrees & institutions</span>
             </div>
             <select
-              value={privacySettings.educationVisibility || "PUBLIC"}
-              onChange={(e) => updatePrivacy("educationVisibility", e.target.value)}
+              value={privacySettings.education || privacySettings.educationVisibility || "PUBLIC"}
+              onChange={(e) => updatePrivacy("education", e.target.value)}
               className="px-2.5 py-1.5 rounded-lg bg-bg-base border border-border-default text-xs text-white focus:outline-none cursor-pointer"
             >
               <option value="PUBLIC">Public</option>
@@ -368,8 +402,8 @@ export default function CareerPreferencesSection({
               <span className="text-[11px] text-text-muted">Infrastructure projects</span>
             </div>
             <select
-              value={privacySettings.projectsVisibility || "PUBLIC"}
-              onChange={(e) => updatePrivacy("projectsVisibility", e.target.value)}
+              value={privacySettings.projects || privacySettings.projectsVisibility || "PUBLIC"}
+              onChange={(e) => updatePrivacy("projects", e.target.value)}
               className="px-2.5 py-1.5 rounded-lg bg-bg-base border border-border-default text-xs text-white focus:outline-none cursor-pointer"
             >
               <option value="PUBLIC">Public</option>
@@ -383,8 +417,8 @@ export default function CareerPreferencesSection({
               <span className="text-[11px] text-text-muted">Licenses and credentials</span>
             </div>
             <select
-              value={privacySettings.certificationsVisibility || "PUBLIC"}
-              onChange={(e) => updatePrivacy("certificationsVisibility", e.target.value)}
+              value={privacySettings.certifications || privacySettings.certificationsVisibility || "PUBLIC"}
+              onChange={(e) => updatePrivacy("certifications", e.target.value)}
               className="px-2.5 py-1.5 rounded-lg bg-bg-base border border-border-default text-xs text-white focus:outline-none cursor-pointer"
             >
               <option value="PUBLIC">Public</option>
@@ -398,8 +432,8 @@ export default function CareerPreferencesSection({
               <span className="text-[11px] text-text-muted">Salary & target roles</span>
             </div>
             <select
-              value={privacySettings.careerPreferencesVisibility || "PRIVATE"}
-              onChange={(e) => updatePrivacy("careerPreferencesVisibility", e.target.value)}
+              value={privacySettings.careerPreferences || privacySettings.careerPreferencesVisibility || "PRIVATE"}
+              onChange={(e) => updatePrivacy("careerPreferences", e.target.value)}
               className="px-2.5 py-1.5 rounded-lg bg-bg-base border border-border-default text-xs text-white focus:outline-none cursor-pointer"
             >
               <option value="PRIVATE">Private Only</option>
@@ -414,8 +448,8 @@ export default function CareerPreferencesSection({
               <span className="text-[11px] text-text-muted">Email and direct links</span>
             </div>
             <select
-              value={privacySettings.contactInfoVisibility || "PRIVATE"}
-              onChange={(e) => updatePrivacy("contactInfoVisibility", e.target.value)}
+              value={privacySettings.contactInfo || privacySettings.contactInfoVisibility || "PRIVATE"}
+              onChange={(e) => updatePrivacy("contactInfo", e.target.value)}
               className="px-2.5 py-1.5 rounded-lg bg-bg-base border border-border-default text-xs text-white focus:outline-none cursor-pointer"
             >
               <option value="PRIVATE">Private Only</option>

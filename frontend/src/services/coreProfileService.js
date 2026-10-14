@@ -1,4 +1,7 @@
 import api from "./api";
+import { PROFILE_QUERY_KEYS } from "../constants/profileQueryKeys";
+
+export { PROFILE_QUERY_KEYS };
 
 /**
  * Dedicated service abstraction for Core Profile APIs.

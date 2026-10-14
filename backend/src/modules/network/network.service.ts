@@ -314,8 +314,41 @@ export class NetworkService {
 
     // Filter by Role
     if (dto.role && dto.role.trim()) {
-      delete query.$or;
-      query.primaryRole = dto.role.trim().toUpperCase();
+      const upperRole = dto.role.trim().toUpperCase();
+      let roleOrConditions: any[] | null = null;
+
+      if (upperRole === 'MENTOR') {
+        roleOrConditions = [
+          { 'mentorship.isAvailableForMentorship': true },
+          { availability: 'AVAILABLE_FOR_MENTORSHIP' },
+          { primaryRole: 'MENTOR' },
+        ];
+      } else if (upperRole === 'FOUNDER') {
+        roleOrConditions = [
+          { primaryRole: 'FOUNDER' },
+          { primaryRole: 'RECRUITER' },
+        ];
+      } else if (upperRole === 'PROFESSIONAL') {
+        roleOrConditions = [
+          { primaryRole: 'PROFESSIONAL' },
+          { primaryRole: 'MENTOR' },
+        ];
+      } else {
+        query.primaryRole = upperRole;
+      }
+
+      if (roleOrConditions) {
+        if (query.$or) {
+          query.$and = query.$and || [];
+          query.$and.push({ $or: query.$or });
+          delete query.$or;
+          query.$and.push({ $or: roleOrConditions });
+        } else if (query.$and) {
+          query.$and.push({ $or: roleOrConditions });
+        } else {
+          query.$or = roleOrConditions;
+        }
+      }
     }
 
     // Filter by Availability

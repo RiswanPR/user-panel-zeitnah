@@ -17,7 +17,7 @@ import {
   INFRASTRUCTURE_DISCIPLINES,
   INFRASTRUCTURE_SECTORS,
   INFRASTRUCTURE_SOFTWARE,
-  PROFILE_ROLES,
+  DISCOVERY_ROLE_FILTERS,
   DISCIPLINE_SPECIALIZATIONS,
 } from "../../constants/infrastructureTaxonomy";
 
@@ -144,7 +144,7 @@ export default function InfrastructurePeopleFilters({
           >
             All Ecosystem
           </button>
-          {PROFILE_ROLES.map((r) => {
+          {DISCOVERY_ROLE_FILTERS.map((r) => {
             const isSelected = role.toLowerCase() === r.value.toLowerCase();
             return (
               <button
@@ -554,6 +554,25 @@ export default function InfrastructurePeopleFilters({
               </div>
 
               <div className="py-4 space-y-4">
+                {/* Ecosystem Role */}
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-text-muted mb-1.5">
+                    Ecosystem Role
+                  </label>
+                  <select
+                    value={role}
+                    onChange={(e) => handleUpdate("role", e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white focus:outline-none focus:border-brand-mint/40"
+                  >
+                    <option value="all" className="bg-[#121B2B]">All Ecosystem</option>
+                    {DISCOVERY_ROLE_FILTERS.map((r) => (
+                      <option key={r.value} value={r.value} className="bg-[#121B2B]">
+                        {r.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Discipline */}
                 <div>
                   <label className="block text-xs font-mono uppercase tracking-wider text-text-muted mb-1.5">

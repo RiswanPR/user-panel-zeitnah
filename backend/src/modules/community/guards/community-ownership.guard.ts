@@ -14,8 +14,13 @@ export class CommunityOwnershipGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
-    // Admins and moderators can bypass ownership checks
-    if (user.role === 'admin' || user.role === 'teacher') {
+    // Admins and educators/moderators can bypass ownership checks
+    const isElevated =
+      user?.role === 'admin' ||
+      user?.primaryRole === 'ADMIN' ||
+      user?.role === 'teacher' ||
+      user?.primaryRole === 'EDUCATOR';
+    if (isElevated) {
       return true;
     }
 

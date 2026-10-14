@@ -201,4 +201,70 @@ describe('NetworkConnectionsService - Connections & Canonical Ordering', () => {
       });
     });
   });
+
+  describe('getPeople - Mentorship & Role Discovery Compatibility', () => {
+    const callerId = new Types.ObjectId().toHexString();
+
+    beforeEach(() => {
+      mockUserModel.findById.mockReturnValue({
+        lean: jest.fn().mockResolvedValue({
+          _id: new Types.ObjectId(callerId),
+          name: 'Caller User',
+        }),
+      });
+
+      mockConnectionModel.find.mockReturnValue({
+        lean: jest.fn().mockResolvedValue([]),
+      });
+
+      const chain = {
+        sort: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        lean: jest.fn().mockResolvedValue([]),
+      };
+      mockUserModel.find.mockReturnValue(chain);
+      mockUserModel.countDocuments.mockResolvedValue(0);
+    });
+
+    it('queries mentorship capability (isAvailableForMentorship) and legacy records when role="mentor"', async () => {
+      await service.getPeople(callerId, { role: 'mentor' });
+
+      expect(mockUserModel.find).toHaveBeenCalled();
+      const passedFilter = mockUserModel.find.mock.calls[0][0];
+
+      expect(passedFilter.$or).toEqual([
+        { 'mentorship.isAvailableForMentorship': true },
+        { availability: 'AVAILABLE_FOR_MENTORSHIP' },
+        { primaryRole: 'MENTOR' },
+        { role: 'mentor' },
+      ]);
+    });
+
+    it('queries canonical professional and legacy mentor records when role="professional"', async () => {
+      await service.getPeople(callerId, { role: 'professional' });
+
+      expect(mockUserModel.find).toHaveBeenCalled();
+      const passedFilter = mockUserModel.find.mock.calls[0][0];
+
+      expect(passedFilter.$or).toEqual([
+        { primaryRole: 'PROFESSIONAL' },
+        { role: 'professional' },
+        { primaryRole: 'MENTOR' },
+      ]);
+    });
+
+    it('queries canonical recruiter and legacy founder records when role="recruiter"', async () => {
+      await service.getPeople(callerId, { role: 'recruiter' });
+
+      expect(mockUserModel.find).toHaveBeenCalled();
+      const passedFilter = mockUserModel.find.mock.calls[0][0];
+
+      expect(passedFilter.$or).toEqual([
+        { primaryRole: 'RECRUITER' },
+        { role: 'recruiter' },
+        { primaryRole: 'FOUNDER' },
+      ]);
+    });
+  });
 });

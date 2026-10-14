@@ -84,9 +84,41 @@ export class NetworkConnectionsService {
 
     // Role filter (Student, Educator, Professional, Mentor, Recruiter, Founder)
     if (query.role && query.role !== 'all') {
-      const upperRole = query.role.trim().toUpperCase();
-      const lowerRole = query.role.trim().toLowerCase();
-      filter.$or = [{ primaryRole: upperRole }, { role: lowerRole }];
+      const cleanRole = query.role.trim();
+      const upperRole = cleanRole.toUpperCase();
+      const lowerRole = cleanRole.toLowerCase();
+
+      if (upperRole === 'MENTOR') {
+        // Mentorship capability discovery:
+        // Matches users who explicitly enabled mentorship availability or have legacy mentor records.
+        // Does NOT treat every Professional as an available mentor automatically.
+        filter.$or = [
+          { 'mentorship.isAvailableForMentorship': true },
+          { availability: 'AVAILABLE_FOR_MENTORSHIP' },
+          { primaryRole: 'MENTOR' },
+          { role: 'mentor' },
+        ];
+      } else if (upperRole === 'FOUNDER') {
+        filter.$or = [
+          { primaryRole: 'FOUNDER' },
+          { role: 'founder' },
+          { primaryRole: 'RECRUITER' },
+        ];
+      } else if (upperRole === 'RECRUITER') {
+        filter.$or = [
+          { primaryRole: 'RECRUITER' },
+          { role: 'recruiter' },
+          { primaryRole: 'FOUNDER' },
+        ];
+      } else if (upperRole === 'PROFESSIONAL') {
+        filter.$or = [
+          { primaryRole: 'PROFESSIONAL' },
+          { role: 'professional' },
+          { primaryRole: 'MENTOR' },
+        ];
+      } else {
+        filter.$or = [{ primaryRole: upperRole }, { role: lowerRole }];
+      }
     }
 
     // Discipline filter

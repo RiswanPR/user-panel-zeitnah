@@ -56,7 +56,9 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, onOpenReel }) {
   const isAdmin =
     user?.role === 'admin' ||
     user?.primaryRole === 'ADMIN' ||
+    user?.primaryRole === 'EDUCATOR' ||
     user?.role === 'superadmin' ||
+    user?.role === 'teacher' ||
     user?.teacher;
 
   const businesses = activeProfile.businesses || [];

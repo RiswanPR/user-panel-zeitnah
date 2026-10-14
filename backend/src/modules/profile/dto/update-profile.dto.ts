@@ -127,6 +127,15 @@ export class UpdateProfileDto {
     softwareSkills?: string[];
     industrySkills?: string[];
     professionalSkills?: string[];
+    // Legacy / alternative keys for backward compatibility
+    technical?: string[];
+    software?: string[];
+    industry?: string[];
+    professional?: string[];
+    softwareTools?: string[];
+    technicalCalculations?: string[];
+    industryStandards?: string[];
+    professionalLeadership?: string[];
   };
 
   @IsOptional()
@@ -145,6 +154,20 @@ export class UpdateProfileDto {
     };
     availability?: string;
     recruiterDiscovery?: string;
+    // Legacy / alternative keys for backward compatibility
+    targetRoles?: string[];
+    preferredInfrastructureSectors?: string[];
+    workModes?: string[];
+    activelyLooking?: boolean;
+    noticePeriod?: string;
+    expectedSalary?: {
+      min?: number | string;
+      max?: number | string;
+      currency?: string;
+    };
+    expectedContractRate?: any;
+    openToRelocation?: boolean;
+    visaSponsorshipRequired?: boolean;
   };
 
   @IsOptional()
@@ -158,5 +181,19 @@ export class UpdateProfileDto {
     messaging?: string;
     readReceipts?: boolean;
     onlinePresence?: boolean;
+    // Legacy / alternative keys for backward compatibility
+    experienceVisibility?: string;
+    educationVisibility?: string;
+    projectsVisibility?: string;
+    certificationsVisibility?: string;
+    careerPreferencesVisibility?: string;
+    contactInfoVisibility?: string;
+    hideSalaryPreferences?: boolean;
+    hideContactInfoFromPublic?: boolean;
+    showEmailToConnectionsOnly?: boolean;
+    showPhoneToConnectionsOnly?: boolean;
+    allowRecommendationRequests?: boolean;
+    showExactLocationToPublic?: boolean;
   };
 }
+

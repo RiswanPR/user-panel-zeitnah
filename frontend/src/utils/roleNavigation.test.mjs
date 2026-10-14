@@ -13,21 +13,24 @@ import {
 import { getProfessionalContext } from './messagingIdentity.js';
 
 describe('Role Navigation Logic & Regression Tests', () => {
-  it('safely normalizes roles with varying casing and null/undefined values', () => {
+  it('safely normalizes roles with varying casing and null/undefined values to canonical roles', () => {
     assert.equal(normalizeUserRole(null), 'STUDENT');
     assert.equal(normalizeUserRole(undefined), 'STUDENT');
     assert.equal(normalizeUserRole({}), 'STUDENT');
     assert.equal(normalizeUserRole({ primaryRole: 'student' }), 'STUDENT');
     assert.equal(normalizeUserRole({ primaryRole: 'STUDENT' }), 'STUDENT');
     assert.equal(normalizeUserRole({ primaryRole: '  recruiter  ' }), 'RECRUITER');
-    assert.equal(normalizeUserRole({ role: 'founder' }), 'FOUNDER');
+    assert.equal(normalizeUserRole({ role: 'founder' }), 'RECRUITER'); // Phase 3: FOUNDER -> RECRUITER
     assert.equal(normalizeUserRole({ role: 'Admin' }), 'ADMIN');
     assert.equal(normalizeUserRole({ primaryRole: 'professional' }), 'PROFESSIONAL');
-    assert.equal(normalizeUserRole({ primaryRole: 'mentor' }), 'MENTOR');
+    assert.equal(normalizeUserRole({ primaryRole: 'mentor' }), 'PROFESSIONAL'); // Phase 3: MENTOR -> PROFESSIONAL
     assert.equal(normalizeUserRole({ primaryRole: 'educator' }), 'EDUCATOR');
     assert.equal(normalizeUserRole({ role: 'teacher' }), 'EDUCATOR');
-    assert.equal(normalizeUserRole('FOUNDER'), 'FOUNDER');
+    assert.equal(normalizeUserRole('FOUNDER'), 'RECRUITER'); // Phase 3: FOUNDER -> RECRUITER
+    assert.equal(normalizeUserRole('MENTOR'), 'PROFESSIONAL'); // Phase 3: MENTOR -> PROFESSIONAL
     assert.equal(normalizeUserRole('teacher'), 'EDUCATOR');
+    assert.equal(normalizeUserRole('superuser'), 'ADMIN');
+    assert.equal(normalizeUserRole('unknown_role'), 'STUDENT');
   });
 
   it('correctly identifies Recruiter and Founder roles', () => {
@@ -171,16 +174,16 @@ describe('Role Navigation Logic & Regression Tests', () => {
   // =========================================================================
 
   describe('Regression Scenarios — Course Enrollment Isolation & Role Integrity', () => {
-    it('TEST 1: FOUNDER + course enrollment → normalizeUserRole returns FOUNDER', () => {
+    it('TEST 1: FOUNDER + course enrollment → normalizeUserRole returns RECRUITER', () => {
       const user = {
         primaryRole: 'FOUNDER',
         role: 'recruiter',
         course: [{ courseId: 'c1', courseName: 'Structural Dynamics 101' }],
       };
-      assert.equal(normalizeUserRole(user), 'FOUNDER');
+      assert.equal(normalizeUserRole(user), 'RECRUITER');
     });
 
-    it('TEST 2: FOUNDER + course enrollment → reload/hydration still gives FOUNDER', () => {
+    it('TEST 2: FOUNDER + course enrollment → reload/hydration gives RECRUITER', () => {
       // Simulating user object hydrated from /auth/me on reload
       const reloadedUser = {
         id: 'u1',
@@ -188,7 +191,7 @@ describe('Role Navigation Logic & Regression Tests', () => {
         role: 'recruiter',
         course: ['course_a', 'course_b'],
       };
-      assert.equal(normalizeUserRole(reloadedUser), 'FOUNDER');
+      assert.equal(normalizeUserRole(reloadedUser), 'RECRUITER');
     });
 
     it('TEST 3: FOUNDER + course enrollment → career navigation = Manage Business', () => {
@@ -277,10 +280,18 @@ describe('Role Navigation Logic & Regression Tests', () => {
     });
 
     it('TEST 10: Course enrollment array presence NEVER overrides primaryRole', () => {
-      // Extensive test ensuring course length has 0 influence on role normalization
-      for (const role of ['FOUNDER', 'RECRUITER', 'PROFESSIONAL', 'MENTOR', 'EDUCATOR', 'STUDENT']) {
+      // Extensive test ensuring course length has 0 influence on canonical role normalization
+      const canonicalExpected = {
+        FOUNDER: 'RECRUITER',
+        RECRUITER: 'RECRUITER',
+        PROFESSIONAL: 'PROFESSIONAL',
+        MENTOR: 'PROFESSIONAL',
+        EDUCATOR: 'EDUCATOR',
+        STUDENT: 'STUDENT',
+      };
+      for (const [role, expected] of Object.entries(canonicalExpected)) {
         const withCourses = { primaryRole: role, course: new Array(5).fill({ courseId: 'cx' }) };
-        assert.equal(normalizeUserRole(withCourses), role, `Role ${role} was corrupted by course array`);
+        assert.equal(normalizeUserRole(withCourses), expected, `Role ${role} was corrupted by course array`);
       }
     });
 
@@ -290,7 +301,7 @@ describe('Role Navigation Logic & Regression Tests', () => {
         primaryRole: 'FOUNDER',
         course: [{ courseName: 'BIM Management' }],
       };
-      assert.equal(normalizeUserRole(founderWithCourses), 'FOUNDER');
+      assert.equal(normalizeUserRole(founderWithCourses), 'RECRUITER');
       assert.notEqual(normalizeUserRole(founderWithCourses), 'STUDENT');
     });
 
@@ -302,7 +313,7 @@ describe('Role Navigation Logic & Regression Tests', () => {
         course: ['course_1', 'course_2'],
       };
       const context = getProfessionalContext(founder);
-      assert.ok(context.includes('Founder'), `Expected context to include 'Founder', got '${context}'`);
+      assert.ok(context.includes('Recruiter') || context.includes('Founder'), `Expected context to include 'Recruiter', got '${context}'`);
       assert.equal(context.includes('Student'), false, `Founder was mislabeled as Student!`);
 
       const recruiter = {

@@ -16,6 +16,7 @@ import { coreProfileService } from "../../services/coreProfileService";
 import { projectsService } from "../../services/projectsService";
 import { useToast } from "../../components/ui/Toast";
 import { getUploadUrl } from "../../utils/courseUi";
+import { PROFILE_QUERY_KEYS } from "../../constants/profileQueryKeys";
 
 // Core Reusable Profile Components
 import ProfileNav from "../../components/profile/ProfileNav";
@@ -59,7 +60,7 @@ export default function Profile() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["profile", "me"],
+    queryKey: PROFILE_QUERY_KEYS.ME,
     queryFn: coreProfileService.getMyProfile,
   });
 
@@ -68,7 +69,7 @@ export default function Profile() {
 
   // 2. User's Projects Query
   const { data: myProjects, refetch: refetchProjects } = useQuery({
-    queryKey: ["projects", "my"],
+    queryKey: PROFILE_QUERY_KEYS.PROJECTS_MY,
     queryFn: projectsService.getMyProjects,
     enabled: Boolean(profile),
   });
@@ -76,10 +77,11 @@ export default function Profile() {
 
   // 3. User's Recommendations Query
   const { data: recommendationsData } = useQuery({
-    queryKey: ["profile", "recommendations"],
+    queryKey: PROFILE_QUERY_KEYS.RECOMMENDATIONS_MY,
     queryFn: coreProfileService.getRecommendations,
     enabled: Boolean(profile),
   });
+
   const recommendationsList = Array.isArray(recommendationsData?.recommendations)
     ? recommendationsData.recommendations
     : Array.isArray(recommendationsData)
@@ -90,7 +92,7 @@ export default function Profile() {
   const avatarMutation = useMutation({
     mutationFn: (file) => coreProfileService.uploadAvatar(file),
     onSuccess: (res) => {
-      queryClient.setQueryData(["profile", "me"], (old) => {
+      queryClient.setQueryData(PROFILE_QUERY_KEYS.ME, (old) => {
         if (!old?.user) return old;
         return {
           ...old,
@@ -98,6 +100,8 @@ export default function Profile() {
           completion: res.completion || old.completion,
         };
       });
+      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEYS.ME });
+      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEYS.COMPLETION });
       setUser((prev) => (prev ? { ...prev, avatar: res.avatar } : prev));
       setAvatarError(false);
       toast.success("Avatar updated", "Your profile photo has been refreshed.");
@@ -121,7 +125,7 @@ export default function Profile() {
   const bannerMutation = useMutation({
     mutationFn: (file) => coreProfileService.uploadBackground(file),
     onSuccess: (res) => {
-      queryClient.setQueryData(["profile", "me"], (old) => {
+      queryClient.setQueryData(PROFILE_QUERY_KEYS.ME, (old) => {
         if (!old?.user) return old;
         return {
           ...old,
@@ -129,7 +133,10 @@ export default function Profile() {
           completion: res.completion || old.completion,
         };
       });
+      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEYS.ME });
+      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEYS.COMPLETION });
       toast.success("Cover banner updated", "Your background cover has been customized.");
+
       if (res.newlyAwarded?.length) {
         res.newlyAwarded.forEach((m) => {
           toast.success(`+${m.points} XP Earned!`, m.label);

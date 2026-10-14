@@ -8,6 +8,8 @@
  * Group Fallback: Deterministic "Name1, Name2 + N others" instead of generic "Group".
  */
 
+import { normalizeUserRole } from './roleNavigation.js';
+
 /**
  * Extracts normalized string ID from any user/participant representation.
  */
@@ -226,8 +228,9 @@ export function getProfessionalContext(participant) {
   }
 
   const parts = [];
-  if (participant.primaryRole && participant.primaryRole !== 'STUDENT') {
-    parts.push(participant.primaryRole.charAt(0) + participant.primaryRole.slice(1).toLowerCase());
+  const canonicalRole = normalizeUserRole(participant);
+  if (canonicalRole && canonicalRole !== 'STUDENT') {
+    parts.push(canonicalRole.charAt(0) + canonicalRole.slice(1).toLowerCase());
   }
   if (participant.primaryDiscipline) {
     parts.push(participant.primaryDiscipline);

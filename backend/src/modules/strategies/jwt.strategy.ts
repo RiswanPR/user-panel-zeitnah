@@ -10,6 +10,7 @@ import { Model } from 'mongoose';
 
 import { AuthenticatedUser } from '../auth/auth.service';
 import { User, UserDocument } from '../../modules/auth/schemas/user.schema';
+import { normalizeCanonicalPrimaryRole } from '../../common/utils/role-normalization.util';
 
 type JwtPayload = {
   userId: string;
@@ -128,7 +129,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     // Canonical primary platform identity: Authoritative MongoDB primaryRole
-    const canonicalPrimaryRole = (
+    const rawRole =
       user.primaryRole ||
       payload.primaryRole ||
       (user.role === 'teacher'
@@ -137,10 +138,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
           ? 'RECRUITER'
           : user.role === 'admin'
             ? 'ADMIN'
-            : 'STUDENT')
-    )
-      .trim()
-      .toUpperCase();
+            : 'STUDENT');
+
+    const canonicalPrimaryRole =
+      normalizeCanonicalPrimaryRole(rawRole) ||
+      (user.role === 'admin' ? 'ADMIN' : 'STUDENT');
 
     return {
       userId: payload.userId,

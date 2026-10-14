@@ -1,6 +1,8 @@
 import { Code2, Cpu, Building, Award, Plus, Layers, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 
+import { normalizeStructuredSkills } from "../../utils/profileNormalization";
+
 export default function ProfileSkillsSection({
   skills = [],
   structuredSkills = null,
@@ -8,18 +10,19 @@ export default function ProfileSkillsSection({
   className = "",
 }) {
   const flat = Array.isArray(skills) ? skills : [];
-  const structured = structuredSkills || {};
+  const normalized = normalizeStructuredSkills(structuredSkills);
 
-  const technical = structured.technical || [];
-  const software = structured.software || [];
-  const industry = structured.industry || [];
-  const professional = structured.professional || [];
+  const technical = normalized.technicalSkills;
+  const software = normalized.softwareSkills;
+  const industry = normalized.industrySkills;
+  const professional = normalized.professionalSkills;
 
   const hasStructured =
     technical.length > 0 ||
     software.length > 0 ||
     industry.length > 0 ||
     professional.length > 0;
+
 
   const totalCount = hasStructured
     ? technical.length + software.length + industry.length + professional.length

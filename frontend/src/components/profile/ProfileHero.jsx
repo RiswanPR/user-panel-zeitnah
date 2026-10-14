@@ -18,12 +18,14 @@ import {
   MessageSquare,
   ShieldCheck,
   Award,
+  Compass,
 } from "lucide-react";
 import { getUploadUrl } from "../../utils/courseUi";
 import EcosystemRoleBadge from "../network/EcosystemRoleBadge";
 import AvailabilityBadge from "../network/AvailabilityBadge";
 import ProfileNetworkStats from "../network/ProfileNetworkStats";
 import RelationshipAction from "../network/RelationshipAction";
+import ProfileAvatar from "./ProfileAvatar";
 
 /**
  * Animated XP Counter for smooth point transitions.
@@ -136,52 +138,46 @@ export default function ProfileHero({
         <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-6 -mt-16 sm:-mt-20 md:-mt-24">
           {/* Avatar & Main Identity */}
           <div className="flex flex-col md:flex-row items-center md:items-end gap-5 text-center md:text-left min-w-0 w-full md:w-auto">
-            {/* Avatar container */}
+            {/* Avatar container with availability frame */}
             <div className="relative group shrink-0">
-              <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-3xl overflow-hidden border-4 border-[#0A0F18] bg-[#0F1724] shadow-2xl flex items-center justify-center ring-1 ring-white/15 relative">
-                {avatarUrl && !avatarError ? (
-                  <img
-                    src={avatarUrl}
-                    alt={profile.name || "Member"}
-                    onError={() => setAvatarError?.(true)}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-mint/20 via-brand-navy/60 to-[#0A0F18] text-brand-mint font-heading font-black text-3xl sm:text-4xl">
-                    {initials}
-                  </div>
+              <ProfileAvatar
+                src={profile.avatar}
+                name={profile.name}
+                initials={initials}
+                size="xl"
+                availability={profile.availability}
+                className="border-4 border-[#0A0F18] shadow-2xl"
+              >
+                {/* Owner Avatar Change Overlay */}
+                {isOwner && onAvatarUpload && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => avatarFileRef.current?.click()}
+                      disabled={isAvatarUploading}
+                      className="absolute inset-0 bg-black/60 rounded-3xl flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white focus-ring z-20"
+                      title="Change profile photo"
+                      aria-label="Change profile photo"
+                    >
+                      {isAvatarUploading ? (
+                        <RefreshCw className="w-6 h-6 animate-spin text-brand-mint" />
+                      ) : (
+                        <>
+                          <Camera className="w-6 h-6 text-brand-mint mb-1" />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Change</span>
+                        </>
+                      )}
+                    </button>
+                    <input
+                      ref={avatarFileRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={onAvatarUpload}
+                    />
+                  </>
                 )}
-              </div>
-
-              {/* Owner Avatar Change Overlay */}
-              {isOwner && onAvatarUpload && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => avatarFileRef.current?.click()}
-                    disabled={isAvatarUploading}
-                    className="absolute inset-0 bg-black/60 rounded-3xl flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white focus-ring"
-                    title="Change profile photo"
-                    aria-label="Change profile photo"
-                  >
-                    {isAvatarUploading ? (
-                      <RefreshCw className="w-6 h-6 animate-spin text-brand-mint" />
-                    ) : (
-                      <>
-                        <Camera className="w-6 h-6 text-brand-mint mb-1" />
-                        <span className="text-[10px] font-bold uppercase tracking-wider">Change</span>
-                      </>
-                    )}
-                  </button>
-                  <input
-                    ref={avatarFileRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="hidden"
-                    onChange={onAvatarUpload}
-                  />
-                </>
-              )}
+              </ProfileAvatar>
             </div>
 
             {/* Name, Verified Badge, Username, Badges */}
@@ -220,6 +216,15 @@ export default function ProfileHero({
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-0.5">
                 <EcosystemRoleBadge role={profile.primaryRole || "STUDENT"} size="sm" />
                 <AvailabilityBadge availability={profile.availability} size="sm" />
+                {(profile.mentorship?.isAvailableForMentorship || profile.availability === "AVAILABLE_FOR_MENTORSHIP") && (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-300"
+                    title="Available for Mentorship"
+                  >
+                    <Compass className="w-3 h-3 text-emerald-300" aria-hidden="true" />
+                    Mentor
+                  </span>
+                )}
                 {profile.primaryDiscipline && (
                   <span className="inline-flex items-center gap-1 rounded-full border border-brand-mint/25 bg-brand-mint/10 px-2.5 py-0.5 text-xs font-bold text-brand-mint">
                     {profile.primaryDiscipline}

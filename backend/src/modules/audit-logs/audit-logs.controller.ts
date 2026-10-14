@@ -45,7 +45,10 @@ export class AuditLogsController {
     limit?: string,
   ) {
     return this.auditLogsService.find({
-      actor: req.user.role === 'admin' ? undefined : req.user.userId,
+      actor:
+        req.user?.role === 'admin' || req.user?.primaryRole === 'ADMIN'
+          ? undefined
+          : req.user.userId,
       action,
       entityType,
       severity,

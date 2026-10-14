@@ -4,6 +4,12 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { mapPrimaryRoleToLegacyRole } from '../profile/profile.service';
 import { UserSchema, normalizeLegacyRoleValue } from './schemas/user.schema';
+import {
+  normalizeCanonicalPrimaryRole,
+  normalizeCanonicalPrimaryRoleWithFallback,
+  isCanonicalCommunityRole,
+  CANONICAL_COMMUNITY_ROLES,
+} from '../../common/utils/role-normalization.util';
 
 describe('Auth Primary Role Contract & Identity Regression Tests', () => {
   let jwtStrategy: JwtStrategy;
@@ -18,7 +24,7 @@ describe('Auth Primary Role Contract & Identity Regression Tests', () => {
     jwtStrategy = new JwtStrategy(mockUserModel);
   });
 
-  it('TEST 1 & 2: FOUNDER + course enrollment → JwtStrategy validates canonical primaryRole as FOUNDER', async () => {
+  it('TEST 1 & 2: Legacy FOUNDER account in DB → JwtStrategy validates and normalizes canonical primaryRole as RECRUITER', async () => {
     const futureExpiry = new Date(Date.now() + 10000000);
     const mockFounder = {
       _id: 'user_founder_1',
@@ -50,13 +56,52 @@ describe('Auth Primary Role Contract & Identity Regression Tests', () => {
       role: 'recruiter',
     });
 
-    expect(result.primaryRole).toBe('FOUNDER');
+    // Phase 2A: legacy FOUNDER normalizes to canonical RECRUITER
+    expect(result.primaryRole).toBe('RECRUITER');
     expect(result.role).toBe('recruiter');
     expect(result.userId).toBe('user_founder_1');
     expect(result.id).toBe('user_founder_1');
   });
 
-  it('TEST 3: /auth/me returns canonical primaryRole for FOUNDER + course enrollment', () => {
+  it('TEST 2B: Legacy MENTOR account in DB → JwtStrategy validates and normalizes canonical primaryRole as PROFESSIONAL', async () => {
+    const futureExpiry = new Date(Date.now() + 10000000);
+    const mockMentor = {
+      _id: 'user_mentor_1',
+      name: 'Dr. Emily Stones',
+      email: 'mentor@zeitnah.com',
+      username: 'emily_mentor',
+      usernameClaimed: true,
+      primaryRole: 'MENTOR',
+      role: 'student',
+      mentorship: {
+        isAvailableForMentorship: true,
+        topics: ['Structural Design'],
+      },
+      devices: [
+        {
+          deviceId: 'dev_mentor',
+          refreshTokenExpiry: futureExpiry,
+          lastSeen: new Date(),
+        },
+      ],
+      account_Status: { isBlocked: false, isDeleted: false },
+    };
+
+    mockUserModel.findById.mockResolvedValue(mockMentor);
+
+    const result = await jwtStrategy.validate({
+      userId: 'user_mentor_1',
+      deviceId: 'dev_mentor',
+      role: 'student',
+    });
+
+    // Phase 2A: legacy MENTOR normalizes to canonical PROFESSIONAL
+    expect(result.primaryRole).toBe('PROFESSIONAL');
+    expect(result.role).toBe('student');
+    expect(result.userId).toBe('user_mentor_1');
+  });
+
+  it('TEST 3: /auth/me returns canonical primaryRole for authenticated user', () => {
     const mockAuthService = {} as AuthService;
     const controller = new AuthController(mockAuthService);
 
@@ -68,7 +113,7 @@ describe('Auth Primary Role Contract & Identity Regression Tests', () => {
         email: 'founder@zeitnah.com',
         username: 'farooq',
         usernameClaimed: true,
-        primaryRole: 'FOUNDER',
+        primaryRole: 'RECRUITER',
         role: 'recruiter',
         deviceId: 'dev_123',
       },
@@ -76,7 +121,7 @@ describe('Auth Primary Role Contract & Identity Regression Tests', () => {
 
     const res = controller.getMe(authenticatedReq);
     expect(res.success).toBe(true);
-    expect(res.user.primaryRole).toBe('FOUNDER');
+    expect(res.user.primaryRole).toBe('RECRUITER');
     expect(res.user.id).toBe('user_founder_1');
     expect(res.user.email).toBe('founder@zeitnah.com');
   });
@@ -286,5 +331,73 @@ describe('Auth Primary Role Contract & Identity Regression Tests', () => {
     await doc.validate();
     expect(doc.role).toBe('teacher');
     expect(doc.primaryRole).toBe('EDUCATOR');
+  });
+
+  describe('Phase 2A Role Normalization Engine', () => {
+    it('normalizes legacy FOUNDER / founder / casing and whitespace to RECRUITER', () => {
+      expect(normalizeCanonicalPrimaryRole('FOUNDER')).toBe('RECRUITER');
+      expect(normalizeCanonicalPrimaryRole('founder')).toBe('RECRUITER');
+      expect(normalizeCanonicalPrimaryRole(' Founder ')).toBe('RECRUITER');
+      expect(normalizeCanonicalPrimaryRole('FoUnDeR')).toBe('RECRUITER');
+    });
+
+    it('normalizes legacy MENTOR / mentor / casing and whitespace to PROFESSIONAL', () => {
+      expect(normalizeCanonicalPrimaryRole('MENTOR')).toBe('PROFESSIONAL');
+      expect(normalizeCanonicalPrimaryRole('mentor')).toBe('PROFESSIONAL');
+      expect(normalizeCanonicalPrimaryRole(' Mentor ')).toBe('PROFESSIONAL');
+      expect(normalizeCanonicalPrimaryRole('MeNtOr')).toBe('PROFESSIONAL');
+    });
+
+    it('preserves canonical roles unchanged', () => {
+      expect(normalizeCanonicalPrimaryRole('STUDENT')).toBe('STUDENT');
+      expect(normalizeCanonicalPrimaryRole('student')).toBe('STUDENT');
+      expect(normalizeCanonicalPrimaryRole(' Student ')).toBe('STUDENT');
+      expect(normalizeCanonicalPrimaryRole('PROFESSIONAL')).toBe('PROFESSIONAL');
+      expect(normalizeCanonicalPrimaryRole('professional')).toBe('PROFESSIONAL');
+      expect(normalizeCanonicalPrimaryRole('RECRUITER')).toBe('RECRUITER');
+      expect(normalizeCanonicalPrimaryRole('recruiter')).toBe('RECRUITER');
+      expect(normalizeCanonicalPrimaryRole('EDUCATOR')).toBe('EDUCATOR');
+      expect(normalizeCanonicalPrimaryRole('educator')).toBe('EDUCATOR');
+      expect(normalizeCanonicalPrimaryRole('TEACHER')).toBe('EDUCATOR');
+      expect(normalizeCanonicalPrimaryRole('teacher')).toBe('EDUCATOR');
+    });
+
+    it('identifies system ADMIN role without confusing it with community roles', () => {
+      expect(normalizeCanonicalPrimaryRole('ADMIN')).toBe('ADMIN');
+      expect(normalizeCanonicalPrimaryRole('admin')).toBe('ADMIN');
+      expect(isCanonicalCommunityRole('ADMIN')).toBe(false);
+      expect(isCanonicalCommunityRole('admin')).toBe(false);
+    });
+
+    it('returns undefined for missing, invalid, or unknown role strings (safeguard against privilege escalation)', () => {
+      expect(normalizeCanonicalPrimaryRole(null)).toBeUndefined();
+      expect(normalizeCanonicalPrimaryRole(undefined)).toBeUndefined();
+      expect(normalizeCanonicalPrimaryRole('')).toBeUndefined();
+      expect(normalizeCanonicalPrimaryRole('   ')).toBeUndefined();
+      expect(normalizeCanonicalPrimaryRole('superman')).toBeUndefined();
+      expect(normalizeCanonicalPrimaryRole('hacker')).toBeUndefined();
+      expect(normalizeCanonicalPrimaryRole('CEO')).toBeUndefined();
+      expect(normalizeCanonicalPrimaryRole('root')).toBeUndefined();
+    });
+
+    it('normalizeCanonicalPrimaryRoleWithFallback uses legacy LMS role as fallback', () => {
+      expect(normalizeCanonicalPrimaryRoleWithFallback(null, 'teacher')).toBe('EDUCATOR');
+      expect(normalizeCanonicalPrimaryRoleWithFallback(undefined, 'recruiter')).toBe('RECRUITER');
+      expect(normalizeCanonicalPrimaryRoleWithFallback('', 'student')).toBe('STUDENT');
+      expect(normalizeCanonicalPrimaryRoleWithFallback('founder', 'student')).toBe('RECRUITER');
+      expect(normalizeCanonicalPrimaryRoleWithFallback(null, null)).toBe('STUDENT');
+    });
+
+    it('isCanonicalCommunityRole validates only canonical roles', () => {
+      expect(isCanonicalCommunityRole('STUDENT')).toBe(true);
+      expect(isCanonicalCommunityRole('PROFESSIONAL')).toBe(true);
+      expect(isCanonicalCommunityRole('RECRUITER')).toBe(true);
+      expect(isCanonicalCommunityRole('EDUCATOR')).toBe(true);
+      expect(isCanonicalCommunityRole('FOUNDER')).toBe(false);
+      expect(isCanonicalCommunityRole('MENTOR')).toBe(false);
+      expect(isCanonicalCommunityRole('ADMIN')).toBe(false);
+      expect(isCanonicalCommunityRole('student')).toBe(false); // must be canonical uppercase
+      expect(isCanonicalCommunityRole(normalizeCanonicalPrimaryRole('student'))).toBe(true);
+    });
   });
 });
