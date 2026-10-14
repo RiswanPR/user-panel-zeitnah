@@ -13,6 +13,7 @@ import {
   Layers,
   ShieldCheck,
   Trophy,
+  Award,
   User,
   ShieldAlert,
   Building2,

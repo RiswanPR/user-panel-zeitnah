@@ -187,4 +187,32 @@ describe("Zeitnah — Profile Navigation Simplification Tests", () => {
     assert.match(drawerContent, /\/profile\/account\?section=sessions/);
     assert.match(drawerContent, /Achievements & Milestones/);
   });
+
+  it("verifies QuickSearchModal imports all referenced icons including Award from lucide-react", () => {
+    const searchModalFile = path.resolve("src/components/navigation/QuickSearchModal.jsx");
+    const content = fs.readFileSync(searchModalFile, "utf8");
+
+    // Extract import statement from lucide-react
+    const lucideImportMatch = content.match(/import\s*\{([\s\S]*?)\}\s*from\s*["']lucide-react["'];/);
+    assert.ok(lucideImportMatch, "lucide-react import must exist in QuickSearchModal.jsx");
+
+    const importedIcons = lucideImportMatch[1]
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    // Assert Award is explicitly imported
+    assert.ok(importedIcons.includes("Award"), "Award icon must be imported in QuickSearchModal.jsx");
+    assert.ok(importedIcons.includes("ShieldAlert"), "ShieldAlert icon must be imported in QuickSearchModal.jsx");
+    assert.ok(importedIcons.includes("ShieldCheck"), "ShieldCheck icon must be imported in QuickSearchModal.jsx");
+
+    // Extract all icon references in searchableItems
+    const iconMatches = [...content.matchAll(/icon:\s*([A-Za-z0-9_]+)/g)].map((m) => m[1]);
+    for (const icon of iconMatches) {
+      assert.ok(
+        importedIcons.includes(icon),
+        `Referenced icon "${icon}" must be included in lucide-react imports`
+      );
+    }
+  });
 });
