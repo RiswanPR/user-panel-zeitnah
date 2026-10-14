@@ -150,7 +150,7 @@ export function resolveNotificationRoute(notif) {
     } else if (typeUpper === 'OPPORTUNITY') {
       rawUrl = '/opportunities/inbox';
     } else if (typeUpper === 'VERIFICATION_UPDATE') {
-      rawUrl = '/profile/verification';
+      rawUrl = '/profile/account?section=verification';
     } else if (typeUpper.startsWith('CONNECTION') || typeUpper === 'FOLLOW') {
       rawUrl = '/network';
     } else if (typeUpper === 'ANNOUNCEMENT' && notif.entityId) {

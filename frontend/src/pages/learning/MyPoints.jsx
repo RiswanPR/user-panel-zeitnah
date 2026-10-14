@@ -12,6 +12,7 @@ import {
 import api from "../../services/api";
 import ProfileNav from "../../components/profile/ProfileNav";
 import EmptyState from "../../components/ui/EmptyState";
+import { resolveAchievementMeta } from "../../utils/achievementMetadata.js";
 
 const activityIconMap = {
   class_completed: CheckCircle2,
@@ -73,14 +74,14 @@ export default function MyPoints() {
         className="space-y-2"
       >
         <div className="inline-flex items-center gap-2 rounded-lg bg-brand-yellow/8 border border-brand-yellow/15 px-3 py-1.5 text-xs font-bold text-brand-yellow uppercase tracking-wider">
-          <Star className="w-3.5 h-3.5" />
-          Gamification & Milestones
+          <Award className="w-3.5 h-3.5" />
+          Achievements & Milestones
         </div>
         <h1 className="font-heading font-black text-3xl sm:text-4xl md:text-5xl text-white tracking-tight leading-none">
-          Level & Rewards
+          Level, Badges & Rewards
         </h1>
         <p className="text-xs sm:text-sm text-text-muted max-w-xl leading-relaxed">
-          Your personal XP timeline, tier level progression, and verified learning activity transactions.
+          Your personal XP timeline, tier level progression, unlocked achievement badges, and verified learning activity transactions.
         </p>
       </motion.div>
 
@@ -183,32 +184,59 @@ export default function MyPoints() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="rounded-2xl border border-border-default bg-bg-card p-6 relative overflow-hidden shadow-sm"
+          className="rounded-2xl border border-border-default bg-bg-card p-6 relative overflow-hidden shadow-sm space-y-4"
         >
           <div className="gradient-line-top" />
 
-          <div className="mb-5 flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-mint/8 border border-brand-mint/15 text-brand-mint">
-              <Award className="w-4 h-4" />
-            </span>
-            <h2 className="text-lg font-heading font-bold text-white">
-              Platform Achievements
-            </h2>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-mint/8 border border-brand-mint/15 text-brand-mint">
+                <Award className="w-4 h-4" />
+              </span>
+              <div>
+                <h2 className="text-lg font-heading font-bold text-white">
+                  Unlocked Achievements
+                </h2>
+                <p className="text-xs text-text-muted">
+                  Verified platform milestone badges
+                </p>
+              </div>
+            </div>
+            {gamification.achievements?.length > 0 && (
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 font-mono text-[11px] font-semibold">
+                {gamification.achievements.length} Badges
+              </span>
+            )}
           </div>
 
-          <div className="flex flex-wrap gap-2 w-full">
+          <div className="grid grid-cols-1 gap-2.5 w-full pt-1">
             {gamification.achievements?.length ? (
-              gamification.achievements.map((achievement) => (
-                <span
-                  key={achievement}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-brand-mint/20 bg-brand-mint/8 px-3 py-1.5 text-xs font-semibold text-brand-mint tracking-wide"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-brand-yellow" />
-                  {String(achievement)
-                    .replaceAll("_", " ")
-                    .replace(/\b\w/g, (l) => l.toUpperCase())}
-                </span>
-              ))
+              gamification.achievements.map((achievement) => {
+                const meta = resolveAchievementMeta(achievement);
+                return (
+                  <div
+                    key={achievement}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                      <Sparkles className="w-4 h-4 text-brand-yellow" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-white truncate">
+                        {meta.title}
+                      </p>
+                      <p className="text-[11px] text-text-muted truncate">
+                        {meta.desc}
+                      </p>
+                    </div>
+                    {meta.category && (
+                      <span className="text-[10px] uppercase tracking-wider text-text-faint font-mono shrink-0">
+                        {meta.category}
+                      </span>
+                    )}
+                  </div>
+                );
+              })
             ) : (
               <p className="text-text-muted text-xs font-medium py-3">
                 No achievements unlocked yet. Complete classes and courses to earn badges.

@@ -5,6 +5,7 @@ import {
   Star,
   Globe,
   Shield,
+  ShieldCheck,
   FileText,
   ArrowRight,
   ExternalLink,
@@ -22,7 +23,7 @@ export default function ProfileModulesGrid({ username, className = "" }) {
       accent: "mint",
     },
     {
-      title: "My Points & Roadmap",
+      title: "Achievements & Milestones",
       description:
         "Review accumulated XP, tier level progression, and verified activity reward transactions.",
       path: "/my-points",
@@ -40,10 +41,19 @@ export default function ProfileModulesGrid({ username, className = "" }) {
       accent: "mint",
     },
     {
-      title: "Active Sessions & Security",
+      title: "Trust & Verification",
+      description:
+        "Manage official engineering council registrations, identity verification, and credentials.",
+      path: "/profile/account?section=verification",
+      icon: ShieldCheck,
+      tag: "Trust",
+      accent: "mint",
+    },
+    {
+      title: "Active Sessions & Devices",
       description:
         "Inspect signed-in devices, operating systems, IP addresses, and revoke active sessions.",
-      path: "/active-sessions",
+      path: "/profile/account?section=sessions",
       icon: Shield,
       tag: "Security",
       accent: "mint",
@@ -52,7 +62,7 @@ export default function ProfileModulesGrid({ username, className = "" }) {
       title: "Account Audit Logs",
       description:
         "Immutable timeline of authentication events, credential updates, and account activity.",
-      path: "/audit-logs",
+      path: "/profile/account?section=security",
       icon: FileText,
       tag: "Audit Trail",
       accent: "mint",

@@ -55,6 +55,7 @@ const AdminBusinessReviewPage = lazyWithRetry(() => import("./pages/admin/AdminB
 const CareerIntelligencePage = lazyWithRetry(() => import("./pages/career/CareerIntelligencePage"));
 const MessagesPage = lazyWithRetry(() => import("./pages/messages/MessagesPage"));
 const VerificationCenterPage = lazyWithRetry(() => import("./pages/profile/VerificationCenterPage"));
+const AccountPage = lazyWithRetry(() => import("./pages/profile/AccountPage"));
 const OpportunityInboxPage = lazyWithRetry(() => import("./pages/opportunities/OpportunityInboxPage"));
 const Home = lazyWithRetry(() => import("./pages/home/Home"));
 const AboutPage = lazyWithRetry(() => import("./pages/about/AboutPage"));
@@ -187,7 +188,9 @@ function App() {
                 <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
                 <Route path="/profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
                 <Route path="/profile/portfolio" element={<Navigate to="/profile" replace />} />
-                <Route path="/profile/verification" element={<Suspense fallback={<PageLoader />}><VerificationCenterPage /></Suspense>} />
+                <Route path="/profile/account" element={<Suspense fallback={<PageLoader />}><AccountPage /></Suspense>} />
+                <Route path="/profile/account/:section" element={<Suspense fallback={<PageLoader />}><AccountPage /></Suspense>} />
+                <Route path="/profile/verification" element={<Navigate to="/profile/account?section=verification" replace />} />
                 <Route path="/profile/edit" element={<Suspense fallback={<PageLoader />}><EditProfile /></Suspense>} />
                 <Route path="/settings" element={<Navigate to="/profile/edit" replace />} />
                 <Route path="/public-profile" element={<Suspense fallback={<PageLoader />}><PublicProfilePage /></Suspense>} />
@@ -200,6 +203,8 @@ function App() {
                 <Route path="/course/:chapterId" element={<Suspense fallback={<PageLoader />}><ClassView /></Suspense>} />
                 <Route path="/my-learning" element={<Suspense fallback={<PageLoader />}><MyLearning /></Suspense>} />
                 <Route path="/my-points" element={<Suspense fallback={<PageLoader />}><MyPoints /></Suspense>} />
+                <Route path="/profile/achievements" element={<Navigate to="/my-points" replace />} />
+                <Route path="/profile/milestones" element={<Navigate to="/my-points" replace />} />
                 <Route path="/leaderboard" element={<Suspense fallback={<PageLoader />}><Leaderboard /></Suspense>} />
                 <Route path="/leaderboard/:courseId" element={<Suspense fallback={<PageLoader />}><Leaderboard /></Suspense>} />
                 <Route path="/network" element={<Suspense fallback={<PageLoader />}><NetworkPage /></Suspense>} />
@@ -244,8 +249,10 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
-                <Route path="/active-sessions" element={<Suspense fallback={<PageLoader />}><ActiveSessions /></Suspense>} />
-                <Route path="/audit-logs" element={<Suspense fallback={<PageLoader />}><AuditLogs /></Suspense>} />
+                <Route path="/active-sessions" element={<Navigate to="/profile/account?section=sessions" replace />} />
+                <Route path="/profile/sessions" element={<Navigate to="/profile/account?section=sessions" replace />} />
+                <Route path="/audit-logs" element={<Navigate to="/profile/account?section=security" replace />} />
+                <Route path="/profile/security" element={<Navigate to="/profile/account?section=security" replace />} />
                 <Route
                   path="/admin/error-reports"
                   element={

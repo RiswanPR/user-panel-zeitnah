@@ -39,7 +39,7 @@ const formatAction = (action) =>
     .toLowerCase()
     .replace(/\b\w/g, (l) => l.toUpperCase());
 
-export default function AuditLogs() {
+export default function AuditLogs({ hideProfileNav = false }) {
   const [logs, setLogs] = useState([]);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -109,7 +109,7 @@ export default function AuditLogs() {
   return (
     <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto">
       {/* ── Sub-Navigation ── */}
-      <ProfileNav />
+      {!hideProfileNav && <ProfileNav />}
 
       {/* ── Header ── */}
       <motion.div

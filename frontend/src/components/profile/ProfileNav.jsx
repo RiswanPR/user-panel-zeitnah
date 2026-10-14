@@ -4,69 +4,53 @@ import {
   User,
   Edit3,
   Globe,
-  ShieldCheck,
   BookOpen,
   Award,
   Shield,
-  FileText,
 } from "lucide-react";
 
 export const PROFILE_TABS = [
   {
+    id: "overview",
     path: "/profile",
     label: "Overview",
     icon: User,
     description: "Identity & career story",
-    primary: true,
   },
   {
-    path: "/profile/verification",
-    label: "Verification",
-    icon: ShieldCheck,
-    description: "Credentials & trust badges",
-    primary: true,
-  },
-  {
+    id: "edit",
     path: "/profile/edit",
-    label: "Profile Studio",
+    label: "Edit Profile",
     icon: Edit3,
-    description: "Edit all profile sections",
-    primary: true,
+    description: "Profile Studio editor",
   },
   {
+    id: "public",
     path: "/public-profile",
-    label: "Public View",
+    label: "Public Profile",
     icon: Globe,
     description: "Public identity showcase",
-    primary: true,
   },
   {
+    id: "learning",
     path: "/my-learning",
     label: "Learning",
     icon: BookOpen,
-    description: "Course progression",
-    primary: false,
+    description: "Course progression & enrolled tracks",
   },
   {
+    id: "achievements",
     path: "/my-points",
-    label: "Milestones",
+    label: "Achievements",
     icon: Award,
-    description: "XP & level roadmap",
-    primary: false,
+    description: "XP, badges & level roadmap",
   },
   {
-    path: "/active-sessions",
-    label: "Sessions",
+    id: "account",
+    path: "/profile/account",
+    label: "Account",
     icon: Shield,
-    description: "Connected devices",
-    primary: false,
-  },
-  {
-    path: "/audit-logs",
-    label: "Security",
-    icon: FileText,
-    description: "Audit trail",
-    primary: false,
+    description: "Verification, security & active sessions",
   },
 ];
 
@@ -74,21 +58,50 @@ export const PROFILE_TABS = [
  * World-Class Core Profile Navigation Component.
  * Segmented glass aesthetic with smooth spring animations, accessible roles,
  * and seamless horizontal scrolling on mobile viewports.
+ * Features 6 simplified top-level destinations: Overview, Edit Profile, Public Profile,
+ * Learning, Achievements, and unified Account.
  */
 export default function ProfileNav({ className = "" }) {
   const location = useLocation();
 
-  const isTabActive = (tabPath) => {
+  const isTabActive = (tab) => {
+    const tabPath = typeof tab === "string" ? tab : tab.path;
+    const path = location.pathname;
+
     if (tabPath === "/profile") {
-      return location.pathname === "/profile";
+      return path === "/profile";
+    }
+    if (tabPath === "/profile/edit") {
+      return path === "/profile/edit";
     }
     if (tabPath === "/public-profile") {
       return (
-        location.pathname === "/public-profile" ||
-        location.pathname.startsWith("/u/")
+        path === "/public-profile" ||
+        path.startsWith("/u/") ||
+        path.startsWith("/profile/u/")
       );
     }
-    return location.pathname.startsWith(tabPath);
+    if (tabPath === "/my-learning") {
+      return path.startsWith("/my-learning");
+    }
+    if (tabPath === "/my-points") {
+      return (
+        path.startsWith("/my-points") ||
+        path.startsWith("/profile/achievements") ||
+        path.startsWith("/profile/milestones")
+      );
+    }
+    if (tabPath === "/profile/account") {
+      return (
+        path.startsWith("/profile/account") ||
+        path.startsWith("/profile/verification") ||
+        path.startsWith("/audit-logs") ||
+        path.startsWith("/active-sessions") ||
+        path.startsWith("/profile/security") ||
+        path.startsWith("/profile/sessions")
+      );
+    }
+    return path.startsWith(tabPath);
   };
 
   return (
@@ -109,7 +122,7 @@ export default function ProfileNav({ className = "" }) {
         className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 px-0.5 scroll-smooth touch-pan-x overscroll-x-contain"
       >
         {PROFILE_TABS.map((tab) => {
-          const active = isTabActive(tab.path);
+          const active = isTabActive(tab);
           const Icon = tab.icon;
 
           return (
@@ -123,7 +136,7 @@ export default function ProfileNav({ className = "" }) {
                 active
                   ? "text-white font-bold"
                   : "text-text-muted hover:text-text-secondary hover:bg-white/[0.04]"
-              } ${!tab.primary ? "opacity-80 hover:opacity-100 hidden md:inline-flex" : ""}`}
+              }`}
             >
               {/* Active pill background */}
               {active && (

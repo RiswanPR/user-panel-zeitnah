@@ -122,7 +122,7 @@ export default function MobileMoreDrawer({
         items: [
           {
             label: "Verification Center",
-            path: "/profile/verification",
+            path: "/profile/account?section=verification",
             icon: ShieldCheck,
             desc: "Credentials, certificates & trust badges",
           },
@@ -138,7 +138,7 @@ export default function MobileMoreDrawer({
             desc: "Platform rank & competitive standings",
           },
           {
-            label: "My Points",
+            label: "Achievements & Milestones",
             path: "/my-points",
             icon: Award,
             desc: "Badges, streaks & technical achievements",
@@ -172,14 +172,14 @@ export default function MobileMoreDrawer({
                 },
               ]),
           {
-            label: "Account Settings",
+            label: "Edit Profile",
             path: "/profile/edit",
             icon: Settings,
-            desc: "Privacy, security & preferences",
+            desc: "Profile Studio editor & preferences",
           },
           {
             label: "Active Sessions",
-            path: "/active-sessions",
+            path: "/profile/account?section=sessions",
             icon: ShieldAlert,
             desc: "Device management & security audit",
           },

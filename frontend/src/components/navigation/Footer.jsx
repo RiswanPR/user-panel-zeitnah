@@ -130,7 +130,7 @@ export default function Footer({ className = "" }) {
               </li>
               <li>
                 <Link
-                  to="/profile/verification"
+                  to="/profile/account?section=verification"
                   className="text-text-muted hover:text-white transition-colors flex items-center gap-1.5"
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-text-faint" />

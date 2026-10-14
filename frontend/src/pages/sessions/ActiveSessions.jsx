@@ -34,7 +34,7 @@ const getDeviceIcon = (deviceType) => {
   return Monitor;
 };
 
-export default function ActiveSessions() {
+export default function ActiveSessions({ hideProfileNav = false }) {
   const navigate = useNavigate();
   const { setUser } = useContext(AuthContext);
   const toast = useToast();
@@ -108,7 +108,7 @@ export default function ActiveSessions() {
   return (
     <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto">
       {/* ── Sub-Navigation ── */}
-      <ProfileNav />
+      {!hideProfileNav && <ProfileNav />}
 
       {/* ── Header ── */}
       <motion.div

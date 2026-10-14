@@ -341,7 +341,7 @@ export default function Home() {
             </Link>
 
             <Link
-              to="/active-sessions"
+              to="/profile/account?section=sessions"
               className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-brand-mint/30 transition-all flex flex-col justify-between h-36"
             >
               <div>
@@ -377,7 +377,7 @@ export default function Home() {
             </Link>
 
             <Link
-              to="/audit-logs"
+              to="/profile/account?section=security"
               className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-brand-mint/30 transition-all flex flex-col justify-between h-36"
             >
               <div>

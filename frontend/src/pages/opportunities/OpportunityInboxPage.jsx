@@ -190,7 +190,7 @@ export default function OpportunityInboxPage() {
               <Briefcase className="w-4 h-4 text-brand-mint" /> View My Profile
             </Link>
             <Link
-              to="/profile/verification"
+              to="/profile/account?section=verification"
               className="px-4 py-2.5 rounded-xl border border-brand-mint/30 bg-brand-mint/10 hover:bg-brand-mint/20 text-brand-mint text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all shadow-sm"
             >
               <ShieldCheck className="w-4 h-4" /> Verification Center

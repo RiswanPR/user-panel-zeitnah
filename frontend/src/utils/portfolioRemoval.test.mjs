@@ -14,17 +14,13 @@ describe('Zeitnah — Complete Portfolio Feature Removal Tests', () => {
     assert.doesNotMatch(content, /label:\s*["']Portfolio["']/);
     assert.doesNotMatch(content, /Layers/);
 
-    // Remaining primary tabs preserved
+    // Remaining profile destinations preserved
     assert.match(content, /path:\s*["']\/profile["']/);
-    assert.match(content, /path:\s*["']\/profile\/verification["']/);
     assert.match(content, /path:\s*["']\/profile\/edit["']/);
     assert.match(content, /path:\s*["']\/public-profile["']/);
-
-    // Remaining secondary tabs preserved
     assert.match(content, /path:\s*["']\/my-learning["']/);
     assert.match(content, /path:\s*["']\/my-points["']/);
-    assert.match(content, /path:\s*["']\/active-sessions["']/);
-    assert.match(content, /path:\s*["']\/audit-logs["']/);
+    assert.match(content, /path:\s*["']\/profile\/account["']/);
   });
 
   it('verifies App.jsx redirects /profile/portfolio to /profile and public portfolio to user profile', () => {

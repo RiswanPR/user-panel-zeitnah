@@ -169,12 +169,12 @@ export default function MainNavbar({
       if (key === "jobs") return path.startsWith("/jobs");
       if (key === "manage-business") return path.startsWith("/manage-business");
       if (key === "career-intelligence") return path.startsWith("/career-intelligence");
-      if (key === "verification") return path.startsWith("/profile/verification");
+      if (key === "verification") return path.startsWith("/profile/verification") || path.startsWith("/profile/account");
       if (key === "community") return path === "/community" || path.startsWith("/community/");
       if (key === "leaderboard") return path === "/leaderboard" || path.startsWith("/leaderboard/");
       if (key === "admin-businesses") return path.startsWith("/admin/businesses");
       if (key === "profile") {
-        if (path.startsWith("/profile/verification") || path === "/profile/edit") {
+        if (path.startsWith("/profile/verification") || path.startsWith("/profile/account") || path === "/profile/edit") {
           return false;
         }
         return path.startsWith("/profile") || path === "/public-profile" || path.startsWith("/u/");
@@ -811,14 +811,14 @@ export default function MainNavbar({
                             ? [
                                 { to: getBusinessProfileUrl(business), icon: Building2, label: "Business Profile" },
                                 { to: "/manage-business", icon: Layers, label: "Manage Business" },
-                                { to: "/profile/edit", icon: Settings, label: "Account Settings" },
-                                { to: "/active-sessions", icon: ShieldAlert, label: "Active Sessions" },
+                                { to: "/profile/edit", icon: Settings, label: "Edit Profile" },
+                                { to: "/profile/account?section=sessions", icon: ShieldAlert, label: "Active Sessions" },
                               ]
                             : [
                                 { to: "/profile", icon: User, label: "My Profile" },
-                                { to: "/profile/verification", icon: ShieldCheck, label: "Verification Center" },
-                                { to: "/profile/edit", icon: Settings, label: "Account Settings" },
-                                { to: "/active-sessions", icon: ShieldAlert, label: "Active Sessions" },
+                                { to: "/profile/account?section=verification", icon: ShieldCheck, label: "Verification Center" },
+                                { to: "/profile/edit", icon: Settings, label: "Edit Profile" },
+                                { to: "/profile/account?section=sessions", icon: ShieldAlert, label: "Active Sessions" },
                               ]
                           ).map(({ to, icon: Icon, label }) => (
                             <Link

@@ -60,7 +60,7 @@ const CATEGORY_META = {
   },
 };
 
-export default function VerificationCenterPage() {
+export default function VerificationCenterPage({ hideProfileNav = false }) {
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
@@ -190,7 +190,7 @@ export default function VerificationCenterPage() {
   return (
     <div className="space-y-6 sm:space-y-8 max-w-6xl mx-auto pb-20">
       {/* ── 01. UNIFIED PROFILE NAVIGATION ── */}
-      <ProfileNav />
+      {!hideProfileNav && <ProfileNav />}
 
       {/* ── 02. TRUST & VERIFICATION HERO ── */}
       <section className="relative overflow-hidden rounded-3xl bg-[#0A0F18]/95 border border-white/[0.08] p-6 sm:p-10 shadow-[0_12px_40px_rgba(0,0,0,0.4)]">
@@ -214,10 +214,10 @@ export default function VerificationCenterPage() {
 
           <div className="flex items-center gap-3 shrink-0">
             <Link
-              to="/profile/portfolio"
+              to="/profile"
               className="zn-btn-secondary text-xs sm:text-sm py-2.5 px-4"
             >
-              View Portfolio
+              View Profile
             </Link>
             <button
               type="button"

@@ -84,6 +84,7 @@ export default function MainLayout({ children }) {
     location.pathname.startsWith("/leaderboard") ||
     location.pathname.startsWith("/career-intelligence") ||
     location.pathname.startsWith("/profile/verification") ||
+    location.pathname.startsWith("/profile/account") ||
     location.pathname.startsWith("/admin/businesses");
 
   // Authoritative mobile active conversation check: suppress bottom nav inside active chat

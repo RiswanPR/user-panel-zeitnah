@@ -236,7 +236,7 @@ export function getMoreNavSections(user) {
       items: [
         {
           key: "verification",
-          path: "/profile/verification",
+          path: "/profile/account?section=verification",
           label: "Verification Center",
           icon: ShieldCheck,
           desc: "Degrees, credentials & trust badges",

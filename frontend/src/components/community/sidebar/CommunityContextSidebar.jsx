@@ -77,7 +77,7 @@ export default function CommunityContextSidebar() {
         </h4>
         <div className="space-y-1">
           <Link
-            to="/profile/verification"
+            to="/profile/account?section=verification"
             className="flex items-center justify-between p-2 rounded-xl hover:bg-white/[0.04] transition-colors group"
           >
             <div className="flex items-center gap-2.5 min-w-0">

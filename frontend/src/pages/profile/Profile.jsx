@@ -415,7 +415,7 @@ export default function Profile() {
                 </h3>
               </div>
               <Link
-                to="/profile/verification"
+                to="/profile/account?section=verification"
                 className="text-xs font-semibold text-brand-mint hover:underline inline-flex items-center gap-1"
               >
                 Center
@@ -452,7 +452,7 @@ export default function Profile() {
             </div>
 
             <Link
-              to="/profile/verification"
+              to="/profile/account?section=verification"
               className="w-full zn-btn-secondary text-xs py-2.5 flex items-center justify-center gap-1.5"
             >
               <span>Manage Trust Badges</span>
