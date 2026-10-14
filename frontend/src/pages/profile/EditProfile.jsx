@@ -21,7 +21,6 @@ import {
   ExternalLink,
   MapPin,
   Calendar,
-  Building,
   Check,
   Eye,
   AlertCircle,
@@ -44,14 +43,10 @@ import ProfileNav from "../../components/profile/ProfileNav";
 import { getUploadUrl } from "../../utils/courseUi";
 import ImageEditorModal from "../../components/common/ImageEditorModal";
 import RoleSelector from "../../components/profile/RoleSelector";
-import InfrastructureExpertiseSection from "../../components/profile/InfrastructureExpertiseSection";
 import StructuredSkillsEditor from "../../components/profile/StructuredSkillsEditor";
 import CareerPreferencesSection from "../../components/profile/CareerPreferencesSection";
 import ProjectEditorModal from "../../components/profile/ProjectEditorModal";
-import {
-  INFRASTRUCTURE_SECTORS,
-  INFRASTRUCTURE_SOFTWARE,
-} from "../../constants/infrastructureTaxonomy";
+import { INFRASTRUCTURE_SECTORS } from "../../constants/infrastructureTaxonomy";
 import { normalizeUserRole } from "../../utils/roleNavigation";
 import { PROFILE_QUERY_KEYS } from "../../constants/profileQueryKeys";
 import {
@@ -66,15 +61,14 @@ const MAX_BIO_LENGTH = 1000;
 const SECTION_CONFIG = [
   { id: "basic-info", index: "01", label: "Basic Information", icon: User, xp: 45, desc: "Avatar, banner, name, location & biography" },
   { id: "professional-identity", index: "02", label: "Professional Identity", icon: Briefcase, xp: 25, desc: "Role, availability & career headline" },
-  { id: "infrastructure-expertise", index: "03", label: "Infrastructure Expertise", icon: Building, xp: 30, desc: "Primary discipline, sectors & software" },
-  { id: "skills", index: "04", label: "Skills & Software", icon: Code2, xp: 20, desc: "Structured engineering & technical matrix" },
-  { id: "experience", index: "05", label: "Experience", icon: Briefcase, xp: 20, desc: "Career timeline & project contributions" },
-  { id: "projects", index: "06", label: "Projects", icon: Hammer, xp: 25, desc: "Engineering deliverables & case studies" },
-  { id: "education", index: "07", label: "Education", icon: GraduationCap, xp: 20, desc: "Academic qualifications & degrees" },
-  { id: "certifications", index: "08", label: "Certifications", icon: Award, xp: 15, desc: "Accredited licenses & credential links" },
-  { id: "career-preferences", index: "09", label: "Career & Privacy", icon: ShieldCheck, xp: 20, desc: "Target roles, salary & privacy toggles" },
-  { id: "recommendations", index: "10", label: "Recommendations", icon: HeartHandshake, xp: 0, desc: "Verified peer & mentor endorsements" },
-  { id: "public-profile", index: "11", label: "Public Profile Setup", icon: Globe, xp: 50, desc: "Public handle, link & publishing state" },
+  { id: "skills", index: "03", label: "Skills & Software", icon: Code2, xp: 20, desc: "Structured engineering & technical matrix" },
+  { id: "experience", index: "04", label: "Experience", icon: Briefcase, xp: 20, desc: "Career timeline & project contributions" },
+  { id: "projects", index: "05", label: "Projects", icon: Hammer, xp: 25, desc: "Engineering deliverables & case studies" },
+  { id: "education", index: "06", label: "Education", icon: GraduationCap, xp: 20, desc: "Academic qualifications & degrees" },
+  { id: "certifications", index: "07", label: "Certifications", icon: Award, xp: 15, desc: "Accredited licenses & credential links" },
+  { id: "career-preferences", index: "08", label: "Career & Privacy", icon: ShieldCheck, xp: 20, desc: "Target roles, salary & privacy toggles" },
+  { id: "recommendations", index: "09", label: "Recommendations", icon: HeartHandshake, xp: 0, desc: "Verified peer & mentor endorsements" },
+  { id: "public-profile", index: "10", label: "Public Profile Setup", icon: Globe, xp: 50, desc: "Public handle, link & publishing state" },
 ];
 
 export default function EditProfile() {
@@ -87,12 +81,12 @@ export default function EditProfile() {
   const avatarFileRef = useRef(null);
   const bannerFileRef = useRef(null);
 
-  // Normalize section parameter with legacy aliases
-  const rawSectionParam = searchParams.get("section") || "basic-info";
-  const normalizedSection =
-    rawSectionParam === "introduction" || rawSectionParam === "about"
-      ? "basic-info"
-      : rawSectionParam;
+  // Normalize section parameter with legacy aliases and redirect stale sections
+  const rawSectionParam = (searchParams.get("section") || "basic-info").toLowerCase().trim();
+  const validSectionIds = SECTION_CONFIG.map((s) => s.id);
+  const normalizedSection = validSectionIds.includes(rawSectionParam)
+    ? rawSectionParam
+    : "basic-info";
 
   const [activeSection, setActiveSection] = useState(normalizedSection);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -194,12 +188,16 @@ export default function EditProfile() {
   // Image Editor Modal state for avatar / banner
   const [editingImage, setEditingImage] = useState(null);
 
-  // Synchronize section changes from URL
+  // Synchronize section changes from URL and replace stale query params
   useEffect(() => {
     if (normalizedSection !== activeSection) {
       setActiveSection(normalizedSection);
     }
-  }, [normalizedSection]);
+    const currentParam = searchParams.get("section");
+    if (currentParam && currentParam !== normalizedSection) {
+      setSearchParams({ section: normalizedSection }, { replace: true });
+    }
+  }, [normalizedSection, searchParams, setSearchParams]);
 
   const handleSelectSection = (sectionId) => {
     if (sectionId === activeSection) return;
@@ -696,16 +694,6 @@ export default function EditProfile() {
     });
   };
 
-  const handleSaveInfrastructure = (e) => {
-    e.preventDefault();
-    updateMutation.mutate({
-      primaryDiscipline,
-      specializations,
-      infrastructureSectors,
-      preferredLocations,
-      yearsOfExperience: Number(yearsOfExperience) || 0,
-    });
-  };
 
   const handleSaveSkills = (e) => {
     e.preventDefault();
@@ -848,10 +836,6 @@ export default function EditProfile() {
         if (profile.headline && profile.primaryRole) return "complete";
         if (profile.headline || profile.primaryRole) return "in-progress";
         return "not-started";
-      case "infrastructure-expertise":
-        if (profile.primaryDiscipline && (profile.infrastructureSectors?.length > 0 || profile.specializations?.length > 0)) return "complete";
-        if (profile.primaryDiscipline) return "in-progress";
-        return "not-started";
       case "skills":
         if (flatSkills.length >= 3) return "complete";
         if (flatSkills.length > 0) return "in-progress";
@@ -904,7 +888,7 @@ export default function EditProfile() {
               </span>
               <span className="text-text-faint text-xs">•</span>
               <span className="text-[10px] font-mono text-text-muted uppercase">
-                {currentSectionMeta.index} / 11
+                {currentSectionMeta.index} / {SECTION_CONFIG.length}
               </span>
               {isDirty && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-yellow/15 border border-brand-yellow/30 text-brand-yellow animate-pulse">
@@ -993,7 +977,7 @@ export default function EditProfile() {
           <div className="rounded-3xl border border-white/[0.08] bg-bg-card/80 backdrop-blur-xl p-3 sm:p-4 space-y-1.5 shadow-xl">
             <div className="px-3 py-2 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-text-faint">
               <span>Studio Sections</span>
-              <span className="font-mono text-[10px] text-text-muted">11 Modules</span>
+              <span className="font-mono text-[10px] text-text-muted">{SECTION_CONFIG.length} Modules</span>
             </div>
 
             <div className="space-y-1">
@@ -1090,7 +1074,7 @@ export default function EditProfile() {
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                      SECTION 01 OF 11
+                      SECTION 01 OF 10
                     </span>
                   </div>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
@@ -1281,7 +1265,7 @@ export default function EditProfile() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                    SECTION 02 OF 11
+                    SECTION 02 OF 10
                   </span>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                     +25 XP
@@ -1384,64 +1368,8 @@ export default function EditProfile() {
             </motion.div>
           )}
 
-          {/* SECTION 3: INFRASTRUCTURE EXPERTISE */}
-          {activeSection === "infrastructure-expertise" && (
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-3xl border border-white/[0.08] bg-bg-card/80 backdrop-blur-xl p-6 sm:p-8 space-y-6 shadow-xl"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                    SECTION 03 OF 11
-                  </span>
-                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
-                    +30 XP
-                  </span>
-                </div>
-                <h2 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
-                  Infrastructure Expertise & Taxonomy
-                </h2>
-                <p className="text-xs sm:text-sm text-text-muted leading-relaxed mt-1">
-                  Specify your primary engineering discipline, specialized niches, and targeted infrastructure sectors.
-                </p>
-              </div>
 
-              <form onSubmit={handleSaveInfrastructure} className="space-y-6">
-                <InfrastructureExpertiseSection
-                  primaryDiscipline={primaryDiscipline}
-                  setPrimaryDiscipline={setPrimaryDiscipline}
-                  specializations={specializations}
-                  setSpecializations={setSpecializations}
-                  infrastructureSectors={infrastructureSectors}
-                  setInfrastructureSectors={setInfrastructureSectors}
-                  yearsOfExperience={yearsOfExperience}
-                  setYearsOfExperience={setYearsOfExperience}
-                  preferredLocations={preferredLocations}
-                  setPreferredLocations={setPreferredLocations}
-                  onChangeDirty={() => setIsDirty(true)}
-                />
-
-                <div className="pt-3 flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={updateMutation.isPending}
-                    className="btn-primary text-xs uppercase tracking-wider flex items-center gap-2 py-3 px-6 cursor-pointer shadow-lg shadow-brand-mint/10 min-h-[44px]"
-                  >
-                    {updateMutation.isPending ? (
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4" />
-                    )}
-                    Save Infrastructure Expertise
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          )}
-
-          {/* SECTION 4: SKILLS & SOFTWARE */}
+          {/* SECTION 3: SKILLS & SOFTWARE */}
           {activeSection === "skills" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -1451,7 +1379,7 @@ export default function EditProfile() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                    SECTION 04 OF 11
+                    SECTION 03 OF 10
                   </span>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                     +20 XP (3+ Skills)
@@ -1492,7 +1420,7 @@ export default function EditProfile() {
             </motion.div>
           )}
 
-          {/* SECTION 5: EXPERIENCE */}
+          {/* SECTION 4: EXPERIENCE */}
           {activeSection === "experience" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -1503,7 +1431,7 @@ export default function EditProfile() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                      SECTION 05 OF 11
+                      SECTION 04 OF 10
                     </span>
                     <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                       +20 XP
@@ -1647,7 +1575,7 @@ export default function EditProfile() {
             </motion.div>
           )}
 
-          {/* SECTION 6: PROJECTS */}
+          {/* SECTION 5: PROJECTS */}
           {activeSection === "projects" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -1658,7 +1586,7 @@ export default function EditProfile() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                      SECTION 06 OF 11
+                      SECTION 05 OF 10
                     </span>
                     <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                       +25 XP
@@ -1782,7 +1710,7 @@ export default function EditProfile() {
             </motion.div>
           )}
 
-          {/* SECTION 7: EDUCATION */}
+          {/* SECTION 6: EDUCATION */}
           {activeSection === "education" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -1793,7 +1721,7 @@ export default function EditProfile() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                      SECTION 07 OF 11
+                      SECTION 06 OF 10
                     </span>
                     <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                       +20 XP
@@ -1903,7 +1831,7 @@ export default function EditProfile() {
             </motion.div>
           )}
 
-          {/* SECTION 8: CERTIFICATIONS */}
+          {/* SECTION 7: CERTIFICATIONS */}
           {activeSection === "certifications" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -1914,7 +1842,7 @@ export default function EditProfile() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                      SECTION 08 OF 11
+                      SECTION 07 OF 10
                     </span>
                     <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                       +15 XP
@@ -2048,7 +1976,7 @@ export default function EditProfile() {
             </motion.div>
           )}
 
-          {/* SECTION 9: CAREER PREFERENCES & PRIVACY */}
+          {/* SECTION 8: CAREER PREFERENCES & PRIVACY */}
           {activeSection === "career-preferences" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -2058,7 +1986,7 @@ export default function EditProfile() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                    SECTION 09 OF 11
+                    SECTION 08 OF 10
                   </span>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                     +20 XP
@@ -2103,7 +2031,7 @@ export default function EditProfile() {
             </motion.div>
           )}
 
-          {/* SECTION 10: RECOMMENDATIONS */}
+          {/* SECTION 9: RECOMMENDATIONS */}
           {activeSection === "recommendations" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -2114,7 +2042,7 @@ export default function EditProfile() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                      SECTION 10 OF 11
+                      SECTION 09 OF 10
                     </span>
                   </div>
                   <h2 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
@@ -2230,7 +2158,7 @@ export default function EditProfile() {
             </motion.div>
           )}
 
-          {/* SECTION 11: PUBLIC PROFILE SETUP */}
+          {/* SECTION 10: PUBLIC PROFILE SETUP */}
           {activeSection === "public-profile" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -2240,7 +2168,7 @@ export default function EditProfile() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                    SECTION 11 OF 11
+                    SECTION 10 OF 10
                   </span>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                     +50 Total XP

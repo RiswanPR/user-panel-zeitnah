@@ -9,7 +9,6 @@ export function normalizeProfileSection(sectionParam) {
   const VALID_SECTIONS = [
     'basic-info',
     'professional-identity',
-    'infrastructure-expertise',
     'skills',
     'experience',
     'projects',
@@ -32,10 +31,6 @@ export function evaluateSectionCompletion(sectionId, profile) {
     case 'professional-identity':
       if (profile.headline && profile.primaryRole) return 'complete';
       if (profile.headline || profile.primaryRole) return 'in-progress';
-      return 'not-started';
-    case 'infrastructure-expertise':
-      if (profile.primaryDiscipline && (profile.infrastructureSectors?.length > 0 || profile.specializations?.length > 0)) return 'complete';
-      if (profile.primaryDiscipline) return 'in-progress';
       return 'not-started';
     case 'skills':
       if (Array.isArray(profile.skills) && profile.skills.length >= 3) return 'complete';
@@ -112,7 +107,7 @@ describe('Profile Redesign Architecture & Routing Validation', () => {
     assert.equal(normalizeProfileSection(undefined), 'basic-info');
     assert.equal(normalizeProfileSection('unknown-section-xyz'), 'basic-info');
     assert.equal(normalizeProfileSection('experience'), 'experience');
-    assert.equal(normalizeProfileSection('infrastructure-expertise'), 'infrastructure-expertise');
+    assert.equal(normalizeProfileSection('infrastructure-expertise'), 'basic-info');
     assert.equal(normalizeProfileSection('public-profile'), 'public-profile');
   });
 
@@ -129,7 +124,6 @@ describe('Profile Redesign Architecture & Routing Validation', () => {
     };
     assert.equal(evaluateSectionCompletion('basic-info', partialProfile), 'in-progress');
     assert.equal(evaluateSectionCompletion('skills', partialProfile), 'in-progress');
-    assert.equal(evaluateSectionCompletion('infrastructure-expertise', partialProfile), 'in-progress');
 
     const fullProfile = {
       name: 'Riswan P.R',
@@ -147,7 +141,6 @@ describe('Profile Redesign Architecture & Routing Validation', () => {
     };
     assert.equal(evaluateSectionCompletion('basic-info', fullProfile), 'complete');
     assert.equal(evaluateSectionCompletion('professional-identity', fullProfile), 'complete');
-    assert.equal(evaluateSectionCompletion('infrastructure-expertise', fullProfile), 'complete');
     assert.equal(evaluateSectionCompletion('skills', fullProfile), 'complete');
     assert.equal(evaluateSectionCompletion('experience', fullProfile), 'complete');
     assert.equal(evaluateSectionCompletion('education', fullProfile), 'complete');
@@ -167,11 +160,10 @@ describe('Profile Redesign Architecture & Routing Validation', () => {
     }
   });
 
-  it('ensures all 11 studio section configurations are distinct and valid', () => {
+  it('ensures all 10 studio section configurations are distinct and valid', () => {
     const SECTION_IDS = [
       'basic-info',
       'professional-identity',
-      'infrastructure-expertise',
       'skills',
       'experience',
       'projects',
@@ -182,11 +174,32 @@ describe('Profile Redesign Architecture & Routing Validation', () => {
       'public-profile',
     ];
     const uniqueIds = new Set(SECTION_IDS);
-    assert.equal(uniqueIds.size, 11, 'All 11 section IDs must be distinct');
+    assert.equal(uniqueIds.size, 10, 'All 10 section IDs must be distinct');
 
     for (const id of SECTION_IDS) {
       assert.equal(normalizeProfileSection(id), id, `Section ID ${id} must normalize to itself`);
     }
+  });
+
+  it('redirects stale infrastructure-expertise section parameter to basic-info and validates 10 remaining modules', () => {
+    assert.equal(normalizeProfileSection('infrastructure-expertise'), 'basic-info');
+    assert.equal(normalizeProfileSection('INFRASTRUCTURE-EXPERTISE'), 'basic-info');
+    assert.equal(normalizeProfileSection('  infrastructure-expertise  '), 'basic-info');
+
+    const REMAINING_SECTIONS = [
+      'basic-info',
+      'professional-identity',
+      'skills',
+      'experience',
+      'projects',
+      'education',
+      'certifications',
+      'career-preferences',
+      'recommendations',
+      'public-profile',
+    ];
+    assert.equal(REMAINING_SECTIONS.length, 10);
+    assert.ok(!REMAINING_SECTIONS.includes('infrastructure-expertise'));
   });
 
   it('validates recommendation submission payloads against backend schema constraints', () => {
