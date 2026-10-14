@@ -13,6 +13,7 @@ import {
   formatExperienceDateRange,
   formatExperienceDateForInput,
   validateExperienceDates,
+  calculateTotalExperience,
 } from './experienceTimeline.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -503,6 +504,287 @@ describe('Career Experience Timeline & Chronological Ordering Regression Tests',
       // Impossible DD/MM/YYYY (e.g. 31/02/2023)
       assert.equal(parseExperienceDateSafe('31/02/2023'), null);
       assert.equal(formatExperienceDateForInput('31/02/2023'), '');
+    });
+  });
+
+  describe('11. Total Professional Experience Summary & Calculation Tests', () => {
+    const fixedNow = new Date('2026-10-14T00:00:00.000Z');
+
+    it('1. One completed role: calculates exact duration and role counts', () => {
+      // 1 year role
+      const single1Yr = [
+        { id: 'exp-1', role: 'Junior Structural Engineer', startDate: '2022-01-01', endDate: '2022-12-31' },
+      ];
+      const res1 = calculateTotalExperience(single1Yr, fixedNow);
+      assert.equal(res1.totalYears, 1);
+      assert.equal(res1.totalMonths, 0);
+      assert.equal(res1.allMonths, 12);
+      assert.equal(res1.formattedTotal, '1 Year');
+      assert.equal(res1.totalRoles, 1);
+      assert.equal(res1.currentRoles, 0);
+
+      // 8 years role
+      const single8Yr = [
+        { id: 'exp-8', role: 'Lead Architect', startDate: '2012-01-01', endDate: '2019-12-31' },
+      ];
+      const res8 = calculateTotalExperience(single8Yr, fixedNow);
+      assert.equal(res8.totalYears, 8);
+      assert.equal(res8.totalMonths, 0);
+      assert.equal(res8.formattedTotal, '8 Years');
+      assert.equal(res8.totalRoles, 1);
+      assert.equal(res8.currentRoles, 0);
+
+      // 2 years 6 months role
+      const single2Yr6Mo = [
+        { id: 'exp-mid', role: 'BIM Coordinator', startDate: '2020-01-01', endDate: '2022-06-30' },
+      ];
+      const resMid = calculateTotalExperience(single2Yr6Mo, fixedNow);
+      assert.equal(resMid.totalYears, 2);
+      assert.equal(resMid.totalMonths, 6);
+      assert.equal(resMid.formattedTotal, '2 Years 6 Months');
+      assert.equal(resMid.totalRoles, 1);
+      assert.equal(resMid.currentRoles, 0);
+    });
+
+    it('2. One current role: uses current reference date as end date and marks role as active', () => {
+      // Role started 2024-01-01, current date is 2026-10-14 -> Jan 2024 to Oct 2026 = 34 months = 2 Years 10 Months
+      const activeRole = [
+        { id: 'exp-act', role: 'Resident Project Engineer', startDate: '2024-01-01', currentlyActive: true },
+      ];
+      const res = calculateTotalExperience(activeRole, fixedNow);
+      assert.equal(res.totalYears, 2);
+      assert.equal(res.totalMonths, 10);
+      assert.equal(res.allMonths, 34);
+      assert.equal(res.formattedTotal, '2 Years 10 Months');
+      assert.equal(res.totalRoles, 1);
+      assert.equal(res.currentRoles, 1);
+
+      // Detects ongoing via isCurrent or null endDate
+      const activeByNullEnd = [
+        { id: 'exp-null-end', role: 'Consultant', startDate: '2024-01-01', endDate: null },
+      ];
+      const resNull = calculateTotalExperience(activeByNullEnd, fixedNow);
+      assert.equal(resNull.currentRoles, 1);
+      assert.equal(resNull.formattedTotal, '2 Years 10 Months');
+    });
+
+    it('3. Multiple overlapping roles: merges overlapping periods so simultaneous jobs do not double-count', () => {
+      // Role A: Jan 2020 to Dec 2022 (36 months)
+      // Role B: Jan 2021 to Dec 2023 (36 months - overlaps Role A from Jan 2021 to Dec 2022)
+      // Role C: Jun 2021 to Jun 2022 (13 months - completely inside Role A and B)
+      // Combined timeline spans Jan 2020 to Dec 2023 = 48 months = 4 Years!
+      // (Without interval merging, 36 + 36 + 13 = 85 months = 7 years 1 mo)
+      const overlapping = [
+        { id: 'exp-a', role: 'Lead Civil Engineer', startDate: '2020-01-01', endDate: '2022-12-31' },
+        { id: 'exp-b', role: 'Senior Consultant', startDate: '2021-01-01', endDate: '2023-12-31' },
+        { id: 'exp-c', role: 'Site Advisor (Part-time)', startDate: '2021-06-01', endDate: '2022-06-30' },
+      ];
+
+      const res = calculateTotalExperience(overlapping, fixedNow);
+      assert.equal(res.allMonths, 48);
+      assert.equal(res.totalYears, 4);
+      assert.equal(res.totalMonths, 0);
+      assert.equal(res.formattedTotal, '4 Years');
+      assert.equal(res.totalRoles, 3);
+      assert.equal(res.currentRoles, 0);
+
+      // Multiple simultaneous ongoing roles
+      const simultaneousActive = [
+        { id: 'act-1', role: 'Design Director', startDate: '2022-01-01', currentlyActive: true },
+        { id: 'act-2', role: 'Board Advisor', startDate: '2024-01-01', currentlyActive: true },
+      ];
+      const resActive = calculateTotalExperience(simultaneousActive, fixedNow);
+      // Jan 2022 to Oct 2026 = 58 months = 4 Years 10 Months
+      assert.equal(resActive.allMonths, 58);
+      assert.equal(resActive.totalYears, 4);
+      assert.equal(resActive.totalMonths, 10);
+      assert.equal(resActive.formattedTotal, '4 Years 10 Months');
+      assert.equal(resActive.totalRoles, 2);
+      assert.equal(resActive.currentRoles, 2);
+    });
+
+    it('4. Non-overlapping roles: correctly sums disjoint periods while ignoring career gaps', () => {
+      // Role 1: Jan 2015 to Dec 2017 (36 months = 3 Years)
+      // Gap: 2018 is completely empty
+      // Role 2: Jan 2019 to Dec 2023 (60 months = 5 Years)
+      // Total: 36 + 60 = 96 months = 8 Years
+      const nonOverlapping = [
+        { id: 'p1', role: 'Site Engineer', startDate: '2015-01-01', endDate: '2017-12-31' },
+        { id: 'p2', role: 'Project Manager', startDate: '2019-01-01', endDate: '2023-12-31' },
+      ];
+
+      const res = calculateTotalExperience(nonOverlapping, fixedNow);
+      assert.equal(res.allMonths, 96);
+      assert.equal(res.totalYears, 8);
+      assert.equal(res.totalMonths, 0);
+      assert.equal(res.formattedTotal, '8 Years');
+      assert.equal(res.totalRoles, 2);
+      assert.equal(res.currentRoles, 0);
+    });
+
+    it('5. Missing or invalid dates: handles missing, invalid, future, or inverted dates safely', () => {
+      const records = [
+        { id: 'valid', role: 'Engineer', startDate: '2020-01-01', endDate: '2021-12-31' }, // 24 months = 2 yrs
+        { id: 'null-start', role: 'Draftsman', startDate: null, endDate: '2022-01-01' },
+        { id: 'empty-start', role: 'Surveyor', startDate: '', endDate: '2022-01-01' },
+        { id: 'invalid-start', role: 'Inspector', startDate: 'not-a-date', endDate: '2022-01-01' },
+        { id: 'invalid-end', role: 'Consultant', startDate: '2022-01-01', endDate: 'not-a-date' },
+        { id: 'inverted-dates', role: 'Intern', startDate: '2024-05-01', endDate: '2024-01-01' },
+        { id: 'future-start', role: 'Future Lead', startDate: '2030-01-01', endDate: '2032-01-01' },
+      ];
+
+      const res = calculateTotalExperience(records, fixedNow);
+      assert.equal(res.totalRoles, 7);
+      assert.equal(res.totalYears, 2);
+      assert.equal(res.totalMonths, 0);
+      assert.equal(res.formattedTotal, '2 Years');
+    });
+
+    it('6. Editing and deleting a role: recalculates immediately after mutations', () => {
+      let state = [
+        { id: 'exp-1', role: 'Engineer', startDate: '2020-01-01', endDate: '2021-12-31' }, // 2 years
+        { id: 'exp-2', role: 'Senior Engineer', startDate: '2022-01-01', endDate: '2023-12-31' }, // 2 years
+      ];
+
+      // Initial state: 4 years
+      let res = calculateTotalExperience(state, fixedNow);
+      assert.equal(res.totalYears, 4);
+      assert.equal(res.formattedTotal, '4 Years');
+      assert.equal(res.totalRoles, 2);
+
+      // Action: Add an experience entry (e.g. 2018 - 2019, 2 years)
+      state = [
+        ...state,
+        { id: 'exp-3', role: 'Junior Engineer', startDate: '2018-01-01', endDate: '2019-12-31' },
+      ];
+      res = calculateTotalExperience(state, fixedNow);
+      assert.equal(res.totalYears, 6);
+      assert.equal(res.formattedTotal, '6 Years');
+      assert.equal(res.totalRoles, 3);
+
+      // Action: Edit an experience entry (change exp-2 to ongoing)
+      state = state.map((item) =>
+        item.id === 'exp-2' ? { ...item, endDate: null, currentlyActive: true } : item
+      );
+      res = calculateTotalExperience(state, fixedNow);
+      // exp-3: 2018-2019 (24 mo)
+      // exp-1: 2020-2021 (24 mo)
+      // exp-2: 2022 to Oct 2026 (58 mo)
+      // Total = 106 months = 8 Years 10 Months
+      assert.equal(res.totalYears, 8);
+      assert.equal(res.totalMonths, 10);
+      assert.equal(res.formattedTotal, '8 Years 10 Months');
+      assert.equal(res.currentRoles, 1);
+
+      // Action: Delete an experience entry (delete exp-3)
+      state = state.filter((item) => item.id !== 'exp-3');
+      res = calculateTotalExperience(state, fixedNow);
+      // exp-1 (24 mo) + exp-2 (58 mo) = 82 mo = 6 Years 10 Months
+      assert.equal(res.totalYears, 6);
+      assert.equal(res.totalMonths, 10);
+      assert.equal(res.formattedTotal, '6 Years 10 Months');
+      assert.equal(res.totalRoles, 2);
+      assert.equal(res.currentRoles, 1);
+    });
+
+    it('7. Correct month/year formatting: outputs sensible strings for all duration ranges', () => {
+      // 0 months
+      assert.equal(calculateTotalExperience([], fixedNow).formattedTotal, '0 Years');
+
+      // 1 month
+      const oneMo = [{ role: 'Intern', startDate: '2023-05-01', endDate: '2023-05-31' }];
+      assert.equal(calculateTotalExperience(oneMo, fixedNow).formattedTotal, '1 Month');
+
+      // 6 months
+      const sixMo = [{ role: 'Intern', startDate: '2023-01-01', endDate: '2023-06-30' }];
+      assert.equal(calculateTotalExperience(sixMo, fixedNow).formattedTotal, '6 Months');
+
+      // 1 year
+      const oneYr = [{ role: 'Specialist', startDate: '2023-01-01', endDate: '2023-12-31' }];
+      assert.equal(calculateTotalExperience(oneYr, fixedNow).formattedTotal, '1 Year');
+
+      // 8 years (prompt example)
+      const eightYr = [{ role: 'Lead', startDate: '2012-01-01', endDate: '2019-12-31' }];
+      assert.equal(calculateTotalExperience(eightYr, fixedNow).formattedTotal, '8 Years');
+
+      // 2 years 6 months (prompt example)
+      const twoYrSixMo = [{ role: 'Consultant', startDate: '2020-01-01', endDate: '2022-06-30' }];
+      assert.equal(calculateTotalExperience(twoYrSixMo, fixedNow).formattedTotal, '2 Years 6 Months');
+
+      // 24+ years senior AEC executive (prompt example: 24+ Years)
+      const senior24 = [{ role: 'VP Engineering', startDate: '2000-01-01', endDate: '2024-01-01' }];
+      assert.equal(calculateTotalExperience(senior24, fixedNow).formattedTotal, '24+ Years');
+
+      // 30+ years
+      const senior30 = [{ role: 'Chief Engineer', startDate: '1990-01-01', endDate: '2020-01-01' }];
+      assert.equal(calculateTotalExperience(senior30, fixedNow).formattedTotal, '30+ Years');
+    });
+
+    it('8. Empty experience history: returns clean zero defaults without NaN', () => {
+      const cases = [[], null, undefined, {}];
+      for (const emptyInput of cases) {
+        const res = calculateTotalExperience(emptyInput, fixedNow);
+        assert.equal(res.totalYears, 0);
+        assert.equal(res.totalMonths, 0);
+        assert.equal(res.allMonths, 0);
+        assert.equal(res.formattedTotal, '0 Years');
+        assert.equal(res.totalRoles, 0);
+        assert.equal(res.currentRoles, 0);
+      }
+    });
+
+    it('9. UI integration: verifies EditProfile and ProfileExperienceSection mount ExperienceSummaryCard', () => {
+      const editProfilePath = path.resolve(__dirname, '../pages/profile/EditProfile.jsx');
+      const editProfileContent = fs.readFileSync(editProfilePath, 'utf8');
+
+      assert.match(
+        editProfileContent,
+        /import\s+ExperienceSummaryCard\s+from\s+["']\.\.\/\.\.\/components\/profile\/ExperienceSummaryCard["']/,
+        'EditProfile.jsx must import ExperienceSummaryCard'
+      );
+      assert.match(
+        editProfileContent,
+        /<ExperienceSummaryCard\s+experience=\{profile\?\.experience\}/,
+        'EditProfile.jsx must render ExperienceSummaryCard with profile.experience'
+      );
+
+      const sectionPath = path.resolve(__dirname, '../components/profile/ProfileExperienceSection.jsx');
+      const sectionContent = fs.readFileSync(sectionPath, 'utf8');
+
+      assert.match(
+        sectionContent,
+        /import\s+ExperienceSummaryCard\s+from\s+["']\.\/ExperienceSummaryCard["']/,
+        'ProfileExperienceSection.jsx must import ExperienceSummaryCard'
+      );
+      assert.match(
+        sectionContent,
+        /<ExperienceSummaryCard\s+experience=\{rawItems\}/,
+        'ProfileExperienceSection.jsx must render ExperienceSummaryCard with rawItems'
+      );
+
+      const summaryCardPath = path.resolve(__dirname, '../components/profile/ExperienceSummaryCard.jsx');
+      const summaryCardContent = fs.readFileSync(summaryCardPath, 'utf8');
+
+      assert.match(
+        summaryCardContent,
+        /data-testid="experience-summary-card"/,
+        'ExperienceSummaryCard must declare test id'
+      );
+      assert.match(
+        summaryCardContent,
+        /data-testid="total-experience-value"/,
+        'ExperienceSummaryCard must declare total experience value test id'
+      );
+      assert.match(
+        summaryCardContent,
+        /data-testid="career-roles-value"/,
+        'ExperienceSummaryCard must declare career roles value test id'
+      );
+      assert.match(
+        summaryCardContent,
+        /data-testid="current-roles-value"/,
+        'ExperienceSummaryCard must declare current roles value test id'
+      );
     });
   });
 });

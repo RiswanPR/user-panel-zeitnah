@@ -273,3 +273,132 @@ export function sortExperienceDescending(experiences) {
 
   return decorated.map((d) => d.item);
 }
+
+/**
+ * Calculates cumulative total professional experience from saved experience entries.
+ *
+ * Rules:
+ * 1. Merges overlapping and contiguous employment intervals to eliminate double-counting.
+ * 2. Roles marked ongoing (currentlyActive, isCurrent, current, or missing endDate) use current date as end date.
+ * 3. Handles missing, invalid, inverted, and future dates safely without NaN or crashing.
+ * 4. Senior experience formatting: >= 15 years displays e.g. "24+ Years".
+ * 5. Mid-level & concise formatting: displays e.g. "8 Years", "2 Years 6 Months", or "6 Months".
+ * 6. Deterministic testability: optional referenceDate parameter defaults to current date.
+ */
+export function calculateTotalExperience(experiences, referenceDate = new Date()) {
+  const safeList = Array.isArray(experiences)
+    ? experiences.filter((exp) => exp && typeof exp === "object")
+    : [];
+
+  const totalRoles = safeList.length;
+  const currentRoles = safeList.filter((exp) => isExperienceOngoing(exp)).length;
+
+  if (totalRoles === 0) {
+    return {
+      totalYears: 0,
+      totalMonths: 0,
+      allMonths: 0,
+      formattedTotal: "0 Years",
+      totalRoles: 0,
+      currentRoles: 0,
+    };
+  }
+
+  const refEpoch =
+    referenceDate instanceof Date
+      ? referenceDate.getTime()
+      : (parseExperienceDateSafe(referenceDate) || Date.now());
+  const refDate = new Date(refEpoch);
+  const nowIdx = refDate.getUTCFullYear() * 12 + refDate.getUTCMonth();
+
+  const intervals = [];
+
+  for (const exp of safeList) {
+    const startEpoch = parseExperienceDateSafe(exp.startDate);
+    if (startEpoch === null) continue;
+
+    const isOngoing = isExperienceOngoing(exp);
+    let endEpoch = isOngoing ? refEpoch : parseExperienceDateSafe(exp.endDate);
+
+    if (endEpoch === null) continue;
+    if (startEpoch > endEpoch) continue;
+
+    const startDt = new Date(startEpoch);
+    const endDt = new Date(endEpoch);
+
+    const startIdx = startDt.getUTCFullYear() * 12 + startDt.getUTCMonth();
+    let endIdx = endDt.getUTCFullYear() * 12 + endDt.getUTCMonth();
+
+    // Future start dates have not accrued past experience
+    if (startIdx > nowIdx) continue;
+
+    // Clamp end date to reference date
+    if (endIdx > nowIdx) {
+      endIdx = nowIdx;
+    }
+
+    if (startIdx > endIdx) continue;
+
+    intervals.push([startIdx, endIdx]);
+  }
+
+  if (intervals.length === 0) {
+    return {
+      totalYears: 0,
+      totalMonths: 0,
+      allMonths: 0,
+      formattedTotal: "0 Years",
+      totalRoles,
+      currentRoles,
+    };
+  }
+
+  // Sort intervals by start ascending, then end descending
+  intervals.sort((a, b) => {
+    if (a[0] !== b[0]) return a[0] - b[0];
+    return b[1] - a[1];
+  });
+
+  // Merge overlapping and contiguous intervals
+  const merged = [];
+  for (const interval of intervals) {
+    if (merged.length === 0) {
+      merged.push([...interval]);
+    } else {
+      const last = merged[merged.length - 1];
+      if (interval[0] <= last[1] + 1) {
+        last[1] = Math.max(last[1], interval[1]);
+      } else {
+        merged.push([...interval]);
+      }
+    }
+  }
+
+  let allMonths = 0;
+  for (const [s, e] of merged) {
+    allMonths += e - s + 1;
+  }
+
+  const totalYears = Math.floor(allMonths / 12);
+  const totalMonths = allMonths % 12;
+
+  let formattedTotal = "0 Years";
+  if (totalYears >= 15) {
+    formattedTotal = `${totalYears}+ Years`;
+  } else if (totalYears > 0 && totalMonths > 0) {
+    formattedTotal = `${totalYears} Year${totalYears > 1 ? "s" : ""} ${totalMonths} Month${totalMonths > 1 ? "s" : ""}`;
+  } else if (totalYears > 0) {
+    formattedTotal = `${totalYears} Year${totalYears > 1 ? "s" : ""}`;
+  } else if (totalMonths > 0) {
+    formattedTotal = `${totalMonths} Month${totalMonths > 1 ? "s" : ""}`;
+  }
+
+  return {
+    totalYears,
+    totalMonths,
+    allMonths,
+    formattedTotal,
+    totalRoles,
+    currentRoles,
+  };
+}

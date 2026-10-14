@@ -299,6 +299,7 @@ export {
   parseExperienceDateSafe,
   isExperienceOngoing,
   validateExperienceDates,
+  calculateTotalExperience,
 } from "./experienceTimeline.js";
 
 export {

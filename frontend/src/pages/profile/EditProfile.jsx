@@ -44,6 +44,7 @@ import { getUploadUrl } from "../../utils/courseUi";
 import ImageEditorModal from "../../components/common/ImageEditorModal";
 import RoleSelector from "../../components/profile/RoleSelector";
 import StructuredSkillsEditor from "../../components/profile/StructuredSkillsEditor";
+import ExperienceSummaryCard from "../../components/profile/ExperienceSummaryCard";
 import { INFRASTRUCTURE_SECTORS } from "../../constants/infrastructureTaxonomy";
 import { normalizeUserRole } from "../../utils/roleNavigation";
 import { PROFILE_QUERY_KEYS } from "../../constants/profileQueryKeys";
@@ -1438,21 +1439,33 @@ export default function EditProfile() {
               animate={{ opacity: 1, y: 0 }}
               className="rounded-3xl border border-white/[0.08] bg-bg-card/80 backdrop-blur-xl p-6 sm:p-8 space-y-6 shadow-xl"
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
+                    SECTION 04 OF 08
+                  </span>
+                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
+                    +20 XP
+                  </span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
+                  Professional Experience
+                </h2>
+                <p className="text-xs sm:text-sm text-text-muted mt-1 leading-relaxed">
+                  AEC career timeline, on-site execution, design consultancy, and project management contributions.
+                </p>
+              </div>
+
+              {/* Total Professional Experience Summary Card */}
+              <ExperienceSummaryCard experience={profile?.experience} />
+
+              <div className="flex items-center justify-between gap-4 pt-1">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                      SECTION 04 OF 08
-                    </span>
-                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
-                      +20 XP
-                    </span>
-                  </div>
-                  <h2 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
-                    Professional Experience
-                  </h2>
-                  <p className="text-xs sm:text-sm text-text-muted mt-1 leading-relaxed">
-                    AEC career timeline, on-site execution, design consultancy, and project management contributions.
+                  <h3 className="text-sm font-heading font-bold text-white tracking-tight">
+                    Career Timeline
+                  </h3>
+                  <p className="text-xs text-text-muted">
+                    Individual positions, responsibilities, and AEC competencies
                   </p>
                 </div>
                 <button

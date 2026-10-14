@@ -5,6 +5,7 @@ import {
   formatExperienceDateRange,
   isExperienceOngoing,
 } from "../../utils/experienceTimeline";
+import ExperienceSummaryCard from "./ExperienceSummaryCard";
 
 export default function ProfileExperienceSection({
   experience = [],
@@ -100,8 +101,10 @@ export default function ProfileExperienceSection({
           )}
         </div>
       ) : (
-        <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-[11px] sm:before:left-[15px] before:top-4 before:bottom-4 before:w-[2px] before:bg-gradient-to-b before:from-brand-mint/50 before:via-white/[0.08] before:to-transparent">
-          {sortedItems.map((exp, index) => {
+        <>
+          <ExperienceSummaryCard experience={rawItems} className="mb-6" />
+          <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-[11px] sm:before:left-[15px] before:top-4 before:bottom-4 before:w-[2px] before:bg-gradient-to-b before:from-brand-mint/50 before:via-white/[0.08] before:to-transparent">
+            {sortedItems.map((exp, index) => {
             const expId = exp.id || exp._id || index;
             const isOngoing = isExperienceOngoing(exp);
             const dateRange = formatExperienceDateRange(
@@ -244,7 +247,8 @@ export default function ProfileExperienceSection({
               </div>
             );
           })}
-        </div>
+          </div>
+        </>
       )}
     </section>
   );
