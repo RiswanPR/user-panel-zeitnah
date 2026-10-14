@@ -145,38 +145,86 @@ export const DISCIPLINE_SPECIALIZATIONS = {
   "Infrastructure Consultancy": ["Feasibility Studies", "Technical Due Diligence", "Master Planning", "Regulatory Approval Liaison", "Environmental Impact Assessment"],
 };
 
-const DEFAULT_SOFTWARE_SKILLS = [
-  "AutoCAD", "Civil 3D", "Revit", "Navisworks", "Primavera P6",
-  "MS Project", "STAAD.Pro", "ETABS", "SAP2000", "Tekla", "GIS", "CostX", "Synchro 4D"
+export const DEFAULT_SOFTWARE_SKILLS = [
+  "AutoCAD",
+  "Autodesk Revit",
+  "Civil 3D",
+  "ETABS",
+  "SAFE",
+  "STAAD.Pro",
+  "Tekla Structures",
+  "Navisworks",
+  "Autodesk BIM 360 / Autodesk Construction Cloud",
+  "Primavera P6",
+  "Microsoft Project",
+  "Microsoft Excel",
+  "SketchUp",
+  "Autodesk 3ds Max",
+  "ArcGIS",
+  "QGIS",
 ];
 
-const DEFAULT_TECHNICAL_SKILLS = [
-  "Structural Analysis", "Reinforced Concrete Design", "Quantity Takeoffs",
-  "Geotechnical Modeling", "Highway Geometry", "Hydrology & Drainage", "BIM Modeling"
+export const DEFAULT_TECHNICAL_SKILLS = [
+  "Structural Analysis",
+  "Structural Design",
+  "Geotechnical Engineering",
+  "Highway and Road Design",
+  "Bridge Engineering",
+  "Quantity Surveying",
+  "Estimation and Costing",
+  "Building Information Modeling (BIM)",
+  "Construction Planning and Scheduling",
+  "Construction Quality Control",
+  "Site Engineering",
+  "Surveying and Setting Out",
+  "Reinforced Concrete Design",
+  "Steel Structure Design",
+  "Water Supply and Drainage Design",
+  "Hydrology and Hydraulics",
+  "Building Services Coordination",
+  "Sustainable Building Design",
+  "Health and Safety Management",
 ];
 
-const DEFAULT_INDUSTRY_SKILLS = [
-  "FIDIC Contracts", "Site Supervision", "QA/QC Procedures",
-  "Bar Bending Schedule (BBS)", "Bill of Quantities (BOQ)", "Safety / OSHA Standards"
+export const DEFAULT_INDUSTRY_SKILLS = [
+  "FIDIC Contracts",
+  "Site Supervision",
+  "QA/QC Procedures",
+  "Bar Bending Schedule (BBS)",
+  "Bill of Quantities (BOQ)",
+  "Safety / OSHA Standards",
 ];
 
-const DEFAULT_PROFESSIONAL_SKILLS = [
-  "Project Leadership", "Stakeholder Management", "Team Coordination",
-  "Risk Mitigation", "Technical Reporting", "Client Negotiation"
+export const DEFAULT_PROFESSIONAL_SKILLS = [
+  "Project Coordination",
+  "Construction Management",
+  "Team Leadership",
+  "Technical Communication",
+  "Client Coordination",
+  "Problem Solving",
+  "Risk Management",
+  "Contract Administration",
+  "Tendering and Procurement",
+  "Cost Control",
+  "Time Management",
+  "Multidisciplinary Coordination",
+  "Report Writing",
+  "Teamwork",
+  "Stakeholder Management",
 ];
 
 export const DEFAULT_STRUCTURED_SKILLS = {
   // Canonical backend keys
   softwareSkills: DEFAULT_SOFTWARE_SKILLS,
   technicalSkills: DEFAULT_TECHNICAL_SKILLS,
-  industrySkills: DEFAULT_INDUSTRY_SKILLS,
   professionalSkills: DEFAULT_PROFESSIONAL_SKILLS,
+  industrySkills: DEFAULT_INDUSTRY_SKILLS,
 
   // Legacy keys
   software: DEFAULT_SOFTWARE_SKILLS,
   technical: DEFAULT_TECHNICAL_SKILLS,
-  industry: DEFAULT_INDUSTRY_SKILLS,
   professional: DEFAULT_PROFESSIONAL_SKILLS,
+  industry: DEFAULT_INDUSTRY_SKILLS,
 };
 
 

@@ -1,20 +1,19 @@
 import { useState } from "react";
-import { Plus, X, Code2, Cpu, Wrench, Shield, CheckCircle2, Sparkles } from "lucide-react";
+import { Plus, X, Code2, Cpu, Shield, CheckCircle2, Sparkles } from "lucide-react";
 import {
-  INFRASTRUCTURE_SOFTWARE,
   DEFAULT_STRUCTURED_SKILLS,
 } from "../../constants/infrastructureTaxonomy";
 
 import { normalizeStructuredSkills } from "../../utils/profileNormalization";
 
-const CATEGORY_TABS = [
+export const CATEGORY_TABS = [
   {
     id: "softwareSkills",
     legacyKey: "software",
     altKey: "softwareTools",
     label: "Software Skills",
     icon: Cpu,
-    desc: "Engineering design, BIM, CAD, and scheduling tools",
+    desc: "Engineering, design, BIM, and productivity software",
   },
   {
     id: "technicalSkills",
@@ -22,15 +21,7 @@ const CATEGORY_TABS = [
     altKey: "technicalCalculations",
     label: "Technical Skills",
     icon: Code2,
-    desc: "Core technical, calculation, and design capabilities",
-  },
-  {
-    id: "industrySkills",
-    legacyKey: "industry",
-    altKey: "industryStandards",
-    label: "Industry Skills",
-    icon: Wrench,
-    desc: "Contract frameworks, safety standards, and QA/QC procedures",
+    desc: "Technical engineering knowledge, calculations, design methods, and discipline-specific competencies",
   },
   {
     id: "professionalSkills",
@@ -38,7 +29,7 @@ const CATEGORY_TABS = [
     altKey: "professionalLeadership",
     label: "Professional Skills",
     icon: Shield,
-    desc: "Leadership, stakeholder management, and team collaboration",
+    desc: "Communication, leadership, coordination, project management, and workplace competencies",
   },
 ];
 
@@ -46,7 +37,6 @@ export default function StructuredSkillsEditor({
   structuredSkills = {
     technicalSkills: [],
     softwareSkills: [],
-    industrySkills: [],
     professionalSkills: [],
   },
   setStructuredSkills,
@@ -107,12 +97,12 @@ export default function StructuredSkillsEditor({
     });
     setStructuredSkills(newStructured);
 
-    // Also remove from flatSkills if no other category has it
+    // Also remove from flatSkills if no other category has it (including legacy industrySkills)
     const remainingAll = [
       ...(newStructured.softwareSkills || []),
       ...(newStructured.technicalSkills || []),
-      ...(newStructured.industrySkills || []),
       ...(newStructured.professionalSkills || []),
+      ...(newStructured.industrySkills || []),
     ];
     if (!remainingAll.some((s) => s.toLowerCase() === skillToRemove.toLowerCase())) {
       setFlatSkills(flatSkills.filter((s) => s !== skillToRemove));
@@ -124,14 +114,12 @@ export default function StructuredSkillsEditor({
   const totalSkillCount =
     (structuredSkills.softwareSkills?.length || structuredSkills.software?.length || 0) +
     (structuredSkills.technicalSkills?.length || structuredSkills.technical?.length || 0) +
-    (structuredSkills.industrySkills?.length || structuredSkills.industry?.length || 0) +
     (structuredSkills.professionalSkills?.length || structuredSkills.professional?.length || 0);
-
 
   return (
     <div className="space-y-6">
       {/* Category Tabs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         {CATEGORY_TABS.map((cat) => {
           const Icon = cat.icon;
           const isActive = activeTab === cat.id;
@@ -142,7 +130,7 @@ export default function StructuredSkillsEditor({
               key={cat.id}
               type="button"
               onClick={() => setActiveTab(cat.id)}
-              className={`p-3 rounded-2xl border text-left transition-all cursor-pointer min-h-[44px] flex flex-col justify-between ${
+              className={`p-2.5 sm:p-3.5 rounded-2xl border text-left transition-all cursor-pointer min-h-[48px] flex flex-col justify-between ${
                 isActive
                   ? "bg-brand-mint/15 border-brand-mint text-white shadow-sm ring-1 ring-brand-mint/40"
                   : "bg-bg-elevated border-border-default text-text-muted hover:text-white hover:bg-white/[0.04]"
@@ -158,16 +146,16 @@ export default function StructuredSkillsEditor({
                   {count}
                 </span>
               </div>
-              <span className="text-xs font-bold truncate">{cat.label}</span>
+              <span className="text-[11px] sm:text-xs font-bold truncate">{cat.label}</span>
             </button>
           );
         })}
       </div>
 
       {/* Active Tab Description */}
-      <div className="flex items-center justify-between text-xs text-text-muted">
-        <p>{CATEGORY_TABS.find((c) => c.id === activeTab)?.desc}</p>
-        <span className="text-text-faint font-mono">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs text-text-muted">
+        <p className="leading-relaxed">{CATEGORY_TABS.find((c) => c.id === activeTab)?.desc}</p>
+        <span className="text-text-faint font-mono shrink-0">
           Total Skills: {totalSkillCount}
         </span>
       </div>
@@ -202,7 +190,7 @@ export default function StructuredSkillsEditor({
         <div className="space-y-1.5 pt-1">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-text-faint flex items-center gap-1">
             <Sparkles className="w-3 h-3 text-brand-yellow" />
-            Curated Infrastructure Suggestions:
+            Curated AEC Suggestions:
           </span>
           <div className="flex flex-wrap gap-1.5">
             {currentDefaults
@@ -224,7 +212,7 @@ export default function StructuredSkillsEditor({
 
       {/* Active Category Chips */}
       <div className="space-y-2 pt-2 border-t border-white/[0.05]">
-        <div className="flex justify-between text-xs text-text-muted">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs text-text-muted">
           <span>Active in {CATEGORY_TABS.find((c) => c.id === activeTab)?.label} ({currentCategoryList.length})</span>
           {totalSkillCount >= 3 ? (
             <span className="text-brand-mint font-semibold flex items-center gap-1">

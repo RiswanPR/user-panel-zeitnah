@@ -1389,7 +1389,7 @@ export default function EditProfile() {
                   Structured Skills & Software
                 </h2>
                 <p className="text-xs sm:text-sm text-text-muted leading-relaxed mt-1">
-                  Organized across Software Tools, Technical Calculations, Industry Standards, and Professional Leadership.
+                  Organized across Software Tools, Technical Engineering Knowledge, and Professional Competencies.
                 </p>
               </div>
 

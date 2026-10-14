@@ -6,6 +6,10 @@ import {
   USER_SELECTABLE_ROLES,
   PROFILE_ROLES,
   AVAILABILITY_STATUSES,
+  DEFAULT_SOFTWARE_SKILLS,
+  DEFAULT_TECHNICAL_SKILLS,
+  DEFAULT_PROFESSIONAL_SKILLS,
+  DEFAULT_STRUCTURED_SKILLS,
 } from '../constants/infrastructureTaxonomy.js';
 import {
   normalizeStructuredSkills,
@@ -248,6 +252,191 @@ describe('Profile Integrity & Privacy Contract Regression Tests', () => {
         AVAILABILITY_STATUSES.map((s) => s.value),
         ['OPEN_TO_WORK', 'OPEN_TO_HIRING', 'NOT_AVAILABLE']
       );
+    });
+  });
+
+  describe('AEC Skills Matrix & Structured Skills Editor Refinement', () => {
+    it('verifies StructuredSkillsEditor statically configures exactly 3 AEC categories and excludes industrySkills', async () => {
+      const fs = await import('node:fs');
+      const path = await import('node:path');
+      const editorPath = path.resolve('src/components/profile/StructuredSkillsEditor.jsx');
+      const content = fs.readFileSync(editorPath, 'utf8');
+
+      // Exactly 3 categories: softwareSkills, technicalSkills, professionalSkills
+      assert.match(content, /id:\s*["']softwareSkills["']/);
+      assert.match(content, /id:\s*["']technicalSkills["']/);
+      assert.match(content, /id:\s*["']professionalSkills["']/);
+
+      // industrySkills must NOT be present in CATEGORY_TABS
+      assert.doesNotMatch(content, /CATEGORY_TABS[\s\S]*?id:\s*["']industrySkills["']/);
+
+      // Tab grid layout is 3 columns
+      assert.match(content, /grid-cols-3/);
+
+      // Total skill count calculates only the 3 remaining categories
+      assert.match(content, /totalSkillCount\s*=[\s\S]*?softwareSkills[\s\S]*?technicalSkills[\s\S]*?professionalSkills/);
+      assert.doesNotMatch(content, /totalSkillCount\s*=[\s\S]*?industrySkills/);
+
+      // Suggestions title reflects Curated AEC Suggestions
+      assert.match(content, /Curated AEC Suggestions/);
+    });
+
+    it('contains comprehensive AEC-focused software skills suggestions', () => {
+      const EXPECTED_SOFTWARE = [
+        'AutoCAD',
+        'Autodesk Revit',
+        'Civil 3D',
+        'ETABS',
+        'SAFE',
+        'STAAD.Pro',
+        'Tekla Structures',
+        'Navisworks',
+        'Autodesk BIM 360 / Autodesk Construction Cloud',
+        'Primavera P6',
+        'Microsoft Project',
+        'Microsoft Excel',
+        'SketchUp',
+        'Autodesk 3ds Max',
+        'ArcGIS',
+        'QGIS',
+      ];
+
+      for (const sw of EXPECTED_SOFTWARE) {
+        assert.ok(
+          DEFAULT_SOFTWARE_SKILLS.includes(sw),
+          `Expected ${sw} to be included in DEFAULT_SOFTWARE_SKILLS`
+        );
+      }
+      assert.equal(DEFAULT_SOFTWARE_SKILLS.length, EXPECTED_SOFTWARE.length);
+    });
+
+    it('contains comprehensive AEC-focused technical skills suggestions', () => {
+      const EXPECTED_TECHNICAL = [
+        'Structural Analysis',
+        'Structural Design',
+        'Geotechnical Engineering',
+        'Highway and Road Design',
+        'Bridge Engineering',
+        'Quantity Surveying',
+        'Estimation and Costing',
+        'Building Information Modeling (BIM)',
+        'Construction Planning and Scheduling',
+        'Construction Quality Control',
+        'Site Engineering',
+        'Surveying and Setting Out',
+        'Reinforced Concrete Design',
+        'Steel Structure Design',
+        'Water Supply and Drainage Design',
+        'Hydrology and Hydraulics',
+        'Building Services Coordination',
+        'Sustainable Building Design',
+        'Health and Safety Management',
+      ];
+
+      for (const tech of EXPECTED_TECHNICAL) {
+        assert.ok(
+          DEFAULT_TECHNICAL_SKILLS.includes(tech),
+          `Expected ${tech} to be included in DEFAULT_TECHNICAL_SKILLS`
+        );
+      }
+      assert.equal(DEFAULT_TECHNICAL_SKILLS.length, EXPECTED_TECHNICAL.length);
+    });
+
+    it('contains comprehensive AEC-focused professional skills suggestions', () => {
+      const EXPECTED_PROFESSIONAL = [
+        'Project Coordination',
+        'Construction Management',
+        'Team Leadership',
+        'Technical Communication',
+        'Client Coordination',
+        'Problem Solving',
+        'Risk Management',
+        'Contract Administration',
+        'Tendering and Procurement',
+        'Cost Control',
+        'Time Management',
+        'Multidisciplinary Coordination',
+        'Report Writing',
+        'Teamwork',
+        'Stakeholder Management',
+      ];
+
+      for (const prof of EXPECTED_PROFESSIONAL) {
+        assert.ok(
+          DEFAULT_PROFESSIONAL_SKILLS.includes(prof),
+          `Expected ${prof} to be included in DEFAULT_PROFESSIONAL_SKILLS`
+        );
+      }
+      assert.equal(DEFAULT_PROFESSIONAL_SKILLS.length, EXPECTED_PROFESSIONAL.length);
+    });
+
+    it('preserves existing industrySkills when updating software, technical, or professional skills', () => {
+      const existingUserSkills = {
+        softwareSkills: ['AutoCAD'],
+        technicalSkills: ['Structural Analysis'],
+        industrySkills: ['FIDIC Contracts', 'Site Supervision', 'QA/QC Procedures'],
+        professionalSkills: ['Project Coordination'],
+      };
+
+      // User adds "ETABS" to softwareSkills in the editor
+      const updatedCategory = [...existingUserSkills.softwareSkills, 'ETABS'];
+      const updatedStructured = normalizeStructuredSkills({
+        ...existingUserSkills,
+        softwareSkills: updatedCategory,
+        software: updatedCategory,
+        softwareTools: updatedCategory,
+      });
+
+      // Existing industry skills MUST remain intact
+      assert.deepEqual(updatedStructured.industrySkills, ['FIDIC Contracts', 'Site Supervision', 'QA/QC Procedures']);
+      assert.deepEqual(updatedStructured.softwareSkills, ['AutoCAD', 'ETABS']);
+      assert.deepEqual(updatedStructured.technicalSkills, ['Structural Analysis']);
+      assert.deepEqual(updatedStructured.professionalSkills, ['Project Coordination']);
+    });
+
+    it('guarantees public profile rendering preserves legacy industry skills without regression', async () => {
+      const fs = await import('node:fs');
+      const path = await import('node:path');
+      const profileSkillsPath = path.resolve('src/components/profile/ProfileSkillsSection.jsx');
+      const content = fs.readFileSync(profileSkillsPath, 'utf8');
+
+      // ProfileSkillsSection must still render industry skills conditionally if present
+      assert.match(content, /industry\.length\s*>\s*0/);
+      assert.match(content, /software\.length\s*>\s*0/);
+      assert.match(content, /technical\.length\s*>\s*0/);
+      assert.match(content, /professional\.length\s*>\s*0/);
+    });
+
+    it('correctly calculates 3+ skills milestone with 3 active categories only', () => {
+      function calculateActiveSkillCount(structuredSkills) {
+        return (
+          (structuredSkills.softwareSkills?.length || 0) +
+          (structuredSkills.technicalSkills?.length || 0) +
+          (structuredSkills.professionalSkills?.length || 0)
+        );
+      }
+
+      const empty = { softwareSkills: [], technicalSkills: [], professionalSkills: [] };
+      assert.equal(calculateActiveSkillCount(empty), 0);
+      assert.equal(calculateActiveSkillCount(empty) >= 3, false);
+
+      const partial = {
+        softwareSkills: ['AutoCAD'],
+        technicalSkills: ['Structural Design'],
+        professionalSkills: [],
+        industrySkills: ['FIDIC'], // legacy industry skill not part of the 3 active categories
+      };
+      assert.equal(calculateActiveSkillCount(partial), 2);
+      assert.equal(calculateActiveSkillCount(partial) >= 3, false);
+
+      const qualified = {
+        softwareSkills: ['AutoCAD'],
+        technicalSkills: ['Structural Design'],
+        professionalSkills: ['Project Coordination'],
+        industrySkills: ['FIDIC'],
+      };
+      assert.equal(calculateActiveSkillCount(qualified), 3);
+      assert.equal(calculateActiveSkillCount(qualified) >= 3, true);
     });
   });
 });
