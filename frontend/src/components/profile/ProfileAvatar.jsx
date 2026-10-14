@@ -17,7 +17,8 @@ import { normalizeAvailability } from "../../utils/profileNormalization";
 
 const SIZE_STYLES = {
   xs: {
-    container: "w-8 h-8 rounded-xl",
+    container: "w-8 h-8",
+    rounded: "rounded-xl",
     text: "text-xs",
     ringOffset: "ring-offset-1",
     marker: "w-3.5 h-3.5 -top-0.5 -right-0.5 p-0.5",
@@ -26,7 +27,8 @@ const SIZE_STYLES = {
     badgeIcon: "w-2 h-2",
   },
   sm: {
-    container: "w-10 h-10 rounded-xl",
+    container: "w-10 h-10",
+    rounded: "rounded-xl",
     text: "text-xs",
     ringOffset: "ring-offset-1 sm:ring-offset-2",
     marker: "w-4 h-4 -top-0.5 -right-0.5 p-0.5",
@@ -35,16 +37,18 @@ const SIZE_STYLES = {
     badgeIcon: "w-2.5 h-2.5",
   },
   md: {
-    container: "h-13 w-13 rounded-2xl",
+    container: "w-13 h-13 sm:w-14 sm:h-14",
+    rounded: "rounded-2xl",
     text: "text-sm",
     ringOffset: "ring-offset-2",
     marker: "w-5 h-5 -top-1 -right-1 p-0.5",
     markerIcon: "w-3 h-3",
     badge: "h-4 w-4 -bottom-0.5 -right-0.5",
-    badgeIcon: "h-3 w-3",
+    badgeIcon: "w-3 h-3",
   },
   lg: {
-    container: "w-20 h-20 rounded-2xl",
+    container: "w-20 h-20",
+    rounded: "rounded-2xl",
     text: "text-xl",
     ringOffset: "ring-offset-2 sm:ring-offset-3",
     marker: "w-6 h-6 -top-1.5 -right-1.5 p-1",
@@ -53,12 +57,13 @@ const SIZE_STYLES = {
     badgeIcon: "w-3.5 h-3.5",
   },
   xl: {
-    container: "w-28 h-28 sm:w-36 sm:h-36 rounded-3xl",
-    text: "text-3xl sm:text-4xl",
-    ringOffset: "ring-offset-3 sm:ring-offset-4",
-    marker: "w-8 h-8 sm:w-9 sm:h-9 -top-2 -right-2 p-1.5 shadow-xl",
+    container: "w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40",
+    rounded: "rounded-full",
+    text: "text-3xl sm:text-4xl md:text-5xl",
+    ringOffset: "ring-offset-4",
+    marker: "w-8 h-8 sm:w-9 sm:h-9 top-0 right-0 sm:top-1 sm:right-1 p-1.5 shadow-xl",
     markerIcon: "w-4 h-4 sm:w-4.5 sm:h-4.5",
-    badge: "w-7 h-7 sm:w-8 sm:h-8 -bottom-1.5 -right-1.5",
+    badge: "w-7 h-7 sm:w-8 sm:h-8 bottom-0 right-0 sm:bottom-1 sm:right-1",
     badgeIcon: "w-4 h-4 sm:w-5 sm:h-5",
   },
 };
@@ -68,6 +73,7 @@ export default function ProfileAvatar({
   name = "Member",
   initials: explicitInitials,
   size = "md",
+  shape = "circle",
   availability,
   isVerified = false,
   showVerificationBadge = false,
@@ -97,13 +103,14 @@ export default function ProfileAvatar({
 
   const normalizedAvailability = normalizeAvailability(availability);
   const sizeConfig = SIZE_STYLES[size] || SIZE_STYLES.md;
+  const isCircle = shape === "circle";
 
   // Frame styling based on availability
   let ringClasses = "ring-1 ring-white/10";
   let statusMarker = null;
 
   if (normalizedAvailability === "OPEN_TO_HIRING") {
-    ringClasses = `ring-2 ring-emerald-400 ring-offset-[#0A0F18] ${sizeConfig.ringOffset} shadow-[0_0_18px_rgba(52,211,153,0.3)]`;
+    ringClasses = `ring-2 sm:ring-[3px] ring-emerald-400/90 ring-offset-[#0A0F18] ${sizeConfig.ringOffset} shadow-[0_0_24px_rgba(52,211,153,0.28)]`;
     statusMarker = {
       type: "HIRING",
       label: "Open to Hiring",
@@ -111,7 +118,7 @@ export default function ProfileAvatar({
       Icon: Briefcase,
     };
   } else if (normalizedAvailability === "OPEN_TO_WORK") {
-    ringClasses = `ring-2 ring-sky-400 ring-offset-[#0A0F18] ${sizeConfig.ringOffset} shadow-[0_0_18px_rgba(56,189,248,0.3)]`;
+    ringClasses = `ring-2 sm:ring-[3px] ring-sky-400/90 ring-offset-[#0A0F18] ${sizeConfig.ringOffset} shadow-[0_0_24px_rgba(56,189,248,0.28)]`;
     statusMarker = {
       type: "WORK",
       label: "Open to Work",
@@ -124,18 +131,21 @@ export default function ProfileAvatar({
     <div className={`relative shrink-0 select-none ${containerClassName}`}>
       {/* ── Main Avatar Surface ── */}
       <div
-        className={`relative overflow-hidden bg-[#0F1724] border border-white/10 flex items-center justify-center transition-all ${sizeConfig.container} ${ringClasses} ${className}`}
+        className={`relative overflow-hidden bg-[#0F1724] border border-white/10 flex items-center justify-center transition-all ${sizeConfig.container} ${isCircle ? "rounded-full aspect-square shrink-0" : sizeConfig.rounded} ${ringClasses} ${className}`}
+        style={isCircle ? { aspectRatio: "1 / 1", borderRadius: "50%" } : undefined}
       >
         {avatarUrl && !imgError ? (
           <img
             src={avatarUrl}
             alt={name || "Member Avatar"}
             onError={() => setImgError(true)}
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover ${isCircle ? "rounded-full" : ""}`}
+            style={isCircle ? { aspectRatio: "1 / 1", borderRadius: "50%", objectFit: "cover" } : { objectFit: "cover" }}
           />
         ) : (
           <div
-            className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-mint/20 via-brand-navy/60 to-[#0A0F18] text-brand-mint font-heading font-black ${sizeConfig.text}`}
+            className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-mint/20 via-brand-navy/60 to-[#0A0F18] text-brand-mint font-heading font-black ${isCircle ? "rounded-full" : ""} ${sizeConfig.text}`}
+            style={isCircle ? { aspectRatio: "1 / 1", borderRadius: "50%" } : undefined}
           >
             {initials}
           </div>
@@ -175,3 +185,4 @@ export default function ProfileAvatar({
     </div>
   );
 }
+
