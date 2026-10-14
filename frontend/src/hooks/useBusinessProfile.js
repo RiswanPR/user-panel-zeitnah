@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useContext, useMemo } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { organizationService } from '../services/organizationService';
+import storage from '../services/storage';
 import {
   normalizeBusinessProfile,
   normalizeBusinessIdentity,
@@ -21,7 +22,8 @@ import {
 export function useBusinessProfile({ enabled = true } = {}) {
   const auth = useContext(AuthContext);
   const user = auth?.user;
-  const isAuthenticated = Boolean(user?.id || user?.userId || user?._id);
+  const isAuthLoading = auth?.loading ?? false;
+  const isAuthenticated = Boolean(!isAuthLoading && (user?.id || user?.userId || user?._id) && !storage.isAccessTokenExpired());
 
   const {
     data: rawBusinesses = [],

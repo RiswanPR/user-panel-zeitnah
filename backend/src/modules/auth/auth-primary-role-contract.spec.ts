@@ -101,7 +101,7 @@ describe('Auth Primary Role Contract & Identity Regression Tests', () => {
     expect(result.userId).toBe('user_mentor_1');
   });
 
-  it('TEST 3: /auth/me returns canonical primaryRole for authenticated user', () => {
+  it('TEST 3: /auth/me returns canonical primaryRole for authenticated user', async () => {
     const mockAuthService = {} as AuthService;
     const controller = new AuthController(mockAuthService);
 
@@ -119,7 +119,7 @@ describe('Auth Primary Role Contract & Identity Regression Tests', () => {
       },
     };
 
-    const res = controller.getMe(authenticatedReq);
+    const res = await controller.getMe(authenticatedReq);
     expect(res.success).toBe(true);
     expect(res.user.primaryRole).toBe('RECRUITER');
     expect(res.user.id).toBe('user_founder_1');

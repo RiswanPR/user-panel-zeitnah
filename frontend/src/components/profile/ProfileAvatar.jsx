@@ -94,10 +94,12 @@ export default function ProfileAvatar({
   children,
 }) {
   const [imgError, setImgError] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const avatarUrl = getUploadUrl(src);
 
   useEffect(() => {
     setImgError(false);
+    setImgLoaded(false);
   }, [src, avatarUrl]);
 
   const initials =
@@ -142,24 +144,31 @@ export default function ProfileAvatar({
     <div className={`relative shrink-0 select-none ${containerClassName}`}>
       {/* ── Main Avatar Surface ── */}
       <div
-        className={`relative overflow-hidden bg-[#0F1724] border border-white/10 flex items-center justify-center transition-all ${sizeConfig.container} ${isCircle ? "rounded-full aspect-square shrink-0" : sizeConfig.rounded} ${ringClasses} ${className}`}
+        className={`relative overflow-hidden isolate bg-[#0F1724] border border-white/10 flex items-center justify-center transition-all ${sizeConfig.container} ${isCircle ? "rounded-full aspect-square shrink-0" : sizeConfig.rounded} ${ringClasses} ${className}`}
         style={isCircle ? { aspectRatio: "1 / 1", borderRadius: "50%" } : undefined}
       >
-        {avatarUrl && !imgError ? (
+        {/* Base Fallback Initials (Always rendered underneath so avatar is never a black void during load or on error) */}
+        <div
+          className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-mint/20 via-brand-navy/60 to-[#0A0F18] text-brand-mint font-heading font-black select-none ${isCircle ? "rounded-full" : ""} ${sizeConfig.text}`}
+          style={isCircle ? { aspectRatio: "1 / 1", borderRadius: "50%" } : undefined}
+          aria-hidden={Boolean(avatarUrl && !imgError && imgLoaded)}
+        >
+          {initials}
+        </div>
+
+        {/* Real Profile Image: fades in once loaded; unmounted on error */}
+        {avatarUrl && !imgError && (
           <img
             src={avatarUrl}
             alt={alt || name || "Member Avatar"}
-            onError={() => setImgError(true)}
-            className={`w-full h-full object-cover ${isCircle ? "rounded-full" : ""}`}
+            onLoad={() => setImgLoaded(true)}
+            onError={() => {
+              setImgError(true);
+              setImgLoaded(false);
+            }}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 ${isCircle ? "rounded-full" : ""} ${imgLoaded ? "opacity-100" : "opacity-0"}`}
             style={isCircle ? { aspectRatio: "1 / 1", borderRadius: "50%", objectFit: "cover" } : { objectFit: "cover" }}
           />
-        ) : (
-          <div
-            className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-mint/20 via-brand-navy/60 to-[#0A0F18] text-brand-mint font-heading font-black ${isCircle ? "rounded-full" : ""} ${sizeConfig.text}`}
-            style={isCircle ? { aspectRatio: "1 / 1", borderRadius: "50%" } : undefined}
-          >
-            {initials}
-          </div>
         )}
 
         {/* Optional Interactive Overlay (e.g. upload trigger in hero) */}

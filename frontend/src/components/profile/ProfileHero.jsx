@@ -163,7 +163,7 @@ export default function ProfileHero({
                 size="xl"
                 shape="circle"
                 availability={profile.availability}
-                className="border-4 border-[#0A0F18] shadow-2xl"
+                className="border-2 sm:border-4 border-[#0A0F18] shadow-2xl"
               >
                 {/* Owner Avatar Change Overlay */}
                 {isOwner && onAvatarUpload && (
@@ -172,7 +172,11 @@ export default function ProfileHero({
                       type="button"
                       onClick={() => avatarFileRef.current?.click()}
                       disabled={isAvatarUploading}
-                      className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white focus-ring z-20"
+                      className={`absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center transition-opacity cursor-pointer text-white focus-ring z-20 ${
+                        isAvatarUploading
+                          ? "opacity-100 pointer-events-auto"
+                          : "opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
+                      }`}
                       title="Change profile photo"
                       aria-label="Change profile photo"
                     >

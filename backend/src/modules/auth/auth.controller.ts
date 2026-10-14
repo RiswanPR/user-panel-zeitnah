@@ -9,11 +9,13 @@ import {
   Res,
   UseGuards,
   UnauthorizedException,
+  Optional,
 } from '@nestjs/common';
 
 import type { Request, Response } from 'express';
 
 import { AuthenticatedUser, AuthService } from './auth.service';
+import { SignedUrlService } from '../../common/aws/signed-url.service';
 
 import { LoginSendOtpDto } from './dto/login-send-otp.dto';
 
@@ -34,7 +36,10 @@ type AuthenticatedRequest = Request & {
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    @Optional() private readonly signedUrlService?: SignedUrlService,
+  ) {}
 
   private setAuthCookies(res: Response, token?: string, refreshToken?: string) {
     const isProduction = process.env.NODE_ENV === 'production';
@@ -266,7 +271,13 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  getMe(@Req() req: AuthenticatedRequest) {
+  async getMe(@Req() req: AuthenticatedRequest) {
+    const rawAvatar = (req.user as any).avatar || '';
+    let signedAvatar = rawAvatar;
+    if (rawAvatar && this.signedUrlService) {
+      signedAvatar = await this.signedUrlService.generateSignedImageUrl(rawAvatar);
+    }
+
     return {
       success: true,
 
@@ -280,7 +291,7 @@ export class AuthController {
         primaryRole: req.user.primaryRole,
         role: req.user.role,
         deviceId: req.user.deviceId,
-        avatar: (req.user as any).avatar || '',
+        avatar: signedAvatar,
       },
     };
   }

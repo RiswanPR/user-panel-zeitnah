@@ -71,16 +71,31 @@ const getRequestKey = (config: InternalAxiosRequestConfig) => {
 api.interceptors.request.use(async (config) => {
   // If a token refresh is currently in flight, wait for it before dispatching new authenticated requests.
   // This prevents sending requests with known-expired tokens and causing 401 refresh storms.
-  // Exclude auth routes (especially logout) from waiting on token refresh
-  if (refreshPromise && !(config as any)._isRefreshRequest && !config.url?.includes('/auth/')) {
+  // Exclude refresh request itself and unauthenticated login/register routes from waiting on token refresh
+  const isRefreshExempt =
+    Boolean((config as any)._isRefreshRequest) ||
+    Boolean(config.url?.includes('/auth/refresh-token')) ||
+    Boolean(config.url?.includes('/auth/login')) ||
+    Boolean(config.url?.includes('/auth/register'));
+
+  if (refreshPromise && !isRefreshExempt) {
     try {
       const freshToken = await refreshPromise;
-      if (!freshToken && !config.url?.includes('/auth/')) {
+      if (!freshToken) {
         return Promise.reject(new axios.Cancel("Authentication session expired"));
       }
     } catch {
       // Refresh failed permanently; reject immediately without making guaranteed-401 network call
       return Promise.reject(new axios.Cancel("Authentication session expired"));
+    }
+  }
+
+  // Proactive token refresh: if access token is expired but refresh token exists, refresh before dispatching
+  if (!isRefreshExempt && storage.isAccessTokenExpired() && storage.getRefreshToken()) {
+    try {
+      await getRefreshedToken();
+    } catch {
+      // If proactive refresh fails, allow request to proceed to standard error handling
     }
   }
 

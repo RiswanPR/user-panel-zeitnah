@@ -90,14 +90,14 @@ console.log(`   Found ${jsFiles.length} chunk and module files in dist/assets/js
 // 4. Verify critical route chunks specifically
 const criticalChunks = [
   'NetworkPage',
-  'NetworkProfilePage',
   'LearningSpaceDetailPage',
   'DiscussionDetailPage',
   'Dashboard',
   'Courses',
   'ClassView',
   'Profile',
-  'PortfolioPage',
+  'PublicProfilePage',
+  'EditProfile',
   'VerificationCenterPage',
   'MessagesPage',
   'JobsPage',

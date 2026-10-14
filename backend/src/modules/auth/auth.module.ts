@@ -16,6 +16,7 @@ import type { StringValue } from 'ms';
 
 import { UsernameModule } from '../profile/services/username.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { AwsModule } from '../../common/aws/aws.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     AuditLogsModule,
     UsernameModule,
     NotificationsModule,
+    AwsModule,
   ],
 
   controllers: [AuthController],

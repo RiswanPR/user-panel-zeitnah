@@ -4,7 +4,7 @@ import {
   useState,
   ReactNode,
 } from "react";
-import api from "../services/api";
+import api, { getRefreshedToken } from "../services/api";
 import storage from "../services/storage";
 import queryClient from "../services/queryClient";
 import nativeNotifications from "../native/notifications";
@@ -56,10 +56,11 @@ function parseJwtPayload(token: string): Record<string, any> | null {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<AuthUser | null>(() => {
-    // Fast synchronous initial hydration from JWT access token if available
+    // Fast synchronous initial hydration from JWT access token if available and NOT expired
     try {
       const token = storage.getAccessToken();
       if (!token) return null;
+      if (storage.isAccessTokenExpired()) return null;
       const payload = parseJwtPayload(token);
       if (!payload || !payload.userId) return null;
       const primaryRole = normalizeUserRole(payload.primaryRole || payload.role);
@@ -85,7 +86,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     const loadUser = async () => {
       try {
-        const token = storage.getAccessToken();
+        let token = storage.getAccessToken();
+
+        // If access token is missing or expired, attempt refresh if refresh token exists
+        if ((!token || storage.isAccessTokenExpired()) && storage.getRefreshToken()) {
+          try {
+            token = await getRefreshedToken();
+          } catch {
+            // Refresh failed permanently
+            token = null;
+          }
+        }
 
         if (!token) {
           if (mounted) {
