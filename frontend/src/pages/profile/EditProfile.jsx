@@ -800,7 +800,7 @@ export default function EditProfile() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 max-w-7xl mx-auto animate-pulse pb-16">
+      <div className="space-y-6 max-w-7xl mx-auto animate-pulse pb-6 sm:pb-8">
         <div className="h-14 bg-bg-card/60 rounded-2xl border border-white/[0.06]" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-4 h-96 bg-bg-card/60 rounded-3xl border border-white/[0.06]" />
@@ -876,7 +876,7 @@ export default function EditProfile() {
   const currentSectionMeta = SECTION_CONFIG.find((s) => s.id === activeSection) || SECTION_CONFIG[0];
 
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto pb-16">
+    <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto pb-6 sm:pb-8">
       {/* ── Sub-Navigation ── */}
       <ProfileNav />
 

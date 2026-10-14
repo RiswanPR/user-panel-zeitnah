@@ -16,13 +16,12 @@ import {
 } from "lucide-react";
 import BRAND from "../../constants/brand";
 import ZeitnahZMotif from "../../components/courses/ZeitnahZMotif";
-import Footer from "../../components/navigation/Footer";
 
 export default function AboutPage() {
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <div className="min-h-screen text-white font-body antialiased relative overflow-hidden flex flex-col justify-between">
+    <div className="min-h-screen text-white font-body antialiased relative overflow-hidden flex flex-col">
       {/* ── BACKGROUND AMBIENT GLOWS ── */}
       <div className="absolute inset-0 pointer-events-none select-none z-0">
         <div className="absolute top-12 left-1/3 w-[600px] h-[600px] rounded-full bg-brand-mint/5 blur-[160px]" />
@@ -358,9 +357,6 @@ export default function AboutPage() {
         </section>
 
       </div>
-
-      {/* ── Page Footer ── */}
-      <Footer />
     </div>
   );
 }

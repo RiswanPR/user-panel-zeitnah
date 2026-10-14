@@ -21,7 +21,6 @@ import NotificationDrawer from "../components/notifications/NotificationDrawer";
 import PlatformAnnouncementBanner from "../components/announcements/PlatformAnnouncementBanner";
 import MobileMoreDrawer from "../components/navigation/MobileMoreDrawer";
 import MainNavbar from "../components/navigation/MainNavbar";
-import Footer from "../components/navigation/Footer";
 import OnboardingOverlay from "../components/onboarding/OnboardingOverlay";
 import { coreProfileService, PROFILE_QUERY_KEYS } from "../services/coreProfileService";
 import { getPrimaryCareerNavigation } from "../utils/roleNavigation";
@@ -294,7 +293,7 @@ export default function MainLayout({ children }) {
               ? 'pb-0'
               : location.pathname.startsWith('/messages')
               ? 'pb-20 md:pb-0'
-              : 'pb-28 md:pb-12'
+              : 'pb-24 md:pb-6'
           }`}
         >
           <div
@@ -318,11 +317,6 @@ export default function MainLayout({ children }) {
           </div>
         </main>
       </div>
-
-      {/* ── Global Platform Footer (hidden on mobile, suppressed in full-height messaging & reels) ── */}
-      {!isMessagesActiveConversation && !location.pathname.startsWith('/messages') && !isReelsActive && (
-        <Footer />
-      )}
 
       {/* Mobile More Navigation Drawer */}
       <MobileMoreDrawer

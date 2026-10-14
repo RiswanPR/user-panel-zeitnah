@@ -230,7 +230,7 @@ export default function Profile() {
   // ── SKELETON LOADING STATE ──
   if (isLoading) {
     return (
-      <div className="space-y-6 sm:space-y-8 animate-pulse max-w-7xl mx-auto pb-16">
+      <div className="space-y-6 sm:space-y-8 animate-pulse max-w-7xl mx-auto pb-6 sm:pb-8">
         <div className="h-12 bg-white/[0.04] rounded-2xl border border-white/[0.06]" />
         <div className="h-80 bg-white/[0.04] rounded-3xl border border-white/[0.06]" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -276,7 +276,7 @@ export default function Profile() {
   const isVerified = Boolean(profile.isVerified);
 
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto pb-20">
+    <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto pb-8 sm:pb-12">
       {/* ── 01. UNIFIED PROFILE NAVIGATION ── */}
       <ProfileNav />
 

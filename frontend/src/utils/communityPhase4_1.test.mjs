@@ -16,10 +16,10 @@ test('Phase 4.1: Community Production Hardening, Reel UX & Profile Integration T
       'MainLayout must compute isReelsActive based on /community/reels pathname'
     );
 
-    // 2. Footer suppression on reels route
+    // 2. Global Footer removal from MainLayout
     assert.ok(
-      content.includes('!isReelsActive && (') && content.includes('<Footer />'),
-      'MainLayout must suppress <Footer /> when isReelsActive is true'
+      !content.includes('<Footer />') && !content.includes('components/navigation/Footer'),
+      'MainLayout must not render <Footer />'
     );
 
     // 3. Main bottom padding removal on reels route
