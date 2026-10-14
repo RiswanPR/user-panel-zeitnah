@@ -1247,8 +1247,21 @@ export class ProfileService {
     const user = await this.userModel.findById(userId);
     if (!user) throw new UnauthorizedException('User not found');
 
+    const isOngoing = Boolean(
+      dto.currentlyActive || (dto as any).isCurrent || (dto as any).current,
+    );
     const start = new Date(dto.startDate);
-    const end = dto.endDate ? new Date(dto.endDate) : null;
+    if (isNaN(start.getTime())) {
+      throw new BadRequestException('Valid start date is required.');
+    }
+
+    const end = isOngoing || !dto.endDate ? null : new Date(dto.endDate);
+    if (!isOngoing && !end) {
+      throw new BadRequestException('End date is required for past roles.');
+    }
+    if (end && isNaN(end.getTime())) {
+      throw new BadRequestException('End date must be a valid date.');
+    }
     if (end && end < start) {
       throw new BadRequestException('End date cannot be before start date.');
     }
@@ -1260,8 +1273,8 @@ export class ProfileService {
       employmentType: dto.employmentType || 'Full-time',
       location: dto.location || '',
       startDate: start,
-      endDate: dto.currentlyActive ? null : end,
-      currentlyActive: Boolean(dto.currentlyActive),
+      endDate: isOngoing ? null : end,
+      currentlyActive: isOngoing,
       description: dto.description || '',
       skillsUsed: dto.skillsUsed || [],
       softwareUsed: dto.softwareUsed || [],
@@ -1300,8 +1313,21 @@ export class ProfileService {
     const idx = (user.experience || []).findIndex((e) => e.id === experienceId);
     if (idx === -1) throw new NotFoundException('Experience record not found');
 
+    const isOngoing = Boolean(
+      dto.currentlyActive || (dto as any).isCurrent || (dto as any).current,
+    );
     const start = new Date(dto.startDate);
-    const end = dto.endDate ? new Date(dto.endDate) : null;
+    if (isNaN(start.getTime())) {
+      throw new BadRequestException('Valid start date is required.');
+    }
+
+    const end = isOngoing || !dto.endDate ? null : new Date(dto.endDate);
+    if (!isOngoing && !end) {
+      throw new BadRequestException('End date is required for past roles.');
+    }
+    if (end && isNaN(end.getTime())) {
+      throw new BadRequestException('End date must be a valid date.');
+    }
     if (end && end < start) {
       throw new BadRequestException('End date cannot be before start date.');
     }
@@ -1313,8 +1339,8 @@ export class ProfileService {
       employmentType: dto.employmentType || 'Full-time',
       location: dto.location || '',
       startDate: start,
-      endDate: dto.currentlyActive ? null : end,
-      currentlyActive: Boolean(dto.currentlyActive),
+      endDate: isOngoing ? null : end,
+      currentlyActive: isOngoing,
       description: dto.description || '',
       skillsUsed:
         dto.skillsUsed !== undefined

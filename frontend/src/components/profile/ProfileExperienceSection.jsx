@@ -1,45 +1,10 @@
-import { Briefcase, Calendar, MapPin, Building, Plus, Pencil, Trash2, Tag, Layers } from "lucide-react";
+import { Briefcase, Calendar, MapPin, Building, Plus, Pencil, Trash2, Layers } from "lucide-react";
 import { Link } from "react-router-dom";
-
-function formatExperienceDates(startDate, endDate, currentlyActive) {
-  if (!startDate) return null;
-  const start = new Date(startDate).toLocaleDateString(undefined, {
-    month: "short",
-    year: "numeric",
-  });
-
-  let end = "Present";
-  if (!currentlyActive && endDate) {
-    end = new Date(endDate).toLocaleDateString(undefined, {
-      month: "short",
-      year: "numeric",
-    });
-  }
-
-  // Calculate approximate duration
-  const startDt = new Date(startDate);
-  const endDt = currentlyActive || !endDate ? new Date() : new Date(endDate);
-  const diffMonths =
-    (endDt.getFullYear() - startDt.getFullYear()) * 12 +
-    (endDt.getMonth() - startDt.getMonth());
-
-  let durationStr = "";
-  if (!isNaN(diffMonths) && diffMonths >= 0) {
-    const years = Math.floor(diffMonths / 12);
-    const months = diffMonths % 12;
-    if (years > 0 && months > 0) {
-      durationStr = ` · ${years} yr ${months} mo`;
-    } else if (years > 0) {
-      durationStr = ` · ${years} yr${years > 1 ? "s" : ""}`;
-    } else if (months > 0) {
-      durationStr = ` · ${months} mo${months > 1 ? "s" : ""}`;
-    } else {
-      durationStr = " · < 1 mo";
-    }
-  }
-
-  return `${start} — ${end}${durationStr}`;
-}
+import {
+  sortExperienceDescending,
+  formatExperienceDateRange,
+  isExperienceOngoing,
+} from "../../utils/experienceTimeline";
 
 export default function ProfileExperienceSection({
   experience = [],
@@ -49,7 +14,8 @@ export default function ProfileExperienceSection({
   onDelete,
   className = "",
 }) {
-  const items = Array.isArray(experience) ? experience : [];
+  const rawItems = Array.isArray(experience) ? experience : [];
+  const sortedItems = sortExperienceDescending(rawItems);
 
   return (
     <section
@@ -81,7 +47,7 @@ export default function ProfileExperienceSection({
               <button
                 type="button"
                 onClick={onAdd}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-brand-mint/30 bg-brand-mint/10 hover:bg-brand-mint/20 text-brand-mint text-xs font-semibold transition-all cursor-pointer focus-ring shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-brand-mint/30 bg-brand-mint/10 hover:bg-brand-mint/20 text-brand-mint text-xs font-semibold transition-all cursor-pointer focus-ring shadow-sm min-h-[36px]"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add Position</span>
@@ -89,7 +55,7 @@ export default function ProfileExperienceSection({
             ) : (
               <Link
                 to="/profile/edit?section=experience"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-brand-mint/30 bg-brand-mint/10 hover:bg-brand-mint/20 text-brand-mint text-xs font-semibold transition-all cursor-pointer focus-ring"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-brand-mint/30 bg-brand-mint/10 hover:bg-brand-mint/20 text-brand-mint text-xs font-semibold transition-all cursor-pointer focus-ring min-h-[36px]"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add Position</span>
@@ -99,7 +65,7 @@ export default function ProfileExperienceSection({
         )}
       </div>
 
-      {items.length === 0 ? (
+      {sortedItems.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.01] p-8 text-center">
           <div className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-text-muted mx-auto mb-3">
             <Building className="w-6 h-6 text-text-faint" />
@@ -113,21 +79,32 @@ export default function ProfileExperienceSection({
               : "This member has not published their career experience."}
           </p>
           {isOwner && (
-            <button
-              type="button"
-              onClick={onAdd || (() => {})}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-mint text-[#070B14] hover:bg-brand-mint/90 text-xs font-bold transition-all cursor-pointer focus-ring shadow-sm"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Your First Role</span>
-            </button>
+            onAdd ? (
+              <button
+                type="button"
+                onClick={onAdd}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-mint text-[#070B14] hover:bg-brand-mint/90 text-xs font-bold transition-all cursor-pointer focus-ring shadow-sm min-h-[40px]"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Your First Role</span>
+              </button>
+            ) : (
+              <Link
+                to="/profile/edit?section=experience"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-mint text-[#070B14] hover:bg-brand-mint/90 text-xs font-bold transition-all cursor-pointer focus-ring shadow-sm min-h-[40px]"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Your First Role</span>
+              </Link>
+            )
           )}
         </div>
       ) : (
-        <div className="relative pl-3 sm:pl-4 space-y-8 before:absolute before:top-2 before:bottom-2 before:left-[17px] sm:before:left-[21px] before:w-[2px] before:bg-white/[0.08]">
-          {items.map((exp, index) => {
-            const expId = exp._id || exp.id || index;
-            const dateRange = formatExperienceDates(
+        <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-[11px] sm:before:left-[15px] before:top-4 before:bottom-4 before:w-[2px] before:bg-gradient-to-b before:from-brand-mint/50 before:via-white/[0.08] before:to-transparent">
+          {sortedItems.map((exp, index) => {
+            const expId = exp.id || exp._id || index;
+            const isOngoing = isExperienceOngoing(exp);
+            const dateRange = formatExperienceDateRange(
               exp.startDate,
               exp.endDate,
               exp.currentlyActive
@@ -136,57 +113,59 @@ export default function ProfileExperienceSection({
             return (
               <div
                 key={expId}
-                className="relative flex items-start gap-4 sm:gap-6 group"
+                className="relative group"
               >
-                {/* Timeline node icon */}
+                {/* Timeline node marker */}
                 <div
-                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 flex items-center justify-center shrink-0 z-10 transition-colors ${
-                    exp.currentlyActive
-                      ? "bg-[#070B14] border-brand-mint text-brand-mint shadow-[0_0_12px_rgba(159,213,178,0.4)]"
+                  className={`absolute -left-6 sm:-left-8 top-1.5 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                    isOngoing
+                      ? "bg-[#070B14] border-brand-mint text-brand-mint shadow-[0_0_12px_rgba(159,213,178,0.35)]"
                       : "bg-[#070B14] border-white/20 text-text-muted group-hover:border-white/40"
                   }`}
                 >
                   <div
-                    className={`w-2 h-2 rounded-full ${
-                      exp.currentlyActive ? "bg-brand-mint animate-pulse" : "bg-white/40"
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      isOngoing ? "bg-brand-mint animate-pulse" : "bg-white/40 group-hover:bg-white/70"
                     }`}
                   />
                 </div>
 
                 {/* Content Card */}
-                <div className="flex-1 rounded-2xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.035] hover:border-white/[0.12] p-5 sm:p-6 transition-all shadow-sm">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                    <div>
-                      <h3 className="text-base sm:text-lg font-heading font-bold text-white tracking-tight">
-                        {exp.role || "Role"}
+                <div className="p-5 sm:p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/30 hover:bg-white/[0.035] transition-all shadow-sm flex flex-col justify-between gap-3.5">
+                  {/* Top row: 1. Job Title & 7. Edit/Delete actions */}
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1 min-w-0">
+                      {/* 1. Job Title — Strongest text emphasis */}
+                      <h3 className="text-base sm:text-lg font-heading font-black text-white tracking-tight leading-snug">
+                        {exp.role || "Untitled Position"}
                       </h3>
-                      <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-text-secondary font-medium mt-0.5">
-                        <span className="text-brand-mint font-semibold">
+                      {/* 2. Company Name & Location */}
+                      <div className="flex items-center gap-2 flex-wrap text-xs sm:text-sm text-text-secondary font-medium">
+                        <span className="text-brand-mint font-bold">
                           {exp.organization || "Organization"}
                         </span>
-                        {exp.employmentType && (
+                        {exp.location && (
                           <>
                             <span className="text-white/20">•</span>
-                            <span className="text-text-muted">{exp.employmentType}</span>
+                            <span className="inline-flex items-center gap-1 text-text-muted">
+                              <MapPin className="w-3.5 h-3.5 text-text-faint" />
+                              <span>{exp.location}</span>
+                            </span>
                           </>
-                        )}
-                        {exp.currentlyActive && (
-                          <span className="px-2 py-0.5 rounded-full bg-brand-mint/10 border border-brand-mint/25 text-[10px] font-bold text-brand-mint uppercase tracking-wider">
-                            Active
-                          </span>
                         )}
                       </div>
                     </div>
 
-                    {isOwner && (
-                      <div className="flex items-center gap-1 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                    {/* 7. Edit and delete actions with accessible labels */}
+                    {isOwner && (onEdit || onDelete) && (
+                      <div className="flex items-center gap-1 shrink-0 opacity-90 sm:opacity-75 sm:group-hover:opacity-100 transition-opacity">
                         {onEdit && (
                           <button
                             type="button"
                             onClick={() => onEdit(exp)}
-                            className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
-                            title="Edit experience"
-                            aria-label={`Edit ${exp.role}`}
+                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer"
+                            title={`Edit ${exp.role || "experience"}`}
+                            aria-label={`Edit ${exp.role || "experience"} at ${exp.organization || "organization"}`}
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
@@ -195,9 +174,9 @@ export default function ProfileExperienceSection({
                           <button
                             type="button"
                             onClick={() => onDelete(expId)}
-                            className="p-1.5 rounded-lg text-text-muted hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
-                            title="Delete experience"
-                            aria-label={`Delete ${exp.role}`}
+                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-red-400 hover:bg-white/[0.04] transition-colors cursor-pointer"
+                            title={`Delete ${exp.role || "experience"}`}
+                            aria-label={`Delete ${exp.role || "experience"} at ${exp.organization || "organization"}`}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -206,53 +185,57 @@ export default function ProfileExperienceSection({
                     )}
                   </div>
 
-                  {/* Meta items: Dates, Location, Sector */}
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-text-muted mb-3 font-mono">
+                  {/* 3 & 4. Dates, Ongoing Badge, Employment Type, and AEC Sector */}
+                  <div className="flex items-center gap-2 flex-wrap text-xs font-mono">
                     {dateRange && (
-                      <span className="inline-flex items-center gap-1.5">
+                      <span className="inline-flex items-center gap-1.5 text-text-muted font-medium">
                         <Calendar className="w-3.5 h-3.5 text-text-faint" />
                         <span>{dateRange}</span>
                       </span>
                     )}
-                    {exp.location && (
-                      <span className="inline-flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-text-faint" />
-                        <span>{exp.location}</span>
+                    {isOngoing && (
+                      <span className="px-2 py-0.5 rounded-full bg-brand-mint/15 border border-brand-mint/30 text-[10px] font-bold text-brand-mint uppercase tracking-wider">
+                        Active Role
+                      </span>
+                    )}
+                    {exp.employmentType && (
+                      <span className="px-2 py-0.5 rounded-md bg-white/[0.04] text-text-muted font-bold text-[11px] border border-white/[0.06]">
+                        {exp.employmentType}
                       </span>
                     )}
                     {exp.infrastructureSector && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.08] text-[11px] text-text-secondary">
+                      <span className="px-2.5 py-0.5 rounded-md bg-brand-mint/10 text-brand-mint border border-brand-mint/20 font-semibold text-[11px] flex items-center gap-1">
                         <Layers className="w-3 h-3 text-brand-mint" />
                         <span>{exp.infrastructureSector}</span>
                       </span>
                     )}
                   </div>
 
-                  {/* Description */}
+                  {/* 5. Description with readable line length and spacing */}
                   {exp.description && (
-                    <p className="text-xs sm:text-sm text-text-secondary leading-relaxed whitespace-pre-line mb-3">
+                    <p className="text-xs sm:text-sm text-text-secondary leading-relaxed whitespace-pre-line max-w-3xl pt-0.5">
                       {exp.description}
                     </p>
                   )}
 
-                  {/* Skills & Software Tags */}
-                  {((exp.skillsUsed && exp.skillsUsed.length > 0) ||
-                    (exp.softwareUsed && exp.softwareUsed.length > 0)) && (
+                  {/* 6. Relevant skills & software as compact chips */}
+                  {((exp.softwareUsed && exp.softwareUsed.length > 0) ||
+                    (exp.skillsUsed && exp.skillsUsed.length > 0)) && (
                     <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-white/[0.05]">
-                      {exp.skillsUsed?.map((sk, sIdx) => (
+                      {exp.softwareUsed?.map((sw, swIdx) => (
                         <span
-                          key={`sk-${sIdx}`}
-                          className="px-2 py-0.5 rounded-lg bg-brand-mint/5 border border-brand-mint/20 text-[11px] font-mono text-brand-mint font-medium"
-                        >
-                          {sk}
-                        </span>
-                      ))}
-                      {exp.softwareUsed?.map((sw, wIdx) => (
-                        <span
-                          key={`sw-${wIdx}`}
-                          className="px-2 py-0.5 rounded-lg bg-brand-yellow/5 border border-brand-yellow/20 text-[11px] font-mono text-brand-yellow font-medium"
+                          key={`sw-${swIdx}`}
+                          className="px-2 py-0.5 rounded-md bg-brand-mint/10 border border-brand-mint/20 text-[11px] font-mono text-brand-mint font-medium"
                         >
                           {sw}
+                        </span>
+                      ))}
+                      {exp.skillsUsed?.map((sk, skIdx) => (
+                        <span
+                          key={`sk-${skIdx}`}
+                          className="px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/[0.06] text-[11px] text-text-secondary font-medium"
+                        >
+                          {sk}
                         </span>
                       ))}
                     </div>

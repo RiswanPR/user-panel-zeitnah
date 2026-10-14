@@ -610,7 +610,46 @@ describe('ProfileService', () => {
       expect(res.message).toBe('Experience added successfully');
       expect(mockUser.experience.length).toBe(1);
       expect(mockUser.experience[0].organization).toBe('Zeitnah Labs');
+      expect(mockUser.experience[0].endDate).toBeNull();
+      expect(mockUser.experience[0].currentlyActive).toBe(true);
       expect(mockUser.save).toHaveBeenCalled();
+    });
+
+    it('should successfully add ongoing role with null or empty end date', async () => {
+      const mockUser: any = {
+        _id: 'user_123',
+        experience: [],
+        gamification: { rewardedMilestones: [], totalPoints: 0 },
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      const res = await service.addExperience('user_123', {
+        organization: 'Larsen & Toubro',
+        role: 'Planning Lead',
+        startDate: '2024-03-01',
+        endDate: null,
+        currentlyActive: true,
+      });
+
+      expect(res.message).toBe('Experience added successfully');
+      expect(mockUser.experience[0].endDate).toBeNull();
+      expect(mockUser.experience[0].currentlyActive).toBe(true);
+    });
+
+    it('should reject non-ongoing role when end date is missing', async () => {
+      const mockUser: any = { _id: 'user_123', experience: [] };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await expect(
+        service.addExperience('user_123', {
+          organization: 'Zeitnah Labs',
+          role: 'Intern',
+          startDate: '2023-01-01',
+          currentlyActive: false,
+        }),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should reject invalid date range where end date is before start date', async () => {
@@ -623,6 +662,20 @@ describe('ProfileService', () => {
           role: 'Intern',
           startDate: '2025-05-01',
           endDate: '2025-01-01',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should reject malformed or invalid start date', async () => {
+      const mockUser: any = { _id: 'user_123', experience: [] };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await expect(
+        service.addExperience('user_123', {
+          organization: 'Zeitnah Labs',
+          role: 'Intern',
+          startDate: 'not-a-valid-date',
+          currentlyActive: true,
         }),
       ).rejects.toThrow(BadRequestException);
     });

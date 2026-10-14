@@ -291,3 +291,12 @@ export function normalizeAvailability(raw) {
       return "NOT_AVAILABLE";
   }
 }
+
+export {
+  sortExperienceDescending,
+  formatExperienceDateRange,
+  formatExperienceDateForInput,
+  parseExperienceDateSafe,
+  isExperienceOngoing,
+  validateExperienceDates,
+} from "./experienceTimeline.js";

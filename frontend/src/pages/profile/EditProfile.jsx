@@ -54,6 +54,11 @@ import {
   normalizeCareerPreferences,
   normalizePrivacySettings,
   normalizeAvailability,
+  sortExperienceDescending,
+  formatExperienceDateRange,
+  formatExperienceDateForInput,
+  isExperienceOngoing,
+  validateExperienceDates,
 } from "../../utils/profileNormalization";
 
 const MAX_BIO_LENGTH = 1000;
@@ -152,6 +157,7 @@ export default function EditProfile() {
   });
   const [expSkillInput, setExpSkillInput] = useState("");
   const [expSoftwareInput, setExpSoftwareInput] = useState("");
+  const [expErrors, setExpErrors] = useState({});
 
   // Projects Modal & State
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
@@ -421,7 +427,18 @@ export default function EditProfile() {
       toast.success("Experience added", "Your professional role has been added.");
       notifyMilestones(res.newlyAwarded);
     },
-    onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to add experience."),
+    onError: (err) => {
+      const msg = err.response?.data?.message || err.friendlyMessage || "Failed to add experience.";
+      if (typeof msg === "string") {
+        const lower = msg.toLowerCase();
+        if (lower.includes("end date")) {
+          setExpErrors((prev) => ({ ...prev, endDate: msg }));
+        } else if (lower.includes("start date")) {
+          setExpErrors((prev) => ({ ...prev, startDate: msg }));
+        }
+      }
+      toast.error("Error", msg);
+    },
   });
 
   const updateExpMutation = useMutation({
@@ -433,7 +450,18 @@ export default function EditProfile() {
       toast.success("Experience updated", "Your professional role was saved.");
       notifyMilestones(res.newlyAwarded);
     },
-    onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to update experience."),
+    onError: (err) => {
+      const msg = err.response?.data?.message || err.friendlyMessage || "Failed to update experience.";
+      if (typeof msg === "string") {
+        const lower = msg.toLowerCase();
+        if (lower.includes("end date")) {
+          setExpErrors((prev) => ({ ...prev, endDate: msg }));
+        } else if (lower.includes("start date")) {
+          setExpErrors((prev) => ({ ...prev, startDate: msg }));
+        }
+      }
+      toast.error("Error", msg);
+    },
   });
 
   const deleteExpMutation = useMutation({
@@ -607,6 +635,7 @@ export default function EditProfile() {
     setExpSkillInput("");
     setExpSoftwareInput("");
     setEditingExpId(null);
+    setExpErrors({});
   };
 
   const resetEduForm = () => {
@@ -750,13 +779,46 @@ export default function EditProfile() {
 
   const handleSaveExp = (e) => {
     e.preventDefault();
-    if (!expForm.organization.trim() || !expForm.role.trim() || !expForm.startDate) {
-      return toast.error("Missing fields", "Organization, role, and start date are required.");
+    if (addExpMutation.isPending || updateExpMutation.isPending) return;
+
+    const errors = {};
+    const org = expForm.organization?.trim();
+    const role = expForm.role?.trim();
+
+    if (!org) errors.organization = "Organization is required.";
+    if (!role) errors.role = "Role is required.";
+
+    const isOngoing = Boolean(expForm.currentlyActive);
+    const dateVal = validateExperienceDates(
+      expForm.startDate,
+      expForm.endDate,
+      isOngoing
+    );
+    if (!dateVal.valid) {
+      Object.assign(errors, dateVal.errors);
     }
+
+    if (Object.keys(errors).length > 0) {
+      setExpErrors(errors);
+      const firstError = Object.values(errors)[0];
+      return toast.error("Validation Error", firstError);
+    }
+
+    setExpErrors({});
+
+    const payload = {
+      ...expForm,
+      organization: org,
+      role: role,
+      startDate: formatExperienceDateForInput(expForm.startDate),
+      endDate: isOngoing ? null : formatExperienceDateForInput(expForm.endDate),
+      currentlyActive: isOngoing,
+    };
+
     if (editingExpId) {
-      updateExpMutation.mutate({ id: editingExpId, payload: expForm });
+      updateExpMutation.mutate({ id: editingExpId, payload });
     } else {
-      addExpMutation.mutate(expForm);
+      addExpMutation.mutate(payload);
     }
   };
 
@@ -823,6 +885,7 @@ export default function EditProfile() {
   const avatarUrl = getUploadUrl(profile?.avatar);
   const bannerUrl = getUploadUrl(profile?.backgroundImage);
   const isAssignedEducator = normalizeUserRole(profile) === "EDUCATOR";
+  const sortedExperiences = sortExperienceDescending(profile?.experience);
 
   // Section completion status helper
   const getSectionStatus = (secId) => {
@@ -1441,7 +1504,7 @@ export default function EditProfile() {
                     Professional Experience
                   </h2>
                   <p className="text-xs sm:text-sm text-text-muted mt-1 leading-relaxed">
-                    Engineering, site supervision, consultancy, internship, and project management roles.
+                    AEC career timeline, on-site execution, design consultancy, and project management contributions.
                   </p>
                 </div>
                 <button
@@ -1457,96 +1520,156 @@ export default function EditProfile() {
                 </button>
               </div>
 
-              {profile?.experience?.length > 0 ? (
-                <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-white/[0.08]">
-                  {profile.experience.map((exp) => (
-                    <div key={exp.id} className="relative group">
-                      <div className="absolute -left-6 top-1.5 w-3 h-3 rounded-full bg-brand-mint border-2 border-bg-card shadow-sm ring-2 ring-brand-mint/20" />
+              {sortedExperiences.length > 0 ? (
+                <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-[11px] sm:before:left-[15px] before:top-4 before:bottom-4 before:w-[2px] before:bg-gradient-to-b before:from-brand-mint/50 before:via-white/[0.08] before:to-transparent">
+                  {sortedExperiences.map((exp, expIdx) => {
+                    const expId = exp.id || exp._id;
+                    const isOngoing = isExperienceOngoing(exp);
+                    const dateRangeStr = formatExperienceDateRange(exp.startDate, exp.endDate, exp.currentlyActive);
 
-                      <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/30 transition-all flex items-start justify-between gap-4">
-                        <div className="space-y-1.5 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-xs font-mono font-bold text-brand-mint uppercase tracking-wider">
-                              {new Date(exp.startDate).getFullYear()} — {exp.currentlyActive ? "Present" : exp.endDate ? new Date(exp.endDate).getFullYear() : "Present"}
-                            </span>
-                            <span className="text-xs text-text-faint">•</span>
-                            <span className="text-xs px-2 py-0.5 rounded bg-white/[0.04] text-text-muted uppercase font-bold">
-                              {exp.employmentType}
-                            </span>
+                    return (
+                      <div key={expId || `exp-${expIdx}`} className="relative group">
+                        {/* Timeline node marker */}
+                        <div
+                          className={`absolute -left-6 sm:-left-8 top-1.5 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                            isOngoing
+                              ? "bg-[#070B14] border-brand-mint text-brand-mint shadow-[0_0_12px_rgba(159,213,178,0.35)]"
+                              : "bg-bg-card border-white/20 text-text-muted group-hover:border-white/40"
+                          }`}
+                        >
+                          <div
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              isOngoing ? "bg-brand-mint animate-pulse" : "bg-white/40 group-hover:bg-white/70"
+                            }`}
+                          />
+                        </div>
+
+                        {/* Experience Card */}
+                        <div className="p-5 sm:p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/30 hover:bg-white/[0.035] transition-all shadow-sm flex flex-col justify-between gap-3.5">
+                          {/* Top row: Job title & Edit/Delete actions */}
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="space-y-1 min-w-0">
+                              {/* 1. Job Title — Strongest emphasis */}
+                              <h3 className="text-base sm:text-lg font-heading font-black text-white tracking-tight leading-snug">
+                                {exp.role || "Untitled Position"}
+                              </h3>
+
+                              {/* 2. Company Name & Location */}
+                              <div className="flex items-center gap-2 flex-wrap text-xs sm:text-sm text-text-secondary font-medium">
+                                <span className="text-brand-mint font-bold">
+                                  {exp.organization || "Organization"}
+                                </span>
+                                {exp.location && (
+                                  <>
+                                    <span className="text-white/20">•</span>
+                                    <span className="inline-flex items-center gap-1 text-text-muted">
+                                      <MapPin className="w-3.5 h-3.5 text-text-faint" />
+                                      <span>{exp.location}</span>
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* 7. Edit and Delete actions with accessible labels */}
+                            <div className="flex items-center gap-1 shrink-0 opacity-90 sm:opacity-75 sm:group-hover:opacity-100 transition-opacity">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingExpId(expId);
+                                  setExpErrors({});
+                                  setExpForm({
+                                    organization: exp.organization || "",
+                                    role: exp.role || "",
+                                    employmentType: exp.employmentType || "Full-time",
+                                    location: exp.location || "",
+                                    startDate: formatExperienceDateForInput(exp.startDate),
+                                    endDate: exp.currentlyActive ? "" : formatExperienceDateForInput(exp.endDate),
+                                    currentlyActive: Boolean(exp.currentlyActive),
+                                    description: exp.description || "",
+                                    infrastructureSector: exp.infrastructureSector || "Buildings",
+                                    skillsUsed: Array.isArray(exp.skillsUsed) ? exp.skillsUsed : [],
+                                    softwareUsed: Array.isArray(exp.softwareUsed) ? exp.softwareUsed : [],
+                                  });
+                                  setIsExpModalOpen(true);
+                                }}
+                                className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer"
+                                title={`Edit ${exp.role || "experience"}`}
+                                aria-label={`Edit ${exp.role || "experience"} at ${exp.organization || "organization"}`}
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => deleteExpMutation.mutate(expId)}
+                                className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-danger hover:bg-white/[0.04] transition-colors cursor-pointer"
+                                title={`Delete ${exp.role || "experience"}`}
+                                aria-label={`Delete ${exp.role || "experience"} at ${exp.organization || "organization"}`}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* 3 & 4. Dates, Ongoing Badge, Employment Type, and AEC Sector */}
+                          <div className="flex items-center gap-2 flex-wrap text-xs font-mono">
+                            {dateRangeStr && (
+                              <span className="inline-flex items-center gap-1.5 text-text-muted font-medium">
+                                <Calendar className="w-3.5 h-3.5 text-text-faint" />
+                                <span>{dateRangeStr}</span>
+                              </span>
+                            )}
+                            {isOngoing && (
+                              <span className="px-2 py-0.5 rounded-full bg-brand-mint/15 border border-brand-mint/30 text-[10px] font-bold text-brand-mint uppercase tracking-wider">
+                                Active Role
+                              </span>
+                            )}
+                            {exp.employmentType && (
+                              <span className="px-2 py-0.5 rounded-md bg-white/[0.04] text-text-muted font-bold text-[11px] border border-white/[0.06]">
+                                {exp.employmentType}
+                              </span>
+                            )}
                             {exp.infrastructureSector && (
-                              <span className="text-xs px-2 py-0.5 rounded bg-brand-mint/10 text-brand-mint border border-brand-mint/20 font-medium">
-                                {exp.infrastructureSector}
+                              <span className="px-2.5 py-0.5 rounded-md bg-brand-mint/10 text-brand-mint border border-brand-mint/20 font-semibold text-[11px] flex items-center gap-1">
+                                <Layers className="w-3 h-3 text-brand-mint" />
+                                <span>{exp.infrastructureSector}</span>
                               </span>
                             )}
                           </div>
 
-                          <h4 className="text-base font-bold text-white leading-snug">{exp.role}</h4>
-                          <div className="text-sm font-semibold text-text-secondary">
-                            {exp.organization} {exp.location && `• ${exp.location}`}
-                          </div>
-
+                          {/* 5. Description with readable line length and spacing */}
                           {exp.description && (
-                            <p className="text-xs text-text-muted mt-2 leading-relaxed whitespace-pre-line">
+                            <p className="text-xs sm:text-sm text-text-secondary leading-relaxed whitespace-pre-line max-w-3xl pt-0.5">
                               {exp.description}
                             </p>
                           )}
 
-                          {/* Software & Skills Used Chips */}
-                          {(exp.softwareUsed?.length > 0 || exp.skillsUsed?.length > 0) && (
-                            <div className="flex flex-wrap gap-1.5 pt-2">
+                          {/* 6. Relevant skills & software as compact chips */}
+                          {((exp.softwareUsed && exp.softwareUsed.length > 0) ||
+                            (exp.skillsUsed && exp.skillsUsed.length > 0)) && (
+                            <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-white/[0.05]">
                               {exp.softwareUsed?.map((sw) => (
-                                <span key={sw} className="px-2 py-0.5 rounded-md bg-white/[0.04] text-[11px] text-brand-mint font-medium">
+                                <span
+                                  key={sw}
+                                  className="px-2 py-0.5 rounded-md bg-brand-mint/10 border border-brand-mint/20 text-[11px] font-mono text-brand-mint font-medium"
+                                >
                                   {sw}
                                 </span>
                               ))}
                               {exp.skillsUsed?.map((sk) => (
-                                <span key={sk} className="px-2 py-0.5 rounded-md bg-white/[0.02] text-[11px] text-text-secondary">
+                                <span
+                                  key={sk}
+                                  className="px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/[0.06] text-[11px] text-text-secondary font-medium"
+                                >
                                   {sk}
                                 </span>
                               ))}
                             </div>
                           )}
                         </div>
-
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingExpId(exp.id);
-                              setExpForm({
-                                organization: exp.organization || "",
-                                role: exp.role || "",
-                                employmentType: exp.employmentType || "Full-time",
-                                location: exp.location || "",
-                                startDate: exp.startDate ? new Date(exp.startDate).toISOString().split("T")[0] : "",
-                                endDate: exp.endDate ? new Date(exp.endDate).toISOString().split("T")[0] : "",
-                                currentlyActive: Boolean(exp.currentlyActive),
-                                description: exp.description || "",
-                                infrastructureSector: exp.infrastructureSector || "Buildings",
-                                skillsUsed: Array.isArray(exp.skillsUsed) ? exp.skillsUsed : [],
-                                softwareUsed: Array.isArray(exp.softwareUsed) ? exp.softwareUsed : [],
-                              });
-                              setIsExpModalOpen(true);
-                            }}
-                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer"
-                            title="Edit"
-                            aria-label="Edit experience"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => deleteExpMutation.mutate(exp.id)}
-                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-danger hover:bg-white/[0.04] transition-colors cursor-pointer"
-                            title="Delete"
-                            aria-label="Delete experience"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="py-14 px-4 rounded-3xl border border-dashed border-white/[0.1] text-center space-y-3.5 bg-white/[0.01]">
@@ -2444,11 +2567,28 @@ export default function EditProfile() {
                 <input
                   type="text"
                   value={expForm.organization}
-                  onChange={(e) => setExpForm({ ...expForm, organization: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setExpForm((prev) => ({ ...prev, organization: val }));
+                    if (val.trim()) {
+                      setExpErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.organization;
+                        return next;
+                      });
+                    }
+                  }}
                   required
                   placeholder="e.g. Larsen & Toubro, AECOM, Bechtel"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
+                  className={`w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border text-sm text-white focus:outline-none ${
+                    expErrors.organization
+                      ? "border-danger focus:border-danger"
+                      : "border-white/[0.08] focus:border-brand-mint"
+                  }`}
                 />
+                {expErrors.organization && (
+                  <p className="text-xs text-danger mt-1">{expErrors.organization}</p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -2459,11 +2599,28 @@ export default function EditProfile() {
                   <input
                     type="text"
                     value={expForm.role}
-                    onChange={(e) => setExpForm({ ...expForm, role: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setExpForm((prev) => ({ ...prev, role: val }));
+                      if (val.trim()) {
+                        setExpErrors((prev) => {
+                          const next = { ...prev };
+                          delete next.role;
+                          return next;
+                        });
+                      }
+                    }}
                     required
                     placeholder="e.g. Site Engineer, BIM Lead"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
+                    className={`w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border text-sm text-white focus:outline-none ${
+                      expErrors.role
+                        ? "border-danger focus:border-danger"
+                        : "border-white/[0.08] focus:border-brand-mint"
+                    }`}
                   />
+                  {expErrors.role && (
+                    <p className="text-xs text-danger mt-1">{expErrors.role}</p>
+                  )}
                 </div>
 
                 <div>
@@ -2524,10 +2681,35 @@ export default function EditProfile() {
                   <input
                     type="date"
                     value={expForm.startDate}
-                    onChange={(e) => setExpForm({ ...expForm, startDate: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setExpForm((prev) => ({ ...prev, startDate: val }));
+                      const valRes = validateExperienceDates(val, expForm.endDate, expForm.currentlyActive);
+                      setExpErrors((prev) => {
+                        const next = { ...prev };
+                        if (valRes.errors.startDate) {
+                          next.startDate = valRes.errors.startDate;
+                        } else {
+                          delete next.startDate;
+                        }
+                        if (valRes.errors.endDate && !expForm.currentlyActive) {
+                          next.endDate = valRes.errors.endDate;
+                        } else if (!valRes.errors.endDate) {
+                          delete next.endDate;
+                        }
+                        return next;
+                      });
+                    }}
                     required
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
+                    className={`w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border text-sm text-white focus:outline-none ${
+                      expErrors.startDate
+                        ? "border-danger focus:border-danger"
+                        : "border-white/[0.08] focus:border-brand-mint"
+                    }`}
                   />
+                  {expErrors.startDate && (
+                    <p className="text-xs text-danger mt-1">{expErrors.startDate}</p>
+                  )}
                 </div>
 
                 <div>
@@ -2537,10 +2719,32 @@ export default function EditProfile() {
                   <input
                     type="date"
                     value={expForm.endDate}
-                    onChange={(e) => setExpForm({ ...expForm, endDate: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setExpForm((prev) => ({ ...prev, endDate: val }));
+                      if (!expForm.currentlyActive) {
+                        const valRes = validateExperienceDates(expForm.startDate, val, false);
+                        setExpErrors((prev) => {
+                          const next = { ...prev };
+                          if (valRes.errors.endDate) {
+                            next.endDate = valRes.errors.endDate;
+                          } else {
+                            delete next.endDate;
+                          }
+                          return next;
+                        });
+                      }
+                    }}
                     disabled={expForm.currentlyActive}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none disabled:opacity-40"
+                    className={`w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border text-sm text-white focus:outline-none disabled:opacity-40 ${
+                      expErrors.endDate && !expForm.currentlyActive
+                        ? "border-danger focus:border-danger"
+                        : "border-white/[0.08] focus:border-brand-mint"
+                    }`}
                   />
+                  {expErrors.endDate && !expForm.currentlyActive && (
+                    <p className="text-xs text-danger mt-1">{expErrors.endDate}</p>
+                  )}
                 </div>
               </div>
 
@@ -2549,7 +2753,23 @@ export default function EditProfile() {
                   type="checkbox"
                   id="currentlyActiveExp"
                   checked={expForm.currentlyActive}
-                  onChange={(e) => setExpForm({ ...expForm, currentlyActive: e.target.checked })}
+                  onChange={(e) => {
+                    const isChecked = e.target.checked;
+                    setExpForm((prev) => ({
+                      ...prev,
+                      currentlyActive: isChecked,
+                      endDate: isChecked ? "" : prev.endDate,
+                    }));
+                    setExpErrors((prev) => {
+                      const next = { ...prev };
+                      if (isChecked) {
+                        delete next.endDate;
+                      } else if (!expForm.endDate) {
+                        next.endDate = "End date is required for past roles.";
+                      }
+                      return next;
+                    });
+                  }}
                   className="rounded border-white/[0.08] text-brand-mint focus:ring-0 cursor-pointer"
                 />
                 <label htmlFor="currentlyActiveExp" className="text-xs text-text-secondary cursor-pointer">

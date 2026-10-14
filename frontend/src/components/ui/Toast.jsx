@@ -36,14 +36,28 @@ export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
   const addToast = useCallback(({ type = 'info', title, message, duration = 4000 }) => {
-    const id = ++toastId;
-    setToasts((prev) => [...prev, { id, type, title, message }]);
+    let createdId = null;
+    setToasts((prev) => {
+      // Avoid displaying duplicate toast notifications for the same validation failure
+      const isDuplicate = prev.some(
+        (t) => t.type === type && t.title === title && t.message === message
+      );
+      if (isDuplicate) {
+        return prev;
+      }
+      const id = ++toastId;
+      createdId = id;
+      return [...prev, { id, type, title, message }];
+    });
+
     if (duration > 0) {
       setTimeout(() => {
-        setToasts((prev) => prev.filter((t) => t.id !== id));
+        if (createdId) {
+          setToasts((prev) => prev.filter((t) => t.id !== createdId));
+        }
       }, duration);
     }
-    return id;
+    return createdId;
   }, []);
 
   const removeToast = useCallback((id) => {

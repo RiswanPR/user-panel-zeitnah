@@ -5,7 +5,9 @@ import {
   IsBoolean,
   IsDateString,
   MaxLength,
+  ValidateIf,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class ExperienceDto {
   @IsString()
@@ -31,13 +33,23 @@ export class ExperienceDto {
   @IsDateString({}, { message: 'Valid start date is required.' })
   startDate!: string;
 
-  @IsOptional()
+  @Transform(({ value }) => (value === '' || value === undefined ? null : value))
+  @ValidateIf((o) => !Boolean(o.currentlyActive || o.isCurrent || o.current))
+  @IsNotEmpty({ message: 'End date is required for past roles.' })
   @IsDateString({}, { message: 'End date must be a valid date.' })
   endDate?: string | null;
 
   @IsOptional()
   @IsBoolean()
   currentlyActive?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isCurrent?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  current?: boolean;
 
   @IsOptional()
   @IsString()

@@ -5,7 +5,9 @@ import {
   IsBoolean,
   IsDateString,
   MaxLength,
+  ValidateIf,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class EducationDto {
   @IsString()
@@ -26,6 +28,8 @@ export class EducationDto {
   @IsDateString({}, { message: 'Valid start date is required.' })
   startDate!: string;
 
+  @Transform(({ value }) => (value === '' || value === undefined ? null : value))
+  @ValidateIf((o) => !Boolean(o.currentlyStudying))
   @IsOptional()
   @IsDateString({}, { message: 'End date must be a valid date.' })
   endDate?: string | null;
