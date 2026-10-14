@@ -15,6 +15,8 @@ import {
   Briefcase,
   GraduationCap,
   Award,
+  Building2,
+  BookOpen,
   Code2,
   Globe,
   Trash2,
@@ -56,6 +58,13 @@ import {
   formatExperienceDateForInput,
   isExperienceOngoing,
   validateExperienceDates,
+  sortEducationDescending,
+  formatEducationDateRange,
+  formatEducationDateForInput,
+  inferAcademicDegreeLevel,
+  extractAcademicHonors,
+  validateEducationForm,
+  AEC_QUALIFICATION_SUGGESTIONS,
 } from "../../utils/profileNormalization";
 
 const MAX_BIO_LENGTH = 1000;
@@ -158,6 +167,7 @@ export default function EditProfile() {
   // Education Modal & Form
   const [isEduModalOpen, setIsEduModalOpen] = useState(false);
   const [editingEduId, setEditingEduId] = useState(null);
+  const [eduErrors, setEduErrors] = useState({});
   const [eduForm, setEduForm] = useState({
     institution: "",
     qualification: "",
@@ -464,7 +474,22 @@ export default function EditProfile() {
       toast.success("Education added", "Academic qualification added.");
       notifyMilestones(res.newlyAwarded);
     },
-    onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to add education."),
+    onError: (err) => {
+      const msg = err.response?.data?.message || "Failed to add education.";
+      if (typeof msg === "string") {
+        const lower = msg.toLowerCase();
+        if (lower.includes("institution")) {
+          setEduErrors((prev) => ({ ...prev, institution: msg }));
+        } else if (lower.includes("qualification")) {
+          setEduErrors((prev) => ({ ...prev, qualification: msg }));
+        } else if (lower.includes("end date")) {
+          setEduErrors((prev) => ({ ...prev, endDate: msg }));
+        } else if (lower.includes("start date")) {
+          setEduErrors((prev) => ({ ...prev, startDate: msg }));
+        }
+      }
+      toast.error("Error", msg);
+    },
   });
 
   const updateEduMutation = useMutation({
@@ -476,7 +501,22 @@ export default function EditProfile() {
       toast.success("Education updated", "Academic qualification updated.");
       notifyMilestones(res.newlyAwarded);
     },
-    onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to update education."),
+    onError: (err) => {
+      const msg = err.response?.data?.message || "Failed to update education.";
+      if (typeof msg === "string") {
+        const lower = msg.toLowerCase();
+        if (lower.includes("institution")) {
+          setEduErrors((prev) => ({ ...prev, institution: msg }));
+        } else if (lower.includes("qualification")) {
+          setEduErrors((prev) => ({ ...prev, qualification: msg }));
+        } else if (lower.includes("end date")) {
+          setEduErrors((prev) => ({ ...prev, endDate: msg }));
+        } else if (lower.includes("start date")) {
+          setEduErrors((prev) => ({ ...prev, startDate: msg }));
+        }
+      }
+      toast.error("Error", msg);
+    },
   });
 
   const deleteEduMutation = useMutation({
@@ -487,6 +527,8 @@ export default function EditProfile() {
     },
     onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to delete education."),
   });
+
+  const isSavingEdu = addEduMutation.isPending || updateEduMutation.isPending;
 
   // Certification Mutations
   const addCertMutation = useMutation({
@@ -599,6 +641,7 @@ export default function EditProfile() {
       description: "",
     });
     setEditingEduId(null);
+    setEduErrors({});
   };
 
   const resetCertForm = () => {
@@ -774,13 +817,32 @@ export default function EditProfile() {
 
   const handleSaveEdu = (e) => {
     e.preventDefault();
-    if (!eduForm.institution.trim() || !eduForm.qualification.trim() || !eduForm.startDate) {
-      return toast.error("Missing fields", "Institution, qualification, and start date are required.");
+    if (isSavingEdu) return;
+
+    const validation = validateEducationForm(eduForm);
+    if (!validation.valid) {
+      setEduErrors(validation.errors);
+      const firstError = Object.values(validation.errors)[0];
+      return toast.error("Validation Error", firstError || "Please check all required education fields.");
     }
+
+    setEduErrors({});
+
+    const isOngoing = Boolean(eduForm.currentlyStudying);
+    const payload = {
+      institution: eduForm.institution.trim(),
+      qualification: eduForm.qualification.trim(),
+      fieldOfStudy: eduForm.fieldOfStudy ? eduForm.fieldOfStudy.trim() : "",
+      startDate: formatEducationDateForInput(eduForm.startDate),
+      endDate: isOngoing ? null : (eduForm.endDate ? formatEducationDateForInput(eduForm.endDate) : null),
+      currentlyStudying: isOngoing,
+      description: eduForm.description ? eduForm.description.trim() : "",
+    };
+
     if (editingEduId) {
-      updateEduMutation.mutate({ id: editingEduId, payload: eduForm });
+      updateEduMutation.mutate({ id: editingEduId, payload });
     } else {
-      addEduMutation.mutate(eduForm);
+      addEduMutation.mutate(payload);
     }
   };
 
@@ -836,6 +898,7 @@ export default function EditProfile() {
   const bannerUrl = getUploadUrl(profile?.backgroundImage);
   const isAssignedEducator = normalizeUserRole(profile) === "EDUCATOR";
   const sortedExperiences = sortExperienceDescending(profile?.experience);
+  const sortedEducations = sortEducationDescending(profile?.education);
 
   // Section completion status helper
   const getSectionStatus = (secId) => {
@@ -1655,19 +1718,24 @@ export default function EditProfile() {
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
                       SECTION 05 OF 09
                     </span>
                     <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                       +20 XP
                     </span>
+                    {profile?.education?.length > 0 && (
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-white/[0.04] border border-white/[0.08] text-white/80">
+                        {profile.education.length} {profile.education.length === 1 ? "Qualification" : "Qualifications"}
+                      </span>
+                    )}
                   </div>
                   <h2 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
                     Education & Academics
                   </h2>
                   <p className="text-xs sm:text-sm text-text-muted mt-1 leading-relaxed">
-                    Engineering degrees, technical diplomas, and university qualifications.
+                    Academic qualifications, technical diplomas, and professional learning.
                   </p>
                 </div>
                 <button
@@ -1683,72 +1751,122 @@ export default function EditProfile() {
                 </button>
               </div>
 
-              {profile?.education?.length > 0 ? (
+              {sortedEducations.length > 0 ? (
                 <div className="space-y-4">
-                  {profile.education.map((edu) => (
-                    <div
-                      key={edu.id}
-                      className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/30 transition-all flex items-start justify-between gap-4"
-                    >
-                      <div className="space-y-1 min-w-0">
-                        <div className="text-xs font-mono font-bold text-brand-mint uppercase tracking-wider">
-                          {new Date(edu.startDate).getFullYear()} — {edu.currentlyStudying ? "Present" : edu.endDate ? new Date(edu.endDate).getFullYear() : "Present"}
-                        </div>
-                        <h4 className="text-base font-bold text-white">{edu.qualification}</h4>
-                        <div className="text-sm font-semibold text-text-secondary">
-                          {edu.institution} {edu.fieldOfStudy && `• ${edu.fieldOfStudy}`}
-                        </div>
-                        {edu.description && (
-                          <p className="text-xs text-text-muted mt-2 leading-relaxed">
-                            {edu.description}
-                          </p>
-                        )}
-                      </div>
+                  {sortedEducations.map((edu) => {
+                    const eduId = edu.id || edu._id;
+                    const levelInfo = inferAcademicDegreeLevel(edu.qualification, edu.fieldOfStudy);
+                    const honorsInfo = extractAcademicHonors(edu.description);
+                    const dateRange = formatEducationDateRange(edu.startDate, edu.endDate, edu.currentlyStudying);
 
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingEduId(edu.id);
-                            setEduForm({
-                              institution: edu.institution || "",
-                              qualification: edu.qualification || "",
-                              fieldOfStudy: edu.fieldOfStudy || "",
-                              startDate: edu.startDate ? new Date(edu.startDate).toISOString().split("T")[0] : "",
-                              endDate: edu.endDate ? new Date(edu.endDate).toISOString().split("T")[0] : "",
-                              currentlyStudying: Boolean(edu.currentlyStudying),
-                              description: edu.description || "",
-                            });
-                            setIsEduModalOpen(true);
-                          }}
-                          className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer"
-                          title="Edit"
-                          aria-label="Edit education"
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => deleteEduMutation.mutate(edu.id)}
-                          className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-danger hover:bg-white/[0.04] transition-colors cursor-pointer"
-                          title="Delete"
-                          aria-label="Delete education"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                    return (
+                      <div
+                        key={eduId}
+                        className="p-5 sm:p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/30 hover:bg-white/[0.035] transition-all shadow-sm flex flex-col justify-between gap-4 group"
+                      >
+                        <div className="space-y-2.5 min-w-0">
+                          {/* Top metadata row */}
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded font-bold border ${levelInfo.badgeClass}`}>
+                                {levelInfo.level}
+                              </span>
+                              {edu.currentlyStudying && (
+                                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/25 text-brand-yellow font-bold">
+                                  In Progress
+                                </span>
+                              )}
+                              {dateRange && (
+                                <span className="inline-flex items-center gap-1.5 text-xs font-mono font-medium text-text-muted">
+                                  <Calendar className="w-3.5 h-3.5 text-text-faint" />
+                                  <span>{dateRange}</span>
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingEduId(eduId);
+                                  setEduForm({
+                                    institution: edu.institution || "",
+                                    qualification: edu.qualification || "",
+                                    fieldOfStudy: edu.fieldOfStudy || "",
+                                    startDate: formatEducationDateForInput(edu.startDate),
+                                    endDate: formatEducationDateForInput(edu.endDate),
+                                    currentlyStudying: Boolean(edu.currentlyStudying),
+                                    description: edu.description || "",
+                                  });
+                                  setEduErrors({});
+                                  setIsEduModalOpen(true);
+                                }}
+                                className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer"
+                                title="Edit academic qualification"
+                                aria-label="Edit academic qualification"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => deleteEduMutation.mutate(eduId)}
+                                disabled={deleteEduMutation.isPending}
+                                className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-danger hover:bg-white/[0.04] transition-colors cursor-pointer disabled:opacity-50"
+                                title="Delete academic qualification"
+                                aria-label="Delete academic qualification"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Qualification & Institution */}
+                          <div>
+                            <h4 className="text-base sm:text-lg font-heading font-bold text-white tracking-tight">
+                              {edu.qualification}
+                            </h4>
+                            <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-text-secondary font-medium mt-0.5">
+                              <span className="text-white/90 font-semibold inline-flex items-center gap-1">
+                                <Building2 className="w-3.5 h-3.5 text-brand-mint/80" />
+                                {edu.institution}
+                              </span>
+                              {edu.fieldOfStudy && (
+                                <>
+                                  <span className="text-white/20">•</span>
+                                  <span className="text-brand-mint/90">{edu.fieldOfStudy}</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Grade / Honors badge if detected */}
+                          {honorsInfo.grade && (
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs font-semibold text-amber-300">
+                              <Award className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                              <span>{honorsInfo.grade}</span>
+                            </div>
+                          )}
+
+                          {/* Description */}
+                          {edu.description && (
+                            <p className="text-xs text-text-muted leading-relaxed pt-2 border-t border-white/[0.04] whitespace-pre-line">
+                              {edu.description}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
-                <div className="py-14 px-4 rounded-3xl border border-dashed border-white/[0.1] text-center space-y-3.5 bg-white/[0.01]">
-                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto text-text-muted">
-                    <GraduationCap className="w-6 h-6 text-brand-mint/70" />
+                <div className="py-12 px-6 rounded-3xl border border-dashed border-white/[0.1] text-center space-y-3.5 bg-white/[0.01]">
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto text-brand-mint/70">
+                    <GraduationCap className="w-6 h-6" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white">No academic history added</h4>
+                    <h4 className="text-sm font-bold text-white">Build your academic profile</h4>
                     <p className="text-xs text-text-muted max-w-sm mx-auto mt-1 leading-relaxed">
-                      Add your engineering degrees, technical diplomas, and university credentials.
+                      Add your degrees, diplomas, and qualifications to showcase your educational journey.
                     </p>
                   </div>
                   <button
@@ -2738,15 +2856,28 @@ export default function EditProfile() {
 
       {/* Education Modal */}
       {isEduModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in">
-          <div className="relative w-full max-w-lg rounded-3xl border border-white/[0.1] bg-bg-card p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90dvh] sm:max-h-[85vh] overflow-y-auto overscroll-contain">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-heading font-extrabold text-white">
-                {editingEduId ? "Edit Education" : "Add Education"}
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
+          <div className="relative w-full max-w-xl rounded-3xl border border-white/[0.1] bg-bg-card p-6 sm:p-8 space-y-6 shadow-2xl max-h-[92dvh] sm:max-h-[88vh] overflow-y-auto overscroll-contain">
+            <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-brand-mint/10 border border-brand-mint/25 flex items-center justify-center text-brand-mint shadow-inner">
+                  <GraduationCap className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-heading font-extrabold text-white">
+                    {editingEduId ? "Edit Academic Qualification" : "Add Academic Qualification"}
+                  </h3>
+                  <p className="text-xs text-text-muted">
+                    Record your degree, engineering diploma, institution, and achievements.
+                  </p>
+                </div>
+              </div>
               <button
                 type="button"
-                onClick={() => setIsEduModalOpen(false)}
+                onClick={() => {
+                  setIsEduModalOpen(false);
+                  resetEduForm();
+                }}
                 className="p-2.5 -mr-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-white cursor-pointer"
                 aria-label="Close dialog"
               >
@@ -2754,51 +2885,119 @@ export default function EditProfile() {
               </button>
             </div>
 
-            <form onSubmit={handleSaveEdu} className="space-y-4">
+            <form onSubmit={handleSaveEdu} className="space-y-5">
+              {/* Qualification / Degree */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
-                  Institution / School <span className="text-brand-mint">*</span>
+                  Degree / Qualification <span className="text-brand-mint">*</span>
                 </label>
                 <input
                   type="text"
-                  value={eduForm.institution}
-                  onChange={(e) => setEduForm({ ...eduForm, institution: e.target.value })}
-                  required
-                  placeholder="e.g. University of Calicut, IIT Madras, Zeitnah"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
+                  value={eduForm.qualification}
+                  onChange={(e) => {
+                    setEduForm({ ...eduForm, qualification: e.target.value });
+                    if (eduErrors.qualification) {
+                      setEduErrors((prev) => {
+                        const copy = { ...prev };
+                        delete copy.qualification;
+                        return copy;
+                      });
+                    }
+                  }}
+                  placeholder="e.g. B.Tech Civil Engineering, B.Arch, M.Tech Structural..."
+                  className={`w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border text-sm text-white focus:outline-none transition-colors ${
+                    eduErrors.qualification ? "border-danger focus:border-danger" : "border-white/[0.08] focus:border-brand-mint"
+                  }`}
                 />
+                {eduErrors.qualification && (
+                  <p className="text-xs text-danger mt-1 font-medium" role="alert">
+                    {eduErrors.qualification}
+                  </p>
+                )}
+
+                {/* Quick AEC Qualification Suggestions */}
+                <div className="pt-2">
+                  <span className="text-[11px] text-text-faint block mb-1.5 font-medium">Quick AEC Suggestions:</span>
+                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto no-scrollbar">
+                    {AEC_QUALIFICATION_SUGGESTIONS.slice(0, 6).map((sug) => (
+                      <button
+                        key={sug}
+                        type="button"
+                        onClick={() => {
+                          setEduForm((prev) => ({ ...prev, qualification: sug }));
+                          if (eduErrors.qualification) {
+                            setEduErrors((prev) => {
+                              const copy = { ...prev };
+                              delete copy.qualification;
+                              return copy;
+                            });
+                          }
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-white/[0.03] hover:bg-brand-mint/10 border border-white/[0.06] hover:border-brand-mint/30 text-[11px] text-text-secondary hover:text-brand-mint transition-colors cursor-pointer text-left"
+                      >
+                        {sug}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Institution & Field of Study */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
-                    Qualification / Degree <span className="text-brand-mint">*</span>
+                    Institution / University <span className="text-brand-mint">*</span>
                   </label>
                   <input
                     type="text"
-                    value={eduForm.qualification}
-                    onChange={(e) => setEduForm({ ...eduForm, qualification: e.target.value })}
-                    required
-                    placeholder="e.g. B.Tech, M.S, Diploma"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
+                    value={eduForm.institution}
+                    onChange={(e) => {
+                      setEduForm({ ...eduForm, institution: e.target.value });
+                      if (eduErrors.institution) {
+                        setEduErrors((prev) => {
+                          const copy = { ...prev };
+                          delete copy.institution;
+                          return copy;
+                        });
+                      }
+                    }}
+                    placeholder="e.g. IIT Madras, NIT Trichy, Univ. of Leeds"
+                    className={`w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border text-sm text-white focus:outline-none transition-colors ${
+                      eduErrors.institution ? "border-danger focus:border-danger" : "border-white/[0.08] focus:border-brand-mint"
+                    }`}
                   />
+                  {eduErrors.institution && (
+                    <p className="text-xs text-danger mt-1 font-medium" role="alert">
+                      {eduErrors.institution}
+                    </p>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
-                    Field of Study
+                    Field of Study / Specialization
                   </label>
                   <input
                     type="text"
                     value={eduForm.fieldOfStudy}
-                    onChange={(e) => setEduForm({ ...eduForm, fieldOfStudy: e.target.value })}
-                    placeholder="e.g. Civil Engineering"
+                    onChange={(e) => {
+                      setEduForm({ ...eduForm, fieldOfStudy: e.target.value });
+                      if (eduErrors.fieldOfStudy) {
+                        setEduErrors((prev) => {
+                          const copy = { ...prev };
+                          delete copy.fieldOfStudy;
+                          return copy;
+                        });
+                      }
+                    }}
+                    placeholder="e.g. Structural Design, BIM, Transport Planning"
                     className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Dates */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
                     Start Date <span className="text-brand-mint">*</span>
@@ -2806,66 +3005,130 @@ export default function EditProfile() {
                   <input
                     type="date"
                     value={eduForm.startDate}
-                    onChange={(e) => setEduForm({ ...eduForm, startDate: e.target.value })}
-                    required
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
+                    onChange={(e) => {
+                      setEduForm({ ...eduForm, startDate: e.target.value });
+                      if (eduErrors.startDate) {
+                        setEduErrors((prev) => {
+                          const copy = { ...prev };
+                          delete copy.startDate;
+                          return copy;
+                        });
+                      }
+                    }}
+                    className={`w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border text-sm text-white focus:outline-none transition-colors ${
+                      eduErrors.startDate ? "border-danger focus:border-danger" : "border-white/[0.08] focus:border-brand-mint"
+                    }`}
                   />
+                  {eduErrors.startDate && (
+                    <p className="text-xs text-danger mt-1 font-medium" role="alert">
+                      {eduErrors.startDate}
+                    </p>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
-                    End Date
+                    Graduation / End Date
                   </label>
                   <input
                     type="date"
                     value={eduForm.endDate}
-                    onChange={(e) => setEduForm({ ...eduForm, endDate: e.target.value })}
+                    onChange={(e) => {
+                      setEduForm({ ...eduForm, endDate: e.target.value });
+                      if (eduErrors.endDate) {
+                        setEduErrors((prev) => {
+                          const copy = { ...prev };
+                          delete copy.endDate;
+                          return copy;
+                        });
+                      }
+                    }}
                     disabled={eduForm.currentlyStudying}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none disabled:opacity-40"
+                    className={`w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border text-sm text-white focus:outline-none transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                      eduErrors.endDate ? "border-danger focus:border-danger" : "border-white/[0.08] focus:border-brand-mint"
+                    }`}
                   />
+                  {eduErrors.endDate && !eduForm.currentlyStudying && (
+                    <p className="text-xs text-danger mt-1 font-medium" role="alert">
+                      {eduErrors.endDate}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* Currently studying here toggle */}
+              <div className="flex items-center gap-2.5 pt-0.5">
                 <input
                   type="checkbox"
                   id="currentlyStudyingEdu"
                   checked={eduForm.currentlyStudying}
-                  onChange={(e) => setEduForm({ ...eduForm, currentlyStudying: e.target.checked })}
-                  className="rounded border-white/[0.08] text-brand-mint focus:ring-0 cursor-pointer"
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setEduForm((prev) => ({
+                      ...prev,
+                      currentlyStudying: checked,
+                      endDate: checked ? "" : prev.endDate,
+                    }));
+                    if (checked) {
+                      setEduErrors((prev) => {
+                        const copy = { ...prev };
+                        delete copy.endDate;
+                        return copy;
+                      });
+                    }
+                  }}
+                  className="rounded border-white/[0.1] bg-bg-elevated text-brand-mint focus:ring-0 cursor-pointer w-4 h-4"
                 />
-                <label htmlFor="currentlyStudyingEdu" className="text-xs text-text-secondary cursor-pointer">
-                  I currently study here
+                <label htmlFor="currentlyStudyingEdu" className="text-xs font-medium text-white/90 cursor-pointer select-none">
+                  I currently study here (Ongoing program / Degree in progress)
                 </label>
               </div>
 
+              {/* Description / Achievements / Grade */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
-                  Description / Honors <span className="text-text-faint font-normal">(Optional)</span>
+                  Academic Achievements & Description <span className="text-text-faint font-normal">(Optional)</span>
                 </label>
                 <textarea
-                  rows={2}
+                  rows={3}
                   value={eduForm.description}
                   onChange={(e) => setEduForm({ ...eduForm, description: e.target.value })}
-                  placeholder="Academic clubs, honors, capstone thesis title..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none resize-none"
+                  placeholder="e.g. CGPA: 8.9/10, First Class with Distinction. Capstone Thesis: Seismic Isolation in Metro Rail Viaducts. President of Civil Engineering Student Association."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none resize-none leading-relaxed"
                 />
+                <span className="text-[11px] text-text-faint block mt-1">
+                  Include CGPA/grade, honors, thesis title, capstone projects, or academic student leadership.
+                </span>
               </div>
 
-              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
+              {/* Action buttons */}
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 pt-3 border-t border-white/[0.06]">
                 <button
                   type="button"
-                  onClick={() => setIsEduModalOpen(false)}
+                  onClick={() => {
+                    setIsEduModalOpen(false);
+                    resetEduForm();
+                  }}
                   className="btn-secondary text-xs py-3 px-5 min-h-[44px] w-full sm:w-auto cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={addEduMutation.isPending || updateEduMutation.isPending}
-                  className="btn-primary text-xs py-3 px-6 min-h-[44px] w-full sm:w-auto cursor-pointer"
+                  disabled={isSavingEdu}
+                  className="btn-primary text-xs py-3 px-6 min-h-[44px] w-full sm:w-auto cursor-pointer inline-flex items-center justify-center gap-2"
                 >
-                  {editingEduId ? "Save Changes" : "Add Education"}
+                  {isSavingEdu ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>{editingEduId ? "Save Changes" : "Save Academic Qualification"}</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>

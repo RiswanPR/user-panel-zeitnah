@@ -300,3 +300,16 @@ export {
   isExperienceOngoing,
   validateExperienceDates,
 } from "./experienceTimeline.js";
+
+export {
+  sortEducationDescending,
+  formatEducationDateRange,
+  formatEducationDateForInput,
+  parseEducationDateSafe,
+  isEducationOngoing,
+  inferAcademicDegreeLevel,
+  extractAcademicHonors,
+  validateEducationForm,
+  AEC_QUALIFICATION_SUGGESTIONS,
+  AEC_FIELD_OF_STUDY_SUGGESTIONS,
+} from "./educationAcademic.js";
