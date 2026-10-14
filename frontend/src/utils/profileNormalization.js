@@ -314,3 +314,17 @@ export {
   AEC_QUALIFICATION_SUGGESTIONS,
   AEC_FIELD_OF_STUDY_SUGGESTIONS,
 } from "./educationAcademic.js";
+
+export {
+  sortCertificationsDescending,
+  getCertificationExpirationStatus,
+  formatCertificationDateRange,
+  formatCertificationDateForInput,
+  formatCertificationDate,
+  parseCertificationDateSafe,
+  isCertificationVerified,
+  validateCertificationForm,
+  AEC_CERTIFICATION_SUGGESTIONS,
+  AEC_ISSUER_SUGGESTIONS,
+} from "./certificationCredential.js";
+

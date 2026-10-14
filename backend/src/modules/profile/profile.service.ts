@@ -677,7 +677,14 @@ export class ProfileService {
         skills: userObj.skills || [],
         experience: isExpVisible ? userObj.experience || [] : [],
         education: isEduVisible ? userObj.education || [] : [],
-        certifications: isCertVisible ? userObj.certifications || [] : [],
+        certifications: isCertVisible
+          ? (userObj.certifications || []).map((c: any) => {
+              const raw =
+                typeof c?.toObject === 'function' ? c.toObject() : { ...c };
+              const { credentialId, ...publicCert } = raw;
+              return publicCert;
+            })
+          : [],
         primaryDiscipline: userObj.primaryDiscipline || '',
         specializations: userObj.specializations || [],
         infrastructureSectors: userObj.infrastructureSectors || [],
@@ -1454,7 +1461,7 @@ export class ProfileService {
     }
 
     user.education[idx] = {
-      ...user.education[idx],
+      id: educationId,
       institution: dto.institution.trim(),
       qualification: dto.qualification.trim(),
       fieldOfStudy: dto.fieldOfStudy || '',
@@ -1562,13 +1569,14 @@ export class ProfileService {
     }
 
     user.certifications[idx] = {
-      ...user.certifications[idx],
+      id: certId,
       name: dto.name.trim(),
       issuer: dto.issuer.trim(),
       issueDate: issue,
       expirationDate: exp,
       credentialId: dto.credentialId || '',
       credentialUrl: dto.credentialUrl || '',
+      status: (user.certifications[idx] as any)?.status || 'UNVERIFIED',
     };
 
     const { newlyAwarded, completion } = evaluateProfileMilestones(user);
@@ -2094,7 +2102,14 @@ export class ProfileService {
       highlightedExperience,
       allExperience: user.experience || [],
       education: user.education || [],
-      certifications: user.certifications || [],
+      certifications: isOwner
+        ? user.certifications || []
+        : (user.certifications || []).map((c: any) => {
+            const raw =
+              typeof c?.toObject === 'function' ? c.toObject() : { ...c };
+            const { credentialId, ...publicCert } = raw;
+            return publicCert;
+          }),
       resume: allowedResume,
       sectionsVisibility: user.portfolio?.sectionsVisibility || {
         about: true,

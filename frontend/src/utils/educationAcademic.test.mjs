@@ -228,7 +228,9 @@ describe("Academic Education & Timeline Utilities Regression Tests", () => {
     it("verifies EditProfile.jsx incorporates the Education & Academics redesign", async () => {
       const fs = await import("node:fs");
       const path = await import("node:path");
-      const editProfilePath = path.resolve("src/pages/profile/EditProfile.jsx");
+      const { fileURLToPath } = await import("node:url");
+      const __dirname = path.dirname(fileURLToPath(import.meta.url));
+      const editProfilePath = path.resolve(__dirname, "../pages/profile/EditProfile.jsx");
       const content = fs.readFileSync(editProfilePath, "utf-8");
 
       // Header & subtitle
@@ -260,7 +262,9 @@ describe("Academic Education & Timeline Utilities Regression Tests", () => {
     it("verifies ProfileEducationSection.jsx uses chronological sorting and consistent header", async () => {
       const fs = await import("node:fs");
       const path = await import("node:path");
-      const compPath = path.resolve("src/components/profile/ProfileEducationSection.jsx");
+      const { fileURLToPath } = await import("node:url");
+      const __dirname = path.dirname(fileURLToPath(import.meta.url));
+      const compPath = path.resolve(__dirname, "../components/profile/ProfileEducationSection.jsx");
       const content = fs.readFileSync(compPath, "utf-8");
 
       assert.ok(content.includes("sortEducationDescending"), "Should use sortEducationDescending");

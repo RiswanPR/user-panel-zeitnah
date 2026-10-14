@@ -63,6 +63,14 @@ import {
   extractAcademicHonors,
   validateEducationForm,
   AEC_QUALIFICATION_SUGGESTIONS,
+  sortCertificationsDescending,
+  getCertificationExpirationStatus,
+  formatCertificationDateRange,
+  formatCertificationDateForInput,
+  isCertificationVerified,
+  validateCertificationForm,
+  AEC_CERTIFICATION_SUGGESTIONS,
+  AEC_ISSUER_SUGGESTIONS,
 } from "../../utils/profileNormalization";
 
 const MAX_BIO_LENGTH = 1000;
@@ -168,6 +176,7 @@ export default function EditProfile() {
   // Certifications Modal & Form
   const [isCertModalOpen, setIsCertModalOpen] = useState(false);
   const [editingCertId, setEditingCertId] = useState(null);
+  const [certErrors, setCertErrors] = useState({});
   const [certForm, setCertForm] = useState({
     name: "",
     issuer: "",
@@ -519,7 +528,24 @@ export default function EditProfile() {
       toast.success("Certification added", "Credential record stored.");
       notifyMilestones(res.newlyAwarded);
     },
-    onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to add certification."),
+    onError: (err) => {
+      const msg = err.response?.data?.message || "Failed to add certification.";
+      if (typeof msg === "string") {
+        const lower = msg.toLowerCase();
+        if (lower.includes("name")) {
+          setCertErrors((prev) => ({ ...prev, name: msg }));
+        } else if (lower.includes("issuer")) {
+          setCertErrors((prev) => ({ ...prev, issuer: msg }));
+        } else if (lower.includes("expiration date")) {
+          setCertErrors((prev) => ({ ...prev, expirationDate: msg }));
+        } else if (lower.includes("issue date")) {
+          setCertErrors((prev) => ({ ...prev, issueDate: msg }));
+        } else if (lower.includes("credential url") || lower.includes("url")) {
+          setCertErrors((prev) => ({ ...prev, credentialUrl: msg }));
+        }
+      }
+      toast.error("Error", msg);
+    },
   });
 
   const updateCertMutation = useMutation({
@@ -531,7 +557,24 @@ export default function EditProfile() {
       toast.success("Certification updated", "Credential record updated.");
       notifyMilestones(res.newlyAwarded);
     },
-    onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to update certification."),
+    onError: (err) => {
+      const msg = err.response?.data?.message || "Failed to update certification.";
+      if (typeof msg === "string") {
+        const lower = msg.toLowerCase();
+        if (lower.includes("name")) {
+          setCertErrors((prev) => ({ ...prev, name: msg }));
+        } else if (lower.includes("issuer")) {
+          setCertErrors((prev) => ({ ...prev, issuer: msg }));
+        } else if (lower.includes("expiration date")) {
+          setCertErrors((prev) => ({ ...prev, expirationDate: msg }));
+        } else if (lower.includes("issue date")) {
+          setCertErrors((prev) => ({ ...prev, issueDate: msg }));
+        } else if (lower.includes("credential url") || lower.includes("url")) {
+          setCertErrors((prev) => ({ ...prev, credentialUrl: msg }));
+        }
+      }
+      toast.error("Error", msg);
+    },
   });
 
   const deleteCertMutation = useMutation({
@@ -542,6 +585,8 @@ export default function EditProfile() {
     },
     onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to delete certification."),
   });
+
+  const isSavingCert = addCertMutation.isPending || updateCertMutation.isPending;
 
   // Recommendation Status Mutation
   const updateRecStatusMutation = useMutation({
@@ -633,6 +678,7 @@ export default function EditProfile() {
       credentialUrl: "",
     });
     setEditingCertId(null);
+    setCertErrors({});
   };
 
   // Image Upload Handlers
@@ -789,13 +835,30 @@ export default function EditProfile() {
 
   const handleSaveCert = (e) => {
     e.preventDefault();
-    if (!certForm.name.trim() || !certForm.issuer.trim() || !certForm.issueDate) {
-      return toast.error("Missing fields", "Certificate name, issuer, and issue date are required.");
+    if (isSavingCert) return;
+
+    const validation = validateCertificationForm(certForm);
+    if (!validation.valid) {
+      setCertErrors(validation.errors);
+      const firstError = Object.values(validation.errors)[0];
+      return toast.error("Validation Error", firstError || "Please check all required certification fields.");
     }
+
+    setCertErrors({});
+
+    const payload = {
+      name: certForm.name.trim(),
+      issuer: certForm.issuer.trim(),
+      issueDate: formatCertificationDateForInput(certForm.issueDate),
+      expirationDate: certForm.expirationDate ? formatCertificationDateForInput(certForm.expirationDate) : null,
+      credentialId: certForm.credentialId ? certForm.credentialId.trim() : "",
+      credentialUrl: certForm.credentialUrl ? certForm.credentialUrl.trim() : "",
+    };
+
     if (editingCertId) {
-      updateCertMutation.mutate({ id: editingCertId, payload: certForm });
+      updateCertMutation.mutate({ id: editingCertId, payload });
     } else {
-      addCertMutation.mutate(certForm);
+      addCertMutation.mutate(payload);
     }
   };
 
@@ -840,6 +903,7 @@ export default function EditProfile() {
   const isAssignedEducator = normalizeUserRole(profile) === "EDUCATOR";
   const sortedExperiences = sortExperienceDescending(profile?.experience);
   const sortedEducations = sortEducationDescending(profile?.education);
+  const sortedCertifications = sortCertificationsDescending(profile?.certifications);
 
   // Section completion status helper
   const getSectionStatus = (secId) => {
@@ -1719,23 +1783,24 @@ export default function EditProfile() {
                           {/* Top metadata row */}
                           <div className="flex items-center justify-between gap-2 flex-wrap">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded font-bold border ${levelInfo.badgeClass}`}>
+                              <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded-md font-bold border ${levelInfo.badgeClass}`}>
                                 {levelInfo.level}
                               </span>
                               {edu.currentlyStudying && (
-                                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/25 text-brand-yellow font-bold">
-                                  In Progress
+                                <span className="px-2 py-0.5 rounded-md bg-brand-mint/10 border border-brand-mint/25 text-[10px] font-mono font-bold text-brand-mint uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-brand-mint animate-pulse shrink-0" />
+                                  <span>In Progress</span>
                                 </span>
                               )}
                               {dateRange && (
                                 <span className="inline-flex items-center gap-1.5 text-xs font-mono font-medium text-text-muted">
-                                  <Calendar className="w-3.5 h-3.5 text-text-faint" />
+                                  <Calendar className="w-3.5 h-3.5 text-text-faint shrink-0" />
                                   <span>{dateRange}</span>
                                 </span>
                               )}
                             </div>
 
-                            <div className="flex items-center gap-1 shrink-0">
+                            <div className="flex items-center gap-1 shrink-0 opacity-90 sm:opacity-75 sm:group-hover:opacity-100 transition-opacity">
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1753,8 +1818,8 @@ export default function EditProfile() {
                                   setIsEduModalOpen(true);
                                 }}
                                 className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer"
-                                title="Edit academic qualification"
-                                aria-label="Edit academic qualification"
+                                title={`Edit ${edu.qualification || "academic qualification"}`}
+                                aria-label={`Edit ${edu.qualification || "academic qualification"} at ${edu.institution || "institution"}`}
                               >
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>
@@ -1763,8 +1828,8 @@ export default function EditProfile() {
                                 onClick={() => deleteEduMutation.mutate(eduId)}
                                 disabled={deleteEduMutation.isPending}
                                 className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-danger hover:bg-white/[0.04] transition-colors cursor-pointer disabled:opacity-50"
-                                title="Delete academic qualification"
-                                aria-label="Delete academic qualification"
+                                title={`Delete ${edu.qualification || "academic qualification"}`}
+                                aria-label={`Delete ${edu.qualification || "academic qualification"} at ${edu.institution || "institution"}`}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -1773,18 +1838,18 @@ export default function EditProfile() {
 
                           {/* Qualification & Institution */}
                           <div>
-                            <h4 className="text-base sm:text-lg font-heading font-bold text-white tracking-tight">
+                            <h3 className="text-base sm:text-lg font-heading font-black text-white tracking-tight leading-snug break-words">
                               {edu.qualification}
-                            </h4>
-                            <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-text-secondary font-medium mt-0.5">
-                              <span className="text-white/90 font-semibold inline-flex items-center gap-1">
-                                <Building2 className="w-3.5 h-3.5 text-brand-mint/80" />
-                                {edu.institution}
+                            </h3>
+                            <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-text-secondary font-medium mt-1">
+                              <span className="text-brand-mint font-bold inline-flex items-center gap-1.5 break-words">
+                                <Building2 className="w-3.5 h-3.5 text-brand-mint/80 shrink-0" />
+                                <span>{edu.institution}</span>
                               </span>
                               {edu.fieldOfStudy && (
                                 <>
                                   <span className="text-white/20">•</span>
-                                  <span className="text-brand-mint/90">{edu.fieldOfStudy}</span>
+                                  <span className="text-brand-mint/90 font-medium break-words">{edu.fieldOfStudy}</span>
                                 </>
                               )}
                             </div>
@@ -1800,7 +1865,7 @@ export default function EditProfile() {
 
                           {/* Description */}
                           {edu.description && (
-                            <p className="text-xs text-text-muted leading-relaxed pt-2 border-t border-white/[0.04] whitespace-pre-line">
+                            <p className="text-xs sm:text-sm text-text-secondary leading-relaxed pt-2.5 border-t border-white/[0.04] whitespace-pre-line break-words">
                               {edu.description}
                             </p>
                           )}
@@ -1845,19 +1910,24 @@ export default function EditProfile() {
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
                       SECTION 06 OF 08
                     </span>
                     <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                       +15 XP
                     </span>
+                    {profile?.certifications?.length > 0 && (
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-white/[0.04] border border-white/[0.08] text-white/80">
+                        {profile.certifications.length} {profile.certifications.length === 1 ? "Credential" : "Credentials"}
+                      </span>
+                    )}
                   </div>
                   <h2 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
-                    Accredited Certifications
+                    Licenses & Certifications
                   </h2>
                   <p className="text-xs sm:text-sm text-text-muted mt-1 leading-relaxed">
-                    Licenses, software certifications, and professional engineering council registrations.
+                    Accredited licenses, software certifications, and professional engineering council registrations.
                   </p>
                 </div>
                 <button
@@ -1869,90 +1939,122 @@ export default function EditProfile() {
                   className="btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer shadow-md min-h-[44px] shrink-0"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  Add Certificate
+                  Add Credential
                 </button>
               </div>
 
-              {profile?.certifications?.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {profile.certifications.map((cert) => (
-                    <div
-                      key={cert.id}
-                      className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/30 transition-all flex flex-col justify-between gap-3 shadow-sm"
-                    >
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-mono font-bold text-brand-mint uppercase tracking-wider">
-                            {new Date(cert.issueDate).getFullYear()}
-                          </span>
-                          <span
-                            className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                              cert.verified
-                                ? "bg-brand-mint/15 text-brand-mint border border-brand-mint/30"
-                                : "bg-white/[0.04] text-text-faint"
-                            }`}
-                          >
-                            {cert.verified ? "Verified ✓" : "Unverified"}
-                          </span>
+              {sortedCertifications.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {sortedCertifications.map((cert) => {
+                    const certId = cert.id || cert._id;
+                    const dateRange = formatCertificationDateRange(cert.issueDate, cert.expirationDate);
+                    const statusInfo = getCertificationExpirationStatus(cert.issueDate, cert.expirationDate);
+                    const isVerified = isCertificationVerified(cert);
+
+                    return (
+                      <div
+                        key={certId}
+                        className="p-5 sm:p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/30 hover:bg-white/[0.035] transition-all flex flex-col justify-between gap-4 shadow-sm group"
+                      >
+                        <div className="space-y-3 min-w-0">
+                          {/* Top Row: Status badge, verified badge & edit/delete actions */}
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
+                              <span
+                                className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded-md font-bold border inline-flex items-center gap-1.5 ${statusInfo.badgeClass}`}
+                              >
+                                {statusInfo.isActive && !statusInfo.isExpired && (
+                                  <span className="w-1.5 h-1.5 rounded-full bg-brand-mint animate-pulse shrink-0" />
+                                )}
+                                <span>{statusInfo.label}</span>
+                              </span>
+
+                              {isVerified && (
+                                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md font-bold bg-brand-mint/15 text-brand-mint border border-brand-mint/30 inline-flex items-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3 text-brand-mint" />
+                                  <span>Verified</span>
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-1 shrink-0 opacity-90 sm:opacity-75 sm:group-hover:opacity-100 transition-opacity">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingCertId(certId);
+                                  setCertForm({
+                                    name: cert.name || "",
+                                    issuer: cert.issuer || "",
+                                    issueDate: formatCertificationDateForInput(cert.issueDate),
+                                    expirationDate: formatCertificationDateForInput(cert.expirationDate),
+                                    credentialId: cert.credentialId || "",
+                                    credentialUrl: cert.credentialUrl || "",
+                                  });
+                                  setCertErrors({});
+                                  setIsCertModalOpen(true);
+                                }}
+                                className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer"
+                                title={`Edit ${cert.name}`}
+                                aria-label={`Edit ${cert.name}`}
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => deleteCertMutation.mutate(certId)}
+                                disabled={deleteCertMutation.isPending}
+                                className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-danger hover:bg-white/[0.04] transition-colors cursor-pointer disabled:opacity-50"
+                                title={`Delete ${cert.name}`}
+                                aria-label={`Delete ${cert.name}`}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Credential Name & Issuer */}
+                          <div>
+                            <h3 className="text-base sm:text-lg font-heading font-black text-white tracking-tight leading-snug break-words">
+                              {cert.name}
+                            </h3>
+                            <p className="text-xs sm:text-sm font-semibold text-brand-mint mt-1 break-words">
+                              {cert.issuer}
+                            </p>
+                          </div>
+
+                          {/* Date Range */}
+                          {dateRange && (
+                            <div className="flex items-center gap-1.5 text-xs text-text-muted font-mono font-medium">
+                              <Calendar className="w-3.5 h-3.5 text-text-faint shrink-0" />
+                              <span>{dateRange}</span>
+                            </div>
+                          )}
+
+                          {/* Credential ID */}
+                          {cert.credentialId && (
+                            <p className="text-[11px] font-mono text-text-muted break-words">
+                              Credential ID: <span className="text-white/80 font-medium">{cert.credentialId}</span>
+                            </p>
+                          )}
                         </div>
-                        <h4 className="text-sm font-bold text-white leading-snug">{cert.name}</h4>
-                        <div className="text-xs text-text-secondary">{cert.issuer}</div>
-                        {cert.credentialId && (
-                          <div className="text-[11px] font-mono text-text-faint truncate">
-                            ID: {cert.credentialId}
+
+                        {/* Bottom Row: Credential URL Link */}
+                        {cert.credentialUrl && (
+                          <div className="pt-3 border-t border-white/[0.04]">
+                            <a
+                              href={cert.credentialUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-brand-mint hover:underline inline-flex items-center gap-1.5 min-h-[36px] font-medium"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                              <span>View Credential</span>
+                            </a>
                           </div>
                         )}
                       </div>
-
-                      <div className="flex items-center justify-between pt-2 border-t border-white/[0.04]">
-                        {cert.credentialUrl ? (
-                          <a
-                            href={cert.credentialUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-brand-mint hover:underline inline-flex items-center gap-1 min-h-[36px]"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                            View Credential
-                          </a>
-                        ) : (
-                          <span />
-                        )}
-
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingCertId(cert.id);
-                              setCertForm({
-                                name: cert.name || "",
-                                issuer: cert.issuer || "",
-                                issueDate: cert.issueDate ? new Date(cert.issueDate).toISOString().split("T")[0] : "",
-                                expirationDate: cert.expirationDate ? new Date(cert.expirationDate).toISOString().split("T")[0] : "",
-                                credentialId: cert.credentialId || "",
-                                credentialUrl: cert.credentialUrl || "",
-                              });
-                              setIsCertModalOpen(true);
-                            }}
-                            className="p-1.5 rounded-lg text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
-                            title="Edit"
-                            aria-label="Edit certification"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => deleteCertMutation.mutate(cert.id)}
-                            className="p-1.5 rounded-lg text-text-muted hover:text-danger hover:bg-white/[0.04] transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
-                            title="Delete"
-                            aria-label="Delete certification"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="py-14 px-4 rounded-3xl border border-dashed border-white/[0.1] text-center space-y-3.5 bg-white/[0.01]">
@@ -1974,7 +2076,7 @@ export default function EditProfile() {
                     className="btn-primary text-xs uppercase tracking-wider inline-flex items-center gap-1.5 py-2.5 px-5 cursor-pointer min-h-[44px]"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    Add Certificate
+                    Add Credential
                   </button>
                 </div>
               )}
@@ -3034,15 +3136,28 @@ export default function EditProfile() {
 
       {/* Certification Modal */}
       {isCertModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in">
-          <div className="relative w-full max-w-lg rounded-3xl border border-white/[0.1] bg-bg-card p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90dvh] sm:max-h-[85vh] overflow-y-auto overscroll-contain">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-heading font-extrabold text-white">
-                {editingCertId ? "Edit Certification" : "Add Certification"}
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
+          <div className="relative w-full max-w-xl rounded-3xl border border-white/[0.1] bg-bg-card p-6 sm:p-8 space-y-6 shadow-2xl max-h-[92dvh] sm:max-h-[88vh] overflow-y-auto overscroll-contain">
+            <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-brand-mint/10 border border-brand-mint/25 flex items-center justify-center text-brand-mint shadow-inner shrink-0">
+                  <Award className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-heading font-extrabold text-white">
+                    {editingCertId ? "Edit Credential" : "Add Credential"}
+                  </h3>
+                  <p className="text-xs text-text-muted">
+                    Record professional certifications, engineering council registrations, or software licenses.
+                  </p>
+                </div>
+              </div>
               <button
                 type="button"
-                onClick={() => setIsCertModalOpen(false)}
+                onClick={() => {
+                  setIsCertModalOpen(false);
+                  resetCertForm();
+                }}
                 className="p-2.5 -mr-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-white cursor-pointer"
                 aria-label="Close dialog"
               >
@@ -3050,21 +3165,64 @@ export default function EditProfile() {
               </button>
             </div>
 
-            <form onSubmit={handleSaveCert} className="space-y-4">
+            <form onSubmit={handleSaveCert} className="space-y-5">
+              {/* Certificate Name */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
-                  Certificate Name <span className="text-brand-mint">*</span>
+                  Certificate / Credential Name <span className="text-brand-mint">*</span>
                 </label>
                 <input
                   type="text"
                   value={certForm.name}
-                  onChange={(e) => setCertForm({ ...certForm, name: e.target.value })}
-                  required
+                  onChange={(e) => {
+                    setCertForm({ ...certForm, name: e.target.value });
+                    if (certErrors.name) {
+                      setCertErrors((prev) => {
+                        const copy = { ...prev };
+                        delete copy.name;
+                        return copy;
+                      });
+                    }
+                  }}
                   placeholder="e.g. Autodesk Certified Professional: Revit for Structural Design"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
+                  className={`w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border text-sm text-white focus:outline-none transition-colors ${
+                    certErrors.name ? "border-danger focus:border-danger" : "border-white/[0.08] focus:border-brand-mint"
+                  }`}
                 />
+                {certErrors.name && (
+                  <p className="text-xs text-danger mt-1 font-medium" role="alert">
+                    {certErrors.name}
+                  </p>
+                )}
+
+                {/* Quick AEC Certificate Suggestions */}
+                <div className="pt-2">
+                  <span className="text-[11px] text-text-faint block mb-1.5 font-medium">Quick AEC Suggestions:</span>
+                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto no-scrollbar">
+                    {AEC_CERTIFICATION_SUGGESTIONS.slice(0, 6).map((sug) => (
+                      <button
+                        key={sug}
+                        type="button"
+                        onClick={() => {
+                          setCertForm((prev) => ({ ...prev, name: sug }));
+                          if (certErrors.name) {
+                            setCertErrors((prev) => {
+                              const copy = { ...prev };
+                              delete copy.name;
+                              return copy;
+                            });
+                          }
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-white/[0.03] hover:bg-brand-mint/10 border border-white/[0.06] hover:border-brand-mint/30 text-[11px] text-text-secondary hover:text-brand-mint transition-colors cursor-pointer text-left"
+                      >
+                        {sug}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
+              {/* Issuing Organization */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
                   Issuing Organization <span className="text-brand-mint">*</span>
@@ -3072,14 +3230,56 @@ export default function EditProfile() {
                 <input
                   type="text"
                   value={certForm.issuer}
-                  onChange={(e) => setCertForm({ ...certForm, issuer: e.target.value })}
-                  required
-                  placeholder="e.g. Autodesk, PMI, Oracle, ASCE, Zeitnah"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
+                  onChange={(e) => {
+                    setCertForm({ ...certForm, issuer: e.target.value });
+                    if (certErrors.issuer) {
+                      setCertErrors((prev) => {
+                        const copy = { ...prev };
+                        delete copy.issuer;
+                        return copy;
+                      });
+                    }
+                  }}
+                  placeholder="e.g. Autodesk, PMI, ICE, Engineering Council"
+                  className={`w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border text-sm text-white focus:outline-none transition-colors ${
+                    certErrors.issuer ? "border-danger focus:border-danger" : "border-white/[0.08] focus:border-brand-mint"
+                  }`}
                 />
+                {certErrors.issuer && (
+                  <p className="text-xs text-danger mt-1 font-medium" role="alert">
+                    {certErrors.issuer}
+                  </p>
+                )}
+
+                {/* Quick AEC Issuer Suggestions */}
+                <div className="pt-2">
+                  <span className="text-[11px] text-text-faint block mb-1.5 font-medium">Common Issuing Bodies:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {AEC_ISSUER_SUGGESTIONS.slice(0, 5).map((sug) => (
+                      <button
+                        key={sug}
+                        type="button"
+                        onClick={() => {
+                          setCertForm((prev) => ({ ...prev, issuer: sug }));
+                          if (certErrors.issuer) {
+                            setCertErrors((prev) => {
+                              const copy = { ...prev };
+                              delete copy.issuer;
+                              return copy;
+                            });
+                          }
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-white/[0.03] hover:bg-brand-mint/10 border border-white/[0.06] hover:border-brand-mint/30 text-[11px] text-text-secondary hover:text-brand-mint transition-colors cursor-pointer text-left"
+                      >
+                        {sug}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Dates */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
                     Issue Date <span className="text-brand-mint">*</span>
@@ -3087,72 +3287,150 @@ export default function EditProfile() {
                   <input
                     type="date"
                     value={certForm.issueDate}
-                    onChange={(e) => setCertForm({ ...certForm, issueDate: e.target.value })}
-                    required
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
+                    onChange={(e) => {
+                      setCertForm({ ...certForm, issueDate: e.target.value });
+                      if (certErrors.issueDate) {
+                        setCertErrors((prev) => {
+                          const copy = { ...prev };
+                          delete copy.issueDate;
+                          return copy;
+                        });
+                      }
+                    }}
+                    className={`w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border text-sm text-white focus:outline-none transition-colors ${
+                      certErrors.issueDate ? "border-danger focus:border-danger" : "border-white/[0.08] focus:border-brand-mint"
+                    }`}
                   />
+                  {certErrors.issueDate && (
+                    <p className="text-xs text-danger mt-1 font-medium" role="alert">
+                      {certErrors.issueDate}
+                    </p>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
-                    Expiration Date
+                    Expiration Date <span className="text-text-faint font-normal">(Leave blank if lifetime)</span>
                   </label>
                   <input
                     type="date"
                     value={certForm.expirationDate}
-                    onChange={(e) => setCertForm({ ...certForm, expirationDate: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
+                    onChange={(e) => {
+                      setCertForm({ ...certForm, expirationDate: e.target.value });
+                      if (certErrors.expirationDate) {
+                        setCertErrors((prev) => {
+                          const copy = { ...prev };
+                          delete copy.expirationDate;
+                          return copy;
+                        });
+                      }
+                    }}
+                    className={`w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border text-sm text-white focus:outline-none transition-colors ${
+                      certErrors.expirationDate ? "border-danger focus:border-danger" : "border-white/[0.08] focus:border-brand-mint"
+                    }`}
                   />
+                  {certErrors.expirationDate && (
+                    <p className="text-xs text-danger mt-1 font-medium" role="alert">
+                      {certErrors.expirationDate}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
-                  Credential ID <span className="text-text-faint font-normal">(Optional)</span>
-                </label>
-                <input
-                  type="text"
-                  value={certForm.credentialId}
-                  onChange={(e) => setCertForm({ ...certForm, credentialId: e.target.value })}
-                  placeholder="e.g. CERT-REV-9874"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
-                />
+              {/* Credential ID & Credential URL */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
+                    Credential ID <span className="text-text-faint font-normal">(Optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={certForm.credentialId}
+                    onChange={(e) => {
+                      setCertForm({ ...certForm, credentialId: e.target.value });
+                      if (certErrors.credentialId) {
+                        setCertErrors((prev) => {
+                          const copy = { ...prev };
+                          delete copy.credentialId;
+                          return copy;
+                        });
+                      }
+                    }}
+                    placeholder="e.g. CERT-REV-9874"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
+                  />
+                  {certErrors.credentialId && (
+                    <p className="text-xs text-danger mt-1 font-medium" role="alert">
+                      {certErrors.credentialId}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
+                    Credential URL <span className="text-text-faint font-normal">(Optional)</span>
+                  </label>
+                  <input
+                    type="url"
+                    value={certForm.credentialUrl}
+                    onChange={(e) => {
+                      setCertForm({ ...certForm, credentialUrl: e.target.value });
+                      if (certErrors.credentialUrl) {
+                        setCertErrors((prev) => {
+                          const copy = { ...prev };
+                          delete copy.credentialUrl;
+                          return copy;
+                        });
+                      }
+                    }}
+                    placeholder="https://..."
+                    className={`w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border text-sm text-white focus:outline-none transition-colors ${
+                      certErrors.credentialUrl ? "border-danger focus:border-danger" : "border-white/[0.08] focus:border-brand-mint"
+                    }`}
+                  />
+                  {certErrors.credentialUrl && (
+                    <p className="text-xs text-danger mt-1 font-medium" role="alert">
+                      {certErrors.credentialUrl}
+                    </p>
+                  )}
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
-                  Credential URL <span className="text-text-faint font-normal">(Optional)</span>
-                </label>
-                <input
-                  type="url"
-                  value={certForm.credentialUrl}
-                  onChange={(e) => setCertForm({ ...certForm, credentialUrl: e.target.value })}
-                  placeholder="https://..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] text-sm text-white focus:border-brand-mint focus:outline-none"
-                />
-              </div>
-
-              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs text-text-muted flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-text-faint shrink-0" />
+              <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs text-text-muted flex items-center gap-2.5">
+                <ShieldCheck className="w-4 h-4 text-brand-mint/70 shrink-0" />
                 <span>
-                  Certifications are marked as <strong className="text-text-secondary">Unverified</strong> unless directly issued by Zeitnah or verified via credential link.
+                  Certifications are verified by Zeitnah or verified directly via official accredited credential links.
                 </span>
               </div>
 
-              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
+              {/* Action buttons */}
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 pt-3 border-t border-white/[0.06]">
                 <button
                   type="button"
-                  onClick={() => setIsCertModalOpen(false)}
+                  onClick={() => {
+                    setIsCertModalOpen(false);
+                    resetCertForm();
+                  }}
                   className="btn-secondary text-xs py-3 px-5 min-h-[44px] w-full sm:w-auto cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={addCertMutation.isPending || updateCertMutation.isPending}
-                  className="btn-primary text-xs py-3 px-6 min-h-[44px] w-full sm:w-auto cursor-pointer"
+                  disabled={isSavingCert}
+                  className="btn-primary text-xs py-3 px-6 min-h-[44px] w-full sm:w-auto cursor-pointer inline-flex items-center justify-center gap-2"
                 >
-                  {editingCertId ? "Save Changes" : "Add Certificate"}
+                  {isSavingCert ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>{editingCertId ? "Save Changes" : "Save Credential"}</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>

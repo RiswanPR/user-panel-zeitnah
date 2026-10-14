@@ -1180,6 +1180,49 @@ describe('ProfileService', () => {
       expect(res.user.primaryDiscipline).toBe('Site Engineering');
     });
 
+    it('Credential IDs are stripped from public profile certifications', async () => {
+      const mockUserDoc: any = {
+        _id: 'user_cert_priv',
+        name: 'Certified Engineer',
+        username: 'certeng',
+        avatar: '',
+        privacySettings: {
+          experience: 'PUBLIC',
+          education: 'PUBLIC',
+          certifications: 'PUBLIC',
+        },
+        toObject: () => ({
+          _id: 'user_cert_priv',
+          name: 'Certified Engineer',
+          username: 'certeng',
+          avatar: '',
+          education: [],
+          certifications: [
+            {
+              id: 'cert-1',
+              name: 'PMP',
+              issuer: 'PMI',
+              credentialId: 'SECRET-CRED-ID-999',
+              credentialUrl: 'https://pmi.org',
+            },
+          ],
+          privacySettings: {
+            certifications: 'PUBLIC',
+          },
+        }),
+      };
+
+      mockUserModel.findOne.mockReturnValue({
+        select: jest.fn().mockResolvedValue(mockUserDoc),
+      });
+
+      const res = await service.getPublicProfile('certeng');
+      expect(res.user.certifications).toHaveLength(1);
+      expect(res.user.certifications[0].name).toBe('PMP');
+      expect(res.user.certifications[0].credentialId).toBeUndefined();
+      expect(res.user.certifications[0].credentialUrl).toBe('https://pmi.org');
+    });
+
     it('Private fields are masked in getPublicProfile when legacy privacy keys are used', async () => {
       const mockUserDoc: any = {
         _id: 'user_legacy_priv',
