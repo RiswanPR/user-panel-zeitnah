@@ -21,11 +21,17 @@ export function getUploadUrl(path) {
     return null;
   }
 
-  if (/^https?:\/\//i.test(path)) {
-    return path;
+  const trimmed = path.trim();
+  if (!trimmed) {
+    return null;
   }
 
-  return `${uploadBaseUrl}/uploads/${path}`;
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  const cleaned = trimmed.replace(/^\/?uploads\/?/i, "").replace(/^\/+/, "");
+  return `${uploadBaseUrl}/uploads/${cleaned}`;
 }
 
 export function formatDuration(duration) {

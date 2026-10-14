@@ -16,6 +16,16 @@ import { normalizeAvailability } from "../../utils/profileNormalization";
  */
 
 const SIZE_STYLES = {
+  xxs: {
+    container: "w-7 h-7",
+    rounded: "rounded-full",
+    text: "text-[9px]",
+    ringOffset: "ring-offset-1",
+    marker: "w-3 h-3 -top-0.5 -right-0.5 p-0.5",
+    markerIcon: "w-1.5 h-1.5",
+    badge: "w-2.5 h-2.5 -bottom-0.5 -right-0.5",
+    badgeIcon: "w-1.5 h-1.5",
+  },
   xs: {
     container: "w-8 h-8",
     rounded: "rounded-xl",
@@ -71,6 +81,7 @@ const SIZE_STYLES = {
 export default function ProfileAvatar({
   src,
   name = "Member",
+  alt,
   initials: explicitInitials,
   size = "md",
   shape = "circle",
@@ -137,7 +148,7 @@ export default function ProfileAvatar({
         {avatarUrl && !imgError ? (
           <img
             src={avatarUrl}
-            alt={name || "Member Avatar"}
+            alt={alt || name || "Member Avatar"}
             onError={() => setImgError(true)}
             className={`w-full h-full object-cover ${isCircle ? "rounded-full" : ""}`}
             style={isCircle ? { aspectRatio: "1 / 1", borderRadius: "50%", objectFit: "cover" } : { objectFit: "cover" }}

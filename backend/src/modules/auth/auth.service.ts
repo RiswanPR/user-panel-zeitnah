@@ -68,6 +68,7 @@ export type AuthenticatedUser = {
   username?: string;
   usernameClaimed?: boolean;
   usernameChangedAt?: Date | null;
+  avatar?: string;
   primaryRole: string;
   role: string;
   deviceId: string;

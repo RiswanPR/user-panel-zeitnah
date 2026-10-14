@@ -280,6 +280,7 @@ export class AuthController {
         primaryRole: req.user.primaryRole,
         role: req.user.role,
         deviceId: req.user.deviceId,
+        avatar: (req.user as any).avatar || '',
       },
     };
   }

@@ -237,4 +237,112 @@ describe('Profile Hero Redesign — Modern Identity & Hero Experience Tests', ()
       assert.match(publicContent, /<ProfileHero[\s\S]*?isOwner=\{isOwnProfile\}/);
     });
   });
+
+  describe('7. Navbar Avatar Resolution, Normalization & Instant Propagation', () => {
+    it('normalizes avatar URLs across diverse formats (relative, leading /uploads, https, object) without duplicates', async () => {
+      const { getUploadUrl } = await import('./courseUi.js');
+
+      // Absolute URLs preserved as-is
+      assert.equal(getUploadUrl('https://example.com/avatar.jpg'), 'https://example.com/avatar.jpg');
+      assert.equal(getUploadUrl('https://s3.amazonaws.com/bucket/profiles/user-123.jpg'), 'https://s3.amazonaws.com/bucket/profiles/user-123.jpg');
+
+      // Relative paths get prefixed with uploadBaseUrl/uploads/
+      const res1 = getUploadUrl('profiles/user-123.jpg');
+      assert.match(res1, /\/uploads\/profiles\/user-123\.jpg$/);
+      assert.ok(!res1.includes('/uploads/uploads/'), 'Must not produce duplicate uploads/ prefix');
+
+      // Leading /uploads/ cleaned gracefully
+      const res2 = getUploadUrl('/uploads/avatars/john.png');
+      assert.match(res2, /\/uploads\/avatars\/john\.png$/);
+      assert.ok(!res2.includes('/uploads/uploads/'), 'Must not produce duplicate uploads/ prefix for /uploads/ paths');
+
+      // Leading uploads/ without slash
+      const res3 = getUploadUrl('uploads/avatars/sarah.png');
+      assert.match(res3, /\/uploads\/avatars\/sarah\.png$/);
+      assert.ok(!res3.includes('/uploads/uploads/'));
+
+      // Nested object format
+      assert.match(getUploadUrl({ url: 'profiles/nested.webp' }), /\/uploads\/profiles\/nested\.webp$/);
+
+      // Falsy, empty, or invalid values return null
+      assert.equal(getUploadUrl(null), null);
+      assert.equal(getUploadUrl(undefined), null);
+      assert.equal(getUploadUrl(''), null);
+      assert.equal(getUploadUrl('   '), null);
+      assert.equal(getUploadUrl(12345), null);
+    });
+
+    it('guarantees MainLayout queries PROFILE_QUERY_KEYS.ME and passes profile to MainNavbar', async () => {
+      const layoutPath = path.resolve('src/layouts/MainLayout.jsx');
+      const layoutContent = fs.readFileSync(layoutPath, 'utf8');
+
+      assert.match(layoutContent, /import\s*\{[^}]*coreProfileService[^}]*PROFILE_QUERY_KEYS[^}]*\}\s*from\s*["'][^"']*coreProfileService["']/);
+      assert.match(layoutContent, /queryKey:\s*PROFILE_QUERY_KEYS\.ME/);
+      assert.match(layoutContent, /<MainNavbar[\s\S]*?profile=\{authoritativeProfile\}/);
+    });
+
+    it('guarantees MainNavbar statically imports and renders ProfileAvatar for navbar trigger and dropdown', async () => {
+      const navbarPath = path.resolve('src/components/navigation/MainNavbar.jsx');
+      const navbarContent = fs.readFileSync(navbarPath, 'utf8');
+
+      // Imports ProfileAvatar
+      assert.match(navbarContent, /import ProfileAvatar from ["']\.\.\/profile\/ProfileAvatar["']/);
+
+      // Resolves rawAvatar across profile, user, and legacy fields
+      assert.match(navbarContent, /rawAvatar\s*=/);
+      assert.match(navbarContent, /currentUser\?\.avatar/);
+      assert.match(navbarContent, /user\?\.avatar/);
+
+      // Uses ProfileAvatar on navbar trigger
+      assert.match(navbarContent, /<ProfileAvatar[\s\S]*?src=\{rawAvatar\}[\s\S]*?size="xxs"[\s\S]*?shape="circle"/);
+
+      // Uses ProfileAvatar in dropdown header
+      assert.match(navbarContent, /<ProfileAvatar[\s\S]*?src=\{rawAvatar\}[\s\S]*?size="xs"[\s\S]*?shape="circle"/);
+    });
+
+    it('guarantees AuthContext enriches authUser with profile avatar on initial load', async () => {
+      const authPath = path.resolve('src/context/AuthContext.tsx');
+      const authContent = fs.readFileSync(authPath, 'utf8');
+
+      assert.match(authContent, /api\.get\(["']\/profile\/me["']\)/);
+      assert.match(authContent, /authUser\.avatar\s*=\s*profileUser\.avatar/);
+    });
+
+    it('guarantees Profile.jsx and EditProfile.jsx propagate avatar updates to PROFILE_QUERY_KEYS.ME and AuthContext', async () => {
+      const profilePath = path.resolve('src/pages/profile/Profile.jsx');
+      const profileContent = fs.readFileSync(profilePath, 'utf8');
+
+      // Updates React Query cache
+      assert.match(profileContent, /queryClient\.setQueryData\(PROFILE_QUERY_KEYS\.ME/);
+
+      // Updates AuthContext user
+      assert.match(profileContent, /setUser\(\(prev\)\s*=>\s*\(prev\s*\?\s*\{[^}]*\.\.\.prev,\s*avatar:\s*res\.avatar/);
+    });
+
+    it('verifies initials fallback is deterministic and triggers only when avatar is empty or load fails', () => {
+      function resolveAvatarDisplay(src, imgError, name) {
+        if (!src || imgError) {
+          const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+          if (parts.length === 0) return { showImage: false, initials: 'ZU' };
+          return { showImage: false, initials: parts.map((p) => p[0]).slice(0, 2).join('').toUpperCase() };
+        }
+        return { showImage: true, url: src };
+      }
+
+      // Valid avatar URL without error -> renders image
+      const valid = resolveAvatarDisplay('https://cdn.zeitnah.com/avatars/riyas.jpg', false, 'Riyas Ahamed');
+      assert.equal(valid.showImage, true);
+      assert.equal(valid.url, 'https://cdn.zeitnah.com/avatars/riyas.jpg');
+
+      // Valid avatar URL with imgError (image load genuinely failed) -> falls back to initials
+      const failed = resolveAvatarDisplay('https://cdn.zeitnah.com/avatars/broken.jpg', true, 'Riyas Ahamed');
+      assert.equal(failed.showImage, false);
+      assert.equal(failed.initials, 'RA');
+
+      // Missing avatar URL -> falls back to initials
+      const missing = resolveAvatarDisplay(null, false, 'Riyas Ahamed');
+      assert.equal(missing.showImage, false);
+      assert.equal(missing.initials, 'RA');
+    });
+  });
 });

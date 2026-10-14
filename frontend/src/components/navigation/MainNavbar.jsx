@@ -29,6 +29,7 @@ import { useActiveProfile } from "../../context/ActiveProfileContext";
 import BusinessLogo from "../business/BusinessLogo";
 import { getBusinessProfileUrl } from "../../utils/businessProfile";
 import ProfileSwitcher from "./ProfileSwitcher";
+import ProfileAvatar from "../profile/ProfileAvatar";
 
 /**
  * ZEITNAH — PREMIUM NAVBAR 3.0
@@ -49,6 +50,7 @@ import ProfileSwitcher from "./ProfileSwitcher";
  */
 export default function MainNavbar({
   user,
+  profile,
   onRequestLogout,
   unreadMessagesCount = 0,
   unreadOpportunitiesCount = 0,
@@ -76,20 +78,35 @@ export default function MainNavbar({
   const moreButtonRef = useRef(null);
   const profileButtonRef = useRef(null);
 
-  const normalizedRole = normalizeUserRole(user);
+  const currentUser = profile || user;
+  const normalizedRole = normalizeUserRole(currentUser || user);
 
-  const avatarUrl = user?.avatar ? getUploadUrl(user.avatar) : null;
+  // Authoritative avatar resolution across profile, user, and legacy fields
+  const rawAvatar =
+    currentUser?.avatar ||
+    user?.avatar ||
+    profile?.avatar ||
+    currentUser?.profilePicture ||
+    user?.profilePicture ||
+    currentUser?.avatarUrl ||
+    user?.avatarUrl ||
+    currentUser?.profileImage ||
+    user?.profileImage;
+
+  const currentUserName = currentUser?.name || user?.name || "";
   const userInitials = useMemo(() => {
-    const name = user?.name?.trim();
+    const name = currentUserName.trim();
     if (!name) return "Z";
-    return name
-      .split(/\s+/)
-      .map((p) => p[0])
-      .filter(Boolean)
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() || "Z";
-  }, [user?.name]);
+    return (
+      name
+        .split(/\s+/)
+        .map((p) => p[0])
+        .filter(Boolean)
+        .join("")
+        .slice(0, 2)
+        .toUpperCase() || "Z"
+    );
+  }, [currentUserName]);
 
   // Global Cmd+K / Ctrl+K keyboard shortcut
   useEffect(() => {
@@ -671,26 +688,14 @@ export default function MainNavbar({
                         />
                       </div>
                     ) : (
-                      <div
-                        className="relative flex items-center justify-center overflow-hidden transition-transform duration-200 group-hover:scale-[1.03]"
-                        style={{
-                          width: "28px",
-                          height: "28px",
-                          borderRadius: "50%",
-                          background: "linear-gradient(135deg, rgba(159,213,178,0.2) 0%, rgba(18,49,76,0.6) 100%)",
-                          border: "1.5px solid rgba(159,213,178,0.25)",
-                        }}
-                      >
-                        {avatarUrl ? (
-                          <img src={avatarUrl} alt="" aria-hidden="true" className="w-full h-full object-cover" />
-                        ) : (
-                          <span
-                            className="font-mono font-bold text-brand-mint"
-                            style={{ fontSize: "9px" }}
-                          >
-                            {userInitials}
-                          </span>
-                        )}
+                      <div className="relative flex items-center justify-center transition-transform duration-200 group-hover:scale-[1.03]">
+                        <ProfileAvatar
+                          src={rawAvatar}
+                          name={currentUserName || "Account"}
+                          size="xxs"
+                          shape="circle"
+                          className="!w-7 !h-7 border-[1.5px] border-brand-mint/30 shadow-sm"
+                        />
                       </div>
                     )}
 
@@ -699,7 +704,7 @@ export default function MainNavbar({
                       className="hidden xl:block max-w-[80px] truncate text-left transition-colors duration-150 text-white/70 group-hover:text-white/90"
                       style={{ fontSize: "12px", fontWeight: 500 }}
                     >
-                      {isBusinessMode && business ? business.name : (user?.name || "Account")}
+                      {isBusinessMode && business ? business.name : (currentUserName || "Account")}
                     </span>
 
                     <ChevronDown
@@ -739,23 +744,14 @@ export default function MainNavbar({
                                 className="shrink-0"
                               />
                             ) : (
-                              <div
-                                className="shrink-0 flex items-center justify-center overflow-hidden"
-                                style={{
-                                  width: "32px",
-                                  height: "32px",
-                                  borderRadius: "50%",
-                                  background: "linear-gradient(135deg, rgba(159,213,178,0.2) 0%, rgba(18,49,76,0.6) 100%)",
-                                  border: "1.5px solid rgba(159,213,178,0.25)",
-                                }}
-                              >
-                                {avatarUrl ? (
-                                  <img src={avatarUrl} alt="" aria-hidden="true" className="w-full h-full object-cover" />
-                                ) : (
-                                  <span className="font-mono font-bold text-brand-mint text-xs">
-                                    {userInitials}
-                                  </span>
-                                )}
+                              <div className="shrink-0 flex items-center justify-center">
+                                <ProfileAvatar
+                                  src={rawAvatar}
+                                  name={currentUserName || "Account"}
+                                  size="xs"
+                                  shape="circle"
+                                  className="!w-8 !h-8 border-[1.5px] border-brand-mint/30 shadow-sm"
+                                />
                               </div>
                             )}
                             <div className="min-w-0 flex-1">
@@ -763,7 +759,7 @@ export default function MainNavbar({
                                 className="font-semibold text-white truncate leading-tight"
                                 style={{ fontSize: "12.5px" }}
                               >
-                                {isBusinessMode && business ? business.name : (user?.name || "Professional")}
+                                {isBusinessMode && business ? business.name : (currentUserName || "Professional")}
                               </p>
                               <p
                                 className="font-mono text-white/40 truncate leading-tight mt-0.5"
@@ -771,7 +767,7 @@ export default function MainNavbar({
                               >
                                 {isBusinessMode && business
                                   ? `@${business.slug || "business"}`
-                                  : `@${user?.username || "profile"}`}
+                                  : `@${currentUser?.username || user?.username || "profile"}`}
                               </p>
                             </div>
                           </div>

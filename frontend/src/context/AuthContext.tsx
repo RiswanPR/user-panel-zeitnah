@@ -101,6 +101,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           const authUser = res.data?.user;
           if (authUser) {
             authUser.primaryRole = normalizeUserRole(authUser);
+            // Enrich with authoritative profile data (signed avatar, name, username)
+            try {
+              const profileRes = await api.get("/profile/me");
+              const profileUser = profileRes.data?.user || profileRes.data?.profile;
+              if (profileUser) {
+                if (profileUser.avatar) authUser.avatar = profileUser.avatar;
+                else if (profileUser.profilePicture) authUser.avatar = profileUser.profilePicture;
+                else if (profileUser.avatarUrl) authUser.avatar = profileUser.avatarUrl;
+                if (profileUser.name && !authUser.name) authUser.name = profileUser.name;
+                if (profileUser.username && !authUser.username) authUser.username = profileUser.username;
+              }
+            } catch {
+              // Non-blocking: fallback to core authUser
+            }
             setUser(authUser);
           } else {
             setUser(null);

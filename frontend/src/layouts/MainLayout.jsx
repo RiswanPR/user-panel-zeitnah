@@ -23,6 +23,7 @@ import MobileMoreDrawer from "../components/navigation/MobileMoreDrawer";
 import MainNavbar from "../components/navigation/MainNavbar";
 import Footer from "../components/navigation/Footer";
 import OnboardingOverlay from "../components/onboarding/OnboardingOverlay";
+import { coreProfileService, PROFILE_QUERY_KEYS } from "../services/coreProfileService";
 import { getPrimaryCareerNavigation } from "../utils/roleNavigation";
 
 export default function MainLayout({ children }) {
@@ -35,6 +36,16 @@ export default function MainLayout({ children }) {
 
   const { unreadCounts } = useMessaging();
   const unreadMessagesCount = unreadCounts?.total || 0;
+
+  // Authoritative current-user profile query (shared cache with /profile and /profile/edit)
+  const { data: profileData } = useQuery({
+    queryKey: PROFILE_QUERY_KEYS.ME,
+    queryFn: coreProfileService.getMyProfile,
+    staleTime: 1000 * 60 * 5,
+    enabled: Boolean(currentUserId),
+    retry: 1,
+  });
+  const authoritativeProfile = profileData?.user || profileData?.profile || profileData;
 
   // Unread opportunities count for candidate
   const { data: oppUnreadData } = useQuery({
@@ -98,6 +109,7 @@ export default function MainLayout({ children }) {
       {/* ── Sleek Top Navigation Bar (Courses First, Search, Notifications, Profile) ── */}
       <MainNavbar
         user={user}
+        profile={authoritativeProfile}
         onRequestLogout={requestLogout || logout}
         unreadMessagesCount={unreadMessagesCount}
         unreadOpportunitiesCount={unreadOpportunitiesCount}

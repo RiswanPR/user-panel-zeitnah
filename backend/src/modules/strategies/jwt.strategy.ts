@@ -156,6 +156,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
       primaryRole: canonicalPrimaryRole,
       role: user.role || payload.role || 'student',
+      avatar: user.avatar || '',
 
       deviceId: payload.deviceId,
     };
