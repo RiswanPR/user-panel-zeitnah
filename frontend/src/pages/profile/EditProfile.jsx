@@ -44,14 +44,11 @@ import { getUploadUrl } from "../../utils/courseUi";
 import ImageEditorModal from "../../components/common/ImageEditorModal";
 import RoleSelector from "../../components/profile/RoleSelector";
 import StructuredSkillsEditor from "../../components/profile/StructuredSkillsEditor";
-import CareerPreferencesSection from "../../components/profile/CareerPreferencesSection";
 import { INFRASTRUCTURE_SECTORS } from "../../constants/infrastructureTaxonomy";
 import { normalizeUserRole } from "../../utils/roleNavigation";
 import { PROFILE_QUERY_KEYS } from "../../constants/profileQueryKeys";
 import {
   normalizeStructuredSkills,
-  normalizeCareerPreferences,
-  normalizePrivacySettings,
   normalizeAvailability,
   sortExperienceDescending,
   formatExperienceDateRange,
@@ -76,9 +73,8 @@ const SECTION_CONFIG = [
   { id: "experience", index: "04", label: "Experience", icon: Briefcase, xp: 20, desc: "Career timeline & project contributions" },
   { id: "education", index: "05", label: "Education", icon: GraduationCap, xp: 20, desc: "Academic qualifications & degrees" },
   { id: "certifications", index: "06", label: "Certifications", icon: Award, xp: 15, desc: "Accredited licenses & credential links" },
-  { id: "career-preferences", index: "07", label: "Career & Privacy", icon: ShieldCheck, xp: 20, desc: "Target roles, salary & privacy toggles" },
-  { id: "recommendations", index: "08", label: "Recommendations", icon: HeartHandshake, xp: 0, desc: "Verified peer & mentor endorsements" },
-  { id: "public-profile", index: "09", label: "Public Profile Setup", icon: Globe, xp: 50, desc: "Public handle, link & publishing state" },
+  { id: "recommendations", index: "07", label: "Recommendations", icon: HeartHandshake, xp: 0, desc: "Verified peer & mentor endorsements" },
+  { id: "public-profile", index: "08", label: "Public Profile Setup", icon: Globe, xp: 50, desc: "Public handle, link & publishing state" },
 ];
 
 export default function EditProfile() {
@@ -127,16 +123,6 @@ export default function EditProfile() {
     normalizeStructuredSkills({})
   );
   const [flatSkills, setFlatSkills] = useState([]);
-
-  // Career Preferences
-  const [careerPreferences, setCareerPreferences] = useState(
-    normalizeCareerPreferences({})
-  );
-
-  // Privacy Settings
-  const [privacySettings, setPrivacySettings] = useState(
-    normalizePrivacySettings({})
-  );
 
 
   // Dirty State Protection
@@ -294,14 +280,6 @@ export default function EditProfile() {
         setStructuredSkills(normalizeStructuredSkills(profile.structuredSkills));
       }
       setFlatSkills(Array.isArray(profile.skills) ? profile.skills : []);
-
-      if (profile.careerPreferences) {
-        setCareerPreferences(normalizeCareerPreferences(profile.careerPreferences));
-      }
-
-      if (profile.privacySettings) {
-        setPrivacySettings(normalizePrivacySettings(profile.privacySettings));
-      }
 
       setIsDirty(false);
     }
@@ -731,44 +709,6 @@ export default function EditProfile() {
     });
   };
 
-  const handleSaveCareerPreferences = (e) => {
-    e.preventDefault();
-    const normalizedPrefs = normalizeCareerPreferences(careerPreferences);
-    const normalizedPrivacy = normalizePrivacySettings(privacySettings);
-    updateMutation.mutate({
-      careerPreferences: {
-        openToOpportunities: normalizedPrefs.openToOpportunities,
-        preferredRoles: normalizedPrefs.preferredRoles,
-        preferredSectors: normalizedPrefs.preferredSectors,
-        preferredLocations: normalizedPrefs.preferredLocations,
-        preferredWorkMode: normalizedPrefs.preferredWorkMode,
-        preferredEmploymentType: normalizedPrefs.preferredEmploymentType,
-        expectedSalaryRange: normalizedPrefs.expectedSalaryRange,
-        availability: normalizedPrefs.availability,
-        recruiterDiscovery: normalizedPrefs.recruiterDiscovery,
-      },
-      privacySettings: {
-        experience: normalizedPrivacy.experience,
-        education: normalizedPrivacy.education,
-        projects: normalizedPrivacy.projects,
-        certifications: normalizedPrivacy.certifications,
-        careerPreferences: normalizedPrivacy.careerPreferences,
-        contactInfo: normalizedPrivacy.contactInfo,
-        messaging: normalizedPrivacy.messaging,
-        readReceipts: normalizedPrivacy.readReceipts,
-        onlinePresence: normalizedPrivacy.onlinePresence,
-        experienceVisibility: normalizedPrivacy.experience,
-        educationVisibility: normalizedPrivacy.education,
-        projectsVisibility: normalizedPrivacy.projects,
-        certificationsVisibility: normalizedPrivacy.certifications,
-        careerPreferencesVisibility: normalizedPrivacy.careerPreferences,
-        contactInfoVisibility: normalizedPrivacy.contactInfo,
-      },
-      discoverableToRecruiters,
-      profileVisibility,
-    });
-  };
-
 
   const handleSaveExp = (e) => {
     e.preventDefault();
@@ -922,9 +862,6 @@ export default function EditProfile() {
         return Array.isArray(profile.education) && profile.education.length > 0 ? "complete" : "not-started";
       case "certifications":
         return Array.isArray(profile.certifications) && profile.certifications.length > 0 ? "complete" : "not-started";
-      case "career-preferences":
-        if (profile.careerPreferences?.preferredRoles?.length > 0) return "complete";
-        return "not-started";
       case "recommendations":
         return recommendations.length > 0 ? "complete" : "not-started";
       case "public-profile":
@@ -1148,7 +1085,7 @@ export default function EditProfile() {
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                      SECTION 01 OF 09
+                      SECTION 01 OF 08
                     </span>
                   </div>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
@@ -1339,7 +1276,7 @@ export default function EditProfile() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                    SECTION 02 OF 09
+                    SECTION 02 OF 08
                   </span>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                     +25 XP
@@ -1453,7 +1390,7 @@ export default function EditProfile() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                    SECTION 03 OF 09
+                    SECTION 03 OF 08
                   </span>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                     +20 XP (3+ Skills)
@@ -1505,7 +1442,7 @@ export default function EditProfile() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                      SECTION 04 OF 09
+                      SECTION 04 OF 08
                     </span>
                     <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                       +20 XP
@@ -1720,7 +1657,7 @@ export default function EditProfile() {
                 <div>
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                      SECTION 05 OF 09
+                      SECTION 05 OF 08
                     </span>
                     <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                       +20 XP
@@ -1896,7 +1833,7 @@ export default function EditProfile() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                      SECTION 06 OF 09
+                      SECTION 06 OF 08
                     </span>
                     <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                       +15 XP
@@ -2030,62 +1967,7 @@ export default function EditProfile() {
             </motion.div>
           )}
 
-          {/* SECTION 7: CAREER PREFERENCES & PRIVACY */}
-          {activeSection === "career-preferences" && (
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-3xl border border-white/[0.08] bg-bg-card/80 backdrop-blur-xl p-6 sm:p-8 space-y-6 shadow-xl"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                    SECTION 07 OF 09
-                  </span>
-                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
-                    +20 XP
-                  </span>
-                </div>
-                <h2 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
-                  Career Preferences & Privacy Controls
-                </h2>
-                <p className="text-xs sm:text-sm text-text-muted leading-relaxed mt-1">
-                  Set confidential recruitment discovery, desired job titles, salary visibility, and contact privacy.
-                </p>
-              </div>
-
-              <form onSubmit={handleSaveCareerPreferences} className="space-y-6">
-                <CareerPreferencesSection
-                  careerPreferences={careerPreferences}
-                  setCareerPreferences={setCareerPreferences}
-                  privacySettings={privacySettings}
-                  setPrivacySettings={setPrivacySettings}
-                  discoverableToRecruiters={discoverableToRecruiters}
-                  setDiscoverableToRecruiters={setDiscoverableToRecruiters}
-                  profileVisibility={profileVisibility}
-                  setProfileVisibility={setProfileVisibility}
-                  onChangeDirty={() => setIsDirty(true)}
-                />
-
-                <div className="pt-3 flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={updateMutation.isPending}
-                    className="btn-primary text-xs uppercase tracking-wider flex items-center gap-2 py-3 px-6 cursor-pointer shadow-lg shadow-brand-mint/10 min-h-[44px]"
-                  >
-                    {updateMutation.isPending ? (
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4" />
-                    )}
-                    Save Career & Privacy Preferences
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          )}
-
-          {/* SECTION 8: RECOMMENDATIONS */}
+          {/* SECTION 7: RECOMMENDATIONS */}
           {activeSection === "recommendations" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -2096,7 +1978,7 @@ export default function EditProfile() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                      SECTION 08 OF 09
+                      SECTION 07 OF 08
                     </span>
                   </div>
                   <h2 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
@@ -2212,7 +2094,7 @@ export default function EditProfile() {
             </motion.div>
           )}
 
-          {/* SECTION 9: PUBLIC PROFILE SETUP */}
+          {/* SECTION 8: PUBLIC PROFILE SETUP */}
           {activeSection === "public-profile" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -2222,7 +2104,7 @@ export default function EditProfile() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                    SECTION 09 OF 09
+                    SECTION 08 OF 08
                   </span>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                     +50 Total XP

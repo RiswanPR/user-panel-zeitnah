@@ -13,7 +13,6 @@ export function normalizeProfileSection(sectionParam) {
     'experience',
     'education',
     'certifications',
-    'career-preferences',
     'recommendations',
     'public-profile',
   ];
@@ -41,9 +40,6 @@ export function evaluateSectionCompletion(sectionId, profile) {
       return Array.isArray(profile.education) && profile.education.length > 0 ? 'complete' : 'not-started';
     case 'certifications':
       return Array.isArray(profile.certifications) && profile.certifications.length > 0 ? 'complete' : 'not-started';
-    case 'career-preferences':
-      if (profile.careerPreferences?.targetRoles?.length > 0 || profile.careerPreferences?.preferredRoles?.length > 0) return 'complete';
-      return 'not-started';
     case 'recommendations':
       return Array.isArray(profile.recommendations) && profile.recommendations.length > 0 ? 'complete' : 'not-started';
     case 'public-profile':
@@ -105,6 +101,9 @@ describe('Profile Redesign Architecture & Routing Validation', () => {
     assert.equal(normalizeProfileSection('unknown-section-xyz'), 'basic-info');
     assert.equal(normalizeProfileSection('experience'), 'experience');
     assert.equal(normalizeProfileSection('infrastructure-expertise'), 'basic-info');
+    assert.equal(normalizeProfileSection('career-preferences'), 'basic-info');
+    assert.equal(normalizeProfileSection('career-privacy'), 'basic-info');
+    assert.equal(normalizeProfileSection('privacy'), 'basic-info');
     assert.equal(normalizeProfileSection('public-profile'), 'public-profile');
   });
 
@@ -157,7 +156,7 @@ describe('Profile Redesign Architecture & Routing Validation', () => {
     }
   });
 
-  it('ensures all 9 studio section configurations are distinct and valid', () => {
+  it('ensures all 8 studio section configurations are distinct and valid', () => {
     const SECTION_IDS = [
       'basic-info',
       'professional-identity',
@@ -165,19 +164,23 @@ describe('Profile Redesign Architecture & Routing Validation', () => {
       'experience',
       'education',
       'certifications',
-      'career-preferences',
       'recommendations',
       'public-profile',
     ];
     const uniqueIds = new Set(SECTION_IDS);
-    assert.equal(uniqueIds.size, 9, 'All 9 section IDs must be distinct');
+    assert.equal(uniqueIds.size, 8, 'All 8 section IDs must be distinct');
 
     for (const id of SECTION_IDS) {
       assert.equal(normalizeProfileSection(id), id, `Section ID ${id} must normalize to itself`);
     }
   });
 
-  it('redirects stale projects and infrastructure-expertise section parameters to basic-info and validates 9 remaining modules', () => {
+  it('redirects stale career-preferences, projects, and infrastructure-expertise section parameters to basic-info and validates 8 remaining modules', () => {
+    assert.equal(normalizeProfileSection('career-preferences'), 'basic-info');
+    assert.equal(normalizeProfileSection('CAREER-PREFERENCES'), 'basic-info');
+    assert.equal(normalizeProfileSection('  career-preferences  '), 'basic-info');
+    assert.equal(normalizeProfileSection('career-privacy'), 'basic-info');
+    assert.equal(normalizeProfileSection('privacy'), 'basic-info');
     assert.equal(normalizeProfileSection('projects'), 'basic-info');
     assert.equal(normalizeProfileSection('PROJECTS'), 'basic-info');
     assert.equal(normalizeProfileSection('  projects  '), 'basic-info');
@@ -192,38 +195,42 @@ describe('Profile Redesign Architecture & Routing Validation', () => {
       'experience',
       'education',
       'certifications',
-      'career-preferences',
       'recommendations',
       'public-profile',
     ];
-    assert.equal(REMAINING_SECTIONS.length, 9);
+    assert.equal(REMAINING_SECTIONS.length, 8);
+    assert.ok(!REMAINING_SECTIONS.includes('career-preferences'));
     assert.ok(!REMAINING_SECTIONS.includes('projects'));
     assert.ok(!REMAINING_SECTIONS.includes('infrastructure-expertise'));
   });
 
-  it('guarantees EditProfile.jsx statically configures exactly 9 modules without Projects or ProjectEditorModal', async () => {
+  it('guarantees EditProfile.jsx statically configures exactly 8 modules without Career & Privacy or Projects', async () => {
     const fs = await import('node:fs');
     const path = await import('node:path');
     const editPath = path.resolve('src/pages/profile/EditProfile.jsx');
     const content = fs.readFileSync(editPath, 'utf8');
 
-    // Projects must not be in SECTION_CONFIG
+    // Career Preferences and Projects must not be in SECTION_CONFIG
+    assert.doesNotMatch(content, /id:\s*["']career-preferences["']/);
     assert.doesNotMatch(content, /id:\s*["']projects["']/);
 
-    // Module index labels must run sequentially from 01 to 09
-    assert.match(content, /index:\s*["']01["'][\s\S]*?index:\s*["']02["'][\s\S]*?index:\s*["']03["'][\s\S]*?index:\s*["']04["'][\s\S]*?index:\s*["']05["'][\s\S]*?index:\s*["']06["'][\s\S]*?index:\s*["']07["'][\s\S]*?index:\s*["']08["'][\s\S]*?index:\s*["']09["']/);
+    // Module index labels must run sequentially from 01 to 08
+    assert.match(content, /index:\s*["']01["'][\s\S]*?index:\s*["']02["'][\s\S]*?index:\s*["']03["'][\s\S]*?index:\s*["']04["'][\s\S]*?index:\s*["']05["'][\s\S]*?index:\s*["']06["'][\s\S]*?index:\s*["']07["'][\s\S]*?index:\s*["']08["']/);
 
-    // Section headers must be 01 OF 09 through 09 OF 09
-    for (let i = 1; i <= 9; i++) {
+    // Section headers must be 01 OF 08 through 08 OF 08
+    for (let i = 1; i <= 8; i++) {
       const idx = String(i).padStart(2, '0');
-      assert.match(content, new RegExp(`SECTION ${idx} OF 09`), `Must have SECTION ${idx} OF 09`);
+      assert.match(content, new RegExp(`SECTION ${idx} OF 08`), `Must have SECTION ${idx} OF 08`);
     }
 
-    // Must not contain any stale "OF 10" or "OF 11"
+    // Must not contain any stale "OF 09", "OF 10", or "OF 11"
+    assert.doesNotMatch(content, /SECTION \d+ OF 09/);
     assert.doesNotMatch(content, /SECTION \d+ OF 10/);
     assert.doesNotMatch(content, /SECTION \d+ OF 11/);
 
-    // Must not import Hammer or ProjectEditorModal or projectsService in EditProfile.jsx
+    // Must not import CareerPreferencesSection or ProjectEditorModal in EditProfile.jsx
+    assert.doesNotMatch(content, /import\s+CareerPreferencesSection/);
+    assert.doesNotMatch(content, /<CareerPreferencesSection/);
     assert.doesNotMatch(content, /import\s+ProjectEditorModal/);
     assert.doesNotMatch(content, /import\s*\{[^}]*projectsService[^}]*\}\s*from/);
     assert.doesNotMatch(content, /<ProjectEditorModal/);
