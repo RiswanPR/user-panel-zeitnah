@@ -11,7 +11,6 @@ import {
   Check,
   X,
   Flag,
-  Layers,
   Lock,
   Sparkles,
 } from "lucide-react";
@@ -524,28 +523,6 @@ export default function PublicProfilePage() {
               {copiedLink ? <Check className="w-3.5 h-3.5 text-brand-mint" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{copiedLink ? "Profile Link Copied!" : "Copy Profile Link"}</span>
             </button>
-          </div>
-
-          {/* Curated Portfolio Link */}
-          <div className="rounded-3xl border border-white/[0.08] bg-[#0A0F18]/90 backdrop-blur-xl p-6 shadow-sm space-y-4">
-            <div className="flex items-center gap-2.5">
-              <Layers className="w-5 h-5 text-brand-yellow" />
-              <h3 className="font-heading font-bold text-white text-base">
-                Portfolio Showcase
-              </h3>
-            </div>
-
-            <p className="text-xs text-text-muted leading-relaxed">
-              Explore {student.name}'s curated engineering deliverables, calculation notes, and resume.
-            </p>
-
-            <Link
-              to={`/u/${encodeURIComponent(student.username)}/portfolio`}
-              className="w-full zn-btn-secondary text-xs py-2.5 flex items-center justify-center gap-1.5 cursor-pointer font-semibold"
-            >
-              <span>View Full Portfolio</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </Link>
           </div>
 
           {/* Community Creator Activity Card */}

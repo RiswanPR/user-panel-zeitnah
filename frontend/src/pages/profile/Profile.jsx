@@ -5,7 +5,6 @@ import {
   AlertCircle,
   RefreshCw,
   BookOpen,
-  Layers,
   ShieldCheck,
   ArrowRight,
   LogOut,
@@ -457,44 +456,6 @@ export default function Profile() {
               className="w-full zn-btn-secondary text-xs py-2.5 flex items-center justify-center gap-1.5"
             >
               <span>Manage Trust Badges</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          {/* Curated Portfolio & Resume Shortcut */}
-          <div className="rounded-3xl border border-white/[0.08] bg-[#0A0F18]/90 backdrop-blur-xl p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <Layers className="w-5 h-5 text-brand-yellow" />
-                <h3 className="font-heading font-bold text-white text-base">
-                  Portfolio & Artifacts
-                </h3>
-              </div>
-              <Link
-                to="/profile/portfolio"
-                className="text-xs font-semibold text-brand-yellow hover:underline inline-flex items-center gap-1"
-              >
-                View
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            <p className="text-xs text-text-muted leading-relaxed">
-              Curate your engineering work samples, design packages, and resume PDF for recruiters.
-            </p>
-
-            <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between">
-              <span className="text-xs font-mono text-text-secondary">Curated Works</span>
-              <span className="text-sm font-bold font-mono text-white">
-                {projectsList.length} items
-              </span>
-            </div>
-
-            <Link
-              to="/profile/portfolio"
-              className="w-full zn-btn-secondary text-xs py-2.5 flex items-center justify-center gap-1.5"
-            >
-              <span>Open Portfolio Studio</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>

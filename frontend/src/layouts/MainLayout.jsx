@@ -83,7 +83,6 @@ export default function MainLayout({ children }) {
   const isMoreRouteActive =
     location.pathname.startsWith("/leaderboard") ||
     location.pathname.startsWith("/career-intelligence") ||
-    location.pathname.startsWith("/profile/portfolio") ||
     location.pathname.startsWith("/profile/verification") ||
     location.pathname.startsWith("/admin/businesses");
 

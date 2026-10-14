@@ -55,7 +55,6 @@ export function getCanonicalProfileSubroutes() {
   return [
     { id: 'overview', path: '/profile', label: 'Overview' },
     { id: 'edit', path: '/profile/edit', label: 'Profile Studio' },
-    { id: 'portfolio', path: '/profile/portfolio', label: 'Portfolio & Work' },
     { id: 'verification', path: '/profile/verification', label: 'Trust & Verification' },
     { id: 'public', path: '/public-profile', label: 'Public View' },
   ];
@@ -146,7 +145,7 @@ describe('Profile Redesign Architecture & Routing Validation', () => {
 
   it('guarantees canonical profile subroutes have no trailing slashes or hash stubs', () => {
     const subroutes = getCanonicalProfileSubroutes();
-    assert.equal(subroutes.length, 5);
+    assert.equal(subroutes.length, 4);
 
     for (const route of subroutes) {
       assert.ok(route.path.startsWith('/'), `Route path ${route.path} must start with /`);

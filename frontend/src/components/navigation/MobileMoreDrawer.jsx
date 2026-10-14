@@ -121,12 +121,6 @@ export default function MobileMoreDrawer({
         title: "PROFESSIONAL IDENTITY",
         items: [
           {
-            label: "Engineering Portfolio",
-            path: "/profile/portfolio",
-            icon: Layers,
-            desc: "BIM models & verified project showcases",
-          },
-          {
             label: "Verification Center",
             path: "/profile/verification",
             icon: ShieldCheck,

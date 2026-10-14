@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import {
   ShieldCheck,
-  Layers,
   Trophy,
   CheckCircle2,
   ExternalLink,
@@ -77,24 +76,6 @@ export default function CommunityContextSidebar() {
           Verified Resources
         </h4>
         <div className="space-y-1">
-          <Link
-            to="/profile/portfolio"
-            className="flex items-center justify-between p-2 rounded-xl hover:bg-white/[0.04] transition-colors group"
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-text-muted group-hover:text-brand-mint group-hover:border-brand-mint/30 transition-colors">
-                <Layers className="w-3.5 h-3.5" />
-              </div>
-              <div className="truncate">
-                <p className="text-xs font-medium text-white group-hover:text-brand-mint transition-colors truncate">
-                  Engineering Portfolio
-                </p>
-                <p className="text-[10px] text-text-faint truncate">Showcase verified models & projects</p>
-              </div>
-            </div>
-            <ExternalLink className="w-3 h-3 text-text-faint group-hover:text-white transition-colors shrink-0 ml-2" />
-          </Link>
-
           <Link
             to="/profile/verification"
             className="flex items-center justify-between p-2 rounded-xl hover:bg-white/[0.04] transition-colors group"

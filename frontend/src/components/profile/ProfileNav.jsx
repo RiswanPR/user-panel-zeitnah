@@ -4,7 +4,6 @@ import {
   User,
   Edit3,
   Globe,
-  Layers,
   ShieldCheck,
   BookOpen,
   Award,
@@ -18,13 +17,6 @@ export const PROFILE_TABS = [
     label: "Overview",
     icon: User,
     description: "Identity & career story",
-    primary: true,
-  },
-  {
-    path: "/profile/portfolio",
-    label: "Portfolio",
-    icon: Layers,
-    description: "Curated work & artifacts",
     primary: true,
   },
   {

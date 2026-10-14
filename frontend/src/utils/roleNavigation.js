@@ -235,13 +235,6 @@ export function getMoreNavSections(user) {
       title: "PROFESSIONAL IDENTITY",
       items: [
         {
-          key: "portfolio",
-          path: "/profile/portfolio",
-          label: "Engineering Portfolio",
-          icon: Layers,
-          desc: "BIM models, verified project showcases",
-        },
-        {
           key: "verification",
           path: "/profile/verification",
           label: "Verification Center",

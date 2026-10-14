@@ -54,7 +54,6 @@ const BusinessDiscoveryPage = lazyWithRetry(() => import("./pages/business/Busin
 const AdminBusinessReviewPage = lazyWithRetry(() => import("./pages/admin/AdminBusinessReviewPage"));
 const CareerIntelligencePage = lazyWithRetry(() => import("./pages/career/CareerIntelligencePage"));
 const MessagesPage = lazyWithRetry(() => import("./pages/messages/MessagesPage"));
-const PortfolioPage = lazyWithRetry(() => import("./pages/profile/PortfolioPage"));
 const VerificationCenterPage = lazyWithRetry(() => import("./pages/profile/VerificationCenterPage"));
 const OpportunityInboxPage = lazyWithRetry(() => import("./pages/opportunities/OpportunityInboxPage"));
 const Home = lazyWithRetry(() => import("./pages/home/Home"));
@@ -151,11 +150,7 @@ function App() {
                 />
                 <Route
                   path="/u/:username/portfolio"
-                  element={
-                    <Suspense fallback={<PageLoader />}>
-                      <PortfolioPage isPublic={true} />
-                    </Suspense>
-                  }
+                  element={<NetworkProfileRedirect />}
                 />
                 <Route
                   path="/profile/u/:username"
@@ -167,11 +162,7 @@ function App() {
                 />
                 <Route
                   path="/profile/u/:username/portfolio"
-                  element={
-                    <Suspense fallback={<PageLoader />}>
-                      <PortfolioPage isPublic={true} />
-                    </Suspense>
-                  }
+                  element={<NetworkProfileRedirect />}
                 />
                 <Route
                   path="/about"
@@ -195,7 +186,7 @@ function App() {
                 <Route path="/home" element={<Suspense fallback={<PageLoader />}><Home /></Suspense>} />
                 <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
                 <Route path="/profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
-                <Route path="/profile/portfolio" element={<Suspense fallback={<PageLoader />}><PortfolioPage /></Suspense>} />
+                <Route path="/profile/portfolio" element={<Navigate to="/profile" replace />} />
                 <Route path="/profile/verification" element={<Suspense fallback={<PageLoader />}><VerificationCenterPage /></Suspense>} />
                 <Route path="/profile/edit" element={<Suspense fallback={<PageLoader />}><EditProfile /></Suspense>} />
                 <Route path="/settings" element={<Navigate to="/profile/edit" replace />} />

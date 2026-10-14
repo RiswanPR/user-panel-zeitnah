@@ -87,14 +87,6 @@ const searchableItems = [
     keywords: ["career", "intelligence", "roadmap", "skills", "analysis"],
   },
   {
-    category: "Career & Opportunities",
-    title: "Engineering Portfolio",
-    desc: "Showcase verified infrastructure projects & BIM models",
-    path: "/profile/portfolio",
-    icon: Layers,
-    keywords: ["portfolio", "projects", "showcase", "bim", "models"],
-  },
-  {
     category: "Account & Security",
     title: "My Profile",
     desc: "Manage credentials, bio, and personal details",
@@ -255,7 +247,7 @@ export default function QuickSearchModal({ isOpen, onClose }) {
                   <Sparkles className="w-8 h-8 text-brand-mint/40 mx-auto mb-2" />
                   <p className="text-sm font-semibold text-white">No results found for &ldquo;{query}&rdquo;</p>
                   <p className="text-xs text-text-muted mt-1">
-                    Try searching for &ldquo;Courses&rdquo;, &ldquo;Jobs&rdquo;, &ldquo;Network&rdquo;, or &ldquo;Portfolio&rdquo;
+                    Try searching for &ldquo;Courses&rdquo;, &ldquo;Jobs&rdquo;, &ldquo;Network&rdquo;, or &ldquo;Verification&rdquo;
                   </p>
                 </div>
               ) : (

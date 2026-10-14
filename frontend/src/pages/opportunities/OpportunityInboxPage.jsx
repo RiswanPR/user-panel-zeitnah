@@ -184,10 +184,10 @@ export default function OpportunityInboxPage() {
 
           <div className="flex items-center gap-3 shrink-0">
             <Link
-              to="/profile/portfolio"
+              to="/profile"
               className="px-4 py-2.5 rounded-xl border border-white/10 hover:border-white/20 bg-white/[0.04] text-white text-xs sm:text-sm font-semibold flex items-center gap-2 hover:bg-white/[0.08] transition-all"
             >
-              <Briefcase className="w-4 h-4 text-brand-mint" /> View My Portfolio
+              <Briefcase className="w-4 h-4 text-brand-mint" /> View My Profile
             </Link>
             <Link
               to="/profile/verification"
@@ -254,7 +254,7 @@ export default function OpportunityInboxPage() {
           {activeTab === 'new' && (
             <div className="pt-2">
               <Link
-                to="/profile/portfolio"
+                to="/profile/edit"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-mint text-black text-xs font-bold font-heading hover:bg-brand-mint/90 transition-all shadow-sm"
               >
                 Boost Profile Completeness

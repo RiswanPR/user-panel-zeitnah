@@ -169,13 +169,12 @@ export default function MainNavbar({
       if (key === "jobs") return path.startsWith("/jobs");
       if (key === "manage-business") return path.startsWith("/manage-business");
       if (key === "career-intelligence") return path.startsWith("/career-intelligence");
-      if (key === "portfolio") return path === "/profile/portfolio" || path.endsWith("/portfolio");
       if (key === "verification") return path.startsWith("/profile/verification");
       if (key === "community") return path === "/community" || path.startsWith("/community/");
       if (key === "leaderboard") return path === "/leaderboard" || path.startsWith("/leaderboard/");
       if (key === "admin-businesses") return path.startsWith("/admin/businesses");
       if (key === "profile") {
-        if (path === "/profile/portfolio" || path.startsWith("/profile/verification") || path === "/profile/edit") {
+        if (path.startsWith("/profile/verification") || path === "/profile/edit") {
           return false;
         }
         return path.startsWith("/profile") || path === "/public-profile" || path.startsWith("/u/");
@@ -817,7 +816,6 @@ export default function MainNavbar({
                               ]
                             : [
                                 { to: "/profile", icon: User, label: "My Profile" },
-                                { to: "/profile/portfolio", icon: Layers, label: "Portfolio" },
                                 { to: "/profile/verification", icon: ShieldCheck, label: "Verification Center" },
                                 { to: "/profile/edit", icon: Settings, label: "Account Settings" },
                                 { to: "/active-sessions", icon: ShieldAlert, label: "Active Sessions" },
