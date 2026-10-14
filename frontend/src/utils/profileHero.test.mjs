@@ -345,4 +345,114 @@ describe('Profile Hero Redesign — Modern Identity & Hero Experience Tests', ()
       assert.equal(missing.initials, 'RA');
     });
   });
+
+  describe('8. Premium Unlocked Achievements Layout & Data Integrity', () => {
+    it('verifies AchievementsGrid replaces narrow 3-column grid with full-width readable stack', async () => {
+      const achievementsFile = path.resolve('src/components/profile/AchievementsGrid.jsx');
+      const content = fs.readFileSync(achievementsFile, 'utf8');
+
+      // Does NOT squeeze into 3 columns in the narrow sidebar
+      assert.doesNotMatch(content, /grid-cols-3/);
+      assert.doesNotMatch(content, /lg:grid-cols-3/);
+
+      // Uses single-column full-width list
+      assert.match(content, /grid grid-cols-1 gap-3/);
+
+      // Sibling-aligned panel styling
+      assert.match(content, /rounded-3xl border border-white\/\[0\.08\] bg-\[#0A0F18\]\/90/);
+    });
+
+    it('verifies readable typography without premature clipping or truncated titles', async () => {
+      const achievementsFile = path.resolve('src/components/profile/AchievementsGrid.jsx');
+      const content = fs.readFileSync(achievementsFile, 'utf8');
+
+      // Title must use break-words and not truncate
+      assert.match(content, /<h3[^>]*break-words/);
+      assert.doesNotMatch(content, /<h3[^>]*truncate/);
+
+      // Description must wrap naturally without line-clamp truncation
+      assert.match(content, /<p[^>]*break-words/);
+      assert.doesNotMatch(content, /<p[^>]*line-clamp-2/);
+
+      // Body uses min-w-0 for reliable flex container wrapping
+      assert.match(content, /min-w-0 flex-1/);
+    });
+
+    it('verifies Unlocked status badge has accessible green styling and dedicated row hierarchy', async () => {
+      const achievementsFile = path.resolve('src/components/profile/AchievementsGrid.jsx');
+      const content = fs.readFileSync(achievementsFile, 'utf8');
+
+      // Unlocked indicator with emerald styling
+      assert.match(content, /bg-emerald-500\/10/);
+      assert.match(content, /text-emerald-400/);
+      assert.match(content, /border-emerald-500\/25/);
+      assert.match(content, /Unlocked/);
+    });
+
+    it('verifies section header displays Unlocked Achievements and real counter pill', async () => {
+      const achievementsFile = path.resolve('src/components/profile/AchievementsGrid.jsx');
+      const content = fs.readFileSync(achievementsFile, 'utf8');
+
+      assert.match(content, /Unlocked Achievements/);
+      assert.match(content, /\{achievements\.length\}\s*Unlocked/);
+    });
+
+    it('verifies polished empty state distinguishes earned vs locked milestones', async () => {
+      const achievementsFile = path.resolve('src/components/profile/AchievementsGrid.jsx');
+      const content = fs.readFileSync(achievementsFile, 'utf8');
+
+      assert.match(content, /No achievements unlocked yet/);
+      assert.match(content, /<Lock/);
+    });
+
+    it('preserves existing achievement definitions and resolves both snake_case and Title Case keys accurately', async () => {
+      // Import from achievementMetadata utility
+      const { resolveAchievementMeta, ACHIEVEMENT_METADATA } = await import('./achievementMetadata.js');
+
+      // Snake case checks
+      const firstStep = resolveAchievementMeta('first_class');
+      assert.equal(firstStep.title, 'First Step');
+      assert.equal(firstStep.desc, 'Streamed and completed your first lecture video.');
+
+      const dedicated = resolveAchievementMeta('five_classes');
+      assert.equal(dedicated.title, 'Dedicated Learner');
+
+      const graduate = resolveAchievementMeta('course_completed');
+      assert.equal(graduate.title, 'Course Graduate');
+
+      const identity = resolveAchievementMeta('profile_100');
+      assert.equal(identity.title, 'Identity Master');
+
+      // Title case backend generated keys
+      const century = resolveAchievementMeta('100 Points Earned');
+      assert.equal(century.title, 'Century Learner');
+      assert.equal(century.category, 'XP');
+
+      const streak7 = resolveAchievementMeta('7 Day Streak');
+      assert.equal(streak7.title, 'Weekly Consistency');
+      assert.equal(streak7.category, 'Streak');
+
+      const streak30 = resolveAchievementMeta('30 Day Streak');
+      assert.equal(streak30.title, 'Unstoppable Momentum');
+
+      // Custom key gracefully formatted without crash
+      const custom = resolveAchievementMeta('bim_coordinator');
+      assert.equal(custom.title, 'Bim Coordinator');
+      assert.equal(custom.desc, 'Platform achievement unlocked.');
+
+      // Object format preserved
+      const objectMeta = resolveAchievementMeta({
+        id: 'special_award',
+        title: 'Project Lead',
+        description: 'Led an infrastructure team.',
+        xp: 150,
+        date: 'Oct 2026',
+      });
+      assert.equal(objectMeta.title, 'Project Lead');
+      assert.equal(objectMeta.desc, 'Led an infrastructure team.');
+      assert.equal(objectMeta.xp, 150);
+      assert.equal(objectMeta.date, 'Oct 2026');
+    });
+  });
 });
+

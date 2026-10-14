@@ -148,6 +148,7 @@ describe('S3 Video Player Production Validation - Backend Suite', () => {
         userId: 'user-123',
         name: 'Student Test',
         email: 'student@example.com',
+        avatar: '',
         username: undefined,
         usernameClaimed: false,
         usernameChangedAt: null,
