@@ -54,7 +54,7 @@ export default function ProfileProjectsSection({
               </button>
             ) : (
               <Link
-                to="/profile/edit?section=projects"
+                to="/profile"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-brand-yellow/30 bg-brand-yellow/10 hover:bg-brand-yellow/20 text-brand-yellow text-xs font-semibold transition-all cursor-pointer focus-ring"
               >
                 <Plus className="w-3.5 h-3.5" />

@@ -29,14 +29,12 @@ import {
   ShieldCheck,
   ChevronRight,
   AlertTriangle,
-  Hammer,
   Sparkles,
   Layers,
   ChevronDown,
 } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
 import { coreProfileService } from "../../services/coreProfileService";
-import { projectsService } from "../../services/projectsService";
 import { useToast } from "../../components/ui/Toast";
 import ChangeUsernameModal from "../../components/username/ChangeUsernameModal";
 import ProfileNav from "../../components/profile/ProfileNav";
@@ -45,7 +43,6 @@ import ImageEditorModal from "../../components/common/ImageEditorModal";
 import RoleSelector from "../../components/profile/RoleSelector";
 import StructuredSkillsEditor from "../../components/profile/StructuredSkillsEditor";
 import CareerPreferencesSection from "../../components/profile/CareerPreferencesSection";
-import ProjectEditorModal from "../../components/profile/ProjectEditorModal";
 import { INFRASTRUCTURE_SECTORS } from "../../constants/infrastructureTaxonomy";
 import { normalizeUserRole } from "../../utils/roleNavigation";
 import { PROFILE_QUERY_KEYS } from "../../constants/profileQueryKeys";
@@ -68,12 +65,11 @@ const SECTION_CONFIG = [
   { id: "professional-identity", index: "02", label: "Professional Identity", icon: Briefcase, xp: 25, desc: "Role, availability & career headline" },
   { id: "skills", index: "03", label: "Skills & Software", icon: Code2, xp: 20, desc: "Structured engineering & technical matrix" },
   { id: "experience", index: "04", label: "Experience", icon: Briefcase, xp: 20, desc: "Career timeline & project contributions" },
-  { id: "projects", index: "05", label: "Projects", icon: Hammer, xp: 25, desc: "Engineering deliverables & case studies" },
-  { id: "education", index: "06", label: "Education", icon: GraduationCap, xp: 20, desc: "Academic qualifications & degrees" },
-  { id: "certifications", index: "07", label: "Certifications", icon: Award, xp: 15, desc: "Accredited licenses & credential links" },
-  { id: "career-preferences", index: "08", label: "Career & Privacy", icon: ShieldCheck, xp: 20, desc: "Target roles, salary & privacy toggles" },
-  { id: "recommendations", index: "09", label: "Recommendations", icon: HeartHandshake, xp: 0, desc: "Verified peer & mentor endorsements" },
-  { id: "public-profile", index: "10", label: "Public Profile Setup", icon: Globe, xp: 50, desc: "Public handle, link & publishing state" },
+  { id: "education", index: "05", label: "Education", icon: GraduationCap, xp: 20, desc: "Academic qualifications & degrees" },
+  { id: "certifications", index: "06", label: "Certifications", icon: Award, xp: 15, desc: "Accredited licenses & credential links" },
+  { id: "career-preferences", index: "07", label: "Career & Privacy", icon: ShieldCheck, xp: 20, desc: "Target roles, salary & privacy toggles" },
+  { id: "recommendations", index: "08", label: "Recommendations", icon: HeartHandshake, xp: 0, desc: "Verified peer & mentor endorsements" },
+  { id: "public-profile", index: "09", label: "Public Profile Setup", icon: Globe, xp: 50, desc: "Public handle, link & publishing state" },
 ];
 
 export default function EditProfile() {
@@ -158,10 +154,6 @@ export default function EditProfile() {
   const [expSkillInput, setExpSkillInput] = useState("");
   const [expSoftwareInput, setExpSoftwareInput] = useState("");
   const [expErrors, setExpErrors] = useState({});
-
-  // Projects Modal & State
-  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
-  const [editingProject, setEditingProject] = useState(null);
 
   // Education Modal & Form
   const [isEduModalOpen, setIsEduModalOpen] = useState(false);
@@ -254,12 +246,6 @@ export default function EditProfile() {
     staleTime: 1000 * 60 * 2,
   });
 
-  const { data: projectsData } = useQuery({
-    queryKey: PROFILE_QUERY_KEYS.PROJECTS_MY,
-    queryFn: () => projectsService.getMyProjects(),
-    staleTime: 1000 * 60 * 5,
-  });
-
   const { data: recommendationsData } = useQuery({
     queryKey: PROFILE_QUERY_KEYS.RECOMMENDATIONS_MY,
     queryFn: () => coreProfileService.getMyRecommendations(),
@@ -268,11 +254,6 @@ export default function EditProfile() {
 
   const profile = profileData?.user || profileData?.profile || profileData;
   const completion = profileData?.completion || completionData?.completion || profile?.completion;
-  const myProjects = Array.isArray(projectsData?.projects)
-    ? projectsData.projects
-    : Array.isArray(projectsData)
-    ? projectsData
-    : [];
   const recommendations = Array.isArray(recommendationsData?.recommendations)
     ? recommendationsData.recommendations
     : Array.isArray(recommendationsData)
@@ -471,37 +452,6 @@ export default function EditProfile() {
       toast.success("Deleted", "Experience record removed.");
     },
     onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to delete experience."),
-  });
-
-  // Projects Mutations
-  const saveProjectMutation = useMutation({
-    mutationFn: (payload) => {
-      if (editingProject?.id || editingProject?._id) {
-        return projectsService.updateProject(editingProject.id || editingProject._id, payload);
-      }
-      return projectsService.createProject(payload);
-    },
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEYS.PROJECTS_MY });
-      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEYS.MY_PROJECTS_LEGACY });
-      invalidateProfileQueries();
-      setIsProjectModalOpen(false);
-      setEditingProject(null);
-      toast.success("Project saved", "Infrastructure project details stored.");
-      notifyMilestones(res.newlyAwarded);
-    },
-    onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to save project."),
-  });
-
-  const deleteProjectMutation = useMutation({
-    mutationFn: (id) => projectsService.deleteProject(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEYS.PROJECTS_MY });
-      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEYS.MY_PROJECTS_LEGACY });
-      invalidateProfileQueries();
-      toast.success("Deleted", "Project record removed.");
-    },
-    onError: (err) => toast.error("Error", err.response?.data?.message || "Failed to delete project."),
   });
 
   // Education Mutations
@@ -905,8 +855,6 @@ export default function EditProfile() {
         return "not-started";
       case "experience":
         return Array.isArray(profile.experience) && profile.experience.length > 0 ? "complete" : "not-started";
-      case "projects":
-        return myProjects.length > 0 ? "complete" : "not-started";
       case "education":
         return Array.isArray(profile.education) && profile.education.length > 0 ? "complete" : "not-started";
       case "certifications":
@@ -1137,7 +1085,7 @@ export default function EditProfile() {
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                      SECTION 01 OF 10
+                      SECTION 01 OF 09
                     </span>
                   </div>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
@@ -1328,7 +1276,7 @@ export default function EditProfile() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                    SECTION 02 OF 10
+                    SECTION 02 OF 09
                   </span>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                     +25 XP
@@ -1442,7 +1390,7 @@ export default function EditProfile() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                    SECTION 03 OF 10
+                    SECTION 03 OF 09
                   </span>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                     +20 XP (3+ Skills)
@@ -1494,7 +1442,7 @@ export default function EditProfile() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                      SECTION 04 OF 10
+                      SECTION 04 OF 09
                     </span>
                     <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                       +20 XP
@@ -1698,142 +1646,7 @@ export default function EditProfile() {
             </motion.div>
           )}
 
-          {/* SECTION 5: PROJECTS */}
-          {activeSection === "projects" && (
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-3xl border border-white/[0.08] bg-bg-card/80 backdrop-blur-xl p-6 sm:p-8 space-y-6 shadow-xl"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                      SECTION 05 OF 10
-                    </span>
-                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
-                      +25 XP
-                    </span>
-                  </div>
-                  <h2 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
-                    Infrastructure Projects
-                  </h2>
-                  <p className="text-xs sm:text-sm text-text-muted mt-1 leading-relaxed">
-                    Civil structures, highways, bridges, metro rails, water treatment, and mega-projects.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditingProject(null);
-                    setIsProjectModalOpen(true);
-                  }}
-                  className="btn-primary text-xs uppercase tracking-wider flex items-center gap-1.5 py-2.5 px-4 cursor-pointer shadow-md min-h-[44px] shrink-0"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Add Project
-                </button>
-              </div>
-
-              {myProjects.length > 0 ? (
-                <div className="grid grid-cols-1 gap-4">
-                  {myProjects.map((proj) => {
-                    const pId = proj.id || proj._id;
-                    return (
-                      <div
-                        key={pId}
-                        className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/30 transition-all flex flex-col justify-between gap-3 shadow-sm"
-                      >
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between gap-2 flex-wrap">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-mono font-bold text-brand-mint uppercase tracking-wider">
-                                {proj.infrastructureSector || "Infrastructure"}
-                              </span>
-                              {proj.status && (
-                                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-white/[0.04] text-text-muted font-bold">
-                                  {proj.status}
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setEditingProject(proj);
-                                  setIsProjectModalOpen(true);
-                                }}
-                                className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer"
-                                title="Edit"
-                                aria-label="Edit project"
-                              >
-                                <Pencil className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => deleteProjectMutation.mutate(pId)}
-                                className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-danger hover:bg-white/[0.04] transition-colors cursor-pointer"
-                                title="Delete"
-                                aria-label="Delete project"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-
-                          <h4 className="text-base font-bold text-white">{proj.title}</h4>
-                          {proj.tagline && (
-                            <p className="text-xs text-text-secondary font-medium">{proj.tagline}</p>
-                          )}
-                          {proj.summary && (
-                            <p className="text-xs text-text-muted line-clamp-2 leading-relaxed">
-                              {proj.summary}
-                            </p>
-                          )}
-
-                          {Array.isArray(proj.softwareUsed) && proj.softwareUsed.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 pt-1">
-                              {proj.softwareUsed.map((sw) => (
-                                <span key={sw} className="px-2 py-0.5 rounded-md bg-white/[0.04] text-[10px] text-brand-mint">
-                                  {sw}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="py-14 px-4 rounded-3xl border border-dashed border-white/[0.1] text-center space-y-3.5 bg-white/[0.01]">
-                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto text-text-muted">
-                    <Hammer className="w-6 h-6 text-brand-mint/70" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-white">No projects published yet</h4>
-                    <p className="text-xs text-text-muted max-w-sm mx-auto mt-1 leading-relaxed">
-                      Present your engineering deliverables, structural modeling, or site execution case studies.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingProject(null);
-                      setIsProjectModalOpen(true);
-                    }}
-                    className="btn-primary text-xs uppercase tracking-wider inline-flex items-center gap-1.5 py-2.5 px-5 cursor-pointer min-h-[44px]"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Add First Project
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          )}
-
-          {/* SECTION 6: EDUCATION */}
+          {/* SECTION 5: EDUCATION */}
           {activeSection === "education" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -1844,7 +1657,7 @@ export default function EditProfile() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                      SECTION 06 OF 10
+                      SECTION 05 OF 09
                     </span>
                     <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                       +20 XP
@@ -1954,7 +1767,7 @@ export default function EditProfile() {
             </motion.div>
           )}
 
-          {/* SECTION 7: CERTIFICATIONS */}
+          {/* SECTION 6: CERTIFICATIONS */}
           {activeSection === "certifications" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -1965,7 +1778,7 @@ export default function EditProfile() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                      SECTION 07 OF 10
+                      SECTION 06 OF 09
                     </span>
                     <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                       +15 XP
@@ -2099,7 +1912,7 @@ export default function EditProfile() {
             </motion.div>
           )}
 
-          {/* SECTION 8: CAREER PREFERENCES & PRIVACY */}
+          {/* SECTION 7: CAREER PREFERENCES & PRIVACY */}
           {activeSection === "career-preferences" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -2109,7 +1922,7 @@ export default function EditProfile() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                    SECTION 08 OF 10
+                    SECTION 07 OF 09
                   </span>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                     +20 XP
@@ -2154,7 +1967,7 @@ export default function EditProfile() {
             </motion.div>
           )}
 
-          {/* SECTION 9: RECOMMENDATIONS */}
+          {/* SECTION 8: RECOMMENDATIONS */}
           {activeSection === "recommendations" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -2165,7 +1978,7 @@ export default function EditProfile() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                      SECTION 09 OF 10
+                      SECTION 08 OF 09
                     </span>
                   </div>
                   <h2 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
@@ -2281,7 +2094,7 @@ export default function EditProfile() {
             </motion.div>
           )}
 
-          {/* SECTION 10: PUBLIC PROFILE SETUP */}
+          {/* SECTION 9: PUBLIC PROFILE SETUP */}
           {activeSection === "public-profile" && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -2291,7 +2104,7 @@ export default function EditProfile() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] font-mono uppercase text-brand-mint tracking-widest font-bold">
-                    SECTION 10 OF 10
+                    SECTION 09 OF 09
                   </span>
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow">
                     +50 Total XP
@@ -2921,17 +2734,7 @@ export default function EditProfile() {
         </div>
       )}
 
-      {/* Projects Modal */}
-      <ProjectEditorModal
-        isOpen={isProjectModalOpen}
-        onClose={() => {
-          setIsProjectModalOpen(false);
-          setEditingProject(null);
-        }}
-        onSave={(payload) => saveProjectMutation.mutate(payload)}
-        initialData={editingProject}
-        isPending={saveProjectMutation.isPending}
-      />
+
 
       {/* Education Modal */}
       {isEduModalOpen && (
