@@ -275,15 +275,48 @@ export function sortExperienceDescending(experiences) {
 }
 
 /**
+ * Calculates exact calendar difference { years, months, days } between two UTC Date objects.
+ * Expects startDt <= endDt.
+ */
+export function getCalendarDifference(startDt, endDt) {
+  let years = endDt.getUTCFullYear() - startDt.getUTCFullYear();
+  let months = endDt.getUTCMonth() - startDt.getUTCMonth();
+  let days = endDt.getUTCDate() - startDt.getUTCDate();
+
+  if (days < 0) {
+    months -= 1;
+    // Number of days in the month preceding endDt
+    const prevMonthDays = new Date(
+      Date.UTC(endDt.getUTCFullYear(), endDt.getUTCMonth(), 0)
+    ).getUTCDate();
+    days += prevMonthDays;
+  }
+
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+
+  return {
+    years: Math.max(0, years),
+    months: Math.max(0, months),
+    days: Math.max(0, days),
+  };
+}
+
+/**
  * Calculates cumulative total professional experience from saved experience entries.
  *
  * Rules:
- * 1. Merges overlapping and contiguous employment intervals to eliminate double-counting.
- * 2. Roles marked ongoing (currentlyActive, isCurrent, current, or missing endDate) use current date as end date.
- * 3. Handles missing, invalid, inverted, and future dates safely without NaN or crashing.
- * 4. Senior experience formatting: >= 15 years displays e.g. "24+ Years".
- * 5. Mid-level & concise formatting: displays e.g. "8 Years", "2 Years 6 Months", or "6 Months".
- * 6. Deterministic testability: optional referenceDate parameter defaults to current date.
+ * 1. Calculates total experience from the union of all valid employment periods (no double-counting).
+ * 2. Current roles use today's date (or referenceDate) as their end date.
+ * 3. Completed roles use their saved end dates (inclusive of the end date).
+ * 4. Ignores invalid, missing, inverted, or future-only periods safely.
+ * 5. Avoids double-counting when multiple current or past roles overlap.
+ * 6. Consistent and explainable month/year rounding: residual days across disjoint periods
+ *    round up to 1 month if >= 15 days, or down if < 15 days.
+ * 7. Displays exact years and months (e.g. "13 Years 5 Months", "2 Years 6 Months", "8 Years").
+ *    For senior careers (>= 20 years), displays clean milestone e.g. "24+ Years".
  */
 export function calculateTotalExperience(experiences, referenceDate = new Date()) {
   const safeList = Array.isArray(experiences)
@@ -308,8 +341,6 @@ export function calculateTotalExperience(experiences, referenceDate = new Date()
     referenceDate instanceof Date
       ? referenceDate.getTime()
       : (parseExperienceDateSafe(referenceDate) || Date.now());
-  const refDate = new Date(refEpoch);
-  const nowIdx = refDate.getUTCFullYear() * 12 + refDate.getUTCMonth();
 
   const intervals = [];
 
@@ -318,28 +349,22 @@ export function calculateTotalExperience(experiences, referenceDate = new Date()
     if (startEpoch === null) continue;
 
     const isOngoing = isExperienceOngoing(exp);
-    let endEpoch = isOngoing ? refEpoch : parseExperienceDateSafe(exp.endDate);
+    let endEpoch = null;
 
-    if (endEpoch === null) continue;
-    if (startEpoch > endEpoch) continue;
-
-    const startDt = new Date(startEpoch);
-    const endDt = new Date(endEpoch);
-
-    const startIdx = startDt.getUTCFullYear() * 12 + startDt.getUTCMonth();
-    let endIdx = endDt.getUTCFullYear() * 12 + endDt.getUTCMonth();
-
-    // Future start dates have not accrued past experience
-    if (startIdx > nowIdx) continue;
-
-    // Clamp end date to reference date
-    if (endIdx > nowIdx) {
-      endIdx = nowIdx;
+    if (isOngoing) {
+      endEpoch = refEpoch;
+    } else {
+      const parsedEnd = parseExperienceDateSafe(exp.endDate);
+      if (parsedEnd === null) continue;
+      // For completed roles, include the full end date (24h / next midnight), clamped to present
+      endEpoch = Math.min(parsedEnd + 86400000, refEpoch);
     }
 
-    if (startIdx > endIdx) continue;
+    if (startEpoch >= endEpoch) continue;
+    // Skip future-only roles that have not yet started
+    if (startEpoch >= refEpoch) continue;
 
-    intervals.push([startIdx, endIdx]);
+    intervals.push([startEpoch, endEpoch]);
   }
 
   if (intervals.length === 0) {
@@ -359,14 +384,15 @@ export function calculateTotalExperience(experiences, referenceDate = new Date()
     return b[1] - a[1];
   });
 
-  // Merge overlapping and contiguous intervals
+  // Merge overlapping and contiguous intervals into disjoint periods
   const merged = [];
   for (const interval of intervals) {
     if (merged.length === 0) {
       merged.push([...interval]);
     } else {
       const last = merged[merged.length - 1];
-      if (interval[0] <= last[1] + 1) {
+      // If next interval starts before or at the end of last, merge
+      if (interval[0] <= last[1]) {
         last[1] = Math.max(last[1], interval[1]);
       } else {
         merged.push([...interval]);
@@ -374,16 +400,41 @@ export function calculateTotalExperience(experiences, referenceDate = new Date()
     }
   }
 
-  let allMonths = 0;
-  for (const [s, e] of merged) {
-    allMonths += e - s + 1;
+  // Calculate calendar differences for each disjoint interval
+  let rawYears = 0;
+  let rawMonths = 0;
+  let rawDays = 0;
+
+  for (const [startMs, endMs] of merged) {
+    const { years, months, days } = getCalendarDifference(new Date(startMs), new Date(endMs));
+    rawYears += years;
+    rawMonths += months;
+    rawDays += days;
   }
 
-  const totalYears = Math.floor(allMonths / 12);
-  const totalMonths = allMonths % 12;
+  // Explainable rounding:
+  // 1. Convert days into full months if >= 30.4375 days
+  if (rawDays >= 30) {
+    const extraFullMonths = Math.floor(rawDays / 30.4375);
+    rawMonths += extraFullMonths;
+    rawDays -= Math.round(extraFullMonths * 30.4375);
+  }
+
+  // 2. Round remaining days: >= 15 days rounds up to 1 month, < 15 days rounds down
+  if (rawDays >= 15) {
+    rawMonths += 1;
+    rawDays = 0;
+  }
+
+  // 3. Roll 12 months into years
+  let totalYears = rawYears + Math.floor(rawMonths / 12);
+  let totalMonths = rawMonths % 12;
+  const allMonths = totalYears * 12 + totalMonths;
 
   let formattedTotal = "0 Years";
-  if (totalYears >= 15) {
+  if (totalYears >= 20 && totalMonths === 0) {
+    formattedTotal = `${totalYears}+ Years`;
+  } else if (totalYears >= 20) {
     formattedTotal = `${totalYears}+ Years`;
   } else if (totalYears > 0 && totalMonths > 0) {
     formattedTotal = `${totalYears} Year${totalYears > 1 ? "s" : ""} ${totalMonths} Month${totalMonths > 1 ? "s" : ""}`;
@@ -391,6 +442,8 @@ export function calculateTotalExperience(experiences, referenceDate = new Date()
     formattedTotal = `${totalYears} Year${totalYears > 1 ? "s" : ""}`;
   } else if (totalMonths > 0) {
     formattedTotal = `${totalMonths} Month${totalMonths > 1 ? "s" : ""}`;
+  } else if (rawDays > 0) {
+    formattedTotal = "< 1 Month";
   }
 
   return {

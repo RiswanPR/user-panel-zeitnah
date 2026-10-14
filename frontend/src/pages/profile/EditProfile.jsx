@@ -1452,7 +1452,7 @@ export default function EditProfile() {
                   Professional Experience
                 </h2>
                 <p className="text-xs sm:text-sm text-text-muted mt-1 leading-relaxed">
-                  AEC career timeline, on-site execution, design consultancy, and project management contributions.
+                  Your professional career timeline, roles, achievements, and contributions.
                 </p>
               </div>
 
@@ -1465,7 +1465,7 @@ export default function EditProfile() {
                     Career Timeline
                   </h3>
                   <p className="text-xs text-text-muted">
-                    Individual positions, responsibilities, and AEC competencies
+                    Individual positions, responsibilities, and competencies
                   </p>
                 </div>
                 <button
@@ -1509,23 +1509,23 @@ export default function EditProfile() {
                         <div className="p-5 sm:p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/30 hover:bg-white/[0.035] transition-all shadow-sm flex flex-col justify-between gap-3.5">
                           {/* Top row: Job title & Edit/Delete actions */}
                           <div className="flex items-start justify-between gap-4">
-                            <div className="space-y-1 min-w-0">
+                            <div className="space-y-1 min-w-0 flex-1">
                               {/* 1. Job Title — Strongest emphasis */}
-                              <h3 className="text-base sm:text-lg font-heading font-black text-white tracking-tight leading-snug">
+                              <h3 className="text-base sm:text-lg font-heading font-black text-white tracking-tight leading-snug break-words">
                                 {exp.role || "Untitled Position"}
                               </h3>
 
                               {/* 2. Company Name & Location */}
                               <div className="flex items-center gap-2 flex-wrap text-xs sm:text-sm text-text-secondary font-medium">
-                                <span className="text-brand-mint font-bold">
+                                <span className="text-brand-mint font-bold break-words">
                                   {exp.organization || "Organization"}
                                 </span>
                                 {exp.location && (
                                   <>
                                     <span className="text-white/20">•</span>
                                     <span className="inline-flex items-center gap-1 text-text-muted">
-                                      <MapPin className="w-3.5 h-3.5 text-text-faint" />
-                                      <span>{exp.location}</span>
+                                      <MapPin className="w-3.5 h-3.5 text-text-faint shrink-0" />
+                                      <span className="break-words">{exp.location}</span>
                                     </span>
                                   </>
                                 )}
@@ -1576,13 +1576,14 @@ export default function EditProfile() {
                           <div className="flex items-center gap-2 flex-wrap text-xs font-mono">
                             {dateRangeStr && (
                               <span className="inline-flex items-center gap-1.5 text-text-muted font-medium">
-                                <Calendar className="w-3.5 h-3.5 text-text-faint" />
+                                <Calendar className="w-3.5 h-3.5 text-text-faint shrink-0" />
                                 <span>{dateRangeStr}</span>
                               </span>
                             )}
                             {isOngoing && (
-                              <span className="px-2 py-0.5 rounded-full bg-brand-mint/15 border border-brand-mint/30 text-[10px] font-bold text-brand-mint uppercase tracking-wider">
-                                Active Role
+                              <span className="px-2 py-0.5 rounded-md bg-brand-mint/10 border border-brand-mint/25 text-[10px] font-mono font-bold text-brand-mint uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm">
+                                <span className="w-1.5 h-1.5 rounded-full bg-brand-mint animate-pulse shrink-0" />
+                                <span>Current</span>
                               </span>
                             )}
                             {exp.employmentType && (
@@ -1592,7 +1593,7 @@ export default function EditProfile() {
                             )}
                             {exp.infrastructureSector && (
                               <span className="px-2.5 py-0.5 rounded-md bg-brand-mint/10 text-brand-mint border border-brand-mint/20 font-semibold text-[11px] flex items-center gap-1">
-                                <Layers className="w-3 h-3 text-brand-mint" />
+                                <Layers className="w-3 h-3 text-brand-mint shrink-0" />
                                 <span>{exp.infrastructureSector}</span>
                               </span>
                             )}
@@ -1600,7 +1601,7 @@ export default function EditProfile() {
 
                           {/* 5. Description with readable line length and spacing */}
                           {exp.description && (
-                            <p className="text-xs sm:text-sm text-text-secondary leading-relaxed whitespace-pre-line max-w-3xl pt-0.5">
+                            <p className="text-xs sm:text-sm text-text-secondary leading-relaxed whitespace-pre-line max-w-3xl pt-0.5 break-words">
                               {exp.description}
                             </p>
                           )}
