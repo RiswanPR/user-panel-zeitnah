@@ -162,6 +162,19 @@ export class ModerationService {
     }
 
     if (
+      !dto.targetType ||
+      !Object.values(ReportTargetType).includes(
+        dto.targetType as ReportTargetType,
+      )
+    ) {
+      throw new BadRequestException({
+        statusCode: 400,
+        code: 'INVALID_TARGET_TYPE',
+        message: 'Invalid report target type',
+      });
+    }
+
+    if (
       !dto.targetId ||
       typeof dto.targetId !== 'string' ||
       !dto.targetId.trim()
@@ -170,6 +183,18 @@ export class ModerationService {
         statusCode: 400,
         code: 'INVALID_TARGET_ID',
         message: 'Target identifier is required',
+      });
+    }
+
+    if (
+      !dto.reason ||
+      typeof dto.reason !== 'string' ||
+      !dto.reason.trim()
+    ) {
+      throw new BadRequestException({
+        statusCode: 400,
+        code: 'INVALID_REASON',
+        message: 'Reason is required',
       });
     }
 
@@ -205,5 +230,161 @@ export class ModerationService {
       details: dto.details?.trim() || '',
       status: ReportStatus.PENDING,
     });
+  }
+
+  /**
+   * Find reports with optional filters
+   */
+  async getReports(filter?: {
+    targetType?: string;
+    status?: string;
+    limit?: number;
+    skip?: number;
+  }): Promise<ReportDocument[]> {
+    const query: any = {};
+
+    if (filter?.targetType) {
+      const tt = String(filter.targetType).trim().toUpperCase();
+      if (tt === 'ALL') {
+        // No targetType filter when querying all target types
+      } else if (tt === 'COMMUNITY') {
+        query.targetType = {
+          $in: [
+            ReportTargetType.COMMUNITY,
+            ReportTargetType.POST,
+            ReportTargetType.COMMENT,
+            'COMMUNITY',
+            'POST',
+            'COMMENT',
+            'post',
+            'comment',
+          ],
+        };
+      } else if (
+        Object.values(ReportTargetType).includes(tt as ReportTargetType)
+      ) {
+        query.targetType = tt;
+      } else {
+        query.targetType = filter.targetType;
+      }
+    }
+
+    if (filter?.status) {
+      const st = String(filter.status).trim().toUpperCase();
+      if (st === 'ALL') {
+        // no status filter
+      } else if (Object.values(ReportStatus).includes(st as ReportStatus)) {
+        query.status = st;
+      } else {
+        query.status = filter.status;
+      }
+    } else {
+      query.status = ReportStatus.PENDING;
+    }
+
+    const limit = Math.min(Math.max(filter?.limit || 20, 1), 500);
+    const skip = Math.max(filter?.skip || 0, 0);
+
+    return this.reportModel
+      .find(query)
+      .sort({ createdAt: 1 })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+  }
+
+  /**
+   * Get a report by its ID
+   */
+  async getReportById(reportId: string): Promise<ReportDocument | null> {
+    if (!Types.ObjectId.isValid(reportId)) {
+      return null;
+    }
+    const res = this.reportModel.findById(reportId);
+    return typeof (res as any)?.exec === 'function'
+      ? (res as any).exec()
+      : res;
+  }
+
+  /**
+   * Resolve or dismiss a report atomically with concurrency protection
+   */
+  async resolveReport(
+    reportId: string,
+    moderatorId: string,
+    action: string,
+    notes?: string,
+  ): Promise<{ report: ReportDocument | null; transitioned: boolean }> {
+    if (!Types.ObjectId.isValid(reportId)) {
+      return { report: null, transitioned: false };
+    }
+
+    const normalizedAction = String(action || '').trim().toLowerCase();
+    const newStatus =
+      normalizedAction === 'dismiss' || normalizedAction === 'dismissed'
+        ? ReportStatus.DISMISSED
+        : normalizedAction === 'review' || normalizedAction === 'reviewed'
+        ? ReportStatus.REVIEWED
+        : ReportStatus.RESOLVED;
+
+    const trimmedNotes = (notes || '').trim();
+    const noteEntry = trimmedNotes
+      ? `\n[Mod ${moderatorId}]: ${trimmedNotes}`
+      : '';
+
+    // Check pre-existing state
+    const existing = await this.getReportById(reportId);
+    if (!existing) {
+      return { report: null, transitioned: false };
+    }
+
+    const isPendingOrReviewed =
+      existing.status === ReportStatus.PENDING ||
+      existing.status === ReportStatus.REVIEWED;
+
+    if (!isPendingOrReviewed) {
+      // Already finalized (resolved or dismissed)
+      return { report: existing, transitioned: false };
+    }
+
+    const newDetails = existing.details
+      ? `${existing.details}${noteEntry}`
+      : trimmedNotes
+      ? `[Mod ${moderatorId}]: ${trimmedNotes}`
+      : '';
+
+    // Atomic compare-and-swap: only update if status is currently PENDING or REVIEWED
+    if (typeof (this.reportModel as any).findOneAndUpdate === 'function') {
+      const updated = await this.reportModel.findOneAndUpdate(
+        {
+          _id: new Types.ObjectId(reportId),
+          status: { $in: [ReportStatus.PENDING, ReportStatus.REVIEWED] },
+        },
+        {
+          $set: {
+            status: newStatus,
+            details: newDetails,
+          },
+        },
+        { returnDocument: 'after' },
+      );
+
+      if (updated) {
+        return { report: updated, transitioned: true };
+      }
+
+      const current = await this.getReportById(reportId);
+      return { report: current, transitioned: false };
+    }
+
+    // Fallback for simple mocks without findOneAndUpdate
+    existing.status = newStatus;
+    if (trimmedNotes) {
+      existing.details = newDetails;
+    }
+    if (typeof (existing as any).save === 'function') {
+      await existing.save();
+    }
+    return { report: existing, transitioned: true };
   }
 }

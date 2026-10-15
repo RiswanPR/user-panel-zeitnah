@@ -12,6 +12,14 @@ import { NotificationsService } from '../../notifications/notifications.service'
 import { OrganizationsService } from '../../organizations/organizations.service';
 import { ModerationService } from '../../moderation/moderation.service';
 
+function resolveUserId(userOrId: any): string {
+  if (!userOrId) return '';
+  if (typeof userOrId === 'string') return userOrId;
+  if (userOrId._id) return String(userOrId._id);
+  if (userOrId.id) return String(userOrId.id);
+  return String(userOrId);
+}
+
 @Injectable()
 export class CommentService {
   constructor(
@@ -44,9 +52,10 @@ export class CommentService {
     }
 
     // Reply hierarchy integrity: verify parent comment belongs to this post
+    let parentComment: any = null;
     if (data.parentId) {
-      const parentComment = await this.commentRepository.findById(data.parentId);
-      if (!parentComment) {
+      parentComment = await this.commentRepository.findById(data.parentId);
+      if (!parentComment || parentComment.isDeleted) {
         throw new NotFoundException('Parent comment not found');
       }
       if (String(parentComment.postId) !== String(postId)) {
@@ -81,33 +90,70 @@ export class CommentService {
       newComment._id,
     );
 
-    // Notify post author if commenter is not the author
-    if (post.authorId && String(post.authorId) !== String(userId)) {
-      try {
-        const isReel =
-          post.type === 'VIDEO' ||
-          (Array.isArray(post.media) &&
-            post.media.some((m: any) => m?.type === 'video'));
-        const targetUrl = isReel
-          ? `/community/reels/${postId}`
-          : `/community#${postId}`;
-        await this.notificationsService.createNotification({
-          recipientId: post.authorId,
-          actorId: userId,
-          type: 'COMMUNITY_COMMENT',
-          category: 'community',
-          priority: 'NORMAL',
-          title: isReel
-            ? 'New comment on your reel'
-            : 'New comment on your post',
-          message: isReel
-            ? 'Someone commented on your reel'
-            : 'Someone commented on your post',
-          actionUrl: targetUrl,
-          targetUrl: targetUrl,
-        });
-      } catch (e) {
-        // best effort notification
+    const isReel =
+      post.type === 'VIDEO' ||
+      (Array.isArray(post.media) &&
+        post.media.some((m: any) => m?.type === 'video'));
+    const targetUrl = isReel
+      ? `/community/reels/${postId}`
+      : `/community#${postId}`;
+
+    const currentUserIdStr = resolveUserId(userId);
+    const notifiedRecipientIds = new Set<string>();
+
+    // 1. If reply, notify parent comment author (if not actor)
+    if (parentComment && parentComment.authorId) {
+      const parentAuthorId = resolveUserId(parentComment.authorId);
+      if (parentAuthorId && parentAuthorId !== currentUserIdStr) {
+        try {
+          await this.notificationsService.createNotification({
+            recipientId: parentComment.authorId,
+            actorId: userId,
+            type: 'COMMUNITY_COMMENT',
+            category: 'community',
+            priority: 'NORMAL',
+            title: 'New reply to your comment',
+            message: 'Someone replied to your comment',
+            actionUrl: targetUrl,
+            targetUrl: targetUrl,
+            idempotencyKey: `reply:${newComment._id}:${parentAuthorId}`,
+          });
+          notifiedRecipientIds.add(parentAuthorId);
+        } catch (e) {
+          // best effort notification
+        }
+      }
+    }
+
+    // 2. Notify post author if not actor and not already notified as parent author
+    if (post.authorId) {
+      const postAuthorId = resolveUserId(post.authorId);
+      if (
+        postAuthorId &&
+        postAuthorId !== currentUserIdStr &&
+        !notifiedRecipientIds.has(postAuthorId)
+      ) {
+        try {
+          await this.notificationsService.createNotification({
+            recipientId: post.authorId,
+            actorId: userId,
+            type: 'COMMUNITY_COMMENT',
+            category: 'community',
+            priority: 'NORMAL',
+            title: isReel
+              ? 'New comment on your reel'
+              : 'New comment on your post',
+            message: isReel
+              ? 'Someone commented on your reel'
+              : 'Someone commented on your post',
+            actionUrl: targetUrl,
+            targetUrl: targetUrl,
+            idempotencyKey: `comment:${newComment._id}:${postAuthorId}`,
+          });
+          notifiedRecipientIds.add(postAuthorId);
+        } catch (e) {
+          // best effort notification
+        }
       }
     }
 

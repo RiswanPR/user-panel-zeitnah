@@ -95,23 +95,23 @@ export default function CommunityComposerEntry({
       </div>
 
       {/* Divider */}
-      <div className="h-px bg-white/[0.05] my-3" />
+      <div className="h-px bg-white/[0.06] my-3" />
 
-      {/* Action choices: Post | Reel | Story */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+      {/* Action choices: Post | Reel | Story (Ergonomic horizontal row on mobile, rich descriptive cards on desktop) */}
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5">
         {/* Post Action */}
         <button
           type="button"
           onClick={onOpenCreatePost}
-          className="group min-h-[44px] p-2.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.04] hover:border-brand-mint/30 transition-all text-left flex items-center sm:flex-col sm:items-start gap-2.5 sm:gap-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-mint/40"
+          className="group min-h-[44px] p-2 sm:p-2.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] hover:border-brand-mint/35 transition-all text-center sm:text-left flex flex-col items-center sm:items-start justify-center sm:justify-start gap-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-mint/40"
           aria-label="Create Post: Share an idea, update or resource"
         >
           <div className="flex items-center gap-1.5 text-xs font-semibold text-white group-hover:text-brand-mint transition-colors">
-            <PenSquare className="w-4 h-4 text-brand-mint shrink-0" />
+            <PenSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-mint shrink-0" />
             <span>Post</span>
           </div>
-          <p className="text-[11px] text-text-muted line-clamp-1 leading-snug">
-            Share an idea, update or resource.
+          <p className="hidden sm:block text-[11px] text-text-muted line-clamp-1 leading-snug">
+            Share an idea or update.
           </p>
         </button>
 
@@ -119,15 +119,15 @@ export default function CommunityComposerEntry({
         <button
           type="button"
           onClick={onOpenCreateReel}
-          className="group min-h-[44px] p-2.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.04] hover:border-brand-mint/30 transition-all text-left flex items-center sm:flex-col sm:items-start gap-2.5 sm:gap-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-mint/40"
+          className="group min-h-[44px] p-2 sm:p-2.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] hover:border-brand-mint/35 transition-all text-center sm:text-left flex flex-col items-center sm:items-start justify-center sm:justify-start gap-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-mint/40"
           aria-label="Create Reel: Share a short video"
         >
           <div className="flex items-center gap-1.5 text-xs font-semibold text-white group-hover:text-brand-mint transition-colors">
-            <Film className="w-4 h-4 text-brand-mint shrink-0" />
+            <Film className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-mint shrink-0" />
             <span>Reel</span>
           </div>
-          <p className="text-[11px] text-text-muted line-clamp-1 leading-snug">
-            Share a short vertical video.
+          <p className="hidden sm:block text-[11px] text-text-muted line-clamp-1 leading-snug">
+            Short vertical video.
           </p>
         </button>
 
@@ -135,15 +135,15 @@ export default function CommunityComposerEntry({
         <button
           type="button"
           onClick={onOpenCreateStory}
-          className="group min-h-[44px] p-2.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.04] hover:border-brand-yellow/30 transition-all text-left flex items-center sm:flex-col sm:items-start gap-2.5 sm:gap-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-yellow/40"
+          className="group min-h-[44px] p-2 sm:p-2.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] hover:border-brand-yellow/35 transition-all text-center sm:text-left flex flex-col items-center sm:items-start justify-center sm:justify-start gap-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-yellow/40"
           aria-label="Create Story: Share something for the next 24 hours"
         >
           <div className="flex items-center gap-1.5 text-xs font-semibold text-white group-hover:text-brand-yellow transition-colors">
-            <Clock className="w-4 h-4 text-brand-yellow shrink-0" />
+            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-yellow shrink-0" />
             <span>Story</span>
           </div>
-          <p className="text-[11px] text-text-muted line-clamp-1 leading-snug">
-            Share moments for 24 hours.
+          <p className="hidden sm:block text-[11px] text-text-muted line-clamp-1 leading-snug">
+            Moments for 24h.
           </p>
         </button>
       </div>

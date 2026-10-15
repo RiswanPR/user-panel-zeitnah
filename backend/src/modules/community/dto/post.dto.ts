@@ -383,6 +383,13 @@ export class UpdatePostDto {
   )
   content?: string;
 
+  @ApiPropertyOptional({ type: [CreatePostMediaDto] })
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => CreatePostMediaDto)
+  media?: CreatePostMediaDto[];
+
   @ApiPropertyOptional()
   @IsBoolean()
   @IsOptional()

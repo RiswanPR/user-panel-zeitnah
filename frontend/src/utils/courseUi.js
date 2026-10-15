@@ -166,3 +166,22 @@ export function getBunnyEmbedUrl(videoReference) {
 
   return `https://iframe.mediadelivery.net/play/${value}`;
 }
+
+export function isIOSNonSafari() {
+  if (typeof window === "undefined" || typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  const isIOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if (!isIOS) return false;
+
+  // Standalone Safari on iOS includes "Safari/" and "Version/" and does NOT include third-party webview/browser tokens
+  const isSafariStandalone =
+    /Safari/i.test(ua) &&
+    /Version\//i.test(ua) &&
+    !/CriOS|FxiOS|OPiOS|EdgiOS|mercury|FBAN|FBAV|Instagram|Line/i.test(ua);
+
+  // Standalone PWA or in-app WKWebView
+  const isStandalonePwa = window.navigator.standalone === true;
+  return !isSafariStandalone || isStandalonePwa;
+}

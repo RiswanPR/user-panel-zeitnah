@@ -504,6 +504,9 @@ export class NotificationsService {
         actionUrl: dto.actionUrl || dto.targetUrl || '',
         idempotencyKey: dto.idempotencyKey,
         isRead: false,
+        metadata: dto.metadata || {},
+        ...(dto.entityType ? { entityType: dto.entityType } : {}),
+        ...(dto.entityId ? { entityId: dto.entityId } : {}),
       });
 
       try {

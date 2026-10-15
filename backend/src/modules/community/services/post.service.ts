@@ -112,13 +112,54 @@ export class PostService {
   }
 
   /**
+   * Extracts canonical S3 key or clean resource path for media ownership and retention verification.
+   * Prevents path traversal and URL encoding bypasses.
+   */
+  private extractCanonicalKey(urlOrKey: string): string {
+    if (!urlOrKey || typeof urlOrKey !== 'string') return '';
+    let decoded = urlOrKey.trim().split('?')[0];
+    try {
+      let prev = '';
+      let count = 0;
+      while (decoded !== prev && count < 5) {
+        prev = decoded;
+        decoded = decodeURIComponent(decoded);
+        count++;
+      }
+    } catch {
+      return '';
+    }
+    if (
+      decoded.includes('\0') ||
+      decoded.includes('..') ||
+      decoded.includes('\\')
+    ) {
+      return '';
+    }
+    const idx = decoded.indexOf('community/');
+    if (idx !== -1) {
+      return decoded.slice(idx);
+    }
+    try {
+      const parsed = new URL(
+        decoded.startsWith('http') ? decoded : `http://localhost/${decoded}`,
+      );
+      return parsed.pathname.replace(/^\/+/, '');
+    } catch {
+      return decoded.replace(/^\/+/, '');
+    }
+  }
+
+  /**
    * Authoritative validation and normalization for post media (Sections 5, 6, 8, 13, 34, 38).
    * Strictly enforces that any video with a mediaId MUST be READY before publication.
+   * Supports safe retention of media already attached to this exact post during updates.
    */
   private async validateAndNormalizeMedia(
     mediaList: any[],
     userId: string,
     isAdmin: boolean = false,
+    existingMediaList?: any[],
   ): Promise<any[]> {
     if (!Array.isArray(mediaList) || mediaList.length === 0) return [];
 
@@ -128,6 +169,7 @@ export class PostService {
     }
 
     const seenUrls = new Set<string>();
+    const seenKeys = new Set<string>();
     const normalized: any[] = [];
 
     for (const m of mediaList) {
@@ -140,121 +182,186 @@ export class PostService {
       }
 
       const rawUrl = m.url.trim();
+      const lower = rawUrl.toLowerCase();
+      if (
+        lower.startsWith('javascript:') ||
+        lower.startsWith('data:text/html') ||
+        lower.startsWith('vbscript:')
+      ) {
+        throw new ForbiddenException('Invalid media protocol');
+      }
+
+      // Decode and check for dangerous path traversal patterns
+      let decoded = rawUrl;
+      try {
+        let prev = '';
+        let iterations = 0;
+        while (decoded !== prev && iterations < 5) {
+          prev = decoded;
+          decoded = decodeURIComponent(decoded);
+          iterations++;
+        }
+      } catch {
+        throw new BadRequestException('Malformed media URL encoding');
+      }
+
+      if (
+        decoded.includes('\0') ||
+        rawUrl.includes('\0') ||
+        decoded.includes('..') ||
+        decoded.includes('\\') ||
+        rawUrl.includes('..') ||
+        rawUrl.includes('\\')
+      ) {
+        throw new ForbiddenException(
+          'Invalid file key: path traversal detected',
+        );
+      }
+
+      const canonicalKey = this.extractCanonicalKey(rawUrl);
+
+      // Check if this media item matches an existing item already attached to this exact post
+      let retainedItem: any = null;
+      if (
+        Array.isArray(existingMediaList) &&
+        existingMediaList.length > 0 &&
+        canonicalKey
+      ) {
+        retainedItem = existingMediaList.find((existing) => {
+          if (!existing) return false;
+          const existingUrl =
+            typeof existing === 'string' ? existing : existing.url;
+          if (!existingUrl) return false;
+          return this.extractCanonicalKey(existingUrl) === canonicalKey;
+        });
+      }
 
       // Check media type
       const allowedTypes = ['image', 'video', 'document'];
-      const mediaType = m.type || 'image';
+      const mediaType = m.type || (retainedItem ? retainedItem.type : 'image');
       if (!allowedTypes.includes(mediaType)) {
         throw new BadRequestException(`Invalid media type: ${mediaType}`);
       }
-
-      // Check authoritative size & duration limits if provided
-      if (mediaType === 'image' && m.size && m.size > 8 * 1024 * 1024) {
-        throw new BadRequestException('Photo must be 8 MB or smaller.');
-      }
-      if (mediaType === 'video' && m.size && m.size > 1024 * 1024 * 1024) {
-        throw new BadRequestException('Video must be 1 GB or smaller.');
-      }
-      if (mediaType === 'video' && m.duration && m.duration > 90) {
-        throw new BadRequestException('Video must be 90 seconds or shorter.');
+      if (retainedItem && retainedItem.type && retainedItem.type !== mediaType) {
+        throw new BadRequestException(
+          'Media type cannot be changed for existing media',
+        );
       }
 
-      // Authoritative Media Ownership & Path Traversal Check (Section 5 & 6)
-      if (this.communityS3Service) {
-        this.communityS3Service.validateMediaOwnership(rawUrl, userId, isAdmin);
-        if (m.processedUrl && typeof m.processedUrl === 'string') {
-          this.communityS3Service.validateMediaOwnership(
-            m.processedUrl,
-            userId,
-            isAdmin,
-          );
-        }
-        if (m.posterUrl && typeof m.posterUrl === 'string') {
-          this.communityS3Service.validateMediaOwnership(
-            m.posterUrl,
-            userId,
-            isAdmin,
-          );
-        }
-      } else {
-        // Fallback validation when communityS3Service is unprovided in isolated tests
-        let decoded = rawUrl;
-        try {
-          let prev = '';
-          while (decoded !== prev) {
-            prev = decoded;
-            decoded = decodeURIComponent(decoded);
-          }
-        } catch {
-          throw new BadRequestException('Malformed media URL encoding');
-        }
-        if (decoded.includes('..') || decoded.includes('\\')) {
-          throw new ForbiddenException(
-            'Invalid file key: path traversal detected',
-          );
-        }
-        if (decoded.includes('community/uploads/')) {
-          const expected = `community/uploads/${userId}/`;
-          if (!isAdmin && !decoded.includes(expected)) {
-            throw new ForbiddenException(
-              'You cannot use media belonging to another user',
-            );
-          }
-        }
-      }
-
-      // Publish Race Condition & Ready Status Enforcement (Section 34 & 38)
       let finalProcessedUrl = m.processedUrl;
       let finalPosterUrl = m.posterUrl;
       let finalDuration = m.duration;
       let finalWidth = m.width;
       let finalHeight = m.height;
+      let finalSize = m.size;
+      let finalMimeType = m.mimeType;
+      let finalMediaId = m.mediaId;
       let resolvedAudioConfig = m.audioConfig;
       let resolvedEditorConfig = m.editorConfig;
 
-      if (mediaType === 'video' && m.mediaId && this.mediaJobService) {
-        const job = await this.mediaJobService.getJobByMediaId(m.mediaId);
-        if (!job) {
-          throw new BadRequestException({
-            code: 'MEDIA_NOT_FOUND',
-            message: 'Referenced media processing job not found.',
-          });
+      if (retainedItem) {
+        // Retained media: strictly enforce authoritative stored metadata from the existing record.
+        // Client-supplied metadata cannot overwrite authoritative server metadata.
+        finalProcessedUrl = retainedItem.processedUrl;
+        finalPosterUrl = retainedItem.posterUrl;
+        finalDuration = retainedItem.duration;
+        finalWidth = retainedItem.width;
+        finalHeight = retainedItem.height;
+        finalSize = retainedItem.size;
+        finalMimeType = retainedItem.mimeType;
+        finalMediaId = retainedItem.mediaId;
+        resolvedAudioConfig = retainedItem.audioConfig;
+        resolvedEditorConfig = retainedItem.editorConfig;
+      } else {
+        // Newly uploaded media: strictly enforce limits, ownership, and job status
+        if (mediaType === 'image' && m.size && m.size > 8 * 1024 * 1024) {
+          throw new BadRequestException('Photo must be 8 MB or smaller.');
         }
-        if (!isAdmin && job.userId !== userId) {
-          throw new ForbiddenException(
-            'You cannot publish media belonging to another user',
+        if (mediaType === 'video' && m.size && m.size > 1024 * 1024 * 1024) {
+          throw new BadRequestException('Video must be 1 GB or smaller.');
+        }
+        if (mediaType === 'video' && m.duration && m.duration > 90) {
+          throw new BadRequestException('Video must be 90 seconds or shorter.');
+        }
+
+        // Authoritative Media Ownership Check (Section 5 & 6)
+        if (this.communityS3Service) {
+          this.communityS3Service.validateMediaOwnership(
+            rawUrl,
+            userId,
+            isAdmin,
           );
-        }
-
-        if (job.status === 'PROCESSING' || job.status === 'QUEUED') {
-          throw new BadRequestException({
-            code: 'MEDIA_NOT_READY',
-            message:
-              'Video is still being optimized. Please wait until processing is complete before publishing.',
-          });
-        }
-
-        if (job.status === 'FAILED') {
-          throw new BadRequestException({
-            code: 'MEDIA_PROCESSING_FAILED',
-            message:
-              job.errorMessage ||
-              'Video processing failed. Please retry processing or choose another video.',
-          });
-        }
-
-        if (job.status === 'READY') {
-          finalProcessedUrl = job.outputUrl || finalProcessedUrl;
-          finalPosterUrl =
-            job.posterUrl || job.customCoverUrl || finalPosterUrl;
-          finalDuration = job.outputDuration || finalDuration;
-          finalWidth = job.outputWidth || finalWidth;
-          finalHeight = job.outputHeight || finalHeight;
-          if (job.audioConfig && !resolvedAudioConfig) {
-            resolvedAudioConfig = job.audioConfig;
+          if (m.processedUrl && typeof m.processedUrl === 'string') {
+            this.communityS3Service.validateMediaOwnership(
+              m.processedUrl,
+              userId,
+              isAdmin,
+            );
           }
-          if (job.editorConfig && !resolvedEditorConfig) {
-            resolvedEditorConfig = job.editorConfig;
+          if (m.posterUrl && typeof m.posterUrl === 'string') {
+            this.communityS3Service.validateMediaOwnership(
+              m.posterUrl,
+              userId,
+              isAdmin,
+            );
+          }
+        } else {
+          // Fallback validation when communityS3Service is unprovided in isolated tests
+          if (decoded.includes('community/uploads/')) {
+            const expected = `community/uploads/${userId}/`;
+            if (!isAdmin && !decoded.includes(expected)) {
+              throw new ForbiddenException(
+                'You cannot use media belonging to another user',
+              );
+            }
+          }
+        }
+
+        // Video Job Readiness
+        if (mediaType === 'video' && m.mediaId && this.mediaJobService) {
+          const job = await this.mediaJobService.getJobByMediaId(m.mediaId);
+          if (!job) {
+            throw new BadRequestException({
+              code: 'MEDIA_NOT_FOUND',
+              message: 'Referenced media processing job not found.',
+            });
+          }
+          if (!isAdmin && job.userId !== userId) {
+            throw new ForbiddenException(
+              'You cannot publish media belonging to another user',
+            );
+          }
+
+          if (job.status === 'PROCESSING' || job.status === 'QUEUED') {
+            throw new BadRequestException({
+              code: 'MEDIA_NOT_READY',
+              message:
+                'Video is still being optimized. Please wait until processing is complete before publishing.',
+            });
+          }
+
+          if (job.status === 'FAILED') {
+            throw new BadRequestException({
+              code: 'MEDIA_PROCESSING_FAILED',
+              message:
+                job.errorMessage ||
+                'Video processing failed. Please retry processing or choose another video.',
+            });
+          }
+
+          if (job.status === 'READY') {
+            finalProcessedUrl = job.outputUrl || finalProcessedUrl;
+            finalPosterUrl =
+              job.posterUrl || job.customCoverUrl || finalPosterUrl;
+            finalDuration = job.outputDuration || finalDuration;
+            finalWidth = job.outputWidth || finalWidth;
+            finalHeight = job.outputHeight || finalHeight;
+            if (job.audioConfig && !resolvedAudioConfig) {
+              resolvedAudioConfig = job.audioConfig;
+            }
+            if (job.editorConfig && !resolvedEditorConfig) {
+              resolvedEditorConfig = job.editorConfig;
+            }
           }
         }
       }
@@ -276,30 +383,41 @@ export class PostService {
       }
 
       // Clean ephemeral query parameters (e.g. ?X-Amz-Signature=...) before storing in DB
-      const cleanUrl = rawUrl.split('?')[0];
+      const cleanUrl = retainedItem?.url
+        ? retainedItem.url.split('?')[0]
+        : rawUrl.split('?')[0];
 
-      if (seenUrls.has(cleanUrl)) {
+      if (
+        seenUrls.has(cleanUrl) ||
+        (canonicalKey && seenKeys.has(canonicalKey))
+      ) {
         continue; // Deduplicate duplicate media items within the same post
       }
       seenUrls.add(cleanUrl);
+      if (canonicalKey) {
+        seenKeys.add(canonicalKey);
+      }
 
       normalized.push({
-        ...m,
         url: cleanUrl,
         type: mediaType,
+        size: finalSize,
+        mimeType: finalMimeType,
         duration: finalDuration,
         width: finalWidth,
         height: finalHeight,
         posterUrl: finalPosterUrl ? finalPosterUrl.split('?')[0] : undefined,
         thumbnailUrl: finalPosterUrl
           ? finalPosterUrl.split('?')[0]
-          : m.thumbnailUrl
-            ? m.thumbnailUrl.split('?')[0]
-            : undefined,
+          : retainedItem?.thumbnailUrl
+            ? retainedItem.thumbnailUrl.split('?')[0]
+            : m.thumbnailUrl
+              ? m.thumbnailUrl.split('?')[0]
+              : undefined,
         processedUrl: finalProcessedUrl
           ? finalProcessedUrl.split('?')[0]
           : undefined,
-        mediaId: m.mediaId,
+        mediaId: finalMediaId,
         audioConfig: resolvedAudioConfig,
         editorConfig: resolvedEditorConfig,
       });
@@ -550,6 +668,7 @@ export class PostService {
       const postData: any = {
         authorId: userId,
         content: data.content,
+        media: validatedMedia,
         type: typeVal,
         audience: audienceVal,
         courseId: data.courseId,
@@ -826,14 +945,6 @@ export class PostService {
       throw new ForbiddenException('Unauthorized to edit this post');
     }
 
-    if ((data as any).media) {
-      await this.validateAndNormalizeMedia(
-        (data as any).media,
-        userId,
-        role === 'admin',
-      );
-    }
-
     const updatePayload: any = { isEdited: true };
     if (data.content !== undefined) {
       updatePayload.content = data.content;
@@ -842,9 +953,97 @@ export class PostService {
       updatePayload.isPinned = Boolean(data.isPinned);
     }
 
-    await this.postRepository.update(id, updatePayload);
+    if ((data as any).media !== undefined) {
+      const existingMediaList: any[] = [];
+      const isDuplicateItem = (e: any, m: any) => {
+        const eUrl = typeof e === 'string' ? e : e?.url;
+        const mUrl = typeof m === 'string' ? m : m?.url;
+        if (eUrl && mUrl && eUrl === mUrl) return true;
+        const eKey = this.extractCanonicalKey(eUrl);
+        const mKey = this.extractCanonicalKey(mUrl);
+        return Boolean(eKey && mKey && eKey === mKey);
+      };
+
+      if (Array.isArray(post.media)) {
+        for (const m of post.media) {
+          if (!existingMediaList.some((e) => isDuplicateItem(e, m))) {
+            existingMediaList.push(m);
+          }
+        }
+      }
+      try {
+        const existingPopulated =
+          await this.postRepository.findByIdPopulated(id, userId);
+        if (existingPopulated && Array.isArray(existingPopulated.media)) {
+          for (const m of existingPopulated.media) {
+            if (!existingMediaList.some((e) => isDuplicateItem(e, m))) {
+              existingMediaList.push(m);
+            }
+          }
+        }
+      } catch {}
+
+      if ((this.postRepository as any).findMediaByPostId) {
+        try {
+          const repoMedia = await (
+            this.postRepository as any
+          ).findMediaByPostId(id);
+          if (Array.isArray(repoMedia)) {
+            for (const m of repoMedia) {
+              if (!existingMediaList.some((e) => isDuplicateItem(e, m))) {
+                existingMediaList.push(m);
+              }
+            }
+          }
+        } catch {}
+      }
+
+      const validatedMedia = await this.validateAndNormalizeMedia(
+        (data as any).media,
+        userId,
+        role === 'admin',
+        existingMediaList,
+      );
+
+      updatePayload.media = validatedMedia;
+      if (post.type !== 'POLL') {
+        updatePayload.type =
+          validatedMedia.length > 0
+            ? (validatedMedia[0].type.toUpperCase() as PostType)
+            : PostType.TEXT;
+      }
+
+      if ((this.postRepository as any).replaceMedia) {
+        await (this.postRepository as any).replaceMedia(
+          id,
+          validatedMedia.map((m) => ({ ...m, postId: id })),
+        );
+      }
+    }
+
+    try {
+      await this.postRepository.update(id, updatePayload);
+    } catch (updateErr) {
+      if (
+        (data as any).media !== undefined &&
+        (this.postRepository as any).replaceMedia
+      ) {
+        try {
+          const preEditMedia = (post.media || []).map((m: any) => ({
+            ...m,
+            postId: id,
+          }));
+          await (this.postRepository as any).replaceMedia(id, preEditMedia);
+        } catch {}
+      }
+      throw updateErr;
+    }
+
     const updated = await this.postRepository.findByIdPopulated(id, userId);
     if (updated) {
+      if (updatePayload.media !== undefined && !updated.media) {
+        updated.media = updatePayload.media;
+      }
       await this.resolveMediaUrls([updated]);
     }
     return updated;
@@ -917,6 +1116,9 @@ export class PostService {
           const targetUrl = isReel
             ? `/community/reels/${postId}`
             : `/community#${postId}`;
+          const idempotencyKey = (result as any).reactionId
+            ? `reaction:${postId}:${userId}:${(result as any).reactionId}`
+            : `reaction:${postId}:${userId}`;
           await this.notificationsService.createNotification({
             recipientId: post.authorId,
             actorId: userId,
@@ -931,6 +1133,7 @@ export class PostService {
               : 'Someone reacted to your post',
             actionUrl: targetUrl,
             targetUrl: targetUrl,
+            idempotencyKey,
           });
         } catch (e) {
           // best-effort
@@ -1095,6 +1298,14 @@ export class PostService {
       String(canonicalPost.authorId) !== String(userId)
     ) {
       try {
+        const canonicalPostIdStr = String(canonicalPostId);
+        const orgIdStr = canonicalPost.organizationId
+          ? String(canonicalPost.organizationId)
+          : undefined;
+        const targetUrl = orgIdStr
+          ? `/community?organizationId=${encodeURIComponent(orgIdStr)}&post=${encodeURIComponent(canonicalPostIdStr)}#${encodeURIComponent(canonicalPostIdStr)}`
+          : `/community?post=${encodeURIComponent(canonicalPostIdStr)}#${encodeURIComponent(canonicalPostIdStr)}`;
+
         await this.notificationsService.createNotification({
           recipientId: canonicalPost.authorId,
           actorId: userId,
@@ -1103,9 +1314,16 @@ export class PostService {
           priority: 'NORMAL',
           title: 'Someone reposted your post',
           message: 'Someone reposted your post in the community',
-          actionUrl: '/community',
-          targetUrl: '/community',
+          actionUrl: targetUrl,
+          targetUrl: targetUrl,
           idempotencyKey: `repost:${canonicalPostId}:${userId}`,
+          metadata: {
+            canonicalPostId: canonicalPostIdStr,
+            originalPostId: canonicalPostIdStr,
+            postId: canonicalPostIdStr,
+            repostId: createdRepost?._id ? String(createdRepost._id) : undefined,
+            ...(orgIdStr ? { organizationId: orgIdStr } : {}),
+          },
         });
       } catch (err) {
         // Notification is best-effort
@@ -1240,6 +1458,15 @@ export class PostService {
       String(canonicalPost.authorId) !== String(userId)
     ) {
       try {
+        const canonicalPostIdStr = String(canonicalPostId);
+        const quotePostIdStr = String(createdPost._id);
+        const orgIdStr = canonicalPost.organizationId
+          ? String(canonicalPost.organizationId)
+          : undefined;
+        const targetUrl = orgIdStr
+          ? `/community?organizationId=${encodeURIComponent(orgIdStr)}&post=${encodeURIComponent(canonicalPostIdStr)}#${encodeURIComponent(canonicalPostIdStr)}`
+          : `/community?post=${encodeURIComponent(canonicalPostIdStr)}#${encodeURIComponent(canonicalPostIdStr)}`;
+
         await this.notificationsService.createNotification({
           recipientId: canonicalPost.authorId,
           actorId: userId,
@@ -1248,9 +1475,16 @@ export class PostService {
           priority: 'NORMAL',
           title: 'Someone quoted your post',
           message: 'Someone quoted your post in the community',
-          actionUrl: '/community',
-          targetUrl: '/community',
+          actionUrl: targetUrl,
+          targetUrl: targetUrl,
           idempotencyKey: `quote:${createdPost._id}:${userId}`,
+          metadata: {
+            quotedPostId: canonicalPostIdStr,
+            quotePostId: quotePostIdStr,
+            originalPostId: canonicalPostIdStr,
+            postId: canonicalPostIdStr,
+            ...(orgIdStr ? { organizationId: orgIdStr } : {}),
+          },
         });
       } catch (err) {
         // Notification is best-effort

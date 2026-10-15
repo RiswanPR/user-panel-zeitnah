@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Param,
+  Query,
   UseGuards,
   Req,
   ForbiddenException,
@@ -16,17 +17,32 @@ import { CommunityModerationService } from '../services/community-moderation.ser
 export class ModerationController {
   constructor(private readonly modService: CommunityModerationService) {}
 
-  // Simple role check for demo purposes. Real app would use a @Roles() guard.
   private checkModerator(req: any) {
-    if (req.user.role !== 'admin' && req.user.role !== 'moderator') {
+    const role = String(req.user?.role || '').trim().toLowerCase();
+    if (role !== 'admin' && role !== 'moderator' && role !== 'superadmin') {
       throw new ForbiddenException('Only moderators can access this endpoint');
     }
   }
 
   @Get('reports')
-  async getReports(@Req() req: any) {
+  async getReports(
+    @Req() req: any,
+    @Query('limit') limit?: string,
+    @Query('skip') skip?: string,
+    @Query('status') status?: string,
+    @Query('targetType') targetType?: string,
+  ) {
     this.checkModerator(req);
-    return this.modService.getPendingReports();
+    const parsedLimit = limit
+      ? Math.min(Math.max(parseInt(limit, 10), 1), 100)
+      : 20;
+    const parsedSkip = skip ? Math.max(parseInt(skip, 10), 0) : 0;
+    return this.modService.getPendingReports(
+      parsedLimit,
+      parsedSkip,
+      status,
+      targetType,
+    );
   }
 
   @Post('reports/:id/resolve')

@@ -56,8 +56,8 @@ describe('Global Website Footer Removal Tests', () => {
     const mainLayoutFile = path.resolve('src/layouts/MainLayout.jsx');
     const content = fs.readFileSync(mainLayoutFile, 'utf8');
 
-    // Responsive padding ensures clearance over floating mobile navigation and clean desktop ending
-    assert.match(content, /pb-24 md:pb-6/);
+    // Safe-area-aware responsive padding ensures clearance over floating mobile navigation and clean desktop ending
+    assert.match(content, /pb-\[calc\(.+safe-area-inset-bottom.+\] md:pb-6/);
   });
 
   it('verifies Profile Studio (EditProfile.jsx) contains no footer references and ends naturally', () => {

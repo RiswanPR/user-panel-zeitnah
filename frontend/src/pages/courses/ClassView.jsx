@@ -835,13 +835,18 @@ function ClassView() {
           const msg = err?.message || player?.video?.error?.message || err?.payload?.message || "";
           console.warn("[VdoCipher] Player error intercepted:", code, msg, err);
 
-          if (code === 60072014 || msg.toLowerCase().includes("domain")) {
+          const lowerMsg = String(msg).toLowerCase();
+          if (lowerMsg.includes("safari") || lowerMsg.includes("fairplay")) {
+            setVdoPlayerError(
+              "Apple FairPlay DRM requires opening this video in Safari Browser."
+            );
+          } else if (code === 60072014 || lowerMsg.includes("domain")) {
             setVdoPlayerError(
               "Domain authorization notice: This domain must be allowed in VdoCipher dashboard settings. Click below to refresh the stream."
             );
-          } else if (code === 4 || msg.toLowerCase().includes("drm") || msg.toLowerCase().includes("license") || msg.toLowerCase().includes("protected")) {
+          } else if (code === 4 || lowerMsg.includes("drm") || lowerMsg.includes("license") || lowerMsg.includes("protected")) {
             setVdoPlayerError(
-              "Protected content could not be verified. If using Incognito/Private mode, please switch to a normal window, or allow Protected Content in Chrome Site Settings."
+              "Protected content could not be verified in this view. On iOS devices, please tap below to open and watch in Safari Browser."
             );
           } else if (code && code !== 1) {
             setVdoPlayerError(
@@ -856,6 +861,12 @@ function ClassView() {
               const payload = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
               if (payload && (payload.event === "error" || payload.type === "error" || payload.error)) {
                 recordVdoError(payload);
+                const rawMsg = String(payload?.error?.message || payload?.message || payload?.error || "").toLowerCase();
+                if (rawMsg.includes("safari") || rawMsg.includes("fairplay")) {
+                  setVdoPlayerError(
+                    "Apple FairPlay DRM requires opening this video in Safari Browser."
+                  );
+                }
               }
             } catch {}
           }

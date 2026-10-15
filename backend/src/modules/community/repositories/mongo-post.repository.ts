@@ -1590,6 +1590,40 @@ export class PostRepository extends BaseRepository<PostDocument> {
     }
   }
 
+  async replaceMedia(
+    postId: string,
+    mediaData: Partial<PostMedia>[],
+  ): Promise<void> {
+    const cleanPostId = String(postId);
+    const existing = await this.postMediaModel
+      .find({ postId: cleanPostId })
+      .lean()
+      .exec();
+
+    try {
+      await this.postMediaModel.deleteMany({ postId: cleanPostId });
+      if (Array.isArray(mediaData) && mediaData.length > 0) {
+        await this.postMediaModel.insertMany(mediaData);
+      }
+    } catch (err) {
+      if (existing.length > 0) {
+        try {
+          await this.postMediaModel.deleteMany({ postId: cleanPostId });
+          await this.postMediaModel.insertMany(existing);
+        } catch {}
+      }
+      throw err;
+    }
+  }
+
+  async findMediaByPostId(postId: string): Promise<PostMedia[]> {
+    if (!postId) return [];
+    return this.postMediaModel
+      .find({ postId: String(postId), isDeleted: { $ne: true } })
+      .lean()
+      .exec();
+  }
+
   async createPoll(
     pollData: Partial<Poll>,
     options: Partial<PollOption>[],
@@ -1628,6 +1662,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
     isLikedByMe: boolean;
     myReactionType: string | null;
     stats: any;
+    reactionId?: string;
   }> {
     const post = await this.postModel.findById(postId);
     if (!post) {
@@ -1681,6 +1716,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
         isLikedByMe: true,
         myReactionType: type,
         stats: updatedPost?.stats || post.stats,
+        reactionId: existing._id ? String(existing._id) : undefined,
       };
     }
 
@@ -1705,6 +1741,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
       isLikedByMe: true,
       myReactionType: type,
       stats: updatedPost?.stats || post.stats,
+      reactionId: reaction._id ? String(reaction._id) : undefined,
     };
   }
 

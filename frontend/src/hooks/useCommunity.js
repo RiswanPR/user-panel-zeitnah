@@ -1039,3 +1039,38 @@ export function useMyFollowedOrganizations() {
   });
 }
 
+// ── MODERATION ──
+
+export function useModerationReports(params) {
+  return useQuery({
+    queryKey: ['community', 'moderation', 'reports', params],
+    queryFn: async () => {
+      const data = await communityApi.getReports(params);
+      return Array.isArray(data) ? data : data?.data || [];
+    },
+    staleTime: 1000 * 30, // 30s
+  });
+}
+
+export function useResolveReport() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }) => communityApi.resolveReport(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['community', 'moderation', 'reports'] });
+    },
+  });
+}
+
+export function useHidePostAsMod() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }) => communityApi.hidePostAsMod(id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['community', 'moderation', 'reports'] });
+      queryClient.invalidateQueries({ queryKey: ['community', 'feed'] });
+    },
+  });
+}
+
+

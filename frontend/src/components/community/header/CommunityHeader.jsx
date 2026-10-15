@@ -41,14 +41,14 @@ export default function CommunityHeader({
         </p>
       </div>
 
-      <div className="relative z-10 flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-        {/* Create Action Button (✦ Create) — Refined Mint → Yellow Energy Material */}
+      <div className="relative z-10 flex items-center gap-1.5 sm:gap-2 shrink-0">
+        {/* Create Action Button (✦ Create) */}
         {onOpenCreate && (
           <button
             type="button"
             id="community-create-trigger"
             onClick={onOpenCreate}
-            className="community-btn-create shrink-0 focus:outline-none focus:ring-2 focus:ring-brand-mint/50 focus:ring-offset-2 focus:ring-offset-[#0B111E]"
+            className="community-btn-create shrink-0 min-h-[44px] px-3 sm:px-3.5 focus:outline-none focus:ring-2 focus:ring-brand-mint/50 focus:ring-offset-2 focus:ring-offset-[#0B111E]"
             aria-label="Create post or story"
             title="Create"
           >
@@ -60,23 +60,23 @@ export default function CommunityHeader({
         {/* Reels Shortcut */}
         <Link
           to="/community/reels"
-          className="min-h-[40px] px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-[#12314C]/30 hover:bg-[#12314C]/50 border border-white/[0.08] hover:border-brand-mint/30 text-xs font-medium text-text-secondary hover:text-white transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+          className="min-h-[44px] min-w-[44px] px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] hover:border-brand-mint/30 text-xs font-medium text-text-secondary hover:text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
           title="Watch Reels"
           aria-label="Watch Reels"
         >
           <Film className="w-3.5 h-3.5 text-brand-mint" />
-          <span className="hidden md:inline">Reels</span>
+          <span className="hidden sm:inline">Reels</span>
         </Link>
 
         {/* Saved Posts Shortcut */}
         <Link
           to="/community/saved"
-          className="min-h-[40px] px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-[#12314C]/30 hover:bg-[#12314C]/50 border border-white/[0.08] hover:border-brand-yellow/30 text-xs font-medium text-text-secondary hover:text-white transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+          className="min-h-[44px] min-w-[44px] px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] hover:border-brand-yellow/30 text-xs font-medium text-text-secondary hover:text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
           title="View Saved Posts"
           aria-label="View Saved Posts"
         >
           <Bookmark className="w-3.5 h-3.5 text-brand-yellow" />
-          <span className="hidden md:inline">Saved</span>
+          <span className="hidden sm:inline">Saved</span>
         </Link>
 
         {/* Creator Insights Modal Trigger */}
@@ -84,7 +84,7 @@ export default function CommunityHeader({
           <button
             type="button"
             onClick={onOpenInsights}
-            className="min-h-[40px] px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-[#12314C]/30 hover:bg-[#12314C]/50 border border-white/[0.08] hover:border-cyan-400/30 text-xs font-medium text-text-secondary hover:text-white transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+            className="hidden sm:flex min-h-[44px] min-w-[44px] px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] hover:border-cyan-400/30 text-xs font-medium text-text-secondary hover:text-white transition-all items-center justify-center gap-1.5 cursor-pointer shrink-0"
             title="Creator Insights"
             aria-label="View Creator Insights"
           >
@@ -97,19 +97,19 @@ export default function CommunityHeader({
         <button
           type="button"
           onClick={onOpenMobileDiscovery}
-          className="lg:hidden min-h-[40px] px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#12314C]/30 hover:bg-[#12314C]/50 border border-white/[0.08] hover:border-brand-mint/30 text-xs font-medium text-text-secondary hover:text-white transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+          className="lg:hidden min-h-[44px] min-w-[44px] px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] hover:border-brand-mint/30 text-xs font-medium text-text-secondary hover:text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
           aria-label="Open community discovery and topics"
           title="Discover"
         >
           <Compass className="w-3.5 h-3.5 text-brand-mint" />
-          <span className="hidden md:inline">Discover</span>
+          <span className="hidden sm:inline">Discover</span>
         </button>
 
         {/* Search Shortcut Trigger (Accessible on all viewports) */}
         <button
           type="button"
           onClick={onOpenSearch}
-          className="min-h-[40px] min-w-[40px] px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-[#12314C]/30 hover:bg-[#12314C]/50 border border-white/[0.08] hover:border-brand-mint/30 text-xs text-text-secondary hover:text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+          className="min-h-[44px] min-w-[40px] px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] hover:border-brand-mint/30 text-xs text-text-secondary hover:text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
           aria-label="Search community"
           title="Search community"
         >

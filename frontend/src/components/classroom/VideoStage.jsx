@@ -1,9 +1,10 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { WifiOff, RefreshCw, Loader2, Lock } from 'lucide-react';
+import { WifiOff, RefreshCw, Loader2, Lock, Compass, ExternalLink } from 'lucide-react';
 import VideoPlayer from '../player/VideoPlayer';
 import VideoWatermark from '../player/VideoWatermark';
 import FeatureErrorBoundary from '../common/FeatureErrorBoundary';
+import { isIOSNonSafari } from '../../utils/courseUi';
 
 export default function VideoStage({
   isS3Video,
@@ -21,6 +22,21 @@ export default function VideoStage({
   onRefreshPlaybackUrl,
   onProgressUpdate,
 }) {
+  const [showEmbeddedAnyway, setShowEmbeddedAnyway] = useState(false);
+  const isIOSRestricted = useMemo(() => isIOSNonSafari(), []);
+
+  const handleOpenInSafari = () => {
+    const cleanUrl = window.location.href.replace(/[?&]open_external=true/g, '');
+    const sep = cleanUrl.includes('?') ? '&' : '?';
+    // Append open_external=true so the native Expo iOS wrapper (ZeitnahMobile) intercepts it and triggers Linking.openURL
+    const targetUrl = `${cleanUrl}${sep}open_external=true`;
+    try {
+      window.location.href = targetUrl;
+    } catch {
+      window.open(targetUrl, '_system');
+    }
+  };
+
   return (
     <div className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.08] bg-black shadow-2xl shadow-black/80 transition-all">
       {/* Top subtle ambient glow line */}
@@ -70,6 +86,44 @@ export default function VideoStage({
             )
           ) : videoUrl ? (
             <>
+              {isIOSRestricted && !showEmbeddedAnyway ? (
+                /* Dedicated Apple FairPlay DRM Stage for iOS In-App WebViews */
+                <div className="absolute inset-0 z-20 bg-[#070B14] flex flex-col items-center justify-center p-6 text-center text-white select-none">
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-36 bg-brand-mint/10 rounded-full blur-3xl pointer-events-none" />
+
+                  <div className="w-14 h-14 rounded-2xl bg-brand-mint/10 border border-brand-mint/30 flex items-center justify-center text-brand-mint mb-4 shadow-lg shadow-brand-mint/10 relative z-10">
+                    <Compass className="w-7 h-7 text-brand-mint" />
+                  </div>
+
+                  <h3 className="text-base sm:text-lg font-heading font-extrabold text-white mb-2 relative z-10 tracking-tight">
+                    Play in Safari Browser
+                  </h3>
+
+                  <p className="text-xs sm:text-sm text-text-muted max-w-sm mb-5 relative z-10 leading-relaxed">
+                    Apple FairPlay DRM requires the official Safari browser on iOS devices. Tap below to watch this lesson in full HD.
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row items-center gap-3 relative z-10">
+                    <button
+                      type="button"
+                      onClick={handleOpenInSafari}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-brand-mint text-bg-base font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-brand-mint/90 active:scale-95 transition-all cursor-pointer shadow-lg shadow-brand-mint/20"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Watch in Safari Browser
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowEmbeddedAnyway(true)}
+                      className="text-[11px] text-text-muted hover:text-white transition-colors py-2 px-3 underline decoration-white/20 underline-offset-4 cursor-pointer"
+                    >
+                      Try In-App Player
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
               <iframe
                 ref={iframeRef}
                 src={videoUrl}
@@ -84,19 +138,33 @@ export default function VideoStage({
                     <WifiOff className="w-6 h-6" />
                   </div>
                   <h3 className="text-base sm:text-lg font-bold mb-2">
-                    Video Stream Interrupted
+                    Video Stream Notice
                   </h3>
                   <p className="text-xs sm:text-sm text-white/60 text-center max-w-sm mb-5">
-                    Stream interrupted by network jitter. Click below to fetch a fresh authenticated session.
+                    {typeof vdoPlayerError === 'string'
+                      ? vdoPlayerError
+                      : 'Stream interrupted by network jitter. Click below to fetch a fresh authenticated session.'}
                   </p>
-                  <button
-                    type="button"
-                    onClick={onVdoReload}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-mint text-bg-base font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-brand-mint/90 transition-all cursor-pointer"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                    Reload Player
-                  </button>
+                  <div className="flex flex-wrap items-center justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={onVdoReload}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-mint text-bg-base font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-brand-mint/90 transition-all cursor-pointer"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      Reload Player
+                    </button>
+                    {(isIOSRestricted || (typeof vdoPlayerError === 'string' && vdoPlayerError.toLowerCase().includes('safari'))) && (
+                      <button
+                        type="button"
+                        onClick={handleOpenInSafari}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-white/20"
+                      >
+                        <Compass className="w-4 h-4 text-brand-mint" />
+                        Open in Safari
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </>

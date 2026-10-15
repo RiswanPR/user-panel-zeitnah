@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useContext, useMemo, Suspense } from 'react';
+import { useState, useEffect, useCallback, useContext, useMemo, useRef, Suspense } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import PostCard from '../../components/community/PostCard';
 import StoryRail from '../../components/community/stories/StoryRail';
@@ -11,6 +11,7 @@ import { useIntersectionObserver } from '../../hooks/useIntersectionObserver';
 import { AuthContext } from '../../context/AuthContext';
 import { useActiveProfile } from '../../context/ActiveProfileContext';
 import CompanyFeedHeader from '../../components/community/header/CompanyFeedHeader';
+import FeedFilterTabs from '../../components/community/feed/FeedFilterTabs';
 import lazyWithRetry from '../../utils/lazyWithRetry';
 
 // Code-split heavy modals and drawers to keep initial CommunityHome bundle lean
@@ -57,10 +58,31 @@ export default function CommunityHome({ initialCreateMode } = {}) {
     isBusinessMode,
   } = useActiveProfile();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // ── URL Feed Filter State ──
   const activeFilter = normalizeFeedFilter(searchParams.get('feed'));
+
+  // ── Notification Deep-Link & Organization Target Parameters ──
+  const targetPostId = useMemo(() => {
+    const paramPost = searchParams.get('post') || searchParams.get('postId');
+    if (paramPost) return String(paramPost).trim();
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hash = window.location.hash.replace(/^#/, '').trim();
+      if (hash && !hash.includes('/')) return hash;
+    }
+    return null;
+  }, [searchParams]);
+
+  const shouldOpenComments = useMemo(() => {
+    return (
+      searchParams.get('openComments') === 'true' ||
+      searchParams.get('comments') === 'true' ||
+      searchParams.get('comments') === '1'
+    );
+  }, [searchParams]);
+
+  const urlOrgId = searchParams.get('organizationId') || null;
 
   // ── Modals & Overlays State ──
   const [selectedGroupIndex, setSelectedGroupIndex] = useState(null);
@@ -108,6 +130,7 @@ export default function CommunityHome({ initialCreateMode } = {}) {
     filter: effectiveFeedFilter,
     activeProfileType,
     activeBusinessId,
+    organizationId: urlOrgId,
   });
 
   // Infinite Scroll Trigger with prefetch margin
@@ -148,6 +171,7 @@ export default function CommunityHome({ initialCreateMode } = {}) {
   const displayedPosts = useMemo(() => {
     if (!activeTopic) return rawPosts;
     const cleanActive = sanitizeTag(activeTopic);
+    if (!cleanActive) return rawPosts;
     return rawPosts.filter((post) => {
       if (!post) return false;
       const tags = (post.tags || []).map(sanitizeTag);
@@ -181,6 +205,95 @@ export default function CommunityHome({ initialCreateMode } = {}) {
       navigate('/community', { replace: true });
     }
   }, [navigate]);
+
+  // ── Notification Deep-Link Navigation & Consumption Lifecycle ──
+  const [targetPostNotice, setTargetPostNotice] = useState(null);
+  const [highlightedPostId, setHighlightedPostId] = useState(null);
+  const handledTargetPostIdRef = useRef(null);
+
+  useEffect(() => {
+    if (!targetPostId || feedLoading) return;
+    if (handledTargetPostIdRef.current === targetPostId) return;
+
+    // Locate matching post in active displayedPosts (matching plain ID, post- prefix, or UUID)
+    const matchedPost = displayedPosts.find((p) => {
+      const pid = String(p._id || p.id || '');
+      return (
+        pid === targetPostId ||
+        pid === `post-${targetPostId}` ||
+        `post-${pid}` === targetPostId
+      );
+    });
+
+    if (matchedPost) {
+      handledTargetPostIdRef.current = targetPostId;
+      setTargetPostNotice(null);
+
+      const matchedId = matchedPost._id || matchedPost.id;
+      setHighlightedPostId(matchedId);
+
+      // Smooth scroll to target post element
+      const cleanId = String(matchedId).replace(/^post-/, '');
+      const element =
+        document.getElementById(matchedId) ||
+        document.getElementById(cleanId) ||
+        document.getElementById(`post-${cleanId}`) ||
+        document.querySelector(`[data-post-id="${matchedId}"]`) ||
+        document.querySelector(`[data-post-id="${cleanId}"]`);
+
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      // Open comment drawer if requested
+      if (shouldOpenComments) {
+        setActiveCommentPost(matchedPost);
+      }
+
+      // Clear highlighted state after 2.5 seconds
+      const timer = setTimeout(() => {
+        setHighlightedPostId((current) => (current === matchedId ? null : current));
+      }, 2500);
+
+      // Clean up consumed navigation query parameters without disrupting browser history
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('post');
+      newParams.delete('postId');
+      newParams.delete('openComments');
+      newParams.delete('comments');
+      setSearchParams(newParams, { replace: true });
+
+      return () => clearTimeout(timer);
+    } else if (!feedLoading) {
+      // Feed has finished loading but target post was not in the current view
+      handledTargetPostIdRef.current = targetPostId;
+
+      const isFilteredView = effectiveFeedFilter !== 'all' || Boolean(activeTopic);
+      setTargetPostNotice({
+        postId: targetPostId,
+        isFilteredView,
+        filter: effectiveFeedFilter,
+        hasTopic: Boolean(activeTopic),
+      });
+
+      // Clean up consumed navigation query parameters
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('post');
+      newParams.delete('postId');
+      newParams.delete('openComments');
+      newParams.delete('comments');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [
+    targetPostId,
+    shouldOpenComments,
+    feedLoading,
+    displayedPosts,
+    effectiveFeedFilter,
+    activeTopic,
+    searchParams,
+    setSearchParams,
+  ]);
 
   const [creationPublishingContext, setCreationPublishingContext] = useState(null);
 
@@ -274,6 +387,16 @@ export default function CommunityHome({ initialCreateMode } = {}) {
   const handleEmptyStateAction = useCallback(() => {
     handleOpenCreatePost();
   }, [handleOpenCreatePost]);
+
+  const handleFilterChange = useCallback((newFilter) => {
+    if (newFilter === activeFilter) return;
+    if (activeTopic) setActiveTopic(null);
+    if (newFilter === 'all') {
+      navigate('/community', { replace: true });
+    } else {
+      navigate(`/community?feed=${newFilter}`, { replace: true });
+    }
+  }, [activeFilter, activeTopic, navigate]);
 
   const handleOpenSearch = useCallback(() => {
     setIsSearchOpen(true);
@@ -401,25 +524,25 @@ export default function CommunityHome({ initialCreateMode } = {}) {
         </Suspense>
       </FeatureErrorBoundary>
 
-      {/* ── Page Header: Company Feed Header in Business Mode, CommunityHeader in Personal Mode ── */}
-      {isBusinessMode ? (
-        <CompanyFeedHeader
-          business={business}
-          onOpenSearch={handleOpenSearch}
-          onOpenCreate={handleOpenCreateAction}
-        />
-      ) : (
-        <CommunityHeader
-          onOpenCreate={handleOpenCreateAction}
-          onOpenSearch={handleOpenSearch}
-          onOpenMobileDiscovery={() => setIsMobileDiscoveryOpen(true)}
-          onOpenInsights={() => setIsInsightsOpen(true)}
-        />
-      )}
+      {/* ── Responsive Centered Editorial Container (Header + Feed + Discovery Sidebar) ── */}
+      <div className="max-w-[1040px] mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-4">
+        {/* ── Page Header: Company Feed Header in Business Mode, CommunityHeader in Personal Mode ── */}
+        {isBusinessMode ? (
+          <CompanyFeedHeader
+            business={business}
+            onOpenSearch={handleOpenSearch}
+            onOpenCreate={handleOpenCreateAction}
+          />
+        ) : (
+          <CommunityHeader
+            onOpenCreate={handleOpenCreateAction}
+            onOpenSearch={handleOpenSearch}
+            onOpenMobileDiscovery={() => setIsMobileDiscoveryOpen(true)}
+            onOpenInsights={() => setIsInsightsOpen(true)}
+          />
+        )}
 
-      {/* ── Responsive Centered Container (Main Feed ~620px + Desktop Discovery Sidebar) ── */}
-      <div className="max-w-[1020px] mx-auto px-0 sm:px-4 lg:px-6 mt-4 sm:mt-5">
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,620px)_340px] justify-center gap-6 lg:gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,620px)_340px] justify-center gap-6 lg:gap-8 items-start mt-3 sm:mt-5">
           {/* ── PRIMARY COLUMN (Community Feed) ── */}
           <div className="w-full max-w-[620px] mx-auto space-y-3.5 min-w-0" id={`feed-panel-${activeFilter}`}>
             {/* ── Stories Strip (Snug within feed column, personal mode only) ── */}
@@ -448,59 +571,110 @@ export default function CommunityHome({ initialCreateMode } = {}) {
               onOpenCreateStory={handleOpenCreateStory}
             />
 
-          {/* Active Topic Banner if filtering by topic */}
-          {activeTopic && (
-            <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#12314C]/70 to-[#9FD5B2]/15 border border-brand-mint/30 text-xs text-white">
-              <span className="flex items-center gap-1.5 font-medium">
-                Filtering by topic: <strong className="text-brand-mint">#{activeTopic}</strong>
-                <span className="text-text-muted font-normal">
-                  ({displayedPosts.length} {displayedPosts.length === 1 ? 'post' : 'posts'})
+            {/* ── Segmented Feed Filter Navigation Bar (Latest / Trending / Following / Cohort) ── */}
+            <FeedFilterTabs
+              activeFilter={effectiveFeedFilter}
+              onChangeFilter={handleFilterChange}
+              hasCohort={Boolean(user?.enrolledCourses?.length)}
+              isBusinessMode={isBusinessMode}
+            />
+
+            {/* Active Topic Banner if filtering by topic */}
+            {activeTopic && (
+              <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#12314C]/70 to-[#9FD5B2]/15 border border-brand-mint/30 text-xs text-white shadow-sm">
+                <span className="flex items-center gap-1.5 font-medium">
+                  Filtering by topic: <strong className="text-brand-mint">#{activeTopic}</strong>
+                  <span className="text-text-muted font-normal">
+                    ({displayedPosts.length} {displayedPosts.length === 1 ? 'post' : 'posts'})
+                  </span>
                 </span>
-              </span>
-              <button
-                type="button"
-                onClick={() => setActiveTopic(null)}
-                className="text-text-muted hover:text-white underline cursor-pointer"
-              >
-                Show all
-              </button>
-            </div>
-          )}
+                <button
+                  type="button"
+                  onClick={() => setActiveTopic(null)}
+                  className="text-text-muted hover:text-white underline cursor-pointer"
+                >
+                  Show all
+                </button>
+              </div>
+            )}
 
-          {/* ── Feed Section ── */}
-          <div className="space-y-4">
-            {feedLoading ? (
-              // High-fidelity PostCard Skeletons
-              Array.from({ length: 3 }).map((_, i) => (
-                <PostCardSkeleton key={i} />
-              ))
-            ) : feedError ? (
-              <EmptyState
-                icon={AlertCircle}
-                title="We couldn't load the community."
-                description="We encountered an issue retrieving the community feed. Please check your network connection and try again."
-                action={() => refetchFeed()}
-                actionLabel="Try again"
-              />
-            ) : (
-              <>
-                {displayedPosts.map((post) => {
-                  const postId = post._id || post.id;
-                  const isCurrentActivePost = Boolean(
-                    activeCommentPost &&
-                    (activeCommentPost._id || activeCommentPost.id) === postId
-                  );
+            {/* Target Post Deep-Link Fallback Notice (if post was filtered or unavailable) */}
+            {targetPostNotice && (
+              <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-[#12314C]/85 border border-brand-mint/30 text-xs text-white shadow-sm animate-fadeIn">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-brand-mint shrink-0" aria-hidden="true" />
+                  <span>
+                    {targetPostNotice.isFilteredView
+                      ? 'The linked post was not found in this filtered view.'
+                      : 'The linked post could not be found. It may have been deleted, moved, or is inaccessible.'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {targetPostNotice.isFilteredView && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTargetPostNotice(null);
+                        if (targetPostNotice.hasTopic) setActiveTopic(null);
+                        handleFilterChange('all');
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-brand-mint/20 hover:bg-brand-mint/30 text-brand-mint font-medium transition-colors cursor-pointer"
+                    >
+                      View all posts
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setTargetPostNotice(null)}
+                    className="text-text-muted hover:text-white px-1.5 py-1 transition-colors cursor-pointer"
+                    aria-label="Dismiss notice"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            )}
 
-                  return (
-                    <PostCard
-                      key={postId}
-                      post={post}
-                      onOpenComments={setActiveCommentPost}
-                      isActiveCommentPost={isCurrentActivePost}
-                      onOpenReel={handleOpenReel}
-                    />
-                  );
-                })}
+            {/* ── Feed Section ── */}
+            <div className="space-y-3.5">
+              {feedLoading ? (
+                // High-fidelity PostCard Skeletons with realistic varied proportions
+                Array.from({ length: 3 }).map((_, i) => (
+                  <PostCardSkeleton key={i} variant={i % 2 === 0 ? 'media' : 'text'} />
+                ))
+              ) : feedError ? (
+                <EmptyState
+                  icon={AlertCircle}
+                  title="We couldn't load the community."
+                  description="We encountered an issue retrieving the community feed. Please check your network connection and try again."
+                  action={() => refetchFeed()}
+                  actionLabel="Try again"
+                />
+              ) : (
+                <>
+                  {displayedPosts.map((post) => {
+                    const postId = post._id || post.id;
+                    const isCurrentActivePost = Boolean(
+                      activeCommentPost &&
+                      (activeCommentPost._id || activeCommentPost.id) === postId
+                    );
+                    const isHighlighted = Boolean(
+                      highlightedPostId &&
+                      (highlightedPostId === postId || highlightedPostId === `post-${postId}`)
+                    );
+
+                    return (
+                      <PostCard
+                        key={postId}
+                        post={post}
+                        onOpenComments={setActiveCommentPost}
+                        isActiveCommentPost={isCurrentActivePost}
+                        isHighlighted={isHighlighted}
+                        onOpenReel={handleOpenReel}
+                        onSelectTopic={setActiveTopic}
+                      />
+                    );
+                  })}
 
                 {/* Infinite Scroll Trigger & Bottom Loading / Error States */}
                 {hasNextPage && (

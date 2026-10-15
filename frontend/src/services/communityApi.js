@@ -401,8 +401,13 @@ export const communityApi = {
   },
 
   // ── Moderation ──
-  getReports: async () => {
-    const response = await api.get('/community/moderation/reports');
+  getReports: async (params) => {
+    const response = await api.get('/community/moderation/reports', { params });
+    return response.data;
+  },
+
+  getModerationReports: async (params) => {
+    const response = await api.get('/community/moderation/reports', { params });
     return response.data;
   },
 

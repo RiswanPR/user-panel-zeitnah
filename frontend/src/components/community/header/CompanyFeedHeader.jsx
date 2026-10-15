@@ -92,7 +92,7 @@ export default function CompanyFeedHeader({
         <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
           <Link
             to="/community/saved"
-            className="min-h-[38px] px-3 py-1.5 rounded-xl bg-[#12314C]/30 hover:bg-[#12314C]/50 border border-white/[0.08] hover:border-brand-yellow/30 text-xs font-medium text-text-secondary hover:text-white transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+            className="min-h-[44px] px-3 py-1.5 rounded-xl bg-[#12314C]/30 hover:bg-[#12314C]/50 border border-white/[0.08] hover:border-brand-yellow/30 text-xs font-medium text-text-secondary hover:text-white transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
             title="View Saved Posts"
             aria-label="View Saved Posts"
           >
@@ -104,7 +104,7 @@ export default function CompanyFeedHeader({
             <button
               type="button"
               onClick={onOpenCreate}
-              className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-brand-mint text-bg-base hover:bg-brand-mint/90 font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm hover:shadow-brand-mint/20"
+              className="min-h-[44px] px-3.5 py-1.5 rounded-xl bg-brand-mint text-bg-base hover:bg-brand-mint/90 font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm hover:shadow-brand-mint/20"
               aria-label={`Create content as ${businessName}`}
               title={`Create as ${businessName}`}
             >
@@ -117,7 +117,7 @@ export default function CompanyFeedHeader({
             <button
               type="button"
               onClick={onOpenSearch}
-              className="min-h-[38px] px-3 py-1.5 rounded-xl bg-[#12314C]/30 hover:bg-[#12314C]/50 border border-white/[0.08] hover:border-brand-mint/30 text-xs text-text-secondary hover:text-white transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+              className="min-h-[44px] px-3 py-1.5 rounded-xl bg-[#12314C]/30 hover:bg-[#12314C]/50 border border-white/[0.08] hover:border-brand-mint/30 text-xs text-text-secondary hover:text-white transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
               aria-label="Search community"
               title="Search community"
             >

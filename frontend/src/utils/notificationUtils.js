@@ -121,6 +121,44 @@ export function extractNotificationActor(notif) {
   };
 }
 
+function extractPostIdFromUrl(url = '') {
+  if (!url || typeof url !== 'string') return '';
+  try {
+    const parsed = new URL(url, 'https://zeitnah.app');
+    const qPost = parsed.searchParams.get('post') || parsed.searchParams.get('postId');
+    if (qPost) return qPost;
+    if (parsed.hash) {
+      const h = parsed.hash.replace(/^#/, '');
+      if (h && !h.includes('/')) return h;
+    }
+    const reelsMatch = parsed.pathname.match(/\/community\/reels\/([^/?#]+)/);
+    if (reelsMatch) return reelsMatch[1];
+  } catch {
+    const hashMatch = url.match(/#([a-zA-Z0-9_-]+)/);
+    if (hashMatch) return hashMatch[1];
+  }
+  return '';
+}
+
+function extractOrgIdFromUrl(url = '') {
+  if (!url || typeof url !== 'string') return '';
+  try {
+    const parsed = new URL(url, 'https://zeitnah.app');
+    const qOrg = parsed.searchParams.get('organizationId');
+    if (qOrg) return qOrg;
+  } catch {}
+  return '';
+}
+
+function extractPostIdFromIdempotencyKey(key = '', prefix = '') {
+  if (!key || typeof key !== 'string') return '';
+  const parts = key.split(':');
+  if (parts.length >= 3 && parts[0] === prefix) {
+    return parts[1] || '';
+  }
+  return '';
+}
+
 /**
  * Authoritative Notification Routing Resolver.
  * Normalizes legacy routes, validates targets, and handles external links safely.
@@ -141,9 +179,106 @@ export function resolveNotificationRoute(notif) {
     notif.metadata?.actionUrl ||
     '';
 
-  // 2. Synthesize route if rawUrl is empty based on type/entity
-  if (!rawUrl && notif.type) {
-    const typeUpper = String(notif.type).toUpperCase();
+  const typeUpper = String(notif.type || '').toUpperCase();
+  const categoryLower = String(notif.category || '').toLowerCase();
+  const isCommunity =
+    categoryLower === 'community' ||
+    typeUpper.startsWith('COMMUNITY_') ||
+    typeUpper === 'COMPANY_POST' ||
+    typeUpper === 'STORY_REACTION' ||
+    typeUpper === 'STORY_REPLY' ||
+    (rawUrl && rawUrl.startsWith('/community'));
+
+  // 2. Synthesize or normalize Community notification destinations
+  if (isCommunity) {
+    const isReel = (rawUrl && rawUrl.includes('/community/reels/')) || Boolean(notif.metadata?.isReel);
+    if (isReel) {
+      const reelId =
+        notif.metadata?.postId ||
+        notif.metadata?.reelId ||
+        extractPostIdFromUrl(rawUrl) ||
+        (notif.entityType === 'post' || notif.entityType === 'reel' ? String(notif.entityId || '') : '');
+
+      if (reelId) {
+        const shouldOpenComments =
+          typeUpper === 'COMMUNITY_COMMENT' ||
+          typeUpper === 'COMMUNITY_REPLY' ||
+          notif.metadata?.openComments === true;
+        rawUrl = `/community/reels/${encodeURIComponent(reelId)}${shouldOpenComments ? '?openComments=true' : ''}`;
+      } else {
+        rawUrl = '/community/reels';
+      }
+    } else {
+      let targetPostId = '';
+      if (typeUpper === 'COMMUNITY_REPOST') {
+        targetPostId =
+          notif.metadata?.originalPostId ||
+          notif.metadata?.canonicalPostId ||
+          notif.metadata?.postId ||
+          extractPostIdFromUrl(rawUrl) ||
+          extractPostIdFromIdempotencyKey(notif.idempotencyKey, 'repost') ||
+          (notif.category === 'community' ? String(notif.entityId || '') : '');
+      } else if (typeUpper === 'COMMUNITY_QUOTE') {
+        targetPostId =
+          notif.metadata?.quotedPostId ||
+          notif.metadata?.quotePostId ||
+          notif.metadata?.originalPostId ||
+          notif.metadata?.postId ||
+          extractPostIdFromUrl(rawUrl) ||
+          extractPostIdFromIdempotencyKey(notif.idempotencyKey, 'quote') ||
+          (notif.category === 'community' ? String(notif.entityId || '') : '');
+      } else {
+        targetPostId =
+          notif.metadata?.postId ||
+          extractPostIdFromUrl(rawUrl) ||
+          (notif.category === 'community' || notif.entityType === 'post' ? String(notif.entityId || '') : '');
+      }
+
+      const orgId =
+        notif.metadata?.organizationId ||
+        notif.metadata?.orgId ||
+        extractOrgIdFromUrl(rawUrl);
+
+      const shouldOpenComments =
+        Boolean(targetPostId) &&
+        (typeUpper === 'COMMUNITY_COMMENT' ||
+          typeUpper === 'COMMUNITY_REPLY' ||
+          notif.metadata?.openComments === true);
+
+      const params = new URLSearchParams();
+      // Retain existing non-navigation query params if rawUrl had any
+      if (rawUrl) {
+        try {
+          const parsed = new URL(rawUrl, 'https://zeitnah.app');
+          parsed.searchParams.forEach((val, key) => {
+            if (
+              key !== 'post' &&
+              key !== 'postId' &&
+              key !== 'openComments' &&
+              key !== 'comments' &&
+              key !== 'organizationId'
+            ) {
+              params.set(key, val);
+            }
+          });
+        } catch {}
+      }
+
+      if (orgId) {
+        params.set('organizationId', orgId);
+      }
+      if (targetPostId) {
+        params.set('post', targetPostId);
+      }
+      if (shouldOpenComments) {
+        params.set('openComments', 'true');
+      }
+
+      const qs = params.toString();
+      rawUrl = `/community${qs ? `?${qs}` : ''}${targetPostId ? `#${encodeURIComponent(targetPostId)}` : ''}`;
+    }
+  } else if (!rawUrl && notif.type) {
+    // 3. Synthesize non-community route if rawUrl is empty based on type/entity
     if (typeUpper === 'MESSAGE' || typeUpper === 'MESSAGE_REQUEST') {
       const convId = notif.entityId || notif.metadata?.conversationId;
       rawUrl = convId ? `/messages?c=${convId}` : '/messages';

@@ -32,7 +32,7 @@ import QuotedPost from '../../reposts/QuotedPost';
  * Premium Instagram-level social feed core implementing the clear hierarchy:
  * AUTHOR → CONTENT → MEDIA → META / TOPIC → ACTIONS → ENGAGEMENT → COMMENTS
  */
-function PostCard({ post, onOpenComments, isActiveCommentPost, onOpenReel }) {
+function PostCard({ post, onOpenComments, isActiveCommentPost, isHighlighted, onOpenReel, onSelectTopic }) {
   const { user } = useContext(AuthContext);
   const activeProfile = useActiveProfile?.() || {};
   const [localShowComments, setLocalShowComments] = useState(false);
@@ -176,13 +176,23 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, onOpenReel }) {
     }
   }, [deleteCommentMutation, targetActionPostId]);
 
+  const elementId = String(postId).startsWith('post-') ? postId : `post-${postId}`;
+  const rawId = String(postId).startsWith('post-') ? postId.slice(5) : postId;
+
   return (
     <motion.article
+      id={elementId}
+      data-post-id={postId}
       initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: shouldReduceMotion ? 0.05 : 0.18, ease: 'easeOut' }}
-      className="zn-card bg-[#090E1A] sm:bg-[#0B111E] border-y border-white/[0.06] border-x-0 sm:border sm:border-white/[0.06] sm:hover:border-white/[0.12] rounded-none sm:rounded-2xl sm:shadow-[0_2px_16px_rgba(0,0,0,0.25)] mb-3 sm:mb-6 group overflow-hidden transition-all duration-200"
+      className={`zn-card bg-[#0B111E] rounded-2xl shadow-sm mb-3 sm:mb-4 group overflow-hidden transition-all duration-300 ${
+        isHighlighted
+          ? 'border-2 border-brand-mint shadow-[0_0_24px_rgba(159,213,178,0.3)] ring-2 ring-brand-mint/30'
+          : 'border border-white/[0.07] hover:border-white/[0.12]'
+      }`}
     >
+      {rawId !== elementId && <div id={rawId} className="sr-only" aria-hidden="true" />}
       {/* 0. Repost Attribution Header if post is a repost */}
       {isRepost && (
         <div className="px-3.5 sm:px-4 pt-3 pb-1 border-b border-white/[0.04]">
@@ -241,6 +251,7 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, onOpenReel }) {
                 aiSummary={displayPost.aiSummary}
                 tags={displayPost.tags}
                 isMediaPost={false}
+                onSelectTopic={onSelectTopic}
               />
             </div>
           )}
@@ -270,20 +281,21 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, onOpenReel }) {
 
           {/* 4. CAPTION & HASHTAGS (Under actions for media posts) */}
           {hasMedia && (displayPost.content || (displayPost.tags && displayPost.tags.length > 0)) && (
-            <div className="px-3.5 sm:px-4 pt-1 pb-1">
+            <div className="px-3.5 sm:px-4 pt-1 pb-2">
               <PostContent
                 author={displayPost.author}
                 content={displayPost.content}
                 aiSummary={displayPost.aiSummary}
                 tags={displayPost.tags}
                 isMediaPost={true}
+                onSelectTopic={onSelectTopic}
               />
             </div>
           )}
 
           {/* 5. COMMENTS: Quick Teaser to open CommentDrawer */}
           {commentCount > 0 && onOpenComments && (
-            <div className="px-3.5 sm:px-4 py-0.5">
+            <div className="px-3.5 sm:px-4 pt-0.5 pb-3">
               <button
                 type="button"
                 onClick={handleToggleComments}
@@ -295,10 +307,10 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, onOpenReel }) {
             </div>
           )}
 
-          {/* 6. TIMESTAMP & METADATA FOOTER */}
-          <div className="px-3.5 sm:px-4 pb-3.5 pt-1 text-[10px] sm:text-[11px] font-normal text-text-faint/70 uppercase tracking-wider select-none">
-            {formatRelativeTime(displayPost.createdAt)}
-          </div>
+          {/* Bottom spacing when no comments teaser is present */}
+          {!(commentCount > 0 && onOpenComments) && (
+            <div className="h-2" />
+          )}
         </>
       )}
 

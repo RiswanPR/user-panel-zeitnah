@@ -97,11 +97,18 @@ export default function EditProfile() {
   const bannerFileRef = useRef(null);
 
   // Normalize section parameter with legacy aliases and redirect stale sections
+  const SECTION_ALIASES = {
+    introduction: "basic-info",
+    about: "basic-info",
+    identity: "professional-identity",
+    role: "professional-identity",
+    roles: "professional-identity",
+  };
   const rawSectionParam = (searchParams.get("section") || "basic-info").toLowerCase().trim();
   const validSectionIds = SECTION_CONFIG.map((s) => s.id);
-  const normalizedSection = validSectionIds.includes(rawSectionParam)
+  const normalizedSection = SECTION_ALIASES[rawSectionParam] || (validSectionIds.includes(rawSectionParam)
     ? rawSectionParam
-    : "basic-info";
+    : "basic-info");
 
   const [activeSection, setActiveSection] = useState(normalizedSection);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -215,11 +222,15 @@ export default function EditProfile() {
   };
 
   const handleConfirmDiscard = () => {
-    setIsDirty(false);
+    resetFormToProfile();
     setIsUnsavedModalOpen(false);
     if (pendingSectionSwitch) {
-      setActiveSection(pendingSectionSwitch);
-      setSearchParams({ section: pendingSectionSwitch });
+      if (pendingSectionSwitch === "exit") {
+        navigate("/profile");
+      } else {
+        setActiveSection(pendingSectionSwitch);
+        setSearchParams({ section: pendingSectionSwitch });
+      }
       setPendingSectionSwitch(null);
     }
   };
@@ -266,33 +277,35 @@ export default function EditProfile() {
     ? recommendationsData
     : [];
 
+  const resetFormToProfile = () => {
+    if (!profile) return;
+    setName(profile.name || "");
+    setHeadline(profile.headline || "");
+    setCurrentRole(profile.currentRole || "");
+    setLocation(profile.location || "");
+    setIndustry(profile.industry || "");
+    setBio(profile.bio || "");
+    setPrimaryRole(normalizeUserRole(profile));
+    setAvailability(normalizeAvailability(profile.availability));
+    setDiscoverableToRecruiters(Boolean(profile.discoverableToRecruiters));
+    setProfileVisibility(profile.profileVisibility || "PUBLIC");
+
+    setPrimaryDiscipline(profile.primaryDiscipline || "");
+    setSpecializations(Array.isArray(profile.specializations) ? profile.specializations : []);
+    setInfrastructureSectors(Array.isArray(profile.infrastructureSectors) ? profile.infrastructureSectors : []);
+    setPreferredLocations(Array.isArray(profile.preferredLocations) ? profile.preferredLocations : []);
+    setYearsOfExperience(profile.yearsOfExperience || 0);
+
+    if (profile.structuredSkills) {
+      setStructuredSkills(normalizeStructuredSkills(profile.structuredSkills));
+    }
+    setFlatSkills(Array.isArray(profile.skills) ? profile.skills : []);
+    setIsDirty(false);
+  };
+
   // Populate local form states from profile data
   useEffect(() => {
-    if (profile) {
-      setName(profile.name || "");
-      setHeadline(profile.headline || "");
-      setCurrentRole(profile.currentRole || "");
-      setLocation(profile.location || "");
-      setIndustry(profile.industry || "");
-      setBio(profile.bio || "");
-      setPrimaryRole(normalizeUserRole(profile));
-      setAvailability(normalizeAvailability(profile.availability));
-      setDiscoverableToRecruiters(Boolean(profile.discoverableToRecruiters));
-      setProfileVisibility(profile.profileVisibility || "PUBLIC");
-
-      setPrimaryDiscipline(profile.primaryDiscipline || "");
-      setSpecializations(Array.isArray(profile.specializations) ? profile.specializations : []);
-      setInfrastructureSectors(Array.isArray(profile.infrastructureSectors) ? profile.infrastructureSectors : []);
-      setPreferredLocations(Array.isArray(profile.preferredLocations) ? profile.preferredLocations : []);
-      setYearsOfExperience(profile.yearsOfExperience || 0);
-
-      if (profile.structuredSkills) {
-        setStructuredSkills(normalizeStructuredSkills(profile.structuredSkills));
-      }
-      setFlatSkills(Array.isArray(profile.skills) ? profile.skills : []);
-
-      setIsDirty(false);
-    }
+    resetFormToProfile();
   }, [profile]);
 
 
@@ -752,7 +765,7 @@ export default function EditProfile() {
         industrySkills: normalized.industrySkills,
         professionalSkills: normalized.professionalSkills,
       },
-      skills: flatSkills,
+      skills: (flatSkills || []).slice(0, 25),
     });
   };
 
@@ -1378,7 +1391,7 @@ export default function EditProfile() {
                       setHeadline(e.target.value);
                       setIsDirty(true);
                     }}
-                    maxLength={140}
+                    maxLength={120}
                     className="w-full px-4 py-3 rounded-xl bg-bg-elevated/70 border border-white/[0.08] focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30 focus:outline-none text-sm text-white transition-colors"
                     placeholder="e.g. Planning Engineer | Primavera P6 & BIM Specialist | Metro & Rail Infrastructure"
                   />
@@ -2286,13 +2299,13 @@ export default function EditProfile() {
                   </div>
 
                   <div className="flex items-center gap-2.5">
-                    {profile?.primaryDiscipline ? (
+                    {profile?.bio && profile.bio.trim().length >= 20 ? (
                       <CheckCircle2 className="w-4 h-4 text-brand-mint shrink-0" />
                     ) : (
                       <Circle className="w-4 h-4 text-brand-yellow shrink-0" />
                     )}
-                    <span className={profile?.primaryDiscipline ? "text-white" : "text-text-muted"}>
-                      Primary infrastructure discipline selected ({profile?.primaryDiscipline || "Not selected"})
+                    <span className={profile?.bio && profile.bio.trim().length >= 20 ? "text-white" : "text-text-muted"}>
+                      About story added (20+ characters)
                     </span>
                   </div>
 
@@ -2480,7 +2493,10 @@ export default function EditProfile() {
               </h3>
               <button
                 type="button"
-                onClick={() => setIsExpModalOpen(false)}
+                onClick={() => {
+                  setIsExpModalOpen(false);
+                  resetExpForm();
+                }}
                 className="p-2.5 -mr-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-white cursor-pointer"
                 aria-label="Close dialog"
               >
@@ -2832,7 +2848,10 @@ export default function EditProfile() {
               <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsExpModalOpen(false)}
+                  onClick={() => {
+                    setIsExpModalOpen(false);
+                    resetExpForm();
+                  }}
                   className="btn-secondary text-xs py-3 px-5 min-h-[44px] w-full sm:w-auto cursor-pointer"
                 >
                   Cancel

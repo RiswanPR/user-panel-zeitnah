@@ -15,11 +15,13 @@ export default function ModeratorDashboard() {
 
   const handleResolve = (action) => {
     if (!selectedReport) return;
-    if (action === 'hide') {
-      hideMutation.mutate({ id: selectedReport.entityId, reason: notes });
+    const targetEntityId = selectedReport.entityId || selectedReport.targetId;
+    if (action === 'hide' && targetEntityId) {
+      hideMutation.mutate({ id: targetEntityId, reason: notes });
     }
+    const reportId = selectedReport._id || selectedReport.id;
     resolveMutation.mutate(
-      { id: selectedReport._id, data: { action, notes } },
+      { id: reportId, data: { action, notes } },
       {
         onSuccess: () => {
           setSelectedReport(null);
@@ -56,17 +58,19 @@ export default function ModeratorDashboard() {
 
           {reports?.map(report => (
             <button
-              key={report._id}
+              key={report._id || report.id}
               onClick={() => setSelectedReport(report)}
               className={`w-full text-left p-3 rounded-xl border transition-colors ${
-                selectedReport?._id === report._id 
+                (selectedReport?._id || selectedReport?.id) === (report._id || report.id) 
                   ? 'bg-white/[0.05] border-brand-mint/50' 
                   : 'bg-bg-surface border-white/[0.05] hover:bg-white/[0.02]'
               }`}
             >
               <div className="flex items-center gap-2 mb-1">
                 <AlertTriangle className="w-4 h-4 text-warning" />
-                <span className="text-sm font-medium text-white capitalize">{report.entityType}</span>
+                <span className="text-sm font-medium text-white capitalize">
+                  {report.entityType || report.targetType || 'Community'}
+                </span>
               </div>
               <p className="text-xs text-text-muted truncate">{report.reason}</p>
             </button>
@@ -81,20 +85,26 @@ export default function ModeratorDashboard() {
               <div className="space-y-4 mb-6">
                 <div>
                   <label className="text-xs text-text-faint uppercase">Entity Type</label>
-                  <p className="text-sm text-white capitalize">{selectedReport.entityType}</p>
+                  <p className="text-sm text-white capitalize">
+                    {selectedReport.entityType || selectedReport.targetType || 'Community'}
+                  </p>
                 </div>
                 <div>
                   <label className="text-xs text-text-faint uppercase">Entity ID</label>
-                  <p className="text-sm font-mono text-text-muted">{selectedReport.entityId}</p>
+                  <p className="text-sm font-mono text-text-muted">
+                    {selectedReport.entityId || selectedReport.targetId}
+                  </p>
                 </div>
                 <div>
                   <label className="text-xs text-text-faint uppercase">Reason</label>
                   <p className="text-sm text-danger font-medium">{selectedReport.reason}</p>
                 </div>
-                {selectedReport.description && (
+                {(selectedReport.description || selectedReport.details) && (
                   <div>
                     <label className="text-xs text-text-faint uppercase">Additional Details</label>
-                    <p className="text-sm text-text-secondary">{selectedReport.description}</p>
+                    <p className="text-sm text-text-secondary">
+                      {selectedReport.description || selectedReport.details}
+                    </p>
                   </div>
                 )}
               </div>
@@ -112,7 +122,7 @@ export default function ModeratorDashboard() {
                   <button 
                     onClick={() => handleResolve('dismiss')}
                     disabled={resolveMutation.isPending}
-                    className="flex-1 btn-secondary py-2 flex items-center justify-center gap-2"
+                    className="flex-1 btn-secondary py-2 flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Check className="w-4 h-4" />
                     Dismiss Report
@@ -120,10 +130,10 @@ export default function ModeratorDashboard() {
                   <button 
                     onClick={() => handleResolve('hide')}
                     disabled={resolveMutation.isPending || hideMutation.isPending}
-                    className="flex-1 bg-danger/10 text-danger hover:bg-danger/20 font-semibold rounded-xl py-2 flex items-center justify-center gap-2 transition-colors"
+                    className="flex-1 bg-danger/10 text-danger hover:bg-danger/20 font-semibold rounded-xl py-2 flex items-center justify-center gap-2 transition-colors cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Hide {selectedReport.entityType}
+                    Hide {selectedReport.entityType || selectedReport.targetType || 'Content'}
                   </button>
                 </div>
               </div>

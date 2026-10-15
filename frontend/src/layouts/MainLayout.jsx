@@ -125,7 +125,7 @@ export default function MainLayout({ children }) {
           Suppressed inside active mobile conversation
           ═══════════════════════════════════════════════ */}
         {!isMessagesActiveConversation && !isReelsActive && (
-          <div className="fixed bottom-0 inset-x-0 z-40 md:hidden pb-[env(safe-area-inset-bottom)] pointer-events-none">
+          <div className="fixed bottom-0 inset-x-0 z-40 md:hidden pb-[env(safe-area-inset-bottom,0px)] pointer-events-none">
             <div className="mx-3 mb-2.5 px-2 py-1.5 rounded-2xl bg-[#0B111E]/95 border border-white/[0.1] backdrop-blur-2xl shadow-[0_-8px_32px_rgba(0,0,0,0.5)] pointer-events-auto">
             <nav className="flex items-center justify-around" aria-label="Mobile Bottom Navigation">
               {/* 1. Courses (First) */}
@@ -292,8 +292,8 @@ export default function MainLayout({ children }) {
             isMessagesActiveConversation || isReelsActive
               ? 'pb-0'
               : location.pathname.startsWith('/messages')
-              ? 'pb-20 md:pb-0'
-              : 'pb-24 md:pb-6'
+              ? 'pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-0'
+              : 'pb-[calc(7.5rem+env(safe-area-inset-bottom,0px))] md:pb-6'
           }`}
         >
           <div

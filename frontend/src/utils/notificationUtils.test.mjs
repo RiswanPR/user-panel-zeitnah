@@ -121,6 +121,75 @@ describe('Notification Utilities — Deduplication, Ordering, Routing & Presenta
     const route4 = resolveNotificationRoute({});
     assert.equal(route4.url, '/notifications');
     assert.equal(route4.isNavigable, false);
+
+    // 5. Community Reaction destination (navigates to relevant post without openComments)
+    const notifReaction = {
+      type: 'COMMUNITY_REACTION',
+      actionUrl: '/community#post-101',
+    };
+    const routeReaction = resolveNotificationRoute(notifReaction);
+    assert.equal(routeReaction.url, '/community?post=post-101#post-101');
+    assert.equal(routeReaction.isNavigable, true);
+
+    // 6. Community Comment/Reply destination (navigates to post with openComments=true)
+    const notifComment = {
+      type: 'COMMUNITY_COMMENT',
+      actionUrl: '/community#post-101',
+    };
+    const routeComment = resolveNotificationRoute(notifComment);
+    assert.equal(routeComment.url, '/community?post=post-101&openComments=true#post-101');
+    assert.equal(routeComment.isNavigable, true);
+
+    // 7. Community Repost destination (navigates to canonical/original post)
+    const notifRepost = {
+      type: 'COMMUNITY_REPOST',
+      metadata: { originalPostId: 'orig-post-456' },
+    };
+    const routeRepost = resolveNotificationRoute(notifRepost);
+    assert.equal(routeRepost.url, '/community?post=orig-post-456#orig-post-456');
+    assert.equal(routeRepost.isNavigable, true);
+
+    // 8. Community Quote destination (navigates to quoted post)
+    const notifQuote = {
+      type: 'COMMUNITY_QUOTE',
+      metadata: { quotedPostId: 'quote-post-789' },
+    };
+    const routeQuote = resolveNotificationRoute(notifQuote);
+    assert.equal(routeQuote.url, '/community?post=quote-post-789#quote-post-789');
+    assert.equal(routeQuote.isNavigable, true);
+
+    // 9. Company Post destination (navigates to company context with target post)
+    const notifCompanyPost = {
+      type: 'company_post',
+      actionUrl: '/community?organizationId=org-tesla',
+      metadata: { organizationId: 'org-tesla', postId: 'post-launch' },
+    };
+    const routeCompanyPost = resolveNotificationRoute(notifCompanyPost);
+    assert.equal(routeCompanyPost.url, '/community?organizationId=org-tesla&post=post-launch#post-launch');
+    assert.equal(routeCompanyPost.isNavigable, true);
+
+    // 10. Reel reaction and comment destinations
+    const notifReelReaction = {
+      type: 'COMMUNITY_REACTION',
+      actionUrl: '/community/reels/reel-video-99',
+    };
+    const routeReelReaction = resolveNotificationRoute(notifReelReaction);
+    assert.equal(routeReelReaction.url, '/community/reels/reel-video-99');
+
+    const notifReelComment = {
+      type: 'COMMUNITY_COMMENT',
+      actionUrl: '/community/reels/reel-video-99',
+    };
+    const routeReelComment = resolveNotificationRoute(notifReelComment);
+    assert.equal(routeReelComment.url, '/community/reels/reel-video-99?openComments=true');
+
+    // 11. Malformed or missing post ID in Community notification falls back safely to /community
+    const notifMalformed = {
+      type: 'COMMUNITY_COMMENT',
+    };
+    const routeMalformed = resolveNotificationRoute(notifMalformed);
+    assert.equal(routeMalformed.url, '/community');
+    assert.equal(routeMalformed.isNavigable, true);
   });
 
   it('formats relative timestamps accurately', () => {
