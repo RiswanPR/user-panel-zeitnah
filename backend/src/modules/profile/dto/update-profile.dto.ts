@@ -4,7 +4,35 @@ import {
   IsArray,
   MaxLength,
   ArrayMaxSize,
+  IsBoolean,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class UpdateProfessionalIdentityDto {
+  @IsString({ message: 'departmentId must be a string.' })
+  @MaxLength(100, { message: 'departmentId must not exceed 100 characters.' })
+  departmentId: string;
+
+  @IsOptional()
+  @IsString({ message: 'titleId must be a string.' })
+  @MaxLength(100, { message: 'titleId must not exceed 100 characters.' })
+  titleId?: string;
+
+  @IsOptional()
+  @IsString({ message: 'titleName must be a string.' })
+  @MaxLength(100, { message: 'titleName must not exceed 100 characters.' })
+  titleName?: string;
+
+  @IsOptional()
+  @IsString({ message: 'customTitle must be a string.' })
+  @MaxLength(100, { message: 'customTitle must not exceed 100 characters.' })
+  customTitle?: string;
+
+  @IsOptional()
+  @IsBoolean({ message: 'isCustomTitle must be a boolean.' })
+  isCustomTitle?: boolean;
+}
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -21,6 +49,11 @@ export class UpdateProfileDto {
   @IsString()
   @MaxLength(100, { message: 'Current role must not exceed 100 characters.' })
   currentRole?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UpdateProfessionalIdentityDto)
+  professionalIdentity?: UpdateProfessionalIdentityDto;
 
   @IsOptional()
   @IsString()

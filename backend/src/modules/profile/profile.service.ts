@@ -20,6 +20,10 @@ import {
   EMPLOYMENT_TYPES,
   VISIBILITY_LEVELS,
 } from './constants/infrastructure-taxonomy';
+import {
+  ProfessionalCatalogueService,
+  ValidatedProfessionalIdentity,
+} from './services/professional-catalogue.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import * as crypto from 'crypto';
@@ -161,7 +165,16 @@ export class ProfileService {
     @Optional()
     @Inject(forwardRef(() => NotificationsService))
     private readonly notificationsService?: NotificationsService,
+    @Optional()
+    private professionalCatalogueService?: ProfessionalCatalogueService,
   ) {}
+
+  private getCatalogueService(): ProfessionalCatalogueService {
+    if (!this.professionalCatalogueService) {
+      this.professionalCatalogueService = new ProfessionalCatalogueService();
+    }
+    return this.professionalCatalogueService;
+  }
 
   private triggerCandidateMatchInvalidation(userId: string) {
     if (this.matchingService) {
@@ -524,7 +537,7 @@ export class ProfileService {
     }
 
     const projection =
-      'name username avatar backgroundImage headline currentRole location industry bio skills experience education certifications role isVerified createdAt gamification publicProfilePublished primaryRole capabilities availability professionalInterests discoverableToRecruiters profileVisibility mentorship recruiterContext educatorContext verification account_Status primaryDiscipline specializations infrastructureSectors preferredLocations yearsOfExperience structuredSkills careerPreferences privacySettings';
+      'name username avatar backgroundImage headline currentRole professionalIdentity location industry bio skills experience education certifications role isVerified createdAt gamification publicProfilePublished primaryRole capabilities availability professionalInterests discoverableToRecruiters profileVisibility mentorship recruiterContext educatorContext verification account_Status primaryDiscipline specializations infrastructureSectors preferredLocations yearsOfExperience structuredSkills careerPreferences privacySettings';
 
     let user: any = null;
 
@@ -671,6 +684,16 @@ export class ProfileService {
         backgroundImage: userObj.backgroundImage || '',
         headline: userObj.headline || '',
         currentRole: userObj.currentRole || '',
+        professionalIdentity: userObj.professionalIdentity || (userObj.currentRole ? {
+          departmentId: null,
+          departmentName: null,
+          titleId: null,
+          titleName: userObj.currentRole,
+          isCustomTitle: false,
+          isLegacyTitle: true,
+          catalogueVersion: null,
+          updatedAt: null,
+        } : null),
         location: userObj.location || '',
         industry: userObj.industry || '',
         bio: userObj.bio || '',
@@ -785,6 +808,18 @@ export class ProfileService {
     await user.save();
 
     const userObj = user.toObject() as any;
+    if (!userObj.professionalIdentity && userObj.currentRole) {
+      userObj.professionalIdentity = {
+        departmentId: null,
+        departmentName: null,
+        titleId: null,
+        titleName: userObj.currentRole,
+        isCustomTitle: false,
+        isLegacyTitle: true,
+        catalogueVersion: null,
+        updatedAt: null,
+      };
+    }
     userObj.availability = normalizeAvailability(userObj.availability);
     if (userObj.avatar) {
       userObj.avatar = await this.signedUrlService.generateSignedImageUrl(
@@ -822,9 +857,28 @@ export class ProfileService {
       throw new UnauthorizedException('User not found');
     }
 
+    // Validate structured professional identity first (atomic validation)
+    let resolvedProfessionalIdentity: ValidatedProfessionalIdentity | null = null;
+    if (data.professionalIdentity !== undefined) {
+      resolvedProfessionalIdentity =
+        this.getCatalogueService().validateAndResolveIdentity(
+          data.professionalIdentity,
+        );
+    }
+
     if (data.name !== undefined) user.name = data.name;
     if (data.headline !== undefined) user.headline = data.headline;
-    if (data.currentRole !== undefined) user.currentRole = data.currentRole;
+    if (resolvedProfessionalIdentity) {
+      user.professionalIdentity = {
+        ...resolvedProfessionalIdentity,
+        updatedAt: new Date(),
+      };
+      user.markModified('professionalIdentity');
+      // Synchronize currentRole with the professional title name
+      user.currentRole = resolvedProfessionalIdentity.titleName;
+    } else if (data.currentRole !== undefined) {
+      user.currentRole = data.currentRole;
+    }
     if (data.location !== undefined) user.location = data.location;
     if (data.industry !== undefined) user.industry = data.industry;
     if (data.bio !== undefined) user.bio = data.bio;
@@ -1116,6 +1170,18 @@ export class ProfileService {
     this.triggerCandidateMatchInvalidation(userId);
 
     const userObj = user.toObject() as any;
+    if (!userObj.professionalIdentity && userObj.currentRole) {
+      userObj.professionalIdentity = {
+        departmentId: null,
+        departmentName: null,
+        titleId: null,
+        titleName: userObj.currentRole,
+        isCustomTitle: false,
+        isLegacyTitle: true,
+        catalogueVersion: null,
+        updatedAt: null,
+      };
+    }
     userObj.availability = normalizeAvailability(userObj.availability);
     if (userObj.avatar) {
       userObj.avatar = await this.signedUrlService.generateSignedImageUrl(
@@ -1808,6 +1874,10 @@ export class ProfileService {
     };
   }
 
+  getProfessionalCatalogue() {
+    return this.getCatalogueService().getCatalogue();
+  }
+
   async adminAssignRole(
     adminUserId: string,
     targetUserId: string,
@@ -2083,6 +2153,16 @@ export class ProfileService {
         avatar: user.avatar,
         headline: user.portfolio?.customHeadline || user.headline,
         currentRole: user.currentRole,
+        professionalIdentity: user.professionalIdentity || (user.currentRole ? {
+          departmentId: null,
+          departmentName: null,
+          titleId: null,
+          titleName: user.currentRole,
+          isCustomTitle: false,
+          isLegacyTitle: true,
+          catalogueVersion: null,
+          updatedAt: null,
+        } : null),
         primaryRole: user.primaryRole,
         primaryDiscipline: user.primaryDiscipline,
         infrastructureSectors: user.infrastructureSectors || [],

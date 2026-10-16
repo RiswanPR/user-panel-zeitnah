@@ -15,6 +15,17 @@ export {
 
 export type UserDocument = User & Document;
 
+export type UserProfessionalIdentity = {
+  departmentId: string | null;
+  departmentName: string | null;
+  titleId: string | null;
+  titleName: string;
+  isCustomTitle: boolean;
+  isLegacyTitle: boolean;
+  catalogueVersion: string | null;
+  updatedAt: Date | null;
+};
+
 export type UserDevice = {
   deviceId: string;
   deviceType: string;
@@ -414,6 +425,22 @@ export class User {
     trim: true,
   })
   currentRole!: string;
+
+  // PROFESSIONAL IDENTITY (Structured Department & Title)
+  @Prop({
+    type: {
+      departmentId: { type: String, default: null, trim: true },
+      departmentName: { type: String, default: null, trim: true },
+      titleId: { type: String, default: null, trim: true },
+      titleName: { type: String, default: '', trim: true },
+      isCustomTitle: { type: Boolean, default: false },
+      isLegacyTitle: { type: Boolean, default: true },
+      catalogueVersion: { type: String, default: null },
+      updatedAt: { type: Date, default: null },
+    },
+    default: null,
+  })
+  professionalIdentity?: UserProfessionalIdentity | null;
 
   // LOCATION
   @Prop({

@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ProfileController } from './profile.controller';
 import { ProfileService } from './profile.service';
+import { ProfessionalCatalogueService } from './services/professional-catalogue.service';
 import { User, UserSchema } from '../auth/schemas/user.schema';
 import {
   Recommendation,
@@ -47,7 +48,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     UsernameModule,
   ],
   controllers: [ProfileController],
-  providers: [ProfileService],
-  exports: [ProfileService],
+  providers: [ProfileService, ProfessionalCatalogueService],
+  exports: [ProfileService, ProfessionalCatalogueService],
 })
 export class ProfileModule {}

@@ -43,6 +43,8 @@ import ProfileNav from "../../components/profile/ProfileNav";
 import { getUploadUrl } from "../../utils/courseUi";
 import ImageEditorModal from "../../components/common/ImageEditorModal";
 import RoleSelector from "../../components/profile/RoleSelector";
+import ProfessionalIdentityEditor from "../../components/profile/ProfessionalIdentityEditor";
+import { formatIdentityPayload } from "../../utils/professionalIdentity";
 import StructuredSkillsEditor from "../../components/profile/StructuredSkillsEditor";
 import ExperienceSummaryCard from "../../components/profile/ExperienceSummaryCard";
 import { INFRASTRUCTURE_SECTORS } from "../../constants/infrastructureTaxonomy";
@@ -118,6 +120,7 @@ export default function EditProfile() {
   const [name, setName] = useState("");
   const [headline, setHeadline] = useState("");
   const [currentRole, setCurrentRole] = useState("");
+  const [professionalIdentity, setProfessionalIdentity] = useState(null);
   const [location, setLocation] = useState("");
   const [industry, setIndustry] = useState("");
   const [bio, setBio] = useState("");
@@ -282,6 +285,7 @@ export default function EditProfile() {
     setName(profile.name || "");
     setHeadline(profile.headline || "");
     setCurrentRole(profile.currentRole || "");
+    setProfessionalIdentity(profile.professionalIdentity || null);
     setLocation(profile.location || "");
     setIndustry(profile.industry || "");
     setBio(profile.bio || "");
@@ -742,15 +746,16 @@ export default function EditProfile() {
 
   const handleSaveProfessionalIdentity = (e) => {
     e.preventDefault();
+    const identityPayload = formatIdentityPayload(professionalIdentity, currentRole);
     updateMutation.mutate({
       headline: headline.trim(),
-      currentRole: currentRole.trim(),
       primaryRole: normalizeUserRole(primaryRole),
       availability,
       yearsOfExperience: Number(yearsOfExperience) || 0,
       preferredLocations,
       discoverableToRecruiters,
       profileVisibility,
+      ...identityPayload,
     });
   };
 
@@ -1400,43 +1405,40 @@ export default function EditProfile() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
-                      Current Position / Title
-                    </label>
-                    <input
-                      type="text"
-                      value={currentRole}
-                      onChange={(e) => {
-                        setCurrentRole(e.target.value);
-                        setIsDirty(true);
-                      }}
-                      className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated/70 border border-white/[0.08] focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30 focus:outline-none text-sm text-white transition-colors"
-                      placeholder="e.g. Senior Structural Engineer"
-                    />
-                  </div>
+                {/* Structured Professional Identity (Department & Scoped Title) */}
+                <ProfessionalIdentityEditor
+                  value={professionalIdentity}
+                  legacyRole={currentRole}
+                  onChange={(newIdentity) => {
+                    setProfessionalIdentity(newIdentity);
+                    if (newIdentity?.titleName) {
+                      setCurrentRole(newIdentity.titleName);
+                    }
+                    setIsDirty(true);
+                  }}
+                  disabled={updateMutation.isPending}
+                />
 
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
-                      Availability Status
-                    </label>
-                    <select
-                      value={availability}
-                      onChange={(e) => {
-                        setAvailability(e.target.value);
-                        setIsDirty(true);
-                      }}
-                      className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated/70 border border-white/[0.08] focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30 focus:outline-none text-sm text-white transition-colors cursor-pointer"
-                    >
-                      <option value="NOT_AVAILABLE">Not Available — Not currently seeking roles or hiring</option>
-                      <option value="OPEN_TO_WORK">Open to Work — Looking for employment or opportunities</option>
-                      <option value="OPEN_TO_HIRING">Open to Hiring — Hiring talent for projects or companies</option>
-                    </select>
-                    <span className="text-[11px] text-text-muted mt-1 block">
-                      Displays an active frame and status indicator on your avatar across the directory and profile hero.
-                    </span>
-                  </div>
+                {/* Availability Status */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
+                    Availability Status
+                  </label>
+                  <select
+                    value={availability}
+                    onChange={(e) => {
+                      setAvailability(e.target.value);
+                      setIsDirty(true);
+                    }}
+                    className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated/70 border border-white/[0.08] focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30 focus:outline-none text-sm text-white transition-colors cursor-pointer"
+                  >
+                    <option value="NOT_AVAILABLE">Not Available — Not currently seeking roles or hiring</option>
+                    <option value="OPEN_TO_WORK">Open to Work — Looking for employment or opportunities</option>
+                    <option value="OPEN_TO_HIRING">Open to Hiring — Hiring talent for projects or companies</option>
+                  </select>
+                  <span className="text-[11px] text-text-muted mt-1 block">
+                    Displays an active frame and status indicator on your avatar across the directory and profile hero.
+                  </span>
                 </div>
 
                 <div className="pt-3 flex justify-end">

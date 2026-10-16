@@ -15,6 +15,7 @@ import {
   UploadedFiles,
   BadRequestException,
   ForbiddenException,
+  Optional,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
@@ -37,10 +38,15 @@ import {
   CreateVerificationRequestDto,
   ReviewVerificationRequestDto,
 } from './dto/verification.dto';
+import { ProfessionalCatalogueService } from './services/professional-catalogue.service';
 
 @Controller('profile')
 export class ProfileController {
-  constructor(private readonly profileService: ProfileService) {}
+  constructor(
+    private readonly profileService: ProfileService,
+    @Optional()
+    private readonly professionalCatalogueService?: ProfessionalCatalogueService,
+  ) {}
 
   private getClientIp(req: any): string {
     const rawIp =
@@ -144,6 +150,15 @@ export class ProfileController {
   @Get('taxonomy')
   getTaxonomy() {
     return this.profileService.getInfrastructureTaxonomy();
+  }
+
+  // PROFESSIONAL IDENTITY CATALOGUE
+  @Get('catalogue')
+  getCatalogue() {
+    if (this.professionalCatalogueService) {
+      return this.professionalCatalogueService.getCatalogue();
+    }
+    return this.profileService.getProfessionalCatalogue();
   }
 
   // UPDATE PROFILE

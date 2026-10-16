@@ -36,6 +36,14 @@ export const coreProfileService = {
   },
 
   /**
+   * Fetches official Phase 2 Professional Identity catalogue (18 departments and 254 scoped titles).
+   */
+  getProfessionalCatalogue: async () => {
+    const response = await api.get("/profile/catalogue");
+    return response.data;
+  },
+
+  /**
    * Uploads avatar image file (max 5MB, JPG/PNG/WebP).
    */
   uploadAvatar: async (file) => {
