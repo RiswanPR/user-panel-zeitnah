@@ -537,7 +537,7 @@ export class ProfileService {
     }
 
     const projection =
-      'name username avatar backgroundImage headline currentRole professionalIdentity location industry bio skills experience education certifications role isVerified createdAt gamification publicProfilePublished primaryRole capabilities availability professionalInterests discoverableToRecruiters profileVisibility mentorship recruiterContext educatorContext verification account_Status primaryDiscipline specializations infrastructureSectors preferredLocations yearsOfExperience structuredSkills careerPreferences privacySettings';
+      'name username avatar backgroundImage headline currentRole professionalIdentity location industry bio skills experience education certifications role isVerified createdAt gamification publicProfilePublished primaryRole capabilities availability professionalInterests discoverableToRecruiters profileVisibility mentorship recruiterContext educatorContext verification account_Status primaryDiscipline specializations infrastructureSectors preferredLocations yearsOfExperience structuredSkills careerPreferences privacySettings companyName currentPosition';
 
     let user: any = null;
 
@@ -754,6 +754,9 @@ export class ProfileService {
           bio: '',
           available: false,
         },
+        companyName: userObj.companyName || userObj.recruiterContext?.companyName || '',
+        currentPosition: userObj.currentPosition || userObj.recruiterContext?.currentPosition || '',
+        recruiterContext: userObj.recruiterContext || null,
         verification: userObj.verification || {
           status: VerificationStatus.UNVERIFIED,
           type: 'IDENTITY',
@@ -923,6 +926,77 @@ export class ProfileService {
 
       user.primaryRole = normalizedRole;
       user.role = mapPrimaryRoleToLegacyRole(normalizedRole, user.role);
+    }
+
+    const effectiveRole =
+      incomingRole !== undefined
+        ? normalizeCanonicalPrimaryRole(incomingRole)
+        : normalizeCanonicalPrimaryRole(user.primaryRole || 'STUDENT') || 'STUDENT';
+
+    // Role-specific validation and persistence for Recruiter
+    if (effectiveRole === 'RECRUITER') {
+      const isRecruiterSubmission =
+        data.companyName !== undefined ||
+        data.currentPosition !== undefined ||
+        data.recruiterContext !== undefined;
+
+      if (isRecruiterSubmission) {
+        const rawCompany =
+          data.companyName !== undefined
+            ? data.companyName
+            : data.recruiterContext?.companyName !== undefined
+            ? data.recruiterContext.companyName
+            : user.companyName || user.recruiterContext?.companyName || '';
+
+        const rawPosition =
+          data.currentPosition !== undefined
+            ? data.currentPosition
+            : data.recruiterContext?.currentPosition !== undefined
+            ? data.recruiterContext.currentPosition
+            : user.currentPosition || user.recruiterContext?.currentPosition || '';
+
+        const cleanCompany = typeof rawCompany === 'string' ? rawCompany.trim() : '';
+        const cleanPosition = typeof rawPosition === 'string' ? rawPosition.trim() : '';
+
+        if (!cleanCompany) {
+          throw new BadRequestException('Company Name is required for Recruiter.');
+        }
+        if (cleanCompany.length > 100) {
+          throw new BadRequestException('Company Name must not exceed 100 characters.');
+        }
+        if (/<[^>]*>/i.test(cleanCompany)) {
+          throw new BadRequestException('Company Name must be plain text without HTML.');
+        }
+
+        if (!cleanPosition) {
+          throw new BadRequestException('Current Position is required for Recruiter.');
+        }
+        if (cleanPosition.length > 100) {
+          throw new BadRequestException('Current Position must not exceed 100 characters.');
+        }
+        if (/<[^>]*>/i.test(cleanPosition)) {
+          throw new BadRequestException('Current Position must be plain text without HTML.');
+        }
+
+        user.companyName = cleanCompany;
+        user.currentPosition = cleanPosition;
+
+        const recruiterSpecs =
+          data.specializations !== undefined
+            ? data.specializations
+            : data.recruiterContext?.specializations;
+
+        user.recruiterContext = {
+          ...(user.recruiterContext || { organizationId: '', hiringInterests: [], opportunityTypes: [] }),
+          ...(data.recruiterContext || {}),
+          companyName: cleanCompany,
+          currentPosition: cleanPosition,
+          specializations: Array.isArray(recruiterSpecs)
+            ? recruiterSpecs
+            : user.recruiterContext?.specializations || user.specializations || [],
+        };
+        user.markModified('recruiterContext');
+      }
     }
 
     if (data.primaryDiscipline !== undefined) {

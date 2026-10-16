@@ -40,7 +40,7 @@ describe('Professional Identity Section — Headline Removal & Preservation Suit
       );
     });
 
-    it('verifies RoleSelector and ProfessionalIdentityEditor are directly adjacent in the form', () => {
+    it('verifies RoleSelector precedes ProfessionalIdentityEditor with no headline input', () => {
       const sec02Start = editProfileContent.indexOf('SECTION 02 OF 08');
       const sec03Start = editProfileContent.indexOf('SECTION 03 OF 08');
       const sec02Content = editProfileContent.slice(sec02Start, sec03Start);
@@ -55,12 +55,11 @@ describe('Professional Identity Section — Headline Removal & Preservation Suit
         'RoleSelector must precede ProfessionalIdentityEditor'
       );
 
-      // Between RoleSelector closing and ProfessionalIdentityEditor opening, there should be no input or headline elements
+      // Between RoleSelector closing and ProfessionalIdentityEditor opening, there should be no headline input or elements
       const between = sec02Content.slice(
         sec02Content.indexOf('/>', roleSelectorIdx) + 2,
         identityEditorIdx
       );
-      assert.doesNotMatch(between, /<input/i, 'No input elements between RoleSelector and ProfessionalIdentityEditor');
       assert.doesNotMatch(between, /headline/i, 'No headline references between RoleSelector and ProfessionalIdentityEditor');
     });
 

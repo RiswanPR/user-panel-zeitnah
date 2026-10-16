@@ -133,6 +133,9 @@ export function calculateAuthoritativeProfileCompletion(user: any) {
   );
   const hasRoleOrLocationOrIndustry = Boolean(
     (user?.currentRole && user.currentRole.trim().length > 0) ||
+    (user?.companyName && user.companyName.trim().length > 0) ||
+    (user?.recruiterContext?.companyName &&
+      user.recruiterContext.companyName.trim().length > 0) ||
     (user?.location && user.location.trim().length > 0) ||
     (user?.industry && user.industry.trim().length > 0),
   );

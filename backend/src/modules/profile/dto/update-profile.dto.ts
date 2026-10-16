@@ -118,8 +118,21 @@ export class UpdateProfileDto {
   };
 
   @IsOptional()
+  @IsString()
+  @MaxLength(100, { message: 'Company name must not exceed 100 characters.' })
+  companyName?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100, { message: 'Current position must not exceed 100 characters.' })
+  currentPosition?: string;
+
+  @IsOptional()
   recruiterContext?: {
     organizationId?: string;
+    companyName?: string;
+    currentPosition?: string;
+    specializations?: string[];
     hiringInterests?: string[];
     opportunityTypes?: string[];
   };

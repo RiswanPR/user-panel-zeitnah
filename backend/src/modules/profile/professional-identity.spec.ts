@@ -733,4 +733,255 @@ describe('Professional Identity Integration (Phase 2)', () => {
       ]);
     });
   });
+
+  // ── 15. Recruiter Professional Identity Integration ──
+  describe('15. Recruiter Professional Identity Integration', () => {
+    it('should save valid recruiter details and populate recruiterContext and top-level fields', async () => {
+      const mockUser: any = {
+        _id: 'user_recruiter_1',
+        primaryRole: 'STUDENT',
+        currentRole: 'Site Engineer',
+        professionalIdentity: {
+          departmentId: 'civil-engineering',
+          titleId: 'civil-engineering:site-engineer-civil',
+          titleName: 'Site Engineer (civil)',
+          isCustomTitle: false,
+        },
+        recruiterContext: {
+          organizationId: '',
+          hiringInterests: [],
+          opportunityTypes: [],
+        },
+        toObject: () => ({ ...mockUser }),
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await profileService.updateProfile('user_recruiter_1', {
+        primaryRole: 'recruiter',
+        companyName: 'Apex Infrastructure Group',
+        currentPosition: 'Talent Acquisition Director',
+        specializations: ['Civil & Structural', 'BIM Modelling'],
+      });
+
+      expect(mockUser.primaryRole).toBe('RECRUITER');
+      expect(mockUser.companyName).toBe('Apex Infrastructure Group');
+      expect(mockUser.currentPosition).toBe('Talent Acquisition Director');
+      expect(mockUser.recruiterContext.companyName).toBe('Apex Infrastructure Group');
+      expect(mockUser.recruiterContext.currentPosition).toBe('Talent Acquisition Director');
+      expect(mockUser.recruiterContext.specializations).toEqual(['Civil & Structural', 'BIM Modelling']);
+      // Preserves existing engineering identity without wiping it
+      expect(mockUser.professionalIdentity.departmentId).toBe('civil-engineering');
+      expect(mockUser.currentRole).toBe('Site Engineer');
+      expect(mockUser.save).toHaveBeenCalled();
+    });
+
+    it('should reject recruiter submission with missing or empty company name', async () => {
+      const mockUser: any = {
+        _id: 'user_recruiter_1',
+        primaryRole: 'RECRUITER',
+        companyName: '',
+        toObject: () => ({ ...mockUser }),
+        save: jest.fn(),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await expect(
+        profileService.updateProfile('user_recruiter_1', {
+          primaryRole: 'recruiter',
+          companyName: '',
+          currentPosition: 'Technical Recruiter',
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      await expect(
+        profileService.updateProfile('user_recruiter_1', {
+          primaryRole: 'recruiter',
+          currentPosition: 'Technical Recruiter',
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(mockUser.save).not.toHaveBeenCalled();
+    });
+
+    it('should reject recruiter submission with whitespace-only company name', async () => {
+      const mockUser: any = {
+        _id: 'user_recruiter_1',
+        primaryRole: 'RECRUITER',
+        toObject: () => ({ ...mockUser }),
+        save: jest.fn(),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await expect(
+        profileService.updateProfile('user_recruiter_1', {
+          primaryRole: 'recruiter',
+          companyName: '    ',
+          currentPosition: 'Lead Talent Partner',
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(mockUser.save).not.toHaveBeenCalled();
+    });
+
+    it('should reject recruiter submission with missing or empty current position', async () => {
+      const mockUser: any = {
+        _id: 'user_recruiter_1',
+        primaryRole: 'RECRUITER',
+        currentPosition: '',
+        toObject: () => ({ ...mockUser }),
+        save: jest.fn(),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await expect(
+        profileService.updateProfile('user_recruiter_1', {
+          primaryRole: 'recruiter',
+          companyName: 'Larsen & Toubro',
+          currentPosition: '',
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      await expect(
+        profileService.updateProfile('user_recruiter_1', {
+          primaryRole: 'recruiter',
+          companyName: 'Larsen & Toubro',
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(mockUser.save).not.toHaveBeenCalled();
+    });
+
+    it('should reject recruiter submission with whitespace-only current position', async () => {
+      const mockUser: any = {
+        _id: 'user_recruiter_1',
+        primaryRole: 'RECRUITER',
+        toObject: () => ({ ...mockUser }),
+        save: jest.fn(),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await expect(
+        profileService.updateProfile('user_recruiter_1', {
+          primaryRole: 'recruiter',
+          companyName: 'Larsen & Toubro',
+          currentPosition: '   \t  ',
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(mockUser.save).not.toHaveBeenCalled();
+    });
+
+    it('should reject recruiter details containing HTML tags', async () => {
+      const mockUser: any = {
+        _id: 'user_recruiter_1',
+        primaryRole: 'RECRUITER',
+        toObject: () => ({ ...mockUser }),
+        save: jest.fn(),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await expect(
+        profileService.updateProfile('user_recruiter_1', {
+          primaryRole: 'recruiter',
+          companyName: '<script>alert(1)</script>InfraCorp',
+          currentPosition: 'Recruiter',
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      await expect(
+        profileService.updateProfile('user_recruiter_1', {
+          primaryRole: 'recruiter',
+          companyName: 'InfraCorp',
+          currentPosition: 'Recruiter<b>Lead</b>',
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(mockUser.save).not.toHaveBeenCalled();
+    });
+
+    it('should preserve engineering identity when saving Recruiter, and preserve recruiter data when switching back to Professional', async () => {
+      const userDoc: any = {
+        _id: 'user_roundtrip_1',
+        primaryRole: 'PROFESSIONAL',
+        currentRole: 'Structural Engineer',
+        professionalIdentity: {
+          departmentId: 'structural-engineering-design',
+          titleId: 'structural-engineering-design:structural-design-engineer',
+          titleName: 'Structural Design Engineer',
+          isCustomTitle: false,
+        },
+        companyName: '',
+        currentPosition: '',
+        recruiterContext: {
+          organizationId: '',
+          companyName: '',
+          currentPosition: '',
+          specializations: [],
+          hiringInterests: [],
+          opportunityTypes: [],
+        },
+        toObject: () => ({ ...userDoc }),
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(userDoc);
+
+      // Step 1: Switch to Recruiter
+      await profileService.updateProfile('user_roundtrip_1', {
+        primaryRole: 'recruiter',
+        companyName: 'Arup Talent',
+        currentPosition: 'Engineering Recruiter',
+        specializations: ['Bridges', 'Tunnels'],
+      });
+
+      expect(userDoc.primaryRole).toBe('RECRUITER');
+      expect(userDoc.companyName).toBe('Arup Talent');
+      expect(userDoc.currentPosition).toBe('Engineering Recruiter');
+      // Engineering identity remains intact
+      expect(userDoc.professionalIdentity.departmentId).toBe('structural-engineering-design');
+      expect(userDoc.currentRole).toBe('Structural Engineer');
+
+      // Step 2: Switch back to Professional
+      await profileService.updateProfile('user_roundtrip_1', {
+        primaryRole: 'professional',
+        professionalIdentity: {
+          departmentId: 'structural-engineering-design',
+          titleId: 'structural-engineering-design:structural-design-engineer',
+          isCustomTitle: false,
+        },
+      });
+
+      expect(userDoc.primaryRole).toBe('PROFESSIONAL');
+      expect(userDoc.professionalIdentity.departmentId).toBe('structural-engineering-design');
+      // Recruiter context was preserved and not cleared
+      expect(userDoc.companyName).toBe('Arup Talent');
+      expect(userDoc.currentPosition).toBe('Engineering Recruiter');
+    });
+
+    it('should not require company name or position for Student or Professional', async () => {
+      const mockStudent: any = {
+        _id: 'user_student_1',
+        primaryRole: 'STUDENT',
+        currentRole: '',
+        toObject: () => ({ ...mockStudent }),
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockStudent);
+
+      // Saving student role does not throw BadRequestException about company name
+      await expect(
+        profileService.updateProfile('user_student_1', {
+          primaryRole: 'student',
+        }),
+      ).resolves.toBeDefined();
+    });
+  });
 });

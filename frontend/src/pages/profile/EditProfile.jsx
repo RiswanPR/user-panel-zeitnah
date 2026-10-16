@@ -137,6 +137,24 @@ export default function EditProfile() {
   const [preferredLocations, setPreferredLocations] = useState([]);
   const [yearsOfExperience, setYearsOfExperience] = useState(0);
 
+  // Recruiter-specific Identity States
+  const [recruiterCompany, setRecruiterCompany] = useState("");
+  const [recruiterPosition, setRecruiterPosition] = useState("");
+  const [recruiterSpecializations, setRecruiterSpecializations] = useState([]);
+  const [newRecruiterSpecInput, setNewRecruiterSpecInput] = useState("");
+
+  const handleAddRecruiterSpec = () => {
+    const val = (newRecruiterSpecInput || "").trim();
+    if (!val) return;
+    if (recruiterSpecializations.some((s) => s.toLowerCase() === val.toLowerCase())) {
+      setNewRecruiterSpecInput("");
+      return;
+    }
+    setRecruiterSpecializations([...recruiterSpecializations, val]);
+    setNewRecruiterSpecInput("");
+    setIsDirty(true);
+  };
+
   // Skills
   const [structuredSkills, setStructuredSkills] = useState(
     normalizeStructuredSkills({})
@@ -299,6 +317,23 @@ export default function EditProfile() {
     setInfrastructureSectors(Array.isArray(profile.infrastructureSectors) ? profile.infrastructureSectors : []);
     setPreferredLocations(Array.isArray(profile.preferredLocations) ? profile.preferredLocations : []);
     setYearsOfExperience(profile.yearsOfExperience || 0);
+
+    setRecruiterCompany(
+      profile.companyName ||
+      profile.recruiterContext?.companyName ||
+      ""
+    );
+    setRecruiterPosition(
+      profile.currentPosition ||
+      profile.recruiterContext?.currentPosition ||
+      ""
+    );
+    const recSpecs =
+      profile.recruiterContext?.specializations ||
+      profile.specializations ||
+      [];
+    setRecruiterSpecializations(Array.isArray(recSpecs) ? recSpecs : []);
+    setNewRecruiterSpecInput("");
 
     if (profile.structuredSkills) {
       setStructuredSkills(normalizeStructuredSkills(profile.structuredSkills));
@@ -746,6 +781,55 @@ export default function EditProfile() {
 
   const handleSaveProfessionalIdentity = (e) => {
     e.preventDefault();
+
+    if (normalizeUserRole(primaryRole) === "RECRUITER") {
+      const cleanCompany = (recruiterCompany || "").trim();
+      const cleanPosition = (recruiterPosition || "").trim();
+
+      if (!cleanCompany) {
+        toast.error("Company Name is required for Recruiters.");
+        return;
+      }
+      if (cleanCompany.length > 100) {
+        toast.error("Company Name must not exceed 100 characters.");
+        return;
+      }
+      if (!cleanPosition) {
+        toast.error("Current Position is required for Recruiters.");
+        return;
+      }
+      if (cleanPosition.length > 100) {
+        toast.error("Current Position must not exceed 100 characters.");
+        return;
+      }
+
+      const payload = {
+        primaryRole: "RECRUITER",
+        availability,
+        yearsOfExperience: Number(yearsOfExperience) || 0,
+        preferredLocations,
+        discoverableToRecruiters,
+        profileVisibility,
+        companyName: cleanCompany,
+        currentPosition: cleanPosition,
+        specializations: recruiterSpecializations,
+        recruiterContext: {
+          companyName: cleanCompany,
+          currentPosition: cleanPosition,
+          specializations: recruiterSpecializations,
+        },
+      };
+
+      const preservedHeadline = (headline && headline.trim()) || profile?.headline;
+      if (preservedHeadline) {
+        payload.headline = preservedHeadline;
+      }
+
+      updateMutation.mutate(payload);
+      return;
+    }
+
+    // Student & Professional workflow
     const identityPayload = formatIdentityPayload(professionalIdentity, currentRole);
     const payload = {
       primaryRole: normalizeUserRole(primaryRole),
@@ -937,6 +1021,21 @@ export default function EditProfile() {
         if (profile.name || profile.avatar) return "in-progress";
         return "not-started";
       case "professional-identity": {
+        const role = normalizeUserRole(profile.primaryRole);
+        if (role === "RECRUITER") {
+          const hasCompany = Boolean(
+            (profile.companyName && profile.companyName.trim()) ||
+            (profile.recruiterContext?.companyName && profile.recruiterContext.companyName.trim())
+          );
+          const hasPosition = Boolean(
+            (profile.currentPosition && profile.currentPosition.trim()) ||
+            (profile.recruiterContext?.currentPosition && profile.recruiterContext.currentPosition.trim())
+          );
+          if (hasCompany && hasPosition) return "complete";
+          if (hasCompany || hasPosition || profile.primaryRole) return "in-progress";
+          return "not-started";
+        }
+
         const hasTitle = Boolean(
           profile.professionalIdentity?.titleName ||
           profile.currentRole ||
@@ -1395,19 +1494,165 @@ export default function EditProfile() {
                   isAssignedEducator={isAssignedEducator}
                 />
 
-                {/* Structured Professional Identity (Department & Scoped Title) */}
-                <ProfessionalIdentityEditor
-                  value={professionalIdentity}
-                  legacyRole={currentRole}
-                  onChange={(newIdentity) => {
-                    setProfessionalIdentity(newIdentity);
-                    if (newIdentity?.titleName) {
-                      setCurrentRole(newIdentity.titleName);
-                    }
-                    setIsDirty(true);
-                  }}
-                  disabled={updateMutation.isPending}
-                />
+                {/* Role-specific content: Recruiter vs Engineering (Student / Professional) */}
+                {normalizeUserRole(primaryRole) === "RECRUITER" ? (
+                  <div className="p-5 sm:p-6 rounded-2xl bg-white/[0.02] border border-white/[0.08] space-y-5">
+                    <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-brand-mint" />
+                        <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                          Recruiter & Organization Details
+                        </h3>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-brand-mint/10 border border-brand-mint/20 text-brand-mint">
+                        TALENT ACQUISITION
+                      </span>
+                    </div>
+
+                    {/* Company Name — Required */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
+                        Company Name <span className="text-brand-mint">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={recruiterCompany}
+                        onChange={(e) => {
+                          setRecruiterCompany(e.target.value);
+                          setIsDirty(true);
+                        }}
+                        maxLength={100}
+                        className="w-full px-4 py-3 rounded-xl bg-bg-elevated/70 border border-white/[0.08] focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30 focus:outline-none text-sm text-white transition-colors"
+                        placeholder="e.g. Larsen & Toubro, AECOM, Mott MacDonald, Apex Infra"
+                      />
+                      <span className="text-[11px] text-text-muted mt-1 block">
+                        The infrastructure enterprise, consulting firm, or recruitment agency you represent.
+                      </span>
+                    </div>
+
+                    {/* Current Position — Required */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
+                        Current Position <span className="text-brand-mint">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={recruiterPosition}
+                        onChange={(e) => {
+                          setRecruiterPosition(e.target.value);
+                          setIsDirty(true);
+                        }}
+                        maxLength={100}
+                        className="w-full px-4 py-3 rounded-xl bg-bg-elevated/70 border border-white/[0.08] focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30 focus:outline-none text-sm text-white transition-colors"
+                        placeholder="e.g. Technical Recruiter, Talent Acquisition Manager, HR Manager"
+                      />
+                      <span className="text-[11px] text-text-muted mt-1 block">
+                        Your official title within the talent acquisition, HR, or leadership team.
+                      </span>
+                    </div>
+
+                    {/* Recruitment Specializations — Optional */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
+                        Recruitment Specializations <span className="text-text-muted font-normal text-[11px] lowercase">(optional)</span>
+                      </label>
+
+                      {/* Active Specialization Chips */}
+                      {recruiterSpecializations.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {recruiterSpecializations.map((spec) => (
+                            <span
+                              key={spec}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-brand-mint/10 text-brand-mint border border-brand-mint/25"
+                            >
+                              {spec}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRecruiterSpecializations(recruiterSpecializations.filter((s) => s !== spec));
+                                  setIsDirty(true);
+                                }}
+                                className="text-brand-mint/60 hover:text-brand-mint cursor-pointer transition-colors"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Add Custom Specialization */}
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={newRecruiterSpecInput}
+                          onChange={(e) => setNewRecruiterSpecInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleAddRecruiterSpec();
+                            }
+                          }}
+                          maxLength={60}
+                          placeholder="Type a hiring specialization and press Enter..."
+                          className="flex-1 px-4 py-2.5 rounded-xl bg-bg-elevated/70 border border-white/[0.08] focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30 focus:outline-none text-xs text-white transition-colors"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddRecruiterSpec}
+                          className="px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-brand-mint/20 hover:text-brand-mint border border-white/[0.08] text-xs font-semibold text-text-secondary transition-colors cursor-pointer"
+                        >
+                          Add
+                        </button>
+                      </div>
+
+                      {/* Quick Suggestions */}
+                      <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                        <span className="text-[11px] text-text-muted mr-1">Suggested:</span>
+                        {[
+                          "Civil & Structural",
+                          "Project Planning (Primavera/BIM)",
+                          "Rail & Metro Systems",
+                          "Highways & Bridges",
+                          "Mechanical & Electrical (MEP)",
+                          "Executive & Leadership",
+                        ]
+                          .filter((s) => !recruiterSpecializations.some((spec) => spec.toLowerCase() === s.toLowerCase()))
+                          .map((suggestion) => (
+                            <button
+                              key={suggestion}
+                              type="button"
+                              onClick={() => {
+                                if (recruiterSpecializations.some((s) => s.toLowerCase() === suggestion.toLowerCase())) return;
+                                setRecruiterSpecializations([...recruiterSpecializations, suggestion]);
+                                setIsDirty(true);
+                              }}
+                              className="text-[11px] px-2.5 py-0.5 rounded-md bg-white/[0.03] hover:bg-white/[0.08] text-text-muted hover:text-white border border-white/[0.06] transition-colors cursor-pointer"
+                            >
+                              + {suggestion}
+                            </button>
+                          ))}
+                      </div>
+                      <span className="text-[11px] text-text-muted mt-2 block">
+                        Highlight the technical disciplines or talent profiles you focus on hiring.
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  /* Structured Professional Identity (Department & Scoped Title) */
+                  <ProfessionalIdentityEditor
+                    value={professionalIdentity}
+                    legacyRole={currentRole}
+                    onChange={(newIdentity) => {
+                      setProfessionalIdentity(newIdentity);
+                      if (newIdentity?.titleName) {
+                        setCurrentRole(newIdentity.titleName);
+                      }
+                      setIsDirty(true);
+                    }}
+                    disabled={updateMutation.isPending}
+                  />
+                )}
 
                 {/* Availability Status */}
                 <div>
@@ -2405,6 +2650,11 @@ export default function EditProfile() {
                     </span>
                   </div>
                   {headline && <p className="text-xs text-white/85 mt-1 line-clamp-2 leading-relaxed">{headline}</p>}
+                  {normalizeUserRole(primaryRole) === "RECRUITER" && (recruiterPosition || recruiterCompany) && (
+                    <p className="text-xs text-brand-mint font-medium mt-1">
+                      {recruiterPosition} {recruiterCompany ? `@ ${recruiterCompany}` : ""}
+                    </p>
+                  )}
                 </div>
                 {primaryDiscipline && (
                   <p className="text-xs text-brand-yellow font-medium mt-1">
@@ -3526,7 +3776,11 @@ export default function EditProfile() {
         }}
         currentAvatarUrl={avatarUrl}
         userName={name || profile?.name || "Professional"}
-        userRole={currentRole || headline || profile?.currentRole || profile?.headline || "Infrastructure Professional"}
+        userRole={
+          normalizeUserRole(primaryRole) === "RECRUITER"
+            ? (recruiterPosition ? `${recruiterPosition}${recruiterCompany ? ` at ${recruiterCompany}` : ""}` : "Recruiter")
+            : (currentRole || headline || profile?.currentRole || profile?.headline || "Infrastructure Professional")
+        }
         isUploading={avatarMutation.isPending || bannerMutation.isPending}
       />
     </div>

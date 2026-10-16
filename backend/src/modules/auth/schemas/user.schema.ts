@@ -426,6 +426,20 @@ export class User {
   })
   currentRole!: string;
 
+  // RECRUITER COMPANY NAME
+  @Prop({
+    default: '',
+    trim: true,
+  })
+  companyName!: string;
+
+  // RECRUITER CURRENT POSITION
+  @Prop({
+    default: '',
+    trim: true,
+  })
+  currentPosition!: string;
+
   // PROFESSIONAL IDENTITY (Structured Department & Title)
   @Prop({
     type: {
@@ -700,13 +714,19 @@ export class User {
   @Prop({
     type: {
       organizationId: { type: String, default: '' },
+      companyName: { type: String, default: '', trim: true },
+      currentPosition: { type: String, default: '', trim: true },
+      specializations: { type: [String], default: [] },
       hiringInterests: { type: [String], default: [] },
       opportunityTypes: { type: [String], default: [] },
     },
-    default: { organizationId: '', hiringInterests: [], opportunityTypes: [] },
+    default: { organizationId: '', companyName: '', currentPosition: '', specializations: [], hiringInterests: [], opportunityTypes: [] },
   })
   recruiterContext!: {
     organizationId?: string;
+    companyName?: string;
+    currentPosition?: string;
+    specializations?: string[];
     hiringInterests: string[];
     opportunityTypes: string[];
   };
