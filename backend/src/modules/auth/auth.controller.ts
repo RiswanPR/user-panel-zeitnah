@@ -51,8 +51,12 @@ export class AuthController {
       path: '/',
       ...(isProduction && cookieDomain ? { domain: cookieDomain } : {}),
     };
-    const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000;
+    const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
     const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
+    const refreshTokenMaxAge =
+      Number(process.env.JWT_SESSION_EXPIRES_IN_MS) ||
+      Number(process.env.JWT_REFRESH_EXPIRES_IN_MS) ||
+      NINETY_DAYS_MS;
 
     if (token) {
       res.cookie('token', token, {
@@ -64,7 +68,7 @@ export class AuthController {
     if (refreshToken) {
       res.cookie('refreshToken', refreshToken, {
         ...cookieOptions,
-        maxAge: SIXTY_DAYS_MS,
+        maxAge: refreshTokenMaxAge,
       });
     }
   }

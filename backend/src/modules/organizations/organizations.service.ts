@@ -1373,6 +1373,7 @@ export class OrganizationsService {
 
   /**
    * Notify opted-in followers when an organization publishes a new Community post (Phase 3 Feature D)
+   * Optimized batch fan-out (Phase D.3.1)
    */
   async notifyFollowersOfNewPost(post: any, organization?: any) {
     if (!this.followModel || !this.notificationsService || !post) return;
@@ -1413,40 +1414,102 @@ export class OrganizationsService {
 
       const postIdStr = String(post._id || post.id || '');
 
-      for (const follower of followers) {
-        const followerUserIdStr = String(follower.userId);
-        // Do not notify author if they are also following their company
-        if (followerUserIdStr === String(post.authorId)) continue;
+      // 1. Author exclusion: Do not notify author if they are also following their company
+      const eligibleFollowers = followers.filter(
+        (follower) => String(follower.userId) !== String(post.authorId),
+      );
+      if (eligibleFollowers.length === 0) return;
 
-        try {
-          // Check follower's global notification preferences
-          const prefs =
-            await this.notificationsService.getPreferences(followerUserIdStr);
-          if (prefs && prefs.inAppNotifications === false) {
-            continue; // Global opt-out takes absolute precedence
+      // 2. Batched preference resolution
+      let optedInFollowers: typeof eligibleFollowers = [];
+
+      if (
+        typeof (this.notificationsService as any).getInAppOptedOutUserIds ===
+        'function'
+      ) {
+        const followerUserIds = eligibleFollowers.map((f) => f.userId);
+        const optedOutSet =
+          await (this.notificationsService as any).getInAppOptedOutUserIds(
+            followerUserIds,
+          );
+        optedInFollowers = eligibleFollowers.filter(
+          (f) => !optedOutSet.has(String(f.userId)),
+        );
+      } else if (
+        typeof this.notificationsService.getPreferences === 'function'
+      ) {
+        // Fallback for mocks/callers that only provide getPreferences
+        const filtered: typeof eligibleFollowers = [];
+        for (const follower of eligibleFollowers) {
+          try {
+            const prefs = await this.notificationsService.getPreferences(
+              String(follower.userId),
+            );
+            if (prefs && prefs.inAppNotifications === false) {
+              continue;
+            }
+            filtered.push(follower);
+          } catch {
+            filtered.push(follower);
           }
+        }
+        optedInFollowers = filtered;
+      } else {
+        optedInFollowers = eligibleFollowers;
+      }
 
-          const idempotencyKey = `company_post_${postIdStr}_${followerUserIdStr}`;
+      if (optedInFollowers.length === 0) return;
 
-          await this.notificationsService.createNotification({
-            recipientId: follower.userId,
-            actorId: post.authorId,
-            type: 'company_post',
-            category: 'community',
-            priority: 'NORMAL',
-            title: `New post from ${orgName}`,
-            message: `${orgName}: "${contentPreview}"`,
-            actionUrl: `/community?organizationId=${String(org._id)}`,
-            targetUrl: `/community?organizationId=${String(org._id)}`,
-            idempotencyKey,
-            metadata: {
-              organizationId: String(org._id),
-              organizationName: orgName,
-              postId: postIdStr,
-            },
-          });
-        } catch {
-          // Best effort per follower, continue loop
+      // 3. Prepare notifications preserving the exact contracts
+      const notificationDtos = optedInFollowers.map((follower) => {
+        const followerUserIdStr = String(follower.userId);
+        const idempotencyKey = `company_post_${postIdStr}_${followerUserIdStr}`;
+
+        return {
+          recipientId: follower.userId,
+          actorId: post.authorId,
+          type: 'company_post',
+          category: 'community',
+          priority: 'NORMAL',
+          title: `New post from ${orgName}`,
+          message: `${orgName}: "${contentPreview}"`,
+          actionUrl: `/community?organizationId=${String(org._id)}`,
+          targetUrl: `/community?organizationId=${String(org._id)}`,
+          idempotencyKey,
+          metadata: {
+            organizationId: String(org._id),
+            organizationName: orgName,
+            postId: postIdStr,
+          },
+        };
+      });
+
+      // 4. Chunked bulk insertion or fallback to single notification calls
+      if (
+        typeof (this.notificationsService as any).createNotificationsBatch ===
+        'function'
+      ) {
+        const CHUNK_SIZE = 100;
+        for (let i = 0; i < notificationDtos.length; i += CHUNK_SIZE) {
+          const chunk = notificationDtos.slice(i, i + CHUNK_SIZE);
+          try {
+            await (this.notificationsService as any).createNotificationsBatch(
+              chunk,
+            );
+          } catch {
+            // Best effort per chunk
+          }
+        }
+      } else if (
+        typeof this.notificationsService.createNotification === 'function'
+      ) {
+        // Fallback for mocks/callers that only provide createNotification
+        for (const dto of notificationDtos) {
+          try {
+            await this.notificationsService.createNotification(dto);
+          } catch {
+            // Best effort per notification
+          }
         }
       }
     } catch {

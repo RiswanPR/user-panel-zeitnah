@@ -167,7 +167,7 @@ export function getBunnyEmbedUrl(videoReference) {
   return `https://iframe.mediadelivery.net/play/${value}`;
 }
 
-export function isIOSNonSafari() {
+export function isIOSAppOrWebView() {
   if (typeof window === "undefined" || typeof navigator === "undefined") return false;
   const ua = navigator.userAgent || "";
   const isIOS =
@@ -175,13 +175,45 @@ export function isIOSNonSafari() {
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   if (!isIOS) return false;
 
-  // Standalone Safari on iOS includes "Safari/" and "Version/" and does NOT include third-party webview/browser tokens
-  const isSafariStandalone =
-    /Safari/i.test(ua) &&
-    /Version\//i.test(ua) &&
-    !/CriOS|FxiOS|OPiOS|EdgiOS|mercury|FBAN|FBAV|Instagram|Line/i.test(ua);
+  // 1. Direct React Native WebView injection check (100% definitive inside ZeitnahMobile)
+  if (typeof window.ReactNativeWebView !== "undefined") {
+    return true;
+  }
 
-  // Standalone PWA or in-app WKWebView
-  const isStandalonePwa = window.navigator.standalone === true;
-  return !isSafariStandalone || isStandalonePwa;
+  // 2. Zeitnah mobile app user agent signature
+  if (/ZeitnahMobile/i.test(ua)) {
+    return true;
+  }
+
+  // 3. WebKit messageHandlers present (indicates third-party in-app WKWebView container)
+  if (
+    typeof window.webkit !== "undefined" &&
+    typeof window.webkit.messageHandlers !== "undefined" &&
+    !window.MSStream
+  ) {
+    return true;
+  }
+
+  // 4. Standalone PWA mode (runs in WebKit standalone without FairPlay EME support)
+  if (window.navigator.standalone === true) {
+    return true;
+  }
+
+  // 5. Third-party iOS browsers (Chrome CriOS, Firefox FxiOS, Edge EdgiOS, Opera OPiOS, in-app webviews)
+  if (/CriOS|FxiOS|OPiOS|EdgiOS|mercury|FBAN|FBAV|Instagram|Line|Twitter|Snapchat/i.test(ua)) {
+    return true;
+  }
+
+  // 6. Missing Safari or Version tokens (classic webview)
+  const hasSafari = /Safari/i.test(ua);
+  const hasVersion = /Version\//i.test(ua);
+  if (!hasSafari || !hasVersion) {
+    return true;
+  }
+
+  return false;
 }
+
+// Backward-compatible alias
+export const isIOSNonSafari = isIOSAppOrWebView;
+

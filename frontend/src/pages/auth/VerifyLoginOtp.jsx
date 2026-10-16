@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext, useRef } from "react";
 import api from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { getDeviceId } from "../../utils/device";
 import storage from "../../services/storage";
 import { isMobile } from "react-device-detect";
@@ -11,6 +11,7 @@ import AuthPremiumBackground from "../../components/ui/AuthPremiumBackground";
 function VerifyOtp() {
   const { setUser } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
@@ -150,7 +151,20 @@ function VerifyOtp() {
     storage.removeItem("login_email");
     setSuccess("Identity verified. Opening your learning space…");
 
-    setTimeout(() => navigate("/courses"), 1200);
+    let returnUrl = "/courses";
+    try {
+      const stored = sessionStorage.getItem("zeitnah_auth_redirect");
+      if (stored && stored.startsWith("/")) {
+        returnUrl = stored;
+        sessionStorage.removeItem("zeitnah_auth_redirect");
+      } else if (location.state?.from?.pathname) {
+        returnUrl = `${location.state.from.pathname}${location.state.from.search || ""}`;
+      }
+    } catch {
+      // Fallback
+    }
+
+    setTimeout(() => navigate(returnUrl), 1200);
   };
 
   const handleVerifyOtp = async () => {

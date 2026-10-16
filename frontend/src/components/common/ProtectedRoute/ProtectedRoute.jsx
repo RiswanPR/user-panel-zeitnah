@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../../../context/AuthContext";
 import { normalizeUserRole } from "../../../utils/roleNavigation";
 
@@ -8,6 +8,7 @@ import { normalizeUserRole } from "../../../utils/roleNavigation";
  */
 function ProtectedRoute({ children, allowedRoles, redirectTo = "/jobs" }) {
   const { user, loading } = useContext(AuthContext);
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -41,7 +42,15 @@ function ProtectedRoute({ children, allowedRoles, redirectTo = "/jobs" }) {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    // Preserve intended destination path so Safari / external login returns directly to the target lesson
+    try {
+      if (typeof window !== "undefined" && location.pathname && location.pathname !== "/login") {
+        sessionStorage.setItem("zeitnah_auth_redirect", location.pathname + (location.search || ""));
+      }
+    } catch {
+      // Session storage quota or private browsing fallback
+    }
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   if (allowedRoles && allowedRoles.length > 0) {

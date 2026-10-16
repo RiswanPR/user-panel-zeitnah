@@ -530,6 +530,231 @@ export class NotificationsService {
   }
 
   /**
+   * Helper to safely extract newly persisted notification documents after
+   * an insertMany unordered partial failure across Mongoose and MongoDB driver versions.
+   */
+  private extractPersistedDocsFromInsertError(err: any): NotificationDocument[] {
+    if (!err) return [];
+
+    const isBasicDoc = (doc: any): doc is NotificationDocument => {
+      if (!doc || typeof doc !== 'object') return false;
+      // Exclude Error instances (e.g. Mongoose ValidationError)
+      if (doc instanceof Error) return false;
+      // Exclude MongoDB driver WriteError instances (which expose code/errmsg, not recipientId)
+      if (doc.errmsg !== undefined || (doc.err && doc.err.errmsg !== undefined)) return false;
+      // A persisted NotificationDocument has an _id and recipientId
+      return Boolean(doc._id && doc.recipientId);
+    };
+
+    // 1. Primary Mongoose path for MongoBulkWriteError (duplicate keys, server write failures)
+    // In Mongoose 9.7.3 model.js:L3202-3225, err.insertedDocs is explicitly pre-filtered to
+    // include only documents that MongoDB confirmed were persisted.
+    if (Array.isArray(err.insertedDocs)) {
+      return err.insertedDocs.filter(isBasicDoc);
+    }
+
+    // 2. MongooseBulkWriteError path (client-side validation errors mixed with partial driver success)
+    if (err.name === 'MongooseBulkWriteError' || Array.isArray(err.validationErrors)) {
+      // If rawResult is explicitly null or reported 0 inserts, no documents were written to MongoDB
+      if (err.rawResult === null || err.rawResult?.insertedCount === 0) {
+        return [];
+      }
+
+      if (Array.isArray(err.results)) {
+        // Build set of driver-confirmed inserted IDs if available from MongoDB driver rawResult
+        let insertedIdSet: Set<string> | undefined;
+        if (err.rawResult?.insertedIds && typeof err.rawResult.insertedIds === 'object') {
+          insertedIdSet = new Set(
+            Object.values(err.rawResult.insertedIds).map((id: any) => String(id)),
+          );
+        }
+
+        // A candidate is only accepted if there is reliable per-document evidence:
+        // either confirmed by rawResult.insertedIds, or explicitly marked isNew === false by Mongoose
+        const verifiedDocs = err.results.filter((doc: any): doc is NotificationDocument => {
+          if (!isBasicDoc(doc)) return false;
+
+          const docIdStr = doc._id.toString();
+          if (insertedIdSet && insertedIdSet.has(docIdStr)) {
+            return true;
+          }
+
+          if (doc.isNew === false) {
+            return true;
+          }
+
+          return false;
+        });
+
+        if (verifiedDocs.length > 0) {
+          return verifiedDocs;
+        }
+
+        // Aggregate insertedCount alone is not sufficient without reliable per-document proof
+        if (err.rawResult?.insertedCount > 0) {
+          this.logger.warn(
+            'createNotificationsBatch: MongooseBulkWriteError has aggregate insertedCount > 0 but lacks reliable per-document confirmation; omitting unverified candidates',
+          );
+        }
+      }
+    }
+
+    return [];
+  }
+
+  /**
+   * Bulk insert notifications in bounded chunks, preserving schema defaults,
+   * validation, timestamps, metadata, and existing notification contracts.
+   * Handles duplicate-key errors (11000 / MongoBulkWriteError) and partial failures safely
+   * without failing the entire batch, and emits socket events ONLY for successfully
+   * inserted records using the exact existing payload contract.
+   */
+  async createNotificationsBatch(
+    dtos: Array<{
+      recipientId: string | Types.ObjectId;
+      actorId?: string | Types.ObjectId;
+      type: string;
+      category?: string;
+      priority?: string;
+      title: string;
+      message: string;
+      actionUrl?: string;
+      targetUrl?: string;
+      idempotencyKey?: string;
+      metadata?: Record<string, any>;
+      entityType?: string;
+      entityId?: string | Types.ObjectId;
+      [key: string]: any;
+    }>,
+    chunkSize = 100,
+  ): Promise<NotificationDocument[]> {
+    if (!dtos || dtos.length === 0) return [];
+
+    const effectiveChunkSize = Math.max(1, Math.min(chunkSize, 250));
+    const allInserted: NotificationDocument[] = [];
+
+    // Pre-validate & format docs to match schema expectations
+    // Validate each recipient ID independently so malformed records do not abort valid ones
+    const docsToInsert: any[] = [];
+    let skippedCount = 0;
+
+    for (const dto of dtos) {
+      if (!dto || !dto.recipientId) {
+        skippedCount++;
+        continue;
+      }
+
+      let recipientId: Types.ObjectId;
+      try {
+        recipientId = this.toObjectId(dto.recipientId);
+      } catch {
+        skippedCount++;
+        continue;
+      }
+
+      let actorId: Types.ObjectId | undefined;
+      if (dto.actorId) {
+        try {
+          actorId = this.toObjectId(dto.actorId);
+        } catch {
+          this.logger.warn(
+            'createNotificationsBatch: ignoring invalid actorId format',
+          );
+          actorId = undefined;
+        }
+      }
+
+      let entityId: Types.ObjectId | undefined;
+      if (dto.entityId) {
+        try {
+          entityId = this.toObjectId(dto.entityId);
+        } catch {
+          this.logger.warn(
+            'createNotificationsBatch: ignoring invalid entityId format',
+          );
+          entityId = undefined;
+        }
+      }
+
+      const priority = (dto.priority || 'NORMAL').toUpperCase();
+      const targetUrl = dto.targetUrl || dto.actionUrl || '';
+      const actionUrl = dto.actionUrl || dto.targetUrl || '';
+
+      docsToInsert.push({
+        recipientId,
+        ...(actorId ? { actorId } : {}),
+        type: dto.type,
+        category: dto.category || 'general',
+        priority,
+        title: dto.title,
+        message: dto.message,
+        targetUrl,
+        actionUrl,
+        idempotencyKey: dto.idempotencyKey,
+        isRead: false,
+        metadata: dto.metadata || {},
+        ...(dto.entityType ? { entityType: dto.entityType } : {}),
+        ...(entityId ? { entityId } : {}),
+      });
+    }
+
+    if (skippedCount > 0) {
+      this.logger.warn(
+        `createNotificationsBatch: skipped ${skippedCount} notification(s) with invalid recipient or ID format`,
+      );
+    }
+
+    if (docsToInsert.length === 0) {
+      return [];
+    }
+
+    for (let i = 0; i < docsToInsert.length; i += effectiveChunkSize) {
+      const chunk = docsToInsert.slice(i, i + effectiveChunkSize);
+      let insertedDocs: NotificationDocument[] = [];
+
+      try {
+        insertedDocs = (await this.notificationModel.insertMany(chunk, {
+          ordered: false,
+        })) as NotificationDocument[];
+      } catch (err: any) {
+        insertedDocs = this.extractPersistedDocsFromInsertError(err);
+        if (
+          err?.code !== 11000 &&
+          err?.name !== 'MongoBulkWriteError' &&
+          err?.name !== 'MongooseBulkWriteError'
+        ) {
+          this.logger.error(
+            `Error during bulk notification insertion chunk: ${err?.message}`,
+            err?.stack,
+          );
+        }
+      }
+
+      // Emit socket events ONLY for documents successfully inserted
+      for (const doc of insertedDocs) {
+        try {
+          if (this.notificationsGateway && doc.recipientId) {
+            const payload =
+              typeof (doc as any).toObject === 'function'
+                ? (doc as any).toObject()
+                : doc;
+            this.notificationsGateway.sendNotificationToUser(
+              doc.recipientId.toString(),
+              payload,
+            );
+          }
+        } catch {
+          // Socket emission is best-effort
+        }
+      }
+
+      allInserted.push(...insertedDocs);
+    }
+
+    return allInserted;
+  }
+
+  /**
    * Get paginated notifications and unread count
    */
   async getUserNotifications(userId: string, query: any = {}) {
@@ -738,6 +963,58 @@ export class NotificationsService {
 
   async getUserPreferences(userId: string) {
     return this.getPreferences(userId);
+  }
+
+  /**
+   * Batch resolve user IDs who have explicitly opted out of in-app notifications.
+   * Preserves default opt-in behavior for users without preference documents.
+   * Splits queries into bounded chunks to protect query planning under large follower volumes.
+   */
+  async getInAppOptedOutUserIds(
+    userIds: (string | Types.ObjectId)[],
+  ): Promise<Set<string>> {
+    if (!userIds || userIds.length === 0) return new Set();
+
+    // 1. Deduplicate & validate recipient IDs before querying
+    const uniqueHexMap = new Map<string, Types.ObjectId>();
+    for (const id of userIds) {
+      if (!id) continue;
+      try {
+        const objId = this.toObjectId(id);
+        const hex = objId.toHexString();
+        if (!uniqueHexMap.has(hex)) {
+          uniqueHexMap.set(hex, objId);
+        }
+      } catch {
+        // Invalid recipient ID format: skip safely
+      }
+    }
+
+    const uniqueObjIds = Array.from(uniqueHexMap.values());
+    if (uniqueObjIds.length === 0) return new Set();
+
+    // 2. Query in bounded chunks (e.g. 1000 IDs)
+    const PREF_CHUNK_SIZE = 1000;
+    const optedOutSet = new Set<string>();
+
+    for (let i = 0; i < uniqueObjIds.length; i += PREF_CHUNK_SIZE) {
+      const chunk = uniqueObjIds.slice(i, i + PREF_CHUNK_SIZE);
+      const optedOutDocs = await this.prefModel
+        .find({
+          userId: { $in: chunk },
+          inAppNotifications: false,
+        })
+        .select('userId')
+        .lean();
+
+      for (const doc of optedOutDocs) {
+        if (doc?.userId) {
+          optedOutSet.add(String(doc.userId));
+        }
+      }
+    }
+
+    return optedOutSet;
   }
 
   /**

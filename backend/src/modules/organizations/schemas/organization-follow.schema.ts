@@ -42,3 +42,8 @@ OrganizationFollowSchema.index(
 );
 
 OrganizationFollowSchema.index({ userId: 1, notificationsEnabled: 1 });
+OrganizationFollowSchema.index({
+  organizationId: 1,
+  notificationsEnabled: 1,
+  userId: 1,
+});

@@ -61,5 +61,6 @@ export class Notification {
 export const NotificationSchema = SchemaFactory.createForClass(Notification);
 NotificationSchema.index({ recipientId: 1, isRead: 1, createdAt: -1 });
 NotificationSchema.index({ recipientId: 1, createdAt: -1 });
+NotificationSchema.index({ recipientId: 1, category: 1, createdAt: -1 });
 NotificationSchema.index({ recipientId: 1, entityType: 1, entityId: 1 });
 NotificationSchema.index({ idempotencyKey: 1 }, { unique: true, sparse: true });

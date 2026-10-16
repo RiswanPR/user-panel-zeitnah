@@ -334,4 +334,135 @@ describe('OrganizationsService — Phase 3 Company Following & Notification Pref
       expect(mockNotificationsService.createNotification).not.toHaveBeenCalled();
     });
   });
+
+  describe('Feature D (Optimized): Batched Follower Fan-Out with Bulk Insertion (Phase D.3.1)', () => {
+    it('uses getInAppOptedOutUserIds and createNotificationsBatch preserving exact contracts', async () => {
+      const followerA = new Types.ObjectId().toHexString();
+      const followerB = new Types.ObjectId().toHexString();
+      const followerOptOut = new Types.ObjectId().toHexString();
+
+      mockFollowModel.find.mockReturnValue({
+        lean: jest.fn().mockResolvedValue([
+          { userId: new Types.ObjectId(followerA), notificationsEnabled: true },
+          { userId: new Types.ObjectId(followerB), notificationsEnabled: true },
+          { userId: new Types.ObjectId(followerOptOut), notificationsEnabled: true },
+          { userId: new Types.ObjectId(creatorUserId), notificationsEnabled: true }, // author
+        ]),
+      });
+
+      const batchMock = {
+        getInAppOptedOutUserIds: jest.fn().mockResolvedValue(new Set([followerOptOut])),
+        createNotificationsBatch: jest.fn().mockResolvedValue([]),
+        getPreferences: jest.fn(),
+        createNotification: jest.fn(),
+      };
+
+      const customService = new OrganizationsService(
+        mockOrgModel,
+        mockMembershipModel,
+        mockUserModel,
+        undefined,
+        mockFollowModel,
+        undefined,
+        undefined,
+        undefined,
+        batchMock as any,
+      );
+
+      const post = {
+        _id: new Types.ObjectId(),
+        authorId: new Types.ObjectId(creatorUserId),
+        organizationId: new Types.ObjectId(validOrgId),
+        content: 'Optimized batched company announcement!',
+        audience: 'PUBLIC',
+      };
+
+      await customService.notifyFollowersOfNewPost(post, eligiblePublicOrg);
+
+      // Author excluded before preference lookup
+      expect(batchMock.getInAppOptedOutUserIds).toHaveBeenCalledTimes(1);
+      const requestedIds = batchMock.getInAppOptedOutUserIds.mock.calls[0][0];
+      const requestedStrings = requestedIds.map(String);
+      expect(requestedStrings).toContain(followerA);
+      expect(requestedStrings).toContain(followerB);
+      expect(requestedStrings).toContain(followerOptOut);
+      expect(requestedStrings).not.toContain(creatorUserId);
+
+      // createNotificationsBatch should receive followerA and followerB, NOT followerOptOut or author
+      expect(batchMock.createNotificationsBatch).toHaveBeenCalledTimes(1);
+      const batchPayload = batchMock.createNotificationsBatch.mock.calls[0][0];
+      expect(batchPayload).toHaveLength(2);
+
+      expect(batchPayload).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            recipientId: new Types.ObjectId(followerA),
+            actorId: new Types.ObjectId(creatorUserId),
+            type: 'company_post',
+            category: 'community',
+            priority: 'NORMAL',
+            title: 'New post from Acme Infra Corp',
+            message: 'Acme Infra Corp: "Optimized batched company announcement!"',
+            actionUrl: `/community?organizationId=${validOrgId}`,
+            targetUrl: `/community?organizationId=${validOrgId}`,
+            idempotencyKey: `company_post_${post._id}_${followerA}`,
+            metadata: {
+              organizationId: validOrgId,
+              organizationName: 'Acme Infra Corp',
+              postId: String(post._id),
+            },
+          }),
+          expect.objectContaining({
+            recipientId: new Types.ObjectId(followerB),
+            idempotencyKey: `company_post_${post._id}_${followerB}`,
+          }),
+        ]),
+      );
+
+      // Zero calls to sequential single-notification endpoints
+      expect(batchMock.getPreferences).not.toHaveBeenCalled();
+      expect(batchMock.createNotification).not.toHaveBeenCalled();
+    });
+
+    it('suppresses dispatch entirely if all followers are author or opted out', async () => {
+      const followerOptOut = new Types.ObjectId().toHexString();
+
+      mockFollowModel.find.mockReturnValue({
+        lean: jest.fn().mockResolvedValue([
+          { userId: new Types.ObjectId(followerOptOut), notificationsEnabled: true },
+          { userId: new Types.ObjectId(creatorUserId), notificationsEnabled: true },
+        ]),
+      });
+
+      const batchMock = {
+        getInAppOptedOutUserIds: jest.fn().mockResolvedValue(new Set([followerOptOut])),
+        createNotificationsBatch: jest.fn().mockResolvedValue([]),
+      };
+
+      const customService = new OrganizationsService(
+        mockOrgModel,
+        mockMembershipModel,
+        mockUserModel,
+        undefined,
+        mockFollowModel,
+        undefined,
+        undefined,
+        undefined,
+        batchMock as any,
+      );
+
+      const post = {
+        _id: new Types.ObjectId(),
+        authorId: new Types.ObjectId(creatorUserId),
+        organizationId: new Types.ObjectId(validOrgId),
+        content: 'No recipients test',
+        audience: 'PUBLIC',
+      };
+
+      await customService.notifyFollowersOfNewPost(post, eligiblePublicOrg);
+
+      expect(batchMock.getInAppOptedOutUserIds).toHaveBeenCalledTimes(1);
+      expect(batchMock.createNotificationsBatch).not.toHaveBeenCalled();
+    });
+  });
 });

@@ -92,7 +92,8 @@ type PublicIpResponse = {
   ip?: string;
 };
 
-const DEFAULT_SESSION_EXPIRY_MS = 60 * 24 * 60 * 60 * 1000;
+const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
+const DEFAULT_SESSION_EXPIRY_MS = NINETY_DAYS_MS;
 
 function parseDurationToMs(value?: string | number | null): number | null {
   if (typeof value === 'number') {
@@ -139,13 +140,21 @@ export class AuthService {
     '15m') as StringValue;
 
   private readonly refreshTokenExpiresIn = (process.env
-    .JWT_REFRESH_EXPIRES_IN || '60d') as StringValue;
+    .JWT_REFRESH_EXPIRES_IN || '90d') as StringValue;
 
   private readonly refreshTokenExpiryMs =
     Number(process.env.JWT_SESSION_EXPIRES_IN_MS) ||
     Number(process.env.JWT_REFRESH_EXPIRES_IN_MS) ||
     parseDurationToMs(this.refreshTokenExpiresIn) ||
     DEFAULT_SESSION_EXPIRY_MS;
+
+  public getRefreshTokenExpiryMs(): number {
+    return this.refreshTokenExpiryMs;
+  }
+
+  public getRefreshTokenExpiresIn(): string {
+    return this.refreshTokenExpiresIn;
+  }
 
   private readonly refreshTokenSecret =
     process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
