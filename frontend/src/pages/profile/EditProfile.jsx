@@ -79,7 +79,7 @@ const MAX_BIO_LENGTH = 1000;
 
 const SECTION_CONFIG = [
   { id: "basic-info", index: "01", label: "Basic Information", icon: User, xp: 45, desc: "Avatar, banner, name, location & biography" },
-  { id: "professional-identity", index: "02", label: "Professional Identity", icon: Briefcase, xp: 25, desc: "Role, availability & career headline" },
+  { id: "professional-identity", index: "02", label: "Professional Identity", icon: Briefcase, xp: 25, desc: "Role, department, title & availability" },
   { id: "skills", index: "03", label: "Skills & Software", icon: Code2, xp: 20, desc: "Structured engineering & technical matrix" },
   { id: "experience", index: "04", label: "Experience", icon: Briefcase, xp: 20, desc: "Career timeline & project contributions" },
   { id: "education", index: "05", label: "Education", icon: GraduationCap, xp: 20, desc: "Academic qualifications & degrees" },
@@ -747,8 +747,7 @@ export default function EditProfile() {
   const handleSaveProfessionalIdentity = (e) => {
     e.preventDefault();
     const identityPayload = formatIdentityPayload(professionalIdentity, currentRole);
-    updateMutation.mutate({
-      headline: headline.trim(),
+    const payload = {
       primaryRole: normalizeUserRole(primaryRole),
       availability,
       yearsOfExperience: Number(yearsOfExperience) || 0,
@@ -756,7 +755,13 @@ export default function EditProfile() {
       discoverableToRecruiters,
       profileVisibility,
       ...identityPayload,
-    });
+    };
+    // Defensively preserve existing headline without erasing it or syncing with title
+    const preservedHeadline = (headline && headline.trim()) || profile?.headline;
+    if (preservedHeadline) {
+      payload.headline = preservedHeadline;
+    }
+    updateMutation.mutate(payload);
   };
 
 
@@ -931,10 +936,16 @@ export default function EditProfile() {
         if (profile.name && profile.avatar && profile.bio) return "complete";
         if (profile.name || profile.avatar) return "in-progress";
         return "not-started";
-      case "professional-identity":
-        if (profile.headline && profile.primaryRole) return "complete";
-        if (profile.headline || profile.primaryRole) return "in-progress";
+      case "professional-identity": {
+        const hasTitle = Boolean(
+          profile.professionalIdentity?.titleName ||
+          profile.currentRole ||
+          profile.headline
+        );
+        if (hasTitle && profile.primaryRole) return "complete";
+        if (hasTitle || profile.primaryRole) return "in-progress";
         return "not-started";
+      }
       case "skills":
         if (flatSkills.length >= 3) return "complete";
         if (flatSkills.length > 0) return "in-progress";
@@ -1369,7 +1380,7 @@ export default function EditProfile() {
                   Professional Identity & Role
                 </h2>
                 <p className="text-xs sm:text-sm text-text-muted leading-relaxed mt-1">
-                  Establish your infrastructure ecosystem role, headline, availability, and job title.
+                  Establish your infrastructure ecosystem role, department, title, and availability.
                 </p>
               </div>
 
@@ -1383,27 +1394,6 @@ export default function EditProfile() {
                   }}
                   isAssignedEducator={isAssignedEducator}
                 />
-
-                {/* Headline */}
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
-                    Professional Headline <span className="text-brand-mint">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={headline}
-                    onChange={(e) => {
-                      setHeadline(e.target.value);
-                      setIsDirty(true);
-                    }}
-                    maxLength={120}
-                    className="w-full px-4 py-3 rounded-xl bg-bg-elevated/70 border border-white/[0.08] focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30 focus:outline-none text-sm text-white transition-colors"
-                    placeholder="e.g. Planning Engineer | Primavera P6 & BIM Specialist | Metro & Rail Infrastructure"
-                  />
-                  <span className="text-[11px] text-text-muted mt-1 block">
-                    Concise summary displayed in network search and profile hero.
-                  </span>
-                </div>
 
                 {/* Structured Professional Identity (Department & Scoped Title) */}
                 <ProfessionalIdentityEditor
