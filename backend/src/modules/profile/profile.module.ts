@@ -20,6 +20,16 @@ import { MatchingModule } from '../matching/matching.module';
 import { CareerIntelligenceModule } from '../career-intelligence/career-intelligence.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 
+import {
+  CatalogueDepartment,
+  CatalogueDepartmentSchema,
+} from './schemas/catalogue-department.schema';
+import {
+  CatalogueTitle,
+  CatalogueTitleSchema,
+} from './schemas/catalogue-title.schema';
+import { CatalogueRepository } from './repositories/catalogue.repository';
+
 @Module({
   imports: [
     forwardRef(() => MatchingModule),
@@ -42,13 +52,29 @@ import { NotificationsModule } from '../notifications/notifications.module';
         name: Project.name,
         schema: ProjectSchema,
       },
+      {
+        name: CatalogueDepartment.name,
+        schema: CatalogueDepartmentSchema,
+      },
+      {
+        name: CatalogueTitle.name,
+        schema: CatalogueTitleSchema,
+      },
     ]),
     AwsModule,
     AuditLogsModule,
     UsernameModule,
   ],
   controllers: [ProfileController],
-  providers: [ProfileService, ProfessionalCatalogueService],
-  exports: [ProfileService, ProfessionalCatalogueService],
+  providers: [
+    ProfileService,
+    ProfessionalCatalogueService,
+    CatalogueRepository,
+  ],
+  exports: [
+    ProfileService,
+    ProfessionalCatalogueService,
+    CatalogueRepository,
+  ],
 })
 export class ProfileModule {}
