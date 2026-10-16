@@ -102,4 +102,92 @@ describe('ProfileController', () => {
     expect(res.user.id).toBe(objectId);
     expect(mockProfileService.getPublicProfile).toHaveBeenCalledWith(objectId);
   });
+
+  describe('Custom Title Request Endpoints', () => {
+    let mockTitleRequestService: any;
+    let requestController: ProfileController;
+
+    beforeEach(async () => {
+      mockTitleRequestService = {
+        createRequest: jest.fn().mockResolvedValue({
+          id: 'req_123',
+          departmentId: 'civil-engineering',
+          requestedTitle: 'Coastal Engineer',
+          status: 'pending',
+        }),
+        getUserRequests: jest.fn().mockResolvedValue([
+          {
+            id: 'req_123',
+            departmentId: 'civil-engineering',
+            requestedTitle: 'Coastal Engineer',
+            status: 'pending',
+          },
+        ]),
+      };
+
+      const module: TestingModule = await Test.createTestingModule({
+        controllers: [ProfileController],
+        providers: [
+          {
+            provide: ProfileService,
+            useValue: mockProfileService,
+          },
+          {
+            provide: 'CatalogueTitleRequestService',
+            useValue: mockTitleRequestService,
+          },
+        ],
+      })
+        .useMocker((token) => {
+          if (token === 'CatalogueTitleRequestService') {
+            return mockTitleRequestService;
+          }
+          return undefined;
+        })
+        .compile();
+
+      requestController = new ProfileController(
+        mockProfileService,
+        undefined,
+        mockTitleRequestService,
+      );
+    });
+
+    it('should submit custom title request and return success confirmation', async () => {
+      const req = {
+        user: { userId: 'user-abc', name: 'Alice', email: 'alice@example.com' },
+      };
+      const dto = {
+        departmentId: 'civil-engineering',
+        title: 'Coastal Engineer',
+      };
+
+      const res = await requestController.createTitleRequest(req, dto);
+
+      expect(res.success).toBe(true);
+      expect(res.message).toMatch(/submitted successfully/);
+      expect(res.request.id).toBe('req_123');
+      expect(mockTitleRequestService.createRequest).toHaveBeenCalledWith(
+        {
+          userId: 'user-abc',
+          name: 'Alice',
+          email: 'alice@example.com',
+        },
+        dto,
+      );
+    });
+
+    it('should retrieve authenticated user title requests', async () => {
+      const req = { user: { userId: 'user-abc' } };
+      const res = await requestController.getMyTitleRequests(req, 'pending');
+
+      expect(Array.isArray(res)).toBe(true);
+      expect(res.length).toBe(1);
+      expect(res[0].id).toBe('req_123');
+      expect(mockTitleRequestService.getUserRequests).toHaveBeenCalledWith(
+        'user-abc',
+        'pending',
+      );
+    });
+  });
 });

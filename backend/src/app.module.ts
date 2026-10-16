@@ -40,9 +40,17 @@ import { SupportModule } from './modules/support/support.module';
     // MONGODB
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGO_URL') || process.env.MONGO_URL,
-      }),
+      useFactory: (configService: ConfigService) => {
+        const uri =
+          configService.get<string>('MONGO_URL') || process.env.MONGO_URL;
+        const dbName =
+          configService.get<string>('MONGO_DB_NAME') ||
+          process.env.MONGO_DB_NAME;
+        return {
+          uri,
+          ...(dbName ? { dbName } : {}),
+        };
+      },
       inject: [ConfigService],
     }),
 

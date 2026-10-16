@@ -28,7 +28,12 @@ import {
   CatalogueTitle,
   CatalogueTitleSchema,
 } from './schemas/catalogue-title.schema';
+import {
+  CatalogueTitleRequest,
+  CatalogueTitleRequestSchema,
+} from './schemas/catalogue-title-request.schema';
 import { CatalogueRepository } from './repositories/catalogue.repository';
+import { CatalogueTitleRequestService } from './services/catalogue-title-request.service';
 
 @Module({
   imports: [
@@ -60,6 +65,10 @@ import { CatalogueRepository } from './repositories/catalogue.repository';
         name: CatalogueTitle.name,
         schema: CatalogueTitleSchema,
       },
+      {
+        name: CatalogueTitleRequest.name,
+        schema: CatalogueTitleRequestSchema,
+      },
     ]),
     AwsModule,
     AuditLogsModule,
@@ -70,11 +79,13 @@ import { CatalogueRepository } from './repositories/catalogue.repository';
     ProfileService,
     ProfessionalCatalogueService,
     CatalogueRepository,
+    CatalogueTitleRequestService,
   ],
   exports: [
     ProfileService,
     ProfessionalCatalogueService,
     CatalogueRepository,
+    CatalogueTitleRequestService,
   ],
 })
 export class ProfileModule {}

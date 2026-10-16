@@ -15,6 +15,7 @@ import {
   UploadedFiles,
   BadRequestException,
   ForbiddenException,
+  ServiceUnavailableException,
   Optional,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
@@ -38,7 +39,9 @@ import {
   CreateVerificationRequestDto,
   ReviewVerificationRequestDto,
 } from './dto/verification.dto';
+import { CreateTitleRequestDto } from './dto/create-title-request.dto';
 import { ProfessionalCatalogueService } from './services/professional-catalogue.service';
+import { CatalogueTitleRequestService } from './services/catalogue-title-request.service';
 
 @Controller('profile')
 export class ProfileController {
@@ -46,6 +49,8 @@ export class ProfileController {
     private readonly profileService: ProfileService,
     @Optional()
     private readonly professionalCatalogueService?: ProfessionalCatalogueService,
+    @Optional()
+    private readonly catalogueTitleRequestService?: CatalogueTitleRequestService,
   ) {}
 
   private getClientIp(req: any): string {
@@ -159,6 +164,53 @@ export class ProfileController {
       return this.professionalCatalogueService.getCatalogue();
     }
     return this.profileService.getProfessionalCatalogue();
+  }
+
+  // CUSTOM TITLE REQUEST WORKFLOW
+  @Post('catalogue/requests')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({
+    default: {
+      limit: 10,
+      ttl: 60000,
+    },
+  })
+  async createTitleRequest(
+    @Req() req: any,
+    @Body() dto: CreateTitleRequestDto,
+  ) {
+    if (!this.catalogueTitleRequestService) {
+      throw new ServiceUnavailableException(
+        'Custom title request service is currently unavailable.',
+      );
+    }
+    const userContext = {
+      userId: req.user.userId,
+      name: req.user.name || req.user.username || '',
+      email: req.user.email || '',
+    };
+    const request = await this.catalogueTitleRequestService.createRequest(
+      userContext,
+      dto,
+    );
+    return {
+      success: true,
+      message:
+        'Your custom title request has been submitted successfully for administrator review.',
+      request,
+    };
+  }
+
+  @Get('catalogue/requests/my')
+  @UseGuards(JwtAuthGuard)
+  async getMyTitleRequests(@Req() req: any, @Query('status') status?: string) {
+    if (!this.catalogueTitleRequestService) {
+      return [];
+    }
+    return this.catalogueTitleRequestService.getUserRequests(
+      req.user.userId,
+      status,
+    );
   }
 
   // UPDATE PROFILE

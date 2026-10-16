@@ -44,6 +44,27 @@ export const coreProfileService = {
   },
 
   /**
+   * Submits a custom title request for administrator review.
+   */
+  submitCustomTitleRequest: async (departmentId, title) => {
+    const response = await api.post("/profile/catalogue/requests", {
+      departmentId,
+      title,
+    });
+    return response.data;
+  },
+
+  /**
+   * Retrieves custom title requests submitted by the current user.
+   */
+  getMyCustomTitleRequests: async (status) => {
+    const response = await api.get("/profile/catalogue/requests/my", {
+      params: status ? { status } : undefined,
+    });
+    return response.data;
+  },
+
+  /**
    * Uploads avatar image file (max 5MB, JPG/PNG/WebP).
    */
   uploadAvatar: async (file) => {
