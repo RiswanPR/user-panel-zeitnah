@@ -106,6 +106,8 @@ const criticalChunks = [
   'ActiveSessions',
   'AuditLogs',
   'PrivacyPolicyPage',
+  'SupportPage',
+  'TermsOfServicePage',
 ];
 
 console.log('\n🎯 4. Verifying critical route chunks exist:');

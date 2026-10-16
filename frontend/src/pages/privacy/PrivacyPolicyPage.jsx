@@ -411,7 +411,7 @@ export default function PrivacyPolicyPage() {
                     <span>Entity Registration & Notice</span>
                   </div>
                   <p className="text-text-muted leading-relaxed">
-                    Operating Organization: <strong className="text-white">{BRAND.name} / Zeitnah LMS</strong>. Registered Legal Entity: <span className="font-mono text-brand-yellow">[Placeholder: Legal Entity Full Name, e.g., Zeitnah Academy Private Limited / LLP]</span>. Registered Headquarters: <span className="font-mono text-brand-yellow">[Placeholder: Corporate Registered Address, City, State, Country, Postal Code]</span>.
+                    Operating Organization: <strong className="text-white">{BRAND.name} / Zeitnah LMS</strong>. Registered Legal Entity: <strong className="text-white">ZEITNAH INSTITUTE OF SURVEY LLP</strong> (Business Constitution: Limited Liability Partnership). Principal Business Address: <span className="text-white">1st Floor, 34/1412, Babil Complex, Kovilakam Road, Mankavu, Kozhikode, Kerala 673007, India</span>.
                   </p>
                 </div>
               </div>
@@ -1042,18 +1042,18 @@ export default function PrivacyPolicyPage() {
 
                   <div className="space-y-1.5">
                     <span className="font-mono text-[10px] uppercase tracking-wider text-text-faint block">Registered Legal Entity</span>
-                    <span className="font-mono text-white block">
-                      [Placeholder: Legal Entity Name, e.g., Zeitnah Academy Private Limited / LLP]
+                    <span className="font-bold text-white block">
+                      ZEITNAH INSTITUTE OF SURVEY LLP
                     </span>
-                    <span className="text-[11px] text-text-faint">Corporate entity registered under applicable company statutes</span>
+                    <span className="text-[11px] text-text-faint">Business Constitution: Limited Liability Partnership</span>
                   </div>
 
                   <div className="space-y-1.5">
                     <span className="font-mono text-[10px] uppercase tracking-wider text-text-faint block">Postal & Registered Address</span>
-                    <span className="font-mono text-white block">
-                      [Placeholder: Registered Headquarters Address, City, State, Country]
+                    <span className="text-white block">
+                      1st Floor, 34/1412, Babil Complex, Kovilakam Road, Mankavu, Kozhikode, Kerala 673007, India
                     </span>
-                    <span className="text-[11px] text-text-faint">Physical correspondence and legal notice destination</span>
+                    <span className="text-[11px] text-text-faint">Principal business address and legal notice destination</span>
                   </div>
                 </div>
 

@@ -27,6 +27,7 @@ import { MatchingModule } from './modules/matching/matching.module';
 import { CareerIntelligenceModule } from './modules/career-intelligence/career-intelligence.module';
 import { MessagingModule } from './modules/messaging/messaging.module';
 import { EmailModule } from './common/email/email.module';
+import { SupportModule } from './modules/support/support.module';
 
 @Module({
   imports: [
@@ -76,6 +77,9 @@ import { EmailModule } from './common/email/email.module';
 
     // RESILIENT EMAIL SERVICE
     EmailModule,
+
+    // CUSTOMER SUPPORT & TICKETING
+    SupportModule,
 
     // RATE LIMITING
     ThrottlerModule.forRoot([

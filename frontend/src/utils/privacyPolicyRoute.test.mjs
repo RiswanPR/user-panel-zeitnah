@@ -102,11 +102,12 @@ describe('Zeitnah LMS Privacy Policy Production Integrity Suite', () => {
     assert.match(content, /never sold and will never sell personal information/i);
   });
 
-  it('verifies legal entity, address, and email placeholders are clearly marked', () => {
+  it('verifies verified legal entity, business constitution, and principal address are stated', () => {
     const content = fs.readFileSync(privacyPagePath, 'utf8');
 
-    assert.match(content, /\[Placeholder: Legal Entity/);
-    assert.match(content, /\[Placeholder: Corporate Registered Address|\[Placeholder: Registered Headquarters Address/);
+    assert.match(content, /ZEITNAH INSTITUTE OF SURVEY LLP/);
+    assert.match(content, /Limited Liability Partnership/);
+    assert.match(content, /Babil Complex, Kovilakam Road, Mankavu, Kozhikode, Kerala 673007, India/);
     assert.match(content, /\[Placeholder: privacy@zeitnahacademy\.com/);
   });
 

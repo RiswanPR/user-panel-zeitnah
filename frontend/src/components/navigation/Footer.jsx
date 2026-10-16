@@ -153,6 +153,22 @@ export default function Footer({ className = "" }) {
                   Privacy Policy
                 </Link>
               </li>
+              <li>
+                <Link
+                  to="/terms-of-service"
+                  className="text-text-muted hover:text-white transition-colors"
+                >
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/support"
+                  className="text-text-muted hover:text-white transition-colors"
+                >
+                  Help & Support
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -196,6 +212,14 @@ export default function Footer({ className = "" }) {
             <span className="text-white/20">•</span>
             <Link to="/privacy-policy" className="hover:text-white transition-colors">
               Privacy Policy
+            </Link>
+            <span className="text-white/20">•</span>
+            <Link to="/terms-of-service" className="hover:text-white transition-colors">
+              Terms of Service
+            </Link>
+            <span className="text-white/20">•</span>
+            <Link to="/support" className="hover:text-white transition-colors">
+              Help & Support
             </Link>
           </div>
         </div>

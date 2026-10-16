@@ -63,6 +63,8 @@ const CommunityHome = lazyWithRetry(() => import("./pages/community/CommunityHom
 const SavedPostsPage = lazyWithRetry(() => import("./pages/community/SavedPostsPage"));
 const ReelsPage = lazyWithRetry(() => import("./pages/community/ReelsPage"));
 const PrivacyPolicyPage = lazyWithRetry(() => import("./pages/privacy/PrivacyPolicyPage"));
+const SupportPage = lazyWithRetry(() => import("./pages/support/SupportPage"));
+const TermsOfServicePage = lazyWithRetry(() => import("./pages/legal/TermsOfServicePage"));
 
 import ProtectedRoute from "./components/common/ProtectedRoute/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";
@@ -185,6 +187,30 @@ function App() {
                 <Route
                   path="/privacy"
                   element={<Navigate to="/privacy-policy" replace />}
+                />
+                <Route
+                  path="/support"
+                  element={
+                    <Suspense fallback={<PageLoader />}>
+                      <SupportPage />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/help"
+                  element={<Navigate to="/support" replace />}
+                />
+                <Route
+                  path="/terms-of-service"
+                  element={
+                    <Suspense fallback={<PageLoader />}>
+                      <TermsOfServicePage />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/terms"
+                  element={<Navigate to="/terms-of-service" replace />}
                 />
               </Route>
 
