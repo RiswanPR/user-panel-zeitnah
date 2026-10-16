@@ -24,6 +24,7 @@ import {
   getCanonicalProfileUrl,
   getProfileIdentifier,
 } from "../../utils/roleNavigation";
+import { resolveDisplayIdentity } from "../../utils/professionalIdentity";
 
 function getInitials(name) {
   if (!name) return "Z";
@@ -84,8 +85,9 @@ export default function InfrastructurePeopleCard({
   const expYears = Number(person?.yearsOfExperience) || 0;
   const expLabel = expYears > 0 ? `${expYears} yr${expYears > 1 ? "s" : ""} exp` : null;
 
-  // Selected discipline & role headline
-  const primaryRole = person?.primaryDiscipline || person?.headline || person?.currentRole || "Infrastructure Professional";
+  // Structured professional identity & fallback
+  const displayIdentity = resolveDisplayIdentity(person);
+  const primaryRole = displayIdentity.title || person?.currentRole || person?.primaryDiscipline || person?.headline || "Infrastructure Professional";
   const organizationName = person?.institution || person?.company || null;
   const locationLabel = person?.location || null;
 
@@ -220,9 +222,24 @@ export default function InfrastructurePeopleCard({
 
         {/* ── 3. Professional Role & Organization ── */}
         <div className="mt-3 space-y-1 w-full max-w-[260px]">
-          <p className="text-xs sm:text-sm font-semibold text-white/90 truncate leading-snug">
+          <p
+            className="text-xs sm:text-sm font-semibold text-white/90 truncate leading-snug"
+            title={primaryRole}
+          >
             {primaryRole}
           </p>
+
+          {displayIdentity.department && (
+            <div className="flex items-center justify-center pt-0.5">
+              <span
+                className="text-[10px] font-medium text-brand-mint bg-brand-mint/10 border border-brand-mint/20 px-2 py-0.5 rounded-md truncate max-w-full"
+                title={`Department: ${displayIdentity.department}`}
+                data-testid="network-card-department"
+              >
+                {displayIdentity.department}
+              </span>
+            </div>
+          )}
 
           {organizationName && (
             <p className="text-xs text-text-muted truncate flex items-center justify-center gap-1">

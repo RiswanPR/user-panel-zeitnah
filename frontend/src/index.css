@@ -2060,3 +2060,42 @@ html, body {
     scroll-behavior: auto !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   PRINT STYLESHEET (Clean PDF / Paper export for legal policies)
+   ═══════════════════════════════════════════════════════════════ */
+@media print {
+  body, html {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+  }
+  header, nav, aside, .ambient-glow, [data-tour], button, .fixed, .pointer-events-none {
+    display: none !important;
+  }
+  article {
+    width: 100% !important;
+    max-width: 100% !important;
+    color: #1f2937 !important;
+  }
+  article h1, article h2, article h3 {
+    color: #111827 !important;
+    page-break-after: avoid;
+  }
+  article p, article li, article td {
+    color: #374151 !important;
+  }
+  article table {
+    border-color: #e5e7eb !important;
+  }
+  article table th {
+    background-color: #f3f4f6 !important;
+    color: #111827 !important;
+  }
+  article table td {
+    border-color: #e5e7eb !important;
+  }
+  article .border {
+    border-color: #e5e7eb !important;
+    background-color: transparent !important;
+  }
+}

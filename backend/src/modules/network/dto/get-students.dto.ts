@@ -60,6 +60,11 @@ export class GetStudentsDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(100)
+  departmentId?: string;
+
+  @IsOptional()
+  @IsString()
   @IsIn(['recommended', 'recent', 'name'])
   sort?: 'recommended' | 'recent' | 'name' = 'recommended';
 }

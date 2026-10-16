@@ -28,6 +28,10 @@ import {
   INFRASTRUCTURE_SOFTWARE,
 } from '../profile/constants/infrastructure-taxonomy';
 import {
+  isValidDepartmentId,
+  getAllDepartments,
+} from '../profile/constants/professional-catalogue';
+import {
   GetConnectionsQueryDto,
   PaginatedConnectionsResponse,
   ConnectionItem,
@@ -237,6 +241,17 @@ export class NetworkService {
       username: user.username || '',
       avatarUrl,
       headline: user.headline || user.currentRole || '',
+      currentRole: user.currentRole || '',
+      professionalIdentity: (user as any).professionalIdentity || (user.currentRole ? {
+        departmentId: null,
+        departmentName: null,
+        titleId: null,
+        titleName: user.currentRole,
+        isCustomTitle: false,
+        isLegacyTitle: true,
+        catalogueVersion: null,
+        updatedAt: null,
+      } : null),
       course: primaryCourse,
       interests: Array.isArray(user.skills) ? user.skills : [],
       institution,
@@ -274,10 +289,22 @@ export class NetworkService {
         { username: regex },
         { headline: regex },
         { currentRole: regex },
+        { 'professionalIdentity.titleName': regex },
         { 'course.courseName': regex },
         { skills: regex },
         { 'education.institution': regex },
       ];
+    }
+
+    // Filter by Professional Identity Department (Phase 5)
+    if (dto.departmentId && dto.departmentId !== 'all') {
+      const cleanDeptId = dto.departmentId.trim();
+      if (!isValidDepartmentId(cleanDeptId)) {
+        throw new BadRequestException(
+          `Invalid or inactive department ID: '${cleanDeptId}'`,
+        );
+      }
+      query['professionalIdentity.departmentId'] = cleanDeptId;
     }
 
     // Filter by Course
@@ -372,7 +399,7 @@ export class NetworkService {
     const skip = (page - 1) * limit;
 
     const projection =
-      'name username avatar headline currentRole course skills education gamification account_Status createdAt primaryRole capabilities availability verification';
+      'name username avatar headline currentRole professionalIdentity course skills education gamification account_Status createdAt primaryRole capabilities availability verification';
 
     const [total, students] = await Promise.all([
       this.userModel.countDocuments(query),
@@ -508,6 +535,7 @@ export class NetworkService {
         '5–10 years',
         '10+ years',
       ],
+      departments: getAllDepartments().map((d) => ({ id: d.id, name: d.name })),
     };
   }
 
@@ -528,7 +556,7 @@ export class NetworkService {
           ...this.getEligibleStudentFilter(),
         })
         .select(
-          'name username avatar headline currentRole course skills education gamification account_Status createdAt',
+          'name username avatar headline currentRole professionalIdentity course skills education gamification account_Status createdAt',
         )
         .exec();
     }
@@ -540,7 +568,7 @@ export class NetworkService {
           ...this.getEligibleStudentFilter(),
         })
         .select(
-          'name username avatar headline currentRole course skills education gamification account_Status createdAt',
+          'name username avatar headline currentRole professionalIdentity course skills education gamification account_Status createdAt',
         )
         .exec();
     }
@@ -976,7 +1004,7 @@ export class NetworkService {
     const userDocs = await this.userModel
       .find({ _id: { $in: otherUserIds } })
       .select(
-        'name username avatar headline currentRole course skills education gamification account_Status createdAt',
+        'name username avatar headline currentRole professionalIdentity course skills education gamification account_Status createdAt',
       )
       .exec();
 
@@ -1043,7 +1071,7 @@ export class NetworkService {
     const userDocs = await this.userModel
       .find({ _id: { $in: requesterIds } })
       .select(
-        'name username avatar headline currentRole course skills education gamification account_Status createdAt',
+        'name username avatar headline currentRole professionalIdentity course skills education gamification account_Status createdAt',
       )
       .exec();
 
@@ -1095,7 +1123,7 @@ export class NetworkService {
     const userDocs = await this.userModel
       .find({ _id: { $in: recipientIds } })
       .select(
-        'name username avatar headline currentRole course skills education gamification account_Status createdAt',
+        'name username avatar headline currentRole professionalIdentity course skills education gamification account_Status createdAt',
       )
       .exec();
 
@@ -1341,6 +1369,16 @@ export class NetworkService {
         avatarUrl,
         headline: u.headline || u.currentRole || '',
         currentRole: u.currentRole || '',
+        professionalIdentity: u.professionalIdentity || (u.currentRole ? {
+          departmentId: null,
+          departmentName: null,
+          titleId: null,
+          titleName: u.currentRole,
+          isCustomTitle: false,
+          isLegacyTitle: true,
+          catalogueVersion: null,
+          updatedAt: null,
+        } : null),
         role: u.role || 'student',
         isFollowing,
         isFollowedBy,
@@ -1555,7 +1593,7 @@ export class NetworkService {
       this.userModel
         .find(userFilter)
         .select(
-          'name username avatar headline currentRole role email account_Status',
+          'name username avatar headline currentRole professionalIdentity role email account_Status',
         )
         .skip(skip)
         .limit(limit)
@@ -1661,7 +1699,7 @@ export class NetworkService {
       this.userModel
         .find(userFilter)
         .select(
-          'name username avatar headline currentRole role email account_Status',
+          'name username avatar headline currentRole professionalIdentity role email account_Status',
         )
         .skip(skip)
         .limit(limit)
@@ -1761,7 +1799,7 @@ export class NetworkService {
       this.userModel
         .find(userFilter)
         .select(
-          'name username avatar headline currentRole role email account_Status',
+          'name username avatar headline currentRole professionalIdentity role email account_Status',
         )
         .skip(skip)
         .limit(limit)

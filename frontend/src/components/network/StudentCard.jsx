@@ -7,6 +7,7 @@ import RelationshipAction from "./RelationshipAction";
 import EcosystemRoleBadge from "./EcosystemRoleBadge";
 import AvailabilityBadge from "./AvailabilityBadge";
 import { normalizeUserRole, getCanonicalProfileUrl, getProfileIdentifier } from "../../utils/roleNavigation";
+import { resolveDisplayIdentity } from "../../utils/professionalIdentity";
 import ProfileAvatar from "../profile/ProfileAvatar";
 
 /**
@@ -104,6 +105,26 @@ export default function StudentCard({ student, onPreview }) {
             </div>
           </div>
         </div>
+
+        {/* Structured Professional Identity / Current Role */}
+        {(() => {
+          const displayIdentity = resolveDisplayIdentity(student);
+          if (!displayIdentity.title && !displayIdentity.department) return null;
+          return (
+            <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+              {displayIdentity.title && (
+                <span className="text-xs font-semibold text-white/90 truncate max-w-[200px]" title={displayIdentity.title}>
+                  {displayIdentity.title}
+                </span>
+              )}
+              {displayIdentity.department && (
+                <span className="text-[10px] font-medium text-brand-mint bg-brand-mint/10 border border-brand-mint/20 px-1.5 py-0.2 rounded truncate max-w-[150px]" title={`Department: ${displayIdentity.department}`}>
+                  {displayIdentity.department}
+                </span>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Educational Headline */}
         {student.headline && (

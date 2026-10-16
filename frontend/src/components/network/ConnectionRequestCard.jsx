@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { getUploadUrl } from "../../utils/courseUi";
 import { getCanonicalProfileUrl, normalizeUserRole } from "../../utils/roleNavigation";
+import { resolveDisplayIdentity } from "../../utils/professionalIdentity";
 import EcosystemRoleBadge from "./EcosystemRoleBadge";
 
 function formatRelativeTime(dateStr) {
@@ -89,6 +90,7 @@ export default function ConnectionRequestCard({
   const avatarSrc = member?.avatarUrl || member?.avatar ? getUploadUrl(member.avatarUrl || member.avatar) : null;
   const initials = getInitials(member?.name);
   const canonicalUrl = getCanonicalProfileUrl(member);
+  const displayIdentity = resolveDisplayIdentity(member);
 
   return (
     <motion.article
@@ -180,9 +182,18 @@ export default function ConnectionRequestCard({
 
             <div className="mt-1 flex items-center gap-1.5 flex-wrap">
               <EcosystemRoleBadge role={normalizeUserRole(member)} size="xs" />
-              {member.currentRole && (
-                <span className="text-[11px] text-text-muted truncate">
-                  • {member.currentRole}
+              {(displayIdentity.title || member.currentRole) && (
+                <span className="text-[11px] text-text-muted truncate max-w-[150px]" title={displayIdentity.title || member.currentRole}>
+                  • {displayIdentity.title || member.currentRole}
+                </span>
+              )}
+              {displayIdentity.department && (
+                <span
+                  className="text-[10px] font-medium text-brand-mint bg-brand-mint/10 border border-brand-mint/20 px-1.5 py-0.2 rounded truncate max-w-[140px]"
+                  title={`Department: ${displayIdentity.department}`}
+                  data-testid="request-card-department"
+                >
+                  {displayIdentity.department}
                 </span>
               )}
             </div>

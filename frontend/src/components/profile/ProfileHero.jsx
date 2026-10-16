@@ -27,6 +27,7 @@ import AvailabilityBadge from "../network/AvailabilityBadge";
 import ProfileNetworkStats from "../network/ProfileNetworkStats";
 import RelationshipAction from "../network/RelationshipAction";
 import ProfileAvatar from "./ProfileAvatar";
+import { resolveDisplayIdentity } from "../../utils/professionalIdentity";
 
 /**
  * Animated XP Counter for smooth point transitions.
@@ -61,6 +62,8 @@ export default function ProfileHero({
 
   const gamification = profile.gamification || {};
   const bannerUrl = getUploadUrl(profile.backgroundImage);
+  const displayIdentity = resolveDisplayIdentity(profile);
+  const displayTitle = displayIdentity.title || profile.currentRole;
 
   const initials = profile.name
     ? profile.name
@@ -276,9 +279,20 @@ export default function ProfileHero({
               {(profile.currentRole || profile.location || profile.industry) && (
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1.5 text-xs text-text-muted pt-1">
                   {profile.currentRole && (
-                    <span className="inline-flex items-center gap-1.5 text-white/80">
-                      <Briefcase className="w-3.5 h-3.5 text-text-faint shrink-0" />
-                      <span>{profile.currentRole}</span>
+                    <span className="inline-flex items-center gap-1.5 text-white/80 flex-wrap">
+                      <Briefcase className="w-3.5 h-3.5 text-text-faint shrink-0" aria-hidden="true" />
+                      <span className="font-semibold text-white/95 break-words max-w-xs sm:max-w-md" title={displayTitle}>
+                        {displayTitle}
+                      </span>
+                      {displayIdentity.department && (
+                        <span
+                          className="inline-flex items-center rounded-md border border-brand-mint/25 bg-brand-mint/10 px-2 py-0.5 text-[11px] font-semibold text-brand-mint shadow-sm"
+                          title={`Department: ${displayIdentity.department}`}
+                          data-testid="profile-department-badge"
+                        >
+                          {displayIdentity.department}
+                        </span>
+                      )}
                     </span>
                   )}
                   {profile.location && (

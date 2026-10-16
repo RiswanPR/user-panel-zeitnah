@@ -57,6 +57,10 @@ export class QueryPeopleDto {
   company?: string;
 
   @IsOptional()
+  @IsString()
+  departmentId?: string;
+
+  @IsOptional()
   page?: number;
 
   @IsOptional()

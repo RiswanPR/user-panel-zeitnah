@@ -62,6 +62,7 @@ const AboutPage = lazyWithRetry(() => import("./pages/about/AboutPage"));
 const CommunityHome = lazyWithRetry(() => import("./pages/community/CommunityHome"));
 const SavedPostsPage = lazyWithRetry(() => import("./pages/community/SavedPostsPage"));
 const ReelsPage = lazyWithRetry(() => import("./pages/community/ReelsPage"));
+const PrivacyPolicyPage = lazyWithRetry(() => import("./pages/privacy/PrivacyPolicyPage"));
 
 import ProtectedRoute from "./components/common/ProtectedRoute/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";
@@ -172,6 +173,18 @@ function App() {
                       <AboutPage />
                     </Suspense>
                   }
+                />
+                <Route
+                  path="/privacy-policy"
+                  element={
+                    <Suspense fallback={<PageLoader />}>
+                      <PrivacyPolicyPage />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/privacy"
+                  element={<Navigate to="/privacy-policy" replace />}
                 />
               </Route>
 

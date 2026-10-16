@@ -194,6 +194,7 @@ export const networkService = {
     level = "",
     institution = "",
     interest = "",
+    departmentId = "",
     sort = "recommended",
     page = 1,
     limit = 12,
@@ -206,6 +207,7 @@ export const networkService = {
           level: level || undefined,
           institution: institution || undefined,
           interest: interest || undefined,
+          departmentId: departmentId || undefined,
           sort: sort || undefined,
           page,
           limit,
@@ -222,7 +224,14 @@ export const networkService = {
             s.name.toLowerCase().includes(query) ||
             s.username.toLowerCase().includes(query) ||
             s.course?.toLowerCase().includes(query) ||
+            s.currentRole?.toLowerCase().includes(query) ||
+            s.professionalIdentity?.titleName?.toLowerCase().includes(query) ||
             s.interests?.some((i) => i.toLowerCase().includes(query)),
+        );
+      }
+      if (departmentId && departmentId.trim() && departmentId.toLowerCase() !== "all") {
+        filtered = filtered.filter(
+          (s) => s.professionalIdentity?.departmentId === departmentId.trim(),
         );
       }
       if (course && course.trim() && course.toLowerCase() !== "all") {

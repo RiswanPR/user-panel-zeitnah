@@ -145,6 +145,14 @@ export default function Footer({ className = "" }) {
                   About & Mission
                 </Link>
               </li>
+              <li>
+                <Link
+                  to="/privacy-policy"
+                  className="text-text-muted hover:text-white transition-colors"
+                >
+                  Privacy Policy
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -184,6 +192,10 @@ export default function Footer({ className = "" }) {
             <span className="text-white/20">•</span>
             <Link to="/about" className="hover:text-white transition-colors">
               Brand Positioning
+            </Link>
+            <span className="text-white/20">•</span>
+            <Link to="/privacy-policy" className="hover:text-white transition-colors">
+              Privacy Policy
             </Link>
           </div>
         </div>

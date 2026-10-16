@@ -99,6 +99,16 @@ export interface NetworkUserItem {
   avatarUrl?: string;
   headline?: string;
   currentRole?: string;
+  professionalIdentity?: {
+    departmentId: string | null;
+    departmentName: string | null;
+    titleId: string | null;
+    titleName: string | null;
+    isCustomTitle?: boolean;
+    isLegacyTitle?: boolean;
+    catalogueVersion?: number | null;
+    updatedAt?: Date | string | null;
+  } | null;
   role?: string;
   isFollowing?: boolean;
   isFollowedBy?: boolean;

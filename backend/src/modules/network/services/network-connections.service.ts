@@ -20,6 +20,7 @@ import { QueryPeopleDto } from '../dto/network.dto';
 import { escapeRegex } from '../../../common/utils/regex.util';
 import { SignedUrlService } from '../../../common/aws/signed-url.service';
 import { ModerationService } from '../../moderation/moderation.service';
+import { isValidDepartmentId } from '../../profile/constants/professional-catalogue';
 
 @Injectable()
 export class NetworkConnectionsService {
@@ -119,6 +120,17 @@ export class NetworkConnectionsService {
       } else {
         filter.$or = [{ primaryRole: upperRole }, { role: lowerRole }];
       }
+    }
+
+    // Department filter (Phase 5: Structured Professional Identity)
+    if (query.departmentId && query.departmentId !== 'all') {
+      const cleanDeptId = query.departmentId.trim();
+      if (!isValidDepartmentId(cleanDeptId)) {
+        throw new BadRequestException(
+          `Invalid or inactive department ID: '${cleanDeptId}'`,
+        );
+      }
+      filter['professionalIdentity.departmentId'] = cleanDeptId;
     }
 
     // Discipline filter
@@ -226,6 +238,7 @@ export class NetworkConnectionsService {
         { username: regex },
         { headline: regex },
         { currentRole: regex },
+        { 'professionalIdentity.titleName': regex },
         { primaryDiscipline: regex },
         { specializations: regex },
         { infrastructureSectors: regex },
@@ -257,6 +270,7 @@ export class NetworkConnectionsService {
         profileImage: 1,
         headline: 1,
         currentRole: 1,
+        professionalIdentity: 1,
         primaryDiscipline: 1,
         specializations: 1,
         infrastructureSectors: 1,
@@ -529,6 +543,17 @@ export class NetworkConnectionsService {
           avatar: avatarUrl,
           avatarUrl,
           headline,
+          currentRole: u.currentRole || '',
+          professionalIdentity: u.professionalIdentity || (u.currentRole ? {
+            departmentId: null,
+            departmentName: null,
+            titleId: null,
+            titleName: u.currentRole,
+            isCustomTitle: false,
+            isLegacyTitle: true,
+            catalogueVersion: null,
+            updatedAt: null,
+          } : null),
           course: primaryCourse,
           skills: combinedSkills,
           interests: combinedSkills,
@@ -607,6 +632,17 @@ export class NetworkConnectionsService {
       avatar,
       avatarUrl: avatar,
       role: raw.role || 'student',
+      currentRole: raw.currentRole || '',
+      professionalIdentity: raw.professionalIdentity || (raw.currentRole ? {
+        departmentId: null,
+        departmentName: null,
+        titleId: null,
+        titleName: raw.currentRole,
+        isCustomTitle: false,
+        isLegacyTitle: true,
+        catalogueVersion: null,
+        updatedAt: null,
+      } : null),
       headline,
       course: primaryCourse,
       skills: Array.isArray(raw.skills) ? raw.skills : [],
@@ -632,7 +668,7 @@ export class NetworkConnectionsService {
     };
 
     const userFields =
-      'name username email avatar profileImage role headline course skills account_Status verification';
+      'name username email avatar profileImage role headline currentRole professionalIdentity course skills account_Status verification';
 
     const total = await this.connectionModel.countDocuments(filter);
     const connections = await this.connectionModel
@@ -680,7 +716,7 @@ export class NetworkConnectionsService {
   async getPendingRequests(userId: string) {
     const userObjId = this.toObjectId(userId);
     const userFields =
-      'name username email avatar profileImage role headline course skills account_Status verification';
+      'name username email avatar profileImage role headline currentRole professionalIdentity course skills account_Status verification';
 
     const [incomingDocs, outgoingDocs] = await Promise.all([
       this.connectionModel

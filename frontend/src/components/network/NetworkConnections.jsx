@@ -24,6 +24,7 @@ import SendMessageRequestModal from "./SendMessageRequestModal";
 import StudentProfilePreviewModal from "./StudentProfilePreviewModal";
 import NetworkSearch from "./NetworkSearch";
 import { getCanonicalProfileUrl } from "../../utils/roleNavigation";
+import { resolveDisplayIdentity } from "../../utils/professionalIdentity";
 
 /**
  * Premium skeleton matching InfrastructurePeopleCard layout
@@ -178,6 +179,7 @@ export default function NetworkConnections({
 
   const [infraFilters, setInfraFilters] = useState({
     role: "all",
+    departmentId: "",
     discipline: "",
     specialization: "",
     sector: "",
@@ -480,6 +482,7 @@ export default function NetworkConnections({
             onReset={() => {
               setInfraFilters({
                 role: "all",
+                departmentId: "",
                 discipline: "",
                 specialization: "",
                 sector: "",
@@ -679,7 +682,8 @@ export default function NetworkConnections({
               {(connectionsQuery.data?.data || []).map((conn) => {
                 const connId = conn.id || conn._id;
                 const profileLink = getCanonicalProfileUrl(conn);
-                const role = conn.currentRole || conn.headline || "Infrastructure Professional";
+                const connIdentity = resolveDisplayIdentity(conn);
+                const role = connIdentity.title || conn.currentRole || conn.headline || "Infrastructure Professional";
                 const org = conn.organization || conn.company || conn.institution || "Zeitnah";
                 const location =
                   conn.location ||
@@ -759,7 +763,12 @@ export default function NetworkConnections({
 
                         {/* Role & Org */}
                         <div className="pt-1.5 text-xs text-text-secondary leading-snug">
-                          <p className="font-medium text-white/90 truncate">{role}</p>
+                          <p className="font-medium text-white/90 truncate" title={role}>{role}</p>
+                          {connIdentity.department && (
+                            <p className="text-[10px] font-mono text-brand-mint truncate mt-0.5" title={`Department: ${connIdentity.department}`}>
+                              {connIdentity.department}
+                            </p>
+                          )}
                           {org && <p className="text-text-muted truncate mt-0.5">{org}</p>}
                         </div>
 
@@ -1070,9 +1079,23 @@ export default function NetworkConnections({
                         {user.username && (
                           <p className="text-xs font-mono text-text-muted truncate">@{user.username}</p>
                         )}
-                        {user.headline && (
-                          <p className="text-xs text-text-muted truncate mt-1">{user.headline}</p>
-                        )}
+                        {(() => {
+                          const userIdentity = resolveDisplayIdentity(user);
+                          if (userIdentity.title) {
+                            return (
+                              <p className="text-xs text-white/90 font-medium truncate mt-1" title={userIdentity.title}>
+                                {userIdentity.title}
+                                {userIdentity.department && (
+                                  <span className="text-[10px] text-brand-mint font-mono ml-1.5">• {userIdentity.department}</span>
+                                )}
+                              </p>
+                            );
+                          }
+                          if (user.headline) {
+                            return <p className="text-xs text-text-muted truncate mt-1">{user.headline}</p>;
+                          }
+                          return null;
+                        })()}
                       </div>
                     </div>
 
@@ -1217,9 +1240,23 @@ export default function NetworkConnections({
                         {user.username && (
                           <p className="text-xs font-mono text-text-muted truncate">@{user.username}</p>
                         )}
-                        {user.headline && (
-                          <p className="text-xs text-text-muted truncate mt-1">{user.headline}</p>
-                        )}
+                        {(() => {
+                          const userIdentity = resolveDisplayIdentity(user);
+                          if (userIdentity.title) {
+                            return (
+                              <p className="text-xs text-white/90 font-medium truncate mt-1" title={userIdentity.title}>
+                                {userIdentity.title}
+                                {userIdentity.department && (
+                                  <span className="text-[10px] text-brand-mint font-mono ml-1.5">• {userIdentity.department}</span>
+                                )}
+                              </p>
+                            );
+                          }
+                          if (user.headline) {
+                            return <p className="text-xs text-text-muted truncate mt-1">{user.headline}</p>;
+                          }
+                          return null;
+                        })()}
                       </div>
                     </div>
 

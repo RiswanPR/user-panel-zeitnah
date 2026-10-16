@@ -114,3 +114,72 @@ export function formatIdentityPayload(identity = {}, legacyCurrentRole = "") {
   const safeLegacy = String(legacyCurrentRole || "").trim();
   return safeLegacy ? { currentRole: safeLegacy } : {};
 }
+
+/**
+ * Resolves the displayable professional identity (title and department)
+ * for public profiles, network cards, and directory views.
+ *
+ * Strict Rules (Phase 4):
+ * 1. Valid structured identity: returns title and department name.
+ * 2. Legacy profiles: returns title, with department strictly null.
+ *    (Does NOT invent, infer, or placeholder a department).
+ * 3. Incomplete identity data: handles gracefully without throwing.
+ * 4. Headline independence: does NOT merge title with headline.
+ * 5. Deduplication: returns a single authoritative title string.
+ *
+ * @param {Object} [entity] - User, profile, person, or connection object
+ * @returns {{ title: string | null, department: string | null, isStructured: boolean, isLegacy: boolean }}
+ */
+export function resolveDisplayIdentity(entity) {
+  if (!entity || typeof entity !== "object") {
+    return { title: null, department: null, isStructured: false, isLegacy: false };
+  }
+
+  const idObj = entity.professionalIdentity;
+  let title = null;
+  let department = null;
+
+  if (idObj && typeof idObj === "object") {
+    const rawTitle = idObj.titleName || idObj.title || idObj.customTitle;
+    if (typeof rawTitle === "string" && rawTitle.trim()) {
+      title = rawTitle.trim();
+    }
+
+    const rawDept = idObj.departmentName || idObj.department;
+    if (typeof rawDept === "string" && rawDept.trim()) {
+      department = rawDept.trim();
+    }
+  }
+
+  // Fallback to top-level currentRole if title was not populated from professionalIdentity
+  if (!title && typeof entity.currentRole === "string" && entity.currentRole.trim()) {
+    title = entity.currentRole.trim();
+  }
+
+  const isStructured = Boolean(title && department);
+  const isLegacy = Boolean(title && !department);
+
+  return {
+    title,
+    department: department || null,
+    isStructured,
+    isLegacy,
+  };
+}
+
+/**
+ * Formats a fallback-safe compact single-line role description for cards.
+ * E.g., "Senior Structural Engineer • Structural Engineering" or "Senior Structural Engineer"
+ *
+ * @param {Object} [entity]
+ * @param {string} [fallback]
+ * @returns {string}
+ */
+export function formatCompactIdentity(entity, fallback = "Infrastructure Professional") {
+  const { title, department } = resolveDisplayIdentity(entity);
+  if (title && department) {
+    return `${title} • ${department}`;
+  }
+  return title || fallback;
+}
+

@@ -17,6 +17,7 @@ import { getUploadUrl } from "../../utils/courseUi";
 import RelationshipAction from "./RelationshipAction";
 import EcosystemRoleBadge from "./EcosystemRoleBadge";
 import { normalizeUserRole, getCanonicalProfileUrl, getProfileIdentifier } from "../../utils/roleNavigation";
+import { resolveDisplayIdentity } from "../../utils/professionalIdentity";
 
 function getInitials(name) {
   if (!name) return "Z";
@@ -188,6 +189,30 @@ export default function StudentProfilePreviewModal({
                 @{student.username}
               </Link>
             )}
+
+            {/* Structured Professional Identity / Current Role */}
+            {(() => {
+              const displayIdentity = resolveDisplayIdentity(student);
+              if (!displayIdentity.title && !displayIdentity.department) return null;
+              return (
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  {displayIdentity.title && (
+                    <span className="text-xs font-semibold text-white/90 truncate max-w-[220px]" title={displayIdentity.title}>
+                      {displayIdentity.title}
+                    </span>
+                  )}
+                  {displayIdentity.department && (
+                    <span
+                      className="text-[10px] font-medium text-brand-mint bg-brand-mint/10 border border-brand-mint/20 px-1.5 py-0.2 rounded truncate max-w-[180px]"
+                      title={`Department: ${displayIdentity.department}`}
+                      data-testid="preview-modal-department"
+                    >
+                      {displayIdentity.department}
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
 
             {student.headline && (
               <p className="text-xs font-medium text-text-secondary mt-1.5 leading-relaxed">

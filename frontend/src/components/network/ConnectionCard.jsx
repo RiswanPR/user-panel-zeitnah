@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import RelationshipAction from "./RelationshipAction";
 import { getCanonicalProfileUrl, getProfileIdentifier } from "../../utils/roleNavigation";
+import { resolveDisplayIdentity } from "../../utils/professionalIdentity";
 
 /**
  * Formats ISO date into a human readable connection date.
@@ -51,6 +52,7 @@ export default function ConnectionCard({
   const student = connection?.user || {};
   const connectionId = connection?.connectionId;
   const connectedAt = connection?.connectedAt;
+  const displayIdentity = resolveDisplayIdentity(student);
 
   const initials = student.name
     ? student.name
@@ -119,6 +121,29 @@ export default function ConnectionCard({
               >
                 @{student.username}
               </Link>
+            )}
+
+            {/* Structured Professional Identity / Current Role */}
+            {(displayIdentity.title || displayIdentity.department) && (
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                {displayIdentity.title && (
+                  <span
+                    className="text-xs font-semibold text-white/90 truncate max-w-[200px]"
+                    title={displayIdentity.title}
+                  >
+                    {displayIdentity.title}
+                  </span>
+                )}
+                {displayIdentity.department && (
+                  <span
+                    className="text-[10px] font-medium text-brand-mint bg-brand-mint/10 border border-brand-mint/20 px-1.5 py-0.2 rounded truncate max-w-[160px]"
+                    title={`Department: ${displayIdentity.department}`}
+                    data-testid="connection-card-department"
+                  >
+                    {displayIdentity.department}
+                  </span>
+                )}
+              </div>
             )}
           </div>
         </div>

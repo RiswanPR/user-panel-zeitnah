@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Cookie, ShieldCheck, Check, Settings, X, ChevronRight, Lock } from "lucide-react";
 
@@ -88,7 +89,10 @@ export default function CookieConsentBanner() {
                     </span>
                   </div>
                   <p className="text-xs text-text-muted leading-relaxed">
-                    We use cookies to secure authentication, store your learning preferences, and analyze platform performance.
+                    We use cookies to secure authentication, store your learning preferences, and analyze platform performance. Learn more in our{" "}
+                    <Link to="/privacy-policy" className="text-brand-mint hover:underline font-medium">
+                      Privacy Policy
+                    </Link>.
                   </p>
 
                   <div className="pt-2 flex flex-wrap items-center gap-2">

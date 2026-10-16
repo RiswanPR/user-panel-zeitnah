@@ -14,6 +14,17 @@ export interface DiscoverableStudent {
   primaryRole?: string;
   capabilities?: string[];
   availability?: string;
+  currentRole?: string;
+  professionalIdentity?: {
+    departmentId: string | null;
+    departmentName: string | null;
+    titleId: string | null;
+    titleName: string | null;
+    isCustomTitle?: boolean;
+    isLegacyTitle?: boolean;
+    catalogueVersion?: number | null;
+    updatedAt?: Date | string | null;
+  } | null;
   relationshipState?:
     | 'none'
     | 'outgoing_pending'
@@ -43,4 +54,5 @@ export interface NetworkFiltersResponse {
   sectors?: string[];
   software?: string[];
   experienceRanges?: string[];
+  departments?: { id: string; name: string }[];
 }

@@ -12,7 +12,12 @@ import {
   MapPin,
   Sparkles,
   Check,
+  Building2,
+  Search,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { coreProfileService } from "../../services/coreProfileService";
+import { PROFILE_QUERY_KEYS } from "../../constants/profileQueryKeys";
 import {
   INFRASTRUCTURE_DISCIPLINES,
   INFRASTRUCTURE_SECTORS,
@@ -48,12 +53,14 @@ export default function InfrastructurePeopleFilters({
   availableFilters,
 }) {
   const shouldReduceMotion = useReducedMotion();
-  const [activeDropdown, setActiveDropdown] = useState(null); // 'discipline' | 'specialization' | 'sector' | 'software' | 'experience'
+  const [activeDropdown, setActiveDropdown] = useState(null); // 'department' | 'discipline' | 'specialization' | 'sector' | 'software' | 'experience'
+  const [departmentSearch, setDepartmentSearch] = useState("");
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const containerRef = useRef(null);
 
   const {
     role = "all",
+    departmentId = "",
     discipline = "",
     specialization = "",
     sector = "",
@@ -61,6 +68,30 @@ export default function InfrastructurePeopleFilters({
     experience = "",
     location = "",
   } = filters;
+
+  const {
+    data: catalogueData,
+    isLoading: isCatalogueLoading,
+    isError: isCatalogueError,
+  } = useQuery({
+    queryKey: PROFILE_QUERY_KEYS.CATALOGUE,
+    queryFn: coreProfileService.getProfessionalCatalogue,
+    staleTime: 1000 * 60 * 30,
+  });
+
+  const rawDepartments =
+    catalogueData?.departments || availableFilters?.departments || [];
+  const departments = rawDepartments.filter(
+    (dept) => !dept.status || dept.status === "active",
+  );
+
+  const selectedDepartment = departments.find(
+    (dept) => dept.id === departmentId,
+  );
+
+  const filteredDepartments = departments.filter((dept) =>
+    dept.name.toLowerCase().includes(departmentSearch.toLowerCase()),
+  );
 
   // Ref-based outside-click detection so adjacent dropdowns open directly on 1-click
   useEffect(() => {
@@ -91,6 +122,7 @@ export default function InfrastructurePeopleFilters({
   const handleClearAll = () => {
     const cleared = {
       role: "all",
+      departmentId: "",
       discipline: "",
       specialization: "",
       sector: "",
@@ -110,10 +142,12 @@ export default function InfrastructurePeopleFilters({
     }
     setIsMobileDrawerOpen(false);
     setActiveDropdown(null);
+    setDepartmentSearch("");
   };
 
   const activeCount = [
     role !== "all" && role,
+    departmentId && departmentId !== "all" && departmentId,
     discipline,
     specialization,
     sector,
@@ -194,6 +228,116 @@ export default function InfrastructurePeopleFilters({
 
       {/* ── Desktop Filter Dropdown Strip ── */}
       <div className="hidden lg:flex flex-wrap items-center gap-2">
+        {/* 0. Department Dropdown */}
+        <div className="relative">
+          <button
+            type="button"
+            id="department-filter-btn"
+            aria-haspopup="listbox"
+            aria-expanded={activeDropdown === "department"}
+            aria-controls="department-filter-menu"
+            onClick={() => {
+              setActiveDropdown(activeDropdown === "department" ? null : "department");
+              setDepartmentSearch("");
+            }}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
+              departmentId
+                ? "border-brand-mint/50 bg-brand-mint/10 text-white font-bold"
+                : "border-white/[0.08] bg-[#0A0F14] text-text-muted hover:text-white hover:border-white/[0.14]"
+            }`}
+          >
+            <Building2 className="w-3.5 h-3.5 text-brand-mint/80 shrink-0" />
+            <span className="truncate max-w-[140px]">
+              {selectedDepartment?.name || "Department"}
+            </span>
+            <ChevronDown
+              className={`w-3 h-3 opacity-60 transition-transform duration-200 ${
+                activeDropdown === "department" ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+
+          {activeDropdown === "department" && (
+            <div
+              id="department-filter-menu"
+              role="listbox"
+              aria-labelledby="department-filter-btn"
+              className="absolute left-0 top-full mt-1.5 w-72 rounded-2xl border border-white/[0.1] bg-[#0C121D] p-2 shadow-2xl backdrop-blur-2xl z-40 max-h-80 flex flex-col"
+            >
+              {/* Searchable input */}
+              <div className="relative mb-1.5 px-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted" />
+                <input
+                  type="text"
+                  placeholder="Search departments..."
+                  value={departmentSearch}
+                  onChange={(e) => setDepartmentSearch(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-text-muted focus:outline-none focus:border-brand-mint/40"
+                  autoFocus
+                />
+              </div>
+
+              <div className="overflow-y-auto no-scrollbar max-h-60 space-y-0.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleUpdate("departmentId", "");
+                    setDepartmentSearch("");
+                  }}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+                    !departmentId
+                      ? "bg-white/[0.06] text-white font-bold"
+                      : "text-text-muted hover:bg-white/[0.06] hover:text-white"
+                  }`}
+                >
+                  <span>All Departments</span>
+                  {!departmentId && <Check className="w-3.5 h-3.5 text-brand-mint" />}
+                </button>
+
+                {isCatalogueLoading && (
+                  <div className="p-3 text-xs text-center text-text-muted">
+                    Loading departments...
+                  </div>
+                )}
+
+                {isCatalogueError && (
+                  <div className="p-3 text-xs text-center text-rose-400">
+                    Failed to load catalogue
+                  </div>
+                )}
+
+                {!isCatalogueLoading && filteredDepartments.length === 0 && (
+                  <div className="p-3 text-xs text-center text-text-muted">
+                    No departments match "{departmentSearch}"
+                  </div>
+                )}
+
+                {filteredDepartments.map((dept) => (
+                  <button
+                    key={dept.id}
+                    type="button"
+                    onClick={() => {
+                      handleUpdate("departmentId", dept.id);
+                      setDepartmentSearch("");
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer text-left ${
+                      departmentId === dept.id
+                        ? "bg-brand-mint/15 text-brand-mint font-bold"
+                        : "text-white/80 hover:bg-white/[0.06] hover:text-white"
+                    }`}
+                  >
+                    <span className="truncate pr-2">{dept.name}</span>
+                    {departmentId === dept.id && (
+                      <Check className="w-3.5 h-3.5 text-brand-mint shrink-0" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* 1. Discipline Dropdown */}
         <div className="relative">
           <button
@@ -475,6 +619,18 @@ export default function InfrastructurePeopleFilters({
       {activeCount > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 pt-1">
           <span className="text-[11px] font-mono text-text-muted mr-1">Active filters:</span>
+          {departmentId && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-brand-mint/10 text-brand-mint border border-brand-mint/20">
+              <span>Dept: {selectedDepartment?.name || departmentId}</span>
+              <button
+                type="button"
+                onClick={() => handleUpdate("departmentId", "")}
+                aria-label="Remove department filter"
+              >
+                <X className="w-3 h-3 hover:text-white" />
+              </button>
+            </span>
+          )}
           {discipline && (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-brand-mint/10 text-brand-mint border border-brand-mint/20">
               <span>{discipline}</span>
@@ -568,6 +724,25 @@ export default function InfrastructurePeopleFilters({
                     {DISCOVERY_ROLE_FILTERS.map((r) => (
                       <option key={r.value} value={r.value} className="bg-[#121B2B]">
                         {r.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Professional Department */}
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-text-muted mb-1.5">
+                    Department
+                  </label>
+                  <select
+                    value={departmentId}
+                    onChange={(e) => handleUpdate("departmentId", e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white focus:outline-none focus:border-brand-mint/40"
+                  >
+                    <option value="" className="bg-[#121B2B]">All Departments</option>
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.id} className="bg-[#121B2B]">
+                        {d.name}
                       </option>
                     ))}
                   </select>
