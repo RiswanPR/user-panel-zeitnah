@@ -102,13 +102,13 @@ export default function JobDetailPage() {
         <div className="w-16 h-16 mx-auto rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
           <AlertCircle className="w-8 h-8" />
         </div>
-        <h2 className="text-xl font-bold text-white">Job Not Found</h2>
+        <h2 className="text-xl font-bold text-text-primary">Job Not Found</h2>
         <p className="text-xs text-text-muted">
           This infrastructure job may have expired, been closed, or does not exist.
         </p>
         <Link
           to="/jobs"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-mint text-black font-bold text-xs"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Jobs</span>
@@ -127,7 +127,7 @@ export default function JobDetailPage() {
       <div>
         <Link
           to="/jobs"
-          className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-text-primary transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Jobs Board</span>
@@ -135,11 +135,11 @@ export default function JobDetailPage() {
       </div>
 
       {/* ── Main Job Header ── */}
-      <div className="p-8 rounded-3xl bg-[#111116] border border-white/[0.08] shadow-2xl relative overflow-hidden">
+      <div className="p-8 rounded-3xl bg-surface-card border border-border shadow-2xl relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 relative z-10">
           <div className="flex items-start gap-5">
             {/* Logo */}
-            <div className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center overflow-hidden shrink-0 shadow-lg">
+            <div className="w-16 h-16 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center overflow-hidden shrink-0 shadow-lg">
               {org.logo ? (
                 <img src={org.logo} alt={org.name} className="w-full h-full object-cover" />
               ) : (
@@ -148,7 +148,7 @@ export default function JobDetailPage() {
             </div>
 
             <div className="space-y-1.5">
-              <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-white tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-text-primary tracking-tight">
                 {job.title}
               </h1>
 
@@ -182,11 +182,11 @@ export default function JobDetailPage() {
                   </span>
                 )}
                 <span>•</span>
-                <span className="px-2 py-0.5 rounded-md bg-white/[0.04] text-white/80 font-semibold">
+                <span className="px-2 py-0.5 rounded-md bg-surface-elevated border border-border text-text-secondary font-semibold">
                   {job.workMode || 'On-site'}
                 </span>
                 <span>•</span>
-                <span className="px-2 py-0.5 rounded-md bg-white/[0.04] text-white/80 font-semibold">
+                <span className="px-2 py-0.5 rounded-md bg-surface-elevated border border-border text-text-secondary font-semibold">
                   {job.jobType || 'Full-time'}
                 </span>
                 <span>•</span>
@@ -201,7 +201,7 @@ export default function JobDetailPage() {
           <div className="flex items-center gap-3 shrink-0 self-stretch sm:self-auto justify-end">
             <button
               onClick={() => toggleSaveMutation.mutate()}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-semibold text-white border border-white/[0.08] transition-all cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-surface-elevated hover:bg-surface-elevated/80 text-xs font-semibold text-text-primary border border-border transition-all cursor-pointer"
             >
               {job.isSaved ? (
                 <>
@@ -210,7 +210,7 @@ export default function JobDetailPage() {
                 </>
               ) : (
                 <>
-                  <Bookmark className="w-4 h-4 text-white/60" />
+                  <Bookmark className="w-4 h-4 text-text-muted" />
                   <span>Save Job</span>
                 </>
               )}
@@ -224,7 +224,7 @@ export default function JobDetailPage() {
             ) : (
               <button
                 onClick={() => setIsApplyModalOpen(true)}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-gradient-to-r from-brand-mint to-cyan-400 text-black font-extrabold text-xs shadow-lg shadow-brand-mint/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-gradient-to-r from-brand-mint to-cyan-400 text-brand-navy font-extrabold text-xs shadow-lg shadow-brand-mint/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
               >
                 <Send className="w-4 h-4" />
                 <span>Apply Now</span>
@@ -234,14 +234,14 @@ export default function JobDetailPage() {
         </div>
 
         {/* Quick Highlights Bar */}
-        <div className="mt-8 pt-6 border-t border-white/[0.06] grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+        <div className="mt-8 pt-6 border-t border-border grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
           <div>
             <span className="text-[11px] text-text-muted block">Discipline</span>
-            <span className="font-semibold text-white mt-0.5 block">{job.discipline}</span>
+            <span className="font-semibold text-text-primary mt-0.5 block">{job.discipline}</span>
           </div>
           <div>
             <span className="text-[11px] text-text-muted block">Infrastructure Sector</span>
-            <span className="font-semibold text-white mt-0.5 block">
+            <span className="font-semibold text-text-primary mt-0.5 block">
               {job.infrastructureSector}
             </span>
           </div>
@@ -255,7 +255,7 @@ export default function JobDetailPage() {
           </div>
           <div>
             <span className="text-[11px] text-text-muted block">Application Deadline</span>
-            <span className="font-semibold text-white mt-0.5 block">
+            <span className="font-semibold text-text-primary mt-0.5 block">
               {job.applicationDeadline
                 ? new Date(job.applicationDeadline).toLocaleDateString()
                 : 'Open until filled'}
@@ -270,11 +270,11 @@ export default function JobDetailPage() {
         <div className="lg:col-span-2 space-y-8">
           {/* About the Role */}
           <div className="space-y-3">
-            <h3 className="text-base font-bold font-heading text-white flex items-center gap-2">
+            <h3 className="text-base font-bold font-heading text-text-primary flex items-center gap-2">
               <Briefcase className="w-4 h-4 text-brand-mint" />
               <span>About the Role</span>
             </h3>
-            <p className="text-sm text-white/80 leading-relaxed whitespace-pre-line">
+            <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">
               {job.description || job.responsibilities}
             </p>
           </div>
@@ -282,11 +282,11 @@ export default function JobDetailPage() {
           {/* Key Responsibilities */}
           {job.responsibilities && (
             <div className="space-y-3">
-              <h3 className="text-base font-bold font-heading text-white flex items-center gap-2">
+              <h3 className="text-base font-bold font-heading text-text-primary flex items-center gap-2">
                 <Layers className="w-4 h-4 text-cyan-400" />
                 <span>Responsibilities</span>
               </h3>
-              <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] text-sm text-white/80 leading-relaxed whitespace-pre-line">
+              <div className="p-5 rounded-2xl bg-surface-elevated/30 border border-border text-sm text-text-secondary leading-relaxed whitespace-pre-line">
                 {job.responsibilities}
               </div>
             </div>
@@ -295,11 +295,11 @@ export default function JobDetailPage() {
           {/* Requirements */}
           {job.requirements && (
             <div className="space-y-3">
-              <h3 className="text-base font-bold font-heading text-white flex items-center gap-2">
+              <h3 className="text-base font-bold font-heading text-text-primary flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-brand-mint" />
                 <span>Requirements & Experience</span>
               </h3>
-              <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] text-sm text-white/80 leading-relaxed whitespace-pre-line">
+              <div className="p-5 rounded-2xl bg-surface-elevated/30 border border-border text-sm text-text-secondary leading-relaxed whitespace-pre-line">
                 {job.requirements}
               </div>
             </div>
@@ -307,11 +307,11 @@ export default function JobDetailPage() {
 
           {/* Software Requirements */}
           <div className="space-y-3">
-            <h3 className="text-base font-bold font-heading text-white flex items-center gap-2">
+            <h3 className="text-base font-bold font-heading text-text-primary flex items-center gap-2">
               <Cpu className="w-4 h-4 text-violet-400" />
               <span>Structured Software Requirements</span>
             </h3>
-            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-4">
+            <div className="p-5 rounded-2xl bg-surface-elevated/30 border border-border space-y-4">
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-cyan-400 block mb-2">
                   Required Software (Must-have)
@@ -327,7 +327,7 @@ export default function JobDetailPage() {
                       </span>
                     ))
                   ) : (
-                    <span className="text-xs text-white/40">General tools as required</span>
+                    <span className="text-xs text-text-muted">General tools as required</span>
                   )}
                 </div>
               </div>
@@ -354,11 +354,11 @@ export default function JobDetailPage() {
 
           {/* Skills Requirements */}
           <div className="space-y-3">
-            <h3 className="text-base font-bold font-heading text-white flex items-center gap-2">
+            <h3 className="text-base font-bold font-heading text-text-primary flex items-center gap-2">
               <Award className="w-4 h-4 text-brand-mint" />
               <span>Skills Taxonomy</span>
             </h3>
-            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-4">
+            <div className="p-5 rounded-2xl bg-surface-elevated/30 border border-border space-y-4">
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 block mb-2">
                   Required Skills
@@ -377,14 +377,14 @@ export default function JobDetailPage() {
 
               {job.preferredSkills?.length > 0 && (
                 <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-white/60 block mb-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted block mb-2">
                     Preferred Skills
                   </span>
                   <div className="flex flex-wrap gap-2">
                     {job.preferredSkills.map((sk) => (
                       <span
                         key={sk}
-                        className="px-3 py-1.5 rounded-xl bg-white/[0.04] text-white/80 border border-white/[0.06] text-xs font-medium"
+                        className="px-3 py-1.5 rounded-xl bg-surface-elevated text-text-secondary border border-border text-xs font-medium"
                       >
                         {sk}
                       </span>
@@ -397,17 +397,17 @@ export default function JobDetailPage() {
 
           {/* Education & Certifications */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
+            <div className="p-5 rounded-2xl bg-surface-elevated/30 border border-border space-y-2">
               <h4 className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-1.5">
                 <GraduationCap className="w-4 h-4 text-brand-mint" />
                 <span>Education</span>
               </h4>
-              <p className="text-sm font-semibold text-white">
+              <p className="text-sm font-semibold text-text-primary">
                 {job.requiredEducation || 'Degree / Diploma in Engineering or relevant field'}
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
+            <div className="p-5 rounded-2xl bg-surface-elevated/30 border border-border space-y-2">
               <h4 className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-1.5">
                 <Award className="w-4 h-4 text-brand-mint" />
                 <span>Certifications</span>
@@ -417,13 +417,13 @@ export default function JobDetailPage() {
                   job.requiredCertifications.map((c) => (
                     <span
                       key={c}
-                      className="px-2.5 py-1 rounded-lg bg-white/[0.05] text-xs font-medium text-white/90"
+                      className="px-2.5 py-1 rounded-lg bg-surface-elevated text-xs font-medium text-text-primary border border-border"
                     >
                       {c}
                     </span>
                   ))
                 ) : (
-                  <span className="text-xs text-white/40">None required</span>
+                  <span className="text-xs text-text-muted">None required</span>
                 )}
               </div>
             </div>
@@ -432,10 +432,10 @@ export default function JobDetailPage() {
           {/* Benefits */}
           {job.benefits && (
             <div className="space-y-3">
-              <h3 className="text-base font-bold font-heading text-white">
+              <h3 className="text-base font-bold font-heading text-text-primary">
                 Benefits & Perks
               </h3>
-              <p className="text-sm text-white/80 leading-relaxed whitespace-pre-line p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+              <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-line p-5 rounded-2xl bg-surface-elevated/30 border border-border">
                 {job.benefits}
               </p>
             </div>
@@ -445,13 +445,13 @@ export default function JobDetailPage() {
         {/* Company & Context Sidebar (Right 1 col) */}
         <div className="space-y-6">
           {/* About the Company */}
-          <div className="p-6 rounded-3xl bg-[#111116] border border-white/[0.08] space-y-4">
-            <h3 className="text-base font-bold font-heading text-white">
+          <div className="p-6 rounded-3xl bg-surface-card border border-border space-y-4">
+            <h3 className="text-base font-bold font-heading text-text-primary">
               About the Employer
             </h3>
 
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center overflow-hidden shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center overflow-hidden shrink-0">
                 {org.logo ? (
                   <img src={org.logo} alt={org.name} className="w-full h-full object-cover" />
                 ) : (
@@ -459,7 +459,7 @@ export default function JobDetailPage() {
                 )}
               </div>
               <div>
-                <h4 className="font-bold text-sm text-white">{org.name}</h4>
+                <h4 className="font-bold text-sm text-text-primary">{org.name}</h4>
                 <span className="text-xs text-text-muted">{org.industry}</span>
               </div>
             </div>
@@ -484,7 +484,7 @@ export default function JobDetailPage() {
               <div className="pt-2">
                 <Link
                   to={`/businesses/${org.slug}`}
-                  className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-semibold text-white transition-colors"
+                  className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 border border-border text-xs font-semibold text-text-primary transition-colors"
                 >
                   <span>View Company Profile</span>
                   <ExternalLink className="w-3 h-3" />
@@ -495,8 +495,8 @@ export default function JobDetailPage() {
 
           {/* Other Jobs from this Business */}
           {job.otherJobs && job.otherJobs.length > 0 && (
-            <div className="p-6 rounded-3xl bg-[#111116] border border-white/[0.08] space-y-4">
-              <h3 className="text-sm font-bold font-heading text-white uppercase tracking-wider">
+            <div className="p-6 rounded-3xl bg-surface-card border border-border space-y-4">
+              <h3 className="text-sm font-bold font-heading text-text-primary uppercase tracking-wider">
                 More Jobs from {org.name}
               </h3>
               <div className="space-y-3">
@@ -504,9 +504,9 @@ export default function JobDetailPage() {
                   <Link
                     key={oj._id}
                     to={`/jobs/${oj._id}`}
-                    className="block p-3.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.04] transition-all"
+                    className="block p-3.5 rounded-xl bg-surface-elevated/30 hover:bg-surface-elevated/80 border border-border transition-all"
                   >
-                    <h5 className="font-bold text-xs text-white line-clamp-1">{oj.title}</h5>
+                    <h5 className="font-bold text-xs text-text-primary line-clamp-1">{oj.title}</h5>
                     <p className="text-[11px] text-text-muted mt-1">
                       {oj.location} • {oj.workMode}
                     </p>
@@ -521,15 +521,15 @@ export default function JobDetailPage() {
       {/* ── Apply Now Modal ── */}
       {isApplyModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="relative w-full max-w-lg bg-[#14141c] border border-white/[0.1] rounded-3xl shadow-2xl p-6 sm:p-8 text-white space-y-5">
-            <div className="flex items-start justify-between pb-4 border-b border-white/[0.08]">
+          <div className="relative w-full max-w-lg bg-surface-card border border-border rounded-3xl shadow-2xl p-6 sm:p-8 text-text-primary space-y-5">
+            <div className="flex items-start justify-between pb-4 border-b border-border">
               <div>
-                <h3 className="text-lg font-bold font-heading text-white">Apply for {job.title}</h3>
+                <h3 className="text-lg font-bold font-heading text-text-primary">Apply for {job.title}</h3>
                 <p className="text-xs text-brand-mint font-semibold mt-0.5">{org.name}</p>
               </div>
               <button
                 onClick={() => setIsApplyModalOpen(false)}
-                className="p-1.5 rounded-xl text-white/40 hover:text-white hover:bg-white/[0.06]"
+                className="p-1.5 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-elevated"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -537,7 +537,7 @@ export default function JobDetailPage() {
 
             <div className="space-y-4 text-xs">
               <div>
-                <label className="block text-white/80 font-semibold mb-1.5">
+                <label className="block text-text-primary font-semibold mb-1.5">
                   Portfolio / Resume URL <span className="text-brand-mint">*</span>
                 </label>
                 <input
@@ -546,12 +546,12 @@ export default function JobDetailPage() {
                   value={resumeUrl}
                   onChange={(e) => setResumeUrl(e.target.value)}
                   placeholder="https://drive.google.com/... or your personal site"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-white/30 outline-none focus:border-brand-mint"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary placeholder-text-muted/50 outline-none focus:border-brand-mint"
                 />
               </div>
 
               <div>
-                <label className="block text-white/80 font-semibold mb-1.5">
+                <label className="block text-text-primary font-semibold mb-1.5">
                   Cover Note / Engineering Highlights
                 </label>
                 <textarea
@@ -559,26 +559,26 @@ export default function JobDetailPage() {
                   value={coverNote}
                   onChange={(e) => setCoverNote(e.target.value)}
                   placeholder="Briefly state your relevant infrastructure project experience and software expertise..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-white/30 outline-none focus:border-brand-mint resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary placeholder-text-muted/50 outline-none focus:border-brand-mint resize-none"
                 />
               </div>
 
-              <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-[11px] text-text-muted leading-relaxed">
+              <div className="p-3.5 rounded-xl bg-surface-elevated/40 border border-border text-[11px] text-text-muted leading-relaxed">
                 By submitting this application, your verified Zeitnah profile and project portfolio will be made available to the hiring team at {org.name}.
               </div>
             </div>
 
-            <div className="pt-4 border-t border-white/[0.08] flex items-center justify-end gap-3">
+            <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
               <button
                 onClick={() => setIsApplyModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-white/60 hover:text-white"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-text-muted hover:text-text-primary"
               >
                 Cancel
               </button>
               <button
                 onClick={() => applyMutation.mutate()}
                 disabled={applyMutation.isPending || !resumeUrl.trim()}
-                className="px-6 py-2.5 rounded-xl bg-brand-mint text-black font-bold text-xs shadow-lg shadow-brand-mint/20 hover:opacity-90 disabled:opacity-50 transition-all cursor-pointer"
+                className="px-6 py-2.5 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs shadow-lg shadow-brand-mint/20 hover:opacity-90 disabled:opacity-50 transition-all cursor-pointer"
               >
                 {applyMutation.isPending ? 'Submitting...' : 'Submit Application'}
               </button>
@@ -588,17 +588,17 @@ export default function JobDetailPage() {
       )}
 
       {/* ── Mobile Sticky Bottom Action Bar ── */}
-      <div className="sm:hidden fixed bottom-[calc(env(safe-area-inset-bottom,0px)+58px)] inset-x-0 z-30 p-3 bg-[#0B111E]/95 backdrop-blur-xl border-t border-white/[0.1] shadow-2xl flex items-center gap-3">
+      <div className="sm:hidden fixed bottom-[calc(env(safe-area-inset-bottom,0px)+58px)] inset-x-0 z-30 p-3 bg-surface-card/95 backdrop-blur-xl border-t border-border shadow-2xl flex items-center gap-3">
         <button
           type="button"
           onClick={() => toggleSaveMutation.mutate()}
           aria-label={job.isSaved ? "Saved" : "Save job"}
-          className="p-3 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white flex items-center justify-center min-w-[44px] min-h-[44px] touch-manipulation cursor-pointer"
+          className="p-3 rounded-xl bg-surface-elevated border border-border text-text-primary flex items-center justify-center min-w-[44px] min-h-[44px] touch-manipulation cursor-pointer"
         >
           {job.isSaved ? (
             <BookmarkCheck className="w-5 h-5 text-brand-mint" />
           ) : (
-            <Bookmark className="w-5 h-5 text-white/70" />
+            <Bookmark className="w-5 h-5 text-text-muted" />
           )}
         </button>
 

@@ -218,7 +218,7 @@ export default function CommentDrawer({ isOpen, post, onClose }) {
                 : { type: 'spring', damping: 30, stiffness: 350 }
             }
             className={`
-              relative z-10 w-full bg-[#0B111E]/95 backdrop-blur-2xl border-white/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.7)] flex flex-col overflow-hidden
+              relative z-10 w-full bg-surface-card/95 backdrop-blur-2xl border-border shadow-2xl flex flex-col overflow-hidden
               /* Mobile bottom sheet */
               max-h-[85vh] h-[82vh] rounded-t-3xl border-t
               /* Desktop right drawer >= 768px */
@@ -228,19 +228,19 @@ export default function CommentDrawer({ isOpen, post, onClose }) {
           >
             {/* Subtle Gradient Edge Highlights */}
             <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-brand-mint/30 to-transparent pointer-events-none md:hidden" />
-            <div className="absolute top-0 bottom-0 left-0 w-[2px] bg-gradient-to-b from-brand-mint/35 via-[#12314C]/40 to-transparent pointer-events-none hidden md:block" />
+            <div className="absolute top-0 bottom-0 left-0 w-[2px] bg-gradient-to-b from-brand-mint/35 via-border/40 to-transparent pointer-events-none hidden md:block" />
 
             {/* Mobile Drag Indicator */}
-            <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mt-2.5 mb-1 md:hidden shrink-0" />
+            <div className="w-10 h-1 bg-border rounded-full mx-auto mt-2.5 mb-1 md:hidden shrink-0" />
 
             {/* Header */}
-            <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-white/[0.06] shrink-0">
+            <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border shrink-0">
               <div className="flex items-center gap-2">
                 <MessageCircle className="w-4 h-4 text-brand-mint" />
-                <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">
+                <h3 className="text-sm sm:text-base font-bold text-text-primary tracking-tight">
                   Comments
                 </h3>
-                <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-text-muted text-xs font-semibold">
+                <span className="px-2 py-0.5 rounded-full bg-surface-elevated text-text-muted border border-border text-xs font-semibold">
                   {commentCount}
                 </span>
               </div>
@@ -248,7 +248,7 @@ export default function CommentDrawer({ isOpen, post, onClose }) {
               <button
                 type="button"
                 onClick={onClose}
-                className="min-w-[44px] min-h-[44px] rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-text-muted hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                className="min-w-[44px] min-h-[44px] rounded-full bg-surface-elevated hover:bg-surface-card text-text-muted hover:text-text-primary border border-border flex items-center justify-center transition-colors cursor-pointer"
                 aria-label="Close comments"
               >
                 <X className="w-5 h-5" />
@@ -257,9 +257,9 @@ export default function CommentDrawer({ isOpen, post, onClose }) {
 
             {/* Mini Context Banner (Post Excerpt) */}
             {post && (
-              <div className="px-4 sm:px-5 py-2.5 bg-white/[0.02] border-b border-white/[0.04] shrink-0">
+              <div className="px-4 sm:px-5 py-2.5 bg-surface-elevated/40 border-b border-border shrink-0">
                 <p className="text-[11px] text-text-muted truncate">
-                  Post by <span className="text-white font-medium">{postAuthorName}</span>: {post.content}
+                  Post by <span className="text-text-primary font-medium">{postAuthorName}</span>: {post.content}
                 </p>
               </div>
             )}

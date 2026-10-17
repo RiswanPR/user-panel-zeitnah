@@ -238,33 +238,33 @@ export default function ThreadPanel({
 
   return (
     <div
-      className={`flex flex-col h-full bg-[#0d0f15] border-l border-white/10 ${
+      className={`flex flex-col h-full bg-surface-card border-l border-border ${
         isMobile ? 'fixed inset-0 z-50 w-full' : 'w-96 flex-shrink-0'
       }`}
     >
       {/* ── Thread Header ── */}
-      <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/10 bg-[#12151e]/80 backdrop-blur-md pt-[max(0.875rem,env(safe-area-inset-top))]">
+      <div className="flex items-center justify-between px-4 py-3.5 border-b border-border bg-surface-card/95 backdrop-blur-md pt-[max(0.875rem,env(safe-area-inset-top))]">
         <div className="flex items-center gap-2.5">
           {isMobile && (
             <button
               onClick={onClose}
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center -ml-2 text-slate-400 hover:text-white rounded-lg transition-colors"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center -ml-2 text-text-muted hover:text-text-primary rounded-lg transition-colors"
               aria-label="Back to chat"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
           )}
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-brand-mint/10 border border-brand-mint/30 flex items-center justify-center text-brand-mint flex-shrink-0">
             <MessageSquare className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-1.5">
+            <h3 className="text-sm font-semibold text-text-primary flex items-center gap-1.5">
               <span>Discussion</span>
-              <span className="text-xs font-normal text-slate-400">
+              <span className="text-xs font-normal text-text-muted">
                 ({replies.length} {replies.length === 1 ? 'reply' : 'replies'})
               </span>
             </h3>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-[11px] text-text-muted">
               Focused thread timeline
             </p>
           </div>
@@ -274,7 +274,7 @@ export default function ThreadPanel({
           {onJumpToMessage && (
             <button
               onClick={() => onJumpToMessage(rootId)}
-              className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-white/5 rounded-lg transition-colors text-xs flex items-center gap-1"
+              className="p-1.5 text-text-muted hover:text-text-primary hover:bg-surface-elevated rounded-lg transition-colors text-xs flex items-center gap-1"
               title="Jump to original message in main chat"
             >
               <CornerDownRight className="w-4 h-4" />
@@ -283,7 +283,7 @@ export default function ThreadPanel({
           )}
           <button
             onClick={onClose}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-elevated rounded-lg transition-colors"
             aria-label="Close thread"
           >
             <X className="w-5 h-5" />
@@ -295,10 +295,10 @@ export default function ThreadPanel({
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {/* Root Message Card */}
         {currentRoot && (
-          <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 shadow-sm space-y-2.5">
+          <div className="p-3.5 rounded-xl bg-surface-elevated/40 border border-border shadow-sm space-y-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-slate-800 border border-white/10 overflow-hidden flex items-center justify-center text-slate-300 font-medium text-xs">
+                <div className="w-8 h-8 rounded-full bg-surface-elevated border border-border overflow-hidden flex items-center justify-center text-text-primary font-medium text-xs">
                   {currentRoot.senderId?.avatar ? (
                     <img
                       src={currentRoot.senderId.avatar}
@@ -306,34 +306,34 @@ export default function ThreadPanel({
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <User className="w-4 h-4 text-slate-400" />
+                    <User className="w-4 h-4 text-text-muted" />
                   )}
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-semibold text-slate-100">
+                    <span className="text-xs font-semibold text-text-primary">
                       {currentRoot.senderId?.name || 'Member'}
                     </span>
                     {currentRoot.senderId?.primaryRole && (
-                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-white/5 border border-white/10 text-slate-400 uppercase font-mono">
+                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-surface-elevated border border-border text-text-muted uppercase font-mono">
                         {currentRoot.senderId.primaryRole}
                       </span>
                     )}
                   </div>
                   {currentRoot.senderId?.username && (
-                    <span className="text-[10px] text-slate-400">
+                    <span className="text-[10px] text-text-muted">
                       @{currentRoot.senderId.username}
                     </span>
                   )}
                 </div>
               </div>
-              <span className="text-[10px] text-slate-400 font-mono">
+              <span className="text-[10px] text-text-muted font-mono">
                 {formatTime(currentRoot.createdAt)}
               </span>
             </div>
 
             {/* Root body */}
-            <div className="text-xs text-slate-200 leading-relaxed break-words whitespace-pre-wrap">
+            <div className="text-xs text-text-primary leading-relaxed break-words whitespace-pre-wrap">
               {renderBodyWithMentions(currentRoot.body)}
             </div>
 
@@ -346,11 +346,11 @@ export default function ThreadPanel({
                     href={att.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-2 rounded-lg bg-white/[0.03] border border-white/5 hover:border-white/15 transition-colors text-xs text-slate-300"
+                    className="flex items-center gap-2 p-2 rounded-lg bg-surface-elevated/60 border border-border hover:border-brand-mint/40 transition-colors text-xs text-text-primary"
                   >
-                    <FileText className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                    <FileText className="w-4 h-4 text-brand-mint flex-shrink-0" />
                     <span className="truncate flex-1">{att.name}</span>
-                    <Download className="w-3.5 h-3.5 text-slate-400" />
+                    <Download className="w-3.5 h-3.5 text-text-muted" />
                   </a>
                 ))}
               </div>
@@ -363,7 +363,7 @@ export default function ThreadPanel({
                   <button
                     key={rIdx}
                     onClick={() => handleToggleReaction(currentRoot._id || currentRoot.id, r.emoji)}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[11px] text-slate-300 hover:bg-white/10 transition-colors"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-elevated border border-border text-[11px] text-text-secondary hover:bg-surface-elevated/80 transition-colors"
                   >
                     <span>{r.emoji}</span>
                     <span>{r.count || 1}</span>
@@ -376,17 +376,17 @@ export default function ThreadPanel({
 
         {/* Divider */}
         <div className="flex items-center gap-3 pt-1 pb-1">
-          <div className="h-px flex-1 bg-white/10" />
-          <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-[10px] uppercase font-mono tracking-wider text-text-muted">
             Replies
           </span>
-          <div className="h-px flex-1 bg-white/10" />
+          <div className="h-px flex-1 bg-border" />
         </div>
 
         {/* Replies List */}
         {isLoading ? (
-          <div className="py-8 flex flex-col items-center justify-center text-slate-400 gap-2">
-            <Loader2 className="w-5 h-5 animate-spin text-emerald-400" />
+          <div className="py-8 flex flex-col items-center justify-center text-text-muted gap-2">
+            <Loader2 className="w-5 h-5 animate-spin text-brand-mint" />
             <span className="text-xs">Loading replies…</span>
           </div>
         ) : isError ? (
@@ -394,7 +394,7 @@ export default function ThreadPanel({
             Failed to load replies. Please try again.
           </div>
         ) : replies.length === 0 ? (
-          <div className="py-8 text-center text-xs text-slate-400">
+          <div className="py-8 text-center text-xs text-text-muted">
             No replies yet in this discussion. Be the first to reply!
           </div>
         ) : (
@@ -405,7 +405,7 @@ export default function ThreadPanel({
                 key={reply.id || reply._id}
                 className="flex items-start gap-2.5 group/reply"
               >
-                <div className="w-7 h-7 rounded-full bg-slate-800 border border-white/10 overflow-hidden flex items-center justify-center text-slate-300 font-medium text-[11px] flex-shrink-0 mt-0.5">
+                <div className="w-7 h-7 rounded-full bg-surface-elevated border border-border overflow-hidden flex items-center justify-center text-text-primary font-medium text-[11px] flex-shrink-0 mt-0.5">
                   {reply.senderId?.avatar ? (
                     <img
                       src={reply.senderId.avatar}
@@ -413,31 +413,31 @@ export default function ThreadPanel({
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <User className="w-3.5 h-3.5 text-slate-400" />
+                    <User className="w-3.5 h-3.5 text-text-muted" />
                   )}
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline justify-between gap-2 mb-1">
                     <div className="flex items-baseline gap-1.5 truncate">
-                      <span className="text-xs font-medium text-slate-200 truncate">
+                      <span className="text-xs font-medium text-text-primary truncate">
                         {reply.senderId?.name || 'Member'}
                       </span>
                       {reply.senderId?.username && (
-                        <span className="text-[10px] text-slate-400 truncate">
+                        <span className="text-[10px] text-text-muted truncate">
                           @{reply.senderId.username}
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] text-slate-400 font-mono flex-shrink-0">
+                    <span className="text-[10px] text-text-muted font-mono flex-shrink-0">
                       {formatTime(reply.createdAt)}
                     </span>
                   </div>
 
                   <div className={`p-2.5 rounded-xl border text-xs leading-relaxed break-words whitespace-pre-wrap ${
                     isOwn
-                      ? 'bg-brand-mint/10 border-brand-mint/20 text-white'
-                      : 'bg-white/[0.025] border-white/5 text-slate-200'
+                      ? 'bg-gradient-to-br from-[#9FD5B2] via-[#94CFAB] to-[#80BF98] text-[#07130E] border-brand-mint/40 font-medium shadow-xs'
+                      : 'bg-surface-card border-border text-text-primary'
                   }`}>
                     {renderBodyWithMentions(reply.body)}
 
@@ -449,11 +449,15 @@ export default function ThreadPanel({
                             href={att.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 p-1.5 rounded-lg bg-black/20 hover:bg-black/40 border border-white/5 transition-colors text-[11px] text-slate-300"
+                            className={`flex items-center gap-2 p-1.5 rounded-lg border transition-colors text-[11px] ${
+                              isOwn
+                                ? 'bg-black/10 hover:bg-black/15 border-black/20 text-[#07130E]'
+                                : 'bg-surface-elevated/60 hover:bg-surface-elevated border-border text-text-primary'
+                            }`}
                           >
-                            <FileText className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                            <FileText className={`w-3.5 h-3.5 flex-shrink-0 ${isOwn ? 'text-[#07130E]' : 'text-brand-mint'}`} />
                             <span className="truncate flex-1">{att.name}</span>
-                            <Download className="w-3 h-3 text-slate-400" />
+                            <Download className={`w-3 h-3 ${isOwn ? 'text-[#07130E]/70' : 'text-text-muted'}`} />
                           </a>
                         ))}
                       </div>
@@ -477,7 +481,7 @@ export default function ThreadPanel({
                         {reply.reactions.map((r, rIdx) => (
                           <span
                             key={rIdx}
-                            className="text-[10px] px-1.5 py-0.2 rounded bg-white/5 border border-white/10 text-slate-300"
+                            className="text-[10px] px-1.5 py-0.2 rounded bg-surface-elevated border border-border text-text-secondary"
                           >
                             {r.emoji} {r.count}
                           </span>
@@ -494,7 +498,7 @@ export default function ThreadPanel({
       </div>
 
       {/* ── Thread Composer ── */}
-      <div className="p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-white/10 bg-[#12151e]/80 backdrop-blur-md relative">
+      <div className="p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-border bg-surface-card/95 backdrop-blur-md relative">
         {/* Mention suggestions popup */}
         <MentionAutocomplete
           visible={mentionVisible}
@@ -510,14 +514,14 @@ export default function ThreadPanel({
             {attachments.map((att, idx) => (
               <span
                 key={idx}
-                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs truncate max-w-xs"
+                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-brand-mint/10 border border-brand-mint/30 text-brand-mint text-xs truncate max-w-xs"
               >
                 <FileText className="w-3 h-3 flex-shrink-0" />
                 <span className="truncate">{att.name}</span>
                 <button
                   type="button"
                   onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))}
-                  className="hover:text-white min-h-[32px] min-w-[32px] flex items-center justify-center"
+                  className="hover:text-text-primary min-h-[32px] min-w-[32px] flex items-center justify-center"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -526,7 +530,7 @@ export default function ThreadPanel({
           </div>
         )}
 
-        <div className="flex items-end gap-2 bg-white/[0.04] border border-white/10 rounded-xl px-2.5 py-1.5 focus-within:border-emerald-500/50 focus-within:ring-1 focus-within:ring-emerald-500/30 transition-all">
+        <div className="flex items-end gap-2 bg-surface-elevated/50 border border-border rounded-xl px-2.5 py-1.5 focus-within:border-brand-mint focus-within:ring-1 focus-within:ring-brand-mint/30 transition-all">
           <input
             type="file"
             ref={fileInputRef}
@@ -539,12 +543,12 @@ export default function ThreadPanel({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-emerald-400 transition-colors flex-shrink-0"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center text-text-muted hover:text-brand-mint transition-colors flex-shrink-0"
             title="Attach file"
             aria-label="Attach file"
           >
             {isUploading ? (
-              <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+              <Loader2 className="w-4 h-4 animate-spin text-brand-mint" />
             ) : (
               <Paperclip className="w-4 h-4" />
             )}
@@ -557,7 +561,7 @@ export default function ThreadPanel({
             onKeyDown={handleKeyDown}
             rows={1}
             placeholder="Reply in thread…"
-            className="flex-1 bg-transparent resize-none border-none outline-none text-xs text-slate-100 placeholder-slate-500 max-h-24 overflow-y-auto leading-relaxed py-2.5"
+            className="flex-1 bg-transparent resize-none border-none outline-none text-xs text-text-primary placeholder:text-text-muted max-h-24 overflow-y-auto leading-relaxed py-2.5"
           />
 
           <button
@@ -568,7 +572,7 @@ export default function ThreadPanel({
               replyMutation.isPending ||
               isUploading
             }
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-30 disabled:hover:bg-emerald-500 text-white transition-all flex-shrink-0"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-brand-mint hover:bg-brand-mint/90 disabled:opacity-30 disabled:hover:bg-brand-mint text-bg-base font-bold transition-all flex-shrink-0 cursor-pointer"
             title="Send reply"
             aria-label="Send reply"
           >

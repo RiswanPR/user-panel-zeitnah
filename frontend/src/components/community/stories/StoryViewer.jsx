@@ -656,7 +656,7 @@ export default function StoryViewer({
             transform: dragY > 0 ? `translateY(${dragY}px) scale(${1 - Math.min(dragY / 1000, 0.12)})` : undefined,
             transition: dragY === 0 ? 'transform 0.25s ease-out' : 'none',
           }}
-          className="relative w-full max-w-[430px] h-[100dvh] sm:h-[88vh] sm:rounded-3xl bg-[#070B14] border border-white/[0.1] overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.8)] flex flex-col z-20"
+          className="relative w-full max-w-[430px] h-[100dvh] sm:h-[88vh] sm:rounded-3xl bg-black border border-border overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.8)] flex flex-col z-20"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -704,7 +704,7 @@ export default function StoryViewer({
                   : `View ${authorName}'s profile`
               }
             >
-              <div className="w-9 h-9 rounded-full bg-[#0E1726] border border-white/[0.2] overflow-hidden flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-full bg-surface-elevated border border-border overflow-hidden flex items-center justify-center shrink-0">
                 {isBusinessStory ? (
                   isBusinessLoading ? (
                     <div className="w-full h-full bg-white/10 animate-pulse flex items-center justify-center">
@@ -822,7 +822,7 @@ export default function StoryViewer({
             {/* Loading Indicator for Slow Media */}
             {mediaUrl && !mediaLoaded && !mediaError && (
               <div
-                className="absolute inset-0 bg-[#070B14] flex items-center justify-center z-10"
+                className="absolute inset-0 bg-black flex items-center justify-center z-10"
                 aria-label="Loading story media"
               >
                 <div className="w-8 h-8 rounded-full border-2 border-brand-mint/20 border-t-brand-mint animate-spin" />
@@ -960,7 +960,7 @@ export default function StoryViewer({
               <button
                 type="submit"
                 disabled={!replyText.trim() || isSubmittingReply}
-                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-gradient-to-r from-brand-mint to-brand-yellow text-[#070B14] hover:brightness-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shrink-0 shadow-md font-bold"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-gradient-to-r from-brand-mint to-brand-yellow text-bg-base hover:brightness-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shrink-0 shadow-md font-bold"
                 aria-label="Send reply"
               >
                 <Send className="w-4 h-4 stroke-[2.5]" />

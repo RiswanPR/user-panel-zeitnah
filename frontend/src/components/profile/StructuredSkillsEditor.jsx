@@ -132,15 +132,15 @@ export default function StructuredSkillsEditor({
               onClick={() => setActiveTab(cat.id)}
               className={`p-2.5 sm:p-3.5 rounded-2xl border text-left transition-all cursor-pointer min-h-[48px] flex flex-col justify-between ${
                 isActive
-                  ? "bg-brand-mint/15 border-brand-mint text-white shadow-sm ring-1 ring-brand-mint/40"
-                  : "bg-bg-elevated border-border-default text-text-muted hover:text-white hover:bg-white/[0.04]"
+                  ? "bg-brand-mint/15 border-brand-mint text-text-primary shadow-sm ring-1 ring-brand-mint/40"
+                  : "bg-surface-elevated/40 border-border text-text-muted hover:text-text-primary hover:bg-surface-elevated"
               }`}
             >
               <div className="flex items-center justify-between w-full mb-1">
                 <Icon className={`w-4 h-4 ${isActive ? "text-brand-mint" : "text-text-faint"}`} />
                 <span
                   className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full ${
-                    count > 0 ? "bg-white/[0.08] text-white" : "text-text-faint"
+                    count > 0 ? "bg-surface-elevated text-text-primary border border-border" : "text-text-faint"
                   }`}
                 >
                   {count}
@@ -173,7 +173,7 @@ export default function StructuredSkillsEditor({
             }
           }}
           placeholder={`Add ${CATEGORY_TABS.find((c) => c.id === activeTab)?.label.toLowerCase()}...`}
-          className="flex-1 px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors"
+          className="flex-1 px-4 py-2.5 rounded-xl bg-surface-elevated/50 border border-border focus:border-brand-mint focus:outline-none text-sm text-text-primary placeholder:text-text-faint transition-colors"
         />
         <button
           type="button"
@@ -200,7 +200,7 @@ export default function StructuredSkillsEditor({
                   key={s}
                   type="button"
                   onClick={() => handleAddSkill(s)}
-                  className="px-2.5 py-1 rounded-lg text-xs bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.06] hover:border-brand-mint/30 text-text-muted hover:text-white transition-all cursor-pointer inline-flex items-center gap-1 min-h-[32px]"
+                  className="px-2.5 py-1 rounded-lg text-xs bg-surface-elevated/30 hover:bg-surface-elevated border border-border hover:border-brand-mint/30 text-text-muted hover:text-text-primary transition-all cursor-pointer inline-flex items-center gap-1 min-h-[32px]"
                 >
                   <Plus className="w-3 h-3 text-brand-mint" />
                   <span>{s}</span>
@@ -211,7 +211,7 @@ export default function StructuredSkillsEditor({
       )}
 
       {/* Active Category Chips */}
-      <div className="space-y-2 pt-2 border-t border-white/[0.05]">
+      <div className="space-y-2 pt-2 border-t border-border">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs text-text-muted">
           <span>Active in {CATEGORY_TABS.find((c) => c.id === activeTab)?.label} ({currentCategoryList.length})</span>
           {totalSkillCount >= 3 ? (
@@ -230,7 +230,7 @@ export default function StructuredSkillsEditor({
             currentCategoryList.map((skill) => (
               <span
                 key={skill}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs font-semibold text-white group hover:border-brand-mint/30 transition-all"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-elevated/50 border border-border text-xs font-semibold text-text-primary group hover:border-brand-mint/30 transition-all"
               >
                 <span>{skill}</span>
                 <button

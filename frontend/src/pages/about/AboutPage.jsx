@@ -21,7 +21,7 @@ export default function AboutPage() {
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <div className="min-h-screen text-white font-body antialiased relative overflow-hidden flex flex-col">
+    <div className="min-h-screen bg-bg-base text-text-primary font-body antialiased relative overflow-hidden flex flex-col">
       {/* ── BACKGROUND AMBIENT GLOWS ── */}
       <div className="absolute inset-0 pointer-events-none select-none z-0">
         <div className="absolute top-12 left-1/3 w-[600px] h-[600px] rounded-full bg-brand-mint/5 blur-[160px]" />
@@ -31,13 +31,13 @@ export default function AboutPage() {
 
       <div className="relative z-10 max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 space-y-12 sm:space-y-16 pt-4 pb-16">
         {/* Top Floating Navigation */}
-        <header className="flex items-center justify-between py-4 border-b border-white/[0.08]">
+        <header className="flex items-center justify-between py-4 border-b border-border">
           <Link to="/" className="flex items-center gap-3 group focus-ring rounded-lg">
-            <div className="w-8 h-8 rounded-lg border border-white/[0.12] bg-[#0E1726]/80 flex items-center justify-center overflow-hidden">
+            <div className="w-8 h-8 rounded-lg border border-border bg-surface-elevated flex items-center justify-center overflow-hidden">
               <img src="/zeitnah-logo.png" alt="Zeitnah" className="w-full h-full object-cover" width={32} height={32} />
             </div>
             <div className="flex flex-col">
-              <span className="font-mono text-sm font-bold tracking-[0.14em] text-white leading-none uppercase">
+              <span className="font-mono text-sm font-bold tracking-[0.14em] text-text-primary leading-none uppercase">
                 {BRAND.name}
               </span>
               <span className="text-[8px] font-mono tracking-[0.16em] text-brand-mint font-semibold uppercase leading-none mt-1">
@@ -47,10 +47,10 @@ export default function AboutPage() {
           </Link>
 
           <div className="flex items-center gap-3">
-            <Link to="/courses" className="text-xs font-medium text-text-secondary hover:text-white transition-colors">
+            <Link to="/courses" className="text-xs font-medium text-text-secondary hover:text-text-primary transition-colors">
               Courses
             </Link>
-            <Link to="/network" className="text-xs font-medium text-text-secondary hover:text-white transition-colors">
+            <Link to="/network" className="text-xs font-medium text-text-secondary hover:text-text-primary transition-colors">
               Network
             </Link>
             <Link to="/login" className="zn-btn-primary text-xs px-3.5 py-1.5 min-h-[32px]">
@@ -69,7 +69,7 @@ export default function AboutPage() {
             ══════════════════════════════════════════════════════════ */}
         <section
           aria-labelledby="about-brand-heading"
-          className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-b from-[#0D1522] via-[#090E17] to-[#070B14] p-6 sm:p-12 lg:p-16 shadow-2xl text-center sm:text-left"
+          className="relative overflow-hidden rounded-3xl border border-border bg-surface-card p-6 sm:p-12 lg:p-16 shadow-2xl text-center sm:text-left"
         >
           {/* Decorative Zeitnah Z in background */}
           <div
@@ -100,7 +100,7 @@ export default function AboutPage() {
               </p>
               <h1
                 id="about-brand-heading"
-                className="font-heading font-black text-4xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white leading-[0.92] uppercase"
+                className="font-heading font-black text-4xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-text-primary leading-[0.92] uppercase"
               >
                 {BRAND.tagline}
               </h1>
@@ -108,7 +108,7 @@ export default function AboutPage() {
 
             {/* STEP 2: OFFICIAL VISION */}
             <div className="pt-1">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/[0.04] border border-white/[0.1] backdrop-blur-md">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-surface-elevated border border-border backdrop-blur-md">
                 <span className="text-base sm:text-2xl font-heading font-bold text-brand-mint tracking-wide">
                   {BRAND.vision}
                 </span>
@@ -121,7 +121,7 @@ export default function AboutPage() {
                 <span className="text-[10px] sm:text-xs font-mono font-bold uppercase tracking-widest text-brand-mint/90 block mb-2">
                   Our Mission
                 </span>
-                <p className="text-lg sm:text-2xl font-medium text-white/95 leading-relaxed sm:leading-relaxed">
+                <p className="text-lg sm:text-2xl font-medium text-text-primary leading-relaxed sm:leading-relaxed">
                   "{BRAND.mission}"
                 </p>
               </div>
@@ -141,7 +141,7 @@ export default function AboutPage() {
             </span>
             <h2
               id="about-pillars-heading"
-              className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl text-white tracking-tight"
+              className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl text-text-primary tracking-tight"
             >
               The Three Pillars
             </h2>
@@ -153,12 +153,12 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
             {/* BUILD */}
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 sm:p-8 space-y-5 hover:border-brand-mint/30 transition-all">
+            <div className="rounded-2xl border border-border bg-surface-card p-6 sm:p-8 space-y-5 hover:border-brand-mint/30 hover:bg-surface-elevated transition-all">
               <div className="w-12 h-12 rounded-xl bg-brand-mint/10 border border-brand-mint/25 flex items-center justify-center text-brand-mint">
                 <Layers className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h3 className="font-heading font-bold text-2xl text-white">
+                <h3 className="font-heading font-bold text-2xl text-text-primary">
                   {BRAND.pillars.build.title}
                 </h3>
                 <p className="text-xs text-brand-mint font-mono font-semibold">
@@ -169,7 +169,7 @@ export default function AboutPage() {
                 {BRAND.pillars.build.description}
               </p>
 
-              <div className="pt-2 border-t border-white/[0.06] space-y-2">
+              <div className="pt-2 border-t border-border space-y-2">
                 <p className="text-[10px] font-mono uppercase tracking-wider text-text-faint font-semibold">
                   What we build
                 </p>
@@ -177,7 +177,7 @@ export default function AboutPage() {
                   {BRAND.pillars.build.items.map((item) => (
                     <span
                       key={item}
-                      className="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.08] text-xs text-white/80 font-medium capitalize"
+                      className="px-2.5 py-1 rounded-lg bg-surface-elevated border border-border text-xs text-text-secondary font-medium capitalize"
                     >
                       {item}
                     </span>
@@ -187,12 +187,12 @@ export default function AboutPage() {
             </div>
 
             {/* CONNECT */}
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 sm:p-8 space-y-5 hover:border-[#F6ED4A]/30 transition-all">
+            <div className="rounded-2xl border border-border bg-surface-card p-6 sm:p-8 space-y-5 hover:border-[#F6ED4A]/30 hover:bg-surface-elevated transition-all">
               <div className="w-12 h-12 rounded-xl bg-[#F6ED4A]/10 border border-[#F6ED4A]/25 flex items-center justify-center text-[#F6ED4A]">
                 <Users2 className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h3 className="font-heading font-bold text-2xl text-white">
+                <h3 className="font-heading font-bold text-2xl text-text-primary">
                   {BRAND.pillars.connect.title}
                 </h3>
                 <p className="text-xs text-[#F6ED4A] font-mono font-semibold">
@@ -203,7 +203,7 @@ export default function AboutPage() {
                 {BRAND.pillars.connect.description}
               </p>
 
-              <div className="pt-2 border-t border-white/[0.06] space-y-2">
+              <div className="pt-2 border-t border-border space-y-2">
                 <p className="text-[10px] font-mono uppercase tracking-wider text-text-faint font-semibold">
                   Who we connect
                 </p>
@@ -211,7 +211,7 @@ export default function AboutPage() {
                   {BRAND.pillars.connect.items.map((item) => (
                     <span
                       key={item}
-                      className="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.08] text-xs text-white/80 font-medium capitalize"
+                      className="px-2.5 py-1 rounded-lg bg-surface-elevated border border-border text-xs text-text-secondary font-medium capitalize"
                     >
                       {item}
                     </span>
@@ -221,12 +221,12 @@ export default function AboutPage() {
             </div>
 
             {/* DISCOVER */}
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 sm:p-8 space-y-5 hover:border-blue-400/30 transition-all">
+            <div className="rounded-2xl border border-border bg-surface-card p-6 sm:p-8 space-y-5 hover:border-blue-400/30 hover:bg-surface-elevated transition-all">
               <div className="w-12 h-12 rounded-xl bg-blue-400/10 border border-blue-400/25 flex items-center justify-center text-blue-400">
                 <Sparkles className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h3 className="font-heading font-bold text-2xl text-white">
+                <h3 className="font-heading font-bold text-2xl text-text-primary">
                   {BRAND.pillars.discover.title}
                 </h3>
                 <p className="text-xs text-blue-400 font-mono font-semibold">
@@ -237,7 +237,7 @@ export default function AboutPage() {
                 {BRAND.pillars.discover.description}
               </p>
 
-              <div className="pt-2 border-t border-white/[0.06] space-y-2">
+              <div className="pt-2 border-t border-border space-y-2">
                 <p className="text-[10px] font-mono uppercase tracking-wider text-text-faint font-semibold">
                   What we discover
                 </p>
@@ -245,7 +245,7 @@ export default function AboutPage() {
                   {BRAND.pillars.discover.items.map((item) => (
                     <span
                       key={item}
-                      className="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.08] text-xs text-white/80 font-medium capitalize"
+                      className="px-2.5 py-1 rounded-lg bg-surface-elevated border border-border text-xs text-text-secondary font-medium capitalize"
                     >
                       {item}
                     </span>
@@ -262,14 +262,14 @@ export default function AboutPage() {
             03. FOUR PILLARS OF OUTCOMES
             Progress • Network • Opportunities • Success
             ══════════════════════════════════════════════════════════ */}
-        <section aria-labelledby="outcomes-heading" className="rounded-2xl border border-white/[0.08] bg-white/[0.015] p-8 sm:p-12 space-y-8">
+        <section aria-labelledby="outcomes-heading" className="rounded-2xl border border-border bg-surface-card p-8 sm:p-12 space-y-8">
           <div className="max-w-2xl space-y-2">
             <span className="text-[10px] font-mono font-bold tracking-[0.22em] uppercase text-brand-mint">
               Member Value
             </span>
             <h2
               id="outcomes-heading"
-              className="font-heading font-extrabold text-2xl sm:text-3xl text-white tracking-tight"
+              className="font-heading font-extrabold text-2xl sm:text-3xl text-text-primary tracking-tight"
             >
               Progress Through the Freedom of Knowledge
             </h2>
@@ -309,10 +309,10 @@ export default function AboutPage() {
               return (
                 <div
                   key={outcome.title}
-                  className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-3"
+                  className="rounded-xl border border-border bg-surface-elevated p-5 space-y-3"
                 >
                   <Icon className={`w-5 h-5 ${outcome.accent}`} />
-                  <h3 className="font-heading font-bold text-base text-white">
+                  <h3 className="font-heading font-bold text-base text-text-primary">
                     {outcome.title}
                   </h3>
                   <p className="text-xs text-text-muted leading-relaxed">
@@ -330,7 +330,7 @@ export default function AboutPage() {
             ══════════════════════════════════════════════════════════ */}
         <section aria-labelledby="cta-heading" className="rounded-3xl border border-brand-mint/20 bg-gradient-to-r from-brand-mint/10 via-brand-mint/5 to-transparent p-8 sm:p-12 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
           <div className="space-y-2 max-w-xl">
-            <h2 id="cta-heading" className="font-heading font-bold text-2xl text-white">
+            <h2 id="cta-heading" className="font-heading font-bold text-2xl text-text-primary">
               Experience the Zeitnah Movement
             </h2>
             <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">

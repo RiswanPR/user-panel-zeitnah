@@ -11,7 +11,7 @@ export default function DiscoverHero() {
   return (
     <section
       aria-labelledby="discover-hero-heading"
-      className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-r from-[#0F1728]/90 via-[#0D1524]/80 to-[#070B14]/90 p-5 sm:p-6 backdrop-blur-xl shadow-md"
+      className="relative overflow-hidden rounded-2xl border border-border bg-surface-card p-5 sm:p-6 backdrop-blur-xl shadow-md"
     >
       {/* Subtle Ambient Radial Lighting */}
       <div
@@ -38,7 +38,7 @@ export default function DiscoverHero() {
           initial={shouldReduceMotion ? false : { opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.05 }}
-          className="text-xl sm:text-2xl font-heading font-extrabold text-white tracking-tight leading-snug"
+          className="text-xl sm:text-2xl font-heading font-extrabold text-text-primary tracking-tight leading-snug"
         >
           Find people who are learning,{" "}
           <span className="text-gradient">building, and growing with Zeitnah.</span>

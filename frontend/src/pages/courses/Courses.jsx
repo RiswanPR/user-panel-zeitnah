@@ -89,7 +89,7 @@ function CourseSection({
       aria-labelledby={sectionId}
       className="space-y-6 pt-4"
     >
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-white/[0.08] pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-border pb-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span
@@ -107,7 +107,7 @@ function CourseSection({
           </div>
           <h2
             id={sectionId}
-            className="display-headline text-2xl sm:text-3xl md:text-4xl text-white tracking-tight leading-none"
+            className="display-headline text-2xl sm:text-3xl md:text-4xl text-text-primary tracking-tight leading-none"
           >
             {title}
           </h2>
@@ -130,7 +130,7 @@ function CourseSection({
 
 function HeroSkeleton() {
   return (
-    <div className="rounded-3xl border border-white/[0.08] bg-[#0A0F14] p-8 sm:p-12 space-y-6 animate-pulse">
+    <div className="rounded-3xl border border-border bg-surface-card p-8 sm:p-12 space-y-6 animate-pulse">
       <div className="h-5 w-48 shimmer rounded-full" />
       <div className="space-y-2">
         <div className="h-12 sm:h-16 w-3/4 shimmer rounded-2xl" />
@@ -148,7 +148,7 @@ function HeroSkeleton() {
 
 function ContinueSkeleton() {
   return (
-    <div className="rounded-3xl border border-white/[0.08] bg-[#0A0F14] p-6 sm:p-7 flex flex-col md:flex-row gap-6 items-start md:items-center animate-pulse">
+    <div className="rounded-3xl border border-border bg-surface-card p-6 sm:p-7 flex flex-col md:flex-row gap-6 items-start md:items-center animate-pulse">
       <div
         className="w-full md:w-64 lg:w-72 aspect-video shimmer rounded-2xl shrink-0"
         style={{ aspectRatio: "16 / 9" }}
@@ -165,7 +165,7 @@ function ContinueSkeleton() {
 
 function FeaturedSkeleton() {
   return (
-    <div className="overflow-hidden rounded-3xl border border-white/[0.08] bg-[#0A0F14] animate-pulse">
+    <div className="overflow-hidden rounded-3xl border border-border bg-surface-card animate-pulse">
       <div className="flex flex-col lg:flex-row items-stretch">
         <div
           className="w-full lg:w-1/2 aspect-video shrink-0 shimmer"
@@ -187,7 +187,7 @@ function FeaturedSkeleton() {
 
 function CardSkeleton() {
   return (
-    <div className="rounded-2xl border border-white/[0.08] bg-[#0A0F14] overflow-hidden animate-pulse">
+    <div className="rounded-2xl border border-border bg-surface-card overflow-hidden animate-pulse">
       <div
         className="aspect-video w-full shimmer"
         style={{ aspectRatio: "16 / 9" }}
@@ -371,12 +371,12 @@ function Courses() {
           ERROR STATE WITH CALM RETRY
           ══════════════════════════════════════════════════════════ */}
       {error && !loading && (
-        <div className="rounded-3xl border border-brand-yellow/20 bg-[#0A0F14] p-8 sm:p-12 text-center space-y-5 max-w-lg mx-auto shadow-2xl relative overflow-hidden">
+        <div className="rounded-3xl border border-brand-yellow/20 bg-surface-card p-8 sm:p-12 text-center space-y-5 max-w-lg mx-auto shadow-2xl relative overflow-hidden">
           <div className="w-12 h-12 rounded-2xl bg-brand-yellow/10 border border-brand-yellow/25 flex items-center justify-center mx-auto text-brand-yellow">
             <RefreshCw className="w-5 h-5" />
           </div>
           <div className="space-y-1.5">
-            <h3 className="font-heading font-extrabold text-lg text-white uppercase tracking-tight">
+            <h3 className="font-heading font-extrabold text-lg text-text-primary uppercase tracking-tight">
               Connection Disrupted
             </h3>
             <p className="text-xs text-text-secondary leading-relaxed max-w-sm mx-auto">
@@ -413,19 +413,19 @@ function Courses() {
           EMPTY STATE
           ══════════════════════════════════════════════════════════ */}
       {!loading && !error && allFiltered.length === 0 && (
-        <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-[#0A0F14] p-10 sm:p-16 text-center max-w-lg mx-auto space-y-6 shadow-2xl">
+        <div className="relative overflow-hidden rounded-3xl border border-border bg-surface-card p-10 sm:p-16 text-center max-w-lg mx-auto space-y-6 shadow-2xl">
           {/* Spatial Z motif */}
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.03]">
             <ZeitnahZMotif variant="white" className="w-72 h-72" />
           </div>
 
           <div className="relative z-10 space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-[#12314C] border border-brand-mint/30 flex items-center justify-center mx-auto text-brand-mint shadow-md">
+            <div className="w-14 h-14 rounded-2xl bg-brand-navy/60 border border-brand-mint/30 flex items-center justify-center mx-auto text-brand-mint shadow-md">
               {search ? <Search className="w-6 h-6" /> : <BookOpen className="w-6 h-6" />}
             </div>
 
             <div className="space-y-2">
-              <h3 className="display-headline text-2xl sm:text-3xl text-white tracking-tight leading-none">
+              <h3 className="display-headline text-2xl sm:text-3xl text-text-primary tracking-tight leading-none">
                 {search ? "NOTHING MATCHED." : "YOUR LIBRARY IS WAITING."}
               </h3>
               <p className="text-xs sm:text-sm text-text-secondary max-w-md mx-auto leading-relaxed">

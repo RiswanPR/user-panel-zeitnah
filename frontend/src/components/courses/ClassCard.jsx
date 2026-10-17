@@ -25,12 +25,12 @@ function ClassCard({ cls, courseType, index, onLockedClick, onOpen }) {
       transition={{ duration: 0.3, delay: index * 0.04, ease: "easeOut" }}
       className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 w-full card-subtle focus-ring ${
         completed
-          ? "border-success/25 hover:border-success/40 bg-gradient-to-r from-success/5 to-bg-card"
+          ? "border-success/25 hover:border-success/40 bg-gradient-to-r from-success/5 to-surface-card"
           : inProgress
-          ? "border-brand-mint/30 hover:border-brand-mint/50 bg-gradient-to-r from-brand-mint/5 to-bg-card"
+          ? "border-brand-mint/30 hover:border-brand-mint/50 bg-gradient-to-r from-brand-mint/5 to-surface-card"
           : locked
-          ? "border-white/[0.06] hover:border-white/10 opacity-75"
-          : "border-white/[0.08] hover:border-brand-mint/30"
+          ? "border-border/60 hover:border-border bg-surface-card/60 opacity-75"
+          : "border-border hover:border-brand-mint/30 bg-surface-card"
       }`}
     >
       <div className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between w-full relative z-10">
@@ -40,7 +40,7 @@ function ClassCard({ cls, courseType, index, onLockedClick, onOpen }) {
           <div
             onClick={locked ? onLockedClick : onOpen}
             aria-hidden="true"
-            className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/[0.06] bg-bg-elevated sm:w-44 shrink-0 select-none flex items-center justify-center cursor-pointer"
+            className="relative aspect-video w-full overflow-hidden rounded-xl border border-border/60 bg-surface-elevated sm:w-44 shrink-0 select-none flex items-center justify-center cursor-pointer"
             style={{ aspectRatio: "16 / 9" }}
           >
             {thumbnailUrl ? (
@@ -80,7 +80,7 @@ function ClassCard({ cls, courseType, index, onLockedClick, onOpen }) {
 
             {/* Progress overlay */}
             {inProgress && (
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/[0.1]">
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-border/40">
                 <div
                   className="h-full bg-gradient-to-r from-brand-mint to-brand-yellow"
                   style={{ width: `${progressPercent}%` }}
@@ -93,7 +93,7 @@ function ClassCard({ cls, courseType, index, onLockedClick, onOpen }) {
           <div className="flex flex-1 flex-col min-w-0 justify-center">
             {/* Status pills */}
             <div className="mb-2 flex flex-wrap items-center gap-1.5">
-              <span className="rounded-md border border-white/[0.08] bg-white/[0.03] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-text-muted">
+              <span className="rounded-md border border-border bg-surface-elevated/80 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-text-muted">
                 {getCourseTypeLabel(courseType)}
               </span>
 
@@ -107,7 +107,7 @@ function ClassCard({ cls, courseType, index, onLockedClick, onOpen }) {
                   {progressPercent}% watched
                 </span>
               ) : locked ? (
-                <span className="inline-flex items-center gap-1 rounded-md border border-white/[0.08] bg-white/[0.02] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-text-muted">
+                <span className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-elevated/60 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-text-muted">
                   <Lock className="w-2.5 h-2.5" />
                   Locked
                 </span>
@@ -121,7 +121,7 @@ function ClassCard({ cls, courseType, index, onLockedClick, onOpen }) {
             {/* Title */}
             <h3
               onClick={locked ? onLockedClick : onOpen}
-              className="text-base sm:text-lg font-heading font-bold text-white tracking-tight leading-snug line-clamp-2 cursor-pointer group-hover:text-brand-mint transition-colors"
+              className="text-base sm:text-lg font-heading font-bold text-text-primary tracking-tight leading-snug line-clamp-2 cursor-pointer group-hover:text-brand-mint transition-colors"
             >
               {cls.title}
             </h3>
@@ -135,13 +135,13 @@ function ClassCard({ cls, courseType, index, onLockedClick, onOpen }) {
             {/* Metadata (duration + exercises) */}
             <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
               {cls.duration && (
-                <span className="inline-flex items-center gap-1.5 rounded-md bg-white/[0.03] border border-white/[0.05] px-2 py-1">
+                <span className="inline-flex items-center gap-1.5 rounded-md bg-surface-elevated/60 border border-border/60 px-2 py-1">
                   <Clock className="w-3 h-3 text-brand-mint" />
                   {formatDuration(cls.duration)}
                 </span>
               )}
               {cls.exerciseCount > 0 && (
-                <span className="inline-flex items-center gap-1.5 rounded-md bg-white/[0.03] border border-white/[0.05] px-2 py-1">
+                <span className="inline-flex items-center gap-1.5 rounded-md bg-surface-elevated/60 border border-border/60 px-2 py-1">
                   <FileText className="w-3 h-3 text-brand-mint" />
                   {cls.exerciseCount} {cls.exerciseCount === 1 ? "Resource" : "Resources"}
                 </span>
@@ -156,14 +156,14 @@ function ClassCard({ cls, courseType, index, onLockedClick, onOpen }) {
             type="button"
             onClick={locked ? onLockedClick : onOpen}
             aria-label={`${locked ? 'Locked lesson' : completed ? 'Rewatch lesson' : inProgress ? 'Continue lesson' : 'Watch lesson'}: ${cls.title}`}
-            className={`w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-xl py-2.5 px-5 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer border focus-ring ${
+            className={`w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-xl py-2.5 px-5 min-h-[44px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer border focus-ring ${
               locked
-                ? "border-white/[0.08] bg-white/[0.03] text-text-muted hover:text-white"
+                ? "border-border bg-surface-elevated/60 text-text-muted hover:text-text-primary hover:border-border-accent"
                 : completed
                 ? "border-success/25 bg-success/10 text-success hover:bg-success/15"
                 : inProgress
-                ? "bg-brand-mint text-bg-base font-extrabold hover:bg-brand-mint/90 shadow-sm"
-                : "bg-brand-yellow text-bg-base font-extrabold hover:bg-brand-yellow/90 shadow-sm"
+                ? "bg-brand-mint text-brand-navy font-extrabold hover:bg-brand-mint/90 shadow-sm border-transparent"
+                : "bg-brand-yellow text-brand-navy font-extrabold hover:bg-brand-yellow/90 shadow-sm border-transparent"
             }`}
           >
             {locked ? (

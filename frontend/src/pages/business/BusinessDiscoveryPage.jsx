@@ -51,14 +51,14 @@ export default function BusinessDiscoveryPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* ── Page Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-white/[0.06]">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-border">
         <div>
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-mint/15 text-brand-mint border border-brand-mint/30">
               Verified Network
             </span>
           </div>
-          <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-white mt-2 tracking-tight">
+          <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-text-primary mt-2 tracking-tight">
             Infrastructure Organizations & Businesses
           </h1>
           <p className="text-sm text-text-muted mt-1 leading-relaxed">
@@ -68,22 +68,22 @@ export default function BusinessDiscoveryPage() {
       </div>
 
       {/* ── Search & Filter Controls ── */}
-      <div className="p-5 rounded-3xl bg-white/[0.02] border border-white/[0.06] space-y-3">
+      <div className="p-5 rounded-3xl bg-surface-card border border-border space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {/* Search bar */}
           <div className="relative sm:col-span-2">
-            <Search className="w-5 h-5 text-white/30 absolute left-4 top-3" />
+            <Search className="w-5 h-5 text-text-muted absolute left-4 top-3" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by company name, sector, or keywords..."
-              className="w-full pl-12 pr-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-white/30 outline-none focus:border-brand-mint"
+              className="w-full pl-12 pr-4 py-2.5 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary placeholder-text-muted outline-none focus:border-brand-mint"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-4 top-3 text-white/40 hover:text-white"
+                className="absolute right-4 top-3 text-text-muted hover:text-text-primary"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -94,7 +94,7 @@ export default function BusinessDiscoveryPage() {
           <select
             value={selectedSpecialization}
             onChange={(e) => setSelectedSpecialization(e.target.value)}
-            className="px-3 py-2.5 rounded-xl bg-[#161620] border border-white/[0.08] text-xs text-white outline-none focus:border-brand-mint"
+            className="px-3 py-2.5 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary outline-none focus:border-brand-mint"
           >
             <option value="">All Specializations</option>
             {INFRASTRUCTURE_SPECIALIZATIONS.map((spec) => (
@@ -129,9 +129,9 @@ export default function BusinessDiscoveryPage() {
           </p>
         </div>
       ) : organizations.length === 0 ? (
-        <div className="py-16 text-center bg-white/[0.02] border border-white/[0.06] rounded-3xl space-y-3">
-          <Building2 className="w-10 h-10 mx-auto text-white/20" />
-          <h3 className="text-base font-bold text-white">No businesses found</h3>
+        <div className="py-16 text-center bg-surface-card border border-border rounded-3xl space-y-3">
+          <Building2 className="w-10 h-10 mx-auto text-text-muted" />
+          <h3 className="text-base font-bold text-text-primary">No businesses found</h3>
           <p className="text-xs text-text-muted max-w-sm mx-auto">
             No verified businesses match your filter criteria. Try searching for broader terms.
           </p>
@@ -143,12 +143,12 @@ export default function BusinessDiscoveryPage() {
             return (
               <div
                 key={org._id || org.id}
-                className="p-6 rounded-3xl bg-[#111116] border border-white/[0.07] hover:border-brand-mint/30 transition-all flex flex-col justify-between group shadow-lg"
+                className="p-6 rounded-3xl bg-surface-card border border-border hover:border-border-accent transition-all flex flex-col justify-between group shadow-lg"
               >
                 <div className="space-y-4">
                   {/* Header */}
                   <div className="flex items-start justify-between gap-3">
-                    <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center overflow-hidden shrink-0">
+                    <div className="w-14 h-14 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center overflow-hidden shrink-0">
                       {org.logo ? (
                         <img src={org.logo} alt={org.name} className="w-full h-full object-cover" />
                       ) : (
@@ -166,7 +166,7 @@ export default function BusinessDiscoveryPage() {
 
                   {/* Title & Industry */}
                   <div>
-                    <h3 className="font-heading font-bold text-lg text-white group-hover:text-brand-mint transition-colors line-clamp-1">
+                    <h3 className="font-heading font-bold text-lg text-text-primary group-hover:text-brand-mint transition-colors line-clamp-1">
                       {org.name}
                     </h3>
                     <p className="text-xs text-text-muted mt-1">
@@ -180,13 +180,13 @@ export default function BusinessDiscoveryPage() {
                       {org.infrastructureSpecializations.slice(0, 3).map((spec) => (
                         <span
                           key={spec}
-                          className="px-2 py-0.5 rounded-md bg-white/[0.04] text-[10px] font-semibold text-brand-mint border border-brand-mint/20"
+                          className="px-2 py-0.5 rounded-md bg-surface-elevated text-[10px] font-semibold text-brand-mint border border-brand-mint/20"
                         >
                           {spec}
                         </span>
                       ))}
                       {org.infrastructureSpecializations.length > 3 && (
-                        <span className="text-[10px] text-white/40 self-center">
+                        <span className="text-[10px] text-text-muted self-center">
                           +{org.infrastructureSpecializations.length - 3} more
                         </span>
                       )}
@@ -200,17 +200,17 @@ export default function BusinessDiscoveryPage() {
                 </div>
 
                 {/* Footer */}
-                <div className="mt-5 pt-4 border-t border-white/[0.05] flex items-center justify-between text-xs">
+                <div className="mt-5 pt-4 border-t border-border flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2 text-text-muted">
                     <Briefcase className="w-3.5 h-3.5 text-brand-mint" />
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-text-primary">
                       {org.activeJobCount || 0} active {org.activeJobCount === 1 ? 'job' : 'jobs'}
                     </span>
                   </div>
 
                   <Link
                     to={`/businesses/${org.slug}`}
-                    className="flex items-center gap-1 px-4 py-2 rounded-xl bg-white/[0.05] group-hover:bg-brand-mint text-white group-hover:text-black font-bold text-xs transition-all"
+                    className="flex items-center gap-1 px-4 py-2 rounded-xl bg-surface-elevated group-hover:bg-brand-mint text-text-primary group-hover:text-brand-navy font-bold text-xs transition-all"
                   >
                     <span>View Business</span>
                     <ChevronRight className="w-3.5 h-3.5" />

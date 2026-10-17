@@ -58,12 +58,12 @@ export default function ProfileSwitcher({ user, onSelect, className = '' }) {
     <div className={`py-1 ${className}`}>
       <div className="px-2.5 py-1 flex items-center justify-between">
         <span
-          className="font-mono text-[9px] uppercase tracking-wider text-white/35 font-semibold select-none"
+          className="font-mono text-[9px] uppercase tracking-wider text-text-muted font-semibold select-none"
         >
           Active Profile
         </span>
         <span
-          className="font-mono text-[8.5px] text-white/25 select-none"
+          className="font-mono text-[8.5px] text-text-faint select-none"
         >
           {1 + businesses.length} profiles
         </span>
@@ -73,7 +73,7 @@ export default function ProfileSwitcher({ user, onSelect, className = '' }) {
         className="mt-0.5 space-y-1 max-h-[190px] overflow-y-auto pr-0.5"
         style={{
           scrollbarWidth: 'thin',
-          scrollbarColor: 'rgba(255,255,255,0.1) transparent',
+          scrollbarColor: 'var(--color-border) transparent',
         }}
         role="group"
         aria-label="Profile selector"
@@ -86,8 +86,8 @@ export default function ProfileSwitcher({ user, onSelect, className = '' }) {
           aria-label={`Switch to Personal Profile (${user?.name || 'Account'})`}
           className={`w-full flex items-center justify-between gap-2.5 px-2.5 py-1.5 rounded-xl transition-all duration-150 text-left cursor-pointer group focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-mint/50 ${
             isPersonalMode
-              ? 'bg-white/[0.07] border border-white/[0.12]'
-              : 'hover:bg-white/[0.035] border border-transparent text-white/70'
+              ? 'bg-brand-mint/10 border border-brand-mint/30'
+              : 'hover:bg-surface-elevated border border-transparent text-text-secondary'
           }`}
         >
           <div className="flex items-center gap-2.5 min-w-0">
@@ -99,7 +99,7 @@ export default function ProfileSwitcher({ user, onSelect, className = '' }) {
                 height: '26px',
                 borderRadius: '50%',
                 background: 'linear-gradient(135deg, rgba(159,213,178,0.2) 0%, rgba(18,49,76,0.6) 100%)',
-                border: isPersonalMode ? '1.5px solid rgba(159,213,178,0.5)' : '1px solid rgba(255,255,255,0.15)',
+                border: isPersonalMode ? '1.5px solid rgba(159,213,178,0.5)' : '1px solid var(--color-border)',
               }}
             >
               {avatarUrl ? (
@@ -114,14 +114,14 @@ export default function ProfileSwitcher({ user, onSelect, className = '' }) {
             <div className="min-w-0 flex-1">
               <p
                 className={`truncate leading-tight font-medium ${
-                  isPersonalMode ? 'text-white font-semibold' : 'text-white/80 group-hover:text-white'
+                  isPersonalMode ? 'text-text-primary font-semibold' : 'text-text-secondary group-hover:text-text-primary'
                 }`}
                 style={{ fontSize: '12px' }}
               >
                 {user?.name || 'Personal Profile'}
               </p>
               <p
-                className="font-mono text-white/40 truncate leading-tight mt-0.5"
+                className="font-mono text-text-muted truncate leading-tight mt-0.5"
                 style={{ fontSize: '9.5px' }}
               >
                 {user?.username ? `@${user.username}` : 'Personal account'}
@@ -139,7 +139,7 @@ export default function ProfileSwitcher({ user, onSelect, className = '' }) {
             </span>
           ) : (
             <span
-              className="font-mono text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded text-white/30 group-hover:text-white/50"
+              className="font-mono text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded text-text-faint group-hover:text-text-secondary"
             >
               Switch
             </span>
@@ -160,7 +160,7 @@ export default function ProfileSwitcher({ user, onSelect, className = '' }) {
               className={`w-full flex items-center justify-between gap-2.5 px-2.5 py-1.5 rounded-xl transition-all duration-150 text-left cursor-pointer group focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-mint/50 ${
                 isSelected
                   ? 'bg-brand-mint/[0.09] border border-brand-mint/30'
-                  : 'hover:bg-white/[0.035] border border-transparent text-white/70'
+                  : 'hover:bg-surface-elevated border border-transparent text-text-secondary'
               }`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
@@ -170,7 +170,7 @@ export default function ProfileSwitcher({ user, onSelect, className = '' }) {
                   style={{
                     width: '26px',
                     height: '26px',
-                    border: isSelected ? '1.5px solid rgba(159,213,178,0.5)' : '1px solid rgba(255,255,255,0.1)',
+                    border: isSelected ? '1.5px solid rgba(159,213,178,0.5)' : '1px solid var(--color-border)',
                   }}
                 >
                   <BusinessLogo
@@ -184,14 +184,14 @@ export default function ProfileSwitcher({ user, onSelect, className = '' }) {
                 <div className="min-w-0 flex-1">
                   <p
                     className={`truncate leading-tight font-medium ${
-                      isSelected ? 'text-white font-semibold' : 'text-white/80 group-hover:text-white'
+                      isSelected ? 'text-text-primary font-semibold' : 'text-text-secondary group-hover:text-text-primary'
                     }`}
                     style={{ fontSize: '12px' }}
                   >
                     {biz.name}
                   </p>
                   <p
-                    className="font-mono text-white/40 truncate leading-tight mt-0.5"
+                    className="font-mono text-text-muted truncate leading-tight mt-0.5"
                     style={{ fontSize: '9.5px' }}
                   >
                     @{biz.slug || 'business'}
@@ -209,7 +209,7 @@ export default function ProfileSwitcher({ user, onSelect, className = '' }) {
                 </span>
               ) : (
                 <span
-                  className="font-mono text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded text-white/30 group-hover:text-white/50"
+                  className="font-mono text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded text-text-faint group-hover:text-text-secondary"
                 >
                   Switch
                 </span>

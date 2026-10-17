@@ -70,7 +70,7 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
           }
         }}
         aria-label={`Masterclass: ${course.name}`}
-        className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/[0.08] hover:border-brand-mint/40 bg-gradient-to-b from-[#0D141A] to-[#0A0F14] cursor-pointer w-full transition-all duration-300 shadow-md hover:-translate-y-1 hover:shadow-2xl focus-ring"
+        className="group relative flex flex-col overflow-hidden rounded-2xl border border-border hover:border-brand-mint/40 bg-surface-card cursor-pointer w-full transition-all duration-300 shadow-md hover:-translate-y-1 hover:shadow-2xl focus-ring"
       >
         {/* Subtle top hairline */}
         <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-brand-mint/20 to-transparent pointer-events-none" />
@@ -82,7 +82,7 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
 
         {/* ── 16:9 Media Cover ── */}
         <div
-          className="relative aspect-video w-full shrink-0 overflow-hidden bg-bg-elevated"
+          className="relative aspect-video w-full shrink-0 overflow-hidden bg-surface-elevated"
           style={{ aspectRatio: "16 / 9" }}
         >
           <OptimizedImage
@@ -92,7 +92,7 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
             className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
           {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0D141A] via-transparent to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
 
           {/* Badges */}
           <div className="absolute left-3 top-3 z-10 flex flex-wrap gap-1.5">
@@ -119,11 +119,11 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
               <span>
                 {chapterCount} {chapterCount === 1 ? "Chapter" : "Chapters"}
               </span>
-              <span className="text-white/20">•</span>
+              <span className="text-text-faint">•</span>
               <span>Self-Paced</span>
             </div>
 
-            <h3 className="font-heading text-lg font-extrabold text-white tracking-tight leading-snug line-clamp-2 group-hover:text-brand-mint transition-colors">
+            <h3 className="font-heading text-lg font-extrabold text-text-primary tracking-tight leading-snug line-clamp-2 group-hover:text-brand-mint transition-colors">
               {course.name}
             </h3>
 
@@ -134,15 +134,15 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
             )}
           </div>
 
-          <div className="space-y-3 pt-2 border-t border-white/[0.06]">
+          <div className="space-y-3 pt-2 border-t border-border">
             {/* Progress line if enrolled */}
             {purchased && (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-[10px] font-mono text-text-muted uppercase">
                   <span>{completed ? "Status" : "Progress"}</span>
-                  <span className="font-bold text-white">{progress}%</span>
+                  <span className="font-bold text-text-primary">{progress}%</span>
                 </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated border border-border/40">
                   <div
                     className="h-full rounded-full bg-brand-mint transition-all duration-500"
                     style={{ width: `${progress}%` }}
@@ -159,7 +159,7 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
                   e.stopPropagation();
                   navigate(`/courses/${course._id}/chapters`);
                 }}
-                className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-brand-mint/10 border border-brand-mint/30 text-brand-mint hover:bg-brand-mint hover:text-black transition-all cursor-pointer shadow-sm"
+                className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-brand-mint/10 border border-brand-mint/30 text-brand-mint hover:bg-brand-mint hover:text-bg-base transition-all cursor-pointer shadow-sm min-h-[44px]"
               >
                 {completed ? (
                   <>
@@ -182,7 +182,7 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
                     e.stopPropagation();
                     navigate(`/courses/${course._id}/chapters`);
                   }}
-                  className="w-full inline-flex items-center justify-center py-2.5 rounded-xl text-xs font-heading font-extrabold uppercase tracking-wider bg-brand-yellow text-black hover:bg-brand-yellow/90 shadow-sm transition-all cursor-pointer active:scale-[0.98]"
+                  className="w-full inline-flex items-center justify-center py-2.5 rounded-xl text-xs font-heading font-extrabold uppercase tracking-wider bg-brand-yellow text-bg-base hover:bg-brand-yellow/90 shadow-sm transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
                 >
                   View
                 </button>
@@ -192,7 +192,7 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
                     e.stopPropagation();
                     setEnquiryModalOpen(true);
                   }}
-                  className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider border border-white/[0.08] bg-white/[0.03] text-white hover:bg-white/[0.07] hover:border-brand-mint/30 transition-all cursor-pointer active:scale-[0.98]"
+                  className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider border border-border bg-surface-elevated text-text-primary hover:bg-surface-card hover:border-brand-mint/30 transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
                 >
                   <HelpCircle className="w-3 h-3 text-brand-mint" />
                   Enquire

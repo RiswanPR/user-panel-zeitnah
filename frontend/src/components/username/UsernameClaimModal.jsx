@@ -193,7 +193,7 @@ export default function UsernameClaimModal() {
                   </span>
                   <h2
                     id="claim-modal-title"
-                    className="mt-3 font-heading font-extrabold text-2xl sm:text-3xl text-white tracking-tight"
+                    className="mt-3 font-heading font-extrabold text-2xl sm:text-3xl text-text-primary tracking-tight"
                   >
                     Claim Your Zeitnah Identity
                   </h2>
@@ -218,7 +218,7 @@ export default function UsernameClaimModal() {
                   </span>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-[11px] text-text-secondary flex items-start gap-2.5 text-left">
+                <div className="p-3.5 rounded-xl bg-surface-elevated border border-border text-[11px] text-text-secondary flex items-start gap-2.5 text-left">
                   <ShieldCheck className="w-4 h-4 text-brand-mint shrink-0 mt-0.5" />
                   <p>
                     Your username will be used as your public Zeitnah identity. You can customize it now or change it later in your profile.
@@ -273,7 +273,7 @@ export default function UsernameClaimModal() {
                   <button
                     type="button"
                     onClick={() => setStage("reveal")}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-text-muted hover:text-white transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-text-muted hover:text-text-primary transition-colors cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Back</span>
@@ -284,7 +284,7 @@ export default function UsernameClaimModal() {
                 </div>
 
                 <div>
-                  <h2 className="font-heading font-extrabold text-2xl text-white tracking-tight">
+                  <h2 className="font-heading font-extrabold text-2xl text-text-primary tracking-tight">
                     Select Your Username
                   </h2>
                   <p className="mt-1.5 text-xs text-text-muted">
@@ -313,7 +313,7 @@ export default function UsernameClaimModal() {
                       }
                       maxLength={20}
                       placeholder="your_handle"
-                      className="w-full glass-input pl-10 pr-10 py-3 text-sm font-medium tracking-wide text-white"
+                      className="w-full glass-input pl-10 pr-10 py-3 text-sm font-medium tracking-wide text-text-primary"
                     />
                     <div className="absolute right-3">
                       {isChecking && (
@@ -381,7 +381,7 @@ export default function UsernameClaimModal() {
                   <button
                     type="button"
                     onClick={() => setStage("reveal")}
-                    className="w-full py-2 text-xs font-semibold text-text-muted hover:text-white transition-colors cursor-pointer"
+                    className="w-full py-2 text-xs font-semibold text-text-muted hover:text-text-primary transition-colors cursor-pointer"
                   >
                     Cancel & Return
                   </button>

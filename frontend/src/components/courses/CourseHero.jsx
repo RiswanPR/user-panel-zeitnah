@@ -49,12 +49,12 @@ const CourseHero = memo(function CourseHero({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: easePremium }}
       aria-label="Zeitnah Courses Hero"
-      className="relative overflow-hidden rounded-3xl zn-hero-panel bg-technical-grid p-6 sm:p-10 lg:p-14"
+      className="relative overflow-hidden rounded-3xl bg-surface-card border border-border p-6 sm:p-10 lg:p-14"
     >
       {/* ── AMBIENT GLOWS ── */}
       <div className="pointer-events-none absolute -top-32 -left-32 w-96 h-96 rounded-full bg-brand-mint/10 blur-[120px] mix-blend-screen" />
       <div className="pointer-events-none absolute -bottom-32 -right-20 w-96 h-96 rounded-full bg-brand-yellow/8 blur-[130px] mix-blend-screen" />
-      <div className="pointer-events-none absolute top-1/2 left-1/3 -translate-y-1/2 w-[500px] h-[300px] bg-brand-navy/60 blur-[100px]" />
+      <div className="pointer-events-none absolute top-1/2 left-1/3 -translate-y-1/2 w-[500px] h-[300px] bg-brand-mint/5 blur-[100px]" />
 
       {/* ── SPATIAL ORGANIC Z MOTIF (Large-scale, low opacity, asymmetrical bleed) ── */}
       <div className="pointer-events-none absolute -right-16 sm:-right-8 -bottom-20 sm:-bottom-16 w-80 sm:w-96 md:w-[480px] h-80 sm:h-96 md:h-[480px] select-none">
@@ -73,7 +73,7 @@ const CourseHero = memo(function CourseHero({
             initial={{ opacity: 0, x: -12 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.1, ease: easePremium }}
-            className="inline-flex items-center gap-2.5 rounded-full bg-[#12314C]/70 border border-brand-mint/25 px-3.5 py-1.5 backdrop-blur-md shadow-sm"
+            className="inline-flex items-center gap-2.5 rounded-full bg-brand-mint/10 border border-brand-mint/25 px-3.5 py-1.5 backdrop-blur-md shadow-sm"
           >
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-mint opacity-75" />
@@ -91,12 +91,12 @@ const CourseHero = memo(function CourseHero({
             transition={{ duration: 0.65, delay: 0.18, ease: easePremium }}
             className="space-y-1"
           >
-            <h1 className="display-headline text-4xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white leading-[0.92]">
+            <h1 className="display-headline text-4xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-text-primary leading-[0.92]">
               BUILD
               <br />
-              <span className="text-white/40">CONNECT</span>
+              <span className="text-text-muted/60">CONNECT</span>
               <br />
-              <span className="bg-gradient-to-r from-white via-white to-brand-mint bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-text-primary via-text-primary to-brand-mint bg-clip-text text-transparent">
                 DISCOVER.
               </span>
             </h1>
@@ -128,7 +128,7 @@ const CourseHero = memo(function CourseHero({
                   label: "COURSES",
                   value: String(stats.total).padStart(2, "0"),
                   icon: BookOpen,
-                  accent: "text-white",
+                  accent: "text-text-primary",
                 },
                 {
                   label: "ENROLLED",
@@ -145,7 +145,7 @@ const CourseHero = memo(function CourseHero({
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-2xl border border-white/[0.08] bg-[#0A0F14]/80 backdrop-blur-xl p-3 sm:p-4 flex flex-col justify-between transition-all hover:border-brand-mint/25 group"
+                  className="rounded-2xl border border-border bg-surface-elevated p-3 sm:p-4 flex flex-col justify-between transition-all hover:border-brand-mint/25 group"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[9px] sm:text-[10px] font-mono font-bold tracking-[0.18em] text-text-muted">
@@ -153,7 +153,7 @@ const CourseHero = memo(function CourseHero({
                     </span>
                     <item.icon className={`w-3.5 h-3.5 ${item.accent} opacity-80 group-hover:opacity-100 transition-opacity`} />
                   </div>
-                  <p className="font-heading font-extrabold text-2xl sm:text-3xl text-white tracking-tight font-mono">
+                  <p className="font-heading font-extrabold text-2xl sm:text-3xl text-text-primary tracking-tight font-mono">
                     {item.value}
                   </p>
                 </div>
@@ -163,7 +163,7 @@ const CourseHero = memo(function CourseHero({
 
           {/* Real Learning Signal Instrument (Zero fabricated numbers) */}
           {learningSignal && (
-            <div className="rounded-2xl border border-brand-mint/20 bg-[#12314C]/40 backdrop-blur-xl p-4 space-y-2.5 shadow-sm">
+            <div className="rounded-2xl border border-brand-mint/20 bg-surface-elevated p-4 space-y-2.5 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Activity className="w-3.5 h-3.5 text-brand-mint" />
@@ -171,13 +171,13 @@ const CourseHero = memo(function CourseHero({
                     LEARNING SIGNAL
                   </span>
                 </div>
-                <span className="text-xs font-mono font-extrabold text-white">
+                <span className="text-xs font-mono font-extrabold text-text-primary">
                   {learningSignal.averageProgress}% AVG
                 </span>
               </div>
 
               {/* Progress Line */}
-              <div className="h-1.5 w-full rounded-full bg-white/[0.06] overflow-hidden">
+              <div className="h-1.5 w-full rounded-full bg-surface-card border border-border/40 overflow-hidden">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-brand-mint to-brand-yellow transition-all duration-1000 ease-out"
                   style={{ width: `${learningSignal.averageProgress}%` }}

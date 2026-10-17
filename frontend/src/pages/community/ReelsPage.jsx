@@ -8,7 +8,7 @@ import ReelsViewer from '../../components/community/reels/ReelsViewer';
 const ReelPageLoader = () => (
   <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
     <div className="relative">
-      <div className="w-10 h-10 rounded-full border-2 border-white/[0.06]" />
+      <div className="w-10 h-10 rounded-full border-2 border-border" />
       <div className="absolute inset-0 w-10 h-10 rounded-full border-2 border-transparent border-t-brand-mint animate-spin" />
     </div>
     <span className="text-xs text-text-muted font-medium">Loading Reels...</span>
@@ -93,7 +93,7 @@ export default function ReelsPage() {
   // Loading state when direct deep-link is requested
   if (postId && isDirectPostLoading && !directPost) {
     return (
-      <div className="fixed inset-0 bg-[#05070D] flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
         <ReelPageLoader />
       </div>
     );
@@ -102,7 +102,7 @@ export default function ReelsPage() {
   // Initial feed loading state
   if (isFeedLoading && videoPosts.length === 0) {
     return (
-      <div className="fixed inset-0 bg-[#05070D] flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
         <ReelPageLoader />
       </div>
     );

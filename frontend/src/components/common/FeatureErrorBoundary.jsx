@@ -128,13 +128,13 @@ class FeatureErrorBoundary extends React.Component {
       const featureTitle = this.props.featureName || "this section";
 
       return (
-        <div className="rounded-2xl border border-danger/20 bg-gradient-to-br from-danger/5 via-bg-card to-bg-card p-6 sm:p-8 text-center space-y-4 max-w-lg mx-auto my-8 shadow-xl">
+        <div className="rounded-2xl border border-danger/20 bg-gradient-to-br from-danger/5 via-surface-card to-surface-card p-6 sm:p-8 text-center space-y-4 max-w-lg mx-auto my-8 shadow-xl">
           <div className="w-12 h-12 rounded-2xl bg-danger/10 border border-danger/25 text-danger flex items-center justify-center mx-auto">
             <AlertCircle className="w-6 h-6" />
           </div>
 
           <div className="space-y-1">
-            <h3 className="text-lg font-heading font-bold text-white tracking-tight">
+            <h3 className="text-lg font-heading font-bold text-text-primary tracking-tight">
               Unable to load {featureTitle}
             </h3>
             <p className="text-xs sm:text-sm font-medium text-text-muted leading-relaxed">
@@ -146,7 +146,7 @@ class FeatureErrorBoundary extends React.Component {
             <button
               type="button"
               onClick={this.handleRetry}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-mint text-bg-base font-bold text-xs uppercase tracking-wider hover:bg-brand-mint/90 transition-all cursor-pointer shadow-sm"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs uppercase tracking-wider hover:bg-brand-mint/90 transition-all cursor-pointer shadow-sm"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               Retry Action
@@ -155,7 +155,7 @@ class FeatureErrorBoundary extends React.Component {
             <button
               type="button"
               onClick={() => this.setState({ showModal: true })}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-surface-elevated hover:bg-surface-card text-text-primary text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer"
             >
               <MessageSquare className="w-3.5 h-3.5 text-[#f6ed4a]" />
               Send Report

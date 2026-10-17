@@ -81,7 +81,7 @@ export default function StoryTextEditorModal({ isOpen, initialData, onSave, onCa
         <button
           type="button"
           onClick={handleDone}
-          className="min-h-[44px] min-w-[44px] px-4 py-1.5 rounded-full bg-brand-mint text-[#070B14] text-sm font-bold hover:opacity-90 transition-all cursor-pointer shadow-md"
+          className="min-h-[44px] min-w-[44px] px-4 py-1.5 rounded-full bg-brand-mint text-bg-base text-sm font-bold hover:opacity-90 transition-all cursor-pointer shadow-md"
         >
           Done
         </button>

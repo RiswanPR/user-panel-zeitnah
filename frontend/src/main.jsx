@@ -4,6 +4,7 @@ import App from "./App";
 import "./index.css";
 import "./App.css";
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import GlobalErrorBoundary from "./components/GlobalErrorBoundary";
 import storage from "./services/storage";
 
@@ -53,9 +54,11 @@ function isBrowserExtensionError(errorOrMessage, filename) {
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <GlobalErrorBoundary>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </ThemeProvider>
     </GlobalErrorBoundary>
   </React.StrictMode>
 );

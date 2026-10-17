@@ -29,18 +29,21 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }) {
         />
 
         <motion.div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Keyboard Shortcuts"
           initial={{ opacity: 0, scale: 0.96, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 10 }}
           transition={{ duration: 0.2 }}
-          className="relative w-full max-w-lg rounded-2xl sm:rounded-3xl border border-white/10 bg-bg-surface p-6 shadow-2xl shadow-black/80 z-10 space-y-5"
+          className="relative w-full max-w-lg rounded-2xl sm:rounded-3xl border border-border bg-surface-card p-6 shadow-2xl z-10 space-y-5"
         >
-          <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+          <div className="flex items-center justify-between pb-3 border-b border-border/60">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-brand-mint/10 border border-brand-mint/20 text-brand-mint flex items-center justify-center">
                 <Keyboard className="w-4 h-4" />
               </div>
-              <h3 className="font-heading font-bold text-base text-white">
+              <h3 className="font-heading font-bold text-base text-text-primary">
                 Keyboard Shortcuts
               </h3>
             </div>
@@ -48,7 +51,7 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }) {
               type="button"
               onClick={onClose}
               aria-label="Close keyboard shortcuts"
-              className="h-8 w-8 rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.08] text-white/60 hover:text-white flex items-center justify-center transition-all cursor-pointer focus-ring"
+              className="h-8 w-8 rounded-xl border border-border bg-surface-elevated/60 hover:bg-surface-elevated text-text-muted hover:text-text-primary flex items-center justify-center transition-all cursor-pointer focus-ring"
             >
               <X className="w-4 h-4" />
             </button>
@@ -58,10 +61,10 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }) {
             {shortcuts.map((sc, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl border border-white/[0.04] bg-white/[0.02]"
+                className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl border border-border/60 bg-surface-elevated/40"
               >
                 <span className="text-xs sm:text-sm text-text-secondary">{sc.action}</span>
-                <kbd className="px-2.5 py-1 rounded-lg border border-white/15 bg-white/[0.06] text-white font-mono text-[11px] font-bold shadow-xs">
+                <kbd className="px-2.5 py-1 rounded-lg border border-border bg-surface-elevated text-text-primary font-mono text-[11px] font-bold shadow-xs">
                   {sc.key}
                 </kbd>
               </div>
@@ -69,7 +72,7 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }) {
           </div>
 
           <div className="pt-2 text-center text-[11px] text-text-muted">
-            Press <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white font-mono">?</kbd> anywhere in the studio to toggle this dialog.
+            Press <kbd className="px-1.5 py-0.5 rounded bg-surface-elevated border border-border text-text-primary font-mono">?</kbd> anywhere in the studio to toggle this dialog.
           </div>
         </motion.div>
       </div>

@@ -79,10 +79,10 @@ export default function CreatorInsightsModal({ isOpen, onClose }) {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 8 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
-          className="w-full max-w-xl bg-[#090E1A] border border-white/[0.08] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+          className="w-full max-w-xl bg-surface-card border border-border rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 sm:p-5 border-b border-white/[0.06] bg-white/[0.01]">
+          <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border bg-surface-card">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-xl bg-brand-mint/10 border border-brand-mint/20 flex items-center justify-center text-brand-mint">
                 <BarChart2 className="w-5 h-5" />
@@ -90,7 +90,7 @@ export default function CreatorInsightsModal({ isOpen, onClose }) {
               <div>
                 <h2
                   id="creator-insights-title"
-                  className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2"
+                  className="text-base sm:text-lg font-bold text-text-primary tracking-tight flex items-center gap-2"
                 >
                   Creator Insights
                   <Badge variant="mint" size="sm">Verified</Badge>
@@ -104,7 +104,7 @@ export default function CreatorInsightsModal({ isOpen, onClose }) {
             <button
               type="button"
               onClick={onClose}
-              className="min-h-[44px] min-w-[44px] p-2 text-text-muted hover:text-white rounded-xl hover:bg-white/[0.06] transition-colors flex items-center justify-center cursor-pointer"
+              className="min-h-[44px] min-w-[44px] p-2 text-text-muted hover:text-text-primary rounded-xl hover:bg-surface-elevated transition-colors flex items-center justify-center cursor-pointer"
               aria-label="Close Creator Insights"
             >
               <X className="w-5 h-5" />
@@ -124,7 +124,7 @@ export default function CreatorInsightsModal({ isOpen, onClose }) {
                 <button
                   type="button"
                   onClick={() => refetch()}
-                  className="min-h-[44px] min-w-[44px] px-4 py-2 bg-white/[0.08] hover:bg-white/[0.14] text-xs font-semibold text-white rounded-xl transition-colors cursor-pointer"
+                  className="min-h-[44px] min-w-[44px] px-4 py-2 bg-surface-card hover:bg-surface-elevated text-xs font-semibold text-text-primary border border-border rounded-xl transition-colors cursor-pointer inline-flex items-center justify-center"
                 >
                   Try Again
                 </button>
@@ -134,64 +134,64 @@ export default function CreatorInsightsModal({ isOpen, onClose }) {
                 {/* Metrics Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
                   {/* Views */}
-                  <div className="p-3 sm:p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.05] hover:border-white/[0.1] transition-all">
+                  <div className="p-3 sm:p-3.5 rounded-xl bg-surface-elevated/40 border border-border hover:border-border-accent transition-all">
                     <div className="flex items-center gap-1.5 text-text-muted text-xs mb-1">
                       <Eye className="w-3.5 h-3.5 text-brand-mint" />
                       <span>Total Views</span>
                     </div>
-                    <p className="text-lg sm:text-xl font-bold font-mono text-white tracking-tight">
+                    <p className="text-lg sm:text-xl font-bold font-mono text-text-primary tracking-tight">
                       {overview.totalViews.toLocaleString()}
                     </p>
                   </div>
 
                   {/* Likes / Reactions */}
-                  <div className="p-3 sm:p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.05] hover:border-white/[0.1] transition-all">
+                  <div className="p-3 sm:p-3.5 rounded-xl bg-surface-elevated/40 border border-border hover:border-border-accent transition-all">
                     <div className="flex items-center gap-1.5 text-text-muted text-xs mb-1">
                       <Heart className="w-3.5 h-3.5 text-rose-400" />
                       <span>Reactions</span>
                     </div>
-                    <p className="text-lg sm:text-xl font-bold font-mono text-white tracking-tight">
+                    <p className="text-lg sm:text-xl font-bold font-mono text-text-primary tracking-tight">
                       {overview.totalLikes.toLocaleString()}
                     </p>
                   </div>
 
                   {/* Comments */}
-                  <div className="p-3 sm:p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.05] hover:border-white/[0.1] transition-all">
+                  <div className="p-3 sm:p-3.5 rounded-xl bg-surface-elevated/40 border border-border hover:border-border-accent transition-all">
                     <div className="flex items-center gap-1.5 text-text-muted text-xs mb-1">
                       <MessageCircle className="w-3.5 h-3.5 text-brand-yellow" />
                       <span>Comments</span>
                     </div>
-                    <p className="text-lg sm:text-xl font-bold font-mono text-white tracking-tight">
+                    <p className="text-lg sm:text-xl font-bold font-mono text-text-primary tracking-tight">
                       {overview.totalComments.toLocaleString()}
                     </p>
                   </div>
 
                   {/* Followers */}
-                  <div className="p-3 sm:p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.05] hover:border-white/[0.1] transition-all">
+                  <div className="p-3 sm:p-3.5 rounded-xl bg-surface-elevated/40 border border-border hover:border-border-accent transition-all">
                     <div className="flex items-center gap-1.5 text-text-muted text-xs mb-1">
                       <Users className="w-3.5 h-3.5 text-cyan-400" />
                       <span>Connections</span>
                     </div>
-                    <p className="text-lg sm:text-xl font-bold font-mono text-white tracking-tight">
+                    <p className="text-lg sm:text-xl font-bold font-mono text-text-primary tracking-tight">
                       {overview.totalFollowers.toLocaleString()}
                     </p>
                   </div>
                 </div>
 
                 {/* Secondary breakdown: Content types */}
-                <div className="flex items-center justify-between p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.05] text-xs">
+                <div className="flex items-center justify-between p-3.5 rounded-xl bg-surface-elevated/40 border border-border text-xs">
                   <span className="text-text-muted">Content Library:</span>
                   <div className="flex items-center gap-3">
-                    <span className="text-white font-medium">
+                    <span className="text-text-primary font-medium">
                       <strong>{overview.totalPosts}</strong> {overview.totalPosts === 1 ? 'post' : 'posts'}
                     </span>
-                    <span className="text-white/20">·</span>
-                    <span className="text-white font-medium flex items-center gap-1">
+                    <span className="text-text-faint">·</span>
+                    <span className="text-text-primary font-medium flex items-center gap-1">
                       <Film className="w-3 h-3 text-brand-mint" />
                       <strong>{overview.totalReels}</strong> {overview.totalReels === 1 ? 'reel' : 'reels'}
                     </span>
-                    <span className="text-white/20">·</span>
-                    <span className="text-white font-medium flex items-center gap-1">
+                    <span className="text-text-faint">·</span>
+                    <span className="text-text-primary font-medium flex items-center gap-1">
                       <Share2 className="w-3 h-3 text-brand-yellow" />
                       <strong>{overview.totalShares + overview.totalReposts}</strong> shares
                     </span>
@@ -206,7 +206,7 @@ export default function CreatorInsightsModal({ isOpen, onClose }) {
                   </h3>
 
                   {topPosts.length === 0 ? (
-                    <div className="p-6 rounded-xl bg-white/[0.01] border border-white/[0.04] text-center text-xs text-text-muted">
+                    <div className="p-6 rounded-xl bg-surface-elevated/40 border border-border text-center text-xs text-text-muted">
                       No posts published yet. Share an idea or reel to start seeing your reach!
                     </div>
                   ) : (
@@ -222,10 +222,10 @@ export default function CreatorInsightsModal({ isOpen, onClose }) {
                         return (
                           <div
                             key={post._id}
-                            className="p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/[0.05] transition-all flex items-center justify-between gap-3 text-xs"
+                            className="p-3 rounded-xl bg-surface-elevated/40 hover:bg-surface-elevated/80 border border-border transition-all flex items-center justify-between gap-3 text-xs"
                           >
                             <div className="min-w-0 flex-1">
-                              <p className="text-white font-medium line-clamp-1">
+                              <p className="text-text-primary font-medium line-clamp-1">
                                 {post.content || (isVideo ? 'Vertical Reel' : 'Shared media')}
                               </p>
                               <div className="flex items-center gap-2 mt-1 text-[11px] text-text-muted font-normal">
@@ -242,7 +242,7 @@ export default function CreatorInsightsModal({ isOpen, onClose }) {
                             </div>
 
                             <div className="flex items-center gap-3 shrink-0 font-mono text-[11px]">
-                              <span className="flex items-center gap-1 text-white">
+                              <span className="flex items-center gap-1 text-text-primary">
                                 <Eye className="w-3 h-3 text-text-muted" />
                                 {views.toLocaleString()}
                               </span>

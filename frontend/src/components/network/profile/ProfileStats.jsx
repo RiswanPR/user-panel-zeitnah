@@ -56,7 +56,7 @@ export default function ProfileStats({ stats }) {
         return (
           <div
             key={item.label}
-            className="rounded-2xl border border-white/[0.08] bg-bg-surface/90 p-4 shadow-lg backdrop-blur-xl"
+            className="rounded-2xl border border-border bg-surface-card p-4 shadow-lg backdrop-blur-xl"
           >
             <div className="flex items-center justify-between">
               <div
@@ -65,7 +65,7 @@ export default function ProfileStats({ stats }) {
                 <Icon className="h-4 w-4" aria-hidden="true" />
               </div>
             </div>
-            <p className="mt-3 text-xl sm:text-2xl font-heading font-black text-white">
+            <p className="mt-3 text-xl sm:text-2xl font-heading font-black text-text-primary">
               {item.value}
             </p>
             <p className="mt-0.5 text-[11px] font-medium text-text-muted">

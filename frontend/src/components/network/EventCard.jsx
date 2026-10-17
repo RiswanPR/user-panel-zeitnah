@@ -35,7 +35,7 @@ export default function EventCard({
       onClick={onViewDetails}
     >
       {/* Event Cover Image */}
-      <div className="relative aspect-[16/9] w-full overflow-hidden bg-[#0F1728]">
+      <div className="relative aspect-[16/9] w-full overflow-hidden bg-surface-elevated">
         {coverUrl ? (
           <img
             src={coverUrl}
@@ -43,12 +43,12 @@ export default function EventCard({
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[#12314C]/40 via-[#0B111E] to-[#070B14] flex items-center justify-center">
+          <div className="w-full h-full bg-gradient-to-br from-brand-navy/30 via-surface-card to-surface-elevated flex items-center justify-center">
             <Calendar className="w-10 h-10 text-brand-mint/40" />
           </div>
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0B111E] via-transparent to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-surface-card via-transparent to-transparent pointer-events-none" />
 
         {/* Event Type Badge */}
         <div className="absolute top-3 left-3">
@@ -85,7 +85,7 @@ export default function EventCard({
             )}
           </div>
 
-          <h3 className="text-base font-heading font-bold text-white group-hover:text-brand-mint transition-colors line-clamp-2">
+          <h3 className="text-base font-heading font-bold text-text-primary group-hover:text-brand-mint transition-colors line-clamp-2">
             {title}
           </h3>
 
@@ -99,14 +99,14 @@ export default function EventCard({
         </div>
 
         {/* Host Info & Footer CTA */}
-        <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between gap-3">
+        <div className="pt-3 border-t border-border flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-7 h-7 rounded-full bg-brand-mint/15 border border-brand-mint/30 flex items-center justify-center text-brand-mint text-[11px] font-bold shrink-0">
               {host.name ? host.name[0].toUpperCase() : 'Z'}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1">
-                <p className="text-xs font-semibold text-white/90 truncate">{host.name || 'Zeitnah Host'}</p>
+                <p className="text-xs font-semibold text-text-primary truncate">{host.name || 'Zeitnah Host'}</p>
                 {host.isVerified && <CheckCircle2 className="w-3 h-3 text-brand-mint shrink-0" />}
               </div>
               <p className="text-[10px] text-text-faint truncate">{host.organization || 'Ecosystem'}</p>
@@ -121,7 +121,7 @@ export default function EventCard({
             }}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all min-h-[36px] touch-manipulation cursor-pointer ${
               isAttending
-                ? 'bg-white/10 text-brand-mint border border-brand-mint/30'
+                ? 'bg-brand-mint/15 text-brand-mint border border-brand-mint/30'
                 : 'zn-btn-primary py-1 px-3 text-[11px]'
             }`}
           >

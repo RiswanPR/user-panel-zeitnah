@@ -21,13 +21,13 @@ export default function ExperienceSummaryCard({ experience = [], className = "" 
     <div
       data-testid="experience-summary-card"
       aria-label="Total Professional Experience Summary"
-      className={`rounded-2xl border border-white/[0.08] bg-[#0A0F18]/80 backdrop-blur-md p-4 sm:p-5 shadow-inner transition-all ${className}`}
+      className={`rounded-2xl border border-border bg-surface-card backdrop-blur-md p-4 sm:p-5 shadow-inner transition-all ${className}`}
     >
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 items-stretch">
         {/* Metric 1: Total Experience (Primary Metric) */}
         <div
           data-testid="experience-summary-total"
-          className="md:col-span-6 flex flex-col justify-between p-4 sm:p-4.5 rounded-xl bg-gradient-to-br from-brand-mint/[0.07] via-white/[0.02] to-transparent border border-brand-mint/25 shadow-sm group"
+          className="md:col-span-6 flex flex-col justify-between p-4 sm:p-4.5 rounded-xl bg-gradient-to-br from-brand-mint/[0.07] via-surface-elevated/40 to-transparent border border-brand-mint/25 shadow-sm group"
         >
           <div className="flex items-center justify-between gap-2 mb-2">
             <span className="text-[11px] font-mono uppercase font-bold tracking-wider text-brand-mint">
@@ -40,7 +40,7 @@ export default function ExperienceSummaryCard({ experience = [], className = "" 
           <div>
             <div
               data-testid="total-experience-value"
-              className="text-2xl sm:text-[26px] lg:text-3xl font-heading font-black text-white tracking-tight leading-tight whitespace-nowrap overflow-hidden text-ellipsis"
+              className="text-2xl sm:text-[26px] lg:text-3xl font-heading font-black text-text-primary tracking-tight leading-tight whitespace-nowrap overflow-hidden text-ellipsis"
             >
               {summary.formattedTotal}
             </div>
@@ -54,7 +54,7 @@ export default function ExperienceSummaryCard({ experience = [], className = "" 
         {/* Metric 2: Career Roles (Secondary Metric) */}
         <div
           data-testid="experience-summary-roles"
-          className="md:col-span-3 flex flex-col justify-between p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12] transition-colors group"
+          className="md:col-span-3 flex flex-col justify-between p-4 rounded-xl bg-surface-elevated/40 border border-border hover:border-border-accent transition-colors group"
         >
           <div className="flex items-center justify-between gap-2 mb-2">
             <span className="text-[11px] font-mono uppercase font-bold tracking-wider text-text-muted group-hover:text-text-secondary transition-colors">
@@ -67,7 +67,7 @@ export default function ExperienceSummaryCard({ experience = [], className = "" 
           <div>
             <div
               data-testid="career-roles-value"
-              className="text-xl sm:text-2xl font-heading font-bold text-white/95 tracking-tight leading-tight"
+              className="text-xl sm:text-2xl font-heading font-bold text-text-primary tracking-tight leading-tight"
             >
               {summary.totalRoles}
             </div>
@@ -80,7 +80,7 @@ export default function ExperienceSummaryCard({ experience = [], className = "" 
         {/* Metric 3: Current Roles (Secondary Metric) */}
         <div
           data-testid="experience-summary-current"
-          className="md:col-span-3 flex flex-col justify-between p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12] transition-colors group"
+          className="md:col-span-3 flex flex-col justify-between p-4 rounded-xl bg-surface-elevated/40 border border-border hover:border-border-accent transition-colors group"
         >
           <div className="flex items-center justify-between gap-2 mb-2">
             <span className="text-[11px] font-mono uppercase font-bold tracking-wider text-text-muted group-hover:text-text-secondary transition-colors">
@@ -93,7 +93,7 @@ export default function ExperienceSummaryCard({ experience = [], className = "" 
           <div>
             <div
               data-testid="current-roles-value"
-              className="text-xl sm:text-2xl font-heading font-bold text-white/95 tracking-tight leading-tight flex items-center gap-2"
+              className="text-xl sm:text-2xl font-heading font-bold text-text-primary tracking-tight leading-tight flex items-center gap-2"
             >
               <span>{summary.currentRoles}</span>
               {summary.currentRoles > 0 && (

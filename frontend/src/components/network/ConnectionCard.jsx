@@ -70,7 +70,7 @@ export default function ConnectionCard({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.2 }}
-      className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-bg-surface/90 p-5 shadow-lg backdrop-blur-xl transition-all duration-300 hover:border-brand-mint/30 hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
+      className="group relative flex flex-col justify-between rounded-2xl border border-border bg-surface-card p-5 shadow-lg backdrop-blur-xl transition-all duration-300 hover:border-brand-mint/30 hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
     >
       <div>
         {/* Header: Avatar, Name & Handles */}
@@ -81,12 +81,12 @@ export default function ConnectionCard({
               <img
                 src={student.avatarUrl}
                 alt={`${student.name}'s profile avatar`}
-                className="h-13 w-13 rounded-2xl object-cover border-2 border-white/[0.08] group-hover:border-brand-mint/40 transition-colors"
+                className="h-13 w-13 rounded-2xl object-cover border-2 border-border group-hover:border-brand-mint/40 transition-colors"
                 loading="lazy"
               />
             ) : (
               <div
-                className="flex h-13 w-13 items-center justify-center rounded-2xl border-2 border-white/[0.08] bg-gradient-to-br from-brand-mint/20 via-white/[0.06] to-brand-mint/5 font-heading font-bold text-white text-base group-hover:border-brand-mint/40 transition-colors"
+                className="flex h-13 w-13 items-center justify-center rounded-2xl border-2 border-border bg-surface-elevated font-heading font-bold text-text-primary text-base group-hover:border-brand-mint/40 transition-colors"
                 aria-hidden="true"
               >
                 {initials}
@@ -110,7 +110,7 @@ export default function ConnectionCard({
               to={getCanonicalProfileUrl(student)}
               className="block text-left group/link focus-ring rounded w-full"
             >
-              <h3 className="truncate text-base font-heading font-bold text-white group-hover/link:text-brand-mint transition-colors">
+              <h3 className="truncate text-base font-heading font-bold text-text-primary group-hover/link:text-brand-mint transition-colors">
                 {student.name}
               </h3>
             </Link>
@@ -128,7 +128,7 @@ export default function ConnectionCard({
               <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                 {displayIdentity.title && (
                   <span
-                    className="text-xs font-semibold text-white/90 truncate max-w-[200px]"
+                    className="text-xs font-semibold text-text-secondary truncate max-w-[200px]"
                     title={displayIdentity.title}
                   >
                     {displayIdentity.title}
@@ -157,9 +157,9 @@ export default function ConnectionCard({
 
         {/* Primary Course */}
         {student.course && (
-          <div className="mt-3 flex items-center gap-1.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-xs text-text-muted">
+          <div className="mt-3 flex items-center gap-1.5 rounded-xl border border-border bg-surface-elevated px-2.5 py-1.5 text-xs text-text-muted">
             <BookOpen className="h-3.5 w-3.5 text-brand-mint/80 shrink-0" aria-hidden="true" />
-            <span className="truncate font-medium text-white/80">{student.course}</span>
+            <span className="truncate font-medium text-text-secondary">{student.course}</span>
           </div>
         )}
 
@@ -171,12 +171,12 @@ export default function ConnectionCard({
       </div>
 
       {/* Action Footer */}
-      <div className="mt-5 pt-4 border-t border-white/[0.06] flex items-center justify-between gap-2">
+      <div className="mt-5 pt-4 border-t border-border flex items-center justify-between gap-2">
         {/* View Profile Action */}
         <button
           type="button"
           onClick={() => onPreview?.(student)}
-          className="flex items-center justify-center gap-1.5 rounded-xl border border-white/[0.1] bg-white/[0.04] py-2 px-3 text-xs font-semibold text-white hover:bg-white/[0.08] hover:border-brand-mint/30 transition-all focus-ring"
+          className="flex items-center justify-center gap-1.5 rounded-xl border border-border bg-surface-elevated py-2 px-3 text-xs font-semibold text-text-primary hover:bg-surface-card hover:border-brand-mint/30 transition-all focus-ring"
         >
           <span>View Profile</span>
         </button>
@@ -196,7 +196,7 @@ export default function ConnectionCard({
             <Link
               to={getCanonicalProfileUrl(student)}
               aria-label={`Open ${student.name}'s profile`}
-              className="flex items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] p-2 text-text-muted hover:border-brand-mint/30 hover:bg-white/[0.06] hover:text-white transition-all focus-ring"
+              className="flex items-center justify-center rounded-xl border border-border bg-surface-elevated p-2 text-text-muted hover:border-brand-mint/30 hover:bg-surface-card hover:text-text-primary transition-all focus-ring"
               title="Open full profile"
             >
               <ExternalLink className="h-4 w-4" aria-hidden="true" />

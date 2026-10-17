@@ -29,14 +29,14 @@ export default function DiscoverySidebar({
       <button
         type="button"
         onClick={onOpenSearch}
-        className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl bg-white/[0.025] hover:bg-white/[0.05] border border-white/[0.06] hover:border-brand-mint/30 text-left transition-all duration-150 flex items-center justify-between group cursor-pointer"
+        className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl bg-surface-card hover:bg-surface-elevated border border-border hover:border-brand-mint/30 text-left transition-all duration-150 flex items-center justify-between group cursor-pointer"
         aria-label="Open search dialog"
       >
-        <div className="flex items-center gap-2.5 text-xs text-text-muted/80 group-hover:text-white transition-colors">
+        <div className="flex items-center gap-2.5 text-xs text-text-muted/80 group-hover:text-text-primary transition-colors">
           <Search className="w-4 h-4 text-brand-mint shrink-0" />
           <span className="truncate">Search posts, peers, topics...</span>
         </div>
-        <kbd className="hidden xl:inline-block px-1.5 py-0.5 text-[10px] font-mono rounded bg-white/[0.06] text-text-faint group-hover:text-white transition-colors">
+        <kbd className="hidden xl:inline-block px-1.5 py-0.5 text-[10px] font-mono rounded bg-surface-elevated border border-border text-text-faint group-hover:text-text-primary transition-colors">
           ⌘K
         </kbd>
       </button>
@@ -49,7 +49,7 @@ export default function DiscoverySidebar({
           ${
             activeFilter === 'trending'
               ? 'bg-gradient-to-r from-amber-500/15 to-orange-500/10 border-amber-500/30 text-amber-300 font-semibold shadow-sm'
-              : 'bg-white/[0.02] hover:bg-white/[0.04] border-white/[0.05] hover:border-amber-500/25 text-text-secondary hover:text-white'
+              : 'bg-surface-card hover:bg-surface-elevated border-border hover:border-amber-500/25 text-text-secondary hover:text-text-primary'
           }
         `}
       >
@@ -62,7 +62,7 @@ export default function DiscoverySidebar({
             <p className="text-[10px] text-text-faint/80">Ranked by real network engagement</p>
           </div>
         </div>
-        <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-white/[0.04] text-text-muted">
+        <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-surface-elevated border border-border text-text-muted">
           {activeFilter === 'trending' ? 'Active' : 'Explore'}
         </span>
       </Link>
@@ -76,9 +76,9 @@ export default function DiscoverySidebar({
 
       {/* 4. Suggested People to Connect With */}
       {suggestedPeople.length > 0 && (
-        <div className="p-4 rounded-2xl bg-[#0B111E]/70 border border-white/[0.05]">
+        <div className="p-4 rounded-2xl bg-surface-card/90 border border-border">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center gap-2">
               <Users className="w-3.5 h-3.5 text-brand-mint" />
               <span>People to Discover</span>
             </h4>
@@ -102,7 +102,7 @@ export default function DiscoverySidebar({
       <DiscoveryLinks onOpenSearch={onOpenSearch} />
 
       {/* 6. Discussion Standards footnote */}
-      <div className="p-3.5 rounded-xl bg-white/[0.015] border border-white/[0.04] text-[11px] text-text-faint/80 space-y-1.5">
+      <div className="p-3.5 rounded-xl bg-surface-card/60 border border-border text-[11px] text-text-faint/80 space-y-1.5">
         <div className="flex items-center gap-1.5 font-semibold text-text-muted/90">
           <BookOpen className="w-3.5 h-3.5 text-brand-mint" />
           <span>Discussion Standards</span>

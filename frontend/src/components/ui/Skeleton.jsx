@@ -32,7 +32,7 @@ export function SkeletonCircle({ size = 48, className = '' }) {
 
 export function SkeletonCard({ className = '' }) {
   return (
-    <div className={`rounded-2xl border border-white/[0.06] bg-bg-card/70 p-5 space-y-4 ${className}`}>
+    <div className={`rounded-2xl border border-border bg-surface-card p-5 space-y-4 ${className}`}>
       <div className="shimmer h-40 rounded-xl" />
       <div className="space-y-2">
         <div className="shimmer h-4 w-3/4 rounded" />
@@ -54,7 +54,7 @@ export function SkeletonImage({ className = '', aspectRatio = '16/9' }) {
 
 export function SkeletonProfile({ className = '' }) {
   return (
-    <div className={`rounded-2xl border border-white/[0.06] bg-bg-card/80 p-6 space-y-6 ${className}`}>
+    <div className={`rounded-2xl border border-border bg-surface-card p-6 space-y-6 ${className}`}>
       <div className="flex items-center gap-4">
         <SkeletonCircle size={72} />
         <div className="space-y-2 flex-1">
@@ -77,7 +77,7 @@ export function SkeletonList({ count = 4, className = '' }) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="rounded-xl border border-white/[0.06] bg-bg-card/60 p-4 flex items-center justify-between gap-4"
+          className="rounded-xl border border-border bg-surface-card p-4 flex items-center justify-between gap-4"
         >
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <SkeletonCircle size={40} />
@@ -96,7 +96,7 @@ export function SkeletonList({ count = 4, className = '' }) {
 export function SkeletonPage({ className = '' }) {
   return (
     <div className={`space-y-6 ${className}`}>
-      <div className="space-y-2 pb-4 border-b border-white/[0.06]">
+      <div className="space-y-2 pb-4 border-b border-border">
         <div className="shimmer h-3 w-24 rounded-full" />
         <div className="shimmer h-8 w-64 rounded-lg" />
         <div className="shimmer h-4 w-96 max-w-full rounded" />

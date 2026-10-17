@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ShieldCheck, FileText, Laptop } from "lucide-react";
+import { ShieldCheck, FileText, Laptop, Palette } from "lucide-react";
 
 export const ACCOUNT_SECTIONS = [
   {
@@ -24,6 +24,13 @@ export const ACCOUNT_SECTIONS = [
     description: "Authorized devices & sign-in management",
     path: "/profile/account?section=sessions",
   },
+  {
+    id: "appearance",
+    label: "Appearance",
+    icon: Palette,
+    description: "Theme preferences & visual display mode",
+    path: "/profile/account?section=appearance",
+  },
 ];
 
 /**
@@ -39,7 +46,7 @@ export default function AccountNav({
   return (
     <nav
       aria-label="Account sections navigation"
-      className={`relative w-full rounded-2xl border border-white/[0.08] bg-[#070B14]/90 backdrop-blur-xl p-1.5 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.35)] transition-all ${className}`}
+      className={`relative w-full rounded-2xl border border-border bg-surface/85 backdrop-blur-xl p-1.5 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.18)] transition-all ${className}`}
     >
       {/* Subtle top ambient mint gradient line */}
       <div
@@ -87,8 +94,8 @@ export default function AccountNav({
 
           const sharedClasses = `relative flex-1 min-w-[120px] sm:min-w-0 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-[13px] font-semibold tracking-wide whitespace-nowrap transition-all duration-200 cursor-pointer min-h-[42px] focus-ring select-none ${
             isActive
-              ? "text-white font-bold"
-              : "text-text-muted hover:text-text-secondary hover:bg-white/[0.04]"
+              ? "text-text-primary font-bold"
+              : "text-text-muted hover:text-text-secondary hover:bg-surface-elevated/50"
           }`;
 
           if (onSelectSection) {

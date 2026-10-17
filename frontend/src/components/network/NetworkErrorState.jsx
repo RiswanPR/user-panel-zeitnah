@@ -30,7 +30,7 @@ export default function NetworkErrorState({
         <AlertTriangle className="h-6 w-6" aria-hidden="true" />
       </div>
 
-      <h3 className="text-base sm:text-lg font-heading font-bold text-white mb-1.5">
+      <h3 className="text-base sm:text-lg font-heading font-bold text-text-primary mb-1.5">
         {title}
       </h3>
 

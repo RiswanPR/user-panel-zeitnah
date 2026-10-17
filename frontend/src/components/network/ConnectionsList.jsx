@@ -161,7 +161,7 @@ export default function ConnectionsList({ onPreview, onSwitchToDiscover }) {
       {/* Editorial Header */}
       <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
         <div>
-          <h2 className="text-xl sm:text-2xl font-heading font-extrabold text-white tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-heading font-extrabold text-text-primary tracking-tight">
             Connections
           </h2>
           <p className="text-xs sm:text-sm text-text-secondary mt-0.5">
@@ -171,7 +171,7 @@ export default function ConnectionsList({ onPreview, onSwitchToDiscover }) {
       </div>
 
       {/* Sub-Tabs Bar & Search */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-b border-border pb-4">
         {/* Navigation Pill Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
           {SUB_TABS.map((tab) => {
@@ -188,8 +188,8 @@ export default function ConnectionsList({ onPreview, onSwitchToDiscover }) {
                 }}
                 className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-semibold transition-all focus-ring shrink-0 ${
                   isActive
-                    ? "bg-brand-mint/15 text-white border border-brand-mint/30 shadow-[0_0_12px_rgba(159,213,178,0.1)]"
-                    : "text-text-muted hover:text-white hover:bg-white/[0.04] border border-transparent"
+                    ? "bg-brand-mint/15 text-text-primary border border-brand-mint/30 shadow-[0_0_12px_rgba(159,213,178,0.1)]"
+                    : "text-text-muted hover:text-text-primary hover:bg-surface-elevated border border-transparent"
                 }`}
               >
                 <Icon
@@ -204,8 +204,8 @@ export default function ConnectionsList({ onPreview, onSwitchToDiscover }) {
                       tab.highlight
                         ? "bg-brand-mint text-bg-base"
                         : isActive
-                        ? "bg-white/[0.1] text-white"
-                        : "bg-white/[0.06] text-text-muted"
+                        ? "bg-brand-mint/20 text-brand-mint"
+                        : "bg-surface-elevated text-text-muted"
                     }`}
                   >
                     {tab.count}
@@ -227,7 +227,7 @@ export default function ConnectionsList({ onPreview, onSwitchToDiscover }) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={`Filter ${subTab}...`}
-            className="w-full rounded-xl border border-white/[0.08] bg-bg-surface/80 py-2 pl-9 pr-3 text-xs text-white placeholder:text-text-muted focus:border-brand-mint/40 focus:outline-none focus:ring-1 focus:ring-brand-mint/40 transition-all"
+            className="w-full rounded-xl border border-border bg-surface-elevated py-2 pl-9 pr-3 text-xs text-text-primary placeholder:text-text-muted focus:border-brand-mint/40 focus:outline-none focus:ring-1 focus:ring-brand-mint/40 transition-all"
           />
         </div>
       </div>

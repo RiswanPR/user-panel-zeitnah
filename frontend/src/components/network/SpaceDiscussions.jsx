@@ -50,7 +50,7 @@ export default function SpaceDiscussions({
       {/* Header & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="font-heading font-bold text-lg text-white">Space Discussions</h2>
+          <h2 className="font-heading font-bold text-lg text-text-primary">Space Discussions</h2>
           <p className="text-xs text-text-muted mt-0.5">Academic conversations, questions, and peer problem-solving.</p>
         </div>
 
@@ -74,7 +74,7 @@ export default function SpaceDiscussions({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search discussions by topic or keyword..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] focus:border-brand-mint/40 text-xs text-white placeholder-text-muted focus:outline-none transition-colors"
+            className="w-full pl-10 pr-4 py-2 rounded-xl bg-surface-elevated border border-border focus:border-brand-mint/40 text-xs text-text-primary placeholder:text-text-muted focus:outline-none transition-colors"
           />
         </div>
 
@@ -85,8 +85,8 @@ export default function SpaceDiscussions({
               onClick={() => setSelectedType(cat)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 selectedType === cat
-                  ? 'bg-white/10 text-white border border-white/20'
-                  : 'bg-white/[0.02] text-text-muted hover:text-white border border-transparent'
+                  ? 'bg-brand-mint/15 text-brand-mint border border-brand-mint/30'
+                  : 'bg-surface-elevated text-text-muted hover:text-text-primary border border-border'
               }`}
             >
               {cat === 'all' ? 'All' : cat.replace('_', ' ').toUpperCase()}
@@ -99,15 +99,15 @@ export default function SpaceDiscussions({
       {isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-28 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+            <div key={i} className="h-28 rounded-2xl bg-surface-card border border-border animate-pulse" />
           ))}
         </div>
       ) : filteredDiscussions.length === 0 ? (
-        <div className="rounded-2xl bg-[#111115]/60 border border-white/[0.06] p-12 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-3 text-text-faint">
+        <div className="rounded-2xl bg-surface-card border border-border p-12 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center mx-auto mb-3 text-text-faint">
             <MessageSquare className="w-6 h-6" />
           </div>
-          <h3 className="font-heading font-bold text-base text-white">No discussions found</h3>
+          <h3 className="font-heading font-bold text-base text-text-primary">No discussions found</h3>
           <p className="text-xs text-text-muted mt-1 max-w-sm mx-auto">
             {searchQuery ? 'Try modifying your search or filter.' : 'Be the first to start an academic discussion in this space!'}
           </p>
@@ -118,11 +118,11 @@ export default function SpaceDiscussions({
             <Link
               key={disc._id}
               to={`/network/spaces/${spaceIdOrSlug}/discussions/${disc._id}`}
-              className="group block p-5 rounded-2xl bg-[#111115]/80 hover:bg-[#141419] border border-white/[0.06] hover:border-brand-mint/30 transition-all duration-200"
+              className="group block p-5 rounded-2xl bg-surface-card hover:bg-surface-elevated border border-border hover:border-brand-mint/30 transition-all duration-200"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-brand-mint font-bold text-xs shrink-0 overflow-hidden mt-0.5">
+                  <div className="w-8 h-8 rounded-xl bg-surface-elevated border border-border flex items-center justify-center text-brand-mint font-bold text-xs shrink-0 overflow-hidden mt-0.5">
                     {disc.authorId?.avatar || disc.authorId?.profileImage ? (
                       <img src={disc.authorId.avatar || disc.authorId.profileImage} alt={disc.authorId.name} className="w-full h-full object-cover" />
                     ) : (
@@ -144,7 +144,7 @@ export default function SpaceDiscussions({
                       </span>
                     </div>
 
-                    <h3 className="text-sm font-bold text-white group-hover:text-brand-mint transition-colors mt-1.5 line-clamp-1">
+                    <h3 className="text-sm font-bold text-text-primary group-hover:text-brand-mint transition-colors mt-1.5 line-clamp-1">
                       {disc.title}
                     </h3>
 
@@ -154,7 +154,7 @@ export default function SpaceDiscussions({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-lg bg-white/[0.03] text-xs font-semibold text-text-muted group-hover:text-brand-mint transition-colors">
+                <div className="flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-lg bg-surface-elevated border border-border text-xs font-semibold text-text-muted group-hover:text-brand-mint transition-colors">
                   <MessageCircle className="w-3.5 h-3.5" />
                   <span>{disc.replyCount || 0}</span>
                 </div>

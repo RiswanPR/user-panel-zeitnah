@@ -167,7 +167,7 @@ export default function NetworkPage() {
       subLabel: "Candidates & Peers",
       icon: Users,
       badge: countsData?.incomingRequestsCount > 0 ? `${countsData.incomingRequestsCount} new` : null,
-      badgeColor: "bg-[#F6ED4A]/15 text-[#F6ED4A] border-[#F6ED4A]/30",
+      badgeColor: "bg-brand-yellow/15 text-brand-yellow border-brand-yellow/30",
     },
     {
       id: "opportunities",
@@ -175,7 +175,7 @@ export default function NetworkPage() {
       subLabel: "Industry Roles & Jobs",
       icon: Briefcase,
       badge: opportunities.length > 0 ? `${opportunities.length}` : null,
-      badgeColor: "bg-white/[0.08] text-white/80 border-white/[0.1]",
+      badgeColor: "bg-surface-elevated text-text-secondary border-border",
     },
     {
       id: "organizations",
@@ -183,7 +183,7 @@ export default function NetworkPage() {
       subLabel: "Consultancies & Colleges",
       icon: Building2,
       badge: organizations.length > 0 ? `${organizations.length}` : null,
-      badgeColor: "bg-white/[0.08] text-white/80 border-white/[0.1]",
+      badgeColor: "bg-surface-elevated text-text-secondary border-border",
     },
   ];
 
@@ -208,7 +208,7 @@ export default function NetworkPage() {
       {/* ── 2. NETWORK COMMAND CENTER ── */}
       <section aria-label="Network Command Center" className="space-y-6">
         {/* ── PRIMARY NAVIGATION STRIP ── */}
-        <div className="relative border-b border-white/[0.08]">
+        <div className="relative border-b border-border">
           <nav
             role="tablist"
             aria-label="Primary Network Navigation"
@@ -228,13 +228,13 @@ export default function NetworkPage() {
                   onClick={() => setPrimaryTab(tab.id)}
                   className={`group relative flex items-center gap-3 px-5 py-3.5 rounded-t-2xl font-degular-black text-sm sm:text-base tracking-wide uppercase transition-all duration-200 cursor-pointer min-h-[48px] select-none shrink-0 focus-ring ${
                     isActive
-                      ? "text-white bg-[#0A0F14] border-t border-x border-white/[0.1] shadow-lg"
-                      : "text-text-muted hover:text-white hover:bg-white/[0.02]"
+                      ? "text-text-primary bg-surface-card border-t border-x border-border shadow-lg"
+                      : "text-text-muted hover:text-text-primary hover:bg-surface-elevated/40"
                   }`}
                 >
                   <Icon
                     className={`w-4 h-4 transition-colors shrink-0 ${
-                      isActive ? "text-brand-mint" : "text-text-muted group-hover:text-white"
+                      isActive ? "text-brand-mint" : "text-text-muted group-hover:text-text-primary"
                     }`}
                     aria-hidden="true"
                   />
@@ -284,7 +284,7 @@ export default function NetworkPage() {
         {/* ── 4. TAB 2: OPPORTUNITIES (CAREER DISCOVERY) ── */}
         {currentTab === "opportunities" && (
           <div role="tabpanel" id="panel-opportunities" aria-labelledby="tab-opportunities" className="space-y-6">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#0A0F14] border border-white/[0.08]">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 rounded-2xl bg-surface-card border border-border">
               {/* Unified Search */}
               <div className="w-full sm:max-w-md">
                 <NetworkSearch
@@ -303,8 +303,8 @@ export default function NetworkPage() {
                     onClick={() => setOppWorkMode(mode)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[36px] whitespace-nowrap focus-ring ${
                       oppWorkMode === mode
-                        ? "bg-brand-mint text-black font-bold shadow-md shadow-brand-mint/15"
-                        : "text-text-muted hover:text-white hover:bg-white/[0.04] bg-[#070B14] border border-white/[0.06]"
+                        ? "bg-brand-mint text-brand-navy font-bold shadow-md shadow-brand-mint/15"
+                        : "text-text-muted hover:text-text-primary hover:bg-surface-elevated bg-surface-elevated/50 border border-border"
                     }`}
                   >
                     {mode === "" ? "All Modes" : mode}

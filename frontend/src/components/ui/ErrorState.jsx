@@ -20,7 +20,7 @@ export default function ErrorState({
       <div className="h-16 w-16 rounded-2xl bg-danger/8 border border-danger/15 flex items-center justify-center text-danger mb-5">
         <AlertTriangle className="w-7 h-7" />
       </div>
-      <h3 className="text-lg font-heading font-bold text-white mb-2">{title}</h3>
+      <h3 className="text-lg font-heading font-bold text-text-primary mb-2">{title}</h3>
       <p className="text-sm font-medium text-text-muted max-w-sm leading-relaxed mb-6">{message}</p>
       {onRetry && (
         <button

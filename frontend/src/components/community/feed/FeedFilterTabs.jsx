@@ -28,7 +28,7 @@ export default function FeedFilterTabs({
     <nav
       role="tablist"
       aria-label="Community feed filters"
-      className={`flex items-center gap-1.5 p-1 bg-[#0B111E]/90 border border-white/[0.08] rounded-xl backdrop-blur-xl overflow-x-auto scrollbar-none shadow-sm ${className}`}
+      className={`flex items-center gap-1.5 p-1 bg-surface-card/90 border border-border rounded-xl backdrop-blur-xl overflow-x-auto scrollbar-none shadow-sm ${className}`}
     >
       {tabs.map((tab, index) => {
         const isActive = activeFilter === tab.id;
@@ -60,17 +60,17 @@ export default function FeedFilterTabs({
             className={`
               relative flex items-center justify-center gap-1.5 px-3.5 py-2 min-h-[44px] rounded-lg text-xs font-semibold
               transition-colors duration-150 select-none shrink-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50
-              ${isActive ? 'text-white font-bold' : 'text-text-muted hover:text-white hover:bg-white/[0.04]'}
+              ${isActive ? 'text-text-primary font-bold' : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated/50'}
             `}
           >
             {isActive && (
               <motion.div
                 layoutId="active-feed-tab"
-                className="absolute inset-0 bg-gradient-to-r from-[#12314C] via-[#173D60] to-[#9FD5B2]/20 border border-brand-mint/40 rounded-lg shadow-[0_2px_12px_rgba(18,49,76,0.5),0_0_12px_rgba(159,213,178,0.18)] overflow-hidden"
+                className="absolute inset-0 bg-surface-elevated border border-border-accent rounded-lg shadow-sm overflow-hidden"
                 transition={{ type: 'spring', stiffness: 450, damping: 32 }}
               >
                 {/* Subtle top internal highlight edge */}
-                <div className="absolute top-0 inset-x-2 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+                <div className="absolute top-0 inset-x-2 h-px bg-gradient-to-r from-transparent via-brand-mint/20 to-transparent pointer-events-none" />
               </motion.div>
             )}
             <Icon

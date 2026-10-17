@@ -24,7 +24,7 @@ export default function ProfileTabs({ activeTab = "overview", onTabChange }) {
       <div
         role="tablist"
         aria-label="Profile Sections"
-        className="inline-flex items-center gap-1.5 rounded-2xl border border-white/[0.08] bg-bg-surface/80 p-1.5 backdrop-blur-xl shadow-lg"
+        className="inline-flex items-center gap-1.5 rounded-2xl border border-border bg-surface-card p-1.5 backdrop-blur-xl shadow-lg"
       >
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id;
@@ -38,17 +38,17 @@ export default function ProfileTabs({ activeTab = "overview", onTabChange }) {
               aria-selected={isActive}
               aria-controls={`profile-tabpanel-${tab.id}`}
               onClick={() => onTabChange?.(tab.id)}
-              className={`relative flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-semibold transition-all duration-200 focus-ring select-none whitespace-nowrap ${
+              className={`relative flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-semibold transition-all duration-200 focus-ring select-none whitespace-nowrap cursor-pointer ${
                 isActive
-                  ? "text-white font-bold"
-                  : "text-text-muted hover:text-white hover:bg-white/[0.03]"
+                  ? "text-text-primary font-bold"
+                  : "text-text-muted hover:text-text-primary hover:bg-surface-elevated/40"
               }`}
             >
               {/* Active Tab Background Indicator */}
               {isActive && (
                 <motion.div
                   layoutId={shouldReduceMotion ? undefined : "profile-tab-active"}
-                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand-mint/15 via-white/[0.08] to-brand-mint/10 border border-brand-mint/30 shadow-[0_0_16px_rgba(159,213,178,0.12)]"
+                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand-mint/15 via-surface-elevated to-brand-mint/10 border border-brand-mint/30 shadow-[0_0_16px_rgba(159,213,178,0.12)]"
                   transition={{ type: "spring", stiffness: 450, damping: 32 }}
                 />
               )}

@@ -183,9 +183,9 @@ export default function LogoUploader({
       <div className="flex items-center justify-between">
         <label
           htmlFor="business-logo-input"
-          className="block text-xs font-semibold text-white/80"
+          className="block text-xs font-semibold text-text-secondary"
         >
-          {label} {required ? <span className="text-brand-mint">*</span> : <span className="text-white/35 font-normal">(Optional)</span>}
+          {label} {required ? <span className="text-brand-mint">*</span> : <span className="text-text-faint font-normal">(Optional)</span>}
         </label>
         {isLocalFile && (
           <span className="text-[11px] font-mono text-brand-mint flex items-center gap-1">
@@ -211,10 +211,10 @@ export default function LogoUploader({
       {/* Main Upload / Preview Surface */}
       {hasImage ? (
         /* ── PREVIEW CARD STATE ── */
-        <div className="relative rounded-2xl bg-[#0E121A] border border-white/[0.1] p-4 transition-all duration-200">
+        <div className="relative rounded-2xl bg-surface-card border border-border p-4 transition-all duration-200">
           <div className="flex flex-col sm:flex-row items-center gap-4">
             {/* Logo Display Stage */}
-            <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-[#070B10] border border-white/[0.08] flex items-center justify-center p-2.5 overflow-hidden shrink-0 shadow-inner group">
+            <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-surface-elevated border border-border flex items-center justify-center p-2.5 overflow-hidden shrink-0 shadow-inner group">
               {/* Subtle transparent grid guide pattern */}
               <div
                 className="absolute inset-0 opacity-15 pointer-events-none"
@@ -234,7 +234,7 @@ export default function LogoUploader({
             {/* Metadata & Actions */}
             <div className="flex-1 text-center sm:text-left space-y-2 min-w-0">
               <div>
-                <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs font-semibold text-white/95">
+                <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs font-semibold text-text-primary">
                   {isLocalFile ? (
                     <>
                       <span className="w-2 h-2 rounded-full bg-brand-mint shrink-0" />
@@ -242,7 +242,7 @@ export default function LogoUploader({
                     </>
                   ) : (
                     <>
-                      <span className="w-2 h-2 rounded-full bg-white/40 shrink-0" />
+                      <span className="w-2 h-2 rounded-full bg-text-muted shrink-0" />
                       <span>Current Business Logo</span>
                     </>
                   )}
@@ -258,16 +258,16 @@ export default function LogoUploader({
                   type="button"
                   onClick={triggerFileInput}
                   disabled={disabled}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-xs font-semibold text-white transition-colors cursor-pointer disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-card border border-border text-xs font-semibold text-text-primary transition-colors cursor-pointer disabled:opacity-50"
                 >
-                  <RefreshCw className="w-3.5 h-3.5 text-white/70" />
+                  <RefreshCw className="w-3.5 h-3.5 text-text-muted" />
                   <span>{isLocalFile ? 'Change' : 'Replace Logo'}</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleRemove}
                   disabled={disabled}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-xs font-semibold text-red-300 transition-colors cursor-pointer border border-red-500/20 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-xs font-semibold text-red-400 transition-colors cursor-pointer border border-red-500/20 disabled:opacity-50"
                 >
                   <X className="w-3.5 h-3.5" />
                   <span>Remove</span>
@@ -287,14 +287,14 @@ export default function LogoUploader({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          className={`relative group rounded-2xl border-2 border-dashed p-6 sm:p-7 text-center transition-all duration-200 cursor-pointer select-none outline-none focus-visible:ring-2 focus-visible:ring-brand-mint focus-visible:ring-offset-2 focus-visible:ring-offset-[#121217] ${
+          className={`relative group rounded-2xl border-2 border-dashed p-6 sm:p-7 text-center transition-all duration-200 cursor-pointer select-none outline-none focus-visible:ring-2 focus-visible:ring-brand-mint focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base ${
             isDragging
               ? 'border-brand-mint bg-brand-mint/[0.06] scale-[1.01]'
-              : 'border-white/[0.12] bg-white/[0.02] hover:border-white/[0.24] hover:bg-white/[0.04]'
+              : 'border-border bg-surface-card/40 hover:border-border-accent hover:bg-surface-card/70'
           } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           {/* Decorative Icon Circle */}
-          <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center mx-auto mb-3 text-white/70 group-hover:text-brand-mint group-hover:border-brand-mint/40 group-hover:scale-105 transition-all">
+          <div className="w-12 h-12 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center mx-auto mb-3 text-text-muted group-hover:text-brand-mint group-hover:border-brand-mint/40 group-hover:scale-105 transition-all">
             {isDragging ? (
               <Upload className="w-5 h-5 text-brand-mint animate-bounce" />
             ) : (
@@ -303,7 +303,7 @@ export default function LogoUploader({
           </div>
 
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-white tracking-tight">
+            <p className="text-sm font-semibold text-text-primary tracking-tight">
               {isDragging ? 'Drop your logo here' : 'Upload your logo'}
             </p>
             <p id="logo-uploader-specs" className="text-xs text-text-muted">
@@ -312,7 +312,7 @@ export default function LogoUploader({
           </div>
 
           {/* Explicit CTA button inside box */}
-          <div className="mt-3.5 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-white/[0.08] group-hover:bg-brand-mint group-hover:text-black text-xs font-semibold text-white transition-all shadow-sm">
+          <div className="mt-3.5 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-surface-elevated border border-border group-hover:bg-brand-mint group-hover:text-brand-navy group-hover:border-brand-mint text-xs font-semibold text-text-primary transition-all shadow-sm">
             <Upload className="w-3.5 h-3.5" />
             <span>Choose Image</span>
           </div>

@@ -34,7 +34,7 @@ export default function CommentInput({
   const replyAuthorName = replyingTo?.author?.name || replyingTo?.author?.displayName || 'member';
 
   return (
-    <div className="bg-[#0B111E] border-t border-white/[0.08] p-3 sm:p-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+    <div className="bg-surface-card border-t border-border p-3 sm:p-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
       {/* Replying Context Bar */}
       {replyingTo && (
         <div
@@ -48,7 +48,7 @@ export default function CommentInput({
           <button
             type="button"
             onClick={onCancelReply}
-            className="min-h-[44px] min-w-[44px] p-2 -mr-1 rounded-full text-text-muted hover:text-white hover:bg-white/[0.1] transition-colors cursor-pointer flex items-center justify-center focus:outline-none focus:ring-1 focus:ring-brand-mint"
+            className="min-h-[44px] min-w-[44px] p-2 -mr-1 rounded-full text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer flex items-center justify-center focus:outline-none focus:ring-1 focus:ring-brand-mint"
             aria-label="Cancel reply"
           >
             <X className="w-4 h-4" />
@@ -59,7 +59,7 @@ export default function CommentInput({
       {/* Input Form */}
       <form onSubmit={handleSubmit} className="flex items-center gap-2.5">
         {/* User Avatar */}
-        <div className="w-8 h-8 rounded-full bg-[#0E1726] ring-1 ring-white/10 shrink-0 overflow-hidden flex items-center justify-center hidden sm:flex">
+        <div className="w-8 h-8 rounded-full bg-surface-elevated ring-1 ring-border shrink-0 overflow-hidden flex items-center justify-center hidden sm:flex">
           {avatarUrl ? (
             <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
           ) : (
@@ -86,7 +86,7 @@ export default function CommentInput({
             }}
             placeholder={replyingTo ? `Reply to @${replyAuthorName}...` : placeholder}
             maxLength={500}
-            className="w-full bg-white/[0.04] border border-white/[0.08] focus:border-brand-mint/50 focus:bg-white/[0.06] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-text-faint focus:outline-none focus:ring-2 focus:ring-brand-mint/25 focus:shadow-[0_0_12px_rgba(159,213,178,0.2)] transition-all"
+            className="w-full bg-surface-elevated border border-border focus:border-brand-mint/50 focus:bg-surface-card rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-text-primary placeholder-text-faint focus:outline-none focus:ring-2 focus:ring-brand-mint/25 focus:shadow-[0_0_12px_rgba(159,213,178,0.2)] transition-all"
           />
         </div>
 
@@ -96,7 +96,7 @@ export default function CommentInput({
           data-testid="comment-drawer-submit"
           type="submit"
           disabled={!value.trim() || isSubmitting}
-          className="min-h-[44px] min-w-[44px] px-3.5 py-2.5 bg-gradient-to-r from-brand-mint to-brand-yellow text-[#070B14] font-bold rounded-xl text-xs flex items-center justify-center hover:brightness-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_14px_rgba(159,213,178,0.3),0_0_10px_rgba(246,237,74,0.15)] focus:outline-none focus:ring-2 focus:ring-brand-mint/50"
+          className="min-h-[44px] min-w-[44px] px-3.5 py-2.5 bg-gradient-to-r from-brand-mint to-brand-yellow text-bg-base font-bold rounded-xl text-xs flex items-center justify-center hover:brightness-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_14px_rgba(159,213,178,0.3),0_0_10px_rgba(246,237,74,0.15)] focus:outline-none focus:ring-2 focus:ring-brand-mint/50"
           aria-label="Post comment"
         >
           {isSubmitting ? (

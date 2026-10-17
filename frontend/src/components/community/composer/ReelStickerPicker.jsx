@@ -146,19 +146,19 @@ export default function ReelStickerPicker({
       aria-modal="true"
       aria-label="Sticker picker"
     >
-      <div className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl bg-[#090F1C] border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      <div className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl bg-surface-card border border-border shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-brand-yellow/15 border border-brand-yellow/30 flex items-center justify-center text-brand-yellow">
               <Smile className="w-4 h-4" />
             </div>
-            <h3 className="text-white font-semibold text-base">Add Sticker</h3>
+            <h3 className="text-text-primary font-semibold text-base">Add Sticker</h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-colors"
+            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
             aria-label="Close sticker picker"
           >
             <X className="w-5 h-5" />
@@ -166,16 +166,16 @@ export default function ReelStickerPicker({
         </div>
 
         {/* Categories Bar */}
-        <div className="px-5 py-3 border-b border-white/5 overflow-x-auto flex gap-1.5 scrollbar-none">
+        <div className="px-5 py-3 border-b border-border overflow-x-auto flex gap-1.5 scrollbar-none">
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
               type="button"
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+              className={`min-h-[32px] px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors inline-flex items-center ${
                 selectedCategory === cat
-                  ? 'bg-brand-mint text-[#070B14] font-semibold shadow-xs'
-                  : 'bg-white/5 text-text-muted hover:text-white'
+                  ? 'bg-brand-mint text-bg-base font-semibold shadow-xs'
+                  : 'bg-surface-elevated text-text-muted hover:text-text-primary border border-border'
               }`}
             >
               {cat}
@@ -200,14 +200,14 @@ export default function ReelStickerPicker({
                   key={sticker.id}
                   type="button"
                   onClick={() => handlePick(sticker)}
-                  className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-brand-mint/40 transition-all hover:scale-105 group active:scale-95"
+                  className="min-h-[44px] flex flex-col items-center justify-center p-3 rounded-2xl bg-surface-elevated/40 hover:bg-surface-elevated border border-border hover:border-brand-mint/40 transition-all hover:scale-105 group active:scale-95 cursor-pointer"
                   title={sticker.name}
                   aria-label={`Select ${sticker.name} sticker`}
                 >
                   <div className="w-12 h-12 flex items-center justify-center p-1">
                     <StickerIcon stickerId={sticker.id} />
                   </div>
-                  <span className="text-[10px] text-text-muted group-hover:text-white mt-1.5 truncate max-w-full text-center">
+                  <span className="text-[10px] text-text-muted group-hover:text-text-primary mt-1.5 truncate max-w-full text-center">
                     {sticker.name}
                   </span>
                 </button>

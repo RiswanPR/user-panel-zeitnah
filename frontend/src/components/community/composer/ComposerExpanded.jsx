@@ -93,11 +93,11 @@ export default function ComposerExpanded({
   const CurrentAudienceIcon = audience === 'COURSE' ? Users : Globe;
 
   return (
-    <div className="bg-[#0B111E]/95 backdrop-blur-xl border border-brand-mint/30 rounded-2xl shadow-[0_4px_32px_rgba(0,0,0,0.4),0_0_24px_rgba(0,255,180,0.06)] p-4 sm:p-5 transition-all">
+    <div className="bg-surface-card/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl p-4 sm:p-5 transition-all">
       {/* Header Bar */}
-      <div className="flex items-center justify-between pb-3 border-b border-white/[0.08] mb-3.5">
+      <div className="flex items-center justify-between pb-3 border-b border-border mb-3.5">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-white tracking-tight">
+          <h3 className="text-sm font-semibold text-text-primary tracking-tight">
             {isBusinessMode && business ? `Publish as ${business.name}` : 'Create post'}
           </h3>
           {isBusinessMode && business && (
@@ -109,7 +109,7 @@ export default function ComposerExpanded({
         <button
           type="button"
           onClick={handleCancel}
-          className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer"
           aria-label="Close composer"
         >
           <X className="w-4 h-4" />
@@ -119,7 +119,7 @@ export default function ComposerExpanded({
       <div className="flex gap-3 sm:gap-4 items-start">
         {/* User / Company Avatar */}
         {isBusinessMode && business ? (
-          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#0E1726] ring-1 ring-brand-mint/30 shrink-0 overflow-hidden flex items-center justify-center">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-surface-elevated ring-1 ring-brand-mint/30 shrink-0 overflow-hidden flex items-center justify-center">
             <BusinessLogo
               logo={business.logo}
               name={business.name}
@@ -128,7 +128,7 @@ export default function ComposerExpanded({
             />
           </div>
         ) : (
-          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#0E1726] ring-1 ring-white/[0.1] shrink-0 overflow-hidden flex items-center justify-center">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-surface-elevated ring-1 ring-border shrink-0 overflow-hidden flex items-center justify-center">
             {avatarUrl ? (
               <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
@@ -145,7 +145,7 @@ export default function ComposerExpanded({
             <button
               type="button"
               onClick={() => setShowAudienceMenu(!showAudienceMenu)}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-xs font-medium text-text-muted hover:text-white transition-colors border border-white/[0.08] cursor-pointer"
+              className="min-h-[44px] inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-elevated hover:bg-surface-elevated/80 text-xs font-medium text-text-muted hover:text-text-primary transition-colors border border-border cursor-pointer"
               aria-label="Select post audience"
               aria-expanded={showAudienceMenu}
             >
@@ -161,7 +161,7 @@ export default function ComposerExpanded({
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -4 }}
                   transition={{ duration: 0.12 }}
-                  className="absolute top-full left-0 mt-2 w-52 rounded-xl bg-[#0E1726] border border-white/[0.1] shadow-2xl z-30 py-1 overflow-hidden"
+                  className="absolute top-full left-0 mt-2 w-52 rounded-xl bg-surface-card border border-border shadow-2xl z-30 py-1 overflow-hidden"
                 >
                   {AUDIENCE_OPTIONS.map((opt) => (
                     <button
@@ -171,11 +171,11 @@ export default function ComposerExpanded({
                         setAudience(opt.id);
                         setShowAudienceMenu(false);
                       }}
-                      className="w-full text-left px-3.5 py-2.5 hover:bg-white/[0.06] transition-colors flex items-start gap-2.5 cursor-pointer"
+                      className="w-full text-left px-3.5 py-2.5 hover:bg-surface-elevated transition-colors flex items-start gap-2.5 cursor-pointer min-h-[44px]"
                     >
                       <opt.icon className="w-4 h-4 text-brand-mint mt-0.5 shrink-0" />
                       <div>
-                        <p className="text-xs font-semibold text-white">{opt.label}</p>
+                        <p className="text-xs font-semibold text-text-primary">{opt.label}</p>
                         <p className="text-[10px] text-text-muted mt-0.5">{opt.desc}</p>
                       </div>
                     </button>
@@ -203,7 +203,7 @@ export default function ComposerExpanded({
                 ? `What would ${business.name} like to share? Announcements, insights, or updates...`
                 : "What's happening? Share insights, questions, or showcases..."
             }
-            className="w-full bg-transparent border-none text-sm sm:text-[15px] text-white placeholder-text-faint focus:outline-none resize-none min-h-[90px] leading-relaxed"
+            className="w-full bg-transparent border-none text-sm sm:text-[15px] text-text-primary placeholder-text-faint focus:outline-none resize-none min-h-[90px] leading-relaxed"
             rows={3}
             autoFocus
           />
@@ -214,7 +214,7 @@ export default function ComposerExpanded({
               {attachedFiles.map((file, idx) => (
                 <div
                   key={idx}
-                  className="relative rounded-xl overflow-hidden border border-white/[0.1] aspect-video bg-[#0E1726] flex items-center justify-center group"
+                  className="relative rounded-xl overflow-hidden border border-border aspect-video bg-surface-elevated flex items-center justify-center group"
                 >
                   {file.type === 'video' ? (
                     <video src={file.url} className="w-full h-full object-cover" />
@@ -224,7 +224,7 @@ export default function ComposerExpanded({
                   <button
                     type="button"
                     onClick={() => removeFile(idx)}
-                    className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/70 text-white hover:bg-rose-600 transition-colors cursor-pointer"
+                    className="min-h-[44px] min-w-[44px] absolute top-1.5 right-1.5 p-1 rounded-full bg-black/70 text-white hover:bg-rose-600 transition-colors cursor-pointer flex items-center justify-center"
                     aria-label="Remove attachment"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -244,7 +244,7 @@ export default function ComposerExpanded({
                 </span>
                 <span>{uploadProgress}%</span>
               </div>
-              <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
+              <div className="h-1.5 w-full bg-surface-elevated border border-border rounded-full overflow-hidden">
                 <div
                   className="h-full bg-brand-mint transition-all duration-150"
                   style={{ width: `${uploadProgress}%` }}
@@ -265,7 +265,7 @@ export default function ComposerExpanded({
                   <button
                     type="button"
                     onClick={() => removeTag(tag)}
-                    className="hover:text-rose-400 p-0.5 cursor-pointer"
+                    className="hover:text-rose-400 p-0.5 cursor-pointer min-h-[32px] inline-flex items-center"
                     aria-label={`Remove tag ${tag}`}
                   >
                     <X className="w-3 h-3" />
@@ -292,19 +292,19 @@ export default function ComposerExpanded({
                   }
                 }}
                 placeholder="tag name (press Enter)"
-                className="bg-white/[0.04] border border-white/[0.1] rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-brand-mint"
+                className="bg-surface-elevated border border-border rounded-lg px-2.5 py-1 text-xs text-text-primary focus:outline-none focus:border-brand-mint min-h-[44px]"
               />
               <button
                 type="button"
                 onClick={handleAddTag}
-                className="px-2.5 py-1 bg-brand-mint text-bg-base rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer"
+                className="min-h-[44px] px-3.5 py-1 bg-brand-mint text-bg-base rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer inline-flex items-center justify-center"
               >
                 Add
               </button>
               <button
                 type="button"
                 onClick={() => setShowTagInput(false)}
-                className="text-text-muted hover:text-white text-xs cursor-pointer"
+                className="min-h-[44px] text-text-muted hover:text-text-primary text-xs cursor-pointer inline-flex items-center"
               >
                 Cancel
               </button>
@@ -312,7 +312,7 @@ export default function ComposerExpanded({
           )}
 
           {/* Bottom Action Row */}
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/[0.06] gap-2 flex-wrap">
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-border gap-2 flex-wrap">
             <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
               <input
                 ref={fileInputRef}
@@ -327,7 +327,7 @@ export default function ComposerExpanded({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="min-h-[40px] min-w-[40px] p-2 text-text-muted hover:text-brand-mint hover:bg-white/[0.04] rounded-lg transition-colors cursor-pointer flex items-center justify-center"
+                className="min-h-[44px] min-w-[44px] p-2 text-text-muted hover:text-brand-mint hover:bg-surface-elevated rounded-lg transition-colors cursor-pointer flex items-center justify-center"
                 title="Add Image or Video"
                 aria-label="Add Image or Video"
               >
@@ -337,7 +337,7 @@ export default function ComposerExpanded({
               <button
                 type="button"
                 onClick={() => setShowTagInput(!showTagInput)}
-                className="min-h-[40px] min-w-[40px] p-2 text-text-muted hover:text-brand-mint hover:bg-white/[0.04] rounded-lg transition-colors cursor-pointer flex items-center justify-center"
+                className="min-h-[44px] min-w-[44px] p-2 text-text-muted hover:text-brand-mint hover:bg-surface-elevated rounded-lg transition-colors cursor-pointer flex items-center justify-center"
                 title="Add Tag"
                 aria-label="Add Tag"
               >
@@ -350,7 +350,7 @@ export default function ComposerExpanded({
                     type="button"
                     onClick={handleImprove}
                     disabled={isImproving}
-                    className="min-h-[40px] flex items-center gap-1 px-2.5 py-1 text-xs text-brand-mint bg-brand-mint/10 hover:bg-brand-mint/20 rounded-lg transition-colors cursor-pointer border border-brand-mint/20"
+                    className="min-h-[44px] flex items-center gap-1 px-2.5 py-1 text-xs text-brand-mint bg-brand-mint/10 hover:bg-brand-mint/20 rounded-lg transition-colors cursor-pointer border border-brand-mint/20"
                     title="Improve with AI"
                   >
                     {isImproving ? (
@@ -365,7 +365,7 @@ export default function ComposerExpanded({
                     type="button"
                     onClick={handleSuggestTags}
                     disabled={isSuggestingTags}
-                    className="min-h-[40px] flex items-center gap-1 px-2.5 py-1 text-xs text-text-muted hover:text-white hover:bg-white/[0.04] rounded-lg transition-colors cursor-pointer"
+                    className="min-h-[44px] flex items-center gap-1 px-2.5 py-1 text-xs text-text-muted hover:text-text-primary hover:bg-surface-elevated rounded-lg transition-colors cursor-pointer"
                     title="Suggest tags"
                   >
                     <span className="hidden sm:inline font-medium">Suggest Tags</span>
@@ -378,7 +378,7 @@ export default function ComposerExpanded({
               <button
                 type="button"
                 onClick={handleCancel}
-                className="min-h-[40px] px-3.5 py-1.5 text-xs font-semibold text-text-muted hover:text-white hover:bg-white/[0.04] rounded-xl transition-colors cursor-pointer"
+                className="min-h-[44px] px-3.5 py-1.5 text-xs font-semibold text-text-muted hover:text-text-primary hover:bg-surface-elevated rounded-xl transition-colors cursor-pointer inline-flex items-center"
               >
                 Cancel
               </button>
@@ -393,7 +393,7 @@ export default function ComposerExpanded({
                   isSubmitting ||
                   isUploading
                 }
-                className="min-h-[40px] flex items-center gap-1.5 px-4 py-2 bg-brand-mint text-bg-base rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer"
+                className="min-h-[44px] flex items-center gap-1.5 px-4 py-2 bg-brand-mint text-bg-base rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer"
               >
                 {isSubmitting ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />

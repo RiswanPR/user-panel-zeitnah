@@ -33,12 +33,12 @@ export default function ModeratorDashboard() {
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
-      <div className="flex items-center gap-3 mb-8 pb-4 border-b border-white/[0.05]">
+      <div className="flex items-center gap-3 mb-8 pb-4 border-b border-border">
         <div className="w-10 h-10 rounded-xl bg-danger/10 flex items-center justify-center">
           <Shield className="w-5 h-5 text-danger" />
         </div>
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white">Moderator Dashboard</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Moderator Dashboard</h1>
           <p className="text-sm text-text-muted">Review and resolve community reports</p>
         </div>
       </div>
@@ -51,7 +51,7 @@ export default function ModeratorDashboard() {
           </h2>
           
           {reports?.length === 0 && (
-            <div className="p-4 rounded-xl bg-bg-surface border border-white/[0.05] text-center text-sm text-text-faint">
+            <div className="p-4 rounded-xl bg-surface-card border border-border text-center text-sm text-text-faint">
               All caught up!
             </div>
           )}
@@ -60,15 +60,15 @@ export default function ModeratorDashboard() {
             <button
               key={report._id || report.id}
               onClick={() => setSelectedReport(report)}
-              className={`w-full text-left p-3 rounded-xl border transition-colors ${
-                (selectedReport?._id || selectedReport?.id) === (report._id || report.id) 
-                  ? 'bg-white/[0.05] border-brand-mint/50' 
-                  : 'bg-bg-surface border-white/[0.05] hover:bg-white/[0.02]'
+              className={`w-full text-left p-3 rounded-xl border transition-colors cursor-pointer ${
+                (selectedReport?._id || selectedReport?.id) === (report._id || report.id)
+                  ? 'bg-surface-elevated border-brand-mint/50'
+                  : 'bg-surface-card border-border hover:bg-surface-elevated'
               }`}
             >
               <div className="flex items-center gap-2 mb-1">
                 <AlertTriangle className="w-4 h-4 text-warning" />
-                <span className="text-sm font-medium text-white capitalize">
+                <span className="text-sm font-medium text-text-primary capitalize">
                   {report.entityType || report.targetType || 'Community'}
                 </span>
               </div>
@@ -80,12 +80,12 @@ export default function ModeratorDashboard() {
         {/* Action Panel */}
         <div className="md:col-span-2">
           {selectedReport ? (
-            <div className="bg-bg-surface rounded-2xl border border-white/[0.05] p-6 shadow-xl">
-              <h3 className="text-lg font-bold text-white mb-2">Report Details</h3>
+            <div className="bg-surface-card rounded-2xl border border-border p-6 shadow-xl">
+              <h3 className="text-lg font-bold text-text-primary mb-2">Report Details</h3>
               <div className="space-y-4 mb-6">
                 <div>
                   <label className="text-xs text-text-faint uppercase">Entity Type</label>
-                  <p className="text-sm text-white capitalize">
+                  <p className="text-sm text-text-primary capitalize">
                     {selectedReport.entityType || selectedReport.targetType || 'Community'}
                   </p>
                 </div>
@@ -109,13 +109,13 @@ export default function ModeratorDashboard() {
                 )}
               </div>
 
-              <div className="border-t border-white/[0.05] pt-6">
-                <label className="block text-sm font-semibold text-white mb-2">Moderator Notes</label>
+              <div className="border-t border-border pt-6">
+                <label className="block text-sm font-semibold text-text-primary mb-2">Moderator Notes</label>
                 <textarea 
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Add notes for audit logs..."
-                  className="w-full bg-bg-base border border-white/[0.1] rounded-xl p-3 text-sm text-white placeholder-text-faint focus:outline-none focus:border-brand-mint mb-4 h-24"
+                  className="w-full bg-surface-elevated border border-border rounded-xl p-3 text-sm text-text-primary placeholder-text-faint focus:outline-none focus:border-brand-mint mb-4 h-24"
                 />
                 
                 <div className="flex gap-3">
@@ -139,7 +139,7 @@ export default function ModeratorDashboard() {
               </div>
             </div>
           ) : (
-            <div className="h-full min-h-[300px] flex items-center justify-center rounded-2xl border border-white/[0.02] border-dashed">
+            <div className="h-full min-h-[300px] flex items-center justify-center rounded-2xl border border-border border-dashed">
               <p className="text-text-faint">Select a report to view details</p>
             </div>
           )}

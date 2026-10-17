@@ -146,7 +146,7 @@ export default function ReactionBar({
                 ? { duration: 0.05 }
                 : { type: 'spring', damping: 24, stiffness: 380 }
             }
-            className="absolute bottom-full left-0 mb-2 bg-[#0E1726]/95 backdrop-blur-xl border border-white/[0.12] rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.5)] p-1.5 flex items-center gap-1 z-30 ring-1 ring-white/10"
+            className="absolute bottom-full left-0 mb-2 bg-surface-elevated/95 backdrop-blur-xl border border-border rounded-full shadow-xl p-1.5 flex items-center gap-1 z-30 ring-1 ring-border"
             role="toolbar"
             aria-label="Choose a reaction"
           >
@@ -161,9 +161,9 @@ export default function ReactionBar({
                   type="button"
                   onClick={() => handleSelectReaction(r.id)}
                   onKeyDown={(e) => handlePickerKeyDown(e, idx)}
-                  className={`min-w-[44px] min-h-[44px] w-11 h-11 rounded-full flex items-center justify-center hover:bg-white/[0.1] active:scale-95 transition-all transform hover:scale-125 motion-reduce:hover:scale-100 motion-reduce:transform-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-mint/50 ${
+                  className={`min-w-[44px] min-h-[44px] w-11 h-11 rounded-full flex items-center justify-center hover:bg-surface-card active:scale-95 transition-all transform hover:scale-125 motion-reduce:hover:scale-100 motion-reduce:transform-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-mint/50 ${
                     r.color
-                  } ${isSelected ? 'bg-white/[0.08] ring-1 ring-white/20' : ''}`}
+                  } ${isSelected ? 'bg-surface-card ring-1 ring-border' : ''}`}
                   title={r.label}
                   aria-label={`React with ${r.label}`}
                 >
@@ -191,8 +191,8 @@ export default function ReactionBar({
         }}
         className={`min-h-[44px] min-w-[44px] p-2 rounded-full text-xs font-semibold flex items-center justify-center transition-all duration-150 cursor-pointer active:scale-90 motion-reduce:transform-none focus:outline-none focus:ring-1 focus:ring-brand-mint/40 ${
           isLiked
-            ? `${activeReaction?.color || 'text-rose-500'} bg-white/[0.05]`
-            : 'text-text-muted hover:text-white hover:bg-white/[0.05]'
+            ? `${activeReaction?.color || 'text-rose-500'} bg-surface-elevated/60`
+            : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated'
         }`}
         aria-label={isLiked ? `Remove ${activeReaction?.label || 'Like'}` : 'React to post'}
         aria-haspopup="true"

@@ -64,13 +64,13 @@ export default function PostContent({
       {content && (
         <div className="leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere] max-w-prose">
           {isMediaPost ? (
-            <p className="text-[13px] sm:text-sm text-slate-200/95 leading-[1.6]">
+            <p className="text-[13px] sm:text-sm text-text-primary leading-[1.6]">
               <span className="font-normal">{renderFormattedText(displayedContent)}</span>
               {isLong && (
                 <button
                   type="button"
                   onClick={() => setIsExpanded((prev) => !prev)}
-                  className="text-xs font-normal text-text-muted/80 hover:text-white transition-colors ml-1.5 cursor-pointer focus:outline-none focus:underline"
+                  className="text-xs font-normal text-text-muted/80 hover:text-text-primary transition-colors ml-1.5 cursor-pointer focus:outline-none focus:underline"
                   aria-expanded={isExpanded}
                 >
                   {isExpanded ? 'less' : 'more'}
@@ -79,14 +79,14 @@ export default function PostContent({
             </p>
           ) : (
             <div>
-              <p className="text-[14px] sm:text-[15px] text-slate-100 font-normal leading-[1.65] tracking-[-0.01em]">
+              <p className="text-[14px] sm:text-[15px] text-text-primary font-normal leading-[1.65] tracking-[-0.01em]">
                 {renderFormattedText(displayedContent)}
               </p>
               {isLong && (
                 <button
                   type="button"
                   onClick={() => setIsExpanded((prev) => !prev)}
-                  className="text-xs font-normal text-text-muted hover:text-white transition-colors pt-1.5 cursor-pointer focus:outline-none focus:underline block"
+                  className="text-xs font-normal text-text-muted hover:text-text-primary transition-colors pt-1.5 cursor-pointer focus:outline-none focus:underline block"
                   aria-expanded={isExpanded}
                 >
                   {isExpanded ? 'Show less' : 'Read more'}

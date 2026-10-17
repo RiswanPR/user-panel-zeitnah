@@ -177,15 +177,15 @@ export default function EditBusinessModal({ isOpen, onClose, business, onSuccess
       aria-labelledby="edit-business-modal-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto"
     >
-      <div className="relative w-full max-w-2xl bg-[#121217] border border-white/[0.1] rounded-3xl shadow-2xl p-6 sm:p-8 my-8 text-white max-h-[90vh] flex flex-col">
+      <div className="relative w-full max-w-2xl bg-surface-card border border-border rounded-3xl shadow-2xl p-6 sm:p-8 my-8 text-text-primary max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-start justify-between pb-5 border-b border-white/[0.08] shrink-0">
+        <div className="flex items-start justify-between pb-5 border-b border-border shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-brand-mint/15 border border-brand-mint/30 flex items-center justify-center text-brand-mint">
               <Building2 className="w-6 h-6" />
             </div>
             <div>
-              <h2 id="edit-business-modal-title" className="text-xl font-bold font-heading text-white">
+              <h2 id="edit-business-modal-title" className="text-xl font-bold font-heading text-text-primary">
                 Edit Business Settings
               </h2>
               <p className="text-xs text-text-muted mt-0.5">
@@ -196,7 +196,7 @@ export default function EditBusinessModal({ isOpen, onClose, business, onSuccess
           <button
             onClick={handleClose}
             aria-label="Close modal"
-            className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -215,7 +215,7 @@ export default function EditBusinessModal({ isOpen, onClose, business, onSuccess
           {/* Business Name & Type */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-white/80 mb-1.5">
+              <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                 Business Name <span className="text-brand-mint">*</span>
               </label>
               <input
@@ -224,21 +224,21 @@ export default function EditBusinessModal({ isOpen, onClose, business, onSuccess
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="e.g. Larsen Infra Engineering"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-brand-mint text-sm text-white placeholder-white/30 outline-none transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border focus:border-brand-mint text-sm text-text-primary placeholder:text-text-muted/60 outline-none transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-white/80 mb-1.5">
+              <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                 Business Type <span className="text-brand-mint">*</span>
               </label>
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#1a1a24] border border-white/[0.08] focus:border-brand-mint text-sm text-white outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border focus:border-brand-mint text-sm text-text-primary outline-none"
               >
                 {BUSINESS_TYPES.map((bt) => (
-                  <option key={bt.value} value={bt.value}>
+                  <option key={bt.value} value={bt.value} className="bg-surface-elevated text-text-primary">
                     {bt.label}
                   </option>
                 ))}
@@ -265,24 +265,24 @@ export default function EditBusinessModal({ isOpen, onClose, business, onSuccess
 
           {/* Official Website */}
           <div>
-            <label className="block text-xs font-semibold text-white/80 mb-1.5">
+            <label className="block text-xs font-semibold text-text-secondary mb-1.5">
               Official Website
             </label>
             <div className="relative">
-              <Globe className="w-4 h-4 absolute left-3.5 top-3 text-white/30" />
+              <Globe className="w-4 h-4 absolute left-3.5 top-3 text-text-muted" />
               <input
                 type="url"
                 value={formData.website}
                 onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                 placeholder="https://company.com"
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-brand-mint text-sm text-white placeholder-white/30 outline-none transition-all"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border focus:border-brand-mint text-sm text-text-primary placeholder:text-text-muted/60 outline-none transition-all"
               />
             </div>
           </div>
 
           {/* Business Description */}
           <div>
-            <label className="block text-xs font-semibold text-white/80 mb-1.5">
+            <label className="block text-xs font-semibold text-text-secondary mb-1.5">
               Company Overview & Capability
             </label>
             <textarea
@@ -290,13 +290,13 @@ export default function EditBusinessModal({ isOpen, onClose, business, onSuccess
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Describe your organization's infrastructure disciplines, major EPC contracts, BIM engineering services..."
-              className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-brand-mint text-sm text-white placeholder-white/30 outline-none transition-all resize-none"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border focus:border-brand-mint text-sm text-text-primary placeholder:text-text-muted/60 outline-none transition-all resize-none"
             />
           </div>
 
           {/* Infrastructure Specializations */}
           <div>
-            <label className="block text-xs font-semibold text-white/80 mb-1">
+            <label className="block text-xs font-semibold text-text-secondary mb-1">
               Infrastructure Specializations <span className="text-brand-mint">*</span>
             </label>
             <p className="text-[11px] text-text-muted mb-2.5">
@@ -312,8 +312,8 @@ export default function EditBusinessModal({ isOpen, onClose, business, onSuccess
                     onClick={() => toggleSpecialization(spec)}
                     className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-brand-mint text-black font-semibold shadow-md shadow-brand-mint/20'
-                        : 'bg-white/[0.04] text-white/70 hover:bg-white/[0.08] border border-white/[0.06]'
+                        ? 'bg-brand-mint text-brand-navy font-bold shadow-md shadow-brand-mint/20'
+                        : 'bg-surface-elevated text-text-secondary hover:bg-surface-elevated/80 border border-border'
                     }`}
                   >
                     {isSelected && <Check className="w-3.5 h-3.5" />}
@@ -327,33 +327,33 @@ export default function EditBusinessModal({ isOpen, onClose, business, onSuccess
           {/* Contact Details */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-white/80 mb-1.5">
+              <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                 Official Business Email
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3.5 top-3 text-white/30" />
+                <Mail className="w-4 h-4 absolute left-3.5 top-3 text-text-muted" />
                 <input
                   type="email"
                   value={formData.businessEmail}
                   onChange={(e) => setFormData({ ...formData, businessEmail: e.target.value })}
                   placeholder="careers@company.com"
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-brand-mint text-sm text-white placeholder-white/30 outline-none transition-all"
+                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border focus:border-brand-mint text-sm text-text-primary placeholder:text-text-muted/60 outline-none transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-white/80 mb-1.5">
+              <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                 Contact Phone
               </label>
               <div className="relative">
-                <Phone className="w-4 h-4 absolute left-3.5 top-3 text-white/30" />
+                <Phone className="w-4 h-4 absolute left-3.5 top-3 text-text-muted" />
                 <input
                   type="tel"
                   value={formData.businessPhone}
                   onChange={(e) => setFormData({ ...formData, businessPhone: e.target.value })}
                   placeholder="+91 98765 43210"
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-brand-mint text-sm text-white placeholder-white/30 outline-none transition-all"
+                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border focus:border-brand-mint text-sm text-text-primary placeholder:text-text-muted/60 outline-none transition-all"
                 />
               </div>
             </div>
@@ -362,35 +362,35 @@ export default function EditBusinessModal({ isOpen, onClose, business, onSuccess
           {/* Location & Headquarters */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-white/80 mb-1.5">City</label>
+              <label className="block text-xs font-semibold text-text-secondary mb-1.5">City</label>
               <input
                 type="text"
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                 placeholder="e.g. Mumbai"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-brand-mint text-sm text-white placeholder-white/30 outline-none transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border focus:border-brand-mint text-sm text-text-primary placeholder:text-text-muted/60 outline-none transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-white/80 mb-1.5">State</label>
+              <label className="block text-xs font-semibold text-text-secondary mb-1.5">State</label>
               <input
                 type="text"
                 value={formData.state}
                 onChange={(e) => setFormData({ ...formData, state: e.target.value })}
                 placeholder="e.g. Maharashtra"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-brand-mint text-sm text-white placeholder-white/30 outline-none transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border focus:border-brand-mint text-sm text-text-primary placeholder:text-text-muted/60 outline-none transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-white/80 mb-1.5">Country</label>
+              <label className="block text-xs font-semibold text-text-secondary mb-1.5">Country</label>
               <input
                 type="text"
                 value={formData.country}
                 onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                 placeholder="e.g. India"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-brand-mint text-sm text-white placeholder-white/30 outline-none transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border focus:border-brand-mint text-sm text-text-primary placeholder:text-text-muted/60 outline-none transition-all"
               />
             </div>
           </div>
@@ -398,23 +398,23 @@ export default function EditBusinessModal({ isOpen, onClose, business, onSuccess
           {/* Company Size & Founded Year */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-white/80 mb-1.5">Company Size</label>
+              <label className="block text-xs font-semibold text-text-secondary mb-1.5">Company Size</label>
               <select
                 value={formData.companySize}
                 onChange={(e) => setFormData({ ...formData, companySize: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#1a1a24] border border-white/[0.08] focus:border-brand-mint text-sm text-white outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border focus:border-brand-mint text-sm text-text-primary outline-none"
               >
-                <option value="1-10">1-10 employees</option>
-                <option value="11-50">11-50 employees</option>
-                <option value="51-200">51-200 employees</option>
-                <option value="201-500">201-500 employees</option>
-                <option value="501-1000">501-1,000 employees</option>
-                <option value="1000+">1,000+ employees</option>
+                <option value="1-10" className="bg-surface-elevated text-text-primary">1-10 employees</option>
+                <option value="11-50" className="bg-surface-elevated text-text-primary">11-50 employees</option>
+                <option value="51-200" className="bg-surface-elevated text-text-primary">51-200 employees</option>
+                <option value="201-500" className="bg-surface-elevated text-text-primary">201-500 employees</option>
+                <option value="501-1000" className="bg-surface-elevated text-text-primary">501-1,000 employees</option>
+                <option value="1000+" className="bg-surface-elevated text-text-primary">1,000+ employees</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-white/80 mb-1.5">Founded Year</label>
+              <label className="block text-xs font-semibold text-text-secondary mb-1.5">Founded Year</label>
               <input
                 type="number"
                 min="1900"
@@ -422,30 +422,30 @@ export default function EditBusinessModal({ isOpen, onClose, business, onSuccess
                 value={formData.foundedYear}
                 onChange={(e) => setFormData({ ...formData, foundedYear: e.target.value })}
                 placeholder="e.g. 2018"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-brand-mint text-sm text-white placeholder-white/30 outline-none transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border focus:border-brand-mint text-sm text-text-primary placeholder:text-text-muted/60 outline-none transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-white/80 mb-1.5">LinkedIn Profile</label>
+              <label className="block text-xs font-semibold text-text-secondary mb-1.5">LinkedIn Profile</label>
               <input
                 type="url"
                 value={formData.linkedin}
                 onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
                 placeholder="https://linkedin.com/company/..."
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-brand-mint text-sm text-white placeholder-white/30 outline-none transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border focus:border-brand-mint text-sm text-text-primary placeholder:text-text-muted/60 outline-none transition-all"
               />
             </div>
           </div>
         </form>
 
         {/* Footer Actions */}
-        <div className="pt-4 border-t border-white/[0.08] flex items-center justify-end gap-3 shrink-0">
+        <div className="pt-4 border-t border-border flex items-center justify-end gap-3 shrink-0">
           <button
             type="button"
             onClick={handleClose}
             disabled={saving || uploadingLogo}
-            className="px-4 py-2.5 rounded-xl text-xs font-semibold text-white/60 hover:text-white hover:bg-white/[0.04] transition-all cursor-pointer disabled:opacity-50"
+            className="px-4 py-2.5 rounded-xl text-xs font-semibold text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-all cursor-pointer disabled:opacity-50"
           >
             Cancel
           </button>
@@ -453,7 +453,7 @@ export default function EditBusinessModal({ isOpen, onClose, business, onSuccess
             type="submit"
             form="edit-business-form"
             disabled={saving || uploadingLogo}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-mint text-black font-bold text-xs shadow-lg shadow-brand-mint/20 hover:opacity-90 disabled:opacity-50 transition-all cursor-pointer"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs shadow-lg shadow-brand-mint/20 hover:opacity-90 disabled:opacity-50 transition-all cursor-pointer"
           >
             {uploadingLogo ? 'Uploading Logo...' : saving ? 'Saving Changes...' : 'Save Business Profile'}
           </button>

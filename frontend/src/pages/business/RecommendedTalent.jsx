@@ -96,11 +96,11 @@ function CandidateCard({ match, jobId, onInviteSent, onSaveToggled, onDismissed 
   const CatIcon = catConfig.icon;
 
   return (
-    <div className="p-5 rounded-3xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12] transition-all group">
+    <div className="p-5 rounded-3xl bg-surface-card border border-border hover:border-border-accent transition-all group">
       {/* Header */}
       <div className="flex items-start gap-4">
         {/* Avatar */}
-        <div className="w-14 h-14 rounded-2xl bg-[#181822] border border-white/[0.08] flex items-center justify-center overflow-hidden shrink-0">
+        <div className="w-14 h-14 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center overflow-hidden shrink-0">
           {candidate.avatar ? (
             <img
               src={candidate.avatar}
@@ -115,7 +115,7 @@ function CandidateCard({ match, jobId, onInviteSent, onSaveToggled, onDismissed 
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-bold text-white text-sm">{candidate.name}</h3>
+            <h3 className="font-bold text-text-primary text-sm">{candidate.name}</h3>
             <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${catConfig.bgClass}`}>
               <CatIcon className="w-3 h-3" />
               {catConfig.label}
@@ -157,7 +157,7 @@ function CandidateCard({ match, jobId, onInviteSent, onSaveToggled, onDismissed 
                   className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold ${
                     match.matchedSoftware?.includes(sw)
                       ? 'bg-brand-mint/15 text-brand-mint border border-brand-mint/30'
-                      : 'bg-white/[0.04] text-text-muted border border-white/[0.06]'
+                      : 'bg-surface-elevated text-text-muted border border-border'
                   }`}
                 >
                   {sw}
@@ -174,7 +174,8 @@ function CandidateCard({ match, jobId, onInviteSent, onSaveToggled, onDismissed 
               <circle
                 cx="32" cy="32" r="28"
                 fill="none"
-                stroke="rgba(255,255,255,0.04)"
+                stroke="currentColor"
+                className="text-border"
                 strokeWidth="4"
               />
               <circle
@@ -187,7 +188,7 @@ function CandidateCard({ match, jobId, onInviteSent, onSaveToggled, onDismissed 
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-lg font-extrabold text-white leading-none">{match.score}</span>
+              <span className="text-lg font-extrabold text-text-primary leading-none">{match.score}</span>
               <span className="text-[8px] text-text-muted font-medium">%</span>
             </div>
           </div>
@@ -205,7 +206,7 @@ function CandidateCard({ match, jobId, onInviteSent, onSaveToggled, onDismissed 
       </button>
 
       {expanded && (
-        <div className="mt-3 pt-3 border-t border-white/[0.06] space-y-3">
+        <div className="mt-3 pt-3 border-t border-border space-y-3">
           {/* Strong Matches */}
           {match.matchReasons?.length > 0 && (
             <div>
@@ -284,11 +285,11 @@ function CandidateCard({ match, jobId, onInviteSent, onSaveToggled, onDismissed 
       )}
 
       {/* Actions */}
-      <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center justify-between gap-2 flex-wrap">
+      <div className="mt-3 pt-3 border-t border-border flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
           <Link
             to={`/u/${candidate.username || candidate.id}`}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs text-white font-semibold transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-xs text-text-primary font-semibold border border-border transition-all"
           >
             <Eye className="w-3.5 h-3.5" />
             View Profile
@@ -300,7 +301,7 @@ function CandidateCard({ match, jobId, onInviteSent, onSaveToggled, onDismissed 
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
               match.isSaved
                 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                : 'bg-white/[0.05] hover:bg-white/[0.1] text-text-muted hover:text-white'
+                : 'bg-surface-elevated hover:bg-surface-elevated/80 text-text-muted hover:text-text-primary border border-border'
             }`}
             title={match.isSaved ? 'Remove from saved candidates' : 'Save candidate'}
           >
@@ -314,7 +315,7 @@ function CandidateCard({ match, jobId, onInviteSent, onSaveToggled, onDismissed 
 
           <Link
             to="/network"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs text-text-muted hover:text-white font-semibold transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-xs text-text-muted hover:text-text-primary font-semibold border border-border transition-all"
             title="Message candidate on network"
           >
             <MessageSquare className="w-3.5 h-3.5" />
@@ -324,7 +325,7 @@ function CandidateCard({ match, jobId, onInviteSent, onSaveToggled, onDismissed 
           <button
             onClick={handleDismiss}
             disabled={dismissing}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.03] hover:bg-red-500/20 text-xs text-text-muted hover:text-red-300 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-surface-elevated hover:bg-red-500/20 text-xs text-text-muted hover:text-red-300 border border-border transition-all cursor-pointer"
             title="Remove from recommended talent"
           >
             <X className="w-3.5 h-3.5" />
@@ -343,7 +344,7 @@ function CandidateCard({ match, jobId, onInviteSent, onSaveToggled, onDismissed 
           ) : (
             <button
               onClick={() => setShowSendModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-mint text-black font-bold text-xs hover:opacity-90 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs hover:opacity-90 transition-all cursor-pointer"
             >
               <Send className="w-3.5 h-3.5" />
               Send Opportunity
@@ -392,21 +393,21 @@ function SendOpportunityModal({ jobId, candidate, onClose, onSuccess }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-3xl bg-[#12121a] border border-white/[0.08] p-6 shadow-2xl space-y-4"
+        className="w-full max-w-md rounded-3xl bg-surface-card border border-border p-6 shadow-2xl space-y-4"
       >
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold text-white font-heading">
+          <h3 className="text-base font-bold text-text-primary font-heading">
             Send Opportunity
           </h3>
-          <button onClick={onClose} className="text-text-muted hover:text-white cursor-pointer">
+          <button onClick={onClose} className="text-text-muted hover:text-text-primary cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
+        <div className="p-3 rounded-2xl bg-surface-elevated border border-border">
           <p className="text-xs text-text-muted">To:</p>
           <div className="flex items-center gap-2 mt-1">
-            <div className="w-8 h-8 rounded-lg bg-[#181822] border border-white/[0.08] flex items-center justify-center overflow-hidden">
+            <div className="w-8 h-8 rounded-lg bg-surface-elevated border border-border flex items-center justify-center overflow-hidden">
               {candidate.avatar ? (
                 <img src={candidate.avatar} alt="" className="w-full h-full object-cover" />
               ) : (
@@ -414,7 +415,7 @@ function SendOpportunityModal({ jobId, candidate, onClose, onSuccess }) {
               )}
             </div>
             <div>
-              <p className="text-sm font-bold text-white">{candidate.name}</p>
+              <p className="text-sm font-bold text-text-primary">{candidate.name}</p>
               <p className="text-[11px] text-text-muted">{candidate.headline || candidate.primaryDiscipline}</p>
             </div>
           </div>
@@ -429,7 +430,7 @@ function SendOpportunityModal({ jobId, candidate, onClose, onSuccess }) {
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Share why you think this candidate would be a great fit..."
             rows={3}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-[#161620] border border-white/[0.08] text-sm text-white placeholder-text-muted/50 resize-none outline-none focus:border-brand-mint transition-colors"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary placeholder-text-muted/50 resize-none outline-none focus:border-brand-mint transition-colors"
           />
         </div>
 
@@ -443,14 +444,14 @@ function SendOpportunityModal({ jobId, candidate, onClose, onSuccess }) {
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl bg-white/[0.05] text-white text-xs font-semibold hover:bg-white/[0.1] transition-all cursor-pointer"
+            className="flex-1 py-2.5 rounded-xl bg-surface-elevated text-text-muted hover:text-text-primary text-xs font-semibold border border-border transition-all cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={handleSend}
             disabled={sending}
-            className="flex-1 py-2.5 rounded-xl bg-brand-mint text-black font-bold text-xs shadow-lg shadow-brand-mint/20 hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+            className="flex-1 py-2.5 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs shadow-lg shadow-brand-mint/20 hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
           >
             {sending ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -525,19 +526,19 @@ export default function RecommendedTalent({ jobId, jobTitle }) {
   // ── Loading State ─────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/[0.06] text-center space-y-4">
+      <div className="p-8 rounded-3xl bg-surface-card border border-border text-center space-y-4">
         <div className="w-12 h-12 mx-auto rounded-full bg-brand-mint/10 border border-brand-mint/20 flex items-center justify-center">
           <Sparkles className="w-6 h-6 text-brand-mint animate-pulse" />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-white">
+          <h3 className="text-sm font-bold text-text-primary">
             AI is finding relevant infrastructure talent...
           </h3>
           <p className="text-xs text-text-muted mt-1">
             Analyzing profiles, skills, experience, and project portfolios
           </p>
         </div>
-        <div className="w-48 h-1 mx-auto rounded-full bg-white/[0.06] overflow-hidden">
+        <div className="w-48 h-1 mx-auto rounded-full bg-surface-elevated overflow-hidden">
           <div className="h-full bg-brand-mint rounded-full animate-pulse" style={{ width: '60%' }} />
         </div>
       </div>
@@ -547,12 +548,12 @@ export default function RecommendedTalent({ jobId, jobTitle }) {
   // ── Error State ───────────────────────────────────────────────
   if (isError) {
     return (
-      <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/[0.06] text-center space-y-4">
+      <div className="p-8 rounded-3xl bg-surface-card border border-border text-center space-y-4">
         <div className="w-12 h-12 mx-auto rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
           <AlertTriangle className="w-6 h-6 text-red-400" />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-white">
+          <h3 className="text-sm font-bold text-text-primary">
             Talent recommendations are temporarily unavailable
           </h3>
           <p className="text-xs text-text-muted mt-1">
@@ -561,7 +562,7 @@ export default function RecommendedTalent({ jobId, jobTitle }) {
         </div>
         <button
           onClick={() => refetch()}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.05] text-xs text-white font-semibold hover:bg-white/[0.1] cursor-pointer"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-elevated text-xs text-text-primary font-semibold hover:bg-surface-elevated/80 border border-border cursor-pointer"
         >
           <RefreshCw className="w-4 h-4" />
           Retry
@@ -573,12 +574,12 @@ export default function RecommendedTalent({ jobId, jobTitle }) {
   // ── Empty State ───────────────────────────────────────────────
   if (matches.length === 0 && !isLoading) {
     return (
-      <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/[0.06] text-center space-y-4">
-        <div className="w-12 h-12 mx-auto rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center">
+      <div className="p-8 rounded-3xl bg-surface-card border border-border text-center space-y-4">
+        <div className="w-12 h-12 mx-auto rounded-full bg-surface-elevated border border-border flex items-center justify-center">
           <Sparkles className="w-6 h-6 text-text-muted" />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-white">
+          <h3 className="text-sm font-bold text-text-primary">
             No strong profile matches found yet
           </h3>
           <p className="text-xs text-text-muted mt-1 max-w-sm mx-auto">
@@ -588,7 +589,7 @@ export default function RecommendedTalent({ jobId, jobTitle }) {
         <button
           onClick={() => triggerMutation.mutate()}
           disabled={triggerMutation.isPending}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-mint text-black font-bold text-xs shadow-lg shadow-brand-mint/20 hover:opacity-90 cursor-pointer disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs shadow-lg shadow-brand-mint/20 hover:opacity-90 cursor-pointer disabled:opacity-50"
         >
           {triggerMutation.isPending ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -605,17 +606,17 @@ export default function RecommendedTalent({ jobId, jobTitle }) {
     <div className="space-y-5">
       {/* ── Key Metrics (Independent Counts) ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+        <div className="p-4 rounded-2xl bg-surface-card border border-border">
           <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
             Applicants
           </span>
-          <p className="text-2xl font-extrabold text-white mt-1">
+          <p className="text-2xl font-extrabold text-text-primary mt-1">
             {summary?.applicants ?? 0}
           </p>
           <span className="text-[10px] text-text-muted">Direct applicants</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+        <div className="p-4 rounded-2xl bg-surface-card border border-border">
           <span className="text-[11px] font-bold uppercase tracking-wider text-brand-mint">
             AI Recommended
           </span>
@@ -625,7 +626,7 @@ export default function RecommendedTalent({ jobId, jobTitle }) {
           <span className="text-[10px] text-brand-mint/70">Matched profiles</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+        <div className="p-4 rounded-2xl bg-surface-card border border-border">
           <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">
             Saved Candidates
           </span>
@@ -635,7 +636,7 @@ export default function RecommendedTalent({ jobId, jobTitle }) {
           <span className="text-[10px] text-amber-400/70">Shortlisted for review</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+        <div className="p-4 rounded-2xl bg-surface-card border border-border">
           <span className="text-[11px] font-bold uppercase tracking-wider text-cyan-400">
             Offers Sent
           </span>
@@ -653,7 +654,7 @@ export default function RecommendedTalent({ jobId, jobTitle }) {
             <Sparkles className="w-5 h-5 text-brand-mint" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-white font-heading">
+            <h2 className="text-base font-bold text-text-primary font-heading">
               AI Recommended Talent
             </h2>
             <p className="text-[11px] text-text-muted mt-0.5">
@@ -665,7 +666,7 @@ export default function RecommendedTalent({ jobId, jobTitle }) {
         <button
           onClick={() => triggerMutation.mutate()}
           disabled={triggerMutation.isPending}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs text-white font-semibold border border-white/[0.08] transition-all cursor-pointer disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-xs text-text-primary font-semibold border border-border transition-all cursor-pointer disabled:opacity-50"
         >
           {triggerMutation.isPending ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -682,8 +683,8 @@ export default function RecommendedTalent({ jobId, jobTitle }) {
           onClick={() => { setCategoryFilter(''); setSavedOnly(false); setPage(1); }}
           className={`px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all cursor-pointer ${
             !categoryFilter && !savedOnly
-              ? 'bg-brand-mint text-black font-bold'
-              : 'bg-white/[0.04] text-text-muted hover:text-white hover:bg-white/[0.08] border border-white/[0.06]'
+              ? 'bg-brand-mint text-brand-navy font-bold'
+              : 'bg-surface-elevated text-text-muted hover:text-text-primary hover:bg-surface-elevated/80 border border-border'
           }`}
         >
           All ({totalMatches})
@@ -693,7 +694,7 @@ export default function RecommendedTalent({ jobId, jobTitle }) {
           className={`px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
             savedOnly
               ? 'bg-amber-400 text-black font-bold shadow-md'
-              : 'bg-white/[0.04] text-text-muted hover:text-white hover:bg-white/[0.08] border border-white/[0.06]'
+              : 'bg-surface-elevated text-text-muted hover:text-text-primary hover:bg-surface-elevated/80 border border-border'
           }`}
         >
           <Bookmark className="w-3 h-3" /> Saved ({summary?.savedCandidates ?? 0})
@@ -704,7 +705,7 @@ export default function RecommendedTalent({ jobId, jobTitle }) {
             className={`px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
               categoryFilter === 'HIGHLY_COMPATIBLE'
                 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold'
-                : 'bg-white/[0.04] text-text-muted hover:text-white hover:bg-white/[0.08] border border-white/[0.06]'
+                : 'bg-surface-elevated text-text-muted hover:text-text-primary hover:bg-surface-elevated/80 border border-border'
             }`}
           >
             <Zap className="w-3 h-3" /> Highly Compatible ({counts.highlyCompatible})
@@ -716,7 +717,7 @@ export default function RecommendedTalent({ jobId, jobTitle }) {
             className={`px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
               categoryFilter === 'STRONGLY_COMPATIBLE'
                 ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-bold'
-                : 'bg-white/[0.04] text-text-muted hover:text-white hover:bg-white/[0.08] border border-white/[0.06]'
+                : 'bg-surface-elevated text-text-muted hover:text-text-primary hover:bg-surface-elevated/80 border border-border'
             }`}
           >
             <Target className="w-3 h-3" /> Strongly Compatible ({counts.stronglyCompatible})
@@ -728,7 +729,7 @@ export default function RecommendedTalent({ jobId, jobTitle }) {
             className={`px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
               categoryFilter === 'POTENTIALLY_COMPATIBLE'
                 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold'
-                : 'bg-white/[0.04] text-text-muted hover:text-white hover:bg-white/[0.08] border border-white/[0.06]'
+                : 'bg-surface-elevated text-text-muted hover:text-text-primary hover:bg-surface-elevated/80 border border-border'
             }`}
           >
             <BarChart3 className="w-3 h-3" /> Potentially Compatible ({counts.potentiallyCompatible})
@@ -737,10 +738,10 @@ export default function RecommendedTalent({ jobId, jobTitle }) {
       </div>
 
       {/* Trust banner */}
-      <div className="p-3 rounded-xl bg-white/[0.015] border border-white/[0.04] flex items-start gap-2">
+      <div className="p-3 rounded-xl bg-surface-card border border-border flex items-start gap-2">
         <ShieldCheck className="w-4 h-4 text-brand-mint/60 shrink-0 mt-0.5" />
         <p className="text-[10px] text-text-muted leading-relaxed">
-          <strong className="text-white/70">Profile Compatibility</strong> scores
+          <strong className="text-text-secondary">Profile Compatibility</strong> scores
           are based on structured profile data including discipline, skills, software,
           experience, projects, and career preferences. They indicate alignment — not
           a guarantee of hiring success. The recruiter makes the hiring decision.
@@ -776,7 +777,7 @@ export default function RecommendedTalent({ jobId, jobTitle }) {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1}
-            className="px-4 py-2 rounded-xl bg-white/[0.05] text-xs text-white font-semibold hover:bg-white/[0.1] disabled:opacity-30 cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-surface-elevated text-xs text-text-primary font-semibold hover:bg-surface-elevated/80 border border-border disabled:opacity-30 cursor-pointer"
           >
             Previous
           </button>
@@ -786,7 +787,7 @@ export default function RecommendedTalent({ jobId, jobTitle }) {
           <button
             onClick={() => setPage((p) => p + 1)}
             disabled={!talentData?.hasNextPage}
-            className="px-4 py-2 rounded-xl bg-white/[0.05] text-xs text-white font-semibold hover:bg-white/[0.1] disabled:opacity-30 cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-surface-elevated text-xs text-text-primary font-semibold hover:bg-surface-elevated/80 border border-border disabled:opacity-30 cursor-pointer"
           >
             Next
           </button>

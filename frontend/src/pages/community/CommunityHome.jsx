@@ -581,7 +581,7 @@ export default function CommunityHome({ initialCreateMode } = {}) {
 
             {/* Active Topic Banner if filtering by topic */}
             {activeTopic && (
-              <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#12314C]/70 to-[#9FD5B2]/15 border border-brand-mint/30 text-xs text-white shadow-sm">
+              <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-surface-elevated border border-brand-mint/30 text-xs text-text-primary shadow-sm">
                 <span className="flex items-center gap-1.5 font-medium">
                   Filtering by topic: <strong className="text-brand-mint">#{activeTopic}</strong>
                   <span className="text-text-muted font-normal">
@@ -591,7 +591,7 @@ export default function CommunityHome({ initialCreateMode } = {}) {
                 <button
                   type="button"
                   onClick={() => setActiveTopic(null)}
-                  className="text-text-muted hover:text-white underline cursor-pointer"
+                  className="text-text-muted hover:text-text-primary underline cursor-pointer"
                 >
                   Show all
                 </button>
@@ -600,7 +600,7 @@ export default function CommunityHome({ initialCreateMode } = {}) {
 
             {/* Target Post Deep-Link Fallback Notice (if post was filtered or unavailable) */}
             {targetPostNotice && (
-              <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-[#12314C]/85 border border-brand-mint/30 text-xs text-white shadow-sm animate-fadeIn">
+              <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-surface-elevated border border-brand-mint/30 text-xs text-text-primary shadow-sm animate-fadeIn">
                 <div className="flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-brand-mint shrink-0" aria-hidden="true" />
                   <span>
@@ -626,7 +626,7 @@ export default function CommunityHome({ initialCreateMode } = {}) {
                   <button
                     type="button"
                     onClick={() => setTargetPostNotice(null)}
-                    className="text-text-muted hover:text-white px-1.5 py-1 transition-colors cursor-pointer"
+                    className="text-text-muted hover:text-text-primary px-1.5 py-1 transition-colors cursor-pointer"
                     aria-label="Dismiss notice"
                   >
                     Dismiss
@@ -684,7 +684,7 @@ export default function CommunityHome({ initialCreateMode } = {}) {
                         <PostCardSkeleton />
                       </div>
                     ) : isFetchNextPageError ? (
-                      <div className="text-center py-5 px-4 bg-white/[0.02] border border-white/[0.06] rounded-2xl">
+                      <div className="text-center py-5 px-4 bg-surface-card border border-border rounded-2xl">
                         <p className="text-xs text-text-muted mb-2.5">Couldn't load more posts.</p>
                         <button
                           type="button"

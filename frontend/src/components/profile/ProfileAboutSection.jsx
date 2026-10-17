@@ -27,7 +27,7 @@ export default function ProfileAboutSection({
     <section
       id="about"
       aria-labelledby="profile-about-heading"
-      className={`rounded-3xl border border-white/[0.08] bg-[#0A0F18]/90 backdrop-blur-xl p-6 sm:p-8 shadow-sm transition-all ${className}`}
+      className={`rounded-3xl border border-border bg-surface-card p-6 sm:p-8 shadow-sm transition-all ${className}`}
     >
       <div className="flex items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
@@ -37,7 +37,7 @@ export default function ProfileAboutSection({
           <div>
             <h2
               id="profile-about-heading"
-              className="text-lg sm:text-xl font-heading font-extrabold text-white tracking-tight"
+              className="text-lg sm:text-xl font-heading font-extrabold text-text-primary tracking-tight"
             >
               Professional Story
             </h2>
@@ -50,7 +50,7 @@ export default function ProfileAboutSection({
         {isOwner && (
           <Link
             to="/profile/edit?section=basic-info"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] text-white text-xs font-semibold transition-all cursor-pointer focus-ring shadow-sm"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-surface-elevated/40 hover:bg-surface-elevated text-text-primary text-xs font-semibold transition-all cursor-pointer focus-ring shadow-sm"
           >
             <Pencil className="w-3.5 h-3.5 text-brand-mint" />
             <span>Edit Bio</span>
@@ -59,11 +59,11 @@ export default function ProfileAboutSection({
       </div>
 
       {!hasAnyMetadata ? (
-        <div className="rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.01] p-8 text-center">
-          <div className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-text-muted mx-auto mb-3">
+        <div className="rounded-2xl border border-dashed border-border bg-surface-elevated/20 p-8 text-center">
+          <div className="w-12 h-12 rounded-xl bg-surface-elevated border border-border flex items-center justify-center text-text-muted mx-auto mb-3">
             <Compass className="w-6 h-6 text-text-faint" />
           </div>
-          <h3 className="text-sm font-heading font-bold text-white mb-1">
+          <h3 className="text-sm font-heading font-bold text-text-primary mb-1">
             No bio or story provided yet
           </h3>
           <p className="text-xs text-text-muted max-w-sm mx-auto mb-4">
@@ -97,20 +97,20 @@ export default function ProfileAboutSection({
           )}
 
           {/* Key Facts & Metadata Strip */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-4 border-t border-white/[0.06]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-4 border-t border-border">
             {primaryDiscipline && (
-              <div className="p-3.5 rounded-xl border border-white/[0.06] bg-white/[0.02]">
+              <div className="p-3.5 rounded-xl border border-border bg-surface-elevated/40">
                 <p className="text-[10px] font-mono uppercase tracking-wider text-text-muted">
                   Primary Discipline
                 </p>
-                <p className="text-sm font-bold text-white mt-1">
+                <p className="text-sm font-bold text-text-primary mt-1">
                   {primaryDiscipline}
                 </p>
               </div>
             )}
 
             {yearsExp > 0 && (
-              <div className="p-3.5 rounded-xl border border-white/[0.06] bg-white/[0.02]">
+              <div className="p-3.5 rounded-xl border border-border bg-surface-elevated/40">
                 <p className="text-[10px] font-mono uppercase tracking-wider text-text-muted">
                   Professional Experience
                 </p>
@@ -121,11 +121,11 @@ export default function ProfileAboutSection({
             )}
 
             {location && (
-              <div className="p-3.5 rounded-xl border border-white/[0.06] bg-white/[0.02]">
+              <div className="p-3.5 rounded-xl border border-border bg-surface-elevated/40">
                 <p className="text-[10px] font-mono uppercase tracking-wider text-text-muted">
                   Base Location
                 </p>
-                <p className="text-sm font-bold text-white mt-1 flex items-center gap-1.5">
+                <p className="text-sm font-bold text-text-primary mt-1 flex items-center gap-1.5">
                   <MapPin className="w-3.5 h-3.5 text-brand-mint shrink-0" />
                   <span className="truncate">{location}</span>
                 </p>
@@ -145,7 +145,7 @@ export default function ProfileAboutSection({
                     {sectors.map((sec, idx) => (
                       <span
                         key={`sec-${idx}`}
-                        className="px-2.5 py-1 rounded-xl bg-white/[0.03] border border-white/[0.08] text-xs font-mono font-medium text-white/90"
+                        className="px-2.5 py-1 rounded-xl bg-surface-elevated border border-border text-xs font-mono font-medium text-text-primary"
                       >
                         {sec}
                       </span>

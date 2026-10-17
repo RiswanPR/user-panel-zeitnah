@@ -79,7 +79,7 @@ function ReelTimeline({
       {/* Time & Duration Info Header */}
       <div className="flex items-center justify-between text-xs text-text-muted">
         <div className="flex items-center gap-1 font-mono text-[11px]">
-          <span className="text-white font-medium">{formatSeconds(currentTime)}</span>
+          <span className="text-text-primary font-medium">{formatSeconds(currentTime)}</span>
           <span className="text-text-faint">/</span>
           <span>{formatSeconds(safeDuration)}</span>
         </div>
@@ -95,7 +95,7 @@ function ReelTimeline({
       </div>
 
       {/* Interactive Timeline Track */}
-      <div className="relative h-11 sm:h-12 w-full rounded-xl bg-[#060D18] border border-white/[0.08] overflow-hidden flex items-center">
+      <div className="relative h-11 sm:h-12 w-full rounded-xl bg-surface-elevated/40 border border-border overflow-hidden flex items-center">
         {/* Track Clickable Area */}
         <div
           ref={trackRef}
@@ -153,7 +153,7 @@ function ReelTimeline({
           className="absolute top-0 bottom-0 w-3 bg-brand-mint rounded-l-md flex items-center justify-center pointer-events-none shadow-md z-25"
           style={{ left: `calc(${leftPercent}% - 3px)` }}
         >
-          <div className="w-0.5 h-4 bg-[#070B14] rounded-full" />
+          <div className="w-0.5 h-4 bg-bg-base rounded-full" />
         </div>
 
         {/* Visible Trim End Handle Anchor */}
@@ -161,7 +161,7 @@ function ReelTimeline({
           className="absolute top-0 bottom-0 w-3 bg-brand-mint rounded-r-md flex items-center justify-center pointer-events-none shadow-md z-25"
           style={{ left: `calc(${rightPercent}% - 9px)` }}
         >
-          <div className="w-0.5 h-4 bg-[#070B14] rounded-full" />
+          <div className="w-0.5 h-4 bg-bg-base rounded-full" />
         </div>
       </div>
 
@@ -177,7 +177,7 @@ function ReelTimeline({
               Audio: {formatSeconds(musicStart)} – {formatSeconds(musicEnd)}
             </span>
           </div>
-          <div className="relative h-2 w-full rounded-full bg-[#060D18] border border-brand-yellow/20 overflow-hidden">
+          <div className="relative h-2 w-full rounded-full bg-surface-elevated/40 border border-brand-yellow/20 overflow-hidden">
             <div
               className="absolute top-0 bottom-0 bg-brand-yellow/80 rounded-full"
               style={{
@@ -199,7 +199,7 @@ function ReelTimeline({
             </span>
             <span className="text-[10px] text-text-faint">Click layer to seek</span>
           </div>
-          <div className="relative h-3 w-full rounded-md bg-[#060D18] border border-white/[0.08] overflow-hidden">
+          <div className="relative h-3 w-full rounded-md bg-surface-elevated/40 border border-border overflow-hidden">
             {layers.map((layer) => {
               const layerStart = Math.max(0, Number(layer.start ?? 0));
               const layerEnd = Math.min(safeDuration, Number(layer.end ?? safeDuration));

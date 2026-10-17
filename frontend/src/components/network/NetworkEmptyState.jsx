@@ -28,7 +28,7 @@ export default function NetworkEmptyState({
       initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className={`flex flex-col items-center justify-center text-center rounded-2xl border border-white/[0.08] bg-bg-surface/50 p-8 sm:p-12 backdrop-blur-xl ${className}`}
+      className={`flex flex-col items-center justify-center text-center rounded-2xl border border-border bg-surface-card/50 p-8 sm:p-12 backdrop-blur-xl ${className}`}
     >
       {/* Icon Pill */}
       <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-brand-mint/20 bg-brand-mint/[0.08] text-brand-mint shadow-inner mb-4">
@@ -36,7 +36,7 @@ export default function NetworkEmptyState({
       </div>
 
       {/* Heading */}
-      <h3 className="text-base sm:text-lg font-heading font-bold text-white mb-1.5">
+      <h3 className="text-base sm:text-lg font-heading font-bold text-text-primary mb-1.5">
         {title}
       </h3>
 

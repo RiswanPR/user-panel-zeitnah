@@ -271,16 +271,11 @@ export default function TroubleshootReporter() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              className="relative w-full max-w-xl rounded-2xl border overflow-hidden shadow-2xl"
-              style={{
-                background: 'linear-gradient(180deg, #0d1f33 0%, #091728 100%)',
-                borderColor: 'rgba(159,213,178,0.12)',
-                maxHeight: '90vh',
-              }}
+              className="relative w-full max-w-xl rounded-2xl border border-border bg-surface-card overflow-hidden shadow-2xl max-h-[90vh]"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Top accent line */}
-              <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: 'linear-gradient(90deg, transparent, rgba(239,68,68,0.5), rgba(246,237,74,0.3), transparent)' }} />
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-red-500/50 to-transparent" />
 
               {/* Success State */}
               {submitted ? (
@@ -289,49 +284,47 @@ export default function TroubleshootReporter() {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: 'spring', stiffness: 500, damping: 25, delay: 0.1 }}
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
-                    style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)' }}
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 bg-emerald-500/10 border border-emerald-500/25"
                   >
                     <svg className="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </motion.div>
-                  <h3 className="text-lg font-bold text-white mb-2">Report Submitted</h3>
-                  <p className="text-sm text-white/50 text-center max-w-xs">
+                  <h3 className="text-lg font-bold text-text-primary mb-2">Report Submitted</h3>
+                  <p className="text-sm text-text-muted text-center max-w-xs">
                     Your troubleshoot report has been sent. Our team will be alerted immediately.
                   </p>
                 </div>
               ) : (
                 /* ── Form Content ── */
-                <div className="overflow-y-auto" style={{ maxHeight: '85vh' }}>
+                <div className="overflow-y-auto max-h-[85vh]">
                   {/* Header */}
-                  <div className="flex items-center justify-between px-6 pt-5 pb-4">
+                  <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border">
                     <div className="flex items-center gap-3">
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center"
-                        style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)' }}
+                        className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-500/10 border border-red-500/25"
                       >
                         <Bug className="w-5 h-5 text-red-400" />
                       </div>
                       <div>
-                        <h2 className="text-base font-bold text-white tracking-tight">Submit Troubleshoot Report</h2>
-                        <p className="text-[11px] text-white/40 font-medium">All error data will be included automatically</p>
+                        <h2 className="text-base font-bold text-text-primary tracking-tight">Submit Troubleshoot Report</h2>
+                        <p className="text-[11px] text-text-muted font-medium">All error data will be included automatically</p>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={closeModal}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.06] transition-all cursor-pointer"
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-all cursor-pointer"
                     >
                       <X className="w-4 h-4" />
                     </button>
                   </div>
 
-                  <div className="px-6 pb-6 space-y-5">
+                  <div className="px-6 pb-6 pt-4 space-y-5">
 
                     {/* Severity Selector */}
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-white/50 mb-2.5">
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-text-secondary mb-2.5">
                         Severity Level
                       </label>
                       <div className="grid grid-cols-4 gap-2">
@@ -340,12 +333,14 @@ export default function TroubleshootReporter() {
                             key={s.value}
                             type="button"
                             onClick={() => setSeverity(s.value)}
-                            className="py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 cursor-pointer border"
-                            style={{
-                              background: severity === s.value ? s.bg : 'rgba(255,255,255,0.02)',
-                              borderColor: severity === s.value ? s.border : 'rgba(255,255,255,0.06)',
-                              color: severity === s.value ? s.color : 'rgba(255,255,255,0.35)',
-                            }}
+                            className={`py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 cursor-pointer border ${
+                              severity === s.value ? '' : 'bg-surface-elevated border-border text-text-muted hover:text-text-primary'
+                            }`}
+                            style={severity === s.value ? {
+                              background: s.bg,
+                              borderColor: s.border,
+                              color: s.color,
+                            } : undefined}
                           >
                             {s.label}
                           </button>
@@ -355,7 +350,7 @@ export default function TroubleshootReporter() {
 
                     {/* Title */}
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-white/50 mb-2">
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-text-secondary mb-2">
                         Title
                       </label>
                       <input
@@ -364,21 +359,14 @@ export default function TroubleshootReporter() {
                         onChange={(e) => { setTitle(e.target.value); setSubmitError(''); }}
                         placeholder="Brief description of the issue..."
                         maxLength={200}
-                        className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 font-medium outline-none transition-all duration-150 focus:ring-2"
-                        style={{
-                          background: 'rgba(7,25,42,0.6)',
-                          border: '1px solid rgba(159,213,178,0.12)',
-                          focusRingColor: 'rgba(159,213,178,0.15)',
-                        }}
-                        onFocus={(e) => { e.target.style.borderColor = 'rgba(159,213,178,0.3)'; }}
-                        onBlur={(e) => { e.target.style.borderColor = 'rgba(159,213,178,0.12)'; }}
+                        className="w-full rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-muted font-medium outline-none transition-all duration-150 bg-surface-elevated border border-border focus:border-border-accent focus:ring-1 focus:ring-brand-mint/40"
                       />
                     </div>
 
                     {/* Description */}
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-white/50 mb-2">
-                        What happened? <span className="text-white/25">(optional)</span>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-text-secondary mb-2">
+                        What happened? <span className="text-text-muted">(optional)</span>
                       </label>
                       <textarea
                         value={description}
@@ -386,13 +374,7 @@ export default function TroubleshootReporter() {
                         placeholder="Describe what you were doing when the error occurred..."
                         maxLength={2000}
                         rows={3}
-                        className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 font-medium outline-none resize-none transition-all duration-150"
-                        style={{
-                          background: 'rgba(7,25,42,0.6)',
-                          border: '1px solid rgba(159,213,178,0.12)',
-                        }}
-                        onFocus={(e) => { e.target.style.borderColor = 'rgba(159,213,178,0.3)'; }}
-                        onBlur={(e) => { e.target.style.borderColor = 'rgba(159,213,178,0.12)'; }}
+                        className="w-full rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-muted font-medium outline-none resize-none transition-all duration-150 bg-surface-elevated border border-border focus:border-border-accent focus:ring-1 focus:ring-brand-mint/40"
                       />
                     </div>
 
@@ -401,19 +383,13 @@ export default function TroubleshootReporter() {
                       <button
                         type="button"
                         onClick={() => setShowPreview((v) => !v)}
-                        className="w-full flex items-center justify-between py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 cursor-pointer"
-                        style={{
-                          background: 'rgba(255,255,255,0.02)',
-                          border: '1px solid rgba(255,255,255,0.06)',
-                          color: 'rgba(255,255,255,0.5)',
-                        }}
+                        className="w-full flex items-center justify-between py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 cursor-pointer bg-surface-elevated border border-border text-text-secondary hover:text-text-primary"
                       >
                         <span className="flex items-center gap-2">
                           <Terminal className="w-3.5 h-3.5" />
                           Error Data Preview
                           <span
-                            className="text-[10px] font-bold px-2 py-0.5 rounded-md"
-                            style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}
+                            className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-500/10 text-red-400"
                           >
                             {errorData
                               ? errorData.consoleErrors.length +
@@ -604,11 +580,7 @@ export default function TroubleshootReporter() {
                       type="button"
                       onClick={handleSubmit}
                       disabled={submitting || !title.trim()}
-                      className="w-full relative group overflow-hidden rounded-xl py-3.5 text-xs font-extrabold uppercase tracking-wider transition-all duration-150 active:scale-[0.99] disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
-                      style={{
-                        background: '#f6ed4a',
-                        color: '#07192a',
-                      }}
+                      className="w-full relative group overflow-hidden rounded-xl py-3.5 text-xs font-extrabold uppercase tracking-wider transition-all duration-150 active:scale-[0.99] disabled:opacity-40 disabled:pointer-events-none cursor-pointer bg-brand-yellow text-brand-navy hover:brightness-105 shadow-md"
                     >
                       <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 bg-gradient-to-r from-transparent via-white/25 to-transparent" />
                       <span className="relative flex items-center justify-center gap-2">

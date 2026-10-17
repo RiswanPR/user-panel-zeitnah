@@ -12,7 +12,7 @@ export default function QuotedPost({ originalPost }) {
   // Graceful fallback for deleted or inaccessible original posts
   if (!originalPost || originalPost.isDeleted) {
     return (
-      <div className="my-3 p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs text-text-muted flex items-center gap-2 select-none">
+      <div className="my-3 p-3.5 rounded-xl bg-surface-elevated/50 border border-border text-xs text-text-muted flex items-center gap-2 select-none">
         <AlertCircle className="w-4 h-4 text-text-muted/60 shrink-0" aria-hidden="true" />
         <span>This post is no longer available.</span>
       </div>
@@ -25,13 +25,13 @@ export default function QuotedPost({ originalPost }) {
   const mediaItems = Array.isArray(originalPost.media) ? originalPost.media : [];
 
   return (
-    <div className="my-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.14] p-3.5 transition-all text-left overflow-hidden">
+    <div className="my-3 rounded-xl bg-surface-elevated/40 hover:bg-surface-elevated/70 border border-border hover:border-border-accent p-3.5 transition-all text-left overflow-hidden">
       {/* Author Bar */}
       <div className="flex items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-2 min-w-0">
           <Link
             to={profileUrl}
-            className="w-5 h-5 rounded-full overflow-hidden ring-1 ring-white/[0.1] bg-[#0E1726] shrink-0 flex items-center justify-center"
+            className="w-5 h-5 rounded-full overflow-hidden ring-1 ring-border bg-surface-elevated shrink-0 flex items-center justify-center"
             title={`View ${authorName}'s profile`}
           >
             {author?.avatar ? (
@@ -49,7 +49,7 @@ export default function QuotedPost({ originalPost }) {
           </Link>
           <Link
             to={profileUrl}
-            className="text-xs font-semibold text-text-secondary hover:text-white transition-colors truncate"
+            className="text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors truncate"
           >
             {authorName}
           </Link>
@@ -73,7 +73,7 @@ export default function QuotedPost({ originalPost }) {
 
       {/* Media Preview (Compact) */}
       {mediaItems.length > 0 && (
-        <div className="mt-2 rounded-lg overflow-hidden border border-white/[0.06] max-h-48 bg-black/40">
+        <div className="mt-2 rounded-lg overflow-hidden border border-border max-h-48 bg-black/40">
           {mediaItems[0].type === 'video' ? (
             <div className="relative aspect-video flex items-center justify-center bg-black/60">
               <Film className="w-6 h-6 text-white/50" />

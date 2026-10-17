@@ -70,7 +70,7 @@ export default function ShareProfileModal({ isOpen, onClose, username, name, pro
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="relative w-full max-w-md rounded-2xl bg-bg-card border border-border-default shadow-2xl p-6 z-10 space-y-6 max-h-[90dvh] overflow-y-auto overscroll-contain"
+          className="relative w-full max-w-md rounded-2xl bg-surface-card border border-border shadow-2xl p-6 z-10 space-y-6 max-h-[90dvh] overflow-y-auto overscroll-contain"
         >
           <div className="gradient-line-top" />
 
@@ -78,7 +78,7 @@ export default function ShareProfileModal({ isOpen, onClose, username, name, pro
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-3 right-3 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+            className="absolute top-3 right-3 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer"
             aria-label="Close dialog"
           >
             <X className="w-5 h-5" />
@@ -89,7 +89,7 @@ export default function ShareProfileModal({ isOpen, onClose, username, name, pro
             <div className="mx-auto w-12 h-12 rounded-xl bg-brand-mint/10 border border-brand-mint/20 flex items-center justify-center text-brand-mint mb-3">
               <Share2 className="w-6 h-6" />
             </div>
-            <h3 className="font-heading font-extrabold text-xl text-white">
+            <h3 className="font-heading font-extrabold text-xl text-text-primary">
               Share Profile
             </h3>
             <p className="text-xs text-text-muted">
@@ -98,13 +98,13 @@ export default function ShareProfileModal({ isOpen, onClose, username, name, pro
           </div>
 
           {/* Handle Preview */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-bg-elevated/70 border border-border-subtle">
+          <div className="flex items-center justify-between p-3 rounded-xl bg-surface-elevated/70 border border-border">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-brand-mint/15 border border-brand-mint/20 flex items-center justify-center text-brand-mint font-bold text-xs">
                 <AtSign className="w-4 h-4" />
               </div>
               <div className="text-left">
-                <p className="text-xs font-bold text-white leading-tight">{name || "Student"}</p>
+                <p className="text-xs font-bold text-text-primary leading-tight">{name || "Student"}</p>
                 <p className="text-[11px] font-mono text-brand-mint">@{username}</p>
               </div>
             </div>
@@ -112,7 +112,7 @@ export default function ShareProfileModal({ isOpen, onClose, username, name, pro
               href={`/u/${effectiveUsername}`}
               target="_blank"
               rel="noreferrer"
-              className="text-xs text-text-muted hover:text-brand-mint min-w-[44px] min-h-[44px] flex items-center justify-center p-1 rounded-lg hover:bg-white/[0.04]"
+              className="text-xs text-text-muted hover:text-brand-mint min-w-[44px] min-h-[44px] flex items-center justify-center p-1 rounded-lg hover:bg-surface-elevated"
               aria-label="Open public profile in new tab"
             >
               <ExternalLink className="w-4 h-4" />
@@ -129,7 +129,7 @@ export default function ShareProfileModal({ isOpen, onClose, username, name, pro
                 type="text"
                 readOnly
                 value={publicUrl}
-                className="glass-input flex-1 px-3 py-2 text-xs font-mono text-text-secondary bg-black/30 select-all"
+                className="glass-input flex-1 px-3 py-2 text-xs font-mono text-text-primary bg-surface-elevated border border-border select-all"
               />
               <button
                 type="button"

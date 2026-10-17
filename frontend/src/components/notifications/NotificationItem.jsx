@@ -91,8 +91,8 @@ function getIconForCategory(iconCategory, isCritical, isHigh) {
   return {
     Icon: Sparkles,
     iconColor: 'text-text-muted',
-    badgeBg: 'bg-white/[0.06] text-text-muted border-white/[0.1]',
-    glowBg: 'bg-white/[0.04] border-white/[0.08]',
+    badgeBg: 'bg-surface-elevated text-text-muted border-border',
+    glowBg: 'bg-surface-elevated border-border',
   };
 }
 
@@ -151,7 +151,7 @@ export default function NotificationItem({
       } ${
         presentation.isUnread
           ? 'bg-brand-mint/[0.04] hover:bg-brand-mint/[0.07] border border-brand-mint/25 shadow-sm'
-          : 'bg-white/[0.015] hover:bg-white/[0.04] border border-white/[0.05] opacity-85 hover:opacity-100'
+          : 'bg-surface-card/60 hover:bg-surface-elevated border border-border/60 opacity-85 hover:opacity-100'
       }`}
     >
       {/* Unread Indicator Bar / Dot */}
@@ -165,7 +165,7 @@ export default function NotificationItem({
       {/* Actor Avatar or Category Icon with Mini Overlay Badge */}
       <div className="relative shrink-0 mt-0.5">
         {actor.avatarUrl ? (
-          <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden border border-white/10 shadow-sm bg-bg-surface">
+          <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden border border-border shadow-sm bg-bg-surface">
             <img
               src={actor.avatarUrl}
               alt={actor.name}
@@ -218,8 +218,8 @@ export default function NotificationItem({
         <h4
           className={`text-xs sm:text-[13px] leading-snug break-words ${
             presentation.isUnread
-              ? 'font-bold text-white'
-              : 'font-semibold text-white/80'
+              ? 'font-bold text-text-primary'
+              : 'font-semibold text-text-secondary'
           }`}
         >
           {presentation.title}

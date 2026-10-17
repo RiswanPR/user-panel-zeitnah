@@ -58,7 +58,7 @@ export default function PostPollBuilder({
 
   return (
     <div
-      className="p-4 sm:p-5 rounded-2xl bg-[#0B1524] border border-white/[0.09] space-y-4"
+      className="p-4 sm:p-5 rounded-2xl bg-surface-elevated/40 border border-border space-y-4"
       role="region"
       aria-label="Poll Builder"
     >
@@ -68,7 +68,7 @@ export default function PostPollBuilder({
             <HelpCircle className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="text-xs sm:text-sm font-semibold text-white">Create a Poll</h4>
+            <h4 className="text-xs sm:text-sm font-semibold text-text-primary">Create a Poll</h4>
             <p className="text-[11px] text-text-muted">Engage the community with a question</p>
           </div>
         </div>
@@ -94,7 +94,7 @@ export default function PostPollBuilder({
           onChange={(e) => onQuestionChange(e.target.value)}
           placeholder="e.g. Which design approach works best for this foundation?"
           maxLength={200}
-          className="w-full bg-white/[0.03] border border-white/[0.08] focus:border-brand-mint/50 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-text-faint focus:outline-none transition-colors"
+          className="w-full bg-surface-card border border-border focus:border-brand-mint/50 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-text-primary placeholder-text-faint focus:outline-none transition-colors"
         />
         <div className="flex justify-end text-[10px] text-text-faint mt-1">
           {question.length}/200
@@ -118,13 +118,13 @@ export default function PostPollBuilder({
               onChange={(e) => handleOptionChange(idx, e.target.value)}
               placeholder={`Option ${idx + 1}`}
               maxLength={100}
-              className="flex-1 bg-white/[0.03] border border-white/[0.08] focus:border-brand-mint/50 rounded-xl px-3 py-2 text-xs sm:text-sm text-white placeholder-text-faint focus:outline-none transition-colors"
+              className="flex-1 bg-surface-card border border-border focus:border-brand-mint/50 rounded-xl px-3 py-2 text-xs sm:text-sm text-text-primary placeholder-text-faint focus:outline-none transition-colors"
             />
             {options.length > 2 && (
               <button
                 type="button"
                 onClick={() => handleRemoveOption(idx)}
-                className="p-2 text-text-muted hover:text-rose-400 hover:bg-white/[0.04] rounded-lg transition-colors cursor-pointer"
+                className="p-2 text-text-muted hover:text-rose-400 hover:bg-surface-elevated rounded-lg transition-colors cursor-pointer"
                 aria-label={`Remove option ${idx + 1}`}
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -153,12 +153,12 @@ export default function PostPollBuilder({
       </div>
 
       {/* Poll Duration */}
-      <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between gap-3">
+      <div className="pt-2 border-t border-border flex items-center justify-between gap-3">
         <div className="flex items-center gap-1.5 text-xs text-text-muted">
           <Clock className="w-3.5 h-3.5" />
           <span>Poll duration:</span>
         </div>
-        <div className="flex items-center gap-1 bg-white/[0.04] p-1 rounded-xl border border-white/[0.06]">
+        <div className="flex items-center gap-1 bg-surface-card p-1 rounded-xl border border-border">
           {DURATION_OPTIONS.map((dur) => (
             <button
               key={dur.value}
@@ -166,8 +166,8 @@ export default function PostPollBuilder({
               onClick={() => onDurationChange(dur.value)}
               className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                 durationDays === dur.value
-                  ? 'bg-brand-mint text-[#070B14] font-semibold shadow-sm'
-                  : 'text-text-muted hover:text-white'
+                  ? 'bg-brand-mint text-bg-base font-semibold shadow-sm'
+                  : 'text-text-muted hover:text-text-primary'
               }`}
             >
               {dur.label}

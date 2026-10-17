@@ -66,7 +66,7 @@ export default function PeopleCard({
     <div
       className={`
         flex items-center justify-between gap-3 p-3 rounded-xl
-        bg-white/[0.025] hover:bg-white/[0.045] border border-white/[0.06] hover:border-brand-mint/30
+        bg-surface-elevated hover:bg-surface-card border border-border hover:border-brand-mint/30
         transition-all duration-150 group
       `}
     >
@@ -77,7 +77,7 @@ export default function PeopleCard({
       >
         {/* Avatar */}
         <div className="relative shrink-0">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-[#12314C]/40 border border-white/10 group-hover:border-brand-mint/50 flex items-center justify-center transition-colors">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-surface-elevated border border-border group-hover:border-brand-mint/50 flex items-center justify-center transition-colors">
             {avatar && !imgError ? (
               <img
                 src={avatar}
@@ -94,14 +94,14 @@ export default function PeopleCard({
             )}
           </div>
           {role && role.toLowerCase() !== 'student' && role.toLowerCase() !== 'member' && (
-            <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-brand-mint border-2 border-[#0B111E] flex items-center justify-center" title={role} />
+            <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-brand-mint border-2 border-surface-card flex items-center justify-center" title={role} />
           )}
         </div>
 
         {/* Identity Details */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <h5 className="text-xs sm:text-sm font-semibold text-white group-hover:text-brand-mint transition-colors truncate">
+            <h5 className="text-xs sm:text-sm font-semibold text-text-primary group-hover:text-brand-mint transition-colors truncate">
               {name}
             </h5>
             {role && role.toLowerCase() !== 'student' && role.toLowerCase() !== 'member' && (
@@ -113,7 +113,7 @@ export default function PeopleCard({
 
           <div className="flex items-center gap-2 text-[11px] text-text-muted mt-0.5 truncate">
             {username && <span className="text-text-faint truncate">{username}</span>}
-            {username && headline && <span className="text-white/20">•</span>}
+            {username && headline && <span className="text-text-faint">•</span>}
             {headline && <span className="truncate">{headline}</span>}
           </div>
         </div>
@@ -127,7 +127,7 @@ export default function PeopleCard({
             <span className={compact ? 'hidden' : 'inline'}>Connected</span>
           </span>
         ) : connectionStatus === 'outgoing_pending' || connectionStatus === 'pending' ? (
-          <span className="min-h-[36px] px-3 py-1 rounded-lg bg-white/[0.04] border border-white/[0.08] text-text-muted text-xs font-medium flex items-center gap-1">
+          <span className="min-h-[36px] px-3 py-1 rounded-lg bg-surface-elevated border border-border text-text-muted text-xs font-medium flex items-center gap-1">
             <Clock className="w-3.5 h-3.5 text-brand-yellow" />
             <span className={compact ? 'hidden' : 'inline'}>Pending</span>
           </span>
@@ -151,7 +151,7 @@ export default function PeopleCard({
 
         <Link
           to={profileUrl}
-          className="min-w-[36px] min-h-[36px] rounded-lg bg-white/[0.02] hover:bg-white/[0.06] text-text-faint hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+          className="min-w-[36px] min-h-[36px] rounded-lg bg-surface-elevated hover:bg-surface-card border border-border text-text-faint hover:text-text-primary flex items-center justify-center transition-colors cursor-pointer"
           aria-label={`Open ${name}'s profile`}
           title="View profile"
         >

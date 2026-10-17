@@ -356,7 +356,7 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
           }
         }}
         onDoubleClick={handleDoubleClick}
-        className="relative my-0 overflow-hidden bg-[#070B14] border-y border-white/[0.04] select-none group transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50"
+        className="relative my-0 overflow-hidden bg-black border-y border-border select-none group transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -404,7 +404,7 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
         </AnimatePresence>
 
         {/* Media Presentation Container */}
-        <div className="relative w-full flex items-center justify-center bg-[#070B14] overflow-hidden">
+        <div className="relative w-full flex items-center justify-center bg-black overflow-hidden">
           {media.map((item, idx) => {
             const isVideo = item.type === 'video';
             const hasError = failedMedia[idx];
@@ -418,7 +418,7 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
               return (
                 <div
                   key={idx}
-                  className="w-full h-64 bg-[#0E1726] flex flex-col items-center justify-center p-4 text-center text-text-muted"
+                  className="w-full h-64 bg-surface-elevated flex flex-col items-center justify-center p-4 text-center text-text-muted"
                   role="status"
                   aria-label="Media attachment could not be loaded"
                 >
@@ -590,7 +590,7 @@ export default function PostMedia({ media = [], onDoubleTapLike, postId, onOpenR
               >
                 {!isLoaded && (
                   <div
-                    className="absolute inset-0 bg-[#0E1726] animate-pulse"
+                    className="absolute inset-0 bg-surface-elevated animate-pulse"
                     aria-hidden="true"
                   />
                 )}

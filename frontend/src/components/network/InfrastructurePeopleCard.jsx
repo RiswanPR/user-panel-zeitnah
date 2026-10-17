@@ -134,7 +134,7 @@ export default function InfrastructurePeopleCard({
       animate={{ opacity: 1, y: 0 }}
       whileHover={shouldReduceMotion ? undefined : { y: -2 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-[#0A0F14]/95 p-5 sm:p-6 shadow-lg transition-all duration-200 hover:border-brand-mint/35 hover:shadow-[0_8px_30px_rgba(0,0,0,0.45)] focus-within:border-brand-mint/40"
+      className="group relative flex flex-col justify-between rounded-2xl border border-border bg-surface-card p-5 sm:p-6 shadow-lg transition-all duration-200 hover:border-brand-mint/35 hover:shadow-[0_8px_30px_rgba(0,0,0,0.45)] focus-within:border-brand-mint/40"
     >
       {/* ── Subtle Top Hairline Highlight ── */}
       <div
@@ -148,7 +148,7 @@ export default function InfrastructurePeopleCard({
           <Link
             to={canonicalUrl}
             aria-label={`View ${person.name}'s profile`}
-            className="h-16 w-16 sm:h-16 sm:w-16 rounded-full border border-white/[0.12] bg-[#070B14] flex items-center justify-center overflow-hidden group-hover:border-brand-mint/45 transition-colors block focus-ring shadow-sm"
+            className="h-16 w-16 sm:h-16 sm:w-16 rounded-full border border-border bg-surface-elevated flex items-center justify-center overflow-hidden group-hover:border-brand-mint/45 transition-colors block focus-ring shadow-sm"
           >
             {avatarSrc ? (
               <img
@@ -167,7 +167,7 @@ export default function InfrastructurePeopleCard({
           {/* Verification Badge */}
           {person.isVerified ? (
             <span
-              className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-black shadow-sm ring-2 ring-[#0A0F14]"
+              className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-black shadow-sm ring-2 ring-surface-card"
               title="Verified Infrastructure Professional"
               aria-label="Verified Infrastructure Professional"
             >
@@ -175,7 +175,7 @@ export default function InfrastructurePeopleCard({
             </span>
           ) : person.isActive ? (
             <span
-              className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-[#0A0F14] bg-brand-mint shadow-sm"
+              className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-surface-card bg-brand-mint shadow-sm"
               title="Active now"
               aria-hidden="true"
             />
@@ -187,7 +187,7 @@ export default function InfrastructurePeopleCard({
           to={canonicalUrl}
           className="focus-ring rounded max-w-full truncate px-1"
         >
-          <h3 className="font-heading font-bold text-base sm:text-lg text-white group-hover:text-brand-mint transition-colors truncate tracking-tight">
+          <h3 className="font-heading font-bold text-base sm:text-lg text-text-primary group-hover:text-brand-mint transition-colors truncate tracking-tight">
             {person.name}
           </h3>
         </Link>
@@ -214,7 +214,7 @@ export default function InfrastructurePeopleCard({
             </span>
           )}
           {expLabel && (
-            <span className="text-[10px] font-mono text-text-muted/80 bg-white/[0.03] border border-white/[0.06] px-1.5 py-0.2 rounded-md">
+            <span className="text-[10px] font-mono text-text-muted/80 bg-surface-elevated border border-border px-1.5 py-0.2 rounded-md">
               {expLabel}
             </span>
           )}
@@ -223,7 +223,7 @@ export default function InfrastructurePeopleCard({
         {/* ── 3. Professional Role & Organization ── */}
         <div className="mt-3 space-y-1 w-full max-w-[260px]">
           <p
-            className="text-xs sm:text-sm font-semibold text-white/90 truncate leading-snug"
+            className="text-xs sm:text-sm font-semibold text-text-primary truncate leading-snug"
             title={primaryRole}
           >
             {primaryRole}
@@ -262,7 +262,7 @@ export default function InfrastructurePeopleCard({
             {displayChips.map((chip) => (
               <span
                 key={chip}
-                className="text-[10px] font-mono text-text-muted border border-white/[0.06] bg-white/[0.02] px-2 py-0.5 rounded-md"
+                className="text-[10px] font-mono text-text-muted border border-border bg-surface-elevated px-2 py-0.5 rounded-md"
               >
                 {chip}
               </span>
@@ -294,13 +294,13 @@ export default function InfrastructurePeopleCard({
       </div>
 
       {/* ── 6. Primary Action Footer ── */}
-      <div className="mt-5 pt-3.5 border-t border-white/[0.06] flex items-center gap-2">
+      <div className="mt-5 pt-3.5 border-t border-border flex items-center gap-2">
         {/* Secondary: Preview */}
         <button
           type="button"
           onClick={() => onPreview?.(person)}
           aria-label={`Preview ${person.name}'s profile`}
-          className="flex-1 min-h-[38px] flex items-center justify-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] py-1.5 px-3 text-xs font-semibold text-text-muted hover:text-white hover:bg-white/[0.07] hover:border-white/[0.16] transition-all cursor-pointer focus-ring"
+          className="flex-1 min-h-[38px] flex items-center justify-center gap-1.5 rounded-xl border border-border bg-surface-elevated py-1.5 px-3 text-xs font-semibold text-text-muted hover:text-text-primary hover:bg-surface-card hover:border-border transition-all cursor-pointer focus-ring"
         >
           <Eye className="w-3.5 h-3.5 text-text-muted" aria-hidden="true" />
           <span>Preview</span>
@@ -325,7 +325,7 @@ export default function InfrastructurePeopleCard({
             aria-label={`More options for ${person.name}`}
             aria-haspopup="true"
             aria-expanded={isMenuOpen}
-            className="h-[38px] w-[38px] flex items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.02] text-text-muted hover:text-white hover:border-white/[0.14] hover:bg-white/[0.05] transition-all cursor-pointer focus-ring"
+            className="h-[38px] w-[38px] flex items-center justify-center rounded-xl border border-border bg-surface-elevated text-text-muted hover:text-text-primary hover:border-border hover:bg-surface-card transition-all cursor-pointer focus-ring"
           >
             <MoreVertical className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -333,14 +333,14 @@ export default function InfrastructurePeopleCard({
           {isMenuOpen && (
             <div
               role="menu"
-              className="absolute right-0 bottom-full mb-1.5 w-48 rounded-2xl border border-white/[0.1] bg-[#0E1522] p-1.5 shadow-2xl backdrop-blur-2xl z-50 animate-fade-in"
+              className="absolute right-0 bottom-full mb-1.5 w-48 rounded-2xl border border-border bg-surface-card p-1.5 shadow-2xl backdrop-blur-2xl z-50 animate-fade-in"
             >
               {canMessage ? (
                 <button
                   type="button"
                   role="menuitem"
                   onClick={handleMessageClick}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-white/90 hover:bg-white/[0.06] hover:text-white transition-colors cursor-pointer text-left"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-text-primary hover:bg-surface-elevated hover:text-text-primary transition-colors cursor-pointer text-left"
                 >
                   <MessageSquare className="w-3.5 h-3.5 text-brand-mint" />
                   <span>{messageAction === "message" ? "Send Message" : "Message Request"}</span>
@@ -355,7 +355,7 @@ export default function InfrastructurePeopleCard({
                 to={canonicalUrl}
                 role="menuitem"
                 onClick={() => setIsMenuOpen(false)}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-white/90 hover:bg-white/[0.06] hover:text-white transition-colors cursor-pointer text-left"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-text-primary hover:bg-surface-elevated hover:text-text-primary transition-colors cursor-pointer text-left"
               >
                 <ExternalLink className="w-3.5 h-3.5 text-text-muted" />
                 <span>Full Profile</span>
@@ -365,7 +365,7 @@ export default function InfrastructurePeopleCard({
                 type="button"
                 role="menuitem"
                 onClick={handleCopyLink}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-white/90 hover:bg-white/[0.06] hover:text-white transition-colors cursor-pointer text-left"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-text-primary hover:bg-surface-elevated hover:text-text-primary transition-colors cursor-pointer text-left"
               >
                 {copied ? (
                   <Check className="w-3.5 h-3.5 text-brand-mint" />

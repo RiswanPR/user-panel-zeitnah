@@ -65,7 +65,7 @@ export default function StudentFilters({
           <button
             type="button"
             onClick={() => setIsMobileOpen(true)}
-            className="sm:hidden inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2 text-xs font-semibold text-white hover:bg-white/[0.08] transition-colors focus-ring"
+            className="sm:hidden inline-flex items-center gap-2 rounded-xl border border-border bg-surface-elevated px-3.5 py-2 text-xs font-semibold text-text-primary hover:bg-surface-card transition-colors focus-ring"
           >
             <Filter className="h-3.5 w-3.5 text-brand-mint" aria-hidden="true" />
             <span>Filters{activeFilterCount > 0 ? ` · ${activeFilterCount}` : ""}</span>
@@ -78,8 +78,8 @@ export default function StudentFilters({
               onClick={() => setActiveDropdown(activeDropdown === "course" ? null : "course")}
               className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors focus-ring ${
                 course
-                  ? "border-brand-mint/40 bg-brand-mint/10 text-white font-bold"
-                  : "border-white/[0.08] bg-white/[0.03] text-text-secondary hover:border-white/[0.14] hover:text-white"
+                  ? "border-brand-mint/40 bg-brand-mint/10 text-brand-mint font-bold"
+                  : "border-border bg-surface-elevated text-text-secondary hover:border-border hover:text-text-primary"
               }`}
             >
               <span>Course{course ? `: ${course}` : ""}</span>
@@ -92,12 +92,12 @@ export default function StudentFilters({
                   className="fixed inset-0 z-20"
                   onClick={() => setActiveDropdown(null)}
                 />
-                <div className="absolute left-0 top-full z-30 mt-1.5 w-56 rounded-xl border border-white/[0.1] bg-bg-surface/95 p-1.5 backdrop-blur-2xl shadow-xl space-y-0.5 max-h-60 overflow-y-auto no-scrollbar">
+                <div className="absolute left-0 top-full z-30 mt-1.5 w-56 rounded-xl border border-border bg-surface-card p-1.5 backdrop-blur-2xl shadow-xl space-y-0.5 max-h-60 overflow-y-auto no-scrollbar">
                   <button
                     type="button"
                     onClick={() => handleSelect("course", "")}
                     className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-left transition-colors ${
-                      !course ? "bg-brand-mint/15 text-brand-mint font-bold" : "text-text-secondary hover:bg-white/[0.05] hover:text-white"
+                      !course ? "bg-brand-mint/15 text-brand-mint font-bold" : "text-text-secondary hover:bg-surface-elevated hover:text-text-primary"
                     }`}
                   >
                     <span>All Courses</span>
@@ -111,7 +111,7 @@ export default function StudentFilters({
                       className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-left transition-colors ${
                         course.toLowerCase() === c.toLowerCase()
                           ? "bg-brand-mint/15 text-brand-mint font-bold"
-                          : "text-text-secondary hover:bg-white/[0.05] hover:text-white"
+                          : "text-text-secondary hover:bg-surface-elevated hover:text-text-primary"
                       }`}
                     >
                       <span className="truncate">{c}</span>
@@ -130,8 +130,8 @@ export default function StudentFilters({
               onClick={() => setActiveDropdown(activeDropdown === "level" ? null : "level")}
               className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors focus-ring ${
                 level
-                  ? "border-brand-mint/40 bg-brand-mint/10 text-white font-bold"
-                  : "border-white/[0.08] bg-white/[0.03] text-text-secondary hover:border-white/[0.14] hover:text-white"
+                  ? "border-brand-mint/40 bg-brand-mint/10 text-brand-mint font-bold"
+                  : "border-border bg-surface-elevated text-text-secondary hover:border-border hover:text-text-primary"
               }`}
             >
               <span>Level{level ? `: ${level}` : ""}</span>
@@ -144,12 +144,12 @@ export default function StudentFilters({
                   className="fixed inset-0 z-20"
                   onClick={() => setActiveDropdown(null)}
                 />
-                <div className="absolute left-0 top-full z-30 mt-1.5 w-44 rounded-xl border border-white/[0.1] bg-bg-surface/95 p-1.5 backdrop-blur-2xl shadow-xl space-y-0.5">
+                <div className="absolute left-0 top-full z-30 mt-1.5 w-44 rounded-xl border border-border bg-surface-card p-1.5 backdrop-blur-2xl shadow-xl space-y-0.5">
                   <button
                     type="button"
                     onClick={() => handleSelect("level", "")}
                     className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-left transition-colors ${
-                      !level ? "bg-brand-mint/15 text-brand-mint font-bold" : "text-text-secondary hover:bg-white/[0.05] hover:text-white"
+                      !level ? "bg-brand-mint/15 text-brand-mint font-bold" : "text-text-secondary hover:bg-surface-elevated hover:text-text-primary"
                     }`}
                   >
                     <span>All Levels</span>
@@ -163,7 +163,7 @@ export default function StudentFilters({
                       className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-left transition-colors ${
                         level.toLowerCase() === l.toLowerCase()
                           ? "bg-brand-mint/15 text-brand-mint font-bold"
-                          : "text-text-secondary hover:bg-white/[0.05] hover:text-white"
+                          : "text-text-secondary hover:bg-surface-elevated hover:text-text-primary"
                       }`}
                     >
                       <span>{l}</span>
@@ -183,8 +183,8 @@ export default function StudentFilters({
                 onClick={() => setActiveDropdown(activeDropdown === "interest" ? null : "interest")}
                 className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors focus-ring ${
                   interest
-                    ? "border-brand-mint/40 bg-brand-mint/10 text-white font-bold"
-                    : "border-white/[0.08] bg-white/[0.03] text-text-secondary hover:border-white/[0.14] hover:text-white"
+                    ? "border-brand-mint/40 bg-brand-mint/10 text-brand-mint font-bold"
+                    : "border-border bg-surface-elevated text-text-secondary hover:border-border hover:text-text-primary"
                 }`}
               >
                 <span>Interest{interest ? `: ${interest}` : ""}</span>
@@ -197,12 +197,12 @@ export default function StudentFilters({
                     className="fixed inset-0 z-20"
                     onClick={() => setActiveDropdown(null)}
                   />
-                  <div className="absolute left-0 top-full z-30 mt-1.5 w-52 rounded-xl border border-white/[0.1] bg-bg-surface/95 p-1.5 backdrop-blur-2xl shadow-xl space-y-0.5 max-h-60 overflow-y-auto no-scrollbar">
+                  <div className="absolute left-0 top-full z-30 mt-1.5 w-52 rounded-xl border border-border bg-surface-card p-1.5 backdrop-blur-2xl shadow-xl space-y-0.5 max-h-60 overflow-y-auto no-scrollbar">
                     <button
                       type="button"
                       onClick={() => handleSelect("interest", "")}
                       className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-left transition-colors ${
-                        !interest ? "bg-brand-mint/15 text-brand-mint font-bold" : "text-text-secondary hover:bg-white/[0.05] hover:text-white"
+                        !interest ? "bg-brand-mint/15 text-brand-mint font-bold" : "text-text-secondary hover:bg-surface-elevated hover:text-text-primary"
                       }`}
                     >
                       <span>All Interests</span>
@@ -216,7 +216,7 @@ export default function StudentFilters({
                         className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-left transition-colors ${
                           interest.toLowerCase() === item.toLowerCase()
                             ? "bg-brand-mint/15 text-brand-mint font-bold"
-                            : "text-text-secondary hover:bg-white/[0.05] hover:text-white"
+                            : "text-text-secondary hover:bg-surface-elevated hover:text-text-primary"
                         }`}
                       >
                         <span className="truncate">{item}</span>
@@ -237,8 +237,8 @@ export default function StudentFilters({
                 onClick={() => setActiveDropdown(activeDropdown === "institution" ? null : "institution")}
                 className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors focus-ring ${
                   institution
-                    ? "border-brand-mint/40 bg-brand-mint/10 text-white font-bold"
-                    : "border-white/[0.08] bg-white/[0.03] text-text-secondary hover:border-white/[0.14] hover:text-white"
+                    ? "border-brand-mint/40 bg-brand-mint/10 text-brand-mint font-bold"
+                    : "border-border bg-surface-elevated text-text-secondary hover:border-border hover:text-text-primary"
                 }`}
               >
                 <span>Institution{institution ? `: ${institution}` : ""}</span>
@@ -251,12 +251,12 @@ export default function StudentFilters({
                     className="fixed inset-0 z-20"
                     onClick={() => setActiveDropdown(null)}
                   />
-                  <div className="absolute left-0 top-full z-30 mt-1.5 w-56 rounded-xl border border-white/[0.1] bg-bg-surface/95 p-1.5 backdrop-blur-2xl shadow-xl space-y-0.5 max-h-60 overflow-y-auto no-scrollbar">
+                  <div className="absolute left-0 top-full z-30 mt-1.5 w-56 rounded-xl border border-border bg-surface-card p-1.5 backdrop-blur-2xl shadow-xl space-y-0.5 max-h-60 overflow-y-auto no-scrollbar">
                     <button
                       type="button"
                       onClick={() => handleSelect("institution", "")}
                       className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-left transition-colors ${
-                        !institution ? "bg-brand-mint/15 text-brand-mint font-bold" : "text-text-secondary hover:bg-white/[0.05] hover:text-white"
+                        !institution ? "bg-brand-mint/15 text-brand-mint font-bold" : "text-text-secondary hover:bg-surface-elevated hover:text-text-primary"
                       }`}
                     >
                       <span>All Institutions</span>
@@ -270,7 +270,7 @@ export default function StudentFilters({
                         className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-left transition-colors ${
                           institution.toLowerCase() === inst.toLowerCase()
                             ? "bg-brand-mint/15 text-brand-mint font-bold"
-                            : "text-text-secondary hover:bg-white/[0.05] hover:text-white"
+                            : "text-text-secondary hover:bg-surface-elevated hover:text-text-primary"
                         }`}
                       >
                         <span className="truncate">{inst}</span>
@@ -295,7 +295,7 @@ export default function StudentFilters({
             <button
               type="button"
               onClick={() => setActiveDropdown(activeDropdown === "sort" ? null : "sort")}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-xs font-semibold text-white hover:border-white/[0.14] transition-colors focus-ring"
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface-elevated px-3 py-2 text-xs font-semibold text-text-primary hover:border-border hover:bg-surface-card transition-colors focus-ring"
             >
               <span>
                 {SORT_OPTIONS.find((s) => s.id === sort)?.label || "Recommended"}
@@ -309,7 +309,7 @@ export default function StudentFilters({
                   className="fixed inset-0 z-20"
                   onClick={() => setActiveDropdown(null)}
                 />
-                <div className="absolute right-0 top-full z-30 mt-1.5 w-44 rounded-xl border border-white/[0.1] bg-bg-surface/95 p-1.5 backdrop-blur-2xl shadow-xl space-y-0.5">
+                <div className="absolute right-0 top-full z-30 mt-1.5 w-44 rounded-xl border border-border bg-surface-card p-1.5 backdrop-blur-2xl shadow-xl space-y-0.5">
                   {SORT_OPTIONS.map((opt) => (
                     <button
                       key={opt.id}
@@ -318,7 +318,7 @@ export default function StudentFilters({
                       className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-left transition-colors ${
                         sort === opt.id
                           ? "bg-brand-mint/15 text-brand-mint font-bold"
-                          : "text-text-secondary hover:bg-white/[0.05] hover:text-white"
+                          : "text-text-secondary hover:bg-surface-elevated hover:text-text-primary"
                       }`}
                     >
                       <span>{opt.label}</span>
@@ -342,7 +342,7 @@ export default function StudentFilters({
                 type="button"
                 onClick={() => handleRemoveFilter("course")}
                 aria-label={`Remove course filter ${course}`}
-                className="hover:text-white transition-colors"
+                className="hover:text-text-primary transition-colors"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -356,7 +356,7 @@ export default function StudentFilters({
                 type="button"
                 onClick={() => handleRemoveFilter("level")}
                 aria-label={`Remove level filter ${level}`}
-                className="hover:text-white transition-colors"
+                className="hover:text-text-primary transition-colors"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -370,7 +370,7 @@ export default function StudentFilters({
                 type="button"
                 onClick={() => handleRemoveFilter("interest")}
                 aria-label={`Remove interest filter ${interest}`}
-                className="hover:text-white transition-colors"
+                className="hover:text-text-primary transition-colors"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -384,7 +384,7 @@ export default function StudentFilters({
                 type="button"
                 onClick={() => handleRemoveFilter("institution")}
                 aria-label={`Remove institution filter ${institution}`}
-                className="hover:text-white transition-colors"
+                className="hover:text-text-primary transition-colors"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -404,18 +404,18 @@ export default function StudentFilters({
       {/* ── Mobile Filter Bottom Sheet Modal ── */}
       {isMobileOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:hidden bg-black/70 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-h-[85vh] overflow-y-auto rounded-t-3xl border-t border-white/[0.1] bg-bg-surface p-6 pb-safe shadow-2xl space-y-6">
+          <div className="w-full max-h-[85vh] overflow-y-auto rounded-t-3xl border-t border-border bg-surface-card p-6 pb-safe shadow-2xl space-y-6">
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 text-brand-mint" />
-                <h3 className="text-base font-heading font-bold text-white">Filter Students</h3>
+                <h3 className="text-base font-heading font-bold text-text-primary">Filter Students</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsMobileOpen(false)}
                 aria-label="Close filters"
-                className="rounded-full p-1 text-text-muted hover:text-white"
+                className="rounded-full p-1 text-text-muted hover:text-text-primary"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -433,7 +433,7 @@ export default function StudentFilters({
                   className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${
                     !course
                       ? "bg-brand-mint text-bg-base font-bold"
-                      : "border border-white/[0.08] bg-white/[0.03] text-text-secondary"
+                      : "border border-border bg-surface-elevated text-text-secondary hover:text-text-primary"
                   }`}
                 >
                   All
@@ -446,7 +446,7 @@ export default function StudentFilters({
                     className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${
                       course.toLowerCase() === c.toLowerCase()
                         ? "bg-brand-mint text-bg-base font-bold"
-                        : "border border-white/[0.08] bg-white/[0.03] text-text-secondary"
+                        : "border border-border bg-surface-elevated text-text-secondary hover:text-text-primary"
                     }`}
                   >
                     {c}
@@ -467,7 +467,7 @@ export default function StudentFilters({
                   className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${
                     !level
                       ? "bg-brand-mint text-bg-base font-bold"
-                      : "border border-white/[0.08] bg-white/[0.03] text-text-secondary"
+                      : "border border-border bg-surface-elevated text-text-secondary hover:text-text-primary"
                   }`}
                 >
                   All
@@ -480,7 +480,7 @@ export default function StudentFilters({
                     className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${
                       level.toLowerCase() === l.toLowerCase()
                         ? "bg-brand-mint text-bg-base font-bold"
-                        : "border border-white/[0.08] bg-white/[0.03] text-text-secondary"
+                        : "border border-border bg-surface-elevated text-text-secondary hover:text-text-primary"
                     }`}
                   >
                     {l}
@@ -502,7 +502,7 @@ export default function StudentFilters({
                     className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${
                       !interest
                         ? "bg-brand-mint text-bg-base font-bold"
-                        : "border border-white/[0.08] bg-white/[0.03] text-text-secondary"
+                        : "border border-border bg-surface-elevated text-text-secondary hover:text-text-primary"
                     }`}
                   >
                     All
@@ -515,7 +515,7 @@ export default function StudentFilters({
                       className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${
                         interest.toLowerCase() === item.toLowerCase()
                           ? "bg-brand-mint text-bg-base font-bold"
-                          : "border border-white/[0.08] bg-white/[0.03] text-text-secondary"
+                          : "border border-border bg-surface-elevated text-text-secondary hover:text-text-primary"
                       }`}
                     >
                       {item}
@@ -538,7 +538,7 @@ export default function StudentFilters({
                     className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${
                       !institution
                         ? "bg-brand-mint text-bg-base font-bold"
-                        : "border border-white/[0.08] bg-white/[0.03] text-text-secondary"
+                        : "border border-border bg-surface-elevated text-text-secondary hover:text-text-primary"
                     }`}
                   >
                     All
@@ -551,7 +551,7 @@ export default function StudentFilters({
                       className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${
                         institution.toLowerCase() === inst.toLowerCase()
                           ? "bg-brand-mint text-bg-base font-bold"
-                          : "border border-white/[0.08] bg-white/[0.03] text-text-secondary"
+                          : "border border-border bg-surface-elevated text-text-secondary hover:text-text-primary"
                       }`}
                     >
                       {inst}
@@ -562,11 +562,11 @@ export default function StudentFilters({
             )}
 
             {/* Modal Actions */}
-            <div className="flex items-center gap-3 pt-4 border-t border-white/[0.08]">
+            <div className="flex items-center gap-3 pt-4 border-t border-border">
               <button
                 type="button"
                 onClick={handleClearAll}
-                className="flex-1 py-2.5 rounded-xl border border-white/[0.1] bg-white/[0.04] text-xs font-semibold text-text-muted hover:text-white"
+                className="flex-1 py-2.5 rounded-xl border border-border bg-surface-elevated text-xs font-semibold text-text-muted hover:text-text-primary"
               >
                 Clear All
               </button>

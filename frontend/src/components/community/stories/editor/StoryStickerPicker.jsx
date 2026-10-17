@@ -23,16 +23,16 @@ export default function StoryStickerPicker({ isOpen, onSelectSticker, onClose })
           exit={{ opacity: 0, y: 30 }}
           transition={{ duration: 0.18 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full sm:max-w-xs bg-[#0E1726] border border-white/10 rounded-t-3xl sm:rounded-2xl p-4 shadow-2xl space-y-3"
+          className="w-full sm:max-w-xs bg-surface-card border border-border rounded-t-3xl sm:rounded-2xl p-4 shadow-2xl space-y-3"
         >
-          <div className="flex items-center justify-between pb-1 border-b border-white/[0.08]">
-            <h3 className="text-xs font-bold text-white tracking-wide uppercase">
+          <div className="flex items-center justify-between pb-1 border-b border-border">
+            <h3 className="text-xs font-bold text-text-primary tracking-wide uppercase">
               Add Sticker
             </h3>
             <button
               type="button"
               onClick={onClose}
-              className="min-h-[44px] min-w-[44px] p-2 text-text-muted hover:text-white flex items-center justify-center cursor-pointer"
+              className="min-h-[44px] min-w-[44px] p-2 text-text-muted hover:text-text-primary flex items-center justify-center cursor-pointer"
               aria-label="Close sticker picker"
             >
               <X className="w-4 h-4" />
@@ -48,7 +48,7 @@ export default function StoryStickerPicker({ isOpen, onSelectSticker, onClose })
                   onSelectSticker(stk.emoji);
                   onClose();
                 }}
-                className="min-h-[48px] min-w-[48px] p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] active:scale-95 transition-all text-2xl flex items-center justify-center cursor-pointer hover:shadow-md"
+                className="min-h-[48px] min-w-[48px] p-2 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 border border-border active:scale-95 transition-all text-2xl flex items-center justify-center cursor-pointer hover:shadow-md"
                 aria-label={stk.label}
                 title={stk.label}
               >

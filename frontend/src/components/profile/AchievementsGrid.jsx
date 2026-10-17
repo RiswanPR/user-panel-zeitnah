@@ -41,7 +41,7 @@ export default function AchievementsGrid({ profile, className = "" }) {
         <div className="space-y-1 min-w-0">
           <div className="flex items-center gap-2">
             <Award className="w-5 h-5 text-emerald-400 shrink-0" aria-hidden="true" />
-            <h2 className="text-base sm:text-lg font-heading font-bold text-white tracking-tight">
+            <h2 className="text-base sm:text-lg font-heading font-bold text-text-primary tracking-tight">
               Unlocked Achievements
             </h2>
           </div>
@@ -60,19 +60,19 @@ export default function AchievementsGrid({ profile, className = "" }) {
 
       {/* ── Content: Empty State vs Full-Width Achievement List ── */}
       {achievements.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.01] p-6 sm:p-8 text-center space-y-3">
-          <div className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-text-muted mx-auto">
+        <div className="rounded-2xl border border-dashed border-border bg-surface-elevated/20 p-6 sm:p-8 text-center space-y-3">
+          <div className="w-12 h-12 rounded-xl bg-surface-elevated border border-border flex items-center justify-center text-text-muted mx-auto">
             <Award className="w-6 h-6 text-text-muted" aria-hidden="true" />
           </div>
           <div>
-            <h3 className="text-sm font-heading font-bold text-white mb-1">
+            <h3 className="text-sm font-heading font-bold text-text-primary mb-1 break-words">
               No achievements unlocked yet
             </h3>
-            <p className="text-xs text-text-muted max-w-xs mx-auto leading-relaxed">
+            <p className="text-xs text-text-muted max-w-xs mx-auto leading-relaxed break-words">
               Complete video lectures, finish course tracks, and build your professional identity to earn verified milestone badges.
             </p>
           </div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.03] border border-white/[0.06] text-[10px] font-mono text-text-muted">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-elevated border border-border text-[10px] font-mono text-text-muted">
             <Lock className="w-3 h-3 text-text-muted" aria-hidden="true" />
             <span>Earn by completing lectures & verifying profile</span>
           </div>
@@ -94,7 +94,7 @@ export default function AchievementsGrid({ profile, className = "" }) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25, delay: i * 0.04 }}
-                className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.035] hover:border-emerald-500/30 p-3.5 sm:p-4 transition-all duration-200"
+                className="group relative overflow-hidden rounded-2xl border border-border bg-surface-elevated/40 hover:bg-surface-elevated hover:border-emerald-500/30 p-3.5 sm:p-4 transition-all duration-200"
               >
                 {/* Subtle top ambient accent highlight */}
                 <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/25 to-transparent group-hover:via-emerald-500/50 transition-colors" />
@@ -108,7 +108,7 @@ export default function AchievementsGrid({ profile, className = "" }) {
                   {/* Body content */}
                   <div className="min-w-0 flex-1">
                     {/* 1. Title */}
-                    <h3 className="text-sm font-heading font-bold text-white leading-snug break-words">
+                    <h3 className="text-sm font-heading font-bold text-text-primary leading-snug break-words">
                       {meta.title}
                     </h3>
 
@@ -118,7 +118,7 @@ export default function AchievementsGrid({ profile, className = "" }) {
                     </p>
 
                     {/* 3. Unlocked status and optional metadata */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 mt-3 pt-2.5 border-t border-white/[0.04]">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mt-3 pt-2.5 border-t border-border">
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-[10px] sm:text-[11px] font-mono font-semibold text-emerald-400 shrink-0">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 animate-pulse" />
                         <span>Unlocked</span>

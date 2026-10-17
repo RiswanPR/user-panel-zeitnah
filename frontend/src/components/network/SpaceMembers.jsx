@@ -19,7 +19,7 @@ export default function SpaceMembers({ members = [], teachers = [], isLoading })
       case 'moderator':
         return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-brand-mint/15 text-brand-mint border border-brand-mint/30">Moderator</span>;
       default:
-        return <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/[0.04] text-text-muted border border-white/[0.06]">Student</span>;
+        return <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-surface-elevated text-text-muted border border-border">Student</span>;
     }
   };
 
@@ -28,7 +28,7 @@ export default function SpaceMembers({ members = [], teachers = [], isLoading })
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="font-heading font-bold text-lg text-white">Space Roster</h2>
+          <h2 className="font-heading font-bold text-lg text-text-primary">Space Roster</h2>
           <p className="text-xs text-text-muted mt-0.5">Assigned faculty and enrolled cohort members.</p>
         </div>
 
@@ -39,7 +39,7 @@ export default function SpaceMembers({ members = [], teachers = [], isLoading })
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search roster..."
-            className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.06] text-xs text-white placeholder-text-muted focus:outline-none focus:border-brand-mint/40 transition-colors"
+            className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-mint/40 transition-colors"
           />
         </div>
       </div>
@@ -54,7 +54,7 @@ export default function SpaceMembers({ members = [], teachers = [], isLoading })
             {teachers.map((t, idx) => (
               <div
                 key={t._id || idx}
-                className="p-4 rounded-2xl bg-[#111115]/90 border border-white/[0.06] flex items-center gap-3"
+                className="p-4 rounded-2xl bg-surface-card border border-border flex items-center gap-3"
               >
                 <div className="w-10 h-10 rounded-xl bg-brand-mint/15 border border-brand-mint/30 flex items-center justify-center text-brand-mint font-bold text-sm shrink-0 overflow-hidden">
                   {t.avatar || t.profileImage ? (
@@ -65,7 +65,7 @@ export default function SpaceMembers({ members = [], teachers = [], isLoading })
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-xs font-bold text-white truncate">{t.name || t.email}</h4>
+                  <h4 className="text-xs font-bold text-text-primary truncate">{t.name || t.email}</h4>
                   <p className="text-[10px] text-text-muted truncate">{t.email}</p>
                   <span className="inline-block mt-1 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-brand-mint/15 text-brand-mint border border-brand-mint/30">
                     Faculty
@@ -86,11 +86,11 @@ export default function SpaceMembers({ members = [], teachers = [], isLoading })
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-16 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+              <div key={i} className="h-16 rounded-2xl bg-surface-card border border-border animate-pulse" />
             ))}
           </div>
         ) : filteredMembers.length === 0 ? (
-          <div className="p-8 rounded-2xl bg-[#111115]/60 border border-white/[0.06] text-center">
+          <div className="p-8 rounded-2xl bg-surface-card border border-border text-center">
             <p className="text-xs text-text-muted">No members match your search.</p>
           </div>
         ) : (
@@ -100,9 +100,9 @@ export default function SpaceMembers({ members = [], teachers = [], isLoading })
               return (
                 <div
                   key={m._id}
-                  className="p-3.5 rounded-2xl bg-[#111115]/80 border border-white/[0.06] flex items-center gap-3"
+                  className="p-3.5 rounded-2xl bg-surface-card border border-border flex items-center gap-3"
                 >
-                  <div className="w-9 h-9 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-brand-mint font-bold text-xs shrink-0 overflow-hidden">
+                  <div className="w-9 h-9 rounded-xl bg-surface-elevated border border-border flex items-center justify-center text-brand-mint font-bold text-xs shrink-0 overflow-hidden">
                     {u.avatar || u.profileImage ? (
                       <img src={u.avatar || u.profileImage} alt={u.name} className="w-full h-full object-cover" />
                     ) : (
@@ -111,7 +111,7 @@ export default function SpaceMembers({ members = [], teachers = [], isLoading })
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <h4 className="text-xs font-bold text-white truncate">{u.name || u.email?.split('@')[0] || 'Student'}</h4>
+                    <h4 className="text-xs font-bold text-text-primary truncate">{u.name || u.email?.split('@')[0] || 'Student'}</h4>
                     <p className="text-[10px] text-text-muted truncate">{u.email}</p>
                   </div>
 

@@ -72,11 +72,11 @@ export default function SuggestedStudents({
           <div className="flex items-center gap-2">
             <h2
               id="suggested-students-heading"
-              className="text-lg sm:text-xl font-heading font-extrabold text-white tracking-tight"
+              className="text-lg sm:text-xl font-heading font-extrabold text-text-primary tracking-tight"
             >
               {title}
             </h2>
-            <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-xs font-mono font-semibold text-text-muted">
+            <span className="rounded-full bg-surface-elevated border border-border px-2 py-0.5 text-xs font-mono font-semibold text-text-muted">
               {loading ? "..." : filteredStudents.length}
             </span>
           </div>
@@ -110,7 +110,7 @@ export default function SuggestedStudents({
                     className={`shrink-0 rounded-xl px-3 py-1.5 text-xs font-semibold transition-all focus-ring ${
                       isActive
                         ? "bg-brand-mint text-bg-base font-bold shadow-[0_0_12px_rgba(159,213,178,0.25)]"
-                        : "bg-white/[0.04] text-text-muted border border-white/[0.06] hover:bg-white/[0.08] hover:text-white"
+                        : "bg-surface-elevated text-text-muted border border-border hover:bg-surface-card hover:text-text-primary"
                     }`}
                   >
                     {category}

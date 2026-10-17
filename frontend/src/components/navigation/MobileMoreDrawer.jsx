@@ -243,10 +243,10 @@ export default function MobileMoreDrawer({
             className="relative z-10 w-full flex flex-col overflow-hidden"
             style={{
               maxHeight: "88vh",
-              background: "rgba(8,13,25,0.99)",
-              borderTop: "1px solid rgba(255,255,255,0.09)",
+              background: "var(--color-surface-card)",
+              borderTop: "1px solid var(--color-border)",
               borderRadius: "20px 20px 0 0",
-              boxShadow: "0 -24px 80px rgba(0,0,0,0.6), 0 -4px 16px rgba(0,0,0,0.4)",
+              boxShadow: "0 -24px 80px rgba(0,0,0,0.4), 0 -4px 16px rgba(0,0,0,0.2)",
               paddingBottom: "calc(env(safe-area-inset-bottom, 16px) + 16px)",
             }}
           >
@@ -254,14 +254,14 @@ export default function MobileMoreDrawer({
             <div className="flex justify-center pt-3 pb-2">
               <div
                 className="rounded-full"
-                style={{ width: "36px", height: "4px", background: "rgba(255,255,255,0.15)" }}
+                style={{ width: "36px", height: "4px", background: "var(--color-border)" }}
               />
             </div>
 
             {/* Header: Identity card + Close */}
             <div
               className="px-4 py-3 flex items-center gap-3"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+              style={{ borderBottom: "1px solid var(--color-border)" }}
             >
               {user ? (
                 <Link
@@ -270,11 +270,9 @@ export default function MobileMoreDrawer({
                   className="flex items-center gap-3 flex-1 min-w-0 rounded-2xl transition-all duration-150 touch-manipulation"
                   style={{
                     padding: "10px 12px",
-                    background: "rgba(255,255,255,0.025)",
-                    border: "1px solid rgba(255,255,255,0.06)",
+                    background: "var(--color-surface-elevated)",
+                    border: "1px solid var(--color-border)",
                   }}
-                  onTouchStart={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.045)"; }}
-                  onTouchEnd={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.025)"; }}
                 >
                   {/* Avatar / BusinessLogo */}
                   {isBusinessMode && business ? (
@@ -322,13 +320,13 @@ export default function MobileMoreDrawer({
 
                   <div className="min-w-0 flex-1">
                     <p
-                      className="font-semibold text-white truncate leading-tight"
+                      className="font-semibold text-text-primary truncate leading-tight"
                       style={{ fontSize: "13px" }}
                     >
                       {isBusinessMode && business ? business.name : (user?.name || "Professional")}
                     </p>
                     <p
-                      className="font-mono text-white/40 truncate leading-tight mt-0.5"
+                      className="font-mono text-text-muted truncate leading-tight mt-0.5"
                       style={{ fontSize: "10.5px" }}
                     >
                       {isBusinessMode && business
@@ -341,9 +339,9 @@ export default function MobileMoreDrawer({
                         padding: "2px 7px",
                         fontSize: "8px",
                         borderRadius: "5px",
-                        background: isBusinessMode ? "rgba(159,213,178,0.12)" : "rgba(255,255,255,0.05)",
-                        border: isBusinessMode ? "1px solid rgba(159,213,178,0.25)" : "1px solid rgba(255,255,255,0.08)",
-                        color: isBusinessMode ? "#9FD5B2" : "rgba(255,255,255,0.35)",
+                        background: isBusinessMode ? "rgba(159,213,178,0.12)" : "var(--color-surface)",
+                        border: isBusinessMode ? "1px solid rgba(159,213,178,0.25)" : "1px solid var(--color-border)",
+                        color: isBusinessMode ? "var(--color-accent)" : "var(--color-text-muted)",
                       }}
                     >
                       {isBusinessMode ? "Business Profile" : normalizedRole}
@@ -351,7 +349,7 @@ export default function MobileMoreDrawer({
                   </div>
 
                   <ChevronRight
-                    style={{ width: "15px", height: "15px", color: "rgba(255,255,255,0.2)", flexShrink: 0 }}
+                    style={{ width: "15px", height: "15px", color: "var(--color-text-faint)", flexShrink: 0 }}
                     aria-hidden="true"
                   />
                 </Link>
@@ -362,15 +360,15 @@ export default function MobileMoreDrawer({
                   className="flex items-center justify-between gap-3 flex-1 min-w-0 rounded-2xl transition-all duration-150"
                   style={{
                     padding: "12px 14px",
-                    background: "rgba(255,255,255,0.025)",
-                    border: "1px solid rgba(255,255,255,0.07)",
+                    background: "var(--color-surface-elevated)",
+                    border: "1px solid var(--color-border)",
                   }}
                 >
                   <div>
-                    <p className="font-semibold text-white leading-tight" style={{ fontSize: "13px" }}>
+                    <p className="font-semibold text-text-primary leading-tight" style={{ fontSize: "13px" }}>
                       Sign in to Zeitnah
                     </p>
-                    <p className="text-white/40 mt-0.5" style={{ fontSize: "11px" }}>
+                    <p className="text-text-muted mt-0.5" style={{ fontSize: "11px" }}>
                       Courses, community & opportunities
                     </p>
                   </div>
@@ -388,9 +386,9 @@ export default function MobileMoreDrawer({
                 style={{
                   width: "36px",
                   height: "36px",
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  color: "rgba(255,255,255,0.45)",
+                  background: "var(--color-surface-elevated)",
+                  border: "1px solid var(--color-border)",
+                  color: "var(--color-text-muted)",
                 }}
               >
                 <X style={{ width: "15px", height: "15px" }} aria-hidden="true" />
@@ -401,7 +399,7 @@ export default function MobileMoreDrawer({
             {hasBusinessProfile && (
               <div
                 className="px-4 py-2"
-                style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+                style={{ borderBottom: "1px solid var(--color-border)" }}
               >
                 <ProfileSwitcher user={user} />
               </div>
@@ -418,14 +416,14 @@ export default function MobileMoreDrawer({
                     {gIdx > 0 && (
                       <div
                         className="mb-4"
-                        style={{ height: "1px", background: "rgba(255,255,255,0.05)" }}
+                        style={{ height: "1px", background: "var(--color-border)" }}
                       />
                     )}
                     <p
                       className="font-mono font-bold uppercase tracking-widest select-none mb-2"
                       style={{
                         fontSize: "9px",
-                        color: "rgba(255,255,255,0.22)",
+                        color: "var(--color-text-faint)",
                         paddingLeft: "2px",
                       }}
                     >
@@ -452,8 +450,8 @@ export default function MobileMoreDrawer({
                               style={{
                                 padding: "10px 12px",
                                 minHeight: "48px",
-                                background: "rgba(255,255,255,0.025)",
-                                border: "1px solid rgba(255,255,255,0.05)",
+                                background: "var(--color-surface-elevated)",
+                                border: "1px solid var(--color-border)",
                               }}
                             >
                               <div
@@ -462,7 +460,7 @@ export default function MobileMoreDrawer({
                                   width: "32px",
                                   height: "32px",
                                   background: "rgba(159,213,178,0.12)",
-                                  color: "rgba(159,213,178,0.9)",
+                                  color: "var(--color-accent)",
                                 }}
                               >
                                 <Icon style={{ width: "14px", height: "14px" }} aria-hidden="true" />
@@ -472,20 +470,20 @@ export default function MobileMoreDrawer({
                                   className="font-medium truncate leading-tight"
                                   style={{
                                     fontSize: "13px",
-                                    color: "rgba(255,255,255,0.8)",
+                                    color: "var(--color-text-primary)",
                                   }}
                                 >
                                   {item.label}
                                 </p>
                                 <p
                                   className="truncate leading-tight mt-0.5"
-                                  style={{ fontSize: "10.5px", color: "rgba(255,255,255,0.3)" }}
+                                  style={{ fontSize: "10.5px", color: "var(--color-text-muted)" }}
                                 >
                                   {item.desc}
                                 </p>
                               </div>
                               <ChevronRight
-                                style={{ width: "13px", height: "13px", color: "rgba(255,255,255,0.2)" }}
+                                style={{ width: "13px", height: "13px", color: "var(--color-text-faint)" }}
                                 aria-hidden="true"
                               />
                             </button>
@@ -501,8 +499,8 @@ export default function MobileMoreDrawer({
                             style={{
                               padding: "10px 12px",
                               minHeight: "48px",
-                              background: isActive ? "rgba(159,213,178,0.08)" : "rgba(255,255,255,0.025)",
-                              border: `1px solid ${isActive ? "rgba(159,213,178,0.2)" : "rgba(255,255,255,0.05)"}`,
+                              background: isActive ? "rgba(159,213,178,0.12)" : "var(--color-surface-elevated)",
+                              border: `1px solid ${isActive ? "rgba(159,213,178,0.25)" : "var(--color-border)"}`,
                             }}
                             aria-current={isActive ? "page" : undefined}
                           >
@@ -512,8 +510,8 @@ export default function MobileMoreDrawer({
                               style={{
                                 width: "32px",
                                 height: "32px",
-                                background: isActive ? "rgba(159,213,178,0.15)" : "rgba(255,255,255,0.04)",
-                                color: isActive ? "rgba(159,213,178,0.9)" : "rgba(255,255,255,0.35)",
+                                background: isActive ? "rgba(159,213,178,0.18)" : "var(--color-surface)",
+                                color: isActive ? "var(--color-accent)" : "var(--color-text-muted)",
                               }}
                             >
                               <Icon style={{ width: "14px", height: "14px" }} aria-hidden="true" />
@@ -525,14 +523,15 @@ export default function MobileMoreDrawer({
                                 className="font-medium truncate leading-tight"
                                 style={{
                                   fontSize: "13px",
-                                  color: isActive ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.75)",
+                                  color: isActive ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                                  fontWeight: isActive ? 600 : 500,
                                 }}
                               >
                                 {item.label}
                               </p>
                               <p
                                 className="truncate leading-tight mt-0.5"
-                                style={{ fontSize: "10.5px", color: "rgba(255,255,255,0.3)" }}
+                                style={{ fontSize: "10.5px", color: "var(--color-text-muted)" }}
                               >
                                 {item.desc}
                               </p>
@@ -551,7 +550,7 @@ export default function MobileMoreDrawer({
 
                             {!item.badge && (
                               <ChevronRight
-                                style={{ width: "13px", height: "13px", color: "rgba(255,255,255,0.18)", flexShrink: 0 }}
+                                style={{ width: "13px", height: "13px", color: "var(--color-text-faint)", flexShrink: 0 }}
                                 aria-hidden="true"
                               />
                             )}
@@ -567,7 +566,7 @@ export default function MobileMoreDrawer({
                   <div style={{ paddingTop: "4px" }}>
                     <div
                       className="mb-4"
-                      style={{ height: "1px", background: "rgba(255,255,255,0.05)" }}
+                      style={{ height: "1px", background: "var(--color-border)" }}
                     />
                     <button
                       type="button"
@@ -595,7 +594,7 @@ export default function MobileMoreDrawer({
                 <div className="text-center pt-2 pb-1 select-none">
                   <p
                     className="font-mono uppercase tracking-[0.2em]"
-                    style={{ fontSize: "9px", color: "rgba(255,255,255,0.15)" }}
+                    style={{ fontSize: "9px", color: "var(--color-text-faint)" }}
                   >
                     Zeitnah · See the unseen
                   </p>

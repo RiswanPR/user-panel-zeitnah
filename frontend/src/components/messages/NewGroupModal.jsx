@@ -91,15 +91,15 @@ export default function NewGroupModal({ onClose, onSelectConversation }) {
         initial={{ opacity: 0, scale: 0.96, y: 6 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96 }}
-        className="relative w-full max-w-md rounded-3xl border border-white/[0.1] bg-[#0C121E] shadow-2xl p-6 overflow-hidden flex flex-col max-h-[85vh]"
+        className="relative w-full max-w-md rounded-3xl border border-border bg-surface-card shadow-2xl p-6 overflow-hidden flex flex-col max-h-[85vh]"
       >
-        <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
+        <div className="flex items-center justify-between pb-4 border-b border-border">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-brand-gold/15 text-brand-gold border border-brand-gold/25">
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white tracking-tight">
+              <h2 className="text-base font-bold text-text-primary tracking-tight">
                 Create Group Chat
               </h2>
               <p className="text-xs text-text-muted mt-0.5">
@@ -111,7 +111,7 @@ export default function NewGroupModal({ onClose, onSelectConversation }) {
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer"
             aria-label="Close dialog"
           >
             <X className="w-5 h-5" />
@@ -131,7 +131,7 @@ export default function NewGroupModal({ onClose, onSelectConversation }) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Kerala High-Speed Rail Phase 2"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-brand-mint/40 text-xs text-white placeholder-text-muted focus:outline-none transition-colors"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated/50 border border-border focus:border-brand-mint text-xs text-text-primary placeholder:text-text-muted focus:outline-none transition-colors"
               autoFocus
             />
           </div>
@@ -150,17 +150,17 @@ export default function NewGroupModal({ onClose, onSelectConversation }) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search network connections..."
-                className="w-full pl-9 pr-4 py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-brand-mint/40 text-xs text-white placeholder-text-muted focus:outline-none transition-colors"
+                className="w-full pl-9 pr-4 py-2 rounded-xl bg-surface-elevated/50 border border-border focus:border-brand-mint text-xs text-text-primary placeholder:text-text-muted focus:outline-none transition-colors"
               />
             </div>
 
-            <div className="flex-1 overflow-y-auto divide-y divide-white/[0.04] -mx-2 px-2 border border-white/[0.06] rounded-2xl bg-white/[0.01]">
+            <div className="flex-1 overflow-y-auto divide-y divide-border -mx-2 px-2 border border-border rounded-2xl bg-surface-elevated/20">
               {isLoading ? (
                 <div className="p-4 space-y-2">
                   {[1, 2, 3].map((i) => (
                     <div
                       key={i}
-                      className="h-12 rounded-xl bg-white/[0.02] border border-white/[0.04] animate-pulse"
+                      className="h-12 rounded-xl bg-surface-elevated/30 border border-border animate-pulse"
                     />
                   ))}
                 </div>
@@ -184,11 +184,11 @@ export default function NewGroupModal({ onClose, onSelectConversation }) {
                       className={`w-full p-2.5 rounded-xl flex items-center justify-between transition-colors text-left cursor-pointer ${
                         isSelected
                           ? 'bg-brand-mint/10'
-                          : 'hover:bg-white/[0.03]'
+                          : 'hover:bg-surface-elevated'
                       }`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center overflow-hidden text-brand-mint font-bold text-xs shrink-0 shadow-inner">
+                        <div className="w-9 h-9 rounded-full bg-surface-elevated border border-border flex items-center justify-center overflow-hidden text-brand-mint font-bold text-xs shrink-0 shadow-inner">
                           {avatar ? (
                             <img
                               src={avatar}
@@ -199,7 +199,7 @@ export default function NewGroupModal({ onClose, onSelectConversation }) {
                             <span>{getInitials(name)}</span>
                           )}
                         </div>
-                        <span className="text-xs font-semibold text-white truncate">
+                        <span className="text-xs font-semibold text-text-primary truncate">
                           {name}
                         </span>
                       </div>
@@ -208,7 +208,7 @@ export default function NewGroupModal({ onClose, onSelectConversation }) {
                         className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-colors ${
                           isSelected
                             ? 'bg-brand-mint border-brand-mint text-bg-base'
-                            : 'border-white/[0.2] bg-white/[0.02]'
+                            : 'border-border bg-surface-elevated'
                         }`}
                       >
                         {isSelected && (
@@ -222,11 +222,11 @@ export default function NewGroupModal({ onClose, onSelectConversation }) {
             </div>
           </div>
 
-          <div className="pt-3 flex items-center justify-end gap-2 border-t border-white/[0.06]">
+          <div className="pt-3 flex items-center justify-end gap-2 border-t border-border">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-white/[0.05] text-text-secondary hover:text-white text-xs font-semibold transition-colors cursor-pointer min-h-[40px]"
+              className="px-4 py-2 rounded-xl bg-surface-elevated text-text-secondary hover:text-text-primary text-xs font-semibold transition-colors cursor-pointer min-h-[44px]"
             >
               Cancel
             </button>
@@ -238,7 +238,7 @@ export default function NewGroupModal({ onClose, onSelectConversation }) {
                 !title.trim() ||
                 selectedUserIds.length === 0
               }
-              className="px-5 py-2 rounded-xl bg-brand-mint text-bg-base text-xs font-bold hover:bg-brand-mint/90 transition-all disabled:opacity-40 cursor-pointer min-h-[40px] shadow-sm shadow-brand-mint/10 inline-flex items-center gap-1.5"
+              className="px-5 py-2 rounded-xl bg-brand-mint text-bg-base text-xs font-bold hover:bg-brand-mint/90 transition-all disabled:opacity-40 cursor-pointer min-h-[44px] shadow-sm shadow-brand-mint/10 inline-flex items-center gap-1.5"
             >
               {createGroupMutation.isPending && (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />

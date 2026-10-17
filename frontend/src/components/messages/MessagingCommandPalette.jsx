@@ -328,15 +328,15 @@ export default function MessagingCommandPalette({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96 }}
           transition={{ duration: 0.15, ease: 'easeOut' }}
-          className="relative w-full sm:max-w-2xl h-full sm:h-auto sm:max-h-[80vh] rounded-none sm:rounded-2xl border-0 sm:border border-white/[0.1] bg-[#0C121E] shadow-2xl overflow-hidden flex flex-col pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]"
+          className="relative w-full sm:max-w-2xl h-full sm:h-auto sm:max-h-[80vh] rounded-none sm:rounded-2xl border-0 sm:border border-border bg-surface-card shadow-2xl overflow-hidden flex flex-col pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Search Input Bar */}
-          <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/[0.08] bg-[#0E1524]">
+          <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border bg-surface-card">
             <button
               type="button"
               onClick={onClose}
-              className="sm:hidden min-h-[44px] min-w-[44px] -ml-2 flex items-center justify-center text-text-muted hover:text-white"
+              className="sm:hidden min-h-[44px] min-w-[44px] -ml-2 flex items-center justify-center text-text-muted hover:text-text-primary"
               aria-label="Close search"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -356,19 +356,19 @@ export default function MessagingCommandPalette({
               }}
               onKeyDown={handleKeyDown}
               placeholder="Search people, conversations, messages, files..."
-              className="w-full bg-transparent text-sm text-white placeholder-text-muted focus:outline-none"
+              className="w-full bg-transparent text-sm text-text-primary placeholder:text-text-muted focus:outline-none"
             />
             {query && (
               <button
                 type="button"
                 onClick={() => setQuery('')}
-                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-white"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary"
                 aria-label="Clear query"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
-            <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono text-text-faint bg-white/[0.04] border border-white/[0.08] rounded">
+            <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono text-text-faint bg-surface-elevated border border-border rounded">
               ESC
             </kbd>
           </div>
@@ -377,7 +377,7 @@ export default function MessagingCommandPalette({
           <div className="flex-1 overflow-y-auto p-2 space-y-1">
             {items.length === 0 ? (
               <div className="p-10 text-center text-xs text-text-muted space-y-1">
-                <p className="font-semibold text-white">No results found for "{query}"</p>
+                <p className="font-semibold text-text-primary">No results found for "{query}"</p>
                 <p>Try searching for a participant, message snippet, or document title.</p>
               </div>
             ) : (
@@ -403,11 +403,11 @@ export default function MessagingCommandPalette({
                         className={`w-full p-2.5 rounded-xl flex items-center justify-between text-left transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-brand-mint/10 border border-brand-mint/30'
-                            : 'hover:bg-white/[0.03] border border-transparent'
+                            : 'hover:bg-surface-elevated/50 border border-transparent'
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center overflow-hidden text-brand-mint text-xs font-bold shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-surface-elevated border border-border flex items-center justify-center overflow-hidden text-brand-mint text-xs font-bold shrink-0">
                             {item.data.avatar ? (
                               <img
                                 src={getUploadUrl(item.data.avatar)}
@@ -420,7 +420,7 @@ export default function MessagingCommandPalette({
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold text-white truncate">
+                              <span className="text-xs font-bold text-text-primary truncate">
                                 {item.data.name}
                               </span>
                               {item.data.role && (
@@ -449,11 +449,11 @@ export default function MessagingCommandPalette({
                         className={`w-full p-2.5 rounded-xl flex items-center justify-between text-left transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-brand-mint/10 border border-brand-mint/30'
-                            : 'hover:bg-white/[0.03] border border-transparent'
+                            : 'hover:bg-surface-elevated/50 border border-transparent'
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center overflow-hidden text-brand-mint text-xs font-bold shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-surface-elevated border border-border flex items-center justify-center overflow-hidden text-brand-mint text-xs font-bold shrink-0">
                             {item.data.avatar ? (
                               <img
                                 src={getUploadUrl(item.data.avatar)}
@@ -465,7 +465,7 @@ export default function MessagingCommandPalette({
                             )}
                           </div>
                           <div className="min-w-0">
-                            <span className="text-xs font-bold text-white truncate block">
+                            <span className="text-xs font-bold text-text-primary truncate block">
                               {item.data.name}
                             </span>
                             <p className="text-[11px] text-text-muted truncate mt-0.5">
@@ -490,7 +490,7 @@ export default function MessagingCommandPalette({
                         className={`w-full p-2.5 rounded-xl flex items-center justify-between text-left transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-brand-mint/10 border border-brand-mint/30'
-                            : 'hover:bg-white/[0.03] border border-transparent'
+                            : 'hover:bg-surface-elevated/50 border border-transparent'
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
@@ -499,7 +499,7 @@ export default function MessagingCommandPalette({
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5 text-[11px]">
-                              <span className="font-bold text-white truncate">
+                              <span className="font-bold text-text-primary truncate">
                                 {item.data.senderId?.name || 'Member'}
                               </span>
                               <span className="text-text-muted">•</span>
@@ -527,7 +527,7 @@ export default function MessagingCommandPalette({
                         className={`w-full p-2.5 rounded-xl flex items-center justify-between text-left transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-brand-mint/10 border border-brand-mint/30'
-                            : 'hover:bg-white/[0.03] border border-transparent'
+                            : 'hover:bg-surface-elevated/50 border border-transparent'
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
@@ -535,7 +535,7 @@ export default function MessagingCommandPalette({
                             <FileText className="w-4 h-4" />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-xs font-bold text-white truncate">
+                            <p className="text-xs font-bold text-text-primary truncate">
                               {item.data.name}
                             </p>
                             <p className="text-[10px] text-text-muted font-mono truncate">
@@ -560,7 +560,7 @@ export default function MessagingCommandPalette({
                         className={`w-full p-2.5 rounded-xl flex items-center justify-between text-left transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-brand-mint/10 border border-brand-mint/30'
-                            : 'hover:bg-white/[0.03] border border-transparent'
+                            : 'hover:bg-surface-elevated/50 border border-transparent'
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
@@ -599,17 +599,17 @@ export default function MessagingCommandPalette({
                         className={`w-full p-2.5 rounded-xl flex items-center justify-between text-left transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-brand-mint/10 border border-brand-mint/30'
-                            : 'hover:bg-white/[0.03] border border-transparent'
+                            : 'hover:bg-surface-elevated/50 border border-transparent'
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <div
-                            className={`p-2 rounded-xl bg-white/[0.04] border border-white/[0.06] ${item.color} shrink-0`}
+                            className={`p-2 rounded-xl bg-surface-elevated border border-border ${item.color} shrink-0`}
                           >
                             <item.icon className="w-4 h-4" />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-xs font-semibold text-white">
+                            <p className="text-xs font-semibold text-text-primary">
                               {item.title}
                             </p>
                             <p className="text-[11px] text-text-muted truncate">
@@ -632,7 +632,7 @@ export default function MessagingCommandPalette({
           </div>
 
           {/* Footer Hints */}
-          <div className="px-4 py-2.5 border-t border-white/[0.06] bg-[#0A0F1A] flex items-center justify-between text-[11px] font-mono text-text-faint">
+          <div className="px-4 py-2.5 border-t border-border bg-surface-elevated/30 flex items-center justify-between text-[11px] font-mono text-text-faint">
             <div className="flex items-center gap-3">
               <span className="hidden sm:inline">↑↓ Navigate</span>
               <span className="hidden sm:inline">↵ Open</span>

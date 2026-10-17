@@ -126,7 +126,7 @@ function CourseClasses() {
         <button
           type="button"
           onClick={() => navigate(`/courses/${courseId}/chapters`)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.06] border border-white/10 text-xs font-semibold text-white hover:bg-white/[0.1] transition-all cursor-pointer"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-elevated border border-border text-xs font-semibold text-text-primary hover:bg-surface-card transition-all cursor-pointer min-h-[44px]"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Back to Chapters
@@ -143,19 +143,19 @@ function CourseClasses() {
       <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-medium text-text-muted">
         <Link
           to="/courses"
-          className="hover:text-white transition-colors focus-ring rounded"
+          className="hover:text-text-primary transition-colors focus-ring rounded"
         >
           Courses
         </Link>
         <ChevronRight className="w-3.5 h-3.5 text-text-faint" />
         <Link
           to={`/courses/${courseId}/chapters`}
-          className="hover:text-white transition-colors focus-ring rounded truncate max-w-[160px] sm:max-w-[220px]"
+          className="hover:text-text-primary transition-colors focus-ring rounded truncate max-w-[160px] sm:max-w-[220px]"
         >
           {course?.name || "Course"}
         </Link>
         <ChevronRight className="w-3.5 h-3.5 text-text-faint" />
-        <span className="text-white truncate max-w-[200px] sm:max-w-xs font-semibold">
+        <span className="text-text-primary truncate max-w-[200px] sm:max-w-xs font-semibold">
           {chapter?.title || "Chapter"}
         </span>
       </nav>
@@ -165,7 +165,7 @@ function CourseClasses() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-bg-card via-bg-surface to-bg-card border border-white/[0.08] p-5 sm:p-7 lg:p-8"
+        className="relative overflow-hidden rounded-2xl bg-surface-card border border-border p-5 sm:p-7 lg:p-8"
       >
         <div className="gradient-line-top" />
 
@@ -185,7 +185,7 @@ function CourseClasses() {
             </span>
           </div>
 
-          <h1 className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl text-white tracking-tight leading-tight">
+          <h1 className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl text-text-primary tracking-tight leading-tight">
             {chapter.title}
           </h1>
 
@@ -203,7 +203,7 @@ function CourseClasses() {
             </span>
             {stats.formattedDuration && (
               <>
-                <span className="w-1 h-1 rounded-full bg-border-default" />
+                <span className="w-1 h-1 rounded-full bg-border" />
                 <span className="inline-flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-brand-mint" />
                   {stats.formattedDuration}
@@ -212,7 +212,7 @@ function CourseClasses() {
             )}
             {stats.totalExercises > 0 && (
               <>
-                <span className="w-1 h-1 rounded-full bg-border-default" />
+                <span className="w-1 h-1 rounded-full bg-border" />
                 <span className="inline-flex items-center gap-1.5">
                   <FileText className="w-3.5 h-3.5 text-brand-mint" />
                   {stats.totalExercises} Resources
@@ -223,14 +223,14 @@ function CourseClasses() {
 
           {/* Progress bar if enrolled */}
           {purchased && stats.totalClasses > 0 && (
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 space-y-2 max-w-xl">
+            <div className="rounded-xl border border-border bg-surface-elevated/40 p-4 space-y-2 max-w-xl">
               <div className="flex items-center justify-between text-xs font-mono font-medium text-text-secondary">
                 <span>
                   {stats.progressPercent >= 100 ? "Module Completed" : "Module Progress"}
                 </span>
-                <span className="font-bold text-white">{stats.progressPercent}%</span>
+                <span className="font-bold text-text-primary">{stats.progressPercent}%</span>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-surface-card border border-border/40">
                 <div
                   className={`h-full rounded-full transition-all duration-700 ${
                     stats.progressPercent >= 100
@@ -252,7 +252,7 @@ function CourseClasses() {
               <button
                 type="button"
                 onClick={() => navigate(`/courses/class/${stats.resumeClass._id}`)}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-brand-mint text-bg-base font-bold text-xs uppercase tracking-wider shadow-md hover:bg-brand-mint/90 transition-all cursor-pointer focus-ring"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-brand-mint text-bg-base font-bold text-xs uppercase tracking-wider shadow-md hover:bg-brand-mint/90 transition-all cursor-pointer focus-ring min-h-[44px]"
               >
                 <Play className="w-4 h-4 fill-current" />
                 <span>
@@ -270,8 +270,8 @@ function CourseClasses() {
 
       {/* ── Lesson Directory ── */}
       <section aria-labelledby="lesson-directory-title" className="space-y-4">
-        <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
-          <h2 id="lesson-directory-title" className="font-heading font-bold text-lg sm:text-xl text-white tracking-tight">
+        <div className="flex items-center justify-between border-b border-border pb-3">
+          <h2 id="lesson-directory-title" className="font-heading font-bold text-lg sm:text-xl text-text-primary tracking-tight">
             Lessons in this Chapter
           </h2>
           <span className="text-xs font-semibold text-text-muted">
@@ -280,7 +280,7 @@ function CourseClasses() {
         </div>
 
         {classes.length === 0 ? (
-          <div className="rounded-2xl border border-white/[0.06] bg-bg-card p-10 text-center">
+          <div className="rounded-2xl border border-border bg-surface-card p-10 text-center">
             <p className="text-text-muted text-sm font-medium">
               No lessons have been published in this chapter yet.
             </p>
@@ -317,13 +317,13 @@ function CourseClasses() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
-              className="relative w-full max-w-md bg-bg-surface border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl z-10 text-center space-y-4"
+              className="relative w-full max-w-md bg-surface-card border border-border rounded-2xl p-6 sm:p-8 shadow-2xl z-10 text-center space-y-4"
             >
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-warning/10 border border-warning/20 text-warning">
                 <Lock className="w-6 h-6" />
               </div>
 
-              <h3 className="font-heading font-bold text-lg text-white">
+              <h3 className="font-heading font-bold text-lg text-text-primary">
                 Content Locked
               </h3>
               <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
@@ -334,14 +334,14 @@ function CourseClasses() {
                 <button
                   type="button"
                   onClick={() => setShowPopup(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] text-xs font-semibold text-white hover:bg-white/[0.08] transition-all cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl border border-border bg-surface-elevated text-xs font-semibold text-text-primary hover:bg-surface-card transition-all cursor-pointer min-h-[44px]"
                 >
                   Dismiss
                 </button>
                 <button
                   type="button"
                   onClick={() => navigate(`/courses/${courseId}/chapters`)}
-                  className="flex-1 py-2.5 rounded-xl bg-brand-yellow text-bg-base text-xs font-bold uppercase tracking-wider hover:bg-brand-yellow/90 transition-all cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl bg-brand-yellow text-bg-base text-xs font-bold uppercase tracking-wider hover:bg-brand-yellow/90 transition-all cursor-pointer min-h-[44px]"
                 >
                   Course Overview
                 </button>

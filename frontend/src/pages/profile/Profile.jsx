@@ -230,16 +230,16 @@ export default function Profile() {
   if (isLoading) {
     return (
       <div className="space-y-6 sm:space-y-8 animate-pulse max-w-7xl mx-auto pb-6 sm:pb-8">
-        <div className="h-12 bg-white/[0.04] rounded-2xl border border-white/[0.06]" />
-        <div className="h-80 bg-white/[0.04] rounded-3xl border border-white/[0.06]" />
+        <div className="h-12 bg-surface-elevated/40 rounded-2xl border border-border" />
+        <div className="h-80 bg-surface-elevated/40 rounded-3xl border border-border" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-8 space-y-6">
-            <div className="h-64 bg-white/[0.04] rounded-3xl border border-white/[0.06]" />
-            <div className="h-72 bg-white/[0.04] rounded-3xl border border-white/[0.06]" />
+            <div className="h-64 bg-surface-elevated/40 rounded-3xl border border-border" />
+            <div className="h-72 bg-surface-elevated/40 rounded-3xl border border-border" />
           </div>
           <div className="lg:col-span-4 space-y-6">
-            <div className="h-48 bg-white/[0.04] rounded-3xl border border-white/[0.06]" />
-            <div className="h-64 bg-white/[0.04] rounded-3xl border border-white/[0.06]" />
+            <div className="h-48 bg-surface-elevated/40 rounded-3xl border border-border" />
+            <div className="h-64 bg-surface-elevated/40 rounded-3xl border border-border" />
           </div>
         </div>
       </div>
@@ -253,7 +253,7 @@ export default function Profile() {
         <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mx-auto mb-4 shadow-sm">
           <AlertCircle className="w-8 h-8" />
         </div>
-        <h2 className="text-2xl font-heading font-black text-white mb-2 tracking-tight">
+        <h2 className="text-2xl font-heading font-black text-text-primary mb-2 tracking-tight">
           Unable to Load Profile
         </h2>
         <p className="text-sm text-text-muted mb-6 max-w-md mx-auto leading-relaxed">
@@ -319,7 +319,7 @@ export default function Profile() {
             className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer select-none focus-ring ${
               activeSectionFilter === sec.id
                 ? "bg-brand-mint text-[#070B14] font-bold shadow-[0_0_12px_rgba(159,213,178,0.3)]"
-                : "bg-white/[0.03] text-text-muted hover:text-white hover:bg-white/[0.06] border border-white/[0.06]"
+                : "bg-surface-elevated/40 text-text-muted hover:text-text-primary hover:bg-surface-elevated border border-border"
             }`}
           >
             {sec.label}
@@ -406,11 +406,11 @@ export default function Profile() {
           <ProfileCompletionCard completionData={completionData} />
 
           {/* Trust & Verification Status */}
-          <div className="rounded-3xl border border-white/[0.08] bg-[#0A0F18]/90 backdrop-blur-xl p-6 shadow-sm space-y-4">
+          <div className="rounded-3xl border border-border bg-surface-card backdrop-blur-xl p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <ShieldCheck className="w-5 h-5 text-brand-mint" />
-                <h3 className="font-heading font-bold text-white text-base">
+                <h3 className="font-heading font-bold text-text-primary text-base">
                   Trust & Verification
                 </h3>
               </div>
@@ -428,8 +428,8 @@ export default function Profile() {
             </p>
 
             <div className="space-y-2.5 pt-1">
-              <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                <span className="text-xs font-medium text-white/90">Identity Verification</span>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-surface-elevated/40 border border-border">
+                <span className="text-xs font-medium text-text-primary">Identity Verification</span>
                 {isVerified ? (
                   <span className="px-2 py-0.5 rounded-full bg-brand-mint/10 border border-brand-mint/25 text-[10px] font-bold text-brand-mint">
                     Verified ✓
@@ -439,8 +439,8 @@ export default function Profile() {
                 )}
               </div>
 
-              <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                <span className="text-xs font-medium text-white/90">Council Licensure</span>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-surface-elevated/40 border border-border">
+                <span className="text-xs font-medium text-text-primary">Council Licensure</span>
                 {profile.certifications?.length > 0 ? (
                   <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-[10px] font-bold text-emerald-400">
                     Active
@@ -461,11 +461,11 @@ export default function Profile() {
           </div>
 
           {/* Learning & Coursework Progress */}
-          <div className="rounded-3xl border border-white/[0.08] bg-[#0A0F18]/90 backdrop-blur-xl p-6 shadow-sm space-y-4">
+          <div className="rounded-3xl border border-border bg-surface-card backdrop-blur-xl p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <BookOpen className="w-5 h-5 text-sky-400" />
-                <h3 className="font-heading font-bold text-white text-base">
+                <h3 className="font-heading font-bold text-text-primary text-base">
                   Course Progression
                 </h3>
               </div>
@@ -479,15 +479,15 @@ export default function Profile() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] text-center">
-                <span className="text-xl font-bold font-heading text-white block">
+              <div className="p-3 rounded-xl bg-surface-elevated/40 border border-border text-center">
+                <span className="text-xl font-bold font-heading text-text-primary block">
                   {gamification.completedCourses || 0}
                 </span>
                 <span className="text-[10px] font-mono uppercase tracking-wider text-text-muted">
                   Courses Done
                 </span>
               </div>
-              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] text-center">
+              <div className="p-3 rounded-xl bg-surface-elevated/40 border border-border text-center">
                 <span className="text-xl font-bold font-heading text-sky-400 block">
                   {gamification.completedClasses || 0}
                 </span>
@@ -502,9 +502,9 @@ export default function Profile() {
           <AchievementsGrid profile={profile} />
 
           {/* Account Security & Sign Out Section */}
-          <div className="p-5 rounded-3xl border border-white/[0.08] bg-white/[0.01] flex items-center justify-between gap-4">
+          <div className="p-5 rounded-3xl border border-border bg-surface-card flex items-center justify-between gap-4">
             <div>
-              <h4 className="text-xs font-heading font-bold text-white uppercase tracking-wider">
+              <h4 className="text-xs font-heading font-bold text-text-primary uppercase tracking-wider">
                 Session Control
               </h4>
               <p className="text-[11px] text-text-muted mt-0.5">

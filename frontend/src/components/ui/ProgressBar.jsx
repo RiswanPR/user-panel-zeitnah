@@ -36,10 +36,10 @@ export default function ProgressBar({
       {(showLabel || label) && (
         <div className="mb-2 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-text-muted">
           {label && <span>{label}</span>}
-          {showLabel && <span className="font-bold text-white">{clamped}%</span>}
+          {showLabel && <span className="font-bold text-text-primary">{clamped}%</span>}
         </div>
       )}
-      <div className={`w-full overflow-hidden rounded-full bg-white/[0.06] ${heights[size]}`}>
+      <div className={`w-full overflow-hidden rounded-full bg-surface-elevated border border-border/40 ${heights[size]}`}>
         {animated ? (
           <motion.div
             initial={{ width: 0 }}

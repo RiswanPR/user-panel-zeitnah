@@ -22,29 +22,29 @@ import leaderboardService from "../../services/leaderboardService";
  */
 function LeaderboardPreviewSkeleton() {
   return (
-    <div className="rounded-2xl border border-white/[0.08] bg-bg-card p-6 sm:p-8 animate-pulse relative overflow-hidden">
+    <div className="rounded-2xl border border-border bg-surface-card p-6 sm:p-8 animate-pulse relative overflow-hidden">
       <div className="flex flex-col lg:flex-row items-stretch gap-6 sm:gap-8">
         {/* Left Column Skeleton */}
         <div className="w-full lg:w-1/4 space-y-3 shrink-0">
-          <div className="h-5 w-28 bg-white/[0.05] rounded-lg" />
-          <div className="h-8 w-44 bg-white/[0.07] rounded-xl" />
-          <div className="h-4 w-full bg-white/[0.04] rounded" />
-          <div className="h-4 w-3/4 bg-white/[0.04] rounded" />
-          <div className="h-9 w-40 bg-white/[0.06] rounded-xl mt-4" />
+          <div className="h-5 w-28 bg-surface-elevated rounded-lg" />
+          <div className="h-8 w-44 bg-surface-elevated rounded-xl" />
+          <div className="h-4 w-full bg-surface-elevated/80 rounded" />
+          <div className="h-4 w-3/4 bg-surface-elevated/80 rounded" />
+          <div className="h-9 w-40 bg-surface-elevated rounded-xl mt-4" />
         </div>
 
         {/* Center Podium Skeleton */}
         <div className="flex-1 flex items-end justify-center gap-3 sm:gap-4 px-2 min-h-[190px]">
-          <div className="w-20 sm:w-24 h-28 bg-white/[0.04] rounded-t-2xl" />
-          <div className="w-24 sm:w-28 h-36 bg-white/[0.06] rounded-t-2xl" />
-          <div className="w-20 sm:w-24 h-24 bg-white/[0.04] rounded-t-2xl" />
+          <div className="w-20 sm:w-24 h-28 bg-surface-elevated/80 rounded-t-2xl" />
+          <div className="w-24 sm:w-28 h-36 bg-surface-elevated rounded-t-2xl" />
+          <div className="w-20 sm:w-24 h-24 bg-surface-elevated/80 rounded-t-2xl" />
         </div>
 
         {/* Right Column Skeleton */}
         <div className="w-full lg:w-1/3 space-y-3 shrink-0">
-          <div className="h-12 bg-white/[0.04] rounded-xl" />
-          <div className="h-12 bg-white/[0.04] rounded-xl" />
-          <div className="h-16 bg-white/[0.06] rounded-xl mt-2" />
+          <div className="h-12 bg-surface-elevated/80 rounded-xl" />
+          <div className="h-12 bg-surface-elevated/80 rounded-xl" />
+          <div className="h-16 bg-surface-elevated rounded-xl mt-2" />
         </div>
       </div>
     </div>
@@ -87,7 +87,7 @@ export default function LeaderboardPreview() {
   // Handle Error (fails gracefully without breaking the Courses page)
   if (isErrorPreview && !previewData) {
     return (
-      <div className="rounded-2xl border border-white/[0.06] bg-bg-card/60 p-6 text-center space-y-2">
+      <div className="rounded-2xl border border-border bg-surface-card p-6 text-center space-y-2">
         <div className="inline-flex items-center gap-2 text-xs font-semibold text-text-muted">
           <AlertCircle className="w-4 h-4 text-text-muted" />
           <span>Leaderboard temporarily unavailable</span>
@@ -98,7 +98,7 @@ export default function LeaderboardPreview() {
         <button
           type="button"
           onClick={() => refetchPreview()}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-xs font-semibold text-text-secondary hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] rounded-lg bg-surface-elevated border border-border text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-elevated/80 transition-colors cursor-pointer"
         >
           <RefreshCw className="w-3 h-3" />
           <span>Retry</span>
@@ -125,7 +125,7 @@ export default function LeaderboardPreview() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
       aria-label="Zeitnah Leaderboard Preview"
-      className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-bg-card via-bg-surface to-bg-card p-6 sm:p-8 shadow-sm"
+      className="relative overflow-hidden rounded-2xl border border-border bg-surface-card p-6 sm:p-8 shadow-sm"
     >
       <div className="gradient-line-top" />
       <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-brand-yellow/5 blur-[90px]" />
@@ -142,7 +142,7 @@ export default function LeaderboardPreview() {
               Leaderboard
             </div>
 
-            <h2 className="font-heading font-black text-xl sm:text-2xl text-white tracking-tight leading-tight">
+            <h2 className="font-heading font-black text-xl sm:text-2xl text-text-primary tracking-tight leading-tight">
               Learn. Progress. Rise.
             </h2>
 
@@ -153,7 +153,7 @@ export default function LeaderboardPreview() {
 
           <Link
             to="/leaderboard"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-mint/15 to-brand-navy/30 border border-brand-mint/25 text-xs font-bold text-brand-mint hover:bg-brand-mint/25 hover:border-brand-mint/40 transition-all shadow-sm cursor-pointer self-start group"
+            className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-gradient-to-r from-brand-mint/15 to-surface-elevated border border-brand-mint/25 text-xs font-bold text-brand-mint hover:bg-brand-mint/25 hover:border-brand-mint/40 transition-all shadow-sm cursor-pointer self-start group"
           >
             <span>View Full Leaderboard</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
@@ -167,7 +167,7 @@ export default function LeaderboardPreview() {
           {topPodium.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center text-text-muted">
               <Sparkles className="w-8 h-8 text-text-muted mb-2 opacity-60" />
-              <p className="text-xs font-semibold text-white">Leaderboard is getting started.</p>
+              <p className="text-xs font-semibold text-text-primary">Leaderboard is getting started.</p>
               <p className="text-[11px] text-text-muted mt-0.5">
                 Complete lessons to earn XP and take the lead.
               </p>
@@ -182,31 +182,31 @@ export default function LeaderboardPreview() {
                     className="group flex flex-col items-center text-center mb-2 cursor-pointer focus:outline-none rounded-xl"
                   >
                     <div className="relative mb-1.5">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-slate-300/40 bg-bg-surface flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-slate-300/40 bg-surface-elevated flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
                         {second.avatar ? (
                           <img src={second.avatar} alt={second.name} className="w-full h-full object-cover" />
                         ) : (
                           <User className="w-6 h-6 text-text-muted" />
                         )}
                       </div>
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-slate-300 text-bg-base flex items-center justify-center text-[10px] font-bold shadow-sm">
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-slate-300 text-brand-navy flex items-center justify-center text-[10px] font-bold shadow-sm">
                         <Medal className="w-3 h-3" />
                       </div>
                       {second.isYou && (
-                        <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 rounded bg-brand-yellow px-1 py-0.2 text-[7px] font-black uppercase text-bg-base">
+                        <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 rounded bg-brand-yellow px-1 py-0.2 text-[7px] font-black uppercase text-brand-navy">
                           YOU
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] font-semibold text-white truncate max-w-[90px] group-hover:text-brand-mint transition-colors">
+                    <p className="text-[11px] font-semibold text-text-primary truncate max-w-[90px] group-hover:text-brand-mint transition-colors">
                       {second.name}
                     </p>
-                    <p className="text-[10px] font-mono font-bold text-slate-300">
+                    <p className="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-300">
                       {(second.points || 0).toLocaleString()} <span className="text-[8px] text-text-muted">XP</span>
                     </p>
                   </Link>
-                  <div className="w-full h-20 sm:h-24 rounded-t-xl border-t border-x border-slate-300/30 bg-gradient-to-b from-white/[0.04] to-transparent flex flex-col items-center pt-2 shadow-inner">
-                    <span className="text-lg font-black font-mono text-slate-300">#2</span>
+                  <div className="w-full h-20 sm:h-24 rounded-t-xl border-t border-x border-slate-300/30 bg-surface-elevated/40 flex flex-col items-center pt-2 shadow-inner">
+                    <span className="text-lg font-black font-mono text-slate-500 dark:text-slate-300">#2</span>
                   </div>
                 </div>
               )}
@@ -220,30 +220,30 @@ export default function LeaderboardPreview() {
                   >
                     <div className="relative mb-1.5">
                       <div className="absolute inset-0 rounded-full bg-brand-yellow/15 blur-md group-hover:blur-lg transition-all" />
-                      <div className="relative w-16 h-16 sm:w-18 sm:h-18 rounded-full overflow-hidden border-2 border-brand-yellow/50 bg-bg-surface flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                      <div className="relative w-16 h-16 sm:w-18 sm:h-18 rounded-full overflow-hidden border-2 border-brand-yellow/50 bg-surface-elevated flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
                         {first.avatar ? (
                           <img src={first.avatar} alt={first.name} className="w-full h-full object-cover" />
                         ) : (
                           <User className="w-8 h-8 text-text-muted" />
                         )}
                       </div>
-                      <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-brand-yellow text-bg-base flex items-center justify-center text-xs font-black shadow-md">
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-brand-yellow text-brand-navy flex items-center justify-center text-xs font-black shadow-md">
                         <Crown className="w-3.5 h-3.5" />
                       </div>
                       {first.isYou && (
-                        <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded bg-brand-yellow px-1.5 py-0.2 text-[8px] font-black uppercase text-bg-base shadow-sm">
+                        <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded bg-brand-yellow px-1.5 py-0.2 text-[8px] font-black uppercase text-brand-navy shadow-sm">
                           YOU
                         </span>
                       )}
                     </div>
-                    <p className="text-xs font-bold text-white truncate max-w-[105px] group-hover:text-brand-mint transition-colors">
+                    <p className="text-xs font-bold text-text-primary truncate max-w-[105px] group-hover:text-brand-mint transition-colors">
                       {first.name}
                     </p>
                     <p className="text-[11px] font-mono font-black text-brand-yellow">
                       {(first.points || 0).toLocaleString()} <span className="text-[8px] text-text-muted">XP</span>
                     </p>
                   </Link>
-                  <div className="w-full h-28 sm:h-32 rounded-t-xl border-t border-x border-brand-yellow/40 bg-gradient-to-b from-brand-yellow/10 to-transparent flex flex-col items-center pt-2 shadow-inner">
+                  <div className="w-full h-28 sm:h-32 rounded-t-xl border-t border-x border-brand-yellow/40 bg-brand-yellow/10 flex flex-col items-center pt-2 shadow-inner">
                     <span className="text-2xl font-black font-mono text-brand-yellow">#1</span>
                   </div>
                 </div>
@@ -257,7 +257,7 @@ export default function LeaderboardPreview() {
                     className="group flex flex-col items-center text-center mb-2 cursor-pointer focus:outline-none rounded-xl"
                   >
                     <div className="relative mb-1.5">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-amber-600/40 bg-bg-surface flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-amber-600/40 bg-surface-elevated flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
                         {third.avatar ? (
                           <img src={third.avatar} alt={third.name} className="w-full h-full object-cover" />
                         ) : (
@@ -268,19 +268,19 @@ export default function LeaderboardPreview() {
                         <Medal className="w-3 h-3" />
                       </div>
                       {third.isYou && (
-                        <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 rounded bg-brand-yellow px-1 py-0.2 text-[7px] font-black uppercase text-bg-base">
+                        <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 rounded bg-brand-yellow px-1 py-0.2 text-[7px] font-black uppercase text-brand-navy">
                           YOU
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] font-semibold text-white truncate max-w-[90px] group-hover:text-brand-mint transition-colors">
+                    <p className="text-[11px] font-semibold text-text-primary truncate max-w-[90px] group-hover:text-brand-mint transition-colors">
                       {third.name}
                     </p>
                     <p className="text-[10px] font-mono font-bold text-amber-500">
                       {(third.points || 0).toLocaleString()} <span className="text-[8px] text-text-muted">XP</span>
                     </p>
                   </Link>
-                  <div className="w-full h-16 sm:h-20 rounded-t-xl border-t border-x border-amber-600/30 bg-gradient-to-b from-white/[0.04] to-transparent flex flex-col items-center pt-2 shadow-inner">
+                  <div className="w-full h-16 sm:h-20 rounded-t-xl border-t border-x border-amber-600/30 bg-surface-elevated/40 flex flex-col items-center pt-2 shadow-inner">
                     <span className="text-lg font-black font-mono text-amber-500">#3</span>
                   </div>
                 </div>
@@ -307,14 +307,14 @@ export default function LeaderboardPreview() {
                     className={`flex items-center justify-between gap-3 p-2.5 rounded-xl border transition-colors cursor-pointer group ${
                       student.isYou
                         ? "bg-brand-yellow/[0.05] border-brand-yellow/25 hover:bg-brand-yellow/[0.08]"
-                        : "bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.04] hover:border-white/[0.1]"
+                        : "bg-surface-elevated/40 border-border hover:bg-surface-elevated/80 hover:border-border-accent"
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="w-6 text-center font-mono font-black text-xs text-text-muted group-hover:text-white">
+                      <span className="w-6 text-center font-mono font-black text-xs text-text-muted group-hover:text-text-primary">
                         #{student.rank}
                       </span>
-                      <div className="w-7 h-7 rounded-full overflow-hidden border border-white/[0.08] bg-bg-surface flex items-center justify-center shrink-0">
+                      <div className="w-7 h-7 rounded-full overflow-hidden border border-border bg-surface-elevated flex items-center justify-center shrink-0">
                         {student.avatar ? (
                           <img src={student.avatar} alt={student.name} className="w-full h-full object-cover" />
                         ) : (
@@ -323,7 +323,7 @@ export default function LeaderboardPreview() {
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <p className="text-xs font-semibold text-white truncate max-w-[120px] group-hover:text-brand-mint transition-colors">
+                          <p className="text-xs font-semibold text-text-primary truncate max-w-[120px] group-hover:text-brand-mint transition-colors">
                             {student.name}
                           </p>
                           {student.isYou && (
@@ -341,7 +341,7 @@ export default function LeaderboardPreview() {
                     </div>
 
                     <div className="text-right font-mono shrink-0">
-                      <span className="text-xs font-bold text-white">
+                      <span className="text-xs font-bold text-text-primary">
                         {(student.points || 0).toLocaleString()}
                       </span>
                       <span className="text-[9px] text-text-muted ml-0.5">XP</span>
@@ -354,9 +354,9 @@ export default function LeaderboardPreview() {
 
           {/* Current Student's Personal Position Card */}
           {userPosition && (
-            <div className="rounded-xl border border-brand-mint/25 bg-gradient-to-r from-brand-mint/[0.06] to-brand-navy/30 p-3 sm:p-3.5 flex items-center justify-between gap-3 shadow-inner">
+            <div className="rounded-xl border border-brand-mint/25 bg-gradient-to-r from-brand-mint/[0.08] to-surface-elevated p-3 sm:p-3.5 flex items-center justify-between gap-3 shadow-inner">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-bg-base/80 border border-brand-mint/30 font-mono font-black text-base text-brand-mint shrink-0 shadow-sm">
+                <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-surface-card border border-brand-mint/30 font-mono font-black text-base text-brand-mint shrink-0 shadow-sm">
                   #{userPosition.rank || "—"}
                 </div>
                 <div className="min-w-0">
@@ -364,11 +364,11 @@ export default function LeaderboardPreview() {
                     <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">
                       Your Position
                     </span>
-                    <span className="rounded bg-brand-yellow px-1 py-0.2 text-[7px] font-black uppercase text-bg-base">
+                    <span className="rounded bg-brand-yellow px-1 py-0.2 text-[7px] font-black uppercase text-brand-navy">
                       YOU
                     </span>
                   </div>
-                  <p className="text-xs font-semibold text-white truncate">
+                  <p className="text-xs font-semibold text-text-primary truncate">
                     {user?.name || "Student"}
                   </p>
                   <p className="text-[10px] text-brand-mint font-semibold">
@@ -378,7 +378,7 @@ export default function LeaderboardPreview() {
               </div>
 
               <div className="text-right font-mono shrink-0">
-                <p className="font-heading font-black text-sm text-white">
+                <p className="font-heading font-black text-sm text-text-primary">
                   {(userPosition.points || 0).toLocaleString()}
                 </p>
                 <p className="text-[9px] font-bold text-brand-mint uppercase tracking-wider">

@@ -25,7 +25,7 @@ export default function SpaceResources({ resources = [], canPost, onPost, isPost
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-heading font-bold text-lg text-white">Curated Resources</h2>
+          <h2 className="font-heading font-bold text-lg text-text-primary">Curated Resources</h2>
           <p className="text-xs text-text-muted mt-0.5">Syllabi, reference guides, lecture materials, and external links.</p>
         </div>
 
@@ -43,15 +43,15 @@ export default function SpaceResources({ resources = [], canPost, onPost, isPost
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-28 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+            <div key={i} className="h-28 rounded-2xl bg-surface-card border border-border animate-pulse" />
           ))}
         </div>
       ) : resources.length === 0 ? (
-        <div className="rounded-2xl bg-[#111115]/60 border border-white/[0.06] p-12 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-3 text-text-faint">
+        <div className="rounded-2xl bg-surface-card border border-border p-12 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center mx-auto mb-3 text-text-faint">
             <FileText className="w-6 h-6" />
           </div>
-          <h3 className="font-heading font-bold text-base text-white">No resources shared yet</h3>
+          <h3 className="font-heading font-bold text-base text-text-primary">No resources shared yet</h3>
           <p className="text-xs text-text-muted mt-1 max-w-sm mx-auto">
             Faculty and cohort members can share helpful documentation, guides, and links here.
           </p>
@@ -61,15 +61,15 @@ export default function SpaceResources({ resources = [], canPost, onPost, isPost
           {resources.map((res) => (
             <div
               key={res._id}
-              className="p-5 rounded-2xl bg-[#111115]/80 border border-white/[0.06] hover:border-brand-mint/30 transition-all flex flex-col justify-between"
+              className="p-5 rounded-2xl bg-surface-card border border-border hover:border-brand-mint/30 transition-all flex flex-col justify-between"
             >
               <div className="flex items-start gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-surface-elevated border border-border flex items-center justify-center shrink-0">
                   {getResourceIcon(res.type)}
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-sm font-bold text-white line-clamp-1">{res.title}</h4>
+                  <h4 className="text-sm font-bold text-text-primary line-clamp-1">{res.title}</h4>
                   {res.description && (
                     <p className="text-xs text-text-muted mt-1 line-clamp-2 leading-relaxed">
                       {res.description}
@@ -82,7 +82,7 @@ export default function SpaceResources({ resources = [], canPost, onPost, isPost
               </div>
 
               {res.url && (
-                <div className="mt-4 pt-3 border-t border-white/[0.04] flex items-center justify-end">
+                <div className="mt-4 pt-3 border-t border-border flex items-center justify-end">
                   <a
                     href={res.url}
                     target="_blank"

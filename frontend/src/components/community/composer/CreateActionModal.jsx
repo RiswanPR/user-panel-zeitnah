@@ -88,16 +88,16 @@ export default function CreateActionModal({
           }
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full sm:max-w-3xl max-h-[90vh] sm:max-h-[85vh] bg-[#090E1A] sm:bg-[#0B111E] border-t sm:border border-white/[0.08] rounded-t-3xl sm:rounded-2xl p-5 sm:p-8 shadow-2xl text-white select-none overflow-y-auto"
+          className="w-full sm:max-w-3xl max-h-[90vh] sm:max-h-[85vh] bg-surface-card border-t sm:border border-border rounded-t-3xl sm:rounded-2xl p-5 sm:p-8 shadow-2xl text-text-primary select-none overflow-y-auto"
         >
           {/* ── Header ── */}
-          <div className="flex items-center justify-between pb-4 mb-4 sm:mb-6 border-b border-white/[0.06]">
+          <div className="flex items-center justify-between pb-4 mb-4 sm:mb-6 border-b border-border">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-brand-mint/10 border border-brand-mint/20 flex items-center justify-center text-brand-mint">
                 <Sparkles className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-bold font-heading text-white tracking-tight flex items-center gap-2">
+                <h3 className="text-sm font-bold font-heading text-text-primary tracking-tight flex items-center gap-2">
                   <span>Create</span>
                   {isBusinessMode && activeOrganization && (
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-mint/20 text-brand-mint border border-brand-mint/30 uppercase font-bold tracking-wider">
@@ -121,7 +121,7 @@ export default function CreateActionModal({
             <button
               type="button"
               onClick={onClose}
-              className="min-h-[44px] min-w-[44px] p-2 rounded-xl text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors flex items-center justify-center cursor-pointer"
+              className="min-h-[44px] min-w-[44px] p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors flex items-center justify-center cursor-pointer"
               aria-label="Close creation menu"
               title="Close"
             >
@@ -133,7 +133,7 @@ export default function CreateActionModal({
           <div className="mb-6 sm:mb-8 text-center sm:text-left">
             <h2
               id="create-chooser-title"
-              className="text-xl sm:text-2xl font-extrabold font-heading text-white tracking-tight"
+              className="text-xl sm:text-2xl font-extrabold font-heading text-text-primary tracking-tight"
             >
               {isBusinessMode && activeOrganization
                 ? `What would ${activeOrganization.name} like to share?`
@@ -156,7 +156,7 @@ export default function CreateActionModal({
                 onClose();
                 if (onSelectPost) onSelectPost();
               }}
-              className="w-full text-left p-5 sm:p-6 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.08] hover:border-brand-mint/40 transition-all cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/60 flex flex-col justify-between min-h-[220px] sm:min-h-[260px] shadow-sm hover:shadow-lg hover:shadow-brand-mint/5"
+              className="w-full text-left p-5 sm:p-6 rounded-2xl bg-surface-elevated hover:bg-surface-card border border-border hover:border-brand-mint/40 transition-all cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/60 flex flex-col justify-between min-h-[220px] sm:min-h-[260px] shadow-sm hover:shadow-lg hover:shadow-brand-mint/5"
               aria-label="Create a Post — Share ideas, photos, knowledge, polls and updates"
             >
               <div>
@@ -172,7 +172,7 @@ export default function CreateActionModal({
                 </div>
 
                 {/* Title & Description */}
-                <h4 className="text-base sm:text-lg font-bold font-heading text-white group-hover:text-brand-mint transition-colors mb-1.5 flex items-center gap-1.5">
+                <h4 className="text-base sm:text-lg font-bold font-heading text-text-primary group-hover:text-brand-mint transition-colors mb-1.5 flex items-center gap-1.5">
                   <span className="text-brand-mint">✦</span>
                   <span>POST</span>
                 </h4>
@@ -183,25 +183,25 @@ export default function CreateActionModal({
 
               {/* Miniature Visual Mockup & Feature Chips */}
               <div>
-                <div className="p-2.5 rounded-xl bg-black/30 border border-white/[0.04] mb-3 hidden sm:block">
+                <div className="p-2.5 rounded-xl bg-surface-card/60 border border-border mb-3 hidden sm:block">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-4 h-4 rounded-full bg-white/10" />
-                    <div className="h-1.5 w-16 bg-white/15 rounded-full" />
+                    <div className="w-4 h-4 rounded-full bg-surface-elevated" />
+                    <div className="h-1.5 w-16 bg-surface-elevated rounded-full" />
                   </div>
                   <div className="space-y-1 mb-2">
-                    <div className="h-1.5 w-full bg-white/10 rounded-full" />
-                    <div className="h-1.5 w-3/4 bg-white/5 rounded-full" />
+                    <div className="h-1.5 w-full bg-surface-elevated rounded-full" />
+                    <div className="h-1.5 w-3/4 bg-surface-elevated/60 rounded-full" />
                   </div>
-                  <div className="h-10 w-full bg-white/[0.03] rounded-lg border border-white/[0.05] flex items-center justify-center text-[10px] text-text-muted/60 font-mono">
+                  <div className="h-10 w-full bg-surface-elevated/40 rounded-lg border border-border flex items-center justify-center text-[10px] text-text-muted font-mono">
                     Ideas · Photos · Polls · Carousel
                   </div>
                 </div>
 
                 <div className="flex flex-wrap gap-1.5">
-                  <span className="px-2 py-0.5 rounded-md bg-white/[0.04] text-[10px] text-text-muted font-medium">Ideas</span>
-                  <span className="px-2 py-0.5 rounded-md bg-white/[0.04] text-[10px] text-text-muted font-medium">Photos</span>
-                  <span className="px-2 py-0.5 rounded-md bg-white/[0.04] text-[10px] text-text-muted font-medium">Polls</span>
-                  <span className="px-2 py-0.5 rounded-md bg-white/[0.04] text-[10px] text-text-muted font-medium">Knowledge</span>
+                  <span className="px-2 py-0.5 rounded-md bg-surface-card border border-border text-[10px] text-text-muted font-medium">Ideas</span>
+                  <span className="px-2 py-0.5 rounded-md bg-surface-card border border-border text-[10px] text-text-muted font-medium">Photos</span>
+                  <span className="px-2 py-0.5 rounded-md bg-surface-card border border-border text-[10px] text-text-muted font-medium">Polls</span>
+                  <span className="px-2 py-0.5 rounded-md bg-surface-card border border-border text-[10px] text-text-muted font-medium">Knowledge</span>
                 </div>
               </div>
             </button>
@@ -214,7 +214,7 @@ export default function CreateActionModal({
                 onClose();
                 if (onSelectReel) onSelectReel();
               }}
-              className="w-full text-left p-5 sm:p-6 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.08] hover:border-brand-mint/40 transition-all cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/60 flex flex-col justify-between min-h-[220px] sm:min-h-[260px] shadow-sm hover:shadow-lg hover:shadow-brand-mint/5"
+              className="w-full text-left p-5 sm:p-6 rounded-2xl bg-surface-elevated hover:bg-surface-card border border-border hover:border-brand-mint/40 transition-all cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/60 flex flex-col justify-between min-h-[220px] sm:min-h-[260px] shadow-sm hover:shadow-lg hover:shadow-brand-mint/5"
               aria-label="Create a Reel — Short vertical video for high-impact discovery"
             >
               <div>
@@ -230,7 +230,7 @@ export default function CreateActionModal({
                 </div>
 
                 {/* Title & Description */}
-                <h4 className="text-base sm:text-lg font-bold font-heading text-white group-hover:text-brand-mint transition-colors mb-1.5 flex items-center gap-1.5">
+                <h4 className="text-base sm:text-lg font-bold font-heading text-text-primary group-hover:text-brand-mint transition-colors mb-1.5 flex items-center gap-1.5">
                   <span className="text-brand-mint">▶</span>
                   <span>REEL</span>
                 </h4>
@@ -241,13 +241,13 @@ export default function CreateActionModal({
 
               {/* Miniature Visual Mockup & Feature Chips */}
               <div>
-                <div className="p-2.5 rounded-xl bg-black/30 border border-white/[0.04] mb-3 hidden sm:block">
+                <div className="p-2.5 rounded-xl bg-surface-card/60 border border-border mb-3 hidden sm:block">
                   <div className="flex items-center justify-center gap-3">
-                    <div className="h-10 w-6 rounded-md bg-white/[0.06] border border-white/[0.1] flex items-center justify-center text-brand-mint">
+                    <div className="h-10 w-6 rounded-md bg-surface-elevated border border-border flex items-center justify-center text-brand-mint">
                       <Film className="w-3 h-3" />
                     </div>
-                    <div className="text-[10px] text-text-muted/70 font-mono space-y-0.5">
-                      <p className="text-white/80 font-medium">9:16 Vertical Video</p>
+                    <div className="text-[10px] text-text-muted font-mono space-y-0.5">
+                      <p className="text-text-primary font-medium">9:16 Vertical Video</p>
                       <p>Up to 90s · Up to 1 GB</p>
                     </div>
                   </div>
@@ -255,8 +255,8 @@ export default function CreateActionModal({
 
                 <div className="flex flex-wrap gap-1.5">
                   <span className="px-2 py-0.5 rounded-md bg-brand-mint/10 text-[10px] text-brand-mint font-medium">9:16 Vertical</span>
-                  <span className="px-2 py-0.5 rounded-md bg-white/[0.04] text-[10px] text-text-muted font-medium">Up to 90s</span>
-                  <span className="px-2 py-0.5 rounded-md bg-white/[0.04] text-[10px] text-text-muted font-medium">Discovery</span>
+                  <span className="px-2 py-0.5 rounded-md bg-surface-card border border-border text-[10px] text-text-muted font-medium">Up to 90s</span>
+                  <span className="px-2 py-0.5 rounded-md bg-surface-card border border-border text-[10px] text-text-muted font-medium">Discovery</span>
                 </div>
               </div>
             </button>
@@ -264,7 +264,7 @@ export default function CreateActionModal({
 
           {/* ── Optional Secondary Story Link ── */}
           {onSelectStory && (
-            <div className="mt-6 pt-4 border-t border-white/[0.04] flex items-center justify-between text-xs text-text-muted">
+            <div className="mt-6 pt-4 border-t border-border flex items-center justify-between text-xs text-text-muted">
               <span>Looking to share quick 24-hour updates?</span>
               <button
                 type="button"

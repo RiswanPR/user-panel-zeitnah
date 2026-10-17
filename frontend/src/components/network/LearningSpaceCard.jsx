@@ -17,10 +17,10 @@ export default function LearningSpaceCard({ space }) {
       animate={{ opacity: 1, y: 0 }}
       whileHover={shouldReduceMotion ? undefined : { y: -3 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className="group relative rounded-2xl bg-[#0A0F14]/95 border border-white/[0.08] hover:border-brand-mint/40 shadow-xl transition-all duration-300 flex flex-col overflow-hidden hover:shadow-[0_12px_36px_-10px_rgba(159,213,178,0.12)]"
+      className="group relative rounded-2xl bg-surface-card border border-border hover:border-brand-mint/40 shadow-xl transition-all duration-300 flex flex-col overflow-hidden hover:shadow-[0_12px_36px_-10px_rgba(159,213,178,0.12)]"
     >
       {/* ── Top Visual Banner ── */}
-      <div className="h-32 relative bg-gradient-to-br from-[#12314C]/70 via-[#070B14] to-[#0A101D] overflow-hidden">
+      <div className="h-32 relative bg-gradient-to-br from-brand-navy/60 via-surface-card to-surface-elevated overflow-hidden">
         {space.coverImage ? (
           <img
             src={space.coverImage}
@@ -40,7 +40,7 @@ export default function LearningSpaceCard({ space }) {
             {space.category || "BATCH"}
           </span>
           {space.code && (
-            <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-black/70 backdrop-blur-md border border-white/10 text-white/90">
+            <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-black/70 backdrop-blur-md border border-white/10 text-white/90">
               {space.code}
             </span>
           )}
@@ -65,7 +65,7 @@ export default function LearningSpaceCard({ space }) {
       {/* ── Content Area ── */}
       <div className="p-5 flex-1 flex flex-col justify-between">
         <div>
-          <h3 className="font-heading font-bold text-base sm:text-lg text-white group-hover:text-brand-mint transition-colors line-clamp-1">
+          <h3 className="font-heading font-bold text-base sm:text-lg text-text-primary group-hover:text-brand-mint transition-colors line-clamp-1">
             {space.name}
           </h3>
 
@@ -80,7 +80,7 @@ export default function LearningSpaceCard({ space }) {
               {space.tags.slice(0, 3).map((tag) => (
                 <span
                   key={tag}
-                  className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-white/[0.03] text-text-muted border border-white/[0.04]"
+                  className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-surface-elevated text-text-muted border border-border"
                 >
                   #{tag}
                 </span>
@@ -95,7 +95,7 @@ export default function LearningSpaceCard({ space }) {
         </div>
 
         {/* ── Footer ── */}
-        <div className="mt-5 pt-3.5 border-t border-white/[0.06] flex items-center justify-between">
+        <div className="mt-5 pt-3.5 border-t border-border flex items-center justify-between">
           {/* Teachers / Mentors Avatars */}
           <div className="flex items-center gap-2">
             {teachers.length > 0 ? (
@@ -103,7 +103,7 @@ export default function LearningSpaceCard({ space }) {
                 {teachers.slice(0, 3).map((t, i) => (
                   <div
                     key={t._id || i}
-                    className="w-7 h-7 rounded-full bg-[#070B14] border-2 border-[#0A0F14] flex items-center justify-center text-[10px] font-bold text-brand-mint overflow-hidden shadow-sm"
+                    className="w-7 h-7 rounded-full bg-surface-elevated border-2 border-surface-card flex items-center justify-center text-[10px] font-bold text-brand-mint overflow-hidden shadow-sm"
                     title={t.name || "Faculty Mentor"}
                   >
                     {t.avatar || t.profileImage ? (

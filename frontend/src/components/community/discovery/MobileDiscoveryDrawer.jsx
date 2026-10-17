@@ -90,9 +90,7 @@ export default function MobileDiscoveryDrawer({
             transition={{ duration: 0.2 }}
             onClick={onClose}
             className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-          />
-
-          {/* Bottom Sheet Container */}
+          />            {/* Bottom Sheet Container */}
           <motion.div
             ref={drawerRef}
             initial={shouldReduceMotion ? { opacity: 0 } : { y: '100%', opacity: 0.5 }}
@@ -108,17 +106,17 @@ export default function MobileDiscoveryDrawer({
                 ? { opacity: 0, transition: { duration: 0.1 } }
                 : { y: '100%', opacity: 0, transition: { duration: 0.2 } }
             }
-            className="relative z-10 w-full max-h-[85vh] h-[82vh] bg-[#0B111E] border-t border-white/[0.08] shadow-[0_0_50px_rgba(0,0,0,0.6)] rounded-t-3xl flex flex-col overflow-hidden pb-[calc(1rem+env(safe-area-inset-bottom))]"
+            className="relative z-10 w-full max-h-[85vh] h-[82vh] bg-surface-card border-t border-border shadow-[0_0_50px_rgba(0,0,0,0.6)] rounded-t-3xl flex flex-col overflow-hidden pb-[calc(1rem+env(safe-area-inset-bottom))]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Drag Handle */}
-            <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mt-2.5 mb-1 shrink-0" />
+            <div className="w-10 h-1 bg-text-muted/30 rounded-full mx-auto mt-2.5 mb-1 shrink-0" />
 
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.06] shrink-0">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-border shrink-0">
               <div className="flex items-center gap-2">
                 <Compass className="w-4 h-4 text-brand-mint" />
-                <h3 className="text-base font-bold text-white tracking-tight">
+                <h3 className="text-base font-bold text-text-primary tracking-tight">
                   Discover Community
                 </h3>
               </div>
@@ -126,7 +124,7 @@ export default function MobileDiscoveryDrawer({
               <button
                 type="button"
                 onClick={onClose}
-                className="min-w-[44px] min-h-[44px] rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-text-muted hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                className="min-w-[44px] min-h-[44px] rounded-full bg-surface-elevated hover:bg-surface-card border border-border text-text-muted hover:text-text-primary flex items-center justify-center transition-colors cursor-pointer"
                 aria-label="Close discovery"
               >
                 <X className="w-5 h-5" />
@@ -142,7 +140,7 @@ export default function MobileDiscoveryDrawer({
                   onClose();
                   if (onOpenSearch) onOpenSearch();
                 }}
-                className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] hover:border-brand-mint/40 text-left transition-all duration-150 flex items-center justify-between group cursor-pointer text-xs text-text-muted"
+                className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl bg-surface-elevated hover:bg-surface-card border border-border hover:border-brand-mint/40 text-left transition-all duration-150 flex items-center justify-between group cursor-pointer text-xs text-text-muted"
                 aria-label="Open community search"
               >
                 <div className="flex items-center gap-2.5">
@@ -160,7 +158,7 @@ export default function MobileDiscoveryDrawer({
                   ${
                     activeFilter === 'trending'
                       ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 font-bold'
-                      : 'bg-white/[0.025] hover:bg-white/[0.05] border-white/[0.06] text-text-secondary'
+                      : 'bg-surface-elevated hover:bg-surface-card border-border text-text-secondary'
                   }
                 `}
               >
@@ -168,7 +166,7 @@ export default function MobileDiscoveryDrawer({
                   <Flame className="w-4 h-4 text-amber-400" />
                   <span className="text-xs">Trending Discussions</span>
                 </div>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.05]">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-surface-card border border-border">
                   {activeFilter === 'trending' ? 'Active' : 'View'}
                 </span>
               </Link>
@@ -187,7 +185,7 @@ export default function MobileDiscoveryDrawer({
               {suggestedPeople.length > 0 && (
                 <PremiumCard variant="panel" padding="p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center gap-2">
                       <Users className="w-3.5 h-3.5 text-brand-mint" />
                       <span>People to Discover</span>
                     </h4>

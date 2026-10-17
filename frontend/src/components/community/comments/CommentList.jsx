@@ -40,7 +40,7 @@ export default function CommentList({
           <button
             type="button"
             onClick={onRetry}
-            className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.12] text-xs font-semibold text-white transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-brand-mint"
+            className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-surface-elevated hover:bg-surface-card border border-border text-xs font-semibold text-text-primary transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-brand-mint"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Try again</span>
@@ -53,10 +53,10 @@ export default function CommentList({
   if (comments.length === 0) {
     return (
       <div className="py-12 px-4 text-center select-none" data-testid="comments-empty-state">
-        <div className="w-12 h-12 rounded-full bg-white/[0.03] border border-white/[0.06] text-text-faint flex items-center justify-center mx-auto mb-3">
+        <div className="w-12 h-12 rounded-full bg-surface-card border border-border text-text-faint flex items-center justify-center mx-auto mb-3">
           <MessageCircle className="w-6 h-6 opacity-60" />
         </div>
-        <h4 className="text-sm font-semibold text-white mb-1">No comments yet</h4>
+        <h4 className="text-sm font-semibold text-text-primary mb-1">No comments yet</h4>
         <p className="text-xs text-text-muted max-w-[220px] mx-auto leading-relaxed">
           Start the conversation with an engineering insight, question, or project feedback.
         </p>

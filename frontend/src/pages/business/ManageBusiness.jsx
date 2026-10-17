@@ -325,7 +325,7 @@ export default function ManageBusiness() {
         <div className="w-20 h-20 mx-auto rounded-3xl bg-brand-mint/10 border border-brand-mint/30 flex items-center justify-center text-brand-mint shadow-xl shadow-brand-mint/10 mb-6">
           <Building2 className="w-10 h-10" />
         </div>
-        <h1 className="text-3xl font-heading font-extrabold text-white tracking-tight">
+        <h1 className="text-3xl font-heading font-extrabold text-text-primary tracking-tight">
           Manage Business
         </h1>
         <p className="text-sm text-text-muted max-w-md mx-auto mt-2 leading-relaxed">
@@ -333,7 +333,7 @@ export default function ManageBusiness() {
         </p>
         <button
           onClick={() => setIsCreateBusinessOpen(true)}
-          className="mt-8 inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-brand-mint text-black font-bold text-sm shadow-xl shadow-brand-mint/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+          className="mt-8 inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-brand-mint text-brand-navy font-bold text-sm shadow-xl shadow-brand-mint/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
         >
           <Plus className="w-5 h-5" />
           <span>+ Create Business</span>
@@ -360,9 +360,9 @@ export default function ManageBusiness() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 pb-36 sm:pb-16">
       {/* Top Bar: Business Switcher & Primary Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.06]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-border">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-[#181822] border border-white/[0.08] flex items-center justify-center overflow-hidden shrink-0 shadow-lg">
+          <div className="w-14 h-14 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center overflow-hidden shrink-0 shadow-lg">
             {activeBusiness?.logo ? (
               <img
                 src={activeBusiness.logo}
@@ -375,7 +375,7 @@ export default function ManageBusiness() {
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-bold font-heading text-white">
+              <h1 className="text-xl sm:text-2xl font-bold font-heading text-text-primary">
                 {activeBusiness?.name}
               </h1>
 
@@ -410,7 +410,7 @@ export default function ManageBusiness() {
               <span>{activeBusiness?.industry || 'Infrastructure'}</span>
               {activeBusiness?.location && (
                 <>
-                  <span className="text-white/20">•</span>
+                  <span className="text-text-muted">•</span>
                   <span className="flex items-center gap-1">
                     <MapPin className="w-3 h-3" />
                     <span>{activeBusiness.location}</span>
@@ -419,7 +419,7 @@ export default function ManageBusiness() {
               )}
               {activeBusiness?.slug && isApproved && (
                 <>
-                  <span className="text-white/20">•</span>
+                  <span className="text-text-muted">•</span>
                   <Link
                     to={`/businesses/${activeBusiness.slug}`}
                     className="flex items-center gap-1 text-brand-mint hover:underline font-semibold"
@@ -439,7 +439,7 @@ export default function ManageBusiness() {
             <select
               value={selectedOrgId}
               onChange={(e) => setSelectedOrgId(e.target.value)}
-              className="px-3.5 py-2.5 min-h-[44px] rounded-xl bg-[#161620] border border-white/[0.08] text-xs text-white font-medium outline-none focus:border-brand-mint cursor-pointer"
+              className="px-3.5 py-2.5 min-h-[44px] rounded-xl bg-surface-elevated border border-border text-xs text-text-primary font-medium outline-none focus:border-brand-mint cursor-pointer"
             >
               {businesses.map((b) => (
                 <option key={b._id || b.id} value={b._id || b.id}>
@@ -451,7 +451,7 @@ export default function ManageBusiness() {
 
           <button
             onClick={() => setIsCreateBusinessOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-semibold text-white border border-white/[0.08] transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-xs font-semibold text-text-primary border border-border transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>New Business</span>
@@ -463,7 +463,7 @@ export default function ManageBusiness() {
               setMissingFieldsPrompt(null);
               setIsCreateJobOpen(true);
             }}
-            className="flex items-center gap-1.5 px-4 py-2.5 min-h-[44px] rounded-xl bg-brand-mint text-black font-bold text-xs shadow-lg shadow-brand-mint/20 hover:opacity-90 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-2.5 min-h-[44px] rounded-xl bg-brand-mint text-brand-navy font-bold text-xs shadow-lg shadow-brand-mint/20 hover:opacity-90 transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>+ Create Job</span>
@@ -508,7 +508,7 @@ export default function ManageBusiness() {
       )}
 
       {/* Tabs Navigation */}
-      <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white/[0.02] border border-white/[0.06] overflow-x-auto">
+      <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-surface-card border border-border overflow-x-auto">
         {[
           { id: 'overview', label: 'Overview', icon: Building2 },
           { id: 'jobs', label: `Jobs (${activeBusiness?.totalJobCount ?? jobs.length})`, icon: Briefcase },
@@ -525,8 +525,8 @@ export default function ManageBusiness() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 active
-                  ? 'bg-brand-mint text-black font-bold shadow-md shadow-brand-mint/15'
-                  : 'text-text-muted hover:text-white hover:bg-white/[0.04]'
+                  ? 'bg-brand-mint text-brand-navy font-bold shadow-md shadow-brand-mint/15'
+                  : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -541,11 +541,11 @@ export default function ManageBusiness() {
         <div className="space-y-6">
           {/* Key Metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+            <div className="p-5 rounded-2xl bg-surface-card border border-border">
               <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
                 Active Jobs
               </span>
-              <p className="text-3xl font-extrabold text-white mt-1">
+              <p className="text-3xl font-extrabold text-text-primary mt-1">
                 {activeBusiness?.activeJobCount ?? 0}
               </p>
               <span className="text-[10px] text-emerald-400 mt-1 block">
@@ -553,11 +553,11 @@ export default function ManageBusiness() {
               </span>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+            <div className="p-5 rounded-2xl bg-surface-card border border-border">
               <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
                 Draft Jobs
               </span>
-              <p className="text-3xl font-extrabold text-white mt-1">
+              <p className="text-3xl font-extrabold text-text-primary mt-1">
                 {activeBusiness?.draftJobCount ?? 0}
               </p>
               <span className="text-[10px] text-text-muted mt-1 block">
@@ -565,11 +565,11 @@ export default function ManageBusiness() {
               </span>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+            <div className="p-5 rounded-2xl bg-surface-card border border-border">
               <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
                 Closed Jobs
               </span>
-              <p className="text-3xl font-extrabold text-white mt-1">
+              <p className="text-3xl font-extrabold text-text-primary mt-1">
                 {activeBusiness?.closedJobCount ?? 0}
               </p>
               <span className="text-[10px] text-text-muted mt-1 block">
@@ -577,7 +577,7 @@ export default function ManageBusiness() {
               </span>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+            <div className="p-5 rounded-2xl bg-surface-card border border-border">
               <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
                 Total Applicants
               </span>
@@ -593,9 +593,9 @@ export default function ManageBusiness() {
           {/* Quick Actions & Recent Jobs */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Recent Jobs Column */}
-            <div className="lg:col-span-2 p-6 rounded-3xl bg-white/[0.02] border border-white/[0.06] space-y-4">
+            <div className="lg:col-span-2 p-6 rounded-3xl bg-surface-card border border-border space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-bold text-white font-heading">
+                <h3 className="text-base font-bold text-text-primary font-heading">
                   Recent Jobs Posted
                 </h3>
                 <button
@@ -608,7 +608,7 @@ export default function ManageBusiness() {
 
               {jobs.length === 0 ? (
                 <div className="py-12 text-center text-text-muted space-y-2">
-                  <Briefcase className="w-8 h-8 mx-auto text-white/20" />
+                  <Briefcase className="w-8 h-8 mx-auto text-text-muted" />
                   <p className="text-xs">No jobs created yet for this business.</p>
                   <button
                     onClick={() => {
@@ -626,11 +626,11 @@ export default function ManageBusiness() {
                   {jobs.slice(0, 4).map((job) => (
                     <div
                       key={job.id || job._id}
-                      className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.04] hover:border-white/[0.1] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                      className="p-4 rounded-2xl bg-surface-elevated border border-border hover:border-border-accent transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="font-bold text-sm text-white">
+                          <h4 className="font-bold text-sm text-text-primary">
                             {job.title}
                           </h4>
                           <span
@@ -639,7 +639,7 @@ export default function ManageBusiness() {
                                 ? 'bg-emerald-500/15 text-emerald-400'
                                 : job.status === 'DRAFT'
                                   ? 'bg-amber-500/15 text-amber-400'
-                                  : 'bg-white/[0.05] text-white/50'
+                                  : 'bg-surface-card text-text-muted'
                             }`}
                           >
                             {job.status}
@@ -658,14 +658,14 @@ export default function ManageBusiness() {
                             setMissingFieldsPrompt(null);
                             setIsCreateJobOpen(true);
                           }}
-                          className="px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-semibold text-white/80 hover:text-white transition-colors cursor-pointer"
+                          className="px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-xs font-semibold text-text-secondary hover:text-text-primary border border-border transition-colors cursor-pointer"
                         >
                           Edit
                         </button>
                         {job.status === 'PUBLISHED' && (
                           <button
                             onClick={() => setClosingJob(job)}
-                            className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-red-500/20 text-xs font-semibold text-text-muted hover:text-red-300 transition-colors cursor-pointer"
+                            className="px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-red-500/20 text-xs font-semibold text-text-muted hover:text-red-300 border border-border transition-colors cursor-pointer"
                           >
                             Close
                           </button>
@@ -673,7 +673,7 @@ export default function ManageBusiness() {
                         {job.status === 'DRAFT' && isApproved && (
                           <button
                             onClick={() => handlePublishDraftClick(job)}
-                            className="px-3 py-1.5 rounded-xl bg-brand-mint text-black font-bold text-xs hover:opacity-90 transition-opacity cursor-pointer"
+                            className="px-3 py-1.5 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs hover:opacity-90 transition-opacity cursor-pointer"
                           >
                             Publish
                           </button>
@@ -681,7 +681,7 @@ export default function ManageBusiness() {
                         {job.status === 'CLOSED' && isApproved && (
                           <button
                             onClick={() => handleReopenClick(job)}
-                            className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-semibold text-white transition-colors cursor-pointer"
+                            className="px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-xs font-semibold text-text-primary border border-border transition-colors cursor-pointer"
                           >
                             Re-open
                           </button>
@@ -694,14 +694,14 @@ export default function ManageBusiness() {
             </div>
 
             {/* Business Quick Details Card */}
-            <div className="p-6 rounded-3xl bg-white/[0.02] border border-white/[0.06] space-y-4">
-              <h3 className="text-base font-bold text-white font-heading">
+            <div className="p-6 rounded-3xl bg-surface-card border border-border space-y-4">
+              <h3 className="text-base font-bold text-text-primary font-heading">
                 Business Info
               </h3>
               <div className="space-y-3 text-xs">
                 <div>
                   <span className="text-text-muted block text-[11px]">Type & Industry</span>
-                  <span className="text-white font-medium">
+                  <span className="text-text-primary font-medium">
                     {activeBusiness?.type} • {activeBusiness?.industry}
                   </span>
                 </div>
@@ -717,28 +717,28 @@ export default function ManageBusiness() {
                       >
                         {s}
                       </span>
-                    )) || <span className="text-white/30">None added</span>}
+                    )) || <span className="text-text-muted">None added</span>}
                   </div>
                 </div>
                 <div>
                   <span className="text-text-muted block text-[11px]">Email & Phone</span>
-                  <span className="text-white">
+                  <span className="text-text-primary">
                     {activeBusiness?.businessEmail || 'Not specified'} •{' '}
                     {activeBusiness?.businessPhone || 'Not specified'}
                   </span>
                 </div>
                 <div>
                   <span className="text-text-muted block text-[11px]">Location</span>
-                  <span className="text-white">
+                  <span className="text-text-primary">
                     {activeBusiness?.officeLocation || activeBusiness?.location || 'Not specified'}
                   </span>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-white/[0.04]">
+              <div className="pt-4 border-t border-border">
                 <button
                   onClick={() => setIsEditBusinessOpen(true)}
-                  className="w-full py-2.5 min-h-[44px] rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-xs font-semibold text-white transition-colors cursor-pointer"
+                  className="w-full py-2.5 min-h-[44px] rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-xs font-semibold text-text-primary border border-border transition-colors cursor-pointer"
                 >
                   Edit Business Details
                 </button>
@@ -760,8 +760,8 @@ export default function ManageBusiness() {
                   onClick={() => setJobFilter(filter)}
                   className={`px-3.5 py-2 min-h-[40px] rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                     jobFilter === filter
-                      ? 'bg-brand-mint text-black font-bold'
-                      : 'bg-white/[0.03] text-text-muted hover:text-white border border-white/[0.04]'
+                      ? 'bg-brand-mint text-brand-navy font-bold'
+                      : 'bg-surface-elevated text-text-muted hover:text-text-primary border border-border'
                   }`}
                 >
                   {filter === 'ALL'
@@ -777,7 +777,7 @@ export default function ManageBusiness() {
                 setMissingFieldsPrompt(null);
                 setIsCreateJobOpen(true);
               }}
-              className="flex items-center gap-1.5 px-4 py-2.5 min-h-[44px] rounded-xl bg-brand-mint text-black font-bold text-xs shadow-lg shadow-brand-mint/20 hover:opacity-90 cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-2.5 min-h-[44px] rounded-xl bg-brand-mint text-brand-navy font-bold text-xs shadow-lg shadow-brand-mint/20 hover:opacity-90 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>+ Create Job</span>
@@ -786,9 +786,9 @@ export default function ManageBusiness() {
 
           {/* Job List */}
           {jobs.length === 0 ? (
-            <div className="py-16 text-center text-text-muted bg-white/[0.02] border border-white/[0.06] rounded-3xl space-y-3">
-              <Briefcase className="w-10 h-10 mx-auto text-white/20" />
-              <h3 className="text-base font-bold text-white">No jobs found</h3>
+            <div className="py-16 text-center text-text-muted bg-surface-card border border-border rounded-3xl space-y-3">
+              <Briefcase className="w-10 h-10 mx-auto text-text-muted" />
+              <h3 className="text-base font-bold text-text-primary">No jobs found</h3>
               <p className="text-xs max-w-sm mx-auto">
                 No jobs matching filter '{jobFilter}'. Create a new structured job to start recruiting.
               </p>
@@ -798,7 +798,7 @@ export default function ManageBusiness() {
                   setMissingFieldsPrompt(null);
                   setIsCreateJobOpen(true);
                 }}
-                className="px-4 py-2.5 min-h-[44px] rounded-xl bg-brand-mint text-black font-bold text-xs cursor-pointer"
+                className="px-4 py-2.5 min-h-[44px] rounded-xl bg-brand-mint text-brand-navy font-bold text-xs cursor-pointer"
               >
                 + Create Job
               </button>
@@ -814,11 +814,11 @@ export default function ManageBusiness() {
                 return (
                   <div
                     key={job.id || job._id}
-                    className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12] transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+                    className="p-5 rounded-2xl bg-surface-card border border-border hover:border-border-accent transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
                   >
                     <div className="space-y-2 flex-1">
                       <div className="flex items-center gap-2.5 flex-wrap">
-                        <h4 className="text-base font-bold text-white font-heading">
+                        <h4 className="text-base font-bold text-text-primary font-heading">
                           {job.title}
                         </h4>
                         <span
@@ -829,7 +829,7 @@ export default function ManageBusiness() {
                                 ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
                                 : job.status === 'ARCHIVED'
                                   ? 'bg-purple-500/15 text-purple-400 border border-purple-500/30'
-                                  : 'bg-white/[0.05] text-white/50 border border-white/[0.08]'
+                                  : 'bg-surface-elevated text-text-muted border border-border'
                           }`}
                         >
                           {job.status}
@@ -842,7 +842,7 @@ export default function ManageBusiness() {
                       </div>
 
                       <p className="text-xs text-text-muted flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-white/80">
+                        <span className="font-semibold text-text-secondary">
                           {job.discipline || 'Engineering'}
                         </span>
                         <span>•</span>
@@ -870,7 +870,7 @@ export default function ManageBusiness() {
                           {job.requiredSkills.map((sk) => (
                             <span
                               key={sk}
-                              className="text-[10px] px-2 py-0.5 rounded-md bg-white/[0.04] text-cyan-300 border border-cyan-500/20"
+                              className="text-[10px] px-2 py-0.5 rounded-md bg-surface-elevated text-cyan-300 border border-cyan-500/20"
                             >
                               {sk}
                             </span>
@@ -882,7 +882,7 @@ export default function ManageBusiness() {
                     {/* Actions & Applicant counter */}
                     <div className="flex items-center gap-2.5 flex-wrap shrink-0 self-end md:self-center">
                       <div className="text-right mr-2">
-                        <span className="text-sm font-bold text-white block">
+                        <span className="text-sm font-bold text-text-primary block">
                           {job.applicantCount || 0}
                         </span>
                         <span className="text-[10px] text-text-muted">applicants</span>
@@ -897,7 +897,7 @@ export default function ManageBusiness() {
                         }}
                         disabled={isMutating}
                         aria-label={`Edit ${job.title}`}
-                        className="flex items-center gap-1 px-3 py-2 min-h-[40px] rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-semibold text-white transition-colors cursor-pointer disabled:opacity-50"
+                        className="flex items-center gap-1 px-3 py-2 min-h-[40px] rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-xs font-semibold text-text-primary border border-border transition-colors cursor-pointer disabled:opacity-50"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
                         <span>Edit</span>
@@ -923,7 +923,7 @@ export default function ManageBusiness() {
                         <button
                           onClick={() => setClosingJob(job)}
                           disabled={isMutating}
-                          className="px-3.5 py-2 min-h-[40px] rounded-xl bg-white/[0.04] hover:bg-red-500/20 text-xs font-semibold text-text-muted hover:text-red-300 transition-colors cursor-pointer disabled:opacity-50"
+                          className="px-3.5 py-2 min-h-[40px] rounded-xl bg-surface-elevated hover:bg-red-500/20 text-xs font-semibold text-text-muted hover:text-red-300 border border-border transition-colors cursor-pointer disabled:opacity-50"
                         >
                           {isMutating ? 'Closing...' : 'Close'}
                         </button>
@@ -934,7 +934,7 @@ export default function ManageBusiness() {
                         <button
                           onClick={() => handlePublishDraftClick(job)}
                           disabled={isMutating}
-                          className="px-3.5 py-2 min-h-[40px] rounded-xl bg-brand-mint text-black font-bold text-xs transition-opacity hover:opacity-90 cursor-pointer disabled:opacity-50"
+                          className="px-3.5 py-2 min-h-[40px] rounded-xl bg-brand-mint text-brand-navy font-bold text-xs transition-opacity hover:opacity-90 cursor-pointer disabled:opacity-50"
                         >
                           {isMutating ? 'Publishing...' : 'Publish'}
                         </button>
@@ -958,7 +958,7 @@ export default function ManageBusiness() {
                           disabled={isMutating}
                           aria-label={`Archive ${job.title}`}
                           title="Archive job"
-                          className="p-2.5 min-h-[40px] min-w-[40px] flex items-center justify-center rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white/50 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+                          className="p-2.5 min-h-[40px] min-w-[40px] flex items-center justify-center rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-text-muted hover:text-text-primary border border-border transition-colors cursor-pointer disabled:opacity-50"
                         >
                           <Archive className="w-4 h-4" />
                         </button>
@@ -971,7 +971,7 @@ export default function ManageBusiness() {
                           disabled={isMutating}
                           aria-label={`Delete ${job.title}`}
                           title="Delete job"
-                          className="p-2.5 min-h-[40px] min-w-[40px] flex items-center justify-center rounded-xl bg-white/[0.04] hover:bg-red-500/20 text-white/50 hover:text-red-400 transition-colors cursor-pointer disabled:opacity-50"
+                          className="p-2.5 min-h-[40px] min-w-[40px] flex items-center justify-center rounded-xl bg-surface-elevated hover:bg-red-500/20 text-text-muted hover:text-red-400 border border-border transition-colors cursor-pointer disabled:opacity-50"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -981,7 +981,7 @@ export default function ManageBusiness() {
                       <Link
                         to={`/jobs/${job.id || job._id}`}
                         aria-label={`View public posting for ${job.title}`}
-                        className="p-2.5 min-h-[40px] min-w-[40px] flex items-center justify-center rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white/70 hover:text-white transition-colors"
+                        className="p-2.5 min-h-[40px] min-w-[40px] flex items-center justify-center rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-text-secondary hover:text-text-primary border border-border transition-colors"
                         title="View public job page"
                       >
                         <Eye className="w-4 h-4" />
@@ -997,10 +997,10 @@ export default function ManageBusiness() {
 
       {/* TAB 3: BUSINESS PROFILE PREVIEW */}
       {activeTab === 'profile' && (
-        <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/[0.06] space-y-6">
+        <div className="p-8 rounded-3xl bg-surface-card border border-border space-y-6">
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div>
-              <h2 className="text-2xl font-bold font-heading text-white">
+              <h2 className="text-2xl font-bold font-heading text-text-primary">
                 {activeBusiness?.name}
               </h2>
               <p className="text-sm text-brand-mint mt-1">
@@ -1019,7 +1019,7 @@ export default function ManageBusiness() {
             <h4 className="text-xs font-bold uppercase tracking-wider text-text-muted mb-2">
               About the Organization
             </h4>
-            <p className="text-sm text-white/80 leading-relaxed max-w-3xl">
+            <p className="text-sm text-text-secondary leading-relaxed max-w-3xl">
               {activeBusiness?.description || 'No description provided yet.'}
             </p>
           </div>
@@ -1040,7 +1040,7 @@ export default function ManageBusiness() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-white/[0.06]">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-border">
             <div>
               <span className="text-[11px] text-text-muted block">Website</span>
               {activeBusiness?.website ? (
@@ -1053,18 +1053,18 @@ export default function ManageBusiness() {
                   {activeBusiness.website}
                 </a>
               ) : (
-                <span className="text-xs text-white">Not provided</span>
+                <span className="text-xs text-text-primary">Not provided</span>
               )}
             </div>
             <div>
               <span className="text-[11px] text-text-muted block">Company Size</span>
-              <span className="text-xs text-white">
+              <span className="text-xs text-text-primary">
                 {activeBusiness?.companySize || 'Not specified'}
               </span>
             </div>
             <div>
               <span className="text-[11px] text-text-muted block">Founded</span>
-              <span className="text-xs text-white">
+              <span className="text-xs text-text-primary">
                 {activeBusiness?.foundedYear || 'Not specified'}
               </span>
             </div>
@@ -1074,9 +1074,9 @@ export default function ManageBusiness() {
 
       {/* TAB 4: SETTINGS */}
       {activeTab === 'settings' && (
-        <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/[0.06] space-y-6">
+        <div className="p-8 rounded-3xl bg-surface-card border border-border space-y-6">
           <div>
-            <h3 className="text-lg font-bold font-heading text-white mb-2">
+            <h3 className="text-lg font-bold font-heading text-text-primary mb-2">
               Edit Business Settings
             </h3>
             <p className="text-xs text-text-muted leading-relaxed max-w-xl">
@@ -1086,13 +1086,13 @@ export default function ManageBusiness() {
           <div className="flex items-center gap-3 flex-wrap">
             <button
               onClick={() => setIsEditBusinessOpen(true)}
-              className="px-5 py-2.5 min-h-[44px] rounded-xl bg-brand-mint text-black font-bold text-xs shadow-lg shadow-brand-mint/20 hover:opacity-90 cursor-pointer"
+              className="px-5 py-2.5 min-h-[44px] rounded-xl bg-brand-mint text-brand-navy font-bold text-xs shadow-lg shadow-brand-mint/20 hover:opacity-90 cursor-pointer"
             >
               Update Business Profile
             </button>
             <button
               onClick={() => setIsCreateBusinessOpen(true)}
-              className="px-4 py-2.5 min-h-[44px] rounded-xl bg-white/[0.05] hover:bg-white/[0.08] text-white text-xs font-semibold border border-white/[0.08] transition-colors cursor-pointer"
+              className="px-4 py-2.5 min-h-[44px] rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-text-primary text-xs font-semibold border border-border transition-colors cursor-pointer"
             >
               Register Another Business
             </button>
@@ -1104,11 +1104,11 @@ export default function ManageBusiness() {
       {activeTab === 'talent' && (
         <div className="space-y-5">
           {jobs.filter((j) => j.status === 'PUBLISHED').length === 0 ? (
-            <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/[0.06] text-center space-y-4">
-              <div className="w-12 h-12 mx-auto rounded-full bg-white/[0.05] flex items-center justify-center">
+            <div className="p-8 rounded-3xl bg-surface-card border border-border text-center space-y-4">
+              <div className="w-12 h-12 mx-auto rounded-full bg-surface-elevated flex items-center justify-center">
                 <Sparkles className="w-6 h-6 text-text-muted" />
               </div>
-              <h3 className="text-sm font-bold text-white">Publish a job to unlock AI talent matching</h3>
+              <h3 className="text-sm font-bold text-text-primary">Publish a job to unlock AI talent matching</h3>
               <p className="text-xs text-text-muted max-w-sm mx-auto">
                 AI talent matching automatically identifies compatible infrastructure professionals when you publish a structured job.
               </p>
@@ -1118,7 +1118,7 @@ export default function ManageBusiness() {
                   setMissingFieldsPrompt(null);
                   setIsCreateJobOpen(true);
                 }}
-                className="inline-flex items-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-brand-mint text-black font-bold text-xs shadow-lg shadow-brand-mint/20 cursor-pointer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-brand-mint text-brand-navy font-bold text-xs shadow-lg shadow-brand-mint/20 cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 Create Job
@@ -1127,7 +1127,7 @@ export default function ManageBusiness() {
           ) : (
             <>
               {/* Job Selector for Talent View */}
-              <div className="flex items-center gap-3 pb-3 border-b border-white/[0.06] overflow-x-auto">
+              <div className="flex items-center gap-3 pb-3 border-b border-border overflow-x-auto">
                 <span className="text-xs font-semibold text-text-muted shrink-0">Select Job:</span>
                 {jobs
                   .filter((j) => j.status === 'PUBLISHED')
@@ -1141,8 +1141,8 @@ export default function ManageBusiness() {
                         onClick={() => setSelectedTalentJobId(j._id || j.id)}
                         className={`px-3 py-1.5 min-h-[40px] rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                           isSelected
-                            ? 'bg-brand-mint text-black font-bold shadow-md shadow-brand-mint/15'
-                            : 'bg-white/[0.03] text-text-muted hover:text-white border border-white/[0.04]'
+                            ? 'bg-brand-mint text-brand-navy font-bold shadow-md shadow-brand-mint/15'
+                            : 'bg-surface-elevated text-text-muted hover:text-text-primary border border-border'
                         }`}
                       >
                         {j.title}
@@ -1174,9 +1174,9 @@ export default function ManageBusiness() {
       {activeTab === 'applicants' && (
         <div className="space-y-6">
           {/* Header & Job Selector */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-surface-card border border-border">
             <div>
-              <h3 className="text-base font-bold font-heading text-white">
+              <h3 className="text-base font-bold font-heading text-text-primary">
                 Candidate Applications
               </h3>
               <p className="text-xs text-text-muted mt-0.5">
@@ -1190,7 +1190,7 @@ export default function ManageBusiness() {
                 <select
                   value={currentApplicantJobId || ''}
                   onChange={(e) => setSelectedApplicantJobId(e.target.value)}
-                  className="px-3 py-2 min-h-[44px] rounded-xl bg-[#161620] border border-white/[0.08] text-xs text-white font-medium outline-none focus:border-brand-mint cursor-pointer"
+                  className="px-3 py-2 min-h-[44px] rounded-xl bg-surface-elevated border border-border text-xs text-text-primary font-medium outline-none focus:border-brand-mint cursor-pointer"
                 >
                   {jobs.map((j) => (
                     <option key={j._id || j.id} value={j._id || j.id}>
@@ -1223,8 +1223,8 @@ export default function ManageBusiness() {
                     onClick={() => setApplicantFilterStatus(filter.id)}
                     className={`px-3 py-1.5 min-h-[40px] rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                       applicantFilterStatus === filter.id
-                        ? 'bg-brand-mint text-black font-bold'
-                        : 'bg-white/[0.03] text-text-muted hover:text-white border border-white/[0.04]'
+                        ? 'bg-brand-mint text-brand-navy font-bold'
+                        : 'bg-surface-elevated text-text-muted hover:text-text-primary border border-border'
                     }`}
                   >
                     {filter.label} ({count})
@@ -1236,14 +1236,14 @@ export default function ManageBusiness() {
 
           {/* Applicant List State */}
           {loadingApplicants ? (
-            <div className="p-12 text-center space-y-3 bg-white/[0.02] border border-white/[0.06] rounded-3xl">
+            <div className="p-12 text-center space-y-3 bg-surface-card border border-border rounded-3xl">
               <div className="w-8 h-8 mx-auto border-2 border-brand-mint/20 border-t-brand-mint rounded-full animate-spin" />
               <p className="text-xs text-text-muted font-medium">Loading applications...</p>
             </div>
           ) : filteredApplicants.length === 0 ? (
-            <div className="p-12 text-center space-y-3 bg-white/[0.02] border border-white/[0.06] rounded-3xl">
-              <Users className="w-10 h-10 mx-auto text-white/20" />
-              <h4 className="text-sm font-bold text-white">No applicants matching filter</h4>
+            <div className="p-12 text-center space-y-3 bg-surface-card border border-border rounded-3xl">
+              <Users className="w-10 h-10 mx-auto text-text-muted" />
+              <h4 className="text-sm font-bold text-text-primary">No applicants matching filter</h4>
               <p className="text-xs text-text-muted max-w-sm mx-auto">
                 {jobApplications.length === 0
                   ? 'No candidates have applied to this posting yet. Qualified applicants will appear here automatically.'
@@ -1262,7 +1262,7 @@ export default function ManageBusiness() {
                 return (
                   <div
                     key={app.id || app._id}
-                    className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.1] transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+                    className="p-5 rounded-2xl bg-surface-card border border-border hover:border-border-accent transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
                   >
                     {/* Candidate Identity */}
                     <div className="flex items-start gap-3.5">
@@ -1279,7 +1279,7 @@ export default function ManageBusiness() {
                       </div>
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="text-sm font-bold text-white font-heading">
+                          <h4 className="text-sm font-bold text-text-primary font-heading">
                             {candidateName}
                           </h4>
                           {candidateUsername && (
@@ -1304,7 +1304,7 @@ export default function ManageBusiness() {
                           </span>
                         </div>
                         <p className="text-xs text-text-muted">{candidateHeadline}</p>
-                        <p className="text-[11px] text-white/40 flex items-center gap-2">
+                        <p className="text-[11px] text-text-muted flex items-center gap-2">
                           <span>
                             Applied on {dayjs(app.appliedAt).format('MMM D, YYYY')}
                           </span>
@@ -1329,7 +1329,7 @@ export default function ManageBusiness() {
                               note: app.coverNote,
                             })
                           }
-                          className="px-3 py-1.5 min-h-[40px] rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-xs font-semibold text-white/80 hover:text-white transition-colors cursor-pointer"
+                          className="px-3 py-1.5 min-h-[40px] rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-xs font-semibold text-text-secondary hover:text-text-primary border border-border transition-colors cursor-pointer"
                         >
                           Cover Note
                         </button>
@@ -1348,7 +1348,7 @@ export default function ManageBusiness() {
                           <ExternalLink className="w-3 h-3 ml-0.5" />
                         </a>
                       ) : (
-                        <span className="text-[11px] text-text-muted px-2 py-1 bg-white/[0.02] rounded-lg">
+                        <span className="text-[11px] text-text-muted px-2 py-1 bg-surface-elevated rounded-lg">
                           No Resume
                         </span>
                       )}
@@ -1359,7 +1359,7 @@ export default function ManageBusiness() {
                           to={`/profile/${candidate.username || candidate.id}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 min-h-[40px] min-w-[40px] flex items-center justify-center rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white/60 hover:text-white transition-colors"
+                          className="p-2 min-h-[40px] min-w-[40px] flex items-center justify-center rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-text-muted hover:text-text-primary border border-border transition-colors"
                           title="View public profile"
                         >
                           <Eye className="w-4 h-4" />
@@ -1372,7 +1372,7 @@ export default function ManageBusiness() {
                         onChange={(e) =>
                           handleUpdateApplicationStatus(app.id, e.target.value)
                         }
-                        className="px-3 py-1.5 min-h-[40px] rounded-xl bg-[#161620] border border-white/[0.08] text-xs font-semibold text-white outline-none focus:border-brand-mint cursor-pointer"
+                        className="px-3 py-1.5 min-h-[40px] rounded-xl bg-surface-elevated border border-border text-xs font-semibold text-text-primary outline-none focus:border-brand-mint cursor-pointer"
                       >
                         <option value="submitted">Submitted</option>
                         <option value="reviewing">In Review</option>
@@ -1397,14 +1397,14 @@ export default function ManageBusiness() {
           aria-labelledby="reopen-job-modal-title"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
         >
-          <div className="w-full max-w-md bg-[#121217] border border-white/[0.1] rounded-3xl p-6 shadow-2xl space-y-4 text-white">
+          <div className="w-full max-w-md bg-surface-card border border-border rounded-3xl p-6 shadow-2xl space-y-4 text-text-primary">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-brand-mint/15 border border-brand-mint/30 flex items-center justify-center text-brand-mint">
                   <RotateCcw className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 id="reopen-job-modal-title" className="text-base font-bold font-heading text-white">
+                  <h3 id="reopen-job-modal-title" className="text-base font-bold font-heading text-text-primary">
                     Re-open Opportunity
                   </h3>
                   <p className="text-xs text-text-muted">
@@ -1414,7 +1414,7 @@ export default function ManageBusiness() {
               </div>
               <button
                 onClick={() => setReopenJob(null)}
-                className="p-1.5 rounded-xl text-white/40 hover:text-white transition-colors cursor-pointer"
+                className="p-1.5 rounded-xl text-text-muted hover:text-text-primary transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1425,7 +1425,7 @@ export default function ManageBusiness() {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-xs font-semibold text-white/80">
+              <label className="block text-xs font-semibold text-text-secondary">
                 New Application Deadline <span className="text-brand-mint">*</span>
               </label>
               <input
@@ -1433,18 +1433,18 @@ export default function ManageBusiness() {
                 min={minReopenDate}
                 value={reopenDeadline}
                 onChange={(e) => setReopenDeadline(e.target.value)}
-                className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-brand-mint text-sm text-white outline-none cursor-pointer"
+                className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl bg-surface-elevated border border-border focus:border-brand-mint text-sm text-text-primary outline-none cursor-pointer"
               />
               <p className="text-[11px] text-text-muted">
                 Must be at least 24 hours in the future.
               </p>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/[0.06]">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
               <button
                 type="button"
                 onClick={() => setReopenJob(null)}
-                className="px-4 py-2 min-h-[44px] rounded-xl text-xs font-semibold text-white/60 hover:text-white cursor-pointer"
+                className="px-4 py-2 min-h-[44px] rounded-xl text-xs font-semibold text-text-muted hover:text-text-primary cursor-pointer"
               >
                 Cancel
               </button>
@@ -1452,7 +1452,7 @@ export default function ManageBusiness() {
                 type="button"
                 disabled={mutatingJobId === reopenJob._id}
                 onClick={handleConfirmReopen}
-                className="px-5 py-2 min-h-[44px] rounded-xl bg-brand-mint text-black font-bold text-xs shadow-lg shadow-brand-mint/20 hover:opacity-90 disabled:opacity-50 transition-all cursor-pointer"
+                className="px-5 py-2 min-h-[44px] rounded-xl bg-brand-mint text-brand-navy font-bold text-xs shadow-lg shadow-brand-mint/20 hover:opacity-90 disabled:opacity-50 transition-all cursor-pointer"
               >
                 {mutatingJobId === reopenJob._id ? 'Re-opening...' : 'Re-open & Publish'}
               </button>
@@ -1469,28 +1469,28 @@ export default function ManageBusiness() {
           aria-labelledby="close-job-modal-title"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
         >
-          <div className="w-full max-w-md bg-[#121217] border border-white/[0.1] rounded-3xl p-6 shadow-2xl space-y-4 text-white">
+          <div className="w-full max-w-md bg-surface-card border border-border rounded-3xl p-6 shadow-2xl space-y-4 text-text-primary">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-300">
                 <AlertTriangle className="w-5 h-5" />
               </div>
               <div>
-                <h3 id="close-job-modal-title" className="text-base font-bold font-heading text-white">
+                <h3 id="close-job-modal-title" className="text-base font-bold font-heading text-text-primary">
                   Close Job Opportunity?
                 </h3>
                 <p className="text-xs text-text-muted">{closingJob.title}</p>
               </div>
             </div>
 
-            <p className="text-xs text-white/70 leading-relaxed">
+            <p className="text-xs text-text-secondary leading-relaxed">
               Closing this job will hide it from the active public search. Candidates will no longer be able to submit new applications. You can re-open it at any time from your business dashboard.
             </p>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/[0.06]">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
               <button
                 type="button"
                 onClick={() => setClosingJob(null)}
-                className="px-4 py-2 min-h-[44px] rounded-xl text-xs font-semibold text-white/60 hover:text-white cursor-pointer"
+                className="px-4 py-2 min-h-[44px] rounded-xl text-xs font-semibold text-text-muted hover:text-text-primary cursor-pointer"
               >
                 Cancel
               </button>
@@ -1515,28 +1515,28 @@ export default function ManageBusiness() {
           aria-labelledby="archive-job-modal-title"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
         >
-          <div className="w-full max-w-md bg-[#121217] border border-white/[0.1] rounded-3xl p-6 shadow-2xl space-y-4 text-white">
+          <div className="w-full max-w-md bg-surface-card border border-border rounded-3xl p-6 shadow-2xl space-y-4 text-text-primary">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-300">
                 <Archive className="w-5 h-5" />
               </div>
               <div>
-                <h3 id="archive-job-modal-title" className="text-base font-bold font-heading text-white">
+                <h3 id="archive-job-modal-title" className="text-base font-bold font-heading text-text-primary">
                   Archive Job Opportunity?
                 </h3>
                 <p className="text-xs text-text-muted">{archivingJob.title}</p>
               </div>
             </div>
 
-            <p className="text-xs text-white/70 leading-relaxed">
+            <p className="text-xs text-text-secondary leading-relaxed">
               Archiving moves this posting to long-term storage and deactivates active AI talent matching. Existing applicants remain preserved for historical review.
             </p>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/[0.06]">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
               <button
                 type="button"
                 onClick={() => setArchivingJob(null)}
-                className="px-4 py-2 min-h-[44px] rounded-xl text-xs font-semibold text-white/60 hover:text-white cursor-pointer"
+                className="px-4 py-2 min-h-[44px] rounded-xl text-xs font-semibold text-text-muted hover:text-text-primary cursor-pointer"
               >
                 Cancel
               </button>
@@ -1561,28 +1561,28 @@ export default function ManageBusiness() {
           aria-labelledby="delete-job-modal-title"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
         >
-          <div className="w-full max-w-md bg-[#121217] border border-white/[0.1] rounded-3xl p-6 shadow-2xl space-y-4 text-white">
+          <div className="w-full max-w-md bg-surface-card border border-border rounded-3xl p-6 shadow-2xl space-y-4 text-text-primary">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400">
                 <Trash2 className="w-5 h-5" />
               </div>
               <div>
-                <h3 id="delete-job-modal-title" className="text-base font-bold font-heading text-white">
+                <h3 id="delete-job-modal-title" className="text-base font-bold font-heading text-text-primary">
                   Permanently Delete Job?
                 </h3>
                 <p className="text-xs text-text-muted">{deletingJob.title}</p>
               </div>
             </div>
 
-            <p className="text-xs text-white/70 leading-relaxed">
+            <p className="text-xs text-text-secondary leading-relaxed">
               This action cannot be undone. The opportunity and all associated matching records will be removed. If this job has received candidate applications, deletion will be blocked to safeguard candidate records—you may archive it instead.
             </p>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/[0.06]">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
               <button
                 type="button"
                 onClick={() => setDeletingJob(null)}
-                className="px-4 py-2 min-h-[44px] rounded-xl text-xs font-semibold text-white/60 hover:text-white cursor-pointer"
+                className="px-4 py-2 min-h-[44px] rounded-xl text-xs font-semibold text-text-muted hover:text-text-primary cursor-pointer"
               >
                 Cancel
               </button>
@@ -1607,10 +1607,10 @@ export default function ManageBusiness() {
           aria-labelledby="cover-note-modal-title"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
         >
-          <div className="w-full max-w-lg bg-[#121217] border border-white/[0.1] rounded-3xl p-6 shadow-2xl space-y-4 text-white">
+          <div className="w-full max-w-lg bg-surface-card border border-border rounded-3xl p-6 shadow-2xl space-y-4 text-text-primary">
             <div className="flex items-start justify-between">
               <div>
-                <h3 id="cover-note-modal-title" className="text-base font-bold font-heading text-white">
+                <h3 id="cover-note-modal-title" className="text-base font-bold font-heading text-text-primary">
                   Candidate Cover Note
                 </h3>
                 <p className="text-xs text-text-muted">
@@ -1619,13 +1619,13 @@ export default function ManageBusiness() {
               </div>
               <button
                 onClick={() => setApplicantCoverNoteModal(null)}
-                className="p-1.5 rounded-xl text-white/40 hover:text-white transition-colors cursor-pointer"
+                className="p-1.5 rounded-xl text-text-muted hover:text-text-primary transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] text-xs text-white/90 leading-relaxed max-h-60 overflow-y-auto whitespace-pre-wrap">
+            <div className="p-4 rounded-2xl bg-surface-elevated border border-border text-xs text-text-primary leading-relaxed max-h-60 overflow-y-auto whitespace-pre-wrap">
               {applicantCoverNoteModal.note}
             </div>
 
@@ -1633,7 +1633,7 @@ export default function ManageBusiness() {
               <button
                 type="button"
                 onClick={() => setApplicantCoverNoteModal(null)}
-                className="px-4 py-2 min-h-[40px] rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-xs font-semibold text-white cursor-pointer"
+                className="px-4 py-2 min-h-[40px] rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-xs font-semibold text-text-primary border border-border cursor-pointer"
               >
                 Close
               </button>

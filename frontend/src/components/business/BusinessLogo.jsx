@@ -56,7 +56,7 @@ export default function BusinessLogo({
   if (resolvedUrl && !hasError) {
     return (
       <div
-        className={`relative overflow-hidden bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0 shadow-sm ${sizeClasses} ${className}`}
+        className={`relative overflow-hidden bg-surface-elevated border border-border flex items-center justify-center shrink-0 shadow-sm ${sizeClasses} ${className}`}
       >
         <img
           src={resolvedUrl}
@@ -72,7 +72,7 @@ export default function BusinessLogo({
   // Graceful fallback: Building2 icon inside styled container
   return (
     <div
-      className={`relative overflow-hidden bg-gradient-to-br from-brand-mint/15 to-[#12314C]/40 border border-brand-mint/25 flex items-center justify-center shrink-0 shadow-sm text-brand-mint ${sizeClasses} ${className}`}
+      className={`relative overflow-hidden bg-gradient-to-br from-brand-mint/15 to-surface-elevated border border-brand-mint/25 flex items-center justify-center shrink-0 shadow-sm text-brand-mint ${sizeClasses} ${className}`}
       title={name}
       aria-label={`${name} logo`}
     >

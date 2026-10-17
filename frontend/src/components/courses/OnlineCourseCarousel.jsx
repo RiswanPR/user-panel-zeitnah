@@ -131,7 +131,7 @@ const OnlineCourseCarousel = memo(function OnlineCourseCarousel({ courses }) {
             aria-label="Previous online classes"
             disabled={!canPrev}
             onClick={() => scrollBy(-1)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0A0F14] border border-white/[0.08] text-white hover:bg-[#101820] hover:border-brand-mint/30 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer focus-ring shadow-sm"
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-elevated border border-border text-text-primary hover:bg-surface-card hover:border-brand-mint/30 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer focus-ring shadow-sm min-h-[44px] min-w-[44px]"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -140,7 +140,7 @@ const OnlineCourseCarousel = memo(function OnlineCourseCarousel({ courses }) {
             aria-label="Next online classes"
             disabled={!canNext}
             onClick={() => scrollBy(1)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0A0F14] border border-white/[0.08] text-white hover:bg-[#101820] hover:border-brand-mint/30 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer focus-ring shadow-sm"
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-elevated border border-border text-text-primary hover:bg-surface-card hover:border-brand-mint/30 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer focus-ring shadow-sm min-h-[44px] min-w-[44px]"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -194,7 +194,7 @@ const OnlineCourseCarousel = memo(function OnlineCourseCarousel({ courses }) {
               className={`rounded-full transition-all duration-300 ${
                 i === currentIndex
                   ? "w-4 h-1.5 bg-brand-mint"
-                  : "w-1.5 h-1.5 bg-white/20"
+                  : "w-1.5 h-1.5 bg-border"
               }`}
             />
           ))}

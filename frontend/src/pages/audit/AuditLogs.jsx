@@ -122,7 +122,7 @@ export default function AuditLogs({ hideProfileNav = false }) {
             <Shield className="w-3.5 h-3.5" />
             Security & Compliance
           </div>
-          <h1 className="font-heading font-black text-3xl sm:text-4xl text-white tracking-tight leading-none">
+          <h1 className="font-heading font-black text-3xl sm:text-4xl text-text-primary tracking-tight leading-none">
             Account Activity Timeline
           </h1>
           <p className="text-xs sm:text-sm font-medium text-text-muted mt-1.5 max-w-xl leading-relaxed">
@@ -176,7 +176,7 @@ export default function AuditLogs({ hideProfileNav = false }) {
               className={`px-3 py-1.5 rounded-xl border text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
                 severity === option.value
                   ? "bg-brand-mint/10 border-brand-mint/30 text-brand-mint shadow-sm"
-                  : "border-border-default text-text-muted hover:text-white hover:border-white/[0.1]"
+                  : "border-border-default text-text-muted hover:text-text-primary hover:border-border-accent"
               }`}
             >
               {option.label}
@@ -195,7 +195,7 @@ export default function AuditLogs({ hideProfileNav = false }) {
               Total Logged Events
             </p>
           </div>
-          <p className="text-3xl sm:text-4xl font-heading font-black text-white font-mono">
+          <p className="text-3xl sm:text-4xl font-heading font-black text-text-primary font-mono">
             {pagination.total}
           </p>
           <p className="text-[11px] text-text-muted mt-1">
@@ -265,7 +265,7 @@ export default function AuditLogs({ hideProfileNav = false }) {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap gap-2 items-center mb-1.5">
-                      <h2 className="text-base sm:text-lg font-heading font-bold text-white">
+                      <h2 className="text-base sm:text-lg font-heading font-bold text-text-primary">
                         {formatAction(log.action)}
                       </h2>
                       <Badge variant={severityBadgeVariant(log.severity)} size="sm">

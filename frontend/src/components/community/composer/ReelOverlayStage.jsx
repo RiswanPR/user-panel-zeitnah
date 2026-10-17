@@ -173,7 +173,7 @@ function ReelOverlayStage({
                       e.stopPropagation();
                       onEditLayer?.(layer);
                     }}
-                    className="absolute -top-3.5 -left-3.5 w-6 h-6 rounded-full bg-brand-mint text-[#070B14] flex items-center justify-center pointer-events-auto hover:bg-brand-mint/90 transition-colors shadow-md"
+                    className="absolute -top-3.5 -left-3.5 w-6 h-6 rounded-full bg-brand-mint text-bg-base flex items-center justify-center pointer-events-auto hover:bg-brand-mint/90 transition-colors shadow-md"
                     title="Edit layer"
                     aria-label="Edit layer"
                   >
@@ -214,7 +214,7 @@ function ReelOverlayStage({
                   layer.style === 'BOLD'
                     ? 'bg-black/90 text-brand-yellow font-black border border-brand-yellow/30'
                     : layer.style === 'HIGHLIGHT'
-                    ? 'bg-brand-mint text-[#070B14] font-bold'
+                    ? 'bg-brand-mint text-bg-base font-bold'
                     : layer.style === 'MINIMAL'
                     ? 'bg-slate-900/60 text-white font-medium border border-white/10'
                     : 'bg-black/80 text-white border border-white/20'

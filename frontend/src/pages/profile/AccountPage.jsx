@@ -7,8 +7,9 @@ import AccountNav from "../../components/profile/AccountNav";
 import VerificationCenterPage from "./VerificationCenterPage";
 import AuditLogs from "../audit/AuditLogs";
 import ActiveSessions from "../sessions/ActiveSessions";
+import ThemeSelector from "../../components/settings/ThemeSelector";
 
-const VALID_SECTIONS = ["verification", "security", "sessions"];
+const VALID_SECTIONS = ["verification", "security", "sessions", "appearance"];
 
 /**
  * Zeitnah Unified Account Page.
@@ -42,7 +43,7 @@ export default function AccountPage() {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl bg-[#0A0F18]/95 border border-white/[0.08] p-6 sm:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.35)]"
+        className="relative overflow-hidden rounded-3xl bg-surface-card border border-border p-6 sm:p-8 shadow-sm"
       >
         <div
           className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-mint/35 to-transparent pointer-events-none"
@@ -55,11 +56,11 @@ export default function AccountPage() {
               <Shield className="w-3.5 h-3.5" />
               Unified Account Area
             </div>
-            <h1 className="text-2xl sm:text-3xl font-heading font-black text-white tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-heading font-black text-text-primary tracking-tight">
               Account, Trust & Security
             </h1>
             <p className="text-text-muted text-xs sm:text-sm max-w-2xl leading-relaxed">
-              Manage your engineering credentials, audit trail timeline, and connected device sessions from a centralized dashboard.
+              Manage your engineering credentials, audit trail timeline, connected devices, and interface theme preferences.
             </p>
           </div>
         </div>
@@ -107,6 +108,18 @@ export default function AccountPage() {
               transition={{ duration: 0.2 }}
             >
               <ActiveSessions hideProfileNav={true} />
+            </motion.div>
+          )}
+
+          {activeSection === "appearance" && (
+            <motion.div
+              key="section-appearance"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ThemeSelector />
             </motion.div>
           )}
         </AnimatePresence>

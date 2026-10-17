@@ -17,7 +17,7 @@ export default function PageHeader({
 }) {
   return (
     <div
-      className={`relative mb-6 sm:mb-8 border-b border-white/[0.06] pb-5 sm:pb-6 ${className}`}
+      className={`relative mb-6 sm:mb-8 border-b border-border pb-5 sm:pb-6 ${className}`}
     >
       {/* Top subtle hairline glow */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-brand-mint/15 to-transparent pointer-events-none" />
@@ -35,7 +35,7 @@ export default function PageHeader({
           )}
 
           <h1
-            className={`font-heading font-extrabold tracking-tight text-white ${
+            className={`font-heading font-extrabold tracking-tight text-text-primary ${
               compact
                 ? "text-2xl sm:text-3xl"
                 : "text-2xl sm:text-3xl lg:text-4xl"
@@ -60,7 +60,7 @@ export default function PageHeader({
       </div>
 
       {/* Optional sub-header tabs, filters, or metric summaries */}
-      {children && <div className="mt-5 pt-3 border-t border-white/[0.04]">{children}</div>}
+      {children && <div className="mt-5 pt-3 border-t border-border">{children}</div>}
     </div>
   );
 }

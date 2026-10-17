@@ -108,7 +108,7 @@ export default function LessonTabs({
       <div
         role="tablist"
         aria-label="Lesson workspace sections"
-        className="flex items-center gap-1 sm:gap-2 border-b border-white/[0.08] pb-px overflow-x-auto no-scrollbar"
+        className="flex items-center gap-1 sm:gap-2 border-b border-border pb-px overflow-x-auto no-scrollbar"
       >
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
@@ -122,8 +122,8 @@ export default function LessonTabs({
               onClick={() => setActiveTab(tab.id)}
               className={`relative px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
                 isActive
-                  ? 'text-white'
-                  : 'text-text-muted hover:text-white/80'
+                  ? 'text-text-primary'
+                  : 'text-text-muted hover:text-text-primary'
               }`}
             >
               <span>{tab.label}</span>
@@ -132,7 +132,7 @@ export default function LessonTabs({
                   className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
                     isActive
                       ? 'bg-brand-mint/20 text-brand-mint border border-brand-mint/30'
-                      : 'bg-white/[0.06] text-text-muted'
+                      : 'bg-surface-elevated text-text-muted'
                   }`}
                 >
                   {tab.count}
@@ -163,7 +163,7 @@ export default function LessonTabs({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.2 }}
-            className="p-5 sm:p-7 rounded-2xl sm:rounded-3xl border border-white/[0.08] bg-bg-card/70 backdrop-blur-md space-y-6"
+            className="p-5 sm:p-7 rounded-2xl sm:rounded-3xl border border-border bg-surface-card space-y-6"
           >
             {/* Header Metadata */}
             <div className="space-y-2">
@@ -171,7 +171,7 @@ export default function LessonTabs({
                 <span className="text-brand-mint">{chapter.title || 'Chapter'}</span>
                 {currentClass.duration && (
                   <>
-                    <span className="w-1 h-1 rounded-full bg-white/20" />
+                    <span className="w-1 h-1 rounded-full bg-border/60" />
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {formatDuration(currentClass.duration)}
@@ -180,7 +180,7 @@ export default function LessonTabs({
                 )}
                 {isClassCompleted && (
                   <>
-                    <span className="w-1 h-1 rounded-full bg-white/20" />
+                    <span className="w-1 h-1 rounded-full bg-border/60" />
                     <span className="text-emerald-400 font-bold flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3" />
                       Completed
@@ -189,13 +189,13 @@ export default function LessonTabs({
                 )}
               </div>
 
-              <h1 className="font-heading font-extrabold text-xl sm:text-2xl md:text-3xl text-white tracking-tight">
+              <h1 className="font-heading font-extrabold text-xl sm:text-2xl md:text-3xl text-text-primary tracking-tight">
                 {currentClass.title || 'Untitled Lesson'}
               </h1>
             </div>
 
             {/* Description */}
-            <div className="prose prose-invert max-w-none text-xs sm:text-sm text-text-secondary leading-relaxed space-y-3">
+            <div className="prose dark:prose-invert max-w-none text-xs sm:text-sm text-text-secondary leading-relaxed space-y-3">
               {currentClass.description ? (
                 currentClass.description
                   .split('\n')
@@ -213,9 +213,9 @@ export default function LessonTabs({
             </div>
 
             {/* Key Focus & Objectives */}
-            <div className="pt-4 border-t border-white/[0.06] grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="p-3.5 rounded-xl border border-white/[0.06] bg-white/[0.02]">
-                <div className="flex items-center gap-2 text-white font-semibold text-xs mb-1">
+            <div className="pt-4 border-t border-border/60 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-3.5 rounded-xl border border-border bg-surface-elevated/40">
+                <div className="flex items-center gap-2 text-text-primary font-semibold text-xs mb-1">
                   <BookOpen className="w-3.5 h-3.5 text-brand-mint" />
                   Format
                 </div>
@@ -224,8 +224,8 @@ export default function LessonTabs({
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-xl border border-white/[0.06] bg-white/[0.02]">
-                <div className="flex items-center gap-2 text-white font-semibold text-xs mb-1">
+              <div className="p-3.5 rounded-xl border border-border bg-surface-elevated/40">
+                <div className="flex items-center gap-2 text-text-primary font-semibold text-xs mb-1">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                   Completion Goal
                 </div>
@@ -234,8 +234,8 @@ export default function LessonTabs({
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-xl border border-white/[0.06] bg-white/[0.02]">
-                <div className="flex items-center gap-2 text-white font-semibold text-xs mb-1">
+              <div className="p-3.5 rounded-xl border border-border bg-surface-elevated/40">
+                <div className="flex items-center gap-2 text-text-primary font-semibold text-xs mb-1">
                   <Sparkles className="w-3.5 h-3.5 text-brand-yellow" />
                   Rewards
                 </div>
@@ -258,11 +258,11 @@ export default function LessonTabs({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.2 }}
-            className="p-5 sm:p-7 rounded-2xl sm:rounded-3xl border border-white/[0.08] bg-bg-card/70 backdrop-blur-md space-y-4"
+            className="p-5 sm:p-7 rounded-2xl sm:rounded-3xl border border-border bg-surface-card space-y-4"
           >
-            <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+            <div className="flex items-center justify-between pb-3 border-b border-border/60">
               <div>
-                <h3 className="font-heading font-bold text-base text-white">
+                <h3 className="font-heading font-bold text-base text-text-primary">
                   Lesson Attachments & Assets
                 </h3>
                 <p className="text-xs text-text-muted mt-0.5">
@@ -275,8 +275,8 @@ export default function LessonTabs({
             </div>
 
             {exercises.length === 0 ? (
-              <div className="p-10 text-center space-y-2 border border-dashed border-white/10 rounded-2xl">
-                <FileText className="w-8 h-8 text-white/20 mx-auto" />
+              <div className="p-10 text-center space-y-2 border border-dashed border-border rounded-2xl">
+                <FileText className="w-8 h-8 text-text-muted mx-auto" />
                 <p className="text-xs sm:text-sm text-text-muted font-medium">
                   No downloadable materials are attached to this lesson.
                 </p>
@@ -291,19 +291,19 @@ export default function LessonTabs({
                   return (
                     <div
                       key={exercise._id || exercise.id || index}
-                      className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl sm:rounded-2xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-brand-mint/30 transition-all"
+                      className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl sm:rounded-2xl border border-border bg-surface-elevated/40 hover:bg-surface-elevated/80 hover:border-brand-mint/30 transition-all"
                     >
                       <div className="flex items-center gap-3.5 min-w-0">
                         <div className="w-10 h-10 rounded-xl bg-brand-mint/10 border border-brand-mint/20 flex items-center justify-center text-brand-mint shrink-0 group-hover:scale-105 transition-transform">
                           <FileText className="w-5 h-5" />
                         </div>
                         <div className="min-w-0">
-                          <h4 className="text-sm font-semibold text-white truncate group-hover:text-brand-mint transition-colors">
+                          <h4 className="text-sm font-semibold text-text-primary truncate group-hover:text-brand-mint transition-colors">
                             {fileName}
                           </h4>
                           <div className="flex items-center gap-2 mt-0.5 text-[11px] text-text-muted">
-                            <span className="font-mono font-bold text-white/50">{fileType}</span>
-                            <span className="w-1 h-1 rounded-full bg-white/20" />
+                            <span className="font-mono font-bold text-text-muted">{fileType}</span>
+                            <span className="w-1 h-1 rounded-full bg-border/60" />
                             <span>Course Asset</span>
                           </div>
                         </div>
@@ -314,7 +314,7 @@ export default function LessonTabs({
                         <button
                           type="button"
                           onClick={() => onPreviewResource && onPreviewResource(exercise)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] text-white/90 hover:text-white text-xs font-semibold transition-all cursor-pointer focus-ring"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] rounded-lg border border-border bg-surface-elevated hover:bg-surface-elevated/80 text-text-secondary hover:text-text-primary text-xs font-semibold transition-all cursor-pointer focus-ring"
                         >
                           <Eye className="w-3.5 h-3.5 text-brand-mint" />
                           <span>Preview</span>
@@ -325,7 +325,7 @@ export default function LessonTabs({
                           download
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-mint text-bg-base hover:bg-brand-mint/90 text-xs font-bold uppercase tracking-wider transition-all focus-ring"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] rounded-lg bg-brand-mint text-brand-navy hover:bg-brand-mint/90 text-xs font-bold uppercase tracking-wider transition-all focus-ring"
                         >
                           <Download className="w-3.5 h-3.5" />
                           <span>Download</span>
@@ -350,11 +350,11 @@ export default function LessonTabs({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.2 }}
-            className="p-5 sm:p-7 rounded-2xl sm:rounded-3xl border border-white/[0.08] bg-bg-card/70 backdrop-blur-md space-y-4"
+            className="p-5 sm:p-7 rounded-2xl sm:rounded-3xl border border-border bg-surface-card space-y-4"
           >
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-white/[0.06]">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border/60">
               <div>
-                <h3 className="font-heading font-bold text-base text-white">
+                <h3 className="font-heading font-bold text-base text-text-primary">
                   My Lesson Notes
                 </h3>
                 <p className="text-xs text-text-muted mt-0.5">
@@ -366,7 +366,7 @@ export default function LessonTabs({
                 <button
                   type="button"
                   onClick={handleInsertTimestamp}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-brand-mint/30 bg-brand-mint/10 hover:bg-brand-mint/20 text-brand-mint text-xs font-semibold transition-all cursor-pointer focus-ring"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 min-h-[44px] rounded-lg border border-brand-mint/30 bg-brand-mint/10 hover:bg-brand-mint/20 text-brand-mint text-xs font-semibold transition-all cursor-pointer focus-ring"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Insert Timestamp</span>
@@ -377,7 +377,7 @@ export default function LessonTabs({
                     <button
                       type="button"
                       onClick={handleCopyNotes}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] text-white/80 hover:text-white text-xs font-semibold transition-all cursor-pointer focus-ring"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 min-h-[44px] rounded-lg border border-border bg-surface-elevated/60 hover:bg-surface-elevated text-text-secondary hover:text-text-primary text-xs font-semibold transition-all cursor-pointer focus-ring"
                     >
                       <Copy className="w-3.5 h-3.5" />
                       <span>{noteCopied ? 'Copied!' : 'Copy'}</span>
@@ -386,7 +386,7 @@ export default function LessonTabs({
                       type="button"
                       onClick={handleClearNotes}
                       aria-label="Clear notes"
-                      className="p-1.5 rounded-lg border border-white/[0.08] bg-white/[0.02] hover:bg-rose-500/10 hover:border-rose-500/30 text-text-muted hover:text-rose-400 transition-all cursor-pointer focus-ring"
+                      className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border bg-surface-elevated/60 hover:bg-rose-500/10 hover:border-rose-500/30 text-text-muted hover:text-rose-400 transition-all cursor-pointer focus-ring"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -400,7 +400,7 @@ export default function LessonTabs({
               onChange={(e) => handleNotesChange(e.target.value)}
               placeholder="Capture key concepts, questions, or ideas from this lesson... Click 'Insert Timestamp' to tie a note to the video timeline."
               rows={8}
-              className="w-full rounded-xl sm:rounded-2xl border border-white/[0.08] bg-black/40 p-4 text-xs sm:text-sm text-white placeholder-text-muted focus:border-brand-mint/50 focus:outline-none focus:ring-1 focus:ring-brand-mint/50 transition-all resize-y leading-relaxed font-mono"
+              className="w-full rounded-xl sm:rounded-2xl border border-border bg-surface-elevated/40 p-4 text-xs sm:text-sm text-text-primary placeholder:text-text-muted focus:border-brand-mint/50 focus:outline-none focus:ring-1 focus:ring-brand-mint/50 transition-all resize-y leading-relaxed font-mono"
             />
           </motion.div>
         )}
@@ -416,10 +416,10 @@ export default function LessonTabs({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.2 }}
-            className="p-5 sm:p-7 rounded-2xl sm:rounded-3xl border border-white/[0.08] bg-bg-card/70 backdrop-blur-md space-y-6"
+            className="p-5 sm:p-7 rounded-2xl sm:rounded-3xl border border-border bg-surface-card space-y-6"
           >
             <div>
-              <h3 className="font-heading font-bold text-base text-white">
+              <h3 className="font-heading font-bold text-base text-text-primary">
                 Detailed Progress Metrics
               </h3>
               <p className="text-xs text-text-muted mt-0.5">
@@ -429,9 +429,9 @@ export default function LessonTabs({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* THIS LESSON */}
-              <div className="p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-white/[0.08] bg-white/[0.02] space-y-3">
+              <div className="p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-border bg-surface-elevated/30 space-y-3">
                 <div className="flex items-center justify-between text-xs text-text-secondary">
-                  <span className="font-semibold text-white/90">This Lesson Progress</span>
+                  <span className="font-semibold text-text-primary">This Lesson Progress</span>
                   <span className="font-mono font-bold text-brand-mint">{classProgressPercent}%</span>
                 </div>
 
@@ -441,7 +441,7 @@ export default function LessonTabs({
                   aria-valuenow={classProgressPercent}
                   aria-valuemin={0}
                   aria-valuemax={100}
-                  className="w-full h-2 rounded-full bg-white/[0.08] overflow-hidden"
+                  className="w-full h-2 rounded-full bg-border/60 overflow-hidden"
                 >
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${
@@ -455,16 +455,16 @@ export default function LessonTabs({
 
                 <div className="flex items-center justify-between text-[11px] text-text-muted pt-1">
                   <span>Status:</span>
-                  <span className={isClassCompleted ? 'text-emerald-400 font-semibold' : 'text-white/70'}>
+                  <span className={isClassCompleted ? 'text-emerald-400 font-semibold' : 'text-text-secondary'}>
                     {isClassCompleted ? 'Completed (90%+ criteria met)' : 'In Progress'}
                   </span>
                 </div>
               </div>
 
               {/* OVERALL COURSE */}
-              <div className="p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-white/[0.08] bg-white/[0.02] space-y-3">
+              <div className="p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-border bg-surface-elevated/30 space-y-3">
                 <div className="flex items-center justify-between text-xs text-text-secondary">
-                  <span className="font-semibold text-white/90">Overall Course Progress</span>
+                  <span className="font-semibold text-text-primary">Overall Course Progress</span>
                   <span className="font-mono font-bold text-brand-yellow">{courseCompletionPercent}%</span>
                 </div>
 
@@ -474,7 +474,7 @@ export default function LessonTabs({
                   aria-valuenow={courseCompletionPercent}
                   aria-valuemin={0}
                   aria-valuemax={100}
-                  className="w-full h-2 rounded-full bg-white/[0.08] overflow-hidden"
+                  className="w-full h-2 rounded-full bg-border/60 overflow-hidden"
                 >
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-brand-mint to-brand-yellow transition-all duration-500"
@@ -484,7 +484,7 @@ export default function LessonTabs({
 
                 <div className="flex items-center justify-between text-[11px] text-text-muted pt-1">
                   <span>Curriculum Completion:</span>
-                  <span className="text-white/70 font-mono">
+                  <span className="text-text-secondary font-mono">
                     {learningProgress?.completedClasses || 0} / {learningProgress?.totalClasses || 0} Lessons
                   </span>
                 </div>
@@ -492,13 +492,13 @@ export default function LessonTabs({
             </div>
 
             {/* LEARNING REWARDS & CERTIFICATE STATUS */}
-            <div className="p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-white/[0.06] bg-brand-mint/[0.03] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-border bg-brand-mint/[0.04] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-start gap-3.5">
                 <div className="w-10 h-10 rounded-xl bg-brand-yellow/10 border border-brand-yellow/20 flex items-center justify-center text-brand-yellow shrink-0">
                   <Award className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-white">Certificate Eligibility</h4>
+                  <h4 className="text-sm font-bold text-text-primary">Certificate Eligibility</h4>
                   <p className="text-xs text-text-muted mt-0.5">
                     {courseCompletionPercent >= 100
                       ? 'Congratulations! You have fulfilled all criteria to claim your course certificate.'

@@ -113,12 +113,12 @@ function ClassroomRecoveryCard({
         initial={{ opacity: 0, y: 12, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.25, ease: "easeOut" }}
-        className="w-full max-w-lg rounded-3xl border border-white/[0.08] bg-bg-card/90 backdrop-blur-xl p-8 sm:p-10 text-center shadow-2xl relative overflow-hidden"
+        className="w-full max-w-lg rounded-3xl border border-border bg-surface-card backdrop-blur-xl p-8 sm:p-10 text-center shadow-2xl relative overflow-hidden"
       >
         {/* Subtle ambient lighting */}
         <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-64 h-32 bg-brand-mint/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center mx-auto mb-5 text-brand-mint shadow-inner">
+        <div className="w-14 h-14 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center mx-auto mb-5 text-brand-mint shadow-inner">
           {isTimeout ? (
             <Clock className="w-7 h-7 text-brand-yellow" />
           ) : (
@@ -127,7 +127,7 @@ function ClassroomRecoveryCard({
         </div>
 
         <div className="space-y-2 mb-8">
-          <h2 className="text-xl sm:text-2xl font-heading font-extrabold text-white tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-heading font-extrabold text-text-primary tracking-tight">
             {title || "Something interrupted your lesson"}
           </h2>
           <p className="text-xs sm:text-sm text-text-muted max-w-sm mx-auto leading-relaxed">
@@ -140,7 +140,7 @@ function ClassroomRecoveryCard({
             <button
               type="button"
               onClick={onRetry}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-brand-mint text-bg-base font-bold text-xs uppercase tracking-wider hover:bg-brand-mint/90 transition-all cursor-pointer shadow-lg shadow-brand-mint/10 focus-ring"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-brand-mint text-bg-base font-bold text-xs uppercase tracking-wider hover:bg-brand-mint/90 transition-all cursor-pointer shadow-lg shadow-brand-mint/10 focus-ring min-h-[44px]"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               Try Again
@@ -150,7 +150,7 @@ function ClassroomRecoveryCard({
             <button
               type="button"
               onClick={onBack}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer focus-ring"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-border bg-surface-elevated hover:bg-surface-card text-text-primary text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer focus-ring min-h-[44px]"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Course Syllabus
@@ -159,11 +159,11 @@ function ClassroomRecoveryCard({
         </div>
 
         {onReport && (
-          <div className="mt-6 pt-5 border-t border-white/[0.06]">
+          <div className="mt-6 pt-5 border-t border-border">
             <button
               type="button"
               onClick={onReport}
-              className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-white transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-text-primary transition-colors cursor-pointer min-h-[44px]"
             >
               <AlertTriangle className="w-3.5 h-3.5 text-brand-yellow/80" />
               <span>Report playback issue</span>
@@ -192,7 +192,7 @@ class ClassViewErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-bg-base text-white flex flex-col">
+        <div className="min-h-screen bg-bg-base text-text-primary flex flex-col">
           <ClassroomRecoveryCard
             title="Something interrupted your lesson"
             message="We couldn't initialize this learning session. Click below to reload your workspace."
@@ -1143,18 +1143,18 @@ function ClassView() {
   // ══════════════════════════════════════════════════════════
   if (loading) {
     return (
-      <div className="min-h-screen bg-bg-base text-white flex flex-col selection:bg-brand-mint/30 selection:text-white pb-20">
+      <div className="min-h-screen bg-bg-base text-text-primary flex flex-col selection:bg-brand-mint/30 selection:text-text-primary pb-20">
         {/* Top Header Skeleton */}
-        <header className="sticky top-0 z-30 w-full bg-bg-base/95 backdrop-blur-xl border-b border-white/[0.08]">
+        <header className="sticky top-0 z-30 w-full bg-bg-base/95 backdrop-blur-xl border-b border-border">
           <div className="max-w-[1680px] mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-white/[0.04] shimmer" />
-              <div className="h-4 w-36 sm:w-56 rounded-lg bg-white/[0.04] shimmer" />
+              <div className="h-9 w-9 rounded-xl bg-surface-elevated shimmer" />
+              <div className="h-4 w-36 sm:w-56 rounded-lg bg-surface-elevated shimmer" />
             </div>
             <div className="flex items-center gap-3">
-              <div className="h-7 w-20 rounded-full bg-white/[0.04] shimmer" />
-              <div className="hidden md:block h-7 w-24 rounded-xl bg-white/[0.04] shimmer" />
-              <div className="xl:hidden h-9 w-28 rounded-xl bg-white/[0.04] shimmer" />
+              <div className="h-7 w-20 rounded-full bg-surface-elevated shimmer" />
+              <div className="hidden md:block h-7 w-24 rounded-xl bg-surface-elevated shimmer" />
+              <div className="xl:hidden h-9 w-28 rounded-xl bg-surface-elevated shimmer" />
             </div>
           </div>
         </header>
@@ -1163,8 +1163,8 @@ function ClassView() {
         <div className="flex-1 max-w-[1680px] w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
             <div className="xl:col-span-8 space-y-6">
-              {/* 16:9 Cinematic Video Player Shimmer */}
-              <div className="relative aspect-video w-full rounded-2xl sm:rounded-3xl bg-neutral-950/80 border border-white/[0.08] overflow-hidden shadow-2xl flex items-center justify-center">
+              {/* 16:9 Cinematic Video Player Shimmer (Intentional dark video stage) */}
+              <div className="relative aspect-video w-full rounded-2xl sm:rounded-3xl bg-neutral-950 border border-border overflow-hidden shadow-2xl flex items-center justify-center">
                 <div className="absolute inset-0 shimmer" />
                 <div className="relative z-10 flex flex-col items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center">
@@ -1177,25 +1177,25 @@ function ClassView() {
               </div>
 
               {/* Lesson Nav Skeleton */}
-              <div className="h-28 w-full rounded-2xl sm:rounded-3xl bg-white/[0.02] border border-white/[0.06] p-4 shimmer" />
+              <div className="h-28 w-full rounded-2xl sm:rounded-3xl bg-surface-card border border-border p-4 shimmer" />
 
               {/* Tabs Skeleton */}
               <div className="space-y-4">
-                <div className="h-10 w-80 rounded-xl bg-white/[0.03] shimmer" />
-                <div className="h-44 w-full rounded-2xl bg-white/[0.02] border border-white/[0.06] p-6 shimmer" />
+                <div className="h-10 w-80 rounded-xl bg-surface-elevated shimmer" />
+                <div className="h-44 w-full rounded-2xl bg-surface-card border border-border p-6 shimmer" />
               </div>
             </div>
 
             {/* Persistent Sidebar Skeleton on Desktop */}
             <div className="hidden xl:block xl:col-span-4 sticky top-20">
-              <div className="h-[calc(100vh-6.5rem)] rounded-3xl bg-white/[0.02] border border-white/[0.08] p-5 space-y-4 shimmer overflow-hidden">
-                <div className="h-5 w-32 rounded-lg bg-white/[0.05]" />
-                <div className="h-4 w-48 rounded-lg bg-white/[0.03]" />
-                <div className="h-2 w-full rounded-full bg-white/[0.05] mt-4" />
+              <div className="h-[calc(100vh-6.5rem)] rounded-3xl bg-surface-card border border-border p-5 space-y-4 shimmer overflow-hidden">
+                <div className="h-5 w-32 rounded-lg bg-surface-elevated" />
+                <div className="h-4 w-48 rounded-lg bg-surface-elevated/70" />
+                <div className="h-2 w-full rounded-full bg-surface-elevated mt-4" />
                 <div className="pt-4 space-y-3">
-                  <div className="h-16 rounded-2xl bg-white/[0.04]" />
-                  <div className="h-16 rounded-2xl bg-white/[0.04]" />
-                  <div className="h-16 rounded-2xl bg-white/[0.04]" />
+                  <div className="h-16 rounded-2xl bg-surface-elevated/50" />
+                  <div className="h-16 rounded-2xl bg-surface-elevated/50" />
+                  <div className="h-16 rounded-2xl bg-surface-elevated/50" />
                 </div>
               </div>
             </div>
@@ -1207,7 +1207,7 @@ function ClassView() {
 
   if (loadError) {
     return (
-      <div className="min-h-screen bg-bg-base text-white flex flex-col">
+      <div className="min-h-screen bg-bg-base text-text-primary flex flex-col">
         <ClassroomRecoveryCard
           title={loadError.isTimeout ? "Connection Timed Out" : "Something interrupted your lesson"}
           message={loadError.message || "We couldn't load this learning session. Please check your network connection and retry."}
@@ -1222,7 +1222,7 @@ function ClassView() {
 
   if (!data || !data.class) {
     return (
-      <div className="min-h-screen bg-bg-base text-white flex flex-col">
+      <div className="min-h-screen bg-bg-base text-text-primary flex flex-col">
         <ClassroomRecoveryCard
           title="Lesson Not Found"
           message="The requested lesson is unavailable or may have been updated. Return to the course syllabus to continue learning."
@@ -1239,7 +1239,7 @@ function ClassView() {
     (cls?.videoId ? getBunnyEmbedUrl(cls.videoId) : "");
 
   return (
-    <div className="min-h-screen bg-bg-base text-white flex flex-col selection:bg-brand-mint/30 selection:text-white">
+    <div className="min-h-screen bg-bg-base text-text-primary flex flex-col selection:bg-brand-mint/30 selection:text-text-primary">
       {/* ══════════════════════════════════════════════════════════
           1. COMPACT LEARNING HEADER
           Responsive breadcrumbs, sync status, curriculum toggle
@@ -1284,13 +1284,13 @@ function ClassView() {
             />
 
             {/* Editorial Lesson Title & Identity Banner */}
-            <div className="rounded-2xl sm:rounded-3xl border border-white/[0.08] bg-bg-card/80 backdrop-blur-md p-5 sm:p-7 space-y-3 relative overflow-hidden">
+            <div className="rounded-2xl sm:rounded-3xl border border-border bg-surface-card backdrop-blur-md p-5 sm:p-7 space-y-3 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-80 h-32 bg-brand-mint/[0.03] rounded-full blur-3xl pointer-events-none" />
               <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
                 <span className="text-brand-mint font-mono">{chapter?.title || 'Course Module'}</span>
                 {cls.duration && (
                   <>
-                    <span className="w-1 h-1 rounded-full bg-white/20" />
+                    <span className="w-1 h-1 rounded-full bg-border" />
                     <span className="flex items-center gap-1 font-mono">
                       <Clock className="w-3 h-3 text-text-muted" />
                       {formatDuration(cls.duration)}
@@ -1299,7 +1299,7 @@ function ClassView() {
                 )}
                 {isClassCompleted ? (
                   <>
-                    <span className="w-1 h-1 rounded-full bg-white/20" />
+                    <span className="w-1 h-1 rounded-full bg-border" />
                     <span className="text-emerald-400 font-bold flex items-center gap-1">
                       <Sparkles className="w-3 h-3" />
                       Completed
@@ -1307,7 +1307,7 @@ function ClassView() {
                   </>
                 ) : classProgressPercent > 0 ? (
                   <>
-                    <span className="w-1 h-1 rounded-full bg-white/20" />
+                    <span className="w-1 h-1 rounded-full bg-border" />
                     <span className="text-brand-yellow font-mono font-medium">
                       {classProgressPercent}% watched
                     </span>
@@ -1315,7 +1315,7 @@ function ClassView() {
                 ) : null}
               </div>
 
-              <h1 className="font-heading font-extrabold text-xl sm:text-2xl md:text-3xl text-white tracking-tight leading-tight">
+              <h1 className="font-heading font-extrabold text-xl sm:text-2xl md:text-3xl text-text-primary tracking-tight leading-tight">
                 {cls.title || 'Untitled Lesson'}
               </h1>
             </div>
@@ -1429,19 +1429,19 @@ function ClassView() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-md bg-bg-surface border border-white/10 rounded-3xl p-6 shadow-2xl z-10 space-y-4"
+              className="relative w-full max-w-md bg-surface-card border border-border rounded-3xl p-6 shadow-2xl z-10 space-y-4"
             >
-              <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+              <div className="flex items-center justify-between border-b border-border pb-3">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-warning" />
-                  <h3 className="font-heading font-bold text-base text-white">
+                  <h3 className="font-heading font-bold text-base text-text-primary">
                     Report Video Issue
                   </h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIssueModalOpen(false)}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg text-text-muted hover:text-white"
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1450,7 +1450,7 @@ function ClassView() {
               <form onSubmit={handleSubmitIssue} className="space-y-3.5">
                 <p className="text-xs text-text-muted">
                   Let us know if you are experiencing playback or audio interruptions with{" "}
-                  <span className="text-white font-semibold">{cls.title}</span>.
+                  <span className="text-text-primary font-semibold">{cls.title}</span>.
                 </p>
 
                 <div>
@@ -1471,14 +1471,14 @@ function ClassView() {
                   <button
                     type="button"
                     onClick={() => setIssueModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-white/10 text-xs font-semibold text-text-muted hover:text-white"
+                    className="px-4 py-2 rounded-xl border border-border bg-surface-elevated text-xs font-semibold text-text-primary hover:bg-surface-card min-h-[44px]"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={submittingIssue || !issueDescription.trim()}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-mint text-bg-base font-bold text-xs uppercase tracking-wider hover:bg-brand-mint/90 disabled:opacity-40"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-mint text-bg-base font-bold text-xs uppercase tracking-wider hover:bg-brand-mint/90 disabled:opacity-40 min-h-[44px]"
                   >
                     {submittingIssue ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />

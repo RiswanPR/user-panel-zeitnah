@@ -127,10 +127,10 @@ export default function CareerPreferencesSection({
   return (
     <div className="space-y-8">
       {/* ── Career Opportunities Toggle ── */}
-      <div className="p-5 rounded-2xl bg-bg-elevated border border-border-default space-y-3">
+      <div className="p-5 rounded-2xl bg-surface-elevated/70 border border-border space-y-3">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-text-primary flex items-center gap-2">
               <Briefcase className="w-4 h-4 text-brand-mint" />
               Open to Career Opportunities
             </h3>
@@ -145,7 +145,7 @@ export default function CareerPreferencesSection({
               onChange={(e) => updatePref("openToOpportunities", e.target.checked)}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-white/[0.08] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-mint" />
+            <div className="w-11 h-6 bg-surface-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-mint" />
           </label>
         </div>
       </div>
@@ -173,7 +173,7 @@ export default function CareerPreferencesSection({
               }
             }}
             placeholder="Add title (e.g. Structural Design Engineer, BIM Coordinator, Site Supervisor)..."
-            className="flex-1 px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors"
+            className="flex-1 px-4 py-2.5 rounded-xl bg-surface-elevated/70 border border-border focus:border-brand-mint focus:outline-none text-sm text-text-primary transition-colors"
           />
           <button
             type="button"
@@ -223,7 +223,7 @@ export default function CareerPreferencesSection({
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[36px] ${
                   isSelected
                     ? "bg-brand-mint/15 border border-brand-mint text-brand-mint shadow-sm"
-                    : "bg-white/[0.02] border border-white/[0.08] text-text-muted hover:text-white"
+                    : "bg-surface-elevated/50 border border-border text-text-muted hover:text-text-primary"
                 }`}
               >
                 {isSelected && <Check className="w-3.5 h-3.5 text-brand-mint" />}
@@ -243,7 +243,7 @@ export default function CareerPreferencesSection({
           <select
             value={careerPreferences.preferredWorkMode || "Hybrid"}
             onChange={(e) => updatePref("preferredWorkMode", e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors cursor-pointer"
+            className="w-full px-4 py-2.5 rounded-xl bg-surface-elevated/70 border border-border focus:border-brand-mint focus:outline-none text-sm text-text-primary transition-colors cursor-pointer"
           >
             {WORK_MODES.map((mode) => (
               <option key={mode} value={mode}>
@@ -260,7 +260,7 @@ export default function CareerPreferencesSection({
           <select
             value={careerPreferences.preferredEmploymentType || "Full-time"}
             onChange={(e) => updatePref("preferredEmploymentType", e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors cursor-pointer"
+            className="w-full px-4 py-2.5 rounded-xl bg-surface-elevated/70 border border-border focus:border-brand-mint focus:outline-none text-sm text-text-primary transition-colors cursor-pointer"
           >
             {EMPLOYMENT_TYPES.map((type) => (
               <option key={type} value={type}>
@@ -277,7 +277,7 @@ export default function CareerPreferencesSection({
           <select
             value={careerPreferences.availability || "Immediate"}
             onChange={(e) => updatePref("availability", e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors cursor-pointer"
+            className="w-full px-4 py-2.5 rounded-xl bg-surface-elevated/70 border border-border focus:border-brand-mint focus:outline-none text-sm text-text-primary transition-colors cursor-pointer"
           >
             {AVAILABILITY_OPTIONS.map((avail) => (
               <option key={avail} value={avail}>
@@ -310,7 +310,7 @@ export default function CareerPreferencesSection({
                   })
                 }
                 placeholder="40,000"
-                className="w-full pl-7 pr-3 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white"
+                className="w-full pl-7 pr-3 py-2.5 rounded-xl bg-surface-elevated/70 border border-border focus:border-brand-mint focus:outline-none text-sm text-text-primary"
               />
             </div>
           </div>
@@ -330,7 +330,7 @@ export default function CareerPreferencesSection({
                   })
                 }
                 placeholder="80,000"
-                className="w-full pl-7 pr-3 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white"
+                className="w-full pl-7 pr-3 py-2.5 rounded-xl bg-surface-elevated/70 border border-border focus:border-brand-mint focus:outline-none text-sm text-text-primary"
               />
             </div>
           </div>
@@ -345,17 +345,17 @@ export default function CareerPreferencesSection({
                   currency: e.target.value.toUpperCase(),
                 })
               }
-              className="w-full px-3 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white uppercase font-mono"
+              className="w-full px-3 py-2.5 rounded-xl bg-surface-elevated/70 border border-border focus:border-brand-mint focus:outline-none text-sm text-text-primary uppercase font-mono"
             />
           </div>
         </div>
       </div>
 
       {/* ── Privacy Settings (Section 16) ── */}
-      <div className="pt-6 border-t border-border-default/60 space-y-4">
+      <div className="pt-6 border-t border-border space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-text-primary flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-brand-mint" />
               Granular Profile Visibility Controls
             </h3>
@@ -366,75 +366,75 @@ export default function CareerPreferencesSection({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="p-3.5 rounded-2xl bg-bg-elevated border border-border-default flex items-center justify-between">
+          <div className="p-3.5 rounded-2xl bg-surface-elevated/70 border border-border flex items-center justify-between">
             <div>
-              <span className="text-xs font-semibold text-white block">Experience Visibility</span>
+              <span className="text-xs font-semibold text-text-primary block">Experience Visibility</span>
               <span className="text-[11px] text-text-muted">Work & project timeline</span>
             </div>
             <select
               value={privacySettings.experience || privacySettings.experienceVisibility || "PUBLIC"}
               onChange={(e) => updatePrivacy("experience", e.target.value)}
-              className="px-2.5 py-1.5 rounded-lg bg-bg-base border border-border-default text-xs text-white focus:outline-none cursor-pointer"
+              className="px-2.5 py-1.5 rounded-lg bg-surface-card border border-border text-xs text-text-primary focus:outline-none cursor-pointer"
             >
               <option value="PUBLIC">Public</option>
               <option value="PRIVATE">Private</option>
             </select>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-bg-elevated border border-border-default flex items-center justify-between">
+          <div className="p-3.5 rounded-2xl bg-surface-elevated/70 border border-border flex items-center justify-between">
             <div>
-              <span className="text-xs font-semibold text-white block">Education Visibility</span>
+              <span className="text-xs font-semibold text-text-primary block">Education Visibility</span>
               <span className="text-[11px] text-text-muted">Degrees & institutions</span>
             </div>
             <select
               value={privacySettings.education || privacySettings.educationVisibility || "PUBLIC"}
               onChange={(e) => updatePrivacy("education", e.target.value)}
-              className="px-2.5 py-1.5 rounded-lg bg-bg-base border border-border-default text-xs text-white focus:outline-none cursor-pointer"
+              className="px-2.5 py-1.5 rounded-lg bg-surface-card border border-border text-xs text-text-primary focus:outline-none cursor-pointer"
             >
               <option value="PUBLIC">Public</option>
               <option value="PRIVATE">Private</option>
             </select>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-bg-elevated border border-border-default flex items-center justify-between">
+          <div className="p-3.5 rounded-2xl bg-surface-elevated/70 border border-border flex items-center justify-between">
             <div>
-              <span className="text-xs font-semibold text-white block">Projects Visibility</span>
+              <span className="text-xs font-semibold text-text-primary block">Projects Visibility</span>
               <span className="text-[11px] text-text-muted">Infrastructure projects</span>
             </div>
             <select
               value={privacySettings.projects || privacySettings.projectsVisibility || "PUBLIC"}
               onChange={(e) => updatePrivacy("projects", e.target.value)}
-              className="px-2.5 py-1.5 rounded-lg bg-bg-base border border-border-default text-xs text-white focus:outline-none cursor-pointer"
+              className="px-2.5 py-1.5 rounded-lg bg-surface-card border border-border text-xs text-text-primary focus:outline-none cursor-pointer"
             >
               <option value="PUBLIC">Public</option>
               <option value="PRIVATE">Private</option>
             </select>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-bg-elevated border border-border-default flex items-center justify-between">
+          <div className="p-3.5 rounded-2xl bg-surface-elevated/70 border border-border flex items-center justify-between">
             <div>
-              <span className="text-xs font-semibold text-white block">Certifications Visibility</span>
+              <span className="text-xs font-semibold text-text-primary block">Certifications Visibility</span>
               <span className="text-[11px] text-text-muted">Licenses and credentials</span>
             </div>
             <select
               value={privacySettings.certifications || privacySettings.certificationsVisibility || "PUBLIC"}
               onChange={(e) => updatePrivacy("certifications", e.target.value)}
-              className="px-2.5 py-1.5 rounded-lg bg-bg-base border border-border-default text-xs text-white focus:outline-none cursor-pointer"
+              className="px-2.5 py-1.5 rounded-lg bg-surface-card border border-border text-xs text-text-primary focus:outline-none cursor-pointer"
             >
               <option value="PUBLIC">Public</option>
               <option value="PRIVATE">Private</option>
             </select>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-bg-elevated border border-border-default flex items-center justify-between">
+          <div className="p-3.5 rounded-2xl bg-surface-elevated/70 border border-border flex items-center justify-between">
             <div>
-              <span className="text-xs font-semibold text-white block">Career Preferences</span>
+              <span className="text-xs font-semibold text-text-primary block">Career Preferences</span>
               <span className="text-[11px] text-text-muted">Salary & target roles</span>
             </div>
             <select
               value={privacySettings.careerPreferences || privacySettings.careerPreferencesVisibility || "PRIVATE"}
               onChange={(e) => updatePrivacy("careerPreferences", e.target.value)}
-              className="px-2.5 py-1.5 rounded-lg bg-bg-base border border-border-default text-xs text-white focus:outline-none cursor-pointer"
+              className="px-2.5 py-1.5 rounded-lg bg-surface-card border border-border text-xs text-text-primary focus:outline-none cursor-pointer"
             >
               <option value="PRIVATE">Private Only</option>
               <option value="VERIFIED_RECRUITERS">Recruiters Only</option>
@@ -442,15 +442,15 @@ export default function CareerPreferencesSection({
             </select>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-bg-elevated border border-border-default flex items-center justify-between">
+          <div className="p-3.5 rounded-2xl bg-surface-elevated/70 border border-border flex items-center justify-between">
             <div>
-              <span className="text-xs font-semibold text-white block">Contact Information</span>
+              <span className="text-xs font-semibold text-text-primary block">Contact Information</span>
               <span className="text-[11px] text-text-muted">Email and direct links</span>
             </div>
             <select
               value={privacySettings.contactInfo || privacySettings.contactInfoVisibility || "PRIVATE"}
               onChange={(e) => updatePrivacy("contactInfo", e.target.value)}
-              className="px-2.5 py-1.5 rounded-lg bg-bg-base border border-border-default text-xs text-white focus:outline-none cursor-pointer"
+              className="px-2.5 py-1.5 rounded-lg bg-surface-card border border-border text-xs text-text-primary focus:outline-none cursor-pointer"
             >
               <option value="PRIVATE">Private Only</option>
               <option value="VERIFIED_RECRUITERS">Recruiters Only</option>
@@ -460,7 +460,7 @@ export default function CareerPreferencesSection({
         </div>
 
         {/* Recruiter discovery checkbox */}
-        <div className="flex items-center gap-3 p-3.5 rounded-xl bg-bg-elevated/60 border border-border-default/60">
+        <div className="flex items-center gap-3 p-3.5 rounded-xl bg-surface-elevated/60 border border-border">
           <input
             type="checkbox"
             id="discoverableRecruitersToggle"
@@ -469,10 +469,10 @@ export default function CareerPreferencesSection({
               setDiscoverableToRecruiters(e.target.checked);
               if (onChangeDirty) onChangeDirty();
             }}
-            className="w-4 h-4 rounded border-border-default text-brand-mint focus:ring-brand-mint bg-bg-elevated cursor-pointer"
+            className="w-4 h-4 rounded border-border text-brand-mint focus:ring-brand-mint bg-surface-elevated cursor-pointer"
           />
           <label htmlFor="discoverableRecruitersToggle" className="text-xs text-text-secondary cursor-pointer select-none">
-            <span className="font-semibold text-white">Recruiter Talent Discovery:</span> Allow verified infrastructure partner companies, EPC contractors, and consultancies to discover my profile for hiring.
+            <span className="font-semibold text-text-primary">Recruiter Talent Discovery:</span> Allow verified infrastructure partner companies, EPC contractors, and consultancies to discover my profile for hiring.
           </label>
         </div>
       </div>

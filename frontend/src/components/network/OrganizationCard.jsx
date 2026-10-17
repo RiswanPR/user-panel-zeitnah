@@ -16,7 +16,7 @@ export default function OrganizationCard({ org, organization }) {
       animate={{ opacity: 1, y: 0 }}
       whileHover={shouldReduceMotion ? undefined : { y: -3 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-[#0A0F14]/95 p-5 shadow-xl transition-all duration-300 hover:border-brand-mint/35 hover:shadow-[0_12px_36px_-10px_rgba(159,213,178,0.12)]"
+      className="group relative flex flex-col justify-between rounded-2xl border border-border bg-surface-card p-5 shadow-xl transition-all duration-300 hover:border-brand-mint/35 hover:shadow-[0_12px_36px_-10px_rgba(159,213,178,0.12)]"
     >
       {/* Top subtle highlight */}
       <div className="absolute top-0 inset-x-5 h-[1px] bg-gradient-to-r from-transparent via-brand-mint/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -24,7 +24,7 @@ export default function OrganizationCard({ org, organization }) {
       <div>
         <div className="flex items-start justify-between gap-3">
           {/* Logo container */}
-          <div className="w-13 h-13 rounded-2xl bg-[#070B14] border border-white/[0.08] flex items-center justify-center text-brand-mint font-bold text-lg overflow-hidden shrink-0 group-hover:border-brand-mint/40 transition-colors">
+          <div className="w-13 h-13 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center text-brand-mint font-bold text-lg overflow-hidden shrink-0 group-hover:border-brand-mint/40 transition-colors">
             {data.logo ? (
               <img src={data.logo} alt={data.name} className="w-full h-full object-cover" />
             ) : (
@@ -42,7 +42,7 @@ export default function OrganizationCard({ org, organization }) {
         </div>
 
         {/* Name */}
-        <h3 className="font-heading font-bold text-base text-white mt-3.5 line-clamp-1 group-hover:text-brand-mint transition-colors">
+        <h3 className="font-heading font-bold text-base text-text-primary mt-3.5 line-clamp-1 group-hover:text-brand-mint transition-colors">
           {data.name}
         </h3>
 
@@ -66,7 +66,7 @@ export default function OrganizationCard({ org, organization }) {
       </div>
 
       {/* Footer Info */}
-      <div className="mt-5 pt-3.5 border-t border-white/[0.06] flex items-center justify-between text-xs text-text-muted">
+      <div className="mt-5 pt-3.5 border-t border-border flex items-center justify-between text-xs text-text-muted">
         <div className="flex items-center gap-3 truncate">
           {data.location && (
             <span className="flex items-center gap-1 truncate">

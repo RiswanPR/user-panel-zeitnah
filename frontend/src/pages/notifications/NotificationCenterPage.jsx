@@ -126,7 +126,7 @@ export default function NotificationCenterPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-heading font-black text-text-primary tracking-tight">
               Notification Center
             </h1>
             {unreadCount > 0 && (
@@ -145,7 +145,7 @@ export default function NotificationCenterPage() {
           <button
             type="button"
             onClick={() => markAllAsRead(categoryParam)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.08] text-xs font-semibold text-text-secondary hover:text-white transition-all focus-ring"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-surface-elevated hover:bg-surface-card text-xs font-semibold text-text-secondary hover:text-text-primary transition-all focus-ring cursor-pointer"
           >
             <CheckCheck className="w-3.5 h-3.5 text-brand-mint" />
             <span>Mark all read</span>
@@ -154,7 +154,7 @@ export default function NotificationCenterPage() {
           <button
             type="button"
             onClick={() => clearRead()}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-red-500/10 hover:border-red-500/20 text-xs font-semibold text-text-muted hover:text-red-400 transition-all focus-ring"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-surface-elevated hover:bg-red-500/10 hover:border-red-500/20 text-xs font-semibold text-text-muted hover:text-red-400 transition-all focus-ring cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Clear read</span>
@@ -164,7 +164,7 @@ export default function NotificationCenterPage() {
             type="button"
             onClick={() => setIsPreferencesOpen(true)}
             aria-label="Notification preferences"
-            className="p-2 rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.08] text-text-muted hover:text-white transition-all focus-ring"
+            className="p-2 rounded-xl border border-border bg-surface-elevated hover:bg-surface-card text-text-muted hover:text-text-primary transition-all focus-ring cursor-pointer"
           >
             <Settings className="w-4 h-4" />
           </button>
@@ -172,7 +172,7 @@ export default function NotificationCenterPage() {
       </div>
 
       {/* ── Toolbar: Category Tabs & Search ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-2 rounded-2xl border border-white/[0.08] bg-bg-surface/60 backdrop-blur-xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-2 rounded-2xl border border-border bg-surface-card shadow-sm">
         {/* Category Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 md:pb-0">
           {CATEGORY_TABS.map((tab) => {
@@ -185,10 +185,10 @@ export default function NotificationCenterPage() {
                   setActiveTab(tab.id);
                   setPage(1);
                 }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all focus-ring ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all focus-ring cursor-pointer ${
                   isActive
-                    ? 'bg-brand-mint text-bg-base font-bold shadow-[0_0_12px_rgba(159,213,178,0.25)]'
-                    : 'bg-white/[0.03] text-text-muted hover:bg-white/[0.06] hover:text-white'
+                    ? 'bg-brand-mint text-brand-navy font-bold shadow-[0_0_12px_rgba(159,213,178,0.25)]'
+                    : 'bg-surface-elevated text-text-muted hover:bg-surface-card hover:text-text-primary'
                 }`}
               >
                 {tab.label}
@@ -205,7 +205,7 @@ export default function NotificationCenterPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search notifications..."
-            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-white/[0.08] bg-white/[0.03] text-white placeholder-text-faint focus:outline-none focus:border-brand-mint/50"
+            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-border bg-surface-elevated text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-accent"
           />
         </div>
       </div>
@@ -219,14 +219,14 @@ export default function NotificationCenterPage() {
             ))}
           </div>
         ) : isError ? (
-          <div className="p-12 text-center rounded-3xl border border-white/[0.08] bg-bg-surface/50 backdrop-blur-xl">
+          <div className="p-12 text-center rounded-3xl border border-border bg-surface-card">
             <p className="text-sm text-text-muted mb-4">
               Unable to load your notifications right now.
             </p>
             <button
               type="button"
               onClick={() => refetch()}
-              className="btn-primary py-2 px-5 text-xs inline-flex items-center gap-2"
+              className="btn-primary py-2 px-5 text-xs inline-flex items-center gap-2 cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" />
               <span>Retry</span>
@@ -241,11 +241,11 @@ export default function NotificationCenterPage() {
             />
           ))
         ) : (
-          <div className="py-20 px-6 text-center rounded-3xl border border-white/[0.08] bg-bg-surface/40 backdrop-blur-xl flex flex-col items-center justify-center">
-            <div className="w-14 h-14 rounded-2xl border border-white/10 bg-white/[0.03] flex items-center justify-center text-text-faint mb-3 shadow-inner">
+          <div className="py-20 px-6 text-center rounded-3xl border border-border bg-surface-card flex flex-col items-center justify-center">
+            <div className="w-14 h-14 rounded-2xl border border-border bg-surface-elevated flex items-center justify-center text-text-faint mb-3 shadow-inner">
               <BellOff className="w-7 h-7" />
             </div>
-            <h3 className="text-base font-heading font-bold text-white mb-1">
+            <h3 className="text-base font-heading font-bold text-text-primary mb-1">
               {searchQuery ? 'No matching notifications' : "You're all caught up"}
             </h3>
             <p className="text-xs sm:text-sm text-text-muted max-w-sm leading-relaxed">
@@ -259,10 +259,10 @@ export default function NotificationCenterPage() {
 
       {/* ── Pagination Controls ── */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
+        <div className="flex items-center justify-between pt-4 border-t border-border">
           <span className="text-xs text-text-muted">
-            Page <span className="font-semibold text-white">{page}</span> of{' '}
-            <span className="font-semibold text-white">{totalPages}</span> ({total} total)
+            Page <span className="font-semibold text-text-primary">{page}</span> of{' '}
+            <span className="font-semibold text-text-primary">{totalPages}</span> ({total} total)
           </span>
 
           <div className="flex items-center gap-2">
@@ -270,7 +270,7 @@ export default function NotificationCenterPage() {
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="inline-flex items-center gap-1 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-semibold text-text-muted hover:text-white transition-colors disabled:opacity-40 disabled:pointer-events-none focus-ring"
+              className="inline-flex items-center gap-1 rounded-xl border border-border bg-surface-elevated px-3 py-1.5 text-xs font-semibold text-text-muted hover:text-text-primary hover:bg-surface-card transition-colors disabled:opacity-40 disabled:pointer-events-none focus-ring cursor-pointer"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
               <span>Previous</span>
@@ -279,7 +279,7 @@ export default function NotificationCenterPage() {
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="inline-flex items-center gap-1 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-semibold text-text-muted hover:text-white transition-colors disabled:opacity-40 disabled:pointer-events-none focus-ring"
+              className="inline-flex items-center gap-1 rounded-xl border border-border bg-surface-elevated px-3 py-1.5 text-xs font-semibold text-text-muted hover:text-text-primary hover:bg-surface-card transition-colors disabled:opacity-40 disabled:pointer-events-none focus-ring cursor-pointer"
             >
               <span>Next</span>
               <ChevronRight className="h-3.5 w-3.5" />
@@ -304,11 +304,11 @@ export default function NotificationCenterPage() {
               initial={{ opacity: 0, scale: 0.95, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
-              className="relative w-full max-w-lg rounded-3xl border border-white/[0.1] bg-[#0C1220] p-6 shadow-2xl z-10 space-y-5"
+              className="relative w-full max-w-lg rounded-3xl border border-border bg-surface-card p-6 shadow-2xl z-10 space-y-5"
             >
-              <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
+              <div className="flex items-center justify-between border-b border-border pb-4">
                 <div>
-                  <h3 className="text-base font-heading font-bold text-white">
+                  <h3 className="text-base font-heading font-bold text-text-primary">
                     Notification Preferences
                   </h3>
                   <p className="text-xs text-text-muted mt-0.5">
@@ -318,7 +318,7 @@ export default function NotificationCenterPage() {
                 <button
                   type="button"
                   onClick={() => setIsPreferencesOpen(false)}
-                  className="p-2 rounded-xl text-text-muted hover:text-white"
+                  className="p-2 rounded-xl text-text-muted hover:text-text-primary cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -372,27 +372,27 @@ export default function NotificationCenterPage() {
                     return (
                       <div
                         key={cat.id}
-                        className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-white/[0.02]"
+                        className="flex items-center justify-between p-3 rounded-xl border border-border bg-surface-elevated"
                       >
-                        <span className="text-xs font-semibold text-white">
+                        <span className="text-xs font-semibold text-text-primary">
                           {cat.label}
                         </span>
                         <div className="flex items-center gap-4 text-xs">
-                          <label className="flex items-center gap-1.5 cursor-pointer text-text-muted hover:text-white">
+                          <label className="flex items-center gap-1.5 cursor-pointer text-text-muted hover:text-text-primary">
                             <input
                               type="checkbox"
                               name={`${cat.id}_inApp`}
                               defaultChecked={pref.inApp}
-                              className="rounded border-white/20 bg-white/10 text-brand-mint focus:ring-brand-mint"
+                              className="rounded border-border bg-surface-card text-brand-mint focus:ring-brand-mint"
                             />
                             <span>In-App</span>
                           </label>
-                          <label className="flex items-center gap-1.5 cursor-pointer text-text-muted hover:text-white">
+                          <label className="flex items-center gap-1.5 cursor-pointer text-text-muted hover:text-text-primary">
                             <input
                               type="checkbox"
                               name={`${cat.id}_email`}
                               defaultChecked={pref.email}
-                              className="rounded border-white/20 bg-white/10 text-brand-mint focus:ring-brand-mint"
+                              className="rounded border-border bg-surface-card text-brand-mint focus:ring-brand-mint"
                             />
                             <span>Email</span>
                           </label>
@@ -402,9 +402,9 @@ export default function NotificationCenterPage() {
                   })}
 
                   {/* Followed Organizations Notification Settings (Phase 3 Feature D) */}
-                  <div className="pt-2 border-t border-white/[0.06] space-y-3">
+                  <div className="pt-2 border-t border-border space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-text-primary flex items-center gap-1.5">
                         <Building2 className="w-3.5 h-3.5 text-brand-mint" />
                         <span>Followed Organizations</span>
                       </span>
@@ -414,7 +414,7 @@ export default function NotificationCenterPage() {
                     </div>
 
                     {followedOrgsData.length === 0 ? (
-                      <p className="text-[11px] text-text-muted italic bg-white/[0.02] p-2.5 rounded-xl border border-white/[0.04]">
+                      <p className="text-[11px] text-text-muted italic bg-surface-elevated p-2.5 rounded-xl border border-border">
                         You are not following any organizations yet. Visit Network &gt; Organizations to discover partners.
                       </p>
                     ) : (
@@ -426,10 +426,10 @@ export default function NotificationCenterPage() {
                           return (
                             <div
                               key={orgId}
-                              className="flex items-center justify-between p-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02]"
+                              className="flex items-center justify-between p-2.5 rounded-xl border border-border bg-surface-elevated"
                             >
                               <div className="flex items-center gap-2.5 min-w-0">
-                                <div className="w-6 h-6 rounded-lg bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 overflow-hidden">
+                                <div className="w-6 h-6 rounded-lg bg-surface-card border border-border flex items-center justify-center shrink-0 overflow-hidden">
                                   {org.logo ? (
                                     <img
                                       src={org.logo}
@@ -440,7 +440,7 @@ export default function NotificationCenterPage() {
                                     <Building2 className="w-3.5 h-3.5 text-brand-mint" />
                                   )}
                                 </div>
-                                <span className="text-xs font-medium text-white truncate max-w-[180px]">
+                                <span className="text-xs font-medium text-text-primary truncate max-w-[180px]">
                                   {org.name}
                                 </span>
                               </div>
@@ -460,7 +460,7 @@ export default function NotificationCenterPage() {
                                 className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-lg border transition-all cursor-pointer ${
                                   item.notificationsEnabled
                                     ? 'bg-brand-mint/15 text-brand-mint border-brand-mint/30 hover:bg-brand-mint/25'
-                                    : 'bg-white/[0.04] text-text-muted border-white/[0.08] hover:text-white'
+                                    : 'bg-surface-card text-text-muted border-border hover:text-text-primary'
                                 }`}
                               >
                                 {item.notificationsEnabled ? (
@@ -491,18 +491,18 @@ export default function NotificationCenterPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/[0.08]">
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
                   <button
                     type="button"
                     onClick={() => setIsPreferencesOpen(false)}
-                    className="btn-secondary py-2 px-4 text-xs"
+                    className="btn-secondary py-2 px-4 text-xs cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={updatePreferencesMutation.isPending}
-                    className="btn-primary py-2 px-5 text-xs font-semibold"
+                    className="btn-primary py-2 px-5 text-xs font-semibold cursor-pointer"
                   >
                     {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Settings'}
                   </button>

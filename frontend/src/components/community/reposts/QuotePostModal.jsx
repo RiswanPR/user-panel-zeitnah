@@ -128,20 +128,20 @@ export default function QuotePostModal({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 30, scale: 0.96 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="relative w-full max-w-lg bg-[#0F172A] border border-white/[0.12] rounded-t-3xl sm:rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] p-5 sm:p-6 overflow-hidden flex flex-col max-h-[90vh]"
+          className="relative w-full max-w-lg bg-surface-card border border-border rounded-t-3xl sm:rounded-2xl shadow-2xl p-5 sm:p-6 overflow-hidden flex flex-col max-h-[90vh]"
         >
           {/* Header */}
-          <div className="flex items-center justify-between pb-3 border-b border-white/[0.08] mb-4">
+          <div className="flex items-center justify-between pb-3 border-b border-border mb-4">
             <h2
               id="quote-modal-title"
-              className="text-base font-semibold text-white tracking-tight"
+              className="text-base font-semibold text-text-primary tracking-tight"
             >
               Quote post
             </h2>
             <button
               type="button"
               onClick={handleClose}
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer"
               aria-label="Close quote dialog"
             >
               <X className="w-5 h-5" />
@@ -163,7 +163,7 @@ export default function QuotePostModal({
                 placeholder="Add your thoughts..."
                 maxLength={charLimit}
                 rows={3}
-                className="w-full bg-white/[0.03] border border-white/[0.08] focus:border-brand-mint/60 rounded-xl p-3 text-sm text-white placeholder-text-muted/60 focus:outline-none transition-colors resize-none leading-relaxed"
+                className="w-full bg-surface-elevated border border-border focus:border-brand-mint/60 rounded-xl p-3 text-sm text-text-primary placeholder-text-muted/60 focus:outline-none transition-colors resize-none leading-relaxed"
               />
               <div className="flex justify-end text-[11px] text-text-muted mt-1 px-1">
                 <span>{remaining} characters left</span>
@@ -179,18 +179,18 @@ export default function QuotePostModal({
             </div>
 
             {/* Actions Bar */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/[0.08] mt-auto">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-border mt-auto">
               <button
                 type="button"
                 onClick={handleClose}
-                className="min-h-[44px] px-4 py-2 text-xs font-semibold text-text-muted hover:text-white hover:bg-white/[0.04] rounded-xl transition-colors cursor-pointer"
+                className="min-h-[44px] px-4 py-2 text-xs font-semibold text-text-muted hover:text-text-primary hover:bg-surface-elevated rounded-xl transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitDisabled}
-                className="min-h-[44px] px-5 py-2 rounded-xl bg-brand-mint text-[#0B111E] font-semibold text-xs flex items-center gap-2 hover:bg-brand-mint/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_2px_12px_rgba(52,211,153,0.25)]"
+                className="min-h-[44px] px-5 py-2 rounded-xl bg-brand-mint text-bg-base font-semibold text-xs flex items-center gap-2 hover:bg-brand-mint/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-sm"
                 aria-label="Publish quote post"
               >
                 {quoteMutation.isPending ? (

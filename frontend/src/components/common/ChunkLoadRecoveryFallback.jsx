@@ -42,7 +42,7 @@ export function ChunkLoadRecoveryFallback({ onReload, onHome }) {
         </div>
       </div>
 
-      <h2 className="text-xl font-bold text-white mb-2 tracking-tight">
+      <h2 className="text-xl font-bold text-text-primary mb-2 tracking-tight">
         Application Update Available
       </h2>
       <p className="text-sm text-text-muted max-w-md mb-8 leading-relaxed">
@@ -53,7 +53,7 @@ export function ChunkLoadRecoveryFallback({ onReload, onHome }) {
         <button
           type="button"
           onClick={handleReload}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-brand-primary hover:bg-brand-primary/90 text-white text-sm font-semibold transition-colors shadow-lg shadow-brand-primary/20 cursor-pointer"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-brand-mint hover:bg-brand-mint/90 text-brand-navy text-sm font-semibold transition-colors shadow-lg shadow-brand-mint/20 cursor-pointer"
         >
           <RefreshCw className="w-4 h-4" />
           Refresh Page
@@ -61,7 +61,7 @@ export function ChunkLoadRecoveryFallback({ onReload, onHome }) {
         <button
           type="button"
           onClick={handleHome}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-text-muted hover:text-white border border-white/[0.08] text-sm font-medium transition-colors cursor-pointer"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-surface-elevated hover:bg-surface-card text-text-muted hover:text-text-primary border border-border text-sm font-medium transition-colors cursor-pointer"
         >
           Return to Dashboard
           <ArrowRight className="w-4 h-4" />

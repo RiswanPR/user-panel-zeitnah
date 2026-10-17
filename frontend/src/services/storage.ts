@@ -65,7 +65,7 @@ export interface BrowserFingerprint {
   timezone: string;
 }
 
-const STORAGE_KEYS = {
+export const STORAGE_KEYS = {
   TOKEN: 'token',
   REFRESH_TOKEN: 'refreshToken',
   SESSION_EXPIRES_AT: 'sessionExpiresAt',
@@ -75,6 +75,7 @@ const STORAGE_KEYS = {
   LOGIN_EMAIL: 'login_email',
   REGISTER_NAME: 'register_name',
   REGISTER_EMAIL: 'register_email',
+  THEME_PREFERENCE: 'zn_theme_preference_v1',
 } as const;
 
 // Synchronous in-memory cache for ultra-fast access in axios interceptors

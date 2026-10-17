@@ -121,9 +121,9 @@ function App() {
           position="bottom-right"
           toastOptions={{
             style: {
-              background: '#0B111E',
-              color: '#fff',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              background: 'var(--zn-token-surface-card)',
+              color: 'var(--zn-token-text-primary)',
+              border: '1px solid var(--zn-token-border)',
               borderRadius: '0.75rem',
               fontSize: '0.875rem',
             },

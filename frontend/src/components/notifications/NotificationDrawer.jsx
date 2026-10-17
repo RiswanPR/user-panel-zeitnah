@@ -116,25 +116,25 @@ export default function NotificationDrawer() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 350 }}
-              className="w-screen max-w-md bg-[#090E1A] border-l border-white/[0.08] shadow-2xl flex flex-col h-full"
+              className="w-screen max-w-md bg-surface-card border-l border-border shadow-2xl flex flex-col h-full"
             >
               {/* Top Accent Gradient Line */}
               <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-brand-mint/70 to-transparent shrink-0" />
 
               {/* ── Drawer Header ── */}
-              <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-b border-white/[0.08] flex items-center justify-between gap-3 bg-[#0B111E]/90 backdrop-blur-xl shrink-0">
+              <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-b border-border flex items-center justify-between gap-3 bg-surface/90 backdrop-blur-xl shrink-0">
                 <div className="flex items-center gap-2.5">
                   {/* Mobile Back button */}
                   <button
                     type="button"
                     onClick={() => setIsDrawerOpen(false)}
                     aria-label="Back"
-                    className="sm:hidden p-1.5 -ml-1 text-text-muted hover:text-white rounded-lg focus-ring"
+                    className="sm:hidden p-1.5 -ml-1 text-text-muted hover:text-text-primary rounded-lg focus-ring"
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </button>
 
-                  <h3 className="text-base font-heading font-extrabold text-white tracking-tight">
+                  <h3 className="text-base font-heading font-extrabold text-text-primary tracking-tight">
                     Notifications
                   </h3>
 
@@ -152,7 +152,7 @@ export default function NotificationDrawer() {
                       onClick={handleMarkAll}
                       title="Mark all as read"
                       aria-label="Mark all as read"
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-xs font-semibold text-text-secondary hover:text-white transition-colors focus-ring"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface border border-border text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors focus-ring"
                     >
                       <CheckCheck className="w-4 h-4 text-brand-mint" aria-hidden="true" />
                       <span className="hidden xs:inline">Mark read</span>
@@ -163,7 +163,7 @@ export default function NotificationDrawer() {
                     type="button"
                     onClick={() => setIsDrawerOpen(false)}
                     aria-label="Close notifications panel"
-                    className="p-2 rounded-xl text-text-muted hover:text-white hover:bg-white/[0.05] transition-colors focus-ring"
+                    className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors focus-ring"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -171,7 +171,7 @@ export default function NotificationDrawer() {
               </div>
 
               {/* ── Category Filter Pills ── */}
-              <div className="px-4 py-2.5 sm:px-5 sm:py-3 border-b border-white/[0.06] bg-black/20 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+              <div className="px-4 py-2.5 sm:px-5 sm:py-3 border-b border-border bg-surface-elevated/30 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
                 {DRAWER_TABS.map((tab) => {
                   const isActive = activeTab === tab.id;
                   return (
@@ -182,7 +182,7 @@ export default function NotificationDrawer() {
                       className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all focus-ring cursor-pointer ${
                         isActive
                           ? 'bg-brand-mint text-bg-base font-bold shadow-[0_0_12px_rgba(159,213,178,0.25)]'
-                          : 'bg-white/[0.04] text-text-muted border border-white/[0.06] hover:bg-white/[0.08] hover:text-white'
+                          : 'bg-surface-elevated text-text-muted border border-border hover:bg-surface hover:text-text-primary'
                       }`}
                     >
                       {tab.label}
@@ -200,7 +200,7 @@ export default function NotificationDrawer() {
                     ))}
                   </div>
                 ) : isError ? (
-                  <div className="p-8 text-center rounded-2xl border border-white/[0.08] bg-white/[0.02]">
+                  <div className="p-8 text-center rounded-2xl border border-border bg-surface-elevated/50">
                     <p className="text-xs text-text-muted mb-3">
                       Notifications couldn't load right now.
                     </p>
@@ -224,10 +224,10 @@ export default function NotificationDrawer() {
                   ))
                 ) : (
                   <div className="py-20 px-6 text-center flex flex-col items-center justify-center">
-                    <div className="w-12 h-12 rounded-2xl border border-white/10 bg-white/[0.03] flex items-center justify-center text-text-faint mb-3">
+                    <div className="w-12 h-12 rounded-2xl border border-border bg-surface-elevated flex items-center justify-center text-text-faint mb-3">
                       <BellOff className="w-6 h-6 text-brand-mint/60" />
                     </div>
-                    <h4 className="text-sm font-heading font-bold text-white mb-1">
+                    <h4 className="text-sm font-heading font-bold text-text-primary mb-1">
                       You're all caught up
                     </h4>
                     <p className="text-xs text-text-muted max-w-xs leading-relaxed">
@@ -240,7 +240,7 @@ export default function NotificationDrawer() {
               </div>
 
               {/* ── Drawer Footer ── */}
-              <div className="p-4 border-t border-white/[0.08] bg-[#070B14] flex items-center justify-between shrink-0">
+              <div className="p-4 border-t border-border bg-surface flex items-center justify-between shrink-0">
                 <Link
                   to="/notifications"
                   onClick={() => setIsDrawerOpen(false)}
@@ -253,7 +253,7 @@ export default function NotificationDrawer() {
                 <button
                   type="button"
                   onClick={() => setIsDrawerOpen(false)}
-                  className="text-xs text-text-muted hover:text-white px-2 py-1 rounded"
+                  className="text-xs text-text-muted hover:text-text-primary px-2 py-1 rounded"
                 >
                   Close
                 </button>

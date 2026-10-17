@@ -29,14 +29,14 @@ function StatCard({ icon: Icon, label, value, delay = 0 }) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay }}
-      className="rounded-2xl border border-border-default bg-bg-card p-5 flex items-center justify-between relative overflow-hidden group hover:border-brand-mint/20 transition-all shadow-sm"
+      className="rounded-2xl border border-border bg-surface-card p-5 flex items-center justify-between relative overflow-hidden group hover:border-brand-mint/20 transition-all shadow-sm"
     >
       <div className="gradient-line-top" />
       <div className="min-w-0 flex-1">
         <p className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-1">
           {label}
         </p>
-        <p className="text-xl sm:text-2xl font-heading font-extrabold text-white truncate">
+        <p className="text-xl sm:text-2xl font-heading font-extrabold text-text-primary truncate">
           {value}
         </p>
       </div>
@@ -72,14 +72,14 @@ export default function MyLearning() {
   if (loading) {
     return (
       <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto animate-pulse">
-        <div className="h-14 bg-bg-card rounded-2xl border border-border-default" />
-        <div className="h-44 bg-bg-card rounded-2xl border border-border-default" />
+        <div className="h-14 bg-surface-card rounded-2xl border border-border" />
+        <div className="h-44 bg-surface-card rounded-2xl border border-border" />
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="h-24 bg-bg-card rounded-2xl border border-border-default" />
+            <div key={i} className="h-24 bg-surface-card rounded-2xl border border-border" />
           ))}
         </div>
-        <div className="h-64 bg-bg-card rounded-2xl border border-border-default" />
+        <div className="h-64 bg-surface-card rounded-2xl border border-border" />
       </div>
     );
   }
@@ -98,7 +98,7 @@ export default function MyLearning() {
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="relative overflow-hidden rounded-2xl bg-bg-card border border-border-default shadow-sm"
+        className="relative overflow-hidden rounded-2xl bg-surface-card border border-border shadow-sm"
       >
         <div className="gradient-line-top" />
         <div className="absolute top-0 right-0 w-[350px] h-[350px] bg-brand-mint/5 rounded-full blur-[120px] pointer-events-none" />
@@ -109,7 +109,7 @@ export default function MyLearning() {
               <TrendingUp className="w-3.5 h-3.5" />
               Learning Progress & Velocity
             </div>
-            <h1 className="font-heading font-black text-3xl sm:text-4xl md:text-5xl text-white tracking-tight leading-none">
+            <h1 className="font-heading font-black text-3xl sm:text-4xl md:text-5xl text-text-primary tracking-tight leading-none">
               Course Progress
             </h1>
             <p className="text-xs sm:text-sm text-text-muted max-w-xl leading-relaxed">
@@ -119,13 +119,14 @@ export default function MyLearning() {
 
           {/* Circular progress */}
           <div className="relative h-28 w-28 sm:h-32 sm:w-32 mx-auto sm:mx-0 shrink-0">
-            <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
+            <svg className="w-full h-full -rotate-90 text-border" viewBox="0 0 120 120">
               <circle
                 cx="60"
                 cy="60"
                 r="52"
                 fill="none"
-                stroke="rgba(255,255,255,0.06)"
+                stroke="currentColor"
+                strokeOpacity="0.4"
                 strokeWidth="8"
               />
               <motion.circle
@@ -151,7 +152,7 @@ export default function MyLearning() {
               </defs>
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-2xl sm:text-3xl font-heading font-black text-white">
+              <span className="text-2xl sm:text-3xl font-heading font-black text-text-primary">
                 {completion}%
               </span>
               <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted mt-0.5">
@@ -179,13 +180,13 @@ export default function MyLearning() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="rounded-2xl border border-border-default bg-bg-card p-6 sm:p-7 relative overflow-hidden shadow-sm"
+        className="rounded-2xl border border-border bg-surface-card p-6 sm:p-7 relative overflow-hidden shadow-sm"
       >
         <div className="gradient-line-top" />
 
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg sm:text-xl font-heading font-bold text-white">
+            <h2 className="text-lg sm:text-xl font-heading font-bold text-text-primary">
               Enrolled Curricula
             </h2>
             <p className="text-xs text-text-muted mt-0.5">
@@ -207,11 +208,11 @@ export default function MyLearning() {
                 <Link
                   key={course._id}
                   to={`/courses/${course._id}`}
-                  className="block rounded-xl border border-white/[0.04] bg-white/[0.02] p-4 sm:p-5 hover:border-brand-mint/25 hover:bg-white/[0.04] transition-all group cursor-pointer"
+                  className="block rounded-xl border border-border bg-surface-elevated/40 p-4 sm:p-5 hover:border-brand-mint/25 hover:bg-surface-card transition-all group cursor-pointer"
                 >
                   <div className="mb-3 flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <h3 className="font-semibold text-white text-base sm:text-lg tracking-tight truncate group-hover:text-brand-mint transition-colors">
+                      <h3 className="font-semibold text-text-primary text-base sm:text-lg tracking-tight truncate group-hover:text-brand-mint transition-colors">
                         {course.name}
                       </h3>
                       <p className="mt-1 text-xs font-medium text-text-muted">
@@ -227,7 +228,7 @@ export default function MyLearning() {
                     </div>
                   </div>
 
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-surface-card border border-border/40">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${percent}%` }}

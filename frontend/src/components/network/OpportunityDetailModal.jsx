@@ -8,11 +8,11 @@ export default function OpportunityDetailModal({ opportunity, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-xl rounded-2xl bg-surface border border-white/10 shadow-2xl p-6 overflow-hidden max-h-[90vh] flex flex-col">
+      <div className="relative w-full max-w-xl rounded-2xl bg-surface-card border border-border shadow-2xl p-6 overflow-hidden max-h-[90vh] flex flex-col">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-xl text-text-muted hover:text-white hover:bg-white/5 transition-colors"
+          className="absolute top-4 right-4 p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors"
         >
           <X className="h-5 w-5" />
         </button>
@@ -28,16 +28,16 @@ export default function OpportunityDetailModal({ opportunity, onClose }) {
             </span>
           </div>
 
-          <h2 className="text-xl font-bold text-white mb-2">{opportunity.title}</h2>
+          <h2 className="text-xl font-bold text-text-primary mb-2">{opportunity.title}</h2>
 
           {org && (
             <div className="flex items-center gap-2 text-sm text-text-secondary">
               <Building2 className="h-4 w-4 text-mint" />
-              <span className="font-medium text-white">{org.name}</span>
+              <span className="font-medium text-text-primary">{org.name}</span>
               {isVerified && <CheckCircle2 className="h-4 w-4 text-mint shrink-0" />}
               {opportunity.location && (
                 <>
-                  <span className="text-white/20">•</span>
+                  <span className="text-text-faint">•</span>
                   <span className="inline-flex items-center gap-1 text-xs text-text-muted">
                     <MapPin className="h-3.5 w-3.5" />
                     <span>{opportunity.location}</span>
@@ -52,7 +52,7 @@ export default function OpportunityDetailModal({ opportunity, onClose }) {
         <div className="flex-1 overflow-y-auto space-y-5 pr-1 text-sm text-text-secondary leading-relaxed">
           {/* About Opportunity */}
           <div>
-            <h4 className="text-xs font-semibold text-white uppercase tracking-wider mb-2">
+            <h4 className="text-xs font-semibold text-text-primary uppercase tracking-wider mb-2">
               About this Opportunity
             </h4>
             <p className="whitespace-pre-line text-xs sm:text-sm">{opportunity.description || "No description provided."}</p>
@@ -61,14 +61,14 @@ export default function OpportunityDetailModal({ opportunity, onClose }) {
           {/* Required Skills */}
           {opportunity.skills && opportunity.skills.length > 0 && (
             <div>
-              <h4 className="text-xs font-semibold text-white uppercase tracking-wider mb-2">
+              <h4 className="text-xs font-semibold text-text-primary uppercase tracking-wider mb-2">
                 Demonstrated Skills Required
               </h4>
               <div className="flex flex-wrap gap-2">
                 {opportunity.skills.map((skill, idx) => (
                   <span
                     key={idx}
-                    className="text-xs px-3 py-1 rounded-lg bg-surface border border-white/10 text-white font-medium"
+                    className="text-xs px-3 py-1 rounded-lg bg-surface-elevated border border-border text-text-primary font-medium"
                   >
                     {skill}
                   </span>
@@ -79,9 +79,9 @@ export default function OpportunityDetailModal({ opportunity, onClose }) {
 
           {/* Organization Details */}
           {org && (
-            <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+            <div className="p-4 rounded-xl bg-surface-elevated border border-border">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-white uppercase tracking-wider">
+                <span className="text-xs font-semibold text-text-primary uppercase tracking-wider">
                   About {org.name}
                 </span>
                 {org.website && (
@@ -102,7 +102,7 @@ export default function OpportunityDetailModal({ opportunity, onClose }) {
         </div>
 
         {/* Modal Footer */}
-        <div className="pt-4 mt-4 border-t border-white/5 flex items-center justify-between">
+        <div className="pt-4 mt-4 border-t border-border flex items-center justify-between">
           <span className="text-xs text-text-muted">
             Published: {opportunity.publishedAt ? new Date(opportunity.publishedAt).toLocaleDateString() : "Recently"}
           </span>

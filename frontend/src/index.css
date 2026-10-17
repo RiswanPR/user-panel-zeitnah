@@ -16,28 +16,41 @@
   --color-zn-dark: #0D141A;
   --color-zn-deep: #101820;
 
-  /* ── Background Layers ── */
-  --color-bg-base: #070B14;
-  --color-bg-surface: #0F1724;
-  --color-bg-card: #131D2D;
-  --color-bg-elevated: #182436;
+  /* ── Semantic Background & Surface Tokens (bound to active theme variables) ── */
+  --color-page-bg: var(--zn-token-page-bg);
+  --color-surface: var(--zn-token-surface);
+  --color-surface-card: var(--zn-token-surface-card);
+  --color-surface-elevated: var(--zn-token-surface-elevated);
 
-  /* ── Border System ── */
-  --color-border-default: #1E293B;
-  --color-border-subtle: rgba(159, 213, 178, 0.08);
-  --color-border-accent: rgba(159, 213, 178, 0.2);
+  /* Preserved background token aliases for existing codebase usage */
+  --color-bg-base: var(--zn-token-page-bg);
+  --color-bg-surface: var(--zn-token-surface);
+  --color-bg-card: var(--zn-token-surface-card);
+  --color-bg-elevated: var(--zn-token-surface-elevated);
 
-  /* ── Text Hierarchy ── */
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #94A3B8;
-  --color-text-muted: #64748B;
-  --color-text-faint: #475569;
+  /* ── Semantic Border Tokens ── */
+  --color-border: var(--zn-token-border);
+  --color-border-default: var(--zn-token-border);
+  --color-border-subtle: var(--zn-token-border-subtle);
+  --color-border-accent: var(--zn-token-border-accent);
 
-  /* ── Semantic Colors ── */
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-danger: #EF4444;
-  --color-info: #38BDF8;
+  /* ── Semantic Text Hierarchy Tokens ── */
+  --color-text-primary: var(--zn-token-text-primary);
+  --color-text-secondary: var(--zn-token-text-secondary);
+  --color-text-muted: var(--zn-token-text-muted);
+  --color-text-faint: var(--zn-token-text-faint);
+
+  /* ── Semantic Brand, Primary & Interactive Tokens ── */
+  --color-primary: var(--zn-token-primary);
+  --color-primary-contrast: var(--zn-token-primary-contrast);
+  --color-accent: var(--zn-token-accent);
+  --color-focus-ring: var(--zn-token-focus-ring);
+
+  /* ── Semantic Status Colors ── */
+  --color-success: var(--zn-token-success);
+  --color-warning: var(--zn-token-warning);
+  --color-danger: var(--zn-token-danger);
+  --color-info: var(--zn-token-info);
 
   /* ── Typography ── */
   --font-degular: "Degular", "Sora", "Inter", system-ui, -apple-system, sans-serif;
@@ -65,39 +78,79 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SIDEBAR & ZEITNAH 2.0 DESIGN TOKENS
-   Single source of truth for global geometry, surfaces & accents.
+   ZEITNAH SEMANTIC THEME FOUNDATION
+   Default: Dark Theme (100% preserving existing visual appearance)
    ═══════════════════════════════════════════════════════════════ */
 :root {
-  /* ── Zeitnah 2.0 Surfaces & Foundation ── */
-  --zn-bg: #070B14;
+  /* ── Semantic Background & Surface Foundation ── */
+  --zn-token-page-bg: #070B14;
+  --zn-token-surface: #0F1724;
+  --zn-token-surface-card: #131D2D;
+  --zn-token-surface-elevated: #182436;
+
+  /* ── Semantic Border System ── */
+  --zn-token-border: #1E293B;
+  --zn-token-border-subtle: rgba(159, 213, 178, 0.08);
+  --zn-token-border-accent: rgba(159, 213, 178, 0.2);
+
+  /* ── Semantic Text Hierarchy ── */
+  --zn-token-text-primary: #FFFFFF;
+  --zn-token-text-secondary: #94A3B8;
+  --zn-token-text-muted: #64748B;
+  --zn-token-text-faint: #475569;
+
+  /* ── Brand, Primary & Interactive Foundation ── */
+  --zn-token-primary: #12314C;
+  --zn-token-primary-contrast: #FFFFFF;
+  --zn-token-accent: #9FD5B2;
+  --zn-token-focus-ring: rgba(159, 213, 178, 0.4);
+
+  /* ── Semantic Status Colors ── */
+  --zn-token-success: #10B981;
+  --zn-token-warning: #F59E0B;
+  --zn-token-danger: #EF4444;
+  --zn-token-info: #38BDF8;
+
+  /* ── Standard CSS Custom Property Aliases ── */
+  --color-page-bg: var(--zn-token-page-bg);
+  --color-surface: var(--zn-token-surface);
+  --color-surface-card: var(--zn-token-surface-card);
+  --color-surface-elevated: var(--zn-token-surface-elevated);
+  --color-border: var(--zn-token-border);
+  --color-primary: var(--zn-token-primary);
+  --color-primary-contrast: var(--zn-token-primary-contrast);
+  --color-accent: var(--zn-token-accent);
+  --color-focus-ring: var(--zn-token-focus-ring);
+
+  /* ── Zeitnah 2.0 Surfaces & Foundation (Preserved for backward compatibility) ── */
+  --zn-bg: var(--zn-token-page-bg);
   --zn-surface-1: #0B111E;
   --zn-surface-2: #0F1728;
   --zn-surface-3: #152033;
-  --zn-surface-card: #0D1625;
+  --zn-surface-card: var(--zn-token-surface-card);
 
   /* ── Borders & Outlines ── */
   --zn-border: rgba(255, 255, 255, 0.07);
-  --zn-border-subtle: rgba(159, 213, 178, 0.08);
-  --zn-border-accent: rgba(159, 213, 178, 0.22);
+  --zn-border-subtle: var(--zn-token-border-subtle);
+  --zn-border-accent: var(--zn-token-border-accent);
   --zn-border-gold: rgba(246, 237, 74, 0.25);
 
   /* ── Text Hierarchy ── */
-  --zn-text: #FFFFFF;
-  --zn-text-muted: #94A3B8;
-  --zn-text-faint: #64748B;
+  --zn-text: var(--zn-token-text-primary);
+  --zn-text-muted: var(--zn-token-text-secondary);
+  --zn-text-faint: var(--zn-token-text-muted);
 
   /* ── Brand & Semantic Accents ── */
-  --zn-accent: #9FD5B2;
+  --zn-accent: var(--zn-token-accent);
   --zn-accent-soft: rgba(159, 213, 178, 0.12);
   --zn-accent-glow: rgba(159, 213, 178, 0.25);
   --zn-gold: #F6ED4A;
   --zn-gold-soft: rgba(246, 237, 74, 0.12);
   --zn-navy: #12314C;
-  --zn-success: #10B981;
-  --zn-warning: #F59E0B;
-  --zn-danger: #EF4444;
-  --zn-info: #38BDF8;
+  --zn-success: var(--zn-token-success);
+  --zn-warning: var(--zn-token-warning);
+  --zn-danger: var(--zn-token-danger);
+  --zn-info: var(--zn-token-info);
 
   /* ── Sidebar Tokens ── */
   --sidebar-width: 260px;
@@ -114,6 +167,118 @@
 
   /* ── Ergonomics & Mobile ── */
   --touch-target-min: 44px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DARK THEME TOKEN SET (Explicit Activation Target)
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="dark"] {
+  --zn-token-page-bg: #070B14;
+  --zn-token-surface: #0F1724;
+  --zn-token-surface-card: #131D2D;
+  --zn-token-surface-elevated: #182436;
+
+  --zn-token-border: #1E293B;
+  --zn-token-border-subtle: rgba(159, 213, 178, 0.08);
+  --zn-token-border-accent: rgba(159, 213, 178, 0.2);
+
+  --zn-token-text-primary: #FFFFFF;
+  --zn-token-text-secondary: #94A3B8;
+  --zn-token-text-muted: #64748B;
+  --zn-token-text-faint: #475569;
+
+  --zn-token-primary: #12314C;
+  --zn-token-primary-contrast: #FFFFFF;
+  --zn-token-accent: #9FD5B2;
+  --zn-token-focus-ring: rgba(159, 213, 178, 0.4);
+
+  --zn-token-success: #10B981;
+  --zn-token-warning: #F59E0B;
+  --zn-token-danger: #EF4444;
+  --zn-token-info: #38BDF8;
+
+  --zn-bg: var(--zn-token-page-bg);
+  --zn-surface-1: #0B111E;
+  --zn-surface-2: #0F1728;
+  --zn-surface-3: #152033;
+  --zn-surface-card: var(--zn-token-surface-card);
+  --zn-border: rgba(255, 255, 255, 0.07);
+  --zn-border-subtle: var(--zn-token-border-subtle);
+  --zn-border-accent: var(--zn-token-border-accent);
+  --zn-border-gold: rgba(246, 237, 74, 0.25);
+  --zn-text: var(--zn-token-text-primary);
+  --zn-text-muted: var(--zn-token-text-secondary);
+  --zn-text-faint: var(--zn-token-text-muted);
+  --zn-accent: var(--zn-token-accent);
+  --zn-accent-soft: rgba(159, 213, 178, 0.12);
+  --zn-accent-glow: rgba(159, 213, 178, 0.25);
+  --zn-gold: #F6ED4A;
+  --zn-gold-soft: rgba(246, 237, 74, 0.12);
+  --zn-navy: #12314C;
+  --zn-success: var(--zn-token-success);
+  --zn-warning: var(--zn-token-warning);
+  --zn-danger: var(--zn-token-danger);
+  --zn-info: var(--zn-token-info);
+  color-scheme: dark;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LIGHT THEME TOKEN SET (Future Activation Target via data-theme="light")
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="light"] {
+  /* ── Clean Neutral/White Canvas & Surfaces ── */
+  --zn-token-page-bg: #F8FAFC;          /* Clean, crisp slate-50 canvas */
+  --zn-token-surface: #FFFFFF;          /* Pure white elevated surface */
+  --zn-token-surface-card: #FFFFFF;     /* Crisp white card surface */
+  --zn-token-surface-elevated: #F1F5F9; /* Subtle elevated slate-100 tier for overlays/popovers */
+
+  /* ── Subtle Structural Borders & Shadows ── */
+  --zn-token-border: #E2E8F0;           /* Slate-200 border for clear structure */
+  --zn-token-border-subtle: rgba(18, 49, 76, 0.08); /* 8% brand navy subtle border */
+  --zn-token-border-accent: rgba(18, 49, 76, 0.18); /* 18% brand navy accent border */
+
+  /* ── Readable High-Contrast Text (WCAG AAA) ── */
+  --zn-token-text-primary: #0A0F1D;     /* Deep near-black/navy for maximum AA/AAA readability */
+  --zn-token-text-secondary: #334155;   /* Slate-700 for high-contrast body text */
+  --zn-token-text-muted: #64748B;       /* Slate-500 for secondary details and timestamps */
+  --zn-token-text-faint: #94A3B8;       /* Slate-400 for placeholders and subtle captions */
+
+  /* ── Brand, Primary & Interactive Tokens ── */
+  --zn-token-primary: #12314C;          /* Zeitnah signature Brand Navy */
+  --zn-token-primary-contrast: #FFFFFF; /* High contrast white text on navy buttons/headers */
+  --zn-token-accent: #0D7A5F;           /* Deepened forest mint/emerald for AAA legibility on white */
+  --zn-token-focus-ring: rgba(18, 49, 76, 0.35); /* Visible navy focus indicator */
+
+  /* ── High-Legibility Semantic Status Colors ── */
+  --zn-token-success: #059669;          /* Emerald-600 */
+  --zn-token-warning: #D97706;          /* Amber-600 */
+  --zn-token-danger: #DC2626;           /* Red-600 */
+  --zn-token-info: #0284C7;             /* Sky-600 */
+
+  /* ── Synchronized Zeitnah 2.0 Surface & Border Aliases ── */
+  --zn-bg: var(--zn-token-page-bg);
+  --zn-surface-1: #FFFFFF;
+  --zn-surface-2: #F8FAFC;
+  --zn-surface-3: #F1F5F9;
+  --zn-surface-card: var(--zn-token-surface-card);
+  --zn-border: var(--zn-token-border);
+  --zn-border-subtle: var(--zn-token-border-subtle);
+  --zn-border-accent: var(--zn-token-border-accent);
+  --zn-border-gold: rgba(217, 119, 6, 0.3);
+  --zn-text: var(--zn-token-text-primary);
+  --zn-text-muted: var(--zn-token-text-secondary);
+  --zn-text-faint: var(--zn-token-text-muted);
+  --zn-accent: var(--zn-token-accent);
+  --zn-accent-soft: rgba(13, 122, 95, 0.1);
+  --zn-accent-glow: rgba(13, 122, 95, 0.2);
+  --zn-gold: #D97706;
+  --zn-gold-soft: rgba(217, 119, 6, 0.1);
+  --zn-navy: #12314C;
+  --zn-success: var(--zn-token-success);
+  --zn-warning: var(--zn-token-warning);
+  --zn-danger: var(--zn-token-danger);
+  --zn-info: var(--zn-token-info);
+  color-scheme: light;
 }
 
 /* ═══════════════════════════════════════════════════════════════

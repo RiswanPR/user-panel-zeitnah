@@ -32,7 +32,7 @@ export default function ProfileSkillsSection({
     <section
       id="skills"
       aria-labelledby="profile-skills-heading"
-      className={`rounded-3xl border border-white/[0.08] bg-[#0A0F18]/90 backdrop-blur-xl p-6 sm:p-8 shadow-sm transition-all ${className}`}
+      className={`rounded-3xl border border-border bg-surface-card p-6 sm:p-8 shadow-sm transition-all ${className}`}
     >
       <div className="flex items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
@@ -43,12 +43,12 @@ export default function ProfileSkillsSection({
             <div className="flex items-center gap-2">
               <h2
                 id="profile-skills-heading"
-                className="text-lg sm:text-xl font-heading font-extrabold text-white tracking-tight"
+                className="text-lg sm:text-xl font-heading font-extrabold text-text-primary tracking-tight"
               >
                 Skills & Technical Competencies
               </h2>
               {totalCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-xs font-mono font-medium text-text-muted">
+                <span className="px-2 py-0.5 rounded-full bg-surface-elevated border border-border text-xs font-mono font-medium text-text-muted">
                   {totalCount}
                 </span>
               )}
@@ -71,11 +71,11 @@ export default function ProfileSkillsSection({
       </div>
 
       {totalCount === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.01] p-8 text-center">
-          <div className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-text-muted mx-auto mb-3">
+        <div className="rounded-2xl border border-dashed border-border bg-surface-elevated/20 p-8 text-center">
+          <div className="w-12 h-12 rounded-xl bg-surface-elevated border border-border flex items-center justify-center text-text-muted mx-auto mb-3">
             <Code2 className="w-6 h-6 text-text-faint" />
           </div>
-          <h3 className="text-sm font-heading font-bold text-white mb-1">
+          <h3 className="text-sm font-heading font-bold text-text-primary mb-1">
             No technical skills cataloged
           </h3>
           <p className="text-xs text-text-muted max-w-sm mx-auto mb-4">
@@ -97,7 +97,7 @@ export default function ProfileSkillsSection({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Engineering Software & BIM */}
           {software.length > 0 && (
-            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 sm:p-5 space-y-3">
+            <div className="rounded-2xl border border-border bg-surface-elevated/40 p-4 sm:p-5 space-y-3">
               <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-brand-yellow">
                 <Cpu className="w-4 h-4" />
                 <span>BIM & Engineering Software</span>
@@ -120,7 +120,7 @@ export default function ProfileSkillsSection({
 
           {/* Technical Disciplines */}
           {technical.length > 0 && (
-            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 sm:p-5 space-y-3">
+            <div className="rounded-2xl border border-border bg-surface-elevated/40 p-4 sm:p-5 space-y-3">
               <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-brand-mint">
                 <Code2 className="w-4 h-4" />
                 <span>Technical & Design Methods</span>
@@ -143,7 +143,7 @@ export default function ProfileSkillsSection({
 
           {/* Industry Sectors */}
           {industry.length > 0 && (
-            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 sm:p-5 space-y-3">
+            <div className="rounded-2xl border border-border bg-surface-elevated/40 p-4 sm:p-5 space-y-3">
               <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-sky-400">
                 <Building className="w-4 h-4" />
                 <span>Industry & Infrastructure Sectors</span>
@@ -166,7 +166,7 @@ export default function ProfileSkillsSection({
 
           {/* Professional Management */}
           {professional.length > 0 && (
-            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 sm:p-5 space-y-3">
+            <div className="rounded-2xl border border-border bg-surface-elevated/40 p-4 sm:p-5 space-y-3">
               <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-emerald-400">
                 <Award className="w-4 h-4" />
                 <span>Management & Leadership</span>
@@ -192,7 +192,7 @@ export default function ProfileSkillsSection({
           {flat.map((skill, idx) => (
             <span
               key={`fl-${idx}`}
-              className="px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.08] hover:border-brand-mint/30 text-xs sm:text-sm font-medium text-white/90 transition-colors"
+              className="px-3 py-1.5 rounded-xl bg-surface-elevated border border-border hover:border-brand-mint/30 text-xs sm:text-sm font-medium text-text-primary transition-colors"
             >
               {skill}
             </span>

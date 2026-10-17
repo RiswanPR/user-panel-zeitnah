@@ -7,9 +7,9 @@ export default function Podium({ topStudents = [], isCourseMode = false }) {
 
   if (!topStudents || topStudents.length === 0) {
     return (
-      <div className="rounded-2xl border border-border-default bg-bg-card/50 p-8 text-center">
+      <div className="rounded-2xl border border-border bg-surface-card p-8 text-center">
         <Award className="w-8 h-8 text-text-muted mx-auto mb-2 opacity-60" />
-        <p className="text-sm font-semibold text-white">Podium Awaiting Learners</p>
+        <p className="text-sm font-semibold text-text-primary">Podium Awaiting Learners</p>
         <p className="text-xs text-text-muted mt-1">
           Complete classes and earn XP to take your place among the top 3.
         </p>
@@ -64,7 +64,7 @@ export default function Podium({ topStudents = [], isCourseMode = false }) {
           pedestalHeight: "h-36 sm:h-44",
           border: "border-brand-yellow/30",
           glow: "bg-brand-yellow/10",
-          badgeBg: "bg-brand-yellow text-bg-base",
+          badgeBg: "bg-brand-yellow text-brand-navy",
           accentColor: "text-brand-yellow",
           avatarSize: "w-20 h-20 sm:w-24 sm:h-24",
           avatarBorder: "border-brand-yellow/40",
@@ -76,7 +76,7 @@ export default function Podium({ topStudents = [], isCourseMode = false }) {
           pedestalHeight: "h-28 sm:h-36",
           border: "border-slate-300/30",
           glow: "bg-slate-300/5",
-          badgeBg: "bg-slate-300 text-bg-base",
+          badgeBg: "bg-slate-300 text-brand-navy",
           accentColor: "text-slate-300",
           avatarSize: "w-16 h-16 sm:w-20 sm:h-20",
           avatarBorder: "border-slate-300/40",
@@ -116,7 +116,7 @@ export default function Podium({ topStudents = [], isCourseMode = false }) {
               className={`absolute inset-0 rounded-full blur-md ${config.glow} group-hover:blur-lg transition-all`}
             />
             <div
-              className={`relative ${config.avatarSize} rounded-full overflow-hidden border-2 ${config.avatarBorder} bg-bg-surface flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300`}
+              className={`relative ${config.avatarSize} rounded-full overflow-hidden border-2 ${config.avatarBorder} bg-surface-elevated flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300`}
             >
               {student.avatar ? (
                 <img
@@ -138,14 +138,14 @@ export default function Podium({ topStudents = [], isCourseMode = false }) {
 
             {/* YOU tag if student is logged in */}
             {student.isYou && (
-              <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-md bg-brand-yellow px-1.5 py-0.2 text-[8px] font-black uppercase tracking-wider text-bg-base shadow-sm">
+              <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-md bg-brand-yellow px-1.5 py-0.2 text-[8px] font-black uppercase tracking-wider text-brand-navy shadow-sm">
                 YOU
               </span>
             )}
           </div>
 
           {/* Student name & handle */}
-          <p className="font-semibold text-white text-xs sm:text-sm truncate max-w-[140px] group-hover:text-brand-mint transition-colors">
+          <p className="font-semibold text-text-primary text-xs sm:text-sm truncate max-w-[140px] group-hover:text-brand-mint transition-colors">
             {student.name}
           </p>
           {student.username && (
@@ -164,9 +164,9 @@ export default function Podium({ topStudents = [], isCourseMode = false }) {
 
         {/* Elevated Pedestal */}
         <div
-          className={`w-full ${config.pedestalHeight} rounded-t-2xl border-t border-x ${config.border} bg-gradient-to-b from-white/[0.04] to-white/[0.01] backdrop-blur-md flex flex-col items-center justify-start pt-3 relative overflow-hidden shadow-lg`}
+          className={`w-full ${config.pedestalHeight} rounded-t-2xl border-t border-x ${config.border} bg-gradient-to-b from-surface-elevated to-surface-card backdrop-blur-md flex flex-col items-center justify-start pt-3 relative overflow-hidden shadow-lg`}
         >
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
           <span className={`text-2xl sm:text-3xl font-heading font-black ${config.accentColor} font-mono`}>
             #{place}
           </span>

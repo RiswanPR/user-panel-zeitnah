@@ -72,7 +72,7 @@ export default function ProfileModulesGrid({ username, className = "" }) {
   return (
     <div className={`space-y-4 ${className}`}>
       <div>
-        <h2 className="text-lg sm:text-xl font-heading font-bold text-white tracking-tight">
+        <h2 className="text-lg sm:text-xl font-heading font-bold text-text-primary tracking-tight">
           Platform Subsystems
         </h2>
         <p className="text-xs text-text-muted mt-0.5">
@@ -110,12 +110,12 @@ export default function ProfileModulesGrid({ username, className = "" }) {
                       <Icon className="w-5 h-5" />
                     </div>
 
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted px-2.5 py-1 rounded-md bg-white/[0.03] border border-white/[0.06]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted px-2.5 py-1 rounded-md bg-surface-elevated border border-border">
                       {mod.tag}
                     </span>
                   </div>
 
-                  <h3 className="text-base font-heading font-bold text-white group-hover:text-brand-mint transition-colors mb-1.5">
+                  <h3 className="text-base font-heading font-bold text-text-primary group-hover:text-brand-mint transition-colors mb-1.5">
                     {mod.title}
                   </h3>
 
@@ -124,7 +124,7 @@ export default function ProfileModulesGrid({ username, className = "" }) {
                   </p>
                 </div>
 
-                <div className="mt-5 pt-4 border-t border-white/[0.04] flex items-center justify-between text-xs font-semibold text-brand-mint">
+                <div className="mt-5 pt-4 border-t border-border flex items-center justify-between text-xs font-semibold text-brand-mint">
                   <span>Open Subsystem</span>
                   <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
                 </div>

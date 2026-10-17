@@ -105,7 +105,7 @@ const SessionDiagnostics = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#07192a] text-white">
+      <div className="flex h-screen items-center justify-center bg-bg-base text-text-primary">
         <Loader2 className="w-10 h-10 animate-spin text-brand-mint" />
       </div>
     );
@@ -115,7 +115,7 @@ const SessionDiagnostics = () => {
   const isSessionValid = tokenData?.sessionExpiresAt && tokenData.sessionExpiresAt > now;
 
   return (
-    <div className="min-h-screen bg-[#07192a] text-white p-6 sm:p-10 font-sans">
+    <div className="min-h-screen bg-bg-base text-text-primary p-6 sm:p-10 font-sans">
       <div className="max-w-4xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
@@ -123,7 +123,7 @@ const SessionDiagnostics = () => {
               <ShieldCheck className="w-8 h-8 text-brand-mint" />
               Session Diagnostics
             </h1>
-            <p className="text-white/50 text-sm mt-1">Real-time authentication & token monitoring</p>
+            <p className="text-text-muted text-sm mt-1">Real-time authentication & token monitoring</p>
           </div>
           <div className="flex gap-3">
              <button 
@@ -156,7 +156,7 @@ const SessionDiagnostics = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Access Token Card */}
-          <div className={`glass-card p-6 rounded-2xl border ${isAccessValid ? 'border-brand-mint/20' : 'border-red-500/20'}`}>
+          <div className={`bg-surface-card p-6 rounded-2xl border ${isAccessValid ? 'border-brand-mint/20' : 'border-red-500/20'}`}>
             <div className="flex items-center gap-3 mb-4">
               <div className={`p-2 rounded-lg ${isAccessValid ? 'bg-brand-mint/10 text-brand-mint' : 'bg-red-500/10 text-red-500'}`}>
                 <KeyRound className="w-6 h-6" />
@@ -171,20 +171,20 @@ const SessionDiagnostics = () => {
             
             <div className="space-y-4 mt-6">
               <div>
-                <div className="text-sm text-white/50 mb-1">Status</div>
+                <div className="text-sm text-text-muted mb-1">Status</div>
                 <div className="font-medium">{tokenData?.token ? "Present in Storage" : "Missing"}</div>
               </div>
               
               <div>
-                <div className="text-sm text-white/50 mb-1">Expires In</div>
-                <div className={`text-2xl font-mono font-bold tracking-tight ${isAccessValid ? 'text-white' : 'text-red-400'}`}>
+                <div className="text-sm text-text-muted mb-1">Expires In</div>
+                <div className={`text-2xl font-mono font-bold tracking-tight ${isAccessValid ? 'text-text-primary' : 'text-red-400'}`}>
                   {formatCountdown(tokenData?.accessExpiresAt)}
                 </div>
               </div>
               
               {tokenData?.accessExpiresAt && (
                 <div>
-                  <div className="text-sm text-white/50 mb-1">Exact Expiry</div>
+                  <div className="text-sm text-text-muted mb-1">Exact Expiry</div>
                   <div className="text-sm font-medium">{tokenData.accessExpiresAt.toLocaleString()}</div>
                 </div>
               )}
@@ -192,7 +192,7 @@ const SessionDiagnostics = () => {
           </div>
 
           {/* Refresh Token Card */}
-          <div className={`glass-card p-6 rounded-2xl border ${isSessionValid ? 'border-blue-500/30' : 'border-red-500/20'}`}>
+          <div className={`bg-surface-card p-6 rounded-2xl border ${isSessionValid ? 'border-blue-500/30' : 'border-red-500/20'}`}>
             <div className="flex items-center gap-3 mb-4">
               <div className={`p-2 rounded-lg ${isSessionValid ? 'bg-blue-500/10 text-blue-400' : 'bg-red-500/10 text-red-500'}`}>
                 <Clock className="w-6 h-6" />
@@ -207,20 +207,20 @@ const SessionDiagnostics = () => {
 
             <div className="space-y-4 mt-6">
               <div>
-                <div className="text-sm text-white/50 mb-1">Status</div>
+                <div className="text-sm text-text-muted mb-1">Status</div>
                 <div className="font-medium">{tokenData?.refreshToken ? "Present in Storage" : "Missing"}</div>
               </div>
               
               <div>
-                <div className="text-sm text-white/50 mb-1">Session Valid For</div>
-                <div className={`text-2xl font-mono font-bold tracking-tight ${isSessionValid ? 'text-white' : 'text-red-400'}`}>
+                <div className="text-sm text-text-muted mb-1">Session Valid For</div>
+                <div className={`text-2xl font-mono font-bold tracking-tight ${isSessionValid ? 'text-text-primary' : 'text-red-400'}`}>
                   {formatCountdown(tokenData?.sessionExpiresAt)}
                 </div>
               </div>
               
               {tokenData?.sessionExpiresAt && (
                 <div>
-                  <div className="text-sm text-white/50 mb-1">Exact Expiry</div>
+                  <div className="text-sm text-text-muted mb-1">Exact Expiry</div>
                   <div className="text-sm font-medium">{tokenData.sessionExpiresAt.toLocaleString()}</div>
                 </div>
               )}
@@ -230,12 +230,12 @@ const SessionDiagnostics = () => {
 
         {/* Payload Debug */}
         {tokenData?.decoded && (
-          <div className="mt-8 glass-card p-6 rounded-2xl border border-white/10">
+          <div className="mt-8 bg-surface-card p-6 rounded-2xl border border-border">
             <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <Laptop className="w-5 h-5 text-white/50" />
+              <Laptop className="w-5 h-5 text-text-muted" />
               Decoded Token Payload
             </h3>
-            <pre className="bg-black/40 p-4 rounded-xl text-xs sm:text-sm text-brand-mint font-mono overflow-x-auto">
+            <pre className="bg-surface-elevated border border-border p-4 rounded-xl text-xs sm:text-sm text-brand-mint font-mono overflow-x-auto">
               {JSON.stringify(tokenData.decoded, null, 2)}
             </pre>
           </div>

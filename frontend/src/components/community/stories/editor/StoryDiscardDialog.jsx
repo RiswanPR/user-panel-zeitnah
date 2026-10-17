@@ -22,14 +22,14 @@ export default function StoryDiscardDialog({ isOpen, onKeepEditing, onDiscard })
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 8 }}
           transition={{ duration: 0.16 }}
-          className="w-full max-w-sm bg-[#0E1726] border border-white/10 rounded-2xl p-5 shadow-2xl space-y-4"
+          className="w-full max-w-sm bg-surface-card border border-border rounded-2xl p-5 shadow-2xl space-y-4"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 shrink-0">
               <AlertCircle className="w-5 h-5" />
             </div>
             <div>
-              <h3 id="discard-title" className="text-base font-bold text-white tracking-tight">
+              <h3 id="discard-title" className="text-base font-bold text-text-primary tracking-tight">
                 Discard story?
               </h3>
               <p id="discard-desc" className="text-xs text-text-muted mt-0.5">
@@ -42,7 +42,7 @@ export default function StoryDiscardDialog({ isOpen, onKeepEditing, onDiscard })
             <button
               type="button"
               onClick={onKeepEditing}
-              className="flex-1 min-h-[44px] px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-white text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
+              className="flex-1 min-h-[44px] px-4 py-2 rounded-xl bg-surface-elevated hover:bg-surface-card text-text-primary border border-border text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
             >
               Keep Editing
             </button>

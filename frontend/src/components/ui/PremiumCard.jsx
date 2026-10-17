@@ -27,7 +27,7 @@ export default function PremiumCard({
   } else if (variant === "panel") {
     variantClasses = "zn-panel";
   } else if (variant === "metric") {
-    variantClasses = "zn-card bg-gradient-to-br from-[#0F1728]/90 via-[#0B111E]/95 to-[#070B14]";
+    variantClasses = "zn-card bg-surface-card";
   } else if (variant === "insight") {
     variantClasses = "zn-card border-l-2 border-l-brand-mint/60";
   }

@@ -24,7 +24,7 @@ export default function SpaceAnnouncements({ announcements = [], canPost, onPost
       {/* Action header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-heading font-bold text-lg text-white">Space Announcements</h2>
+          <h2 className="font-heading font-bold text-lg text-text-primary">Space Announcements</h2>
           <p className="text-xs text-text-muted mt-0.5">Official updates and notices from faculty and mentors.</p>
         </div>
 
@@ -43,15 +43,15 @@ export default function SpaceAnnouncements({ announcements = [], canPost, onPost
       {isLoading ? (
         <div className="space-y-4">
           {[1, 2].map((i) => (
-            <div key={i} className="h-32 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+            <div key={i} className="h-32 rounded-2xl bg-surface-card border border-border animate-pulse" />
           ))}
         </div>
       ) : announcements.length === 0 ? (
-        <div className="rounded-2xl bg-[#111115]/60 border border-white/[0.06] p-12 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-3 text-text-faint">
+        <div className="rounded-2xl bg-surface-card border border-border p-12 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center mx-auto mb-3 text-text-faint">
             <Megaphone className="w-6 h-6" />
           </div>
-          <h3 className="font-heading font-bold text-base text-white">No announcements yet</h3>
+          <h3 className="font-heading font-bold text-base text-text-primary">No announcements yet</h3>
           <p className="text-xs text-text-muted mt-1 max-w-sm mx-auto">
             Official cohort announcements from teachers and moderators will appear here.
           </p>
@@ -64,12 +64,12 @@ export default function SpaceAnnouncements({ announcements = [], canPost, onPost
               className={`p-6 rounded-2xl border transition-all ${
                 ann.pinned
                   ? 'bg-gradient-to-r from-brand-mint/[0.04] to-transparent border-brand-mint/30 shadow-lg shadow-brand-mint/5'
-                  : 'bg-[#111115]/80 border-white/[0.06]'
+                  : 'bg-surface-card border-border'
               }`}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-brand-mint font-bold text-xs overflow-hidden">
+                  <div className="w-8 h-8 rounded-xl bg-surface-elevated border border-border flex items-center justify-center text-brand-mint font-bold text-xs overflow-hidden">
                     {ann.authorId?.avatar || ann.authorId?.profileImage ? (
                       <img src={ann.authorId.avatar || ann.authorId.profileImage} alt={ann.authorId.name} className="w-full h-full object-cover" />
                     ) : (
@@ -77,7 +77,7 @@ export default function SpaceAnnouncements({ announcements = [], canPost, onPost
                     )}
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <h4 className="text-sm font-bold text-text-primary flex items-center gap-2">
                       <span>{ann.title}</span>
                       {ann.pinned && (
                         <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-brand-yellow/15 text-brand-yellow border border-brand-yellow/30">

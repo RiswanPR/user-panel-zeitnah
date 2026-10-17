@@ -278,7 +278,7 @@ export default function JobsPage() {
         title="Infrastructure Jobs"
         description="Discover verified engineering, BIM, construction management, and energy infrastructure roles matched with your profile."
         actions={
-          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md overflow-x-auto max-w-full no-scrollbar">
+          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-surface-elevated/40 border border-border backdrop-blur-md overflow-x-auto max-w-full no-scrollbar">
             {[
               { id: 'forYou', label: 'For You', icon: Sparkles },
               { id: 'all', label: 'All Jobs', icon: Briefcase },
@@ -299,8 +299,8 @@ export default function JobsPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer min-h-[38px] touch-manipulation ${
                     active
-                      ? 'bg-brand-mint text-black font-bold shadow-md shadow-brand-mint/15'
-                      : 'text-text-muted hover:text-white hover:bg-white/[0.04]'
+                      ? 'bg-brand-mint text-brand-navy font-bold shadow-md shadow-brand-mint/15'
+                      : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated/60'
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -314,21 +314,21 @@ export default function JobsPage() {
 
       {/* ── Search & Filter Controls (For Explore & Recent tabs) ── */}
       {(activeTab === 'all' || activeTab === 'recent') && (
-        <div className="space-y-3 p-5 rounded-3xl bg-white/[0.02] border border-white/[0.06]">
+        <div className="space-y-3 p-5 rounded-3xl bg-surface-card border border-border">
           {/* Main search bar */}
           <div className="relative">
-            <Search className="w-5 h-5 text-white/30 absolute left-4 top-3.5" />
+            <Search className="w-5 h-5 text-text-muted absolute left-4 top-3.5" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by title, skills, software, company, or keywords..."
-              className="w-full pl-12 pr-4 py-3 rounded-2xl bg-white/[0.04] border border-white/[0.08] focus:border-brand-mint text-sm text-white placeholder-white/30 outline-none transition-all"
+              className="w-full pl-12 pr-4 py-3 rounded-2xl bg-surface-elevated border border-border focus:border-brand-mint text-sm text-text-primary placeholder-text-muted/50 outline-none transition-all"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-4 top-3.5 text-white/40 hover:text-white"
+                className="absolute right-4 top-3.5 text-text-muted hover:text-text-primary"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -341,7 +341,7 @@ export default function JobsPage() {
             <select
               value={selectedDiscipline}
               onChange={(e) => setSelectedDiscipline(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-[#161620] border border-white/[0.08] text-xs text-white/90 outline-none focus:border-brand-mint"
+              className="px-3 py-2 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary outline-none focus:border-brand-mint"
             >
               <option value="">All Disciplines</option>
               {INFRASTRUCTURE_DISCIPLINES.map((d) => (
@@ -355,7 +355,7 @@ export default function JobsPage() {
             <select
               value={selectedSector}
               onChange={(e) => setSelectedSector(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-[#161620] border border-white/[0.08] text-xs text-white/90 outline-none focus:border-brand-mint"
+              className="px-3 py-2 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary outline-none focus:border-brand-mint"
             >
               <option value="">All Sectors</option>
               {INFRASTRUCTURE_SECTORS.map((s) => (
@@ -369,7 +369,7 @@ export default function JobsPage() {
             <select
               value={selectedSoftware}
               onChange={(e) => setSelectedSoftware(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-[#161620] border border-white/[0.08] text-xs text-white/90 outline-none focus:border-brand-mint"
+              className="px-3 py-2 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary outline-none focus:border-brand-mint"
             >
               <option value="">All Software Tools</option>
               {INFRASTRUCTURE_SOFTWARE.map((sw) => (
@@ -383,7 +383,7 @@ export default function JobsPage() {
             <select
               value={selectedWorkMode}
               onChange={(e) => setSelectedWorkMode(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-[#161620] border border-white/[0.08] text-xs text-white/90 outline-none focus:border-brand-mint"
+              className="px-3 py-2 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary outline-none focus:border-brand-mint"
             >
               <option value="">All Work Modes</option>
               {WORK_MODES.map((wm) => (
@@ -397,7 +397,7 @@ export default function JobsPage() {
             <select
               value={selectedJobType}
               onChange={(e) => setSelectedJobType(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-[#161620] border border-white/[0.08] text-xs text-white/90 outline-none focus:border-brand-mint"
+              className="px-3 py-2 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary outline-none focus:border-brand-mint"
             >
               <option value="">All Job Types</option>
               {JOB_TYPES.map((jt) => (
@@ -411,7 +411,7 @@ export default function JobsPage() {
             <select
               value={minExp}
               onChange={(e) => setMinExp(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-[#161620] border border-white/[0.08] text-xs text-white/90 outline-none focus:border-brand-mint"
+              className="px-3 py-2 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary outline-none focus:border-brand-mint"
             >
               <option value="">Experience Level</option>
               <option value="0">0+ Years (Entry)</option>
@@ -450,7 +450,7 @@ export default function JobsPage() {
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>Personalized Job Recommendations</span>
                 </div>
-                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-black text-text-primary tracking-tight">
                   Jobs For You
                 </h2>
                 <p className="text-xs sm:text-sm text-text-muted mt-1 max-w-2xl leading-relaxed">
@@ -463,7 +463,7 @@ export default function JobsPage() {
                 <button
                   onClick={() => refreshRecsMutation.mutate()}
                   disabled={refreshRecsMutation.isPending || refetchingRecs}
-                  className="px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-xs font-semibold text-white transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2.5 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 border border-border text-xs font-semibold text-text-primary transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
                   title="Refresh recommendations based on latest profile changes"
                 >
                   <RotateCw
@@ -480,20 +480,20 @@ export default function JobsPage() {
 
             {/* Profile Insights Summary Bar */}
             {profileInsights && profileInsights.totalRecommended > 0 && (
-              <div className="mt-5 pt-4 border-t border-white/[0.08] grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3 rounded-2xl bg-black/30 border border-white/[0.05]">
+              <div className="mt-5 pt-4 border-t border-border grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3 rounded-2xl bg-surface-elevated/50 border border-border">
                   <span className="text-[11px] text-text-muted block">Total Matched</span>
-                  <span className="text-lg font-black text-white">
+                  <span className="text-lg font-black text-text-primary">
                     {profileInsights.totalRecommended} Jobs
                   </span>
                 </div>
-                <div className="p-3 rounded-2xl bg-black/30 border border-white/[0.05]">
+                <div className="p-3 rounded-2xl bg-surface-elevated/50 border border-border">
                   <span className="text-[11px] text-text-muted block">Highly Compatible (80%+)</span>
                   <span className="text-lg font-black text-emerald-400">
                     {profileInsights.highlyCompatibleCount}
                   </span>
                 </div>
-                <div className="p-3 rounded-2xl bg-black/30 border border-white/[0.05] sm:col-span-2">
+                <div className="p-3 rounded-2xl bg-surface-elevated/50 border border-border sm:col-span-2">
                   <span className="text-[11px] text-text-muted block">Top Matching Sectors</span>
                   <span className="text-xs font-bold text-brand-mint truncate block mt-1">
                     {profileInsights.topMatchingSectors?.join(' • ') || 'Civil Infrastructure'}
@@ -504,12 +504,12 @@ export default function JobsPage() {
 
             {/* Profile Improvement Loop Hint */}
             {profileInsights?.profileImprovements?.length > 0 && (
-              <div className="mt-4 p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.07] flex items-start gap-3">
+              <div className="mt-4 p-3.5 rounded-2xl bg-surface-elevated/40 border border-border flex items-start gap-3">
                 <div className="p-1.5 rounded-xl bg-amber-500/10 text-amber-400 shrink-0 mt-0.5">
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <div className="text-xs">
-                  <span className="font-bold text-white block">
+                  <span className="font-bold text-text-primary block">
                     Improve Job Discovery:
                   </span>
                   <p className="text-text-muted mt-0.5">
@@ -539,15 +539,15 @@ export default function JobsPage() {
                 onClick={() => setRecCategory(f.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   recCategory === f.id
-                    ? 'bg-brand-mint text-black font-bold'
-                    : 'bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/[0.08]'
+                    ? 'bg-brand-mint text-brand-navy font-bold'
+                    : 'bg-surface-elevated text-text-secondary hover:text-text-primary hover:bg-surface-elevated/80 border border-border'
                 }`}
               >
                 {f.label}
               </button>
             ))}
 
-            <div className="h-4 w-px bg-white/10 mx-1 hidden sm:block" />
+            <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
 
             {[
               { id: 'role_match', label: 'Role Matches' },
@@ -561,7 +561,7 @@ export default function JobsPage() {
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   recType === t.id
                     ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 font-bold'
-                    : 'bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/[0.08]'
+                    : 'bg-surface-elevated text-text-secondary hover:text-text-primary hover:bg-surface-elevated/80 border border-border'
                 }`}
               >
                 {t.label}
@@ -578,9 +578,9 @@ export default function JobsPage() {
               </p>
             </div>
           ) : recsError ? (
-            <div className="py-16 text-center bg-white/[0.02] border border-white/[0.06] rounded-3xl space-y-3 p-6">
+            <div className="py-16 text-center bg-surface-card border border-border rounded-3xl space-y-3 p-6">
               <AlertCircle className="w-10 h-10 mx-auto text-amber-400" />
-              <h3 className="text-base font-bold text-white">
+              <h3 className="text-base font-bold text-text-primary">
                 Talent recommendations are temporarily unavailable
               </h3>
               <p className="text-xs text-text-muted max-w-md mx-auto">
@@ -589,22 +589,22 @@ export default function JobsPage() {
               <div className="flex items-center justify-center gap-2 pt-2">
                 <button
                   onClick={() => refetchRecs()}
-                  className="px-4 py-2 rounded-xl bg-brand-mint text-black font-bold text-xs cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs cursor-pointer"
                 >
                   Retry Matching
                 </button>
                 <button
                   onClick={() => setActiveTab('all')}
-                  className="px-4 py-2 rounded-xl bg-white/[0.06] text-white font-semibold text-xs cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-surface-elevated text-text-primary border border-border font-semibold text-xs cursor-pointer"
                 >
                   Browse All Jobs
                 </button>
               </div>
             </div>
           ) : !recsData?.data || recsData.data.length === 0 ? (
-            <div className="py-16 text-center bg-white/[0.02] border border-white/[0.06] rounded-3xl space-y-3 p-6">
+            <div className="py-16 text-center bg-surface-card border border-border rounded-3xl space-y-3 p-6">
               <Sparkles className="w-10 h-10 mx-auto text-brand-mint/40" />
-              <h3 className="text-base font-bold text-white">
+              <h3 className="text-base font-bold text-text-primary">
                 No strong profile matches found yet
               </h3>
               <p className="text-xs text-text-muted max-w-md mx-auto">
@@ -613,13 +613,13 @@ export default function JobsPage() {
               <div className="flex items-center justify-center gap-2 pt-2">
                 <Link
                   to="/profile/edit"
-                  className="px-4 py-2 rounded-xl bg-brand-mint text-black font-bold text-xs"
+                  className="px-4 py-2 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs"
                 >
                   Edit Profile Details
                 </Link>
                 <button
                   onClick={() => setActiveTab('all')}
-                  className="px-4 py-2 rounded-xl bg-white/[0.06] text-white font-semibold text-xs"
+                  className="px-4 py-2 rounded-xl bg-surface-elevated text-text-primary border border-border font-semibold text-xs"
                 >
                   Explore All Jobs
                 </button>
@@ -663,16 +663,16 @@ export default function JobsPage() {
               </p>
             </div>
           ) : displayJobs.length === 0 ? (
-            <div className="py-16 text-center bg-white/[0.02] border border-white/[0.06] rounded-3xl space-y-3">
-              <Briefcase className="w-10 h-10 mx-auto text-white/20" />
-              <h3 className="text-base font-bold text-white">No jobs found</h3>
+            <div className="py-16 text-center bg-surface-card border border-border rounded-3xl space-y-3">
+              <Briefcase className="w-10 h-10 mx-auto text-text-muted/40" />
+              <h3 className="text-base font-bold text-text-primary">No jobs found</h3>
               <p className="text-xs text-text-muted max-w-sm mx-auto">
                 No active infrastructure jobs match your search parameters. Try clearing filters or exploring other sectors.
               </p>
               {hasActiveFilters && (
                 <button
                   onClick={clearFilters}
-                  className="px-4 py-2 rounded-xl bg-brand-mint text-black font-bold text-xs"
+                  className="px-4 py-2 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs cursor-pointer"
                 >
                   Clear Filters
                 </button>
@@ -705,15 +705,15 @@ export default function JobsPage() {
               </p>
             </div>
           ) : savedJobs.length === 0 ? (
-            <div className="py-16 text-center bg-white/[0.02] border border-white/[0.06] rounded-3xl space-y-3">
-              <Bookmark className="w-10 h-10 mx-auto text-white/20" />
-              <h3 className="text-base font-bold text-white">No saved jobs</h3>
+            <div className="py-16 text-center bg-surface-card border border-border rounded-3xl space-y-3">
+              <Bookmark className="w-10 h-10 mx-auto text-text-muted/40" />
+              <h3 className="text-base font-bold text-text-primary">No saved jobs</h3>
               <p className="text-xs text-text-muted max-w-sm mx-auto">
                 Bookmark interesting opportunities to review and apply to them later.
               </p>
               <button
                 onClick={() => setActiveTab('all')}
-                className="px-4 py-2 rounded-xl bg-brand-mint text-black font-bold text-xs"
+                className="px-4 py-2 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs cursor-pointer"
               >
                 Browse All Jobs
               </button>
@@ -745,15 +745,15 @@ export default function JobsPage() {
               </p>
             </div>
           ) : myApplications.length === 0 ? (
-            <div className="py-16 text-center bg-white/[0.02] border border-white/[0.06] rounded-3xl space-y-3">
-              <FileCheck2 className="w-10 h-10 mx-auto text-white/20" />
-              <h3 className="text-base font-bold text-white">No active applications</h3>
+            <div className="py-16 text-center bg-surface-card border border-border rounded-3xl space-y-3">
+              <FileCheck2 className="w-10 h-10 mx-auto text-text-muted/40" />
+              <h3 className="text-base font-bold text-text-primary">No active applications</h3>
               <p className="text-xs text-text-muted max-w-sm mx-auto">
                 You haven't submitted any job applications yet. Explore openings and apply directly.
               </p>
               <button
                 onClick={() => setActiveTab('all')}
-                className="px-4 py-2 rounded-xl bg-brand-mint text-black font-bold text-xs"
+                className="px-4 py-2 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs cursor-pointer"
               >
                 Discover Opportunities
               </button>
@@ -763,18 +763,18 @@ export default function JobsPage() {
               {myApplications.map((app) => (
                 <div
                   key={app.id}
-                  className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  className="p-5 rounded-2xl bg-surface-card border border-border hover:border-border-accent transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2.5">
-                      <h4 className="text-base font-bold text-white font-heading">
+                      <h4 className="text-base font-bold text-text-primary font-heading">
                         {app.job?.title || 'Infrastructure Position'}
                       </h4>
                       <span
                         className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full ${
                           app.status === 'submitted'
                             ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
-                            : 'bg-white/[0.05] text-white/50 border border-white/[0.08]'
+                            : 'bg-surface-elevated text-text-muted border border-border'
                         }`}
                       >
                         {app.status}
@@ -794,7 +794,7 @@ export default function JobsPage() {
                     </p>
 
                     {app.coverNote && (
-                      <p className="text-xs text-white/70 italic line-clamp-1 pt-1">
+                      <p className="text-xs text-text-muted italic line-clamp-1 pt-1">
                         "{app.coverNote}"
                       </p>
                     )}
@@ -804,7 +804,7 @@ export default function JobsPage() {
                     {app.status === 'submitted' && (
                       <button
                         onClick={() => withdrawMutation.mutate(app.id)}
-                        className="px-3.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-red-500/20 text-xs font-semibold text-text-muted hover:text-red-300 transition-colors"
+                        className="px-3.5 py-1.5 rounded-xl bg-surface-elevated hover:bg-red-500/20 border border-border text-xs font-semibold text-text-muted hover:text-red-300 transition-colors"
                       >
                         Withdraw
                       </button>
@@ -812,7 +812,7 @@ export default function JobsPage() {
                     {app.job?.id && (
                       <Link
                         to={`/jobs/${app.job.id}`}
-                        className="flex items-center gap-1 px-4 py-2 rounded-xl bg-brand-mint text-black font-bold text-xs shadow-md shadow-brand-mint/15"
+                        className="flex items-center gap-1 px-4 py-2 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs shadow-md shadow-brand-mint/15"
                       >
                         <span>View Job</span>
                         <ChevronRight className="w-3.5 h-3.5" />
@@ -829,9 +829,9 @@ export default function JobsPage() {
       {/* ── TAB 4: RECEIVED OPPORTUNITY INVITATIONS ── */}
       {activeTab === 'invites' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+          <div className="flex items-center justify-between pb-2 border-b border-border">
             <div>
-              <h2 className="text-lg font-bold text-white">Direct Employer Opportunities</h2>
+              <h2 className="text-lg font-bold text-text-primary">Direct Employer Opportunities</h2>
               <p className="text-xs text-text-muted mt-0.5">
                 Employers and recruiters who matched with your profile and reached out with opportunities.
               </p>
@@ -844,15 +844,15 @@ export default function JobsPage() {
               <p className="text-xs">Loading received invitations...</p>
             </div>
           ) : invites.length === 0 ? (
-            <div className="py-16 text-center text-text-muted bg-white/[0.02] border border-white/[0.06] rounded-3xl space-y-3">
-              <Mail className="w-10 h-10 mx-auto text-white/20" />
-              <h3 className="text-base font-bold text-white">No invitations received yet</h3>
+            <div className="py-16 text-center text-text-muted bg-surface-card border border-border rounded-3xl space-y-3">
+              <Mail className="w-10 h-10 mx-auto text-text-muted/40" />
+              <h3 className="text-base font-bold text-text-primary">No invitations received yet</h3>
               <p className="text-xs max-w-sm mx-auto">
                 When recruiters match a published job to your expertise, their direct opportunities will appear here. Ensure your profile is discoverable in settings.
               </p>
               <Link
                 to="/profile/edit"
-                className="inline-block px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-brand-mint font-semibold text-xs border border-brand-mint/30"
+                className="inline-block px-4 py-2 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-brand-mint font-semibold text-xs border border-brand-mint/30"
               >
                 Update Profile & Preferences
               </Link>
@@ -867,11 +867,11 @@ export default function JobsPage() {
                 return (
                   <div
                     key={invite.id}
-                    className="p-5 rounded-3xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12] transition-all flex flex-col md:flex-row md:items-center justify-between gap-5"
+                    className="p-5 rounded-3xl bg-surface-card border border-border hover:border-border-accent transition-all flex flex-col md:flex-row md:items-center justify-between gap-5"
                   >
                     <div className="space-y-2 flex-1 min-w-0">
                       <div className="flex items-center gap-2.5 flex-wrap">
-                        <span className="font-bold text-base text-white">
+                        <span className="font-bold text-base text-text-primary">
                           {job.title || 'Infrastructure Position'}
                         </span>
                         <span
@@ -890,7 +890,7 @@ export default function JobsPage() {
                       </div>
 
                       <p className="text-xs text-text-muted flex items-center gap-2 flex-wrap">
-                        <span className="text-white font-semibold">{business.name || 'Employer'}</span>
+                        <span className="text-text-primary font-semibold">{business.name || 'Employer'}</span>
                         <span>•</span>
                         <span>{job.discipline || 'Engineering'}</span>
                         <span>•</span>
@@ -900,7 +900,7 @@ export default function JobsPage() {
                       </p>
 
                       {invite.message && (
-                        <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.04] text-xs text-white/80 italic">
+                        <div className="p-3 rounded-xl bg-surface-elevated/50 border border-border text-xs text-text-secondary italic">
                           "{invite.message}"
                         </div>
                       )}
@@ -930,7 +930,7 @@ export default function JobsPage() {
                               })
                             }
                             disabled={respondInviteMutation.isPending}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.03] hover:bg-red-500/20 text-text-muted hover:text-red-300 text-xs font-semibold transition-all cursor-pointer"
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-elevated border border-border hover:bg-red-500/20 text-text-muted hover:text-red-300 text-xs font-semibold transition-all cursor-pointer"
                           >
                             <ThumbsDown className="w-3.5 h-3.5" />
                             <span>Decline</span>
@@ -941,7 +941,7 @@ export default function JobsPage() {
                       {job.id && (
                         <Link
                           to={`/jobs/${job.id}`}
-                          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-brand-mint text-white hover:text-black font-bold text-xs transition-all"
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-elevated border border-border hover:bg-brand-mint text-text-primary hover:text-brand-navy font-bold text-xs transition-all"
                         >
                           <span>View Job</span>
                           <ChevronRight className="w-3.5 h-3.5" />
@@ -975,12 +975,12 @@ function JobCard({ job, onToggleSave }) {
   const isVerified = org.isVerified || org.verificationStatus === 'VERIFIED';
 
   return (
-    <div className="p-6 rounded-3xl bg-[#111116] border border-white/[0.07] hover:border-brand-mint/30 transition-all flex flex-col justify-between group shadow-lg">
+    <div className="p-6 rounded-3xl bg-surface-card border border-border hover:border-brand-mint/30 transition-all flex flex-col justify-between group shadow-lg">
       <div className="space-y-4">
         {/* Card Header */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center overflow-hidden shrink-0">
+            <div className="w-12 h-12 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center overflow-hidden shrink-0">
               {org.logo ? (
                 <img src={org.logo} alt={org.name} className="w-full h-full object-cover" />
               ) : (
@@ -989,7 +989,7 @@ function JobCard({ job, onToggleSave }) {
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-semibold text-xs text-white/90 line-clamp-1">
+                <span className="font-semibold text-xs text-text-primary line-clamp-1">
                   {org.name || 'Infrastructure Employer'}
                 </span>
                 {isVerified && (
@@ -1011,7 +1011,7 @@ function JobCard({ job, onToggleSave }) {
           <button
             onClick={onToggleSave}
             title={job.isSaved ? 'Remove from saved' : 'Save job'}
-            className="p-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] text-white/40 hover:text-brand-mint transition-colors cursor-pointer"
+            className="p-2 rounded-xl bg-surface-elevated border border-border hover:bg-surface-elevated/80 text-text-muted hover:text-brand-mint transition-colors cursor-pointer"
           >
             {job.isSaved ? (
               <BookmarkCheck className="w-4 h-4 text-brand-mint" />
@@ -1025,19 +1025,19 @@ function JobCard({ job, onToggleSave }) {
         <div>
           <Link
             to={`/jobs/${job.id}`}
-            className="font-heading font-bold text-lg text-white hover:text-brand-mint transition-colors line-clamp-1"
+            className="font-heading font-bold text-lg text-text-primary hover:text-brand-mint transition-colors line-clamp-1"
           >
             {job.title}
           </Link>
           <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs text-text-muted">
-            <span className="font-semibold text-cyan-300">{job.discipline}</span>
+            <span className="font-semibold text-cyan-400">{job.discipline}</span>
             <span>•</span>
             <span>{job.infrastructureSector}</span>
             <span>•</span>
-            <span className="px-2 py-0.5 rounded-md bg-white/[0.04] text-[10px] font-semibold text-white/70">
+            <span className="px-2 py-0.5 rounded-md bg-surface-elevated border border-border text-[10px] font-semibold text-text-secondary">
               {job.workMode || 'On-site'}
             </span>
-            <span className="px-2 py-0.5 rounded-md bg-white/[0.04] text-[10px] font-semibold text-white/70">
+            <span className="px-2 py-0.5 rounded-md bg-surface-elevated border border-border text-[10px] font-semibold text-text-secondary">
               {job.jobType || 'Full-time'}
             </span>
           </div>
@@ -1055,7 +1055,7 @@ function JobCard({ job, onToggleSave }) {
               </span>
             ))}
             {job.requiredSoftware.length > 3 && (
-              <span className="text-[10px] text-white/40 self-center">
+              <span className="text-[10px] text-text-muted self-center">
                 +{job.requiredSoftware.length - 3} more
               </span>
             )}
@@ -1069,7 +1069,7 @@ function JobCard({ job, onToggleSave }) {
       </div>
 
       {/* Card Footer */}
-      <div className="mt-5 pt-4 border-t border-white/[0.05] flex items-center justify-between text-xs">
+      <div className="mt-5 pt-4 border-t border-border flex items-center justify-between text-xs">
         <div>
           <span className="text-[11px] text-text-muted block">
             Experience: {job.minYearsExperience}–{job.maxYearsExperience} yrs
@@ -1083,7 +1083,7 @@ function JobCard({ job, onToggleSave }) {
 
         <Link
           to={`/jobs/${job.id}`}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.05] group-hover:bg-brand-mint text-white group-hover:text-black font-bold text-xs transition-all"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-elevated border border-border group-hover:bg-brand-mint text-text-primary group-hover:text-brand-navy font-bold text-xs transition-all"
         >
           <span>View Job</span>
           <ChevronRight className="w-3.5 h-3.5" />
@@ -1105,15 +1105,15 @@ function RecommendedJobCard({ rec, onWhyThisJob, onToggleSave, onHide, onFeedbac
     ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
     : isStrongly
     ? 'bg-brand-mint/10 border-brand-mint/30 text-brand-mint'
-    : 'bg-white/[0.06] border-white/10 text-white/80';
+    : 'bg-surface-elevated border-border text-text-secondary';
 
   return (
-    <div className="p-6 rounded-3xl bg-[#111116] border border-white/[0.08] hover:border-brand-mint/30 transition-all flex flex-col justify-between group shadow-lg">
+    <div className="p-6 rounded-3xl bg-surface-card border border-border hover:border-brand-mint/30 transition-all flex flex-col justify-between group shadow-lg">
       <div className="space-y-4">
         {/* Card Header: Company, Role, Compatibility Badge */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center overflow-hidden shrink-0">
+            <div className="w-12 h-12 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center overflow-hidden shrink-0">
               {rec.business?.logo ? (
                 <img
                   src={rec.business.logo}
@@ -1126,7 +1126,7 @@ function RecommendedJobCard({ rec, onWhyThisJob, onToggleSave, onHide, onFeedbac
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-semibold text-xs text-white/90 line-clamp-1">
+                <span className="font-semibold text-xs text-text-primary line-clamp-1">
                   {rec.business?.name || 'Verified Infrastructure Partner'}
                 </span>
                 {rec.business?.verified && (
@@ -1154,19 +1154,19 @@ function RecommendedJobCard({ rec, onWhyThisJob, onToggleSave, onHide, onFeedbac
         <div>
           <Link
             to={`/jobs/${rec.jobId}`}
-            className="font-heading font-bold text-lg text-white group-hover:text-brand-mint transition-colors line-clamp-1"
+            className="font-heading font-bold text-lg text-text-primary group-hover:text-brand-mint transition-colors line-clamp-1"
           >
             {rec.title}
           </Link>
           <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs text-text-muted">
-            <span className="font-semibold text-cyan-300">{rec.discipline}</span>
+            <span className="font-semibold text-cyan-400">{rec.discipline}</span>
             <span>•</span>
             <span>{rec.infrastructureSector}</span>
             <span>•</span>
-            <span className="px-2 py-0.5 rounded-md bg-white/[0.04] text-[10px] font-semibold text-white/70">
+            <span className="px-2 py-0.5 rounded-md bg-surface-elevated border border-border text-[10px] font-semibold text-text-secondary">
               {rec.workMode || 'On-site'}
             </span>
-            <span className="px-2 py-0.5 rounded-md bg-white/[0.04] text-[10px] font-semibold text-white/70">
+            <span className="px-2 py-0.5 rounded-md bg-surface-elevated border border-border text-[10px] font-semibold text-text-secondary">
               {rec.jobType || 'Full-time'}
             </span>
           </div>
@@ -1210,7 +1210,7 @@ function RecommendedJobCard({ rec, onWhyThisJob, onToggleSave, onHide, onFeedbac
       </div>
 
       {/* Card Footer: Actions */}
-      <div className="mt-5 pt-4 border-t border-white/[0.05] flex items-center justify-between text-xs">
+      <div className="mt-5 pt-4 border-t border-border flex items-center justify-between text-xs">
         <button
           onClick={onWhyThisJob}
           className="text-xs font-semibold text-brand-mint hover:underline flex items-center gap-1 cursor-pointer"
@@ -1227,7 +1227,7 @@ function RecommendedJobCard({ rec, onWhyThisJob, onToggleSave, onHide, onFeedbac
             className={`p-2 rounded-xl transition-all cursor-pointer ${
               rec.feedback === 'INTERESTED'
                 ? 'bg-emerald-500/20 text-emerald-400'
-                : 'hover:bg-white/[0.06] text-white/40 hover:text-white'
+                : 'hover:bg-surface-elevated text-text-muted hover:text-text-primary'
             }`}
           >
             <ThumbsUp className="w-3.5 h-3.5" />
@@ -1238,7 +1238,7 @@ function RecommendedJobCard({ rec, onWhyThisJob, onToggleSave, onHide, onFeedbac
             className={`p-2 rounded-xl transition-all cursor-pointer ${
               rec.feedback === 'NOT_INTERESTED'
                 ? 'bg-red-500/20 text-red-400'
-                : 'hover:bg-white/[0.06] text-white/40 hover:text-white'
+                : 'hover:bg-surface-elevated text-text-muted hover:text-text-primary'
             }`}
           >
             <ThumbsDown className="w-3.5 h-3.5" />
@@ -1248,7 +1248,7 @@ function RecommendedJobCard({ rec, onWhyThisJob, onToggleSave, onHide, onFeedbac
           <button
             onClick={onToggleSave}
             title={rec.isSaved ? 'Remove from saved' : 'Save job'}
-            className="p-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] text-white/40 hover:text-brand-mint transition-colors cursor-pointer"
+            className="p-2 rounded-xl bg-surface-elevated border border-border hover:bg-surface-elevated/80 text-text-muted hover:text-brand-mint transition-colors cursor-pointer"
           >
             {rec.isSaved ? (
               <BookmarkCheck className="w-4 h-4 text-brand-mint" />
@@ -1261,14 +1261,14 @@ function RecommendedJobCard({ rec, onWhyThisJob, onToggleSave, onHide, onFeedbac
           <button
             onClick={onHide}
             title="Hide this job"
-            className="p-2 rounded-xl bg-white/[0.03] hover:bg-red-500/10 text-white/30 hover:text-red-400 transition-colors cursor-pointer"
+            className="p-2 rounded-xl bg-surface-elevated border border-border hover:bg-red-500/10 text-text-muted hover:text-red-400 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
 
           <Link
             to={`/jobs/${rec.jobId}`}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.05] group-hover:bg-brand-mint text-white group-hover:text-black font-bold text-xs transition-all ml-1"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-elevated border border-border group-hover:bg-brand-mint text-text-primary group-hover:text-brand-navy font-bold text-xs transition-all ml-1"
           >
             <span>View Job</span>
             <ChevronRight className="w-3.5 h-3.5" />
@@ -1284,7 +1284,7 @@ function WhyThisJobModal({ job, explanation, isLoading, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-[#12121A] border border-white/[0.12] rounded-3xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto space-y-5 shadow-2xl">
+      <div className="bg-surface-card border border-border rounded-3xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto space-y-5 shadow-2xl text-text-primary">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div>
@@ -1292,7 +1292,7 @@ function WhyThisJobModal({ job, explanation, isLoading, onClose }) {
               <Sparkles className="w-3 h-3" />
               <span>AI Match Analysis</span>
             </div>
-            <h2 className="text-lg font-bold text-white leading-tight">
+            <h2 className="text-lg font-bold text-text-primary leading-tight">
               Why Zeitnah recommends this job
             </h2>
             <p className="text-xs text-text-muted mt-0.5">
@@ -1301,14 +1301,14 @@ function WhyThisJobModal({ job, explanation, isLoading, onClose }) {
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Compatibility banner */}
-        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between">
+        <div className="p-4 rounded-2xl bg-surface-elevated/40 border border-border flex items-center justify-between">
           <div>
             <span className="text-xs text-text-muted">Profile Compatibility</span>
             <p className="text-2xl font-black text-brand-mint">
@@ -1338,7 +1338,7 @@ function WhyThisJobModal({ job, explanation, isLoading, onClose }) {
                   {explanation.strongMatches.map((m, idx) => (
                     <div
                       key={idx}
-                      className="px-3 py-2 rounded-xl bg-emerald-500/[0.06] border border-emerald-500/15 text-xs text-white/90 flex items-center gap-2"
+                      className="px-3 py-2 rounded-xl bg-emerald-500/[0.06] border border-emerald-500/15 text-xs text-text-primary flex items-center gap-2"
                     >
                       <span className="text-emerald-400 font-bold">✓</span>
                       <span>{m}</span>
@@ -1351,14 +1351,14 @@ function WhyThisJobModal({ job, explanation, isLoading, onClose }) {
             {/* Additional alignment */}
             {explanation?.additionalMatches?.length > 0 && (
               <div>
-                <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-2">
+                <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider mb-2">
                   Additional Alignment
                 </h4>
                 <div className="space-y-1.5">
                   {explanation.additionalMatches.map((m, idx) => (
                     <div
                       key={idx}
-                      className="px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] text-xs text-white/80 flex items-center gap-2"
+                      className="px-3 py-2 rounded-xl bg-surface-elevated/50 border border-border text-xs text-text-secondary flex items-center gap-2"
                     >
                       <span className="text-brand-mint">✓</span>
                       <span>{m}</span>
@@ -1390,7 +1390,7 @@ function WhyThisJobModal({ job, explanation, isLoading, onClose }) {
 
             {/* Dimension Breakdown Bars */}
             {explanation?.dimensionScores?.length > 0 && (
-              <div className="pt-2 border-t border-white/[0.06]">
+              <div className="pt-2 border-t border-border">
                 <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2.5">
                   Alignment by Dimension
                 </h4>
@@ -1399,9 +1399,9 @@ function WhyThisJobModal({ job, explanation, isLoading, onClose }) {
                     <div key={idx} className="space-y-1">
                       <div className="flex justify-between text-xs">
                         <span className="text-text-muted capitalize">{dim.dimension}</span>
-                        <span className="text-white font-semibold">{dim.score}%</span>
+                        <span className="text-text-primary font-semibold">{dim.score}%</span>
                       </div>
-                      <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                      <div className="w-full h-1.5 rounded-full bg-surface-elevated overflow-hidden">
                         <div
                           className="h-full bg-brand-mint rounded-full"
                           style={{ width: `${dim.score}%` }}
@@ -1416,16 +1416,16 @@ function WhyThisJobModal({ job, explanation, isLoading, onClose }) {
         )}
 
         {/* Modal footer */}
-        <div className="pt-4 border-t border-white/[0.06] flex items-center justify-end gap-2.5">
+        <div className="pt-4 border-t border-border flex items-center justify-end gap-2.5">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-xs font-semibold text-white transition-all cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 border border-border text-xs font-semibold text-text-primary transition-all cursor-pointer"
           >
             Close
           </button>
           <Link
             to={`/jobs/${job.jobId}`}
-            className="px-5 py-2 rounded-xl bg-brand-mint text-black font-bold text-xs hover:shadow-lg hover:shadow-brand-mint/20 transition-all flex items-center gap-1.5"
+            className="px-5 py-2 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs hover:shadow-lg hover:shadow-brand-mint/20 transition-all flex items-center gap-1.5"
           >
             <span>View Full Opportunity</span>
             <ExternalLink className="w-3.5 h-3.5" />

@@ -34,7 +34,7 @@ export default function NotFoundPage() {
           </span>
         </motion.div>
 
-        <h1 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight mb-3">
+        <h1 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight mb-3">
           Page Not Found
         </h1>
         <p className="text-sm font-medium text-text-muted leading-relaxed mb-8 max-w-sm mx-auto">

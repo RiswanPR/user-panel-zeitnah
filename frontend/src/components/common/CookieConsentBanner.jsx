@@ -70,7 +70,7 @@ export default function CookieConsentBanner() {
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             className="fixed bottom-4 left-4 right-4 md:left-6 md:right-auto md:max-w-xl z-50 pointer-events-auto"
           >
-            <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-[#0a131e]/90 backdrop-blur-xl p-5 shadow-2xl shadow-black/80">
+            <div className="relative overflow-hidden rounded-2xl border border-border bg-surface-card/95 backdrop-blur-xl p-5 shadow-2xl shadow-black/40">
               {/* Gradient border accent */}
               <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-brand-mint via-brand-yellow to-brand-mint" />
 
@@ -81,7 +81,7 @@ export default function CookieConsentBanner() {
 
                 <div className="flex-1 space-y-1.5 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-heading font-bold text-white tracking-wide">
+                    <h3 className="text-sm font-heading font-bold text-text-primary tracking-wide">
                       We value your privacy
                     </h3>
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-brand-mint bg-brand-mint/10 border border-brand-mint/20 px-2 py-0.5 rounded-full">
@@ -106,14 +106,14 @@ export default function CookieConsentBanner() {
                     <button
                       type="button"
                       onClick={handleRejectNonEssential}
-                      className="px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-semibold text-xs transition-all cursor-pointer"
+                      className="px-3.5 py-2 rounded-xl bg-surface-elevated border border-border hover:bg-surface text-text-primary font-semibold text-xs transition-all cursor-pointer"
                     >
                       Essential Only
                     </button>
                     <button
                       type="button"
                       onClick={() => setShowPreferencesModal(true)}
-                      className="px-3.5 py-2 rounded-xl text-text-muted hover:text-white font-semibold text-xs flex items-center gap-1 transition-all cursor-pointer ml-auto"
+                      className="px-3.5 py-2 rounded-xl text-text-muted hover:text-text-primary font-semibold text-xs flex items-center gap-1 transition-all cursor-pointer ml-auto"
                     >
                       <Settings className="w-3.5 h-3.5" /> Customize
                     </button>
@@ -133,15 +133,15 @@ export default function CookieConsentBanner() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-white/15 bg-[#0c1825] p-6 shadow-2xl"
+              className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-surface-card p-6 shadow-2xl"
             >
-              <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
+              <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
                 <div className="flex items-center gap-2.5">
                   <div className="h-9 w-9 rounded-xl bg-brand-mint/10 border border-brand-mint/20 flex items-center justify-center text-brand-mint">
                     <Cookie className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-heading font-bold text-white">
+                    <h3 className="text-base font-heading font-bold text-text-primary">
                       Cookie Preferences
                     </h3>
                     <p className="text-xs text-text-muted">Manage your privacy settings</p>
@@ -150,7 +150,7 @@ export default function CookieConsentBanner() {
                 <button
                   type="button"
                   onClick={() => setShowPreferencesModal(false)}
-                  className="h-8 w-8 rounded-lg bg-white/5 hover:bg-white/15 text-white/70 hover:text-white flex items-center justify-center transition-all border border-white/10"
+                  className="h-8 w-8 rounded-lg bg-surface-elevated hover:bg-surface text-text-muted hover:text-text-primary flex items-center justify-center transition-all border border-border"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -158,11 +158,11 @@ export default function CookieConsentBanner() {
 
               <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
                 {/* Essential Cookies */}
-                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 flex items-start justify-between gap-3">
+                <div className="rounded-xl border border-border bg-surface-elevated/50 p-4 flex items-start justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <Lock className="w-3.5 h-3.5 text-brand-mint" />
-                      <h4 className="text-sm font-bold text-white">Strictly Necessary Cookies</h4>
+                      <h4 className="text-sm font-bold text-text-primary">Strictly Necessary Cookies</h4>
                       <span className="text-[10px] uppercase font-bold text-brand-mint bg-brand-mint/10 border border-brand-mint/20 px-2 py-0.5 rounded-md">
                         Always Active
                       </span>
@@ -174,9 +174,9 @@ export default function CookieConsentBanner() {
                 </div>
 
                 {/* Functional Cookies */}
-                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 flex items-start justify-between gap-3">
+                <div className="rounded-xl border border-border bg-surface-elevated/50 p-4 flex items-start justify-between gap-3">
                   <div className="flex-1">
-                    <h4 className="text-sm font-bold text-white mb-1">Functional Preferences</h4>
+                    <h4 className="text-sm font-bold text-text-primary mb-1">Functional Preferences</h4>
                     <p className="text-xs text-text-muted leading-relaxed">
                       Saves your UI preferences, volume settings, player rate, and video watermark position.
                     </p>
@@ -190,14 +190,14 @@ export default function CookieConsentBanner() {
                       }
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-mint" />
+                    <div className="w-11 h-6 bg-surface-elevated border border-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-mint" />
                   </label>
                 </div>
 
                 {/* Analytics Cookies */}
-                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 flex items-start justify-between gap-3">
+                <div className="rounded-xl border border-border bg-surface-elevated/50 p-4 flex items-start justify-between gap-3">
                   <div className="flex-1">
-                    <h4 className="text-sm font-bold text-white mb-1">Performance & Diagnostics</h4>
+                    <h4 className="text-sm font-bold text-text-primary mb-1">Performance & Diagnostics</h4>
                     <p className="text-xs text-text-muted leading-relaxed">
                       Helps us analyze video playback health, detect streaming errors, and improve platform speed.
                     </p>
@@ -211,23 +211,23 @@ export default function CookieConsentBanner() {
                       }
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-mint" />
+                    <div className="w-11 h-6 bg-surface-elevated border border-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-mint" />
                   </label>
                 </div>
               </div>
 
-              <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-end gap-3">
+              <div className="mt-5 pt-4 border-t border-border flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={handleRejectNonEssential}
-                  className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-semibold text-xs transition-all"
+                  className="px-4 py-2 rounded-xl bg-surface-elevated border border-border hover:bg-surface text-text-primary font-semibold text-xs transition-all cursor-pointer"
                 >
                   Reject Optional
                 </button>
                 <button
                   type="button"
                   onClick={handleSavePreferences}
-                  className="px-5 py-2 rounded-xl bg-brand-mint text-bg-dark font-bold text-xs shadow-md shadow-brand-mint/20 hover:bg-brand-mint/90 transition-all flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-xl bg-brand-mint text-bg-dark font-bold text-xs shadow-md shadow-brand-mint/20 hover:bg-brand-mint/90 transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   <Check className="w-4 h-4" /> Save Preferences
                 </button>

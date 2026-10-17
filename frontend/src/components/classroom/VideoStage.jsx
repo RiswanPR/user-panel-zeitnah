@@ -76,11 +76,11 @@ export default function VideoStage({
   };
 
   return (
-    <div className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.08] bg-black shadow-2xl shadow-black/80 transition-all">
+    <div className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-border bg-black shadow-2xl shadow-black/80 transition-all">
       {/* Top subtle ambient glow line */}
       <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-brand-mint/40 to-transparent z-10" />
 
-      {/* Video Box with strict 16:9 Aspect Ratio */}
+      {/* Video Box with strict 16:9 Aspect Ratio (preserved dark stage) */}
       <FeatureErrorBoundary featureName="Video Player">
         <div className="relative aspect-video w-full bg-black overflow-hidden flex items-center justify-center">
           {/* Dynamic Floating Watermark for non-S3/VdoCipher videos */}
@@ -107,7 +107,7 @@ export default function VideoStage({
                 <button
                   type="button"
                   onClick={onRefreshPlaybackUrl}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-mint text-bg-base font-bold text-xs uppercase tracking-wider hover:bg-brand-mint/90 transition-all cursor-pointer"
+                  className="inline-flex items-center gap-2 px-4 py-2 min-h-[44px] rounded-xl bg-brand-mint text-brand-navy font-bold text-xs uppercase tracking-wider hover:bg-brand-mint/90 transition-all cursor-pointer"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   Retry Playback
@@ -144,7 +144,7 @@ export default function VideoStage({
                   <button
                     type="button"
                     onClick={handleOpenInSafari}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-brand-mint text-bg-base font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-brand-mint/90 active:scale-95 transition-all cursor-pointer shadow-lg shadow-brand-mint/20"
+                    className="inline-flex items-center gap-2 px-6 py-3 min-h-[44px] bg-brand-mint text-brand-navy font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-brand-mint/90 active:scale-95 transition-all cursor-pointer shadow-lg shadow-brand-mint/20"
                   >
                     <ExternalLink className="w-4 h-4" />
                     Watch in Safari Browser
@@ -153,7 +153,7 @@ export default function VideoStage({
                   <button
                     type="button"
                     onClick={handleCopyLink}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer"
                   >
                     {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-brand-mint" />}
                     <span>{copied ? 'Link Copied' : 'Copy Lesson Link'}</span>
@@ -195,7 +195,7 @@ export default function VideoStage({
                       <button
                         type="button"
                         onClick={onVdoReload}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-mint text-bg-base font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-brand-mint/90 transition-all cursor-pointer"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 min-h-[44px] bg-brand-mint text-brand-navy font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-brand-mint/90 transition-all cursor-pointer"
                       >
                         <RefreshCw className="w-4 h-4" />
                         Reload Player
@@ -203,7 +203,7 @@ export default function VideoStage({
                       <button
                         type="button"
                         onClick={handleOpenInSafari}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-white/20"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 min-h-[44px] bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-white/20"
                       >
                         <Compass className="w-4 h-4 text-brand-mint" />
                         Open in Safari
@@ -229,7 +229,7 @@ export default function VideoStage({
         aria-valuenow={classProgressPercent}
         aria-valuemin={0}
         aria-valuemax={100}
-        className="h-1 w-full bg-white/[0.06] relative overflow-hidden"
+        className="h-1 w-full bg-border/60 relative overflow-hidden"
       >
         <div
           className={`h-full transition-all duration-300 ${

@@ -11,42 +11,42 @@ import leaderboardService from "../../services/leaderboardService";
  */
 function LeaderboardSidebarSkeleton() {
   return (
-    <div className="w-full p-3 rounded-xl border border-white/[0.10] bg-white/[0.02] animate-pulse space-y-3">
+    <div className="w-full p-3 rounded-xl border border-border bg-surface-elevated animate-pulse space-y-3">
       {/* Header skeleton */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <div className="w-3.5 h-3.5 rounded bg-white/[0.08]" />
-          <div className="w-20 h-3 rounded bg-white/[0.06]" />
+          <div className="w-3.5 h-3.5 rounded bg-surface-card" />
+          <div className="w-20 h-3 rounded bg-surface-card" />
         </div>
-        <div className="w-3.5 h-3.5 rounded bg-white/[0.06]" />
+        <div className="w-3.5 h-3.5 rounded bg-surface-card" />
       </div>
 
       {/* Rank hero skeleton */}
       <div className="flex flex-col items-center py-2.5 space-y-1.5">
-        <div className="w-16 h-2 rounded bg-white/[0.04]" />
-        <div className="w-14 h-7 rounded-lg bg-white/[0.08]" />
-        <div className="w-16 h-2 rounded bg-white/[0.04]" />
+        <div className="w-16 h-2 rounded bg-surface-card" />
+        <div className="w-14 h-7 rounded-lg bg-surface-card" />
+        <div className="w-16 h-2 rounded bg-surface-card" />
       </div>
 
       {/* Stats skeleton */}
-      <div className="flex items-center justify-between py-1.5 px-2 rounded-lg border border-white/[0.04] bg-white/[0.02]">
-        <div className="w-12 h-3 rounded bg-white/[0.05]" />
-        <div className="w-14 h-3 rounded bg-white/[0.05]" />
+      <div className="flex items-center justify-between py-1.5 px-2 rounded-lg border border-border bg-surface-card">
+        <div className="w-12 h-3 rounded bg-surface-elevated" />
+        <div className="w-14 h-3 rounded bg-surface-elevated" />
       </div>
 
       {/* Progress skeleton */}
       <div className="space-y-1">
-        <div className="w-full h-1 rounded-full bg-white/[0.06]" />
+        <div className="w-full h-1 rounded-full bg-surface-card" />
         <div className="flex items-center justify-between">
-          <div className="w-16 h-2 rounded bg-white/[0.04]" />
-          <div className="w-6 h-2 rounded bg-white/[0.04]" />
+          <div className="w-16 h-2 rounded bg-surface-card" />
+          <div className="w-6 h-2 rounded bg-surface-card" />
         </div>
       </div>
 
       {/* CTA skeleton */}
-      <div className="mt-2.5 pt-2 border-t border-white/[0.04] flex items-center justify-between">
-        <div className="w-24 h-2.5 rounded bg-white/[0.05]" />
-        <div className="w-3 h-3 rounded bg-white/[0.04]" />
+      <div className="mt-2.5 pt-2 border-t border-border flex items-center justify-between">
+        <div className="w-24 h-2.5 rounded bg-surface-card" />
+        <div className="w-3 h-3 rounded bg-surface-card" />
       </div>
     </div>
   );
@@ -92,19 +92,19 @@ export default function LeaderboardSidebarCard() {
         to="/leaderboard"
         className={`block w-full p-3 rounded-xl border transition-all duration-200 group focus-ring ${
           isLeaderboardActive
-            ? "bg-brand-yellow/[0.05] border-brand-yellow/35 text-white"
-            : "bg-white/[0.02] border-white/[0.10] hover:bg-white/[0.04] hover:border-white/[0.18] text-text-muted hover:text-white"
+            ? "bg-brand-yellow/[0.08] border-brand-yellow/35 text-text-primary"
+            : "bg-surface-elevated border-border hover:bg-surface-card hover:border-border-accent text-text-muted hover:text-text-primary"
         }`}
         aria-label="View Leaderboard"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <Trophy className="w-3.5 h-3.5 text-brand-yellow" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-white">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-text-primary">
               Leaderboard
             </span>
           </div>
-          <ArrowRight className="w-3.5 h-3.5 text-text-muted group-hover:text-white group-hover:translate-x-0.5 transition-transform" />
+          <ArrowRight className="w-3.5 h-3.5 text-text-muted group-hover:text-text-primary group-hover:translate-x-0.5 transition-transform" />
         </div>
       </Link>
     );
@@ -125,8 +125,8 @@ export default function LeaderboardSidebarCard() {
       aria-label={`Leaderboard, your current standing is rank ${rank} with ${points.toLocaleString()} XP`}
       className={`relative block w-full rounded-xl border p-3 transition-all duration-200 group overflow-hidden focus-ring ${
         isLeaderboardActive
-          ? "border-brand-yellow/35 bg-gradient-to-b from-brand-yellow/[0.04] to-bg-card/95 shadow-[0_0_24px_rgba(234,179,8,0.06)]"
-          : "border-white/[0.10] bg-gradient-to-b from-bg-card/95 to-bg-card/75 hover:border-white/[0.18] hover:shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
+          ? "border-brand-yellow/35 bg-gradient-to-b from-brand-yellow/[0.04] to-surface-card shadow-[0_0_24px_rgba(234,179,8,0.06)]"
+          : "border-border bg-surface-card hover:border-border-accent hover:shadow-[0_8px_24px_rgba(0,0,0,0.15)]"
       }`}
     >
       {/* Subtle top accent line */}
@@ -134,18 +134,18 @@ export default function LeaderboardSidebarCard() {
         className={`absolute inset-x-0 top-0 h-[1px] ${
           isLeaderboardActive
             ? "bg-gradient-to-r from-transparent via-brand-yellow/50 to-transparent"
-            : "bg-gradient-to-r from-transparent via-white/[0.12] to-transparent group-hover:via-brand-yellow/30 transition-all duration-300"
+            : "bg-gradient-to-r from-transparent via-border to-transparent group-hover:via-brand-yellow/30 transition-all duration-300"
         }`}
       />
 
       {/* ── 1. Header: Trophy + Label + ArrowUpRight ── */}
-      <div className="flex items-center justify-between pb-2 border-b border-white/[0.04]">
+      <div className="flex items-center justify-between pb-2 border-b border-border">
         <div className="flex items-center gap-1.5">
           <Trophy
             className="w-3.5 h-3.5 text-brand-yellow shrink-0 group-hover:scale-105 transition-transform duration-200"
             aria-hidden="true"
           />
-          <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/90 font-heading">
+          <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-text-primary font-heading">
             Leaderboard
           </span>
         </div>
@@ -172,7 +172,7 @@ export default function LeaderboardSidebarCard() {
         </p>
 
         <div className="my-0.5 relative z-10">
-          <span className="font-heading font-black text-2xl sm:text-[28px] leading-tight font-mono tracking-tight tabular-nums text-white group-hover:text-brand-yellow transition-colors duration-200">
+          <span className="font-heading font-black text-2xl sm:text-[28px] leading-tight font-mono tracking-tight tabular-nums text-text-primary group-hover:text-brand-yellow transition-colors duration-200">
             #{rank}
           </span>
         </div>
@@ -183,9 +183,9 @@ export default function LeaderboardSidebarCard() {
       </div>
 
       {/* ── 3. XP + Level Metadata ── */}
-      <div className="flex items-center justify-between py-1.5 px-2 bg-white/[0.02] rounded-lg border border-white/[0.04] w-full">
+      <div className="flex items-center justify-between py-1.5 px-2 bg-surface-elevated rounded-lg border border-border w-full">
         <div className="flex items-baseline gap-1 text-left">
-          <span className="text-[11px] font-mono font-bold tabular-nums text-white leading-none">
+          <span className="text-[11px] font-mono font-bold tabular-nums text-text-primary leading-none">
             {points.toLocaleString()}
           </span>
           <span className="text-[9px] text-text-muted font-normal leading-none">XP</span>
@@ -205,7 +205,7 @@ export default function LeaderboardSidebarCard() {
       {/* ── 4. Level Progress Bar (if data available) ── */}
       {xpNeeded && xpNeeded > 0 ? (
         <div className="pt-2 pb-1 space-y-1 w-full">
-          <div className="h-1 w-full rounded-full bg-white/[0.06] overflow-hidden">
+          <div className="h-1 w-full rounded-full bg-surface-elevated overflow-hidden">
             <div
               className="h-full rounded-full bg-gradient-to-r from-brand-mint via-brand-yellow to-brand-yellow transition-all duration-500 ease-out"
               style={{ width: `${progressPercent}%` }}
@@ -224,7 +224,7 @@ export default function LeaderboardSidebarCard() {
       </p>
 
       {/* ── 6. Interactive CTA ── */}
-      <div className="mt-2 pt-2 border-t border-white/[0.04] flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-text-secondary group-hover:text-brand-yellow transition-colors w-full">
+      <div className="mt-2 pt-2 border-t border-border flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-text-secondary group-hover:text-brand-yellow transition-colors w-full">
         <span>View Leaderboard</span>
         <ArrowRight
           className="w-3 h-3 group-hover:translate-x-1 transition-transform duration-200"

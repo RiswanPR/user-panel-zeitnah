@@ -11,7 +11,7 @@ export default function ContinueWatchingCard({ course }) {
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-r from-bg-card to-bg-card/80 border border-white/10 rounded-2xl p-5 flex flex-col md:flex-row items-center gap-6 relative overflow-hidden group"
+      className="bg-surface-card border border-border rounded-2xl p-5 flex flex-col md:flex-row items-center gap-6 relative overflow-hidden group shadow-md"
     >
       <div className="absolute top-0 right-0 w-64 h-64 bg-brand-mint/10 blur-[80px] rounded-full pointer-events-none -mr-20 -mt-20" />
       
@@ -35,10 +35,10 @@ export default function ContinueWatchingCard({ course }) {
             Continue Watching
           </span>
         </div>
-        <h3 className="text-xl font-bold text-white mb-3 line-clamp-1 group-hover:text-brand-mint transition-colors">{name}</h3>
+        <h3 className="text-xl font-bold text-text-primary mb-3 line-clamp-1 group-hover:text-brand-mint transition-colors">{name}</h3>
         
         <div className="flex items-center gap-4">
-          <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+          <div className="flex-1 h-2 bg-surface-elevated border border-border/40 rounded-full overflow-hidden">
             <motion.div 
               initial={{ width: 0 }}
               animate={{ width: `${learningProgress.completionPercent}%` }}
@@ -48,13 +48,13 @@ export default function ContinueWatchingCard({ course }) {
               <div className="absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-r from-transparent to-white/30" />
             </motion.div>
           </div>
-          <span className="text-xs font-bold text-white shrink-0">{learningProgress.completionPercent}%</span>
+          <span className="text-xs font-bold text-text-primary shrink-0">{learningProgress.completionPercent}%</span>
         </div>
       </div>
       
       <a 
         href={`/courses/${_id}`}
-        className="w-full md:w-auto shrink-0 bg-white text-black font-bold px-6 py-3 rounded-xl hover:bg-brand-mint hover:scale-105 transition-all text-sm text-center relative z-10"
+        className="w-full md:w-auto shrink-0 bg-brand-yellow text-bg-base font-bold px-6 py-3 rounded-xl hover:bg-brand-yellow/90 hover:scale-105 transition-all text-sm text-center relative z-10 min-h-[44px] inline-flex items-center justify-center"
       >
         Resume Now
       </a>

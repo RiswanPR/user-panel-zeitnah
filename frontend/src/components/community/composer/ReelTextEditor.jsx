@@ -105,21 +105,21 @@ export default function ReelTextEditor({
       aria-modal="true"
       aria-label="Text overlay editor"
     >
-      <div className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl bg-[#090F1C] border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl bg-surface-card border border-border shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-brand-mint/15 border border-brand-mint/30 flex items-center justify-center text-brand-mint">
               <Type className="w-4 h-4" />
             </div>
-            <h3 className="text-white font-semibold text-base">
+            <h3 className="text-text-primary font-semibold text-base">
               {initialLayer ? 'Edit Text Overlay' : 'Add Text Overlay'}
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-colors"
+            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors"
             aria-label="Close text editor"
           >
             <X className="w-5 h-5" />
@@ -142,7 +142,7 @@ export default function ReelTextEditor({
               onChange={(e) => setContent(e.target.value.slice(0, 300))}
               placeholder="Enter overlay text..."
               rows={3}
-              className="w-full rounded-xl bg-[#050912] border border-white/10 px-4 py-3 text-white placeholder:text-text-muted focus:outline-none focus:border-brand-mint text-sm resize-none transition-colors"
+              className="w-full rounded-xl bg-surface-elevated border border-border px-4 py-3 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-mint text-sm resize-none transition-colors"
             />
           </div>
 
@@ -158,8 +158,8 @@ export default function ReelTextEditor({
                     onClick={() => setFontFamily(f.id)}
                     className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
                       fontFamily === f.id
-                        ? 'bg-brand-mint text-[#070B14] shadow-sm font-semibold'
-                        : 'bg-white/5 text-text-muted hover:text-white'
+                        ? 'bg-brand-mint text-bg-base shadow-sm font-semibold'
+                        : 'bg-surface-elevated text-text-muted hover:text-text-primary'
                     }`}
                   >
                     {f.name}
@@ -172,11 +172,11 @@ export default function ReelTextEditor({
             <div className="flex items-center justify-between">
               <span className="text-xs text-text-muted">Alignment & Weight</span>
               <div className="flex items-center gap-2">
-                <div className="flex p-0.5 rounded-lg bg-white/5 border border-white/5">
+                <div className="flex p-0.5 rounded-lg bg-surface-elevated border border-border">
                   <button
                     type="button"
                     onClick={() => setTextAlign('left')}
-                    className={`p-1.5 rounded-md ${textAlign === 'left' ? 'bg-white/20 text-white' : 'text-text-muted'}`}
+                    className={`p-1.5 rounded-md ${textAlign === 'left' ? 'bg-surface-card text-text-primary' : 'text-text-muted'}`}
                     aria-label="Align left"
                   >
                     <AlignLeft className="w-3.5 h-3.5" />
@@ -184,7 +184,7 @@ export default function ReelTextEditor({
                   <button
                     type="button"
                     onClick={() => setTextAlign('center')}
-                    className={`p-1.5 rounded-md ${textAlign === 'center' ? 'bg-white/20 text-white' : 'text-text-muted'}`}
+                    className={`p-1.5 rounded-md ${textAlign === 'center' ? 'bg-surface-card text-text-primary' : 'text-text-muted'}`}
                     aria-label="Align center"
                   >
                     <AlignCenter className="w-3.5 h-3.5" />
@@ -192,7 +192,7 @@ export default function ReelTextEditor({
                   <button
                     type="button"
                     onClick={() => setTextAlign('right')}
-                    className={`p-1.5 rounded-md ${textAlign === 'right' ? 'bg-white/20 text-white' : 'text-text-muted'}`}
+                    className={`p-1.5 rounded-md ${textAlign === 'right' ? 'bg-surface-card text-text-primary' : 'text-text-muted'}`}
                     aria-label="Align right"
                   >
                     <AlignRight className="w-3.5 h-3.5" />
@@ -203,7 +203,7 @@ export default function ReelTextEditor({
                   type="button"
                   onClick={() => setFontWeight((w) => (w === 'bold' ? 'normal' : 'bold'))}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                    fontWeight === 'bold' ? 'bg-white/20 text-white' : 'bg-white/5 text-text-muted'
+                    fontWeight === 'bold' ? 'bg-surface-card text-text-primary' : 'bg-surface-elevated text-text-muted'
                   }`}
                 >
                   B
@@ -268,10 +268,10 @@ export default function ReelTextEditor({
           </div>
 
           {/* Timing Controls */}
-          <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 space-y-2">
+          <div className="p-3 rounded-xl bg-surface-elevated/40 border border-border space-y-2">
             <div className="flex items-center justify-between text-xs text-text-muted">
               <span>Display Timing</span>
-              <span className="font-mono text-white">
+              <span className="font-mono text-text-primary">
                 {start.toFixed(1)}s – {end.toFixed(1)}s ({(end - start).toFixed(1)}s duration)
               </span>
             </div>
@@ -285,7 +285,7 @@ export default function ReelTextEditor({
                   step="0.1"
                   value={start}
                   onChange={(e) => setStart(Math.max(0, Number(e.target.value)))}
-                  className="w-full rounded-lg bg-[#050912] border border-white/10 px-3 py-1.5 text-white text-xs font-mono"
+                  className="w-full rounded-lg bg-surface-card border border-border px-3 py-1.5 text-text-primary text-xs font-mono"
                 />
               </div>
               <div>
@@ -297,7 +297,7 @@ export default function ReelTextEditor({
                   step="0.1"
                   value={end}
                   onChange={(e) => setEnd(Math.min(duration, Math.max(start + 0.5, Number(e.target.value))))}
-                  className="w-full rounded-lg bg-[#050912] border border-white/10 px-3 py-1.5 text-white text-xs font-mono"
+                  className="w-full rounded-lg bg-surface-card border border-border px-3 py-1.5 text-text-primary text-xs font-mono"
                 />
               </div>
             </div>
@@ -305,11 +305,11 @@ export default function ReelTextEditor({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-white/10 bg-[#060D18]">
+        <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-border bg-surface-card">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-sm font-medium text-text-muted hover:text-white transition-colors"
+            className="px-4 py-2 rounded-xl text-sm font-medium text-text-muted hover:text-text-primary transition-colors"
           >
             Cancel
           </button>
@@ -317,7 +317,7 @@ export default function ReelTextEditor({
             type="button"
             onClick={handleSave}
             disabled={!content.trim()}
-            className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-brand-mint text-[#070B14] font-semibold text-sm hover:bg-brand-mint/90 transition-all disabled:opacity-50 disabled:pointer-events-none shadow-md"
+            className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-brand-mint text-bg-base font-semibold text-sm hover:bg-brand-mint/90 transition-all disabled:opacity-50 disabled:pointer-events-none shadow-md"
           >
             <Check className="w-4 h-4" />
             <span>Save Text</span>

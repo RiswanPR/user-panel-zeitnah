@@ -137,32 +137,32 @@ export default function ForwardMessageModal({ isOpen, message, onClose }) {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ duration: 0.18 }}
-          className="relative w-full max-w-lg bg-[#12141c] border-t sm:border border-white/10 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[85vh] z-10 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+          className="relative w-full max-w-lg bg-surface-card border-t sm:border border-border rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[85vh] z-10 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
           role="dialog"
           aria-modal="true"
           aria-labelledby="forward-modal-title"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 bg-white/[0.02]">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-surface-card">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <div className="w-8 h-8 rounded-lg bg-brand-mint/10 border border-brand-mint/30 flex items-center justify-center text-brand-mint">
                 <Share2 className="w-4 h-4" />
               </div>
               <div>
                 <h2
                   id="forward-modal-title"
-                  className="text-sm font-semibold text-slate-100"
+                  className="text-sm font-semibold text-text-primary"
                 >
                   Forward Message
                 </h2>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-text-muted">
                   Select destination conversations
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-white rounded-lg transition-colors hover:bg-white/5"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center text-text-muted hover:text-text-primary rounded-lg transition-colors hover:bg-surface-elevated"
               aria-label="Close"
             >
               <X className="w-5 h-5" />
@@ -170,39 +170,39 @@ export default function ForwardMessageModal({ isOpen, message, onClose }) {
           </div>
 
           {/* Message Preview Snippet */}
-          <div className="px-5 py-3 bg-white/[0.015] border-b border-white/5">
-            <div className="text-[11px] font-mono uppercase text-slate-400 tracking-wider mb-1">
+          <div className="px-5 py-3 bg-surface-elevated/20 border-b border-border">
+            <div className="text-[11px] font-mono uppercase text-text-muted tracking-wider mb-1">
               Quoting: {senderName}
             </div>
-            <div className="p-2.5 rounded-lg bg-white/[0.03] border border-white/5 text-xs text-slate-300 line-clamp-2 italic">
+            <div className="p-2.5 rounded-lg bg-surface-elevated/40 border border-border text-xs text-text-secondary line-clamp-2 italic">
               "{message.body || (message.attachments?.length ? 'Attachment' : 'Message')}"
             </div>
           </div>
 
           {/* Search bar */}
-          <div className="p-4 border-b border-white/5">
+          <div className="p-4 border-b border-border">
             <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
               <input
                 ref={searchInputRef}
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search conversations…"
-                className="w-full pl-9 pr-4 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all"
+                className="w-full pl-9 pr-4 py-2.5 bg-surface-elevated/50 border border-border rounded-xl text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-mint focus:ring-1 focus:ring-brand-mint/30 transition-all"
               />
             </div>
           </div>
 
           {/* Destination Conversations List */}
-          <div className="flex-1 overflow-y-auto px-4 py-2 divide-y divide-white/[0.03]">
+          <div className="flex-1 overflow-y-auto px-4 py-2 divide-y divide-border">
             {isLoading ? (
-              <div className="py-8 flex flex-col items-center justify-center text-slate-400 gap-2">
-                <Loader2 className="w-5 h-5 animate-spin text-emerald-400" />
+              <div className="py-8 flex flex-col items-center justify-center text-text-muted gap-2">
+                <Loader2 className="w-5 h-5 animate-spin text-brand-mint" />
                 <span className="text-xs">Loading conversations…</span>
               </div>
             ) : filteredConversations.length === 0 ? (
-              <div className="py-8 text-center text-xs text-slate-400">
+              <div className="py-8 text-center text-xs text-text-muted">
                 No matching conversations found.
               </div>
             ) : (
@@ -218,23 +218,23 @@ export default function ForwardMessageModal({ isOpen, message, onClose }) {
                     onClick={() => toggleSelect(conv.id || conv._id)}
                     className={`w-full min-h-[48px] flex items-center gap-3 p-3 rounded-xl transition-all text-left ${
                       isSelected
-                        ? 'bg-emerald-500/15 border border-emerald-500/30'
-                        : 'hover:bg-white/[0.04] border border-transparent'
+                        ? 'bg-brand-mint/15 border border-brand-mint/30'
+                        : 'hover:bg-surface-elevated border border-transparent'
                     }`}
                   >
                     {/* Checkbox indicator */}
                     <div
                       className={`w-5 h-5 rounded flex items-center justify-center border transition-all shrink-0 ${
                         isSelected
-                          ? 'bg-emerald-500 border-emerald-500 text-white'
-                          : 'border-white/20 bg-white/5'
+                          ? 'bg-brand-mint border-brand-mint text-bg-base'
+                          : 'border-border bg-surface-elevated'
                       }`}
                     >
                       {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                     </div>
 
                     {/* Avatar */}
-                    <div className="w-8 h-8 rounded-full bg-slate-800 border border-white/10 overflow-hidden flex items-center justify-center text-slate-300 font-medium text-xs flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-surface-elevated border border-border overflow-hidden flex items-center justify-center text-text-primary font-medium text-xs flex-shrink-0">
                       {conv.avatar ? (
                         <img
                           src={conv.avatar}
@@ -242,25 +242,25 @@ export default function ForwardMessageModal({ isOpen, message, onClose }) {
                           className="w-full h-full object-cover"
                         />
                       ) : isGroup ? (
-                        <Users className="w-4 h-4 text-emerald-400" />
+                        <Users className="w-4 h-4 text-brand-mint" />
                       ) : (
-                        <User className="w-4 h-4 text-slate-400" />
+                        <User className="w-4 h-4 text-text-muted" />
                       )}
                     </div>
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-medium text-slate-200 truncate">
+                        <span className="text-xs font-medium text-text-primary truncate">
                           {title}
                         </span>
                         {isGroup && (
-                          <span className="text-[9px] px-1 py-0.2 rounded bg-white/5 border border-white/10 text-slate-400 uppercase font-mono">
+                          <span className="text-[9px] px-1 py-0.2 rounded bg-surface-elevated border border-border text-text-muted uppercase font-mono">
                             Group
                           </span>
                         )}
                       </div>
-                      <span className="text-[11px] text-slate-400 truncate block">
+                      <span className="text-[11px] text-text-muted truncate block">
                         {conv.lastMessage?.body || 'No messages yet'}
                       </span>
                     </div>
@@ -271,18 +271,18 @@ export default function ForwardMessageModal({ isOpen, message, onClose }) {
           </div>
 
           {/* Optional Note Input */}
-          <div className="p-4 border-t border-white/10 bg-white/[0.01]">
+          <div className="p-4 border-t border-border bg-surface-card">
             <input
               type="text"
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Add an optional note…"
-              className="w-full px-3 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-emerald-500/50 transition-all mb-3"
+              className="w-full px-3 py-2.5 bg-surface-elevated/50 border border-border rounded-xl text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-mint transition-all mb-3"
             />
 
             {/* Actions */}
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-text-muted">
                 {selectedConvIds.size} selected
               </span>
 
@@ -290,7 +290,7 @@ export default function ForwardMessageModal({ isOpen, message, onClose }) {
                 <button
                   type="button"
                   onClick={onClose}
-                  className="min-h-[44px] px-4 py-2 rounded-xl border border-white/10 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                  className="min-h-[44px] px-4 py-2 rounded-xl border border-border text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-surface-elevated transition-colors"
                 >
                   Cancel
                 </button>
@@ -300,7 +300,7 @@ export default function ForwardMessageModal({ isOpen, message, onClose }) {
                   disabled={
                     selectedConvIds.size === 0 || forwardMutation.isPending
                   }
-                  className="min-h-[44px] px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 disabled:hover:bg-emerald-500 text-white text-xs font-medium transition-all flex items-center gap-1.5 shadow-sm"
+                  className="min-h-[44px] px-4 py-2 rounded-xl bg-brand-mint hover:bg-brand-mint/90 disabled:opacity-40 disabled:hover:bg-brand-mint text-bg-base font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
                   {forwardMutation.isPending && (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />

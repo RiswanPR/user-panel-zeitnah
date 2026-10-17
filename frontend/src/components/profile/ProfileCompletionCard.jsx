@@ -107,10 +107,10 @@ export default function ProfileCompletionCard({
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: prefersReducedMotion ? 0 : 0.4 }}
-        className={`relative overflow-hidden rounded-3xl border bg-bg-card p-6 sm:p-8 transition-all ${
+        className={`relative overflow-hidden rounded-3xl border bg-surface-card p-6 sm:p-8 transition-all ${
           isComplete
             ? "border-brand-mint/30 shadow-[0_0_30px_rgba(159,213,178,0.06)]"
-            : "border-border-default hover:border-brand-mint/20"
+            : "border-border hover:border-brand-mint/20"
         }`}
       >
         <div className="gradient-line-top" />
@@ -148,7 +148,7 @@ export default function ProfileCompletionCard({
             </div>
 
             <div className="flex items-baseline gap-3">
-              <h2 className="text-3xl sm:text-4xl font-heading font-black text-white tracking-tight">
+              <h2 className="text-3xl sm:text-4xl font-heading font-black text-text-primary tracking-tight">
                 <AnimatedCounter value={completion} />%
               </h2>
               <span className="text-sm sm:text-base font-semibold text-text-secondary">
@@ -171,7 +171,7 @@ export default function ProfileCompletionCard({
             {/* Authoritative Progress Bar with ARIA */}
             <div className="mt-5 max-w-md w-full">
               <div className="flex justify-between text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">
-                <span className="text-white font-mono">
+                <span className="text-text-primary font-mono">
                   <AnimatedCounter value={completion} />% Complete
                 </span>
                 <span className="text-brand-mint font-mono font-bold">
@@ -185,7 +185,7 @@ export default function ProfileCompletionCard({
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-label="Profile completion progress"
-                className="h-2.5 w-full overflow-hidden rounded-full bg-white/[0.06] p-0.5 border border-white/[0.04]"
+                className="h-2.5 w-full overflow-hidden rounded-full bg-surface-elevated p-0.5 border border-border"
               >
                 <motion.div
                   initial={false}
@@ -210,7 +210,7 @@ export default function ProfileCompletionCard({
                   cy="50"
                   r="42"
                   fill="none"
-                  stroke="rgba(255,255,255,0.06)"
+                  stroke="var(--color-border)"
                   strokeWidth="6"
                 />
                 <motion.circle
@@ -230,7 +230,7 @@ export default function ProfileCompletionCard({
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-xl sm:text-2xl font-heading font-black text-white leading-none">
+                <span className="text-xl sm:text-2xl font-heading font-black text-text-primary leading-none">
                   <AnimatedCounter value={completion} />%
                 </span>
                 <span className="text-[9px] font-bold uppercase tracking-widest text-text-muted mt-1">
@@ -265,7 +265,7 @@ export default function ProfileCompletionCard({
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: prefersReducedMotion ? 0 : 0.4, delay: 0.1 }}
-          className="relative overflow-hidden rounded-3xl border border-brand-mint/25 bg-gradient-to-r from-bg-card via-bg-elevated to-bg-card p-6 sm:p-7 shadow-sm group hover:border-brand-mint/40 transition-all"
+          className="relative overflow-hidden rounded-3xl border border-brand-mint/25 bg-gradient-to-r from-surface-card via-surface-elevated to-surface-card p-6 sm:p-7 shadow-sm group hover:border-brand-mint/40 transition-all"
         >
           <div className="gradient-line-top" />
 
@@ -285,7 +285,7 @@ export default function ProfileCompletionCard({
                   </span>
                 </div>
 
-                <h3 className="text-lg sm:text-xl font-heading font-black text-white group-hover:text-brand-mint transition-colors">
+                <h3 className="text-lg sm:text-xl font-heading font-black text-text-primary group-hover:text-brand-mint transition-colors">
                   {dominantAction.title}
                 </h3>
 
@@ -306,7 +306,7 @@ export default function ProfileCompletionCard({
 
           {/* Secondary Actions (Supporting) */}
           {secondaryActions.length > 0 && (
-            <div className="mt-5 pt-4 border-t border-white/[0.05] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-text-muted">
+            <div className="mt-5 pt-4 border-t border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-text-muted">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-text-faint">
                 Next up after this:
               </span>
@@ -315,7 +315,7 @@ export default function ProfileCompletionCard({
                   <Link
                     key={sec.id}
                     to={`/profile/edit?section=${sec.targetSection}`}
-                    className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-white transition-colors"
+                    className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-text-primary transition-colors"
                   >
                     <span>{sec.title}</span>
                     <span className="text-brand-yellow font-mono font-bold text-[10px]">

@@ -183,19 +183,19 @@ export default function ConversationList({
 
   return (
     <div
-      className="flex flex-col h-full bg-[#080C14] border-r border-white/[0.08]"
+      className="flex flex-col h-full bg-surface-card border-r border-border"
       role="region"
       aria-label="Conversation list"
     >
       {/* ── Top Header & Actions ── */}
-      <div className="p-3.5 sm:p-4 border-b border-white/[0.08] space-y-3 shrink-0 bg-[#0C121E]/95 backdrop-blur-md pt-[max(0.875rem,env(safe-area-inset-top))]">
+      <div className="p-3.5 sm:p-4 border-b border-border space-y-3 shrink-0 bg-surface-card/95 backdrop-blur-md pt-[max(0.875rem,env(safe-area-inset-top))]">
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-1.5">
             <span className="text-[10px] font-mono tracking-widest uppercase text-text-muted/80">
               Zeitnah
             </span>
-            <span className="text-white/20 font-light text-xs">/</span>
-            <h2 className="text-base sm:text-lg font-heading font-black text-white tracking-tight">
+            <span className="text-text-faint font-light text-xs">/</span>
+            <h2 className="text-base sm:text-lg font-heading font-black text-text-primary tracking-tight">
               Messages
             </h2>
             {unreadCounts?.unreadMessages > 0 && (
@@ -209,7 +209,7 @@ export default function ConversationList({
             <button
               type="button"
               onClick={onOpenCommandPalette}
-              className="rounded-xl text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors focus-ring cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors focus-ring cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
               title="Search Messages (⌘K)"
               aria-label="Search messages"
             >
@@ -218,7 +218,7 @@ export default function ConversationList({
             <button
               type="button"
               onClick={onNewGroup}
-              className="rounded-xl text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors focus-ring cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors focus-ring cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
               title="New Group Workspace"
               aria-label="Create new group chat"
             >
@@ -238,7 +238,7 @@ export default function ConversationList({
 
         {/* ── Main Folder Tabs (Chats, Requests, Saved, Archived) ── */}
         <div
-          className="grid grid-cols-4 gap-1 bg-white/[0.03] p-1 rounded-xl border border-white/[0.06]"
+          className="grid grid-cols-4 gap-1 bg-surface-elevated/40 p-1 rounded-xl border border-border"
           role="tablist"
           aria-label="Message folders"
         >
@@ -249,8 +249,8 @@ export default function ConversationList({
             onClick={() => onTabChange('chats')}
             className={`flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg text-xs font-semibold transition-all cursor-pointer min-h-[36px] ${
               activeTab === 'chats'
-                ? 'bg-white/10 text-white shadow-sm font-bold'
-                : 'text-text-muted hover:text-white'
+                ? 'bg-surface-card text-text-primary shadow-sm font-bold border border-border/50'
+                : 'text-text-muted hover:text-text-primary'
             }`}
           >
             <Inbox className="w-3.5 h-3.5 shrink-0" />
@@ -271,8 +271,8 @@ export default function ConversationList({
             onClick={() => onTabChange('requests')}
             className={`flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg text-xs font-semibold transition-all cursor-pointer min-h-[36px] ${
               activeTab === 'requests'
-                ? 'bg-white/10 text-white shadow-sm font-bold'
-                : 'text-text-muted hover:text-white'
+                ? 'bg-surface-card text-text-primary shadow-sm font-bold border border-border/50'
+                : 'text-text-muted hover:text-text-primary'
             }`}
           >
             <Sparkles className="w-3.5 h-3.5 shrink-0" />
@@ -291,8 +291,8 @@ export default function ConversationList({
             onClick={() => onTabChange('saved')}
             className={`flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg text-xs font-semibold transition-all cursor-pointer min-h-[36px] ${
               activeTab === 'saved'
-                ? 'bg-white/10 text-white shadow-sm font-bold'
-                : 'text-text-muted hover:text-white'
+                ? 'bg-surface-card text-text-primary shadow-sm font-bold border border-border/50'
+                : 'text-text-muted hover:text-text-primary'
             }`}
           >
             <Bookmark className="w-3.5 h-3.5 shrink-0" />
@@ -306,8 +306,8 @@ export default function ConversationList({
             onClick={() => onTabChange('archived')}
             className={`flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg text-xs font-semibold transition-all cursor-pointer min-h-[36px] ${
               activeTab === 'archived'
-                ? 'bg-white/10 text-white shadow-sm font-bold'
-                : 'text-text-muted hover:text-white'
+                ? 'bg-surface-card text-text-primary shadow-sm font-bold border border-border/50'
+                : 'text-text-muted hover:text-text-primary'
             }`}
           >
             <Archive className="w-3.5 h-3.5 shrink-0" />
@@ -324,7 +324,7 @@ export default function ConversationList({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search conversations, names, handles..."
-            className="w-full pl-9 pr-14 py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-brand-mint/40 text-xs text-white placeholder-text-muted focus:outline-none transition-colors min-h-[40px]"
+            className="w-full pl-9 pr-14 py-2 rounded-xl bg-surface-elevated/50 border border-border focus:border-brand-mint text-xs text-text-primary placeholder-text-muted focus:outline-none transition-colors min-h-[40px]"
             aria-label="Search conversations"
           />
           <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -334,7 +334,7 @@ export default function ConversationList({
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="p-1 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors"
+                className="p-1 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors"
                 aria-label="Clear search"
               >
                 <X className="w-3 h-3" />
@@ -343,7 +343,7 @@ export default function ConversationList({
               <button
                 type="button"
                 onClick={onOpenCommandPalette}
-                className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-text-faint bg-white/[0.04] border border-white/[0.08] rounded hover:text-white hover:bg-white/[0.08] cursor-pointer"
+                className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-text-faint bg-surface-elevated border border-border rounded hover:text-text-primary hover:bg-surface-elevated/80 cursor-pointer"
                 title="Open Command Palette (⌘K)"
               >
                 ⌘K
@@ -375,7 +375,7 @@ export default function ConversationList({
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all shrink-0 cursor-pointer flex items-center gap-1 min-h-[32px] ${
                     active
                       ? 'bg-brand-mint/15 text-brand-mint border border-brand-mint/30 font-semibold'
-                      : 'bg-white/[0.02] text-text-muted hover:text-white border border-white/[0.05]'
+                      : 'bg-surface-elevated/40 text-text-muted hover:text-text-primary border border-border/60 hover:bg-surface-elevated'
                   }`}
                 >
                   <span>{f.label}</span>
@@ -403,7 +403,7 @@ export default function ConversationList({
         </div>
       ) : (
         <div
-          className="flex-1 overflow-y-auto divide-y divide-white/[0.04]"
+          className="flex-1 overflow-y-auto divide-y divide-border/40"
           role="list"
           aria-label="Conversations"
         >
@@ -412,19 +412,19 @@ export default function ConversationList({
             {[1, 2, 3, 4, 5].map((i) => (
               <div
                 key={i}
-                className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse"
+                className="flex items-center gap-3 p-3 rounded-2xl bg-surface-card border border-border animate-pulse"
               >
-                <div className="w-11 h-11 rounded-full bg-white/[0.05] shrink-0" />
+                <div className="w-11 h-11 rounded-full bg-surface-elevated shrink-0" />
                 <div className="flex-1 space-y-2 min-w-0">
-                  <div className="h-3.5 bg-white/[0.06] rounded w-2/3" />
-                  <div className="h-3 bg-white/[0.03] rounded w-1/2" />
+                  <div className="h-3.5 bg-surface-elevated rounded w-2/3" />
+                  <div className="h-3 bg-surface-elevated/60 rounded w-1/2" />
                 </div>
               </div>
             ))}
           </div>
         ) : conversations.length === 0 ? (
           <div className="p-8 text-center my-auto">
-            <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto mb-3 text-text-muted">
+            <div className="w-12 h-12 rounded-2xl bg-surface-card border border-border flex items-center justify-center mx-auto mb-3 text-text-muted">
               {activeTab === 'requests' ? (
                 <Sparkles className="w-6 h-6 text-brand-gold/70" />
               ) : activeTab === 'archived' ? (
@@ -433,7 +433,7 @@ export default function ConversationList({
                 <Inbox className="w-6 h-6 text-brand-mint/70" />
               )}
             </div>
-            <h4 className="text-sm font-bold text-white mb-1 tracking-tight">
+            <h4 className="text-sm font-bold text-text-primary mb-1 tracking-tight">
               {searchQuery
                 ? 'Nothing found.'
                 : activeTab === 'requests'
@@ -509,8 +509,8 @@ export default function ConversationList({
                   isSelected
                     ? 'bg-brand-mint/[0.08] border-brand-mint shadow-inner'
                     : unreadCount > 0
-                    ? 'bg-white/[0.02] border-transparent hover:bg-white/[0.04]'
-                    : 'border-transparent hover:bg-white/[0.03]'
+                    ? 'bg-surface-elevated/40 border-transparent hover:bg-surface-elevated/70'
+                    : 'border-transparent hover:bg-surface-elevated/40'
                 }`}
                 aria-label={`Conversation with ${displayName}${
                   unreadCount > 0 ? `, ${unreadCount} unread messages` : ''
@@ -521,12 +521,12 @@ export default function ConversationList({
                   <div
                     className={`w-11 h-11 rounded-full flex items-center justify-center overflow-hidden font-heading font-bold text-xs transition-all ${
                       isOnline
-                        ? 'ring-2 ring-brand-mint/70 ring-offset-2 ring-offset-[#080C14]'
-                        : 'border border-white/[0.08]'
+                        ? 'ring-2 ring-brand-mint/70 ring-offset-2 ring-offset-bg-base'
+                        : 'border border-border'
                     } ${
                       avatarUrl
-                        ? 'bg-white/[0.05]'
-                        : 'bg-gradient-to-br from-[#1A2333] to-[#0D1424] text-brand-mint shadow-inner'
+                        ? 'bg-surface-elevated'
+                        : 'bg-surface-elevated text-brand-mint border border-border shadow-inner'
                     }`}
                   >
                     {avatarUrl ? (
@@ -544,7 +544,7 @@ export default function ConversationList({
                   </div>
                   {isOnline && (
                     <span
-                      className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#080C14] bg-brand-mint shadow-sm"
+                      className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-surface-card bg-brand-mint shadow-sm"
                       title={presenceTooltip}
                       aria-label={presenceTooltip}
                     />
@@ -560,8 +560,8 @@ export default function ConversationList({
                         isSelected
                           ? 'text-brand-mint'
                           : unreadCount > 0
-                          ? 'text-white font-extrabold'
-                          : 'text-white/95'
+                          ? 'text-text-primary font-extrabold'
+                          : 'text-text-primary'
                       }`}
                     >
                       {displayName}
@@ -611,13 +611,13 @@ export default function ConversationList({
                     <div
                       className={`text-xs truncate flex items-center gap-1 min-w-0 flex-1 ${
                         unreadCount > 0
-                          ? 'font-semibold text-white/90'
+                          ? 'font-semibold text-text-primary'
                           : 'text-text-muted'
                       }`}
                     >
                       {hasDraft && !isSelected ? (
-                        <span className="text-amber-400 font-medium truncate flex items-center gap-1 text-xs">
-                          <Edit3 className="w-3 h-3 text-amber-400 shrink-0" />
+                        <span className="text-amber-500 font-medium truncate flex items-center gap-1 text-xs">
+                          <Edit3 className="w-3 h-3 text-amber-500 shrink-0" />
                           <span className="font-bold shrink-0">Draft:</span>
                           <span className="truncate">{draftText}</span>
                         </span>
@@ -675,7 +675,7 @@ export default function ConversationList({
                       )}
                       {lastMsg?.threadReplyCount > 0 && (
                         <span
-                          className="px-1.5 py-0.2 rounded-full bg-white/[0.06] text-text-muted font-mono text-[9px] flex items-center gap-0.5 shrink-0"
+                          className="px-1.5 py-0.2 rounded-full bg-surface-elevated border border-border text-text-muted font-mono text-[9px] flex items-center gap-0.5 shrink-0"
                           title={`${lastMsg.threadReplyCount} thread replies`}
                         >
                           💬 {lastMsg.threadReplyCount}

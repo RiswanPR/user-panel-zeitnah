@@ -105,20 +105,20 @@ export default function SendMessageRequestModal({ recipient, onClose, onSuccess 
         initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        className="relative w-full max-w-md rounded-3xl border border-white/[0.1] bg-[#0A0F14] p-6 shadow-2xl backdrop-blur-2xl"
+        className="relative w-full max-w-md rounded-3xl border border-border bg-surface-card p-6 shadow-2xl backdrop-blur-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top subtle highlight */}
         <div className="absolute top-0 inset-x-8 h-[2px] bg-gradient-to-r from-transparent via-brand-mint/40 to-transparent" />
 
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
+        <div className="flex items-center justify-between pb-4 border-b border-border">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-brand-mint/15 text-brand-mint border border-brand-mint/30 flex items-center justify-center">
               <Send className="w-4 h-4" />
             </div>
             <div>
-              <h2 id="message-recipient-name" className="text-sm font-heading font-bold text-white">
+              <h2 id="message-recipient-name" className="text-sm font-heading font-bold text-text-primary">
                 Message {recipient.name}
               </h2>
               <p className="text-[11px] text-text-muted">
@@ -132,7 +132,7 @@ export default function SendMessageRequestModal({ recipient, onClose, onSuccess 
             type="button"
             onClick={onClose}
             aria-label="Close dialog"
-            className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-text-muted hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+            className="w-7 h-7 rounded-lg bg-surface-elevated hover:bg-surface-card text-text-muted hover:text-text-primary flex items-center justify-center transition-colors cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -152,7 +152,7 @@ export default function SendMessageRequestModal({ recipient, onClose, onSuccess 
               placeholder="Hi, I saw your highway and BIM project work and would love to exchange insights..."
               maxLength={2000}
               required
-              className="w-full rounded-2xl bg-white/[0.03] border border-white/[0.08] focus:border-brand-mint/50 p-3 text-xs text-white placeholder-text-muted/60 focus:outline-none transition-colors resize-none"
+              className="w-full rounded-2xl bg-surface-elevated border border-border focus:border-brand-mint/50 p-3 text-xs text-text-primary placeholder:text-text-muted focus:outline-none transition-colors resize-none"
             />
             <div className="flex items-center justify-between mt-1 text-[10px] text-text-muted font-mono">
               <span>Professional civil & infrastructure network</span>
@@ -160,7 +160,7 @@ export default function SendMessageRequestModal({ recipient, onClose, onSuccess 
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-start gap-2.5">
+          <div className="p-3 rounded-xl bg-surface-elevated border border-border flex items-start gap-2.5">
             <Lock className="w-3.5 h-3.5 text-brand-mint/70 shrink-0 mt-0.5" />
             <p className="text-[11px] text-text-muted leading-relaxed font-medium">
               Zeitnah is an infrastructure-industry professional network. Messages adhere to our professional conduct policy.
@@ -171,7 +171,7 @@ export default function SendMessageRequestModal({ recipient, onClose, onSuccess 
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-text-muted hover:text-white hover:bg-white/[0.04] transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer"
             >
               Cancel
             </button>

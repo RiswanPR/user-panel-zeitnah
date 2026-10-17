@@ -41,20 +41,20 @@ export default function DiscussionDetailPage() {
   if (discussionQuery.isLoading) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12 space-y-6">
-        <div className="h-44 rounded-3xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
-        <div className="h-64 rounded-3xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+        <div className="h-44 rounded-3xl bg-surface-card/60 border border-border animate-pulse" />
+        <div className="h-64 rounded-3xl bg-surface-card/60 border border-border animate-pulse" />
       </div>
     );
   }
 
   if (discussionQuery.isError || !discussionQuery.data) {
     return (
-      <div className="max-w-md mx-auto my-20 p-8 rounded-3xl bg-[#111115] border border-white/[0.08] text-center">
-        <h2 className="font-heading font-bold text-lg text-white">Discussion Not Found</h2>
+      <div className="max-w-md mx-auto my-20 p-8 rounded-3xl bg-surface-card border border-border text-center">
+        <h2 className="font-heading font-bold text-lg text-text-primary">Discussion Not Found</h2>
         <p className="text-xs text-text-muted mt-2">This discussion thread may have been removed or locked.</p>
         <Link
           to={spaceParam ? `/network/spaces/${spaceParam}` : '/network'}
-          className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-xl bg-brand-mint text-black font-semibold text-xs"
+          className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Space</span>
@@ -73,14 +73,14 @@ export default function DiscussionDetailPage() {
       {/* Back button */}
       <Link
         to={spaceParam ? `/network/spaces/${spaceParam}?tab=discussions` : '/network'}
-        className="inline-flex items-center gap-2 text-xs font-semibold text-text-muted hover:text-white transition-colors"
+        className="inline-flex items-center gap-2 text-xs font-semibold text-text-muted hover:text-text-primary transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         <span>Back to Discussions</span>
       </Link>
 
       {/* Main Discussion Thread Post */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-[#111115]/90 border border-white/[0.08] shadow-xl">
+      <div className="p-6 sm:p-8 rounded-3xl bg-surface-card border border-border shadow-xl">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-brand-mint/15 text-brand-mint font-bold text-sm flex items-center justify-center overflow-hidden shrink-0">
@@ -92,7 +92,7 @@ export default function DiscussionDetailPage() {
             </div>
 
             <div>
-              <h4 className="text-sm font-bold text-white">{author.name || author.email}</h4>
+              <h4 className="text-sm font-bold text-text-primary">{author.name || author.email}</h4>
               <p className="text-[11px] text-text-muted flex items-center gap-1 mt-0.5">
                 <Clock className="w-3 h-3 text-text-faint" />
                 <span>{new Date(discussion.createdAt).toLocaleString()}</span>
@@ -113,7 +113,7 @@ export default function DiscussionDetailPage() {
           </div>
         </div>
 
-        <h1 className="font-heading font-extrabold text-xl sm:text-2xl text-white mt-5">
+        <h1 className="font-heading font-extrabold text-xl sm:text-2xl text-text-primary mt-5">
           {discussion.title}
         </h1>
 
@@ -125,7 +125,7 @@ export default function DiscussionDetailPage() {
       {/* Replies Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-heading font-bold text-base text-white flex items-center gap-2">
+          <h2 className="font-heading font-bold text-base text-text-primary flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-brand-mint" />
             <span>Replies ({replies.length})</span>
           </h2>
@@ -134,11 +134,11 @@ export default function DiscussionDetailPage() {
         {repliesQuery.isLoading ? (
           <div className="space-y-3">
             {[1, 2].map((i) => (
-              <div key={i} className="h-20 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+              <div key={i} className="h-20 rounded-2xl bg-surface-card/60 border border-border animate-pulse" />
             ))}
           </div>
         ) : replies.length === 0 ? (
-          <div className="p-8 rounded-2xl bg-[#111115]/60 border border-white/[0.06] text-center">
+          <div className="p-8 rounded-2xl bg-surface-card/60 border border-border text-center">
             <p className="text-xs text-text-muted">No replies yet. Be the first to join the conversation.</p>
           </div>
         ) : (
@@ -148,9 +148,9 @@ export default function DiscussionDetailPage() {
               return (
                 <div
                   key={reply._id}
-                  className="p-5 rounded-2xl bg-[#111115]/80 border border-white/[0.06] flex items-start gap-3.5"
+                  className="p-5 rounded-2xl bg-surface-card border border-border flex items-start gap-3.5"
                 >
-                  <div className="w-8 h-8 rounded-xl bg-white/[0.03] border border-white/[0.06] text-brand-mint font-bold text-xs flex items-center justify-center shrink-0 overflow-hidden mt-0.5">
+                  <div className="w-8 h-8 rounded-xl bg-surface-elevated border border-border text-brand-mint font-bold text-xs flex items-center justify-center shrink-0 overflow-hidden mt-0.5">
                     {replyAuthor.avatar || replyAuthor.profileImage ? (
                       <img src={replyAuthor.avatar || replyAuthor.profileImage} alt={replyAuthor.name} className="w-full h-full object-cover" />
                     ) : (
@@ -160,7 +160,7 @@ export default function DiscussionDetailPage() {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <h4 className="text-xs font-bold text-white">{replyAuthor.name || replyAuthor.email}</h4>
+                      <h4 className="text-xs font-bold text-text-primary">{replyAuthor.name || replyAuthor.email}</h4>
                       <span className="text-[10px] text-text-muted">
                         {new Date(reply.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(reply.createdAt).toLocaleDateString()}
                       </span>
@@ -178,13 +178,13 @@ export default function DiscussionDetailPage() {
 
         {/* Reply Composer */}
         {!isLocked && (
-          <form onSubmit={handleSendReply} className="mt-6 p-4 rounded-2xl bg-[#111115] border border-white/[0.08] shadow-xl space-y-3">
+          <form onSubmit={handleSendReply} className="mt-6 p-4 rounded-2xl bg-surface-card border border-border shadow-xl space-y-3">
             <textarea
               rows={3}
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
               placeholder="Write a constructive, academic reply..."
-              className="w-full px-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] focus:border-brand-mint/40 text-xs sm:text-sm text-white placeholder-text-muted focus:outline-none transition-colors resize-none"
+              className="w-full px-4 py-2.5 rounded-xl bg-surface-elevated border border-border focus:border-brand-mint text-xs sm:text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-colors resize-none"
             />
 
             <div className="flex items-center justify-between pt-1">
@@ -195,7 +195,7 @@ export default function DiscussionDetailPage() {
               <button
                 type="submit"
                 disabled={replyMutation.isPending || !replyText.trim()}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-mint hover:bg-brand-mint/90 disabled:opacity-50 text-black font-semibold text-xs shadow-md shadow-brand-mint/20 transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-mint hover:bg-brand-mint/90 disabled:opacity-50 text-brand-navy font-bold text-xs shadow-md shadow-brand-mint/20 transition-all cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>{replyMutation.isPending ? 'Sending...' : 'Post Reply'}</span>

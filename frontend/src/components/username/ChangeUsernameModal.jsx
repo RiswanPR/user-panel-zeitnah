@@ -224,7 +224,7 @@ export default function ChangeUsernameModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 16 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className="relative w-full max-w-md rounded-3xl bg-bg-card border border-border-default shadow-2xl overflow-hidden text-left z-10"
+          className="relative w-full max-w-md rounded-3xl bg-bg-card border border-border shadow-2xl overflow-hidden text-left z-10"
         >
           <div className="gradient-line-top" />
           <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-44 bg-brand-mint/15 rounded-full blur-[80px] pointer-events-none" />
@@ -235,7 +235,7 @@ export default function ChangeUsernameModal({
             disabled={isSubmitting}
             onClick={handleClose}
             aria-label="Close dialog"
-            className="absolute top-5 right-5 p-2 rounded-xl text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+            className="absolute top-5 right-5 p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -249,7 +249,7 @@ export default function ChangeUsernameModal({
               </div>
               <h2
                 id="change-username-title"
-                className="font-heading font-extrabold text-xl sm:text-2xl text-white tracking-tight"
+                className="font-heading font-extrabold text-xl sm:text-2xl text-text-primary tracking-tight"
               >
                 Change Username
               </h2>
@@ -260,7 +260,7 @@ export default function ChangeUsernameModal({
             </div>
 
             {/* Current Username badge */}
-            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between text-xs">
+            <div className="p-3 rounded-xl bg-surface-elevated/40 border border-border flex items-center justify-between text-xs">
               <span className="text-text-muted font-medium">
                 Current username:
               </span>
@@ -287,7 +287,7 @@ export default function ChangeUsernameModal({
                     To maintain trusted identity across Zeitnah, usernames
                     can only be changed once every 14 days.
                   </p>
-                  <div className="pt-1 text-[11px] font-semibold text-white">
+                  <div className="pt-1 text-[11px] font-semibold text-text-primary">
                     You can change your username again in{" "}
                     <span className="text-brand-mint font-bold">
                       {remainingDays} {remainingDays === 1 ? "day" : "days"}
@@ -344,7 +344,7 @@ export default function ChangeUsernameModal({
                         )
                       }
                       placeholder="new_handle"
-                      className="w-full glass-input pl-10 pr-10 py-3 text-sm font-mono tracking-wide text-white"
+                      className="w-full glass-input pl-10 pr-10 py-3 text-sm font-mono tracking-wide text-text-primary"
                     />
                     <div className="absolute right-3">
                       {isChecking && (
@@ -384,11 +384,11 @@ export default function ChangeUsernameModal({
                 </div>
 
                 {/* Cooldown notice */}
-                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-start gap-2.5 text-[11px] text-text-muted">
+                <div className="p-3 rounded-xl bg-surface-elevated/40 border border-border flex items-start gap-2.5 text-[11px] text-text-muted">
                   <Clock className="w-3.5 h-3.5 text-brand-mint shrink-0 mt-0.5" />
                   <span>
                     Username changes are limited to{" "}
-                    <strong className="text-white">once every 14 days</strong>.
+                    <strong className="text-text-primary">once every 14 days</strong>.
                   </span>
                 </div>
 

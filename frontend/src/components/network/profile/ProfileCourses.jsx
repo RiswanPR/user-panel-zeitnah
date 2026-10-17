@@ -11,7 +11,7 @@ export default function ProfileCourses({ courses = [] }) {
   const hasCourses = courses && courses.length > 0;
 
   return (
-    <div className="rounded-2xl border border-white/[0.08] bg-bg-surface/90 p-5 sm:p-6 shadow-lg backdrop-blur-xl space-y-4">
+    <div className="rounded-2xl border border-border bg-surface-card p-5 sm:p-6 shadow-lg backdrop-blur-xl space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xs font-mono font-bold uppercase tracking-widest text-text-muted flex items-center gap-2">
           <BookOpen className="h-3.5 w-3.5 text-brand-mint" />
@@ -36,12 +36,12 @@ export default function ProfileCourses({ courses = [] }) {
             return (
               <div
                 key={course.courseId || course.name}
-                className="group flex flex-col justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 hover:border-brand-mint/30 hover:bg-white/[0.04] transition-all"
+                className="group flex flex-col justify-between rounded-xl border border-border bg-surface-elevated/40 p-4 hover:border-brand-mint/30 hover:bg-surface-elevated/70 transition-all"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2.5">
                     <div className="min-w-0 flex-1">
-                      <h3 className="truncate text-sm font-bold text-white group-hover:text-brand-mint transition-colors">
+                      <h3 className="truncate text-sm font-bold text-text-primary group-hover:text-brand-mint transition-colors">
                         {course.name}
                       </h3>
                       {course.totalClasses ? (
@@ -67,7 +67,7 @@ export default function ProfileCourses({ courses = [] }) {
 
                 {/* Progress Bar */}
                 <div className="mt-4">
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
                         isCompleted

@@ -88,12 +88,12 @@ export default function PostPreview({
   const currentMedia = hasMedia ? files[activeMediaIdx] || files[0] : null;
 
   return (
-    <div className="max-w-[560px] mx-auto bg-[#070B14] border border-white/[0.1] rounded-3xl overflow-hidden shadow-2xl text-white">
+    <div className="max-w-[560px] mx-auto bg-surface-card border border-border rounded-3xl overflow-hidden shadow-2xl text-text-primary">
       {/* 1. AUTHOR HEADER */}
-      <div className="flex items-center justify-between p-4 border-b border-white/[0.06]">
+      <div className="flex items-center justify-between p-4 border-b border-border">
         <div className="flex items-center gap-3">
           {isBusiness ? (
-            <div className="w-10 h-10 rounded-xl bg-[#0E1726] border border-white/[0.1] overflow-hidden flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-surface-elevated border border-border overflow-hidden flex items-center justify-center shrink-0">
               <BusinessLogo
                 logo={business?.logo}
                 name={authorName}
@@ -102,7 +102,7 @@ export default function PostPreview({
               />
             </div>
           ) : (
-            <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/[0.1] overflow-hidden flex items-center justify-center font-bold text-xs text-brand-mint shrink-0">
+            <div className="w-10 h-10 rounded-full bg-surface-elevated border border-border overflow-hidden flex items-center justify-center font-bold text-xs text-brand-mint shrink-0">
               {avatarUrl ? (
                 <img src={avatarUrl} alt={authorName} className="w-full h-full object-cover" />
               ) : (
@@ -112,7 +112,7 @@ export default function PostPreview({
           )}
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs sm:text-sm font-bold text-white">{authorName}</span>
+              <span className="text-xs sm:text-sm font-bold text-text-primary">{authorName}</span>
               {isBusiness && (
                 <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-brand-mint/15 text-brand-mint border border-brand-mint/30">
                   Company
@@ -131,7 +131,7 @@ export default function PostPreview({
 
       {/* 2. MEDIA PREVIEW (If media attached) */}
       {hasMedia && currentMedia && (
-        <div className="relative bg-black/80 flex items-center justify-center overflow-hidden border-b border-white/[0.06] max-h-[460px]">
+        <div className="relative bg-black/80 flex items-center justify-center overflow-hidden border-b border-border max-h-[460px]">
           {currentMedia.type === 'image' && (
             <img
               src={currentMedia.previewUrl}
@@ -153,7 +153,7 @@ export default function PostPreview({
           {currentMedia.type === 'document' && (
             <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
               <FileText className="w-16 h-16 text-brand-mint mb-3" />
-              <p className="text-sm font-semibold text-white truncate max-w-xs">{currentMedia.name}</p>
+              <p className="text-sm font-semibold text-text-primary truncate max-w-xs">{currentMedia.name}</p>
               <p className="text-xs text-text-muted mt-1">PDF Document preview</p>
             </div>
           )}
@@ -207,7 +207,7 @@ export default function PostPreview({
       {/* 3. CAPTION & TEXT CONTENT */}
       {content && (
         <div className="p-4 space-y-2">
-          <p className="text-xs sm:text-sm text-slate-100 leading-relaxed whitespace-pre-wrap break-words">
+          <p className="text-xs sm:text-sm text-text-primary leading-relaxed whitespace-pre-wrap break-words">
             {renderPreviewText(content)}
           </p>
 
@@ -229,8 +229,8 @@ export default function PostPreview({
 
       {/* 4. POLL PREVIEW (If poll configured) */}
       {hasPoll && (
-        <div className="p-4 mx-4 mb-3 rounded-2xl bg-[#0B1524] border border-white/[0.08] space-y-3">
-          <div className="flex items-center gap-2 text-xs font-semibold text-white">
+        <div className="p-4 mx-4 mb-3 rounded-2xl bg-surface-elevated/40 border border-border space-y-3">
+          <div className="flex items-center gap-2 text-xs font-semibold text-text-primary">
             <HelpCircle className="w-4 h-4 text-brand-mint" />
             <span>{pollQuestion}</span>
           </div>
@@ -243,8 +243,8 @@ export default function PostPreview({
                 onClick={() => setSelectedPollOption(idx)}
                 className={`w-full relative overflow-hidden rounded-xl border p-2.5 text-left text-xs transition-colors cursor-pointer flex items-center justify-between ${
                   selectedPollOption === idx
-                    ? 'border-brand-mint bg-brand-mint/10 text-white font-medium'
-                    : 'border-white/[0.08] hover:border-white/[0.2] bg-white/[0.02] text-text-secondary'
+                    ? 'border-brand-mint bg-brand-mint/10 text-text-primary font-medium'
+                    : 'border-border hover:border-border-accent bg-surface-card text-text-secondary'
                 }`}
               >
                 <span>{opt}</span>
@@ -260,13 +260,13 @@ export default function PostPreview({
       )}
 
       {/* 5. MOCK INTERACTION BAR */}
-      <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.06] text-text-muted">
+      <div className="flex items-center justify-between px-4 py-3 border-t border-border text-text-muted">
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-1.5 text-xs hover:text-rose-400 transition-colors select-none">
             <Heart className="w-4 h-4" />
             <span>0</span>
           </span>
-          <span className="flex items-center gap-1.5 text-xs hover:text-white transition-colors select-none">
+          <span className="flex items-center gap-1.5 text-xs hover:text-text-primary transition-colors select-none">
             <MessageCircle className="w-4 h-4" />
             <span>0</span>
           </span>

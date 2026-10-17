@@ -5,9 +5,9 @@ const ROLE_CONFIG = {
   STUDENT: {
     label: "Student",
     icon: GraduationCap,
-    bgColor: "bg-mint/10",
-    textColor: "text-mint",
-    borderColor: "border-mint/20",
+    bgColor: "bg-brand-mint/10",
+    textColor: "text-brand-mint",
+    borderColor: "border-brand-mint/20",
   },
   PROFESSIONAL: {
     label: "Professional",

@@ -40,7 +40,7 @@ export default function StoryEditorToolbar({
           onClick={() => onSelectTool(activeTool === 'text' ? null : 'text')}
           className={`min-h-[44px] min-w-[44px] p-2.5 rounded-xl transition-all flex items-center justify-center cursor-pointer ${
             activeTool === 'text'
-              ? 'bg-brand-mint text-[#070B14] shadow-md shadow-brand-mint/20'
+              ? 'bg-brand-mint text-bg-base shadow-md shadow-brand-mint/20'
               : 'bg-white/[0.05] hover:bg-white/[0.1] text-text-muted hover:text-white'
           } disabled:opacity-30 disabled:cursor-not-allowed`}
           aria-label="Add text overlay"
@@ -57,7 +57,7 @@ export default function StoryEditorToolbar({
             onClick={() => onSelectTool(activeTool === 'draw' ? null : 'draw')}
             className={`min-h-[44px] min-w-[44px] p-2.5 rounded-xl transition-all flex items-center justify-center cursor-pointer ${
               activeTool === 'draw'
-                ? 'bg-brand-mint text-[#070B14] shadow-md shadow-brand-mint/20'
+                ? 'bg-brand-mint text-bg-base shadow-md shadow-brand-mint/20'
                 : 'bg-white/[0.05] hover:bg-white/[0.1] text-text-muted hover:text-white'
             } disabled:opacity-30 disabled:cursor-not-allowed`}
             aria-label="Draw on photo"
@@ -75,7 +75,7 @@ export default function StoryEditorToolbar({
             onClick={() => onSelectTool(activeTool === 'sticker' ? null : 'sticker')}
             className={`min-h-[44px] min-w-[44px] p-2.5 rounded-xl transition-all flex items-center justify-center cursor-pointer ${
               activeTool === 'sticker'
-                ? 'bg-brand-mint text-[#070B14] shadow-md shadow-brand-mint/20'
+                ? 'bg-brand-mint text-bg-base shadow-md shadow-brand-mint/20'
                 : 'bg-white/[0.05] hover:bg-white/[0.1] text-text-muted hover:text-white'
             } disabled:opacity-30 disabled:cursor-not-allowed`}
             aria-label="Add sticker"
@@ -93,7 +93,7 @@ export default function StoryEditorToolbar({
             onClick={() => onSelectTool(activeTool === 'filter' ? null : 'filter')}
             className={`min-h-[44px] min-w-[44px] p-2.5 rounded-xl transition-all flex items-center justify-center cursor-pointer ${
               activeTool === 'filter'
-                ? 'bg-brand-mint text-[#070B14] shadow-md shadow-brand-mint/20'
+                ? 'bg-brand-mint text-bg-base shadow-md shadow-brand-mint/20'
                 : 'bg-white/[0.05] hover:bg-white/[0.1] text-text-muted hover:text-white'
             } disabled:opacity-30 disabled:cursor-not-allowed`}
             aria-label="Photo filters"

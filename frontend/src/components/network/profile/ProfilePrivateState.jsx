@@ -13,12 +13,12 @@ export default function ProfilePrivateState({ profile }) {
     <div className="space-y-6 sm:space-y-8">
       <ProfileHeader profile={profile} isOwnProfile={false} />
 
-      <div className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.08] bg-bg-surface/80 p-8 sm:p-12 text-center shadow-lg backdrop-blur-xl max-w-lg mx-auto">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/[0.1] bg-white/[0.04] text-text-muted mb-4">
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-surface-card p-8 sm:p-12 text-center shadow-lg backdrop-blur-xl max-w-lg mx-auto">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-surface-elevated text-text-muted mb-4">
           <Lock className="h-6 w-6 text-text-muted" aria-hidden="true" />
         </div>
 
-        <h2 className="text-base sm:text-lg font-heading font-bold text-white">
+        <h2 className="text-base sm:text-lg font-heading font-bold text-text-primary">
           Private Profile
         </h2>
 

@@ -135,11 +135,11 @@ export default function SavedPostsPage() {
     <div className="community-aurora-bg min-h-screen pb-16">
       <div className="max-w-[760px] mx-auto py-4 sm:py-6 px-3 sm:px-4">
         {/* Navigation Header */}
-        <div className="mb-6 pb-4 border-b border-white/[0.08]">
+        <div className="mb-6 pb-4 border-b border-border">
           <div className="flex items-center gap-3 mb-3">
             <Link
               to="/community"
-              className="flex items-center gap-1.5 text-xs font-semibold text-text-muted hover:text-white transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 text-xs font-semibold text-text-muted hover:text-text-primary transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4 text-brand-mint" />
               <span>Back to Community</span>
@@ -149,7 +149,7 @@ export default function SavedPostsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <h1 className="text-xl sm:text-2xl font-bold font-heading text-white tracking-tight">
+                <h1 className="text-xl sm:text-2xl font-bold font-heading text-text-primary tracking-tight">
                   Saved Library
                 </h1>
                 <Badge variant="mint" size="sm">
@@ -161,7 +161,7 @@ export default function SavedPostsPage() {
               </p>
             </div>
 
-            <span className="self-start sm:self-auto text-xs font-mono font-semibold text-text-faint px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+            <span className="self-start sm:self-auto text-xs font-mono font-semibold text-text-faint px-3 py-1.5 rounded-xl bg-surface-card border border-border">
               {allSavedPosts.length} {allSavedPosts.length === 1 ? 'item saved' : 'items saved'}
             </span>
           </div>
@@ -175,13 +175,13 @@ export default function SavedPostsPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search saved bookmarks..."
-                className="w-full pl-10 pr-4 py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-brand-mint/40 text-xs text-white placeholder-text-muted/60 focus:outline-none transition-colors"
+                className="w-full pl-10 pr-4 py-2 rounded-xl bg-surface-card border border-border focus:border-brand-mint/40 text-xs text-text-primary placeholder-text-muted/60 focus:outline-none transition-colors"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-text-muted hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-text-muted hover:text-text-primary"
                 >
                   Clear
                 </button>
@@ -198,7 +198,7 @@ export default function SavedPostsPage() {
                 className={`min-h-[40px] px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                   activeCategory === 'all'
                     ? 'bg-brand-mint text-bg-base shadow-sm'
-                    : 'bg-white/[0.03] hover:bg-white/[0.07] text-text-muted hover:text-white border border-white/[0.05]'
+                    : 'bg-surface-elevated hover:bg-surface-card text-text-muted hover:text-text-primary border border-border'
                 }`}
               >
                 <Layers className="w-3.5 h-3.5" />
@@ -212,7 +212,7 @@ export default function SavedPostsPage() {
                 className={`min-h-[40px] px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                   activeCategory === 'posts'
                     ? 'bg-brand-mint text-bg-base shadow-sm'
-                    : 'bg-white/[0.03] hover:bg-white/[0.07] text-text-muted hover:text-white border border-white/[0.05]'
+                    : 'bg-surface-elevated hover:bg-surface-card text-text-muted hover:text-text-primary border border-border'
                 }`}
               >
                 <FileText className="w-3.5 h-3.5" />
@@ -226,7 +226,7 @@ export default function SavedPostsPage() {
                 className={`min-h-[40px] px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                   activeCategory === 'reels'
                     ? 'bg-brand-mint text-bg-base shadow-sm'
-                    : 'bg-white/[0.03] hover:bg-white/[0.07] text-text-muted hover:text-white border border-white/[0.05]'
+                    : 'bg-surface-elevated hover:bg-surface-card text-text-muted hover:text-text-primary border border-border'
                 }`}
               >
                 <Film className="w-3.5 h-3.5" />
@@ -240,7 +240,7 @@ export default function SavedPostsPage() {
                 className={`min-h-[40px] px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                   activeCategory === 'resources'
                     ? 'bg-brand-mint text-bg-base shadow-sm'
-                    : 'bg-white/[0.03] hover:bg-white/[0.07] text-text-muted hover:text-white border border-white/[0.05]'
+                    : 'bg-surface-elevated hover:bg-surface-card text-text-muted hover:text-text-primary border border-border'
                 }`}
               >
                 <Code2 className="w-3.5 h-3.5" />
@@ -275,8 +275,8 @@ export default function SavedPostsPage() {
               actionLabel="Explore Community"
             />
           ) : displayedPosts.length === 0 ? (
-            <div className="p-8 rounded-2xl bg-white/[0.02] border border-white/[0.06] text-center space-y-2">
-              <p className="text-sm text-white font-medium">No bookmarks found in this view</p>
+            <div className="p-8 rounded-2xl bg-surface-card border border-border text-center space-y-2">
+              <p className="text-sm text-text-primary font-medium">No bookmarks found in this view</p>
               <p className="text-xs text-text-muted">
                 {searchQuery
                   ? `No saved items match "${searchQuery}".`
@@ -317,7 +317,7 @@ export default function SavedPostsPage() {
                 type="button"
                 onClick={() => fetchNextPage()}
                 disabled={isFetchingNextPage}
-                className="min-h-[44px] px-5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] text-xs font-semibold text-white transition-colors cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                className="min-h-[44px] px-5 py-2 rounded-xl bg-surface-card hover:bg-surface-elevated text-xs font-semibold text-text-primary border border-border transition-colors cursor-pointer flex items-center gap-2 disabled:opacity-50"
               >
                 {isFetchingNextPage ? (
                   <>

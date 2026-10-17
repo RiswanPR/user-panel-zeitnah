@@ -70,7 +70,7 @@ function CourseChapters() {
     return (
       <div className="space-y-8 max-w-7xl mx-auto">
         <div className="h-4 w-48 shimmer rounded" />
-        <div className="rounded-2xl border border-white/[0.06] bg-bg-card p-6 sm:p-8 flex flex-col md:flex-row gap-6">
+        <div className="rounded-2xl border border-border bg-surface-card p-6 sm:p-8 flex flex-col md:flex-row gap-6">
           <div
             className="w-full md:w-5/12 aspect-video shimmer rounded-xl shrink-0"
             style={{ aspectRatio: "16 / 9" }}
@@ -100,7 +100,7 @@ function CourseChapters() {
         <button
           type="button"
           onClick={() => navigate("/courses")}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.06] border border-white/10 text-xs font-semibold text-white hover:bg-white/[0.1] transition-all cursor-pointer"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-elevated border border-border text-xs font-semibold text-text-primary hover:bg-surface-elevated/80 transition-all cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Back to Courses
@@ -156,12 +156,12 @@ function CourseChapters() {
       <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-medium text-text-muted">
         <Link
           to="/courses"
-          className="hover:text-white transition-colors focus-ring rounded"
+          className="hover:text-text-primary transition-colors focus-ring rounded"
         >
           Courses
         </Link>
         <ChevronRight className="w-3.5 h-3.5 text-text-faint" />
-        <span className="text-white truncate max-w-[280px] sm:max-w-md font-semibold">
+        <span className="text-text-primary truncate max-w-[280px] sm:max-w-md font-semibold">
           {course.name}
         </span>
       </nav>
@@ -172,7 +172,7 @@ function CourseChapters() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
         aria-label="Course Overview"
-        className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-bg-card via-bg-surface to-bg-card p-5 sm:p-7 lg:p-8"
+        className="relative overflow-hidden rounded-2xl border border-border bg-surface-card p-5 sm:p-7 lg:p-8"
       >
         <div className="gradient-line-top" />
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand-mint/5 blur-[90px]" />
@@ -180,7 +180,7 @@ function CourseChapters() {
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-6 lg:gap-8">
           {/* 16:9 Cover Thumbnail (1920x1080) */}
           <div
-            className="relative w-full md:w-5/12 aspect-video shrink-0 rounded-xl overflow-hidden border border-white/[0.08] bg-bg-elevated"
+            className="relative w-full md:w-5/12 aspect-video shrink-0 rounded-xl overflow-hidden border border-border bg-surface-elevated"
             style={{ aspectRatio: "16 / 9" }}
           >
             <img
@@ -217,7 +217,7 @@ function CourseChapters() {
                 </span>
               </div>
 
-              <h1 className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl text-white tracking-tight leading-tight">
+              <h1 className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl text-text-primary tracking-tight leading-tight">
                 {course.name}
               </h1>
 
@@ -230,14 +230,14 @@ function CourseChapters() {
 
             {/* Progress metrics if enrolled */}
             {isPurchased && (
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 space-y-2 max-w-xl">
+              <div className="rounded-xl border border-border bg-surface-elevated/40 p-4 space-y-2 max-w-xl">
                 <div className="flex items-center justify-between text-xs font-medium text-text-secondary">
                   <span>
                     {completionPercent >= 100 ? "Course Complete" : "Your Progress"}
                   </span>
-                  <span className="font-bold text-white">{completionPercent}%</span>
+                  <span className="font-bold text-text-primary">{completionPercent}%</span>
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-surface-elevated">
                   <div
                     className={`h-full rounded-full transition-all duration-700 ${
                       completionPercent >= 100
@@ -285,7 +285,7 @@ function CourseChapters() {
           <div className="flex items-start gap-3">
             <BookOpen className="w-5 h-5 text-brand-mint shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-sm font-bold text-white">Free Chapters Available</h3>
+              <h3 className="text-sm font-bold text-text-primary">Free Chapters Available</h3>
               <p className="text-xs text-text-muted mt-0.5">
                 The first 2 chapters are open for free preview. Explore the lessons below to get started.
               </p>
@@ -300,11 +300,11 @@ function CourseChapters() {
           </button>
         </div>
       ) : !isPurchased && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-white/[0.08] bg-white/[0.02] p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-border bg-surface-card p-4 sm:p-5">
           <div className="flex items-start gap-3">
             <Lock className="w-5 h-5 text-warning shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-sm font-bold text-white">Course Syllabus Preview</h3>
+              <h3 className="text-sm font-bold text-text-primary">Course Syllabus Preview</h3>
               <p className="text-xs text-text-muted mt-0.5">
                 Review the modular roadmap below. Enquire to unlock live streaming sessions and materials.
               </p>
@@ -322,9 +322,9 @@ function CourseChapters() {
 
       {/* ── Chapter Roadmap Section ── */}
       <section aria-labelledby="chapter-roadmap-title" className="space-y-5">
-        <div className="flex items-center justify-between border-b border-white/[0.06] pb-4">
+        <div className="flex items-center justify-between border-b border-border pb-4">
           <div>
-            <h2 id="chapter-roadmap-title" className="font-heading font-bold text-xl sm:text-2xl text-white tracking-tight">
+            <h2 id="chapter-roadmap-title" className="font-heading font-bold text-xl sm:text-2xl text-text-primary tracking-tight">
               Course Syllabus
             </h2>
             <p className="text-xs text-text-muted mt-0.5">
@@ -337,7 +337,7 @@ function CourseChapters() {
         </div>
 
         {chapters.length === 0 ? (
-          <div className="rounded-2xl border border-white/[0.06] bg-bg-card p-10 text-center">
+          <div className="rounded-2xl border border-border bg-surface-card p-10 text-center">
             <p className="text-text-muted text-sm font-medium">
               No chapters have been published for this course yet.
             </p>

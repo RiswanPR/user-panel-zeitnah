@@ -44,7 +44,7 @@ export default function CourseTypeBadge({
     if (s === "locked") {
       return (
         <span
-          className={`inline-flex items-center font-mono font-bold uppercase tracking-wider rounded-lg border backdrop-blur-md border-white/15 bg-white/5 text-text-muted ${
+          className={`inline-flex items-center font-mono font-bold uppercase tracking-wider rounded-lg border backdrop-blur-md border-border bg-surface-elevated text-text-muted ${
             size === "sm"
               ? "px-2 py-0.5 text-[9px] gap-1"
               : size === "lg"

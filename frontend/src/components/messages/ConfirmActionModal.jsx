@@ -105,7 +105,7 @@ export default function ConfirmActionModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 12 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="relative w-full max-w-md rounded-2xl border border-white/[0.09] bg-[#080D12] p-6 shadow-2xl overflow-hidden"
+          className="relative w-full max-w-md rounded-2xl border border-border bg-surface-card p-6 shadow-2xl overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Subtle top ambient indicator */}
@@ -121,7 +121,7 @@ export default function ConfirmActionModal({
             onClick={onClose}
             disabled={isLoading}
             aria-label="Close dialog"
-            className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-xl bg-white/[0.03] border border-white/[0.06] text-text-muted hover:text-white hover:bg-white/[0.08] transition-all cursor-pointer disabled:opacity-40"
+            className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-xl bg-surface-elevated/40 border border-border text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-all cursor-pointer disabled:opacity-40"
           >
             <X className="w-4 h-4" />
           </button>
@@ -136,7 +136,7 @@ export default function ConfirmActionModal({
             <div className="pt-0.5 pr-6">
               <h2
                 id="confirm-dialog-title"
-                className="text-base font-heading font-black text-white tracking-tight"
+                className="text-base font-heading font-black text-text-primary tracking-tight"
               >
                 {title}
               </h2>
@@ -153,13 +153,13 @@ export default function ConfirmActionModal({
           {extraContent && <div className="mb-5">{extraContent}</div>}
 
           {/* Action buttons */}
-          <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-white/[0.06]">
+          <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-border">
             <button
               ref={cancelBtnRef}
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="px-4 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.08] text-xs font-semibold text-text-secondary hover:text-white transition-all cursor-pointer disabled:opacity-50"
+              className="px-4 py-2.5 rounded-xl border border-border bg-surface-elevated/60 hover:bg-surface-elevated text-xs font-semibold text-text-secondary hover:text-text-primary transition-all cursor-pointer disabled:opacity-50 min-h-[44px]"
             >
               {cancelLabel}
             </button>
@@ -168,10 +168,10 @@ export default function ConfirmActionModal({
               type="button"
               onClick={onConfirm}
               disabled={isLoading}
-              className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-50 ${
+              className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-50 min-h-[44px] ${
                 danger
                   ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-lg shadow-rose-500/20'
-                  : 'bg-brand-yellow hover:bg-brand-yellow/90 text-[#12314C] shadow-lg shadow-brand-yellow/15'
+                  : 'bg-brand-yellow hover:bg-brand-yellow/90 text-slate-900 shadow-lg shadow-brand-yellow/15'
               }`}
             >
               {isLoading ? (

@@ -100,7 +100,7 @@ export default function TermsOfServicePage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#070B14] text-text-primary selection:bg-brand-mint/20 selection:text-brand-mint pt-20 pb-24">
+    <div className="min-h-screen bg-bg-base text-text-primary selection:bg-brand-mint/20 selection:text-brand-mint pt-20 pb-24">
       {/* Background Ambience */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute top-1/4 -left-48 w-96 h-96 rounded-full bg-brand-mint/[0.03] blur-[120px]" />
@@ -110,7 +110,7 @@ export default function TermsOfServicePage() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb Navigation */}
         <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-2 text-xs text-text-muted font-mono">
-          <Link to="/" className="hover:text-white transition-colors">Home</Link>
+          <Link to="/" className="hover:text-text-primary transition-colors">Home</Link>
           <ChevronRight className="w-3.5 h-3.5 text-text-faint" />
           <span className="text-text-faint">Legal</span>
           <ChevronRight className="w-3.5 h-3.5 text-text-faint" />
@@ -118,7 +118,7 @@ export default function TermsOfServicePage() {
         </nav>
 
         {/* Hero Header */}
-        <div className="relative rounded-3xl border border-white/[0.08] bg-gradient-to-b from-[#0C1220]/90 to-[#070B14]/90 p-8 sm:p-12 mb-10 overflow-hidden shadow-2xl backdrop-blur-xl">
+        <div className="relative rounded-3xl border border-border bg-surface-card p-8 sm:p-12 mb-10 overflow-hidden shadow-2xl backdrop-blur-xl">
           <div className="absolute -right-16 -top-16 w-80 h-80 opacity-15 pointer-events-none">
             <ZeitnahZMotif />
           </div>
@@ -129,29 +129,29 @@ export default function TermsOfServicePage() {
               <span>Official Legal Agreement</span>
             </div>
 
-            <h1 className="text-3xl sm:text-5xl font-heading font-extrabold text-white tracking-tight leading-tight">
+            <h1 className="text-3xl sm:text-5xl font-heading font-extrabold text-text-primary tracking-tight leading-tight">
               Terms of Service
             </h1>
 
             <p className="text-sm sm:text-base text-text-muted leading-relaxed">
               These Terms of Service (&ldquo;Terms&rdquo;) constitute a legally binding agreement between you and{" "}
-              <strong className="text-white">ZEITNAH INSTITUTE OF SURVEY LLP</strong> (&ldquo;Zeitnah,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;),
+              <strong className="text-text-primary">ZEITNAH INSTITUTE OF SURVEY LLP</strong> (&ldquo;Zeitnah,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;),
               governing your access to and use of the Zeitnah Learning Management System (LMS), mobile applications, and instructional engineering curricula.
             </p>
 
             <div className="pt-2 flex flex-wrap items-center gap-4 text-xs font-mono text-text-secondary">
-              <span className="inline-flex items-center gap-1.5 bg-white/[0.04] px-3 py-1 rounded-lg border border-white/[0.06]">
+              <span className="inline-flex items-center gap-1.5 bg-surface-elevated px-3 py-1 rounded-lg border border-border">
                 <Clock className="w-3.5 h-3.5 text-brand-mint" />
                 <span>Effective Date: October 16, 2026</span>
               </span>
-              <span className="inline-flex items-center gap-1.5 bg-white/[0.04] px-3 py-1 rounded-lg border border-white/[0.06]">
+              <span className="inline-flex items-center gap-1.5 bg-surface-elevated px-3 py-1 rounded-lg border border-border">
                 <Building2 className="w-3.5 h-3.5 text-brand-yellow" />
                 <span>Operating Entity: ZEITNAH INSTITUTE OF SURVEY LLP</span>
               </span>
               <button
                 type="button"
                 onClick={handlePrint}
-                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-white transition-colors cursor-pointer"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-surface-elevated hover:bg-surface-card border border-border text-text-primary transition-colors cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>Print Document</span>
@@ -164,7 +164,7 @@ export default function TermsOfServicePage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Table of Contents Sticky Sidebar */}
           <aside className="lg:col-span-4 space-y-4 lg:sticky lg:top-24">
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0F1A]/80 backdrop-blur-md p-5 space-y-4">
+            <div className="rounded-2xl border border-border bg-surface-card backdrop-blur-md p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="font-mono text-xs uppercase font-bold text-text-secondary tracking-wider">
                   Table of Contents
@@ -180,7 +180,7 @@ export default function TermsOfServicePage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Filter sections..."
-                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-white/[0.03] border border-white/[0.08] text-white placeholder-text-faint focus:outline-none focus:border-brand-mint transition-colors"
+                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-surface-elevated border border-border text-text-primary placeholder-text-faint focus:outline-none focus:border-brand-mint transition-colors"
                 />
               </div>
 
@@ -195,7 +195,7 @@ export default function TermsOfServicePage() {
                       className={`group flex items-start gap-2.5 px-3 py-2 rounded-xl text-xs transition-all ${
                         isActive
                           ? "bg-brand-mint/10 text-brand-mint font-semibold border border-brand-mint/20"
-                          : "text-text-muted hover:text-white hover:bg-white/[0.03]"
+                          : "text-text-muted hover:text-text-primary hover:bg-surface-elevated"
                       }`}
                     >
                       <span className={`font-mono text-[10px] shrink-0 mt-0.5 ${isActive ? "text-brand-mint font-bold" : "text-text-faint"}`}>
@@ -208,10 +208,10 @@ export default function TermsOfServicePage() {
               </nav>
 
               {/* Cross-Link Legal Cards */}
-              <div className="pt-3 border-t border-white/[0.08] space-y-2">
+              <div className="pt-3 border-t border-border space-y-2">
                 <Link
                   to="/privacy-policy"
-                  className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.06] text-xs text-text-secondary hover:text-white transition-colors"
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-surface-elevated hover:bg-surface-card border border-border text-xs text-text-secondary hover:text-text-primary transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="w-3.5 h-3.5 text-brand-mint" />
@@ -221,7 +221,7 @@ export default function TermsOfServicePage() {
                 </Link>
                 <Link
                   to="/support"
-                  className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.06] text-xs text-text-secondary hover:text-white transition-colors"
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-surface-elevated hover:bg-surface-card border border-border text-xs text-text-secondary hover:text-text-primary transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <HelpCircle className="w-3.5 h-3.5 text-brand-yellow" />
@@ -233,13 +233,13 @@ export default function TermsOfServicePage() {
             </div>
 
             {/* Entity Verification Notice Box */}
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0F1A]/80 p-5 space-y-2.5 text-xs">
-              <div className="flex items-center gap-2 font-bold text-white">
+            <div className="rounded-2xl border border-border bg-surface-card p-5 space-y-2.5 text-xs">
+              <div className="flex items-center gap-2 font-bold text-text-primary">
                 <Building2 className="w-4 h-4 text-brand-mint shrink-0" />
                 <span>Operating Legal Entity</span>
               </div>
               <p className="text-text-secondary leading-relaxed">
-                <strong className="text-white">ZEITNAH INSTITUTE OF SURVEY LLP</strong><br />
+                <strong className="text-text-primary">ZEITNAH INSTITUTE OF SURVEY LLP</strong><br />
                 Business Constitution: Limited Liability Partnership<br />
                 1st Floor, 34/1412, Babil Complex, Kovilakam Road, Mankavu, Kozhikode, Kerala 673007, India
               </p>
@@ -256,7 +256,7 @@ export default function TermsOfServicePage() {
                 <Scale className="w-4 h-4" />
                 <span>Section 01</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 1. Acceptance of Terms & Operating Entity
               </h2>
               <div className="space-y-3.5 text-sm leading-relaxed text-text-secondary">
@@ -269,10 +269,10 @@ export default function TermsOfServicePage() {
                   <code className="font-mono text-text-primary">com.zeitnahacademy.app</code>).
                 </p>
                 <p>
-                  These Terms of Service are entered into by and between you and <strong className="text-white">ZEITNAH INSTITUTE OF SURVEY LLP</strong>,
+                  These Terms of Service are entered into by and between you and <strong className="text-text-primary">ZEITNAH INSTITUTE OF SURVEY LLP</strong>,
                   a Limited Liability Partnership registered and operating under the laws of India, having its principal place of business at:
                 </p>
-                <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4 text-xs font-mono text-white/90 space-y-1">
+                <div className="rounded-xl border border-border bg-surface-elevated p-4 text-xs font-mono text-text-primary space-y-1">
                   <p className="font-bold text-brand-mint">ZEITNAH INSTITUTE OF SURVEY LLP</p>
                   <p>1st Floor, 34/1412, Babil Complex, Kovilakam Road</p>
                   <p>Mankavu, Kozhikode, Kerala 673007, India</p>
@@ -295,18 +295,18 @@ export default function TermsOfServicePage() {
                 <KeyRound className="w-4 h-4" />
                 <span>Section 02</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 2. Account Registration, OTP & Security
               </h2>
               <div className="space-y-3.5 text-sm leading-relaxed text-text-secondary">
                 <p>
-                  <strong className="text-white">Passwordless Authentication:</strong> To enhance account security and prevent brute-force attacks, Zeitnah LMS utilizes a passwordless email verification architecture. Login and registration requests issue a time-sensitive One-Time Password (OTP) dispatched from our verified transactional relay (<code className="font-mono text-brand-mint">noreply@zeitnahacademy.com</code>). You are responsible for ensuring your registered email address remains secure.
+                  <strong className="text-text-primary">Passwordless Authentication:</strong> To enhance account security and prevent brute-force attacks, Zeitnah LMS utilizes a passwordless email verification architecture. Login and registration requests issue a time-sensitive One-Time Password (OTP) dispatched from our verified transactional relay (<code className="font-mono text-brand-mint">noreply@zeitnahacademy.com</code>). You are responsible for ensuring your registered email address remains secure.
                 </p>
                 <p>
-                  <strong className="text-white">Single-User License:</strong> Accounts are issued on a strictly personal, non-transferable, single-user basis. You may not sell, lease, share, assign, or sublicense your account credentials or enrolled course access to any third party.
+                  <strong className="text-text-primary">Single-User License:</strong> Accounts are issued on a strictly personal, non-transferable, single-user basis. You may not sell, lease, share, assign, or sublicense your account credentials or enrolled course access to any third party.
                 </p>
                 <p>
-                  <strong className="text-white">Active Device Limits:</strong> To protect licensed curricula and institutional assets, the platform monitors active device sessions. You may inspect and revoke authorizations for obsolete devices at any time by navigating to <strong className="text-white">Profile &gt; Account &gt; Sessions</strong>. Simultaneous logins exceeding established safety thresholds may trigger automated session invalidation.
+                  <strong className="text-text-primary">Active Device Limits:</strong> To protect licensed curricula and institutional assets, the platform monitors active device sessions. You may inspect and revoke authorizations for obsolete devices at any time by navigating to <strong className="text-text-primary">Profile &gt; Account &gt; Sessions</strong>. Simultaneous logins exceeding established safety thresholds may trigger automated session invalidation.
                 </p>
               </div>
             </section>
@@ -319,7 +319,7 @@ export default function TermsOfServicePage() {
                 <Layers className="w-4 h-4" />
                 <span>Section 03</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 3. Educational Services, Curriculum & Attendance
               </h2>
               <div className="space-y-3.5 text-sm leading-relaxed text-text-secondary">
@@ -327,7 +327,7 @@ export default function TermsOfServicePage() {
                   Zeitnah LMS provides professional survey engineering, geomatics, industrial design, and technical workforce curricula. We grant you a limited, non-exclusive, revocable, non-transferable license to access enrolled educational content solely for your personal academic and skill development.
                 </p>
                 <p>
-                  <strong className="text-white">Class Progress & Attendance:</strong> The platform programmatically measures curriculum consumption, including playback timestamps, completed chapters, interactive attendance markers, and weekly learning streaks. Verified attendance metrics and completion criteria are prerequisites for institutional certificates of completion.
+                  <strong className="text-text-primary">Class Progress & Attendance:</strong> The platform programmatically measures curriculum consumption, including playback timestamps, completed chapters, interactive attendance markers, and weekly learning streaks. Verified attendance metrics and completion criteria are prerequisites for institutional certificates of completion.
                 </p>
               </div>
             </section>
@@ -340,12 +340,12 @@ export default function TermsOfServicePage() {
                 <Lock className="w-4 h-4" />
                 <span>Section 04</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 4. Proprietary Rights, DRM & Forensic Watermarking
               </h2>
               <div className="space-y-3.5 text-sm leading-relaxed text-text-secondary">
                 <p>
-                  All course recordings, instructional videos, lecture notes, diagrams, blueprints, software demonstrations, quizzes, and brand trademarks are the exclusive intellectual property of <strong className="text-white">ZEITNAH INSTITUTE OF SURVEY LLP</strong> or our contributing instructors.
+                  All course recordings, instructional videos, lecture notes, diagrams, blueprints, software demonstrations, quizzes, and brand trademarks are the exclusive intellectual property of <strong className="text-text-primary">ZEITNAH INSTITUTE OF SURVEY LLP</strong> or our contributing instructors.
                 </p>
                 <div className="rounded-xl border border-brand-mint/20 bg-brand-mint/[0.04] p-4 space-y-2">
                   <div className="flex items-center gap-2 font-bold text-brand-mint">
@@ -357,7 +357,7 @@ export default function TermsOfServicePage() {
                   </p>
                 </div>
                 <p>
-                  <strong className="text-white">Forensic Dynamic Watermark:</strong> You expressly acknowledge and consent that during video playback, our player renders a subtle, dynamic forensic watermark displaying your full name, registered email address, device identifier, and the current timestamp across the video canvas. This forensic marker operates as a tamper-evident mechanism to trace unauthorized screen captures.
+                  <strong className="text-text-primary">Forensic Dynamic Watermark:</strong> You expressly acknowledge and consent that during video playback, our player renders a subtle, dynamic forensic watermark displaying your full name, registered email address, device identifier, and the current timestamp across the video canvas. This forensic marker operates as a tamper-evident mechanism to trace unauthorized screen captures.
                 </p>
               </div>
             </section>
@@ -370,7 +370,7 @@ export default function TermsOfServicePage() {
                 <AlertCircle className="w-4 h-4" />
                 <span>Section 05</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 5. Acceptable Use & Prohibited Conduct
               </h2>
               <div className="space-y-3.5 text-sm leading-relaxed text-text-secondary">
@@ -394,7 +394,7 @@ export default function TermsOfServicePage() {
                 <FileText className="w-4 h-4" />
                 <span>Section 06</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 6. Admissions, Course Fees & Enquiry Policy
               </h2>
               <div className="space-y-3.5 text-sm leading-relaxed text-text-secondary">
@@ -415,7 +415,7 @@ export default function TermsOfServicePage() {
                 <Layers className="w-4 h-4" />
                 <span>Section 07</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 7. Portfolios, Resumes & Community Messaging
               </h2>
               <div className="space-y-3.5 text-sm leading-relaxed text-text-secondary">
@@ -436,7 +436,7 @@ export default function TermsOfServicePage() {
                 <Building2 className="w-4 h-4" />
                 <span>Section 08</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 8. Third-Party Infrastructure & Technical Limitations
               </h2>
               <div className="space-y-3.5 text-sm leading-relaxed text-text-secondary">
@@ -457,7 +457,7 @@ export default function TermsOfServicePage() {
                 <AlertCircle className="w-4 h-4" />
                 <span>Section 09</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 9. Disclaimers of Warranties & Educational Outcomes
               </h2>
               <div className="space-y-3.5 text-sm leading-relaxed text-text-secondary">
@@ -478,7 +478,7 @@ export default function TermsOfServicePage() {
                 <Scale className="w-4 h-4" />
                 <span>Section 10</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 10. Limitation of Liability & Indemnification
               </h2>
               <div className="space-y-3.5 text-sm leading-relaxed text-text-secondary">
@@ -499,14 +499,14 @@ export default function TermsOfServicePage() {
                 <Trash2 className="w-4 h-4" />
                 <span>Section 11</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 11. Suspension, Termination & Apple Guideline 5.1.1(v) Deletion
               </h2>
               <div className="space-y-3.5 text-sm leading-relaxed text-text-secondary">
                 <p>
-                  <strong className="text-white">Suspension by Zeitnah:</strong> We reserve the right to suspend or terminate your account immediately if you breach these Terms, record or distribute DRM-protected lectures, or engage in malicious platform behavior.
+                  <strong className="text-text-primary">Suspension by Zeitnah:</strong> We reserve the right to suspend or terminate your account immediately if you breach these Terms, record or distribute DRM-protected lectures, or engage in malicious platform behavior.
                 </p>
-                <div className="rounded-xl border border-white/[0.08] bg-[#0A0F1A] p-4 space-y-2">
+                <div className="rounded-xl border border-border bg-surface-elevated p-4 space-y-2">
                   <div className="flex items-center gap-2 font-bold text-rose-400">
                     <Trash2 className="w-4 h-4 shrink-0" />
                     <span>Voluntary Account Deletion (Apple App Store Guideline 5.1.1(v))</span>
@@ -515,8 +515,8 @@ export default function TermsOfServicePage() {
                     You have the unreserved right to permanently delete your account and associated personal data at any time without fees or delays:
                   </p>
                   <ul className="space-y-1.5 text-xs text-text-muted list-disc list-inside pt-1">
-                    <li><strong className="text-white">In-App Pathway:</strong> Navigate to <code className="font-mono text-brand-mint">Profile &gt; Account &gt; Security</code> and select &ldquo;Delete Account&rdquo;.</li>
-                    <li><strong className="text-white">Email Pathway:</strong> Send a written deletion request from your registered email address to <code className="font-mono text-brand-mint">[Placeholder: support@zeitnahacademy.com]</code> with the subject &ldquo;Account Deletion Request&rdquo;.</li>
+                    <li><strong className="text-text-primary">In-App Pathway:</strong> Navigate to <code className="font-mono text-brand-mint">Profile &gt; Account &gt; Security</code> and select &ldquo;Delete Account&rdquo;.</li>
+                    <li><strong className="text-text-primary">Email Pathway:</strong> Send a written deletion request from your registered email address to <code className="font-mono text-brand-mint">[Placeholder: support@zeitnahacademy.com]</code> with the subject &ldquo;Account Deletion Request&rdquo;.</li>
                   </ul>
                   <p className="text-[11px] text-text-faint pt-1">
                     Upon account deletion, all active authentication sessions, profile portfolios, and cached tokens will be purged in accordance with our Privacy Policy.
@@ -533,15 +533,15 @@ export default function TermsOfServicePage() {
                 <Scale className="w-4 h-4" />
                 <span>Section 12</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 12. Governing Law & Exclusive Jurisdiction
               </h2>
               <div className="space-y-3.5 text-sm leading-relaxed text-text-secondary">
                 <p>
-                  These Terms, their interpretation, and any contractual or non-contractual disputes arising out of or in connection with the platform shall be governed by, construed, and enforced in accordance with the substantive laws of <strong className="text-white">India</strong>.
+                  These Terms, their interpretation, and any contractual or non-contractual disputes arising out of or in connection with the platform shall be governed by, construed, and enforced in accordance with the substantive laws of <strong className="text-text-primary">India</strong>.
                 </p>
                 <p>
-                  Any legal suit, action, arbitration, or proceeding arising out of or relating to these Terms or Zeitnah LMS shall be instituted exclusively in the competent courts located in <strong className="text-white">Kozhikode (Calicut), Kerala, India</strong>. Both parties irrevocably submit to the exclusive personal jurisdiction of such courts.
+                  Any legal suit, action, arbitration, or proceeding arising out of or relating to these Terms or Zeitnah LMS shall be instituted exclusively in the competent courts located in <strong className="text-text-primary">Kozhikode (Calicut), Kerala, India</strong>. Both parties irrevocably submit to the exclusive personal jurisdiction of such courts.
                 </p>
               </div>
             </section>
@@ -554,7 +554,7 @@ export default function TermsOfServicePage() {
                 <Mail className="w-4 h-4" />
                 <span>Section 13</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 13. Modifications to Terms & Legal Notices
               </h2>
               <div className="space-y-3.5 text-sm leading-relaxed text-text-secondary">
@@ -562,19 +562,19 @@ export default function TermsOfServicePage() {
                   We may periodically revise these Terms to reflect technical enhancements, statutory amendments, or curriculum expansions. Substantial revisions will be announced via platform banners or email notices dispatched to registered users. The updated version date at the top of this document indicates when changes take effect.
                 </p>
 
-                <div className="rounded-2xl border border-white/[0.08] bg-[#0A0F1A]/90 p-5 space-y-3">
-                  <span className="font-mono text-xs uppercase font-bold text-white tracking-wider block">
+                <div className="rounded-2xl border border-border bg-surface-card p-5 space-y-3">
+                  <span className="font-mono text-xs uppercase font-bold text-text-primary tracking-wider block">
                     Official Legal Notice Address
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                     <div>
                       <span className="text-text-faint font-mono uppercase text-[10px] block">Corporate Entity</span>
-                      <strong className="text-white block">ZEITNAH INSTITUTE OF SURVEY LLP</strong>
+                      <strong className="text-text-primary block">ZEITNAH INSTITUTE OF SURVEY LLP</strong>
                       <span className="text-text-muted block">Business Constitution: Limited Liability Partnership</span>
                     </div>
                     <div>
                       <span className="text-text-faint font-mono uppercase text-[10px] block">Principal Business Address</span>
-                      <p className="text-white">
+                      <p className="text-text-primary">
                         1st Floor, 34/1412, Babil Complex, Kovilakam Road, Mankavu, Kozhikode, Kerala 673007, India
                       </p>
                     </div>

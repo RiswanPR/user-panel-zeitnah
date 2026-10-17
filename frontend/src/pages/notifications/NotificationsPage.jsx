@@ -115,7 +115,7 @@ export default function NotificationsPage() {
           type="button"
           onClick={handleBack}
           aria-label="Go back"
-          className="inline-flex items-center gap-2 text-xs font-semibold text-text-muted hover:text-white transition-colors py-1.5 px-2.5 -ml-2.5 rounded-xl hover:bg-white/[0.04] focus-ring cursor-pointer"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-text-muted hover:text-text-primary transition-colors py-1.5 px-2.5 -ml-2.5 rounded-xl hover:bg-surface-elevated focus-ring cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4 text-brand-mint" aria-hidden="true" />
           <span>Back</span>
@@ -129,10 +129,10 @@ export default function NotificationsPage() {
       </div>
 
       {/* ── Header Area ── */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-white/[0.08]">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-border">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="font-heading font-black text-2xl sm:text-3xl text-white tracking-tight">
+            <h1 className="font-heading font-black text-2xl sm:text-3xl text-text-primary tracking-tight">
               Notification Center
             </h1>
           </div>
@@ -147,7 +147,7 @@ export default function NotificationsPage() {
             <button
               type="button"
               onClick={() => markAllAsRead(categoryParam)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-xs font-semibold text-white transition-all cursor-pointer focus-ring shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-elevated hover:bg-surface-card border border-border text-xs font-semibold text-text-primary transition-all cursor-pointer focus-ring shadow-sm"
             >
               <CheckCheck className="w-4 h-4 text-brand-mint" aria-hidden="true" />
               <span>Mark all as read</span>
@@ -159,7 +159,7 @@ export default function NotificationsPage() {
               type="button"
               onClick={() => clearRead()}
               title="Clear all read notifications"
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.02] hover:bg-red-500/10 hover:border-red-500/25 border border-white/[0.06] text-xs font-semibold text-text-muted hover:text-red-400 transition-all cursor-pointer focus-ring"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-elevated hover:bg-red-500/10 hover:border-red-500/25 border border-border text-xs font-semibold text-text-muted hover:text-red-400 transition-all cursor-pointer focus-ring"
             >
               <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
               <span className="hidden sm:inline">Clear read</span>
@@ -178,13 +178,13 @@ export default function NotificationsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search notifications by title, keyword, or actor..."
-            className="w-full h-10 pl-10 pr-9 rounded-xl bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.14] focus:border-brand-mint/40 text-xs sm:text-sm text-white placeholder:text-text-muted transition-all outline-none"
+            className="w-full h-10 pl-10 pr-9 rounded-xl bg-surface-elevated border border-border hover:border-border-accent focus:border-border-accent text-xs sm:text-sm text-text-primary placeholder:text-text-muted transition-all outline-none"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-text-muted hover:text-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-text-muted hover:text-text-primary cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -202,8 +202,8 @@ export default function NotificationsPage() {
                 onClick={() => handleTabChange(tab.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer focus-ring ${
                   isActive
-                    ? 'bg-brand-mint text-bg-base font-bold shadow-[0_0_12px_rgba(159,213,178,0.25)]'
-                    : 'bg-white/[0.03] text-text-muted border border-white/[0.06] hover:bg-white/[0.06] hover:text-white'
+                    ? 'bg-brand-mint text-brand-navy font-bold shadow-[0_0_12px_rgba(159,213,178,0.25)]'
+                    : 'bg-surface-elevated text-text-muted border border-border hover:bg-surface-card hover:text-text-primary'
                 }`}
               >
                 {tab.label}
@@ -219,30 +219,30 @@ export default function NotificationsPage() {
           {[1, 2, 3, 4, 5].map((i) => (
             <div
               key={i}
-              className="h-20 rounded-2xl bg-white/[0.02] border border-white/[0.05] animate-pulse"
+              className="h-20 rounded-2xl bg-surface-elevated border border-border animate-pulse"
             />
           ))}
         </div>
       ) : isError ? (
-        <div className="p-12 text-center rounded-2xl border border-white/[0.08] bg-[#0E131F]/60 max-w-md mx-auto">
+        <div className="p-12 text-center rounded-2xl border border-border bg-surface-card max-w-md mx-auto">
           <p className="text-xs sm:text-sm text-text-muted mb-4">
             We couldn't load your notifications right now.
           </p>
           <button
             type="button"
             onClick={() => refetch()}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.1] text-xs font-semibold text-white transition-all"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-elevated hover:bg-surface-card border border-border text-xs font-semibold text-text-primary transition-all cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Try again</span>
           </button>
         </div>
       ) : filteredNotifications.length === 0 ? (
-        <div className="py-20 px-4 text-center rounded-3xl bg-[#0B111E]/40 border border-white/[0.06] max-w-md mx-auto">
-          <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-center mx-auto mb-3.5 text-text-faint">
+        <div className="py-20 px-4 text-center rounded-3xl bg-surface-card border border-border max-w-md mx-auto">
+          <div className="w-12 h-12 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center mx-auto mb-3.5 text-text-faint">
             <Inbox className="w-6 h-6 text-brand-mint/60" />
           </div>
-          <h3 className="font-heading font-bold text-base text-white">
+          <h3 className="font-heading font-bold text-base text-text-primary">
             {searchQuery ? 'No matching notifications' : 'No notifications'}
           </h3>
           <p className="text-xs text-text-muted mt-1 leading-relaxed max-w-xs mx-auto">
@@ -262,7 +262,7 @@ export default function NotificationsPage() {
                 <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-text-muted">
                   {group.label}
                 </span>
-                <div className="flex-1 h-px bg-white/[0.05]" />
+                <div className="flex-1 h-px bg-border" />
               </div>
 
               {/* Group Items */}
@@ -280,7 +280,7 @@ export default function NotificationsPage() {
 
           {/* ── Pagination Controls ── */}
           {totalPages > 1 && (
-            <div className="pt-4 border-t border-white/[0.06] flex items-center justify-between gap-4">
+            <div className="pt-4 border-t border-border flex items-center justify-between gap-4">
               <span className="text-xs font-mono text-text-muted">
                 Page {page} of {totalPages} ({total} total)
               </span>
@@ -290,7 +290,7 @@ export default function NotificationsPage() {
                   type="button"
                   disabled={page <= 1 || isFetching}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.07] disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold text-white transition-all focus-ring"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-border bg-surface-elevated hover:bg-surface-card disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold text-text-primary transition-all focus-ring cursor-pointer"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   <span>Previous</span>
@@ -300,7 +300,7 @@ export default function NotificationsPage() {
                   type="button"
                   disabled={page >= totalPages || isFetching}
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.07] disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold text-white transition-all focus-ring"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-border bg-surface-elevated hover:bg-surface-card disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold text-text-primary transition-all focus-ring cursor-pointer"
                 >
                   <span>Next</span>
                   <ChevronRight className="w-4 h-4" />

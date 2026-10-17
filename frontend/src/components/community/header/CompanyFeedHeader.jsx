@@ -36,7 +36,7 @@ export default function CompanyFeedHeader({
       {/* Subtle Mint Ambient Glow */}
       <div className="absolute -left-6 -top-6 w-36 h-36 rounded-full bg-brand-mint/[0.06] blur-2xl pointer-events-none" />
 
-      <div className="relative z-10 p-4 sm:p-5 rounded-2xl bg-[#0E1726]/80 backdrop-blur-xl border border-white/[0.08] shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="relative z-10 p-4 sm:p-5 rounded-2xl bg-surface-card/90 backdrop-blur-xl border border-border shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         {/* Active Company Identity */}
         <div className="flex items-center gap-3.5 min-w-0">
           <Link
@@ -49,9 +49,9 @@ export default function CompanyFeedHeader({
                 logo={business?.logo}
                 name={businessName}
                 size="lg"
-                className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl ring-1 ring-white/10 group-hover:ring-brand-mint/40 transition-all duration-200"
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl ring-1 ring-border group-hover:ring-brand-mint/40 transition-all duration-200"
               />
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#0E1726] border border-white/10 flex items-center justify-center text-brand-mint shadow">
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-surface-elevated border border-border flex items-center justify-center text-brand-mint shadow">
                 <Building2 className="w-3 h-3" />
               </div>
             </div>
@@ -61,7 +61,7 @@ export default function CompanyFeedHeader({
             <div className="flex items-center gap-2 flex-wrap">
               <Link
                 to={profileUrl}
-                className="text-base sm:text-lg font-bold text-white hover:text-brand-mint transition-colors truncate max-w-[220px] sm:max-w-xs font-heading tracking-tight"
+                className="text-base sm:text-lg font-bold text-text-primary hover:text-brand-mint transition-colors truncate max-w-[220px] sm:max-w-xs font-heading tracking-tight"
               >
                 {businessName}
               </Link>
@@ -76,7 +76,7 @@ export default function CompanyFeedHeader({
                   {businessSlug}
                 </span>
               )}
-              {businessSlug && <span className="text-white/20">·</span>}
+              {businessSlug && <span className="text-text-faint">·</span>}
               <Link
                 to={profileUrl}
                 className="inline-flex items-center gap-1 text-[11px] font-medium text-brand-mint hover:underline cursor-pointer"
@@ -92,7 +92,7 @@ export default function CompanyFeedHeader({
         <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
           <Link
             to="/community/saved"
-            className="min-h-[44px] px-3 py-1.5 rounded-xl bg-[#12314C]/30 hover:bg-[#12314C]/50 border border-white/[0.08] hover:border-brand-yellow/30 text-xs font-medium text-text-secondary hover:text-white transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+            className="min-h-[44px] px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-card border border-border hover:border-brand-yellow/30 text-xs font-medium text-text-secondary hover:text-text-primary transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
             title="View Saved Posts"
             aria-label="View Saved Posts"
           >
@@ -117,13 +117,13 @@ export default function CompanyFeedHeader({
             <button
               type="button"
               onClick={onOpenSearch}
-              className="min-h-[44px] px-3 py-1.5 rounded-xl bg-[#12314C]/30 hover:bg-[#12314C]/50 border border-white/[0.08] hover:border-brand-mint/30 text-xs text-text-secondary hover:text-white transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+              className="min-h-[44px] px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-card border border-border hover:border-brand-mint/30 text-xs text-text-secondary hover:text-text-primary transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
               aria-label="Search community"
               title="Search community"
             >
               <Search className="w-3.5 h-3.5 text-brand-mint" />
               <span className="hidden sm:inline font-medium">Search</span>
-              <kbd className="hidden lg:inline-block px-1 py-0.2 text-[9px] font-mono rounded bg-white/[0.06] text-text-faint">
+              <kbd className="hidden lg:inline-block px-1 py-0.2 text-[9px] font-mono rounded bg-surface-card border border-border text-text-faint">
                 ⌘K
               </kbd>
             </button>

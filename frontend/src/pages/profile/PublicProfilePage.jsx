@@ -238,16 +238,16 @@ export default function PublicProfilePage() {
   if (loading) {
     return (
       <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto pb-16 animate-pulse">
-        <div className="h-10 w-28 bg-white/[0.04] rounded-xl border border-white/[0.06]" />
-        <div className="h-80 bg-white/[0.04] rounded-3xl border border-white/[0.06]" />
+        <div className="h-10 w-28 bg-surface-elevated/40 rounded-xl border border-border" />
+        <div className="h-80 bg-surface-elevated/40 rounded-3xl border border-border" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-8 space-y-6">
-            <div className="h-64 bg-white/[0.04] rounded-3xl border border-white/[0.06]" />
-            <div className="h-72 bg-white/[0.04] rounded-3xl border border-white/[0.06]" />
+            <div className="h-64 bg-surface-elevated/40 rounded-3xl border border-border" />
+            <div className="h-72 bg-surface-elevated/40 rounded-3xl border border-border" />
           </div>
           <div className="lg:col-span-4 space-y-6">
-            <div className="h-48 bg-white/[0.04] rounded-3xl border border-white/[0.06]" />
-            <div className="h-64 bg-white/[0.04] rounded-3xl border border-white/[0.06]" />
+            <div className="h-48 bg-surface-elevated/40 rounded-3xl border border-border" />
+            <div className="h-64 bg-surface-elevated/40 rounded-3xl border border-border" />
           </div>
         </div>
       </div>
@@ -261,7 +261,7 @@ export default function PublicProfilePage() {
         <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mx-auto shadow-sm">
           <User className="w-8 h-8" />
         </div>
-        <h2 className="text-2xl sm:text-3xl font-heading font-black text-white tracking-tight">
+        <h2 className="text-2xl sm:text-3xl font-heading font-black text-text-primary tracking-tight">
           Profile Not Found
         </h2>
         <p className="text-sm text-text-muted leading-relaxed max-w-md mx-auto">
@@ -294,7 +294,7 @@ export default function PublicProfilePage() {
         <button
           type="button"
           onClick={handleBack}
-          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/20 text-white text-xs font-semibold transition-all cursor-pointer shadow-sm group focus-ring touch-manipulation select-none"
+          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border bg-surface-elevated/40 hover:bg-surface-elevated hover:border-border-accent text-text-primary text-xs font-semibold transition-all cursor-pointer shadow-sm group focus-ring touch-manipulation select-none"
           aria-label="Go back to previous page"
         >
           <ArrowLeft className="w-3.5 h-3.5 text-brand-mint transition-transform group-hover:-translate-x-0.5" />
@@ -303,17 +303,17 @@ export default function PublicProfilePage() {
 
         <div className="flex items-center gap-2 text-xs text-text-muted">
           <span className="hidden sm:inline">Zeitnah Professional Identity</span>
-          <span className="text-white/20 hidden sm:inline">•</span>
+          <span className="text-border hidden sm:inline">•</span>
           <span className="font-mono text-brand-mint/90 font-medium">@{student.username}</span>
         </div>
       </div>
 
       {/* ── 01. OWNER PREVIEW BANNER ── */}
       {isOwnProfile && (
-        <div className="flex items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl bg-brand-mint/10 border border-brand-mint/25 text-white shadow-sm">
+        <div className="flex items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl bg-brand-mint/10 border border-brand-mint/25 text-text-primary shadow-sm">
           <div className="flex items-center gap-2.5 min-w-0">
             <Sparkles className="w-4 h-4 text-brand-mint shrink-0" />
-            <span className="text-xs text-white/90 truncate">
+            <span className="text-xs text-text-primary/90 truncate">
               You are viewing your public identity as others see it.
             </span>
           </div>
@@ -358,7 +358,7 @@ export default function PublicProfilePage() {
               className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer select-none focus-ring ${
                 activeSectionFilter === sec.id
                   ? "bg-brand-mint text-[#070B14] font-bold shadow-[0_0_12px_rgba(159,213,178,0.3)]"
-                  : "bg-white/[0.03] text-text-muted hover:text-white hover:bg-white/[0.06] border border-white/[0.06]"
+                  : "bg-surface-elevated/40 text-text-muted hover:text-text-primary hover:bg-surface-elevated border border-border"
               }`}
             >
               {sec.label}
@@ -388,7 +388,7 @@ export default function PublicProfilePage() {
               )
             ) : (
               activeSectionFilter === "experience" && (
-                <div className="p-6 rounded-3xl border border-white/[0.08] bg-white/[0.01] text-center">
+                <div className="p-6 rounded-3xl border border-border bg-surface-elevated/20 text-center">
                   <Lock className="w-5 h-5 text-text-muted mx-auto mb-2" />
                   <p className="text-xs text-text-muted">
                     Career experience is restricted by user privacy settings.
@@ -409,7 +409,7 @@ export default function PublicProfilePage() {
               )
             ) : (
               activeSectionFilter === "education" && (
-                <div className="p-6 rounded-3xl border border-white/[0.08] bg-white/[0.01] text-center">
+                <div className="p-6 rounded-3xl border border-border bg-surface-elevated/20 text-center">
                   <Lock className="w-5 h-5 text-text-muted mx-auto mb-2" />
                   <p className="text-xs text-text-muted">
                     Education records are restricted by user privacy settings.
@@ -440,7 +440,7 @@ export default function PublicProfilePage() {
               )
             ) : (
               activeSectionFilter === "projects" && (
-                <div className="p-6 rounded-3xl border border-white/[0.08] bg-white/[0.01] text-center">
+                <div className="p-6 rounded-3xl border border-border bg-surface-elevated/20 text-center">
                   <Lock className="w-5 h-5 text-text-muted mx-auto mb-2" />
                   <p className="text-xs text-text-muted">
                     Projects are restricted by user privacy settings.
@@ -461,7 +461,7 @@ export default function PublicProfilePage() {
               )
             ) : (
               activeSectionFilter === "certifications" && (
-                <div className="p-6 rounded-3xl border border-white/[0.08] bg-white/[0.01] text-center">
+                <div className="p-6 rounded-3xl border border-border bg-surface-elevated/20 text-center">
                   <Lock className="w-5 h-5 text-text-muted mx-auto mb-2" />
                   <p className="text-xs text-text-muted">
                     Certifications are restricted by user privacy settings.
@@ -485,17 +485,17 @@ export default function PublicProfilePage() {
         {/* ── RIGHT STRATEGIC SIDEBAR (4 Cols) ── */}
         <div className="lg:col-span-4 space-y-6 sm:space-y-8">
           {/* Trust & Verified Credentials Card */}
-          <div className="rounded-3xl border border-white/[0.08] bg-[#0A0F18]/90 backdrop-blur-xl p-6 shadow-sm space-y-4">
+          <div className="rounded-3xl border border-border bg-surface-card backdrop-blur-xl p-6 shadow-sm space-y-4">
             <div className="flex items-center gap-2.5">
               <ShieldCheck className="w-5 h-5 text-brand-mint" />
-              <h3 className="font-heading font-bold text-white text-base">
+              <h3 className="font-heading font-bold text-text-primary text-base">
                 Verified Credentials
               </h3>
             </div>
 
             <div className="space-y-2.5 pt-1">
-              <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                <span className="text-xs font-medium text-white/90">Identity Status</span>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-surface-elevated/40 border border-border">
+                <span className="text-xs font-medium text-text-primary">Identity Status</span>
                 {student.isVerified ? (
                   <span className="px-2 py-0.5 rounded-full bg-brand-mint/10 border border-brand-mint/25 text-[10px] font-bold text-brand-mint">
                     Verified ✓
@@ -506,8 +506,8 @@ export default function PublicProfilePage() {
               </div>
 
               {student.verifications?.professional?.status === "VERIFIED" && (
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                  <span className="text-xs font-medium text-white/90">Council Licensure</span>
+                <div className="flex items-center justify-between p-3 rounded-xl bg-surface-elevated/40 border border-border">
+                  <span className="text-xs font-medium text-text-primary">Council Licensure</span>
                   <span className="px-2 py-0.5 rounded-full bg-brand-yellow/10 border border-brand-yellow/25 text-[10px] font-bold text-brand-yellow">
                     Council Certified ✓
                   </span>
@@ -526,10 +526,10 @@ export default function PublicProfilePage() {
           </div>
 
           {/* Community Creator Activity Card */}
-          <div className="rounded-3xl border border-white/[0.08] bg-[#0A0F18]/90 backdrop-blur-xl p-6 shadow-sm space-y-4">
+          <div className="rounded-3xl border border-border bg-surface-card backdrop-blur-xl p-6 shadow-sm space-y-4">
             <div className="flex items-center gap-2.5">
               <Sparkles className="w-5 h-5 text-brand-mint" />
-              <h3 className="font-heading font-bold text-white text-base">
+              <h3 className="font-heading font-bold text-text-primary text-base">
                 Community Presence
               </h3>
             </div>
@@ -548,7 +548,7 @@ export default function PublicProfilePage() {
               </Link>
               <Link
                 to="/community/reels"
-                className="w-full py-2.5 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-semibold text-white/90 hover:text-white flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                className="w-full py-2.5 px-3 rounded-xl bg-surface-elevated/50 hover:bg-surface-elevated border border-border text-xs font-semibold text-text-primary/90 hover:text-text-primary flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
                 <span>Watch Community Reels</span>
                 <Sparkles className="w-3.5 h-3.5 text-brand-yellow" />
@@ -558,10 +558,10 @@ export default function PublicProfilePage() {
 
           {/* Social Proof & Endorsement CTA */}
           {!isOwnProfile && (
-            <div className="rounded-3xl border border-white/[0.08] bg-gradient-to-br from-rose-500/10 via-transparent to-transparent p-6 shadow-sm space-y-3">
+            <div className="rounded-3xl border border-rose-500/20 bg-rose-500/10 p-6 shadow-sm space-y-3">
               <div className="flex items-center gap-2 text-rose-300">
                 <HeartHandshake className="w-5 h-5" />
-                <h4 className="text-sm font-heading font-bold text-white">
+                <h4 className="text-sm font-heading font-bold text-text-primary">
                   Worked with {student.name?.split(" ")[0]}?
                 </h4>
               </div>
@@ -613,17 +613,17 @@ export default function PublicProfilePage() {
               initial={{ opacity: 0, scale: 0.95, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              className="relative w-full max-sm:rounded-t-3xl max-sm:rounded-b-none sm:rounded-3xl sm:max-w-lg bg-[#0F1724] border border-white/[0.12] p-6 sm:p-8 shadow-2xl z-10 space-y-5 max-sm:max-h-[90vh] overflow-y-auto"
+              className="relative w-full max-sm:rounded-t-3xl max-sm:rounded-b-none sm:rounded-3xl sm:max-w-lg bg-surface-card border border-border p-6 sm:p-8 shadow-2xl z-10 space-y-5 max-sm:max-h-[90vh] overflow-y-auto"
             >
-              <div className="w-10 h-1 rounded-full bg-white/20 mx-auto -mt-2 mb-2 sm:hidden" />
+              <div className="w-10 h-1 rounded-full bg-border mx-auto -mt-2 mb-2 sm:hidden" />
 
-              <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
+              <div className="flex items-center justify-between border-b border-border pb-4">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/25 flex items-center justify-center text-rose-300">
                     <HeartHandshake className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 id="endorse-modal-title" className="font-heading font-bold text-white text-base">
+                    <h3 id="endorse-modal-title" className="font-heading font-bold text-text-primary text-base">
                       Endorse {student.name}
                     </h3>
                     <p className="text-xs text-text-muted">
@@ -636,7 +636,7 @@ export default function PublicProfilePage() {
                   onClick={() => setIsWriteRecOpen(false)}
                   disabled={isSubmittingRec}
                   aria-label="Close dialog"
-                  className="p-1 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer disabled:opacity-40"
+                  className="p-1 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer disabled:opacity-40"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -655,13 +655,13 @@ export default function PublicProfilePage() {
                     value={recRelationship}
                     onChange={(e) => setRecRelationship(e.target.value)}
                     disabled={isSubmittingRec}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white text-xs focus:border-brand-mint outline-none transition-colors cursor-pointer"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated/50 border border-border text-text-primary text-xs focus:border-brand-mint outline-none transition-colors cursor-pointer"
                   >
-                    <option value="Peer / Student" className="bg-[#0F1724]">Peer / Student / Colleague</option>
-                    <option value="Mentor" className="bg-[#0F1724]">Mentor / Senior Advisor</option>
-                    <option value="Instructor" className="bg-[#0F1724]">Instructor / Professor</option>
-                    <option value="Collaborator" className="bg-[#0F1724]">Project Collaborator / Partner</option>
-                    <option value="Other" className="bg-[#0F1724]">Other Professional Relationship</option>
+                    <option value="Peer / Student" className="bg-surface-card text-text-primary">Peer / Student / Colleague</option>
+                    <option value="Mentor" className="bg-surface-card text-text-primary">Mentor / Senior Advisor</option>
+                    <option value="Instructor" className="bg-surface-card text-text-primary">Instructor / Professor</option>
+                    <option value="Collaborator" className="bg-surface-card text-text-primary">Project Collaborator / Partner</option>
+                    <option value="Other" className="bg-surface-card text-text-primary">Other Professional Relationship</option>
                   </select>
                 </div>
 
@@ -684,7 +684,7 @@ export default function PublicProfilePage() {
                     onChange={(e) => setRecContent(e.target.value)}
                     disabled={isSubmittingRec}
                     placeholder={`Describe your experience working with ${student.name}, their technical strengths, and project impact...`}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white text-xs placeholder:text-text-muted/60 focus:border-brand-mint outline-none transition-colors resize-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated/50 border border-border text-text-primary text-xs placeholder:text-text-muted/60 focus:border-brand-mint outline-none transition-colors resize-none"
                     maxLength={1000}
                   />
                 </div>
@@ -694,7 +694,7 @@ export default function PublicProfilePage() {
                     type="button"
                     onClick={() => setIsWriteRecOpen(false)}
                     disabled={isSubmittingRec}
-                    className="px-4 py-2 rounded-xl border border-white/10 text-text-muted hover:text-white text-xs font-semibold transition-colors cursor-pointer disabled:opacity-40"
+                    className="px-4 py-2 rounded-xl border border-border text-text-muted hover:text-text-primary hover:bg-surface-elevated text-xs font-semibold transition-colors cursor-pointer disabled:opacity-40"
                   >
                     Cancel
                   </button>

@@ -28,18 +28,21 @@ export default function ChapterCompleteModal({
 
         {/* Modal Window */}
         <motion.div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Chapter Completed"
           initial={{ opacity: 0, scale: 0.96, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 10 }}
           transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-          className="relative w-full max-w-md rounded-2xl sm:rounded-3xl border border-white/10 bg-bg-surface p-6 sm:p-8 shadow-2xl shadow-black/80 z-10 text-center space-y-6"
+          className="relative w-full max-w-md rounded-2xl sm:rounded-3xl border border-border bg-surface-card p-6 sm:p-8 shadow-2xl z-10 text-center space-y-6"
         >
           {/* Close button */}
           <button
             type="button"
             onClick={onClose}
             aria-label="Close chapter complete dialog"
-            className="absolute top-4 right-4 h-8 w-8 rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.08] text-white/60 hover:text-white flex items-center justify-center transition-all cursor-pointer focus-ring"
+            className="absolute top-4 right-4 h-8 w-8 rounded-xl border border-border bg-surface-elevated/60 hover:bg-surface-elevated text-text-muted hover:text-text-primary flex items-center justify-center transition-all cursor-pointer focus-ring"
           >
             <X className="w-4 h-4" />
           </button>
@@ -56,7 +59,7 @@ export default function ChapterCompleteModal({
               Chapter Completed
             </div>
 
-            <h3 className="font-heading font-extrabold text-xl sm:text-2xl text-white tracking-tight">
+            <h3 className="font-heading font-extrabold text-xl sm:text-2xl text-text-primary tracking-tight">
               {chapter?.title || 'Chapter Milestone'}
             </h3>
 
@@ -66,9 +69,9 @@ export default function ChapterCompleteModal({
           </div>
 
           {/* Progress summary divider */}
-          <div className="py-3 px-4 rounded-xl border border-white/[0.06] bg-white/[0.02] flex items-center justify-between text-xs text-text-muted">
+          <div className="py-3 px-4 rounded-xl border border-border/60 bg-surface-elevated/40 flex items-center justify-between text-xs text-text-muted">
             <span>Lessons Finished</span>
-            <span className="font-mono font-bold text-white">
+            <span className="font-mono font-bold text-text-primary">
               {completedLessonCount} / {totalLessonCount || completedLessonCount}
             </span>
           </div>
@@ -79,7 +82,7 @@ export default function ChapterCompleteModal({
               <button
                 type="button"
                 onClick={onContinueToNextChapter}
-                className="w-full py-3.5 px-5 rounded-xl bg-brand-mint hover:bg-brand-mint/90 text-bg-base font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-brand-mint/15 focus-ring"
+                className="w-full py-3.5 px-5 min-h-[44px] rounded-xl bg-brand-mint hover:bg-brand-mint/90 text-brand-navy font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-brand-mint/15 focus-ring"
               >
                 <span>Continue to {nextChapter.title || 'Next Chapter'}</span>
                 <ChevronRight className="w-4 h-4" />
@@ -88,7 +91,7 @@ export default function ChapterCompleteModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full py-3.5 px-5 rounded-xl bg-brand-mint hover:bg-brand-mint/90 text-bg-base font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer focus-ring"
+                className="w-full py-3.5 px-5 min-h-[44px] rounded-xl bg-brand-mint hover:bg-brand-mint/90 text-brand-navy font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer focus-ring"
               >
                 <span>Return to Learning Studio</span>
               </button>
@@ -97,7 +100,7 @@ export default function ChapterCompleteModal({
             <button
               type="button"
               onClick={onReviewChapter}
-              className="w-full py-2.5 px-4 rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.06] text-white/80 hover:text-white text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer focus-ring"
+              className="w-full py-2.5 px-4 min-h-[44px] rounded-xl border border-border bg-surface-elevated/60 hover:bg-surface-elevated text-text-secondary hover:text-text-primary text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer focus-ring"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Review Chapter</span>

@@ -39,14 +39,14 @@ export default function CommunityComposerEntry({
 
   return (
     <div
-      className="bg-[#0B111E]/85 backdrop-blur-xl border border-white/[0.07] hover:border-white/[0.12] rounded-2xl p-3.5 sm:p-4 shadow-xl transition-all duration-200 select-none"
+      className="bg-surface-card/90 backdrop-blur-xl border border-border hover:border-border-accent rounded-2xl p-3.5 sm:p-4 shadow-xl transition-all duration-200 select-none"
       role="region"
       aria-label="Create content"
     >
       {/* Top row: Avatar + Welcoming input bar */}
       <div className="flex items-center gap-3">
         {isBusinessMode && activeBusiness ? (
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl shrink-0 overflow-hidden ring-1 ring-brand-mint/30 bg-[#0E1726] flex items-center justify-center">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl shrink-0 overflow-hidden ring-1 ring-brand-mint/30 bg-surface-elevated flex items-center justify-center">
             <BusinessLogo
               logo={activeBusiness.logo}
               name={activeBusiness.name}
@@ -54,7 +54,7 @@ export default function CommunityComposerEntry({
             />
           </div>
         ) : (
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full shrink-0 overflow-hidden ring-1 ring-white/10 bg-[#0E1726] flex items-center justify-center">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full shrink-0 overflow-hidden ring-1 ring-border bg-surface-elevated flex items-center justify-center">
             {userAvatar && !avatarError ? (
               <img
                 src={userAvatar}
@@ -74,7 +74,7 @@ export default function CommunityComposerEntry({
         <button
           type="button"
           onClick={onOpenCreatePost}
-          className="flex-1 min-h-[44px] text-left px-4 py-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.05] hover:border-brand-mint/30 text-xs sm:text-sm text-text-muted hover:text-white transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-mint/40"
+          className="flex-1 min-h-[44px] text-left px-4 py-2.5 rounded-xl bg-surface-elevated hover:bg-surface-card border border-border hover:border-brand-mint/30 text-xs sm:text-sm text-text-muted hover:text-text-primary transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-mint/40"
           aria-label={
             isBusinessMode && activeBusiness
               ? `What would ${activeBusiness.name} like to share? Click to create a post`
@@ -95,7 +95,7 @@ export default function CommunityComposerEntry({
       </div>
 
       {/* Divider */}
-      <div className="h-px bg-white/[0.06] my-3" />
+      <div className="h-px bg-border my-3" />
 
       {/* Action choices: Post | Reel | Story (Ergonomic horizontal row on mobile, rich descriptive cards on desktop) */}
       <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5">
@@ -103,10 +103,10 @@ export default function CommunityComposerEntry({
         <button
           type="button"
           onClick={onOpenCreatePost}
-          className="group min-h-[44px] p-2 sm:p-2.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] hover:border-brand-mint/35 transition-all text-center sm:text-left flex flex-col items-center sm:items-start justify-center sm:justify-start gap-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-mint/40"
+          className="group min-h-[44px] p-2 sm:p-2.5 rounded-xl bg-surface-elevated hover:bg-surface-card border border-border hover:border-brand-mint/35 transition-all text-center sm:text-left flex flex-col items-center sm:items-start justify-center sm:justify-start gap-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-mint/40"
           aria-label="Create Post: Share an idea, update or resource"
         >
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-white group-hover:text-brand-mint transition-colors">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-text-primary group-hover:text-brand-mint transition-colors">
             <PenSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-mint shrink-0" />
             <span>Post</span>
           </div>
@@ -119,10 +119,10 @@ export default function CommunityComposerEntry({
         <button
           type="button"
           onClick={onOpenCreateReel}
-          className="group min-h-[44px] p-2 sm:p-2.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] hover:border-brand-mint/35 transition-all text-center sm:text-left flex flex-col items-center sm:items-start justify-center sm:justify-start gap-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-mint/40"
+          className="group min-h-[44px] p-2 sm:p-2.5 rounded-xl bg-surface-elevated hover:bg-surface-card border border-border hover:border-brand-mint/35 transition-all text-center sm:text-left flex flex-col items-center sm:items-start justify-center sm:justify-start gap-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-mint/40"
           aria-label="Create Reel: Share a short video"
         >
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-white group-hover:text-brand-mint transition-colors">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-text-primary group-hover:text-brand-mint transition-colors">
             <Film className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-mint shrink-0" />
             <span>Reel</span>
           </div>
@@ -135,10 +135,10 @@ export default function CommunityComposerEntry({
         <button
           type="button"
           onClick={onOpenCreateStory}
-          className="group min-h-[44px] p-2 sm:p-2.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] hover:border-brand-yellow/35 transition-all text-center sm:text-left flex flex-col items-center sm:items-start justify-center sm:justify-start gap-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-yellow/40"
+          className="group min-h-[44px] p-2 sm:p-2.5 rounded-xl bg-surface-elevated hover:bg-surface-card border border-border hover:border-brand-yellow/35 transition-all text-center sm:text-left flex flex-col items-center sm:items-start justify-center sm:justify-start gap-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-yellow/40"
           aria-label="Create Story: Share something for the next 24 hours"
         >
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-white group-hover:text-brand-yellow transition-colors">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-text-primary group-hover:text-brand-yellow transition-colors">
             <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-yellow shrink-0" />
             <span>Story</span>
           </div>

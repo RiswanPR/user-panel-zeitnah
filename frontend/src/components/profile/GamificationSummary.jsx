@@ -54,7 +54,7 @@ export default function GamificationSummary({ profile, className = "" }) {
     <div className={`space-y-4 ${className}`}>
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg sm:text-xl font-heading font-bold text-white tracking-tight">
+          <h2 className="text-lg sm:text-xl font-heading font-bold text-text-primary tracking-tight">
             Learning Telemetry & XP
           </h2>
           <p className="text-xs text-text-muted mt-0.5">
@@ -96,19 +96,19 @@ export default function GamificationSummary({ profile, className = "" }) {
             <p className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-1">
               Accumulated XP
             </p>
-            <p className="text-4xl sm:text-5xl font-heading font-black text-white tracking-tight leading-none font-mono">
+            <p className="text-4xl sm:text-5xl font-heading font-black text-text-primary tracking-tight leading-none font-mono">
               {totalPoints.toLocaleString()}
             </p>
           </div>
 
           {/* Level Progress */}
-          <div className="mt-6 pt-5 border-t border-white/[0.06]">
+          <div className="mt-6 pt-5 border-t border-border">
             <div className="flex justify-between text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">
-              <span className="text-white">Level {level}</span>
+              <span className="text-text-primary">Level {level}</span>
               <span className="text-brand-yellow">Level {level + 1}</span>
             </div>
 
-            <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-surface-elevated border border-border">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${levelProgress}%` }}
@@ -147,7 +147,7 @@ export default function GamificationSummary({ profile, className = "" }) {
                   <p className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-1">
                     {stat.label}
                   </p>
-                  <p className="text-2xl sm:text-3xl font-heading font-extrabold text-white tracking-tight">
+                  <p className="text-2xl sm:text-3xl font-heading font-extrabold text-text-primary tracking-tight">
                     {stat.value}
                   </p>
                   <p className="text-[11px] font-medium text-text-faint mt-1">

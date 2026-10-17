@@ -6,7 +6,7 @@
  */
 
 const variantStyles = {
-  default: 'border-white/[0.06] bg-white/[0.03] text-text-muted',
+  default: 'border-border bg-surface-elevated text-text-muted',
   success: 'border-success/20 bg-success/8 text-success',
   warning: 'border-warning/20 bg-warning/8 text-warning',
   danger: 'border-danger/20 bg-danger/8 text-danger',

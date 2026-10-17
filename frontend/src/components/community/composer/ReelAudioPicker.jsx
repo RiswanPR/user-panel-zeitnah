@@ -248,16 +248,16 @@ export default function ReelAudioPicker({
         animate={{ opacity: 1, y: 0 }}
         exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 40 }}
         transition={{ duration: 0.2 }}
-        className="w-full max-w-2xl rounded-t-3xl sm:rounded-3xl bg-[#090F1D] border border-white/[0.08] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] sm:max-h-[85vh]"
+        className="w-full max-w-2xl rounded-t-3xl sm:rounded-3xl bg-surface-card border border-border shadow-2xl overflow-hidden flex flex-col max-h-[90vh] sm:max-h-[85vh]"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06] bg-[#070B14]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-surface-card">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-brand-mint/10 border border-brand-mint/20 flex items-center justify-center text-brand-mint">
               <Music2 className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-white">Audio & Music</h2>
+              <h2 className="text-sm font-semibold text-text-primary">Audio & Music</h2>
               <p className="text-[11px] text-text-muted">
                 Control original sound, select soundtrack & mix levels
               </p>
@@ -266,7 +266,7 @@ export default function ReelAudioPicker({
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-text-muted hover:text-white flex items-center justify-center transition-colors focus:outline-none"
+            className="w-9 h-9 rounded-full bg-surface-elevated hover:bg-surface-elevated/80 text-text-muted hover:text-text-primary flex items-center justify-center transition-colors focus:outline-none min-h-[44px] min-w-[44px]"
             aria-label="Close audio picker"
           >
             <X className="w-4 h-4" />
@@ -287,10 +287,10 @@ export default function ReelAudioPicker({
                   setAudioMode('ORIGINAL_ONLY');
                   if (originalVolume === 0) setOriginalVolume(1.0);
                 }}
-                className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all cursor-pointer ${
+                className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all cursor-pointer min-h-[44px] ${
                   audioMode === 'ORIGINAL_ONLY'
                     ? 'bg-brand-mint/10 border-brand-mint text-brand-mint shadow-[0_0_12px_rgba(20,241,149,0.15)]'
-                    : 'bg-white/[0.02] border-white/[0.06] text-text-muted hover:border-white/20 hover:text-white'
+                    : 'bg-surface-elevated border-border text-text-muted hover:border-border-accent hover:text-text-primary'
                 }`}
               >
                 <Volume2 className="w-4 h-4 mb-1.5" />
@@ -308,10 +308,10 @@ export default function ReelAudioPicker({
                   if (originalVolume === 0) setOriginalVolume(0.5);
                   if (musicVolume === 0) setMusicVolume(1.0);
                 }}
-                className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all cursor-pointer ${
+                className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all cursor-pointer min-h-[44px] ${
                   audioMode === 'MIXED'
                     ? 'bg-brand-mint/10 border-brand-mint text-brand-mint shadow-[0_0_12px_rgba(20,241,149,0.15)]'
-                    : 'bg-white/[0.02] border-white/[0.06] text-text-muted hover:border-white/20 hover:text-white'
+                    : 'bg-surface-elevated border-border text-text-muted hover:border-border-accent hover:text-text-primary'
                 }`}
               >
                 <Layers className="w-4 h-4 mb-1.5" />
@@ -328,10 +328,10 @@ export default function ReelAudioPicker({
                   setAudioMode('MUSIC_ONLY');
                   if (musicVolume === 0) setMusicVolume(1.0);
                 }}
-                className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all cursor-pointer ${
+                className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all cursor-pointer min-h-[44px] ${
                   audioMode === 'MUSIC_ONLY'
                     ? 'bg-brand-mint/10 border-brand-mint text-brand-mint shadow-[0_0_12px_rgba(20,241,149,0.15)]'
-                    : 'bg-white/[0.02] border-white/[0.06] text-text-muted hover:border-white/20 hover:text-white'
+                    : 'bg-surface-elevated border-border text-text-muted hover:border-border-accent hover:text-text-primary'
                 }`}
               >
                 <Disc3 className="w-4 h-4 mb-1.5" />
@@ -342,11 +342,11 @@ export default function ReelAudioPicker({
           </div>
 
           {/* ── SECTION 2: VOLUME CONTROLS ── */}
-          <div className="p-4 rounded-2xl bg-[#060D18] border border-white/[0.06] space-y-4">
+          <div className="p-4 rounded-2xl bg-surface-elevated border border-border space-y-4">
             {/* Original Audio Volume */}
             <div className={`space-y-1.5 ${audioMode === 'MUSIC_ONLY' ? 'opacity-40' : ''}`}>
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-white flex items-center gap-1.5">
+                <span className="font-medium text-text-primary flex items-center gap-1.5">
                   <Volume2 className="w-3.5 h-3.5 text-brand-mint" />
                   Original Audio (
                   {creatorHandle ? `@${creatorHandle.replace(/^@/, '')}` : 'You'})
@@ -371,7 +371,7 @@ export default function ReelAudioPicker({
             {/* Music Volume */}
             <div className={`space-y-1.5 ${audioMode === 'ORIGINAL_ONLY' ? 'opacity-40' : ''}`}>
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-white flex items-center gap-1.5">
+                <span className="font-medium text-text-primary flex items-center gap-1.5">
                   <Music2 className="w-3.5 h-3.5 text-brand-yellow" />
                   Soundtrack Music
                 </span>
@@ -410,7 +410,7 @@ export default function ReelAudioPicker({
                     )}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-white truncate">
+                    <h3 className="text-sm font-semibold text-text-primary truncate">
                       {selectedMusic.title}
                     </h3>
                     <p className="text-xs text-text-muted truncate">
@@ -421,14 +421,14 @@ export default function ReelAudioPicker({
                 <button
                   type="button"
                   onClick={handleRemoveTrack}
-                  className="px-2.5 py-1 rounded-xl bg-white/[0.06] hover:bg-rose-500/20 text-text-muted hover:text-rose-400 text-xs font-medium transition-colors"
+                  className="min-h-[44px] px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-rose-500/20 text-text-muted hover:text-rose-400 text-xs font-medium transition-colors border border-border inline-flex items-center"
                 >
                   Remove
                 </button>
               </div>
 
               {/* Lightweight Audio Scrubber (Section 11) */}
-              <div className="pt-2 border-t border-white/[0.06] space-y-2">
+              <div className="pt-2 border-t border-border space-y-2">
                 <div className="flex items-center justify-between text-xs text-text-muted font-mono">
                   <span className="flex items-center gap-1 text-brand-mint">
                     <Scissors className="w-3 h-3" />
@@ -480,7 +480,7 @@ export default function ReelAudioPicker({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search soundtrack by title, artist, or tag..."
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-[#060D18] border border-white/[0.08] text-xs text-white placeholder-text-faint focus:outline-none focus:border-brand-mint/50 transition-colors"
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary placeholder-text-faint focus:outline-none focus:border-brand-mint/50 transition-colors"
               />
             </div>
 
@@ -491,10 +491,10 @@ export default function ReelAudioPicker({
                   key={cat.id}
                   type="button"
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+                  className={`min-h-[32px] px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer inline-flex items-center ${
                     selectedCategory === cat.id
-                      ? 'bg-brand-mint text-[#070B14] font-semibold'
-                      : 'bg-white/[0.04] text-text-muted hover:bg-white/[0.08] hover:text-white'
+                      ? 'bg-brand-mint text-bg-base font-semibold'
+                      : 'bg-surface-elevated text-text-muted hover:bg-surface-elevated/80 hover:text-text-primary border border-border'
                   }`}
                 >
                   {cat.label}
@@ -515,9 +515,9 @@ export default function ReelAudioPicker({
                   <p className="text-xs text-rose-300">{loadError}</p>
                 </div>
               ) : tracks.length === 0 ? (
-                <div className="py-10 text-center space-y-2 p-6 rounded-2xl bg-white/[0.01] border border-white/[0.04]">
+                <div className="py-10 text-center space-y-2 p-6 rounded-2xl bg-surface-elevated/40 border border-border">
                   <Disc3 className="w-8 h-8 text-text-faint mx-auto" />
-                  <h4 className="text-xs font-semibold text-white">No tracks available</h4>
+                  <h4 className="text-xs font-semibold text-text-primary">No tracks available</h4>
                   <p className="text-[11px] text-text-muted max-w-sm mx-auto">
                     {searchQuery
                       ? 'No music tracks matched your query. Try a different keyword.'
@@ -535,7 +535,7 @@ export default function ReelAudioPicker({
                       className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${
                         isSelected
                           ? 'bg-brand-mint/[0.06] border-brand-mint/40'
-                          : 'bg-white/[0.02] border-white/[0.04] hover:border-white/10 hover:bg-white/[0.04]'
+                          : 'bg-surface-elevated/40 border-border hover:border-border-accent hover:bg-surface-elevated'
                       }`}
                     >
                       {/* Play Preview & Track Info */}
@@ -545,8 +545,8 @@ export default function ReelAudioPicker({
                           onClick={() => handleTogglePreview(track)}
                           className={`w-9 h-9 rounded-xl flex items-center justify-center transition-transform hover:scale-105 shrink-0 ${
                             isPreviewing
-                              ? 'bg-brand-mint text-[#070B14] shadow-[0_0_10px_rgba(20,241,149,0.3)]'
-                              : 'bg-white/[0.08] text-white hover:bg-white/[0.15]'
+                              ? 'bg-brand-mint text-bg-base shadow-[0_0_10px_rgba(20,241,149,0.3)]'
+                              : 'bg-surface-elevated text-text-primary hover:bg-surface-elevated/80 border border-border'
                           }`}
                           aria-label={isPreviewing ? 'Pause preview' : 'Play preview'}
                         >
@@ -559,11 +559,11 @@ export default function ReelAudioPicker({
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-white truncate">
+                            <span className="text-xs font-semibold text-text-primary truncate">
                               {track.title}
                             </span>
                             {track.category && (
-                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-white/[0.06] text-text-muted uppercase font-mono">
+                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-surface-card border border-border text-text-muted uppercase font-mono">
                                 {track.category}
                               </span>
                             )}
@@ -584,7 +584,7 @@ export default function ReelAudioPicker({
 
                           {/* Progress indicator during preview */}
                           {isPreviewing && (
-                            <div className="w-full h-1 bg-white/[0.1] rounded-full overflow-hidden mt-1.5">
+                            <div className="w-full h-1 bg-surface-card border border-border rounded-full overflow-hidden mt-1.5">
                               <div
                                 className="h-full bg-brand-mint transition-all"
                                 style={{ width: `${previewProgress}%` }}
@@ -605,7 +605,7 @@ export default function ReelAudioPicker({
                           <button
                             type="button"
                             onClick={() => handleSelectTrack(track)}
-                            className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-brand-mint hover:text-[#070B14] text-xs font-medium text-white transition-colors cursor-pointer"
+                            className="min-h-[44px] px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-brand-mint hover:text-bg-base text-xs font-medium text-text-primary transition-colors cursor-pointer inline-flex items-center border border-border"
                           >
                             Use Track
                           </button>
@@ -620,10 +620,10 @@ export default function ReelAudioPicker({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 border-t border-white/[0.06] bg-[#070B14] flex items-center justify-between">
+        <div className="p-4 border-t border-border bg-surface-card flex items-center justify-between">
           <div className="text-xs text-text-muted">
             Mode:{' '}
-            <span className="text-white font-semibold">
+            <span className="text-text-primary font-semibold">
               {audioMode === 'ORIGINAL_ONLY'
                 ? 'Original Audio'
                 : audioMode === 'MUSIC_ONLY'
@@ -634,7 +634,7 @@ export default function ReelAudioPicker({
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-brand-mint hover:bg-brand-mint/90 text-[#070B14] text-xs font-semibold transition-transform hover:scale-[1.02] cursor-pointer"
+            className="min-h-[44px] px-5 py-2 rounded-xl bg-brand-mint hover:bg-brand-mint/90 text-bg-base text-xs font-semibold transition-transform hover:scale-[1.02] cursor-pointer inline-flex items-center justify-center"
           >
             Apply & Close
           </button>

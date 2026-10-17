@@ -89,11 +89,11 @@ export default function StoryRail({
   return (
     <section
       aria-label="Community Stories"
-      className="relative p-2.5 sm:p-3 rounded-2xl bg-gradient-to-r from-[#0C1524]/90 via-[#0B1220]/85 to-[#0C1524]/90 border border-white/[0.08] backdrop-blur-2xl shadow-[0_4px_20px_rgba(0,0,0,0.25)] hover:border-brand-mint/20 transition-all select-none overflow-hidden group/rail"
+      className="relative p-2.5 sm:p-3 rounded-2xl bg-surface-card border border-border backdrop-blur-2xl shadow-sm hover:border-brand-mint/20 transition-all select-none overflow-hidden group/rail"
     >
       {/* Top subtle ambient light bar */}
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-mint/25 to-transparent pointer-events-none" />
-      <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#12314C]/40 to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-border/40 to-transparent pointer-events-none" />
 
       {/* Desktop Left Scroll Chevron */}
       {canScrollLeft && (
@@ -120,8 +120,8 @@ export default function StoryRail({
       )}
 
       {/* Edge gradient masks */}
-      <div className="absolute left-0 inset-y-0 w-6 bg-gradient-to-r from-[#0C1524] to-transparent pointer-events-none z-10 opacity-70 hidden sm:block" />
-      <div className="absolute right-0 inset-y-0 w-8 bg-gradient-to-l from-[#0C1524] to-transparent pointer-events-none z-10 opacity-70" />
+      <div className="absolute left-0 inset-y-0 w-6 bg-gradient-to-r from-surface-card to-transparent pointer-events-none z-10 opacity-70 hidden sm:block" />
+      <div className="absolute right-0 inset-y-0 w-8 bg-gradient-to-l from-surface-card to-transparent pointer-events-none z-10 opacity-70" />
 
       <div
         ref={railRef}
@@ -147,11 +147,11 @@ export default function StoryRail({
                 hasOwnStory
                   ? currentUserGroup.hasUnseenStories
                     ? 'p-[2.5px] community-ring-own ring-1 ring-brand-yellow/30'
-                    : 'p-[2px] zn-gradient-ring-seen ring-1 ring-white/10 opacity-80 group-hover:opacity-100 group-hover:ring-brand-mint/20'
-                  : 'p-[2px] bg-white/[0.08] border-2 border-dashed border-white/20 group-hover:border-brand-mint/60'
+                    : 'p-[2px] zn-gradient-ring-seen ring-1 ring-border opacity-80 group-hover:opacity-100 group-hover:ring-brand-mint/20'
+                  : 'p-[2px] bg-surface-elevated border-2 border-dashed border-border group-hover:border-brand-mint/60'
               }`}
             >
-              <div className="w-full h-full rounded-full bg-[#0E1726] border-2 border-[#0B111E] overflow-hidden flex items-center justify-center">
+              <div className="w-full h-full rounded-full bg-surface-elevated border-2 border-surface-card overflow-hidden flex items-center justify-center">
                 {resolvedCurrentUserAvatar && !currentUserImgError ? (
                   <img
                     src={resolvedCurrentUserAvatar}
@@ -175,7 +175,7 @@ export default function StoryRail({
                 e.stopPropagation();
                 onAddStory?.();
               }}
-              className="min-h-[24px] min-w-[24px] absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-gradient-to-br from-brand-mint to-brand-yellow text-[#070B14] flex items-center justify-center ring-2 ring-[#0B111E] shadow-sm hover:scale-110 active:scale-95 transition-all cursor-pointer font-bold after:content-[''] after:absolute after:-inset-2.5 after:min-w-[44px] after:min-h-[44px]"
+              className="min-h-[24px] min-w-[24px] absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-gradient-to-br from-brand-mint to-brand-yellow text-bg-base flex items-center justify-center ring-2 ring-surface-card shadow-sm hover:scale-110 active:scale-95 transition-all cursor-pointer font-bold after:content-[''] after:absolute after:-inset-2.5 after:min-w-[44px] after:min-h-[44px]"
               title="Add to story"
               aria-label="Add to story"
             >
@@ -183,7 +183,7 @@ export default function StoryRail({
             </button>
           </div>
 
-          <span className="text-[11px] font-medium text-text-muted group-hover:text-white transition-colors truncate max-w-[68px]">
+          <span className="text-[11px] font-medium text-text-muted group-hover:text-text-primary transition-colors truncate max-w-[68px]">
             Your story
           </span>
         </div>

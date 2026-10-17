@@ -47,12 +47,12 @@ export default function MyPoints() {
   if (loading) {
     return (
       <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto animate-pulse">
-        <div className="h-14 bg-bg-card rounded-2xl border border-border-default" />
+        <div className="h-14 bg-surface-card rounded-2xl border border-border" />
         <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="h-72 bg-bg-card rounded-2xl border border-border-default" />
-          <div className="h-72 bg-bg-card rounded-2xl border border-border-default" />
+          <div className="h-72 bg-surface-card rounded-2xl border border-border" />
+          <div className="h-72 bg-surface-card rounded-2xl border border-border" />
         </div>
-        <div className="h-64 bg-bg-card rounded-2xl border border-border-default" />
+        <div className="h-64 bg-surface-card rounded-2xl border border-border" />
       </div>
     );
   }
@@ -77,7 +77,7 @@ export default function MyPoints() {
           <Award className="w-3.5 h-3.5" />
           Achievements & Milestones
         </div>
-        <h1 className="font-heading font-black text-3xl sm:text-4xl md:text-5xl text-white tracking-tight leading-none">
+        <h1 className="font-heading font-black text-3xl sm:text-4xl md:text-5xl text-text-primary tracking-tight leading-none">
           Level, Badges & Rewards
         </h1>
         <p className="text-xs sm:text-sm text-text-muted max-w-xl leading-relaxed">
@@ -92,7 +92,7 @@ export default function MyPoints() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-2xl border border-border-default bg-bg-card p-6 sm:p-8 relative overflow-hidden shadow-sm"
+          className="rounded-2xl border border-border bg-surface-card p-6 sm:p-8 relative overflow-hidden shadow-sm"
         >
           <div className="gradient-line-top" />
           <div className="absolute top-0 right-0 w-[260px] h-[260px] bg-brand-yellow/5 rounded-full blur-[100px] pointer-events-none" />
@@ -100,13 +100,14 @@ export default function MyPoints() {
           <div className="relative flex flex-col sm:flex-row items-center gap-8 w-full">
             {/* Circular level indicator */}
             <div className="relative h-40 w-40 sm:h-44 sm:w-44 shrink-0">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 160 160">
+              <svg className="w-full h-full -rotate-90 text-border" viewBox="0 0 160 160">
                 <circle
                   cx="80"
                   cy="80"
                   r="68"
                   fill="none"
-                  stroke="rgba(255,255,255,0.04)"
+                  stroke="currentColor"
+                  strokeOpacity="0.4"
                   strokeWidth="10"
                 />
                 <motion.circle
@@ -133,7 +134,7 @@ export default function MyPoints() {
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <Star className="w-5 h-5 text-brand-mint mb-1" />
-                <span className="text-3xl sm:text-4xl font-heading font-black text-white">
+                <span className="text-3xl sm:text-4xl font-heading font-black text-text-primary">
                   {gamification.level || 1}
                 </span>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted mt-0.5">
@@ -147,7 +148,7 @@ export default function MyPoints() {
               <p className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-1">
                 Accumulated XP
               </p>
-              <p className="font-heading font-black text-4xl sm:text-5xl text-white tracking-tight truncate leading-none font-mono">
+              <p className="font-heading font-black text-4xl sm:text-5xl text-text-primary tracking-tight truncate leading-none font-mono">
                 {(gamification.totalPoints || 0).toLocaleString()}
               </p>
 
@@ -155,7 +156,7 @@ export default function MyPoints() {
                 <span className="rounded-lg border border-brand-mint/20 bg-brand-mint/8 px-3 py-1 text-xs font-bold uppercase tracking-wide text-brand-mint">
                   {gamification.rank || "Beginner"}
                 </span>
-                <span className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1 text-xs font-semibold text-text-muted font-mono">
+                <span className="rounded-lg border border-border bg-surface-elevated px-3 py-1 text-xs font-semibold text-text-muted font-mono">
                   {levelProgress.pointsToNextLevel || 0} pts to next level
                 </span>
               </div>
@@ -166,7 +167,7 @@ export default function MyPoints() {
                   <span>Level {gamification.level || 1}</span>
                   <span>{levelProgress.nextLevel ? `Level ${levelProgress.nextLevel}` : "Maximum"}</span>
                 </div>
-                <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-surface-elevated border border-border/40">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${progressPercent}%` }}
@@ -184,7 +185,7 @@ export default function MyPoints() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="rounded-2xl border border-border-default bg-bg-card p-6 relative overflow-hidden shadow-sm space-y-4"
+          className="rounded-2xl border border-border bg-surface-card p-6 relative overflow-hidden shadow-sm space-y-4"
         >
           <div className="gradient-line-top" />
 
@@ -194,7 +195,7 @@ export default function MyPoints() {
                 <Award className="w-4 h-4" />
               </span>
               <div>
-                <h2 className="text-lg font-heading font-bold text-white">
+                <h2 className="text-lg font-heading font-bold text-text-primary">
                   Unlocked Achievements
                 </h2>
                 <p className="text-xs text-text-muted">
@@ -216,13 +217,13 @@ export default function MyPoints() {
                 return (
                   <div
                     key={achievement}
-                    className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
+                    className="flex items-center gap-3 p-3 rounded-xl border border-border bg-surface-elevated/40 hover:bg-surface-card hover:border-brand-mint/30 transition-colors"
                   >
                     <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
                       <Sparkles className="w-4 h-4 text-brand-yellow" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold text-white truncate">
+                      <p className="text-xs font-semibold text-text-primary truncate">
                         {meta.title}
                       </p>
                       <p className="text-[11px] text-text-muted truncate">
@@ -251,7 +252,7 @@ export default function MyPoints() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="rounded-2xl border border-border-default bg-bg-card p-6 sm:p-7 relative overflow-hidden shadow-sm"
+        className="rounded-2xl border border-border bg-surface-card p-6 sm:p-7 relative overflow-hidden shadow-sm"
       >
         <div className="gradient-line-top" />
 
@@ -260,7 +261,7 @@ export default function MyPoints() {
             <TrendingUp className="w-4 h-4" />
           </span>
           <div>
-            <h2 className="text-lg sm:text-xl font-heading font-bold text-white">
+            <h2 className="text-lg sm:text-xl font-heading font-bold text-text-primary">
               Activity & XP Ledger
             </h2>
             <p className="text-xs text-text-muted mt-0.5">
@@ -279,14 +280,14 @@ export default function MyPoints() {
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 + index * 0.04 }}
-                  className="flex items-center justify-between gap-4 rounded-xl border border-white/[0.04] bg-white/[0.02] p-4 hover:border-brand-mint/15 hover:bg-white/[0.04] transition-colors"
+                  className="flex items-center justify-between gap-4 rounded-xl border border-border bg-surface-elevated/40 p-4 hover:border-brand-mint/15 hover:bg-surface-card transition-colors"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-bg-elevated border border-white/[0.05] text-brand-mint shrink-0">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-elevated border border-border text-brand-mint shrink-0">
                       <Icon className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-semibold text-white text-sm truncate">
+                      <p className="font-semibold text-text-primary text-sm truncate">
                         {activity.label}
                       </p>
                       <p className="text-xs font-medium text-text-muted mt-0.5">

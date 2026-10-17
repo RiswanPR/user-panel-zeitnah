@@ -35,7 +35,7 @@ export default function BusinessProfileIdentityCard({
         />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 truncate">
-            <span className="text-xs font-semibold text-white truncate">
+            <span className="text-xs font-semibold text-text-primary truncate">
               {business.name}
             </span>
             {business.isVerified && (
@@ -52,7 +52,7 @@ export default function BusinessProfileIdentityCard({
 
   return (
     <div
-      className={`p-4 rounded-2xl bg-gradient-to-br from-[#0E1626] to-[#0A101D] border border-white/[0.08] shadow-lg flex items-center justify-between gap-4 ${className}`}
+      className={`p-4 rounded-2xl bg-surface-card border border-border shadow-lg flex items-center justify-between gap-4 ${className}`}
     >
       <div className="flex items-center gap-3.5 min-w-0">
         <BusinessLogo
@@ -62,7 +62,7 @@ export default function BusinessProfileIdentityCard({
         />
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-sm font-bold text-white truncate">
+            <h3 className="text-sm font-bold text-text-primary truncate">
               {business.name}
             </h3>
             {business.isVerified && (
@@ -85,7 +85,7 @@ export default function BusinessProfileIdentityCard({
       {showLink && business.slug && (
         <Link
           to={profileUrl}
-          className="shrink-0 p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-text-muted hover:text-white transition-colors"
+          className="shrink-0 p-2 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 border border-border text-text-muted hover:text-text-primary transition-colors"
           title="View public business profile"
           aria-label={`View ${business.name} public profile`}
         >

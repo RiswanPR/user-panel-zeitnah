@@ -153,13 +153,13 @@ export default function NetworkActivityItem({ activity }) {
       initial={shouldReduceMotion ? false : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className="group relative flex items-start gap-3.5 sm:gap-4 rounded-2xl border border-white/[0.08] bg-[#0E1526]/80 p-4 sm:p-5 transition-all duration-200 hover:border-white/[0.14] hover:bg-[#121B30]/90 shadow-sm"
+      className="group relative flex items-start gap-3.5 sm:gap-4 rounded-2xl border border-border bg-surface-card p-4 sm:p-5 transition-all duration-200 hover:border-border hover:bg-surface-elevated shadow-sm"
     >
       {/* ── Actor Avatar with Milestone Icon Badge ── */}
       <div className="relative shrink-0 mt-0.5">
         <Link
           to={profileUrl}
-          className="block relative h-10 w-10 sm:h-11 sm:w-11 rounded-xl border border-white/[0.1] bg-bg-card overflow-hidden transition-transform group-hover:scale-105 focus-ring"
+          className="block relative h-10 w-10 sm:h-11 sm:w-11 rounded-xl border border-border bg-surface-elevated overflow-hidden transition-transform group-hover:scale-105 focus-ring"
           title={`View ${actor?.name || "Student"}'s profile`}
         >
           {avatarSrc ? (
@@ -179,7 +179,7 @@ export default function NetworkActivityItem({ activity }) {
 
         {/* Milestone Badge Icon Overlay */}
         <div
-          className={`absolute -bottom-1 -right-1 flex h-4 w-4 sm:h-4.5 sm:w-4.5 items-center justify-center rounded-full border border-[#0E1526] ${visuals.bg} ${visuals.color} shadow-sm`}
+          className={`absolute -bottom-1 -right-1 flex h-4 w-4 sm:h-4.5 sm:w-4.5 items-center justify-center rounded-full border border-surface-card ${visuals.bg} ${visuals.color} shadow-sm`}
           title={visuals.label}
         >
           <Icon className="h-2.5 w-2.5" aria-hidden="true" />
@@ -193,7 +193,7 @@ export default function NetworkActivityItem({ activity }) {
           <div className="flex flex-wrap items-center gap-1.5 min-w-0">
             <Link
               to={profileUrl}
-              className="truncate text-xs sm:text-sm font-bold text-white hover:text-brand-mint transition-colors focus-ring rounded"
+              className="truncate text-xs sm:text-sm font-bold text-text-primary hover:text-brand-mint transition-colors focus-ring rounded"
             >
               {actor?.name || "Anonymous Student"}
             </Link>
@@ -244,14 +244,14 @@ export default function NetworkActivityItem({ activity }) {
         {/* ── Milestone Context Card (Factual & Direct) ── */}
         {type === "COURSE_COMPLETED" && (
           <div
-            className={`flex items-center gap-3 rounded-xl border ${visuals.cardBorder} bg-white/[0.02] p-3 transition-colors hover:bg-white/[0.04]`}
+            className={`flex items-center gap-3 rounded-xl border ${visuals.cardBorder} bg-surface-elevated p-3 transition-colors hover:bg-surface-card`}
           >
             {thumbnailSrc ? (
               <img
                 src={thumbnailSrc}
                 alt={context?.courseName || "Course"}
                 onError={() => setThumbError(true)}
-                className="h-11 w-16 rounded-lg object-cover border border-white/[0.08] shrink-0"
+                className="h-11 w-16 rounded-lg object-cover border border-border shrink-0"
                 loading="lazy"
               />
             ) : (
@@ -266,13 +266,13 @@ export default function NetworkActivityItem({ activity }) {
               {context?.courseId ? (
                 <Link
                   to={`/courses/${context.courseId}`}
-                  className="group/link inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-white hover:text-brand-mint transition-colors truncate"
+                  className="group/link inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-text-primary hover:text-brand-mint transition-colors truncate"
                 >
                   <span className="truncate">{context?.courseName || "Course Track"}</span>
                   <ExternalLink className="h-3 w-3 shrink-0 opacity-0 group-hover/link:opacity-100 transition-opacity" />
                 </Link>
               ) : (
-                <p className="text-xs sm:text-sm font-semibold text-white truncate">
+                <p className="text-xs sm:text-sm font-semibold text-text-primary truncate">
                   {context?.courseName || "Course Track"}
                 </p>
               )}
@@ -282,13 +282,13 @@ export default function NetworkActivityItem({ activity }) {
 
         {type === "LESSON_COMPLETED" && (
           <div
-            className={`flex items-center gap-3 rounded-xl border ${visuals.cardBorder} bg-white/[0.02] p-2.5 sm:p-3 transition-colors hover:bg-white/[0.04]`}
+            className={`flex items-center gap-3 rounded-xl border ${visuals.cardBorder} bg-surface-elevated p-2.5 sm:p-3 transition-colors hover:bg-surface-card`}
           >
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20">
               <CheckCircle2 className="h-4 w-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs sm:text-sm font-medium text-white truncate">
+              <p className="text-xs sm:text-sm font-medium text-text-primary truncate">
                 {context?.lessonName || "Lecture Lesson"}
               </p>
               {context?.courseName && (
@@ -302,14 +302,14 @@ export default function NetworkActivityItem({ activity }) {
 
         {type === "COURSE_JOINED" && (
           <div
-            className={`flex items-center gap-3 rounded-xl border ${visuals.cardBorder} bg-white/[0.02] p-3 transition-colors hover:bg-white/[0.04]`}
+            className={`flex items-center gap-3 rounded-xl border ${visuals.cardBorder} bg-surface-elevated p-3 transition-colors hover:bg-surface-card`}
           >
             {thumbnailSrc ? (
               <img
                 src={thumbnailSrc}
                 alt={context?.courseName || "Course"}
                 onError={() => setThumbError(true)}
-                className="h-11 w-16 rounded-lg object-cover border border-white/[0.08] shrink-0"
+                className="h-11 w-16 rounded-lg object-cover border border-border shrink-0"
                 loading="lazy"
               />
             ) : (
@@ -324,13 +324,13 @@ export default function NetworkActivityItem({ activity }) {
               {context?.courseId ? (
                 <Link
                   to={`/courses/${context.courseId}`}
-                  className="group/link inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-white hover:text-indigo-300 transition-colors truncate"
+                  className="group/link inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-text-primary hover:text-indigo-300 transition-colors truncate"
                 >
                   <span className="truncate">{context?.courseName || "Curriculum Track"}</span>
                   <ExternalLink className="h-3 w-3 shrink-0 opacity-0 group-hover/link:opacity-100 transition-opacity" />
                 </Link>
               ) : (
-                <p className="text-xs sm:text-sm font-semibold text-white truncate">
+                <p className="text-xs sm:text-sm font-semibold text-text-primary truncate">
                   {context?.courseName || "Curriculum Track"}
                 </p>
               )}
@@ -346,7 +346,7 @@ export default function NetworkActivityItem({ activity }) {
               <Sparkles className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs sm:text-sm font-bold text-white truncate">
+              <p className="text-xs sm:text-sm font-bold text-text-primary truncate">
                 {context?.achievementName || "Milestone Badge"}
               </p>
               <p className="text-[11px] text-text-muted mt-0.5">
@@ -364,7 +364,7 @@ export default function NetworkActivityItem({ activity }) {
               <Flame className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs sm:text-sm font-bold text-white">
+              <p className="text-xs sm:text-sm font-bold text-text-primary">
                 {context?.streakDays || 7}-Day Learning Streak
               </p>
               <p className="text-[11px] text-text-muted mt-0.5">

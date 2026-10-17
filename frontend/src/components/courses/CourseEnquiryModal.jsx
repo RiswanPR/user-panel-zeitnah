@@ -116,12 +116,12 @@ function CourseEnquiryModal({ isOpen, onClose, course }) {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-bg-surface shadow-2xl z-10"
+          className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-surface-card shadow-2xl z-10"
         >
           <div className="gradient-line-top" />
 
           {/* Header */}
-          <div className="relative flex items-center justify-between p-5 border-b border-white/[0.06] bg-white/[0.02]">
+          <div className="relative flex items-center justify-between p-5 border-b border-border/60 bg-surface-elevated/40">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-brand-mint/10 border border-brand-mint/20 flex items-center justify-center text-brand-mint shrink-0">
                 <GraduationCap className="w-5 h-5" />
@@ -129,7 +129,7 @@ function CourseEnquiryModal({ isOpen, onClose, course }) {
               <div>
                 <h3
                   id="course-enquiry-modal-title"
-                  className="font-heading font-extrabold text-base sm:text-lg text-white tracking-tight"
+                  className="font-heading font-extrabold text-base sm:text-lg text-text-primary tracking-tight"
                 >
                   Course Enquiry
                 </h3>
@@ -143,7 +143,7 @@ function CourseEnquiryModal({ isOpen, onClose, course }) {
               type="button"
               onClick={onClose}
               aria-label="Close modal"
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer focus-ring"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer focus-ring"
             >
               <X className="w-4 h-4" />
             </button>
@@ -152,15 +152,15 @@ function CourseEnquiryModal({ isOpen, onClose, course }) {
           {/* Body */}
           <div className="p-5 sm:p-6">
             {/* Course Summary Banner */}
-            <div className="mb-5 flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+            <div className="mb-5 flex items-center gap-3 rounded-xl border border-border/60 bg-surface-elevated/40 p-3">
               {course.coverImage ? (
                 <img
                   src={course.coverImage}
                   alt={course.name}
-                  className="w-12 h-12 rounded-lg object-cover border border-white/10 shrink-0"
+                  className="w-12 h-12 rounded-lg object-cover border border-border/60 shrink-0"
                 />
               ) : (
-                <div className="w-12 h-12 rounded-lg bg-bg-elevated flex items-center justify-center border border-white/10 shrink-0">
+                <div className="w-12 h-12 rounded-lg bg-surface-elevated flex items-center justify-center border border-border/60 shrink-0">
                   <GraduationCap className="w-5 h-5 text-brand-mint" />
                 </div>
               )}
@@ -168,7 +168,7 @@ function CourseEnquiryModal({ isOpen, onClose, course }) {
                 <span className="text-[9px] font-bold uppercase tracking-wider text-brand-mint">
                   Target Course
                 </span>
-                <h4 className="text-xs sm:text-sm font-bold text-white truncate">
+                <h4 className="text-xs sm:text-sm font-bold text-text-primary truncate">
                   {course.name}
                 </h4>
               </div>
@@ -183,18 +183,18 @@ function CourseEnquiryModal({ isOpen, onClose, course }) {
                 <div className="w-14 h-14 rounded-full bg-success/10 border border-success/30 flex items-center justify-center text-success">
                   <CheckCircle2 className="w-7 h-7" />
                 </div>
-                <h4 className="text-lg font-heading font-extrabold text-white">
+                <h4 className="text-lg font-heading font-extrabold text-text-primary">
                   Enquiry Submitted
                 </h4>
                 <p className="text-xs sm:text-sm text-text-muted max-w-sm leading-relaxed">
                   Thank you for your interest in{" "}
-                  <span className="text-white font-semibold">{course.name}</span>.
+                  <span className="text-text-primary font-semibold">{course.name}</span>.
                   Our team will reach out to you shortly.
                 </p>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="mt-2 px-6 py-2.5 rounded-xl bg-brand-mint text-bg-base font-bold text-xs uppercase tracking-wider hover:bg-brand-mint/90 transition-all cursor-pointer"
+                  className="mt-2 min-h-[44px] px-6 py-2.5 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs uppercase tracking-wider hover:bg-brand-mint/90 transition-all cursor-pointer inline-flex items-center justify-center"
                 >
                   Done
                 </button>
@@ -293,14 +293,14 @@ function CourseEnquiryModal({ isOpen, onClose, course }) {
                   <button
                     type="button"
                     onClick={onClose}
-                    className="px-4 py-2.5 rounded-xl border border-white/[0.08] text-xs font-semibold uppercase tracking-wider text-text-muted hover:text-white hover:bg-white/[0.04] transition-colors cursor-pointer"
+                    className="min-h-[44px] px-4 py-2.5 rounded-xl border border-border text-xs font-semibold uppercase tracking-wider text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer inline-flex items-center justify-center"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-yellow text-bg-base font-bold text-xs uppercase tracking-wider hover:bg-brand-yellow/90 active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer shadow-md"
+                    className="min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-brand-yellow text-brand-navy font-bold text-xs uppercase tracking-wider hover:bg-brand-yellow/90 active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer shadow-md"
                   >
                     {loading ? (
                       <>

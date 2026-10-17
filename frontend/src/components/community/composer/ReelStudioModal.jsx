@@ -1202,22 +1202,22 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.96, opacity: 0 }}
           transition={{ duration: 0.18 }}
-          className="relative w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-[1080px] bg-[#070B14] border-0 sm:border border-white/[0.1] rounded-none sm:rounded-3xl shadow-[0_24px_80px_rgba(0,0,0,0.7)] flex flex-col overflow-hidden text-white"
+          className="relative w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-[1080px] bg-surface-card border-0 sm:border border-border rounded-none sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden text-text-primary"
         >
           {/* ── Studio Header Bar ── */}
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-white/[0.08] shrink-0 select-none bg-[#09111F]/90 backdrop-blur-md z-20">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-border shrink-0 select-none bg-surface-card/90 backdrop-blur-md z-20">
             <div className="flex items-center gap-2.5">
               <button
                 type="button"
                 onClick={handleAttemptClose}
-                className="p-1.5 -ml-1 rounded-xl text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+                className="p-2 -ml-1 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
                 aria-label="Close reel studio"
               >
                 <X className="w-5 h-5" />
               </button>
 
               <div className="flex items-center gap-2">
-                <h2 id="reel-studio-title" className="text-sm sm:text-base font-bold font-heading text-white tracking-tight flex items-center gap-2">
+                <h2 id="reel-studio-title" className="text-sm sm:text-base font-bold font-heading text-text-primary tracking-tight flex items-center gap-2">
                   <span>Create Reel</span>
                   <span className="px-2 py-0.5 rounded-full bg-brand-yellow/10 border border-brand-yellow/20 text-[10px] font-semibold text-brand-yellow uppercase tracking-wider">
                     Studio
@@ -1239,7 +1239,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                   onClick={handlePublishReel}
                   // eslint-disable-next-line react-hooks/refs
                   disabled={isPublishingRef.current || createPostMutation.isPending}
-                  className="sm:hidden px-3.5 py-1.5 rounded-xl bg-brand-mint text-[#070B14] font-bold text-xs hover:opacity-90 disabled:opacity-40 transition-all cursor-pointer"
+                  className="sm:hidden px-3.5 py-1.5 rounded-xl bg-brand-mint text-bg-base font-bold text-xs hover:opacity-90 disabled:opacity-40 transition-all cursor-pointer min-h-[44px] flex items-center justify-center"
                 >
                   Post
                 </button>
@@ -1266,7 +1266,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
               onDrop={handleDrop}
               className={`flex-1 flex flex-col items-center justify-center p-8 sm:p-12 text-center min-h-[460px] overflow-hidden transition-all duration-300 ${
                 isDraggingOver
-                  ? 'bg-[#12314C]/45 border-2 border-dashed border-brand-mint/60 shadow-[0_0_32px_rgba(159,213,178,0.22)]'
+                  ? 'bg-brand-mint/10 border-2 border-dashed border-brand-mint/60 shadow-[0_0_32px_rgba(159,213,178,0.22)]'
                   : 'bg-transparent'
               }`}
             >
@@ -1274,7 +1274,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                 <Film className="w-8 h-8 sm:w-10 sm:h-10" />
               </div>
 
-              <h3 className="text-lg sm:text-xl font-bold font-heading text-white mb-2">
+              <h3 className="text-lg sm:text-xl font-bold font-heading text-text-primary mb-2">
                 Share a Reel with the Community
               </h3>
               <p className="text-xs sm:text-sm text-text-muted max-w-md mb-6 leading-relaxed">
@@ -1285,7 +1285,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                 type="button"
                 id="select-reel-video-btn"
                 onClick={() => fileInputRef.current?.click()}
-                className="px-6 py-3 rounded-2xl bg-gradient-to-r from-brand-mint to-brand-yellow text-[#070B14] font-bold text-xs sm:text-sm hover:shadow-[0_0_24px_rgba(159,213,178,0.4)] transition-all cursor-pointer"
+                className="min-h-[44px] px-6 py-3 rounded-2xl bg-gradient-to-r from-brand-mint to-brand-yellow text-bg-base font-bold text-xs sm:text-sm hover:shadow-[0_0_24px_rgba(159,213,178,0.4)] transition-all cursor-pointer inline-flex items-center justify-center"
               >
                 Select Video from Device
               </button>
@@ -1300,8 +1300,8 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
             </div>
           ) : status === 'UPLOADING' || status === 'PROCESSING' || status === 'VALIDATING' || status === 'READY_TO_PUBLISH' || status === 'PUBLISHING' ? (
             /* UPLOADING & BACKGROUND PROCESSING OVERLAY */
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[420px] bg-[#070B14]">
-              <div className="max-w-md w-full p-8 rounded-3xl bg-[#09111F] border border-white/[0.08] text-center space-y-5">
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[420px] bg-surface-card">
+              <div className="max-w-md w-full p-8 rounded-3xl bg-surface-elevated border border-border text-center space-y-5">
                 <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
                   <div className="absolute inset-0 rounded-full border-2 border-brand-mint/20 border-t-brand-mint animate-spin" />
                   {status === 'PROCESSING' ? (
@@ -1311,7 +1311,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                   )}
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">
+                  <h3 className="text-base font-bold text-text-primary">
                     {status === 'PROCESSING'
                       ? 'Optimizing Reel video…'
                       : status === 'READY_TO_PUBLISH' || status === 'PUBLISHING'
@@ -1329,11 +1329,11 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                 <div className="space-y-1.5 text-left">
                   <div className="flex justify-between text-[11px] text-text-muted">
                     <span>{uploadStatusText}</span>
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-text-primary">
                       {status === 'PROCESSING' ? 'Processing' : `${uploadProgress}%`}
                     </span>
                   </div>
-                  <div className="h-2 w-full bg-white/[0.06] rounded-full overflow-hidden">
+                  <div className="h-2 w-full bg-surface-card border border-border rounded-full overflow-hidden">
                     <div
                       className={`h-full bg-gradient-to-r from-brand-mint to-brand-yellow transition-all duration-300 rounded-full ${
                         status === 'PROCESSING' ? 'animate-pulse' : ''
@@ -1348,7 +1348,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                     type="button"
                     data-testid="cancel-reel-upload-btn"
                     onClick={handleCancelUpload}
-                    className="text-xs text-text-muted hover:text-white transition-colors cursor-pointer pt-2"
+                    className="text-xs text-text-muted hover:text-text-primary transition-colors cursor-pointer pt-2 min-h-[44px] inline-flex items-center"
                   >
                     Cancel upload
                   </button>
@@ -1357,13 +1357,13 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
             </div>
           ) : status === 'ERROR' ? (
             /* ERROR & RECOVERY SCREEN */
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[420px] bg-[#070B14]">
-              <div className="max-w-md w-full p-6 rounded-3xl bg-[#0F1828] border border-rose-500/30 text-center space-y-4">
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[420px] bg-surface-card">
+              <div className="max-w-md w-full p-6 rounded-3xl bg-surface-elevated border border-rose-500/30 text-center space-y-4">
                 <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 mx-auto flex items-center justify-center">
                   <AlertCircle className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">
+                  <h3 className="text-base font-bold text-text-primary">
                     {uploadError?.toLowerCase().includes('process') || processingMediaId
                       ? 'Video processing failed'
                       : 'Reel Upload Failed'}
@@ -1379,7 +1379,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                       id="retry-processing-btn"
                       data-testid="retry-processing-btn"
                       onClick={handleRetryProcessing}
-                      className="px-4 py-2 rounded-xl bg-brand-mint text-[#070B14] text-xs font-bold hover:opacity-90 transition-all cursor-pointer flex items-center gap-1.5"
+                      className="min-h-[44px] px-4 py-2 rounded-xl bg-brand-mint text-bg-base text-xs font-bold hover:opacity-90 transition-all cursor-pointer flex items-center gap-1.5"
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
                       <span>Retry processing</span>
@@ -1388,7 +1388,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                     <button
                       type="button"
                       onClick={handlePublishReel}
-                      className="px-4 py-2 rounded-xl bg-brand-mint text-[#070B14] text-xs font-bold hover:opacity-90 transition-all cursor-pointer"
+                      className="min-h-[44px] px-4 py-2 rounded-xl bg-brand-mint text-bg-base text-xs font-bold hover:opacity-90 transition-all cursor-pointer flex items-center"
                     >
                       Try again
                     </button>
@@ -1396,14 +1396,14 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                   <button
                     type="button"
                     onClick={handleRemoveVideo}
-                    className="px-4 py-2 rounded-xl bg-white/[0.06] text-white hover:bg-white/[0.1] text-xs font-semibold transition-all cursor-pointer"
+                    className="min-h-[44px] px-4 py-2 rounded-xl bg-surface-card border border-border text-text-primary hover:bg-surface-elevated text-xs font-semibold transition-all cursor-pointer inline-flex items-center justify-center"
                   >
                     Choose another video
                   </button>
                   <button
                     type="button"
                     onClick={() => setStatus('READY')}
-                    className="px-4 py-2 rounded-xl bg-white/[0.03] text-text-muted hover:text-white text-xs font-medium transition-all cursor-pointer"
+                    className="min-h-[44px] px-4 py-2 rounded-xl bg-surface-card/60 text-text-muted hover:text-text-primary text-xs font-medium transition-all cursor-pointer inline-flex items-center justify-center"
                   >
                     Keep editing
                   </button>
@@ -1414,9 +1414,9 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
             /* STUDIO READY WORKSPACE: 2-COLUMN (DESKTOP) & STACKED (MOBILE) */
             <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
               {/* LEFT COLUMN: 9:16 Video Preview Stage + Timeline + Trim */}
-              <div className="flex-1 flex flex-col items-center justify-between p-4 sm:p-6 overflow-y-auto bg-black/40 space-y-4">
+              <div className="flex-1 flex flex-col items-center justify-between p-4 sm:p-6 overflow-y-auto bg-bg-base/60 backdrop-blur-sm space-y-4">
                 {/* 9:16 Video Stage */}
-                <div className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-[9/16] rounded-3xl bg-black border border-white/[0.1] overflow-hidden shadow-2xl flex items-center justify-center group shrink-0">
+                <div className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-[9/16] rounded-3xl bg-black border border-border overflow-hidden shadow-2xl flex items-center justify-center group shrink-0">
                   <video
                     ref={videoRef}
                     src={previewUrl}
@@ -1456,7 +1456,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                     <button
                       type="button"
                       onClick={toggleMute}
-                      className="p-2 rounded-full bg-black/60 backdrop-blur-md text-white hover:bg-black/80 transition-colors cursor-pointer"
+                      className="p-2 rounded-full bg-black/60 backdrop-blur-md text-white hover:bg-black/80 transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
                       aria-label={isMuted ? 'Unmute video' : 'Mute video'}
                     >
                       {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
@@ -1465,7 +1465,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                     <button
                       type="button"
                       onClick={handleRemoveVideo}
-                      className="p-2 rounded-full bg-black/60 backdrop-blur-md text-white hover:bg-rose-500/80 transition-colors cursor-pointer"
+                      className="p-2 rounded-full bg-black/60 backdrop-blur-md text-white hover:bg-rose-500/80 transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
                       aria-label="Remove video"
                       title="Remove video"
                     >
@@ -1481,13 +1481,13 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                 </div>
 
                 {/* Phase 3D: Creator Tools Bar (Text, Sticker, Caption, Layers) */}
-                <div className="w-full max-w-[480px] p-2 rounded-2xl bg-[#09111F] border border-white/[0.08] flex items-center justify-between gap-1.5 shadow-md shrink-0">
+                <div className="w-full max-w-[480px] p-2 rounded-2xl bg-surface-card border border-border flex items-center justify-between gap-1.5 shadow-md shrink-0">
                   <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
                     <button
                       type="button"
                       id="reel-add-text-btn"
                       onClick={handleOpenAddText}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-semibold text-white hover:text-brand-mint transition-colors cursor-pointer shrink-0"
+                      className="min-h-[44px] flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 border border-border text-xs font-semibold text-text-primary hover:text-brand-mint transition-colors cursor-pointer shrink-0"
                     >
                       <Type className="w-3.5 h-3.5 text-brand-mint" />
                       <span>Text</span>
@@ -1497,7 +1497,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                       type="button"
                       id="reel-add-sticker-btn"
                       onClick={handleOpenStickerPicker}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-semibold text-white hover:text-brand-yellow transition-colors cursor-pointer shrink-0"
+                      className="min-h-[44px] flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 border border-border text-xs font-semibold text-text-primary hover:text-brand-yellow transition-colors cursor-pointer shrink-0"
                     >
                       <Smile className="w-3.5 h-3.5 text-brand-yellow" />
                       <span>Sticker</span>
@@ -1507,7 +1507,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                       type="button"
                       id="reel-add-caption-btn"
                       onClick={handleOpenAddCaption}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-semibold text-white hover:text-sky-400 transition-colors cursor-pointer shrink-0"
+                      className="min-h-[44px] flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 border border-border text-xs font-semibold text-text-primary hover:text-sky-400 transition-colors cursor-pointer shrink-0"
                     >
                       <Subtitles className="w-3.5 h-3.5 text-sky-400" />
                       <span>Caption</span>
@@ -1518,12 +1518,12 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                     type="button"
                     id="reel-manage-layers-btn"
                     onClick={() => setIsLayerPanelOpen(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-semibold text-white hover:text-indigo-400 transition-colors cursor-pointer shrink-0"
+                    className="min-h-[44px] flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 border border-border text-xs font-semibold text-text-primary hover:text-indigo-400 transition-colors cursor-pointer shrink-0"
                   >
                     <Layers className="w-3.5 h-3.5 text-indigo-400" />
                     <span>Layers</span>
                     {editorLayers.length > 0 && (
-                      <span className="ml-1 px-1.5 py-0.2 rounded-full bg-brand-mint text-[#070B14] font-bold text-[10px]">
+                      <span className="ml-1 px-1.5 py-0.2 rounded-full bg-brand-mint text-bg-base font-bold text-[10px]">
                         {editorLayers.length}
                       </span>
                     )}
@@ -1531,7 +1531,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                 </div>
 
                 {/* Timeline & Scrubber & Trim Section */}
-                <div className="w-full max-w-[480px] p-3.5 rounded-2xl bg-[#09111F] border border-white/[0.08] space-y-3 shrink-0">
+                <div className="w-full max-w-[480px] p-3.5 rounded-2xl bg-surface-card border border-border space-y-3 shrink-0">
                   <ReelTimeline
                     duration={videoDuration}
                     currentTime={currentTime}
@@ -1550,13 +1550,13 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                   />
 
                   {/* Audio & Music Selection Trigger (Phase 3C) */}
-                  <div className="flex items-center justify-between pt-1 border-t border-white/[0.06]">
+                  <div className="flex items-center justify-between pt-1 border-t border-border">
                     <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-black/60 border border-white/[0.1] overflow-hidden flex items-center justify-center shrink-0 text-brand-mint">
+                      <div className="w-8 h-8 rounded-lg bg-surface-elevated border border-border overflow-hidden flex items-center justify-center shrink-0 text-brand-mint">
                         <Music2 className="w-4 h-4" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-white truncate">
+                        <p className="text-xs font-semibold text-text-primary truncate">
                           {selectedMusic && audioMode !== 'ORIGINAL_ONLY'
                             ? selectedMusic.title
                             : 'Original Audio'}
@@ -1574,16 +1574,16 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                     <button
                       type="button"
                       onClick={() => setIsAudioPickerOpen(true)}
-                      className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-semibold text-brand-mint transition-colors cursor-pointer shrink-0"
+                      className="min-h-[44px] px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 border border-border text-xs font-semibold text-brand-mint transition-colors cursor-pointer shrink-0 inline-flex items-center"
                     >
                       {selectedMusic ? 'Edit Audio' : 'Add Music'}
                     </button>
                   </div>
 
                   {/* Cover Selection Trigger */}
-                  <div className="flex items-center justify-between pt-1 border-t border-white/[0.06]">
+                  <div className="flex items-center justify-between pt-1 border-t border-border">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-black/60 border border-white/[0.1] overflow-hidden flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-surface-elevated border border-border overflow-hidden flex items-center justify-center shrink-0">
                         {selectedCover?.previewUrl ? (
                           <img
                             src={selectedCover.previewUrl}
@@ -1595,7 +1595,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                         )}
                       </div>
                       <div>
-                        <p className="text-xs font-semibold text-white">Reel Cover</p>
+                        <p className="text-xs font-semibold text-text-primary">Reel Cover</p>
                         <p className="text-[10px] text-text-muted">
                           {selectedCover ? 'Custom frame selected' : 'Auto poster at 1.0s'}
                         </p>
@@ -1605,7 +1605,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                     <button
                       type="button"
                       onClick={() => setIsCoverSelectorOpen(true)}
-                      className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-semibold text-brand-mint transition-colors cursor-pointer"
+                      className="min-h-[44px] px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 border border-border text-xs font-semibold text-brand-mint transition-colors cursor-pointer inline-flex items-center"
                     >
                       Choose Cover
                     </button>
@@ -1614,12 +1614,12 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
               </div>
 
               {/* RIGHT COLUMN: Reel Details, Caption, Hashtags, Audience */}
-              <div className="w-full lg:w-[380px] border-t lg:border-t-0 lg:border-l border-white/[0.08] bg-[#09111F]/50 p-4 sm:p-6 space-y-5 overflow-y-auto">
+              <div className="w-full lg:w-[380px] border-t lg:border-t-0 lg:border-l border-border bg-surface-card/60 p-4 sm:p-6 space-y-5 overflow-y-auto">
                 {/* Author Info */}
                 <div className="flex items-center justify-between gap-3">
                   {isBusinessMode ? (
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#0E1726] border border-white/[0.1] overflow-hidden flex items-center justify-center shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-surface-elevated border border-border overflow-hidden flex items-center justify-center shrink-0">
                         <BusinessLogo
                           logo={currentBusiness?.logo}
                           name={currentBusiness?.name || 'Company'}
@@ -1629,7 +1629,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5">
-                          <p className="text-xs sm:text-sm font-bold text-white">
+                          <p className="text-xs sm:text-sm font-bold text-text-primary">
                             {currentBusiness?.name || 'Company'}
                           </p>
                           <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-brand-yellow/15 text-brand-yellow border border-brand-yellow/30">
@@ -1643,7 +1643,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                     </div>
                   ) : (
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#0E1726] border border-white/[0.1] overflow-hidden flex items-center justify-center text-xs font-bold text-brand-mint shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-surface-elevated border border-border overflow-hidden flex items-center justify-center text-xs font-bold text-brand-mint shrink-0">
                         {avatarUrl ? (
                           <img src={avatarUrl} alt={user?.name || 'You'} className="w-full h-full object-cover" />
                         ) : (
@@ -1651,7 +1651,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                         )}
                       </div>
                       <div>
-                        <p className="text-xs sm:text-sm font-bold text-white">{user?.name || 'You'}</p>
+                        <p className="text-xs sm:text-sm font-bold text-text-primary">{user?.name || 'You'}</p>
                         <p className="text-[11px] text-text-muted">
                           {user?.username ? `@${user.username}` : 'Verified Member'} · <span className="text-brand-yellow font-medium">Reel</span>
                         </p>
@@ -1665,7 +1665,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                 {/* Caption Textarea */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs text-text-muted">
-                    <label htmlFor="reel-caption-input" className="font-semibold text-white">
+                    <label htmlFor="reel-caption-input" className="font-semibold text-text-primary">
                       Caption
                     </label>
                     <span className="font-mono text-[11px]">
@@ -1679,14 +1679,14 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                     placeholder="Describe your Reel... Highlight key engineering details, site progress, or BIM lessons"
                     rows={4}
                     maxLength={2200}
-                    className="w-full bg-white/[0.02] border border-white/[0.08] focus:border-brand-yellow/50 rounded-2xl p-3.5 text-xs sm:text-sm text-white placeholder-text-faint focus:outline-none resize-none leading-relaxed transition-colors"
+                    className="w-full bg-surface-elevated/60 border border-border focus:border-brand-yellow/50 rounded-2xl p-3.5 text-xs sm:text-sm text-text-primary placeholder-text-faint focus:outline-none resize-none leading-relaxed transition-colors"
                   />
                 </div>
 
                 {/* Hashtags Section */}
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between text-xs text-text-muted">
-                    <span className="font-semibold text-white">Hashtags</span>
+                    <span className="font-semibold text-text-primary">Hashtags</span>
                     <span className="text-[10px]">{tags.length} added</span>
                   </div>
 
@@ -1704,7 +1704,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                         }
                       }}
                       placeholder="Add hashtag and press Enter..."
-                      className="w-full bg-white/[0.03] border border-white/[0.08] focus:border-brand-yellow/50 rounded-xl pl-8 pr-3 py-2 text-xs text-white placeholder-text-faint focus:outline-none transition-colors"
+                      className="w-full bg-surface-elevated/60 border border-border focus:border-brand-yellow/50 rounded-xl pl-8 pr-3 py-2 text-xs text-text-primary placeholder-text-faint focus:outline-none transition-colors"
                     />
                   </div>
 
@@ -1720,7 +1720,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                           <button
                             type="button"
                             onClick={() => handleRemoveHashtag(tag)}
-                            className="p-0.5 hover:text-white cursor-pointer"
+                            className="p-0.5 hover:text-text-primary cursor-pointer"
                             aria-label={`Remove tag ${tag}`}
                           >
                             <X className="w-3 h-3" />
@@ -1743,10 +1743,10 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                             key={tag}
                             type="button"
                             onClick={() => (isAdded ? handleRemoveHashtag(tag) : handleAddHashtag(tag))}
-                            className={`px-2 py-0.5 rounded-lg text-[10px] font-medium transition-colors cursor-pointer ${
+                            className={`min-h-[32px] px-2.5 py-1 rounded-lg text-[10px] font-medium transition-colors cursor-pointer inline-flex items-center ${
                               isAdded
-                                ? 'bg-brand-yellow text-[#070B14] font-semibold'
-                                : 'bg-white/[0.04] text-text-muted hover:text-white border border-white/[0.06]'
+                                ? 'bg-brand-yellow text-bg-base font-semibold'
+                                : 'bg-surface-elevated text-text-muted hover:text-text-primary border border-border'
                             }`}
                           >
                             #{tag}
@@ -1758,15 +1758,15 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                 </div>
 
                 {/* Clip Summary Card */}
-                <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-white">
+                <div className="p-3.5 rounded-2xl bg-surface-elevated/40 border border-border space-y-2">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-text-primary">
                     <Info className="w-3.5 h-3.5 text-brand-mint" />
                     <span>Clip Specs</span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-[11px] text-text-muted">
                     <div>
                       <span className="text-text-faint">Full Length:</span>{' '}
-                      <span className="font-mono text-white">{formatDuration(videoDuration)}</span>
+                      <span className="font-mono text-text-primary">{formatDuration(videoDuration)}</span>
                     </div>
                     <div>
                       <span className="text-text-faint">Trimmed:</span>{' '}
@@ -1776,11 +1776,11 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                     </div>
                     <div>
                       <span className="text-text-faint">Aspect:</span>{' '}
-                      <span className="text-white">9:16 Portrait</span>
+                      <span className="text-text-primary">9:16 Portrait</span>
                     </div>
                     <div>
                       <span className="text-text-faint">File Size:</span>{' '}
-                      <span className="text-white">{formatFileSize(selectedFile?.size)}</span>
+                      <span className="text-text-primary">{formatFileSize(selectedFile?.size)}</span>
                     </div>
                   </div>
                 </div>
@@ -1795,7 +1795,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
             status !== 'VALIDATING' &&
             status !== 'READY_TO_PUBLISH' &&
             status !== 'ERROR' && (
-            <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-t border-white/[0.08] bg-[#070B14] shrink-0 select-none pb-[env(safe-area-inset-bottom,14px)]">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-t border-border bg-surface-card shrink-0 select-none pb-[env(safe-area-inset-bottom,14px)]">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-text-muted">
                   {selectedFile ? 'Ready to publish' : 'Select video'}
@@ -1806,7 +1806,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                 <button
                   type="button"
                   onClick={handleAttemptClose}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+                  className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer inline-flex items-center"
                 >
                   Cancel
                 </button>
@@ -1817,10 +1817,10 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                   onClick={handlePublishReel}
                   // eslint-disable-next-line react-hooks/refs
                   disabled={isPublishingRef.current || createPostMutation.isPending || !selectedFile}
-                  className={`min-h-[42px] px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md cursor-pointer disabled:opacity-50 ${
+                  className={`min-h-[44px] px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md cursor-pointer disabled:opacity-50 inline-flex items-center justify-center ${
                     createPostMutation.isPending
-                      ? 'community-shimmer-btn text-[#070B14]'
-                      : 'bg-gradient-to-r from-brand-yellow to-brand-mint text-[#070B14] hover:shadow-[0_0_24px_rgba(246,237,74,0.35)] hover:brightness-105 active:scale-95'
+                      ? 'community-shimmer-btn text-bg-base'
+                      : 'bg-gradient-to-r from-brand-yellow to-brand-mint text-bg-base hover:shadow-[0_0_24px_rgba(246,237,74,0.35)] hover:brightness-105 active:scale-95'
                   }`}
                 >
                   {createPostMutation.isPending ? 'Publishing…' : 'Publish Reel →'}
@@ -1838,12 +1838,12 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
               aria-labelledby="discard-reel-title"
               aria-describedby="discard-reel-desc"
             >
-              <div className="w-full max-w-sm bg-[#0E1726] border border-white/[0.1] rounded-3xl p-6 shadow-2xl text-center space-y-4">
+              <div className="w-full max-w-sm bg-surface-card border border-border rounded-3xl p-6 shadow-2xl text-center space-y-4">
                 <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 mx-auto flex items-center justify-center">
                   <AlertCircle className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 id="discard-reel-title" className="text-base font-bold text-white">
+                  <h3 id="discard-reel-title" className="text-base font-bold text-text-primary">
                     Discard Reel changes?
                   </h3>
                   <p id="discard-reel-desc" className="text-xs text-text-muted mt-1 leading-relaxed">
@@ -1855,7 +1855,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                   <button
                     type="button"
                     onClick={handleConfirmDiscard}
-                    className="w-full py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold text-xs border border-rose-500/20 transition-all cursor-pointer"
+                    className="min-h-[44px] w-full py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold text-xs border border-rose-500/20 transition-all cursor-pointer inline-flex items-center justify-center"
                   >
                     Discard Reel
                   </button>
@@ -1863,7 +1863,7 @@ export default function ReelStudioModal({ isOpen, onClose, onSuccess, publishing
                   <button
                     type="button"
                     onClick={() => setShowDiscardDialog(false)}
-                    className="w-full py-2.5 rounded-xl bg-white/[0.06] text-white hover:bg-white/[0.1] font-medium text-xs transition-colors cursor-pointer"
+                    className="min-h-[44px] w-full py-2.5 rounded-xl bg-surface-elevated text-text-primary hover:bg-surface-elevated/80 border border-border font-medium text-xs transition-colors cursor-pointer inline-flex items-center justify-center"
                   >
                     Keep editing
                   </button>

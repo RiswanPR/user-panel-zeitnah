@@ -107,7 +107,7 @@ export default function ProfileNav({ className = "" }) {
   return (
     <nav
       aria-label="Profile navigation"
-      className={`relative w-full rounded-2xl border border-white/[0.08] bg-[#070B14]/80 backdrop-blur-2xl p-1.5 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.36)] transition-all ${className}`}
+      className={`relative w-full rounded-2xl border border-border bg-surface/85 backdrop-blur-2xl p-1.5 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.18)] transition-all ${className}`}
     >
       {/* Subtle top ambient mint gradient line */}
       <div
@@ -134,8 +134,8 @@ export default function ProfileNav({ className = "" }) {
               title={tab.description}
               className={`relative flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-[13px] font-semibold tracking-wide whitespace-nowrap shrink-0 transition-all duration-200 cursor-pointer min-h-[40px] focus-ring select-none ${
                 active
-                  ? "text-white font-bold"
-                  : "text-text-muted hover:text-text-secondary hover:bg-white/[0.04]"
+                  ? "text-text-primary font-bold"
+                  : "text-text-muted hover:text-text-secondary hover:bg-surface-elevated/50"
               }`}
             >
               {/* Active pill background */}

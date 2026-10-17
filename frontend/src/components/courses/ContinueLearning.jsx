@@ -80,7 +80,7 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2.5">
           <span className="w-2 h-2 rounded-full bg-brand-yellow" />
-          <h2 className="text-[11px] sm:text-xs font-mono font-bold tracking-[0.2em] uppercase text-white">
+          <h2 className="text-[11px] sm:text-xs font-mono font-bold tracking-[0.2em] uppercase text-text-primary">
             CONTINUE LEARNING
           </h2>
         </div>
@@ -106,7 +106,7 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
           }
         }}
         aria-label={`Resume learning ${name}`}
-        className="group relative overflow-hidden rounded-3xl border border-white/[0.08] hover:border-brand-mint/35 bg-gradient-to-r from-[#0D141A] via-[#0A0F14] to-[#12314C]/30 p-5 sm:p-7 lg:p-8 cursor-pointer transition-all duration-300 shadow-xl focus-ring"
+        className="group relative overflow-hidden rounded-3xl border border-border hover:border-brand-mint/35 bg-surface-card p-5 sm:p-7 lg:p-8 cursor-pointer transition-all duration-300 shadow-xl focus-ring"
       >
         {/* Subtle Top Accent Hairline */}
         <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-brand-mint/40 to-transparent pointer-events-none" />
@@ -123,7 +123,7 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-6 lg:gap-8 w-full">
           {/* ── 16:9 Cinematic Image Container ── */}
           <div
-            className="relative w-full md:w-64 lg:w-72 aspect-video rounded-2xl overflow-hidden bg-bg-elevated border border-white/[0.08] shrink-0"
+            className="relative w-full md:w-64 lg:w-72 aspect-video rounded-2xl overflow-hidden bg-surface-elevated border border-border shrink-0"
             style={{ aspectRatio: "16 / 9" }}
           >
             <OptimizedImage
@@ -161,7 +161,7 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
                 </span>
                 {lastChapter && (
                   <>
-                    <span className="text-white/20">•</span>
+                    <span className="text-text-faint">•</span>
                     <span className="text-text-muted truncate max-w-[280px]">
                       {lastChapter.title || lastChapter.name}
                     </span>
@@ -170,7 +170,7 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
               </div>
 
               {/* Course Title */}
-              <h3 className="font-heading text-xl sm:text-2xl lg:text-3xl font-extrabold text-white tracking-tight leading-tight line-clamp-2 group-hover:text-brand-mint transition-colors">
+              <h3 className="font-heading text-xl sm:text-2xl lg:text-3xl font-extrabold text-text-primary tracking-tight leading-tight line-clamp-2 group-hover:text-brand-mint transition-colors">
                 {name}
               </h3>
             </div>
@@ -185,7 +185,7 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
                   {progress}% COMPLETED
                 </span>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-surface-elevated border border-border/40">
                 <div
                   className="h-full rounded-full bg-brand-mint transition-all duration-700 ease-out"
                   style={{ width: `${progress}%` }}
@@ -199,7 +199,7 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
             <button
               type="button"
               tabIndex={-1}
-              className="w-full md:w-auto inline-flex items-center justify-center gap-3 px-6 py-3.5 rounded-2xl bg-brand-yellow text-black font-heading font-extrabold text-xs uppercase tracking-wider shadow-lg hover:bg-brand-yellow/90 group-hover:shadow-[0_0_24px_rgba(246,237,74,0.3)] transition-all cursor-pointer select-none active:scale-[0.98]"
+              className="w-full md:w-auto inline-flex items-center justify-center gap-3 px-6 py-3.5 rounded-2xl bg-brand-yellow text-brand-navy font-heading font-extrabold text-xs uppercase tracking-wider shadow-lg hover:bg-brand-yellow/90 group-hover:shadow-[0_0_24px_rgba(246,237,74,0.3)] transition-all cursor-pointer select-none active:scale-[0.98] min-h-[44px]"
             >
               <span>{isCompleted ? "REVIEW COURSE" : "CONTINUE LEARNING"}</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

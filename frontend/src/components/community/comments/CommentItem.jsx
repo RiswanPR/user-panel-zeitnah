@@ -45,12 +45,12 @@ export default function CommentItem({
     <div
       id={`comment-item-${commentId}`}
       data-testid="comment-item"
-      className="flex items-start gap-3 py-3 px-2 rounded-xl hover:bg-white/[0.02] transition-colors group border-b border-white/[0.03] last:border-b-0"
+      className="flex items-start gap-3 py-3 px-2 rounded-xl hover:bg-surface-elevated/40 transition-colors group border-b border-border/50 last:border-b-0"
     >
       {/* Author Avatar */}
       <Link
         to={authorProfileUrl}
-        className="w-8 h-8 rounded-full shrink-0 overflow-hidden ring-1 ring-white/10 hover:ring-brand-mint/40 bg-[#0E1726] flex items-center justify-center transition-all"
+        className="w-8 h-8 rounded-full shrink-0 overflow-hidden ring-1 ring-border hover:ring-brand-mint/40 bg-surface-elevated flex items-center justify-center transition-all"
         aria-label={`View ${authorName}'s profile`}
       >
         {authorAvatar && !imgError ? (
@@ -74,7 +74,7 @@ export default function CommentItem({
           <div className="flex items-center gap-1.5 min-w-0">
             <Link
               to={authorProfileUrl}
-              className="text-xs font-semibold text-white hover:text-brand-mint transition-colors truncate"
+              className="text-xs font-semibold text-text-primary hover:text-brand-mint transition-colors truncate"
             >
               {authorName}
             </Link>
@@ -96,7 +96,7 @@ export default function CommentItem({
         </p>
 
         {/* Actions Row */}
-        <div className="flex items-center gap-3 mt-2 pt-1 border-t border-white/[0.03]">
+        <div className="flex items-center gap-3 mt-2 pt-1 border-t border-border/40">
           {onReply && (
             <button
               type="button"
@@ -112,7 +112,7 @@ export default function CommentItem({
           <button
             type="button"
             onClick={() => setIsReportModalOpen(true)}
-            className="min-h-[32px] inline-flex items-center gap-1 text-[11px] font-medium text-text-muted hover:text-white transition-colors cursor-pointer opacity-60 hover:opacity-100"
+            className="min-h-[32px] inline-flex items-center gap-1 text-[11px] font-medium text-text-muted hover:text-text-primary transition-colors cursor-pointer opacity-60 hover:opacity-100"
             aria-label="Report comment"
             title="Report comment"
           >

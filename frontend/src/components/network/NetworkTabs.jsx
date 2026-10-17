@@ -56,7 +56,7 @@ export default function NetworkTabs({
         ref={tabListRef}
         role="tablist"
         aria-label="Network Sections"
-        className="inline-flex items-center gap-1.5 rounded-2xl border border-white/[0.08] bg-bg-surface/80 p-1.5 backdrop-blur-xl shadow-lg shrink-0"
+        className="inline-flex items-center gap-1.5 rounded-2xl border border-border bg-surface-card/80 p-1.5 backdrop-blur-xl shadow-lg shrink-0"
       >
         {TABS.map((tab, index) => {
           const isActive = activeTab === tab.id;
@@ -74,15 +74,15 @@ export default function NetworkTabs({
               onKeyDown={(e) => handleKeyDown(e, index)}
               className={`relative flex items-center gap-2 rounded-xl px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-all duration-200 focus-ring select-none shrink-0 whitespace-nowrap ${
                 isActive
-                  ? "text-white font-bold"
-                  : "text-text-muted hover:text-white hover:bg-white/[0.03]"
+                  ? "text-text-primary font-bold"
+                  : "text-text-muted hover:text-text-primary hover:bg-surface-elevated/40"
               }`}
             >
               {/* Active Tab Background Indicator */}
               {isActive && (
                 <motion.div
                   layoutId={shouldReduceMotion ? undefined : "network-tab-active"}
-                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand-mint/15 via-white/[0.08] to-brand-mint/10 border border-brand-mint/30 shadow-[0_0_16px_rgba(159,213,178,0.12)]"
+                  className="absolute inset-0 rounded-xl bg-surface-elevated/80 border border-brand-mint/30 shadow-[0_0_16px_rgba(159,213,178,0.12)]"
                   transition={{ type: "spring", stiffness: 450, damping: 32 }}
                 />
               )}
@@ -103,8 +103,8 @@ export default function NetworkTabs({
                 <span
                   className={`relative z-10 ml-1 rounded-full px-1.5 py-0.2 text-[10px] font-mono font-bold ${
                     isActive
-                      ? "bg-brand-mint text-bg-base"
-                      : "bg-white/[0.08] text-text-muted"
+                      ? "bg-brand-mint text-brand-navy"
+                      : "bg-surface-elevated text-text-muted"
                   }`}
                 >
                   {connectionsCount}

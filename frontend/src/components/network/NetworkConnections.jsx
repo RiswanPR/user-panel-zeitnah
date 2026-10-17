@@ -31,36 +31,36 @@ import { resolveDisplayIdentity } from "../../utils/professionalIdentity";
  */
 function PeopleCardSkeleton() {
   return (
-    <div className="relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-[#0A0F14]/90 p-5 shadow-xl animate-pulse min-h-[290px]">
+    <div className="relative flex flex-col justify-between rounded-2xl border border-border bg-surface-card p-5 shadow-xl animate-pulse min-h-[290px]">
       <div>
         {/* Header: Avatar + Identity */}
         <div className="flex items-start gap-3.5">
-          <div className="h-14 w-14 rounded-2xl bg-white/[0.06] shrink-0" />
+          <div className="h-14 w-14 rounded-2xl bg-surface-elevated shrink-0" />
           <div className="min-w-0 flex-1 space-y-2 pt-0.5">
-            <div className="h-4 w-3/5 rounded bg-white/[0.08]" />
-            <div className="h-3 w-2/5 rounded bg-white/[0.04]" />
-            <div className="h-4 w-24 rounded-full bg-white/[0.05]" />
+            <div className="h-4 w-3/5 rounded bg-surface-elevated" />
+            <div className="h-3 w-2/5 rounded bg-surface-elevated/70" />
+            <div className="h-4 w-24 rounded-full bg-surface-elevated/80" />
           </div>
         </div>
 
         {/* Headline / Role */}
         <div className="mt-4 space-y-2">
-          <div className="h-3 w-4/5 rounded bg-white/[0.06]" />
-          <div className="h-3 w-2/3 rounded bg-white/[0.04]" />
+          <div className="h-3 w-4/5 rounded bg-surface-elevated" />
+          <div className="h-3 w-2/3 rounded bg-surface-elevated/70" />
         </div>
 
         {/* Skills pill placeholders */}
         <div className="mt-4 flex flex-wrap gap-1.5">
-          <div className="h-5 w-16 rounded-md bg-white/[0.04]" />
-          <div className="h-5 w-20 rounded-md bg-white/[0.04]" />
-          <div className="h-5 w-14 rounded-md bg-white/[0.04]" />
+          <div className="h-5 w-16 rounded-md bg-surface-elevated/70" />
+          <div className="h-5 w-20 rounded-md bg-surface-elevated/70" />
+          <div className="h-5 w-14 rounded-md bg-surface-elevated/70" />
         </div>
       </div>
 
       {/* Footer Actions */}
-      <div className="mt-6 flex items-center gap-2 pt-4 border-t border-white/[0.06]">
-        <div className="h-9 flex-1 rounded-xl bg-white/[0.06]" />
-        <div className="h-9 flex-1 rounded-xl bg-white/[0.04]" />
+      <div className="mt-6 flex items-center gap-2 pt-4 border-t border-border">
+        <div className="h-9 flex-1 rounded-xl bg-surface-elevated" />
+        <div className="h-9 flex-1 rounded-xl bg-surface-elevated/70" />
       </div>
     </div>
   );
@@ -71,18 +71,18 @@ function PeopleCardSkeleton() {
  */
 function ConnectionCardSkeleton() {
   return (
-    <div className="p-5 rounded-2xl bg-[#0A0F14] border border-white/[0.08] flex flex-col justify-between gap-3 animate-pulse min-h-[140px]">
+    <div className="p-5 rounded-2xl bg-surface-card border border-border flex flex-col justify-between gap-3 animate-pulse min-h-[140px]">
       <div className="flex items-start gap-3.5 min-w-0">
-        <div className="w-13 h-13 rounded-2xl bg-white/[0.06] shrink-0" />
+        <div className="w-13 h-13 rounded-2xl bg-surface-elevated shrink-0" />
         <div className="min-w-0 flex-1 space-y-2 pt-0.5">
-          <div className="h-4 w-3/4 rounded bg-white/[0.08]" />
-          <div className="h-3 w-1/2 rounded bg-white/[0.04]" />
-          <div className="h-3 w-2/3 rounded bg-white/[0.04]" />
+          <div className="h-4 w-3/4 rounded bg-surface-elevated" />
+          <div className="h-3 w-1/2 rounded bg-surface-elevated/70" />
+          <div className="h-3 w-2/3 rounded bg-surface-elevated/70" />
         </div>
       </div>
-      <div className="pt-3 border-t border-white/[0.04] flex items-center justify-between">
-        <div className="h-3 w-24 rounded bg-white/[0.04]" />
-        <div className="h-7 w-20 rounded-xl bg-white/[0.06]" />
+      <div className="pt-3 border-t border-border flex items-center justify-between">
+        <div className="h-3 w-24 rounded bg-surface-elevated/70" />
+        <div className="h-7 w-20 rounded-xl bg-surface-elevated" />
       </div>
     </div>
   );
@@ -384,9 +384,9 @@ export default function NetworkConnections({
   return (
     <div className="space-y-6">
       {/* ── 1. Contextual Secondary Segmented Navigation Strip (Section 13) ── */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pb-2 border-b border-white/[0.06]">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pb-2 border-b border-border">
         {/* Sub-tab segmented bar */}
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.02] border border-white/[0.06] overflow-x-auto no-scrollbar scroll-smooth">
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-surface-elevated/40 border border-border overflow-x-auto no-scrollbar scroll-smooth">
           {[
             { id: "people", label: "Discover", icon: Compass },
             { id: "connections", label: "Connections", count: connectionsCount, icon: UserCheck },
@@ -409,8 +409,8 @@ export default function NetworkConnections({
                 onClick={() => handleTabChange(tab.id)}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer min-h-[36px] focus-ring ${
                   isActive
-                    ? "bg-white/[0.08] text-white font-bold border border-white/[0.08] shadow-sm"
-                    : "text-text-muted hover:text-white hover:bg-white/[0.03]"
+                    ? "bg-surface-card text-text-primary font-bold border border-border shadow-sm"
+                    : "text-text-muted hover:text-text-primary hover:bg-surface-elevated/60"
                 }`}
               >
                 <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-brand-mint" : "text-text-muted"}`} />
@@ -419,10 +419,10 @@ export default function NetworkConnections({
                   <span
                     className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full font-bold ${
                       isActive
-                        ? "bg-white/20 text-white"
+                        ? "bg-surface-elevated text-text-primary"
                         : tab.hasAttention
                         ? "bg-amber-400/15 text-amber-200 border border-amber-400/25"
-                        : "bg-white/[0.06] text-text-muted"
+                        : "bg-surface-elevated/60 text-text-muted"
                     }`}
                   >
                     {formatNumber(tab.count)}
@@ -452,7 +452,7 @@ export default function NetworkConnections({
           {/* Section Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h2 id="people-discovery-heading" className="text-xl sm:text-2xl font-heading font-extrabold text-white tracking-tight">
+              <h2 id="people-discovery-heading" className="text-xl sm:text-2xl font-heading font-extrabold text-text-primary tracking-tight">
                 People You May Know
               </h2>
               <p className="text-xs text-text-muted mt-0.5 font-medium">
@@ -461,8 +461,8 @@ export default function NetworkConnections({
             </div>
 
             {peopleQuery.data?.total !== undefined && (
-              <span className="text-xs font-mono text-text-muted bg-white/[0.03] border border-white/[0.06] px-3 py-1 rounded-xl shrink-0 self-start sm:self-auto">
-                <span className="text-white font-bold">{formatNumber(peopleQuery.data.total)}</span>{" "}
+              <span className="text-xs font-mono text-text-muted bg-surface-elevated/40 border border-border px-3 py-1 rounded-xl shrink-0 self-start sm:self-auto">
+                <span className="text-text-primary font-bold">{formatNumber(peopleQuery.data.total)}</span>{" "}
                 {peopleQuery.data.total === 1 ? "profile available" : "profiles available"}
               </span>
             )}
@@ -507,7 +507,7 @@ export default function NetworkConnections({
           ) : peopleQuery.isError ? (
             <div className="p-10 rounded-3xl bg-rose-500/5 border border-rose-500/20 text-center max-w-md mx-auto">
               <AlertCircle className="w-8 h-8 text-rose-400 mx-auto mb-2" />
-              <p className="text-sm font-bold text-white">Failed to load directory</p>
+              <p className="text-sm font-bold text-text-primary">Failed to load directory</p>
               <p className="text-xs text-text-muted mt-1 leading-relaxed">
                 Could not retrieve candidates at this time. Please check your connection.
               </p>
@@ -520,11 +520,11 @@ export default function NetworkConnections({
               </button>
             </div>
           ) : (peopleQuery.data?.people || []).length === 0 ? (
-            <div className="p-14 sm:p-16 rounded-3xl bg-[#0A0F14] border border-white/[0.06] text-center max-w-lg mx-auto">
-              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-text-muted">
+            <div className="p-14 sm:p-16 rounded-3xl bg-surface-card border border-border text-center max-w-lg mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center mx-auto mb-4 text-text-muted">
                 <Compass className="w-7 h-7 text-brand-mint/80" />
               </div>
-              <h3 className="font-heading font-bold text-lg text-white">
+              <h3 className="font-heading font-bold text-lg text-text-primary">
                 {debouncedSearch ? "No people found" : "No matching professionals"}
               </h3>
               <p className="text-xs text-text-muted mt-1 leading-relaxed max-w-sm mx-auto">
@@ -551,7 +551,7 @@ export default function NetworkConnections({
                     });
                     setPage(1);
                   }}
-                  className="px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-white transition-colors cursor-pointer focus-ring"
+                  className="px-4 py-2.5 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-xs font-bold text-text-primary transition-colors cursor-pointer focus-ring"
                 >
                   Reset All Filters
                 </button>
@@ -582,7 +582,7 @@ export default function NetworkConnections({
 
           {/* Pagination */}
           {(peopleQuery.data?.totalPages || 1) > 1 && (
-            <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
+            <div className="flex items-center justify-between pt-4 border-t border-border">
               <span className="text-xs text-text-muted font-mono">
                 Page {page} of {peopleQuery.data?.totalPages}
               </span>
@@ -591,7 +591,7 @@ export default function NetworkConnections({
                   type="button"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40 cursor-pointer min-h-[36px] focus-ring"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-surface-elevated hover:bg-surface-elevated/80 text-text-primary disabled:opacity-40 cursor-pointer min-h-[36px] focus-ring"
                 >
                   Previous
                 </button>
@@ -599,7 +599,7 @@ export default function NetworkConnections({
                   type="button"
                   onClick={() => setPage((p) => p + 1)}
                   disabled={page >= peopleQuery.data?.totalPages}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40 cursor-pointer min-h-[36px] focus-ring"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-surface-elevated hover:bg-surface-elevated/80 text-text-primary disabled:opacity-40 cursor-pointer min-h-[36px] focus-ring"
                 >
                   Next
                 </button>
@@ -614,7 +614,7 @@ export default function NetworkConnections({
         <section aria-labelledby="connections-heading" className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 id="connections-heading" className="text-xl sm:text-2xl font-heading font-extrabold text-white tracking-tight">
+              <h2 id="connections-heading" className="text-xl sm:text-2xl font-heading font-extrabold text-text-primary tracking-tight">
                 My Network
               </h2>
               <p className="text-xs text-text-muted mt-0.5 font-medium">
@@ -622,8 +622,8 @@ export default function NetworkConnections({
               </p>
             </div>
             {connectionsCount > 0 && (
-              <span className="text-xs font-mono text-text-muted bg-white/[0.03] border border-white/[0.06] px-3 py-1 rounded-xl">
-                <span className="text-white font-bold">{connectionsCount}</span>{" "}
+              <span className="text-xs font-mono text-text-muted bg-surface-elevated/40 border border-border px-3 py-1 rounded-xl">
+                <span className="text-text-primary font-bold">{connectionsCount}</span>{" "}
                 {connectionsCount === 1 ? "connection" : "connections"}
               </span>
             )}
@@ -638,7 +638,7 @@ export default function NetworkConnections({
           ) : connectionsQuery.isError ? (
             <div className="p-8 rounded-3xl bg-rose-500/5 border border-rose-500/20 text-center max-w-md mx-auto">
               <AlertCircle className="w-8 h-8 text-rose-400 mx-auto mb-2" />
-              <p className="text-sm font-bold text-white">Failed to load connections</p>
+              <p className="text-sm font-bold text-text-primary">Failed to load connections</p>
               <button
                 type="button"
                 onClick={() => connectionsQuery.refetch()}
@@ -648,8 +648,8 @@ export default function NetworkConnections({
               </button>
             </div>
           ) : (connectionsQuery.data?.data || []).length === 0 ? (
-            <div className="py-20 px-6 rounded-2xl border border-white/[0.06] bg-white/[0.01] text-center max-w-md mx-auto">
-              <h3 className="font-heading font-bold text-xl text-white">
+            <div className="py-20 px-6 rounded-2xl border border-border bg-surface-card/60 text-center max-w-md mx-auto">
+              <h3 className="font-heading font-bold text-xl text-text-primary">
                 {debouncedSearch ? "No matching connections" : "Your network starts here"}
               </h3>
               <p className="text-xs text-text-muted mt-2 leading-relaxed max-w-xs mx-auto">
@@ -661,7 +661,7 @@ export default function NetworkConnections({
                 <button
                   type="button"
                   onClick={() => handleSearchChange("")}
-                  className="mt-5 px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-white transition-colors cursor-pointer inline-flex items-center gap-1.5 focus-ring"
+                  className="mt-5 px-4 py-2 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-xs font-bold text-text-primary transition-colors cursor-pointer inline-flex items-center gap-1.5 focus-ring"
                 >
                   <X className="w-3.5 h-3.5" />
                   <span>Clear Search</span>
@@ -670,7 +670,7 @@ export default function NetworkConnections({
                 <button
                   type="button"
                   onClick={() => handleTabChange("people")}
-                  className="mt-6 px-5 py-2.5 rounded-xl bg-brand-mint text-black font-bold text-xs hover:bg-brand-mint/90 transition-all shadow-sm cursor-pointer inline-flex items-center gap-2 focus-ring"
+                  className="mt-6 px-5 py-2.5 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs hover:bg-brand-mint/90 transition-all shadow-sm cursor-pointer inline-flex items-center gap-2 focus-ring"
                 >
                   <Compass className="w-4 h-4" />
                   <span>Discover People</span>
@@ -693,13 +693,13 @@ export default function NetworkConnections({
                 return (
                   <div
                     key={connId}
-                    className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-[#0A0F14]/95 p-5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-white/[0.16] shadow-sm hover:shadow-lg"
+                    className="group relative flex flex-col justify-between rounded-2xl border border-border bg-surface-card p-5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-border-accent shadow-sm hover:shadow-lg"
                   >
                     <div>
                       <div className="flex items-start justify-between gap-3">
                         {/* Avatar (56px circular) */}
                         <Link to={profileLink} className="relative shrink-0 block focus-ring rounded-full">
-                          <div className="w-14 h-14 rounded-full bg-[#070B14] border border-white/[0.08] flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden transition-transform duration-200 ease-out group-hover:scale-[1.02]">
+                          <div className="w-14 h-14 rounded-full bg-surface-elevated border border-border flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden transition-transform duration-200 ease-out group-hover:scale-[1.02]">
                             {conn.avatar ? (
                               <img src={conn.avatar} alt={conn.name} className="w-full h-full object-cover" />
                             ) : (
@@ -708,7 +708,7 @@ export default function NetworkConnections({
                           </div>
                           {conn.isVerified && (
                             <span
-                              className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-black shadow-sm"
+                              className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-brand-navy shadow-sm"
                               title="Verified Member"
                             >
                               <ShieldCheck className="h-2.5 w-2.5" />
@@ -718,7 +718,7 @@ export default function NetworkConnections({
 
                         {/* Secondary Remove Trigger */}
                         {confirmRemoveId === connId ? (
-                          <div className="flex items-center gap-1.5 animate-fade-in bg-white/[0.04] p-1 rounded-xl border border-white/[0.08]">
+                          <div className="flex items-center gap-1.5 animate-fade-in bg-surface-elevated p-1 rounded-xl border border-border">
                             <span className="text-[11px] font-medium text-text-muted px-1">Remove?</span>
                             <button
                               type="button"
@@ -731,7 +731,7 @@ export default function NetworkConnections({
                             <button
                               type="button"
                               onClick={() => setConfirmRemoveId(null)}
-                              className="px-2 py-0.5 rounded-lg bg-white/[0.06] text-text-muted hover:text-white text-[11px] font-medium transition-colors cursor-pointer"
+                              className="px-2 py-0.5 rounded-lg bg-surface-card text-text-muted hover:text-text-primary text-[11px] font-medium transition-colors cursor-pointer"
                             >
                               Cancel
                             </button>
@@ -753,7 +753,7 @@ export default function NetworkConnections({
                       <div className="mt-3.5 space-y-1">
                         <Link
                           to={profileLink}
-                          className="font-heading font-bold text-base text-white hover:text-brand-mint transition-colors truncate block focus-ring rounded"
+                          className="font-heading font-bold text-base text-text-primary hover:text-brand-mint transition-colors truncate block focus-ring rounded"
                         >
                           {conn.name}
                         </Link>
@@ -763,7 +763,7 @@ export default function NetworkConnections({
 
                         {/* Role & Org */}
                         <div className="pt-1.5 text-xs text-text-secondary leading-snug">
-                          <p className="font-medium text-white/90 truncate" title={role}>{role}</p>
+                          <p className="font-medium text-text-primary truncate" title={role}>{role}</p>
                           {connIdentity.department && (
                             <p className="text-[10px] font-mono text-brand-mint truncate mt-0.5" title={`Department: ${connIdentity.department}`}>
                               {connIdentity.department}
@@ -780,20 +780,20 @@ export default function NetworkConnections({
                     </div>
 
                     {/* Footer: Connected time + Quiet Connected badge & View Profile */}
-                    <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between gap-2">
+                    <div className="mt-4 pt-3 border-t border-border flex items-center justify-between gap-2">
                       <span className="text-[11px] font-mono text-text-muted/70 truncate">
                         {connectedTime}
                       </span>
 
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-white/[0.08] bg-white/[0.03] text-text-secondary text-xs font-medium tracking-tight">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border bg-surface-elevated text-text-secondary text-xs font-medium tracking-tight">
                           <UserCheck className="w-3 h-3 text-brand-mint" />
                           <span>Connected</span>
                         </span>
 
                         <Link
                           to={profileLink}
-                          className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.04] transition-colors focus-ring"
+                          className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors focus-ring"
                           title="View Profile"
                           aria-label={`View ${conn.name}'s profile`}
                         >
@@ -809,7 +809,7 @@ export default function NetworkConnections({
 
           {/* Pagination */}
           {(connectionsQuery.data?.totalPages || 1) > 1 && (
-            <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
+            <div className="flex items-center justify-between pt-4 border-t border-border">
               <span className="text-xs text-text-muted font-mono">
                 Page {page} of {connectionsQuery.data?.totalPages}
               </span>
@@ -818,7 +818,7 @@ export default function NetworkConnections({
                   type="button"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40 cursor-pointer min-h-[36px] focus-ring"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-surface-elevated hover:bg-surface-elevated/80 text-text-primary disabled:opacity-40 cursor-pointer min-h-[36px] focus-ring"
                 >
                   Previous
                 </button>
@@ -826,7 +826,7 @@ export default function NetworkConnections({
                   type="button"
                   onClick={() => setPage((p) => p + 1)}
                   disabled={!connectionsQuery.data?.hasNextPage}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-white disabled:opacity-40 cursor-pointer min-h-[36px] focus-ring"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-surface-elevated hover:bg-surface-elevated/80 text-text-primary disabled:opacity-40 cursor-pointer min-h-[36px] focus-ring"
                 >
                   Next
                 </button>
@@ -839,7 +839,7 @@ export default function NetworkConnections({
       {/* ── 4. TAB 3: DEDICATED CONNECTION REQUESTS INBOX (SECTION 14) ── */}
       {subTab === "requests" && (
         <section aria-labelledby="requests-heading" className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/[0.06]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border">
             <div>
               <div className="flex items-center gap-2.5">
                 <h2 id="requests-heading" className="text-sm font-mono uppercase tracking-widest text-text-muted font-bold">
@@ -857,19 +857,19 @@ export default function NetworkConnections({
             </div>
 
             {/* Sub-selector for Incoming vs Outgoing */}
-            <div className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.03] border border-white/[0.06] self-start sm:self-auto shrink-0">
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-surface-elevated/40 border border-border self-start sm:self-auto shrink-0">
               <button
                 type="button"
                 onClick={() => setRequestsSubTab("incoming")}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer min-h-[34px] focus-ring ${
                   requestsSubTab === "incoming"
-                    ? "bg-white/[0.1] text-white font-bold border border-white/[0.08]"
-                    : "text-text-muted hover:text-white"
+                    ? "bg-surface-card text-text-primary font-bold border border-border"
+                    : "text-text-muted hover:text-text-primary"
                 }`}
               >
                 <span>Incoming</span>
                 {incomingRequestsCount > 0 && (
-                  <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-white/[0.08] text-white">
+                  <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-surface-elevated text-text-primary">
                     {incomingRequestsCount}
                   </span>
                 )}
@@ -880,13 +880,13 @@ export default function NetworkConnections({
                 onClick={() => setRequestsSubTab("outgoing")}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer min-h-[34px] focus-ring ${
                   requestsSubTab === "outgoing"
-                    ? "bg-white/[0.1] text-white font-bold border border-white/[0.08]"
-                    : "text-text-muted hover:text-white"
+                    ? "bg-surface-card text-text-primary font-bold border border-border"
+                    : "text-text-muted hover:text-text-primary"
                 }`}
               >
                 <span>Sent</span>
                 {outgoingRequestsCount > 0 && (
-                  <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-white/[0.08] text-white">
+                  <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-surface-elevated text-text-primary">
                     {outgoingRequestsCount}
                   </span>
                 )}
@@ -902,13 +902,13 @@ export default function NetworkConnections({
                   {[1, 2].map((i) => (
                     <div
                       key={i}
-                      className="h-32 rounded-2xl bg-[#0A0F14] border border-white/[0.04] animate-pulse"
+                      className="h-32 rounded-2xl bg-surface-card border border-border animate-pulse"
                     />
                   ))}
                 </div>
               ) : (requestsQuery.data?.incoming || []).length === 0 ? (
-                <div className="py-16 px-6 rounded-2xl border border-white/[0.06] bg-white/[0.01] text-center max-w-sm mx-auto">
-                  <h4 className="font-heading font-bold text-base text-white">
+                <div className="py-16 px-6 rounded-2xl border border-border bg-surface-card/60 text-center max-w-sm mx-auto">
+                  <h4 className="font-heading font-bold text-base text-text-primary">
                     You're all caught up
                   </h4>
                   <p className="text-xs text-text-muted mt-1.5 leading-relaxed">
@@ -945,13 +945,13 @@ export default function NetworkConnections({
                   {[1, 2].map((i) => (
                     <div
                       key={i}
-                      className="h-32 rounded-2xl bg-[#0A0F14] border border-white/[0.04] animate-pulse"
+                      className="h-32 rounded-2xl bg-surface-card border border-border animate-pulse"
                     />
                   ))}
                 </div>
               ) : (requestsQuery.data?.outgoing || []).length === 0 ? (
-                <div className="py-16 px-6 rounded-2xl border border-white/[0.06] bg-white/[0.01] text-center max-w-sm mx-auto">
-                  <h4 className="font-heading font-bold text-base text-white">
+                <div className="py-16 px-6 rounded-2xl border border-border bg-surface-card/60 text-center max-w-sm mx-auto">
+                  <h4 className="font-heading font-bold text-base text-text-primary">
                     No pending sent requests
                   </h4>
                   <p className="text-xs text-text-muted mt-1.5 leading-relaxed">
@@ -985,7 +985,7 @@ export default function NetworkConnections({
         <section aria-labelledby="followers-heading" className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 id="followers-heading" className="text-xl sm:text-2xl font-heading font-extrabold text-white tracking-tight">
+              <h2 id="followers-heading" className="text-xl sm:text-2xl font-heading font-extrabold text-text-primary tracking-tight">
                 Your Followers
               </h2>
               <p className="text-xs text-text-muted mt-0.5 font-medium">
@@ -993,8 +993,8 @@ export default function NetworkConnections({
               </p>
             </div>
             {followersCount > 0 && (
-              <span className="text-xs font-mono text-text-muted bg-white/[0.03] border border-white/[0.06] px-3 py-1 rounded-xl">
-                <span className="text-white font-bold">{followersCount}</span>{" "}
+              <span className="text-xs font-mono text-text-muted bg-surface-elevated/40 border border-border px-3 py-1 rounded-xl">
+                <span className="text-text-primary font-bold">{followersCount}</span>{" "}
                 {followersCount === 1 ? "follower" : "followers"}
               </span>
             )}
@@ -1009,7 +1009,7 @@ export default function NetworkConnections({
           ) : followersQuery.isError ? (
             <div className="p-8 rounded-3xl bg-rose-500/5 border border-rose-500/20 text-center max-w-md mx-auto">
               <AlertCircle className="w-8 h-8 text-rose-400 mx-auto mb-2" />
-              <p className="text-sm font-bold text-white">Failed to load followers</p>
+              <p className="text-sm font-bold text-text-primary">Failed to load followers</p>
               <button
                 type="button"
                 onClick={() => followersQuery.refetch()}
@@ -1019,8 +1019,8 @@ export default function NetworkConnections({
               </button>
             </div>
           ) : (followersQuery.data?.data || []).length === 0 ? (
-            <div className="py-20 px-6 rounded-2xl border border-white/[0.06] bg-white/[0.01] text-center max-w-md mx-auto">
-              <h3 className="font-heading font-bold text-xl text-white">
+            <div className="py-20 px-6 rounded-2xl border border-border bg-surface-card/60 text-center max-w-md mx-auto">
+              <h3 className="font-heading font-bold text-xl text-text-primary">
                 {debouncedSearch ? "No matching followers" : "No followers yet"}
               </h3>
               <p className="text-xs text-text-muted mt-2 leading-relaxed max-w-xs mx-auto">
@@ -1032,7 +1032,7 @@ export default function NetworkConnections({
                 <button
                   type="button"
                   onClick={() => handleSearchChange("")}
-                  className="mt-5 px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-white transition-colors cursor-pointer inline-flex items-center gap-1.5 focus-ring"
+                  className="mt-5 px-4 py-2 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-xs font-bold text-text-primary transition-colors cursor-pointer inline-flex items-center gap-1.5 focus-ring"
                 >
                   <X className="w-3.5 h-3.5" />
                   <span>Clear Search</span>
@@ -1048,11 +1048,11 @@ export default function NetworkConnections({
                 return (
                   <div
                     key={user.id || user._id}
-                    className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-[#0A0F14]/95 p-5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-white/[0.16] shadow-sm hover:shadow-lg"
+                    className="group relative flex flex-col justify-between rounded-2xl border border-border bg-surface-card p-5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-border-accent shadow-sm hover:shadow-lg"
                   >
                     <div className="flex items-start gap-3.5 min-w-0">
                       <Link to={profileLink} className="relative shrink-0 block focus-ring rounded-full">
-                        <div className="w-14 h-14 rounded-full bg-[#070B14] border border-white/[0.08] flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden transition-transform duration-200 ease-out group-hover:scale-[1.02]">
+                        <div className="w-14 h-14 rounded-full bg-surface-elevated border border-border flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden transition-transform duration-200 ease-out group-hover:scale-[1.02]">
                           {user.avatar ? (
                             <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                           ) : (
@@ -1061,7 +1061,7 @@ export default function NetworkConnections({
                         </div>
                         {user.isVerified && (
                           <span
-                            className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-black shadow-sm"
+                            className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-brand-navy shadow-sm"
                             title="Verified Member"
                           >
                             <ShieldCheck className="h-2.5 w-2.5" />
@@ -1072,7 +1072,7 @@ export default function NetworkConnections({
                       <div className="min-w-0 flex-1">
                         <Link
                           to={profileLink}
-                          className="font-heading font-bold text-base text-white hover:text-brand-mint transition-colors truncate block focus-ring rounded"
+                          className="font-heading font-bold text-base text-text-primary hover:text-brand-mint transition-colors truncate block focus-ring rounded"
                         >
                           {user.name}
                         </Link>
@@ -1083,7 +1083,7 @@ export default function NetworkConnections({
                           const userIdentity = resolveDisplayIdentity(user);
                           if (userIdentity.title) {
                             return (
-                              <p className="text-xs text-white/90 font-medium truncate mt-1" title={userIdentity.title}>
+                              <p className="text-xs text-text-primary font-medium truncate mt-1" title={userIdentity.title}>
                                 {userIdentity.title}
                                 {userIdentity.department && (
                                   <span className="text-[10px] text-brand-mint font-mono ml-1.5">• {userIdentity.department}</span>
@@ -1099,10 +1099,10 @@ export default function NetworkConnections({
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-white/[0.06] gap-2 mt-4">
+                    <div className="flex items-center justify-between pt-3 border-t border-border gap-2 mt-4">
                       <Link
                         to={profileLink}
-                        className="px-3 py-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.04] text-xs font-semibold inline-flex items-center gap-1.5 transition-colors focus-ring"
+                        className="px-3 py-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-elevated text-xs font-semibold inline-flex items-center gap-1.5 transition-colors focus-ring"
                       >
                         <ExternalLink className="w-3.5 h-3.5 text-text-muted" />
                         <span>Profile</span>
@@ -1120,8 +1120,8 @@ export default function NetworkConnections({
                         disabled={followMutation.isPending}
                         className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[34px] focus-ring ${
                           isFollowing
-                            ? "bg-white/[0.08] hover:bg-rose-500/15 text-white hover:text-rose-300 border border-white/10"
-                            : "bg-brand-mint text-black hover:bg-brand-mint/90 shadow-sm shadow-brand-mint/20"
+                            ? "bg-surface-elevated hover:bg-rose-500/15 text-text-primary hover:text-rose-300 border border-border"
+                            : "bg-brand-mint text-brand-navy hover:bg-brand-mint/90 shadow-sm shadow-brand-mint/20"
                         }`}
                       >
                         {isFollowing ? "Following" : "Follow Back"}
@@ -1140,7 +1140,7 @@ export default function NetworkConnections({
         <section aria-labelledby="following-heading" className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 id="following-heading" className="text-xl sm:text-2xl font-heading font-extrabold text-white tracking-tight">
+              <h2 id="following-heading" className="text-xl sm:text-2xl font-heading font-extrabold text-text-primary tracking-tight">
                 People You Follow
               </h2>
               <p className="text-xs text-text-muted mt-0.5 font-medium">
@@ -1148,8 +1148,8 @@ export default function NetworkConnections({
               </p>
             </div>
             {followingCount > 0 && (
-              <span className="text-xs font-mono text-text-muted bg-white/[0.03] border border-white/[0.06] px-3 py-1 rounded-xl">
-                <span className="text-white font-bold">{followingCount}</span>{" "}
+              <span className="text-xs font-mono text-text-muted bg-surface-elevated/40 border border-border px-3 py-1 rounded-xl">
+                <span className="text-text-primary font-bold">{followingCount}</span>{" "}
                 {followingCount === 1 ? "person" : "people"}
               </span>
             )}
@@ -1164,7 +1164,7 @@ export default function NetworkConnections({
           ) : followingQuery.isError ? (
             <div className="p-8 rounded-3xl bg-rose-500/5 border border-rose-500/20 text-center max-w-md mx-auto">
               <AlertCircle className="w-8 h-8 text-rose-400 mx-auto mb-2" />
-              <p className="text-sm font-bold text-white">Failed to load following list</p>
+              <p className="text-sm font-bold text-text-primary">Failed to load following list</p>
               <button
                 type="button"
                 onClick={() => followingQuery.refetch()}
@@ -1174,8 +1174,8 @@ export default function NetworkConnections({
               </button>
             </div>
           ) : (followingQuery.data?.data || []).length === 0 ? (
-            <div className="py-20 px-6 rounded-2xl border border-white/[0.06] bg-white/[0.01] text-center max-w-md mx-auto">
-              <h3 className="font-heading font-bold text-xl text-white">
+            <div className="py-20 px-6 rounded-2xl border border-border bg-surface-card/60 text-center max-w-md mx-auto">
+              <h3 className="font-heading font-bold text-xl text-text-primary">
                 {debouncedSearch ? "No matching users" : "You are not following anyone yet"}
               </h3>
               <p className="text-xs text-text-muted mt-2 leading-relaxed max-w-xs mx-auto">
@@ -1185,7 +1185,7 @@ export default function NetworkConnections({
                 <button
                   type="button"
                   onClick={() => handleSearchChange("")}
-                  className="mt-5 px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-white transition-colors cursor-pointer inline-flex items-center gap-1.5 focus-ring"
+                  className="mt-5 px-4 py-2 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-xs font-bold text-text-primary transition-colors cursor-pointer inline-flex items-center gap-1.5 focus-ring"
                 >
                   <X className="w-3.5 h-3.5" />
                   <span>Clear Search</span>
@@ -1194,7 +1194,7 @@ export default function NetworkConnections({
                 <button
                   type="button"
                   onClick={() => handleTabChange("people")}
-                  className="mt-6 px-5 py-2.5 rounded-xl bg-brand-mint text-black font-bold text-xs hover:bg-brand-mint/90 transition-all shadow-sm cursor-pointer inline-flex items-center gap-2 focus-ring"
+                  className="mt-6 px-5 py-2.5 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs hover:bg-brand-mint/90 transition-all shadow-sm cursor-pointer inline-flex items-center gap-2 focus-ring"
                 >
                   <Compass className="w-4 h-4" />
                   <span>Explore Directory</span>
@@ -1209,11 +1209,11 @@ export default function NetworkConnections({
                 return (
                   <div
                     key={user.id || user._id}
-                    className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-[#0A0F14]/95 p-5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-white/[0.16] shadow-sm hover:shadow-lg"
+                    className="group relative flex flex-col justify-between rounded-2xl border border-border bg-surface-card p-5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-border-accent shadow-sm hover:shadow-lg"
                   >
                     <div className="flex items-start gap-3.5 min-w-0">
                       <Link to={profileLink} className="relative shrink-0 block focus-ring rounded-full">
-                        <div className="w-14 h-14 rounded-full bg-[#070B14] border border-white/[0.08] flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden transition-transform duration-200 ease-out group-hover:scale-[1.02]">
+                        <div className="w-14 h-14 rounded-full bg-surface-elevated border border-border flex items-center justify-center text-brand-mint font-heading font-bold text-sm overflow-hidden transition-transform duration-200 ease-out group-hover:scale-[1.02]">
                           {user.avatar ? (
                             <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                           ) : (
@@ -1222,7 +1222,7 @@ export default function NetworkConnections({
                         </div>
                         {user.isVerified && (
                           <span
-                            className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-black shadow-sm"
+                            className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-mint text-brand-navy shadow-sm"
                             title="Verified Member"
                           >
                             <ShieldCheck className="h-2.5 w-2.5" />
@@ -1233,7 +1233,7 @@ export default function NetworkConnections({
                       <div className="min-w-0 flex-1">
                         <Link
                           to={profileLink}
-                          className="font-heading font-bold text-base text-white hover:text-brand-mint transition-colors truncate block focus-ring rounded"
+                          className="font-heading font-bold text-base text-text-primary hover:text-brand-mint transition-colors truncate block focus-ring rounded"
                         >
                           {user.name}
                         </Link>
@@ -1244,7 +1244,7 @@ export default function NetworkConnections({
                           const userIdentity = resolveDisplayIdentity(user);
                           if (userIdentity.title) {
                             return (
-                              <p className="text-xs text-white/90 font-medium truncate mt-1" title={userIdentity.title}>
+                              <p className="text-xs text-text-primary font-medium truncate mt-1" title={userIdentity.title}>
                                 {userIdentity.title}
                                 {userIdentity.department && (
                                   <span className="text-[10px] text-brand-mint font-mono ml-1.5">• {userIdentity.department}</span>
@@ -1260,10 +1260,10 @@ export default function NetworkConnections({
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-white/[0.06] gap-2 mt-4">
+                    <div className="flex items-center justify-between pt-3 border-t border-border gap-2 mt-4">
                       <Link
                         to={profileLink}
-                        className="px-3 py-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.04] text-xs font-semibold inline-flex items-center gap-1.5 transition-colors focus-ring"
+                        className="px-3 py-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-elevated text-xs font-semibold inline-flex items-center gap-1.5 transition-colors focus-ring"
                       >
                         <ExternalLink className="w-3.5 h-3.5 text-text-muted" />
                         <span>Profile</span>
@@ -1279,7 +1279,7 @@ export default function NetworkConnections({
                           })
                         }
                         disabled={followMutation.isPending}
-                        className="px-3.5 py-1.5 rounded-xl bg-white/[0.08] hover:bg-rose-500/15 text-white hover:text-rose-300 border border-white/10 text-xs font-bold transition-all cursor-pointer min-h-[34px] focus-ring"
+                        className="px-3.5 py-1.5 rounded-xl bg-surface-elevated hover:bg-rose-500/15 text-text-primary hover:text-rose-300 border border-border text-xs font-bold transition-all cursor-pointer min-h-[34px] focus-ring"
                       >
                         Unfollow
                       </button>

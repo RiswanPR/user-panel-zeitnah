@@ -27,7 +27,7 @@ export default function AnnouncementBanner() {
     ? 'border-rose-500/40 bg-gradient-to-r from-rose-950/80 via-rose-900/40 to-black/80 text-rose-200'
     : isHigh
     ? 'border-amber-500/40 bg-gradient-to-r from-amber-950/80 via-amber-900/40 to-black/80 text-amber-200'
-    : 'border-brand-mint/30 bg-gradient-to-r from-brand-mint/15 via-white/[0.03] to-transparent text-white';
+    : 'border-brand-mint/30 bg-gradient-to-r from-brand-mint/15 via-surface-elevated to-transparent text-text-primary';
 
   const Icon = isCritical ? AlertTriangle : Info;
 
@@ -38,7 +38,7 @@ export default function AnnouncementBanner() {
     >
       <div className="flex items-start sm:items-center justify-between gap-3">
         <div className="flex items-start sm:items-center gap-3">
-          <div className="p-2 rounded-xl bg-white/[0.05] shrink-0">
+          <div className="p-2 rounded-xl bg-surface-elevated border border-border/40 shrink-0">
             <Icon className="w-4 h-4" />
           </div>
 
@@ -48,7 +48,7 @@ export default function AnnouncementBanner() {
                 {activeAnnouncement.type || 'Platform Announcement'}
               </span>
             </div>
-            <h4 className="text-xs sm:text-sm font-heading font-bold text-white mt-0.5">
+            <h4 className="text-xs sm:text-sm font-heading font-bold text-text-primary mt-0.5">
               {activeAnnouncement.title}
             </h4>
             <p className="text-xs opacity-90 mt-0.5 leading-relaxed">

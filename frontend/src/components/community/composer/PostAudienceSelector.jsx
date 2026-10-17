@@ -61,7 +61,7 @@ export default function PostAudienceSelector({ audience, onChange }) {
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.09] text-xs font-medium text-white transition-colors cursor-pointer select-none"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-card border border-border text-xs font-medium text-text-primary transition-colors cursor-pointer select-none"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
@@ -72,7 +72,7 @@ export default function PostAudienceSelector({ audience, onChange }) {
 
       {isOpen && (
         <div
-          className="absolute left-0 sm:right-0 sm:left-auto top-full mt-1.5 w-72 bg-[#0E1726] border border-white/[0.12] rounded-2xl shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150"
+          className="absolute left-0 sm:right-0 sm:left-auto top-full mt-1.5 w-72 bg-surface-card border border-border rounded-2xl shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150"
           role="listbox"
           aria-label="Audience options"
         >
@@ -90,15 +90,15 @@ export default function PostAudienceSelector({ audience, onChange }) {
                   setIsOpen(false);
                 }}
                 className={`w-full flex items-start gap-3 p-2.5 rounded-xl text-left transition-colors cursor-pointer ${
-                  isCurrent ? 'bg-white/[0.08]' : 'hover:bg-white/[0.04]'
+                  isCurrent ? 'bg-surface-elevated' : 'hover:bg-surface-elevated/60'
                 }`}
               >
-                <div className="w-7 h-7 rounded-lg bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 mt-0.5">
+                <div className="w-7 h-7 rounded-lg bg-surface-elevated border border-border flex items-center justify-center shrink-0 mt-0.5">
                   <ItemIcon className="w-3.5 h-3.5 text-brand-mint" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-white">{item.label}</p>
+                    <p className="text-xs font-semibold text-text-primary">{item.label}</p>
                     {isCurrent && <Check className="w-3.5 h-3.5 text-brand-mint shrink-0" />}
                   </div>
                   <p className="text-[11px] text-text-muted mt-0.5 leading-snug">{item.desc}</p>

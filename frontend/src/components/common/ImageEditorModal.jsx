@@ -461,17 +461,16 @@ export default function ImageEditorModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 12 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="relative z-10 w-full max-w-5xl max-h-[92dvh] sm:max-h-[90vh] flex flex-col rounded-2xl sm:rounded-3xl bg-bg-card border border-border-default shadow-2xl overflow-hidden"
-          style={{ background: '#07192A' }}
+          className="relative z-10 w-full max-w-5xl max-h-[92dvh] sm:max-h-[90vh] flex flex-col rounded-2xl sm:rounded-3xl bg-surface-card border border-border shadow-2xl overflow-hidden"
         >
           {/* ── Modal Header ── */}
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-white/[0.08] bg-black/20">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-border bg-surface-elevated/40">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-brand-mint/10 border border-brand-mint/20 flex items-center justify-center text-brand-mint">
                 {isBanner ? <ImageIcon className="w-4 h-4" /> : <User className="w-4 h-4" />}
               </div>
               <div>
-                <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">
+                <h3 className="text-sm sm:text-base font-bold text-text-primary tracking-tight">
                   {isBanner ? 'Position Your Profile Banner' : 'Adjust Your Profile Photo'}
                 </h3>
                 <p className="text-[11px] text-text-muted hidden sm:block">
@@ -485,14 +484,14 @@ export default function ImageEditorModal({
             <div className="flex items-center gap-2">
               {/* Tab Switch on Mobile/Desktop */}
               {isBanner && (
-                <div className="flex p-0.5 rounded-lg bg-white/[0.05] border border-white/[0.08]">
+                <div className="flex p-0.5 rounded-lg bg-surface-elevated border border-border">
                   <button
                     type="button"
                     onClick={() => setActiveTab('crop')}
                     className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                       activeTab === 'crop'
-                        ? 'bg-brand-mint text-bg-primary font-bold shadow-sm'
-                        : 'text-white/60 hover:text-white'
+                        ? 'bg-brand-mint text-brand-navy font-bold shadow-sm'
+                        : 'text-text-muted hover:text-text-primary'
                     }`}
                   >
                     Crop
@@ -502,8 +501,8 @@ export default function ImageEditorModal({
                     onClick={() => setActiveTab('preview')}
                     className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center gap-1 ${
                       activeTab === 'preview'
-                        ? 'bg-brand-mint text-bg-primary font-bold shadow-sm'
-                        : 'text-white/60 hover:text-white'
+                        ? 'bg-brand-mint text-brand-navy font-bold shadow-sm'
+                        : 'text-text-muted hover:text-text-primary'
                     }`}
                   >
                     <Eye className="w-3 h-3" />
@@ -516,7 +515,7 @@ export default function ImageEditorModal({
                 type="button"
                 onClick={onClose}
                 disabled={isUploading || isProcessing}
-                className="p-1.5 rounded-xl border border-white/[0.08] hover:bg-white/[0.08] text-white/50 hover:text-white transition-colors cursor-pointer disabled:opacity-30"
+                className="p-1.5 rounded-xl border border-border bg-surface-elevated hover:bg-surface-card text-text-muted hover:text-text-primary transition-colors cursor-pointer disabled:opacity-30"
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />
@@ -621,7 +620,7 @@ export default function ImageEditorModal({
                       <button
                         type="button"
                         onClick={handleRotate}
-                        className="px-2.5 py-1.5 rounded-xl border border-white/[0.08] hover:bg-white/[0.06] text-xs font-semibold text-white/80 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
+                        className="px-2.5 py-1.5 rounded-xl border border-border hover:bg-surface-elevated text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1.5 cursor-pointer"
                         title="Rotate 90° clockwise"
                         aria-label="Rotate image"
                       >
@@ -632,7 +631,7 @@ export default function ImageEditorModal({
                       <button
                         type="button"
                         onClick={handleReset}
-                        className="px-2.5 py-1.5 rounded-xl border border-white/[0.08] hover:bg-white/[0.06] text-xs font-semibold text-white/60 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
+                        className="px-2.5 py-1.5 rounded-xl border border-border hover:bg-surface-elevated text-xs font-semibold text-text-muted hover:text-text-primary transition-colors flex items-center gap-1.5 cursor-pointer"
                         title="Reset crop and zoom"
                         aria-label="Reset crop"
                       >
@@ -646,18 +645,18 @@ export default function ImageEditorModal({
                       <button
                         type="button"
                         onClick={() => setZoom((z) => Math.max(1, +(z - 0.15).toFixed(2)))}
-                        className="p-1.5 rounded-xl border border-white/[0.08] hover:bg-white/[0.06] text-white/70 hover:text-white cursor-pointer"
+                        className="p-1.5 rounded-xl border border-border hover:bg-surface-elevated text-text-muted hover:text-text-primary cursor-pointer"
                         aria-label="Zoom out"
                       >
                         <ZoomOut className="w-3.5 h-3.5" />
                       </button>
-                      <span className="text-[11px] font-mono text-white/70 w-10 text-center">
+                      <span className="text-[11px] font-mono text-text-secondary w-10 text-center">
                         {Math.round(zoom * 100)}%
                       </span>
                       <button
                         type="button"
                         onClick={() => setZoom((z) => Math.min(3, +(z + 0.15).toFixed(2)))}
-                        className="p-1.5 rounded-xl border border-white/[0.08] hover:bg-white/[0.06] text-white/70 hover:text-white cursor-pointer"
+                        className="p-1.5 rounded-xl border border-border hover:bg-surface-elevated text-text-muted hover:text-text-primary cursor-pointer"
                         aria-label="Zoom in"
                       >
                         <ZoomIn className="w-3.5 h-3.5" />
@@ -672,9 +671,9 @@ export default function ImageEditorModal({
             <div className={`${isBanner ? 'lg:col-span-4' : 'lg:col-span-5'} flex flex-col justify-between space-y-4`}>
               <div className="space-y-4">
                 {/* Zoom Slider */}
-                <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] space-y-2">
+                <div className="p-3.5 rounded-2xl bg-surface-elevated border border-border space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold uppercase tracking-wider text-white/60 text-[10px]">
+                    <span className="font-bold uppercase tracking-wider text-text-muted text-[10px]">
                       Zoom Level
                     </span>
                     <span className="font-mono text-brand-mint text-xs font-semibold">
@@ -697,8 +696,8 @@ export default function ImageEditorModal({
                 {isBanner && (
                   <>
                     {/* Dimension Presets */}
-                    <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] space-y-2.5">
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-white/60">
+                    <div className="p-3.5 rounded-2xl bg-surface-elevated border border-border space-y-2.5">
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-text-muted">
                         Export Dimensions
                       </label>
                       <div className="grid grid-cols-3 gap-1.5">
@@ -709,12 +708,12 @@ export default function ImageEditorModal({
                             onClick={() => setDimensionPreset(preset.id)}
                             className={`p-2 rounded-xl text-center transition-all cursor-pointer border ${
                               dimensionPreset === preset.id
-                                ? 'bg-brand-mint/15 border-brand-mint/40 text-white'
-                                : 'bg-white/[0.02] border-white/[0.06] text-white/60 hover:text-white hover:bg-white/[0.04]'
+                                ? 'bg-brand-mint/15 border-brand-mint/40 text-brand-mint'
+                                : 'bg-surface-card border-border text-text-muted hover:text-text-primary hover:bg-surface-card/80'
                             }`}
                           >
                             <div className="text-xs font-bold">{preset.label}</div>
-                            <div className="text-[9px] font-mono text-white/40 mt-0.5">
+                            <div className="text-[9px] font-mono text-text-faint mt-0.5">
                               {preset.width}×{preset.height}
                             </div>
                           </button>
@@ -723,8 +722,8 @@ export default function ImageEditorModal({
                     </div>
 
                     {/* Quality Presets */}
-                    <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] space-y-2.5">
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-white/60">
+                    <div className="p-3.5 rounded-2xl bg-surface-elevated border border-border space-y-2.5">
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-text-muted">
                         Image Quality & Compression
                       </label>
                       <div className="grid grid-cols-3 gap-1.5">
@@ -735,12 +734,12 @@ export default function ImageEditorModal({
                             onClick={() => setQualityPreset(q.id)}
                             className={`p-2 rounded-xl text-center transition-all cursor-pointer border ${
                               qualityPreset === q.id
-                                ? 'bg-brand-mint/15 border-brand-mint/40 text-white'
-                                : 'bg-white/[0.02] border-white/[0.06] text-white/60 hover:text-white hover:bg-white/[0.04]'
+                                ? 'bg-brand-mint/15 border-brand-mint/40 text-brand-mint'
+                                : 'bg-surface-card border-border text-text-muted hover:text-text-primary hover:bg-surface-card/80'
                             }`}
                           >
                             <div className="text-xs font-bold">{q.label}</div>
-                            <div className="text-[9px] text-white/40 mt-0.5">
+                            <div className="text-[9px] text-text-faint mt-0.5">
                               {q.id === 'high' ? 'Crisp' : q.id === 'balanced' ? 'Balanced' : 'Smallest'}
                             </div>
                           </button>
@@ -751,14 +750,14 @@ export default function ImageEditorModal({
                 )}
 
                 {/* Real-time File Output Card */}
-                <div className="p-3.5 rounded-2xl bg-brand-mint/[0.04] border border-brand-mint/15 space-y-1.5">
+                <div className="p-3.5 rounded-2xl bg-brand-mint/[0.05] border border-brand-mint/20 space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-white/60 text-[11px]">Estimated upload size:</span>
+                    <span className="font-semibold text-text-secondary text-[11px]">Estimated upload size:</span>
                     <span className="font-mono font-bold text-brand-mint">
                       {formatBytes(estimatedSize)}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-[10px] text-white/40 font-mono">
+                  <div className="flex items-center justify-between text-[10px] text-text-muted font-mono">
                     <span>
                       {isBanner
                         ? (BANNER_DIMENSIONS.find((d) => d.id === dimensionPreset)?.width || 1600) + ' × ' + (BANNER_DIMENSIONS.find((d) => d.id === dimensionPreset)?.height || 500)
@@ -766,7 +765,7 @@ export default function ImageEditorModal({
                     </span>
                     <span>Format: WebP / JPEG</span>
                   </div>
-                  <div className="pt-1 flex items-center gap-1.5 text-[10px] text-brand-mint/80">
+                  <div className="pt-1 flex items-center gap-1.5 text-[10px] text-brand-mint/90">
                     <Check className="w-3 h-3 shrink-0" />
                     <span>Optimized in browser • Guaranteed under 4 MB server limit</span>
                   </div>
@@ -774,12 +773,12 @@ export default function ImageEditorModal({
               </div>
 
               {/* ── Modal Footer Action Bar (Sticky on Mobile) ── */}
-              <div className="pt-3 border-t border-white/[0.08] flex items-center gap-3">
+              <div className="pt-3 border-t border-border flex items-center gap-3">
                 <button
                   type="button"
                   onClick={onClose}
                   disabled={isProcessing || isUploading}
-                  className="flex-1 py-3 px-4 rounded-xl border border-white/[0.12] hover:bg-white/[0.06] text-xs font-bold text-white/70 hover:text-white transition-all cursor-pointer text-center disabled:opacity-40"
+                  className="flex-1 py-3 px-4 rounded-xl border border-border hover:bg-surface-elevated text-xs font-bold text-text-secondary hover:text-text-primary transition-all cursor-pointer text-center disabled:opacity-40"
                 >
                   Cancel
                 </button>
@@ -788,16 +787,12 @@ export default function ImageEditorModal({
                   type="button"
                   onClick={handleSave}
                   disabled={isProcessing || isUploading || Boolean(loadingError)}
-                  className="flex-1 relative group overflow-hidden py-3 px-5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all active:scale-[0.99] disabled:opacity-40 disabled:pointer-events-none cursor-pointer shadow-lg"
-                  style={{
-                    background: '#f6ed4a',
-                    color: '#07192a',
-                  }}
+                  className="flex-1 relative group overflow-hidden py-3 px-5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all active:scale-[0.99] disabled:opacity-40 disabled:pointer-events-none cursor-pointer shadow-lg bg-brand-yellow text-brand-navy hover:brightness-105"
                 >
                   <span className="relative flex items-center justify-center gap-2">
                     {isProcessing || isUploading ? (
                       <>
-                        <RefreshCw className="w-4 h-4 animate-spin text-bg-primary" />
+                        <RefreshCw className="w-4 h-4 animate-spin text-brand-navy" />
                         <span>{isProcessing ? 'Optimizing…' : 'Uploading…'}</span>
                       </>
                     ) : (

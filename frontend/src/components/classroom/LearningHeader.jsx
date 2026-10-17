@@ -44,10 +44,10 @@ export default function LearningHeader({
     ? 'bg-brand-mint animate-pulse'
     : syncState === 'error'
     ? 'bg-rose-500'
-    : 'bg-white/40';
+    : 'bg-text-muted';
 
   return (
-    <header className="sticky top-0 z-30 w-full bg-bg-base/95 backdrop-blur-xl border-b border-white/[0.08] transition-all">
+    <header className="sticky top-0 z-30 w-full bg-bg-base/95 backdrop-blur-xl border-b border-border transition-all">
       <div className="max-w-[1680px] mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
         {/* Left: Brand / Back Navigation and Breadcrumb Trail */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
@@ -61,7 +61,7 @@ export default function LearningHeader({
               }
             }}
             aria-label="Back to course overview"
-            className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.08] text-white/70 hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0 focus-ring"
+            className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl border border-border bg-surface-elevated/60 hover:bg-surface-elevated text-text-muted hover:text-text-primary flex items-center justify-center transition-all cursor-pointer shrink-0 focus-ring"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
@@ -70,18 +70,18 @@ export default function LearningHeader({
           <nav aria-label="Course hierarchy" className="flex items-center gap-1.5 min-w-0 text-xs text-text-muted">
             <Link
               to="/courses"
-              className="hidden md:inline hover:text-white transition-colors truncate shrink-0"
+              className="hidden md:inline hover:text-text-primary transition-colors truncate shrink-0"
             >
               Courses
             </Link>
 
             {course?.name && (
               <>
-                <ChevronRight className="hidden md:inline w-3 h-3 text-white/30 shrink-0" />
+                <ChevronRight className="hidden md:inline w-3 h-3 text-text-faint shrink-0" />
                 <Link
                   to={`/courses/${course._id}/chapters`}
                   title={course.name}
-                  className="hidden sm:inline font-medium hover:text-white transition-colors truncate max-w-[100px] md:max-w-[180px] lg:max-w-[240px]"
+                  className="hidden sm:inline font-medium hover:text-text-primary transition-colors truncate max-w-[100px] md:max-w-[180px] lg:max-w-[240px]"
                 >
                   {course.name}
                 </Link>
@@ -90,20 +90,20 @@ export default function LearningHeader({
 
             {chapter?.title && (
               <>
-                <ChevronRight className="hidden sm:inline w-3 h-3 text-white/30 shrink-0" />
+                <ChevronRight className="hidden sm:inline w-3 h-3 text-text-faint shrink-0" />
                 <span
                   title={chapter.title}
-                  className="hidden lg:inline text-white/60 truncate max-w-[140px]"
+                  className="hidden lg:inline text-text-muted truncate max-w-[140px]"
                 >
                   {chapter.title}
                 </span>
               </>
             )}
 
-            <ChevronRight className="w-3 h-3 text-white/30 shrink-0 sm:hidden" />
+            <ChevronRight className="w-3 h-3 text-text-faint shrink-0 sm:hidden" />
             <span
               title={currentClass?.title || 'Lesson'}
-              className="text-white font-semibold truncate text-xs sm:text-sm max-w-[120px] xs:max-w-[160px] sm:max-w-[240px] md:max-w-[320px]"
+              className="text-text-primary font-semibold truncate text-xs sm:text-sm max-w-[120px] xs:max-w-[160px] sm:max-w-[240px] md:max-w-[320px]"
             >
               {currentClass?.title || 'Lesson'}
             </span>
@@ -115,7 +115,7 @@ export default function LearningHeader({
           {/* Micro-Sync Status Badge */}
           <div
             title={`Playback Status: ${syncLabel}`}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-white/[0.08] bg-white/[0.02] text-[11px] font-medium text-white/70"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border bg-surface-elevated/60 text-[11px] font-medium text-text-secondary"
           >
             <span className={`w-2 h-2 rounded-full ${syncDotColor}`} />
             <span className="hidden sm:inline">{syncLabel}</span>
@@ -123,10 +123,10 @@ export default function LearningHeader({
 
           {/* Overall Course Progress Chip (Desktop & Tablet) */}
           <div
-            className="hidden md:flex items-center gap-2.5 px-3 py-1 rounded-xl border border-white/[0.08] bg-white/[0.02]"
+            className="hidden md:flex items-center gap-2.5 px-3 py-1 rounded-xl border border-border bg-surface-elevated/60"
             title={`Course Progress: ${courseCompletionPercent}%`}
           >
-            <div className="w-14 lg:w-16 h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
+            <div className="w-14 lg:w-16 h-1.5 rounded-full bg-border/60 overflow-hidden">
               <div
                 className="h-full rounded-full bg-brand-mint transition-all duration-500"
                 style={{ width: `${courseCompletionPercent}%` }}
@@ -143,7 +143,7 @@ export default function LearningHeader({
             onClick={onOpenShortcuts}
             aria-label="View keyboard shortcuts"
             title="Keyboard shortcuts (?)"
-            className="hidden sm:flex h-9 w-9 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.08] text-white/60 hover:text-white items-center justify-center transition-all cursor-pointer focus-ring"
+            className="hidden sm:flex h-9 w-9 rounded-xl border border-border bg-surface-elevated/60 hover:bg-surface-elevated text-text-muted hover:text-text-primary items-center justify-center transition-all cursor-pointer focus-ring"
           >
             <HelpCircle className="w-4 h-4" />
           </button>
@@ -154,7 +154,7 @@ export default function LearningHeader({
             onClick={onOpenIssueModal}
             aria-label="Report a playback problem"
             title="Report playback problem"
-            className="hidden lg:flex items-center gap-1.5 h-9 px-3 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.08] text-[11px] font-semibold text-white/70 hover:text-white transition-all cursor-pointer focus-ring"
+            className="hidden lg:flex items-center gap-1.5 h-9 px-3 rounded-xl border border-border bg-surface-elevated/60 hover:bg-surface-elevated text-[11px] font-semibold text-text-secondary hover:text-text-primary transition-all cursor-pointer focus-ring"
           >
             <AlertTriangle className="w-3.5 h-3.5 text-warning" />
             <span>Report Issue</span>

@@ -66,7 +66,7 @@ export default function ReportModal({
         }
       }}
     >
-      <div className="relative w-full max-sm:rounded-t-3xl max-sm:rounded-b-none sm:rounded-3xl sm:max-w-lg bg-[#0C121E] border border-white/[0.12] shadow-2xl p-6 sm:p-7 max-sm:max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-sm:rounded-t-3xl max-sm:rounded-b-none sm:rounded-3xl sm:max-w-lg bg-surface-card border border-border shadow-2xl p-6 sm:p-7 max-sm:max-h-[90vh] overflow-y-auto">
         {/* Mobile Drag Indicator */}
         <div className="w-10 h-1 rounded-full bg-white/20 mx-auto -mt-2 mb-4 sm:hidden" />
 
@@ -75,7 +75,7 @@ export default function ReportModal({
           onClick={onClose}
           disabled={submitting}
           aria-label="Close dialog"
-          className="absolute top-4 right-4 p-2 rounded-xl text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors disabled:opacity-40 cursor-pointer"
+          className="absolute top-4 right-4 p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors disabled:opacity-40 cursor-pointer"
         >
           <X className="h-4 w-4" />
         </button>
@@ -86,7 +86,7 @@ export default function ReportModal({
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <div className="space-y-1">
-              <h3 className="text-lg font-heading font-bold text-white tracking-tight">
+              <h3 className="text-lg font-heading font-bold text-text-primary tracking-tight">
                 Report Submitted
               </h3>
               <p className="text-xs text-text-muted max-w-sm mx-auto leading-relaxed">
@@ -105,12 +105,12 @@ export default function ReportModal({
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-3 mb-5 border-b border-white/[0.08] pb-4">
+            <div className="flex items-center gap-3 mb-5 border-b border-border pb-4">
               <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-400 shrink-0">
                 <Flag className="h-5 w-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <h3 id="report-modal-title" className="text-base font-heading font-bold text-white tracking-tight">
+                <h3 id="report-modal-title" className="text-base font-heading font-bold text-text-primary tracking-tight">
                   Submit Factual Report
                 </h3>
                 <p className="text-xs text-text-muted truncate mt-0.5">
@@ -119,7 +119,7 @@ export default function ReportModal({
               </div>
             </div>
 
-            <p className="text-[11px] text-text-muted bg-white/[0.02] border border-white/[0.06] p-3 rounded-xl mb-4 leading-relaxed">
+            <p className="text-[11px] text-text-muted bg-surface-elevated border border-border p-3 rounded-xl mb-4 leading-relaxed">
               Reports are confidential and reviewed independently. Please provide accurate details to help our team take appropriate action.
             </p>
 
@@ -143,13 +143,13 @@ export default function ReportModal({
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   disabled={submitting}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white text-xs focus:outline-none focus:border-brand-mint transition-colors cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border text-text-primary text-xs focus:outline-none focus:border-brand-mint transition-colors cursor-pointer"
                 >
-                  <option value="INAPPROPRIATE_CONTENT" className="bg-[#0C121E]">Inappropriate or Offensive Content</option>
-                  <option value="SPAM_OR_SCAM" className="bg-[#0C121E]">Spam, Scam, or Misleading Information</option>
-                  <option value="IMPERSONATION" className="bg-[#0C121E]">Impersonation or False Identity</option>
-                  <option value="HARASSMENT" className="bg-[#0C121E]">Harassment or Unwanted Contact</option>
-                  <option value="OTHER" className="bg-[#0C121E]">Other Factual Concern</option>
+                  <option value="INAPPROPRIATE_CONTENT" className="bg-surface-card text-text-primary">Inappropriate or Offensive Content</option>
+                  <option value="SPAM_OR_SCAM" className="bg-surface-card text-text-primary">Spam, Scam, or Misleading Information</option>
+                  <option value="IMPERSONATION" className="bg-surface-card text-text-primary">Impersonation or False Identity</option>
+                  <option value="HARASSMENT" className="bg-surface-card text-text-primary">Harassment or Unwanted Contact</option>
+                  <option value="OTHER" className="bg-surface-card text-text-primary">Other Factual Concern</option>
                 </select>
               </div>
 
@@ -173,7 +173,7 @@ export default function ReportModal({
                   onChange={(e) => setDetails(e.target.value)}
                   disabled={submitting}
                   placeholder="Describe specific details to assist our team in investigating..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white text-xs focus:outline-none focus:border-brand-mint transition-colors placeholder:text-text-muted/60 resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border text-text-primary text-xs focus:outline-none focus:border-brand-mint transition-colors placeholder:text-text-muted resize-none"
                 />
               </div>
 
@@ -182,7 +182,7 @@ export default function ReportModal({
                   type="button"
                   onClick={onClose}
                   disabled={submitting}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-text-muted hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-text-muted hover:text-text-primary transition-colors cursor-pointer disabled:opacity-40"
                 >
                   Cancel
                 </button>

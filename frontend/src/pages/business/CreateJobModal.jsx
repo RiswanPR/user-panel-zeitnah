@@ -197,15 +197,15 @@ export default function CreateJobModal({
       aria-labelledby="job-modal-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto"
     >
-      <div className="relative w-full max-w-3xl bg-[#121217] border border-white/[0.1] rounded-3xl shadow-2xl p-6 sm:p-8 my-8 text-white max-h-[90vh] flex flex-col">
+      <div className="relative w-full max-w-3xl bg-surface-card border border-border rounded-3xl shadow-2xl p-6 sm:p-8 my-8 text-text-primary max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-start justify-between pb-5 border-b border-white/[0.08] shrink-0">
+        <div className="flex items-start justify-between pb-5 border-b border-border shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-300">
               {isEditMode ? <Edit3 className="w-6 h-6" /> : <Briefcase className="w-6 h-6" />}
             </div>
             <div>
-              <h2 id="job-modal-title" className="text-xl font-bold font-heading text-white">
+              <h2 id="job-modal-title" className="text-xl font-bold font-heading text-text-primary">
                 {isEditMode ? 'Edit Infrastructure Job' : 'Create Infrastructure Job'}
               </h2>
               <p className="text-xs text-text-muted mt-0.5">
@@ -216,7 +216,7 @@ export default function CreateJobModal({
           <button
             onClick={onClose}
             aria-label="Close modal"
-            className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors"
+            className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -261,7 +261,7 @@ export default function CreateJobModal({
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-white/80 mb-1.5">
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                   Job Title <span className="text-cyan-400">*</span>
                 </label>
                 <input
@@ -270,12 +270,12 @@ export default function CreateJobModal({
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="e.g. Senior BIM Coordinator, Bridge Project Lead"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-cyan-400 text-sm text-white placeholder-white/30 outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border focus:border-cyan-400 text-sm text-text-primary placeholder:text-text-muted/60 outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1.5">Job Type</label>
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5">Job Type</label>
                 <select
                   value={formData.jobType}
                   onChange={(e) =>
@@ -285,10 +285,10 @@ export default function CreateJobModal({
                       employmentType: e.target.value,
                     })
                   }
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#1a1a24] border border-white/[0.08] text-sm text-white outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary outline-none"
                 >
                   {JOB_TYPES.map((jt) => (
-                    <option key={jt} value={jt}>
+                    <option key={jt} value={jt} className="bg-surface-elevated text-text-primary">
                       {jt}
                     </option>
                   ))}
@@ -296,14 +296,14 @@ export default function CreateJobModal({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1.5">Work Mode</label>
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5">Work Mode</label>
                 <select
                   value={formData.workMode}
                   onChange={(e) => setFormData({ ...formData, workMode: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#1a1a24] border border-white/[0.08] text-sm text-white outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary outline-none"
                 >
                   {WORK_MODES.map((wm) => (
-                    <option key={wm} value={wm}>
+                    <option key={wm} value={wm} className="bg-surface-elevated text-text-primary">
                       {wm}
                     </option>
                   ))}
@@ -319,16 +319,16 @@ export default function CreateJobModal({
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1.5">
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                   Discipline <span className="text-cyan-400">*</span>
                 </label>
                 <select
                   value={formData.discipline}
                   onChange={(e) => setFormData({ ...formData, discipline: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#1a1a24] border border-white/[0.08] text-sm text-white outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary outline-none"
                 >
                   {INFRASTRUCTURE_DISCIPLINES.map((d) => (
-                    <option key={d} value={d}>
+                    <option key={d} value={d} className="bg-surface-elevated text-text-primary">
                       {d}
                     </option>
                   ))}
@@ -336,7 +336,7 @@ export default function CreateJobModal({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1.5">
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                   Infrastructure Sector <span className="text-cyan-400">*</span>
                 </label>
                 <select
@@ -344,10 +344,10 @@ export default function CreateJobModal({
                   onChange={(e) =>
                     setFormData({ ...formData, infrastructureSector: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-[#1a1a24] border border-white/[0.08] text-sm text-white outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary outline-none"
                 >
                   {INFRASTRUCTURE_SECTORS.map((s) => (
-                    <option key={s} value={s}>
+                    <option key={s} value={s} className="bg-surface-elevated text-text-primary">
                       {s}
                     </option>
                   ))}
@@ -355,13 +355,13 @@ export default function CreateJobModal({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1.5">Specialization</label>
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5">Specialization</label>
                 <input
                   type="text"
                   value={formData.specialization}
                   onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
                   placeholder="e.g. 4D Simulation, Pre-stressed Concrete"
-                  className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-white/30 outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary placeholder:text-text-muted/60 outline-none"
                 />
               </div>
             </div>
@@ -374,7 +374,7 @@ export default function CreateJobModal({
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1.5">
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                   Min Experience (Years)
                 </label>
                 <input
@@ -385,12 +385,12 @@ export default function CreateJobModal({
                   onChange={(e) =>
                     setFormData({ ...formData, minYearsExperience: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1.5">
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                   Max Experience (Years)
                 </label>
                 <input
@@ -401,12 +401,12 @@ export default function CreateJobModal({
                   onChange={(e) =>
                     setFormData({ ...formData, maxYearsExperience: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1.5">
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                   Work Location <span className="text-cyan-400">*</span>
                 </label>
                 <input
@@ -415,7 +415,7 @@ export default function CreateJobModal({
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                   placeholder="e.g. Kochi, Kerala or Site HQ"
-                  className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary outline-none"
                 />
               </div>
             </div>
@@ -428,10 +428,10 @@ export default function CreateJobModal({
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1.5">
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                   Required Software Tools (Must-have)
                 </label>
-                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 rounded-xl bg-surface-elevated/40 border border-border">
                   {INFRASTRUCTURE_SOFTWARE.map((sw) => {
                     const selected = formData.requiredSoftware.includes(sw);
                     return (
@@ -441,8 +441,8 @@ export default function CreateJobModal({
                         onClick={() => toggleSoftware(sw, false)}
                         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
                           selected
-                            ? 'bg-cyan-500 text-black font-bold shadow-md shadow-cyan-500/20'
-                            : 'bg-white/[0.04] text-white/70 hover:bg-white/[0.08]'
+                            ? 'bg-cyan-500 text-brand-navy font-bold shadow-md shadow-cyan-500/20'
+                            : 'bg-surface-elevated text-text-secondary hover:bg-surface-elevated/80 border border-border'
                         }`}
                       >
                         {selected && <Check className="w-3 h-3 stroke-[3]" />}
@@ -454,10 +454,10 @@ export default function CreateJobModal({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1.5">
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                   Preferred Software Tools (Good-to-have)
                 </label>
-                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 rounded-xl bg-surface-elevated/40 border border-border">
                   {INFRASTRUCTURE_SOFTWARE.map((sw) => {
                     const selected = formData.preferredSoftware.includes(sw);
                     return (
@@ -468,7 +468,7 @@ export default function CreateJobModal({
                         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
                           selected
                             ? 'bg-violet-500 text-white font-bold shadow-md shadow-violet-500/20'
-                            : 'bg-white/[0.04] text-white/70 hover:bg-white/[0.08]'
+                            : 'bg-surface-elevated text-text-secondary hover:bg-surface-elevated/80 border border-border'
                         }`}
                       >
                         {selected && <Check className="w-3 h-3 stroke-[3]" />}
@@ -488,7 +488,7 @@ export default function CreateJobModal({
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1.5">
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                   Required Skills <span className="text-cyan-400">*</span>
                 </label>
                 <div className="flex gap-2 mb-2">
@@ -503,17 +503,17 @@ export default function CreateJobModal({
                       }
                     }}
                     placeholder="Type skill & press Add..."
-                    className="flex-1 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-white/30 outline-none"
+                    className="flex-1 px-3 py-1.5 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary placeholder:text-text-muted/60 outline-none"
                   />
                   <button
                     type="button"
                     onClick={() => handleAddSkill(false)}
-                    className="px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-xs font-semibold"
+                    className="px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-text-primary border border-border text-xs font-semibold cursor-pointer"
                   >
                     Add
                   </button>
                 </div>
-                <div className="flex flex-wrap gap-1.5 min-h-[38px] p-2 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                <div className="flex flex-wrap gap-1.5 min-h-[38px] p-2 rounded-xl bg-surface-elevated/40 border border-border">
                   {formData.requiredSkills.map((s) => (
                     <span
                       key={s}
@@ -527,13 +527,13 @@ export default function CreateJobModal({
                     </span>
                   ))}
                   {formData.requiredSkills.length === 0 && (
-                    <span className="text-[11px] text-white/30">No required skills added yet.</span>
+                    <span className="text-[11px] text-text-muted">No required skills added yet.</span>
                   )}
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1.5">
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                   Preferred Skills
                 </label>
                 <div className="flex gap-2 mb-2">
@@ -548,17 +548,17 @@ export default function CreateJobModal({
                       }
                     }}
                     placeholder="Type preferred skill..."
-                    className="flex-1 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-white/30 outline-none"
+                    className="flex-1 px-3 py-1.5 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary placeholder:text-text-muted/60 outline-none"
                   />
                   <button
                     type="button"
                     onClick={() => handleAddSkill(true)}
-                    className="px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-xs font-semibold"
+                    className="px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-text-primary border border-border text-xs font-semibold cursor-pointer"
                   >
                     Add
                   </button>
                 </div>
-                <div className="flex flex-wrap gap-1.5 min-h-[38px] p-2 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                <div className="flex flex-wrap gap-1.5 min-h-[38px] p-2 rounded-xl bg-surface-elevated/40 border border-border">
                   {formData.preferredSkills.map((s) => (
                     <span
                       key={s}
@@ -572,7 +572,7 @@ export default function CreateJobModal({
                     </span>
                   ))}
                   {formData.preferredSkills.length === 0 && (
-                    <span className="text-[11px] text-white/30">No preferred skills added.</span>
+                    <span className="text-[11px] text-text-muted">No preferred skills added.</span>
                   )}
                 </div>
               </div>
@@ -586,7 +586,7 @@ export default function CreateJobModal({
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1.5">
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                   Required Education
                 </label>
                 <input
@@ -594,12 +594,12 @@ export default function CreateJobModal({
                   value={formData.requiredEducation}
                   onChange={(e) => setFormData({ ...formData, requiredEducation: e.target.value })}
                   placeholder="e.g. B.Tech in Civil Engineering"
-                  className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1.5">
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                   Required Certifications
                 </label>
                 <div className="flex gap-2 mb-2">
@@ -614,17 +614,17 @@ export default function CreateJobModal({
                       }
                     }}
                     placeholder="e.g. PMP, LEED AP, OSHA 30..."
-                    className="flex-1 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-white/30 outline-none"
+                    className="flex-1 px-3 py-1.5 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary placeholder:text-text-muted/60 outline-none"
                   />
                   <button
                     type="button"
                     onClick={handleAddCert}
-                    className="px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-xs font-semibold"
+                    className="px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-text-primary border border-border text-xs font-semibold cursor-pointer"
                   >
                     Add
                   </button>
                 </div>
-                <div className="flex flex-wrap gap-1.5 min-h-[38px] p-2 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                <div className="flex flex-wrap gap-1.5 min-h-[38px] p-2 rounded-xl bg-surface-elevated/40 border border-border">
                   {formData.requiredCertifications.map((c) => (
                     <span
                       key={c}
@@ -638,7 +638,7 @@ export default function CreateJobModal({
                     </span>
                   ))}
                   {formData.requiredCertifications.length === 0 && (
-                    <span className="text-[11px] text-white/30">None added</span>
+                    <span className="text-[11px] text-text-muted">None added</span>
                   )}
                 </div>
               </div>
@@ -652,48 +652,48 @@ export default function CreateJobModal({
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1.5">Min Salary</label>
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5">Min Salary</label>
                 <input
                   type="number"
                   placeholder="e.g. 600000"
                   value={formData.salaryMin}
                   onChange={(e) => setFormData({ ...formData, salaryMin: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1.5">Max Salary</label>
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5">Max Salary</label>
                 <input
                   type="number"
                   placeholder="e.g. 1200000"
                   value={formData.salaryMax}
                   onChange={(e) => setFormData({ ...formData, salaryMax: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1.5">Currency</label>
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5">Currency</label>
                 <select
                   value={formData.currency}
                   onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#1a1a24] border border-white/[0.08] text-sm text-white outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary outline-none"
                 >
-                  <option value="INR">INR (₹)</option>
-                  <option value="USD">USD ($)</option>
-                  <option value="AED">AED</option>
-                  <option value="EUR">EUR (€)</option>
-                  <option value="GBP">GBP (£)</option>
+                  <option value="INR" className="bg-surface-elevated text-text-primary">INR (₹)</option>
+                  <option value="USD" className="bg-surface-elevated text-text-primary">USD ($)</option>
+                  <option value="AED" className="bg-surface-elevated text-text-primary">AED</option>
+                  <option value="EUR" className="bg-surface-elevated text-text-primary">EUR (€)</option>
+                  <option value="GBP" className="bg-surface-elevated text-text-primary">GBP (£)</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1.5">
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                   Application Deadline
                 </label>
                 <input
                   type="date"
                   value={formData.applicationDeadline}
                   onChange={(e) => setFormData({ ...formData, applicationDeadline: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary outline-none"
                 />
               </div>
             </div>
@@ -705,7 +705,7 @@ export default function CreateJobModal({
               8. Job Details & Responsibilities
             </h3>
             <div>
-              <label className="block text-xs font-semibold text-white/80 mb-1.5">
+              <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                 Key Responsibilities <span className="text-cyan-400">*</span>
               </label>
               <textarea
@@ -713,12 +713,12 @@ export default function CreateJobModal({
                 value={formData.responsibilities}
                 onChange={(e) => setFormData({ ...formData, responsibilities: e.target.value })}
                 placeholder="• Prepare monthly baseline programs in Primavera P6&#10;• Coordinate 4D BIM clash detection with MEP contractors&#10;• Oversee site quantity takeoffs and BOQ verifications"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-cyan-400 text-sm text-white placeholder-white/30 outline-none resize-none"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border focus:border-cyan-400 text-sm text-text-primary placeholder:text-text-muted/60 outline-none resize-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-white/80 mb-1.5">
+              <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                 Requirements & Experience
               </label>
               <textarea
@@ -726,12 +726,12 @@ export default function CreateJobModal({
                 value={formData.requirements}
                 onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
                 placeholder="• 3+ years handling metro or highway infrastructure projects&#10;• Hands-on proficiency with Civil 3D and Revit Structures&#10;• Working knowledge of FIDIC Red Book contractual terms"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-cyan-400 text-sm text-white placeholder-white/30 outline-none resize-none"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border focus:border-cyan-400 text-sm text-text-primary placeholder:text-text-muted/60 outline-none resize-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-white/80 mb-1.5">
+              <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                 Benefits & Perks
               </label>
               <textarea
@@ -739,14 +739,14 @@ export default function CreateJobModal({
                 value={formData.benefits}
                 onChange={(e) => setFormData({ ...formData, benefits: e.target.value })}
                 placeholder="Site accommodation allowances, annual performance bonus, professional chartership support..."
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-cyan-400 text-sm text-white placeholder-white/30 outline-none resize-none"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border focus:border-cyan-400 text-sm text-text-primary placeholder:text-text-muted/60 outline-none resize-none"
               />
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="pt-4 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
+        <div className="pt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
           <p className="text-[11px] text-text-muted text-center sm:text-left">
             {isEditMode
               ? 'Changes will immediately update across search and candidate matches.'
@@ -758,7 +758,7 @@ export default function CreateJobModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-white/60 hover:text-white hover:bg-white/[0.04] transition-all cursor-pointer"
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-all cursor-pointer"
             >
               Cancel
             </button>
@@ -766,7 +766,7 @@ export default function CreateJobModal({
               type="button"
               disabled={saving}
               onClick={() => handleSubmit(false)}
-              className="px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-white text-xs font-semibold transition-all disabled:opacity-50 cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-text-primary border border-border text-xs font-semibold transition-all disabled:opacity-50 cursor-pointer"
             >
               {saving ? 'Saving...' : isEditMode ? 'Save Changes' : 'Save as Draft'}
             </button>
@@ -774,7 +774,7 @@ export default function CreateJobModal({
               type="button"
               disabled={saving || !isApproved}
               onClick={() => handleSubmit(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-brand-mint text-black font-bold text-xs shadow-lg shadow-cyan-500/20 hover:opacity-90 disabled:opacity-50 transition-all cursor-pointer"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-brand-mint text-brand-navy font-bold text-xs shadow-lg shadow-cyan-500/20 hover:opacity-90 disabled:opacity-50 transition-all cursor-pointer"
             >
               {saving
                 ? 'Saving...'

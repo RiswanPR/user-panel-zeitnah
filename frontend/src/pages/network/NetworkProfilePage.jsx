@@ -89,7 +89,7 @@ export default function NetworkProfilePage() {
       <div className="flex items-center justify-between">
         <Link
           to="/network"
-          className="inline-flex items-center gap-2 text-xs font-semibold text-text-muted hover:text-white transition-colors focus-ring rounded-lg px-1 py-0.5"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-text-muted hover:text-text-primary transition-colors focus-ring rounded-lg px-1 py-0.5"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           <span>Back to Network</span>

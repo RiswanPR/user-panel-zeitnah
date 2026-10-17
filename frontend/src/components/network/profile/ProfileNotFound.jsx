@@ -7,12 +7,12 @@ import { UserX, ArrowLeft } from "lucide-react";
  */
 export default function ProfileNotFound() {
   return (
-    <div className="flex flex-col items-center justify-center rounded-3xl border border-white/[0.08] bg-bg-surface/80 p-10 sm:p-16 text-center shadow-xl backdrop-blur-xl max-w-lg mx-auto my-12">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/[0.1] bg-white/[0.04] text-text-muted mb-5">
+    <div className="flex flex-col items-center justify-center rounded-3xl border border-border bg-surface-card p-10 sm:p-16 text-center shadow-xl backdrop-blur-xl max-w-lg mx-auto my-12">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-border bg-surface-elevated text-text-muted mb-5">
         <UserX className="h-8 w-8 text-text-muted" aria-hidden="true" />
       </div>
 
-      <h1 className="text-xl sm:text-2xl font-heading font-black text-white tracking-tight">
+      <h1 className="text-xl sm:text-2xl font-heading font-black text-text-primary tracking-tight">
         Profile unavailable
       </h1>
 
@@ -23,7 +23,7 @@ export default function ProfileNotFound() {
       <div className="mt-6">
         <Link
           to="/network"
-          className="inline-flex items-center gap-2 rounded-xl bg-brand-mint px-5 py-2.5 text-xs font-bold text-bg-base hover:bg-brand-mint/90 transition-all focus-ring shadow-lg"
+          className="inline-flex items-center gap-2 rounded-xl bg-brand-mint px-5 py-2.5 text-xs font-bold text-brand-navy hover:bg-brand-mint/90 transition-all focus-ring shadow-lg cursor-pointer"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           <span>Back to Network</span>

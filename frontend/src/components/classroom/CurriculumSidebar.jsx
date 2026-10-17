@@ -77,17 +77,17 @@ export function CurriculumContent({
   return (
     <div className="flex flex-col h-full select-none">
       {/* ── Curriculum Header ── */}
-      <div className="p-4 sm:p-5 border-b border-white/[0.08] bg-white/[0.01] shrink-0">
+      <div className="p-4 sm:p-5 border-b border-border bg-surface-elevated/20 shrink-0">
         <div className="flex items-center justify-between gap-2 mb-2">
           <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-brand-mint">
             Course Curriculum
           </span>
-          <span className="text-[11px] font-mono font-semibold text-white/50">
+          <span className="text-[11px] font-mono font-semibold text-text-muted">
             {completedClasses} / {totalClasses} Lessons
           </span>
         </div>
 
-        <h3 className="text-sm sm:text-base font-heading font-bold text-white leading-snug line-clamp-2">
+        <h3 className="text-sm sm:text-base font-heading font-bold text-text-primary leading-snug line-clamp-2">
           {courseTitle}
         </h3>
 
@@ -103,7 +103,7 @@ export function CurriculumContent({
             aria-valuenow={completionPercent}
             aria-valuemin={0}
             aria-valuemax={100}
-            className="w-full h-1.5 rounded-full bg-white/[0.08] overflow-hidden"
+            className="w-full h-1.5 rounded-full bg-border/60 overflow-hidden"
           >
             <div
               className="h-full rounded-full bg-gradient-to-r from-brand-mint to-brand-yellow transition-all duration-500"
@@ -114,7 +114,7 @@ export function CurriculumContent({
       </div>
 
       {/* ── Chapters Accordion List ── */}
-      <div className="flex-1 overflow-y-auto divide-y divide-white/[0.04] p-2 space-y-2 no-scrollbar">
+      <div className="flex-1 overflow-y-auto divide-y divide-border/40 p-2 space-y-2 no-scrollbar">
         {resolvedChapters.length === 0 ? (
           <div className="p-8 text-center text-text-muted text-xs">
             No curriculum modules published yet.
@@ -135,8 +135,8 @@ export function CurriculumContent({
                 key={code}
                 className={`rounded-2xl transition-all overflow-hidden border ${
                   isChapterActive
-                    ? 'border-brand-mint/30 bg-brand-mint/[0.02]'
-                    : 'border-white/[0.04] bg-white/[0.01]'
+                    ? 'border-brand-mint/30 bg-brand-mint/[0.04]'
+                    : 'border-border/60 bg-surface-card'
                 }`}
               >
                 {/* Chapter Header Accordion Button */}
@@ -144,7 +144,7 @@ export function CurriculumContent({
                   type="button"
                   onClick={() => toggleChapter(code)}
                   aria-expanded={isExpanded}
-                  className="w-full p-3.5 flex items-center justify-between gap-3 text-left hover:bg-white/[0.04] transition-all cursor-pointer focus-ring"
+                  className="w-full p-3.5 flex items-center justify-between gap-3 text-left hover:bg-surface-elevated/60 transition-all cursor-pointer focus-ring"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -158,27 +158,27 @@ export function CurriculumContent({
                         </span>
                       )}
                       {isLocked && (
-                        <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-white/40 bg-white/[0.05] px-1.5 py-0.5 rounded">
+                        <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-text-muted bg-surface-elevated px-1.5 py-0.5 rounded">
                           <Lock className="w-2.5 h-2.5" />
                           Locked
                         </span>
                       )}
                     </div>
-                    <h4 className="text-xs sm:text-sm font-semibold text-white truncate">
+                    <h4 className="text-xs sm:text-sm font-semibold text-text-primary truncate">
                       {chapter.title}
                     </h4>
                     <div className="flex items-center gap-2 mt-1 text-[11px] text-text-muted">
                       <span>{chapterLessons.length} {chapterLessons.length === 1 ? 'lesson' : 'lessons'}</span>
                       {chapter.completedClasses > 0 && (
                         <>
-                          <span className="w-1 h-1 rounded-full bg-white/20" />
+                          <span className="w-1 h-1 rounded-full bg-border/80" />
                           <span className="text-emerald-400/90 font-mono">{chapter.completedClasses} completed</span>
                         </>
                       )}
                     </div>
                   </div>
 
-                  <div className={`p-1 text-white/50 transition-transform duration-200 shrink-0 ${isExpanded ? 'rotate-180' : ''}`}>
+                  <div className={`p-1 text-text-muted transition-transform duration-200 shrink-0 ${isExpanded ? 'rotate-180' : ''}`}>
                     <ChevronDown className="w-4 h-4" />
                   </div>
                 </button>
@@ -219,12 +219,12 @@ export function CurriculumContent({
                                 }}
                                 className={`w-full flex items-center justify-between gap-2.5 p-2.5 rounded-xl text-left transition-all cursor-pointer focus-ring ${
                                   isCurrent
-                                    ? 'bg-brand-mint/15 border border-brand-mint/40 text-white shadow-lg shadow-brand-mint/5'
+                                    ? 'bg-brand-mint/15 border border-brand-mint/40 text-text-primary shadow-sm'
                                     : isClassDone
-                                    ? 'bg-emerald-500/[0.04] border border-emerald-500/20 text-white/90 hover:bg-emerald-500/10'
+                                    ? 'bg-emerald-500/[0.06] border border-emerald-500/25 text-text-primary hover:bg-emerald-500/10'
                                     : isClassLocked
-                                    ? 'opacity-40 border border-transparent hover:bg-white/[0.02] text-white/40'
-                                    : 'border border-transparent hover:border-white/[0.08] hover:bg-white/[0.04] text-white/80'
+                                    ? 'opacity-40 border border-transparent hover:bg-surface-elevated/40 text-text-muted'
+                                    : 'border border-transparent hover:border-border hover:bg-surface-elevated text-text-secondary hover:text-text-primary'
                                 }`}
                               >
                                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -237,14 +237,14 @@ export function CurriculumContent({
                                     ) : isClassDone ? (
                                       <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                                     ) : isClassLocked ? (
-                                      <Lock className="w-4 h-4 text-white/30" />
+                                      <Lock className="w-4 h-4 text-text-muted" />
                                     ) : (
-                                      <Circle className="w-3.5 h-3.5 text-white/30" />
+                                      <Circle className="w-3.5 h-3.5 text-text-muted" />
                                     )}
                                   </div>
 
                                   <div className="min-w-0 flex-1">
-                                    <p className={`text-xs truncate ${isCurrent ? 'font-bold text-white' : 'font-medium'}`}>
+                                    <p className={`text-xs truncate ${isCurrent ? 'font-bold text-text-primary' : 'font-medium'}`}>
                                       {cls.title}
                                     </p>
                                     <div className="flex items-center gap-2 mt-0.5 text-[10px] text-text-muted">
@@ -304,7 +304,7 @@ export default function CurriculumSidebar({
   return (
     <aside
       aria-label="Course Curriculum Navigation"
-      className="flex flex-col w-full h-full rounded-2xl sm:rounded-3xl border border-white/[0.08] bg-bg-card/90 backdrop-blur-xl overflow-hidden shadow-2xl"
+      className="flex flex-col w-full h-full rounded-2xl sm:rounded-3xl border border-border bg-surface-card/95 backdrop-blur-xl overflow-hidden shadow-2xl"
     >
       <CurriculumContent
         curriculum={curriculum}
@@ -377,21 +377,21 @@ export function CurriculumDrawer({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 350 }}
-            className="relative w-full max-w-xl rounded-t-3xl bg-bg-surface border-t border-white/15 p-2 pt-3 shadow-2xl z-10 max-h-[85vh] flex flex-col pb-[env(safe-area-inset-bottom,24px)]"
+            className="relative w-full max-w-xl rounded-t-3xl bg-surface-card border-t border-border p-2 pt-3 shadow-2xl z-10 max-h-[85vh] flex flex-col pb-[env(safe-area-inset-bottom,24px)]"
           >
             {/* Drag Handle */}
-            <div className="w-12 h-1.5 rounded-full bg-white/20 mx-auto mb-2 shrink-0" />
+            <div className="w-12 h-1.5 rounded-full bg-border-accent mx-auto mb-2 shrink-0" />
 
             {/* Header with Close Button */}
-            <div className="flex items-center justify-between px-4 pb-2 border-b border-white/[0.08]">
-              <h3 className="text-sm font-bold text-white font-heading">
+            <div className="flex items-center justify-between px-4 pb-2 border-b border-border">
+              <h3 className="text-sm font-bold text-text-primary font-heading">
                 Curriculum Navigation
               </h3>
               <button
                 type="button"
                 onClick={onClose}
                 aria-label="Close curriculum drawer"
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-white/60 hover:text-white bg-white/[0.04] border border-white/[0.08] cursor-pointer"
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-text-muted hover:text-text-primary bg-surface-elevated border border-border cursor-pointer focus-ring"
               >
                 <X className="w-4 h-4" />
               </button>

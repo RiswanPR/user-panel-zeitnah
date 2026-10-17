@@ -112,14 +112,14 @@ export default function ProjectEditorModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
-      <div className="relative w-full max-w-2xl rounded-3xl border border-border-default bg-bg-card p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90dvh] overflow-y-auto overscroll-contain">
+      <div className="relative w-full max-w-2xl rounded-3xl border border-border bg-surface-card p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90dvh] overflow-y-auto overscroll-contain">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-brand-mint/15 border border-brand-mint/25 flex items-center justify-center text-brand-mint">
               <Hammer className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-lg font-heading font-extrabold text-white">
+              <h3 className="text-lg font-heading font-extrabold text-text-primary">
                 {initialData ? "Edit Infrastructure Project" : "Add Infrastructure Project"}
               </h3>
               <p className="text-xs text-text-muted">
@@ -130,7 +130,7 @@ export default function ProjectEditorModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-white cursor-pointer"
+            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-text-primary cursor-pointer"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -149,7 +149,7 @@ export default function ProjectEditorModal({
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               placeholder="e.g. Al Maktoum International Airport Expansion Phase 2"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated/50 border border-border text-sm text-text-primary placeholder:text-text-faint focus:border-brand-mint focus:outline-none"
             />
           </div>
 
@@ -162,7 +162,7 @@ export default function ProjectEditorModal({
               <select
                 value={form.projectType}
                 onChange={(e) => setForm({ ...form, projectType: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none cursor-pointer"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated/50 border border-border text-sm text-text-primary focus:border-brand-mint focus:outline-none cursor-pointer"
               >
                 <option value="Infrastructure">Infrastructure</option>
                 <option value="Commercial">Commercial</option>
@@ -182,7 +182,7 @@ export default function ProjectEditorModal({
               <select
                 value={form.infrastructureSector}
                 onChange={(e) => setForm({ ...form, infrastructureSector: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none cursor-pointer"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated/50 border border-border text-sm text-text-primary focus:border-brand-mint focus:outline-none cursor-pointer"
               >
                 {INFRASTRUCTURE_SECTORS.map((s) => (
                   <option key={s} value={s}>
@@ -204,7 +204,7 @@ export default function ProjectEditorModal({
                 value={form.role}
                 onChange={(e) => setForm({ ...form, role: e.target.value })}
                 placeholder="e.g. Lead Structural Designer, BIM Modeler"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated/50 border border-border text-sm text-text-primary placeholder:text-text-faint focus:border-brand-mint focus:outline-none"
               />
             </div>
 
@@ -217,7 +217,7 @@ export default function ProjectEditorModal({
                 value={form.location}
                 onChange={(e) => setForm({ ...form, location: e.target.value })}
                 placeholder="e.g. Dubai, UAE"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated/50 border border-border text-sm text-text-primary placeholder:text-text-faint focus:border-brand-mint focus:outline-none"
               />
             </div>
           </div>
@@ -232,7 +232,7 @@ export default function ProjectEditorModal({
                 type="date"
                 value={form.startDate}
                 onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated/50 border border-border text-sm text-text-primary focus:border-brand-mint focus:outline-none"
               />
             </div>
 
@@ -245,7 +245,7 @@ export default function ProjectEditorModal({
                 value={form.endDate}
                 onChange={(e) => setForm({ ...form, endDate: e.target.value })}
                 disabled={form.currentlyActive}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none disabled:opacity-40"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated/50 border border-border text-sm text-text-primary focus:border-brand-mint focus:outline-none disabled:opacity-40"
               />
             </div>
           </div>
@@ -256,7 +256,7 @@ export default function ProjectEditorModal({
               id="projCurrentlyActive"
               checked={form.currentlyActive}
               onChange={(e) => setForm({ ...form, currentlyActive: e.target.checked })}
-              className="rounded border-border-default text-brand-mint focus:ring-0 cursor-pointer"
+              className="rounded border-border text-brand-mint focus:ring-0 cursor-pointer"
             />
             <label htmlFor="projCurrentlyActive" className="text-xs text-text-secondary cursor-pointer">
               Currently ongoing / active project
@@ -273,7 +273,7 @@ export default function ProjectEditorModal({
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="High-level description of the project scope, scale, budget, or key challenges..."
-              className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none resize-none"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated/50 border border-border text-sm text-text-primary placeholder:text-text-faint focus:border-brand-mint focus:outline-none resize-none"
             />
           </div>
 
@@ -287,7 +287,7 @@ export default function ProjectEditorModal({
               value={form.responsibilities}
               onChange={(e) => setForm({ ...form, responsibilities: e.target.value })}
               placeholder="Your specific responsibilities, site audits, calculation reports, 3D modeling tasks..."
-              className="w-full px-3.5 py-2.5 rounded-xl bg-bg-elevated border border-border-default text-sm text-white focus:border-brand-mint focus:outline-none resize-none"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated/50 border border-border text-sm text-text-primary placeholder:text-text-faint focus:border-brand-mint focus:outline-none resize-none"
             />
           </div>
 
@@ -308,7 +308,7 @@ export default function ProjectEditorModal({
                   }
                 }}
                 placeholder="e.g. Revit, Civil 3D, Primavera P6, Navisworks..."
-                className="flex-1 px-3.5 py-2 rounded-xl bg-bg-elevated border border-border-default text-xs text-white focus:border-brand-mint focus:outline-none"
+                className="flex-1 px-3.5 py-2 rounded-xl bg-surface-elevated/50 border border-border text-xs text-text-primary placeholder:text-text-faint focus:border-brand-mint focus:outline-none"
               />
               <button
                 type="button"
@@ -327,7 +327,7 @@ export default function ProjectEditorModal({
                     key={sw}
                     type="button"
                     onClick={() => handleAddSoftware(sw)}
-                    className="text-[10px] px-2 py-0.5 rounded bg-white/[0.02] border border-white/[0.06] text-text-muted hover:text-white cursor-pointer"
+                    className="text-[10px] px-2 py-0.5 rounded bg-surface-elevated/40 border border-border text-text-muted hover:text-text-primary cursor-pointer"
                   >
                     + {sw}
                   </button>
@@ -371,7 +371,7 @@ export default function ProjectEditorModal({
                   }
                 }}
                 placeholder="e.g. Quantity Surveying, Geotechnical Analysis, Clash Detection..."
-                className="flex-1 px-3.5 py-2 rounded-xl bg-bg-elevated border border-border-default text-xs text-white focus:border-brand-mint focus:outline-none"
+                className="flex-1 px-3.5 py-2 rounded-xl bg-surface-elevated/50 border border-border text-xs text-text-primary placeholder:text-text-faint focus:border-brand-mint focus:outline-none"
               />
               <button
                 type="button"
@@ -386,7 +386,7 @@ export default function ProjectEditorModal({
                 {form.skills.map((skill) => (
                   <span
                     key={skill}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.08] text-xs text-white font-medium"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-elevated/50 border border-border text-xs text-text-primary font-medium"
                   >
                     {skill}
                     <button
@@ -403,7 +403,7 @@ export default function ProjectEditorModal({
           </div>
 
           {/* Modal Actions */}
-          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4 border-t border-white/[0.06]">
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4 border-t border-border">
             <button
               type="button"
               onClick={onClose}

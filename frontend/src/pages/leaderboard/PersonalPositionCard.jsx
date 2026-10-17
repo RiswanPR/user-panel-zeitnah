@@ -30,7 +30,7 @@ export default function PersonalPositionCard({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.05 }}
-      className="relative overflow-hidden rounded-2xl bg-bg-card border border-border-default p-6 sm:p-7 shadow-sm"
+      className="relative overflow-hidden rounded-2xl bg-surface-card border border-border p-6 sm:p-7 shadow-sm"
     >
       <div className="gradient-line-top" />
       <div className="absolute top-0 right-0 w-[240px] h-[240px] bg-brand-mint/5 rounded-full blur-[90px] pointer-events-none" />
@@ -44,11 +44,11 @@ export default function PersonalPositionCard({
               <span className="text-[10px] font-bold uppercase tracking-widest text-brand-mint block">
                 Rank
               </span>
-              <span className="font-heading font-black text-3xl sm:text-4xl text-white font-mono leading-none">
+              <span className="font-heading font-black text-3xl sm:text-4xl text-text-primary font-mono leading-none">
                 #{currentRank}
               </span>
             </div>
-            <span className="absolute -top-1.5 -right-1.5 rounded-md bg-brand-yellow px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-bg-base shadow-sm">
+            <span className="absolute -top-1.5 -right-1.5 rounded-md bg-brand-yellow px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-brand-navy shadow-sm">
               YOU
             </span>
           </div>
@@ -60,14 +60,14 @@ export default function PersonalPositionCard({
                 {isCourseMode ? `Your Course Standing (${courseName || "Curriculum"})` : "Your Global Standing"}
               </span>
               {telemetry?.totalLearners && !isCourseMode && (
-                <span className="rounded-full bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 text-[10px] text-text-muted font-mono">
+                <span className="rounded-full bg-surface-elevated border border-border px-2 py-0.5 text-[10px] text-text-muted font-mono">
                   of {telemetry.totalLearners.toLocaleString()} learners
                 </span>
               )}
             </div>
 
             <div className="flex items-baseline gap-3">
-              <span className="font-heading font-black text-3xl sm:text-4xl text-white font-mono tracking-tight leading-none">
+              <span className="font-heading font-black text-3xl sm:text-4xl text-text-primary font-mono tracking-tight leading-none">
                 {xpValue.toLocaleString()}
               </span>
               <span className="text-xs font-bold text-brand-mint uppercase tracking-wider">
@@ -80,7 +80,7 @@ export default function PersonalPositionCard({
                 <Star className="w-3 h-3 text-brand-yellow" />
                 Level {level}
               </span>
-              <span className="inline-flex items-center gap-1 rounded-lg border border-white/[0.06] bg-white/[0.03] px-2.5 py-0.5 text-xs font-semibold text-text-secondary">
+              <span className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface-elevated px-2.5 py-0.5 text-xs font-semibold text-text-secondary">
                 <Award className="w-3 h-3 text-brand-mint" />
                 {rankTitle}
               </span>
@@ -96,7 +96,7 @@ export default function PersonalPositionCard({
         </div>
 
         {/* Right Side: Level Progression & Link to My Points */}
-        <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between gap-4 pt-4 lg:pt-0 border-t lg:border-t-0 border-white/[0.06] min-w-[280px]">
+        <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between gap-4 pt-4 lg:pt-0 border-t lg:border-t-0 border-border min-w-[280px]">
           {/* Level Progress */}
           <div className="w-full sm:max-w-xs lg:max-w-none space-y-1.5">
             <div className="flex justify-between items-center text-[11px] font-semibold text-text-muted uppercase tracking-wider">
@@ -107,7 +107,7 @@ export default function PersonalPositionCard({
                   : "Max Level"}
               </span>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-surface-elevated">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${progressPercent}%` }}

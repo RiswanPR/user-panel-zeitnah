@@ -22,7 +22,7 @@ export default function ProfileExperienceSection({
     <section
       id="experience"
       aria-labelledby="profile-experience-heading"
-      className={`rounded-3xl border border-white/[0.08] bg-[#0A0F18]/90 backdrop-blur-xl p-6 sm:p-8 shadow-sm transition-all ${className}`}
+      className={`rounded-3xl border border-border bg-surface-card p-6 sm:p-8 shadow-sm transition-all ${className}`}
     >
       <div className="flex items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
@@ -32,7 +32,7 @@ export default function ProfileExperienceSection({
           <div>
             <h2
               id="profile-experience-heading"
-              className="text-lg sm:text-xl font-heading font-extrabold text-white tracking-tight"
+              className="text-lg sm:text-xl font-heading font-extrabold text-text-primary tracking-tight"
             >
               Career Experience
             </h2>
@@ -67,11 +67,11 @@ export default function ProfileExperienceSection({
       </div>
 
       {sortedItems.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.01] p-8 text-center">
-          <div className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-text-muted mx-auto mb-3">
+        <div className="rounded-2xl border border-dashed border-border bg-surface-elevated/20 p-8 text-center">
+          <div className="w-12 h-12 rounded-xl bg-surface-elevated border border-border flex items-center justify-center text-text-muted mx-auto mb-3">
             <Building className="w-6 h-6 text-text-faint" />
           </div>
-          <h3 className="text-sm font-heading font-bold text-white mb-1">
+          <h3 className="text-sm font-heading font-bold text-text-primary mb-1">
             No career experience listed
           </h3>
           <p className="text-xs text-text-muted max-w-sm mx-auto mb-4">
@@ -103,7 +103,7 @@ export default function ProfileExperienceSection({
       ) : (
         <>
           <ExperienceSummaryCard experience={rawItems} className="mb-6" />
-          <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-[11px] sm:before:left-[15px] before:top-4 before:bottom-4 before:w-[2px] before:bg-gradient-to-b before:from-brand-mint/50 before:via-white/[0.08] before:to-transparent">
+          <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-[11px] sm:before:left-[15px] before:top-4 before:bottom-4 before:w-[2px] before:bg-gradient-to-b before:from-brand-mint/50 before:via-border before:to-transparent">
             {sortedItems.map((exp, index) => {
             const expId = exp.id || exp._id || index;
             const isOngoing = isExperienceOngoing(exp);
@@ -122,24 +122,24 @@ export default function ProfileExperienceSection({
                 <div
                   className={`absolute -left-6 sm:-left-8 top-1.5 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
                     isOngoing
-                      ? "bg-[#070B14] border-brand-mint text-brand-mint shadow-[0_0_12px_rgba(159,213,178,0.35)]"
-                      : "bg-[#070B14] border-white/20 text-text-muted group-hover:border-white/40"
+                      ? "bg-page-bg border-brand-mint text-brand-mint shadow-[0_0_12px_rgba(159,213,178,0.35)]"
+                      : "bg-page-bg border-border text-text-muted group-hover:border-border-accent"
                   }`}
                 >
                   <div
                     className={`w-1.5 h-1.5 rounded-full ${
-                      isOngoing ? "bg-brand-mint animate-pulse" : "bg-white/40 group-hover:bg-white/70"
+                      isOngoing ? "bg-brand-mint animate-pulse" : "bg-text-faint group-hover:bg-text-secondary"
                     }`}
                   />
                 </div>
 
                 {/* Content Card */}
-                <div className="p-5 sm:p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/30 hover:bg-white/[0.035] transition-all shadow-sm flex flex-col justify-between gap-3.5">
+                <div className="p-5 sm:p-6 rounded-2xl bg-surface-elevated/40 border border-border hover:border-brand-mint/30 hover:bg-surface-elevated transition-all shadow-sm flex flex-col justify-between gap-3.5">
                   {/* Top row: 1. Job Title & 7. Edit/Delete actions */}
                   <div className="flex items-start justify-between gap-4">
                     <div className="space-y-1 min-w-0 flex-1">
                       {/* 1. Job Title — Strongest text emphasis */}
-                      <h3 className="text-base sm:text-lg font-heading font-black text-white tracking-tight leading-snug break-words">
+                      <h3 className="text-base sm:text-lg font-heading font-black text-text-primary tracking-tight leading-snug break-words">
                         {exp.role || "Untitled Position"}
                       </h3>
                       {/* 2. Company Name & Location */}
@@ -149,7 +149,7 @@ export default function ProfileExperienceSection({
                         </span>
                         {exp.location && (
                           <>
-                            <span className="text-white/20">•</span>
+                            <span className="text-text-faint">•</span>
                             <span className="inline-flex items-center gap-1 text-text-muted">
                               <MapPin className="w-3.5 h-3.5 text-text-faint shrink-0" />
                               <span className="break-words">{exp.location}</span>
@@ -166,7 +166,7 @@ export default function ProfileExperienceSection({
                           <button
                             type="button"
                             onClick={() => onEdit(exp)}
-                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer"
+                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-brand-mint hover:bg-surface-elevated transition-colors cursor-pointer"
                             title={`Edit ${exp.role || "experience"}`}
                             aria-label={`Edit ${exp.role || "experience"} at ${exp.organization || "organization"}`}
                           >
@@ -177,7 +177,7 @@ export default function ProfileExperienceSection({
                           <button
                             type="button"
                             onClick={() => onDelete(expId)}
-                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-red-400 hover:bg-white/[0.04] transition-colors cursor-pointer"
+                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-red-400 hover:bg-surface-elevated transition-colors cursor-pointer"
                             title={`Delete ${exp.role || "experience"}`}
                             aria-label={`Delete ${exp.role || "experience"} at ${exp.organization || "organization"}`}
                           >
@@ -203,13 +203,13 @@ export default function ProfileExperienceSection({
                       </span>
                     )}
                     {exp.employmentType && (
-                      <span className="px-2 py-0.5 rounded-md bg-white/[0.04] text-text-muted font-bold text-[11px] border border-white/[0.06]">
+                      <span className="px-2 py-0.5 rounded-md bg-surface-elevated text-text-muted font-bold text-[11px] border border-border">
                         {exp.employmentType}
                       </span>
                     )}
                     {exp.infrastructureSector && (
                       <span className="px-2.5 py-0.5 rounded-md bg-brand-mint/10 text-brand-mint border border-brand-mint/20 font-semibold text-[11px] flex items-center gap-1">
-                        <Layers className="w-3 h-3 text-brand-mint shrink-0" />
+                        <Layers className="w-3.5 h-3.5 text-brand-mint shrink-0" />
                         <span>{exp.infrastructureSector}</span>
                       </span>
                     )}
@@ -225,7 +225,7 @@ export default function ProfileExperienceSection({
                   {/* 6. Relevant skills & software as compact chips */}
                   {((exp.softwareUsed && exp.softwareUsed.length > 0) ||
                     (exp.skillsUsed && exp.skillsUsed.length > 0)) && (
-                    <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-white/[0.05]">
+                    <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-border">
                       {exp.softwareUsed?.map((sw, swIdx) => (
                         <span
                           key={`sw-${swIdx}`}
@@ -237,7 +237,7 @@ export default function ProfileExperienceSection({
                       {exp.skillsUsed?.map((sk, skIdx) => (
                         <span
                           key={`sk-${skIdx}`}
-                          className="px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/[0.06] text-[11px] text-text-secondary font-medium"
+                          className="px-2 py-0.5 rounded-md bg-surface-elevated border border-border text-[11px] text-text-secondary font-medium"
                         >
                           {sk}
                         </span>

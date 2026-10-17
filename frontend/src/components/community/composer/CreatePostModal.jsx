@@ -853,15 +853,15 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.96, opacity: 0 }}
           transition={{ duration: 0.18 }}
-          className="relative w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-[1040px] bg-[#070B14] border-0 sm:border border-white/[0.1] rounded-none sm:rounded-3xl shadow-[0_24px_80px_rgba(0,0,0,0.7)] flex flex-col overflow-hidden text-white"
+          className="relative w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-[1040px] bg-surface-card border-0 sm:border border-border rounded-none sm:rounded-3xl shadow-[0_24px_80px_rgba(0,0,0,0.7)] flex flex-col overflow-hidden text-text-primary"
         >
           {/* ── Studio Header Bar ── */}
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-white/[0.08] shrink-0 select-none bg-[#09111F]/90 backdrop-blur-md z-20">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-border shrink-0 select-none bg-surface-card/90 backdrop-blur-md z-20">
             <div className="flex items-center gap-2.5">
               <button
                 type="button"
                 onClick={handleRequestClose}
-                className="p-1.5 -ml-1 rounded-xl text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+                className="p-1.5 -ml-1 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer"
                 aria-label="Close post studio"
               >
                 <ArrowLeft className="w-5 h-5 sm:hidden" />
@@ -869,7 +869,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
               </button>
 
               <div>
-                <h2 id="create-post-title" className="text-sm sm:text-base font-bold font-heading text-white tracking-tight flex items-center gap-2">
+                <h2 id="create-post-title" className="text-sm sm:text-base font-bold font-heading text-text-primary tracking-tight flex items-center gap-2">
                   <span>Create Post</span>
                   <span className="hidden sm:inline-block px-2 py-0.5 rounded-full bg-brand-mint/10 border border-brand-mint/20 text-[10px] font-semibold text-brand-mint uppercase tracking-wider">
                     Studio
@@ -883,14 +883,14 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
 
             {/* View Switch: Edit vs Preview */}
             <div className="flex items-center gap-2">
-              <div className="flex items-center bg-white/[0.04] p-1 rounded-xl border border-white/[0.08]">
+              <div className="flex items-center bg-surface-elevated p-1 rounded-xl border border-border">
                 <button
                   type="button"
                   onClick={() => setViewMode('EDIT')}
                   className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                     viewMode === 'EDIT'
-                      ? 'bg-brand-mint text-[#070B14] font-semibold shadow-sm'
-                      : 'text-text-muted hover:text-white'
+                      ? 'bg-brand-mint text-bg-base font-semibold shadow-sm'
+                      : 'text-text-muted hover:text-text-primary'
                   }`}
                 >
                   <Edit3 className="w-3.5 h-3.5" />
@@ -901,8 +901,8 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                   onClick={() => setViewMode('PREVIEW')}
                   className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                     viewMode === 'PREVIEW'
-                      ? 'bg-brand-mint text-[#070B14] font-semibold shadow-sm'
-                      : 'text-text-muted hover:text-white'
+                      ? 'bg-brand-mint text-bg-base font-semibold shadow-sm'
+                      : 'text-text-muted hover:text-text-primary'
                   }`}
                 >
                   <Eye className="w-3.5 h-3.5" />
@@ -915,7 +915,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                 type="button"
                 onClick={handlePublish}
                 disabled={isUploading || createPostMutation.isPending}
-                className="sm:hidden px-3.5 py-1.5 rounded-xl bg-brand-mint text-[#070B14] font-bold text-xs hover:opacity-90 disabled:opacity-40 transition-all cursor-pointer"
+                className="sm:hidden px-3.5 py-1.5 rounded-xl bg-brand-mint text-bg-base font-bold text-xs hover:opacity-90 disabled:opacity-40 transition-all cursor-pointer"
               >
                 {isUploading ? 'Posting...' : 'Post'}
               </button>
@@ -925,7 +925,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
           {/* ── Saved Draft Notification Banner ── */}
           {hasExistingDraft && (
             <div className="px-4 sm:px-6 py-2 bg-brand-mint/10 border-b border-brand-mint/20 flex items-center justify-between text-xs shrink-0">
-              <span className="flex items-center gap-2 text-white/90">
+              <span className="flex items-center gap-2 text-text-primary">
                 <Sparkles className="w-3.5 h-3.5 text-brand-mint" />
                 <span>You have an unfinished post draft.</span>
               </span>
@@ -937,11 +937,11 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                 >
                   Resume
                 </button>
-                <span className="text-white/20">•</span>
+                <span className="text-text-muted/30">•</span>
                 <button
                   type="button"
                   onClick={handleDiscardSavedDraft}
-                  className="text-text-muted hover:text-white cursor-pointer"
+                  className="text-text-muted hover:text-text-primary cursor-pointer"
                 >
                   Discard
                 </button>
@@ -962,41 +962,41 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
 
           {/* ── UPLOADING / PUBLISHING OVERLAY ── */}
           {step === 'UPLOADING' ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[420px] bg-[#070B14]">
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[420px] bg-surface-card">
               {uploadError ? (
-                <div className="max-w-md w-full p-6 rounded-3xl bg-[#0F1828] border border-rose-500/30 text-center space-y-4">
+                <div className="max-w-md w-full p-6 rounded-3xl bg-surface-elevated border border-rose-500/30 text-center space-y-4">
                   <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 mx-auto flex items-center justify-center">
                     <AlertCircle className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-white">Upload failed</h3>
+                    <h3 className="text-base font-bold text-text-primary">Upload failed</h3>
                     <p className="text-xs text-text-muted mt-1 leading-relaxed">{uploadError}</p>
                   </div>
                   <div className="flex items-center justify-center gap-3 pt-2">
                     <button
                       type="button"
                       onClick={() => handlePublish()}
-                      className="px-4 py-2 rounded-xl bg-brand-mint text-[#070B14] text-xs font-bold hover:opacity-90 transition-all cursor-pointer"
+                      className="px-4 py-2 rounded-xl bg-brand-mint text-bg-base text-xs font-bold hover:opacity-90 transition-all cursor-pointer"
                     >
                       Retry
                     </button>
                     <button
                       type="button"
                       onClick={() => setStep('DETAILS')}
-                      className="px-4 py-2 rounded-xl bg-white/[0.06] text-white hover:bg-white/[0.1] text-xs font-semibold transition-all cursor-pointer"
+                      className="px-4 py-2 rounded-xl bg-surface-card text-text-primary hover:bg-surface-card/80 border border-border text-xs font-semibold transition-all cursor-pointer"
                     >
                       Keep editing
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="max-w-md w-full p-8 rounded-3xl bg-[#09111F] border border-white/[0.08] text-center space-y-5">
+                <div className="max-w-md w-full p-8 rounded-3xl bg-surface-card border border-border text-center space-y-5">
                   <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
                     <div className="absolute inset-0 rounded-full border-2 border-brand-mint/20 border-t-brand-mint animate-spin" />
                     <UploadCloud className="w-7 h-7 text-brand-mint" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-white">Publishing post…</h3>
+                    <h3 className="text-base font-bold text-text-primary">Publishing post…</h3>
                     <p className="text-xs text-text-muted mt-1">Please keep this window open.</p>
                   </div>
 
@@ -1004,9 +1004,9 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                   <div className="space-y-1.5 text-left">
                     <div className="flex justify-between text-[11px] text-text-muted">
                       <span>{uploadStatusText}</span>
-                      <span className="font-semibold text-white">{uploadProgress}%</span>
+                      <span className="font-semibold text-text-primary">{uploadProgress}%</span>
                     </div>
-                    <div className="h-2 w-full bg-white/[0.06] rounded-full overflow-hidden">
+                    <div className="h-2 w-full bg-surface-elevated rounded-full overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-brand-mint to-brand-yellow transition-all duration-300 rounded-full"
                         style={{ width: `${uploadProgress}%` }}
@@ -1018,7 +1018,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                     type="button"
                     data-testid="cancel-upload-btn"
                     onClick={handleCancelUpload}
-                    className="text-xs text-text-muted hover:text-white transition-colors cursor-pointer pt-2"
+                    className="text-xs text-text-muted hover:text-text-primary transition-colors cursor-pointer pt-2"
                   >
                     Cancel upload
                   </button>
@@ -1027,7 +1027,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
             </div>
           ) : viewMode === 'PREVIEW' ? (
             /* ── PREVIEW MODE VIEW ── */
-            <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-[#040810]/70">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-bg-base/70">
               <PostPreview
                 user={user}
                 content={content}
@@ -1069,12 +1069,12 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                       <button
                         type="button"
                         onClick={() => setShowIdentityMenu((prev) => !prev)}
-                        className="flex items-center gap-3 p-1.5 -ml-1.5 rounded-2xl hover:bg-white/[0.04] transition-all text-left cursor-pointer group border border-transparent hover:border-white/[0.08]"
+                        className="flex items-center gap-3 p-1.5 -ml-1.5 rounded-2xl hover:bg-surface-elevated transition-all text-left cursor-pointer group border border-transparent hover:border-border"
                         aria-label="Switch publishing profile"
                         aria-expanded={showIdentityMenu}
                       >
                         {isBusinessMode ? (
-                          <div className="w-10 h-10 rounded-xl bg-[#0E1726] border border-white/[0.1] overflow-hidden flex items-center justify-center shrink-0">
+                          <div className="w-10 h-10 rounded-xl bg-surface-elevated border border-border overflow-hidden flex items-center justify-center shrink-0">
                             <BusinessLogo
                               logo={currentBusiness?.logo}
                               name={currentBusiness?.name || 'Company'}
@@ -1083,7 +1083,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                             />
                           </div>
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-[#0E1726] border border-white/[0.1] overflow-hidden flex items-center justify-center text-xs font-bold text-brand-mint shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-surface-elevated border border-border overflow-hidden flex items-center justify-center text-xs font-bold text-brand-mint shrink-0">
                             {avatarUrl ? (
                               <img src={avatarUrl} alt={user?.name || 'You'} className="w-full h-full object-cover" />
                             ) : (
@@ -1093,17 +1093,17 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                         )}
                         <div>
                           <div className="flex items-center gap-1.5">
-                            <p className="text-xs sm:text-sm font-bold text-white group-hover:text-brand-mint transition-colors">
+                            <p className="text-xs sm:text-sm font-bold text-text-primary group-hover:text-brand-mint transition-colors">
                               {isBusinessMode ? (currentBusiness?.name || 'Company') : (user?.name || 'You')}
                             </p>
                             <span className={`inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold ${
                               isBusinessMode
                                 ? 'bg-brand-mint/15 text-brand-mint border border-brand-mint/30'
-                                : 'bg-white/[0.06] text-text-muted border border-white/[0.08]'
+                                : 'bg-surface-elevated text-text-muted border border-border'
                             }`}>
                               {isBusinessMode ? 'Company' : 'Personal'}
                             </span>
-                            <ChevronDown className="w-3.5 h-3.5 text-text-muted group-hover:text-white transition-colors" />
+                            <ChevronDown className="w-3.5 h-3.5 text-text-muted group-hover:text-text-primary transition-colors" />
                           </div>
                           <p className="text-[11px] text-text-muted">
                             {isBusinessMode
@@ -1122,7 +1122,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -4, scale: 0.98 }}
                             transition={{ duration: 0.12 }}
-                            className="absolute top-full left-0 mt-2 w-64 rounded-2xl bg-[#0E1726] border border-white/[0.1] shadow-2xl z-30 p-2 overflow-hidden"
+                            className="absolute top-full left-0 mt-2 w-64 rounded-2xl bg-surface-card border border-border shadow-2xl z-30 p-2 overflow-hidden"
                           >
                             <div className="px-2.5 py-1.5 text-[11px] font-semibold text-text-muted uppercase tracking-wider">
                               Publishing as
@@ -1133,17 +1133,17 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                               type="button"
                               onClick={() => {
                                 setCapturedPublishingContext({
-                                  profileType: 'personal',
-                                  organizationId: null,
-                                  organization: null,
+                                   profileType: 'personal',
+                                   organizationId: null,
+                                   organization: null,
                                 });
                                 setShowIdentityMenu(false);
                               }}
                               className={`w-full flex items-center gap-2.5 p-2 rounded-xl text-left transition-colors cursor-pointer ${
-                                !isBusinessMode ? 'bg-white/[0.08] text-white' : 'hover:bg-white/[0.04] text-text-muted hover:text-white'
+                                !isBusinessMode ? 'bg-surface-elevated text-text-primary' : 'hover:bg-surface-elevated/60 text-text-muted hover:text-text-primary'
                               }`}
                             >
-                              <div className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/[0.08] overflow-hidden flex items-center justify-center shrink-0 text-xs font-bold text-brand-mint">
+                              <div className="w-8 h-8 rounded-full bg-surface-elevated border border-border overflow-hidden flex items-center justify-center shrink-0 text-xs font-bold text-brand-mint">
                                 {avatarUrl ? (
                                   <img src={avatarUrl} alt={user?.name || 'You'} className="w-full h-full object-cover" />
                                 ) : (
@@ -1173,10 +1173,10 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                                     setShowIdentityMenu(false);
                                   }}
                                   className={`w-full flex items-center gap-2.5 p-2 rounded-xl text-left transition-colors cursor-pointer mt-1 ${
-                                    isSelected ? 'bg-white/[0.08] text-white' : 'hover:bg-white/[0.04] text-text-muted hover:text-white'
+                                    isSelected ? 'bg-surface-elevated text-text-primary' : 'hover:bg-surface-elevated/60 text-text-muted hover:text-text-primary'
                                   }`}
                                 >
-                                  <div className="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/[0.08] overflow-hidden flex items-center justify-center shrink-0">
+                                  <div className="w-8 h-8 rounded-lg bg-surface-elevated border border-border overflow-hidden flex items-center justify-center shrink-0">
                                     <BusinessLogo logo={biz.logo} name={biz.name} size="sm" className="w-full h-full object-cover" />
                                   </div>
                                   <div className="flex-1 min-w-0">
@@ -1193,7 +1193,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                     </div>
                   ) : isBusinessMode ? (
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#0E1726] border border-white/[0.1] overflow-hidden flex items-center justify-center shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-surface-elevated border border-border overflow-hidden flex items-center justify-center shrink-0">
                         <BusinessLogo
                           logo={currentBusiness?.logo}
                           name={currentBusiness?.name || 'Company'}
@@ -1203,7 +1203,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5">
-                          <p className="text-xs sm:text-sm font-bold text-white">
+                          <p className="text-xs sm:text-sm font-bold text-text-primary">
                             {currentBusiness?.name || 'Company'}
                           </p>
                           <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-brand-mint/15 text-brand-mint border border-brand-mint/30">
@@ -1217,7 +1217,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                     </div>
                   ) : (
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#0E1726] border border-white/[0.1] overflow-hidden flex items-center justify-center text-xs font-bold text-brand-mint shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-surface-elevated border border-border overflow-hidden flex items-center justify-center text-xs font-bold text-brand-mint shrink-0">
                         {avatarUrl ? (
                           <img src={avatarUrl} alt={user?.name || 'You'} className="w-full h-full object-cover" />
                         ) : (
@@ -1225,7 +1225,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                         )}
                       </div>
                       <div>
-                        <p className="text-xs sm:text-sm font-bold text-white">{user?.name || 'You'}</p>
+                        <p className="text-xs sm:text-sm font-bold text-text-primary">{user?.name || 'You'}</p>
                         <p className="text-[11px] text-text-muted">
                           {user?.username ? `@${user.username}` : 'Verified Member'} · <span className="text-brand-mint font-medium">{audience}</span>
                         </p>
@@ -1254,7 +1254,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                     }
                     rows={4}
                     maxLength={5000}
-                    className="flex-1 w-full bg-white/[0.02] border border-white/[0.08] focus:border-brand-mint/40 rounded-2xl p-4 text-sm sm:text-base text-white placeholder-text-faint focus:outline-none resize-none leading-relaxed transition-colors"
+                    className="flex-1 w-full bg-surface-card border border-border focus:border-brand-mint/40 rounded-2xl p-4 text-sm sm:text-base text-text-primary placeholder-text-faint focus:outline-none resize-none leading-relaxed transition-colors"
                   />
 
                   {/* Mentions Autocomplete Popup */}
@@ -1322,11 +1322,11 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                 )}
 
                 {/* Quick Attachments Toolbar */}
-                <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-white/[0.06]">
+                <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-border">
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] text-xs text-text-secondary hover:text-white border border-white/[0.06] transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-card text-xs text-text-secondary hover:text-text-primary border border-border transition-colors cursor-pointer"
                   >
                     <Image className="w-3.5 h-3.5 text-brand-mint" />
                     <span>Photo / Video</span>
@@ -1338,7 +1338,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs border transition-colors cursor-pointer ${
                       showPoll
                         ? 'bg-brand-mint/10 border-brand-mint/30 text-brand-mint font-semibold'
-                        : 'bg-white/[0.03] hover:bg-white/[0.08] border-white/[0.06] text-text-secondary hover:text-white'
+                        : 'bg-surface-elevated hover:bg-surface-card border-border text-text-secondary hover:text-text-primary'
                     }`}
                   >
                     <BarChart2 className="w-3.5 h-3.5 text-brand-yellow" />
@@ -1351,7 +1351,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                       setContent((prev) => `${prev}@`);
                       if (textareaRef.current) textareaRef.current.focus();
                     }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] text-xs text-text-secondary hover:text-white border border-white/[0.06] transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-card text-xs text-text-secondary hover:text-text-primary border border-border transition-colors cursor-pointer"
                   >
                     <AtSign className="w-3.5 h-3.5 text-sky-400" />
                     <span>Mention</span>
@@ -1363,7 +1363,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs border transition-colors cursor-pointer ${
                       showLocationInput || location
                         ? 'bg-purple-500/10 border-purple-500/30 text-purple-300 font-semibold'
-                        : 'bg-white/[0.03] hover:bg-white/[0.08] border-white/[0.06] text-text-secondary hover:text-white'
+                        : 'bg-surface-elevated hover:bg-surface-card border-border text-text-secondary hover:text-text-primary'
                     }`}
                   >
                     <MapPin className="w-3.5 h-3.5 text-purple-400" />
@@ -1373,20 +1373,20 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
 
                 {/* Optional Location Input */}
                 {showLocationInput && (
-                  <div className="flex items-center gap-2 p-2 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                  <div className="flex items-center gap-2 p-2 rounded-xl bg-surface-card border border-border">
                     <MapPin className="w-4 h-4 text-purple-400 shrink-0" />
                     <input
                       type="text"
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
                       placeholder="Add project site, city or venue..."
-                      className="w-full bg-transparent text-xs text-white placeholder-text-faint focus:outline-none"
+                      className="w-full bg-transparent text-xs text-text-primary placeholder-text-faint focus:outline-none"
                     />
                     {location && (
                       <button
                         type="button"
                         onClick={() => setLocation('')}
-                        className="p-1 text-text-muted hover:text-white"
+                        className="p-1 text-text-muted hover:text-text-primary"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -1396,15 +1396,15 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
               </div>
 
               {/* RIGHT / SETTINGS COLUMN (Desktop >=1024px) */}
-              <div className="w-full lg:w-[360px] border-t lg:border-t-0 lg:border-l border-white/[0.08] bg-[#09111F]/50 p-4 sm:p-6 space-y-5 overflow-y-auto">
+              <div className="w-full lg:w-[360px] border-t lg:border-t-0 lg:border-l border-border bg-surface-card/60 p-4 sm:p-6 space-y-5 overflow-y-auto">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-text-muted">
                   Post Settings
                 </h3>
 
                 {/* Audience Control Card */}
-                <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] space-y-2">
+                <div className="p-3.5 rounded-2xl bg-surface-card border border-border space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-white">Audience</span>
+                    <span className="text-xs font-semibold text-text-primary">Audience</span>
                     <span className="text-[10px] text-brand-mint font-medium">{audience}</span>
                   </div>
                   <p className="text-[11px] text-text-muted leading-relaxed">
@@ -1417,9 +1417,9 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                 </div>
 
                 {/* Topics / Hashtags Section */}
-                <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] space-y-3">
+                <div className="p-3.5 rounded-2xl bg-surface-card border border-border space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-white">Topics &amp; Hashtags</span>
+                    <span className="text-xs font-semibold text-text-primary">Topics &amp; Hashtags</span>
                     <span className="text-[10px] text-text-muted">{tags.length} selected</span>
                   </div>
 
@@ -1437,18 +1437,18 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                         }
                       }}
                       placeholder="Search or add topic..."
-                      className="w-full bg-white/[0.03] border border-white/[0.08] focus:border-brand-mint/50 rounded-xl pl-8 pr-3 py-2 text-xs text-white placeholder-text-faint focus:outline-none transition-colors"
+                      className="w-full bg-surface-elevated border border-border focus:border-brand-mint/50 rounded-xl pl-8 pr-3 py-2 text-xs text-text-primary placeholder-text-faint focus:outline-none transition-colors"
                     />
 
                     {/* Suggestions dropdown */}
                     {topicSuggestions.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-[#0E1726] border border-white/[0.12] rounded-xl shadow-xl p-1 z-30 divide-y divide-white/[0.04]">
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-surface-card border border-border rounded-xl shadow-xl p-1 z-30 divide-y divide-border">
                         {topicSuggestions.map((t, idx) => (
                           <button
                             key={idx}
                             type="button"
                             onClick={() => handleAddTag(t)}
-                            className="w-full text-left px-3 py-1.5 text-xs text-brand-mint hover:bg-white/[0.06] rounded-lg transition-colors cursor-pointer"
+                            className="w-full text-left px-3 py-1.5 text-xs text-brand-mint hover:bg-surface-elevated rounded-lg transition-colors cursor-pointer"
                           >
                             #{t}
                           </button>
@@ -1469,7 +1469,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                           <button
                             type="button"
                             onClick={() => handleRemoveTag(tag)}
-                            className="p-0.5 hover:text-white cursor-pointer"
+                            className="p-0.5 hover:text-text-primary cursor-pointer"
                             aria-label={`Remove topic ${tag}`}
                           >
                             <X className="w-3 h-3" />
@@ -1494,8 +1494,8 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                             onClick={() => (isAdded ? handleRemoveTag(hashtag) : handleAddTag(hashtag))}
                             className={`px-2 py-0.5 rounded-lg text-[10px] font-medium transition-colors cursor-pointer ${
                               isAdded
-                                ? 'bg-brand-mint text-[#070B14] font-semibold'
-                                : 'bg-white/[0.04] text-text-muted hover:text-white border border-white/[0.06]'
+                                ? 'bg-brand-mint text-bg-base font-semibold'
+                                : 'bg-surface-elevated text-text-muted hover:text-text-primary border border-border'
                             }`}
                           >
                             #{hashtag}
@@ -1507,15 +1507,15 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                 </div>
 
                 {/* Comment Settings */}
-                <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] space-y-2">
+                <div className="p-3.5 rounded-2xl bg-surface-card border border-border space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-white">Comment Permissions</span>
+                    <span className="text-xs font-semibold text-text-primary">Comment Permissions</span>
                     <MessageSquare className="w-3.5 h-3.5 text-text-muted" />
                   </div>
                   <select
                     value={allowComments}
                     onChange={(e) => setAllowComments(e.target.value)}
-                    className="w-full bg-[#0E1726] border border-white/[0.08] text-xs text-white rounded-xl px-3 py-2 focus:outline-none focus:border-brand-mint/50 cursor-pointer"
+                    className="w-full bg-surface-elevated border border-border text-xs text-text-primary rounded-xl px-3 py-2 focus:outline-none focus:border-brand-mint/50 cursor-pointer"
                   >
                     <option value="everyone">Allow comments from everyone</option>
                     <option value="connections">Connections &amp; cohort members only</option>
@@ -1527,7 +1527,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
           )}
 
           {/* ── Studio Bottom Publishing Bar ── */}
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-t border-white/[0.08] bg-[#070B14] shrink-0 select-none pb-[env(safe-area-inset-bottom,14px)]">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-t border-border bg-surface-card shrink-0 select-none pb-[env(safe-area-inset-bottom,14px)]">
             {/* Draft status indicator */}
             <div className="flex items-center gap-2">
               <span className="flex items-center gap-1.5 text-xs text-text-muted">
@@ -1543,7 +1543,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
               <button
                 type="button"
                 onClick={handleSaveDraft}
-                className="text-xs text-text-muted hover:text-white transition-colors cursor-pointer ml-1"
+                className="text-xs text-text-muted hover:text-text-primary transition-colors cursor-pointer ml-1"
               >
                 Save
               </button>
@@ -1555,7 +1555,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                 type="button"
                 id="create-post-close-btn"
                 onClick={handleRequestClose}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+                className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer inline-flex items-center"
               >
                 Cancel
               </button>
@@ -1565,10 +1565,10 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                 id="composer-submit-btn"
                 onClick={handlePublish}
                 disabled={isUploading || createPostMutation.isPending}
-                className={`min-h-[42px] px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md cursor-pointer disabled:opacity-50 ${
+                className={`min-h-[44px] px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md cursor-pointer disabled:opacity-50 inline-flex items-center justify-center ${
                   createPostMutation.isPending || isUploading
-                    ? 'community-shimmer-btn text-[#070B14]'
-                    : 'bg-gradient-to-r from-brand-mint to-brand-yellow text-[#070B14] hover:shadow-[0_0_24px_rgba(159,213,178,0.4),0_0_14px_rgba(246,237,74,0.2)] hover:brightness-105 active:scale-95'
+                    ? 'community-shimmer-btn text-bg-base'
+                    : 'bg-gradient-to-r from-brand-mint to-brand-yellow text-bg-base hover:shadow-[0_0_24px_rgba(159,213,178,0.4),0_0_14px_rgba(246,237,74,0.2)] hover:brightness-105 active:scale-95'
                 }`}
               >
                 {createPostMutation.isPending || isUploading ? 'Publishing…' : 'Publish Post →'}
@@ -1585,12 +1585,12 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
               aria-labelledby="discard-title"
               aria-describedby="discard-desc"
             >
-              <div className="w-full max-w-sm bg-[#0E1726] border border-white/[0.1] rounded-3xl p-6 shadow-2xl text-center space-y-4">
+              <div className="w-full max-w-sm bg-surface-card border border-border rounded-3xl p-6 shadow-2xl text-center space-y-4">
                 <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 mx-auto flex items-center justify-center">
                   <AlertCircle className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 id="discard-title" className="text-base font-bold text-white">
+                  <h3 id="discard-title" className="text-base font-bold text-text-primary">
                     Discard changes?
                   </h3>
                   <p id="discard-desc" className="text-xs text-text-muted mt-1 leading-relaxed">
@@ -1602,7 +1602,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                   <button
                     type="button"
                     onClick={handleSaveDraft}
-                    className="w-full py-2.5 rounded-xl bg-brand-mint text-[#070B14] font-bold text-xs hover:opacity-90 transition-all cursor-pointer"
+                    className="w-full py-2.5 rounded-xl bg-brand-mint text-bg-base font-bold text-xs hover:opacity-90 transition-all cursor-pointer"
                   >
                     Save as draft
                   </button>
@@ -1618,7 +1618,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                   <button
                     type="button"
                     onClick={() => setShowDraftDialog(false)}
-                    className="w-full py-2 rounded-xl text-text-muted hover:text-white font-medium text-xs transition-colors cursor-pointer"
+                    className="w-full py-2 rounded-xl text-text-muted hover:text-text-primary font-medium text-xs transition-colors cursor-pointer"
                   >
                     Keep editing
                   </button>

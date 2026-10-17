@@ -89,7 +89,7 @@ export default function ProfileActivity({ activity = [] }) {
   const hasActivity = activity && activity.length > 0;
 
   return (
-    <div className="rounded-2xl border border-white/[0.08] bg-bg-surface/90 p-5 sm:p-6 shadow-lg backdrop-blur-xl space-y-4">
+    <div className="rounded-2xl border border-border bg-surface-card p-5 sm:p-6 shadow-lg backdrop-blur-xl space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xs font-mono font-bold uppercase tracking-widest text-text-muted flex items-center gap-2">
           <Activity className="h-3.5 w-3.5 text-brand-mint" />
@@ -115,7 +115,7 @@ export default function ProfileActivity({ activity = [] }) {
             return (
               <div
                 key={item.id}
-                className="flex items-start gap-3 rounded-xl border border-white/[0.04] bg-white/[0.01] p-3 hover:border-white/[0.08] transition-colors"
+                className="flex items-start gap-3 rounded-xl border border-border bg-surface-elevated/30 p-3 hover:border-border-accent transition-colors"
               >
                 <div
                   className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border ${visuals.bg} ${visuals.color}`}
@@ -125,7 +125,7 @@ export default function ProfileActivity({ activity = [] }) {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-white truncate">
+                  <p className="text-xs font-semibold text-text-primary truncate">
                     {item.title}
                   </p>
                   <div className="mt-1 flex items-center gap-2 text-[10px] text-text-muted">

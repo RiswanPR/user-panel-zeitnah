@@ -76,7 +76,7 @@ export default function InfrastructureExpertiseSection({
               setPrimaryDiscipline(e.target.value);
               if (onChangeDirty) onChangeDirty();
             }}
-            className="w-full px-4 py-3 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors cursor-pointer"
+            className="w-full px-4 py-3 rounded-xl bg-surface-elevated/70 border border-border focus:border-brand-mint focus:outline-none text-sm text-text-primary transition-colors cursor-pointer"
           >
             <option value="">Select your infrastructure discipline...</option>
             {INFRASTRUCTURE_DISCIPLINES.map((d) => (
@@ -106,7 +106,7 @@ export default function InfrastructureExpertiseSection({
                 if (onChangeDirty) onChangeDirty();
               }}
               placeholder="0"
-              className="w-full px-4 py-3 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors"
+              className="w-full px-4 py-3 rounded-xl bg-surface-elevated/70 border border-border focus:border-brand-mint focus:outline-none text-sm text-text-primary transition-colors"
             />
             <span className="absolute right-4 top-3.5 text-xs text-text-faint pointer-events-none">
               Years
@@ -143,7 +143,7 @@ export default function InfrastructureExpertiseSection({
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[36px] ${
                   isSelected
                     ? "bg-brand-mint/15 border border-brand-mint text-brand-mint shadow-[0_0_12px_rgba(159,213,178,0.15)]"
-                    : "bg-white/[0.02] border border-white/[0.08] text-text-muted hover:text-white hover:border-white/20"
+                    : "bg-surface-elevated/50 border border-border text-text-muted hover:text-text-primary hover:border-brand-mint/30"
                 }`}
               >
                 {isSelected ? (
@@ -159,7 +159,7 @@ export default function InfrastructureExpertiseSection({
       </div>
 
       {/* ── Specializations ── */}
-      <div className="space-y-3 pt-2 border-t border-border-default/50">
+      <div className="space-y-3 pt-2 border-t border-border">
         <div className="flex items-center justify-between">
           <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary">
             Specializations & Sub-Disciplines
@@ -182,7 +182,7 @@ export default function InfrastructureExpertiseSection({
               }
             }}
             placeholder="Add specialization (e.g. Bridge Design, 4D BIM, Geotechnical Investigation)..."
-            className="flex-1 px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors"
+            className="flex-1 px-4 py-2.5 rounded-xl bg-surface-elevated/70 border border-border focus:border-brand-mint focus:outline-none text-sm text-text-primary transition-colors"
           />
           <button
             type="button"
@@ -209,7 +209,7 @@ export default function InfrastructureExpertiseSection({
                     key={spec}
                     type="button"
                     onClick={() => handleAddSpec(spec)}
-                    className="px-2.5 py-1 rounded-lg text-xs bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.06] hover:border-brand-mint/30 text-text-muted hover:text-white transition-all cursor-pointer inline-flex items-center gap-1"
+                    className="px-2.5 py-1 rounded-lg text-xs bg-surface-elevated/50 hover:bg-surface-elevated border border-border hover:border-brand-mint/30 text-text-muted hover:text-text-primary transition-all cursor-pointer inline-flex items-center gap-1"
                   >
                     <Plus className="w-3 h-3 text-brand-mint" />
                     <span>{spec}</span>
@@ -243,7 +243,7 @@ export default function InfrastructureExpertiseSection({
       </div>
 
       {/* ── Preferred Locations ── */}
-      <div className="space-y-3 pt-2 border-t border-border-default/50">
+      <div className="space-y-3 pt-2 border-t border-border">
         <div className="flex items-center justify-between">
           <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary">
             Preferred Work / Project Locations
@@ -265,7 +265,7 @@ export default function InfrastructureExpertiseSection({
               }
             }}
             placeholder="Add location (e.g. Dubai, UAE, Riyadh, KSA, London, UK, Remote)..."
-            className="flex-1 px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-default focus:border-brand-mint focus:outline-none text-sm text-white transition-colors"
+            className="flex-1 px-4 py-2.5 rounded-xl bg-surface-elevated/70 border border-border focus:border-brand-mint focus:outline-none text-sm text-text-primary transition-colors"
           />
           <button
             type="button"
@@ -282,7 +282,7 @@ export default function InfrastructureExpertiseSection({
             {preferredLocations.map((loc) => (
               <span
                 key={loc}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs font-semibold text-white"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-elevated border border-border text-xs font-semibold text-text-primary"
               >
                 <MapPin className="w-3 h-3 text-brand-mint" />
                 <span>{loc}</span>

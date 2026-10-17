@@ -186,23 +186,23 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, isHighlighted, on
       initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: shouldReduceMotion ? 0.05 : 0.18, ease: 'easeOut' }}
-      className={`zn-card bg-[#0B111E] rounded-2xl shadow-sm mb-3 sm:mb-4 group overflow-hidden transition-all duration-300 ${
+      className={`zn-card bg-surface-card rounded-2xl shadow-sm mb-3 sm:mb-4 group overflow-hidden transition-all duration-300 ${
         isHighlighted
           ? 'border-2 border-brand-mint shadow-[0_0_24px_rgba(159,213,178,0.3)] ring-2 ring-brand-mint/30'
-          : 'border border-white/[0.07] hover:border-white/[0.12]'
+          : 'border border-border hover:border-border-accent'
       }`}
     >
       {rawId !== elementId && <div id={rawId} className="sr-only" aria-hidden="true" />}
       {/* 0. Repost Attribution Header if post is a repost */}
       {isRepost && (
-        <div className="px-3.5 sm:px-4 pt-3 pb-1 border-b border-white/[0.04]">
+        <div className="px-3.5 sm:px-4 pt-3 pb-1 border-b border-border">
           <RepostAttribution author={post.author} />
         </div>
       )}
 
       {/* If original post is deleted/inaccessible */}
       {isOriginalDeleted ? (
-        <div className="m-3.5 p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs text-text-muted flex items-center justify-between select-none">
+        <div className="m-3.5 p-3.5 rounded-xl bg-surface-elevated/50 border border-border text-xs text-text-muted flex items-center justify-between select-none">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-text-muted/60" aria-hidden="true" />
             <span>Original post unavailable</span>
@@ -299,7 +299,7 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, isHighlighted, on
               <button
                 type="button"
                 onClick={handleToggleComments}
-                className="text-xs text-text-muted/75 hover:text-white transition-colors block text-left cursor-pointer select-none"
+                className="text-xs text-text-muted/75 hover:text-text-primary transition-colors block text-left cursor-pointer select-none"
                 aria-label={`View all ${commentCount} comments`}
               >
                 View all {commentCount.toLocaleString()} {commentCount === 1 ? 'comment' : 'comments'}
@@ -322,7 +322,7 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, isHighlighted, on
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="mt-4 pt-4 border-t border-white/[0.06] overflow-hidden"
+            className="mt-4 pt-4 border-t border-border overflow-hidden"
             aria-label="Post comments"
           >
             {/* New Comment Input */}
@@ -334,7 +334,7 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, isHighlighted, on
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 placeholder="Write a comment..."
-                className="flex-1 bg-white/[0.04] border border-white/[0.08] focus:border-brand-mint/50 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-white placeholder-text-faint focus:outline-none transition-colors"
+                className="flex-1 bg-surface-elevated border border-border focus:border-brand-mint/50 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-text-primary placeholder-text-faint focus:outline-none transition-colors"
                 maxLength={500}
               />
               <button
@@ -380,11 +380,11 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, isHighlighted, on
                   return (
                     <div
                       key={commentId}
-                      className="flex items-start gap-2.5 p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04]"
+                      className="flex items-start gap-2.5 p-2.5 rounded-xl bg-surface-elevated/40 border border-border"
                     >
                       <Link
                         to={cProfileUrl}
-                        className="w-7 h-7 rounded-full shrink-0 overflow-hidden ring-1 ring-white/[0.08] bg-[#0E1726] flex items-center justify-center"
+                        className="w-7 h-7 rounded-full shrink-0 overflow-hidden ring-1 ring-border bg-surface-elevated flex items-center justify-center"
                         aria-label={`View ${cAuthorName}'s profile`}
                       >
                         {comment.author?.avatar ? (
@@ -404,7 +404,7 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, isHighlighted, on
                         <div className="flex items-center justify-between gap-2">
                           <Link
                             to={cProfileUrl}
-                            className="text-xs font-semibold text-white hover:text-brand-mint transition-colors truncate"
+                            className="text-xs font-semibold text-text-primary hover:text-brand-mint transition-colors truncate"
                           >
                             {cAuthorName}
                           </Link>

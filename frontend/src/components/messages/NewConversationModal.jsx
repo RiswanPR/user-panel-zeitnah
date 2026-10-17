@@ -57,16 +57,16 @@ export default function NewConversationModal({ onClose, onSelectConversation }) 
         initial={{ opacity: 0, scale: 0.96, y: 6 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96 }}
-        className="relative w-full max-w-md rounded-3xl border border-white/[0.1] bg-[#0C121E] shadow-2xl p-6 overflow-hidden flex flex-col max-h-[82vh]"
+        className="relative w-full max-w-md rounded-3xl border border-border bg-surface-card shadow-2xl p-6 overflow-hidden flex flex-col max-h-[82vh]"
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
+        <div className="flex items-center justify-between pb-4 border-b border-border">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-brand-mint/15 text-brand-mint border border-brand-mint/25">
               <MessageSquare className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white tracking-tight">
+              <h2 className="text-base font-bold text-text-primary tracking-tight">
                 New Direct Message
               </h2>
               <p className="text-xs text-text-muted mt-0.5">
@@ -78,7 +78,7 @@ export default function NewConversationModal({ onClose, onSelectConversation }) 
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer"
             aria-label="Close dialog"
           >
             <X className="w-5 h-5" />
@@ -94,20 +94,20 @@ export default function NewConversationModal({ onClose, onSelectConversation }) 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search your network by name or handle..."
-              className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-brand-mint/40 text-xs text-white placeholder-text-muted focus:outline-none transition-colors"
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-surface-elevated/50 border border-border focus:border-brand-mint text-xs text-text-primary placeholder:text-text-muted focus:outline-none transition-colors"
               autoFocus
             />
           </div>
         </div>
 
         {/* Connections List */}
-        <div className="flex-1 overflow-y-auto divide-y divide-white/[0.04] -mx-2 px-2">
+        <div className="flex-1 overflow-y-auto divide-y divide-border -mx-2 px-2">
           {isLoading ? (
             <div className="p-4 space-y-3">
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="h-14 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse"
+                  className="h-14 rounded-2xl bg-surface-elevated/30 border border-border animate-pulse"
                 />
               ))}
             </div>
@@ -132,9 +132,9 @@ export default function NewConversationModal({ onClose, onSelectConversation }) 
                   key={conn._id || peer.id}
                   type="button"
                   onClick={() => handleSelectUser(peer)}
-                  className="w-full p-2.5 rounded-2xl flex items-center gap-3 hover:bg-white/[0.04] transition-colors text-left cursor-pointer group"
+                  className="w-full min-h-[44px] p-2.5 rounded-2xl flex items-center gap-3 hover:bg-surface-elevated transition-colors text-left cursor-pointer group"
                 >
-                  <div className="w-11 h-11 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center overflow-hidden text-brand-mint font-bold text-xs shrink-0 shadow-inner">
+                  <div className="w-11 h-11 rounded-full bg-surface-elevated border border-border flex items-center justify-center overflow-hidden text-brand-mint font-bold text-xs shrink-0 shadow-inner">
                     {avatar ? (
                       <img
                         src={avatar}
@@ -148,7 +148,7 @@ export default function NewConversationModal({ onClose, onSelectConversation }) 
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <p className="text-xs font-bold text-white group-hover:text-brand-mint transition-colors truncate">
+                      <p className="text-xs font-bold text-text-primary group-hover:text-brand-mint transition-colors truncate">
                         {name}
                       </p>
                       {peer.role && (

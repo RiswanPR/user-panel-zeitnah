@@ -166,14 +166,14 @@ export default function InfrastructurePeopleFilters({
       {/* ── Filter Bar Header: Role Selector + Secondary Dropdowns ── */}
       <div className="flex items-center justify-between gap-3">
         {/* Role Pills (Primary Persona) */}
-        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-[#0A0F14] border border-white/[0.08] overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-surface-elevated border border-border overflow-x-auto no-scrollbar">
           <button
             type="button"
             onClick={() => handleUpdate("role", "all")}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
               role === "all"
                 ? "bg-brand-mint text-black font-bold shadow-md shadow-brand-mint/15"
-                : "text-text-muted hover:text-white hover:bg-white/[0.04]"
+                : "text-text-muted hover:text-text-primary hover:bg-surface-card"
             }`}
           >
             All Ecosystem
@@ -188,7 +188,7 @@ export default function InfrastructurePeopleFilters({
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                   isSelected
                     ? "bg-brand-mint text-black font-bold shadow-md shadow-brand-mint/15"
-                    : "text-text-muted hover:text-white hover:bg-white/[0.04]"
+                    : "text-text-muted hover:text-text-primary hover:bg-surface-card"
                 }`}
               >
                 {r.label}
@@ -202,7 +202,7 @@ export default function InfrastructurePeopleFilters({
           type="button"
           onClick={() => setIsMobileDrawerOpen(true)}
           aria-label="Open filter drawer"
-          className="lg:hidden flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs font-semibold text-white hover:border-brand-mint/30 transition-all cursor-pointer shrink-0"
+          className="lg:hidden flex items-center gap-2 px-3.5 py-2 rounded-xl bg-surface-elevated border border-border text-xs font-semibold text-text-primary hover:border-brand-mint/30 transition-all cursor-pointer shrink-0"
         >
           <Filter className="w-3.5 h-3.5 text-brand-mint" aria-hidden="true" />
           <span>Filters</span>
@@ -218,7 +218,7 @@ export default function InfrastructurePeopleFilters({
           <button
             type="button"
             onClick={handleClearAll}
-            className="hidden lg:inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-white transition-colors cursor-pointer ml-auto"
+            className="hidden lg:inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-text-primary transition-colors cursor-pointer ml-auto"
           >
             <RotateCcw className="w-3 h-3 text-text-muted" />
             <span>Reset filters</span>
@@ -242,8 +242,8 @@ export default function InfrastructurePeopleFilters({
             }}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
               departmentId
-                ? "border-brand-mint/50 bg-brand-mint/10 text-white font-bold"
-                : "border-white/[0.08] bg-[#0A0F14] text-text-muted hover:text-white hover:border-white/[0.14]"
+                ? "border-brand-mint/50 bg-brand-mint/10 text-brand-mint font-bold"
+                : "border-border bg-surface-elevated text-text-muted hover:text-text-primary hover:border-border hover:bg-surface-card"
             }`}
           >
             <Building2 className="w-3.5 h-3.5 text-brand-mint/80 shrink-0" />
@@ -262,7 +262,7 @@ export default function InfrastructurePeopleFilters({
               id="department-filter-menu"
               role="listbox"
               aria-labelledby="department-filter-btn"
-              className="absolute left-0 top-full mt-1.5 w-72 rounded-2xl border border-white/[0.1] bg-[#0C121D] p-2 shadow-2xl backdrop-blur-2xl z-40 max-h-80 flex flex-col"
+              className="absolute left-0 top-full mt-1.5 w-72 rounded-2xl border border-border bg-surface-card p-2 shadow-2xl backdrop-blur-2xl z-40 max-h-80 flex flex-col"
             >
               {/* Searchable input */}
               <div className="relative mb-1.5 px-1">
@@ -273,7 +273,7 @@ export default function InfrastructurePeopleFilters({
                   value={departmentSearch}
                   onChange={(e) => setDepartmentSearch(e.target.value)}
                   onClick={(e) => e.stopPropagation()}
-                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-text-muted focus:outline-none focus:border-brand-mint/40"
+                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-mint/40"
                   autoFocus
                 />
               </div>
@@ -287,8 +287,8 @@ export default function InfrastructurePeopleFilters({
                   }}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                     !departmentId
-                      ? "bg-white/[0.06] text-white font-bold"
-                      : "text-text-muted hover:bg-white/[0.06] hover:text-white"
+                      ? "bg-brand-mint/15 text-brand-mint font-bold"
+                      : "text-text-muted hover:bg-surface-elevated hover:text-text-primary"
                   }`}
                 >
                   <span>All Departments</span>
@@ -324,7 +324,7 @@ export default function InfrastructurePeopleFilters({
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer text-left ${
                       departmentId === dept.id
                         ? "bg-brand-mint/15 text-brand-mint font-bold"
-                        : "text-white/80 hover:bg-white/[0.06] hover:text-white"
+                        : "text-text-secondary hover:bg-surface-elevated hover:text-text-primary"
                     }`}
                   >
                     <span className="truncate pr-2">{dept.name}</span>
@@ -351,8 +351,8 @@ export default function InfrastructurePeopleFilters({
             }
             className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
               discipline
-                ? "border-brand-mint/50 bg-brand-mint/10 text-white font-bold"
-                : "border-white/[0.08] bg-[#0A0F14] text-text-muted hover:text-white hover:border-white/[0.14]"
+                ? "border-brand-mint/50 bg-brand-mint/10 text-brand-mint font-bold"
+                : "border-border bg-surface-elevated text-text-muted hover:text-text-primary hover:border-border hover:bg-surface-card"
             }`}
           >
             <Briefcase className="w-3.5 h-3.5 text-brand-mint/80 shrink-0" />
@@ -365,12 +365,12 @@ export default function InfrastructurePeopleFilters({
               id="discipline-filter-menu"
               role="listbox"
               aria-labelledby="discipline-filter-btn"
-              className="absolute left-0 top-full mt-1.5 w-64 rounded-2xl border border-white/[0.1] bg-[#0C121D] p-1.5 shadow-2xl backdrop-blur-2xl z-40 max-h-72 overflow-y-auto no-scrollbar"
+              className="absolute left-0 top-full mt-1.5 w-64 rounded-2xl border border-border bg-surface-card p-1.5 shadow-2xl backdrop-blur-2xl z-40 max-h-72 overflow-y-auto no-scrollbar"
             >
               <button
                 type="button"
                 onClick={() => handleUpdate("discipline", "")}
-                className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-text-muted hover:bg-white/[0.06] hover:text-white transition-colors"
+                className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-text-muted hover:bg-surface-elevated hover:text-text-primary transition-colors"
               >
                 All Disciplines
               </button>
@@ -382,7 +382,7 @@ export default function InfrastructurePeopleFilters({
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
                     discipline === d
                       ? "bg-brand-mint/15 text-brand-mint font-bold"
-                      : "text-white/80 hover:bg-white/[0.06] hover:text-white"
+                      : "text-text-secondary hover:bg-surface-elevated hover:text-text-primary"
                   }`}
                 >
                   <span>{d}</span>
@@ -407,8 +407,8 @@ export default function InfrastructurePeopleFilters({
               }
               className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
                 specialization
-                  ? "border-brand-mint/50 bg-brand-mint/10 text-white font-bold"
-                  : "border-white/[0.08] bg-[#0A0F14] text-text-muted hover:text-white hover:border-white/[0.14]"
+                  ? "border-brand-mint/50 bg-brand-mint/10 text-brand-mint font-bold"
+                  : "border-border bg-surface-elevated text-text-muted hover:text-text-primary hover:border-border hover:bg-surface-card"
               }`}
             >
               <span className="truncate max-w-[140px]">{specialization || "Specialization"}</span>
@@ -420,12 +420,12 @@ export default function InfrastructurePeopleFilters({
                 id="spec-filter-menu"
                 role="listbox"
                 aria-labelledby="spec-filter-btn"
-                className="absolute left-0 top-full mt-1.5 w-60 rounded-2xl border border-white/[0.1] bg-[#0C121D] p-1.5 shadow-2xl backdrop-blur-2xl z-40 max-h-64 overflow-y-auto no-scrollbar"
+                className="absolute left-0 top-full mt-1.5 w-60 rounded-2xl border border-border bg-surface-card p-1.5 shadow-2xl backdrop-blur-2xl z-40 max-h-64 overflow-y-auto no-scrollbar"
               >
                 <button
                   type="button"
                   onClick={() => handleUpdate("specialization", "")}
-                  className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-text-muted hover:bg-white/[0.06] hover:text-white"
+                  className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-text-muted hover:bg-surface-elevated hover:text-text-primary"
                 >
                   All Specializations
                 </button>
@@ -437,7 +437,7 @@ export default function InfrastructurePeopleFilters({
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
                       specialization === s
                         ? "bg-brand-mint/15 text-brand-mint font-bold"
-                        : "text-white/80 hover:bg-white/[0.06] hover:text-white"
+                        : "text-text-secondary hover:bg-surface-elevated hover:text-text-primary"
                     }`}
                   >
                     <span>{s}</span>
@@ -462,8 +462,8 @@ export default function InfrastructurePeopleFilters({
             }
             className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
               sector
-                ? "border-brand-mint/50 bg-brand-mint/10 text-white font-bold"
-                : "border-white/[0.08] bg-[#0A0F14] text-text-muted hover:text-white hover:border-white/[0.14]"
+                ? "border-brand-mint/50 bg-brand-mint/10 text-brand-mint font-bold"
+                : "border-border bg-surface-elevated text-text-muted hover:text-text-primary hover:border-border hover:bg-surface-card"
             }`}
           >
             <Layers className="w-3.5 h-3.5 text-brand-mint/80 shrink-0" />
@@ -476,12 +476,12 @@ export default function InfrastructurePeopleFilters({
               id="sector-filter-menu"
               role="listbox"
               aria-labelledby="sector-filter-btn"
-              className="absolute left-0 top-full mt-1.5 w-60 rounded-2xl border border-white/[0.1] bg-[#0C121D] p-1.5 shadow-2xl backdrop-blur-2xl z-40 max-h-64 overflow-y-auto no-scrollbar"
+              className="absolute left-0 top-full mt-1.5 w-60 rounded-2xl border border-border bg-surface-card p-1.5 shadow-2xl backdrop-blur-2xl z-40 max-h-64 overflow-y-auto no-scrollbar"
             >
               <button
                 type="button"
                 onClick={() => handleUpdate("sector", "")}
-                className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-text-muted hover:bg-white/[0.06] hover:text-white"
+                className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-text-muted hover:bg-surface-elevated hover:text-text-primary"
               >
                 All Sectors
               </button>
@@ -493,7 +493,7 @@ export default function InfrastructurePeopleFilters({
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
                     sector === sec
                       ? "bg-brand-mint/15 text-brand-mint font-bold"
-                      : "text-white/80 hover:bg-white/[0.06] hover:text-white"
+                      : "text-text-secondary hover:bg-surface-elevated hover:text-text-primary"
                   }`}
                 >
                   <span>{sec}</span>
@@ -517,8 +517,8 @@ export default function InfrastructurePeopleFilters({
             }
             className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
               software
-                ? "border-brand-mint/50 bg-brand-mint/10 text-white font-bold"
-                : "border-white/[0.08] bg-[#0A0F14] text-text-muted hover:text-white hover:border-white/[0.14]"
+                ? "border-brand-mint/50 bg-brand-mint/10 text-brand-mint font-bold"
+                : "border-border bg-surface-elevated text-text-muted hover:text-text-primary hover:border-border hover:bg-surface-card"
             }`}
           >
             <Wrench className="w-3.5 h-3.5 text-brand-mint/80 shrink-0" />
@@ -531,12 +531,12 @@ export default function InfrastructurePeopleFilters({
               id="software-filter-menu"
               role="listbox"
               aria-labelledby="software-filter-btn"
-              className="absolute left-0 top-full mt-1.5 w-56 rounded-2xl border border-white/[0.1] bg-[#0C121D] p-1.5 shadow-2xl backdrop-blur-2xl z-40 max-h-64 overflow-y-auto no-scrollbar"
+              className="absolute left-0 top-full mt-1.5 w-56 rounded-2xl border border-border bg-surface-card p-1.5 shadow-2xl backdrop-blur-2xl z-40 max-h-64 overflow-y-auto no-scrollbar"
             >
               <button
                 type="button"
                 onClick={() => handleUpdate("software", "")}
-                className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-text-muted hover:bg-white/[0.06] hover:text-white"
+                className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-text-muted hover:bg-surface-elevated hover:text-text-primary"
               >
                 All Software
               </button>
@@ -548,7 +548,7 @@ export default function InfrastructurePeopleFilters({
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
                     software === sw
                       ? "bg-brand-mint/15 text-brand-mint font-bold"
-                      : "text-white/80 hover:bg-white/[0.06] hover:text-white"
+                      : "text-text-secondary hover:bg-surface-elevated hover:text-text-primary"
                   }`}
                 >
                   <span>{sw}</span>
@@ -572,8 +572,8 @@ export default function InfrastructurePeopleFilters({
             }
             className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
               experience
-                ? "border-brand-mint/50 bg-brand-mint/10 text-white font-bold"
-                : "border-white/[0.08] bg-[#0A0F14] text-text-muted hover:text-white hover:border-white/[0.14]"
+                ? "border-brand-mint/50 bg-brand-mint/10 text-brand-mint font-bold"
+                : "border-border bg-surface-elevated text-text-muted hover:text-text-primary hover:border-border hover:bg-surface-card"
             }`}
           >
             <Clock className="w-3.5 h-3.5 text-brand-mint/80 shrink-0" />
@@ -586,12 +586,12 @@ export default function InfrastructurePeopleFilters({
               id="exp-filter-menu"
               role="listbox"
               aria-labelledby="exp-filter-btn"
-              className="absolute left-0 top-full mt-1.5 w-52 rounded-2xl border border-white/[0.1] bg-[#0C121D] p-1.5 shadow-2xl backdrop-blur-2xl z-40 max-h-64 overflow-y-auto no-scrollbar"
+              className="absolute left-0 top-full mt-1.5 w-52 rounded-2xl border border-border bg-surface-card p-1.5 shadow-2xl backdrop-blur-2xl z-40 max-h-64 overflow-y-auto no-scrollbar"
             >
               <button
                 type="button"
                 onClick={() => handleUpdate("experience", "")}
-                className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-text-muted hover:bg-white/[0.06] hover:text-white"
+                className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-text-muted hover:bg-surface-elevated hover:text-text-primary"
               >
                 Any Experience
               </button>
@@ -603,7 +603,7 @@ export default function InfrastructurePeopleFilters({
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
                     experience === exp
                       ? "bg-brand-mint/15 text-brand-mint font-bold"
-                      : "text-white/80 hover:bg-white/[0.06] hover:text-white"
+                      : "text-text-secondary hover:bg-surface-elevated hover:text-text-primary"
                   }`}
                 >
                   <span>{exp}</span>
@@ -648,26 +648,26 @@ export default function InfrastructurePeopleFilters({
             </span>
           )}
           {sector && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-white/[0.06] text-white border border-white/[0.1]">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-surface-elevated text-text-primary border border-border">
               <span>{sector}</span>
               <button type="button" onClick={() => handleUpdate("sector", "")} aria-label="Remove sector filter">
-                <X className="w-3 h-3 hover:text-white" />
+                <X className="w-3 h-3 hover:text-text-primary" />
               </button>
             </span>
           )}
           {software && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-white/[0.06] text-white border border-white/[0.1]">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-surface-elevated text-text-primary border border-border">
               <span>{software}</span>
               <button type="button" onClick={() => handleUpdate("software", "")} aria-label="Remove software filter">
-                <X className="w-3 h-3 hover:text-white" />
+                <X className="w-3 h-3 hover:text-text-primary" />
               </button>
             </span>
           )}
           {experience && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-white/[0.06] text-white border border-white/[0.1]">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-surface-elevated text-text-primary border border-border">
               <span>{experience}</span>
               <button type="button" onClick={() => handleUpdate("experience", "")} aria-label="Remove experience filter">
-                <X className="w-3 h-3 hover:text-white" />
+                <X className="w-3 h-3 hover:text-text-primary" />
               </button>
             </span>
           )}
@@ -689,20 +689,20 @@ export default function InfrastructurePeopleFilters({
               animate={{ y: 0 }}
               exit={shouldReduceMotion ? false : { y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 250 }}
-              className="w-full sm:max-w-md max-h-[85vh] rounded-t-3xl sm:rounded-3xl border border-white/[0.1] bg-[#0A0F14] p-6 shadow-2xl overflow-y-auto"
+              className="w-full sm:max-w-md max-h-[85vh] rounded-t-3xl sm:rounded-3xl border border-border bg-surface-card p-6 shadow-2xl overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
+              <div className="flex items-center justify-between pb-4 border-b border-border">
                 <div className="flex items-center gap-2">
                   <Filter className="w-4 h-4 text-brand-mint" />
-                  <h3 id="mobile-filter-title" className="font-heading font-bold text-white text-base">
+                  <h3 id="mobile-filter-title" className="font-heading font-bold text-text-primary text-base">
                     Filter Professionals
                   </h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsMobileDrawerOpen(false)}
-                  className="p-1 rounded-lg text-text-muted hover:text-white cursor-pointer"
+                  className="p-1 rounded-lg text-text-muted hover:text-text-primary cursor-pointer"
                   aria-label="Close filters"
                 >
                   <X className="w-4 h-4" />
@@ -718,11 +718,11 @@ export default function InfrastructurePeopleFilters({
                   <select
                     value={role}
                     onChange={(e) => handleUpdate("role", e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white focus:outline-none focus:border-brand-mint/40"
+                    className="w-full px-3 py-2.5 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary focus:outline-none focus:border-brand-mint/40"
                   >
-                    <option value="all" className="bg-[#121B2B]">All Ecosystem</option>
+                    <option value="all" className="bg-surface-card text-text-primary">All Ecosystem</option>
                     {DISCOVERY_ROLE_FILTERS.map((r) => (
-                      <option key={r.value} value={r.value} className="bg-[#121B2B]">
+                      <option key={r.value} value={r.value} className="bg-surface-card text-text-primary">
                         {r.label}
                       </option>
                     ))}
@@ -737,11 +737,11 @@ export default function InfrastructurePeopleFilters({
                   <select
                     value={departmentId}
                     onChange={(e) => handleUpdate("departmentId", e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white focus:outline-none focus:border-brand-mint/40"
+                    className="w-full px-3 py-2.5 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary focus:outline-none focus:border-brand-mint/40"
                   >
-                    <option value="" className="bg-[#121B2B]">All Departments</option>
+                    <option value="" className="bg-surface-card text-text-primary">All Departments</option>
                     {departments.map((d) => (
-                      <option key={d.id} value={d.id} className="bg-[#121B2B]">
+                      <option key={d.id} value={d.id} className="bg-surface-card text-text-primary">
                         {d.name}
                       </option>
                     ))}
@@ -756,11 +756,11 @@ export default function InfrastructurePeopleFilters({
                   <select
                     value={discipline}
                     onChange={(e) => handleUpdate("discipline", e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white focus:outline-none focus:border-brand-mint/40"
+                    className="w-full px-3 py-2.5 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary focus:outline-none focus:border-brand-mint/40"
                   >
-                    <option value="" className="bg-[#121B2B]">All Disciplines</option>
+                    <option value="" className="bg-surface-card text-text-primary">All Disciplines</option>
                     {INFRASTRUCTURE_DISCIPLINES.map((d) => (
-                      <option key={d} value={d} className="bg-[#121B2B]">
+                      <option key={d} value={d} className="bg-surface-card text-text-primary">
                         {d}
                       </option>
                     ))}
@@ -775,11 +775,11 @@ export default function InfrastructurePeopleFilters({
                   <select
                     value={sector}
                     onChange={(e) => handleUpdate("sector", e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white focus:outline-none focus:border-brand-mint/40"
+                    className="w-full px-3 py-2.5 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary focus:outline-none focus:border-brand-mint/40"
                   >
-                    <option value="" className="bg-[#121B2B]">All Sectors</option>
+                    <option value="" className="bg-surface-card text-text-primary">All Sectors</option>
                     {INFRASTRUCTURE_SECTORS.map((s) => (
-                      <option key={s} value={s} className="bg-[#121B2B]">
+                      <option key={s} value={s} className="bg-surface-card text-text-primary">
                         {s}
                       </option>
                     ))}
@@ -794,11 +794,11 @@ export default function InfrastructurePeopleFilters({
                   <select
                     value={software}
                     onChange={(e) => handleUpdate("software", e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white focus:outline-none focus:border-brand-mint/40"
+                    className="w-full px-3 py-2.5 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary focus:outline-none focus:border-brand-mint/40"
                   >
-                    <option value="" className="bg-[#121B2B]">All Software</option>
+                    <option value="" className="bg-surface-card text-text-primary">All Software</option>
                     {INFRASTRUCTURE_SOFTWARE.map((sw) => (
-                      <option key={sw} value={sw} className="bg-[#121B2B]">
+                      <option key={sw} value={sw} className="bg-surface-card text-text-primary">
                         {sw}
                       </option>
                     ))}
@@ -813,11 +813,11 @@ export default function InfrastructurePeopleFilters({
                   <select
                     value={experience}
                     onChange={(e) => handleUpdate("experience", e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white focus:outline-none focus:border-brand-mint/40"
+                    className="w-full px-3 py-2.5 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary focus:outline-none focus:border-brand-mint/40"
                   >
-                    <option value="" className="bg-[#121B2B]">Any Experience</option>
+                    <option value="" className="bg-surface-card text-text-primary">Any Experience</option>
                     {EXPERIENCE_OPTIONS.map((exp) => (
-                      <option key={exp} value={exp} className="bg-[#121B2B]">
+                      <option key={exp} value={exp} className="bg-surface-card text-text-primary">
                         {exp}
                       </option>
                     ))}
@@ -825,11 +825,11 @@ export default function InfrastructurePeopleFilters({
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-4 border-t border-white/[0.08]">
+              <div className="flex items-center justify-between pt-4 border-t border-border">
                 <button
                   type="button"
                   onClick={handleClearAll}
-                  className="text-xs font-semibold text-text-muted hover:text-white cursor-pointer"
+                  className="text-xs font-semibold text-text-muted hover:text-text-primary cursor-pointer"
                 >
                   Reset All
                 </button>

@@ -59,19 +59,43 @@ export default function PlatformAnnouncementBanner() {
     ? 'bg-gradient-to-r from-red-950/95 via-red-900/85 to-red-950/95 border-b border-red-500/40 text-red-100 shadow-lg shadow-red-950/50'
     : isHigh
     ? 'bg-gradient-to-r from-amber-950/95 via-amber-900/85 to-amber-950/95 border-b border-amber-500/30 text-amber-100 shadow-lg shadow-black/40'
-    : 'bg-gradient-to-r from-cyan-950/95 via-brand-surface/90 to-violet-950/95 border-b border-brand-mint/20 text-text-primary shadow-lg shadow-black/30';
+    : 'bg-gradient-to-r from-surface-elevated via-surface-card to-surface-elevated border-b border-border text-text-primary shadow-md';
 
   const badgeTheme = isCritical
     ? 'bg-red-500/30 text-red-200 border-red-500/40'
     : isHigh
     ? 'bg-amber-500/30 text-amber-200 border-amber-500/40'
-    : 'bg-brand-mint/20 text-brand-mint border-brand-mint/30';
+    : 'bg-brand-mint/15 text-brand-mint border-brand-mint/30';
 
   const iconTheme = isCritical
     ? 'bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse'
     : isHigh
     ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
-    : 'bg-brand-mint/20 text-brand-mint border border-brand-mint/30';
+    : 'bg-brand-mint/15 text-brand-mint border border-brand-mint/30';
+
+  const titleColor = isCritical
+    ? 'text-red-100'
+    : isHigh
+    ? 'text-amber-100'
+    : 'text-text-primary';
+
+  const ctaBtnTheme = isCritical
+    ? 'bg-red-500/20 hover:bg-red-500/30 text-red-100 border border-red-500/30'
+    : isHigh
+    ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-100 border border-amber-500/30'
+    : 'bg-surface-elevated hover:bg-surface-elevated/80 text-text-primary border border-border';
+
+  const dismissBtnTheme = isCritical
+    ? 'text-red-200/70 hover:text-red-100 hover:bg-red-500/20'
+    : isHigh
+    ? 'text-amber-200/70 hover:text-amber-100 hover:bg-amber-500/20'
+    : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated';
+
+  const ackBtnTheme = isCritical
+    ? 'bg-red-500/30 hover:bg-red-500/40 text-red-100 border border-red-500/40'
+    : isHigh
+    ? 'bg-amber-500/30 hover:bg-amber-500/40 text-amber-100 border border-amber-500/40'
+    : 'bg-surface-elevated hover:bg-surface-elevated/80 text-text-primary border border-border';
 
   const displayPriority = isCritical
     ? 'CRITICAL ALERT'
@@ -98,7 +122,7 @@ export default function PlatformAnnouncementBanner() {
               {displayPriority}
             </span>
             <div className="text-xs sm:text-sm min-w-0 font-medium leading-snug">
-              <span className="font-bold text-white mr-1.5">{topAnnouncement.title}:</span>
+              <span className={`font-bold mr-1.5 ${titleColor}`}>{topAnnouncement.title}:</span>
               <span className="opacity-90">{plainMessage}</span>
             </div>
           </div>
@@ -112,7 +136,7 @@ export default function PlatformAnnouncementBanner() {
                 href={ctaUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors ${ctaBtnTheme}`}
               >
                 <span>{ctaLabel}</span>
                 <ExternalLink className="w-3 h-3" />
@@ -120,7 +144,7 @@ export default function PlatformAnnouncementBanner() {
             ) : (
               <Link
                 to={ctaUrl}
-                className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors ${ctaBtnTheme}`}
               >
                 <span>{ctaLabel}</span>
                 <ArrowRight className="w-3 h-3" />
@@ -140,7 +164,7 @@ export default function PlatformAnnouncementBanner() {
                   onSettled: () => setActionPendingId(null),
                 });
               }}
-              className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              className={`p-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${dismissBtnTheme}`}
               title="Dismiss announcement"
               aria-label="Dismiss announcement"
             >
@@ -158,7 +182,7 @@ export default function PlatformAnnouncementBanner() {
                   onSettled: () => setActionPendingId(null),
                 });
               }}
-              className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-white border border-white/20 transition-all cursor-pointer shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+              className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all cursor-pointer shadow-sm disabled:opacity-40 disabled:cursor-not-allowed ${ackBtnTheme}`}
               title="Acknowledge mandatory announcement"
             >
               <Check className="w-3 h-3" />

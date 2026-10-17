@@ -75,8 +75,8 @@ export default function NetworkSearch({
       <div
         className={`relative flex items-center ${heightClass} rounded-2xl border transition-all duration-200 ${
           isFocused
-            ? "border-brand-mint/50 bg-[#0A0F14] shadow-[0_0_24px_rgba(159,213,178,0.12)] ring-1 ring-brand-mint/25"
-            : "border-white/[0.08] bg-[#070B14]/80 hover:border-white/[0.14] hover:bg-[#0A0F14]"
+            ? "border-brand-mint/50 bg-surface-card shadow-[0_0_24px_rgba(159,213,178,0.12)] ring-1 ring-brand-mint/25"
+            : "border-border bg-surface-elevated/80 hover:border-border-accent hover:bg-surface-elevated"
         } backdrop-blur-xl`}
       >
         {/* Leading Search Icon */}
@@ -101,7 +101,7 @@ export default function NetworkSearch({
           onChange={(e) => setLocalValue(e.target.value)}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          className="w-full bg-transparent py-2.5 pr-14 text-xs sm:text-sm text-white placeholder:text-text-muted/60 focus:outline-none"
+          className="w-full bg-transparent py-2.5 pr-14 text-xs sm:text-sm text-text-primary placeholder:text-text-muted/60 focus:outline-none"
         />
 
         {/* Right Action: Loading Spinner or ⌘K Hint or Clear Button */}
@@ -113,13 +113,13 @@ export default function NetworkSearch({
               type="button"
               onClick={handleClear}
               aria-label="Clear search"
-              className="flex h-6 w-6 items-center justify-center rounded-full bg-white/[0.08] text-text-muted hover:bg-white/[0.15] hover:text-white transition-all cursor-pointer focus-ring"
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-surface-elevated text-text-muted hover:bg-surface-card hover:text-text-primary transition-all cursor-pointer focus-ring"
             >
               <X className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
           ) : (
             <div
-              className="hidden sm:inline-flex items-center gap-0.5 rounded-md border border-white/[0.1] bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-mono font-medium text-text-muted select-none pointer-events-none"
+              className="hidden sm:inline-flex items-center gap-0.5 rounded-md border border-border bg-surface-elevated px-1.5 py-0.5 text-[10px] font-mono font-medium text-text-muted select-none pointer-events-none"
               aria-hidden="true"
             >
               <span>{isMac ? "⌘" : "Ctrl"}</span>

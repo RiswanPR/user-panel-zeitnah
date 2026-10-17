@@ -84,7 +84,7 @@ function Dashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="relative overflow-hidden rounded-2xl bg-bg-card border border-border-default"
+        className="relative overflow-hidden rounded-2xl bg-surface-card border border-border"
       >
         <div className="gradient-line-top" />
         <div className="absolute top-0 right-0 w-[400px] h-[300px] bg-brand-mint/4 rounded-full blur-[120px] pointer-events-none" />
@@ -97,7 +97,7 @@ function Dashboard() {
                 <Sparkles className="w-3.5 h-3.5" />
                 {getGreeting()}
               </div>
-              <h1 className="font-heading font-extrabold text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight leading-none">
+              <h1 className="font-heading font-extrabold text-3xl sm:text-4xl lg:text-5xl text-text-primary tracking-tight leading-none">
                 Welcome back, <span className="text-gradient">{firstName}</span>
               </h1>
               <p className="text-sm font-medium text-text-muted mt-3 max-w-lg leading-relaxed">
@@ -109,8 +109,8 @@ function Dashboard() {
 
             {/* Completion circle */}
             <div className="relative h-24 w-24 sm:h-28 sm:w-28 mx-auto sm:mx-0 shrink-0">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-                <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+              <svg className="w-full h-full -rotate-90 text-border" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" strokeOpacity="0.4" strokeWidth="8" />
                 <motion.circle
                   cx="60" cy="60" r="52" fill="none" stroke="url(#dashGrad)" strokeWidth="8" strokeLinecap="round"
                   strokeDasharray={`${2 * Math.PI * 52}`}
@@ -126,7 +126,7 @@ function Dashboard() {
                 </defs>
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-xl sm:text-2xl font-heading font-extrabold text-white">
+                <span className="text-xl sm:text-2xl font-heading font-extrabold text-text-primary">
                   {summary.overallCompletionPercent || 0}%
                 </span>
                 <span className="text-[9px] font-semibold uppercase tracking-wider text-text-muted">Overall</span>
@@ -144,11 +144,11 @@ function Dashboard() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 + i * 0.05 }}
-            className="rounded-2xl border border-border-default bg-bg-card p-5 flex items-center justify-between group hover:border-brand-mint/15 transition-colors relative overflow-hidden"
+            className="rounded-2xl border border-border bg-surface-card p-5 flex items-center justify-between group hover:border-brand-mint/15 transition-colors relative overflow-hidden"
           >
             <div className="min-w-0 flex-1">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-text-muted mb-1">{stat.label}</p>
-              <p className="text-xl sm:text-2xl font-heading font-extrabold text-white truncate">{stat.value}</p>
+              <p className="text-xl sm:text-2xl font-heading font-extrabold text-text-primary truncate">{stat.value}</p>
             </div>
             <div className="h-11 w-11 rounded-xl bg-brand-mint/8 border border-brand-mint/15 flex items-center justify-center text-brand-mint shrink-0 ml-3 group-hover:bg-brand-mint/12 transition-colors">
               <stat.icon className="w-5 h-5" />
@@ -165,11 +165,11 @@ function Dashboard() {
           transition={{ delay: 0.3 }}
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg sm:text-xl font-heading font-bold text-white">Continue Learning</h2>
+            <h2 className="text-lg sm:text-xl font-heading font-bold text-text-primary">Continue Learning</h2>
             <button
               type="button"
               onClick={() => navigate("/courses")}
-              className="text-xs font-semibold text-brand-mint hover:text-white transition-colors inline-flex items-center gap-1 cursor-pointer"
+              className="text-xs font-semibold text-brand-mint hover:text-text-primary transition-colors inline-flex items-center gap-1 cursor-pointer"
             >
               View All
               <ArrowRight className="w-3.5 h-3.5" />
@@ -188,13 +188,13 @@ function Dashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.35 + i * 0.06 }}
                   onClick={() => navigate(`/courses/${course._id}/chapters`)}
-                  className="group text-left rounded-2xl border border-border-default bg-bg-card p-5 hover:border-brand-mint/20 transition-all duration-300 hover:-translate-y-0.5 cursor-pointer relative overflow-hidden w-full"
+                  className="group text-left rounded-2xl border border-border bg-surface-card p-5 hover:border-brand-mint/20 transition-all duration-300 hover:-translate-y-0.5 cursor-pointer relative overflow-hidden w-full"
                 >
                   <div className="gradient-line-top" />
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="min-w-0">
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-text-muted mb-1">Course</p>
-                      <h3 className="font-semibold text-white text-base tracking-tight line-clamp-2 group-hover:text-brand-mint transition-colors">
+                      <h3 className="font-semibold text-text-primary text-base tracking-tight line-clamp-2 group-hover:text-brand-mint transition-colors">
                         {course.name}
                       </h3>
                     </div>
@@ -205,7 +205,7 @@ function Dashboard() {
                   <p className="text-xs font-medium text-text-muted mb-3">
                     {progress?.completedClasses || 0} of {progress?.totalClasses || 0} classes
                   </p>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated border border-border/40">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${percent}%` }}
@@ -236,13 +236,13 @@ function Dashboard() {
             key={action.path}
             type="button"
             onClick={() => navigate(action.path)}
-            className="group rounded-2xl border border-border-default bg-bg-card p-5 flex items-center gap-4 hover:border-brand-mint/20 transition-all duration-200 w-full text-left cursor-pointer"
+            className="group rounded-2xl border border-border bg-surface-card p-5 flex items-center gap-4 hover:border-brand-mint/20 transition-all duration-200 w-full text-left cursor-pointer min-h-[44px]"
           >
             <div className="h-11 w-11 rounded-xl bg-brand-mint/8 border border-brand-mint/15 flex items-center justify-center text-brand-mint shrink-0 group-hover:bg-brand-mint/12 transition-colors">
               <action.icon className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-white group-hover:text-brand-mint transition-colors truncate">{action.label}</p>
+              <p className="text-sm font-semibold text-text-primary group-hover:text-brand-mint transition-colors truncate">{action.label}</p>
               <p className="text-xs font-medium text-text-muted mt-0.5">{action.desc}</p>
             </div>
           </button>

@@ -62,13 +62,13 @@ export default function DiscoveryLinks({ onOpenSearch }) {
   return (
     <PremiumCard variant="surface" padding="p-4 sm:p-5">
       <div className="flex items-center justify-between mb-3">
-        <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+        <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider">
           Explore Platform
         </h4>
         <button
           type="button"
           onClick={handleTriggerSearch}
-          className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/[0.04] hover:bg-white/[0.08] text-[10px] font-mono text-text-muted hover:text-white transition-colors cursor-pointer"
+          className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-elevated hover:bg-surface-card border border-border text-[10px] font-mono text-text-muted hover:text-text-primary transition-colors cursor-pointer"
           title="Open platform search"
         >
           <Search className="w-3 h-3" />
@@ -83,20 +83,20 @@ export default function DiscoveryLinks({ onOpenSearch }) {
             <Link
               key={link.to}
               to={link.to}
-              className="flex items-center justify-between p-2 rounded-xl hover:bg-white/[0.04] transition-colors group"
+              className="flex items-center justify-between p-2 rounded-xl hover:bg-surface-elevated transition-colors group"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-text-muted group-hover:text-brand-mint group-hover:border-brand-mint/30 transition-colors">
+                <div className="w-7 h-7 rounded-lg bg-surface-elevated border border-border flex items-center justify-center text-text-muted group-hover:text-brand-mint group-hover:border-brand-mint/30 transition-colors">
                   <Icon className="w-3.5 h-3.5" />
                 </div>
                 <div className="truncate">
-                  <p className="text-xs font-medium text-white group-hover:text-brand-mint transition-colors truncate">
+                  <p className="text-xs font-medium text-text-primary group-hover:text-brand-mint transition-colors truncate">
                     {link.label}
                   </p>
                   <p className="text-[10px] text-text-faint truncate">{link.description}</p>
                 </div>
               </div>
-              <ExternalLink className="w-3 h-3 text-text-faint group-hover:text-white transition-colors shrink-0 ml-2" />
+              <ExternalLink className="w-3 h-3 text-text-faint group-hover:text-text-primary transition-colors shrink-0 ml-2" />
             </Link>
           );
         })}

@@ -85,15 +85,15 @@ export default function ErrorFeedbackModal({ errorData, onClose, onRetry }) {
   if (success) {
     return (
       <div id="error-feedback-modal-overlay" className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300">
-        <div className="bg-[#0A1A2F] border border-[#9fd5b2]/30 rounded-2xl max-w-md w-full p-8 text-center shadow-2xl">
+        <div className="bg-surface-card border border-border-accent rounded-2xl max-w-md w-full p-8 text-center shadow-2xl">
           <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Report Sent</h2>
-          <p className="text-white/60 mb-8">Thank you for helping us improve Zeitnah. Our engineering team has been notified.</p>
+          <h2 className="text-2xl font-bold text-text-primary mb-2">Report Sent</h2>
+          <p className="text-text-muted mb-8">Thank you for helping us improve Zeitnah. Our engineering team has been notified.</p>
           <div className="flex gap-3 justify-center">
-            <button onClick={handleReload} className="px-6 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transition-colors">Reload Page</button>
-            <button onClick={handleHome} className="px-6 py-2.5 bg-[#9fd5b2] hover:bg-[#86c49a] text-[#0A1A2F] rounded-lg font-bold transition-colors">Go Home</button>
+            <button onClick={handleReload} className="px-6 py-2.5 bg-surface-elevated hover:bg-surface-card border border-border text-text-primary rounded-xl font-medium transition-colors cursor-pointer">Reload Page</button>
+            <button onClick={handleHome} className="px-6 py-2.5 bg-brand-mint hover:bg-brand-mint/90 text-brand-navy rounded-xl font-bold transition-colors cursor-pointer">Go Home</button>
           </div>
         </div>
       </div>
@@ -102,7 +102,7 @@ export default function ErrorFeedbackModal({ errorData, onClose, onRetry }) {
 
   return (
     <div id="error-feedback-modal-overlay" className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300">
-      <div className="bg-[#0A1A2F] border border-red-500/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-surface-card border border-border rounded-2xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
         {!showFeedback ? (
           <>
             <div className="flex items-center gap-4 mb-4">
@@ -110,33 +110,33 @@ export default function ErrorFeedbackModal({ errorData, onClose, onRetry }) {
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white">We encountered an unexpected issue.</h2>
+                <h2 className="text-xl font-bold text-text-primary">We encountered an unexpected issue.</h2>
               </div>
             </div>
-            <p className="text-white/70 mb-6 text-sm">
+            <p className="text-text-secondary mb-6 text-sm">
               You can help us resolve it quickly by sending an automatic diagnostic report. No passwords or OTPs are included.
             </p>
             <div className="flex flex-col gap-3">
-              <button onClick={() => setShowFeedback(true)} className="w-full py-3 bg-[#f6ed4a] hover:bg-[#e5dc42] text-[#0A1A2F] rounded-xl font-bold transition-colors flex items-center justify-center gap-2">
+              <button onClick={() => setShowFeedback(true)} className="w-full py-3 bg-brand-yellow hover:brightness-105 text-brand-navy rounded-xl font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 Send Diagnostic Report
               </button>
               <div className="grid grid-cols-2 gap-3">
                 {onRetry && (
-                  <button onClick={onRetry} className="py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-medium transition-colors">
+                  <button onClick={onRetry} className="py-2.5 bg-surface-elevated hover:bg-surface-card border border-border text-text-primary rounded-xl font-medium transition-colors cursor-pointer">
                     Retry Action
                   </button>
                 )}
-                <button onClick={handleReload} className="py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-medium transition-colors">
+                <button onClick={handleReload} className="py-2.5 bg-surface-elevated hover:bg-surface-card border border-border text-text-primary rounded-xl font-medium transition-colors cursor-pointer">
                   Reload Page
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <button onClick={handleHome} className="py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-medium transition-colors">
+                <button onClick={handleHome} className="py-2.5 bg-surface-elevated hover:bg-surface-card border border-border text-text-primary rounded-xl font-medium transition-colors cursor-pointer">
                   Go Home
                 </button>
                 {onClose && (
-                  <button onClick={onClose} className="py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white/50 hover:text-white rounded-xl font-medium transition-colors">
+                  <button onClick={onClose} className="py-2.5 bg-surface-elevated hover:bg-surface-card border border-border text-text-muted hover:text-text-primary rounded-xl font-medium transition-colors cursor-pointer">
                     Continue Anyway
                   </button>
                 )}
@@ -145,35 +145,35 @@ export default function ErrorFeedbackModal({ errorData, onClose, onRetry }) {
           </>
         ) : (
           <form onSubmit={handleSendReport} className="flex flex-col gap-4 text-left">
-            <h2 className="text-xl font-bold text-white mb-2">Diagnostic Report</h2>
+            <h2 className="text-xl font-bold text-text-primary mb-2">Diagnostic Report</h2>
             <div>
-              <label className="block text-xs font-semibold text-white/70 uppercase tracking-wide mb-1.5">What happened?</label>
+              <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1.5">What happened?</label>
               <textarea 
                 required
                 rows={2}
                 value={formData.whatHappened}
                 onChange={e => setFormData({...formData, whatHappened: e.target.value})}
-                className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white placeholder-white/30 focus:border-[#9fd5b2] outline-none transition-colors resize-none text-sm"
+                className="w-full bg-surface-elevated border border-border rounded-xl p-3 text-text-primary placeholder:text-text-muted focus:border-border-accent outline-none transition-colors resize-none text-sm"
                 placeholder="e.g., I clicked the play button and the screen went black."
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-white/70 uppercase tracking-wide mb-1.5">What were you trying to do?</label>
+              <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1.5">What were you trying to do?</label>
               <textarea 
                 required
                 rows={2}
                 value={formData.whatTryingToDo}
                 onChange={e => setFormData({...formData, whatTryingToDo: e.target.value})}
-                className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white placeholder-white/30 focus:border-[#9fd5b2] outline-none transition-colors resize-none text-sm"
+                className="w-full bg-surface-elevated border border-border rounded-xl p-3 text-text-primary placeholder:text-text-muted focus:border-border-accent outline-none transition-colors resize-none text-sm"
                 placeholder="e.g., I was trying to watch chapter 3 of the advanced course."
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-white/70 uppercase tracking-wide mb-1.5">Can you reproduce it?</label>
+              <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1.5">Can you reproduce it?</label>
               <select 
                 value={formData.reproducible}
                 onChange={e => setFormData({...formData, reproducible: e.target.value})}
-                className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white focus:border-[#9fd5b2] outline-none transition-colors text-sm"
+                className="w-full bg-surface-elevated border border-border rounded-xl p-3 text-text-primary focus:border-border-accent outline-none transition-colors text-sm"
               >
                 <option value="yes">Yes, it happens every time</option>
                 <option value="sometimes">Sometimes</option>
@@ -182,30 +182,30 @@ export default function ErrorFeedbackModal({ errorData, onClose, onRetry }) {
               </select>
             </div>
             <label className="flex items-center gap-3 cursor-pointer mt-2 group">
-              <div className="relative flex items-center justify-center w-5 h-5 rounded border border-white/30 group-hover:border-[#9fd5b2] transition-colors">
+              <div className="relative flex items-center justify-center w-5 h-5 rounded border border-border group-hover:border-border-accent transition-colors">
                 <input 
                   type="checkbox" 
                   checked={includeScreenshot}
                   onChange={(e) => setIncludeScreenshot(e.target.checked)}
                   className="peer absolute inset-0 opacity-0 cursor-pointer"
                 />
-                <svg className="w-3.5 h-3.5 text-[#9fd5b2] opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
+                <svg className="w-3.5 h-3.5 text-brand-mint opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
               </div>
-              <span className="text-sm text-white/80">Include a screenshot of the current page</span>
+              <span className="text-sm text-text-secondary">Include a screenshot of the current page</span>
             </label>
 
-            <div className="flex gap-3 mt-4 pt-4 border-t border-white/10">
+            <div className="flex gap-3 mt-4 pt-4 border-t border-border">
               <button 
                 type="button"
                 onClick={() => setShowFeedback(false)}
-                className="flex-1 py-3 rounded-xl font-medium text-white/70 hover:text-white bg-white/5 hover:bg-white/10 transition-colors"
+                className="flex-1 py-3 rounded-xl font-medium text-text-secondary hover:text-text-primary bg-surface-elevated hover:bg-surface-card border border-border transition-colors cursor-pointer"
               >
                 Back
               </button>
               <button 
                 type="submit"
                 disabled={loading}
-                className="flex-1 py-3 rounded-xl font-bold text-[#0A1A2F] bg-[#9fd5b2] hover:bg-[#86c49a] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 py-3 rounded-xl font-bold text-brand-navy bg-brand-mint hover:bg-brand-mint/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
               >
                 {loading ? (
                   <>

@@ -337,16 +337,16 @@ export default function ProfessionalIdentityEditor({
 
   if (isLoading) {
     return (
-      <div className="space-y-4 p-5 rounded-2xl border border-white/[0.08] bg-bg-elevated/40 animate-pulse">
+      <div className="space-y-4 p-5 rounded-2xl border border-border bg-bg-elevated/40 animate-pulse">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-white/10" />
+          <div className="w-8 h-8 rounded-lg bg-surface-elevated" />
           <div className="space-y-2 flex-1">
-            <div className="h-3 w-40 bg-white/10 rounded" />
-            <div className="h-2.5 w-60 bg-white/5 rounded" />
+            <div className="h-3 w-40 bg-surface-elevated rounded" />
+            <div className="h-2.5 w-60 bg-surface-elevated/50 rounded" />
           </div>
         </div>
-        <div className="h-10 bg-white/5 rounded-xl" />
-        <div className="h-24 bg-white/5 rounded-xl" />
+        <div className="h-10 bg-surface-elevated/50 rounded-xl" />
+        <div className="h-24 bg-surface-elevated/50 rounded-xl" />
       </div>
     );
   }
@@ -389,7 +389,7 @@ export default function ProfessionalIdentityEditor({
           <div className="space-y-1 text-xs">
             <p className="font-bold text-amber-200">
               Legacy Position Title:{" "}
-              <span className="text-white font-mono font-normal">
+              <span className="text-text-primary font-mono font-normal">
                 "{legacyRole || value?.titleName}"
               </span>
             </p>
@@ -432,7 +432,7 @@ export default function ProfessionalIdentityEditor({
                   )}
                 </span>
               </div>
-              <p className="text-sm font-bold text-white tracking-tight mt-0.5">
+              <p className="text-sm font-bold text-text-primary tracking-tight mt-0.5">
                 {selectedTitleName}
               </p>
             </div>
@@ -442,7 +442,7 @@ export default function ProfessionalIdentityEditor({
             type="button"
             disabled={disabled}
             onClick={() => setIsDeptSelectorOpen((prev) => !prev)}
-            className="self-start sm:self-center inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/10 bg-white/[0.04] text-xs font-semibold text-text-secondary hover:text-white hover:bg-white/[0.08] transition-all"
+            className="self-start sm:self-center inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-surface-elevated text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-elevated/80 transition-all"
           >
             <Edit3 className="w-3.5 h-3.5" />
             {isDeptSelectorOpen ? "Close Selector" : "Change Selection"}
@@ -452,7 +452,7 @@ export default function ProfessionalIdentityEditor({
 
       {/* ── STEP 1: Department Selection Area ── */}
       {(!selectedDeptId || isDeptSelectorOpen) && (
-        <div className="space-y-3 p-4 sm:p-5 rounded-2xl border border-white/[0.08] bg-bg-elevated/40">
+        <div className="space-y-3 p-4 sm:p-5 rounded-2xl border border-border bg-bg-elevated/40">
           <div className="flex items-center justify-between">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary">
@@ -466,7 +466,7 @@ export default function ProfessionalIdentityEditor({
               <button
                 type="button"
                 onClick={() => setIsDeptSelectorOpen(false)}
-                className="text-xs text-text-muted hover:text-white transition-colors"
+                className="text-xs text-text-muted hover:text-text-primary transition-colors"
               >
                 Done
               </button>
@@ -483,13 +483,13 @@ export default function ProfessionalIdentityEditor({
               onChange={(e) => setDeptSearch(e.target.value)}
               placeholder="Search 18 departments (e.g. Civil, Structural, QA/QC, MEP)..."
               disabled={disabled}
-              className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-bg-card border border-white/[0.08] focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30 focus:outline-none text-xs sm:text-sm text-white placeholder:text-text-muted transition-colors"
+              className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-bg-card border border-border focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30 focus:outline-none text-xs sm:text-sm text-text-primary placeholder:text-text-muted transition-colors"
             />
             {deptSearch && (
               <button
                 type="button"
                 onClick={() => setDeptSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -516,12 +516,12 @@ export default function ProfessionalIdentityEditor({
                   onClick={() => handleSelectDepartment(dept)}
                   className={`text-left p-3 rounded-xl border transition-all flex items-center justify-between group cursor-pointer ${
                     isSelected
-                      ? "border-brand-mint bg-brand-mint/10 text-white shadow-sm ring-1 ring-brand-mint/30"
-                      : "border-white/[0.06] bg-bg-card/70 text-text-secondary hover:text-white hover:border-white/[0.15] hover:bg-bg-card"
+                      ? "border-brand-mint bg-brand-mint/10 text-text-primary shadow-sm ring-1 ring-brand-mint/30"
+                      : "border-border bg-bg-card text-text-secondary hover:text-text-primary hover:border-border-accent hover:bg-bg-elevated"
                   }`}
                 >
                   <div className="min-w-0 pr-2">
-                    <p className="text-xs font-bold truncate group-hover:text-white transition-colors">
+                    <p className="text-xs font-bold truncate group-hover:text-text-primary transition-colors">
                       {dept.name}
                     </p>
                     <span className="text-[10px] text-text-muted">
@@ -531,7 +531,7 @@ export default function ProfessionalIdentityEditor({
                   {isSelected ? (
                     <Check className="w-4 h-4 text-brand-mint shrink-0" />
                   ) : (
-                    <ChevronRight className="w-3.5 h-3.5 text-text-muted/40 group-hover:text-white/60 shrink-0 transition-colors" />
+                    <ChevronRight className="w-3.5 h-3.5 text-text-muted/40 group-hover:text-text-secondary shrink-0 transition-colors" />
                   )}
                 </button>
               );
@@ -548,7 +548,7 @@ export default function ProfessionalIdentityEditor({
 
       {/* ── STEP 2: Title Selection Area (Scoped to Department) ── */}
       {selectedDeptId && activeDepartment && (
-        <div className="space-y-4 p-4 sm:p-5 rounded-2xl border border-white/[0.08] bg-bg-elevated/40">
+        <div className="space-y-4 p-4 sm:p-5 rounded-2xl border border-border bg-bg-elevated/40">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary">
@@ -560,14 +560,14 @@ export default function ProfessionalIdentityEditor({
             </div>
 
             {/* Mode Switcher Tabs */}
-            <div className="inline-flex rounded-xl p-1 bg-bg-card border border-white/[0.06] self-start sm:self-auto">
+            <div className="inline-flex rounded-xl p-1 bg-bg-card border border-border self-start sm:self-auto">
               <button
                 type="button"
                 onClick={() => handleSwitchTitleMode("predefined")}
                 className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
                   titleMode === "predefined"
                     ? "bg-brand-mint text-bg-main shadow-sm font-bold"
-                    : "text-text-muted hover:text-white"
+                    : "text-text-muted hover:text-text-primary"
                 }`}
               >
                 Catalogue Titles ({departmentTitles.length})
@@ -578,7 +578,7 @@ export default function ProfessionalIdentityEditor({
                 className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
                   titleMode === "custom"
                     ? "bg-brand-mint text-bg-main shadow-sm font-bold"
-                    : "text-text-muted hover:text-white"
+                    : "text-text-muted hover:text-text-primary"
                 }`}
               >
                 Custom Title
@@ -598,13 +598,13 @@ export default function ProfessionalIdentityEditor({
                   onChange={(e) => setTitleSearch(e.target.value)}
                   placeholder={`Search titles in ${activeDepartment.name}...`}
                   disabled={disabled}
-                  className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-bg-card border border-white/[0.08] focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30 focus:outline-none text-xs sm:text-sm text-white placeholder:text-text-muted transition-colors"
+                  className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-bg-card border border-border focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30 focus:outline-none text-xs sm:text-sm text-text-primary placeholder:text-text-muted transition-colors"
                 />
                 {titleSearch && (
                   <button
                     type="button"
                     onClick={() => setTitleSearch("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-white"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -630,17 +630,17 @@ export default function ProfessionalIdentityEditor({
                       onClick={() => handleSelectPredefinedTitle(t)}
                       className={`text-left p-3 rounded-xl border transition-all flex items-center justify-between group cursor-pointer ${
                         isSelected
-                          ? "border-brand-mint bg-brand-mint/10 text-white shadow-sm ring-1 ring-brand-mint/30"
-                          : "border-white/[0.06] bg-bg-card/70 text-text-secondary hover:text-white hover:border-white/[0.15] hover:bg-bg-card"
+                          ? "border-brand-mint bg-brand-mint/10 text-text-primary shadow-sm ring-1 ring-brand-mint/30"
+                          : "border-border bg-bg-card text-text-secondary hover:text-text-primary hover:border-border-accent hover:bg-bg-elevated"
                       }`}
                     >
-                      <span className="text-xs font-semibold truncate pr-2 group-hover:text-white transition-colors">
+                      <span className="text-xs font-semibold truncate pr-2 group-hover:text-text-primary transition-colors">
                         {t.label}
                       </span>
                       {isSelected ? (
                         <Check className="w-4 h-4 text-brand-mint shrink-0" />
                       ) : (
-                        <span className="text-[10px] text-text-muted/60 px-1.5 py-0.5 rounded border border-white/[0.05] bg-white/[0.02]">
+                        <span className="text-[10px] text-text-muted/60 px-1.5 py-0.5 rounded border border-border bg-surface-elevated">
                           Catalogue
                         </span>
                       )}
@@ -671,7 +671,7 @@ export default function ProfessionalIdentityEditor({
               </div>
 
               {/* Request Title Footer Helper */}
-              <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-xs">
+              <div className="flex items-center justify-between pt-2 border-t border-border text-xs">
                 <span className="text-text-muted text-[11px]">
                   Can't find your exact title in {activeDepartment.name}?
                 </span>
@@ -680,7 +680,7 @@ export default function ProfessionalIdentityEditor({
                     <button
                       type="button"
                       onClick={handleOpenHistoryModal}
-                      className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-white font-medium transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-text-primary font-medium transition-colors cursor-pointer"
                     >
                       <History className="w-3 h-3 text-brand-mint" />
                       My Requests ({myRequests.length})
@@ -726,17 +726,17 @@ export default function ProfessionalIdentityEditor({
                     maxLength={105} // slight leeway so validator can catch and explain >100
                     disabled={disabled}
                     placeholder="e.g. Lead Substation Commissioning Engineer"
-                    className={`w-full px-4 py-2.5 rounded-xl bg-bg-card border text-xs sm:text-sm text-white placeholder:text-text-muted transition-colors focus:outline-none ${
+                    className={`w-full px-4 py-2.5 rounded-xl bg-bg-card border text-xs sm:text-sm text-text-primary placeholder:text-text-muted transition-colors focus:outline-none ${
                       customTitleError
                         ? "border-red-500/50 focus:border-red-500 focus:ring-1 focus:ring-red-500/30"
-                        : "border-white/[0.08] focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30"
+                        : "border-border focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30"
                     }`}
                   />
                   {customTitle && (
                     <button
                       type="button"
                       onClick={() => handleCustomTitleChange("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-white"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -786,9 +786,9 @@ export default function ProfessionalIdentityEditor({
 
               {/* Optional Request History Link */}
               {myRequests.length > 0 && (
-                <div className="p-3.5 rounded-xl border border-white/[0.08] bg-bg-card/40 flex items-center justify-between gap-2.5">
+                <div className="p-3.5 rounded-xl border border-border bg-bg-card/40 flex items-center justify-between gap-2.5">
                   <div className="space-y-0.5">
-                    <p className="text-xs font-semibold text-white">
+                    <p className="text-xs font-semibold text-text-primary">
                       Track Review Status
                     </p>
                     <p className="text-[11px] text-text-muted">
@@ -798,7 +798,7 @@ export default function ProfessionalIdentityEditor({
                   <button
                     type="button"
                     onClick={handleOpenHistoryModal}
-                    className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.04] text-text-secondary hover:text-white text-xs font-semibold transition-all cursor-pointer"
+                    className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface-elevated text-text-secondary hover:text-text-primary text-xs font-semibold transition-all cursor-pointer"
                   >
                     <History className="w-3.5 h-3.5 text-brand-mint" />
                     My Requests ({myRequests.length})
@@ -818,7 +818,7 @@ export default function ProfessionalIdentityEditor({
           aria-labelledby="confirm-dept-title"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in"
         >
-          <div className="w-full max-w-md rounded-3xl border border-white/[0.12] bg-bg-card p-6 space-y-5 shadow-2xl">
+          <div className="w-full max-w-md rounded-3xl border border-border bg-bg-card p-6 space-y-5 shadow-2xl">
             <div className="flex items-start gap-4">
               <div className="w-11 h-11 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center shrink-0 text-amber-400">
                 <AlertTriangle className="w-6 h-6" />
@@ -826,17 +826,17 @@ export default function ProfessionalIdentityEditor({
               <div className="space-y-1">
                 <h3
                   id="confirm-dept-title"
-                  className="text-base font-bold text-white tracking-tight"
+                  className="text-base font-bold text-text-primary tracking-tight"
                 >
                   Change Engineering Department?
                 </h3>
                 <p className="text-xs text-text-secondary leading-relaxed">
                   You currently have title{" "}
-                  <span className="font-semibold text-white">
+                  <span className="font-semibold text-text-primary">
                     "{selectedTitleName || customTitle}"
                   </span>{" "}
                   under{" "}
-                  <span className="font-semibold text-white">
+                  <span className="font-semibold text-text-primary">
                     {activeDepartment?.name}
                   </span>
                   .
@@ -844,7 +844,7 @@ export default function ProfessionalIdentityEditor({
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl border border-white/[0.08] bg-bg-elevated/60 text-xs text-text-secondary leading-relaxed">
+            <div className="p-3.5 rounded-xl border border-border bg-bg-elevated/60 text-xs text-text-secondary leading-relaxed">
               Changing your department to{" "}
               <span className="font-bold text-brand-mint">
                 {pendingDept.name}
@@ -856,7 +856,7 @@ export default function ProfessionalIdentityEditor({
               <button
                 type="button"
                 onClick={handleCancelDeptChange}
-                className="px-4 py-2 rounded-xl border border-white/10 bg-white/[0.04] text-xs font-semibold text-text-secondary hover:text-white hover:bg-white/[0.08] transition-all"
+                className="px-4 py-2 rounded-xl border border-border bg-surface-elevated text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-elevated/80 transition-all"
               >
                 Cancel (Keep Current)
               </button>
@@ -880,7 +880,7 @@ export default function ProfessionalIdentityEditor({
           aria-labelledby="history-modal-heading"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in"
         >
-          <div className="w-full max-w-lg rounded-3xl border border-white/[0.12] bg-bg-card p-6 space-y-5 shadow-2xl">
+          <div className="w-full max-w-lg rounded-3xl border border-border bg-bg-card p-6 space-y-5 shadow-2xl">
             {/* Modal Header */}
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -890,7 +890,7 @@ export default function ProfessionalIdentityEditor({
                 <div>
                   <h3
                     id="history-modal-heading"
-                    className="text-base font-bold text-white tracking-tight"
+                    className="text-base font-bold text-text-primary tracking-tight"
                   >
                     My Title Requests
                   </h3>
@@ -902,7 +902,7 @@ export default function ProfessionalIdentityEditor({
               <button
                 type="button"
                 onClick={handleCloseHistoryModal}
-                className="text-text-muted hover:text-white transition-colors p-1 cursor-pointer"
+                className="text-text-muted hover:text-text-primary transition-colors p-1 cursor-pointer"
                 aria-label="Close"
               >
                 <X className="w-5 h-5" />
@@ -919,23 +919,23 @@ export default function ProfessionalIdentityEditor({
               ) : isErrorRequests ? (
                 <div className="py-8 text-center space-y-3 border border-red-500/20 rounded-2xl bg-red-500/5 p-6">
                   <AlertCircle className="w-8 h-8 text-red-400 mx-auto" />
-                  <p className="text-xs font-semibold text-white">Could Not Load Requests</p>
+                  <p className="text-xs font-semibold text-text-primary">Could Not Load Requests</p>
                   <p className="text-[11px] text-text-muted max-w-xs mx-auto">
                     There was an error loading your title requests history.
                   </p>
                   <button
                     type="button"
                     onClick={() => refetchMyRequests()}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/10 bg-white/[0.04] text-xs font-semibold text-white hover:bg-white/[0.08] transition-all cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-surface-elevated text-xs font-semibold text-text-primary hover:bg-surface-elevated/80 transition-all cursor-pointer"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
                     Retry
                   </button>
                 </div>
               ) : myRequests.length === 0 ? (
-                <div className="py-8 text-center space-y-2 border border-white/[0.06] rounded-2xl bg-bg-elevated/20 p-6">
+                <div className="py-8 text-center space-y-2 border border-border rounded-2xl bg-bg-elevated/20 p-6">
                   <History className="w-8 h-8 text-text-muted mx-auto opacity-50" />
-                  <p className="text-xs font-semibold text-white">No Requests Yet</p>
+                  <p className="text-xs font-semibold text-text-primary">No Requests Yet</p>
                   <p className="text-[11px] text-text-muted max-w-xs mx-auto leading-relaxed">
                     When you save a custom title on your profile, it is automatically submitted for catalogue review and will appear here.
                   </p>
@@ -956,11 +956,11 @@ export default function ProfessionalIdentityEditor({
                     return (
                       <div
                         key={reqId}
-                        className="p-3.5 rounded-2xl border border-white/[0.08] bg-bg-elevated/50 space-y-2"
+                        className="p-3.5 rounded-2xl border border-border bg-bg-elevated/50 space-y-2"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="space-y-0.5">
-                            <p className="text-xs font-bold text-white tracking-tight">
+                            <p className="text-xs font-bold text-text-primary tracking-tight">
                               {req.title || req.requestedTitle}
                             </p>
                             <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
@@ -988,7 +988,7 @@ export default function ProfessionalIdentityEditor({
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between text-[10px] text-text-muted pt-1 border-t border-white/[0.04]">
+                        <div className="flex items-center justify-between text-[10px] text-text-muted pt-1 border-t border-border">
                           <span>Submitted: {dateFormatted || "Recent"}</span>
                           {req.reviewNote && (
                             <span
@@ -1009,7 +1009,7 @@ export default function ProfessionalIdentityEditor({
                 <button
                   type="button"
                   onClick={handleCloseHistoryModal}
-                  className="px-4 py-2 rounded-xl border border-white/10 bg-white/[0.04] text-xs font-semibold text-text-secondary hover:text-white hover:bg-white/[0.08] transition-all cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-border bg-surface-elevated text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-elevated/80 transition-all cursor-pointer"
                 >
                   Close
                 </button>

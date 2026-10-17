@@ -44,7 +44,7 @@ export default function NetworkHero({
   return (
     <header
       aria-label="Network Overview & Search"
-      className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-b from-[#0C121A] via-[#090D13] to-[#07090B] p-6 sm:p-8 lg:p-9 shadow-2xl transition-all duration-300"
+      className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-b from-surface-card via-bg-base to-surface-card p-6 sm:p-8 lg:p-9 shadow-2xl transition-all duration-300"
     >
       {/* ── 1. Subtle Engineering Grid Background ── */}
       <div
@@ -59,7 +59,7 @@ export default function NetworkHero({
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -bottom-28 right-0 h-80 w-80 rounded-full bg-[#12314C]/30 blur-[110px]"
+        className="pointer-events-none absolute -bottom-28 right-0 h-80 w-80 rounded-full bg-brand-navy/30 blur-[110px]"
       />
 
       {/* ── 3. Subtle Zeitnah Motif in Background ── */}
@@ -86,7 +86,7 @@ export default function NetworkHero({
               <span>ZEITNAH PROFESSIONAL NETWORK</span>
             </span>
 
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium text-text-muted bg-white/[0.03] border border-white/[0.06]">
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium text-text-muted bg-surface-elevated/40 border border-border">
               <span className="h-1.5 w-1.5 rounded-full bg-brand-mint animate-pulse" />
               Live Network
             </span>
@@ -103,12 +103,12 @@ export default function NetworkHero({
             initial={shouldReduceMotion ? false : { opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25 }}
-            className="font-degular-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight uppercase leading-[0.94] select-none"
+            className="font-degular-black text-3xl sm:text-4xl lg:text-5xl text-text-primary tracking-tight uppercase leading-[0.94] select-none"
           >
             NETWORK
           </motion.h1>
 
-          <p className="text-base sm:text-lg font-heading font-bold text-white/95 tracking-tight leading-snug">
+          <p className="text-base sm:text-lg font-heading font-bold text-text-primary tracking-tight leading-snug">
             Your professional graph, in one place.
           </p>
 
@@ -142,13 +142,13 @@ export default function NetworkHero({
               className={`h-11 sm:h-12 px-4 rounded-2xl border text-xs font-semibold inline-flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 shrink-0 select-none focus-ring ${
                 activeFiltersCount > 0
                   ? "bg-brand-mint/15 text-brand-mint border-brand-mint/40 shadow-sm"
-                  : "bg-[#070B14] hover:bg-[#0A0F14] text-text-muted hover:text-white border-white/[0.08] hover:border-white/[0.16]"
+                  : "bg-surface-elevated hover:bg-surface-elevated/80 text-text-muted hover:text-text-primary border border-border"
               }`}
             >
               <Filter className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>Filters</span>
               {activeFiltersCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-brand-mint text-black">
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-brand-mint text-brand-navy">
                   {activeFiltersCount}
                 </span>
               )}
@@ -160,7 +160,7 @@ export default function NetworkHero({
         <div
           role="region"
           aria-label="Network Telemetry"
-          className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 pt-4 border-t border-white/[0.06]"
+          className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 pt-4 border-t border-border"
         >
           {/* Telemetry 1: Connections */}
           <button
@@ -168,10 +168,10 @@ export default function NetworkHero({
             onClick={() => onStatClick?.("connections")}
             className="text-left group cursor-pointer focus-ring rounded-xl p-1 -m-1 transition-opacity hover:opacity-90"
           >
-            <p className="text-2xl sm:text-3xl font-heading font-extrabold text-white tracking-tight tabular-nums group-hover:text-brand-mint transition-colors">
+            <p className="text-2xl sm:text-3xl font-heading font-extrabold text-text-primary tracking-tight tabular-nums group-hover:text-brand-mint transition-colors">
               {Number(connectionsCount).toLocaleString()}
             </p>
-            <p className="text-xs text-text-muted font-medium mt-0.5 group-hover:text-white/80 transition-colors">
+            <p className="text-xs text-text-muted font-medium mt-0.5 group-hover:text-text-primary transition-colors">
               Connections
             </p>
           </button>
@@ -185,7 +185,7 @@ export default function NetworkHero({
             <div className="flex items-baseline gap-2">
               <p
                 className={`text-2xl sm:text-3xl font-heading font-extrabold tracking-tight tabular-nums ${
-                  requestsCount > 0 ? "text-amber-300" : "text-white"
+                  requestsCount > 0 ? "text-amber-300" : "text-text-primary"
                 } group-hover:text-amber-200 transition-colors`}
               >
                 {requestsCount < 10 && requestsCount > 0 ? `0${requestsCount}` : Number(requestsCount).toLocaleString()}
@@ -196,7 +196,7 @@ export default function NetworkHero({
                 </span>
               )}
             </div>
-            <p className="text-xs text-text-muted font-medium mt-0.5 group-hover:text-white/80 transition-colors">
+            <p className="text-xs text-text-muted font-medium mt-0.5 group-hover:text-text-primary transition-colors">
               Pending
             </p>
           </button>
@@ -207,10 +207,10 @@ export default function NetworkHero({
             onClick={() => onStatClick?.("people")}
             className="text-left group cursor-pointer focus-ring rounded-xl p-1 -m-1 transition-opacity hover:opacity-90"
           >
-            <p className="text-2xl sm:text-3xl font-heading font-extrabold text-white tracking-tight tabular-nums group-hover:text-brand-mint transition-colors">
+            <p className="text-2xl sm:text-3xl font-heading font-extrabold text-text-primary tracking-tight tabular-nums group-hover:text-brand-mint transition-colors">
               {directoryCount !== null ? Number(directoryCount).toLocaleString() : "—"}
             </p>
-            <p className="text-xs text-text-muted font-medium mt-0.5 group-hover:text-white/80 transition-colors">
+            <p className="text-xs text-text-muted font-medium mt-0.5 group-hover:text-text-primary transition-colors">
               Directory
             </p>
           </button>
@@ -221,10 +221,10 @@ export default function NetworkHero({
             onClick={() => onStatClick?.("followers")}
             className="text-left group cursor-pointer focus-ring rounded-xl p-1 -m-1 transition-opacity hover:opacity-90"
           >
-            <p className="text-2xl sm:text-3xl font-heading font-extrabold text-white tracking-tight tabular-nums group-hover:text-brand-mint transition-colors">
+            <p className="text-2xl sm:text-3xl font-heading font-extrabold text-text-primary tracking-tight tabular-nums group-hover:text-brand-mint transition-colors">
               {Number(followersCount).toLocaleString()}
             </p>
-            <p className="text-xs text-text-muted font-medium mt-0.5 group-hover:text-white/80 transition-colors">
+            <p className="text-xs text-text-muted font-medium mt-0.5 group-hover:text-text-primary transition-colors">
               Followers
             </p>
           </button>

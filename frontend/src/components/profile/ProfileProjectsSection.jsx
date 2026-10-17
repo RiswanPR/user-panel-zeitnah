@@ -14,7 +14,7 @@ export default function ProfileProjectsSection({
     <section
       id="projects"
       aria-labelledby="profile-projects-heading"
-      className={`rounded-3xl border border-white/[0.08] bg-[#0A0F18]/90 backdrop-blur-xl p-6 sm:p-8 shadow-sm transition-all ${className}`}
+      className={`rounded-3xl border border-border bg-surface-card p-6 sm:p-8 shadow-sm transition-all ${className}`}
     >
       <div className="flex items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
@@ -25,12 +25,12 @@ export default function ProfileProjectsSection({
             <div className="flex items-center gap-2">
               <h2
                 id="profile-projects-heading"
-                className="text-lg sm:text-xl font-heading font-extrabold text-white tracking-tight"
+                className="text-lg sm:text-xl font-heading font-extrabold text-text-primary tracking-tight"
               >
                 Featured Projects & Deliverables
               </h2>
               {items.length > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-xs font-mono font-medium text-text-muted">
+                <span className="px-2 py-0.5 rounded-full bg-surface-elevated border border-border text-xs font-mono font-medium text-text-muted">
                   {items.length}
                 </span>
               )}
@@ -66,11 +66,11 @@ export default function ProfileProjectsSection({
       </div>
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.01] p-8 text-center">
-          <div className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-text-muted mx-auto mb-3">
+        <div className="rounded-2xl border border-dashed border-border bg-surface-elevated/20 p-8 text-center">
+          <div className="w-12 h-12 rounded-xl bg-surface-elevated border border-border flex items-center justify-center text-text-muted mx-auto mb-3">
             <Hammer className="w-6 h-6 text-text-faint" />
           </div>
-          <h3 className="text-sm font-heading font-bold text-white mb-1">
+          <h3 className="text-sm font-heading font-bold text-text-primary mb-1">
             No projects featured yet
           </h3>
           <p className="text-xs text-text-muted max-w-sm mx-auto mb-4">
@@ -99,12 +99,12 @@ export default function ProfileProjectsSection({
             return (
               <div
                 key={projId}
-                className="rounded-2xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.04] hover:border-brand-yellow/30 transition-all p-5 flex flex-col justify-between group shadow-sm"
+                className="rounded-2xl border border-border bg-surface-elevated/40 hover:bg-surface-elevated hover:border-brand-yellow/30 transition-all p-5 flex flex-col justify-between group shadow-sm"
               >
                 <div>
                   {/* Optional Media Preview Thumbnail */}
                   {resolvedCover && (
-                    <div className="h-40 w-full rounded-xl overflow-hidden mb-4 bg-black/40 border border-white/[0.06] relative">
+                    <div className="h-40 w-full rounded-xl overflow-hidden mb-4 bg-black/40 border border-border relative">
                       <img
                         src={resolvedCover}
                         alt={proj.title || "Project"}
@@ -120,7 +120,7 @@ export default function ProfileProjectsSection({
                   )}
 
                   <div className="flex items-start justify-between gap-3 mb-2">
-                    <h3 className="text-base font-heading font-bold text-white group-hover:text-brand-yellow transition-colors tracking-tight line-clamp-1">
+                    <h3 className="text-base font-heading font-bold text-text-primary group-hover:text-brand-yellow transition-colors tracking-tight line-clamp-1">
                       {proj.title || "Untitled Deliverable"}
                     </h3>
                     {proj.projectUrl && (
@@ -128,7 +128,7 @@ export default function ProfileProjectsSection({
                         href={proj.projectUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-text-muted hover:text-white p-1 rounded-md transition-colors"
+                        className="text-text-muted hover:text-text-primary p-1 rounded-md transition-colors"
                         title="Open external project link"
                         aria-label={`Open link for ${proj.title}`}
                       >
@@ -155,11 +155,11 @@ export default function ProfileProjectsSection({
                 {/* Footer details: technologies & tags */}
                 {((proj.technologies && proj.technologies.length > 0) ||
                   (proj.skills && proj.skills.length > 0)) && (
-                  <div className="flex flex-wrap gap-1.5 pt-3 border-t border-white/[0.05]">
+                  <div className="flex flex-wrap gap-1.5 pt-3 border-t border-border">
                     {proj.technologies?.slice(0, 4).map((tech, tIdx) => (
                       <span
                         key={`t-${tIdx}`}
-                        className="px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.08] text-[10px] font-mono text-text-secondary"
+                        className="px-2 py-0.5 rounded-md bg-surface-elevated border border-border text-[10px] font-mono text-text-secondary"
                       >
                         {tech}
                       </span>

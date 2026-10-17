@@ -232,13 +232,13 @@ export default function PublicBusinessProfilePage() {
         <div className="w-16 h-16 mx-auto rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
           <AlertCircle className="w-8 h-8" />
         </div>
-        <h2 className="text-xl font-bold text-white">Business Profile Not Found</h2>
+        <h2 className="text-xl font-bold text-text-primary">Business Profile Not Found</h2>
         <p className="text-xs text-text-muted">
           This organization might be unverified, private, or does not exist.
         </p>
         <Link
           to="/network?tab=organizations"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-mint text-black font-bold text-xs"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Explore Organizations</span>
@@ -256,7 +256,7 @@ export default function PublicBusinessProfilePage() {
       <div>
         <Link
           to="/network?tab=organizations"
-          className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-text-primary transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Organizations</span>
@@ -264,10 +264,10 @@ export default function PublicBusinessProfilePage() {
       </div>
 
       {/* ── Business Header ── */}
-      <div className="p-8 rounded-3xl bg-[#111116] border border-white/[0.08] shadow-2xl space-y-6">
+      <div className="p-8 rounded-3xl bg-surface-card border border-border shadow-2xl space-y-6">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div className="flex items-start gap-5">
-            <div className="w-20 h-20 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center overflow-hidden shrink-0 shadow-lg">
+            <div className="w-20 h-20 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center overflow-hidden shrink-0 shadow-lg">
               {business.logo ? (
                 <img
                   src={business.logo}
@@ -281,7 +281,7 @@ export default function PublicBusinessProfilePage() {
 
             <div className="space-y-1.5">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-white tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-text-primary tracking-tight">
                   {business.name}
                 </h1>
 
@@ -313,11 +313,11 @@ export default function PublicBusinessProfilePage() {
                 href={business.website}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-semibold text-white border border-white/[0.08] transition-colors"
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-xs font-semibold text-text-primary border border-border transition-colors"
               >
                 <Globe className="w-3.5 h-3.5 text-brand-mint" />
                 <span>Website</span>
-                <ExternalLink className="w-3 h-3 text-white/40" />
+                <ExternalLink className="w-3 h-3 text-text-muted" />
               </a>
             )}
 
@@ -330,8 +330,8 @@ export default function PublicBusinessProfilePage() {
                   disabled={isFollowPending}
                   className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm disabled:opacity-50 ${
                     isFollowing
-                      ? 'bg-white/[0.08] hover:bg-red-500/15 text-brand-mint hover:text-red-400 border border-brand-mint/30 hover:border-red-500/30'
-                      : 'bg-brand-mint text-bg-base hover:bg-brand-mint/90 shadow-brand-mint/20'
+                      ? 'bg-surface-elevated hover:bg-red-500/15 text-brand-mint hover:text-red-400 border border-brand-mint/30 hover:border-red-500/30'
+                      : 'bg-brand-mint text-brand-navy hover:opacity-90 shadow-brand-mint/20'
                   }`}
                   title={isFollowing ? 'Unfollow organization' : 'Follow organization'}
                   aria-label={isFollowing ? 'Unfollow organization' : 'Follow organization'}
@@ -355,7 +355,7 @@ export default function PublicBusinessProfilePage() {
                     className={`p-2 rounded-xl border transition-all cursor-pointer ${
                       notificationsEnabled
                         ? 'bg-brand-mint/15 text-brand-mint border-brand-mint/30 hover:bg-brand-mint/25'
-                        : 'bg-white/[0.05] text-text-muted border-white/[0.08] hover:text-white hover:bg-white/[0.1]'
+                        : 'bg-surface-elevated text-text-muted border-border hover:text-text-primary hover:bg-surface-elevated/80'
                     }`}
                     title={
                       notificationsEnabled
@@ -383,7 +383,7 @@ export default function PublicBusinessProfilePage() {
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
                 activeTab === 'posts'
                   ? 'bg-brand-mint/15 text-brand-mint border-brand-mint/30'
-                  : 'bg-white/[0.05] hover:bg-white/[0.1] text-white border-white/[0.08] hover:border-brand-mint/30'
+                  : 'bg-surface-elevated hover:bg-surface-elevated/80 text-text-primary border-border hover:border-brand-mint/30'
               }`}
               title={`View ${business.name} Company Posts`}
               aria-label={`View ${business.name} Company Posts`}
@@ -404,7 +404,7 @@ export default function PublicBusinessProfilePage() {
                   <button
                     type="button"
                     onClick={handleSwitchToThisBusiness}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.08] hover:bg-brand-mint/20 text-xs font-semibold text-white hover:text-brand-mint border border-white/10 hover:border-brand-mint/30 transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-surface-elevated hover:bg-brand-mint/20 text-xs font-semibold text-text-primary hover:text-brand-mint border border-border hover:border-brand-mint/30 transition-all cursor-pointer"
                     title={`Switch active profile to ${business.name}`}
                   >
                     <span>Switch to Profile</span>
@@ -415,7 +415,7 @@ export default function PublicBusinessProfilePage() {
                 <button
                   type="button"
                   onClick={handleOpenCreate}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-mint text-bg-base hover:bg-brand-mint/90 text-xs font-bold transition-all cursor-pointer shadow-sm shadow-brand-mint/20"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-mint text-brand-navy hover:opacity-90 text-xs font-bold transition-all cursor-pointer shadow-sm shadow-brand-mint/20"
                   aria-label={`Create content as ${business.name}`}
                 >
                   <Sparkles className="w-3.5 h-3.5" />
@@ -425,7 +425,7 @@ export default function PublicBusinessProfilePage() {
                 {/* Manage Business link */}
                 <Link
                   to="/manage-business"
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-semibold text-text-muted hover:text-white border border-white/[0.08] transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 text-xs font-semibold text-text-muted hover:text-text-primary border border-border transition-colors"
                   title="Manage Business"
                   aria-label="Manage Business"
                 >
@@ -438,7 +438,7 @@ export default function PublicBusinessProfilePage() {
         </div>
 
         {/* Highlight Metrics */}
-        <div className="pt-6 border-t border-white/[0.06] grid grid-cols-2 sm:grid-cols-5 gap-4 text-xs">
+        <div className="pt-6 border-t border-border grid grid-cols-2 sm:grid-cols-5 gap-4 text-xs">
           <div>
             <span className="text-[11px] text-text-muted block">Followers</span>
             <span className="font-semibold text-brand-mint mt-0.5 block">
@@ -447,25 +447,25 @@ export default function PublicBusinessProfilePage() {
           </div>
           <div>
             <span className="text-[11px] text-text-muted block">Company Size</span>
-            <span className="font-semibold text-white mt-0.5 block">
+            <span className="font-semibold text-text-primary mt-0.5 block">
               {business.companySize || 'Enterprise'}
             </span>
           </div>
           <div>
             <span className="text-[11px] text-text-muted block">Founded</span>
-            <span className="font-semibold text-white mt-0.5 block">
+            <span className="font-semibold text-text-primary mt-0.5 block">
               {business.foundedYear || 'Established Partner'}
             </span>
           </div>
           <div>
             <span className="text-[11px] text-text-muted block">Members / Team</span>
-            <span className="font-semibold text-white mt-0.5 block">
+            <span className="font-semibold text-text-primary mt-0.5 block">
               {business.memberCount || 1} members
             </span>
           </div>
           <div>
             <span className="text-[11px] text-text-muted block">Active Opportunities</span>
-            <span className="font-semibold text-white mt-0.5 block">
+            <span className="font-semibold text-text-primary mt-0.5 block">
               {jobs.length} active jobs
             </span>
           </div>
@@ -475,15 +475,15 @@ export default function PublicBusinessProfilePage() {
       {/* ── Content View Tabs ── */}
       <div
         id="company-content-tabs"
-        className="flex items-center gap-2 border-b border-white/[0.08] pb-3"
+        className="flex items-center gap-2 border-b border-border pb-3"
       >
         <button
           type="button"
           onClick={() => setActiveTab('posts')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === 'posts'
-              ? 'bg-brand-mint text-bg-base shadow-sm shadow-brand-mint/20'
-              : 'text-text-muted hover:text-white bg-white/[0.03] hover:bg-white/[0.06]'
+              ? 'bg-brand-mint text-brand-navy shadow-sm shadow-brand-mint/20 font-bold'
+              : 'text-text-muted hover:text-text-primary bg-surface-elevated/40 hover:bg-surface-elevated'
           }`}
         >
           <Radio className="w-3.5 h-3.5" />
@@ -495,8 +495,8 @@ export default function PublicBusinessProfilePage() {
           onClick={() => setActiveTab('about')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === 'about'
-              ? 'bg-brand-mint text-bg-base shadow-sm shadow-brand-mint/20'
-              : 'text-text-muted hover:text-white bg-white/[0.03] hover:bg-white/[0.06]'
+              ? 'bg-brand-mint text-brand-navy shadow-sm shadow-brand-mint/20 font-bold'
+              : 'text-text-muted hover:text-text-primary bg-surface-elevated/40 hover:bg-surface-elevated'
           }`}
         >
           <Building2 className="w-3.5 h-3.5" />
@@ -512,7 +512,7 @@ export default function PublicBusinessProfilePage() {
             /* ── Embedded Public Company Feed (Phase 3 Feature B) ── */
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-bold font-heading text-white flex items-center gap-2">
+                <h3 className="text-base font-bold font-heading text-text-primary flex items-center gap-2">
                   <Radio className="w-4 h-4 text-brand-mint" />
                   <span>Posts from {business.name}</span>
                 </h3>
@@ -541,11 +541,11 @@ export default function PublicBusinessProfilePage() {
                   actionLabel="Try again"
                 />
               ) : feedPosts.length === 0 ? (
-                <div className="p-12 rounded-3xl bg-[#111116] border border-white/[0.08] text-center space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto text-text-muted">
+                <div className="p-12 rounded-3xl bg-surface-card border border-border text-center space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center mx-auto text-text-muted">
                     <MessageSquare className="w-6 h-6 text-brand-mint" />
                   </div>
-                  <h4 className="text-sm font-bold text-white">No posts published yet</h4>
+                  <h4 className="text-sm font-bold text-text-primary">No posts published yet</h4>
                   <p className="text-xs text-text-muted max-w-sm mx-auto leading-relaxed">
                     {business.name} has not published any public Community updates yet. Follow to receive notifications when new updates arrive.
                   </p>
@@ -554,7 +554,7 @@ export default function PublicBusinessProfilePage() {
                       type="button"
                       onClick={handleToggleFollow}
                       disabled={isFollowPending}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-mint text-bg-base text-xs font-bold hover:bg-brand-mint/90 transition-all cursor-pointer shadow-sm shadow-brand-mint/20 mt-2"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-mint text-brand-navy text-xs font-bold hover:opacity-90 transition-all cursor-pointer shadow-sm shadow-brand-mint/20 mt-2"
                     >
                       <UserPlus className="w-3.5 h-3.5" />
                       <span>Follow {business.name}</span>
@@ -586,7 +586,7 @@ export default function PublicBusinessProfilePage() {
                         type="button"
                         onClick={() => fetchNextPage()}
                         disabled={isFetchingNextPage}
-                        className="px-4 py-2 bg-white/[0.05] hover:bg-white/[0.1] text-white border border-white/[0.08] rounded-xl text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
+                        className="px-4 py-2 bg-surface-elevated hover:bg-surface-elevated/80 text-text-primary border border-border rounded-xl text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
                       >
                         {isFetchingNextPage ? (
                           <>
@@ -607,10 +607,10 @@ export default function PublicBusinessProfilePage() {
             <div className="space-y-8">
               {/* About */}
               <div className="space-y-3">
-                <h3 className="text-base font-bold font-heading text-white">
+                <h3 className="text-base font-bold font-heading text-text-primary">
                   About Organization
                 </h3>
-                <p className="text-sm text-white/80 leading-relaxed whitespace-pre-line">
+                <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">
                   {business.description ||
                     'Leading infrastructure and engineering services provider, collaborating with technical talent and executing critical projects.'}
                 </p>
@@ -619,7 +619,7 @@ export default function PublicBusinessProfilePage() {
               {/* Infrastructure Specializations */}
               {business.infrastructureSpecializations?.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="text-base font-bold font-heading text-white">
+                  <h3 className="text-base font-bold font-heading text-text-primary">
                     Infrastructure Specializations
                   </h3>
                   <div className="flex flex-wrap gap-2">
@@ -638,7 +638,7 @@ export default function PublicBusinessProfilePage() {
               {/* Open Active Jobs */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-base font-bold font-heading text-white flex items-center gap-2">
+                  <h3 className="text-base font-bold font-heading text-text-primary flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-brand-mint" />
                     <span>Open Infrastructure Jobs ({jobs.length})</span>
                   </h3>
@@ -649,7 +649,7 @@ export default function PublicBusinessProfilePage() {
                     Loading job listings...
                   </div>
                 ) : jobs.length === 0 ? (
-                  <div className="p-8 rounded-2xl bg-white/[0.02] border border-white/[0.06] text-center text-text-muted text-xs">
+                  <div className="p-8 rounded-2xl bg-surface-card border border-border text-center text-text-muted text-xs">
                     No active openings currently available from this business.
                   </div>
                 ) : (
@@ -657,10 +657,10 @@ export default function PublicBusinessProfilePage() {
                     {jobs.map((job) => (
                       <div
                         key={job.id}
-                        className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-brand-mint/30 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                        className="p-5 rounded-2xl bg-surface-card border border-border hover:border-brand-mint/30 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                       >
                         <div className="space-y-1">
-                          <h4 className="font-bold text-sm text-white">
+                          <h4 className="font-bold text-sm text-text-primary">
                             {job.title}
                           </h4>
                           <p className="text-xs text-text-muted flex items-center gap-2">
@@ -676,7 +676,7 @@ export default function PublicBusinessProfilePage() {
 
                         <Link
                           to={`/jobs/${job.id}`}
-                          className="flex items-center gap-1 px-4 py-2 rounded-xl bg-brand-mint text-black font-bold text-xs shadow-md shadow-brand-mint/15 self-end sm:self-center"
+                          className="flex items-center gap-1 px-4 py-2 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs shadow-md shadow-brand-mint/15 self-end sm:self-center"
                         >
                           <span>View & Apply</span>
                           <ChevronRight className="w-3.5 h-3.5" />
@@ -692,15 +692,15 @@ export default function PublicBusinessProfilePage() {
 
         {/* Right Column: Contact & Information */}
         <div className="space-y-6">
-          <div className="p-6 rounded-3xl bg-[#111116] border border-white/[0.08] space-y-4 text-xs">
-            <h3 className="text-sm font-bold font-heading text-white uppercase tracking-wider">
+          <div className="p-6 rounded-3xl bg-surface-card border border-border space-y-4 text-xs">
+            <h3 className="text-sm font-bold font-heading text-text-primary uppercase tracking-wider">
               Contact Information
             </h3>
 
             {business.businessEmail && (
               <div>
                 <span className="text-text-muted block text-[11px]">Email</span>
-                <span className="text-white font-medium">
+                <span className="text-text-primary font-medium">
                   {business.businessEmail}
                 </span>
               </div>
@@ -709,7 +709,7 @@ export default function PublicBusinessProfilePage() {
             {business.businessPhone && (
               <div>
                 <span className="text-text-muted block text-[11px]">Phone</span>
-                <span className="text-white font-medium">
+                <span className="text-text-primary font-medium">
                   {business.businessPhone}
                 </span>
               </div>
@@ -720,7 +720,7 @@ export default function PublicBusinessProfilePage() {
                 <span className="text-text-muted block text-[11px]">
                   Headquarters Address
                 </span>
-                <span className="text-white font-medium leading-relaxed block">
+                <span className="text-text-primary font-medium leading-relaxed block">
                   {business.officeLocation}
                 </span>
               </div>

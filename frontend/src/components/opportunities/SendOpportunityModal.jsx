@@ -131,12 +131,12 @@ export default function SendOpportunityModal({
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="relative w-full max-w-lg bg-[#0e141b] border border-white/[0.12] rounded-3xl shadow-2xl p-6 sm:p-8 text-white"
+          className="relative w-full max-w-lg bg-surface-card border border-border rounded-3xl shadow-2xl p-6 sm:p-8 text-text-primary"
         >
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 p-2 rounded-xl text-text-muted hover:text-white hover:bg-white/[0.06] transition"
+            className="absolute top-5 right-5 p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-elevated transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -147,11 +147,11 @@ export default function SendOpportunityModal({
               <Sparkles className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-bold tracking-tight text-white">
+              <h2 className="text-xl font-bold tracking-tight text-text-primary">
                 Send Career Opportunity
               </h2>
               <p className="text-xs text-text-muted">
-                To <span className="font-semibold text-white">{candidate?.name}</span> ({candidate?.currentRole || candidate?.primaryRole || 'Infrastructure Specialist'})
+                To <span className="font-semibold text-text-primary">{candidate?.name}</span> ({candidate?.currentRole || candidate?.primaryRole || 'Infrastructure Specialist'})
               </p>
             </div>
           </div>
@@ -164,7 +164,7 @@ export default function SendOpportunityModal({
                 Hiring Business
               </label>
               {fetchingBiz ? (
-                <div className="h-11 bg-white/[0.03] rounded-xl animate-pulse" />
+                <div className="h-11 bg-surface-elevated rounded-xl animate-pulse" />
               ) : businesses.length === 0 ? (
                 <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-300 flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
@@ -175,10 +175,10 @@ export default function SendOpportunityModal({
                   <select
                     value={selectedBusinessId}
                     onChange={(e) => setSelectedBusinessId(e.target.value)}
-                    className="w-full h-11 px-4 pr-10 bg-[#161f28] border border-white/[0.1] rounded-xl text-sm text-white appearance-none focus:outline-none focus:border-brand-mint transition"
+                    className="w-full h-11 px-4 pr-10 bg-surface-elevated border border-border rounded-xl text-sm text-text-primary appearance-none focus:outline-none focus:border-brand-mint transition"
                   >
                     {businesses.map((b) => (
-                      <option key={b._id} value={b._id} className="bg-[#161f28]">
+                      <option key={b._id} value={b._id} className="bg-surface-elevated text-text-primary">
                         {b.name} ({b.industry || 'Infrastructure'})
                       </option>
                     ))}
@@ -194,9 +194,9 @@ export default function SendOpportunityModal({
                 Select Active Job
               </label>
               {fetchingJobs ? (
-                <div className="h-11 bg-white/[0.03] rounded-xl animate-pulse" />
+                <div className="h-11 bg-surface-elevated rounded-xl animate-pulse" />
               ) : jobs.length === 0 ? (
-                <div className="p-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-xs text-text-muted">
+                <div className="p-3 bg-surface-elevated border border-border rounded-xl text-xs text-text-muted">
                   No active published jobs found for this business. Publish a job first.
                 </div>
               ) : (
@@ -204,10 +204,10 @@ export default function SendOpportunityModal({
                   <select
                     value={selectedJobId}
                     onChange={(e) => setSelectedJobId(e.target.value)}
-                    className="w-full h-11 px-4 pr-10 bg-[#161f28] border border-white/[0.1] rounded-xl text-sm text-white appearance-none focus:outline-none focus:border-brand-mint transition"
+                    className="w-full h-11 px-4 pr-10 bg-surface-elevated border border-border rounded-xl text-sm text-text-primary appearance-none focus:outline-none focus:border-brand-mint transition"
                   >
                     {jobs.map((j) => (
-                      <option key={j._id} value={j._id} className="bg-[#161f28]">
+                      <option key={j._id} value={j._id} className="bg-surface-elevated text-text-primary">
                         {j.title} • {j.location} ({j.workMode})
                       </option>
                     ))}
@@ -228,7 +228,7 @@ export default function SendOpportunityModal({
                 onChange={(e) => setMessage(e.target.value)}
                 maxLength={1000}
                 placeholder="Mention why their infrastructure background stands out..."
-                className="w-full p-3.5 bg-[#161f28] border border-white/[0.1] rounded-xl text-sm text-white placeholder-text-muted/50 focus:outline-none focus:border-brand-mint transition resize-none"
+                className="w-full p-3.5 bg-surface-elevated border border-border rounded-xl text-sm text-text-primary placeholder-text-muted/50 focus:outline-none focus:border-brand-mint transition resize-none"
               />
               <div className="flex justify-between items-center text-[10px] text-text-muted mt-1">
                 <span>Keep it authentic and professional.</span>
@@ -237,7 +237,7 @@ export default function SendOpportunityModal({
             </div>
 
             {/* Notice / Terms */}
-            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-start gap-2.5 text-xs text-text-muted">
+            <div className="p-3 rounded-xl bg-surface-elevated/50 border border-border flex items-start gap-2.5 text-xs text-text-muted">
               <Lock className="w-4 h-4 text-brand-mint shrink-0 mt-0.5" />
               <span>
                 Sending an opportunity notifies the candidate privately. They can review your job and choose to accept, decline, or message you. This does not automatically create an application.
@@ -249,14 +249,14 @@ export default function SendOpportunityModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-5 py-2.5 rounded-xl border border-white/[0.1] text-xs font-semibold text-text-muted hover:text-white hover:bg-white/[0.04] transition"
+                className="px-5 py-2.5 rounded-xl border border-border text-xs font-semibold text-text-muted hover:text-text-primary hover:bg-surface-elevated transition"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading || !selectedJobId || businesses.length === 0}
-                className="px-6 py-2.5 rounded-xl bg-brand-mint text-bg-base text-xs font-bold flex items-center gap-2 hover:bg-brand-mint/90 transition shadow-lg shadow-brand-mint/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2.5 rounded-xl bg-brand-mint text-brand-navy text-xs font-bold flex items-center gap-2 hover:bg-brand-mint/90 transition shadow-lg shadow-brand-mint/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {loading ? (
                   <>Sending...</>

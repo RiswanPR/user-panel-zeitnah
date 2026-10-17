@@ -237,13 +237,13 @@ export default function CommunitySearchModal({
           }
           className={`
             relative z-10 w-full max-w-3xl min-h-screen sm:min-h-0 sm:max-h-[88vh]
-            bg-[#0B111E] border-0 sm:border border-white/[0.08] sm:rounded-2xl
-            shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden
+            bg-surface-card border-0 sm:border border-border sm:rounded-2xl
+            shadow-2xl flex flex-col overflow-hidden
           `}
           onClick={(e) => e.stopPropagation()}
         >
           {/* 1. Header with Accessible Search Field */}
-          <div className="p-3.5 sm:p-4 border-b border-white/[0.06] bg-[#0E1626]/60 backdrop-blur-md shrink-0">
+          <div className="p-3.5 sm:p-4 border-b border-border bg-surface-card/90 backdrop-blur-md shrink-0">
             <div className="flex items-center gap-2">
               <div className="relative flex-1 flex items-center">
                 <Search className="w-4 h-4 text-brand-mint absolute left-3.5 pointer-events-none" />
@@ -255,9 +255,9 @@ export default function CommunitySearchModal({
                   placeholder="Search posts, engineers, topics..."
                   className={`
                     w-full min-h-[46px] pl-10 pr-10 rounded-xl
-                    bg-white/[0.04] hover:bg-white/[0.06] focus:bg-[#0B111E]
-                    border border-white/[0.08] focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/40
-                    text-sm text-white placeholder-text-muted transition-all outline-none
+                    bg-surface-elevated hover:bg-surface-card focus:bg-surface-card
+                    border border-border focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/40
+                    text-sm text-text-primary placeholder-text-muted transition-all outline-none
                   `}
                   aria-label="Search community"
                   autoComplete="off"
@@ -268,7 +268,7 @@ export default function CommunitySearchModal({
                   <button
                     type="button"
                     onClick={handleClearInput}
-                    className="absolute right-3 p-1 rounded-full text-text-muted hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                    className="absolute right-3 p-1 rounded-full text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer"
                     aria-label="Clear search text"
                   >
                     <X className="w-4 h-4" />
@@ -280,7 +280,7 @@ export default function CommunitySearchModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="min-w-[44px] min-h-[44px] rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-text-muted hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                className="min-w-[44px] min-h-[44px] rounded-xl bg-surface-elevated hover:bg-surface-card border border-border text-text-muted hover:text-text-primary flex items-center justify-center transition-colors cursor-pointer shrink-0"
                 aria-label="Close search"
               >
                 <X className="w-5 h-5" />
@@ -289,7 +289,7 @@ export default function CommunitySearchModal({
 
             {/* 2. Category Filter Tabs */}
             {debouncedQuery.length >= 2 && (
-              <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-white/[0.04] overflow-x-auto scrollbar-none">
+              <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-border overflow-x-auto scrollbar-none">
                 {[
                   { id: 'all', label: 'All Results', icon: TrendingUp },
                   { id: 'posts', label: `Posts ${posts.length ? `(${posts.length})` : ''}`, icon: FileText },
@@ -308,8 +308,8 @@ export default function CommunitySearchModal({
                         flex items-center gap-1.5 transition-all duration-150 cursor-pointer shrink-0
                         ${
                           isSelected
-                            ? 'bg-brand-mint text-[#070B14] shadow-[0_0_12px_rgba(159,213,178,0.25)]'
-                            : 'bg-white/[0.03] text-text-muted hover:text-white hover:bg-white/[0.06]'
+                            ? 'bg-brand-mint text-bg-base shadow-sm'
+                            : 'bg-surface-elevated text-text-muted hover:text-text-primary hover:bg-surface-card border border-border'
                         }
                       `}
                     >
@@ -330,7 +330,7 @@ export default function CommunitySearchModal({
                 {recentList.length > 0 && (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                      <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center gap-2">
                         <Clock className="w-3.5 h-3.5 text-brand-mint" />
                         <span>Recent Searches</span>
                       </h4>
@@ -348,14 +348,14 @@ export default function CommunitySearchModal({
                         <div
                           key={term}
                           onClick={() => handleSelectRecent(term)}
-                          className="group inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.035] hover:bg-white/[0.07] border border-white/[0.06] hover:border-brand-mint/30 text-xs text-text-secondary hover:text-white transition-all cursor-pointer"
+                          className="group inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-elevated hover:bg-surface-card border border-border hover:border-brand-mint/40 text-xs text-text-secondary hover:text-text-primary transition-all cursor-pointer"
                         >
                           <Clock className="w-3 h-3 text-text-faint" />
                           <span>{term}</span>
                           <button
                             type="button"
                             onClick={(e) => handleRemoveRecent(e, term)}
-                            className="text-text-faint hover:text-white p-0.5 rounded transition-colors"
+                            className="text-text-faint hover:text-text-primary p-0.5 rounded transition-colors"
                             aria-label={`Remove ${term} from recent searches`}
                           >
                             <X className="w-3 h-3" />
@@ -367,8 +367,8 @@ export default function CommunitySearchModal({
                 )}
 
                 {/* Helpful Search Tips */}
-                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.05] text-xs text-text-muted space-y-2">
-                  <p className="font-semibold text-white">Search Community</p>
+                <div className="p-4 rounded-xl bg-surface-elevated/40 border border-border text-xs text-text-muted space-y-2">
+                  <p className="font-semibold text-text-primary">Search Community</p>
                   <p className="text-[11px] leading-relaxed text-text-faint">
                     Type a topic (e.g. <strong className="text-brand-mint">#engineering</strong>), keyword, or engineer's name to instantly discover verified discussions, blueprints, and peers.
                   </p>
@@ -378,16 +378,16 @@ export default function CommunitySearchModal({
               // Loading Skeletons
               <div className="space-y-4">
                 <PostCardSkeleton />
-                <div className="p-4 rounded-xl bg-white/[0.02] animate-pulse space-y-3">
-                  <div className="h-4 bg-white/10 rounded w-1/3" />
-                  <div className="h-3 bg-white/5 rounded w-1/2" />
+                <div className="p-4 rounded-xl bg-surface-card border border-border animate-pulse space-y-3">
+                  <div className="h-4 bg-surface-elevated rounded w-1/3" />
+                  <div className="h-3 bg-surface-elevated/60 rounded w-1/2" />
                 </div>
               </div>
             ) : isError ? (
               // Error State
               <div className="text-center py-10 px-4">
                 <AlertCircle className="w-10 h-10 text-rose-400/80 mx-auto mb-3" />
-                <h4 className="text-sm font-bold text-white mb-1">Search encountered an issue</h4>
+                <h4 className="text-sm font-bold text-text-primary mb-1">Search encountered an issue</h4>
                 <p className="text-xs text-text-muted max-w-md mx-auto mb-4">
                   We could not complete your search query. Please verify your connection and try again.
                 </p>
@@ -402,10 +402,10 @@ export default function CommunitySearchModal({
             ) : totalResultsCount === 0 ? (
               // Empty State
               <div className="text-center py-12 px-4">
-                <div className="w-12 h-12 rounded-full bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-3">
+                <div className="w-12 h-12 rounded-full bg-surface-card border border-border flex items-center justify-center mx-auto mb-3">
                   <Search className="w-5 h-5 text-text-muted" />
                 </div>
-                <h4 className="text-sm font-bold text-white mb-1">
+                <h4 className="text-sm font-bold text-text-primary mb-1">
                   No results for "{debouncedQuery}"
                 </h4>
                 <p className="text-xs text-text-muted max-w-sm mx-auto">
@@ -418,7 +418,7 @@ export default function CommunitySearchModal({
                 {/* 1. Topics / Hashtags Section */}
                 {(activeTab === 'all' || activeTab === 'topics') && topics.length > 0 && (
                   <div className="space-y-2.5">
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
                       <Hash className="w-3.5 h-3.5 text-brand-mint" />
                       <span>Topics & Disciplines ({topics.length})</span>
                     </h4>
@@ -428,10 +428,10 @@ export default function CommunitySearchModal({
                           key={item.tag}
                           type="button"
                           onClick={() => handleTopicClick(item.tag)}
-                          className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/[0.03] hover:bg-brand-mint/15 border border-white/[0.08] hover:border-brand-mint/40 text-xs font-medium text-text-secondary hover:text-white transition-all cursor-pointer group"
+                          className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-elevated hover:bg-surface-card border border-border hover:border-brand-mint/40 text-xs font-medium text-text-secondary hover:text-text-primary transition-all cursor-pointer group"
                         >
                           <span className="text-brand-mint font-bold">#{item.tag}</span>
-                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-white/[0.06] text-text-muted">
+                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-surface-card border border-border text-text-muted">
                             {item.count} {item.count === 1 ? 'post' : 'posts'}
                           </span>
                           <ArrowRight className="w-3 h-3 text-text-faint group-hover:text-brand-mint transition-colors ml-0.5" />
@@ -444,7 +444,7 @@ export default function CommunitySearchModal({
                 {/* 2. People Section */}
                 {(activeTab === 'all' || activeTab === 'people') && people.length > 0 && (
                   <div className="space-y-2.5">
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
                       <Users className="w-3.5 h-3.5 text-brand-mint" />
                       <span>Engineers & Members ({people.length})</span>
                     </h4>
@@ -459,7 +459,7 @@ export default function CommunitySearchModal({
                 {/* 3. Posts Section */}
                 {(activeTab === 'all' || activeTab === 'posts') && posts.length > 0 && (
                   <div className="space-y-3">
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
                       <FileText className="w-3.5 h-3.5 text-brand-mint" />
                       <span>Community Discussions ({posts.length})</span>
                     </h4>
@@ -482,8 +482,8 @@ export default function CommunitySearchModal({
           </div>
 
           {/* 4. Footer */}
-          <div className="px-4 py-2.5 border-t border-white/[0.06] bg-[#0E1626]/40 flex items-center justify-between text-[11px] text-text-faint shrink-0">
-            <span className="hidden sm:inline">Press <kbd className="font-mono text-white/70">ESC</kbd> to exit</span>
+          <div className="px-4 py-2.5 border-t border-border bg-surface-card/90 flex items-center justify-between text-[11px] text-text-faint shrink-0">
+            <span className="hidden sm:inline">Press <kbd className="font-mono text-text-secondary">ESC</kbd> to exit</span>
             {totalResultsCount > 0 && debouncedQuery && (
               <span className="font-mono text-text-muted">
                 {totalResultsCount} verified {totalResultsCount === 1 ? 'match' : 'matches'}

@@ -60,7 +60,7 @@ export default function StoryDrawingControls({
           <button
             type="button"
             onClick={onDone}
-            className="min-h-[44px] px-3.5 rounded-xl bg-brand-mint text-[#070B14] font-bold text-xs flex items-center gap-1 hover:opacity-90 transition-all cursor-pointer shadow-md"
+            className="min-h-[44px] px-3.5 rounded-xl bg-brand-mint text-bg-base font-bold text-xs flex items-center gap-1 hover:opacity-90 transition-all cursor-pointer shadow-md"
             aria-label="Done drawing"
           >
             <Check className="w-4 h-4" />
@@ -80,7 +80,7 @@ export default function StoryDrawingControls({
               onClick={() => onStrokeWidthChange(sw.size)}
               className={`min-h-[36px] px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                 strokeWidth === sw.size
-                  ? 'bg-brand-mint text-[#070B14]'
+                  ? 'bg-brand-mint text-bg-base'
                   : 'bg-white/[0.06] text-text-muted hover:text-white'
               }`}
             >

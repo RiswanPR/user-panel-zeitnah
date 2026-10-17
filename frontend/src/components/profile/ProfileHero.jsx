@@ -78,7 +78,7 @@ export default function ProfileHero({
   return (
     <section
       aria-label="Profile Header"
-      className={`relative overflow-hidden rounded-3xl bg-[#0A0F18]/95 border border-white/[0.08] shadow-[0_16px_48px_rgba(0,0,0,0.5)] ${className}`}
+      className={`relative overflow-hidden rounded-3xl bg-surface-card border border-border shadow-[0_16px_48px_rgba(0,0,0,0.5)] ${className}`}
     >
       {/* Subtle top ambient mint gradient line */}
       <div
@@ -208,7 +208,7 @@ export default function ProfileHero({
             <div className="pt-1 sm:pt-2 space-y-2.5 min-w-0 flex-1 w-full">
               {/* Primary Name Line with Verified and Availability Badges */}
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
-                <h1 className="font-heading font-black text-2xl sm:text-3xl md:text-[34px] lg:text-4xl text-white tracking-tight leading-tight break-words">
+                <h1 className="font-heading font-black text-2xl sm:text-3xl md:text-[34px] lg:text-4xl text-text-primary tracking-tight leading-tight break-words">
                   {profile.name || "Zeitnah Member"}
                 </h1>
                 {profile.isVerified && (
@@ -230,7 +230,7 @@ export default function ProfileHero({
                   <button
                     type="button"
                     onClick={onChangeUsername}
-                    className="inline-flex items-center gap-1 text-[11px] font-medium text-text-muted hover:text-brand-mint transition-colors px-2 py-0.5 rounded-md hover:bg-white/[0.04] cursor-pointer"
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-text-muted hover:text-brand-mint transition-colors px-2 py-0.5 rounded-md hover:bg-surface-elevated cursor-pointer"
                     title="Change handle"
                     aria-label="Edit handle"
                   >
@@ -258,7 +258,7 @@ export default function ProfileHero({
                   </span>
                 )}
                 {Number(profile.yearsOfExperience) > 0 && (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-xs font-mono font-medium text-white/90 shadow-sm">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-border bg-surface-elevated px-2.5 py-0.5 text-xs font-mono font-medium text-text-primary shadow-sm">
                     {profile.yearsOfExperience}+ Years Exp
                   </span>
                 )}
@@ -266,7 +266,7 @@ export default function ProfileHero({
 
               {/* Professional Headline */}
               {profile.headline ? (
-                <p className="text-sm sm:text-base font-medium text-white/95 leading-relaxed max-w-2xl break-words pt-0.5">
+                <p className="text-sm sm:text-base font-medium text-text-primary leading-relaxed max-w-2xl break-words pt-0.5">
                   {profile.headline}
                 </p>
               ) : isOwner ? (
@@ -279,9 +279,9 @@ export default function ProfileHero({
               {(profile.currentRole || profile.location || profile.industry) && (
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1.5 text-xs text-text-muted pt-1">
                   {profile.currentRole && (
-                    <span className="inline-flex items-center gap-1.5 text-white/80 flex-wrap">
+                    <span className="inline-flex items-center gap-1.5 text-text-secondary flex-wrap">
                       <Briefcase className="w-3.5 h-3.5 text-text-faint shrink-0" aria-hidden="true" />
-                      <span className="font-semibold text-white/95 break-words max-w-xs sm:max-w-md" title={displayTitle}>
+                      <span className="font-semibold text-text-primary break-words max-w-xs sm:max-w-md" title={displayTitle}>
                         {displayTitle}
                       </span>
                       {displayIdentity.department && (
@@ -296,13 +296,13 @@ export default function ProfileHero({
                     </span>
                   )}
                   {profile.location && (
-                    <span className="inline-flex items-center gap-1.5 text-white/80">
+                    <span className="inline-flex items-center gap-1.5 text-text-secondary">
                       <MapPin className="w-3.5 h-3.5 text-text-faint shrink-0" />
                       <span>{profile.location}</span>
                     </span>
                   )}
                   {profile.industry && (
-                    <span className="inline-flex items-center gap-1.5 text-white/80">
+                    <span className="inline-flex items-center gap-1.5 text-text-secondary">
                       <Building2 className="w-3.5 h-3.5 text-brand-yellow/80 shrink-0" />
                       <span>{profile.industry}</span>
                     </span>
@@ -331,7 +331,7 @@ export default function ProfileHero({
               <span className="px-3 py-1.5 rounded-xl border border-brand-mint/25 bg-brand-mint/10 text-xs font-bold uppercase tracking-wider text-brand-mint shadow-sm">
                 {gamification.rank || "Pioneer"}
               </span>
-              <span className="px-3 py-1.5 rounded-xl border border-white/10 bg-white/[0.04] text-xs font-bold font-mono text-white shadow-sm">
+              <span className="px-3 py-1.5 rounded-xl border border-border bg-surface-elevated text-xs font-bold font-mono text-text-primary shadow-sm">
                 <XPCountUp value={gamification.totalPoints || 0} /> XP
               </span>
             </div>
@@ -359,7 +359,7 @@ export default function ProfileHero({
                   <button
                     type="button"
                     onClick={onShare}
-                    className="p-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] text-text-muted hover:text-white transition-colors cursor-pointer shrink-0 focus-ring"
+                    className="p-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl border border-border bg-surface-elevated/40 hover:bg-surface-elevated text-text-muted hover:text-text-primary transition-colors cursor-pointer shrink-0 focus-ring"
                     title="Share profile"
                     aria-label="Share profile"
                   >
@@ -414,7 +414,7 @@ export default function ProfileHero({
                   <button
                     type="button"
                     onClick={onShare}
-                    className="p-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] text-text-muted hover:text-white transition-colors cursor-pointer shrink-0 focus-ring"
+                    className="p-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl border border-border bg-surface-elevated/40 hover:bg-surface-elevated text-text-muted hover:text-text-primary transition-colors cursor-pointer shrink-0 focus-ring"
                     title="Share profile"
                     aria-label="Share profile"
                   >
@@ -426,7 +426,7 @@ export default function ProfileHero({
                   <button
                     type="button"
                     onClick={onReport}
-                    className="p-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] hover:bg-red-500/10 hover:border-red-500/20 text-text-muted hover:text-red-400 transition-colors cursor-pointer shrink-0 focus-ring"
+                    className="p-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl border border-border bg-surface-elevated/40 hover:bg-red-500/10 hover:border-red-500/20 text-text-muted hover:text-red-400 transition-colors cursor-pointer shrink-0 focus-ring"
                     title="Report profile"
                     aria-label="Report profile"
                   >

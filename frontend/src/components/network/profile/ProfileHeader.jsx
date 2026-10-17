@@ -97,9 +97,9 @@ export default function ProfileHeader({ profile, isOwnProfile = false }) {
   const joinedLabel = formatJoinedDate(user.joinedAt);
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-bg-surface/90 shadow-2xl backdrop-blur-2xl">
+    <div className="relative overflow-hidden rounded-3xl border border-border bg-surface-card shadow-2xl backdrop-blur-2xl">
       {/* ── AMBIENT COVER / VISUAL BACKDROP ── */}
-      <div className="relative h-44 sm:h-56 md:h-64 w-full overflow-hidden bg-gradient-to-br from-[#0B0F19] via-[#0F172A] to-[#070B14]">
+      <div className="relative h-44 sm:h-56 md:h-64 w-full overflow-hidden bg-gradient-to-br from-bg-base via-surface-card to-surface-elevated">
         {/* If user has a real cover photo, display it */}
         {user.backgroundImage ? (
           <img
@@ -117,7 +117,7 @@ export default function ProfileHeader({ profile, isOwnProfile = false }) {
         )}
 
         {/* Ambient bottom shadow gradient for smooth blend */}
-        <div className="absolute inset-0 bg-gradient-to-t from-bg-surface via-transparent to-transparent opacity-90" />
+        <div className="absolute inset-0 bg-gradient-to-t from-surface-card via-transparent to-transparent opacity-90" />
       </div>
 
       {/* ── PROFILE INFO CONTAINER ── */}
@@ -130,11 +130,11 @@ export default function ProfileHeader({ profile, isOwnProfile = false }) {
                 src={user.avatarUrl}
                 alt={`${user.name}'s profile avatar`}
                 onError={() => setAvatarError(true)}
-                className="h-28 w-28 sm:h-36 sm:w-36 rounded-3xl object-cover border-4 border-bg-surface bg-bg-surface shadow-2xl"
+                className="h-28 w-28 sm:h-36 sm:w-36 rounded-3xl object-cover border-4 border-surface-card bg-surface-card shadow-2xl"
               />
             ) : (
               <div
-                className="flex h-28 w-28 sm:h-36 sm:w-36 items-center justify-center rounded-3xl border-4 border-bg-surface bg-gradient-to-br from-brand-mint/25 via-white/[0.08] to-brand-mint/10 font-heading font-black text-white text-3xl sm:text-4xl shadow-2xl"
+                className="flex h-28 w-28 sm:h-36 sm:w-36 items-center justify-center rounded-3xl border-4 border-surface-card bg-gradient-to-br from-brand-mint/25 via-surface-elevated to-brand-mint/10 font-heading font-black text-text-primary text-3xl sm:text-4xl shadow-2xl"
                 aria-hidden="true"
               >
                 {initials}
@@ -144,7 +144,7 @@ export default function ProfileHeader({ profile, isOwnProfile = false }) {
             {/* Verified Student Badge */}
             {user.isVerified && (
               <span
-                className="absolute bottom-1 right-1 flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-xl bg-brand-mint text-bg-base shadow-lg border-2 border-bg-surface"
+                className="absolute bottom-1 right-1 flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-xl bg-brand-mint text-brand-navy shadow-lg border-2 border-surface-card"
                 title="Verified Student"
               >
                 <ShieldCheck className="h-4 w-4" />
@@ -157,7 +157,7 @@ export default function ProfileHeader({ profile, isOwnProfile = false }) {
             {isOwnProfile ? (
               <Link
                 to="/profile/edit"
-                className="inline-flex items-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.06] px-4 py-2.5 text-xs font-bold text-white hover:bg-white/[0.1] hover:border-brand-mint/40 transition-all focus-ring"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface-elevated px-4 py-2.5 text-xs font-bold text-text-primary hover:bg-surface-elevated/80 hover:border-brand-mint/40 transition-all focus-ring"
               >
                 <Edit3 className="h-3.5 w-3.5" />
                 <span>Edit Profile</span>
@@ -182,14 +182,14 @@ export default function ProfileHeader({ profile, isOwnProfile = false }) {
                         navigate(`/messages?user=${user.id}`);
                       }
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-brand-mint/40 bg-brand-mint/10 px-4 py-2.5 text-xs font-bold text-brand-mint hover:bg-brand-mint/20 hover:border-brand-mint/60 transition-all focus-ring"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-brand-mint/40 bg-brand-mint/10 px-4 py-2.5 text-xs font-bold text-brand-mint hover:bg-brand-mint/20 hover:border-brand-mint/60 transition-all focus-ring cursor-pointer"
                   >
                     <MessageSquare className="h-3.5 w-3.5" />
                     <span>{relationship.state === "connected" ? "Message" : "Message Request"}</span>
                   </button>
                 ) : (
                   <span
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-2.5 text-xs text-text-faint cursor-not-allowed opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface-elevated/40 px-3.5 py-2.5 text-xs text-text-faint cursor-not-allowed opacity-50"
                     title="Messaging restricted by user's privacy settings"
                   >
                     <MessageSquare className="h-3.5 w-3.5" />
@@ -205,7 +205,7 @@ export default function ProfileHeader({ profile, isOwnProfile = false }) {
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 aria-label="Profile options"
                 aria-expanded={isMenuOpen}
-                className="flex items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] p-2.5 text-text-muted hover:text-white hover:bg-white/[0.08] hover:border-white/[0.2] transition-all focus-ring"
+                className="flex items-center justify-center rounded-xl border border-border bg-surface-elevated p-2.5 text-text-muted hover:text-text-primary hover:bg-surface-elevated/80 transition-all focus-ring cursor-pointer"
               >
                 <MoreVertical className="h-4 w-4" />
               </button>
@@ -216,12 +216,12 @@ export default function ProfileHeader({ profile, isOwnProfile = false }) {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute right-0 top-full mt-2 w-52 rounded-2xl border border-white/[0.1] bg-bg-elevated/95 p-1.5 shadow-2xl backdrop-blur-xl z-30"
+                  className="absolute right-0 top-full mt-2 w-52 rounded-2xl border border-border bg-surface-elevated p-1.5 shadow-2xl backdrop-blur-xl z-30"
                 >
                   <button
                     type="button"
                     onClick={handleCopyLink}
-                    className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-text-secondary hover:bg-white/[0.06] hover:text-white transition-colors text-left"
+                    className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-text-secondary hover:bg-surface-card hover:text-text-primary transition-colors text-left cursor-pointer"
                   >
                     {copiedLink ? (
                       <Check className="h-3.5 w-3.5 text-brand-mint" />
@@ -235,7 +235,7 @@ export default function ProfileHeader({ profile, isOwnProfile = false }) {
                     <Link
                       to={`/u/${encodeURIComponent(user.username)}`}
                       onClick={() => setIsMenuOpen(false)}
-                      className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-text-secondary hover:bg-white/[0.06] hover:text-white transition-colors text-left"
+                      className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-text-secondary hover:bg-surface-card hover:text-text-primary transition-colors text-left"
                     >
                       <ExternalLink className="h-3.5 w-3.5" />
                       <span>View Public Resume</span>
@@ -250,7 +250,7 @@ export default function ProfileHeader({ profile, isOwnProfile = false }) {
         {/* Name, Handle, Headline, and Contextual Badges */}
         <div className="mt-4 space-y-2">
           <div className="flex flex-wrap items-baseline gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-heading font-black text-white tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-heading font-black text-text-primary tracking-tight">
               {user.name}
             </h1>
             {user.username && (

@@ -21,7 +21,7 @@ export default function ProfileCertificationsSection({
     <section
       id="certifications"
       aria-labelledby="profile-certifications-heading"
-      className={`rounded-3xl border border-white/[0.08] bg-[#0A0F18]/90 backdrop-blur-xl p-6 sm:p-8 shadow-sm transition-all ${className}`}
+      className={`rounded-3xl border border-border bg-surface-card p-6 sm:p-8 shadow-sm transition-all ${className}`}
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
@@ -32,12 +32,12 @@ export default function ProfileCertificationsSection({
             <div className="flex items-center gap-2 flex-wrap">
               <h2
                 id="profile-certifications-heading"
-                className="text-lg sm:text-xl font-heading font-extrabold text-white tracking-tight"
+                className="text-lg sm:text-xl font-heading font-extrabold text-text-primary tracking-tight"
               >
                 Licenses & Certifications
               </h2>
               {items.length > 0 && (
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-white/[0.04] border border-white/[0.08] text-white/80">
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-surface-elevated border border-border text-text-secondary">
                   {items.length} {items.length === 1 ? "Credential" : "Credentials"}
                 </span>
               )}
@@ -73,12 +73,12 @@ export default function ProfileCertificationsSection({
       </div>
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.01] p-8 text-center space-y-3">
-          <div className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-text-muted mx-auto">
+        <div className="rounded-2xl border border-dashed border-border bg-surface-elevated/20 p-8 text-center space-y-3">
+          <div className="w-12 h-12 rounded-xl bg-surface-elevated border border-border flex items-center justify-center text-text-muted mx-auto">
             <Award className="w-6 h-6 text-brand-mint/70" />
           </div>
           <div>
-            <h3 className="text-sm font-heading font-bold text-white mb-1">
+            <h3 className="text-sm font-heading font-bold text-text-primary mb-1">
               No certifications added
             </h3>
             <p className="text-xs text-text-muted max-w-sm mx-auto leading-relaxed">
@@ -121,7 +121,7 @@ export default function ProfileCertificationsSection({
             return (
               <div
                 key={certId}
-                className="rounded-2xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.035] hover:border-brand-mint/30 p-5 sm:p-6 transition-all shadow-sm flex flex-col justify-between gap-4 group"
+                className="rounded-2xl border border-border bg-surface-elevated/40 hover:bg-surface-elevated hover:border-brand-mint/30 p-5 sm:p-6 transition-all shadow-sm flex flex-col justify-between gap-4 group"
               >
                 <div className="space-y-3 min-w-0">
                   <div className="flex items-start justify-between gap-3">
@@ -146,7 +146,7 @@ export default function ProfileCertificationsSection({
                         )}
                       </div>
 
-                      <h3 className="text-base sm:text-lg font-heading font-black text-white tracking-tight leading-snug pt-1 break-words">
+                      <h3 className="text-base sm:text-lg font-heading font-black text-text-primary tracking-tight leading-snug pt-1 break-words">
                         {cert.name || "Certification"}
                       </h3>
 
@@ -161,7 +161,7 @@ export default function ProfileCertificationsSection({
                           <button
                             type="button"
                             onClick={() => onEdit(cert)}
-                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer"
+                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-brand-mint hover:bg-surface-elevated transition-colors cursor-pointer"
                             title={`Edit ${cert.name}`}
                             aria-label={`Edit ${cert.name}`}
                           >
@@ -172,7 +172,7 @@ export default function ProfileCertificationsSection({
                           <button
                             type="button"
                             onClick={() => onDelete(certId)}
-                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-danger hover:bg-white/[0.04] transition-colors cursor-pointer"
+                            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-danger hover:bg-surface-elevated transition-colors cursor-pointer"
                             title={`Delete ${cert.name}`}
                             aria-label={`Delete ${cert.name}`}
                           >
@@ -193,13 +193,13 @@ export default function ProfileCertificationsSection({
                   {/* Privacy protection: Credential ID only shown to owner */}
                   {isOwner && cert.credentialId && (
                     <p className="text-[11px] font-mono text-text-muted break-words">
-                      Credential ID: <span className="text-white/80 font-medium">{cert.credentialId}</span>
+                      Credential ID: <span className="text-text-primary font-medium">{cert.credentialId}</span>
                     </p>
                   )}
                 </div>
 
                 {cert.credentialUrl && (
-                  <div className="pt-3 border-t border-white/[0.05]">
+                  <div className="pt-3 border-t border-border">
                     <a
                       href={cert.credentialUrl}
                       target="_blank"

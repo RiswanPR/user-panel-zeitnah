@@ -119,23 +119,23 @@ export default function ProfileAvatar({
   const isCircle = shape === "circle";
 
   // Frame styling based on availability
-  let ringClasses = "ring-1 ring-white/10";
+  let ringClasses = "ring-1 ring-border";
   let statusMarker = null;
 
   if (normalizedAvailability === "OPEN_TO_HIRING") {
-    ringClasses = `ring-2 sm:ring-[3px] ring-emerald-400/90 ring-offset-[#0A0F18] ${sizeConfig.ringOffset} shadow-[0_0_24px_rgba(52,211,153,0.28)]`;
+    ringClasses = `ring-2 sm:ring-[3px] ring-emerald-400/90 ring-offset-[var(--color-surface)] ${sizeConfig.ringOffset} shadow-[0_0_24px_rgba(52,211,153,0.28)]`;
     statusMarker = {
       type: "HIRING",
       label: "Open to Hiring",
-      bg: "bg-[#0A101D] border border-emerald-400/90 text-emerald-300",
+      bg: "bg-surface-card border border-emerald-400/90 text-emerald-300",
       Icon: Briefcase,
     };
   } else if (normalizedAvailability === "OPEN_TO_WORK") {
-    ringClasses = `ring-2 sm:ring-[3px] ring-sky-400/90 ring-offset-[#0A0F18] ${sizeConfig.ringOffset} shadow-[0_0_24px_rgba(56,189,248,0.28)]`;
+    ringClasses = `ring-2 sm:ring-[3px] ring-sky-400/90 ring-offset-[var(--color-surface)] ${sizeConfig.ringOffset} shadow-[0_0_24px_rgba(56,189,248,0.28)]`;
     statusMarker = {
       type: "WORK",
       label: "Open to Work",
-      bg: "bg-[#0A101D] border border-sky-400/90 text-sky-300",
+      bg: "bg-surface-card border border-sky-400/90 text-sky-300",
       Icon: Sparkles,
     };
   }
@@ -144,7 +144,7 @@ export default function ProfileAvatar({
     <div className={`relative shrink-0 select-none ${containerClassName}`}>
       {/* ── Main Avatar Surface ── */}
       <div
-        className={`relative overflow-hidden isolate bg-[#0F1724] border border-white/10 flex items-center justify-center transition-all ${sizeConfig.container} ${isCircle ? "rounded-full aspect-square shrink-0" : sizeConfig.rounded} ${ringClasses} ${className}`}
+        className={`relative overflow-hidden isolate bg-surface-elevated border border-border flex items-center justify-center transition-all ${sizeConfig.container} ${isCircle ? "rounded-full aspect-square shrink-0" : sizeConfig.rounded} ${ringClasses} ${className}`}
         style={isCircle ? { aspectRatio: "1 / 1", borderRadius: "50%" } : undefined}
       >
         {/* Base Fallback Initials (Always rendered underneath so avatar is never a black void during load or on error) */}

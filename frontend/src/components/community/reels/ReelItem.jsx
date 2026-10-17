@@ -289,10 +289,10 @@ function ReelItem({
       data-testid="reel-item"
       data-post-id={postId}
       onClick={handleStageTap}
-      className="relative w-full h-[100dvh] flex items-center justify-center bg-[#05070D] snap-start flex-shrink-0 select-none overflow-hidden"
+      className="relative w-full h-[100dvh] flex items-center justify-center bg-black snap-start flex-shrink-0 select-none overflow-hidden"
     >
       {/* ── DESKTOP & MOBILE STAGE FRAME ── */}
-      <div className="relative w-full h-full max-w-[440px] md:h-[calc(100dvh-28px)] md:my-3 md:rounded-3xl overflow-hidden bg-black shadow-[0_25px_70px_rgba(0,0,0,0.85)] border-0 md:border md:border-white/[0.08] flex items-center justify-center">
+      <div className="relative w-full h-full max-w-[440px] md:h-[calc(100dvh-28px)] md:my-3 md:rounded-3xl overflow-hidden bg-black shadow-[0_25px_70px_rgba(0,0,0,0.85)] border-0 md:border md:border-border flex items-center justify-center">
 
         {/* ── MEDIA PLAYER / POSTER ── */}
         {isMounted ? (
@@ -313,7 +313,7 @@ function ReelItem({
           />
         ) : (
           // Distant unmounted video: renders lightweight poster
-          <div className="w-full h-full bg-[#0B111E] flex items-center justify-center relative">
+          <div className="w-full h-full bg-black flex items-center justify-center relative">
             {posterUrl ? (
               <img
                 src={getUploadUrl(posterUrl)}
@@ -322,7 +322,7 @@ function ReelItem({
                 loading="lazy"
               />
             ) : (
-              <div className="w-full h-full bg-[#070B14] flex items-center justify-center">
+              <div className="w-full h-full bg-black flex items-center justify-center">
                 <Play className="w-12 h-12 text-white/30" />
               </div>
             )}
@@ -563,7 +563,7 @@ function ReelItem({
             {showMoreMenu && (
               <div
                 onClick={(e) => e.stopPropagation()}
-                className="absolute right-0 bottom-11 w-44 rounded-2xl bg-[#0D1424]/95 border border-white/10 shadow-2xl backdrop-blur-xl p-1.5 z-40 text-xs"
+                className="absolute right-0 bottom-11 w-44 rounded-2xl bg-surface-card/95 border border-border shadow-2xl backdrop-blur-xl p-1.5 z-40 text-xs"
               >
                 <button
                   type="button"
@@ -571,7 +571,7 @@ function ReelItem({
                     handleShare();
                     setShowMoreMenu(false);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-white/90 hover:bg-white/[0.08] transition-colors cursor-pointer text-left"
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer text-left min-h-[36px]"
                 >
                   <Copy className="w-3.5 h-3.5 text-text-muted" />
                   <span>Copy Link</span>
@@ -579,7 +579,7 @@ function ReelItem({
                 <Link
                   to={`/community#${postId}`}
                   onClick={() => setShowMoreMenu(false)}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-white/90 hover:bg-white/[0.08] transition-colors cursor-pointer text-left"
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer text-left min-h-[36px]"
                 >
                   <ExternalLink className="w-3.5 h-3.5 text-text-muted" />
                   <span>View in Feed</span>

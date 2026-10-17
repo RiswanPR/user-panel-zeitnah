@@ -113,15 +113,15 @@ export default function MessageRequestsView({ onSelectConversation }) {
   });
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#080C14] overflow-y-auto p-4 sm:p-6 lg:p-8">
+    <div className="flex-1 flex flex-col h-full bg-bg-base overflow-y-auto p-4 sm:p-6 lg:p-8">
       <div className="max-w-3xl mx-auto w-full space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-3.5 pb-5 border-b border-white/[0.08]">
+        <div className="flex items-center gap-3.5 pb-5 border-b border-border">
           <div className="w-11 h-11 rounded-2xl bg-brand-gold/15 border border-brand-gold/30 flex items-center justify-center text-brand-gold shrink-0">
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-lg font-heading font-black text-white tracking-tight">
+            <h1 className="text-lg font-heading font-black text-text-primary tracking-tight">
               Message Requests
             </h1>
             <p className="text-xs text-text-muted mt-0.5 leading-relaxed">
@@ -136,16 +136,16 @@ export default function MessageRequestsView({ onSelectConversation }) {
             {[1, 2].map((i) => (
               <div
                 key={i}
-                className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06] animate-pulse h-40"
+                className="p-6 rounded-2xl bg-surface-elevated/30 border border-border animate-pulse h-40"
               />
             ))}
           </div>
         ) : requests.length === 0 ? (
-          <div className="p-16 rounded-3xl bg-white/[0.02] border border-white/[0.06] text-center max-w-md mx-auto my-12">
-            <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-3 text-text-muted">
+          <div className="p-16 rounded-3xl bg-surface-card border border-border text-center max-w-md mx-auto my-12">
+            <div className="w-12 h-12 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center mx-auto mb-3 text-text-muted">
               <Check className="w-6 h-6 text-brand-mint" />
             </div>
-            <h3 className="text-sm font-bold text-white mb-1 tracking-tight">
+            <h3 className="text-sm font-bold text-text-primary mb-1 tracking-tight">
               You&apos;re all caught up.
             </h3>
             <p className="text-xs text-text-muted leading-relaxed">
@@ -171,12 +171,12 @@ export default function MessageRequestsView({ onSelectConversation }) {
               return (
                 <div
                   key={convId}
-                  className="rounded-2xl border border-white/[0.08] bg-[#0E1524] p-5 shadow-xl space-y-4 hover:border-brand-mint/30 transition-all"
+                  className="rounded-2xl border border-border bg-surface-card p-5 shadow-xl space-y-4 hover:border-brand-mint/40 transition-all"
                 >
                   {/* Sender Details */}
                   <div className="flex items-start justify-between gap-3.5">
                     <div className="flex items-start gap-3.5 min-w-0">
-                      <div className="w-12 h-12 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center overflow-hidden text-brand-mint font-heading font-bold text-xs shrink-0 shadow-inner">
+                      <div className="w-12 h-12 rounded-full bg-surface-elevated border border-border flex items-center justify-center overflow-hidden text-brand-mint font-heading font-bold text-xs shrink-0 shadow-inner">
                         {avatarSrc ? (
                           <img
                             src={getUploadUrl(avatarSrc)}
@@ -190,7 +190,7 @@ export default function MessageRequestsView({ onSelectConversation }) {
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <h3 className="text-sm font-bold text-white truncate tracking-tight">
+                          <h3 className="text-sm font-bold text-text-primary truncate tracking-tight">
                             {senderName}
                           </h3>
                           {senderRole && (
@@ -221,7 +221,7 @@ export default function MessageRequestsView({ onSelectConversation }) {
                       {sender && (
                         <Link
                           to={getCanonicalProfileUrl(sender)}
-                          className="p-1.5 rounded-xl text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors"
+                          className="p-1.5 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors"
                           title="View Canonical Profile"
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
@@ -231,7 +231,7 @@ export default function MessageRequestsView({ onSelectConversation }) {
                   </div>
 
                   {/* Introductory Message Snippet */}
-                  <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs text-white/90 leading-relaxed">
+                  <div className="p-3.5 rounded-xl bg-surface-elevated/40 border border-border text-xs text-text-primary leading-relaxed">
                     <div className="flex items-center gap-1.5 text-text-muted mb-1 text-[11px] font-mono uppercase tracking-wider">
                       <MessageSquare className="w-3 h-3 text-brand-gold" />
                       <span>Introduction</span>
@@ -240,13 +240,13 @@ export default function MessageRequestsView({ onSelectConversation }) {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/[0.04]">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border">
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => acceptMutation.mutate(convId)}
                         disabled={acceptMutation.isPending}
-                        className="px-4 py-2 rounded-xl bg-brand-mint text-bg-base text-xs font-bold hover:bg-brand-mint/90 transition-all cursor-pointer inline-flex items-center gap-1.5 focus-ring disabled:opacity-50 min-h-[40px] shadow-sm shadow-brand-mint/10"
+                        className="px-4 py-2 rounded-xl bg-brand-mint text-bg-base text-xs font-bold hover:bg-brand-mint/90 transition-all cursor-pointer inline-flex items-center gap-1.5 focus-ring disabled:opacity-50 min-h-[44px] shadow-sm shadow-brand-mint/10"
                       >
                         <Check className="w-3.5 h-3.5" />
                         <span>Accept Request</span>
@@ -256,7 +256,7 @@ export default function MessageRequestsView({ onSelectConversation }) {
                         type="button"
                         onClick={() => declineMutation.mutate(convId)}
                         disabled={declineMutation.isPending}
-                        className="px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-text-secondary hover:text-white text-xs font-semibold transition-all cursor-pointer inline-flex items-center gap-1.5 focus-ring disabled:opacity-50 min-h-[40px]"
+                        className="px-3.5 py-2 rounded-xl bg-surface-elevated/60 hover:bg-surface-elevated text-text-secondary hover:text-text-primary border border-border text-xs font-semibold transition-all cursor-pointer inline-flex items-center gap-1.5 focus-ring disabled:opacity-50 min-h-[44px]"
                       >
                         <X className="w-3.5 h-3.5" />
                         <span>Decline</span>
@@ -272,7 +272,7 @@ export default function MessageRequestsView({ onSelectConversation }) {
                         })
                       }
                       disabled={blockMutation.isPending || !senderId}
-                      className="px-3 py-1.5 rounded-xl text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 text-xs font-medium transition-all cursor-pointer inline-flex items-center gap-1 disabled:opacity-50 min-h-[36px]"
+                      className="px-3 py-1.5 rounded-xl text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 text-xs font-medium transition-all cursor-pointer inline-flex items-center gap-1 disabled:opacity-50 min-h-[44px]"
                       title="Block sender"
                     >
                       <Ban className="w-3.5 h-3.5" />

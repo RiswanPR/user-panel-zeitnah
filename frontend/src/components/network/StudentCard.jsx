@@ -59,7 +59,7 @@ export default function StudentCard({ student, onPreview }) {
       animate={{ opacity: 1, y: 0 }}
       whileHover={shouldReduceMotion ? undefined : { y: -2 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#111A29]/95 to-[#0A101D]/95 p-5 backdrop-blur-xl shadow-lg transition-all duration-300 hover:border-brand-mint/30 hover:shadow-[0_8px_32px_-8px_rgba(159,213,178,0.12)]"
+      className="group relative flex flex-col justify-between rounded-2xl border border-border bg-surface-card p-5 shadow-lg transition-all duration-300 hover:border-brand-mint/30 hover:shadow-[0_8px_32px_-8px_rgba(159,213,178,0.12)]"
     >
       {/* Subtle Card Top Highlight */}
       <div className="gradient-line-top opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -85,7 +85,7 @@ export default function StudentCard({ student, onPreview }) {
               to={getCanonicalProfileUrl(student)}
               className="block text-left group/link focus-ring rounded w-full"
             >
-              <h3 className="truncate text-base font-heading font-bold text-white group-hover/link:text-brand-mint transition-colors">
+              <h3 className="truncate text-base font-heading font-bold text-text-primary group-hover/link:text-brand-mint transition-colors">
                 {student.name}
               </h3>
             </Link>
@@ -113,7 +113,7 @@ export default function StudentCard({ student, onPreview }) {
           return (
             <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
               {displayIdentity.title && (
-                <span className="text-xs font-semibold text-white/90 truncate max-w-[200px]" title={displayIdentity.title}>
+                <span className="text-xs font-semibold text-text-secondary truncate max-w-[200px]" title={displayIdentity.title}>
                   {displayIdentity.title}
                 </span>
               )}
@@ -135,9 +135,9 @@ export default function StudentCard({ student, onPreview }) {
 
         {/* Course / Primary Learning Context */}
         {student.course && (
-          <div className="mt-3 flex items-center gap-1.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-xs text-text-muted">
+          <div className="mt-3 flex items-center gap-1.5 rounded-xl border border-border bg-surface-elevated px-2.5 py-1.5 text-xs text-text-muted">
             <BookOpen className="h-3.5 w-3.5 text-brand-mint/80 shrink-0" aria-hidden="true" />
-            <span className="truncate font-medium text-white/80">{student.course}</span>
+            <span className="truncate font-medium text-text-secondary">{student.course}</span>
           </div>
         )}
 
@@ -147,13 +147,13 @@ export default function StudentCard({ student, onPreview }) {
             {student.interests.slice(0, 3).map((interest) => (
               <span
                 key={interest}
-                className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-0.5 text-[11px] font-medium text-text-muted group-hover:border-brand-mint/15 transition-colors"
+                className="rounded-lg border border-border bg-surface-elevated px-2 py-0.5 text-[11px] font-medium text-text-muted group-hover:border-brand-mint/15 transition-colors"
               >
                 {interest}
               </span>
             ))}
             {student.interests.length > 3 && (
-              <span className="rounded-lg bg-white/[0.03] px-1.5 py-0.5 text-[10px] text-text-muted">
+              <span className="rounded-lg bg-surface-elevated px-1.5 py-0.5 text-[10px] text-text-muted">
                 +{student.interests.length - 3}
               </span>
             )}
@@ -170,12 +170,12 @@ export default function StudentCard({ student, onPreview }) {
       </div>
 
       {/* Action Footer */}
-      <div className="mt-5 pt-4 border-t border-white/[0.06] flex items-center gap-2">
+      <div className="mt-5 pt-4 border-t border-border flex items-center gap-2">
         {/* View Profile Action */}
         <button
           type="button"
           onClick={() => onPreview?.(student)}
-          className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-white/[0.1] bg-white/[0.04] py-2 px-3 text-xs font-semibold text-white hover:bg-white/[0.08] hover:border-brand-mint/30 transition-all focus-ring"
+          className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-border bg-surface-elevated py-2 px-3 text-xs font-semibold text-text-primary hover:bg-surface-card hover:border-brand-mint/30 transition-all focus-ring"
         >
           <span>View Profile</span>
         </button>
@@ -194,7 +194,7 @@ export default function StudentCard({ student, onPreview }) {
           <Link
             to={getCanonicalProfileUrl(student)}
             aria-label={`Open ${student.name}'s profile`}
-            className="flex items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] p-2 text-text-muted hover:border-brand-mint/30 hover:bg-white/[0.06] hover:text-white transition-all focus-ring"
+            className="flex items-center justify-center rounded-xl border border-border bg-surface-elevated p-2 text-text-muted hover:border-brand-mint/30 hover:bg-surface-card hover:text-text-primary transition-all focus-ring"
             title="Open full profile"
           >
             <ExternalLink className="h-4 w-4" aria-hidden="true" />

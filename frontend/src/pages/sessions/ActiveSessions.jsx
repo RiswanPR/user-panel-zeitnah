@@ -121,7 +121,7 @@ export default function ActiveSessions({ hideProfileNav = false }) {
             <Shield className="w-3.5 h-3.5" />
             Security Center
           </div>
-          <h1 className="font-heading font-black text-3xl sm:text-4xl text-white tracking-tight leading-none">
+          <h1 className="font-heading font-black text-3xl sm:text-4xl text-text-primary tracking-tight leading-none">
             Active Sessions
           </h1>
           <p className="text-xs sm:text-sm font-medium text-text-muted mt-1.5 max-w-xl leading-relaxed">
@@ -150,7 +150,7 @@ export default function ActiveSessions({ hideProfileNav = false }) {
               Signed-in Devices
             </p>
           </div>
-          <p className="text-3xl sm:text-4xl font-heading font-black text-white font-mono">
+          <p className="text-3xl sm:text-4xl font-heading font-black text-text-primary font-mono">
             {sessions.length}
           </p>
           <p className="text-[11px] text-text-muted mt-1">
@@ -215,7 +215,7 @@ export default function ActiveSessions({ hideProfileNav = false }) {
                       className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
                         isCurrent
                           ? "bg-brand-mint/10 border border-brand-mint/25 text-brand-mint shadow-sm"
-                          : "bg-bg-elevated border border-white/[0.05] text-text-muted"
+                          : "bg-bg-elevated border border-border text-text-muted"
                       }`}
                     >
                       <DeviceIcon className="w-6 h-6" />
@@ -223,7 +223,7 @@ export default function ActiveSessions({ hideProfileNav = false }) {
 
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                        <h2 className="text-base sm:text-lg font-heading font-bold text-white truncate">
+                        <h2 className="text-base sm:text-lg font-heading font-bold text-text-primary truncate">
                           {session.browser || "Browser"} on {session.os || "Device"}
                         </h2>
                         {isCurrent && (
@@ -275,7 +275,7 @@ export default function ActiveSessions({ hideProfileNav = false }) {
               <AlertTriangle className="w-6 h-6" />
             </div>
 
-            <h3 className="text-lg font-heading font-bold text-white mb-2">
+            <h3 className="text-lg font-heading font-bold text-text-primary mb-2">
               {sessionToRevoke.isCurrent
                 ? "Sign Out This Device?"
                 : "Revoke Device Session?"}

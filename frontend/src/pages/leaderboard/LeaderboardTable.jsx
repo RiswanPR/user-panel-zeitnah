@@ -72,7 +72,7 @@ export default function LeaderboardTable({
   return (
     <div className="space-y-4">
       {/* ── Search and Filter Controls ── */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-2xl bg-bg-card border border-border-default shadow-sm">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-2xl bg-surface-card border border-border shadow-sm">
         {/* Search Bar */}
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
@@ -82,14 +82,14 @@ export default function LeaderboardTable({
             onChange={(e) => setLocalSearch(e.target.value)}
             placeholder="Search learners by name or handle..."
             aria-label="Search learners"
-            className="w-full rounded-xl bg-white/[0.03] border border-white/[0.08] pl-10 pr-9 py-2 text-xs sm:text-sm text-white placeholder:text-text-muted focus:outline-none focus:border-brand-mint/40 focus:ring-1 focus:ring-brand-mint/30 transition-all"
+            className="w-full rounded-xl bg-surface-elevated border border-border pl-10 pr-9 py-2 text-xs sm:text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-accent focus:ring-1 focus:ring-brand-mint/30 transition-all"
           />
           {localSearch && (
             <button
               type="button"
               onClick={handleClearSearch}
               aria-label="Clear search"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-white p-0.5 rounded-md transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary p-0.5 rounded-md transition-colors cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -106,11 +106,11 @@ export default function LeaderboardTable({
                 onLevelFilterChange(e.target.value ? Number(e.target.value) : undefined)
               }
               aria-label="Filter by level"
-              className="appearance-none rounded-xl bg-white/[0.03] border border-white/[0.08] px-3.5 py-2 pr-8 text-xs font-semibold text-text-secondary focus:outline-none focus:border-brand-mint/40 focus:text-white cursor-pointer transition-all"
+              className="appearance-none rounded-xl bg-surface-elevated border border-border px-3.5 py-2 pr-8 text-xs font-semibold text-text-secondary focus:outline-none focus:border-border-accent focus:text-text-primary cursor-pointer transition-all"
             >
-              <option value="" className="bg-bg-surface text-white">All Levels</option>
+              <option value="" className="bg-surface-card text-text-primary">All Levels</option>
               {[1, 2, 3, 4, 5, 6, 7].map((lvl) => (
-                <option key={lvl} value={lvl} className="bg-bg-surface text-white">
+                <option key={lvl} value={lvl} className="bg-surface-card text-text-primary">
                   Level {lvl}
                 </option>
               ))}
@@ -132,13 +132,13 @@ export default function LeaderboardTable({
       </div>
 
       {/* ── Table View for Desktop (>= 768px) ── */}
-      <div className="hidden md:block rounded-2xl bg-bg-card border border-border-default overflow-hidden shadow-sm relative">
+      <div className="hidden md:block rounded-2xl bg-surface-card border border-border overflow-hidden shadow-sm relative">
         <div className="gradient-line-top" />
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse" role="table">
             <thead>
-              <tr className="border-b border-white/[0.06] bg-white/[0.01] text-[11px] font-bold uppercase tracking-wider text-text-muted">
+              <tr className="border-b border-border bg-surface-elevated/40 text-[11px] font-bold uppercase tracking-wider text-text-muted">
                 <th scope="col" className="py-3.5 pl-6 pr-3 w-16 text-center">Rank</th>
                 <th scope="col" className="py-3.5 px-4">Learner</th>
                 <th scope="col" className="py-3.5 px-4 text-center">Level</th>
@@ -148,7 +148,7 @@ export default function LeaderboardTable({
                 <th scope="col" className="py-3.5 pr-6 pl-4 text-right">Streak</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.03]">
+            <tbody className="divide-y divide-border">
               {learners.length > 0 ? (
                 learners.map((student) => {
                   const isYou = student.isYou;
@@ -164,7 +164,7 @@ export default function LeaderboardTable({
                       className={`group transition-colors duration-150 ${
                         isYou
                           ? "bg-brand-yellow/[0.04] hover:bg-brand-yellow/[0.07]"
-                          : "hover:bg-white/[0.02]"
+                          : "hover:bg-surface-elevated/40"
                       }`}
                     >
                       {/* Rank Number */}
@@ -192,7 +192,7 @@ export default function LeaderboardTable({
                           to={profileUrl}
                           className="flex items-center gap-3 group-hover:text-brand-mint transition-colors cursor-pointer"
                         >
-                          <div className="relative w-9 h-9 rounded-full overflow-hidden border border-white/[0.08] bg-bg-surface flex items-center justify-center shrink-0">
+                          <div className="relative w-9 h-9 rounded-full overflow-hidden border border-border bg-surface-elevated flex items-center justify-center shrink-0">
                             {student.avatar ? (
                               <img
                                 src={student.avatar}
@@ -205,7 +205,7 @@ export default function LeaderboardTable({
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <span className="font-semibold text-sm text-white truncate max-w-[180px] group-hover:text-brand-mint transition-colors">
+                              <span className="font-semibold text-sm text-text-primary truncate max-w-[180px] group-hover:text-brand-mint transition-colors">
                                 {student.name}
                               </span>
                               {isYou && (
@@ -240,7 +240,7 @@ export default function LeaderboardTable({
 
                       {/* XP */}
                       <td className="py-4 px-4 text-right font-mono">
-                        <span className="font-heading font-black text-sm text-white">
+                        <span className="font-heading font-black text-sm text-text-primary">
                           {xp.toLocaleString()}
                         </span>
                         <span className="text-[10px] font-bold text-text-muted ml-1">XP</span>
@@ -271,7 +271,7 @@ export default function LeaderboardTable({
               ) : (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-text-muted">
-                    <p className="text-sm font-semibold text-white mb-1">No Learners Found</p>
+                    <p className="text-sm font-semibold text-text-primary mb-1">No Learners Found</p>
                     <p className="text-xs max-w-sm mx-auto">
                       {searchQuery
                         ? `No learners matching "${searchQuery}". Try adjusting your search or filters.`
@@ -302,7 +302,7 @@ export default function LeaderboardTable({
                 className={`rounded-2xl border p-4 transition-all ${
                   isYou
                     ? "bg-brand-yellow/[0.04] border-brand-yellow/25 shadow-sm"
-                    : "bg-bg-card border-border-default"
+                    : "bg-surface-card border-border"
                 }`}
               >
                 {/* Header: Rank + YOU + XP */}
@@ -331,7 +331,7 @@ export default function LeaderboardTable({
                   </div>
 
                   <div className="text-right font-mono">
-                    <span className="font-heading font-black text-sm text-white">
+                    <span className="font-heading font-black text-sm text-text-primary">
                       {xp.toLocaleString()}
                     </span>
                     <span className="text-[10px] font-bold text-text-muted ml-1">XP</span>
@@ -343,7 +343,7 @@ export default function LeaderboardTable({
                   to={profileUrl}
                   className="flex items-center gap-3 mb-3 cursor-pointer group"
                 >
-                  <div className="w-10 h-10 rounded-full overflow-hidden border border-white/[0.08] bg-bg-surface flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-full overflow-hidden border border-border bg-surface-elevated flex items-center justify-center shrink-0">
                     {student.avatar ? (
                       <img
                         src={student.avatar}
@@ -355,7 +355,7 @@ export default function LeaderboardTable({
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-sm text-white truncate group-hover:text-brand-mint transition-colors">
+                    <p className="font-semibold text-sm text-text-primary truncate group-hover:text-brand-mint transition-colors">
                       {student.name}
                     </p>
                     {student.username && (
@@ -367,7 +367,7 @@ export default function LeaderboardTable({
                 </Link>
 
                 {/* Bottom Metadata: Level + Rank + Classes Done */}
-                <div className="flex items-center justify-between pt-2.5 border-t border-white/[0.04] text-xs text-text-muted">
+                <div className="flex items-center justify-between pt-2.5 border-t border-border text-xs text-text-muted">
                   <div className="flex items-center gap-2">
                     <span className="inline-flex items-center gap-1 font-bold text-brand-mint font-mono text-[11px]">
                       <Star className="w-3 h-3 text-brand-yellow" />
@@ -393,8 +393,8 @@ export default function LeaderboardTable({
             );
           })
         ) : (
-          <div className="rounded-2xl border border-border-default bg-bg-card p-8 text-center text-text-muted">
-            <p className="text-sm font-semibold text-white mb-1">No Learners Found</p>
+          <div className="rounded-2xl border border-border bg-surface-card p-8 text-center text-text-muted">
+            <p className="text-sm font-semibold text-text-primary mb-1">No Learners Found</p>
             <p className="text-xs">
               {searchQuery
                 ? `No learners matching "${searchQuery}".`
@@ -406,10 +406,10 @@ export default function LeaderboardTable({
 
       {/* ── Server-Side Pagination Controls ── */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-bg-card border border-border-default shadow-sm">
+        <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-surface-card border border-border shadow-sm">
           <p className="text-xs text-text-muted font-medium">
-            Showing Page <span className="text-white font-bold">{page}</span> of{" "}
-            <span className="text-white font-bold">{totalPages}</span> ({totalLearners.toLocaleString()} learners)
+            Showing Page <span className="text-text-primary font-bold">{page}</span> of{" "}
+            <span className="text-text-primary font-bold">{totalPages}</span> ({totalLearners.toLocaleString()} learners)
           </p>
 
           <div className="flex items-center gap-1.5">
@@ -418,7 +418,7 @@ export default function LeaderboardTable({
               disabled={page <= 1 || isLoading}
               onClick={() => onPageChange(page - 1)}
               aria-label="Previous page"
-              className="flex items-center justify-center w-8 h-8 rounded-xl bg-white/[0.03] border border-white/[0.08] text-text-muted hover:text-white hover:bg-white/[0.06] disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+              className="flex items-center justify-center w-8 h-8 rounded-xl bg-surface-elevated border border-border text-text-muted hover:text-text-primary hover:bg-surface-card disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -433,7 +433,7 @@ export default function LeaderboardTable({
               disabled={page >= totalPages || isLoading}
               onClick={() => onPageChange(page + 1)}
               aria-label="Next page"
-              className="flex items-center justify-center w-8 h-8 rounded-xl bg-white/[0.03] border border-white/[0.08] text-text-muted hover:text-white hover:bg-white/[0.06] disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+              className="flex items-center justify-center w-8 h-8 rounded-xl bg-surface-elevated border border-border text-text-muted hover:text-text-primary hover:bg-surface-card disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

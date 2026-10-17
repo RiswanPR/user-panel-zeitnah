@@ -45,10 +45,10 @@ export default function PostMediaManager({
   if (!files || files.length === 0) return null;
 
   return (
-    <div className="space-y-3.5 p-4 rounded-2xl bg-[#091220] border border-white/[0.08]">
+    <div className="space-y-3.5 p-4 rounded-2xl bg-surface-elevated/40 border border-border">
       {/* Top Media Bar: Aspect Ratio & Rotation Controls */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-1.5 bg-white/[0.04] p-1 rounded-xl border border-white/[0.06]">
+        <div className="flex items-center gap-1.5 bg-surface-card p-1 rounded-xl border border-border">
           {ASPECT_RATIOS.map((ratio) => (
             <button
               key={ratio.id}
@@ -56,8 +56,8 @@ export default function PostMediaManager({
               onClick={() => onAspectRatioChange(ratio.id)}
               className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer ${
                 aspectRatio === ratio.id
-                  ? 'bg-brand-mint text-[#070B14] font-semibold'
-                  : 'text-text-muted hover:text-white'
+                  ? 'bg-brand-mint text-bg-base font-semibold'
+                  : 'text-text-muted hover:text-text-primary'
               }`}
             >
               {ratio.label}
@@ -68,7 +68,7 @@ export default function PostMediaManager({
         <button
           type="button"
           onClick={onRotate}
-          className="flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.04] hover:bg-white/[0.08] text-text-muted hover:text-white rounded-xl text-xs transition-colors border border-white/[0.06] cursor-pointer"
+          className="flex items-center gap-1.5 px-2.5 py-1 bg-surface-card hover:bg-surface-elevated text-text-muted hover:text-text-primary rounded-xl text-xs transition-colors border border-border cursor-pointer"
           title="Rotate 90 degrees"
         >
           <RotateCw className="w-3.5 h-3.5" />
@@ -78,7 +78,7 @@ export default function PostMediaManager({
 
       {/* Primary Active Media Preview Stage */}
       {currentMedia && (
-        <div className="relative rounded-2xl bg-black/60 border border-white/[0.06] overflow-hidden flex items-center justify-center min-h-[220px] max-h-[380px]">
+        <div className="relative rounded-2xl bg-black/60 border border-border overflow-hidden flex items-center justify-center min-h-[220px] max-h-[380px]">
           {currentMedia.type === 'image' && (
             <img
               src={currentMedia.previewUrl}
@@ -102,7 +102,7 @@ export default function PostMediaManager({
           {currentMedia.type === 'document' && (
             <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
               <FileText className="w-14 h-14 text-brand-mint mb-3" />
-              <p className="text-sm font-semibold text-white truncate max-w-xs">{currentMedia.name}</p>
+              <p className="text-sm font-semibold text-text-primary truncate max-w-xs">{currentMedia.name}</p>
               <p className="text-xs text-text-muted mt-1">
                 {(currentMedia.size / (1024 * 1024)).toFixed(1)} MB PDF document
               </p>
@@ -160,7 +160,7 @@ export default function PostMediaManager({
       {/* Carousel Thumbnail Strip */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs text-text-muted">
-          <span className="font-medium text-white/90">
+          <span className="font-medium text-text-primary">
             {files.length === 1 ? 'Attached media' : `Carousel items (${files.length})`}
           </span>
           <span className="text-[11px] text-text-faint">Drag or click to reorder</span>
@@ -176,19 +176,19 @@ export default function PostMediaManager({
                 className={`relative group shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border-2 cursor-pointer transition-all ${
                   isSelected
                     ? 'border-brand-mint shadow-[0_0_12px_rgba(159,213,178,0.3)] ring-2 ring-brand-mint/30'
-                    : 'border-white/[0.08] hover:border-white/[0.25]'
+                    : 'border-border hover:border-border-accent'
                 }`}
               >
                 {file.type === 'image' && (
                   <img src={file.previewUrl} alt={file.name} className="w-full h-full object-cover" />
                 )}
                 {file.type === 'video' && (
-                  <div className="w-full h-full bg-slate-900 flex items-center justify-center text-text-muted">
+                  <div className="w-full h-full bg-surface-elevated flex items-center justify-center text-text-muted">
                     <Video className="w-6 h-6 text-brand-mint" />
                   </div>
                 )}
                 {file.type === 'document' && (
-                  <div className="w-full h-full bg-slate-900 flex items-center justify-center text-text-muted">
+                  <div className="w-full h-full bg-surface-elevated flex items-center justify-center text-text-muted">
                     <FileText className="w-6 h-6 text-brand-mint" />
                   </div>
                 )}
@@ -214,7 +214,7 @@ export default function PostMediaManager({
               type="button"
               onClick={() => addMoreInputRef.current?.click()}
               disabled={isUploading}
-              className="shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-xl border border-dashed border-white/[0.15] hover:border-brand-mint/60 bg-white/[0.02] hover:bg-white/[0.05] flex flex-col items-center justify-center gap-1 text-text-muted hover:text-brand-mint transition-colors cursor-pointer"
+              className="shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-xl border border-dashed border-border hover:border-brand-mint/60 bg-surface-card hover:bg-surface-elevated flex flex-col items-center justify-center gap-1 text-text-muted hover:text-brand-mint transition-colors cursor-pointer"
             >
               <Plus className="w-5 h-5" />
               <span className="text-[10px] font-medium">Add</span>

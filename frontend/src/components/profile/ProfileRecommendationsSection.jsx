@@ -18,7 +18,7 @@ export default function ProfileRecommendationsSection({
     <section
       id="recommendations"
       aria-labelledby="profile-recommendations-heading"
-      className={`rounded-3xl border border-white/[0.08] bg-[#0A0F18]/90 backdrop-blur-xl p-6 sm:p-8 shadow-sm transition-all ${className}`}
+      className={`rounded-3xl border border-border bg-surface-card p-6 sm:p-8 shadow-sm transition-all ${className}`}
     >
       <div className="flex items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
@@ -29,12 +29,12 @@ export default function ProfileRecommendationsSection({
             <div className="flex items-center gap-2">
               <h2
                 id="profile-recommendations-heading"
-                className="text-lg sm:text-xl font-heading font-extrabold text-white tracking-tight"
+                className="text-lg sm:text-xl font-heading font-extrabold text-text-primary tracking-tight"
               >
                 Peer & Mentor Recommendations
               </h2>
               {displayItems.length > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-xs font-mono font-medium text-text-muted">
+                <span className="px-2 py-0.5 rounded-full bg-surface-elevated border border-border text-xs font-mono font-medium text-text-muted">
                   {displayItems.length}
                 </span>
               )}
@@ -70,11 +70,11 @@ export default function ProfileRecommendationsSection({
       </div>
 
       {displayItems.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.01] p-8 text-center">
-          <div className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-text-muted mx-auto mb-3">
+        <div className="rounded-2xl border border-dashed border-border bg-surface-elevated/20 p-8 text-center">
+          <div className="w-12 h-12 rounded-xl bg-surface-elevated border border-border flex items-center justify-center text-text-muted mx-auto mb-3">
             <Quote className="w-6 h-6 text-text-faint" />
           </div>
-          <h3 className="text-sm font-heading font-bold text-white mb-1">
+          <h3 className="text-sm font-heading font-bold text-text-primary mb-1">
             No recommendations recorded
           </h3>
           <p className="text-xs text-text-muted max-w-sm mx-auto mb-4">
@@ -104,9 +104,9 @@ export default function ProfileRecommendationsSection({
             return (
               <div
                 key={recId}
-                className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 sm:p-6 transition-all shadow-sm flex flex-col justify-between relative overflow-hidden"
+                className="rounded-2xl border border-border bg-surface-elevated/40 p-5 sm:p-6 transition-all shadow-sm flex flex-col justify-between relative overflow-hidden"
               >
-                <Quote className="w-8 h-8 text-white/[0.05] absolute top-4 right-4 pointer-events-none" />
+                <Quote className="w-8 h-8 text-border absolute top-4 right-4 pointer-events-none" />
 
                 <div className="mb-4">
                   <div className="flex items-center gap-2 mb-2">
@@ -128,12 +128,12 @@ export default function ProfileRecommendationsSection({
                   </p>
                 </div>
 
-                <div className="flex items-center gap-3 pt-3 border-t border-white/[0.05]">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-mint/20 to-brand-navy/60 border border-white/10 flex items-center justify-center text-brand-mint font-bold text-xs uppercase">
+                <div className="flex items-center gap-3 pt-3 border-t border-border">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-mint/20 to-brand-navy/60 border border-border flex items-center justify-center text-brand-mint font-bold text-xs uppercase">
                     {authorName[0] || "P"}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-white truncate">
+                    <p className="text-xs font-bold text-text-primary truncate">
                       {authorName}
                     </p>
                     <p className="text-[11px] text-text-muted truncate">

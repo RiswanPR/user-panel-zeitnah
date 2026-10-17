@@ -48,9 +48,7 @@ const CourseCategoryExplorer = memo(function CourseCategoryExplorer({
         subtitle: "Complete academy syllabus and modular learning tracks",
         count: totalCount,
         icon: BookOpen,
-        surfaceClass:
-          "from-[#0D141A] to-[#12314C]/70 hover:border-brand-mint/40",
-        accentColor: "text-white",
+        accentColor: "text-text-primary",
         motifVariant: "navy",
       },
       {
@@ -60,8 +58,6 @@ const CourseCategoryExplorer = memo(function CourseCategoryExplorer({
         subtitle: "Self-paced engineering modules with structured chapters",
         count: recordingCount,
         icon: Play,
-        surfaceClass:
-          "from-[#0A0F14] to-[#12314C]/50 hover:border-brand-yellow/40",
         accentColor: "text-brand-yellow",
         motifVariant: "yellow",
       },
@@ -72,8 +68,6 @@ const CourseCategoryExplorer = memo(function CourseCategoryExplorer({
         subtitle: "Scheduled interactive sessions and live workshops",
         count: onlineCount,
         icon: Video,
-        surfaceClass:
-          "from-[#0D141A] via-[#0A0F14] to-[#101820] hover:border-brand-mint/40",
         accentColor: "text-brand-mint",
         motifVariant: "mint",
       },
@@ -84,8 +78,6 @@ const CourseCategoryExplorer = memo(function CourseCategoryExplorer({
         subtitle: "Your enrolled curriculum and personal learning telemetry",
         count: enrolledCount,
         icon: Layers,
-        surfaceClass:
-          "from-[#12314C]/80 via-[#0A0F14] to-[#07090B] hover:border-brand-mint/50",
         accentColor: "text-brand-mint",
         motifVariant: "gradient",
       },
@@ -97,7 +89,7 @@ const CourseCategoryExplorer = memo(function CourseCategoryExplorer({
   return (
     <section aria-labelledby="category-explorer-heading" className="space-y-6">
       {/* ── Section Title & Editorial Statement ── */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-white/[0.08] pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-border pb-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-brand-mint" />
@@ -107,7 +99,7 @@ const CourseCategoryExplorer = memo(function CourseCategoryExplorer({
           </div>
           <h2
             id="category-explorer-heading"
-            className="display-headline text-2xl sm:text-3xl md:text-4xl text-white tracking-tight leading-none"
+            className="display-headline text-2xl sm:text-3xl md:text-4xl text-text-primary tracking-tight leading-none"
           >
             CHOOSE YOUR DIRECTION.
           </h2>
@@ -139,14 +131,14 @@ const CourseCategoryExplorer = memo(function CourseCategoryExplorer({
                 }
               }}
               aria-label={`Filter by ${cat.title}`}
-              className={`group relative overflow-hidden rounded-2xl border p-5 sm:p-6 flex flex-col justify-between min-h-[200px] cursor-pointer transition-all duration-300 shadow-md bg-gradient-to-br ${cat.surfaceClass} ${
+              className={`group relative overflow-hidden rounded-2xl border p-5 sm:p-6 flex flex-col justify-between min-h-[200px] cursor-pointer transition-all duration-300 shadow-md bg-surface-card hover:border-brand-mint/40 ${
                 isActive
                   ? "border-brand-mint/60 shadow-[0_0_24px_rgba(159,213,178,0.15)] ring-1 ring-brand-mint/30"
-                  : "border-white/[0.08]"
+                  : "border-border"
               }`}
             >
               {/* Subtle top hairline */}
-              <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none" />
+              <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-brand-mint/20 to-transparent pointer-events-none" />
 
               {/* Spatial Z Motif Watermark */}
               <div className="pointer-events-none absolute -right-6 -bottom-6 w-32 h-32 select-none opacity-[0.05] group-hover:opacity-[0.1] transition-opacity duration-300">
@@ -158,11 +150,11 @@ const CourseCategoryExplorer = memo(function CourseCategoryExplorer({
 
               {/* ── TOP: Numeric Index & Direct Arrow ── */}
               <div className="relative z-10 flex items-center justify-between">
-                <span className="font-heading font-black text-2xl sm:text-3xl text-white/30 font-mono tracking-tighter group-hover:text-white/60 transition-colors">
+                <span className="font-heading font-black text-2xl sm:text-3xl text-text-muted/40 font-mono tracking-tighter group-hover:text-text-primary transition-colors">
                   {cat.index}
                 </span>
 
-                <div className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-text-muted group-hover:text-white group-hover:bg-white/[0.08] group-hover:border-white/20 transition-all">
+                <div className="w-8 h-8 rounded-xl bg-surface-elevated border border-border flex items-center justify-center text-text-muted group-hover:text-text-primary group-hover:bg-surface-card group-hover:border-border-accent transition-all">
                   <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                 </div>
               </div>
@@ -176,7 +168,7 @@ const CourseCategoryExplorer = memo(function CourseCategoryExplorer({
                   </span>
                 </div>
 
-                <h3 className="font-heading font-extrabold text-base sm:text-lg text-white tracking-tight leading-snug group-hover:text-brand-mint transition-colors">
+                <h3 className="font-heading font-extrabold text-base sm:text-lg text-text-primary tracking-tight leading-snug group-hover:text-brand-mint transition-colors">
                   {cat.title}
                 </h3>
 

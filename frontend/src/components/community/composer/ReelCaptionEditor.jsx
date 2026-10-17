@@ -66,21 +66,21 @@ export default function ReelCaptionEditor({
       aria-modal="true"
       aria-label="Caption layer editor"
     >
-      <div className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl bg-[#090F1C] border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      <div className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl bg-surface-card border border-border shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-brand-yellow/15 border border-brand-yellow/30 flex items-center justify-center text-brand-yellow">
               <Subtitles className="w-4 h-4" />
             </div>
-            <h3 className="text-white font-semibold text-base">
+            <h3 className="text-text-primary font-semibold text-base">
               {initialLayer ? 'Edit Caption Segment' : 'Add Caption Segment'}
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-colors"
+            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors"
             aria-label="Close caption editor"
           >
             <X className="w-5 h-5" />
@@ -101,7 +101,7 @@ export default function ReelCaptionEditor({
               value={content}
               onChange={(e) => setContent(e.target.value.slice(0, 300))}
               placeholder="e.g. Building the future of structural engineering..."
-              className="w-full rounded-xl bg-[#050912] border border-white/10 px-4 py-3 text-white placeholder:text-text-muted focus:outline-none focus:border-brand-mint text-sm transition-colors"
+              className="w-full rounded-xl bg-surface-elevated border border-border px-4 py-3 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-mint text-sm transition-colors"
             />
           </div>
 
@@ -117,11 +117,11 @@ export default function ReelCaptionEditor({
                   className={`p-3 rounded-xl border text-left transition-all ${
                     style === st.id
                       ? 'border-brand-mint bg-brand-mint/10'
-                      : 'border-white/5 bg-white/[0.02] hover:bg-white/[0.05]'
+                      : 'border-border bg-surface-elevated hover:bg-surface-card'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-semibold text-white">{st.name}</span>
+                    <span className="text-xs font-semibold text-text-primary">{st.name}</span>
                     {style === st.id && <Check className="w-3.5 h-3.5 text-brand-mint" />}
                   </div>
                   <span className="text-[10px] text-text-muted block leading-tight">{st.desc}</span>
@@ -131,10 +131,10 @@ export default function ReelCaptionEditor({
           </div>
 
           {/* Timing Controls */}
-          <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 space-y-2">
+          <div className="p-3 rounded-xl bg-surface-elevated/40 border border-border space-y-2">
             <div className="flex items-center justify-between text-xs text-text-muted">
               <span>Segment Timing</span>
-              <span className="font-mono text-white">
+              <span className="font-mono text-text-primary">
                 {start.toFixed(1)}s – {end.toFixed(1)}s ({(end - start).toFixed(1)}s)
               </span>
             </div>
@@ -148,7 +148,7 @@ export default function ReelCaptionEditor({
                   step="0.1"
                   value={start}
                   onChange={(e) => setStart(Math.max(0, Number(e.target.value)))}
-                  className="w-full rounded-lg bg-[#050912] border border-white/10 px-3 py-1.5 text-white text-xs font-mono"
+                  className="w-full rounded-lg bg-surface-card border border-border px-3 py-1.5 text-text-primary text-xs font-mono"
                 />
               </div>
               <div>
@@ -160,7 +160,7 @@ export default function ReelCaptionEditor({
                   step="0.1"
                   value={end}
                   onChange={(e) => setEnd(Math.min(duration, Math.max(start + 0.5, Number(e.target.value))))}
-                  className="w-full rounded-lg bg-[#050912] border border-white/10 px-3 py-1.5 text-white text-xs font-mono"
+                  className="w-full rounded-lg bg-surface-card border border-border px-3 py-1.5 text-text-primary text-xs font-mono"
                 />
               </div>
             </div>
@@ -168,11 +168,11 @@ export default function ReelCaptionEditor({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-white/10 bg-[#060D18]">
+        <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-border bg-surface-card">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-sm font-medium text-text-muted hover:text-white transition-colors"
+            className="px-4 py-2 rounded-xl text-sm font-medium text-text-muted hover:text-text-primary transition-colors"
           >
             Cancel
           </button>
@@ -180,7 +180,7 @@ export default function ReelCaptionEditor({
             type="button"
             onClick={handleSave}
             disabled={!content.trim()}
-            className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-brand-mint text-[#070B14] font-semibold text-sm hover:bg-brand-mint/90 transition-all disabled:opacity-50 disabled:pointer-events-none shadow-md"
+            className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-brand-mint text-bg-base font-semibold text-sm hover:bg-brand-mint/90 transition-all disabled:opacity-50 disabled:pointer-events-none shadow-md"
           >
             <Check className="w-4 h-4" />
             <span>Save Caption</span>

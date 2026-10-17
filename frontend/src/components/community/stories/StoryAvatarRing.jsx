@@ -63,14 +63,14 @@ export default function StoryAvatarRing({
       <div
         className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-full transition-all duration-200 group-hover:scale-[1.04] ${
           !unseen
-            ? 'p-[2px] zn-gradient-ring-seen ring-1 ring-white/10 opacity-75 group-hover:opacity-100 group-hover:ring-brand-mint/20'
+            ? 'p-[2px] zn-gradient-ring-seen ring-1 ring-border opacity-75 group-hover:opacity-100 group-hover:ring-brand-mint/20'
             : isOwnStory
             ? 'p-[2.5px] community-ring-own ring-1 ring-brand-yellow/30'
             : 'p-[2.5px] community-ring-unseen ring-1 ring-[#12314C]/60 group-hover:ring-brand-mint/50'
         }`}
       >
         {/* Inner Avatar Container */}
-        <div className="w-full h-full rounded-full bg-[#0E1726] border-2 border-[#0B111E] overflow-hidden flex items-center justify-center">
+        <div className="w-full h-full rounded-full bg-surface-elevated border-2 border-surface-card overflow-hidden flex items-center justify-center">
           {avatarUrl && !imgError ? (
             <img
               src={avatarUrl}
@@ -93,7 +93,7 @@ export default function StoryAvatarRing({
         {/* Multi-story count pill (if user has 2+ stories) */}
         {storiesCount > 1 && (
           <span
-            className="absolute -top-1 -right-1 px-1.5 py-0.5 text-[9px] font-bold bg-[#070B14]/90 backdrop-blur-md text-white border border-white/20 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.4)] flex items-center justify-center min-w-[18px]"
+            className="absolute -top-1 -right-1 px-1.5 py-0.5 text-[9px] font-bold bg-surface-card/90 backdrop-blur-md text-text-primary border border-border rounded-full shadow-sm flex items-center justify-center min-w-[18px]"
             title={`${storiesCount} stories`}
           >
             {storiesCount}
@@ -102,7 +102,7 @@ export default function StoryAvatarRing({
       </div>
 
       {/* Author Name Tag */}
-      <span className="text-[11px] font-medium text-text-muted group-hover:text-white transition-colors truncate max-w-[68px] text-center">
+      <span className="text-[11px] font-medium text-text-muted group-hover:text-text-primary transition-colors truncate max-w-[68px] text-center">
         {isOwnStory ? 'Your story' : authorName.split(' ')[0]}
       </span>
     </div>

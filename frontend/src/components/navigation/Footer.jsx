@@ -8,7 +8,7 @@ export default function Footer({ className = "" }) {
   return (
     <footer
       aria-label="Platform Footer"
-      className={`hidden md:block border-t border-white/[0.08] bg-[#070B14]/90 backdrop-blur-xl text-white select-none relative z-10 transition-colors ${className}`}
+      className={`hidden md:block border-t border-border bg-surface/90 backdrop-blur-xl text-text-primary select-none relative z-10 transition-colors ${className}`}
     >
       {/* Subtle top ambient glow */}
       <div
@@ -26,7 +26,7 @@ export default function Footer({ className = "" }) {
               className="inline-flex items-center gap-3 group focus-ring rounded-lg py-0.5"
               aria-label={`${BRAND.name} home`}
             >
-              <div className="w-8 h-8 rounded-lg border border-white/[0.12] bg-[#0E1726]/80 flex items-center justify-center overflow-hidden shadow-inner group-hover:border-brand-mint/40 transition-colors">
+              <div className="w-8 h-8 rounded-lg border border-border bg-surface-elevated flex items-center justify-center overflow-hidden shadow-inner group-hover:border-brand-mint/40 transition-colors">
                 <img
                   src="/zeitnah-logo.png"
                   alt={`${BRAND.name} Logo`}
@@ -36,7 +36,7 @@ export default function Footer({ className = "" }) {
                 />
               </div>
               <div className="flex flex-col">
-                <span className="font-mono text-base font-bold tracking-[0.14em] text-white group-hover:text-brand-mint transition-colors leading-none uppercase">
+                <span className="font-mono text-base font-bold tracking-[0.14em] text-text-primary group-hover:text-brand-mint transition-colors leading-none uppercase">
                   {BRAND.name}
                 </span>
                 <span className="text-[9px] font-mono tracking-[0.2em] text-brand-mint font-semibold uppercase leading-none mt-1">
@@ -51,11 +51,11 @@ export default function Footer({ className = "" }) {
 
             {/* Vision Pill Strip */}
             <div className="flex items-center gap-2 pt-1 text-[10px] font-mono text-text-faint uppercase tracking-wider">
-              <span className="text-white/80 font-semibold">{BRAND.pillars.build.title}</span>
+              <span className="text-text-secondary font-semibold">{BRAND.pillars.build.title}</span>
               <span className="text-brand-mint">•</span>
-              <span className="text-white/80 font-semibold">{BRAND.pillars.connect.title}</span>
+              <span className="text-text-secondary font-semibold">{BRAND.pillars.connect.title}</span>
               <span className="text-brand-mint">•</span>
-              <span className="text-white/80 font-semibold">{BRAND.pillars.discover.title}</span>
+              <span className="text-text-secondary font-semibold">{BRAND.pillars.discover.title}</span>
             </div>
           </div>
 
@@ -68,7 +68,7 @@ export default function Footer({ className = "" }) {
               <li>
                 <Link
                   to="/courses"
-                  className="text-text-muted hover:text-white transition-colors flex items-center gap-1.5"
+                  className="text-text-muted hover:text-text-primary transition-colors flex items-center gap-1.5"
                 >
                   <BookOpen className="w-3.5 h-3.5 text-text-faint" />
                   <span>Courses</span>
@@ -77,7 +77,7 @@ export default function Footer({ className = "" }) {
               <li>
                 <Link
                   to="/network"
-                  className="text-text-muted hover:text-white transition-colors flex items-center gap-1.5"
+                  className="text-text-muted hover:text-text-primary transition-colors flex items-center gap-1.5"
                 >
                   <Compass className="w-3.5 h-3.5 text-text-faint" />
                   <span>Network</span>
@@ -86,7 +86,7 @@ export default function Footer({ className = "" }) {
               <li>
                 <Link
                   to="/jobs"
-                  className="text-text-muted hover:text-white transition-colors flex items-center gap-1.5"
+                  className="text-text-muted hover:text-text-primary transition-colors flex items-center gap-1.5"
                 >
                   <Briefcase className="w-3.5 h-3.5 text-text-faint" />
                   <span>Opportunities</span>
@@ -95,7 +95,7 @@ export default function Footer({ className = "" }) {
               <li>
                 <Link
                   to="/career-intelligence"
-                  className="text-text-muted hover:text-white transition-colors flex items-center gap-1.5"
+                  className="text-text-muted hover:text-text-primary transition-colors flex items-center gap-1.5"
                 >
                   <TrendingUp className="w-3.5 h-3.5 text-text-faint" />
                   <span>Career Intelligence</span>
@@ -113,7 +113,7 @@ export default function Footer({ className = "" }) {
               <li>
                 <Link
                   to="/leaderboard"
-                  className="text-text-muted hover:text-white transition-colors flex items-center gap-1.5"
+                  className="text-text-muted hover:text-text-primary transition-colors flex items-center gap-1.5"
                 >
                   <Trophy className="w-3.5 h-3.5 text-text-faint" />
                   <span>Leaderboard</span>
@@ -122,7 +122,7 @@ export default function Footer({ className = "" }) {
               <li>
                 <Link
                   to="/businesses"
-                  className="text-text-muted hover:text-white transition-colors flex items-center gap-1.5"
+                  className="text-text-muted hover:text-text-primary transition-colors flex items-center gap-1.5"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-text-faint" />
                   <span>Organizations</span>
@@ -131,7 +131,7 @@ export default function Footer({ className = "" }) {
               <li>
                 <Link
                   to="/profile/account?section=verification"
-                  className="text-text-muted hover:text-white transition-colors flex items-center gap-1.5"
+                  className="text-text-muted hover:text-text-primary transition-colors flex items-center gap-1.5"
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-text-faint" />
                   <span>Verification Center</span>
@@ -140,7 +140,7 @@ export default function Footer({ className = "" }) {
               <li>
                 <Link
                   to="/about"
-                  className="text-text-muted hover:text-white transition-colors"
+                  className="text-text-muted hover:text-text-primary transition-colors"
                 >
                   About & Mission
                 </Link>
@@ -148,7 +148,7 @@ export default function Footer({ className = "" }) {
               <li>
                 <Link
                   to="/privacy-policy"
-                  className="text-text-muted hover:text-white transition-colors"
+                  className="text-text-muted hover:text-text-primary transition-colors"
                 >
                   Privacy Policy
                 </Link>
@@ -156,7 +156,7 @@ export default function Footer({ className = "" }) {
               <li>
                 <Link
                   to="/terms-of-service"
-                  className="text-text-muted hover:text-white transition-colors"
+                  className="text-text-muted hover:text-text-primary transition-colors"
                 >
                   Terms of Service
                 </Link>
@@ -164,7 +164,7 @@ export default function Footer({ className = "" }) {
               <li>
                 <Link
                   to="/support"
-                  className="text-text-muted hover:text-white transition-colors"
+                  className="text-text-muted hover:text-text-primary transition-colors"
                 >
                   Help & Support
                 </Link>
@@ -177,8 +177,8 @@ export default function Footer({ className = "" }) {
             <p className="text-[11px] font-mono font-bold uppercase tracking-widest text-text-secondary">
               Our Vision
             </p>
-            <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3.5 space-y-2">
-              <span className="font-heading font-bold text-xs text-white block">
+            <div className="rounded-xl border border-border bg-surface-elevated/40 p-3.5 space-y-2">
+              <span className="font-heading font-bold text-xs text-text-primary block">
                 {BRAND.vision}
               </span>
               <p className="text-[11px] text-text-muted leading-relaxed line-clamp-3">
@@ -196,7 +196,7 @@ export default function Footer({ className = "" }) {
         </div>
 
         {/* Bottom Bar: Copyright & System Status */}
-        <div className="mt-10 pt-6 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-text-muted">
+        <div className="mt-10 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-text-muted">
           <p>
             &copy; {currentYear} {BRAND.name}. All rights reserved.
           </p>
@@ -205,20 +205,20 @@ export default function Footer({ className = "" }) {
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               Network Operational
             </span>
-            <span className="text-white/20">•</span>
-            <Link to="/about" className="hover:text-white transition-colors">
+            <span className="text-text-faint">•</span>
+            <Link to="/about" className="hover:text-text-primary transition-colors">
               Brand Positioning
             </Link>
-            <span className="text-white/20">•</span>
-            <Link to="/privacy-policy" className="hover:text-white transition-colors">
+            <span className="text-text-faint">•</span>
+            <Link to="/privacy-policy" className="hover:text-text-primary transition-colors">
               Privacy Policy
             </Link>
-            <span className="text-white/20">•</span>
-            <Link to="/terms-of-service" className="hover:text-white transition-colors">
+            <span className="text-text-faint">•</span>
+            <Link to="/terms-of-service" className="hover:text-text-primary transition-colors">
               Terms of Service
             </Link>
-            <span className="text-white/20">•</span>
-            <Link to="/support" className="hover:text-white transition-colors">
+            <span className="text-text-faint">•</span>
+            <Link to="/support" className="hover:text-text-primary transition-colors">
               Help & Support
             </Link>
           </div>

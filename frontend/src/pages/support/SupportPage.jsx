@@ -398,7 +398,7 @@ export default function SupportPage() {
   };
 
   return (
-    <div className="min-h-screen text-white font-body antialiased relative selection:bg-brand-mint/30 selection:text-white pb-20">
+    <div className="min-h-screen bg-bg-base text-text-primary font-body antialiased relative selection:bg-brand-mint/30 selection:text-brand-mint pb-20">
       
       {/* ── BACKGROUND AMBIENT GLOWS ── */}
       <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden" aria-hidden="true">
@@ -412,7 +412,7 @@ export default function SupportPage() {
         {/* ══════════════════════════════════════════════════════════
             01. SUPPORT HERO & SEARCH
             ══════════════════════════════════════════════════════════ */}
-        <header className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-b from-[#0E1726]/95 via-[#0A0F1A]/95 to-[#070B14]/95 p-6 sm:p-12 lg:p-16 shadow-2xl text-center">
+        <header className="relative overflow-hidden rounded-3xl border border-border bg-surface-card p-6 sm:p-12 lg:p-16 shadow-2xl text-center">
           {/* Subtle accent line */}
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-mint/40 to-transparent pointer-events-none" />
 
@@ -434,7 +434,7 @@ export default function SupportPage() {
             </div>
 
             <div className="space-y-2.5">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-black tracking-tight text-white">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-black tracking-tight text-text-primary">
                 How can we help you?
               </h1>
               <p className="text-sm sm:text-base text-text-secondary leading-relaxed max-w-2xl mx-auto">
@@ -451,14 +451,14 @@ export default function SupportPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search help topics (e.g., OTP login, video watermark, account deletion, certificate)..."
-                  className="w-full pl-12 pr-10 py-3.5 rounded-2xl bg-[#070B14]/90 border border-white/15 text-sm text-white placeholder-text-muted focus:outline-none focus:border-brand-mint/60 focus:ring-2 focus:ring-brand-mint/20 transition-all shadow-inner"
+                  className="w-full pl-12 pr-10 py-3.5 rounded-2xl bg-surface-elevated border border-border text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-brand-mint/60 focus:ring-2 focus:ring-brand-mint/20 transition-all shadow-inner"
                   aria-label="Search help topics and frequently asked questions"
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchQuery("")}
-                    className="absolute right-4 text-xs font-mono text-text-muted hover:text-white"
+                    className="absolute right-4 text-xs font-mono text-text-muted hover:text-text-primary cursor-pointer"
                   >
                     Clear
                   </button>
@@ -477,7 +477,7 @@ export default function SupportPage() {
         <section aria-labelledby="help-categories-heading" className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h2 id="help-categories-heading" className="text-xl sm:text-2xl font-heading font-bold text-white tracking-tight">
+              <h2 id="help-categories-heading" className="text-xl sm:text-2xl font-heading font-bold text-text-primary tracking-tight">
                 Explore Help Topics
               </h2>
               <p className="text-xs sm:text-sm text-text-muted">
@@ -514,8 +514,8 @@ export default function SupportPage() {
                   }}
                   className={`relative text-left rounded-2xl border p-5 space-y-3 transition-all duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50 ${
                     isSelected
-                      ? "border-brand-mint/40 bg-[#0E1A29] shadow-lg shadow-brand-mint/5"
-                      : "border-white/[0.08] bg-[#0A0F1A]/70 hover:bg-[#0E1726] hover:border-white/15"
+                      ? "border-brand-mint/40 bg-brand-mint/10 shadow-lg shadow-brand-mint/5"
+                      : "border-border bg-surface-card hover:bg-surface-elevated hover:border-border-accent"
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -578,9 +578,9 @@ export default function SupportPage() {
           </div>
 
           {filteredFaqs.length === 0 ? (
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-8 text-center space-y-3">
+            <div className="rounded-2xl border border-border bg-surface-card p-8 text-center space-y-3">
               <Search className="w-8 h-8 text-text-muted mx-auto" />
-              <h3 className="text-base font-bold text-white">No matching answers found</h3>
+              <h3 className="text-base font-bold text-text-primary">No matching answers found</h3>
               <p className="text-xs text-text-muted max-w-md mx-auto">
                 We couldn&apos;t find an existing FAQ matching &ldquo;{searchQuery}&rdquo;. You can submit a support ticket below and our engineering team will answer you directly.
               </p>
@@ -602,14 +602,14 @@ export default function SupportPage() {
                 return (
                   <div
                     key={faq.id}
-                    className="rounded-2xl border border-white/[0.08] bg-[#0A0F1A]/80 overflow-hidden transition-colors"
+                    className="rounded-2xl border border-border bg-surface-card overflow-hidden transition-colors"
                   >
                     <button
                       type="button"
                       onClick={() => toggleFaq(faq.id)}
                       aria-expanded={isExpanded}
                       aria-controls={`faq-answer-${faq.id}`}
-                      className="w-full flex items-center justify-between p-5 text-left text-sm font-heading font-bold text-white hover:text-brand-mint transition-colors cursor-pointer gap-4"
+                      className="w-full flex items-center justify-between p-5 text-left text-sm font-heading font-bold text-text-primary hover:text-brand-mint transition-colors cursor-pointer gap-4"
                     >
                       <span>{faq.question}</span>
                       <ChevronDown
@@ -622,7 +622,7 @@ export default function SupportPage() {
                     {isExpanded && (
                       <div
                         id={`faq-answer-${faq.id}`}
-                        className="px-5 pb-5 text-xs text-text-secondary leading-relaxed border-t border-white/[0.04] pt-3"
+                        className="px-5 pb-5 text-xs text-text-secondary leading-relaxed border-t border-border pt-3"
                       >
                         <p>{faq.answer}</p>
                       </div>
@@ -643,7 +643,7 @@ export default function SupportPage() {
               <Cpu className="w-4 h-4" />
               <span>Self-Service Diagnostics</span>
             </div>
-            <h2 id="troubleshooting-heading" className="text-xl sm:text-2xl font-heading font-bold text-white tracking-tight mt-1">
+            <h2 id="troubleshooting-heading" className="text-xl sm:text-2xl font-heading font-bold text-text-primary tracking-tight mt-1">
               Common Technical Troubleshooting Steps
             </h2>
             <p className="text-xs sm:text-sm text-text-muted">
@@ -651,9 +651,9 @@ export default function SupportPage() {
             </p>
           </div>
 
-          <div className="rounded-3xl border border-white/[0.08] bg-[#0A0F1A]/90 p-6 sm:p-8 space-y-6">
+          <div className="rounded-3xl border border-border bg-surface-card p-6 sm:p-8 space-y-6">
             {/* Tab Buttons */}
-            <div className="flex flex-wrap items-center gap-2 border-b border-white/[0.08] pb-4">
+            <div className="flex flex-wrap items-center gap-2 border-b border-border pb-4">
               {TROUBLESHOOTING_STEPS.map((t, idx) => (
                 <button
                   key={t.title}
@@ -662,7 +662,7 @@ export default function SupportPage() {
                   className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                     activeTroubleshootTab === idx
                       ? "bg-brand-mint text-bg-dark font-bold shadow-md shadow-brand-mint/20"
-                      : "bg-white/[0.03] text-text-muted hover:text-white hover:bg-white/[0.06]"
+                      : "bg-surface-elevated text-text-muted hover:text-text-primary hover:bg-surface-elevated/80"
                   }`}
                 >
                   {t.title}
@@ -674,7 +674,7 @@ export default function SupportPage() {
             <div className="space-y-4">
               <div className="space-y-1">
                 <span className="text-[10px] font-mono uppercase tracking-wider text-text-faint font-bold">Problem Scenario</span>
-                <p className="text-sm font-bold text-white">
+                <p className="text-sm font-bold text-text-primary">
                   {TROUBLESHOOTING_STEPS[activeTroubleshootTab].problem}
                 </p>
               </div>
@@ -686,7 +686,7 @@ export default function SupportPage() {
                 <ol className="space-y-2 text-xs text-text-secondary">
                   {TROUBLESHOOTING_STEPS[activeTroubleshootTab].steps.map((step, sIdx) => (
                     <li key={sIdx} className="flex items-start gap-2.5">
-                      <span className="w-5 h-5 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center font-mono text-[10px] font-bold text-brand-mint shrink-0 mt-0.5">
+                      <span className="w-5 h-5 rounded-full bg-surface-elevated border border-border flex items-center justify-center font-mono text-[10px] font-bold text-brand-mint shrink-0 mt-0.5">
                         {sIdx + 1}
                       </span>
                       <span className="leading-relaxed">{step}</span>
@@ -700,14 +700,14 @@ export default function SupportPage() {
 
         {/* ══════════════════════════════════════════════════════════
             05. CONTACT CHANNELS & LIVE SUPPORT FORM
-            ═══════════════════════════════════════════════════════ */}
+            ══════════════════════════════════════════════════════════ */}
         <section ref={contactFormRef} aria-labelledby="contact-support-heading" className="space-y-6 scroll-mt-24">
           <div>
             <div className="flex items-center gap-2 text-brand-mint font-mono text-xs font-bold uppercase tracking-widest">
               <Mail className="w-4 h-4" />
               <span>Direct Support</span>
             </div>
-            <h2 id="contact-support-heading" className="text-xl sm:text-2xl font-heading font-bold text-white tracking-tight mt-1">
+            <h2 id="contact-support-heading" className="text-xl sm:text-2xl font-heading font-bold text-text-primary tracking-tight mt-1">
               Contact the Zeitnah Support Team
             </h2>
             <p className="text-xs sm:text-sm text-text-muted">
@@ -721,7 +721,7 @@ export default function SupportPage() {
             <div className="lg:col-span-5 space-y-4">
               
               {/* General Support Card */}
-              <div className="rounded-2xl border border-white/[0.08] bg-[#0A0F1A]/90 p-5 space-y-3">
+              <div className="rounded-2xl border border-border bg-surface-card p-5 space-y-3">
                 <div className="w-9 h-9 rounded-xl bg-brand-mint/10 border border-brand-mint/20 flex items-center justify-center text-brand-mint">
                   <Mail className="w-4 h-4" />
                 </div>
@@ -742,7 +742,7 @@ export default function SupportPage() {
               </div>
 
               {/* Privacy & Account Deletion Card */}
-              <div className="rounded-2xl border border-white/[0.08] bg-[#0A0F1A]/90 p-5 space-y-3">
+              <div className="rounded-2xl border border-border bg-surface-card p-5 space-y-3">
                 <div className="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
                   <Trash2 className="w-4 h-4" />
                 </div>
@@ -766,8 +766,8 @@ export default function SupportPage() {
               </div>
 
               {/* Operational Hours */}
-              <div className="rounded-2xl border border-white/[0.08] bg-[#0A0F1A]/90 p-5 space-y-2">
-                <div className="flex items-center gap-2 text-xs font-bold text-white">
+              <div className="rounded-2xl border border-border bg-surface-card p-5 space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-text-primary">
                   <Clock className="w-4 h-4 text-brand-yellow shrink-0" />
                   <span>Support Availability & Hours</span>
                 </div>
@@ -778,13 +778,13 @@ export default function SupportPage() {
               </div>
 
               {/* Operating Legal Entity & Address */}
-              <div className="rounded-2xl border border-white/[0.08] bg-[#0A0F1A]/90 p-5 space-y-2.5">
-                <div className="flex items-center gap-2 text-xs font-bold text-white">
+              <div className="rounded-2xl border border-border bg-surface-card p-5 space-y-2.5">
+                <div className="flex items-center gap-2 text-xs font-bold text-text-primary">
                   <Building2 className="w-4 h-4 text-brand-mint shrink-0" />
                   <span>Operating Legal Entity</span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-xs font-bold text-white block">
+                  <span className="text-xs font-bold text-text-primary block">
                     ZEITNAH INSTITUTE OF SURVEY LLP
                   </span>
                   <span className="text-[11px] text-text-faint font-mono block">
@@ -800,10 +800,10 @@ export default function SupportPage() {
 
             {/* Right Column: Live Support Request Form (7 cols) */}
             <div className="lg:col-span-7">
-              <div className="rounded-3xl border border-white/[0.1] bg-gradient-to-b from-[#0E1726] to-[#070B14] p-6 sm:p-8 space-y-6 shadow-xl">
+              <div className="rounded-3xl border border-border bg-surface-card p-6 sm:p-8 space-y-6 shadow-xl">
                 
                 <div>
-                  <h3 className="text-lg font-heading font-bold text-white">
+                  <h3 className="text-lg font-heading font-bold text-text-primary">
                     Submit a Support Request
                   </h3>
                   <p className="text-xs text-text-muted mt-1">
@@ -820,7 +820,7 @@ export default function SupportPage() {
                       <span className="font-mono text-xs uppercase font-bold tracking-wider text-brand-mint block">
                         Ticket Created Successfully
                       </span>
-                      <h4 className="text-xl font-heading font-black text-white font-mono">
+                      <h4 className="text-xl font-heading font-black text-text-primary font-mono">
                         {submissionSuccess.ticketNumber}
                       </h4>
                       <p className="text-xs text-text-secondary max-w-md mx-auto leading-relaxed">
@@ -863,7 +863,7 @@ export default function SupportPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* Name */}
                       <div className="space-y-1.5">
-                        <label htmlFor="support-name" className="text-xs font-semibold text-white block">
+                        <label htmlFor="support-name" className="text-xs font-semibold text-text-primary block">
                           Full Name <span className="text-brand-mint">*</span>
                         </label>
                         <input
@@ -873,10 +873,10 @@ export default function SupportPage() {
                           value={formData.name}
                           onChange={handleFormChange}
                           placeholder="Your name"
-                          className={`w-full px-3.5 py-2.5 rounded-xl bg-[#070B14] border text-xs text-white placeholder-text-muted focus:outline-none focus:ring-1 transition-all ${
+                          className={`w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border text-xs text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 transition-all ${
                             formErrors.name
                               ? "border-rose-500 focus:ring-rose-500"
-                              : "border-white/10 focus:border-brand-mint focus:ring-brand-mint"
+                              : "border-border focus:border-brand-mint focus:ring-brand-mint"
                           }`}
                         />
                         {formErrors.name && (
@@ -886,7 +886,7 @@ export default function SupportPage() {
 
                       {/* Email */}
                       <div className="space-y-1.5">
-                        <label htmlFor="support-email" className="text-xs font-semibold text-white block">
+                        <label htmlFor="support-email" className="text-xs font-semibold text-text-primary block">
                           Email Address <span className="text-brand-mint">*</span>
                         </label>
                         <input
@@ -896,10 +896,10 @@ export default function SupportPage() {
                           value={formData.email}
                           onChange={handleFormChange}
                           placeholder="name@example.com"
-                          className={`w-full px-3.5 py-2.5 rounded-xl bg-[#070B14] border text-xs text-white placeholder-text-muted focus:outline-none focus:ring-1 transition-all ${
+                          className={`w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border text-xs text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 transition-all ${
                             formErrors.email
                               ? "border-rose-500 focus:ring-rose-500"
-                              : "border-white/10 focus:border-brand-mint focus:ring-brand-mint"
+                              : "border-border focus:border-brand-mint focus:ring-brand-mint"
                           }`}
                         />
                         {formErrors.email && (
@@ -911,7 +911,7 @@ export default function SupportPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* Category */}
                       <div className="space-y-1.5">
-                        <label htmlFor="support-category" className="text-xs font-semibold text-white block">
+                        <label htmlFor="support-category" className="text-xs font-semibold text-text-primary block">
                           Issue Category <span className="text-brand-mint">*</span>
                         </label>
                         <select
@@ -919,7 +919,7 @@ export default function SupportPage() {
                           name="category"
                           value={formData.category}
                           onChange={handleFormChange}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-[#070B14] border border-white/10 text-xs text-white focus:outline-none focus:border-brand-mint focus:ring-1 focus:ring-brand-mint cursor-pointer"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary focus:outline-none focus:border-brand-mint focus:ring-1 focus:ring-brand-mint cursor-pointer"
                         >
                           <option value="ACCOUNT_LOGIN">Account & Login</option>
                           <option value="ACCOUNT_RECOVERY">Password & Account Recovery</option>
@@ -936,7 +936,7 @@ export default function SupportPage() {
 
                       {/* Subject */}
                       <div className="space-y-1.5">
-                        <label htmlFor="support-subject" className="text-xs font-semibold text-white block">
+                        <label htmlFor="support-subject" className="text-xs font-semibold text-text-primary block">
                           Subject <span className="text-brand-mint">*</span>
                         </label>
                         <input
@@ -946,10 +946,10 @@ export default function SupportPage() {
                           value={formData.subject}
                           onChange={handleFormChange}
                           placeholder="Brief summary of the issue"
-                          className={`w-full px-3.5 py-2.5 rounded-xl bg-[#070B14] border text-xs text-white placeholder-text-muted focus:outline-none focus:ring-1 transition-all ${
+                          className={`w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border text-xs text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 transition-all ${
                             formErrors.subject
                               ? "border-rose-500 focus:ring-rose-500"
-                              : "border-white/10 focus:border-brand-mint focus:ring-brand-mint"
+                              : "border-border focus:border-brand-mint focus:ring-brand-mint"
                           }`}
                         />
                         {formErrors.subject && (
@@ -960,7 +960,7 @@ export default function SupportPage() {
 
                     {/* Message */}
                     <div className="space-y-1.5">
-                      <label htmlFor="support-message" className="text-xs font-semibold text-white block">
+                      <label htmlFor="support-message" className="text-xs font-semibold text-text-primary block">
                         Message Details <span className="text-brand-mint">*</span>
                       </label>
                       <textarea
@@ -970,10 +970,10 @@ export default function SupportPage() {
                         value={formData.message}
                         onChange={handleFormChange}
                         placeholder="Please provide details regarding your browser, course, lesson, or account identifier..."
-                        className={`w-full px-3.5 py-2.5 rounded-xl bg-[#070B14] border text-xs text-white placeholder-text-muted focus:outline-none focus:ring-1 transition-all ${
+                        className={`w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border text-xs text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 transition-all ${
                           formErrors.message
                             ? "border-rose-500 focus:ring-rose-500"
-                            : "border-white/10 focus:border-brand-mint focus:ring-brand-mint"
+                            : "border-border focus:border-brand-mint focus:ring-brand-mint"
                         }`}
                       />
                       {formErrors.message && (
@@ -1018,14 +1018,14 @@ export default function SupportPage() {
         {/* ══════════════════════════════════════════════════════════
             06. ADDITIONAL VERIFIED PLATFORM RESOURCES
             ══════════════════════════════════════════════════════════ */}
-        <section aria-labelledby="resources-heading" className="rounded-3xl border border-white/[0.08] bg-[#0A0F1A]/60 p-6 sm:p-10 space-y-4">
-          <h2 id="resources-heading" className="text-base font-heading font-bold text-white">
+        <section aria-labelledby="resources-heading" className="rounded-3xl border border-border bg-surface-card p-6 sm:p-10 space-y-4">
+          <h2 id="resources-heading" className="text-base font-heading font-bold text-text-primary">
             Additional Verified Resources
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
             <Link
               to="/privacy-policy"
-              className="p-4 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] transition-colors group space-y-1 block"
+              className="p-4 rounded-xl border border-border bg-surface-elevated hover:bg-surface-card transition-colors group space-y-1 block"
             >
               <div className="flex items-center justify-between text-brand-mint font-semibold">
                 <span>Privacy Policy</span>
@@ -1038,9 +1038,9 @@ export default function SupportPage() {
 
             <Link
               to="/courses"
-              className="p-4 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] transition-colors group space-y-1 block"
+              className="p-4 rounded-xl border border-border bg-surface-elevated hover:bg-surface-card transition-colors group space-y-1 block"
             >
-              <div className="flex items-center justify-between text-white font-semibold">
+              <div className="flex items-center justify-between text-text-primary font-semibold">
                 <span>Course Catalog</span>
                 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </div>
@@ -1051,9 +1051,9 @@ export default function SupportPage() {
 
             <Link
               to="/network"
-              className="p-4 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] transition-colors group space-y-1 block"
+              className="p-4 rounded-xl border border-border bg-surface-elevated hover:bg-surface-card transition-colors group space-y-1 block"
             >
-              <div className="flex items-center justify-between text-white font-semibold">
+              <div className="flex items-center justify-between text-text-primary font-semibold">
                 <span>Global Civil Network</span>
                 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </div>
@@ -1064,9 +1064,9 @@ export default function SupportPage() {
 
             <Link
               to="/about"
-              className="p-4 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] transition-colors group space-y-1 block"
+              className="p-4 rounded-xl border border-border bg-surface-elevated hover:bg-surface-card transition-colors group space-y-1 block"
             >
-              <div className="flex items-center justify-between text-white font-semibold">
+              <div className="flex items-center justify-between text-text-primary font-semibold">
                 <span>About Zeitnah</span>
                 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </div>
@@ -1080,21 +1080,21 @@ export default function SupportPage() {
         {/* ══════════════════════════════════════════════════════════
             07. SUPPORT PAGE FOOTER
             ══════════════════════════════════════════════════════════ */}
-        <footer className="pt-8 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-text-muted">
+        <footer className="pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-text-muted">
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 rounded-lg bg-white/[0.04] border border-white/10 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-lg bg-surface-elevated border border-border flex items-center justify-center">
               <img src="/zeitnah-logo.png" alt="Zeitnah" className="w-4 h-4 object-contain" width={16} height={16} />
             </div>
             <span>&copy; {new Date().getFullYear()} {BRAND.name}. All rights reserved.</span>
           </div>
 
           <div className="flex items-center gap-4 text-xs">
-            <Link to="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
-            <span className="text-white/20">•</span>
-            <Link to="/about" className="hover:text-white transition-colors">About</Link>
-            <span className="text-white/20">•</span>
-            <Link to="/courses" className="hover:text-white transition-colors">Courses</Link>
-            <span className="text-white/20">•</span>
+            <Link to="/privacy-policy" className="hover:text-text-primary transition-colors">Privacy Policy</Link>
+            <span className="text-text-faint">•</span>
+            <Link to="/about" className="hover:text-text-primary transition-colors">About</Link>
+            <span className="text-text-faint">•</span>
+            <Link to="/courses" className="hover:text-text-primary transition-colors">Courses</Link>
+            <span className="text-text-faint">•</span>
             <button
               type="button"
               onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}

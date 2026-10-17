@@ -91,9 +91,28 @@
       />
     </noscript>
 
+    <!-- Early Theme Initialization (Anti-FOUC) -->
+    <script>
+      (function() {
+        try {
+          var key = 'zn_theme_preference_v1';
+          var pref = localStorage.getItem(key);
+          var m = window.matchMedia('(prefers-color-scheme: dark)');
+          var isDark = pref === 'dark' || (pref !== 'light' && (!m || m.matches));
+          var theme = isDark ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', theme);
+          var metaTheme = document.querySelector('meta[name="theme-color"]');
+          if (metaTheme) metaTheme.setAttribute('content', isDark ? '#070B14' : '#F8FAFC');
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
+
     <!-- Critical inline styles for instant first paint -->
     <style>
       html, body { background-color: #070B14; color: #fff; margin: 0; padding: 0; }
+      html[data-theme="light"], html[data-theme="light"] body { background-color: #F8FAFC; color: #0A0F1D; }
       #root { min-height: 100vh; }
     </style>
   </head>

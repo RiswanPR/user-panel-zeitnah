@@ -213,7 +213,7 @@ export default function ReelsViewer({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#05070D] flex flex-col items-center justify-center select-none overflow-hidden overscroll-none">
+    <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center select-none overflow-hidden overscroll-none">
 
       {/* ── TOP HEADER (Mobile Floating Back & Desktop Control Bar) ── */}
       <div className="absolute top-0 inset-x-0 z-40 p-3 sm:p-4 pt-[max(12px,env(safe-area-inset-top,12px))] flex items-center justify-between pointer-events-none">

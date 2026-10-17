@@ -21,7 +21,7 @@ export default function ProfileEducationSection({
     <section
       id="education"
       aria-labelledby="profile-education-heading"
-      className={`rounded-3xl border border-white/[0.08] bg-[#0A0F18]/90 backdrop-blur-xl p-6 sm:p-8 shadow-sm transition-all ${className}`}
+      className={`rounded-3xl border border-border bg-surface-card p-6 sm:p-8 shadow-sm transition-all ${className}`}
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
@@ -32,12 +32,12 @@ export default function ProfileEducationSection({
             <div className="flex items-center gap-2 flex-wrap">
               <h2
                 id="profile-education-heading"
-                className="text-lg sm:text-xl font-heading font-extrabold text-white tracking-tight"
+                className="text-lg sm:text-xl font-heading font-extrabold text-text-primary tracking-tight"
               >
                 Education & Academics
               </h2>
               {items.length > 0 && (
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-white/[0.04] border border-white/[0.08] text-white/80">
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-surface-elevated border border-border text-text-secondary">
                   {items.length} {items.length === 1 ? "Qualification" : "Qualifications"}
                 </span>
               )}
@@ -73,12 +73,12 @@ export default function ProfileEducationSection({
       </div>
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.01] p-8 text-center space-y-3">
-          <div className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-text-muted mx-auto">
+        <div className="rounded-2xl border border-dashed border-border bg-surface-elevated/20 p-8 text-center space-y-3">
+          <div className="w-12 h-12 rounded-xl bg-surface-elevated border border-border flex items-center justify-center text-text-muted mx-auto">
             <GraduationCap className="w-6 h-6 text-brand-mint/70" />
           </div>
           <div>
-            <h3 className="text-sm font-heading font-bold text-white mb-1">
+            <h3 className="text-sm font-heading font-bold text-text-primary mb-1">
               Build your academic profile
             </h3>
             <p className="text-xs text-text-muted max-w-sm mx-auto leading-relaxed">
@@ -125,7 +125,7 @@ export default function ProfileEducationSection({
             return (
               <div
                 key={eduId}
-                className="rounded-2xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.035] hover:border-brand-mint/30 p-5 sm:p-6 transition-all shadow-sm flex flex-col justify-between gap-3.5 group"
+                className="rounded-2xl border border-border bg-surface-elevated/40 hover:bg-surface-elevated hover:border-brand-mint/30 p-5 sm:p-6 transition-all shadow-sm flex flex-col justify-between gap-3.5 group"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div className="space-y-2 min-w-0 flex-1">
@@ -147,18 +147,18 @@ export default function ProfileEducationSection({
                       )}
                     </div>
 
-                    <h3 className="text-base sm:text-lg font-heading font-black text-white tracking-tight leading-snug break-words">
+                    <h3 className="text-base sm:text-lg font-heading font-black text-text-primary tracking-tight leading-snug break-words">
                       {edu.qualification || edu.degree || "Degree / Qualification"}
                     </h3>
 
                     <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-text-secondary font-medium">
-                      <span className="text-white/90 font-semibold inline-flex items-center gap-1.5 break-words">
+                      <span className="text-text-primary font-semibold inline-flex items-center gap-1.5 break-words">
                         <Building2 className="w-3.5 h-3.5 text-brand-mint/80 shrink-0" />
                         <span>{edu.institution || "Institution / University"}</span>
                       </span>
                       {edu.fieldOfStudy && (
                         <>
-                          <span className="text-white/20">•</span>
+                          <span className="text-text-faint">•</span>
                           <span className="text-brand-mint/90 font-medium break-words">{edu.fieldOfStudy}</span>
                         </>
                       )}
@@ -178,7 +178,7 @@ export default function ProfileEducationSection({
                         <button
                           type="button"
                           onClick={() => onEdit(edu)}
-                          className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-brand-mint hover:bg-white/[0.04] transition-colors cursor-pointer"
+                          className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-brand-mint hover:bg-surface-elevated transition-colors cursor-pointer"
                           title={`Edit ${edu.qualification || "education"}`}
                           aria-label={`Edit ${edu.qualification || "education"} at ${edu.institution || "institution"}`}
                         >
@@ -189,7 +189,7 @@ export default function ProfileEducationSection({
                         <button
                           type="button"
                           onClick={() => onDelete(eduId)}
-                          className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-danger hover:bg-white/[0.04] transition-colors cursor-pointer"
+                          className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-danger hover:bg-surface-elevated transition-colors cursor-pointer"
                           title={`Delete ${edu.qualification || "education"}`}
                           aria-label={`Delete ${edu.qualification || "education"} at ${edu.institution || "institution"}`}
                         >
@@ -201,7 +201,7 @@ export default function ProfileEducationSection({
                 </div>
 
                 {edu.description && (
-                  <p className="mt-2 text-xs sm:text-sm text-text-secondary leading-relaxed whitespace-pre-line border-t border-white/[0.05] pt-3 break-words">
+                  <p className="mt-2 text-xs sm:text-sm text-text-secondary leading-relaxed whitespace-pre-line border-t border-border pt-3 break-words">
                     {edu.description}
                   </p>
                 )}

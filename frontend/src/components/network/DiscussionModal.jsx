@@ -24,17 +24,17 @@ export default function DiscussionModal({ isOpen, onClose, onSubmit, isSubmittin
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <div className="relative w-full max-w-xl rounded-2xl bg-[#111115] border border-white/[0.08] shadow-2xl p-6 overflow-hidden">
-        <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
+      <div className="relative w-full max-w-xl rounded-2xl bg-surface-card border border-border shadow-2xl p-6 overflow-hidden">
+        <div className="flex items-center justify-between pb-4 border-b border-border">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-brand-mint/15 text-brand-mint flex items-center justify-center">
               <MessageSquare className="w-4 h-4" />
             </div>
-            <h3 className="font-heading font-bold text-lg text-white">Start a Discussion</h3>
+            <h3 className="font-heading font-bold text-lg text-text-primary">Start a Discussion</h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.05] transition-colors cursor-pointer"
+            className="p-1 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -51,7 +51,7 @@ export default function DiscussionModal({ isOpen, onClose, onSubmit, isSubmittin
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. How to structure NestJS modules for scalability?"
-              className="w-full px-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-brand-mint/40 text-white text-sm focus:outline-none transition-colors"
+              className="w-full px-4 py-2.5 rounded-xl bg-surface-elevated border border-border focus:border-brand-mint/40 text-text-primary text-sm focus:outline-none transition-colors placeholder:text-text-muted"
             />
           </div>
 
@@ -68,7 +68,7 @@ export default function DiscussionModal({ isOpen, onClose, onSubmit, isSubmittin
                   className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-all text-left cursor-pointer ${
                     type === cat.value
                       ? 'bg-brand-mint/15 border-brand-mint text-brand-mint shadow-sm'
-                      : 'bg-white/[0.02] border-white/[0.06] text-text-muted hover:text-white'
+                      : 'bg-surface-elevated border-border text-text-muted hover:text-text-primary'
                   }`}
                 >
                   {cat.label}
@@ -87,15 +87,15 @@ export default function DiscussionModal({ isOpen, onClose, onSubmit, isSubmittin
               value={body}
               onChange={(e) => setBody(e.target.value)}
               placeholder="Describe your question, observation, or topic in detail..."
-              className="w-full px-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-brand-mint/40 text-white text-sm focus:outline-none transition-colors resize-none"
+              className="w-full px-4 py-2.5 rounded-xl bg-surface-elevated border border-border focus:border-brand-mint/40 text-text-primary text-sm focus:outline-none transition-colors placeholder:text-text-muted resize-none"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.06]">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-text-muted hover:text-white transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-text-muted hover:text-text-primary transition-colors cursor-pointer"
             >
               Cancel
             </button>

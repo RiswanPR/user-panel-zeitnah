@@ -72,7 +72,7 @@ export default function RepostMenu({
       ref={menuRef}
       role="menu"
       aria-label="Repost options"
-      className="absolute bottom-full left-0 mb-2 z-30 min-w-[180px] py-1.5 rounded-2xl bg-[#0F172A]/95 backdrop-blur-xl border border-white/[0.12] shadow-[0_10px_30px_rgba(0,0,0,0.5)] animate-in fade-in zoom-in-95 duration-150 select-none"
+      className="absolute bottom-full left-0 mb-2 z-30 min-w-[180px] py-1.5 rounded-2xl bg-surface-elevated/95 backdrop-blur-xl border border-border shadow-xl animate-in fade-in zoom-in-95 duration-150 select-none"
     >
       {/* Repost Toggle Item */}
       <button
@@ -89,7 +89,7 @@ export default function RepostMenu({
         } ${
           isReposted
             ? 'text-rose-400 hover:bg-rose-500/10'
-            : 'text-white hover:bg-brand-mint/10 hover:text-brand-mint'
+            : 'text-text-primary hover:bg-surface-card hover:text-brand-mint'
         }`}
       >
         {isReposted ? (
@@ -113,7 +113,7 @@ export default function RepostMenu({
           onQuote();
           onClose();
         }}
-        className="w-full min-h-[44px] px-3.5 py-2.5 flex items-center gap-2.5 text-xs font-semibold text-white hover:bg-brand-mint/10 hover:text-brand-mint text-left transition-colors cursor-pointer"
+        className="w-full min-h-[44px] px-3.5 py-2.5 flex items-center gap-2.5 text-xs font-semibold text-text-primary hover:bg-surface-card hover:text-brand-mint text-left transition-colors cursor-pointer"
       >
         <Quote className="w-4 h-4 text-text-muted shrink-0" />
         <span>Quote post</span>

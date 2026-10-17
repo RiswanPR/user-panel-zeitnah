@@ -94,14 +94,14 @@ export default function AdminBusinessReviewPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* ── Page Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-white/[0.06]">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-border">
         <div>
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-mint/15 text-brand-mint border border-brand-mint/30">
               Admin Governance
             </span>
           </div>
-          <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-white mt-2 tracking-tight">
+          <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-text-primary mt-2 tracking-tight">
             Business Verification Management
           </h1>
           <p className="text-sm text-text-muted mt-1 leading-relaxed">
@@ -113,7 +113,7 @@ export default function AdminBusinessReviewPage() {
       {/* ── Filters & Tabs ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Status Filter Tabs */}
-        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] overflow-x-auto">
+        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-surface-card border border-border overflow-x-auto">
           {[
             { id: 'PENDING', label: 'Pending Review', icon: Clock },
             { id: 'APPROVED', label: 'Approved', icon: CheckCircle2 },
@@ -130,7 +130,7 @@ export default function AdminBusinessReviewPage() {
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                   active
                     ? 'bg-brand-mint text-black font-bold shadow-md shadow-brand-mint/20'
-                    : 'text-text-muted hover:text-white hover:bg-white/[0.04]'
+                    : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -142,13 +142,13 @@ export default function AdminBusinessReviewPage() {
 
         {/* Search */}
         <div className="relative w-full sm:w-72">
-          <Search className="w-4 h-4 text-white/30 absolute left-3.5 top-3" />
+          <Search className="w-4 h-4 text-text-faint absolute left-3.5 top-3" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by business name or email..."
-            className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-white/30 outline-none focus:border-brand-mint"
+            className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-surface-card border border-border text-xs text-text-primary placeholder-text-faint outline-none focus:border-brand-mint"
           />
         </div>
       </div>
@@ -162,9 +162,9 @@ export default function AdminBusinessReviewPage() {
           </p>
         </div>
       ) : businesses.length === 0 ? (
-        <div className="py-16 text-center bg-white/[0.02] border border-white/[0.06] rounded-3xl space-y-3">
-          <Building2 className="w-10 h-10 mx-auto text-white/20" />
-          <h3 className="text-base font-bold text-white">No businesses found</h3>
+        <div className="py-16 text-center bg-surface-card border border-border rounded-3xl space-y-3">
+          <Building2 className="w-10 h-10 mx-auto text-text-faint" />
+          <h3 className="text-base font-bold text-text-primary">No businesses found</h3>
           <p className="text-xs text-text-muted max-w-sm mx-auto">
             No business registrations match status '{statusFilter}'.
           </p>
@@ -176,11 +176,11 @@ export default function AdminBusinessReviewPage() {
             return (
               <div
                 key={org._id}
-                className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12] transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-5"
+                className="p-5 rounded-2xl bg-surface-card border border-border hover:border-border-accent transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-5"
               >
                 {/* Org Info */}
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center overflow-hidden shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center overflow-hidden shrink-0">
                     {org.logo ? (
                       <img src={org.logo} alt={org.name} className="w-full h-full object-cover" />
                     ) : (
@@ -190,7 +190,7 @@ export default function AdminBusinessReviewPage() {
 
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="text-base font-bold text-white font-heading">{org.name}</h4>
+                      <h4 className="text-base font-bold text-text-primary font-heading">{org.name}</h4>
                       <span
                         className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full ${
                           org.status === 'APPROVED'
@@ -227,12 +227,12 @@ export default function AdminBusinessReviewPage() {
                     </p>
 
                     {/* Owner detail */}
-                    <div className="flex items-center gap-2 pt-1 text-xs text-white/70">
+                    <div className="flex items-center gap-2 pt-1 text-xs text-text-secondary">
                       <User className="w-3.5 h-3.5 text-text-faint" />
                       <span>
                         Owner: <strong>{owner.name || owner.email || 'User'}</strong>
                       </span>
-                      <span className="px-2 py-0.5 rounded-md bg-white/[0.04] text-[10px] font-semibold text-brand-mint">
+                      <span className="px-2 py-0.5 rounded-md bg-surface-elevated border border-border text-[10px] font-semibold text-brand-mint">
                         {owner.primaryRole || 'RECRUITER'}
                       </span>
                       <span className="text-text-faint">•</span>
@@ -247,7 +247,7 @@ export default function AdminBusinessReviewPage() {
                 <div className="flex items-center gap-2.5 shrink-0 self-end lg:self-center">
                   <button
                     onClick={() => setReviewingOrg(org)}
-                    className="px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-semibold text-white transition-colors cursor-pointer"
+                    className="px-3.5 py-2 rounded-xl bg-surface-elevated hover:bg-surface-card border border-border text-xs font-semibold text-text-primary transition-colors cursor-pointer"
                   >
                     Review Details
                   </button>
@@ -295,8 +295,8 @@ export default function AdminBusinessReviewPage() {
       {/* ── Review Modal ── */}
       {reviewingOrg && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="relative w-full max-w-2xl bg-[#14141c] border border-white/[0.1] rounded-3xl shadow-2xl p-6 sm:p-8 text-white space-y-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-start justify-between pb-4 border-b border-white/[0.08]">
+          <div className="relative w-full max-w-2xl bg-surface-card border border-border rounded-3xl shadow-2xl p-6 sm:p-8 text-text-primary space-y-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between pb-4 border-b border-border">
               <div>
                 <h3 className="text-xl font-bold font-heading">{reviewingOrg.name}</h3>
                 <p className="text-xs text-brand-mint font-semibold mt-0.5">
@@ -305,7 +305,7 @@ export default function AdminBusinessReviewPage() {
               </div>
               <button
                 onClick={() => setReviewingOrg(null)}
-                className="p-1.5 rounded-xl text-white/40 hover:text-white"
+                className="p-1.5 rounded-xl text-text-muted hover:text-text-primary"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -316,7 +316,7 @@ export default function AdminBusinessReviewPage() {
                 <span className="text-[11px] text-text-muted uppercase font-bold block">
                   Description
                 </span>
-                <p className="text-sm text-white/90 leading-relaxed mt-1">
+                <p className="text-sm text-text-primary leading-relaxed mt-1">
                   {reviewingOrg.description || 'No description provided.'}
                 </p>
               </div>
@@ -337,26 +337,26 @@ export default function AdminBusinessReviewPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+              <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-surface-elevated border border-border">
                 <div>
                   <span className="text-text-muted block text-[11px]">Business Email</span>
-                  <span className="font-semibold text-white">
+                  <span className="font-semibold text-text-primary">
                     {reviewingOrg.businessEmail || 'None'}
                   </span>
                 </div>
                 <div>
                   <span className="text-text-muted block text-[11px]">Business Phone</span>
-                  <span className="font-semibold text-white">
+                  <span className="font-semibold text-text-primary">
                     {reviewingOrg.businessPhone || 'None'}
                   </span>
                 </div>
                 <div>
                   <span className="text-text-muted block text-[11px]">Website</span>
-                  <span className="font-semibold text-white">{reviewingOrg.website || 'None'}</span>
+                  <span className="font-semibold text-text-primary">{reviewingOrg.website || 'None'}</span>
                 </div>
                 <div>
                   <span className="text-text-muted block text-[11px]">Headquarters Location</span>
-                  <span className="font-semibold text-white">
+                  <span className="font-semibold text-text-primary">
                     {reviewingOrg.officeLocation || reviewingOrg.location || 'None'}
                   </span>
                 </div>
@@ -369,10 +369,10 @@ export default function AdminBusinessReviewPage() {
               )}
             </div>
 
-            <div className="pt-4 border-t border-white/[0.08] flex items-center justify-end gap-3">
+            <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
               <button
                 onClick={() => setReviewingOrg(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-white/60 hover:text-white"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-primary"
               >
                 Close
               </button>
@@ -393,7 +393,7 @@ export default function AdminBusinessReviewPage() {
       {/* ── Reject Modal with Mandatory Reason ── */}
       {rejectingOrg && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="relative w-full max-w-md bg-[#14141c] border border-white/[0.1] rounded-3xl shadow-2xl p-6 text-white space-y-4">
+          <div className="relative w-full max-w-md bg-surface-card border border-border rounded-3xl shadow-2xl p-6 text-text-primary space-y-4">
             <h3 className="text-lg font-bold font-heading text-red-400">
               Reject Business Verification
             </h3>
@@ -405,12 +405,12 @@ export default function AdminBusinessReviewPage() {
               value={reasonInput}
               onChange={(e) => setReasonInput(e.target.value)}
               placeholder="e.g. Incomplete business address or website not responding..."
-              className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-white/30 outline-none focus:border-red-400 resize-none"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary placeholder-text-faint outline-none focus:border-red-400 resize-none"
             />
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 onClick={() => setRejectingOrg(null)}
-                className="px-4 py-2 rounded-xl text-xs text-white/60 hover:text-white"
+                className="px-4 py-2 rounded-xl text-xs text-text-secondary hover:text-text-primary"
               >
                 Cancel
               </button>
@@ -431,7 +431,7 @@ export default function AdminBusinessReviewPage() {
       {/* ── Suspend Modal with Mandatory Reason ── */}
       {suspendingOrg && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="relative w-full max-w-md bg-[#14141c] border border-white/[0.1] rounded-3xl shadow-2xl p-6 text-white space-y-4">
+          <div className="relative w-full max-w-md bg-surface-card border border-border rounded-3xl shadow-2xl p-6 text-text-primary space-y-4">
             <h3 className="text-lg font-bold font-heading text-amber-400">
               Suspend Business Operations
             </h3>
@@ -443,12 +443,12 @@ export default function AdminBusinessReviewPage() {
               value={reasonInput}
               onChange={(e) => setReasonInput(e.target.value)}
               placeholder="e.g. Compliance failure or fraudulent job posting reports..."
-              className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-white/30 outline-none focus:border-amber-400 resize-none"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border text-xs text-text-primary placeholder-text-faint outline-none focus:border-amber-400 resize-none"
             />
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 onClick={() => setSuspendingOrg(null)}
-                className="px-4 py-2 rounded-xl text-xs text-white/60 hover:text-white"
+                className="px-4 py-2 rounded-xl text-xs text-text-secondary hover:text-text-primary"
               >
                 Cancel
               </button>

@@ -112,7 +112,7 @@ export default function MessagesPage() {
   };
 
   return (
-    <div className="h-[calc(100dvh-4rem)] md:h-[calc(100vh-4.25rem)] w-full flex overflow-hidden bg-[#080C14]">
+    <div className="h-[calc(100dvh-4rem)] md:h-[calc(100vh-4.25rem)] w-full flex overflow-hidden bg-bg-base">
       {/* ── Left Pane: Conversations / Folders / Search ── */}
       <div
         className={`${
@@ -136,7 +136,7 @@ export default function MessagesPage() {
       <div
         className={`${
           !selectedConversationId ? 'hidden md:flex' : 'flex'
-        } flex-1 flex-col h-full overflow-hidden bg-[#080C14]`}
+        } flex-1 flex-col h-full overflow-hidden bg-bg-base`}
       >
         {activeTab === 'requests' && !selectedConversationId ? (
           <MessageRequestsView onSelectConversation={handleSelectConversation} />
@@ -150,7 +150,7 @@ export default function MessagesPage() {
           />
         ) : (
           /* Editorial Workspace Empty State */
-          <div className="flex-1 hidden md:flex flex-col items-center justify-center text-center p-8 lg:p-12 relative overflow-hidden bg-[#080C14]">
+          <div className="flex-1 hidden md:flex flex-col items-center justify-center text-center p-8 lg:p-12 relative overflow-hidden bg-bg-base">
             {/* Subtle background ambient glow */}
             <div className="absolute w-96 h-96 rounded-full bg-brand-mint/5 blur-3xl pointer-events-none -top-12 -right-12" />
             <div className="absolute w-80 h-80 rounded-full bg-brand-gold/5 blur-3xl pointer-events-none -bottom-12 -left-12" />
@@ -161,7 +161,7 @@ export default function MessagesPage() {
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-xl font-heading font-black text-white tracking-tight">
+                <h3 className="text-xl font-heading font-black text-text-primary tracking-tight">
                   Select a conversation to continue.
                 </h3>
                 <p className="text-xs text-text-muted leading-relaxed max-w-sm mx-auto">
@@ -171,8 +171,8 @@ export default function MessagesPage() {
 
               {/* Ecosystem Highlights */}
               <div className="grid grid-cols-2 gap-3 text-left pt-1">
-                <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-1">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-white">
+                <div className="p-3.5 rounded-2xl bg-surface-card border border-border space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-text-primary">
                     <ShieldCheck className="w-3.5 h-3.5 text-brand-mint" />
                     <span>Verified Network</span>
                   </div>
@@ -181,8 +181,8 @@ export default function MessagesPage() {
                   </p>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-1">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-white">
+                <div className="p-3.5 rounded-2xl bg-surface-card border border-border space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-text-primary">
                     <Zap className="w-3.5 h-3.5 text-brand-gold" />
                     <span>Command Center</span>
                   </div>
@@ -197,14 +197,14 @@ export default function MessagesPage() {
                 <button
                   type="button"
                   onClick={() => setShowNewChatModal(true)}
-                  className="px-5 py-2.5 rounded-xl bg-brand-mint text-bg-base text-xs font-bold hover:bg-brand-mint/90 transition-all cursor-pointer shadow-lg shadow-brand-mint/10 focus-ring"
+                  className="px-5 py-2.5 rounded-xl bg-brand-mint text-bg-base text-xs font-bold hover:bg-brand-mint/90 transition-all cursor-pointer shadow-lg shadow-brand-mint/10 focus-ring min-h-[44px]"
                 >
                   Start Direct Message
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowNewGroupModal(true)}
-                  className="px-4 py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-text-secondary hover:text-white text-xs font-semibold border border-white/[0.08] transition-all cursor-pointer focus-ring flex items-center gap-1.5"
+                  className="px-4 py-2.5 rounded-xl bg-surface-card hover:bg-surface-elevated text-text-secondary hover:text-text-primary text-xs font-semibold border border-border transition-all cursor-pointer focus-ring flex items-center gap-1.5 min-h-[44px]"
                 >
                   <Users className="w-3.5 h-3.5" />
                   <span>Create Group</span>

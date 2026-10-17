@@ -35,7 +35,7 @@ const CourseStandingStrip = memo(function CourseStandingStrip() {
 
   return (
     <section aria-label="Learning Standing & Standings" className="pt-2">
-      <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-r from-[#12314C]/80 via-[#0A0F14] to-[#07090B] p-5 sm:p-7 shadow-xl">
+      <div className="relative overflow-hidden rounded-3xl border border-border bg-surface-card p-5 sm:p-7 shadow-xl">
         {/* Subtle accent hairline */}
         <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-brand-yellow/30 to-transparent pointer-events-none" />
 
@@ -51,7 +51,7 @@ const CourseStandingStrip = memo(function CourseStandingStrip() {
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           {/* ── Left: Standing Telemetry & Rank ── */}
           <div className="flex items-center gap-4 sm:gap-5 min-w-0">
-            <div className="w-12 h-12 rounded-2xl bg-[#12314C] border border-brand-yellow/30 flex items-center justify-center text-brand-yellow shrink-0 shadow-md">
+            <div className="w-12 h-12 rounded-2xl bg-brand-yellow/10 border border-brand-yellow/30 flex items-center justify-center text-brand-yellow shrink-0 shadow-md">
               <Trophy className="w-6 h-6" />
             </div>
 
@@ -67,10 +67,10 @@ const CourseStandingStrip = memo(function CourseStandingStrip() {
               </div>
 
               <div className="flex items-baseline gap-3 flex-wrap">
-                <span className="font-heading font-extrabold text-2xl sm:text-3xl text-white font-mono tracking-tight">
+                <span className="font-heading font-extrabold text-2xl sm:text-3xl text-text-primary font-mono tracking-tight">
                   #{position.rank}
                 </span>
-                <span className="text-white/20 text-sm">•</span>
+                <span className="text-text-faint text-sm">•</span>
                 <span className="text-xs sm:text-sm font-mono font-bold text-text-secondary">
                   {(position.points || 0).toLocaleString()}{" "}
                   <span className="text-[10px] text-text-muted font-normal uppercase">
@@ -79,9 +79,9 @@ const CourseStandingStrip = memo(function CourseStandingStrip() {
                 </span>
                 {xpNeeded && xpNeeded > 0 ? (
                   <>
-                    <span className="text-white/20 text-xs hidden md:inline">•</span>
+                    <span className="text-text-faint text-xs hidden md:inline">•</span>
                     <span className="text-xs text-text-muted font-mono hidden md:inline">
-                      <span className="text-white font-semibold">
+                      <span className="text-text-primary font-semibold">
                         {xpNeeded.toLocaleString()} XP
                       </span>{" "}
                       to Level {nextLevel}
@@ -95,7 +95,7 @@ const CourseStandingStrip = memo(function CourseStandingStrip() {
           {/* ── Right: Direct Action CTA ── */}
           <Link
             to="/leaderboard"
-            className="inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl bg-white/[0.04] border border-white/[0.1] text-xs font-mono font-bold uppercase tracking-wider text-white hover:bg-white/[0.08] hover:border-brand-mint/35 transition-all cursor-pointer shrink-0 self-start sm:self-auto group active:scale-[0.98] shadow-sm"
+            className="inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl bg-surface-elevated border border-border text-xs font-mono font-bold uppercase tracking-wider text-text-primary hover:bg-surface-card hover:border-brand-mint/35 transition-all cursor-pointer shrink-0 self-start sm:self-auto group active:scale-[0.98] shadow-sm min-h-[44px]"
           >
             <span>View Standings</span>
             <ArrowRight className="w-3.5 h-3.5 text-text-muted group-hover:text-brand-mint group-hover:translate-x-1 transition-all" />

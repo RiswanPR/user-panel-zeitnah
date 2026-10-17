@@ -24,15 +24,15 @@ export default function LessonNavigation({
   const isNextCrossChapter = nextLesson && prevLesson && nextLesson.chapterCode !== prevLesson.chapterCode;
 
   return (
-    <div className="w-full rounded-2xl sm:rounded-3xl border border-white/[0.08] bg-bg-card/70 backdrop-blur-md p-4 sm:p-6 transition-all space-y-4">
+    <div className="w-full rounded-2xl sm:rounded-3xl border border-border bg-surface-card p-4 sm:p-6 transition-all space-y-4">
       {/* Top bar: Autoplay toggle + Curriculum shortcut */}
-      <div className="flex flex-wrap items-center justify-between gap-3 text-xs border-b border-white/[0.06] pb-3">
-        <label className="inline-flex items-center gap-2.5 cursor-pointer select-none text-text-muted hover:text-white transition-colors min-h-[44px] sm:min-h-0">
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs border-b border-border/60 pb-3">
+        <label className="inline-flex items-center gap-2.5 cursor-pointer select-none text-text-muted hover:text-text-primary transition-colors min-h-[44px] sm:min-h-0">
           <input
             type="checkbox"
             checked={autoPlayNext}
             onChange={(e) => onToggleAutoPlay && onToggleAutoPlay(e.target.checked)}
-            className="w-4 h-4 rounded border-white/20 bg-white/5 text-brand-mint focus:ring-brand-mint/40 cursor-pointer"
+            className="w-4 h-4 rounded border-border bg-surface-elevated text-brand-mint focus:ring-brand-mint/40 cursor-pointer"
           />
           <span className="font-medium text-xs">Auto-play next lesson</span>
         </label>
@@ -57,11 +57,11 @@ export default function LessonNavigation({
           aria-label={prevLesson ? `Previous lesson: ${prevLesson.title}` : 'Beginning of course'}
           className={`flex items-center gap-3 p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border transition-all text-left group min-h-[56px] ${
             prevLesson
-              ? 'border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/20 cursor-pointer'
-              : 'border-white/[0.04] bg-white/[0.01] opacity-35 cursor-not-allowed'
+              ? 'border-border bg-surface-elevated/40 hover:bg-surface-elevated hover:border-border-accent cursor-pointer'
+              : 'border-border/40 bg-surface-elevated/20 opacity-35 cursor-not-allowed'
           }`}
         >
-          <div className="w-9 h-9 rounded-xl border border-white/[0.08] bg-white/[0.04] flex items-center justify-center text-white/70 group-hover:text-white group-hover:border-white/20 shrink-0 transition-colors">
+          <div className="w-9 h-9 rounded-xl border border-border bg-surface-elevated flex items-center justify-center text-text-muted group-hover:text-text-primary group-hover:border-border-accent shrink-0 transition-colors">
             <ChevronLeft className="w-4 h-4" />
           </div>
 
@@ -69,7 +69,7 @@ export default function LessonNavigation({
             <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-text-muted block">
               {prevLesson?.chapterTitle ? `Prev · ${prevLesson.chapterTitle}` : 'Previous Lesson'}
             </span>
-            <h4 className="text-xs sm:text-sm font-semibold text-white/90 truncate group-hover:text-white transition-colors">
+            <h4 className="text-xs sm:text-sm font-semibold text-text-secondary truncate group-hover:text-text-primary transition-colors">
               {prevLesson ? prevLesson.title : 'Course Beginning'}
             </h4>
           </div>
@@ -83,8 +83,8 @@ export default function LessonNavigation({
             aria-label={nextLesson.locked || nextLesson.isLocked ? `Next lesson (Locked): ${nextLesson.title}` : `Next lesson: ${nextLesson.title}`}
             className={`flex items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border transition-all text-left group min-h-[56px] cursor-pointer ${
               nextLesson.locked || nextLesson.isLocked
-                ? 'border-white/[0.06] bg-white/[0.02] hover:border-white/10'
-                : 'border-brand-mint/30 bg-brand-mint/[0.04] hover:bg-brand-mint/[0.08] hover:border-brand-mint/50'
+                ? 'border-border/60 bg-surface-elevated/40 hover:border-border'
+                : 'border-brand-mint/30 bg-brand-mint/[0.06] hover:bg-brand-mint/[0.12] hover:border-brand-mint/50'
             }`}
           >
             <div className="min-w-0 flex-1">
@@ -98,7 +98,7 @@ export default function LessonNavigation({
                   </span>
                 )}
               </div>
-              <h4 className="text-xs sm:text-sm font-semibold text-white truncate group-hover:text-brand-mint transition-colors">
+              <h4 className="text-xs sm:text-sm font-semibold text-text-primary truncate group-hover:text-brand-mint transition-colors">
                 {nextLesson.title}
               </h4>
             </div>
@@ -124,7 +124,7 @@ export default function LessonNavigation({
                 <Sparkles className="w-3 h-3" />
                 Module Complete · Next Module
               </span>
-              <h4 className="text-xs sm:text-sm font-semibold text-white truncate group-hover:text-brand-yellow transition-colors">
+              <h4 className="text-xs sm:text-sm font-semibold text-text-primary truncate group-hover:text-brand-yellow transition-colors">
                 Continue to {nextChapter.title || 'Next Chapter'}
               </h4>
               <p className="text-[10px] text-text-muted mt-0.5">
@@ -132,7 +132,7 @@ export default function LessonNavigation({
               </p>
             </div>
 
-            <div className="w-9 h-9 rounded-xl bg-brand-yellow text-bg-base font-bold flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+            <div className="w-9 h-9 rounded-xl bg-brand-yellow text-brand-navy font-bold flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
               <ChevronRight className="w-4 h-4" />
             </div>
           </button>
@@ -143,7 +143,7 @@ export default function LessonNavigation({
               <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 block">
                 Course Completed
               </span>
-              <h4 className="text-xs sm:text-sm font-semibold text-white truncate">
+              <h4 className="text-xs sm:text-sm font-semibold text-text-primary truncate">
                 You reached the final lecture!
               </h4>
             </div>

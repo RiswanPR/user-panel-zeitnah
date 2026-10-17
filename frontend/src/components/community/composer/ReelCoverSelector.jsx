@@ -169,19 +169,19 @@ export default function ReelCoverSelector({
       aria-modal="true"
       aria-labelledby="cover-selector-title"
     >
-      <div className="w-full max-w-md bg-[#09111F] border border-white/[0.1] rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 text-white">
+      <div className="w-full max-w-md bg-surface-card border border-border rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 text-text-primary">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+        <div className="flex items-center justify-between border-b border-border pb-3">
           <div className="flex items-center gap-2">
             <Film className="w-4 h-4 text-brand-mint" />
-            <h3 id="cover-selector-title" className="text-sm sm:text-base font-bold text-white">
+            <h3 id="cover-selector-title" className="text-sm sm:text-base font-bold text-text-primary">
               Choose Reel Cover
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+            className="p-1 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer"
             aria-label="Close cover selector"
           >
             <X className="w-5 h-5" />
@@ -215,7 +215,7 @@ export default function ReelCoverSelector({
         {/* Video Scrubber to pick frame */}
         <div className="space-y-2 pt-1">
           <div className="flex items-center justify-between text-xs text-text-muted">
-            <span className="font-medium text-white/90">Scrub video for frame</span>
+            <span className="font-medium text-text-primary">Scrub video for frame</span>
             <span className="font-mono text-brand-mint font-semibold">{formatSecs(scrubTime)}</span>
           </div>
 
@@ -226,7 +226,7 @@ export default function ReelCoverSelector({
             step="0.1"
             value={scrubTime}
             onChange={handleSliderChange}
-            className="w-full h-2 bg-white/[0.08] rounded-lg appearance-none cursor-pointer accent-brand-mint"
+            className="w-full h-2 bg-surface-elevated rounded-lg appearance-none cursor-pointer accent-brand-mint"
             aria-label="Seek video frame for cover"
           />
 
@@ -235,7 +235,7 @@ export default function ReelCoverSelector({
               type="button"
               onClick={handleCaptureCurrentFrame}
               disabled={isExtracting}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-xs font-semibold text-brand-mint border border-brand-mint/30 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-card text-xs font-semibold text-brand-mint border border-brand-mint/30 transition-colors cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>Use this frame</span>
@@ -244,7 +244,7 @@ export default function ReelCoverSelector({
             <button
               type="button"
               onClick={() => customCoverInputRef.current?.click()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-xs font-medium text-text-muted hover:text-white border border-white/[0.06] transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-card text-xs font-medium text-text-muted hover:text-text-primary border border-border transition-colors cursor-pointer"
             >
               <Upload className="w-3.5 h-3.5" />
               <span>Upload image</span>
@@ -260,11 +260,11 @@ export default function ReelCoverSelector({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-between gap-2 pt-3 border-t border-white/[0.08]">
+        <div className="flex items-center justify-between gap-2 pt-3 border-t border-border">
           <button
             type="button"
             onClick={handleResetToAuto}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs text-text-muted hover:text-white transition-colors cursor-pointer"
+            className="flex items-center gap-1 px-3 py-1.5 text-xs text-text-muted hover:text-text-primary transition-colors cursor-pointer"
           >
             <RotateCcw className="w-3 h-3" />
             <span>Reset to default</span>
@@ -274,14 +274,14 @@ export default function ReelCoverSelector({
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-1.5 rounded-xl text-xs text-text-muted hover:text-white transition-colors cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl text-xs text-text-muted hover:text-text-primary transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleConfirm}
-              className="flex items-center gap-1 px-4 py-2 rounded-xl bg-brand-mint text-[#070B14] text-xs font-bold hover:opacity-90 transition-all cursor-pointer"
+              className="flex items-center gap-1 px-4 py-2 rounded-xl bg-brand-mint text-bg-base text-xs font-bold hover:opacity-90 transition-all cursor-pointer"
             >
               <Check className="w-3.5 h-3.5" />
               <span>Apply Cover</span>

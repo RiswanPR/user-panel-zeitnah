@@ -22,18 +22,18 @@ export default function SkillProofBadge({ skill }) {
   }
 
   return (
-    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-white/5 hover:border-white/10 transition-colors">
-      <span className="text-xs font-medium text-white">{skill.name}</span>
+    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-card border border-border hover:border-border-accent transition-colors">
+      <span className="text-xs font-medium text-text-primary">{skill.name}</span>
       {isDemonstrated ? (
         <span
           title={proofLabel}
-          className="inline-flex items-center gap-1 text-[10px] font-semibold text-mint bg-mint/10 border border-mint/20 px-1.5 py-0.5 rounded"
+          className="inline-flex items-center gap-1 text-[10px] font-semibold text-brand-mint bg-brand-mint/10 border border-brand-mint/20 px-1.5 py-0.5 rounded"
         >
           <ProofIcon className="h-2.5 w-2.5" />
           <span>{proofLabel}</span>
         </span>
       ) : (
-        <span className="text-[10px] text-text-muted bg-white/5 px-1.5 py-0.5 rounded">
+        <span className="text-[10px] text-text-muted bg-surface-elevated px-1.5 py-0.5 rounded">
           Claimed
         </span>
       )}

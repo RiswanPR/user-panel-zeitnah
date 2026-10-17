@@ -219,13 +219,13 @@ export default function QuickSearchModal({ isOpen, onClose }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: -10 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="relative w-full max-w-xl rounded-2xl bg-gradient-to-b from-[#0F1728] via-[#0B111E] to-[#070B14] border border-white/[0.12] shadow-2xl overflow-hidden z-10 flex flex-col max-h-[80vh]"
+            className="relative w-full max-w-xl rounded-2xl bg-surface-card border border-border shadow-2xl overflow-hidden z-10 flex flex-col max-h-[80vh]"
           >
             {/* Top gradient hairline */}
             <div className="gradient-line-top" />
 
             {/* Search Input Bar */}
-            <div className="relative flex items-center px-4 py-3.5 border-b border-white/[0.08]">
+            <div className="relative flex items-center px-4 py-3.5 border-b border-border">
               <Search className="w-5 h-5 text-brand-mint shrink-0 ml-1 mr-3" />
               <input
                 ref={inputRef}
@@ -237,7 +237,7 @@ export default function QuickSearchModal({ isOpen, onClose }) {
                 }}
                 placeholder="Search courses, jobs, spaces, tools... (e.g. 'BIM', 'Leaderboard')"
                 aria-label="Quick search navigation"
-                className="w-full bg-transparent text-sm text-white placeholder-text-muted focus:outline-none font-medium"
+                className="w-full bg-transparent text-sm text-text-primary placeholder-text-muted focus:outline-none font-medium"
               />
               {query ? (
                 <button
@@ -246,12 +246,12 @@ export default function QuickSearchModal({ isOpen, onClose }) {
                     setQuery("");
                     inputRef.current?.focus();
                   }}
-                  className="p-1 rounded-lg hover:bg-white/[0.06] text-text-muted hover:text-white transition-colors"
+                  className="p-1 rounded-lg hover:bg-surface-elevated text-text-muted hover:text-text-primary transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
               ) : (
-                <kbd className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-mono rounded bg-white/[0.06] text-text-faint border border-white/[0.08]">
+                <kbd className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-mono rounded bg-surface-elevated text-text-faint border border-border">
                   ESC
                 </kbd>
               )}
@@ -262,7 +262,7 @@ export default function QuickSearchModal({ isOpen, onClose }) {
               {filteredItems.length === 0 ? (
                 <div className="py-12 text-center">
                   <Sparkles className="w-8 h-8 text-brand-mint/40 mx-auto mb-2" />
-                  <p className="text-sm font-semibold text-white">No results found for &ldquo;{query}&rdquo;</p>
+                  <p className="text-sm font-semibold text-text-primary">No results found for &ldquo;{query}&rdquo;</p>
                   <p className="text-xs text-text-muted mt-1">
                     Try searching for &ldquo;Courses&rdquo;, &ldquo;Jobs&rdquo;, &ldquo;Network&rdquo;, or &ldquo;Verification&rdquo;
                   </p>
@@ -280,15 +280,15 @@ export default function QuickSearchModal({ isOpen, onClose }) {
                       onMouseEnter={() => setSelectedIndex(idx)}
                       className={`w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-left transition-all cursor-pointer ${
                         isSelected
-                          ? "bg-brand-mint/12 border border-brand-mint/25 text-white"
-                          : "border border-transparent hover:bg-white/[0.04] text-text-secondary"
+                          ? "bg-brand-mint/12 border border-brand-mint/25 text-text-primary font-medium"
+                          : "border border-transparent hover:bg-surface-elevated text-text-secondary"
                       }`}
                     >
                       <div
                         className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
                           isSelected
                             ? "bg-brand-mint/20 text-brand-mint"
-                            : "bg-white/[0.04] text-text-muted"
+                            : "bg-surface-elevated text-text-muted"
                         }`}
                       >
                         <Icon className="w-4 h-4" />
@@ -298,12 +298,12 @@ export default function QuickSearchModal({ isOpen, onClose }) {
                         <div className="flex items-center gap-2">
                           <span
                             className={`text-xs font-semibold truncate ${
-                              isSelected ? "text-white" : "text-white/90"
+                              isSelected ? "text-text-primary" : "text-text-secondary"
                             }`}
                           >
                             {item.title}
                           </span>
-                          <span className="text-[10px] font-mono uppercase tracking-wider text-text-faint px-1.5 py-0.2 rounded bg-white/[0.03]">
+                          <span className="text-[10px] font-mono uppercase tracking-wider text-text-faint px-1.5 py-0.2 rounded bg-surface-elevated">
                             {item.category}
                           </span>
                         </div>
@@ -326,15 +326,15 @@ export default function QuickSearchModal({ isOpen, onClose }) {
             </div>
 
             {/* Footer with Keyboard Hints */}
-            <div className="px-4 py-2.5 bg-white/[0.02] border-t border-white/[0.06] flex items-center justify-between text-[11px] text-text-faint font-mono">
+            <div className="px-4 py-2.5 bg-surface-elevated/40 border-t border-border flex items-center justify-between text-[11px] text-text-faint font-mono">
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1 py-0.5 rounded bg-white/[0.06] text-text-muted border border-white/[0.06]">↑</kbd>
-                  <kbd className="px-1 py-0.5 rounded bg-white/[0.06] text-text-muted border border-white/[0.06]">↓</kbd>
+                  <kbd className="px-1 py-0.5 rounded bg-surface-elevated text-text-muted border border-border">↑</kbd>
+                  <kbd className="px-1 py-0.5 rounded bg-surface-elevated text-text-muted border border-border">↓</kbd>
                   <span className="ml-1">Navigate</span>
                 </span>
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] text-text-muted border border-white/[0.06]">↵</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded bg-surface-elevated text-text-muted border border-border">↵</kbd>
                   <span className="ml-1">Select</span>
                 </span>
               </div>

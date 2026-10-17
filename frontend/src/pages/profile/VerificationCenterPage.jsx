@@ -175,13 +175,13 @@ export default function VerificationCenterPage({ hideProfileNav = false }) {
     }
     if (s === 'EXPIRED') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-mono bg-white/[0.05] text-text-muted border border-white/10">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-mono bg-surface-elevated text-text-muted border border-border">
           <AlertTriangle className="w-3.5 h-3.5" /> Expired
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-mono bg-white/[0.04] text-text-faint border border-white/[0.08]">
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-mono bg-surface-elevated/70 text-text-faint border border-border">
         Unverified
       </span>
     );
@@ -193,7 +193,7 @@ export default function VerificationCenterPage({ hideProfileNav = false }) {
       {!hideProfileNav && <ProfileNav />}
 
       {/* ── 02. TRUST & VERIFICATION HERO ── */}
-      <section className="relative overflow-hidden rounded-3xl bg-[#0A0F18]/95 border border-white/[0.08] p-6 sm:p-10 shadow-[0_12px_40px_rgba(0,0,0,0.4)]">
+      <section className="relative overflow-hidden rounded-3xl bg-surface-card border border-border p-6 sm:p-10 shadow-sm">
         <div
           className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-mint/40 to-transparent pointer-events-none"
           aria-hidden="true"
@@ -204,7 +204,7 @@ export default function VerificationCenterPage({ hideProfileNav = false }) {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-mint/10 border border-brand-mint/20 text-brand-mint text-xs font-semibold uppercase tracking-wider">
               <ShieldCheck className="w-3.5 h-3.5" /> Trust & Verification Center
             </div>
-            <h1 className="text-2xl sm:text-3xl font-heading font-black text-white tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-heading font-black text-text-primary tracking-tight">
               Verification Center
             </h1>
             <p className="text-text-muted text-xs sm:text-sm max-w-2xl leading-relaxed">
@@ -231,10 +231,10 @@ export default function VerificationCenterPage({ hideProfileNav = false }) {
         </div>
 
         {/* Security / Privacy notice */}
-        <div className="mt-6 flex items-start gap-3 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] text-xs text-text-secondary">
+        <div className="mt-6 flex items-start gap-3 p-4 rounded-2xl bg-surface-elevated/50 border border-border text-xs text-text-secondary">
           <Lock className="w-4 h-4 text-brand-mint shrink-0 mt-0.5" />
           <p className="leading-relaxed">
-            <strong className="text-white">Strict Document Security:</strong> Verification documents and licenses are stored in private encrypted storage with authenticated signed tokens. Documents are never exposed on your public profile or shared with recruiters. Only the resulting verification badge is displayed.
+            <strong className="text-text-primary">Strict Document Security:</strong> Verification documents and licenses are stored in private encrypted storage with authenticated signed tokens. Documents are never exposed on your public profile or shared with recruiters. Only the resulting verification badge is displayed.
           </p>
         </div>
       </section>
@@ -259,7 +259,7 @@ export default function VerificationCenterPage({ hideProfileNav = false }) {
               return (
                 <div
                   key={catKey}
-                  className="rounded-2xl border border-white/[0.08] bg-[#0A0F18]/90 p-5 sm:p-6 space-y-4 hover:border-white/20 transition-all shadow-sm"
+                  className="rounded-2xl border border-border bg-surface-card p-5 sm:p-6 space-y-4 hover:border-border-accent transition-all shadow-sm"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
@@ -267,7 +267,7 @@ export default function VerificationCenterPage({ hideProfileNav = false }) {
                         <Icon className="w-5 h-5" />
                       </div>
                       <div>
-                        <h2 className="text-base font-heading font-bold text-white">
+                        <h2 className="text-base font-heading font-bold text-text-primary">
                           {meta.title}
                         </h2>
                         <span className="text-[11px] text-text-muted font-mono uppercase">
@@ -282,7 +282,7 @@ export default function VerificationCenterPage({ hideProfileNav = false }) {
                     {meta.description}
                   </p>
 
-                  <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between">
+                  <div className="pt-2 border-t border-border flex items-center justify-between">
                     {meta.isAdminOnly ? (
                       <span className="text-[11px] text-text-faint italic flex items-center gap-1">
                         <Info className="w-3.5 h-3.5" /> Administrator Controlled
@@ -312,10 +312,10 @@ export default function VerificationCenterPage({ hideProfileNav = false }) {
           </div>
 
           {/* ── 04. VERIFICATION AUDIT TRAIL ── */}
-          <section className="rounded-3xl border border-white/[0.08] bg-[#0A0F18]/90 backdrop-blur-xl p-6 sm:p-8 space-y-6 shadow-sm">
+          <section className="rounded-3xl border border-border bg-surface-card backdrop-blur-xl p-6 sm:p-8 space-y-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-heading font-extrabold text-white tracking-tight">
+                <h2 className="text-lg font-heading font-extrabold text-text-primary tracking-tight">
                   Verification History
                 </h2>
                 <p className="text-xs text-text-muted mt-0.5">
@@ -325,7 +325,7 @@ export default function VerificationCenterPage({ hideProfileNav = false }) {
             </div>
 
             {(!data?.requests || data.requests.length === 0) ? (
-              <div className="py-10 text-center text-text-muted text-xs space-y-2 border border-dashed border-white/[0.08] rounded-2xl">
+              <div className="py-10 text-center text-text-muted text-xs space-y-2 border border-dashed border-border rounded-2xl">
                 <Shield className="w-8 h-8 opacity-30 mx-auto" />
                 <p>No verification requests submitted yet.</p>
               </div>
@@ -334,11 +334,11 @@ export default function VerificationCenterPage({ hideProfileNav = false }) {
                 {data.requests.map((req) => (
                   <div
                     key={req._id}
-                    className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs"
+                    className="p-4 rounded-xl bg-surface-elevated/40 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-white uppercase font-mono">
+                        <span className="font-bold text-text-primary uppercase font-mono">
                           {req.category}
                         </span>
                         <span>•</span>
@@ -379,18 +379,18 @@ export default function VerificationCenterPage({ hideProfileNav = false }) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-lg bg-[#0F1724] border border-white/[0.12] rounded-3xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl space-y-5"
+              className="relative w-full max-w-lg bg-surface-card border border-border rounded-3xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl space-y-5"
             >
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="absolute top-5 right-5 p-2 rounded-full border border-white/10 hover:bg-white/[0.08] text-text-muted hover:text-white transition-colors"
+                className="absolute top-5 right-5 p-2 rounded-full border border-border hover:bg-surface-elevated text-text-muted hover:text-text-primary transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
 
               <div>
-                <h3 className="text-xl font-heading font-bold text-white">
+                <h3 className="text-xl font-heading font-bold text-text-primary">
                   Request Credential Verification
                 </h3>
                 <p className="text-xs text-text-muted mt-1">
@@ -410,12 +410,12 @@ export default function VerificationCenterPage({ hideProfileNav = false }) {
                       const meta = CATEGORY_META[e.target.value];
                       setDocumentType(meta?.allowedTypes?.[0] || '');
                     }}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white text-xs focus:border-brand-mint outline-none transition-colors"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border text-text-primary text-xs focus:border-brand-mint outline-none transition-colors"
                   >
                     {Object.entries(CATEGORY_META)
                       .filter(([, meta]) => !meta.isAdminOnly)
                       .map(([key, meta]) => (
-                        <option key={key} value={key} className="bg-[#0F1724]">
+                        <option key={key} value={key} className="bg-surface text-text-primary">
                           {meta.title}
                         </option>
                       ))}
@@ -431,7 +431,7 @@ export default function VerificationCenterPage({ hideProfileNav = false }) {
                     value={documentType}
                     onChange={(e) => setDocumentType(e.target.value)}
                     placeholder="e.g. Council Registration Certificate"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white text-xs focus:border-brand-mint outline-none transition-colors"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border text-text-primary text-xs focus:border-brand-mint outline-none transition-colors"
                     required
                   />
                 </div>
@@ -446,7 +446,7 @@ export default function VerificationCenterPage({ hideProfileNav = false }) {
                       value={documentNumber}
                       onChange={(e) => setDocumentNumber(e.target.value)}
                       placeholder="Optional"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white text-xs focus:border-brand-mint outline-none transition-colors"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border text-text-primary text-xs focus:border-brand-mint outline-none transition-colors"
                     />
                   </div>
 
@@ -459,7 +459,7 @@ export default function VerificationCenterPage({ hideProfileNav = false }) {
                       value={issuingAuthority}
                       onChange={(e) => setIssuingAuthority(e.target.value)}
                       placeholder="e.g. Council of Engineers"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white text-xs focus:border-brand-mint outline-none transition-colors"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated border border-border text-text-primary text-xs focus:border-brand-mint outline-none transition-colors"
                     />
                   </div>
                 </div>
@@ -473,7 +473,7 @@ export default function VerificationCenterPage({ hideProfileNav = false }) {
                     multiple
                     accept="application/pdf,image/jpeg,image/png,image/webp"
                     onChange={handleFileChange}
-                    className="w-full text-xs text-text-muted file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border file:border-white/10 file:bg-white/[0.05] file:text-white file:text-xs file:font-semibold hover:file:bg-white/[0.1] file:cursor-pointer"
+                    className="w-full text-xs text-text-muted file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border file:border-border file:bg-surface-elevated file:text-text-primary file:text-xs file:font-semibold hover:file:bg-surface file:cursor-pointer"
                     required
                   />
                   {files.length > 0 && (
@@ -483,11 +483,11 @@ export default function VerificationCenterPage({ hideProfileNav = false }) {
                   )}
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/[0.08]">
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-white/10 text-text-muted hover:text-white text-xs font-semibold"
+                    className="px-4 py-2 rounded-xl border border-border text-text-muted hover:text-text-primary text-xs font-semibold"
                   >
                     Cancel
                   </button>

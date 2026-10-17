@@ -136,7 +136,7 @@ export default function PrivacyPolicyPage() {
   };
 
   return (
-    <div className="min-h-screen text-white font-body antialiased relative selection:bg-brand-mint/30 selection:text-white pb-20">
+    <div className="min-h-screen bg-bg-base text-text-primary font-body antialiased relative selection:bg-brand-mint/30 selection:text-brand-mint pb-20">
       
       {/* ── AMBIENT BACKGROUND ATMOSPHERE ── */}
       <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden" aria-hidden="true">
@@ -150,7 +150,7 @@ export default function PrivacyPolicyPage() {
         {/* ══════════════════════════════════════════════════════════
             01. HERO / EDITORIAL HEADER
             ══════════════════════════════════════════════════════════ */}
-        <header className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-b from-[#0E1726]/95 via-[#0A0F1A]/95 to-[#070B14]/95 p-6 sm:p-10 lg:p-12 shadow-2xl">
+        <header className="relative overflow-hidden rounded-3xl border border-border bg-surface-card p-6 sm:p-10 lg:p-12 shadow-2xl">
           {/* Subtle top accent line */}
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-mint/40 to-transparent pointer-events-none" />
 
@@ -173,34 +173,34 @@ export default function PrivacyPolicyPage() {
                 Official Legal Documentation
               </span>
 
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-semibold uppercase tracking-wider text-white/70 bg-white/[0.04] border border-white/10">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-semibold uppercase tracking-wider text-text-secondary bg-surface-elevated border border-border">
                 <Smartphone className="w-3 h-3 text-brand-mint" />
                 Web & iOS Application
               </span>
             </div>
 
             <div className="space-y-2">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-black tracking-tight text-white">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-black tracking-tight text-text-primary">
                 Privacy Policy
               </h1>
               <p className="text-sm sm:text-base text-text-secondary leading-relaxed max-w-2xl">
-                This Privacy Policy describes how <strong className="text-white">{BRAND.name}</strong> (&ldquo;Zeitnah&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) collects, uses, protects, and discloses your personal information when you access or use the Zeitnah Learning Management System (LMS), our official website at <a href="https://zeitnahacademy.com" className="text-brand-mint hover:underline">zeitnahacademy.com</a>, and the Zeitnah mobile application (including our iOS app registered under identifier <code className="font-mono text-xs px-1.5 py-0.5 rounded bg-white/[0.06] text-white">com.zeitnahacademy.app</code>).
+                This Privacy Policy describes how <strong className="text-text-primary">{BRAND.name}</strong> (&ldquo;Zeitnah&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) collects, uses, protects, and discloses your personal information when you access or use the Zeitnah Learning Management System (LMS), our official website at <a href="https://zeitnahacademy.com" className="text-brand-mint hover:underline">zeitnahacademy.com</a>, and the Zeitnah mobile application (including our iOS app registered under identifier <code className="font-mono text-xs px-1.5 py-0.5 rounded bg-surface-elevated border border-border text-text-primary">com.zeitnahacademy.app</code>).
               </p>
             </div>
 
             {/* Publication Metadata & Action Pill Bar */}
-            <div className="pt-4 border-t border-white/[0.08] flex flex-wrap items-center justify-between gap-4 text-xs">
+            <div className="pt-4 border-t border-border flex flex-wrap items-center justify-between gap-4 text-xs">
               <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-text-muted">
                 <div>
                   <span className="font-mono text-[10px] uppercase tracking-wider text-text-faint block">Last Updated</span>
-                  <span className="font-mono text-white font-medium">October 16, 2026</span>
+                  <span className="font-mono text-text-primary font-medium">October 16, 2026</span>
                 </div>
-                <div className="hidden sm:block w-px h-6 bg-white/[0.08]" aria-hidden="true" />
+                <div className="hidden sm:block w-px h-6 bg-border" aria-hidden="true" />
                 <div>
                   <span className="font-mono text-[10px] uppercase tracking-wider text-text-faint block">Effective Date</span>
-                  <span className="font-mono text-white font-medium">October 16, 2026</span>
+                  <span className="font-mono text-text-primary font-medium">October 16, 2026</span>
                 </div>
-                <div className="hidden sm:block w-px h-6 bg-white/[0.08]" aria-hidden="true" />
+                <div className="hidden sm:block w-px h-6 bg-border" aria-hidden="true" />
                 <div>
                   <span className="font-mono text-[10px] uppercase tracking-wider text-text-faint block">Status</span>
                   <span className="text-emerald-400 font-semibold inline-flex items-center gap-1">
@@ -216,7 +216,7 @@ export default function PrivacyPolicyPage() {
                   type="button"
                   onClick={handleCopyLink}
                   aria-label="Copy policy URL"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] text-text-secondary hover:text-white transition-all cursor-pointer text-xs"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-surface-elevated hover:bg-surface-card text-text-secondary hover:text-text-primary transition-all cursor-pointer text-xs"
                 >
                   {copiedLink ? (
                     <>
@@ -235,7 +235,7 @@ export default function PrivacyPolicyPage() {
                   type="button"
                   onClick={handlePrint}
                   aria-label="Print policy document"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] text-text-secondary hover:text-white transition-all cursor-pointer text-xs"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-surface-elevated hover:bg-surface-card text-text-secondary hover:text-text-primary transition-all cursor-pointer text-xs"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Print / Save PDF</span>
@@ -249,41 +249,41 @@ export default function PrivacyPolicyPage() {
             02. CORE AT-A-GLANCE SUMMARY CARDS
             ══════════════════════════════════════════════════════════ */}
         <section aria-label="Privacy Highlights" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="rounded-2xl border border-white/[0.08] bg-[#0A0F1A]/70 p-4.5 space-y-2 backdrop-blur-sm">
+          <div className="rounded-2xl border border-border bg-surface-card p-4.5 space-y-2 backdrop-blur-sm">
             <div className="w-8 h-8 rounded-xl bg-brand-mint/10 border border-brand-mint/20 flex items-center justify-center text-brand-mint">
               <ShieldCheck className="w-4 h-4" />
             </div>
-            <h2 className="text-sm font-heading font-bold text-white">No Ad Tracking</h2>
+            <h2 className="text-sm font-heading font-bold text-text-primary">No Ad Tracking</h2>
             <p className="text-xs text-text-muted leading-relaxed">
               We do not track you across other apps or websites, and we never sell your personal data to data brokers or advertising networks.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-white/[0.08] bg-[#0A0F1A]/70 p-4.5 space-y-2 backdrop-blur-sm">
+          <div className="rounded-2xl border border-border bg-surface-card p-4.5 space-y-2 backdrop-blur-sm">
             <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
               <Trash2 className="w-4 h-4" />
             </div>
-            <h2 className="text-sm font-heading font-bold text-white">Account Deletion</h2>
+            <h2 className="text-sm font-heading font-bold text-text-primary">Account Deletion</h2>
             <p className="text-xs text-text-muted leading-relaxed">
               In accordance with Apple App Store rules, you can initiate complete account and personal data deletion directly via in-app settings or email.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-white/[0.08] bg-[#0A0F1A]/70 p-4.5 space-y-2 backdrop-blur-sm">
+          <div className="rounded-2xl border border-border bg-surface-card p-4.5 space-y-2 backdrop-blur-sm">
             <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
               <Video className="w-4 h-4" />
             </div>
-            <h2 className="text-sm font-heading font-bold text-white">Forensic Watermarking</h2>
+            <h2 className="text-sm font-heading font-bold text-text-primary">Forensic Watermarking</h2>
             <p className="text-xs text-text-muted leading-relaxed">
               Class video streams display a dynamic watermark with your identifier to safeguard instructors&apos; intellectual property against piracy.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-white/[0.08] bg-[#0A0F1A]/70 p-4.5 space-y-2 backdrop-blur-sm">
+          <div className="rounded-2xl border border-border bg-surface-card p-4.5 space-y-2 backdrop-blur-sm">
             <div className="w-8 h-8 rounded-xl bg-brand-yellow/10 border border-brand-yellow/20 flex items-center justify-center text-brand-yellow">
               <Lock className="w-4 h-4" />
             </div>
-            <h2 className="text-sm font-heading font-bold text-white">Granular Visibility</h2>
+            <h2 className="text-sm font-heading font-bold text-text-primary">Granular Visibility</h2>
             <p className="text-xs text-text-muted leading-relaxed">
               You decide who sees your portfolio, resume, certifications, and career preferences (Public, Network Connections, Recruiters, or Private).
             </p>
@@ -299,8 +299,8 @@ export default function PrivacyPolicyPage() {
           
           {/* ── STICKY TABLE OF CONTENTS (Desktop) ── */}
           <aside className="lg:col-span-4 sticky top-24 hidden lg:block">
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0F1A]/90 backdrop-blur-xl p-5 space-y-4 shadow-xl">
-              <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+            <div className="rounded-2xl border border-border bg-surface-card backdrop-blur-xl p-5 space-y-4 shadow-xl">
+              <div className="flex items-center justify-between border-b border-border pb-3">
                 <span className="text-xs font-mono font-bold uppercase tracking-widest text-text-secondary flex items-center gap-2">
                   <FileText className="w-3.5 h-3.5 text-brand-mint" />
                   Contents Table
@@ -319,10 +319,10 @@ export default function PrivacyPolicyPage() {
                       className={`group flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-all duration-150 ${
                         isActive
                           ? "bg-brand-mint/15 text-brand-mint font-semibold border border-brand-mint/25 shadow-sm"
-                          : "text-text-muted hover:text-white hover:bg-white/[0.03]"
+                          : "text-text-muted hover:text-text-primary hover:bg-surface-elevated"
                       }`}
                     >
-                      <Icon className={`w-3.5 h-3.5 shrink-0 transition-colors ${isActive ? "text-brand-mint" : "text-text-faint group-hover:text-white/70"}`} />
+                      <Icon className={`w-3.5 h-3.5 shrink-0 transition-colors ${isActive ? "text-brand-mint" : "text-text-faint group-hover:text-text-secondary"}`} />
                       <span className="truncate">{sec.title}</span>
                       {isActive && <ChevronRight className="w-3.5 h-3.5 ml-auto shrink-0 text-brand-mint" />}
                     </a>
@@ -330,7 +330,7 @@ export default function PrivacyPolicyPage() {
                 })}
               </nav>
 
-              <div className="pt-3 border-t border-white/[0.06] space-y-2">
+              <div className="pt-3 border-t border-border space-y-2">
                 <a
                   href="#contact-information"
                   className="w-full zn-btn-secondary text-xs py-2 px-3 text-center block font-semibold"
@@ -343,7 +343,7 @@ export default function PrivacyPolicyPage() {
 
           {/* ── MOBILE COLLAPSIBLE TABLE OF CONTENTS ── */}
           <div className="lg:hidden col-span-1">
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0F1A]/90 p-4 space-y-3">
+            <div className="rounded-2xl border border-border bg-surface-card p-4 space-y-3">
               <button
                 type="button"
                 onClick={() => setIsTocMobileOpen(!isTocMobileOpen)}
@@ -358,7 +358,7 @@ export default function PrivacyPolicyPage() {
               </button>
 
               {isTocMobileOpen && (
-                <nav className="pt-3 border-t border-white/[0.06] space-y-1 max-h-72 overflow-y-auto">
+                <nav className="pt-3 border-t border-border space-y-1 max-h-72 overflow-y-auto">
                   {SECTIONS.map((sec) => (
                     <a
                       key={sec.id}
@@ -367,7 +367,7 @@ export default function PrivacyPolicyPage() {
                       className={`block px-3 py-2 rounded-lg text-xs ${
                         activeSection === sec.id
                           ? "bg-brand-mint/15 text-brand-mint font-semibold"
-                          : "text-text-muted hover:text-white"
+                          : "text-text-muted hover:text-text-primary"
                       }`}
                     >
                       {sec.title}
@@ -389,7 +389,7 @@ export default function PrivacyPolicyPage() {
                 <Globe2 className="w-4 h-4" />
                 <span>Section 01</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 1. Introduction and Scope
               </h2>
               <div className="space-y-3 text-text-muted">
@@ -425,7 +425,7 @@ export default function PrivacyPolicyPage() {
                 <Database className="w-4 h-4" />
                 <span>Section 02</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 2. Information We Collect
               </h2>
               <p className="text-text-muted">
@@ -435,8 +435,8 @@ export default function PrivacyPolicyPage() {
               <div className="space-y-4 pt-2">
                 
                 {/* 2.1 Account and Registration */}
-                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-2">
-                  <h3 className="text-base font-heading font-bold text-white flex items-center gap-2">
+                <div className="rounded-2xl border border-border bg-surface-card p-5 space-y-2">
+                  <h3 className="text-base font-heading font-bold text-text-primary flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-brand-mint" />
                     2.1 Account and Registration Information
                   </h3>
@@ -452,8 +452,8 @@ export default function PrivacyPolicyPage() {
                 </div>
 
                 {/* 2.2 Profile & Professional Identity */}
-                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-2">
-                  <h3 className="text-base font-heading font-bold text-white flex items-center gap-2">
+                <div className="rounded-2xl border border-border bg-surface-card p-5 space-y-2">
+                  <h3 className="text-base font-heading font-bold text-text-primary flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-brand-mint" />
                     2.2 Profile and Professional Identity
                   </h3>
@@ -471,8 +471,8 @@ export default function PrivacyPolicyPage() {
                 </div>
 
                 {/* 2.3 Verification Documents */}
-                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-2">
-                  <h3 className="text-base font-heading font-bold text-white flex items-center gap-2">
+                <div className="rounded-2xl border border-border bg-surface-card p-5 space-y-2">
+                  <h3 className="text-base font-heading font-bold text-text-primary flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-brand-mint" />
                     2.3 Verification Records and Identity Documents (Verification Center)
                   </h3>
@@ -491,8 +491,8 @@ export default function PrivacyPolicyPage() {
                 </div>
 
                 {/* 2.4 Learning Activity & Progress */}
-                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-2">
-                  <h3 className="text-base font-heading font-bold text-white flex items-center gap-2">
+                <div className="rounded-2xl border border-border bg-surface-card p-5 space-y-2">
+                  <h3 className="text-base font-heading font-bold text-text-primary flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-brand-mint" />
                     2.4 Learning Activity, Video Playback & Attendance
                   </h3>
@@ -508,8 +508,8 @@ export default function PrivacyPolicyPage() {
                 </div>
 
                 {/* 2.5 Uploaded Content & Communications */}
-                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-2">
-                  <h3 className="text-base font-heading font-bold text-white flex items-center gap-2">
+                <div className="rounded-2xl border border-border bg-surface-card p-5 space-y-2">
+                  <h3 className="text-base font-heading font-bold text-text-primary flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-brand-mint" />
                     2.5 Uploaded Content and Community Communications
                   </h3>
@@ -524,8 +524,8 @@ export default function PrivacyPolicyPage() {
                 </div>
 
                 {/* 2.6 Device & Diagnostic Information */}
-                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-2">
-                  <h3 className="text-base font-heading font-bold text-white flex items-center gap-2">
+                <div className="rounded-2xl border border-border bg-surface-card p-5 space-y-2">
+                  <h3 className="text-base font-heading font-bold text-text-primary flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-brand-mint" />
                     2.6 Device, Diagnostic and Telemetry Information
                   </h3>
@@ -542,8 +542,8 @@ export default function PrivacyPolicyPage() {
                 </div>
 
                 {/* 2.7 Transaction Information */}
-                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-2">
-                  <h3 className="text-base font-heading font-bold text-white flex items-center gap-2">
+                <div className="rounded-2xl border border-border bg-surface-card p-5 space-y-2">
+                  <h3 className="text-base font-heading font-bold text-text-primary flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-brand-mint" />
                     2.7 Course Enquiries and Transaction Records
                   </h3>
@@ -566,7 +566,7 @@ export default function PrivacyPolicyPage() {
                 <Eye className="w-4 h-4" />
                 <span>Section 03</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 3. How We Use Information
               </h2>
               <p className="text-text-muted">
@@ -591,7 +591,7 @@ export default function PrivacyPolicyPage() {
                 <FileText className="w-4 h-4" />
                 <span>Section 04</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 4. Cookies, Analytics & Local Storage
               </h2>
               <p className="text-text-muted">
@@ -652,15 +652,15 @@ export default function PrivacyPolicyPage() {
                 <Video className="w-4 h-4" />
                 <span>Section 05</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 5. Educational Content, Video Playback & Watermarking
               </h2>
               <div className="space-y-3 text-text-muted">
                 <p>
                   Zeitnah courses feature specialized engineering and civil design lectures, recorded classes, and instructional materials that represent protected intellectual property.
                 </p>
-                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-3 text-xs">
-                  <h3 className="text-sm font-heading font-bold text-white flex items-center gap-2">
+                <div className="rounded-2xl border border-border bg-surface-card p-5 space-y-3 text-xs">
+                  <h3 className="text-sm font-heading font-bold text-text-primary flex items-center gap-2">
                     <Lock className="w-4 h-4 text-brand-mint" />
                     DRM Video Streaming & Dynamic Forensic Watermark
                   </h3>
@@ -684,7 +684,7 @@ export default function PrivacyPolicyPage() {
                 <Bell className="w-4 h-4" />
                 <span>Section 06</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 6. Notifications and Communications
               </h2>
               <div className="space-y-3 text-text-muted text-xs">
@@ -723,7 +723,7 @@ export default function PrivacyPolicyPage() {
                 <Server className="w-4 h-4" />
                 <span>Section 07</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 7. Service Providers and Third-Party Integrations
               </h2>
               <p className="text-text-muted">
@@ -783,7 +783,7 @@ export default function PrivacyPolicyPage() {
                 <ShieldCheck className="w-4 h-4" />
                 <span>Section 08</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 8. How Information Is Shared
               </h2>
               <div className="space-y-3 text-text-muted text-xs">
@@ -808,7 +808,7 @@ export default function PrivacyPolicyPage() {
                 <Lock className="w-4 h-4" />
                 <span>Section 09</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 9. Data Storage, Security and Retention
               </h2>
               <div className="space-y-3 text-text-muted text-xs">
@@ -855,7 +855,7 @@ export default function PrivacyPolicyPage() {
                 <Trash2 className="w-4 h-4" />
                 <span>Section 10</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 10. User Rights & Account/Data Deletion Requests
               </h2>
               <p className="text-text-muted">
@@ -869,7 +869,7 @@ export default function PrivacyPolicyPage() {
                     <Smartphone className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-base font-heading font-bold text-white">
+                    <h3 className="text-base font-heading font-bold text-text-primary">
                       Apple App Store Guideline 5.1.1(v) — Complete Account Deletion
                     </h3>
                     <p className="text-xs text-text-muted">Direct mechanisms to delete your account and associated personal data</p>
@@ -881,32 +881,32 @@ export default function PrivacyPolicyPage() {
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs pt-1">
-                  <div className="rounded-xl border border-white/10 bg-[#070B14]/70 p-4 space-y-2">
+                  <div className="rounded-xl border border-border bg-surface-elevated p-4 space-y-2">
                     <span className="font-mono text-[10px] uppercase font-bold text-brand-mint tracking-wider block">Option A: In-App Self-Service</span>
                     <ol className="list-decimal pl-4 space-y-1.5 text-text-muted">
                       <li>Log in to your Zeitnah account on the web or in the iOS app;</li>
-                      <li>Navigate to <strong className="text-white">Profile &gt; Account &gt; Security</strong>;</li>
-                      <li>Locate the <strong className="text-white">Account Deletion & Data Request</strong> section;</li>
+                      <li>Navigate to <strong className="text-text-primary">Profile &gt; Account &gt; Security</strong>;</li>
+                      <li>Locate the <strong className="text-text-primary">Account Deletion & Data Request</strong> section;</li>
                       <li>Confirm your request to deactivate and schedule your account data for permanent removal.</li>
                     </ol>
                   </div>
 
-                  <div className="rounded-xl border border-white/10 bg-[#070B14]/70 p-4 space-y-2">
+                  <div className="rounded-xl border border-border bg-surface-elevated p-4 space-y-2">
                     <span className="font-mono text-[10px] uppercase font-bold text-brand-mint tracking-wider block">Option B: Direct Email Request</span>
                     <p className="text-text-muted leading-relaxed">
                       Send an email directly to our dedicated privacy contact at:
                     </p>
-                    <div className="font-mono text-brand-mint bg-white/[0.05] p-2 rounded-lg text-center font-bold">
+                    <div className="font-mono text-brand-mint bg-surface-card border border-border p-2 rounded-lg text-center font-bold">
                       [Placeholder: privacy@zeitnahacademy.com]
                     </div>
                     <p className="text-[11px] text-text-faint">
-                      Please send the request from the email address registered with your account using the subject line: <span className="text-white">&ldquo;Account Deletion Request&rdquo;</span>.
+                      Please send the request from the email address registered with your account using the subject line: <span className="text-text-primary">&ldquo;Account Deletion Request&rdquo;</span>.
                     </p>
                   </div>
                 </div>
 
-                <div className="text-xs text-text-muted pt-2 border-t border-white/[0.08] space-y-1">
-                  <p><strong className="text-white">What Happens When Your Account Is Deleted:</strong></p>
+                <div className="text-xs text-text-muted pt-2 border-t border-border space-y-1">
+                  <p><strong className="text-text-primary">What Happens When Your Account Is Deleted:</strong></p>
                   <ul className="list-disc pl-5 space-y-1 text-text-muted">
                     <li>Your profile, avatar, resume, and credentials are permanently purged or disassociated from your identity.</li>
                     <li>Active authentication tokens and connected device records are revoked immediately.</li>
@@ -918,16 +918,16 @@ export default function PrivacyPolicyPage() {
 
               {/* Other Rights */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3.5 space-y-1">
-                  <span className="font-bold text-white block">Right of Access</span>
+                <div className="rounded-xl border border-border bg-surface-elevated p-3.5 space-y-1">
+                  <span className="font-bold text-text-primary block">Right of Access</span>
                   <p className="text-text-muted">Request a copy of the personal data we maintain about you.</p>
                 </div>
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3.5 space-y-1">
-                  <span className="font-bold text-white block">Right to Rectify</span>
+                <div className="rounded-xl border border-border bg-surface-elevated p-3.5 space-y-1">
+                  <span className="font-bold text-text-primary block">Right to Rectify</span>
                   <p className="text-text-muted">Update inaccurate profile, education, or contact details directly in-app.</p>
                 </div>
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3.5 space-y-1">
-                  <span className="font-bold text-white block">Right to Restrict</span>
+                <div className="rounded-xl border border-border bg-surface-elevated p-3.5 space-y-1">
+                  <span className="font-bold text-text-primary block">Right to Restrict</span>
                   <p className="text-text-muted">Restrict recruiter visibility or revoke optional cookie consent anytime.</p>
                 </div>
               </div>
@@ -941,7 +941,7 @@ export default function PrivacyPolicyPage() {
                 <Shield className="w-4 h-4" />
                 <span>Section 11</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 11. Children&apos;s Privacy and Age-Related Protections
               </h2>
               <div className="space-y-3 text-text-muted text-xs leading-relaxed">
@@ -965,7 +965,7 @@ export default function PrivacyPolicyPage() {
                 <Globe2 className="w-4 h-4" />
                 <span>Section 12</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 12. International Data Transfers
               </h2>
               <div className="space-y-3 text-text-muted text-xs leading-relaxed">
@@ -986,7 +986,7 @@ export default function PrivacyPolicyPage() {
                 <Sparkles className="w-4 h-4" />
                 <span>Section 13</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 13. Changes to this Policy
               </h2>
               <div className="space-y-3 text-text-muted text-xs leading-relaxed">
@@ -1010,7 +1010,7 @@ export default function PrivacyPolicyPage() {
                 <Mail className="w-4 h-4" />
                 <span>Section 14</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary tracking-tight">
                 14. Contact Information and Privacy Requests
               </h2>
               <p className="text-text-muted">
@@ -1018,11 +1018,11 @@ export default function PrivacyPolicyPage() {
               </p>
 
               {/* Contact Card */}
-              <div className="rounded-2xl border border-white/[0.1] bg-gradient-to-b from-[#0E1726] to-[#070B14] p-6 sm:p-8 space-y-6 shadow-xl">
+              <div className="rounded-2xl border border-border bg-surface-card p-6 sm:p-8 space-y-6 shadow-xl">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
                   <div className="space-y-1.5">
                     <span className="font-mono text-[10px] uppercase tracking-wider text-text-faint block">Official Platform</span>
-                    <span className="text-sm font-heading font-bold text-white block">{BRAND.name} / Zeitnah LMS</span>
+                    <span className="text-sm font-heading font-bold text-text-primary block">{BRAND.name} / Zeitnah LMS</span>
                     <a href="https://zeitnahacademy.com" className="text-brand-mint hover:underline font-mono inline-flex items-center gap-1">
                       <span>https://zeitnahacademy.com</span>
                       <ExternalLink className="w-3 h-3" />
@@ -1042,7 +1042,7 @@ export default function PrivacyPolicyPage() {
 
                   <div className="space-y-1.5">
                     <span className="font-mono text-[10px] uppercase tracking-wider text-text-faint block">Registered Legal Entity</span>
-                    <span className="font-bold text-white block">
+                    <span className="font-bold text-text-primary block">
                       ZEITNAH INSTITUTE OF SURVEY LLP
                     </span>
                     <span className="text-[11px] text-text-faint">Business Constitution: Limited Liability Partnership</span>
@@ -1074,7 +1074,7 @@ export default function PrivacyPolicyPage() {
               </div>
 
               {/* Legal Review Disclaimer */}
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-[11px] text-text-faint space-y-1">
+              <div className="rounded-xl border border-border bg-surface-card p-4 text-[11px] text-text-faint space-y-1">
                 <p className="font-semibold text-text-muted">Notice to Platform Owner & Legal Counsel:</p>
                 <p>
                   This Privacy Policy has been compiled based upon verified technological implementations within the Zeitnah LMS codebase (including AWS S3, VdoCipher DRM video playback, Upstash Redis, Resend email dispatch, and Apple APNs notifications). Before formal submission to Apple App Store Connect or promotional distribution, legal counsel should verify applicable local statutory notices (such as the Indian Digital Personal Data Protection Act 2023 or EU GDPR) and populate all bracketed <code className="font-mono text-brand-yellow">[Placeholder: ...]</code> items with exact corporate registration data.

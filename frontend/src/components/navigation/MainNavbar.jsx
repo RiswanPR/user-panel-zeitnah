@@ -218,11 +218,11 @@ export default function MainNavbar({
         aria-label="Main platform navigation"
         className="sticky top-0 z-40 w-full"
         style={{
-          background: "rgba(8, 13, 25, 0.92)",
+          background: "var(--color-surface)",
           backdropFilter: "blur(20px) saturate(1.4)",
           WebkitBackdropFilter: "blur(20px) saturate(1.4)",
-          borderBottom: "1px solid rgba(255,255,255,0.065)",
-          boxShadow: "0 1px 0 rgba(255,255,255,0.04), 0 4px 16px rgba(0,0,0,0.28)",
+          borderBottom: "1px solid var(--color-border)",
+          boxShadow: "0 1px 0 var(--color-border), 0 4px 16px rgba(0,0,0,0.12)",
         }}
       >
         {/* Premium accent hairline — restrained mint gradient */}
@@ -250,9 +250,9 @@ export default function MainNavbar({
                 <div
                   className="relative w-[30px] h-[30px] shrink-0 rounded-lg flex items-center justify-center overflow-hidden transition-all duration-200 group-hover:scale-[1.04]"
                   style={{
-                    background: "rgba(14,23,38,0.9)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+                    background: "var(--color-surface-elevated)",
+                    border: "1px solid var(--color-border)",
+                    boxShadow: "inset 0 1px 0 var(--color-border)",
                   }}
                 >
                   <img
@@ -268,13 +268,13 @@ export default function MainNavbar({
                 {/* Wordmark */}
                 <div className="flex flex-col justify-center leading-none">
                   <span
-                    className="font-mono font-bold tracking-[0.12em] uppercase transition-colors duration-200 text-white group-hover:text-brand-mint"
+                    className="font-mono font-bold tracking-[0.12em] uppercase transition-colors duration-200 text-text-primary group-hover:text-brand-mint"
                     style={{ fontSize: "12px", letterSpacing: "0.12em" }}
                   >
                     Zeitnah
                   </span>
                   <span
-                    className="font-mono tracking-[0.16em] uppercase text-brand-mint/60 group-hover:text-brand-mint/80 transition-colors duration-200"
+                    className="font-mono tracking-[0.16em] uppercase text-brand-mint/80 group-hover:text-brand-mint transition-colors duration-200"
                     style={{ fontSize: "7.5px", marginTop: "2px" }}
                   >
                     See the unseen
@@ -308,8 +308,8 @@ export default function MainNavbar({
                       }
                       className={`relative flex items-center gap-1.5 rounded-lg select-none transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50 group ${
                         active
-                          ? "text-white"
-                          : "text-white/50 hover:text-white/90"
+                          ? "text-text-primary"
+                          : "text-text-muted hover:text-text-primary"
                       }`}
                       style={{
                         padding: "5px 10px",
@@ -331,8 +331,8 @@ export default function MainNavbar({
                       <div
                         className={`absolute inset-0 rounded-lg transition-all duration-150 ${
                           active
-                            ? "bg-white/[0.06]"
-                            : "bg-transparent group-hover:bg-white/[0.04]"
+                            ? "bg-brand-mint/10"
+                            : "bg-transparent group-hover:bg-surface-elevated"
                         }`}
                       />
 
@@ -340,8 +340,8 @@ export default function MainNavbar({
                       <Icon
                         className={`shrink-0 relative z-10 transition-colors duration-150 ${
                           active
-                            ? isCommunity ? "text-brand-mint" : "text-white"
-                            : "text-white/40 group-hover:text-white/70"
+                            ? isCommunity ? "text-brand-mint" : "text-text-primary"
+                            : "text-text-muted group-hover:text-text-secondary"
                         }`}
                         style={{ width: "13px", height: "13px" }}
                         aria-hidden="true"
@@ -375,10 +375,10 @@ export default function MainNavbar({
                     aria-label="More navigation"
                     className={`relative flex items-center gap-1 rounded-lg select-none transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50 group ${
                       isAnyMoreLinkActive
-                        ? "text-white"
+                        ? "text-text-primary"
                         : isMoreOpen
-                        ? "text-white/90"
-                        : "text-white/50 hover:text-white/90"
+                        ? "text-text-primary"
+                        : "text-text-muted hover:text-text-primary"
                     }`}
                     style={{
                       padding: "5px 8px 5px 10px",
@@ -396,8 +396,8 @@ export default function MainNavbar({
                     <div
                       className={`absolute inset-0 rounded-lg transition-all duration-150 ${
                         isAnyMoreLinkActive || isMoreOpen
-                          ? "bg-white/[0.06]"
-                          : "bg-transparent group-hover:bg-white/[0.04]"
+                          ? "bg-brand-mint/10"
+                          : "bg-transparent group-hover:bg-surface-elevated"
                       }`}
                     />
                     <span className="relative z-10 hidden lg:inline">More</span>
@@ -418,11 +418,11 @@ export default function MainNavbar({
                         className="absolute left-0 mt-1.5 z-50 py-1"
                         style={{
                           width: "288px",
-                          background: "rgba(10,16,30,0.98)",
-                          border: "1px solid rgba(255,255,255,0.08)",
+                          background: "var(--color-surface-card)",
+                          border: "1px solid var(--color-border)",
                           borderRadius: "14px",
                           backdropFilter: "blur(24px)",
-                          boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.3)",
+                          boxShadow: "0 20px 60px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.15)",
                         }}
                       >
                         {moreSections.map((section, sIdx) => (
@@ -430,12 +430,12 @@ export default function MainNavbar({
                             {sIdx > 0 && (
                               <div
                                 className="mx-3 my-1"
-                                style={{ height: "1px", background: "rgba(255,255,255,0.05)" }}
+                                style={{ height: "1px", background: "var(--color-border)" }}
                               />
                             )}
                             <div className="px-3 pt-2.5 pb-1">
                               <p
-                                className="font-mono font-bold uppercase tracking-widest text-white/25 select-none"
+                                className="font-mono font-bold uppercase tracking-widest text-text-faint select-none"
                                 style={{ fontSize: "9px" }}
                               >
                                 {section.title}
@@ -453,15 +453,15 @@ export default function MainNavbar({
                                     aria-current={active ? "page" : undefined}
                                     className={`flex items-center gap-3 px-2.5 py-2 rounded-xl transition-all duration-150 group ${
                                       active
-                                        ? "bg-brand-mint/8 text-white"
-                                        : "text-white/55 hover:text-white hover:bg-white/[0.04]"
+                                        ? "bg-brand-mint/12 text-text-primary"
+                                        : "text-text-secondary hover:text-text-primary hover:bg-surface-elevated"
                                     }`}
                                   >
                                     <div
                                       className={`flex items-center justify-center shrink-0 rounded-lg transition-colors duration-150 ${
                                         active
                                           ? "bg-brand-mint/15 text-brand-mint"
-                                          : "bg-white/[0.04] text-white/35 group-hover:text-white/70 group-hover:bg-white/[0.06]"
+                                          : "bg-surface-elevated text-text-muted group-hover:text-text-primary group-hover:bg-surface-elevated"
                                       }`}
                                       style={{ width: "28px", height: "28px" }}
                                     >
@@ -475,7 +475,7 @@ export default function MainNavbar({
                                         {item.label}
                                       </p>
                                       <p
-                                        className="truncate text-white/35 leading-tight mt-0.5"
+                                        className="truncate text-text-muted leading-tight mt-0.5"
                                         style={{ fontSize: "10px" }}
                                       >
                                         {item.desc}
@@ -501,7 +501,7 @@ export default function MainNavbar({
               {/* Subtle separator between nav and utilities on desktop */}
               <div
                 className="hidden md:block self-stretch my-3.5 w-px mr-1.5"
-                style={{ background: "rgba(255,255,255,0.06)" }}
+                style={{ background: "var(--color-border)" }}
                 aria-hidden="true"
               />
 
@@ -510,37 +510,15 @@ export default function MainNavbar({
                 type="button"
                 onClick={() => setIsSearchOpen(true)}
                 aria-label="Search platform (Cmd+K)"
-                className="flex items-center gap-2 rounded-lg transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50 group"
+                className="flex items-center gap-2 rounded-lg transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50 group bg-surface-elevated/50 hover:bg-surface-elevated border border-border text-text-muted hover:text-text-secondary"
                 style={{
                   padding: "5px 10px",
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.07)",
-                  color: "rgba(255,255,255,0.45)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(255,255,255,0.055)";
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
-                  e.currentTarget.style.color = "rgba(255,255,255,0.75)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)";
-                  e.currentTarget.style.color = "rgba(255,255,255,0.45)";
                 }}
               >
                 <Search style={{ width: "13px", height: "13px", color: "rgba(159,213,178,0.7)" }} aria-hidden="true" />
                 <span className="hidden xl:inline" style={{ fontSize: "11.5px" }}>Search</span>
                 <kbd
-                  className="hidden sm:flex items-center font-mono"
-                  style={{
-                    padding: "1px 5px",
-                    fontSize: "9.5px",
-                    borderRadius: "4px",
-                    background: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    color: "rgba(255,255,255,0.3)",
-                    lineHeight: "1.5",
-                  }}
+                  className="hidden sm:flex items-center font-mono px-1.5 py-0.5 rounded text-[9.5px] bg-surface-elevated border border-border text-text-faint leading-normal"
                 >
                   ⌘K
                 </kbd>
@@ -557,24 +535,14 @@ export default function MainNavbar({
                       : "Messages"
                   }
                   title="Messages"
-                  className="relative flex items-center justify-center rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50 group"
+                  className={`relative flex items-center justify-center rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50 group ${
+                    messagesActive
+                      ? "text-text-primary bg-surface-elevated"
+                      : "text-text-muted hover:text-text-primary hover:bg-surface-elevated"
+                  }`}
                   style={{
                     width: "34px",
                     height: "34px",
-                    color: messagesActive ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.45)",
-                    background: messagesActive ? "rgba(255,255,255,0.07)" : "transparent",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!messagesActive) {
-                      e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-                      e.currentTarget.style.color = "rgba(255,255,255,0.8)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!messagesActive) {
-                      e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.color = "rgba(255,255,255,0.45)";
-                    }
                   }}
                 >
                   <MessageSquare style={{ width: "16px", height: "16px" }} aria-hidden="true" />
@@ -607,27 +575,13 @@ export default function MainNavbar({
                       : "Global Leaderboard"
                   }
                   title="Leaderboard"
-                  className="flex items-center gap-1.5 rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+                  className={`flex items-center gap-1.5 rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 ${
+                    leaderboardActive
+                      ? "bg-amber-400/10 border border-amber-400/30"
+                      : "bg-surface-elevated/40 hover:bg-amber-400/5 border border-border hover:border-amber-400/25"
+                  }`}
                   style={{
                     padding: "4px 9px",
-                    background: leaderboardActive
-                      ? "rgba(251,191,36,0.1)"
-                      : "rgba(255,255,255,0.03)",
-                    border: leaderboardActive
-                      ? "1px solid rgba(251,191,36,0.25)"
-                      : "1px solid rgba(255,255,255,0.07)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(251,191,36,0.22)";
-                    e.currentTarget.style.background = "rgba(251,191,36,0.07)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = leaderboardActive
-                      ? "rgba(251,191,36,0.25)"
-                      : "rgba(255,255,255,0.07)";
-                    e.currentTarget.style.background = leaderboardActive
-                      ? "rgba(251,191,36,0.1)"
-                      : "rgba(255,255,255,0.03)";
                   }}
                 >
                   <Trophy
@@ -636,15 +590,15 @@ export default function MainNavbar({
                   />
                   {position?.rank ? (
                     <span
-                      className="font-mono font-bold tabular-nums"
-                      style={{ fontSize: "11px", color: "rgba(255,255,255,0.85)" }}
+                      className="font-mono font-bold tabular-nums text-text-primary"
+                      style={{ fontSize: "11px" }}
                     >
                       #{position.rank}
                     </span>
                   ) : (
                     <span
-                      className="hidden lg:inline font-mono"
-                      style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)" }}
+                      className="hidden lg:inline font-mono text-text-faint"
+                      style={{ fontSize: "11px" }}
                     >
                       Rank
                     </span>
@@ -665,10 +619,8 @@ export default function MainNavbar({
                     aria-expanded={isProfileOpen}
                     aria-haspopup="true"
                     aria-label="Open profile menu"
-                    className="flex items-center gap-2 rounded-lg transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50 group"
+                    className="flex items-center gap-2 rounded-lg transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-mint/50 group hover:bg-surface-elevated"
                     style={{ padding: "3px 6px 3px 3px" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                   >
                     {/* Avatar */}
                     {isBusinessMode && business ? (
@@ -700,15 +652,15 @@ export default function MainNavbar({
 
                     {/* Name — only at wide screens */}
                     <span
-                      className="hidden xl:block max-w-[80px] truncate text-left transition-colors duration-150 text-white/70 group-hover:text-white/90"
+                      className="hidden xl:block max-w-[80px] truncate text-left transition-colors duration-150 text-text-secondary group-hover:text-text-primary"
                       style={{ fontSize: "12px", fontWeight: 500 }}
                     >
                       {isBusinessMode && business ? business.name : (currentUserName || "Account")}
                     </span>
 
                     <ChevronDown
-                      className={`hidden xl:block transition-transform duration-200 ${isProfileOpen ? "rotate-180" : ""}`}
-                      style={{ width: "11px", height: "11px", color: "rgba(255,255,255,0.3)" }}
+                      className={`hidden xl:block transition-transform duration-200 ${isProfileOpen ? "rotate-180" : ""} text-text-faint`}
+                      style={{ width: "11px", height: "11px" }}
                       aria-hidden="true"
                     />
                   </button>
@@ -721,18 +673,18 @@ export default function MainNavbar({
                         className="absolute right-0 mt-1.5 z-50"
                         style={{
                           width: "240px",
-                          background: "rgba(10,16,30,0.98)",
-                          border: "1px solid rgba(255,255,255,0.08)",
+                          background: "var(--color-surface-card)",
+                          border: "1px solid var(--color-border)",
                           borderRadius: "14px",
                           backdropFilter: "blur(24px)",
-                          boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.3)",
+                          boxShadow: "0 20px 60px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.15)",
                           padding: "8px",
                         }}
                       >
                         {/* Identity header */}
                         <div
                           className="px-2.5 py-2.5 mb-1"
-                          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+                          style={{ borderBottom: "1px solid var(--color-border)" }}
                         >
                           <div className="flex items-center gap-2.5 mb-2">
                             {isBusinessMode && business ? (
@@ -755,13 +707,13 @@ export default function MainNavbar({
                             )}
                             <div className="min-w-0 flex-1">
                               <p
-                                className="font-semibold text-white truncate leading-tight"
+                                className="font-semibold text-text-primary truncate leading-tight"
                                 style={{ fontSize: "12.5px" }}
                               >
                                 {isBusinessMode && business ? business.name : (currentUserName || "Professional")}
                               </p>
                               <p
-                                className="font-mono text-white/40 truncate leading-tight mt-0.5"
+                                className="font-mono text-text-muted truncate leading-tight mt-0.5"
                                 style={{ fontSize: "10px" }}
                               >
                                 {isBusinessMode && business
@@ -778,16 +730,16 @@ export default function MainNavbar({
                                 padding: "2px 7px",
                                 fontSize: "8.5px",
                                 borderRadius: "5px",
-                                background: isBusinessMode ? "rgba(159,213,178,0.12)" : "rgba(255,255,255,0.05)",
-                                border: isBusinessMode ? "1px solid rgba(159,213,178,0.25)" : "1px solid rgba(255,255,255,0.08)",
-                                color: isBusinessMode ? "#9FD5B2" : "rgba(255,255,255,0.4)",
+                                background: isBusinessMode ? "rgba(159,213,178,0.12)" : "var(--color-surface-elevated)",
+                                border: isBusinessMode ? "1px solid rgba(159,213,178,0.25)" : "1px solid var(--color-border)",
+                                color: isBusinessMode ? "var(--color-accent)" : "var(--color-text-muted)",
                               }}
                             >
                               {isBusinessMode ? "Business Profile" : "Personal Profile"}
                             </div>
                             {!isBusinessMode && (
                               <span
-                                className="font-mono text-[8px] text-white/30 uppercase tracking-wider"
+                                className="font-mono text-[8px] text-text-faint uppercase tracking-wider"
                               >
                                 {normalizedRole}
                               </span>
@@ -799,7 +751,7 @@ export default function MainNavbar({
                         {hasBusinessProfile && (
                           <div
                             className="px-1 py-1 mb-1"
-                            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+                            style={{ borderBottom: "1px solid var(--color-border)" }}
                           >
                             <ProfileSwitcher user={user} />
                           </div>
@@ -825,7 +777,7 @@ export default function MainNavbar({
                               key={to}
                               to={to}
                               onClick={() => setIsProfileOpen(false)}
-                              className="flex items-center gap-2.5 rounded-xl transition-all duration-150 text-white/55 hover:text-white hover:bg-white/[0.04]"
+                              className="flex items-center gap-2.5 rounded-xl transition-all duration-150 text-text-secondary hover:text-text-primary hover:bg-surface-elevated"
                               style={{ padding: "7px 10px" }}
                             >
                               <Icon style={{ width: "13px", height: "13px" }} aria-hidden="true" />
@@ -838,7 +790,7 @@ export default function MainNavbar({
                               setIsProfileOpen(false);
                               startTour({ reset: true });
                             }}
-                            className="w-full flex items-center gap-2.5 rounded-xl transition-all duration-150 text-white/55 hover:text-white hover:bg-white/[0.04] text-left cursor-pointer"
+                            className="w-full flex items-center gap-2.5 rounded-xl transition-all duration-150 text-text-secondary hover:text-text-primary hover:bg-surface-elevated text-left cursor-pointer"
                             style={{ padding: "7px 10px" }}
                           >
                             <Compass style={{ width: "13px", height: "13px", color: "rgba(159,213,178,0.85)" }} aria-hidden="true" />
@@ -847,7 +799,7 @@ export default function MainNavbar({
                         </div>
 
                         {/* Sign out */}
-                        <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "6px" }}>
+                        <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: "6px" }}>
                           <button
                             type="button"
                             onClick={() => {

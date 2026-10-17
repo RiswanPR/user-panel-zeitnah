@@ -588,12 +588,12 @@ export default function CreateStoryModal({ isOpen, onClose, publishingContext: p
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 16 }}
           transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-          className="relative w-full max-w-md bg-[#0B111E] border border-white/[0.1] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[96vh]"
+          className="relative w-full max-w-md bg-surface-card border border-border rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[96vh]"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-3.5 sm:p-4 border-b border-white/[0.06] bg-[#0B111E]/80 backdrop-blur-md z-30">
+          <div className="flex items-center justify-between p-3.5 sm:p-4 border-b border-border bg-surface-card/90 backdrop-blur-md z-30">
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-bold text-text-primary tracking-tight flex items-center gap-2">
                 <span>Create Story</span>
                 {isPreviewMode && (
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 uppercase font-semibold">
@@ -625,7 +625,7 @@ export default function CreateStoryModal({ isOpen, onClose, publishingContext: p
               type="button"
               onClick={handleClose}
               disabled={isBusy}
-              className="min-w-[44px] min-h-[44px] flex items-center justify-center bg-white/[0.05] hover:bg-white/[0.1] disabled:opacity-30 rounded-full transition-colors text-text-muted hover:text-white cursor-pointer"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center bg-surface-elevated hover:bg-surface-card disabled:opacity-30 rounded-full transition-colors text-text-muted hover:text-text-primary border border-border cursor-pointer"
               aria-label="Close create story modal"
             >
               <X className="w-5 h-5" />
@@ -641,7 +641,7 @@ export default function CreateStoryModal({ isOpen, onClose, publishingContext: p
                 className={`flex-1 min-h-[44px] rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   tab === 'media'
                     ? 'bg-brand-mint text-bg-base shadow-sm'
-                    : 'bg-white/[0.04] text-text-muted hover:text-white hover:bg-white/[0.08]'
+                    : 'bg-surface-elevated text-text-muted hover:text-text-primary hover:bg-surface-card border border-border'
                 }`}
               >
                 <ImageIcon className="w-4 h-4" /> Photo / Video
@@ -652,7 +652,7 @@ export default function CreateStoryModal({ isOpen, onClose, publishingContext: p
                 className={`flex-1 min-h-[44px] rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   tab === 'text'
                     ? 'bg-brand-mint text-bg-base shadow-sm'
-                    : 'bg-white/[0.04] text-text-muted hover:text-white hover:bg-white/[0.08]'
+                    : 'bg-surface-elevated text-text-muted hover:text-text-primary hover:bg-surface-card border border-border'
                 }`}
               >
                 <Type className="w-4 h-4" /> Text Story
@@ -738,7 +738,7 @@ export default function CreateStoryModal({ isOpen, onClose, publishingContext: p
                   // Large Premium Dropzone with Native Camera/Gallery support
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="aspect-[9/16] w-full max-h-[76vh] rounded-2xl border-2 border-dashed border-white/[0.12] hover:border-brand-mint/60 bg-white/[0.02] hover:bg-white/[0.04] transition-all flex flex-col items-center justify-center p-6 text-center cursor-pointer group"
+                    className="aspect-[9/16] w-full max-h-[76vh] rounded-2xl border-2 border-dashed border-border hover:border-brand-mint/60 bg-surface-elevated/40 hover:bg-surface-elevated/70 transition-all flex flex-col items-center justify-center p-6 text-center cursor-pointer group"
                     role="button"
                     tabIndex={0}
                     aria-label="Upload photo or video for story"
@@ -749,16 +749,16 @@ export default function CreateStoryModal({ isOpen, onClose, publishingContext: p
                       }
                     }}
                   >
-                    <div className="w-14 h-14 rounded-full bg-white/[0.05] group-hover:bg-brand-mint/10 flex items-center justify-center text-text-muted group-hover:text-brand-mint transition-colors mb-3">
+                    <div className="w-14 h-14 rounded-full bg-surface-card border border-border group-hover:bg-brand-mint/10 flex items-center justify-center text-text-muted group-hover:text-brand-mint transition-colors mb-3">
                       <UploadCloud className="w-7 h-7" />
                     </div>
-                    <h3 className="text-sm font-bold text-white mb-1">
+                    <h3 className="text-sm font-bold text-text-primary mb-1">
                       Choose photo or video
                     </h3>
                     <p className="text-xs text-text-muted max-w-[240px] leading-relaxed">
                       Photos up to 8 MB, vertical videos up to 1 GB (max 90s)
                     </p>
-                    <span className="mt-4 min-h-[44px] px-4 py-2 rounded-xl bg-white/[0.06] group-hover:bg-brand-mint group-hover:text-[#0B111E] text-xs font-semibold text-white transition-all flex items-center justify-center">
+                    <span className="mt-4 min-h-[44px] px-4 py-2 rounded-xl bg-surface-elevated border border-border group-hover:bg-brand-mint group-hover:text-bg-base text-xs font-semibold text-text-primary transition-all flex items-center justify-center">
                       Browse files
                     </span>
                   </div>
@@ -810,7 +810,7 @@ export default function CreateStoryModal({ isOpen, onClose, publishingContext: p
                           onClick={() => setBgColor(bg)}
                           className={`min-w-[44px] min-h-[44px] rounded-full ${bg} transition-all cursor-pointer ${
                             bgColor === bg
-                              ? 'ring-2 ring-white ring-offset-2 ring-offset-[#0B111E] scale-110'
+                              ? 'ring-2 ring-white ring-offset-2 ring-offset-surface-card scale-110'
                               : 'opacity-70 hover:opacity-100 hover:scale-105'
                           }`}
                           aria-label={`Select background ${idx + 1}`}
@@ -824,9 +824,9 @@ export default function CreateStoryModal({ isOpen, onClose, publishingContext: p
 
             {/* Progress / Status Display during upload & publish */}
             {isBusy && (
-              <div className="w-full p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-2">
+              <div className="w-full p-3.5 rounded-2xl bg-surface-elevated border border-border space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-white flex items-center gap-1.5">
+                  <span className="font-medium text-text-primary flex items-center gap-1.5">
                     <RefreshCw className="w-3.5 h-3.5 animate-spin text-brand-mint" />
                     {statusMessage}
                   </span>
@@ -837,7 +837,7 @@ export default function CreateStoryModal({ isOpen, onClose, publishingContext: p
                   )}
                 </div>
 
-                <div className="h-2 w-full bg-white/[0.08] rounded-full overflow-hidden p-0.5 shadow-inner">
+                <div className="h-2 w-full bg-surface-card rounded-full overflow-hidden p-0.5 shadow-inner">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-500 shadow-[0_0_12px_rgba(56,189,248,0.5)] transition-all duration-200 ease-out"
                     style={{
@@ -896,12 +896,12 @@ export default function CreateStoryModal({ isOpen, onClose, publishingContext: p
           )}
 
           {/* Action Footer */}
-          <div className="p-3.5 sm:p-4 border-t border-white/[0.06] bg-[#0E1726]/60 flex items-center gap-2">
+          <div className="p-3.5 sm:p-4 border-t border-border bg-surface-card/90 flex items-center gap-2">
             <button
               type="button"
               onClick={handleClose}
               disabled={isBusy}
-              className="flex-1 min-h-[44px] rounded-xl bg-white/[0.05] hover:bg-white/[0.1] disabled:opacity-40 text-text-muted hover:text-white text-xs sm:text-sm font-semibold transition-all cursor-pointer"
+              className="flex-1 min-h-[44px] rounded-xl bg-surface-elevated hover:bg-surface-card disabled:opacity-40 text-text-muted hover:text-text-primary border border-border text-xs sm:text-sm font-semibold transition-all cursor-pointer"
             >
               Cancel
             </button>
@@ -912,8 +912,8 @@ export default function CreateStoryModal({ isOpen, onClose, publishingContext: p
               disabled={isBusy || (tab === 'media' && !file && !uploadedUrl) || (tab === 'text' && !text.trim())}
               className={`flex-1 min-h-[44px] rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md ${
                 state === 'publishing'
-                  ? 'community-shimmer-btn text-[#070B14]'
-                  : 'bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 text-[#070B14] hover:shadow-[0_0_20px_rgba(52,211,153,0.4)] active:scale-95'
+                  ? 'community-shimmer-btn text-bg-base'
+                  : 'bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 text-bg-base hover:shadow-[0_0_20px_rgba(52,211,153,0.4)] active:scale-95'
               } disabled:opacity-40 disabled:cursor-not-allowed`}
             >
               {state === 'uploading' ? (

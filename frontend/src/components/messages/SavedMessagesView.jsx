@@ -59,19 +59,19 @@ export default function SavedMessagesView({ onSelectMessage, onClose }) {
 
   return (
     <div
-      className="flex flex-col h-full bg-[#080C14] border-r border-white/[0.08]"
+      className="flex flex-col h-full bg-surface-card border-r border-border"
       role="region"
       aria-label="Saved messages"
     >
       {/* Header */}
-      <div className="p-4 border-b border-white/[0.08] bg-[#0C121E]/95 backdrop-blur-md space-y-3 shrink-0">
+      <div className="p-4 border-b border-border bg-surface-card/95 backdrop-blur-md space-y-3 shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-brand-gold/15 text-brand-gold flex items-center justify-center border border-brand-gold/30">
               <Bookmark className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-base font-heading font-black text-white tracking-tight">
+              <h2 className="text-base font-heading font-black text-text-primary tracking-tight">
                 Saved Messages
               </h2>
               <p className="text-[11px] text-text-muted">
@@ -84,7 +84,7 @@ export default function SavedMessagesView({ onSelectMessage, onClose }) {
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors"
+              className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors"
               aria-label="Close saved messages"
             >
               <X className="w-4 h-4" />
@@ -100,13 +100,13 @@ export default function SavedMessagesView({ onSelectMessage, onClose }) {
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
             placeholder="Filter saved messages..."
-            className="w-full pl-8 pr-8 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.08] focus:border-brand-gold/40 text-xs text-white placeholder-text-muted focus:outline-none transition-colors"
+            className="w-full pl-8 pr-8 py-1.5 rounded-xl bg-surface-elevated/50 border border-border focus:border-brand-gold/50 text-xs text-text-primary placeholder:text-text-muted focus:outline-none transition-colors"
           />
           {searchFilter && (
             <button
               type="button"
               onClick={() => setSearchFilter('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-white"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -121,26 +121,26 @@ export default function SavedMessagesView({ onSelectMessage, onClose }) {
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] animate-pulse space-y-2.5"
+                className="p-4 rounded-2xl bg-surface-elevated/30 border border-border animate-pulse space-y-2.5"
               >
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-white/[0.08]" />
+                  <div className="w-8 h-8 rounded-full bg-surface-elevated" />
                   <div className="space-y-1 flex-1">
-                    <div className="h-3 w-24 bg-white/[0.08] rounded" />
-                    <div className="h-2 w-16 bg-white/[0.04] rounded" />
+                    <div className="h-3 w-24 bg-surface-elevated rounded" />
+                    <div className="h-2 w-16 bg-surface-elevated/60 rounded" />
                   </div>
                 </div>
-                <div className="h-4 w-full bg-white/[0.06] rounded" />
+                <div className="h-4 w-full bg-surface-elevated/60 rounded" />
               </div>
             ))}
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="text-center py-16 px-6 space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-text-muted mx-auto">
+            <div className="w-14 h-14 rounded-2xl bg-surface-elevated/20 border border-border flex items-center justify-center text-text-muted mx-auto">
               <Bookmark className="w-6 h-6 opacity-40" />
             </div>
             <div className="space-y-1 max-w-xs mx-auto">
-              <h4 className="text-sm font-bold text-white">No saved messages</h4>
+              <h4 className="text-sm font-bold text-text-primary">No saved messages</h4>
               <p className="text-xs text-text-muted leading-relaxed">
                 {searchFilter
                   ? 'No saved messages match your filter.'
@@ -160,7 +160,7 @@ export default function SavedMessagesView({ onSelectMessage, onClose }) {
             return (
               <div
                 key={item.id}
-                className="group relative p-3.5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-brand-gold/30 transition-all space-y-2.5 text-left cursor-pointer"
+                className="group relative p-3.5 rounded-2xl bg-surface-elevated/30 hover:bg-surface-elevated/50 border border-border hover:border-brand-gold/40 transition-all space-y-2.5 text-left cursor-pointer"
                 onClick={() => onSelectMessage?.(item.conversationId, item.messageId)}
                 role="button"
                 tabIndex={0}
@@ -174,7 +174,7 @@ export default function SavedMessagesView({ onSelectMessage, onClose }) {
                 {/* Header: Sender & Conversation Context */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-7 h-7 rounded-full bg-white/[0.08] border border-white/[0.1] overflow-hidden flex items-center justify-center text-[10px] font-bold text-brand-mint shrink-0">
+                    <div className="w-7 h-7 rounded-full bg-surface-elevated border border-border overflow-hidden flex items-center justify-center text-[10px] font-bold text-brand-mint shrink-0">
                       {avatarUrl ? (
                         <img
                           src={getUploadUrl(avatarUrl)}
@@ -187,7 +187,7 @@ export default function SavedMessagesView({ onSelectMessage, onClose }) {
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5 truncate">
-                        <span className="text-xs font-bold text-white truncate">
+                        <span className="text-xs font-bold text-text-primary truncate">
                           {senderName}
                         </span>
                         {sender?.primaryRole && (
@@ -209,7 +209,7 @@ export default function SavedMessagesView({ onSelectMessage, onClose }) {
                         e.stopPropagation();
                         unsaveMutation.mutate(item.messageId);
                       }}
-                      className="p-1 rounded-lg text-text-muted hover:text-red-400 hover:bg-white/[0.06] transition-colors"
+                      className="p-1 rounded-lg text-text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
                       title="Remove from saved"
                       aria-label="Remove from saved messages"
                     >
@@ -222,7 +222,7 @@ export default function SavedMessagesView({ onSelectMessage, onClose }) {
                 </div>
 
                 {/* Message Body Snippet */}
-                <p className="text-xs text-text-secondary leading-relaxed line-clamp-3 bg-white/[0.01] p-2 rounded-xl border border-white/[0.03]">
+                <p className="text-xs text-text-secondary leading-relaxed line-clamp-3 bg-surface-card/60 p-2 rounded-xl border border-border/50">
                   {item.message?.body || (hasAttachments ? 'Shared an attachment' : '')}
                 </p>
 

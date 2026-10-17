@@ -11,7 +11,7 @@ export default function ProfileAbout({ bio }) {
   const hasBio = Boolean(bio && bio.trim().length > 0);
 
   return (
-    <div className="rounded-2xl border border-white/[0.08] bg-bg-surface/90 p-5 sm:p-6 shadow-lg backdrop-blur-xl">
+    <div className="rounded-2xl border border-border bg-surface-card p-5 sm:p-6 shadow-lg backdrop-blur-xl">
       <h2 className="text-xs font-mono font-bold uppercase tracking-widest text-text-muted flex items-center gap-2 mb-3">
         <User className="h-3.5 w-3.5 text-brand-mint" />
         <span>About</span>

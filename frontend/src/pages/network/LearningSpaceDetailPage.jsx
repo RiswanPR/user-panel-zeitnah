@@ -99,8 +99,8 @@ export default function LearningSpaceDetailPage() {
   if (spaceQuery.isLoading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-12 space-y-6">
-        <div className="h-48 rounded-3xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
-        <div className="h-64 rounded-3xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+        <div className="h-48 rounded-3xl bg-surface-card/60 border border-border animate-pulse" />
+        <div className="h-64 rounded-3xl bg-surface-card/60 border border-border animate-pulse" />
       </div>
     );
   }
@@ -108,11 +108,11 @@ export default function LearningSpaceDetailPage() {
   if (spaceQuery.isError) {
     const status = spaceQuery.error?.response?.status;
     return (
-      <div className="max-w-md mx-auto my-20 p-8 rounded-3xl bg-[#111115] border border-white/[0.08] text-center shadow-2xl">
+      <div className="max-w-md mx-auto my-20 p-8 rounded-3xl bg-surface-card border border-border text-center shadow-2xl">
         <div className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
           {status === 403 ? <Lock className="w-6 h-6" /> : <ShieldAlert className="w-6 h-6" />}
         </div>
-        <h2 className="font-heading font-bold text-xl text-white">
+        <h2 className="font-heading font-bold text-xl text-text-primary">
           {status === 403 ? 'Access Restricted' : 'Space Not Found'}
         </h2>
         <p className="text-xs text-text-muted mt-2 leading-relaxed">
@@ -122,7 +122,7 @@ export default function LearningSpaceDetailPage() {
         </p>
         <Link
           to="/network?tab=spaces"
-          className="inline-flex items-center gap-1.5 mt-6 px-5 py-2.5 rounded-xl bg-brand-mint text-black font-semibold text-xs transition-colors"
+          className="inline-flex items-center gap-1.5 mt-6 px-5 py-2.5 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Return to Spaces</span>
@@ -150,7 +150,7 @@ export default function LearningSpaceDetailPage() {
       />
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] mb-8 overflow-x-auto">
+      <div className="flex items-center gap-1 p-1 rounded-2xl bg-surface-elevated/40 border border-border mb-8 overflow-x-auto">
         {[
           { id: 'discussions', label: 'Discussions', icon: MessageSquare },
           { id: 'announcements', label: 'Announcements', icon: Megaphone },
@@ -166,8 +166,8 @@ export default function LearningSpaceDetailPage() {
               onClick={() => setTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 active
-                  ? 'bg-brand-mint text-black shadow-lg shadow-brand-mint/15 font-bold'
-                  : 'text-text-muted hover:text-white hover:bg-white/[0.04]'
+                  ? 'bg-brand-mint text-brand-navy shadow-lg shadow-brand-mint/15 font-bold'
+                  : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated'
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
@@ -220,17 +220,17 @@ export default function LearningSpaceDetailPage() {
       {currentTab === 'overview' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            <div className="p-6 rounded-3xl bg-[#111115]/90 border border-white/[0.06]">
-              <h3 className="font-heading font-bold text-base text-white mb-2">About this Learning Space</h3>
+            <div className="p-6 rounded-3xl bg-surface-card border border-border">
+              <h3 className="font-heading font-bold text-base text-text-primary mb-2">About this Learning Space</h3>
               <p className="text-xs sm:text-sm text-text-secondary leading-relaxed whitespace-pre-line">
                 {space.description || 'Welcome to this cohort learning space. Here you can collaborate with peers, ask academic questions, access curated materials, and stay updated with faculty announcements.'}
               </p>
             </div>
 
             {/* Quick Discussions Snapshot */}
-            <div className="p-6 rounded-3xl bg-[#111115]/90 border border-white/[0.06]">
+            <div className="p-6 rounded-3xl bg-surface-card border border-border">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-heading font-bold text-base text-white">Recent Discussions</h3>
+                <h3 className="font-heading font-bold text-base text-text-primary">Recent Discussions</h3>
                 <button
                   onClick={() => setTab('discussions')}
                   className="text-xs font-semibold text-brand-mint hover:underline"
@@ -249,8 +249,8 @@ export default function LearningSpaceDetailPage() {
 
           <div className="space-y-6">
             {/* Guidelines / Rules */}
-            <div className="p-6 rounded-3xl bg-[#111115]/90 border border-white/[0.06]">
-              <h3 className="font-heading font-bold text-base text-white mb-3">Conduct Guidelines</h3>
+            <div className="p-6 rounded-3xl bg-surface-card border border-border">
+              <h3 className="font-heading font-bold text-base text-text-primary mb-3">Conduct Guidelines</h3>
               <ul className="space-y-2 text-xs text-text-muted">
                 <li className="flex items-start gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-brand-mint mt-1 shrink-0" />

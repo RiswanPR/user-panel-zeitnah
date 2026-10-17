@@ -94,12 +94,12 @@ export function ToastProvider({ children }) {
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: 40, scale: 0.95 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                className={`rounded-xl border backdrop-blur-lg p-4 shadow-xl flex items-start gap-3 ${toastStyles[t.type]}`}
+                className={`rounded-xl border backdrop-blur-lg p-4 shadow-xl flex items-start gap-3 bg-surface-elevated/95 ${toastStyles[t.type]}`}
               >
                 <Icon className={`w-5 h-5 shrink-0 mt-0.5 ${iconColors[t.type]}`} />
                 <div className="flex-1 min-w-0">
                   {t.title && (
-                    <p className="text-sm font-semibold text-white">{t.title}</p>
+                    <p className="text-sm font-semibold text-text-primary">{t.title}</p>
                   )}
                   {t.message && (
                     <p className="text-xs font-medium text-text-secondary mt-0.5 leading-relaxed">{t.message}</p>
@@ -108,7 +108,7 @@ export function ToastProvider({ children }) {
                 <button
                   type="button"
                   onClick={() => removeToast(t.id)}
-                  className="shrink-0 text-text-muted hover:text-white transition-colors cursor-pointer"
+                  className="shrink-0 text-text-muted hover:text-text-primary transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
