@@ -68,17 +68,28 @@ describe('CatalogueTitleRequestService (Phase 3 & Phase 6)', () => {
         };
       }),
       find: jest.fn().mockImplementation((query) => {
-        return {
-          sort: jest.fn().mockReturnValue({
-            lean: jest.fn().mockReturnValue({
-              exec: jest.fn().mockImplementation(async () => {
-                return storedRequests.filter((r) => {
-                  return Object.entries(query).every(([k, v]) => r[k] === v);
-                });
-              }),
+        let skipVal = 0;
+        let limitVal = Infinity;
+        const chain: any = {
+          sort: jest.fn().mockImplementation(() => chain),
+          skip: jest.fn().mockImplementation((s: number) => {
+            skipVal = s;
+            return chain;
+          }),
+          limit: jest.fn().mockImplementation((l: number) => {
+            limitVal = l;
+            return chain;
+          }),
+          lean: jest.fn().mockReturnValue({
+            exec: jest.fn().mockImplementation(async () => {
+              const matched = storedRequests.filter((r) => {
+                return Object.entries(query).every(([k, v]) => r[k] === v);
+              });
+              return matched.slice(skipVal, skipVal + limitVal);
             }),
           }),
         };
+        return chain;
       }),
     };
 
@@ -165,6 +176,28 @@ describe('CatalogueTitleRequestService (Phase 3 & Phase 6)', () => {
           {
             departmentId: 'civil-engineering',
             title: 'Highway\nEngineer',
+          },
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects title label containing control characters', async () => {
+      await expect(
+        service.createRequest(
+          { userId: 'user-1' },
+          {
+            departmentId: 'civil-engineering',
+            title: 'Highway\tEngineer',
+          },
+        ),
+      ).rejects.toThrow(BadRequestException);
+
+      await expect(
+        service.createRequest(
+          { userId: 'user-1' },
+          {
+            departmentId: 'civil-engineering',
+            title: 'Highway\x00Engineer',
           },
         ),
       ).rejects.toThrow(BadRequestException);
@@ -288,6 +321,45 @@ describe('CatalogueTitleRequestService (Phase 3 & Phase 6)', () => {
         ),
       ).rejects.toThrow(ConflictException);
     });
+
+    it('rejects request if an equivalent title request has already been approved', async () => {
+      storedRequests.push({
+        id: 'req_approved_spec',
+        userId: 'other-user',
+        departmentId: 'civil-engineering',
+        normalizedTitle: 'geotechnical lead',
+        status: 'approved',
+      });
+
+      await expect(
+        service.createRequest(
+          { userId: 'user-1' },
+          {
+            departmentId: 'civil-engineering',
+            title: 'Geotechnical Lead',
+          },
+        ),
+      ).rejects.toThrow(
+        /A request for title "Geotechnical Lead" in Civil Engineering has already been approved/,
+      );
+    });
+
+    it('translates MongoDB duplicate key error (code 11000) into ConflictException', async () => {
+      mockRequestModel.create.mockRejectedValueOnce({
+        code: 11000,
+        message: 'E11000 duplicate key error',
+      });
+
+      await expect(
+        service.createRequest(
+          { userId: 'user-1' },
+          {
+            departmentId: 'civil-engineering',
+            title: 'Race Condition Role',
+          },
+        ),
+      ).rejects.toThrow(ConflictException);
+    });
   });
 
   describe('5. Abuse Prevention & User Rate Limiting', () => {
@@ -358,6 +430,35 @@ describe('CatalogueTitleRequestService (Phase 3 & Phase 6)', () => {
       const userARequests = await service.getUserRequests('user-a');
       expect(userARequests.length).toBe(1);
       expect(userARequests[0].requestedTitle).toBe('Title A');
+    });
+
+    it('supports pagination options when querying user requests', async () => {
+      for (let i = 1; i <= 5; i++) {
+        storedRequests.push({
+          id: `req_page_${i}`,
+          userId: 'paginated-user',
+          requestedTitle: `Paginated Title ${i}`,
+          status: 'pending',
+        });
+      }
+
+      const page1 = await service.getUserRequests('paginated-user', {
+        page: 1,
+        limit: 2,
+      });
+      expect(page1.length).toBe(2);
+
+      const page2 = await service.getUserRequests('paginated-user', {
+        page: 2,
+        limit: 2,
+      });
+      expect(page2.length).toBe(2);
+
+      const page3 = await service.getUserRequests('paginated-user', {
+        page: 3,
+        limit: 2,
+      });
+      expect(page3.length).toBe(1);
     });
 
     it('does not insert into catalogue_titles upon request creation', async () => {

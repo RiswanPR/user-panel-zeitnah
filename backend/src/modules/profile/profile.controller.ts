@@ -203,13 +203,25 @@ export class ProfileController {
 
   @Get('catalogue/requests/my')
   @UseGuards(JwtAuthGuard)
-  async getMyTitleRequests(@Req() req: any, @Query('status') status?: string) {
+  async getMyTitleRequests(
+    @Req() req: any,
+    @Query('status') status?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
     if (!this.catalogueTitleRequestService) {
       return [];
     }
+    const currentUserId = req.user.userId || req.user.id;
     return this.catalogueTitleRequestService.getUserRequests(
-      req.user.userId,
-      status,
+      currentUserId,
+      page || limit
+        ? {
+            status,
+            page: page ? parseInt(page, 10) : undefined,
+            limit: limit ? parseInt(limit, 10) : undefined,
+          }
+        : status,
     );
   }
 

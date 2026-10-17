@@ -101,6 +101,45 @@ describe('ProfessionalCatalogueService (Phase 5: User Panel DB Integration)', ()
       expect(diagnostics.totalTitles).toBe(3);
     });
 
+    it('should successfully load and validate all 18 departments and 254 titles matching the seeded database', async () => {
+      const allDepts = getAllDepartments();
+      const rawDepts: RawCatalogueDepartmentRecord[] = allDepts.map((d, dIdx) => ({
+        id: d.id,
+        name: d.name,
+        status: 'active',
+        displayOrder: dIdx + 1,
+        catalogueVersion: '2026.1',
+        aliases: d.aliases,
+      }));
+      const rawTitles: RawCatalogueTitleRecord[] = allDepts.flatMap((d) =>
+        d.titles.map((t, tIdx) => ({
+          id: t.id,
+          departmentId: d.id,
+          label: t.label,
+          status: 'active',
+          displayOrder: tIdx + 1,
+          catalogueVersion: '2026.1',
+          aliases: t.aliases,
+        })),
+      );
+
+      mockRepository.findActiveDepartments.mockResolvedValueOnce(rawDepts);
+      mockRepository.findActiveTitles.mockResolvedValueOnce(rawTitles);
+
+      const catalogue = await service.loadCatalogue(true);
+
+      expect(catalogue.version).toBe('2026.1');
+      expect(catalogue.departments).toHaveLength(18);
+      expect(catalogue.summary.totalDepartments).toBe(18);
+      expect(catalogue.summary.totalTitles).toBe(254);
+      expect(service.getActiveSource()).toBe('DATABASE');
+
+      const diagnostics = service.getDiagnostics();
+      expect(diagnostics.source).toBe('DATABASE');
+      expect(diagnostics.totalDepartments).toBe(18);
+      expect(diagnostics.totalTitles).toBe(254);
+    });
+
     it('should maintain deterministic ordering (displayOrder asc, then id asc)', async () => {
       // Return unsorted records from mock repository
       mockRepository.findActiveDepartments.mockResolvedValueOnce([

@@ -43,9 +43,13 @@ import { SupportModule } from './modules/support/support.module';
       useFactory: (configService: ConfigService) => {
         const uri =
           configService.get<string>('MONGO_URL') || process.env.MONGO_URL;
-        const dbName =
+        const rawDbName =
           configService.get<string>('MONGO_DB_NAME') ||
           process.env.MONGO_DB_NAME;
+        const dbName =
+          typeof rawDbName === 'string' && rawDbName.trim().length > 0
+            ? rawDbName.trim()
+            : undefined;
         return {
           uri,
           ...(dbName ? { dbName } : {}),

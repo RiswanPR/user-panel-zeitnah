@@ -89,10 +89,10 @@ export class CatalogueTitleRequestService {
       );
     }
 
-    // Reject HTML tags and multiline text
-    if (/[<>]/.test(rawTitle) || /[\r\n]/.test(rawTitle)) {
+    // Reject control characters (0x00-0x1F, 0x7F), HTML tags (< >), and newlines
+    if (/[\x00-\x1F\x7F<>]/.test(rawTitle)) {
       throw new BadRequestException(
-        'Title label must be single-line plain text without HTML characters.',
+        'Title label must be single-line plain text without control or HTML characters.',
       );
     }
 
@@ -105,7 +105,7 @@ export class CatalogueTitleRequestService {
         CatalogueTitleRequestService.normalizeTitle(t.label) === normalized
       ) {
         throw new BadRequestException(
-          `Title "${rawTitle}" already exists in the ${department.name} department catalogue.`,
+          `Title "${rawTitle}" already exists in the ${department.name} department catalogue. Please select it from the available catalogue titles.`,
         );
       }
       if (Array.isArray(t.aliases)) {
@@ -114,14 +114,29 @@ export class CatalogueTitleRequestService {
             CatalogueTitleRequestService.normalizeTitle(alias) === normalized
           ) {
             throw new BadRequestException(
-              `Title "${rawTitle}" matches existing catalogue title "${t.label}" (alias) in ${department.name}.`,
+              `Title "${rawTitle}" matches existing catalogue title "${t.label}" (alias) in ${department.name}. Please select "${t.label}" from the available catalogue titles.`,
             );
           }
         }
       }
     }
 
-    // Check 2: Is there already a pending request for this normalized title and department?
+    // Check 2: Has an equivalent request already been approved in the database?
+    const alreadyApproved = await this.requestModel
+      .findOne({
+        departmentId: department.id,
+        normalizedTitle: normalized,
+        status: 'approved',
+      })
+      .exec();
+
+    if (alreadyApproved) {
+      throw new BadRequestException(
+        `A request for title "${rawTitle}" in ${department.name} has already been approved. Please select it from the available catalogue titles.`,
+      );
+    }
+
+    // Check 3: Is there already a pending request for this normalized title and department?
     const duplicatePending = await this.requestModel
       .findOne({
         departmentId: department.id,
@@ -136,7 +151,7 @@ export class CatalogueTitleRequestService {
       );
     }
 
-    // Check 3: Abuse protection - limit pending requests per user
+    // Check 4: Abuse protection - limit pending requests per user
     const pendingCount = await this.requestModel
       .countDocuments({
         userId: user.userId,
@@ -153,48 +168,77 @@ export class CatalogueTitleRequestService {
     const requestId = `req_${randomUUID()}`;
     const now = new Date();
 
-    const created = await this.requestModel.create({
-      id: requestId,
-      userId: user.userId,
-      userName: user.name || '',
-      userEmail: user.email || '',
-      departmentId: department.id,
-      departmentName: department.name,
-      requestedTitle: rawTitle,
-      normalizedTitle: normalized,
-      status: 'pending',
-      submittedAt: now,
-      reviewedAt: null,
-      reviewerId: null,
-      reviewerName: null,
-      reviewNote: null,
-      createdTitleId: null,
-    });
+    try {
+      const created = await this.requestModel.create({
+        id: requestId,
+        userId: user.userId,
+        userName: user.name || '',
+        userEmail: user.email || '',
+        departmentId: department.id,
+        departmentName: department.name,
+        requestedTitle: rawTitle,
+        normalizedTitle: normalized,
+        status: 'pending',
+        submittedAt: now,
+        reviewedAt: null,
+        reviewerId: null,
+        reviewerName: null,
+        reviewNote: null,
+        createdTitleId: null,
+      });
 
-    this.logger.log(
-      `[TitleRequest] Created title request ${requestId} for "${rawTitle}" in ${department.name} by user ${user.userId}`,
-    );
+      this.logger.log(
+        `[TitleRequest] Created title request ${requestId} for "${rawTitle}" in ${department.name} by user ${user.userId}`,
+      );
 
-    return created;
+      return created;
+    } catch (err: any) {
+      if (err.code === 11000) {
+        throw new ConflictException(
+          `A request for title "${rawTitle}" in ${department.name} is already pending administrator review.`,
+        );
+      }
+      throw err;
+    }
   }
 
   /**
-   * Retrieves pending or past requests submitted by the authenticated user.
+   * Retrieves pending or past requests submitted by the authenticated user with optional pagination.
    */
   async getUserRequests(
     userId: string,
-    status?: string,
+    statusOrOptions?:
+      | string
+      | { status?: string; page?: number; limit?: number },
   ): Promise<CatalogueTitleRequest[]> {
     if (!userId) return [];
+    let status: string | undefined;
+    let page: number | undefined;
+    let limit: number | undefined;
+
+    if (typeof statusOrOptions === 'string') {
+      status = statusOrOptions;
+    } else if (statusOrOptions && typeof statusOrOptions === 'object') {
+      status = statusOrOptions.status;
+      page = statusOrOptions.page;
+      limit = statusOrOptions.limit;
+    }
+
     const query: any = { userId };
     if (status && ['pending', 'approved', 'rejected'].includes(status)) {
       query.status = status;
     }
-    return this.requestModel
-      .find(query)
-      .sort({ createdAt: -1 })
-      .lean()
-      .exec() as Promise<CatalogueTitleRequest[]>;
+
+    let queryChain = this.requestModel.find(query).sort({ createdAt: -1 });
+
+    if (page && limit && page > 0 && limit > 0) {
+      const skip = (page - 1) * limit;
+      queryChain = queryChain.skip(skip).limit(limit) as any;
+    } else if (limit && limit > 0) {
+      queryChain = queryChain.limit(limit) as any;
+    }
+
+    return queryChain.lean().exec() as Promise<CatalogueTitleRequest[]>;
   }
 
   /**

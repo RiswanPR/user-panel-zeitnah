@@ -10,6 +10,7 @@ export const PROFILE_QUERY_KEYS = {
   PUBLIC_PROFILE: (username) => ["profile", "public", username],
   TAXONOMY: ["profile", "taxonomy"],
   CATALOGUE: ["profile", "catalogue"],
+  TITLE_REQUESTS_MY: ["profile", "catalogue", "requests", "my"],
   USERNAME_STATUS: ["profile", "username", "status"],
   // Legacy aliases for backward compatibility with external handlers
   MY_PROFILE_LEGACY: ["myProfile"],

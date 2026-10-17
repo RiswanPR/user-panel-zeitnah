@@ -138,4 +138,89 @@ describe('User Panel — Custom Title Requests Frontend Verification', () => {
       );
     });
   });
+
+  describe('4. Request Modal Tabs and Request History Rendering', () => {
+    test('supports switching between New Request form and My Requests history tabs', () => {
+      assert.ok(
+        editorSrc.includes('requestModalTab'),
+        'Editor must manage requestModalTab state'
+      );
+      assert.ok(
+        editorSrc.includes('New Request') && editorSrc.includes('My Requests'),
+        'Modal must render New Request and My Requests tab labels'
+      );
+    });
+
+    test('renders status badges for pending, approved, and rejected statuses', () => {
+      assert.ok(
+        editorSrc.includes('Approved') && editorSrc.includes('Pending') && editorSrc.includes('Rejected'),
+        'History tab must render status labels'
+      );
+      assert.ok(
+        editorSrc.includes('CheckCircle2') && editorSrc.includes('Clock') && editorSrc.includes('X'),
+        'History tab must use appropriate status icons'
+      );
+    });
+
+    test('renders submission date and optional review note in history items', () => {
+      assert.ok(
+        editorSrc.includes('Submitted:') || editorSrc.includes('createdAt'),
+        'History view must display request submission date'
+      );
+      assert.ok(
+        editorSrc.includes('reviewNote'),
+        'History view must render reviewNote when present'
+      );
+    });
+
+    test('provides empty state and prompt when no requests exist', () => {
+      assert.ok(
+        editorSrc.includes('No Requests Yet'),
+        'History view must display friendly empty state when user has no requests'
+      );
+    });
+  });
+
+  describe('5. Client Collision Guard & Repeated Submit Prevention', () => {
+    test('prevents requesting a title that already exists in the department', () => {
+      assert.ok(
+        editorSrc.includes('already exists in the') && editorSrc.includes('Please select it from the predefined titles list'),
+        'Must block duplicate submission and direct user to predefined titles list'
+      );
+    });
+
+    test('prevents submitting duplicate pending requests client-side', () => {
+      assert.ok(
+        editorSrc.includes('already have a pending request'),
+        'Must detect existing pending request in user history before sending request'
+      );
+    });
+
+    test('shows loading spinner and disables submit button during request in flight', () => {
+      assert.ok(
+        editorSrc.includes('requestSubmitting'),
+        'Editor must track requestSubmitting state'
+      );
+      assert.ok(
+        editorSrc.includes('Submitting...') && editorSrc.includes('Loader2'),
+        'Submit button must show loading state with spinner'
+      );
+      assert.ok(
+        editorSrc.includes('disabled={requestSubmitting'),
+        'Buttons and inputs must be disabled while submitting'
+      );
+    });
+
+    test('invalidates my requests query cache upon successful submission', () => {
+      assert.ok(
+        editorSrc.includes('TITLE_REQUESTS_MY'),
+        'Editor must use PROFILE_QUERY_KEYS.TITLE_REQUESTS_MY'
+      );
+      assert.ok(
+        editorSrc.includes('invalidateQueries'),
+        'Editor must invalidate requests query on successful submission'
+      );
+    });
+  });
 });
+
