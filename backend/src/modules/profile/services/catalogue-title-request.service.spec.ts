@@ -99,6 +99,12 @@ describe('CatalogueTitleRequestService (Phase 3 & Phase 6)', () => {
         if (deptId === 'retired-dept') return mockRetiredDepartment;
         return undefined;
       }),
+      getTitle: jest.fn().mockImplementation((deptId: string, titleId: string) => {
+        if (deptId === 'civil-engineering' && titleId === 'geothermal-specialist') {
+          return { id: 'geothermal-specialist', label: 'Geothermal Specialist', status: 'active' };
+        }
+        return undefined;
+      }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -476,6 +482,232 @@ describe('CatalogueTitleRequestService (Phase 3 & Phase 6)', () => {
       expect(mockCatalogueService.getDepartment).toHaveBeenCalledWith(
         'civil-engineering',
       );
+    });
+  });
+
+  describe('Phase 6: findOrCreateOrReuseRequest (Idempotent Request Operation)', () => {
+    it('creates a new pending request when custom title is unique', async () => {
+      const res = await service.findOrCreateOrReuseRequest(
+        { userId: 'user-p6-1', name: 'Alice', email: 'alice@zeitnah.com' },
+        'civil-engineering',
+        'Coastal Protection Specialist',
+      );
+
+      expect(res.action).toBe('CREATED_PENDING');
+      expect(res.isNew).toBe(true);
+      expect(res.reused).toBe(false);
+      expect(res.isOfficialTitle).toBe(false);
+      expect(res.request).toBeDefined();
+      expect(res.request?.requestedTitle).toBe('Coastal Protection Specialist');
+      expect(res.request?.normalizedTitle).toBe('coastal protection specialist');
+      expect(res.request?.status).toBe('pending');
+    });
+
+    it('reuses existing pending request when the same user submits repeatedly', async () => {
+      const res1 = await service.findOrCreateOrReuseRequest(
+        { userId: 'user-p6-1' },
+        'civil-engineering',
+        'Deep Tunnel Engineer',
+      );
+      expect(res1.action).toBe('CREATED_PENDING');
+      expect(res1.isNew).toBe(true);
+
+      const res2 = await service.findOrCreateOrReuseRequest(
+        { userId: 'user-p6-1' },
+        'civil-engineering',
+        '  deep   tunnel   engineer  ',
+      );
+      expect(res2.action).toBe('REUSED_PENDING');
+      expect(res2.isNew).toBe(false);
+      expect(res2.reused).toBe(true);
+      expect(res2.request?.id).toBe(res1.request?.id);
+    });
+
+    it('reuses existing pending request when a second user submits the same title in the same department', async () => {
+      const resA = await service.findOrCreateOrReuseRequest(
+        { userId: 'user-p6-alice' },
+        'civil-engineering',
+        'Offshore Port Engineer',
+      );
+      expect(resA.action).toBe('CREATED_PENDING');
+
+      const resB = await service.findOrCreateOrReuseRequest(
+        { userId: 'user-p6-bob' },
+        'civil-engineering',
+        'Offshore Port Engineer',
+      );
+      expect(resB.action).toBe('REUSED_PENDING');
+      expect(resB.isNew).toBe(false);
+      expect(resB.reused).toBe(true);
+      expect(resB.request?.id).toBe(resA.request?.id);
+      // Preserves original requester's userId
+      expect(resB.request?.userId).toBe('user-p6-alice');
+    });
+
+    it('resolves directly to official title when matching active catalogue title or alias without creating request', async () => {
+      // Matches Site Engineer in mockDepartment
+      const resExact = await service.findOrCreateOrReuseRequest(
+        { userId: 'user-p6-1' },
+        'civil-engineering',
+        'site engineer',
+      );
+
+      expect(resExact.action).toBe('OFFICIAL_TITLE_EXISTS');
+      expect(resExact.isOfficialTitle).toBe(true);
+      expect(resExact.resolvedTitleId).toBe('civil-engineering:site-engineer');
+      expect(resExact.resolvedTitleName).toBe('Site Engineer');
+      expect(resExact.request).toBeNull();
+
+      // Matches alias 'Field Engineer'
+      const resAlias = await service.findOrCreateOrReuseRequest(
+        { userId: 'user-p6-1' },
+        'civil-engineering',
+        'FIELD ENGINEER',
+      );
+
+      expect(resAlias.action).toBe('OFFICIAL_TITLE_EXISTS');
+      expect(resAlias.isOfficialTitle).toBe(true);
+      expect(resAlias.resolvedTitleId).toBe('civil-engineering:site-engineer');
+      expect(resAlias.resolvedTitleName).toBe('Site Engineer');
+      expect(resAlias.request).toBeNull();
+    });
+
+    it('returns ALREADY_APPROVED when title was previously approved and resolves title ID', async () => {
+      storedRequests.push({
+        id: 'req_prev_approved',
+        userId: 'user_prior',
+        departmentId: 'civil-engineering',
+        requestedTitle: 'Geothermal Specialist',
+        normalizedTitle: 'geothermal specialist',
+        status: 'approved',
+        createdTitleId: 'civil-engineering:geothermal-specialist',
+      });
+
+      const res = await service.findOrCreateOrReuseRequest(
+        { userId: 'user-p6-new' },
+        'civil-engineering',
+        'Geothermal Specialist',
+      );
+
+      expect(res.action).toBe('ALREADY_APPROVED');
+      expect(res.isOfficialTitle).toBe(true);
+      expect(res.resolvedTitleId).toBe('civil-engineering:geothermal-specialist');
+      expect(res.request?.id).toBe('req_prev_approved');
+    });
+
+    it('preserves rejected request history and creates a fresh pending request', async () => {
+      storedRequests.push({
+        id: 'req_prior_rejected',
+        userId: 'user_prior',
+        departmentId: 'civil-engineering',
+        requestedTitle: 'Bridge Painting Specialist',
+        normalizedTitle: 'bridge painting specialist',
+        status: 'rejected',
+        reviewNote: 'Too specific for infrastructure catalogue',
+      });
+
+      const res = await service.findOrCreateOrReuseRequest(
+        { userId: 'user-p6-new' },
+        'civil-engineering',
+        'Bridge Painting Specialist',
+      );
+
+      expect(res.action).toBe('CREATED_PENDING');
+      expect(res.isNew).toBe(true);
+      expect(res.request?.id).not.toBe('req_prior_rejected');
+      expect(res.request?.status).toBe('pending');
+
+      // The rejected record remains preserved in the database
+      const rejectedDoc = storedRequests.find((r) => r.id === 'req_prior_rejected');
+      expect(rejectedDoc).toBeDefined();
+      expect(rejectedDoc.status).toBe('rejected');
+    });
+
+    it('recovers from concurrent duplicate-key error (11000) by looking up winning pending request', async () => {
+      const winningDoc = {
+        id: 'req_winning_concurrent',
+        userId: 'user_concurrent_winner',
+        departmentId: 'civil-engineering',
+        requestedTitle: 'Dam Safety Specialist',
+        normalizedTitle: 'dam safety specialist',
+        status: 'pending',
+      };
+
+      // Mock create to simulate code 11000 duplicate key race condition
+      mockRequestModel.create.mockImplementationOnce(async () => {
+        // Insert winning doc into store just before throwing
+        storedRequests.push(winningDoc);
+        const dupErr: any = new Error('E11000 duplicate key error');
+        dupErr.code = 11000;
+        throw dupErr;
+      });
+
+      const res = await service.findOrCreateOrReuseRequest(
+        { userId: 'user_concurrent_loser' },
+        'civil-engineering',
+        'Dam Safety Specialist',
+      );
+
+      expect(res.action).toBe('REUSED_PENDING');
+      expect(res.isNew).toBe(false);
+      expect(res.reused).toBe(true);
+      expect(res.request?.id).toBe('req_winning_concurrent');
+      expect(res.request?.userId).toBe('user_concurrent_winner');
+    });
+
+    it('rejects invalid title strings and inactive department', async () => {
+      await expect(
+        service.findOrCreateOrReuseRequest(
+          { userId: 'u1' },
+          'civil-engineering',
+          '   ',
+        ),
+      ).rejects.toThrow(BadRequestException);
+
+      await expect(
+        service.findOrCreateOrReuseRequest(
+          { userId: 'u1' },
+          'civil-engineering',
+          'A',
+        ),
+      ).rejects.toThrow(BadRequestException);
+
+      await expect(
+        service.findOrCreateOrReuseRequest(
+          { userId: 'u1' },
+          'civil-engineering',
+          'Title<script>alert(1)</script>',
+        ),
+      ).rejects.toThrow(BadRequestException);
+
+      await expect(
+        service.findOrCreateOrReuseRequest(
+          { userId: 'u1' },
+          'retired-dept',
+          'Valid Custom Title',
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('enforces maximum 10 pending requests per user for new submissions', async () => {
+      for (let i = 0; i < 10; i++) {
+        storedRequests.push({
+          id: `req_user_limit_${i}`,
+          userId: 'user-at-limit',
+          departmentId: 'civil-engineering',
+          requestedTitle: `Limit Title ${i}`,
+          normalizedTitle: `limit title ${i}`,
+          status: 'pending',
+        });
+      }
+
+      await expect(
+        service.findOrCreateOrReuseRequest(
+          { userId: 'user-at-limit' },
+          'civil-engineering',
+          'Eleventh Custom Title',
+        ),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });

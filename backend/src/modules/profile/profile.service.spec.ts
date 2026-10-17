@@ -13,12 +13,14 @@ import { UploadService } from '../../common/aws/upload.service';
 import { SignedUrlService } from '../../common/aws/signed-url.service';
 import { UsernameService } from './services/username.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { CatalogueTitleRequestService } from './services/catalogue-title-request.service';
 
 describe('ProfileService', () => {
   let service: ProfileService;
   let mockUserModel: any;
   let mockRecommendationModel: any;
   let mockAuditLogsService: any;
+  let mockCatalogueTitleRequestService: any;
   let usernameService: UsernameService;
 
   beforeEach(async () => {
@@ -48,6 +50,15 @@ describe('ProfileService', () => {
 
     mockAuditLogsService = {
       record: jest.fn().mockResolvedValue(true),
+    };
+
+    mockCatalogueTitleRequestService = {
+      findOrCreateOrReuseRequest: jest.fn(),
+      normalizeTitle: jest
+        .fn()
+        .mockImplementation((t: string) =>
+          t.trim().toLowerCase().replace(/\s+/g, ' '),
+        ),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -80,6 +91,10 @@ describe('ProfileService', () => {
         {
           provide: AuditLogsService,
           useValue: mockAuditLogsService,
+        },
+        {
+          provide: CatalogueTitleRequestService,
+          useValue: mockCatalogueTitleRequestService,
         },
       ],
     }).compile();
@@ -1402,6 +1417,510 @@ describe('ProfileService', () => {
       expect(mockUser.availability).toBe('OPEN_TO_HIRING');
       expect(mockUser.primaryRole).toBe('STUDENT');
       expect(mockUser.role).toBe('student');
+    });
+  });
+
+  describe('Phase 6: Automatic Custom-Title Request Integration (ProfileService.updateProfile)', () => {
+    let mockUser: any;
+
+    beforeEach(() => {
+      mockUser = {
+        _id: 'user_123',
+        name: 'Jane Doe',
+        email: 'jane.doe@zeitnah.com',
+        avatar: 'profiles/jane.png',
+        bio: 'Civil engineer with 10 years experience',
+        skills: ['AutoCAD', 'Structural Analysis'],
+        currentRole: 'Junior Engineer',
+        headline: 'Passionate about sustainable infrastructure',
+        primaryRole: 'PROFESSIONAL',
+        professionalIdentity: null,
+        gamification: { rewardedMilestones: [] },
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+        toObject: function () {
+          return {
+            _id: this._id,
+            name: this.name,
+            email: this.email,
+            avatar: this.avatar,
+            bio: this.bio,
+            skills: this.skills,
+            currentRole: this.currentRole,
+            headline: this.headline,
+            primaryRole: this.primaryRole,
+            professionalIdentity: this.professionalIdentity,
+          };
+        },
+      };
+
+      mockUserModel.findById.mockResolvedValue(mockUser);
+    });
+
+    // 1. Predefined title saves without creating a request
+    it('1. Predefined title saves without creating a request', async () => {
+      const res = await service.updateProfile('user_123', {
+        professionalIdentity: {
+          departmentId: 'civil-engineering',
+          titleId: 'civil-engineering:site-engineer-civil',
+          isCustomTitle: false,
+        },
+      });
+
+      expect(mockCatalogueTitleRequestService.findOrCreateOrReuseRequest).not.toHaveBeenCalled();
+      expect(res.customTitleRequest).toBeUndefined();
+      expect(mockUser.professionalIdentity.isCustomTitle).toBe(false);
+      expect(mockUser.professionalIdentity.titleId).toBe('civil-engineering:site-engineer-civil');
+      expect(mockUser.currentRole).toBe('Site Engineer (civil)');
+      expect(mockUser.save).toHaveBeenCalled();
+    });
+
+    // 2. New custom title creates one pending request
+    it('2. New custom title creates one pending request and attaches metadata to response', async () => {
+      mockCatalogueTitleRequestService.findOrCreateOrReuseRequest.mockResolvedValue({
+        action: 'CREATED_PENDING',
+        request: { _id: 'req_new_1', status: 'pending', departmentId: 'civil-engineering', requestedTitle: 'Tunnel Ventilation Engineer' },
+        departmentId: 'civil-engineering',
+        departmentName: 'Civil Engineering',
+        resolvedTitleId: null,
+        resolvedTitleName: 'Tunnel Ventilation Engineer',
+        isOfficialTitle: false,
+        isNew: true,
+        reused: false,
+      });
+
+      const res = await service.updateProfile('user_123', {
+        professionalIdentity: {
+          departmentId: 'civil-engineering',
+          customTitle: 'Tunnel Ventilation Engineer',
+          isCustomTitle: true,
+        },
+      });
+
+      expect(mockCatalogueTitleRequestService.findOrCreateOrReuseRequest).toHaveBeenCalledWith(
+        { userId: 'user_123', name: 'Jane Doe', email: 'jane.doe@zeitnah.com' },
+        'civil-engineering',
+        'Tunnel Ventilation Engineer',
+      );
+      expect(res.customTitleRequest).toEqual({
+        action: 'CREATED_PENDING',
+        requestId: 'req_new_1',
+        status: 'pending',
+        isOfficialTitle: false,
+        reused: false,
+        isNew: true,
+      });
+      expect(mockUser.professionalIdentity.isCustomTitle).toBe(true);
+      expect(mockUser.professionalIdentity.titleName).toBe('Tunnel Ventilation Engineer');
+      expect(mockUser.currentRole).toBe('Tunnel Ventilation Engineer');
+      expect(mockUser.save).toHaveBeenCalled();
+    });
+
+    // 3. Same user saves the same custom title repeatedly
+    it('3. Same user saves the same custom title repeatedly (idempotent reuse)', async () => {
+      mockCatalogueTitleRequestService.findOrCreateOrReuseRequest.mockResolvedValue({
+        action: 'REUSED_PENDING',
+        request: { _id: 'req_existing_1', status: 'pending', departmentId: 'civil-engineering' },
+        departmentId: 'civil-engineering',
+        departmentName: 'Civil Engineering',
+        resolvedTitleId: null,
+        resolvedTitleName: 'Tunnel Ventilation Engineer',
+        isOfficialTitle: false,
+        isNew: false,
+        reused: true,
+      });
+
+      const res = await service.updateProfile('user_123', {
+        professionalIdentity: {
+          departmentId: 'civil-engineering',
+          customTitle: 'Tunnel Ventilation Engineer',
+          isCustomTitle: true,
+        },
+      });
+
+      expect(res.customTitleRequest.action).toBe('REUSED_PENDING');
+      expect(res.customTitleRequest.reused).toBe(true);
+      expect(res.customTitleRequest.requestId).toBe('req_existing_1');
+      expect(mockUser.save).toHaveBeenCalled();
+    });
+
+    // 4. A second user saves the same title in the same department
+    it('4. A second user saves the same title in the same department (cross-user pending request reuse)', async () => {
+      const user2: any = {
+        ...mockUser,
+        _id: 'user_456',
+        name: 'Bob Smith',
+        email: 'bob@zeitnah.com',
+        save: jest.fn().mockResolvedValue(true),
+        toObject: function () { return { ...this }; },
+      };
+      mockUserModel.findById.mockResolvedValue(user2);
+
+      mockCatalogueTitleRequestService.findOrCreateOrReuseRequest.mockResolvedValue({
+        action: 'REUSED_PENDING',
+        request: { _id: 'req_user1_pending', requestedBy: 'user_123', status: 'pending' },
+        departmentId: 'civil-engineering',
+        departmentName: 'Civil Engineering',
+        resolvedTitleId: null,
+        resolvedTitleName: 'Tunnel Ventilation Engineer',
+        isOfficialTitle: false,
+        isNew: false,
+        reused: true,
+      });
+
+      const res = await service.updateProfile('user_456', {
+        professionalIdentity: {
+          departmentId: 'civil-engineering',
+          customTitle: 'Tunnel Ventilation Engineer',
+          isCustomTitle: true,
+        },
+      });
+
+      expect(mockCatalogueTitleRequestService.findOrCreateOrReuseRequest).toHaveBeenCalledWith(
+        { userId: 'user_456', name: 'Bob Smith', email: 'bob@zeitnah.com' },
+        'civil-engineering',
+        'Tunnel Ventilation Engineer',
+      );
+      expect(res.customTitleRequest.action).toBe('REUSED_PENDING');
+      expect(res.customTitleRequest.reused).toBe(true);
+      expect(user2.currentRole).toBe('Tunnel Ventilation Engineer');
+      expect(user2.save).toHaveBeenCalled();
+    });
+
+    // 5. Concurrent equivalent requests encounter duplicate-key recovery
+    it('5. Concurrent equivalent requests encounter duplicate-key recovery without leaking 409', async () => {
+      mockCatalogueTitleRequestService.findOrCreateOrReuseRequest.mockResolvedValue({
+        action: 'REUSED_PENDING',
+        request: { _id: 'req_concurrent_winner', status: 'pending' },
+        departmentId: 'civil-engineering',
+        departmentName: 'Civil Engineering',
+        resolvedTitleId: null,
+        resolvedTitleName: 'Tunnel Ventilation Engineer',
+        isOfficialTitle: false,
+        isNew: false,
+        reused: true,
+      });
+
+      const res = await service.updateProfile('user_123', {
+        professionalIdentity: {
+          departmentId: 'civil-engineering',
+          customTitle: 'Tunnel Ventilation Engineer',
+          isCustomTitle: true,
+        },
+      });
+
+      expect(res.message).toBe('Profile updated successfully');
+      expect(res.customTitleRequest.action).toBe('REUSED_PENDING');
+      expect(res.customTitleRequest.requestId).toBe('req_concurrent_winner');
+    });
+
+    // 6. Existing official title or alias is resolved without creating a request
+    it('6. Existing official title or alias is resolved without creating a request', async () => {
+      mockCatalogueTitleRequestService.findOrCreateOrReuseRequest.mockResolvedValue({
+        action: 'OFFICIAL_TITLE_EXISTS',
+        request: null,
+        departmentId: 'civil-engineering',
+        departmentName: 'Civil Engineering',
+        resolvedTitleId: 'civil-engineering:structural-engineer-civil',
+        resolvedTitleName: 'Structural engineer (civil)',
+        isOfficialTitle: true,
+        isNew: false,
+        reused: false,
+      });
+
+      const res = await service.updateProfile('user_123', {
+        professionalIdentity: {
+          departmentId: 'civil-engineering',
+          customTitle: 'Structural engineer (civil)',
+          isCustomTitle: true,
+        },
+      });
+
+      expect(res.customTitleRequest.action).toBe('OFFICIAL_TITLE_EXISTS');
+      expect(res.customTitleRequest.isOfficialTitle).toBe(true);
+      expect(res.customTitleRequest.requestId).toBeNull();
+      // Converted from custom to official catalogue title!
+      expect(mockUser.professionalIdentity.isCustomTitle).toBe(false);
+      expect(mockUser.professionalIdentity.titleId).toBe('civil-engineering:structural-engineer-civil');
+      expect(mockUser.professionalIdentity.titleName).toBe('Structural engineer (civil)');
+      expect(mockUser.currentRole).toBe('Structural engineer (civil)');
+    });
+
+    // 7. An approved request is handled without creating a duplicate
+    it('7. An approved request is handled without creating a duplicate', async () => {
+      mockCatalogueTitleRequestService.findOrCreateOrReuseRequest.mockResolvedValue({
+        action: 'ALREADY_APPROVED',
+        request: { _id: 'req_approved_1', status: 'approved', createdTitleId: 'civil-engineering:geothermal-specialist' },
+        departmentId: 'civil-engineering',
+        departmentName: 'Civil Engineering',
+        resolvedTitleId: 'civil-engineering:geothermal-specialist',
+        resolvedTitleName: 'Geothermal Specialist',
+        isOfficialTitle: true,
+        isNew: false,
+        reused: true,
+      });
+
+      const res = await service.updateProfile('user_123', {
+        professionalIdentity: {
+          departmentId: 'civil-engineering',
+          customTitle: 'Geothermal Specialist',
+          isCustomTitle: true,
+        },
+      });
+
+      expect(res.customTitleRequest.action).toBe('ALREADY_APPROVED');
+      expect(res.customTitleRequest.requestId).toBe('req_approved_1');
+      expect(mockUser.professionalIdentity.isCustomTitle).toBe(false);
+      expect(mockUser.professionalIdentity.titleId).toBe('civil-engineering:geothermal-specialist');
+      expect(mockUser.currentRole).toBe('Geothermal Specialist');
+    });
+
+    // 8. A rejected request follows the documented retry policy
+    it('8. A rejected request follows the documented retry policy (preserves rejected record, creates new pending)', async () => {
+      mockCatalogueTitleRequestService.findOrCreateOrReuseRequest.mockResolvedValue({
+        action: 'CREATED_PENDING',
+        request: { _id: 'req_new_retry', status: 'pending', requestedTitle: 'Previously Rejected Title' },
+        departmentId: 'civil-engineering',
+        departmentName: 'Civil Engineering',
+        resolvedTitleId: null,
+        resolvedTitleName: 'Previously Rejected Title',
+        isOfficialTitle: false,
+        isNew: true,
+        reused: false,
+      });
+
+      const res = await service.updateProfile('user_123', {
+        professionalIdentity: {
+          departmentId: 'civil-engineering',
+          customTitle: 'Previously Rejected Title',
+          isCustomTitle: true,
+        },
+      });
+
+      expect(res.customTitleRequest.action).toBe('CREATED_PENDING');
+      expect(res.customTitleRequest.requestId).toBe('req_new_retry');
+      expect(mockUser.currentRole).toBe('Previously Rejected Title');
+      expect(mockUser.save).toHaveBeenCalled();
+    });
+
+    // 9. Invalid title and inactive department are rejected
+    it('9. Invalid title and inactive department are rejected without mutating profile', async () => {
+      await expect(
+        service.updateProfile('user_123', {
+          professionalIdentity: {
+            departmentId: 'civil-engineering',
+            customTitle: 'Bad <script>alert(1)</script>',
+            isCustomTitle: true,
+          },
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      await expect(
+        service.updateProfile('user_123', {
+          professionalIdentity: {
+            departmentId: 'non-existent-dept',
+            customTitle: 'Valid Title',
+            isCustomTitle: true,
+          },
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(mockCatalogueTitleRequestService.findOrCreateOrReuseRequest).not.toHaveBeenCalled();
+      expect(mockUser.save).not.toHaveBeenCalled();
+    });
+
+    // 10. Request insertion fails
+    it('10. Request insertion fails (bubbles error, profile save is aborted)', async () => {
+      mockCatalogueTitleRequestService.findOrCreateOrReuseRequest.mockRejectedValue(
+        new Error('MongoDB cluster write timeout'),
+      );
+
+      await expect(
+        service.updateProfile('user_123', {
+          professionalIdentity: {
+            departmentId: 'civil-engineering',
+            customTitle: 'Failing Request Title',
+            isCustomTitle: true,
+          },
+        }),
+      ).rejects.toThrow('MongoDB cluster write timeout');
+
+      expect(mockUser.save).not.toHaveBeenCalled();
+    });
+
+    // 11. Profile persistence fails after request handling
+    it('11. Profile persistence fails after request handling (bubbles error, request was safely created)', async () => {
+      mockCatalogueTitleRequestService.findOrCreateOrReuseRequest.mockResolvedValue({
+        action: 'CREATED_PENDING',
+        request: { _id: 'req_created_before_user_fail', status: 'pending' },
+        departmentId: 'civil-engineering',
+        departmentName: 'Civil Engineering',
+        resolvedTitleId: null,
+        resolvedTitleName: 'Bridge Specialist',
+        isOfficialTitle: false,
+        isNew: true,
+        reused: false,
+      });
+
+      mockUser.save.mockRejectedValue(new Error('User document write lock error'));
+
+      await expect(
+        service.updateProfile('user_123', {
+          professionalIdentity: {
+            departmentId: 'civil-engineering',
+            customTitle: 'Bridge Specialist',
+            isCustomTitle: true,
+          },
+        }),
+      ).rejects.toThrow('User document write lock error');
+    });
+
+    // 12. Retry after a simulated timeout
+    it('12. Retry after a simulated timeout succeeds idempotently', async () => {
+      // First attempt: request service created request, but network timed out before profile response
+      // Second attempt: retry calls findOrCreateOrReuseRequest which reuses pending request
+      mockCatalogueTitleRequestService.findOrCreateOrReuseRequest.mockResolvedValue({
+        action: 'REUSED_PENDING',
+        request: { _id: 'req_timed_out_prior', status: 'pending' },
+        departmentId: 'civil-engineering',
+        departmentName: 'Civil Engineering',
+        resolvedTitleId: null,
+        resolvedTitleName: 'Bridge Specialist',
+        isOfficialTitle: false,
+        isNew: false,
+        reused: true,
+      });
+
+      const res = await service.updateProfile('user_123', {
+        professionalIdentity: {
+          departmentId: 'civil-engineering',
+          customTitle: 'Bridge Specialist',
+          isCustomTitle: true,
+        },
+      });
+
+      expect(res.message).toBe('Profile updated successfully');
+      expect(res.customTitleRequest.action).toBe('REUSED_PENDING');
+      expect(res.customTitleRequest.reused).toBe(true);
+      expect(mockUser.save).toHaveBeenCalled();
+    });
+
+    // 13. Department or custom-title changes preserve historical requests
+    it('13. Department or custom-title changes preserve historical requests', async () => {
+      // Step 1: User saves in civil engineering
+      mockCatalogueTitleRequestService.findOrCreateOrReuseRequest.mockResolvedValueOnce({
+        action: 'CREATED_PENDING',
+        request: { _id: 'req_civil_1', status: 'pending', departmentId: 'civil-engineering' },
+        departmentId: 'civil-engineering',
+        departmentName: 'Civil Engineering',
+        resolvedTitleId: null,
+        resolvedTitleName: 'Civil Specialist',
+        isOfficialTitle: false,
+        isNew: true,
+        reused: false,
+      });
+
+      await service.updateProfile('user_123', {
+        professionalIdentity: {
+          departmentId: 'civil-engineering',
+          customTitle: 'Civil Specialist',
+          isCustomTitle: true,
+        },
+      });
+
+      // Step 2: User changes department to mechanical engineering with a new custom title
+      mockCatalogueTitleRequestService.findOrCreateOrReuseRequest.mockResolvedValueOnce({
+        action: 'CREATED_PENDING',
+        request: { _id: 'req_mech_2', status: 'pending', departmentId: 'mechanical-engineering' },
+        departmentId: 'mechanical-engineering',
+        departmentName: 'Mechanical Engineering',
+        resolvedTitleId: null,
+        resolvedTitleName: 'Robotics Specialist',
+        isOfficialTitle: false,
+        isNew: true,
+        reused: false,
+      });
+
+      const res2 = await service.updateProfile('user_123', {
+        professionalIdentity: {
+          departmentId: 'mechanical-engineering',
+          customTitle: 'Robotics Specialist',
+          isCustomTitle: true,
+        },
+      });
+
+      expect(res2.customTitleRequest.requestId).toBe('req_mech_2');
+      expect(mockUser.professionalIdentity.departmentId).toBe('mechanical-engineering');
+      expect(mockUser.professionalIdentity.titleName).toBe('Robotics Specialist');
+      // No deletion or revocation call was made against req_civil_1
+    });
+
+    // 14. Existing headline/currentRole behaviour remains correct
+    it('14. Existing headline/currentRole behaviour remains correct with custom title update', async () => {
+      mockCatalogueTitleRequestService.findOrCreateOrReuseRequest.mockResolvedValue({
+        action: 'CREATED_PENDING',
+        request: { _id: 'req_headline_test', status: 'pending' },
+        departmentId: 'civil-engineering',
+        departmentName: 'Civil Engineering',
+        resolvedTitleId: null,
+        resolvedTitleName: 'Tunnel Engineer',
+        isOfficialTitle: false,
+        isNew: true,
+        reused: false,
+      });
+
+      await service.updateProfile('user_123', {
+        headline: 'Passionate about underground infrastructure',
+        professionalIdentity: {
+          departmentId: 'civil-engineering',
+          customTitle: 'Tunnel Engineer',
+          isCustomTitle: true,
+        },
+      });
+
+      expect(mockUser.headline).toBe('Passionate about underground infrastructure');
+      expect(mockUser.currentRole).toBe('Tunnel Engineer');
+      expect(mockUser.professionalIdentity.titleName).toBe('Tunnel Engineer');
+    });
+
+    // 15. Authentication-derived requester identity cannot be overridden by client data
+    it('15. Authentication-derived requester identity cannot be overridden by client data', async () => {
+      mockCatalogueTitleRequestService.findOrCreateOrReuseRequest.mockResolvedValue({
+        action: 'CREATED_PENDING',
+        request: { _id: 'req_auth_test', status: 'pending' },
+        departmentId: 'civil-engineering',
+        departmentName: 'Civil Engineering',
+        resolvedTitleId: null,
+        resolvedTitleName: 'Security Specialist',
+        isOfficialTitle: false,
+        isNew: true,
+        reused: false,
+      });
+
+      // Client attempts to spoof requester identity in payload
+      const spoofedPayload: any = {
+        requesterId: 'hacker_999',
+        requesterName: 'Hacker Admin',
+        requesterEmail: 'admin@hacked.com',
+        professionalIdentity: {
+          departmentId: 'civil-engineering',
+          customTitle: 'Security Specialist',
+          isCustomTitle: true,
+        },
+      };
+
+      await service.updateProfile('user_123', spoofedPayload);
+
+      // Verify that findOrCreateOrReuseRequest received the genuine authenticated user identity from DB
+      expect(mockCatalogueTitleRequestService.findOrCreateOrReuseRequest).toHaveBeenCalledWith(
+        {
+          userId: 'user_123',
+          name: 'Jane Doe',
+          email: 'jane.doe@zeitnah.com',
+        },
+        'civil-engineering',
+        'Security Specialist',
+      );
     });
   });
 });

@@ -24,6 +24,10 @@ import {
   ProfessionalCatalogueService,
   ValidatedProfessionalIdentity,
 } from './services/professional-catalogue.service';
+import {
+  CatalogueTitleRequestService,
+  TitleRequestOperationResult,
+} from './services/catalogue-title-request.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import * as crypto from 'crypto';
@@ -167,7 +171,13 @@ export class ProfileService {
     private readonly notificationsService?: NotificationsService,
     @Optional()
     private professionalCatalogueService?: ProfessionalCatalogueService,
+    @Optional()
+    private catalogueTitleRequestService?: CatalogueTitleRequestService,
   ) {}
+
+  setCatalogueTitleRequestService(service: CatalogueTitleRequestService) {
+    this.catalogueTitleRequestService = service;
+  }
 
   private getCatalogueService(): ProfessionalCatalogueService {
     if (!this.professionalCatalogueService) {
@@ -862,11 +872,43 @@ export class ProfileService {
 
     // Validate structured professional identity first (atomic validation)
     let resolvedProfessionalIdentity: ValidatedProfessionalIdentity | null = null;
+    let customTitleRequestResult: TitleRequestOperationResult | null = null;
+
     if (data.professionalIdentity !== undefined) {
       resolvedProfessionalIdentity =
         this.getCatalogueService().validateAndResolveIdentity(
           data.professionalIdentity,
         );
+
+      // Automatic custom-title request creation or reuse
+      if (
+        resolvedProfessionalIdentity &&
+        resolvedProfessionalIdentity.isCustomTitle &&
+        this.catalogueTitleRequestService
+      ) {
+        const titleReqResult =
+          await this.catalogueTitleRequestService.findOrCreateOrReuseRequest(
+            {
+              userId: user.id || (user._id ? user._id.toString() : userId),
+              name: user.name || data.name,
+              email: user.email,
+            },
+            resolvedProfessionalIdentity.departmentId,
+            resolvedProfessionalIdentity.titleName,
+          );
+
+        customTitleRequestResult = titleReqResult;
+
+        // If the custom title matched an active official catalogue title or approved title with an ID:
+        if (titleReqResult.isOfficialTitle && titleReqResult.resolvedTitleId) {
+          resolvedProfessionalIdentity = {
+            ...resolvedProfessionalIdentity,
+            titleId: titleReqResult.resolvedTitleId,
+            titleName: titleReqResult.resolvedTitleName,
+            isCustomTitle: false,
+          };
+        }
+      }
     }
 
     if (data.name !== undefined) user.name = data.name;
@@ -1274,6 +1316,25 @@ export class ProfileService {
       user: userObj,
       newlyAwarded,
       completion,
+      ...(customTitleRequestResult
+        ? {
+            customTitleRequest: {
+              action: customTitleRequestResult.action,
+              requestId:
+                (customTitleRequestResult.request as any)?._id?.toString() ||
+                (customTitleRequestResult.request as any)?.id?.toString() ||
+                null,
+              status:
+                customTitleRequestResult.request?.status ||
+                (customTitleRequestResult.isOfficialTitle
+                  ? 'approved'
+                  : 'pending'),
+              isOfficialTitle: customTitleRequestResult.isOfficialTitle,
+              reused: customTitleRequestResult.reused,
+              isNew: customTitleRequestResult.isNew,
+            },
+          }
+        : {}),
     };
   }
 

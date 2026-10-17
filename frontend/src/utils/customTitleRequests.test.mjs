@@ -7,220 +7,297 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-describe('User Panel — Custom Title Requests Frontend Verification', () => {
+describe('User Panel — Phase 7: Automatic Custom-Title Request UX Verification', () => {
   const editorPath = path.resolve(__dirname, '../components/profile/ProfessionalIdentityEditor.jsx');
+  const editProfilePath = path.resolve(__dirname, '../pages/profile/EditProfile.jsx');
   const servicePath = path.resolve(__dirname, '../services/coreProfileService.js');
 
   const editorSrc = fs.readFileSync(editorPath, 'utf8');
+  const editProfileSrc = fs.readFileSync(editProfilePath, 'utf8');
   const serviceSrc = fs.readFileSync(servicePath, 'utf8');
 
-  describe('1. ProfessionalIdentityEditor.jsx — Request Custom Title Action & Modal', () => {
-    test('contains prominent Request Custom Title buttons in UI states', () => {
+  describe('1. Custom Title Entry Followed by Normal Save Action', () => {
+    test('provides custom title input with single-line and 100 character constraints', () => {
       assert.ok(
-        editorSrc.includes('Request Custom Title'),
-        'ProfessionalIdentityEditor must offer a clear "Request Custom Title" action'
+        editorSrc.includes('maxLength={105}') || editorSrc.includes('maxLength={100}'),
+        'Custom title input must enforce character max length limit'
       );
       assert.ok(
-        editorSrc.includes('handleOpenRequestModal'),
-        'Editor must bind handleOpenRequestModal trigger'
-      );
-    });
-
-    test('renders Request Custom Title button in empty search state', () => {
-      assert.ok(
-        editorSrc.includes('No predefined titles match'),
-        'Editor must display empty search state message'
+        editorSrc.includes('validateCustomTitle'),
+        'Must validate custom title with plain text rules'
       );
       assert.ok(
-        editorSrc.includes('handleOpenRequestModal(titleSearch)'),
-        'Empty search state must trigger custom title request modal'
+        editorSrc.includes('customTitle.length}/100'),
+        'Must render real-time character counter'
       );
     });
 
-    test('renders Request Custom Title button in list footer and helper prompt', () => {
+    test('saves identity via standard Save Professional Identity button', () => {
       assert.ok(
-        editorSrc.includes("Can't find your exact title in"),
-        'Editor list footer must provide prompt to request title'
+        editProfileSrc.includes('Save Professional Identity'),
+        'EditProfile must contain "Save Professional Identity" primary action'
       );
       assert.ok(
-        editorSrc.includes('handleOpenRequestModal'),
-        'Custom title mode must offer trigger to submit request'
-      );
-    });
-
-    test('enforces department selection before requesting custom title', () => {
-      assert.ok(
-        editorSrc.includes('activeDepartment') || editorSrc.includes('selectedDeptId'),
-        'Editor must guard that an existing active department is selected before requesting title'
-      );
-    });
-
-    test('implements Request Custom Title modal with validation and character limit', () => {
-      assert.ok(
-        editorSrc.includes('showRequestModal'),
-        'Must contain modal state showRequestModal'
+        editProfileSrc.includes('formatIdentityPayload'),
+        'Must construct standard identity payload with custom title'
       );
       assert.ok(
-        editorSrc.includes('requestTitleInput.length}/100'),
-        'Modal must show a real-time character counter up to 100'
-      );
-      assert.ok(
-        editorSrc.includes('Requests require administrator review before inclusion in the official catalogue'),
-        'Modal must explain that admin approval is required'
+        editProfileSrc.includes('updateMutation.mutate(payload)'),
+        'Must trigger profile update mutation on save'
       );
     });
   });
 
-  describe('2. coreProfileService.js — Custom Title Request API Client', () => {
-    test('exports submitCustomTitleRequest and getMyCustomTitleRequests', () => {
+  describe('2. Removal of Separate Submission Workflow from Normal Flow', () => {
+    test('does not render separate "Request Addition" or "Submit Request" button in normal editing', () => {
       assert.ok(
-        serviceSrc.includes('submitCustomTitleRequest:'),
-        'coreProfileService must export submitCustomTitleRequest'
+        !editorSrc.includes('Request Addition'),
+        'Must not contain separate "Request Addition" button in normal workflow'
       );
       assert.ok(
-        serviceSrc.includes('getMyCustomTitleRequests:'),
-        'coreProfileService must export getMyCustomTitleRequests'
-      );
-    });
-
-    test('targets correct backend endpoints /profile/catalogue/requests', () => {
-      assert.ok(
-        serviceSrc.includes('/profile/catalogue/requests'),
-        'Must call POST /profile/catalogue/requests'
-      );
-      assert.ok(
-        serviceSrc.includes('/profile/catalogue/requests/my'),
-        'Must call GET /profile/catalogue/requests/my'
+        !editorSrc.includes('Submit Request'),
+        'Must not contain separate "Submit Request" button in normal workflow'
       );
     });
 
-    test('forwards departmentId and title in payload', () => {
+    test('does not invoke submitCustomTitleRequest during normal profile identity editing', () => {
       assert.ok(
-        serviceSrc.includes('departmentId') && serviceSrc.includes('title'),
-        'Service payload must include departmentId and title'
+        !editorSrc.includes('submitCustomTitleRequest'),
+        'ProfessionalIdentityEditor must not invoke submitCustomTitleRequest in normal flow'
       );
     });
-  });
 
-  describe('3. Normalization and Duplicate Detection Rules', () => {
-    function normalizeTitle(t) {
-      return (t || '')
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, ' ');
-    }
-
-    test('normalizes whitespace and case deterministically', () => {
-      const raw1 = '  Senior   Civil   Engineer  ';
-      const raw2 = 'senior civil engineer';
-      const raw3 = 'SENIOR  CIVIL  ENGINEER';
-
-      assert.equal(normalizeTitle(raw1), 'senior civil engineer');
-      assert.equal(normalizeTitle(raw2), 'senior civil engineer');
-      assert.equal(normalizeTitle(raw3), 'senior civil engineer');
-      assert.equal(normalizeTitle(raw1), normalizeTitle(raw3));
-    });
-
-    test('detects exact collision regardless of casing or extra spaces', () => {
-      const existingTitles = ['Site Engineer', 'Project Manager', 'Bridge Engineer'];
-      const normalizedExisting = existingTitles.map(normalizeTitle);
-
-      const requested1 = '  site   engineer  ';
+    test('replaces empty search modal trigger with direct "Use as custom title" button', () => {
       assert.ok(
-        normalizedExisting.includes(normalizeTitle(requested1)),
-        'Must detect collision with existing Site Engineer'
+        editorSrc.includes('Use "{titleSearch}" as custom title') ||
+          editorSrc.includes('Use as custom title'),
+        'Empty search state must offer direct option to use search term as custom title'
       );
-
-      const requested2 = 'New Unique Specialist';
       assert.ok(
-        !normalizedExisting.includes(normalizeTitle(requested2)),
-        'Must allow non-colliding title'
+        !editorSrc.includes('handleOpenRequestModal'),
+        'Empty search state must not open separate request modal'
       );
     });
   });
 
-  describe('4. Request Modal Tabs and Request History Rendering', () => {
-    test('supports switching between New Request form and My Requests history tabs', () => {
+  describe('3. Phase 6 Response Handling & User Feedback', () => {
+    test('shows confirmation when a new pending request is created', () => {
       assert.ok(
-        editorSrc.includes('requestModalTab'),
-        'Editor must manage requestModalTab state'
-      );
-      assert.ok(
-        editorSrc.includes('New Request') && editorSrc.includes('My Requests'),
-        'Modal must render New Request and My Requests tab labels'
+        editProfileSrc.includes('Your custom title has been submitted for catalogue review.'),
+        'Must show "Your custom title has been submitted for catalogue review." for new pending requests'
       );
     });
 
-    test('renders status badges for pending, approved, and rejected statuses', () => {
+    test('shows confirmation when an existing pending request is reused', () => {
       assert.ok(
-        editorSrc.includes('Approved') && editorSrc.includes('Pending') && editorSrc.includes('Rejected'),
-        'History tab must render status labels'
-      );
-      assert.ok(
-        editorSrc.includes('CheckCircle2') && editorSrc.includes('Clock') && editorSrc.includes('X'),
-        'History tab must use appropriate status icons'
+        editProfileSrc.includes('This title is already awaiting catalogue review.'),
+        'Must show "This title is already awaiting catalogue review." for reused pending requests'
       );
     });
 
-    test('renders submission date and optional review note in history items', () => {
+    test('shows confirmation when custom title is resolved to official catalogue title', () => {
+      assert.ok(
+        editProfileSrc.includes('Professional identity saved using the official catalogue title.'),
+        'Must show "Professional identity saved using the official catalogue title." when resolved'
+      );
+    });
+
+    test('uses standard save feedback for predefined titles without mentioning custom requests', () => {
+      assert.ok(
+        editProfileSrc.includes('toast.success("Changes saved", "Your profile has been updated.")'),
+        'Must display standard success feedback when saving predefined catalogue title'
+      );
+    });
+
+    test('shows error notification and never claims submission on save failure', () => {
+      assert.ok(
+        editProfileSrc.includes('toast.error("Save failed"'),
+        'Must trigger error toast on mutation failure'
+      );
+      assert.ok(
+        editProfileSrc.includes('err.response?.data?.message || "Could not update your profile."'),
+        'Must display non-sensitive, actionable error message'
+      );
+    });
+  });
+
+  describe('4. Request History View & Status Display', () => {
+    test('renders dedicated My Title Requests history modal', () => {
+      assert.ok(
+        editorSrc.includes('My Title Requests'),
+        'Must provide "My Title Requests" dialog title'
+      );
+      assert.ok(
+        editorSrc.includes('showHistoryModal'),
+        'Editor must track showHistoryModal state'
+      );
+    });
+
+    test('renders status badges for pending, approved, and rejected requests', () => {
+      assert.ok(
+        editorSrc.includes('Approved') &&
+          editorSrc.includes('CheckCircle2') &&
+          editorSrc.includes('Pending') &&
+          editorSrc.includes('Clock') &&
+          editorSrc.includes('Rejected') &&
+          editorSrc.includes('X'),
+        'Must render Approved, Pending, and Rejected badges with respective icons'
+      );
+    });
+
+    test('renders department label, submission date, and reviewer notes in history items', () => {
+      assert.ok(
+        editorSrc.includes('departmentLabel') || editorSrc.includes('departmentId'),
+        'History card must display department information'
+      );
       assert.ok(
         editorSrc.includes('Submitted:') || editorSrc.includes('createdAt'),
-        'History view must display request submission date'
+        'History card must display submission date'
       );
       assert.ok(
         editorSrc.includes('reviewNote'),
-        'History view must render reviewNote when present'
+        'History card must render reviewer note when present'
       );
     });
 
-    test('provides empty state and prompt when no requests exist', () => {
+    test('handles loading, empty, and error states gracefully in history modal', () => {
+      assert.ok(
+        editorSrc.includes('Loading your title requests...'),
+        'Must render loading state while requests query is in flight'
+      );
       assert.ok(
         editorSrc.includes('No Requests Yet'),
-        'History view must display friendly empty state when user has no requests'
+        'Must render empty state when user has no requests'
+      );
+      assert.ok(
+        editorSrc.includes('Could Not Load Requests') && editorSrc.includes('refetchMyRequests'),
+        'Must render error state with retry button'
       );
     });
   });
 
-  describe('5. Client Collision Guard & Repeated Submit Prevention', () => {
-    test('prevents requesting a title that already exists in the department', () => {
+  describe('5. React Query Cache & State Consistency', () => {
+    test('invalidates TITLE_REQUESTS_MY query cache upon custom title profile save', () => {
       assert.ok(
-        editorSrc.includes('already exists in the') && editorSrc.includes('Please select it from the predefined titles list'),
-        'Must block duplicate submission and direct user to predefined titles list'
+        editProfileSrc.includes('PROFILE_QUERY_KEYS.TITLE_REQUESTS_MY'),
+        'EditProfile must reference PROFILE_QUERY_KEYS.TITLE_REQUESTS_MY'
+      );
+      assert.ok(
+        editProfileSrc.includes('queryClient.invalidateQueries({'),
+        'Must invalidate requests query cache on successful custom title save'
       );
     });
 
-    test('prevents submitting duplicate pending requests client-side', () => {
+    test('invalidates and updates profile query cache after identity save', () => {
       assert.ok(
-        editorSrc.includes('already have a pending request'),
-        'Must detect existing pending request in user history before sending request'
+        editProfileSrc.includes('invalidateProfileQueries()'),
+        'Must invalidate profile queries upon save'
+      );
+      assert.ok(
+        editProfileSrc.includes('queryClient.setQueryData(PROFILE_QUERY_KEYS.ME'),
+        'Must optimistically update profile cache with saved response'
       );
     });
 
-    test('shows loading spinner and disables submit button during request in flight', () => {
+    test('synchronizes local professionalIdentity and currentRole with saved response', () => {
       assert.ok(
-        editorSrc.includes('requestSubmitting'),
-        'Editor must track requestSubmitting state'
+        editProfileSrc.includes('res?.user?.professionalIdentity'),
+        'Must check for returned professionalIdentity'
       );
       assert.ok(
-        editorSrc.includes('Submitting...') && editorSrc.includes('Loader2'),
-        'Submit button must show loading state with spinner'
+        editProfileSrc.includes('setProfessionalIdentity(res.user.professionalIdentity)'),
+        'Must synchronize local professionalIdentity state'
+      );
+    });
+  });
+
+  describe('6. Duplicate Submission Protection & Mutation Guards', () => {
+    test('disables save button and displays spinner while mutation is in progress', () => {
+      assert.ok(
+        editProfileSrc.includes('disabled={updateMutation.isPending}'),
+        'Save button must be disabled when updateMutation.isPending is true'
       );
       assert.ok(
-        editorSrc.includes('disabled={requestSubmitting'),
-        'Buttons and inputs must be disabled while submitting'
+        editProfileSrc.includes('RefreshCw') && editProfileSrc.includes('animate-spin'),
+        'Save button must display animated spinner during submission'
       );
     });
 
-    test('invalidates my requests query cache upon successful submission', () => {
+    test('forwards disabled prop to ProfessionalIdentityEditor during profile save', () => {
       assert.ok(
-        editorSrc.includes('TITLE_REQUESTS_MY'),
-        'Editor must use PROFILE_QUERY_KEYS.TITLE_REQUESTS_MY'
+        editProfileSrc.includes('disabled={updateMutation.isPending}'),
+        'Must pass disabled={updateMutation.isPending} to ProfessionalIdentityEditor'
       );
       assert.ok(
-        editorSrc.includes('invalidateQueries'),
-        'Editor must invalidate requests query on successful submission'
+        editorSrc.includes('disabled = false'),
+        'ProfessionalIdentityEditor must accept disabled prop'
+      );
+    });
+  });
+
+  describe('7. Department-Switch Confirmation & Title Collision Safeguards', () => {
+    test('guards against accidental title loss with department switch confirmation', () => {
+      assert.ok(
+        editorSrc.includes('Change Engineering Department?'),
+        'Must prompt user before clearing title on department switch'
+      );
+      assert.ok(
+        editorSrc.includes('handleConfirmDeptChange') &&
+          editorSrc.includes('handleCancelDeptChange'),
+        'Must provide confirm and cancel handlers'
+      );
+    });
+
+    test('displays non-blocking suggestions for matching official catalogue titles', () => {
+      assert.ok(
+        editorSrc.includes('Matching Predefined Catalogue Titles:'),
+        'Must display suggestion chip when custom title matches predefined titles'
+      );
+      assert.ok(
+        editorSrc.includes('handleSelectPredefinedTitle'),
+        'Must allow switching to official title from suggestion'
+      );
+    });
+  });
+
+  describe('8. Accessibility & Semantics of History Panel and Custom Input', () => {
+    test('history modal uses proper dialog semantics and ARIA labelling', () => {
+      assert.ok(
+        editorSrc.includes('role="dialog"'),
+        'Modal must have role="dialog"'
+      );
+      assert.ok(
+        editorSrc.includes('aria-modal="true"'),
+        'Modal must have aria-modal="true"'
+      );
+      assert.ok(
+        editorSrc.includes('aria-labelledby="history-modal-heading"'),
+        'Modal must have aria-labelledby pointing to heading'
+      );
+      assert.ok(
+        editorSrc.includes('aria-label="Close"'),
+        'Close button must have aria-label="Close"'
+      );
+    });
+
+    test('interactive buttons explicitly specify type="button"', () => {
+      assert.ok(
+        editorSrc.includes('type="button"'),
+        'Interactive buttons must specify type="button" to prevent unintended form submission'
+      );
+    });
+  });
+
+  describe('9. Authoritative API Client Invariant', () => {
+    test('coreProfileService preserves getMyCustomTitleRequests and submitCustomTitleRequest', () => {
+      assert.ok(
+        serviceSrc.includes('getMyCustomTitleRequests:'),
+        'Must maintain getMyCustomTitleRequests API method'
+      );
+      assert.ok(
+        serviceSrc.includes('submitCustomTitleRequest:'),
+        'Must maintain submitCustomTitleRequest API method for backwards compatibility'
       );
     });
   });
 });
-

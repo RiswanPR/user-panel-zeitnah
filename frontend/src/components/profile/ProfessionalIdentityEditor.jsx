@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   Building2,
   Briefcase,
@@ -15,7 +15,6 @@ import {
   Tag,
   Info,
   CheckCircle2,
-  Send,
   Loader2,
   Clock,
   History,
@@ -81,20 +80,14 @@ export default function ProfessionalIdentityEditor({
   const [pendingDept, setPendingDept] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  // Custom title request workflow state
-  const [showRequestModal, setShowRequestModal] = useState(false);
-  const [requestModalTab, setRequestModalTab] = useState("form"); // 'form' | 'history'
-  const [requestTitleInput, setRequestTitleInput] = useState("");
-  const [requestSubmitting, setRequestSubmitting] = useState(false);
-  const [requestError, setRequestError] = useState(null);
-  const [requestSuccess, setRequestSuccess] = useState(false);
-  const [requestSuccessMessage, setRequestSuccessMessage] = useState("");
+  // Request history modal state
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
 
-  const queryClient = useQueryClient();
   const {
     data: myRequestsData,
     refetch: refetchMyRequests,
     isLoading: isLoadingRequests,
+    isError: isErrorRequests,
   } = useQuery({
     queryKey: PROFILE_QUERY_KEYS.TITLE_REQUESTS_MY,
     queryFn: () => coreProfileService.getMyCustomTitleRequests(),
@@ -329,105 +322,13 @@ export default function ProfessionalIdentityEditor({
     }
   };
 
-  // 7. Custom Title Request Handlers
-  const handleOpenRequestModal = (initialVal = "", defaultTab = "form") => {
-    const defaultVal =
-      typeof initialVal === "string" && initialVal.trim()
-        ? initialVal.trim()
-        : titleSearch.trim() || customTitle.trim() || "";
-    setRequestTitleInput(defaultVal);
-    setRequestModalTab(defaultTab);
-    setRequestError(null);
-    setRequestSuccess(false);
-    setRequestSuccessMessage("");
-    setShowRequestModal(true);
+  // 7. Request History Modal Handlers
+  const handleOpenHistoryModal = () => {
+    setShowHistoryModal(true);
   };
 
-  const handleCloseRequestModal = () => {
-    setShowRequestModal(false);
-    setRequestSubmitting(false);
-    setRequestError(null);
-    setRequestSuccess(false);
-  };
-
-  const handleSubmitTitleRequest = async (e) => {
-    if (e) e.preventDefault();
-    if (!activeDepartment) {
-      setRequestError("Please select an active department first.");
-      return;
-    }
-    const cleanTitle = requestTitleInput.trim();
-    if (!cleanTitle) {
-      setRequestError("Title label cannot be empty.");
-      return;
-    }
-    if (cleanTitle.length < 2) {
-      setRequestError("Title label must be at least 2 characters long.");
-      return;
-    }
-    if (cleanTitle.length > 100) {
-      setRequestError("Title label must not exceed 100 characters.");
-      return;
-    }
-    if (/[\x00-\x1F\x7F<>]/.test(cleanTitle) || /[\r\n]/.test(cleanTitle)) {
-      setRequestError(
-        "Title label must be single-line plain text without control or HTML characters."
-      );
-      return;
-    }
-
-    // Check if title or alias already exists in active department
-    const normalizedInput = cleanTitle.toLowerCase();
-    const existingMatch = activeDepartment.titles?.find((t) => {
-      if (t.name.toLowerCase() === normalizedInput) return true;
-      return t.aliases?.some((a) => a.toLowerCase() === normalizedInput);
-    });
-    if (existingMatch) {
-      setRequestError(
-        `"${existingMatch.name}" already exists in the ${activeDepartment.name} department. Please select it from the predefined titles list.`
-      );
-      return;
-    }
-
-    // Check if duplicate pending request exists in user's request history
-    const existingPending = myRequests.find(
-      (r) =>
-        r.departmentId === activeDepartment.id &&
-        r.status === "pending" &&
-        r.normalizedTitle === cleanTitle.toLowerCase().replace(/\s+/g, " ")
-    );
-    if (existingPending) {
-      setRequestError(
-        `You already have a pending request for "${cleanTitle}" in this department.`
-      );
-      return;
-    }
-
-    setRequestSubmitting(true);
-    setRequestError(null);
-    try {
-      const res = await coreProfileService.submitCustomTitleRequest(
-        activeDepartment.id,
-        cleanTitle
-      );
-      setRequestSuccess(true);
-      setRequestSuccessMessage(
-        res?.message ||
-          "Custom title request submitted successfully for administrator review."
-      );
-      queryClient.invalidateQueries({
-        queryKey: PROFILE_QUERY_KEYS.TITLE_REQUESTS_MY,
-      });
-      refetchMyRequests();
-    } catch (err) {
-      const msg =
-        err.response?.data?.message ||
-        err.message ||
-        "Failed to submit title request. Please try again.";
-      setRequestError(msg);
-    } finally {
-      setRequestSubmitting(false);
-    }
+  const handleCloseHistoryModal = () => {
+    setShowHistoryModal(false);
   };
 
   // =========================================================================
@@ -759,18 +660,10 @@ export default function ProfessionalIdentityEditor({
                           setCustomTitle(titleSearch);
                           handleSwitchTitleMode("custom");
                         }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/10 bg-white/[0.04] text-xs text-text-secondary hover:text-white hover:bg-white/[0.08] font-semibold transition-all"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-brand-mint/30 bg-brand-mint/15 text-brand-mint hover:bg-brand-mint/25 text-xs font-bold transition-all shadow-sm cursor-pointer"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
-                        Use as custom title
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenRequestModal(titleSearch)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-brand-mint/30 bg-brand-mint/15 text-brand-mint hover:bg-brand-mint/25 text-xs font-bold transition-all shadow-sm"
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                        Request Custom Title
+                        Use "{titleSearch}" as custom title
                       </button>
                     </div>
                   </div>
@@ -786,8 +679,8 @@ export default function ProfessionalIdentityEditor({
                   {myRequests.length > 0 && (
                     <button
                       type="button"
-                      onClick={() => handleOpenRequestModal("", "history")}
-                      className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-white font-medium transition-colors"
+                      onClick={handleOpenHistoryModal}
+                      className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-white font-medium transition-colors cursor-pointer"
                     >
                       <History className="w-3 h-3 text-brand-mint" />
                       My Requests ({myRequests.length})
@@ -795,11 +688,11 @@ export default function ProfessionalIdentityEditor({
                   )}
                   <button
                     type="button"
-                    onClick={() => handleOpenRequestModal(titleSearch)}
-                    className="inline-flex items-center gap-1 text-xs text-brand-mint hover:underline font-semibold"
+                    onClick={() => handleSwitchTitleMode("custom")}
+                    className="inline-flex items-center gap-1 text-xs text-brand-mint hover:underline font-semibold cursor-pointer"
                   >
-                    <Send className="w-3 h-3" />
-                    Request Custom Title
+                    <Edit3 className="w-3 h-3" />
+                    Enter Custom Title
                   </button>
                 </div>
               </div>
@@ -858,7 +751,7 @@ export default function ProfessionalIdentityEditor({
                 )}
 
                 <p className="text-[11px] text-text-muted mt-1.5">
-                  Custom titles remain associated with {activeDepartment.name}. Must be single-line plain text under 100 characters.
+                  Custom titles remain associated with {activeDepartment.name}. When you click Save Professional Identity, your title is saved immediately and automatically submitted for catalogue review. Must be single-line plain text under 100 characters.
                 </p>
               </div>
 
@@ -891,37 +784,27 @@ export default function ProfessionalIdentityEditor({
                 </div>
               )}
 
-              {/* Request Title Addition in Department Banner */}
-              <div className="p-3.5 rounded-xl border border-white/[0.08] bg-bg-card/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                <div className="space-y-0.5">
-                  <p className="text-xs font-semibold text-white">
-                    Missing this title in the official catalogue?
-                  </p>
-                  <p className="text-[11px] text-text-muted">
-                    Submit a request to add "{customTitle || "your title"}" to {activeDepartment.name} for all users.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {myRequests.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => handleOpenRequestModal("", "history")}
-                      className="self-start sm:self-center shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.04] text-text-secondary hover:text-white text-xs font-semibold transition-all"
-                    >
-                      <History className="w-3.5 h-3.5 text-brand-mint" />
-                      My Requests ({myRequests.length})
-                    </button>
-                  )}
+              {/* Optional Request History Link */}
+              {myRequests.length > 0 && (
+                <div className="p-3.5 rounded-xl border border-white/[0.08] bg-bg-card/40 flex items-center justify-between gap-2.5">
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-semibold text-white">
+                      Track Review Status
+                    </p>
+                    <p className="text-[11px] text-text-muted">
+                      Review the progress of your submitted custom titles in the catalogue.
+                    </p>
+                  </div>
                   <button
                     type="button"
-                    onClick={() => handleOpenRequestModal(customTitle)}
-                    className="self-start sm:self-center shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-mint/30 bg-brand-mint/10 text-brand-mint hover:bg-brand-mint/20 text-xs font-bold transition-all shadow-sm"
+                    onClick={handleOpenHistoryModal}
+                    className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.04] text-text-secondary hover:text-white text-xs font-semibold transition-all cursor-pointer"
                   >
-                    <Send className="w-3.5 h-3.5" />
-                    Request Addition
+                    <History className="w-3.5 h-3.5 text-brand-mint" />
+                    My Requests ({myRequests.length})
                   </button>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>
@@ -989,12 +872,12 @@ export default function ProfessionalIdentityEditor({
         </div>
       )}
 
-      {/* ── STEP 4: Request Custom Title Modal ── */}
-      {showRequestModal && activeDepartment && (
+      {/* ── STEP 4: My Title Requests History Modal ── */}
+      {showHistoryModal && (
         <div
           role="dialog"
           aria-modal="true"
-          aria-labelledby="request-title-heading"
+          aria-labelledby="history-modal-heading"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in"
         >
           <div className="w-full max-w-lg rounded-3xl border border-white/[0.12] bg-bg-card p-6 space-y-5 shadow-2xl">
@@ -1002,298 +885,136 @@ export default function ProfessionalIdentityEditor({
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-brand-mint/15 border border-brand-mint/30 flex items-center justify-center shrink-0 text-brand-mint">
-                  {requestModalTab === "form" ? (
-                    <Send className="w-5 h-5" />
-                  ) : (
-                    <History className="w-5 h-5" />
-                  )}
+                  <History className="w-5 h-5" />
                 </div>
                 <div>
                   <h3
-                    id="request-title-heading"
+                    id="history-modal-heading"
                     className="text-base font-bold text-white tracking-tight"
                   >
-                    {requestModalTab === "form"
-                      ? "Request Custom Title"
-                      : "My Title Requests"}
+                    My Title Requests
                   </h3>
                   <p className="text-xs text-text-secondary">
-                    {requestModalTab === "form"
-                      ? "Submit a missing title for official catalogue inclusion."
-                      : "Review the status of your previously submitted title requests."}
+                    Review the catalogue review status of your custom title requests.
                   </p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={handleCloseRequestModal}
-                className="text-text-muted hover:text-white transition-colors p-1"
+                onClick={handleCloseHistoryModal}
+                className="text-text-muted hover:text-white transition-colors p-1 cursor-pointer"
                 aria-label="Close"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Modal Tabs */}
-            <div className="flex items-center border-b border-white/[0.08] gap-4 text-xs font-semibold">
-              <button
-                type="button"
-                onClick={() => {
-                  setRequestModalTab("form");
-                  setRequestError(null);
-                }}
-                className={`pb-2.5 transition-colors relative flex items-center gap-1.5 ${
-                  requestModalTab === "form"
-                    ? "text-brand-mint border-b-2 border-brand-mint font-bold"
-                    : "text-text-muted hover:text-white"
-                }`}
-              >
-                <Send className="w-3.5 h-3.5" />
-                <span>New Request</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setRequestModalTab("history")}
-                className={`pb-2.5 transition-colors relative flex items-center gap-1.5 ${
-                  requestModalTab === "history"
-                    ? "text-brand-mint border-b-2 border-brand-mint font-bold"
-                    : "text-text-muted hover:text-white"
-                }`}
-              >
-                <History className="w-3.5 h-3.5" />
-                <span>My Requests</span>
-                {myRequests.length > 0 && (
-                  <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-white/10 text-white">
-                    {myRequests.length}
-                  </span>
-                )}
-              </button>
-            </div>
+            {/* TAB CONTENT: History only */}
+            <div className="space-y-3">
+              {isLoadingRequests ? (
+                <div className="py-8 text-center space-y-2">
+                  <Loader2 className="w-6 h-6 animate-spin text-brand-mint mx-auto" />
+                  <p className="text-xs text-text-muted">Loading your title requests...</p>
+                </div>
+              ) : isErrorRequests ? (
+                <div className="py-8 text-center space-y-3 border border-red-500/20 rounded-2xl bg-red-500/5 p-6">
+                  <AlertCircle className="w-8 h-8 text-red-400 mx-auto" />
+                  <p className="text-xs font-semibold text-white">Could Not Load Requests</p>
+                  <p className="text-[11px] text-text-muted max-w-xs mx-auto">
+                    There was an error loading your title requests history.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => refetchMyRequests()}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/10 bg-white/[0.04] text-xs font-semibold text-white hover:bg-white/[0.08] transition-all cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    Retry
+                  </button>
+                </div>
+              ) : myRequests.length === 0 ? (
+                <div className="py-8 text-center space-y-2 border border-white/[0.06] rounded-2xl bg-bg-elevated/20 p-6">
+                  <History className="w-8 h-8 text-text-muted mx-auto opacity-50" />
+                  <p className="text-xs font-semibold text-white">No Requests Yet</p>
+                  <p className="text-[11px] text-text-muted max-w-xs mx-auto leading-relaxed">
+                    When you save a custom title on your profile, it is automatically submitted for catalogue review and will appear here.
+                  </p>
+                </div>
+              ) : (
+                <div className="max-h-72 overflow-y-auto space-y-2.5 pr-1 scrollbar-thin">
+                  {myRequests.map((req, idx) => {
+                    const reqId = req.id || req._id || `req-${idx}`;
+                    const status = (req.status || "pending").toLowerCase();
+                    const dateFormatted = req.createdAt
+                      ? new Date(req.createdAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })
+                      : "";
 
-            {/* TAB CONTENT: Form */}
-            {requestModalTab === "form" && (
-              <>
-                {requestSuccess ? (
-                  <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 space-y-4">
-                    <div className="flex items-start gap-3 text-emerald-300">
-                      <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
-                      <div className="space-y-1">
-                        <p className="text-xs font-bold uppercase tracking-wider text-emerald-200">
-                          Request Submitted Successfully
-                        </p>
-                        <p className="text-xs text-emerald-200/90 leading-relaxed">
-                          {requestSuccessMessage}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-emerald-500/20">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setRequestSuccess(false);
-                          setRequestModalTab("history");
-                        }}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-white/10 bg-white/[0.04] text-xs font-semibold text-white hover:bg-white/[0.08] transition-all"
+                    return (
+                      <div
+                        key={reqId}
+                        className="p-3.5 rounded-2xl border border-white/[0.08] bg-bg-elevated/50 space-y-2"
                       >
-                        <History className="w-3.5 h-3.5 text-brand-mint" />
-                        View My Requests
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleCloseRequestModal}
-                        className="px-4 py-2 rounded-xl bg-brand-mint text-bg-main text-xs font-bold uppercase tracking-wider hover:bg-brand-mint/90 transition-all shadow-md"
-                      >
-                        Done
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <form onSubmit={handleSubmitTitleRequest} className="space-y-4">
-                    {/* Fixed Department Banner */}
-                    <div className="p-3.5 rounded-2xl border border-white/[0.08] bg-bg-elevated/40 space-y-1">
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-text-muted">
-                        Target Engineering Department (Fixed)
-                      </span>
-                      <div className="flex items-center gap-2 text-xs font-semibold text-white">
-                        <Building2 className="w-3.5 h-3.5 text-brand-mint" />
-                        <span>{activeDepartment.name}</span>
-                        <span className="text-[10px] text-text-muted font-mono">
-                          ({activeDepartment.id})
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Requested Title Input */}
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold uppercase tracking-wider text-text-secondary">
-                          Proposed Title Name <span className="text-brand-mint">*</span>
-                        </label>
-                        <span
-                          className={`text-[11px] font-mono ${
-                            requestTitleInput.length > 100
-                              ? "text-red-400 font-bold"
-                              : "text-text-muted"
-                          }`}
-                        >
-                          {requestTitleInput.length}/100
-                        </span>
-                      </div>
-                      <input
-                        type="text"
-                        value={requestTitleInput}
-                        onChange={(e) => setRequestTitleInput(e.target.value)}
-                        maxLength={105}
-                        placeholder="e.g. Lead Substation Commissioning Engineer"
-                        disabled={requestSubmitting}
-                        className="w-full px-4 py-2.5 rounded-xl bg-bg-elevated border border-white/[0.08] focus:border-brand-mint/50 focus:ring-1 focus:ring-brand-mint/30 text-xs sm:text-sm text-white placeholder:text-text-muted focus:outline-none transition-colors"
-                      />
-                      <p className="text-[11px] text-text-muted">
-                        Must be single-line plain text under 100 characters. Requests require administrator review before inclusion in the official catalogue.
-                      </p>
-                    </div>
-
-                    {requestError && (
-                      <div className="p-3 rounded-xl border border-red-500/30 bg-red-500/10 flex items-start gap-2.5 text-red-300 text-xs">
-                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                        <span>{requestError}</span>
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-end gap-3 pt-2">
-                      <button
-                        type="button"
-                        onClick={handleCloseRequestModal}
-                        disabled={requestSubmitting}
-                        className="px-4 py-2 rounded-xl border border-white/10 bg-white/[0.04] text-xs font-semibold text-text-secondary hover:text-white hover:bg-white/[0.08] transition-all"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={requestSubmitting || !requestTitleInput.trim()}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-mint text-bg-main text-xs font-bold uppercase tracking-wider hover:bg-brand-mint/90 transition-all shadow-lg shadow-brand-mint/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {requestSubmitting ? (
-                          <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            Submitting...
-                          </>
-                        ) : (
-                          <>
-                            <Send className="w-3.5 h-3.5" />
-                            Submit Request
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </form>
-                )}
-              </>
-            )}
-
-            {/* TAB CONTENT: History */}
-            {requestModalTab === "history" && (
-              <div className="space-y-3">
-                {isLoadingRequests ? (
-                  <div className="py-8 text-center space-y-2">
-                    <Loader2 className="w-6 h-6 animate-spin text-brand-mint mx-auto" />
-                    <p className="text-xs text-text-muted">Loading your title requests...</p>
-                  </div>
-                ) : myRequests.length === 0 ? (
-                  <div className="py-8 text-center space-y-2 border border-white/[0.06] rounded-2xl bg-bg-elevated/20 p-6">
-                    <History className="w-8 h-8 text-text-muted mx-auto opacity-50" />
-                    <p className="text-xs font-semibold text-white">No Requests Yet</p>
-                    <p className="text-[11px] text-text-muted max-w-xs mx-auto">
-                      You have not submitted any custom title requests. Propose a missing title using the New Request tab.
-                    </p>
-                    <div className="pt-2">
-                      <button
-                        type="button"
-                        onClick={() => setRequestModalTab("form")}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-brand-mint/15 border border-brand-mint/30 text-brand-mint text-xs font-semibold hover:bg-brand-mint/25 transition-all"
-                      >
-                        <Send className="w-3 h-3" />
-                        Create a Request
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="max-h-72 overflow-y-auto space-y-2.5 pr-1 scrollbar-thin">
-                    {myRequests.map((req, idx) => {
-                      const reqId = req.id || req._id || `req-${idx}`;
-                      const status = (req.status || "pending").toLowerCase();
-                      const dateFormatted = req.createdAt
-                        ? new Date(req.createdAt).toLocaleDateString("en-US", {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })
-                        : "";
-
-                      return (
-                        <div
-                          key={reqId}
-                          className="p-3.5 rounded-2xl border border-white/[0.08] bg-bg-elevated/50 space-y-2"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="space-y-0.5">
-                              <p className="text-xs font-bold text-white tracking-tight">
-                                {req.title}
-                              </p>
-                              <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
-                                <Building2 className="w-3 h-3 text-brand-mint" />
-                                <span>{req.departmentLabel || req.departmentId}</span>
-                              </div>
-                            </div>
-                            <div>
-                              {status === "approved" ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  Approved
-                                </span>
-                              ) : status === "rejected" ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30">
-                                  <X className="w-3 h-3" />
-                                  Rejected
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                                  <Clock className="w-3 h-3" />
-                                  Pending
-                                </span>
-                              )}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="space-y-0.5">
+                            <p className="text-xs font-bold text-white tracking-tight">
+                              {req.title || req.requestedTitle}
+                            </p>
+                            <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
+                              <Building2 className="w-3 h-3 text-brand-mint" />
+                              <span>{req.departmentLabel || req.departmentName || req.departmentId}</span>
                             </div>
                           </div>
-
-                          <div className="flex items-center justify-between text-[10px] text-text-muted pt-1 border-t border-white/[0.04]">
-                            <span>Submitted: {dateFormatted || "Recent"}</span>
-                            {req.reviewNote && (
-                              <span
-                                className="text-amber-200/80 italic truncate max-w-[200px]"
-                                title={req.reviewNote}
-                              >
-                                Note: {req.reviewNote}
+                          <div>
+                            {status === "approved" ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                                <CheckCircle2 className="w-3 h-3" />
+                                Approved
+                              </span>
+                            ) : status === "rejected" ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                                <X className="w-3 h-3" />
+                                Rejected
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                <Clock className="w-3 h-3" />
+                                Pending
                               </span>
                             )}
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
 
-                <div className="flex justify-end pt-2">
-                  <button
-                    type="button"
-                    onClick={handleCloseRequestModal}
-                    className="px-4 py-2 rounded-xl border border-white/10 bg-white/[0.04] text-xs font-semibold text-text-secondary hover:text-white hover:bg-white/[0.08] transition-all"
-                  >
-                    Close
-                  </button>
+                        <div className="flex items-center justify-between text-[10px] text-text-muted pt-1 border-t border-white/[0.04]">
+                          <span>Submitted: {dateFormatted || "Recent"}</span>
+                          {req.reviewNote && (
+                            <span
+                              className="text-amber-200/80 italic truncate max-w-[200px]"
+                              title={req.reviewNote}
+                            >
+                              Note: {req.reviewNote}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
+              )}
+
+              <div className="flex justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={handleCloseHistoryModal}
+                  className="px-4 py-2 rounded-xl border border-white/10 bg-white/[0.04] text-xs font-semibold text-text-secondary hover:text-white hover:bg-white/[0.08] transition-all cursor-pointer"
+                >
+                  Close
+                </button>
               </div>
-            )}
+            </div>
           </div>
         </div>
       )}

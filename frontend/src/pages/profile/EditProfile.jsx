@@ -395,7 +395,47 @@ export default function EditProfile() {
       }
 
       setIsDirty(false);
-      toast.success("Changes saved", "Your profile has been updated.");
+
+      if (res?.user?.professionalIdentity) {
+        setProfessionalIdentity(res.user.professionalIdentity);
+        if (res.user.professionalIdentity.titleName) {
+          setCurrentRole(res.user.professionalIdentity.titleName);
+        }
+      }
+
+      // Phase 7 Custom Title Request Feedback Handling
+      if (res?.customTitleRequest) {
+        const { action, isOfficialTitle, isNew, reused } = res.customTitleRequest;
+        if (action === "CREATED_PENDING" || (isNew && !isOfficialTitle)) {
+          toast.success(
+            "Identity Saved",
+            "Professional identity saved. Your custom title has been submitted for catalogue review."
+          );
+        } else if (action === "REUSED_PENDING" || (reused && !isOfficialTitle)) {
+          toast.success(
+            "Identity Saved",
+            "Professional identity saved. This title is already awaiting catalogue review."
+          );
+        } else if (
+          action === "OFFICIAL_TITLE_EXISTS" ||
+          action === "ALREADY_APPROVED" ||
+          isOfficialTitle
+        ) {
+          toast.success(
+            "Identity Saved",
+            "Professional identity saved using the official catalogue title."
+          );
+        } else {
+          toast.success("Changes saved", "Your profile has been updated.");
+        }
+        // Invalidate request history query cache so "My Requests" is immediately up to date
+        queryClient.invalidateQueries({
+          queryKey: PROFILE_QUERY_KEYS.TITLE_REQUESTS_MY,
+        });
+      } else {
+        toast.success("Changes saved", "Your profile has been updated.");
+      }
+
       notifyMilestones(res.newlyAwarded);
     },
     onError: (err) => {
