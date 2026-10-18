@@ -255,13 +255,13 @@ export default function ConnectionRequestCard({
                 <span>Decline</span>
               </button>
 
-              {/* Accept: Primary brand-mint */}
+              {/* Accept: Primary CTA */}
               <button
                 type="button"
                 onClick={() => onAccept?.(connectionId)}
                 disabled={isAccepting || isDeclining}
                 aria-label={`Accept request from ${member.name}`}
-                className="px-4 py-2 rounded-xl bg-brand-mint hover:bg-brand-mint/90 text-black text-xs font-bold transition-all cursor-pointer shadow-md shadow-brand-mint/15 disabled:opacity-50 min-h-[38px] inline-flex items-center gap-1.5 focus-ring"
+                className="px-4 py-2 rounded-xl bg-brand-primary text-white hover:bg-brand-primary/90 dark:bg-brand-mint dark:text-brand-navy dark:hover:bg-brand-mint/90 text-xs font-bold transition-all cursor-pointer shadow-md disabled:opacity-50 min-h-[38px] inline-flex items-center gap-1.5 focus-ring"
               >
                 {isAccepting ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />

@@ -640,7 +640,7 @@ export default function CreateStoryModal({ isOpen, onClose, publishingContext: p
                 onClick={() => setTab('media')}
                 className={`flex-1 min-h-[44px] rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   tab === 'media'
-                    ? 'bg-brand-mint text-bg-base shadow-sm'
+                    ? 'bg-brand-navy text-white dark:bg-brand-mint dark:text-brand-navy shadow-sm'
                     : 'bg-surface-elevated text-text-muted hover:text-text-primary hover:bg-surface-card border border-border'
                 }`}
               >
@@ -651,7 +651,7 @@ export default function CreateStoryModal({ isOpen, onClose, publishingContext: p
                 onClick={() => setTab('text')}
                 className={`flex-1 min-h-[44px] rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   tab === 'text'
-                    ? 'bg-brand-mint text-bg-base shadow-sm'
+                    ? 'bg-brand-navy text-white dark:bg-brand-mint dark:text-brand-navy shadow-sm'
                     : 'bg-surface-elevated text-text-muted hover:text-text-primary hover:bg-surface-card border border-border'
                 }`}
               >
@@ -901,7 +901,7 @@ export default function CreateStoryModal({ isOpen, onClose, publishingContext: p
               type="button"
               onClick={handleClose}
               disabled={isBusy}
-              className="flex-1 min-h-[44px] rounded-xl bg-surface-elevated hover:bg-surface-card disabled:opacity-40 text-text-muted hover:text-text-primary border border-border text-xs sm:text-sm font-semibold transition-all cursor-pointer"
+              className="flex-1 zn-btn-secondary min-h-[44px] rounded-xl text-xs sm:text-sm font-semibold cursor-pointer"
             >
               Cancel
             </button>
@@ -910,10 +910,8 @@ export default function CreateStoryModal({ isOpen, onClose, publishingContext: p
               type="button"
               onClick={handleSubmit}
               disabled={isBusy || (tab === 'media' && !file && !uploadedUrl) || (tab === 'text' && !text.trim())}
-              className={`flex-1 min-h-[44px] rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md ${
-                state === 'publishing'
-                  ? 'community-shimmer-btn text-bg-base'
-                  : 'bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 text-bg-base hover:shadow-[0_0_20px_rgba(52,211,153,0.4)] active:scale-95'
+              className={`flex-1 zn-btn-primary min-h-[44px] rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 cursor-pointer shadow-md ${
+                state === 'publishing' ? 'community-shimmer-btn' : ''
               } disabled:opacity-40 disabled:cursor-not-allowed`}
             >
               {state === 'uploading' ? (

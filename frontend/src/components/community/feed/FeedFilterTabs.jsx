@@ -75,7 +75,7 @@ export default function FeedFilterTabs({
             )}
             <Icon
               className={`w-3.5 h-3.5 relative z-10 transition-colors ${
-                isActive ? 'text-brand-mint' : 'text-text-faint'
+                isActive ? 'text-brand-navy dark:text-brand-mint' : 'text-text-muted'
               }`}
             />
             <span className="relative z-10 tracking-tight">{tab.label}</span>

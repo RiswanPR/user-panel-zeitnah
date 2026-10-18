@@ -16,7 +16,7 @@ function renderFormattedText(text) {
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="text-brand-mint hover:underline break-all"
+          className="text-brand-navy dark:text-brand-mint font-semibold hover:underline break-all"
         >
           {part}
         </a>
@@ -50,7 +50,7 @@ export default function PostContent({
       {/* AI Summary Highlight if available */}
       {aiSummary && (
         <div className="mb-3 p-3 bg-brand-mint/10 border border-brand-mint/20 rounded-xl">
-          <div className="flex items-center gap-1.5 mb-1 text-brand-mint">
+          <div className="flex items-center gap-1.5 mb-1 text-brand-navy dark:text-brand-mint">
             <Sparkles className="w-4 h-4 shrink-0" />
             <span className="text-[11px] font-bold uppercase tracking-wider">AI Summary</span>
           </div>
@@ -108,7 +108,7 @@ export default function PostContent({
                 key={`${tag}-${idx}`}
                 type="button"
                 onClick={() => onSelectTopic?.(cleanTag)}
-                className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-brand-mint/[0.08] hover:bg-brand-mint/[0.16] border border-brand-mint/20 hover:border-brand-mint/40 text-[11px] sm:text-xs font-medium text-brand-mint transition-all duration-150 cursor-pointer focus:outline-none focus:ring-1 focus:ring-brand-mint/50 select-none"
+                className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-brand-mint/10 hover:bg-brand-mint/20 border border-brand-mint/25 hover:border-brand-mint/40 text-[11px] sm:text-xs font-semibold text-brand-navy dark:text-brand-mint transition-all duration-150 cursor-pointer focus:outline-none focus:ring-1 focus:ring-brand-mint/50 select-none"
                 title={`Filter posts by #${cleanTag}`}
                 aria-label={`Topic tag ${cleanTag}`}
               >

@@ -196,7 +196,7 @@ export default function CareerIntelligencePage() {
         <h2 className="text-lg font-semibold">{error || 'Data Unavailable'}</h2>
         <button
           onClick={() => loadCareerData()}
-          className="px-4 py-2 rounded-lg bg-brand-mint/10 text-brand-mint hover:bg-brand-mint/20 text-sm font-medium transition"
+          className="px-4 py-2 rounded-xl bg-brand-primary text-white hover:bg-brand-primary/90 dark:bg-brand-mint dark:text-brand-navy dark:hover:bg-brand-mint/90 text-sm font-semibold transition shadow-sm"
         >
           Try Again
         </button>
@@ -220,7 +220,7 @@ export default function CareerIntelligencePage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-mint/10 text-brand-mint border border-brand-mint/20">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-mint/10 text-brand-primary dark:text-brand-mint border border-brand-mint/20">
                   <Sparkles className="w-3 h-3" />
                   Infrastructure Career Decision Support
                 </span>
@@ -241,13 +241,13 @@ export default function CareerIntelligencePage() {
                 disabled={refreshing}
                 className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border bg-surface-elevated hover:bg-surface-elevated/80 text-xs font-medium text-text-primary transition"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-brand-mint' : ''}`} />
+                <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-brand-primary dark:text-brand-mint' : ''}`} />
                 {refreshing ? 'Refreshing...' : 'Refresh Insights'}
               </button>
 
               <button
                 onClick={() => setShowTargetModal(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-mint text-brand-navy text-xs font-bold hover:bg-brand-mint/90 transition shadow-lg shadow-brand-mint/20 cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-primary text-white hover:bg-brand-primary/90 dark:bg-brand-mint dark:text-brand-navy dark:hover:bg-brand-mint/90 text-xs font-bold transition shadow-lg cursor-pointer min-h-[38px]"
               >
                 <Target className="w-3.5 h-3.5" />
                 Target: {primaryTargetRole || 'Set Target'}
@@ -267,10 +267,10 @@ export default function CareerIntelligencePage() {
                 <span
                   className={`text-xl font-bold ${
                     profileStrength === 'STRONG'
-                      ? 'text-emerald-400'
+                      ? 'text-emerald-700 dark:text-emerald-400'
                       : profileStrength === 'MODERATE'
-                      ? 'text-amber-400'
-                      : 'text-cyan-400'
+                      ? 'text-amber-700 dark:text-amber-400'
+                      : 'text-cyan-700 dark:text-cyan-400'
                   }`}
                 >
                   {profileStrength === 'STRONG'
@@ -327,7 +327,7 @@ export default function CareerIntelligencePage() {
               </div>
               <button
                 onClick={() => setShowTargetModal(true)}
-                className="text-[11px] text-brand-mint hover:underline font-medium mt-1 inline-flex items-center gap-1 cursor-pointer"
+                className="text-[11px] text-brand-primary dark:text-brand-mint hover:underline font-semibold mt-1 inline-flex items-center gap-1 cursor-pointer"
               >
                 Change goal <ChevronRight className="w-3 h-3" />
               </button>
@@ -335,7 +335,11 @@ export default function CareerIntelligencePage() {
           </div>
 
           {/* ── NAVIGATION TABS ──────────────────────────────────────────────── */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-6 mt-2 border-t border-border">
+          <div
+            role="tablist"
+            aria-label="Career Intelligence Sections"
+            className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-6 mt-2 border-t border-border"
+          >
             {[
               { id: 'overview', label: 'Overview', icon: Layers },
               { id: 'roles', label: 'Role Alignment', icon: Compass },
@@ -349,15 +353,18 @@ export default function CareerIntelligencePage() {
               return (
                 <button
                   key={tab.id}
+                  role="tab"
+                  id={`career-tab-${tab.id}`}
+                  aria-selected={isActive}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition cursor-pointer focus-ring ${
                     isActive
-                      ? 'bg-surface-elevated text-text-primary border border-border shadow-sm'
+                      ? 'bg-surface-elevated text-text-primary font-bold border border-border shadow-sm'
                       : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated/40'
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-brand-mint' : 'text-text-muted'}`} />
-                  {tab.label}
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-brand-primary dark:text-brand-mint' : 'text-text-muted'}`} />
+                  <span>{tab.label}</span>
                 </button>
               );
             })}
@@ -379,7 +386,7 @@ export default function CareerIntelligencePage() {
                     How clearly your available profile information demonstrates relevant infrastructure capabilities.
                   </p>
                 </div>
-                <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+                <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border border-emerald-500/20 font-semibold">
                   {profileStrength} Strength
                 </span>
               </div>
@@ -397,7 +404,7 @@ export default function CareerIntelligencePage() {
                     <div
                       className={`p-2 rounded-xl mt-0.5 ${
                         item.verified
-                          ? 'bg-emerald-500/10 text-emerald-400'
+                          ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
                           : 'bg-surface-elevated text-text-muted'
                       }`}
                     >
@@ -423,7 +430,7 @@ export default function CareerIntelligencePage() {
                 </div>
                 <button
                   onClick={() => setActiveTab('roles')}
-                  className="text-xs text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-1"
+                  className="text-xs text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-semibold flex items-center gap-1"
                 >
                   View all roles <ArrowUpRight className="w-3.5 h-3.5" />
                 </button>
@@ -443,10 +450,10 @@ export default function CareerIntelligencePage() {
                         <span
                           className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
                             role.alignmentLevel === 'STRONG'
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                              ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border border-emerald-500/20'
                               : role.alignmentLevel === 'MODERATE'
-                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                              : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                              ? 'bg-amber-500/10 text-amber-800 dark:text-amber-400 border border-amber-500/20'
+                              : 'bg-blue-500/10 text-blue-800 dark:text-blue-400 border border-blue-500/20'
                           }`}
                         >
                           {role.alignmentScore}% Match
@@ -456,14 +463,14 @@ export default function CareerIntelligencePage() {
 
                       <div className="mt-3 space-y-1.5">
                         {role.demonstratedReasons.slice(0, 2).map((r, i) => (
-                          <div key={i} className="text-xs text-emerald-400/90 flex items-start gap-1.5">
-                            <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                          <div key={i} className="text-xs text-emerald-800 dark:text-emerald-400/90 flex items-start gap-1.5 font-medium">
+                            <CheckCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                             <span>{r}</span>
                           </div>
                         ))}
                         {role.developmentGaps.slice(0, 1).map((g, i) => (
-                          <div key={i} className="text-xs text-amber-400/80 flex items-start gap-1.5">
-                            <span className="text-amber-400">△</span>
+                          <div key={i} className="text-xs text-amber-800 dark:text-amber-400/90 flex items-start gap-1.5 font-medium">
+                            <span className="text-amber-600 dark:text-amber-400 font-bold">△</span>
                             <span>{g}</span>
                           </div>
                         ))}
@@ -479,7 +486,7 @@ export default function CareerIntelligencePage() {
                           handleSelectRole(role.roleTitle);
                           setActiveTab('skills');
                         }}
-                        className="text-xs text-emerald-400 hover:text-emerald-300 font-medium inline-flex items-center gap-1"
+                        className="text-xs text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-semibold inline-flex items-center gap-1"
                       >
                         Skill Gaps <ChevronRight className="w-3 h-3" />
                       </button>
@@ -508,8 +515,8 @@ export default function CareerIntelligencePage() {
                           <span
                             className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${
                               rec.priority === 'HIGH'
-                                ? 'bg-rose-500/10 text-rose-400'
-                                : 'bg-amber-500/10 text-amber-400'
+                                ? 'bg-rose-500/10 text-rose-700 dark:text-rose-400'
+                                : 'bg-amber-500/10 text-amber-800 dark:text-amber-400'
                             }`}
                           >
                             {rec.priority}
@@ -556,10 +563,10 @@ export default function CareerIntelligencePage() {
                         <span
                           className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${
                             role.alignmentLevel === 'STRONG'
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                              ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border border-emerald-500/20'
                               : role.alignmentLevel === 'MODERATE'
-                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                              : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                              ? 'bg-amber-500/10 text-amber-800 dark:text-amber-400 border border-amber-500/20'
+                              : 'bg-blue-500/10 text-blue-800 dark:text-blue-400 border border-blue-500/20'
                           }`}
                         >
                           {role.alignmentScore}% {role.alignmentLevel}
@@ -569,7 +576,7 @@ export default function CareerIntelligencePage() {
                       <h4 className="text-base font-bold text-text-primary flex items-center gap-2">
                         {role.roleTitle}
                         {isCurrentTarget && (
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-normal">
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 font-medium">
                             Target
                           </span>
                         )}
@@ -580,10 +587,10 @@ export default function CareerIntelligencePage() {
                         <div
                           className={`h-1.5 rounded-full ${
                             role.alignmentLevel === 'STRONG'
-                              ? 'bg-emerald-400'
+                              ? 'bg-emerald-500 dark:bg-emerald-400'
                               : role.alignmentLevel === 'MODERATE'
-                              ? 'bg-amber-400'
-                              : 'bg-blue-400'
+                              ? 'bg-amber-500 dark:bg-amber-400'
+                              : 'bg-blue-500 dark:bg-blue-400'
                           }`}
                           style={{ width: `${role.alignmentScore}%` }}
                         />
@@ -596,7 +603,7 @@ export default function CareerIntelligencePage() {
                         </div>
                         {role.demonstratedReasons.map((r, i) => (
                           <div key={i} className="text-xs text-text-secondary flex items-start gap-1.5">
-                            <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                            <CheckCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                             <span>{r}</span>
                           </div>
                         ))}
@@ -607,8 +614,8 @@ export default function CareerIntelligencePage() {
                               Potential Development
                             </div>
                             {role.developmentGaps.map((g, i) => (
-                              <div key={i} className="text-xs text-amber-400/90 flex items-start gap-1.5">
-                                <span className="text-amber-400 font-bold">△</span>
+                              <div key={i} className="text-xs text-amber-800 dark:text-amber-400/90 flex items-start gap-1.5 font-medium">
+                                <span className="text-amber-600 dark:text-amber-400 font-bold">△</span>
                                 <span>{g}</span>
                               </div>
                             ))}
@@ -623,7 +630,7 @@ export default function CareerIntelligencePage() {
                           handleSelectRole(role.roleTitle);
                           setActiveTab('skills');
                         }}
-                        className="text-xs text-emerald-400 hover:text-emerald-300 font-medium inline-flex items-center gap-1"
+                        className="text-xs text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-semibold inline-flex items-center gap-1"
                       >
                         Inspect Skill Gaps <ChevronRight className="w-3 h-3" />
                       </button>
@@ -652,7 +659,7 @@ export default function CareerIntelligencePage() {
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-surface-card border border-border">
               <div>
-                <span className="text-xs uppercase tracking-wider text-emerald-400 font-medium">Target Role</span>
+                <span className="text-xs uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-bold">Target Role</span>
                 <h3 className="text-lg font-bold text-text-primary mt-0.5">{skillGaps.targetRole}</h3>
                 <p className="text-xs text-text-muted mt-0.5">
                   Tier: {skillGaps.roleTier} • Discipline: {skillGaps.discipline}
@@ -681,10 +688,10 @@ export default function CareerIntelligencePage() {
               <div className="p-6 rounded-2xl bg-surface-card border border-border">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-sm font-bold text-text-primary flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-400" />
+                    <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     Already Demonstrated ({skillGaps.demonstratedSkills.length})
                   </h4>
-                  <span className="text-xs text-emerald-400/80 font-medium">Profile Grounded</span>
+                  <span className="text-xs text-emerald-700 dark:text-emerald-400/80 font-medium">Profile Grounded</span>
                 </div>
 
                 <div className="space-y-3">
@@ -699,7 +706,7 @@ export default function CareerIntelligencePage() {
                           <span>Evidence: {item.source}</span>
                         </div>
                       </div>
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium uppercase tracking-wider shrink-0">
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border border-emerald-500/20 font-medium uppercase tracking-wider shrink-0">
                         {item.evidenceType.replace('_', ' ')}
                       </span>
                     </div>
@@ -711,10 +718,10 @@ export default function CareerIntelligencePage() {
               <div className="p-6 rounded-2xl bg-surface-card border border-border">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-sm font-bold text-text-primary flex items-center gap-2">
-                    <span className="text-amber-400 font-bold">△</span>
+                    <span className="text-amber-600 dark:text-amber-400 font-bold">△</span>
                     Not Currently Demonstrated ({skillGaps.gapSkills.length})
                   </h4>
-                  <span className="text-xs text-amber-400/80 font-medium">Potential Areas to Strengthen</span>
+                  <span className="text-xs text-amber-800 dark:text-amber-400/90 font-medium">Potential Areas to Strengthen</span>
                 </div>
 
                 <div className="space-y-3">
@@ -728,8 +735,8 @@ export default function CareerIntelligencePage() {
                         <span
                           className={`text-[10px] px-2 py-0.5 rounded font-medium ${
                             gap.importance === 'REQUIRED'
-                              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                              : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                              ? 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20'
+                              : 'bg-amber-500/10 text-amber-800 dark:text-amber-400 border border-amber-500/20'
                           }`}
                         >
                           {gap.importance}
@@ -765,19 +772,19 @@ export default function CareerIntelligencePage() {
 
                 {/* 2. Current Role */}
                 <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-center relative">
-                  <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">Current Level</span>
+                  <span className="text-[10px] uppercase font-bold text-emerald-800 dark:text-emerald-400 tracking-wider">Current Level</span>
                   <div className="text-xs font-bold text-text-primary mt-1">{pathways.currentPosition}</div>
                 </div>
 
                 {/* 3. Adjacent / Target */}
                 <div className="p-4 rounded-2xl bg-surface-elevated border border-border-accent text-center">
-                  <span className="text-[10px] uppercase font-bold text-cyan-400 tracking-wider">Target Role</span>
+                  <span className="text-[10px] uppercase font-bold text-cyan-800 dark:text-cyan-400 tracking-wider">Target Role</span>
                   <div className="text-xs font-bold text-text-primary mt-1">{pathways.targetRole}</div>
                 </div>
 
                 {/* 4. Successors */}
                 <div className="p-4 rounded-2xl bg-surface-elevated border border-border text-center">
-                  <span className="text-[10px] uppercase font-bold text-purple-400 tracking-wider">Advanced</span>
+                  <span className="text-[10px] uppercase font-bold text-purple-800 dark:text-purple-400 tracking-wider">Advanced</span>
                   <div className="text-xs font-semibold text-text-secondary mt-1">
                     {pathways.progressionLadder.successorRoles.slice(0, 2).join(' / ') || 'Project Director'}
                   </div>
@@ -798,7 +805,7 @@ export default function CareerIntelligencePage() {
                     key={step.stepNumber}
                     className="p-4 rounded-2xl bg-surface-card border border-border flex items-start gap-4"
                   >
-                    <div className="w-8 h-8 rounded-xl bg-surface-elevated border border-border flex items-center justify-center font-bold text-xs text-emerald-400 shrink-0">
+                    <div className="w-8 h-8 rounded-xl bg-surface-elevated border border-border flex items-center justify-center font-bold text-xs text-emerald-700 dark:text-emerald-400 shrink-0">
                       {step.stepNumber}
                     </div>
                     <div className="flex-1">
@@ -809,7 +816,7 @@ export default function CareerIntelligencePage() {
                         </span>
                       </div>
                       <p className="text-xs text-text-secondary mt-1 leading-relaxed">{step.description}</p>
-                      <div className="mt-2 text-[11px] text-emerald-400/90 font-medium flex items-center gap-1.5">
+                      <div className="mt-2 text-[11px] text-emerald-800 dark:text-emerald-400/90 font-medium flex items-center gap-1.5">
                         <span>Action: {step.actionItem}</span>
                       </div>
                     </div>
@@ -827,12 +834,12 @@ export default function CareerIntelligencePage() {
             <div className="p-5 rounded-2xl bg-surface-card border border-border space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <BarChart3 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span className="text-xs font-semibold text-text-primary">
                     {marketBenchmarks.observationWindow || 'Infrastructure Market Intelligence'}
                   </span>
                 </div>
-                <span className="text-xs text-emerald-400 font-mono bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                <span className="text-xs text-emerald-800 dark:text-emerald-400 font-mono bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20 font-semibold">
                   Population: {marketBenchmarks.population || `${marketBenchmarks.totalActiveJobs} active jobs`}
                 </span>
               </div>
@@ -861,7 +868,7 @@ export default function CareerIntelligencePage() {
               {/* Software Demand */}
               <div className="p-6 rounded-2xl bg-surface-card border border-border">
                 <h4 className="text-sm font-bold text-text-primary mb-1 flex items-center gap-2">
-                  <Cpu className="w-4 h-4 text-cyan-400" /> Top Requested Software
+                  <Cpu className="w-4 h-4 text-cyan-600 dark:text-cyan-400" /> Top Requested Software
                 </h4>
                 <p className="text-xs text-text-muted mb-4">Frequency in currently published infrastructure openings.</p>
 
@@ -874,7 +881,7 @@ export default function CareerIntelligencePage() {
                       </div>
                       <div className="w-full bg-surface-elevated rounded-full h-1.5 overflow-hidden">
                         <div
-                          className="bg-cyan-400 h-1.5 rounded-full"
+                          className="bg-cyan-500 dark:bg-cyan-400 h-1.5 rounded-full"
                           style={{ width: `${Math.min(100, sw.percentage)}%` }}
                         />
                       </div>
@@ -886,7 +893,7 @@ export default function CareerIntelligencePage() {
               {/* Skill Demand */}
               <div className="p-6 rounded-2xl bg-surface-card border border-border">
                 <h4 className="text-sm font-bold text-text-primary mb-1 flex items-center gap-2">
-                  <Award className="w-4 h-4 text-emerald-400" /> High-Demand Technical Skills
+                  <Award className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> High-Demand Technical Skills
                 </h4>
                 <p className="text-xs text-text-muted mb-4">Competencies most frequently required by EPC employers.</p>
 
@@ -899,7 +906,7 @@ export default function CareerIntelligencePage() {
                       </div>
                       <div className="w-full bg-surface-elevated rounded-full h-1.5 overflow-hidden">
                         <div
-                          className="bg-emerald-400 h-1.5 rounded-full"
+                          className="bg-emerald-500 dark:bg-emerald-400 h-1.5 rounded-full"
                           style={{ width: `${Math.min(100, sk.percentage)}%` }}
                         />
                       </div>
@@ -911,7 +918,7 @@ export default function CareerIntelligencePage() {
               {/* In-Demand Roles */}
               <div className="p-6 rounded-2xl bg-surface-card border border-border">
                 <h4 className="text-sm font-bold text-text-primary mb-1 flex items-center gap-2">
-                  <Briefcase className="w-4 h-4 text-purple-400" /> Active Role Hiring Volume
+                  <Briefcase className="w-4 h-4 text-purple-600 dark:text-purple-400" /> Active Role Hiring Volume
                 </h4>
                 <p className="text-xs text-text-muted mb-4">Current open positions on Zeitnah.</p>
 
@@ -922,7 +929,7 @@ export default function CareerIntelligencePage() {
                       className="p-3 rounded-xl bg-surface-elevated border border-border flex items-center justify-between text-xs"
                     >
                       <span className="font-semibold text-text-primary">{r.roleTitle}</span>
-                      <span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 font-medium">
+                      <span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-800 dark:text-purple-300 font-medium">
                         {r.activeJobCount} openings
                       </span>
                     </div>
@@ -933,7 +940,7 @@ export default function CareerIntelligencePage() {
               {/* Geographic Distribution */}
               <div className="p-6 rounded-2xl bg-surface-card border border-border">
                 <h4 className="text-sm font-bold text-text-primary mb-1 flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-amber-400" /> Opportunities by Location
+                  <MapPin className="w-4 h-4 text-amber-600 dark:text-amber-400" /> Opportunities by Location
                 </h4>
                 <p className="text-xs text-text-muted mb-4">Job volume across primary infrastructure corridors.</p>
 
@@ -958,7 +965,7 @@ export default function CareerIntelligencePage() {
           <div className="max-w-4xl mx-auto space-y-6">
             <div className="p-6 rounded-3xl bg-surface-card border border-border">
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-700 dark:text-emerald-400">
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
@@ -1022,7 +1029,7 @@ export default function CareerIntelligencePage() {
                     <div className="mt-2 flex flex-wrap gap-2 items-center">
                       <span className="text-[10px] uppercase font-bold text-text-muted">Market Grounding:</span>
                       {msg.marketRefs.map((ref, i) => (
-                        <span key={i} className="text-[10px] px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300">
+                        <span key={i} className="text-[10px] px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-800 dark:text-cyan-300 font-medium">
                           {ref}
                         </span>
                       ))}
@@ -1036,7 +1043,7 @@ export default function CareerIntelligencePage() {
                         <button
                           key={i}
                           onClick={() => handleSendAssistantQuery(action)}
-                          className="text-[10px] px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 transition font-medium"
+                          className="text-[10px] px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-500/20 transition font-medium"
                         >
                           → {action}
                         </button>
@@ -1048,7 +1055,7 @@ export default function CareerIntelligencePage() {
 
               {assistantLoading && (
                 <div className="p-4 rounded-2xl bg-surface-card border border-border mr-12 text-xs text-text-muted animate-pulse flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full border border-emerald-400 border-t-transparent animate-spin" />
+                  <div className="w-3 h-3 rounded-full border border-emerald-500 dark:border-emerald-400 border-t-transparent animate-spin" />
                   Grounded assistant is analyzing your profile and active job data...
                 </div>
               )}
@@ -1067,7 +1074,7 @@ export default function CareerIntelligencePage() {
               <button
                 onClick={() => handleSendAssistantQuery()}
                 disabled={!assistantInput.trim() || assistantLoading}
-                className="p-2.5 rounded-xl bg-brand-mint hover:opacity-90 disabled:opacity-30 text-brand-navy font-bold transition"
+                className="p-2.5 rounded-xl bg-brand-primary text-white hover:bg-brand-primary/90 dark:bg-brand-mint dark:text-brand-navy dark:hover:bg-brand-mint/90 disabled:opacity-30 font-bold transition shadow-sm"
               >
                 <Send className="w-3.5 h-3.5" />
               </button>
@@ -1120,7 +1127,7 @@ export default function CareerIntelligencePage() {
                 <button
                   type="submit"
                   disabled={refreshing}
-                  className="px-4 py-2 rounded-xl bg-brand-mint text-brand-navy text-xs font-bold hover:opacity-90 transition"
+                  className="px-4 py-2 rounded-xl bg-brand-primary text-white hover:bg-brand-primary/90 dark:bg-brand-mint dark:text-brand-navy dark:hover:bg-brand-mint/90 text-xs font-bold transition shadow-sm"
                 >
                   {refreshing ? 'Saving...' : 'Save Target Goal'}
                 </button>

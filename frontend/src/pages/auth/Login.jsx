@@ -267,7 +267,7 @@ function Login() {
         </section>
 
         {/* RIGHT — auth experience */}
-        <section className="flex w-full flex-1 items-center justify-center px-5 py-8 sm:px-8 lg:max-w-[570px] lg:px-12 xl:max-w-[620px]">
+        <section className="flex w-full flex-1 items-center justify-center px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-8 sm:py-8 sm:px-8 lg:max-w-[570px] lg:px-12 xl:max-w-[620px]">
           <div className="w-full max-w-[430px]">
             {/* Mobile brand */}
             <div className="mb-7 flex items-center justify-center gap-3 lg:hidden">

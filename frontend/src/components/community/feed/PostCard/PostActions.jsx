@@ -102,8 +102,8 @@ export default function PostActions({
             onClick={onToggleComments}
             className={`min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-full text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-90 motion-reduce:transform-none ${
               showComments
-                ? 'text-brand-mint bg-brand-mint/10'
-                : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated'
+                ? 'text-brand-navy dark:text-brand-mint bg-brand-mint/15 dark:bg-brand-mint/10'
+                : 'text-text-secondary hover:text-text-primary hover:bg-surface-elevated'
             }`}
             aria-label="Toggle comments"
             aria-expanded={showComments}
@@ -124,13 +124,13 @@ export default function PostActions({
               aria-expanded={showRepostMenu}
               className={`min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-full text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-90 motion-reduce:transform-none ${
                 isReposted
-                  ? 'text-brand-mint bg-brand-mint/10'
-                  : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated'
+                  ? 'text-brand-navy dark:text-brand-mint bg-brand-mint/15 dark:bg-brand-mint/10'
+                  : 'text-text-secondary hover:text-text-primary hover:bg-surface-elevated'
               }`}
               aria-label={isReposted ? 'Reposted. Click to change' : 'Repost or quote post'}
               title={isReposted ? 'Reposted' : 'Repost'}
             >
-              <Repeat2 className={`w-5 h-5 ${isReposted ? 'text-brand-mint' : ''}`} />
+              <Repeat2 className={`w-5 h-5 ${isReposted ? 'text-brand-navy dark:text-brand-mint' : ''}`} />
             </button>
 
             <RepostMenu
@@ -149,7 +149,7 @@ export default function PostActions({
             type="button"
             data-testid="post-share-btn"
             onClick={handleShare}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-full text-xs font-semibold text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-all duration-150 cursor-pointer active:scale-90 motion-reduce:transform-none"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-full text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-elevated transition-all duration-150 cursor-pointer active:scale-90 motion-reduce:transform-none"
             aria-label="Share post"
             title="Copy link to post"
           >
@@ -166,7 +166,7 @@ export default function PostActions({
           className={`min-h-[44px] min-w-[44px] -mr-2 sm:-mr-2.5 p-2 rounded-full transition-all duration-150 flex items-center justify-center cursor-pointer active:scale-90 motion-reduce:transform-none ${
             isSaved
               ? 'text-brand-yellow hover:text-brand-yellow/90'
-              : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated'
+              : 'text-text-secondary hover:text-text-primary hover:bg-surface-elevated'
           }`}
           aria-label={isSaved ? 'Remove bookmark' : 'Bookmark post'}
           title={isSaved ? 'Saved' : 'Save'}
@@ -177,25 +177,25 @@ export default function PostActions({
 
       {/* 2. Engagement Metadata Line (Clean, Calm Hierarchy) */}
       {(reactionCount > 0 || repostCount > 0 || viewCount > 0) && (
-        <div className="flex items-center gap-1.5 text-xs text-text-primary pt-1.5 pb-0.5 select-none">
+        <div className="flex items-center gap-1.5 text-xs text-text-primary pt-1.5 pb-0.5 select-none font-medium">
           {reactionCount > 0 && (
             <span className="font-semibold tracking-[-0.01em]">
               {reactionCount.toLocaleString()} {reactionCount === 1 ? 'like' : 'likes'}
             </span>
           )}
           {reactionCount > 0 && repostCount > 0 && (
-            <span className="text-text-faint">·</span>
+            <span className="text-text-muted">·</span>
           )}
           {repostCount > 0 && (
-            <span className="text-text-muted/80 font-normal">
+            <span className="text-text-secondary font-normal">
               {repostCount.toLocaleString()} {repostCount === 1 ? 'repost' : 'reposts'}
             </span>
           )}
           {(reactionCount > 0 || repostCount > 0) && viewCount > 0 && (
-            <span className="text-text-faint">·</span>
+            <span className="text-text-muted">·</span>
           )}
           {viewCount > 0 && (
-            <span className="text-text-muted/70 font-normal">
+            <span className="text-text-secondary font-normal">
               {viewCount.toLocaleString()} {viewCount === 1 ? 'view' : 'views'}
             </span>
           )}

@@ -188,23 +188,23 @@ export default function VerificationCenterPage({ hideProfileNav = false }) {
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-6xl mx-auto pb-20">
+    <div className="space-y-5 sm:space-y-6 max-w-6xl mx-auto pb-16">
       {/* ── 01. UNIFIED PROFILE NAVIGATION ── */}
       {!hideProfileNav && <ProfileNav />}
 
       {/* ── 02. TRUST & VERIFICATION HERO ── */}
-      <section className="relative overflow-hidden rounded-3xl bg-surface-card border border-border p-6 sm:p-10 shadow-sm">
+      <section className="relative overflow-hidden rounded-2xl bg-surface-card border border-border p-5 sm:p-6 shadow-sm">
         <div
           className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-mint/40 to-transparent pointer-events-none"
           aria-hidden="true"
         />
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-mint/10 border border-brand-mint/20 text-brand-mint text-xs font-semibold uppercase tracking-wider">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-brand-mint/10 border border-brand-mint/20 text-brand-mint text-[11px] font-semibold uppercase tracking-wider">
               <ShieldCheck className="w-3.5 h-3.5" /> Trust & Verification Center
             </div>
-            <h1 className="text-2xl sm:text-3xl font-heading font-black text-text-primary tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-heading font-black text-text-primary tracking-tight">
               Verification Center
             </h1>
             <p className="text-text-muted text-xs sm:text-sm max-w-2xl leading-relaxed">
@@ -215,14 +215,14 @@ export default function VerificationCenterPage({ hideProfileNav = false }) {
           <div className="flex items-center gap-3 shrink-0">
             <Link
               to="/profile"
-              className="zn-btn-secondary text-xs sm:text-sm py-2.5 px-4"
+              className="zn-btn-secondary text-xs sm:text-sm py-2 px-4 focus-ring"
             >
               View Profile
             </Link>
             <button
               type="button"
               onClick={() => handleOpenRequest('PROFESSIONAL')}
-              className="zn-btn-primary text-xs sm:text-sm py-2.5 px-5 flex items-center gap-2 cursor-pointer shadow-sm"
+              className="zn-btn-primary text-xs sm:text-sm py-2 px-5 flex items-center gap-2 cursor-pointer shadow-sm focus-ring"
             >
               <ShieldCheck className="w-4 h-4" />
               <span>Request Verification</span>
@@ -231,7 +231,7 @@ export default function VerificationCenterPage({ hideProfileNav = false }) {
         </div>
 
         {/* Security / Privacy notice */}
-        <div className="mt-6 flex items-start gap-3 p-4 rounded-2xl bg-surface-elevated/50 border border-border text-xs text-text-secondary">
+        <div className="mt-4 sm:mt-5 flex items-start gap-3 p-3.5 sm:p-4 rounded-xl bg-surface-elevated/50 border border-border text-xs text-text-secondary">
           <Lock className="w-4 h-4 text-brand-mint shrink-0 mt-0.5" />
           <p className="leading-relaxed">
             <strong className="text-text-primary">Strict Document Security:</strong> Verification documents and licenses are stored in private encrypted storage with authenticated signed tokens. Documents are never exposed on your public profile or shared with recruiters. Only the resulting verification badge is displayed.

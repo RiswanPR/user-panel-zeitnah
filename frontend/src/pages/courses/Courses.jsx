@@ -99,7 +99,9 @@ function CourseSection({
             />
             <span
               className={`text-[10px] font-mono font-bold tracking-[0.2em] uppercase ${
-                accentColor === "yellow" ? "text-brand-yellow" : "text-brand-mint"
+                accentColor === "yellow"
+                  ? "text-amber-800 dark:text-brand-yellow"
+                  : "text-brand-primary dark:text-brand-mint"
               }`}
             >
               {accentColor === "yellow" ? "LIVE SYLLABUS" : "CURRICULUM MODULES"}
@@ -386,7 +388,7 @@ function Courses() {
           <button
             type="button"
             onClick={loadCourses}
-            className="inline-flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-brand-yellow text-black font-heading font-extrabold text-xs uppercase tracking-wider hover:bg-brand-yellow/90 transition-all cursor-pointer shadow-md active:scale-95"
+            className="zn-btn-primary min-h-[44px] rounded-2xl px-6 py-3 font-heading font-extrabold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md inline-flex items-center gap-2.5"
           >
             <RefreshCw className="w-4 h-4" />
             <span>Retry Connection</span>
@@ -440,7 +442,7 @@ function Courses() {
                 <button
                   type="button"
                   onClick={() => setSearch("")}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-brand-yellow text-black font-heading font-extrabold text-xs uppercase tracking-wider hover:bg-brand-yellow/90 transition-all cursor-pointer shadow-md active:scale-95"
+                  className="zn-btn-primary min-h-[44px] rounded-2xl px-6 py-3 font-heading font-extrabold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md inline-flex items-center gap-2"
                 >
                   <span>Clear Search Filter</span>
                 </button>
@@ -448,7 +450,7 @@ function Courses() {
                 <button
                   type="button"
                   onClick={handleBrowseCatalog}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-brand-yellow text-black font-heading font-extrabold text-xs uppercase tracking-wider hover:bg-brand-yellow/90 transition-all cursor-pointer shadow-md active:scale-95"
+                  className="zn-btn-primary min-h-[44px] rounded-2xl px-6 py-3 font-heading font-extrabold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md inline-flex items-center gap-2"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>Browse Entire Catalog</span>

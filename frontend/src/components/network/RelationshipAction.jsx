@@ -326,8 +326,8 @@ export default function RelationshipAction({
         <span
           className={`inline-flex items-center justify-center gap-1.5 rounded-xl border select-none transition-all duration-200 ${
             justSent
-              ? "border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-300 font-semibold"
-              : "border-amber-400/25 bg-amber-400/[0.06] text-amber-200/90 font-medium"
+              ? "border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-700 dark:text-emerald-300 font-semibold"
+              : "border-amber-500/30 dark:border-amber-400/25 bg-amber-500/[0.08] dark:bg-amber-400/[0.06] text-amber-800 dark:text-amber-200 font-medium"
           } ${
             variant === "full"
               ? "w-full py-2 px-4 text-xs"
@@ -338,12 +338,12 @@ export default function RelationshipAction({
         >
           {justSent ? (
             <>
-              <Check className="h-3.5 w-3.5 shrink-0 text-emerald-400 animate-scale-in" aria-hidden="true" />
+              <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400 animate-scale-in" aria-hidden="true" />
               <span>Request Sent</span>
             </>
           ) : (
             <>
-              <Clock className="h-3.5 w-3.5 text-amber-400/80 shrink-0" aria-hidden="true" />
+              <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400/80 shrink-0" aria-hidden="true" />
               <span>Pending</span>
             </>
           )}
@@ -359,7 +359,7 @@ export default function RelationshipAction({
           }}
           title={`Cancel connection request to ${studentName}`}
           aria-label={`Cancel connection request to ${studentName}`}
-          className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2 text-text-muted/70 hover:border-rose-500/30 hover:bg-rose-500/10 hover:text-rose-400 transition-colors focus-ring cursor-pointer shrink-0 disabled:opacity-50 min-h-[38px] min-w-[38px] flex items-center justify-center"
+          className="rounded-xl border border-border bg-surface-elevated p-2 text-text-muted hover:border-rose-500/30 hover:bg-rose-500/10 hover:text-rose-500 transition-colors focus-ring cursor-pointer shrink-0 disabled:opacity-50 min-h-[38px] min-w-[38px] flex items-center justify-center"
         >
           {isCancelling ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin text-rose-400" />
@@ -385,7 +385,7 @@ export default function RelationshipAction({
           }}
           title={`Decline connection request from ${studentName}`}
           aria-label={`Decline connection request from ${studentName}`}
-          className="rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.07] text-text-muted hover:text-white p-2 text-xs font-semibold transition-all focus-ring cursor-pointer shrink-0 disabled:opacity-50 min-h-[38px] min-w-[38px] flex items-center justify-center"
+          className="rounded-xl border border-border bg-surface-elevated hover:bg-surface-card text-text-muted hover:text-text-primary p-2 text-xs font-semibold transition-all focus-ring cursor-pointer shrink-0 disabled:opacity-50 min-h-[38px] min-w-[38px] flex items-center justify-center"
         >
           {isDeclining ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -394,7 +394,7 @@ export default function RelationshipAction({
           )}
         </button>
 
-        {/* Accept: Primary brand mint */}
+        {/* Accept: Primary CTA */}
         <button
           type="button"
           disabled={isAnyActionPending}
@@ -403,7 +403,7 @@ export default function RelationshipAction({
             if (idToUse) acceptMutation.mutate(idToUse);
           }}
           aria-label={`Accept connection request from ${studentName}`}
-          className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-mint text-bg-base font-bold hover:bg-brand-mint/90 transition-all focus-ring shadow-sm shadow-brand-mint/15 disabled:opacity-60 cursor-pointer min-h-[38px] ${
+          className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-primary text-white hover:bg-brand-primary/90 dark:bg-brand-mint dark:text-brand-navy dark:hover:bg-brand-mint/90 font-bold transition-all focus-ring shadow-sm disabled:opacity-60 cursor-pointer min-h-[38px] ${
             variant === "full" ? "w-full py-2 px-4 text-xs" : "flex-1 py-1.5 px-3 text-xs"
           }`}
         >
@@ -438,7 +438,7 @@ export default function RelationshipAction({
           ? `Connecting with ${studentName}...`
           : `Connect with ${studentName}`
       }
-      className={`inline-flex items-center justify-center gap-1.5 rounded-xl border border-brand-mint/30 bg-brand-mint/[0.08] hover:bg-brand-mint/[0.16] hover:border-brand-mint/50 text-brand-mint font-bold transition-all duration-200 focus-ring cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed min-h-[38px] ${
+      className={`inline-flex items-center justify-center gap-1.5 rounded-xl border border-brand-primary/30 dark:border-brand-mint/30 bg-brand-primary/[0.06] dark:bg-brand-mint/[0.08] hover:bg-brand-primary/[0.12] dark:hover:bg-brand-mint/[0.16] hover:border-brand-primary/50 dark:hover:border-brand-mint/50 text-brand-primary dark:text-brand-mint font-bold transition-all duration-200 focus-ring cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed min-h-[38px] ${
         variant === "full"
           ? "w-full py-2 px-4 text-xs font-bold"
           : variant === "icon"
@@ -448,7 +448,7 @@ export default function RelationshipAction({
     >
       {isSending ? (
         <>
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-brand-mint shrink-0" />
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-brand-primary dark:text-brand-mint shrink-0" />
           {variant !== "icon" && <span>Connecting...</span>}
         </>
       ) : (

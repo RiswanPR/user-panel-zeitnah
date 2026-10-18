@@ -183,7 +183,7 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
                     e.stopPropagation();
                     navigate(`/courses/${course._id}/chapters`);
                   }}
-                  className="w-full inline-flex items-center justify-center py-2.5 rounded-xl text-xs font-heading font-extrabold uppercase tracking-wider bg-brand-yellow text-bg-base hover:bg-brand-yellow/90 shadow-sm transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
+                  className="w-full inline-flex items-center justify-center py-2.5 rounded-xl text-xs font-heading font-extrabold uppercase tracking-wider bg-brand-yellow text-brand-navy hover:bg-brand-yellow/90 shadow-sm transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
                 >
                   Join
                 </button>

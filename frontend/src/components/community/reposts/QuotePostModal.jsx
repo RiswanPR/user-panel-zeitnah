@@ -183,14 +183,14 @@ export default function QuotePostModal({
               <button
                 type="button"
                 onClick={handleClose}
-                className="min-h-[44px] px-4 py-2 text-xs font-semibold text-text-muted hover:text-text-primary hover:bg-surface-elevated rounded-xl transition-colors cursor-pointer"
+                className="zn-btn-secondary min-h-[44px] px-4 py-2 text-xs font-semibold rounded-xl cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitDisabled}
-                className="min-h-[44px] px-5 py-2 rounded-xl bg-brand-mint text-bg-base font-semibold text-xs flex items-center gap-2 hover:bg-brand-mint/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-sm"
+                className="zn-btn-primary min-h-[44px] px-5 py-2 rounded-xl font-semibold text-xs flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-sm"
                 aria-label="Publish quote post"
               >
                 {quoteMutation.isPending ? (

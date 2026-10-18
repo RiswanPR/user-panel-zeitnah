@@ -572,7 +572,7 @@ export default function ThreadPanel({
               replyMutation.isPending ||
               isUploading
             }
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-brand-mint hover:bg-brand-mint/90 disabled:opacity-30 disabled:hover:bg-brand-mint text-bg-base font-bold transition-all flex-shrink-0 cursor-pointer"
+            className="zn-btn-primary min-h-[44px] min-w-[44px] !p-0 flex items-center justify-center rounded-xl disabled:opacity-30 flex-shrink-0 cursor-pointer"
             title="Send reply"
             aria-label="Send reply"
           >

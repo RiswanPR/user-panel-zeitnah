@@ -278,7 +278,11 @@ export default function JobsPage() {
         title="Infrastructure Jobs"
         description="Discover verified engineering, BIM, construction management, and energy infrastructure roles matched with your profile."
         actions={
-          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-surface-elevated/40 border border-border backdrop-blur-md overflow-x-auto max-w-full no-scrollbar">
+          <div
+            role="tablist"
+            aria-label="Jobs Navigation"
+            className="flex items-center gap-1.5 p-1 rounded-2xl bg-surface-elevated/40 border border-border backdrop-blur-md overflow-x-auto max-w-full no-scrollbar"
+          >
             {[
               { id: 'forYou', label: 'For You', icon: Sparkles },
               { id: 'all', label: 'All Jobs', icon: Briefcase },
@@ -296,14 +300,17 @@ export default function JobsPage() {
               return (
                 <button
                   key={tab.id}
+                  role="tab"
+                  id={`jobs-tab-${tab.id}`}
+                  aria-selected={active}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer min-h-[38px] touch-manipulation ${
+                  className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer min-h-[38px] touch-manipulation focus-ring ${
                     active
-                      ? 'bg-brand-mint text-brand-navy font-bold shadow-md shadow-brand-mint/15'
+                      ? 'bg-surface-elevated text-text-primary font-bold border border-border shadow-sm'
                       : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated/60'
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5 shrink-0" />
+                  <Icon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-brand-primary dark:text-brand-mint' : 'text-text-muted'}`} />
                   <span>{tab.label}</span>
                 </button>
               );
@@ -446,7 +453,7 @@ export default function JobsPage() {
           <div className="p-6 rounded-3xl bg-gradient-to-r from-brand-mint/10 via-purple-500/5 to-white/[0.02] border border-brand-mint/20 relative overflow-hidden">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-mint/15 border border-brand-mint/30 text-brand-mint text-xs font-bold mb-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-mint/15 border border-brand-mint/30 text-brand-primary dark:text-brand-mint text-xs font-bold mb-2">
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>Personalized Job Recommendations</span>
                 </div>
@@ -468,7 +475,7 @@ export default function JobsPage() {
                 >
                   <RotateCw
                     className={`w-3.5 h-3.5 ${
-                      refreshRecsMutation.isPending || refetchingRecs ? 'animate-spin text-brand-mint' : ''
+                      refreshRecsMutation.isPending || refetchingRecs ? 'animate-spin text-brand-primary dark:text-brand-mint' : ''
                     }`}
                   />
                   <span>
@@ -489,13 +496,13 @@ export default function JobsPage() {
                 </div>
                 <div className="p-3 rounded-2xl bg-surface-elevated/50 border border-border">
                   <span className="text-[11px] text-text-muted block">Highly Compatible (80%+)</span>
-                  <span className="text-lg font-black text-emerald-400">
+                  <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
                     {profileInsights.highlyCompatibleCount}
                   </span>
                 </div>
                 <div className="p-3 rounded-2xl bg-surface-elevated/50 border border-border sm:col-span-2">
                   <span className="text-[11px] text-text-muted block">Top Matching Sectors</span>
-                  <span className="text-xs font-bold text-brand-mint truncate block mt-1">
+                  <span className="text-xs font-bold text-brand-primary dark:text-brand-mint truncate block mt-1">
                     {profileInsights.topMatchingSectors?.join(' • ') || 'Civil Infrastructure'}
                   </span>
                 </div>
@@ -505,7 +512,7 @@ export default function JobsPage() {
             {/* Profile Improvement Loop Hint */}
             {profileInsights?.profileImprovements?.length > 0 && (
               <div className="mt-4 p-3.5 rounded-2xl bg-surface-elevated/40 border border-border flex items-start gap-3">
-                <div className="p-1.5 rounded-xl bg-amber-500/10 text-amber-400 shrink-0 mt-0.5">
+                <div className="p-1.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <div className="text-xs">
@@ -518,7 +525,7 @@ export default function JobsPage() {
                 </div>
                 <Link
                   to="/profile/edit"
-                  className="ml-auto text-[11px] font-bold text-brand-mint hover:underline whitespace-nowrap self-center"
+                  className="ml-auto text-[11px] font-bold text-brand-primary dark:text-brand-mint hover:underline whitespace-nowrap self-center"
                 >
                   Edit Profile →
                 </Link>
@@ -539,7 +546,7 @@ export default function JobsPage() {
                 onClick={() => setRecCategory(f.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   recCategory === f.id
-                    ? 'bg-brand-mint text-brand-navy font-bold'
+                    ? 'bg-brand-primary text-white dark:bg-brand-mint dark:text-brand-navy font-bold'
                     : 'bg-surface-elevated text-text-secondary hover:text-text-primary hover:bg-surface-elevated/80 border border-border'
                 }`}
               >
@@ -560,7 +567,7 @@ export default function JobsPage() {
                 onClick={() => setRecType(recType === t.id ? '' : t.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   recType === t.id
-                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 font-bold'
+                    ? 'bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/40 font-bold'
                     : 'bg-surface-elevated text-text-secondary hover:text-text-primary hover:bg-surface-elevated/80 border border-border'
                 }`}
               >
@@ -579,7 +586,7 @@ export default function JobsPage() {
             </div>
           ) : recsError ? (
             <div className="py-16 text-center bg-surface-card border border-border rounded-3xl space-y-3 p-6">
-              <AlertCircle className="w-10 h-10 mx-auto text-amber-400" />
+              <AlertCircle className="w-10 h-10 mx-auto text-amber-600 dark:text-amber-400" />
               <h3 className="text-base font-bold text-text-primary">
                 Talent recommendations are temporarily unavailable
               </h3>
@@ -589,13 +596,13 @@ export default function JobsPage() {
               <div className="flex items-center justify-center gap-2 pt-2">
                 <button
                   onClick={() => refetchRecs()}
-                  className="px-4 py-2 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-brand-primary text-white hover:bg-brand-primary/90 dark:bg-brand-mint dark:text-brand-navy dark:hover:bg-brand-mint/90 font-bold text-xs cursor-pointer min-h-[38px]"
                 >
                   Retry Matching
                 </button>
                 <button
                   onClick={() => setActiveTab('all')}
-                  className="px-4 py-2 rounded-xl bg-surface-elevated text-text-primary border border-border font-semibold text-xs cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-surface-elevated text-text-primary border border-border font-semibold text-xs cursor-pointer min-h-[38px]"
                 >
                   Browse All Jobs
                 </button>
@@ -603,7 +610,7 @@ export default function JobsPage() {
             </div>
           ) : !recsData?.data || recsData.data.length === 0 ? (
             <div className="py-16 text-center bg-surface-card border border-border rounded-3xl space-y-3 p-6">
-              <Sparkles className="w-10 h-10 mx-auto text-brand-mint/40" />
+              <Sparkles className="w-10 h-10 mx-auto text-brand-primary/40 dark:text-brand-mint/40" />
               <h3 className="text-base font-bold text-text-primary">
                 No strong profile matches found yet
               </h3>
@@ -613,7 +620,7 @@ export default function JobsPage() {
               <div className="flex items-center justify-center gap-2 pt-2">
                 <Link
                   to="/profile/edit"
-                  className="px-4 py-2 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs"
+                  className="px-4 py-2 rounded-xl bg-brand-primary text-white hover:bg-brand-primary/90 dark:bg-brand-mint dark:text-brand-navy dark:hover:bg-brand-mint/90 font-bold text-xs min-h-[38px] inline-flex items-center justify-center"
                 >
                   Edit Profile Details
                 </Link>
@@ -812,7 +819,7 @@ export default function JobsPage() {
                     {app.job?.id && (
                       <Link
                         to={`/jobs/${app.job.id}`}
-                        className="flex items-center gap-1 px-4 py-2 rounded-xl bg-brand-mint text-brand-navy font-bold text-xs shadow-md shadow-brand-mint/15"
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-primary text-white hover:bg-brand-primary/90 dark:bg-brand-mint dark:text-brand-navy dark:hover:bg-brand-mint/90 font-bold text-xs shadow-md transition-all min-h-[38px]"
                       >
                         <span>View Job</span>
                         <ChevronRight className="w-3.5 h-3.5" />
@@ -941,7 +948,7 @@ export default function JobsPage() {
                       {job.id && (
                         <Link
                           to={`/jobs/${job.id}`}
-                          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-elevated border border-border hover:bg-brand-mint text-text-primary hover:text-brand-navy font-bold text-xs transition-all"
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-elevated border border-border hover:bg-brand-primary hover:text-white dark:hover:bg-brand-mint dark:hover:text-brand-navy text-text-primary font-bold text-xs transition-all min-h-[38px]"
                         >
                           <span>View Job</span>
                           <ChevronRight className="w-3.5 h-3.5" />
@@ -1030,7 +1037,7 @@ function JobCard({ job, onToggleSave }) {
             {job.title}
           </Link>
           <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs text-text-muted">
-            <span className="font-semibold text-cyan-400">{job.discipline}</span>
+            <span className="font-semibold text-cyan-700 dark:text-cyan-400">{job.discipline}</span>
             <span>•</span>
             <span>{job.infrastructureSector}</span>
             <span>•</span>
@@ -1049,7 +1056,7 @@ function JobCard({ job, onToggleSave }) {
             {job.requiredSoftware.slice(0, 3).map((sw) => (
               <span
                 key={sw}
-                className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-300 border border-cyan-500/20"
+                className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-800 dark:text-cyan-300 border border-cyan-500/20"
               >
                 {sw}
               </span>
@@ -1075,7 +1082,7 @@ function JobCard({ job, onToggleSave }) {
             Experience: {job.minYearsExperience}–{job.maxYearsExperience} yrs
           </span>
           {job.salaryMin && job.salaryMax && (
-            <span className="text-xs font-semibold text-brand-mint">
+            <span className="text-xs font-semibold text-emerald-700 dark:text-brand-mint">
               {job.currency} {job.salaryMin.toLocaleString()} – {job.salaryMax.toLocaleString()}
             </span>
           )}
@@ -1083,7 +1090,7 @@ function JobCard({ job, onToggleSave }) {
 
         <Link
           to={`/jobs/${job.id}`}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-elevated border border-border group-hover:bg-brand-mint text-text-primary group-hover:text-brand-navy font-bold text-xs transition-all"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-elevated border border-border group-hover:bg-brand-primary group-hover:text-white dark:group-hover:bg-brand-mint dark:group-hover:text-brand-navy text-text-primary font-bold text-xs transition-all"
         >
           <span>View Job</span>
           <ChevronRight className="w-3.5 h-3.5" />
@@ -1102,9 +1109,9 @@ function RecommendedJobCard({ rec, onWhyThisJob, onToggleSave, onHide, onFeedbac
   const isStrongly = rec.compatibilityScore >= 60;
 
   const scoreBadgeColor = isHighly
-    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400'
     : isStrongly
-    ? 'bg-brand-mint/10 border-brand-mint/30 text-brand-mint'
+    ? 'bg-brand-mint/10 border-brand-mint/30 text-brand-primary dark:text-brand-mint'
     : 'bg-surface-elevated border-border text-text-secondary';
 
   return (
@@ -1121,7 +1128,7 @@ function RecommendedJobCard({ rec, onWhyThisJob, onToggleSave, onHide, onFeedbac
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <Building2 className="w-6 h-6 text-brand-mint" />
+                <Building2 className="w-6 h-6 text-brand-primary dark:text-brand-mint" />
               )}
             </div>
             <div>
@@ -1130,7 +1137,7 @@ function RecommendedJobCard({ rec, onWhyThisJob, onToggleSave, onHide, onFeedbac
                   {rec.business?.name || 'Verified Infrastructure Partner'}
                 </span>
                 {rec.business?.verified && (
-                  <span title="Verified Employer" className="text-emerald-400 flex items-center shrink-0">
+                  <span title="Verified Employer" className="text-emerald-600 dark:text-emerald-400 flex items-center shrink-0">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                   </span>
                 )}
@@ -1154,12 +1161,12 @@ function RecommendedJobCard({ rec, onWhyThisJob, onToggleSave, onHide, onFeedbac
         <div>
           <Link
             to={`/jobs/${rec.jobId}`}
-            className="font-heading font-bold text-lg text-text-primary group-hover:text-brand-mint transition-colors line-clamp-1"
+            className="font-heading font-bold text-lg text-text-primary group-hover:text-brand-primary dark:group-hover:text-brand-mint transition-colors line-clamp-1"
           >
             {rec.title}
           </Link>
           <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs text-text-muted">
-            <span className="font-semibold text-cyan-400">{rec.discipline}</span>
+            <span className="font-semibold text-cyan-700 dark:text-cyan-400">{rec.discipline}</span>
             <span>•</span>
             <span>{rec.infrastructureSector}</span>
             <span>•</span>
@@ -1177,7 +1184,7 @@ function RecommendedJobCard({ rec, onWhyThisJob, onToggleSave, onHide, onFeedbac
           {rec.matchedSectors?.slice(0, 1).map((s) => (
             <span
               key={s}
-              className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-brand-mint/10 text-brand-mint border border-brand-mint/20"
+              className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-brand-mint/10 text-emerald-800 dark:text-brand-mint border border-brand-mint/20"
             >
               ✓ {s}
             </span>
@@ -1185,7 +1192,7 @@ function RecommendedJobCard({ rec, onWhyThisJob, onToggleSave, onHide, onFeedbac
           {rec.matchedSoftware?.slice(0, 2).map((sw) => (
             <span
               key={sw}
-              className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-300 border border-cyan-500/20"
+              className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-800 dark:text-cyan-300 border border-cyan-500/20"
             >
               ✓ {sw}
             </span>
@@ -1193,7 +1200,7 @@ function RecommendedJobCard({ rec, onWhyThisJob, onToggleSave, onHide, onFeedbac
           {rec.matchedSkills?.slice(0, 2).map((sk) => (
             <span
               key={sk}
-              className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-300 border border-purple-500/20"
+              className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-800 dark:text-purple-300 border border-purple-500/20"
             >
               ✓ {sk}
             </span>
@@ -1202,8 +1209,8 @@ function RecommendedJobCard({ rec, onWhyThisJob, onToggleSave, onHide, onFeedbac
 
         {/* Top match reason */}
         {rec.matchReasons?.length > 0 && (
-          <p className="text-xs text-emerald-400/90 flex items-center gap-1.5 pt-1 line-clamp-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+          <p className="text-xs text-emerald-700 dark:text-emerald-400/90 flex items-center gap-1.5 pt-1 line-clamp-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0" />
             <span>Why it matches: {rec.matchReasons[0]}</span>
           </p>
         )}
@@ -1213,7 +1220,7 @@ function RecommendedJobCard({ rec, onWhyThisJob, onToggleSave, onHide, onFeedbac
       <div className="mt-5 pt-4 border-t border-border flex items-center justify-between text-xs">
         <button
           onClick={onWhyThisJob}
-          className="text-xs font-semibold text-brand-mint hover:underline flex items-center gap-1 cursor-pointer"
+          className="text-xs font-semibold text-brand-primary dark:text-brand-mint hover:underline flex items-center gap-1 cursor-pointer"
         >
           <Sparkles className="w-3.5 h-3.5" />
           <span>Why this job?</span>
@@ -1226,7 +1233,7 @@ function RecommendedJobCard({ rec, onWhyThisJob, onToggleSave, onHide, onFeedbac
             title="Interested in this role"
             className={`p-2 rounded-xl transition-all cursor-pointer ${
               rec.feedback === 'INTERESTED'
-                ? 'bg-emerald-500/20 text-emerald-400'
+                ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
                 : 'hover:bg-surface-elevated text-text-muted hover:text-text-primary'
             }`}
           >
@@ -1237,7 +1244,7 @@ function RecommendedJobCard({ rec, onWhyThisJob, onToggleSave, onHide, onFeedbac
             title="Not interested"
             className={`p-2 rounded-xl transition-all cursor-pointer ${
               rec.feedback === 'NOT_INTERESTED'
-                ? 'bg-red-500/20 text-red-400'
+                ? 'bg-red-500/20 text-red-600 dark:text-red-400'
                 : 'hover:bg-surface-elevated text-text-muted hover:text-text-primary'
             }`}
           >
@@ -1248,10 +1255,10 @@ function RecommendedJobCard({ rec, onWhyThisJob, onToggleSave, onHide, onFeedbac
           <button
             onClick={onToggleSave}
             title={rec.isSaved ? 'Remove from saved' : 'Save job'}
-            className="p-2 rounded-xl bg-surface-elevated border border-border hover:bg-surface-elevated/80 text-text-muted hover:text-brand-mint transition-colors cursor-pointer"
+            className="p-2 rounded-xl bg-surface-elevated border border-border hover:bg-surface-elevated/80 text-text-muted hover:text-brand-primary dark:hover:text-brand-mint transition-colors cursor-pointer"
           >
             {rec.isSaved ? (
-              <BookmarkCheck className="w-4 h-4 text-brand-mint" />
+              <BookmarkCheck className="w-4 h-4 text-brand-primary dark:text-brand-mint" />
             ) : (
               <Bookmark className="w-4 h-4" />
             )}
@@ -1268,7 +1275,7 @@ function RecommendedJobCard({ rec, onWhyThisJob, onToggleSave, onHide, onFeedbac
 
           <Link
             to={`/jobs/${rec.jobId}`}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-elevated border border-border group-hover:bg-brand-mint text-text-primary group-hover:text-brand-navy font-bold text-xs transition-all ml-1"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-elevated border border-border group-hover:bg-brand-primary group-hover:text-white dark:group-hover:bg-brand-mint dark:group-hover:text-brand-navy text-text-primary font-bold text-xs transition-all ml-1"
           >
             <span>View Job</span>
             <ChevronRight className="w-3.5 h-3.5" />

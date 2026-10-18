@@ -101,8 +101,8 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
               <span
                 className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider border backdrop-blur-md ${
                   completed
-                    ? "border-brand-mint/30 bg-brand-mint/15 text-brand-mint"
-                    : "border-brand-yellow/30 bg-brand-yellow/15 text-brand-yellow"
+                    ? "border-brand-mint/30 bg-brand-mint/15 text-emerald-800 dark:text-brand-mint"
+                    : "border-amber-500/30 dark:border-brand-yellow/30 bg-amber-500/15 dark:bg-brand-yellow/15 text-amber-800 dark:text-brand-yellow"
                 }`}
               >
                 {completed ? "Completed" : "Enrolled"}
@@ -123,7 +123,7 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
               <span>Self-Paced</span>
             </div>
 
-            <h3 className="font-heading text-lg font-extrabold text-text-primary tracking-tight leading-snug line-clamp-2 group-hover:text-brand-mint transition-colors">
+            <h3 className="font-heading text-lg font-extrabold text-text-primary tracking-tight leading-snug line-clamp-2 group-hover:text-brand-primary dark:group-hover:text-brand-mint transition-colors">
               {course.name}
             </h3>
 
@@ -159,7 +159,7 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
                   e.stopPropagation();
                   navigate(`/courses/${course._id}/chapters`);
                 }}
-                className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-brand-mint/10 border border-brand-mint/30 text-brand-mint hover:bg-brand-mint hover:text-bg-base transition-all cursor-pointer shadow-sm min-h-[44px]"
+                className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-brand-mint/10 border border-brand-mint/30 text-brand-primary dark:text-brand-mint hover:bg-brand-primary hover:text-white dark:hover:bg-brand-mint dark:hover:text-brand-navy transition-all cursor-pointer shadow-sm min-h-[44px]"
               >
                 {completed ? (
                   <>
@@ -182,7 +182,7 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
                     e.stopPropagation();
                     navigate(`/courses/${course._id}/chapters`);
                   }}
-                  className="w-full inline-flex items-center justify-center py-2.5 rounded-xl text-xs font-heading font-extrabold uppercase tracking-wider bg-brand-yellow text-bg-base hover:bg-brand-yellow/90 shadow-sm transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
+                  className="w-full inline-flex items-center justify-center py-2.5 rounded-xl text-xs font-heading font-extrabold uppercase tracking-wider bg-brand-yellow text-brand-navy hover:bg-brand-yellow/90 shadow-sm transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
                 >
                   View
                 </button>

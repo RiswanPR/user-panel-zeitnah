@@ -26,64 +26,64 @@ function getIconForCategory(iconCategory, isCritical, isHigh) {
   if (isCritical) {
     return {
       Icon: ShieldAlert,
-      iconColor: 'text-rose-400',
-      badgeBg: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
-      glowBg: 'bg-rose-500/10 border-rose-500/25',
+      iconColor: 'text-rose-600 dark:text-rose-400',
+      badgeBg: 'bg-rose-500/15 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-500/30',
+      glowBg: 'bg-rose-500/10 border-rose-500/20 dark:border-rose-500/25',
     };
   }
   if (iconCategory === 'announcement') {
     return {
       Icon: Megaphone,
-      iconColor: isHigh ? 'text-amber-400' : 'text-brand-mint',
-      badgeBg: isHigh ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-brand-mint/20 text-brand-mint border-brand-mint/30',
+      iconColor: isHigh ? 'text-amber-700 dark:text-amber-400' : 'text-brand-navy dark:text-brand-mint',
+      badgeBg: isHigh ? 'bg-amber-500/15 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/30' : 'bg-brand-mint/15 dark:bg-brand-mint/20 text-brand-navy dark:text-brand-mint border-brand-mint/30',
       glowBg: isHigh ? 'bg-amber-500/10 border-amber-500/25' : 'bg-brand-mint/10 border-brand-mint/25',
     };
   }
   if (iconCategory === 'social') {
     return {
       Icon: Users,
-      iconColor: 'text-indigo-300',
-      badgeBg: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+      iconColor: 'text-indigo-700 dark:text-indigo-300',
+      badgeBg: 'bg-indigo-500/15 dark:bg-indigo-500/20 text-indigo-800 dark:text-indigo-300 border-indigo-500/30',
       glowBg: 'bg-indigo-500/10 border-indigo-500/25',
     };
   }
   if (iconCategory === 'learning') {
     return {
       Icon: BookOpen,
-      iconColor: 'text-brand-mint',
-      badgeBg: 'bg-brand-mint/20 text-brand-mint border-brand-mint/30',
+      iconColor: 'text-brand-navy dark:text-brand-mint',
+      badgeBg: 'bg-brand-mint/15 dark:bg-brand-mint/20 text-brand-navy dark:text-brand-mint border-brand-mint/30',
       glowBg: 'bg-brand-mint/10 border-brand-mint/25',
     };
   }
   if (iconCategory === 'achievement') {
     return {
       Icon: Trophy,
-      iconColor: 'text-amber-400',
-      badgeBg: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+      iconColor: 'text-amber-700 dark:text-amber-400',
+      badgeBg: 'bg-amber-500/15 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/30',
       glowBg: 'bg-amber-500/10 border-amber-500/25',
     };
   }
   if (iconCategory === 'opportunity') {
     return {
       Icon: Briefcase,
-      iconColor: 'text-emerald-400',
-      badgeBg: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+      iconColor: 'text-emerald-700 dark:text-emerald-400',
+      badgeBg: 'bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border-emerald-500/30',
       glowBg: 'bg-emerald-500/10 border-emerald-500/25',
     };
   }
   if (iconCategory === 'message') {
     return {
       Icon: MessageSquare,
-      iconColor: 'text-cyan-400',
-      badgeBg: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+      iconColor: 'text-cyan-700 dark:text-cyan-400',
+      badgeBg: 'bg-cyan-500/15 dark:bg-cyan-500/20 text-cyan-800 dark:text-cyan-300 border-cyan-500/30',
       glowBg: 'bg-cyan-500/10 border-cyan-500/25',
     };
   }
   if (iconCategory === 'identity') {
     return {
       Icon: CheckCircle2,
-      iconColor: 'text-teal-300',
-      badgeBg: 'bg-teal-500/20 text-teal-300 border-teal-500/30',
+      iconColor: 'text-teal-700 dark:text-teal-300',
+      badgeBg: 'bg-teal-500/15 dark:bg-teal-500/20 text-teal-800 dark:text-teal-300 border-teal-500/30',
       glowBg: 'bg-teal-500/10 border-teal-500/25',
     };
   }
@@ -150,14 +150,14 @@ export default function NotificationItem({
         compact ? 'p-3' : 'p-3.5 sm:p-4'
       } ${
         presentation.isUnread
-          ? 'bg-brand-mint/[0.04] hover:bg-brand-mint/[0.07] border border-brand-mint/25 shadow-sm'
-          : 'bg-surface-card/60 hover:bg-surface-elevated border border-border/60 opacity-85 hover:opacity-100'
+          ? 'bg-surface-card border-brand-mint/40 shadow-sm dark:bg-brand-mint/[0.04] dark:border-brand-mint/25 ring-1 ring-brand-mint/20'
+          : 'bg-surface-card/60 hover:bg-surface-elevated border-border/60 opacity-80 hover:opacity-100'
       }`}
     >
       {/* Unread Indicator Bar / Dot */}
       {presentation.isUnread && (
         <span
-          className="absolute -left-0.5 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-r-full bg-brand-mint shadow-[0_0_8px_rgba(159,213,178,0.7)]"
+          className="absolute -left-0.5 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-r-full bg-brand-navy dark:bg-brand-mint shadow-[0_0_8px_rgba(159,213,178,0.7)]"
           aria-hidden="true"
         />
       )}
@@ -209,7 +209,7 @@ export default function NotificationItem({
             </span>
           </div>
 
-          <span className="text-[10px] text-text-faint whitespace-nowrap">
+          <span className="text-[10px] text-text-secondary whitespace-nowrap font-medium">
             {formatNotificationTime(notification.createdAt)}
           </span>
         </div>
@@ -232,7 +232,7 @@ export default function NotificationItem({
 
         {/* Action Link if navigable */}
         {route.isNavigable && (
-          <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-brand-mint group-hover:underline">
+          <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-brand-navy dark:text-brand-mint group-hover:underline">
             <span>View details</span>
             <ArrowRight className="w-2.5 h-2.5 transition-transform group-hover:translate-x-0.5" />
           </div>

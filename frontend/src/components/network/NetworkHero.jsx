@@ -171,7 +171,7 @@ export default function NetworkHero({
             <p className="text-2xl sm:text-3xl font-heading font-extrabold text-text-primary tracking-tight tabular-nums group-hover:text-brand-mint transition-colors">
               {Number(connectionsCount).toLocaleString()}
             </p>
-            <p className="text-xs text-text-muted font-medium mt-0.5 group-hover:text-text-primary transition-colors">
+            <p className="text-xs text-text-secondary font-semibold mt-0.5 group-hover:text-text-primary transition-colors">
               Connections
             </p>
           </button>
@@ -185,18 +185,18 @@ export default function NetworkHero({
             <div className="flex items-baseline gap-2">
               <p
                 className={`text-2xl sm:text-3xl font-heading font-extrabold tracking-tight tabular-nums ${
-                  requestsCount > 0 ? "text-amber-300" : "text-text-primary"
-                } group-hover:text-amber-200 transition-colors`}
+                  requestsCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-text-primary"
+                } group-hover:text-amber-700 dark:group-hover:text-amber-200 transition-colors`}
               >
                 {requestsCount < 10 && requestsCount > 0 ? `0${requestsCount}` : Number(requestsCount).toLocaleString()}
               </p>
               {requestsCount > 0 && (
-                <span className="text-[10px] font-mono font-bold text-amber-300/90 bg-amber-400/10 border border-amber-400/20 px-1.5 py-0.2 rounded-md">
+                <span className="text-[10px] font-mono font-bold text-amber-800 dark:text-amber-300 bg-amber-500/15 dark:bg-amber-400/10 border border-amber-500/30 dark:border-amber-400/20 px-1.5 py-0.2 rounded-md">
                   Action
                 </span>
               )}
             </div>
-            <p className="text-xs text-text-muted font-medium mt-0.5 group-hover:text-text-primary transition-colors">
+            <p className="text-xs text-text-secondary font-semibold mt-0.5 group-hover:text-text-primary transition-colors">
               Pending
             </p>
           </button>
@@ -210,7 +210,7 @@ export default function NetworkHero({
             <p className="text-2xl sm:text-3xl font-heading font-extrabold text-text-primary tracking-tight tabular-nums group-hover:text-brand-mint transition-colors">
               {directoryCount !== null ? Number(directoryCount).toLocaleString() : "—"}
             </p>
-            <p className="text-xs text-text-muted font-medium mt-0.5 group-hover:text-text-primary transition-colors">
+            <p className="text-xs text-text-secondary font-semibold mt-0.5 group-hover:text-text-primary transition-colors">
               Directory
             </p>
           </button>
@@ -224,7 +224,7 @@ export default function NetworkHero({
             <p className="text-2xl sm:text-3xl font-heading font-extrabold text-text-primary tracking-tight tabular-nums group-hover:text-brand-mint transition-colors">
               {Number(followersCount).toLocaleString()}
             </p>
-            <p className="text-xs text-text-muted font-medium mt-0.5 group-hover:text-text-primary transition-colors">
+            <p className="text-xs text-text-secondary font-semibold mt-0.5 group-hover:text-text-primary transition-colors">
               Followers
             </p>
           </button>

@@ -54,7 +54,7 @@ export default function ContinueWatchingCard({ course }) {
       
       <a 
         href={`/courses/${_id}`}
-        className="w-full md:w-auto shrink-0 bg-brand-yellow text-bg-base font-bold px-6 py-3 rounded-xl hover:bg-brand-yellow/90 hover:scale-105 transition-all text-sm text-center relative z-10 min-h-[44px] inline-flex items-center justify-center"
+        className="w-full md:w-auto shrink-0 bg-brand-yellow text-brand-navy font-bold px-6 py-3 rounded-xl hover:bg-brand-yellow/90 hover:scale-105 transition-all text-sm text-center relative z-10 min-h-[44px] inline-flex items-center justify-center shadow-md"
       >
         Resume Now
       </a>

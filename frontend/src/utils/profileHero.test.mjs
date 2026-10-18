@@ -138,7 +138,7 @@ describe('Profile Hero Redesign — Modern Identity & Hero Experience Tests', ()
       assert.match(content, /bg-gradient-to-b from-black\/60 to-transparent/);
 
       // Ambient bottom fade for avatar contrast
-      assert.match(content, /bg-gradient-to-t from-\[#0A0F18\] via-\[#0A0F18\]\/50 to-transparent/);
+      assert.match(content, /bg-gradient-to-t from-(surface-card|\[#0A0F18\]) via-(surface-card\/40|\[#0A0F18\]\/50) to-transparent/);
 
       // Change Cover button is placed at top-right with z-20 to avoid overlap
       assert.match(content, /top-4 right-4 sm:top-5 sm:right-5 z-20/);

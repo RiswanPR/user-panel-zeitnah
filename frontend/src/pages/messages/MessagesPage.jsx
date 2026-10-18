@@ -197,14 +197,14 @@ export default function MessagesPage() {
                 <button
                   type="button"
                   onClick={() => setShowNewChatModal(true)}
-                  className="px-5 py-2.5 rounded-xl bg-brand-mint text-bg-base text-xs font-bold hover:bg-brand-mint/90 transition-all cursor-pointer shadow-lg shadow-brand-mint/10 focus-ring min-h-[44px]"
+                  className="zn-btn-primary min-h-[44px] text-xs px-5 py-2.5"
                 >
                   Start Direct Message
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowNewGroupModal(true)}
-                  className="px-4 py-2.5 rounded-xl bg-surface-card hover:bg-surface-elevated text-text-secondary hover:text-text-primary text-xs font-semibold border border-border transition-all cursor-pointer focus-ring flex items-center gap-1.5 min-h-[44px]"
+                  className="zn-btn-secondary min-h-[44px] text-xs px-4 py-2.5 gap-1.5"
                 >
                   <Users className="w-3.5 h-3.5" />
                   <span>Create Group</span>

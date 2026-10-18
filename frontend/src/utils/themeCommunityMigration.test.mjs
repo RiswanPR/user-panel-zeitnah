@@ -354,4 +354,32 @@ describe('Zeitnah — Phase 4C: Community and Feed Theme Migration Unit Tests', 
     assert.ok(audioContent.includes('min-h-[44px]'), 'ReelAudioPicker buttons must enforce min-h-[44px]');
     assert.ok(storyModalContent.includes('min-h-[44px]'), 'CreateStoryModal buttons must enforce min-h-[44px]');
   });
+
+  // ── TEST 8: DEF-002 Regression — .zn-card & .zn-panel Semantic Surface Tokens ──
+  it('8. DEF-002: .zn-card and .zn-panel use semantic theme surface tokens without hardcoded dark background overrides', () => {
+    const indexCssPath = path.resolve(__dirname, '../index.css');
+    const indexCss = fs.readFileSync(indexCssPath, 'utf8');
+
+    // .zn-card must use semantic surface token
+    assert.ok(
+      indexCss.includes('.zn-card {\n  position: relative;\n  background-color: var(--zn-surface-card);'),
+      '.zn-card must use background-color: var(--zn-surface-card)'
+    );
+
+    // .zn-panel must use semantic surface token
+    assert.ok(
+      indexCss.includes('.zn-panel {\n  background-color: var(--zn-surface-card);'),
+      '.zn-panel must use background-color: var(--zn-surface-card)'
+    );
+
+    // .zn-card-elevated must use semantic surface token
+    assert.ok(
+      indexCss.includes('.zn-card-elevated {\n  position: relative;\n  background-color: var(--zn-token-surface-elevated);'),
+      '.zn-card-elevated must use var(--zn-token-surface-elevated)'
+    );
+
+    // Hardcoded dark backgrounds must not override .zn-card
+    assert.ok(!indexCss.includes('background: #0B111E;'), 'index.css must not contain hardcoded background: #0B111E');
+    assert.ok(!indexCss.includes('background: #0D1424;'), 'index.css must not contain hardcoded background: #0D1424');
+  });
 });

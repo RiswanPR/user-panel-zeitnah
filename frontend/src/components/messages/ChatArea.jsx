@@ -145,8 +145,8 @@ function renderBodyWithMentions(body, _mentions = [], isMe = false) {
               onClick={(e) => e.stopPropagation()}
               className={`inline-flex items-center font-semibold rounded px-1 py-0.2 mx-0.5 transition-colors ${
                 isMe
-                  ? 'bg-black/15 text-bg-base hover:underline'
-                  : 'bg-brand-mint/15 text-brand-mint hover:text-brand-mint/80 hover:bg-brand-mint/25'
+                  ? 'bg-black/15 text-[#07130E] hover:underline'
+                  : 'bg-brand-mint/15 text-brand-navy dark:text-brand-mint hover:bg-brand-mint/25'
               }`}
             >
               {part}
@@ -2904,7 +2904,7 @@ export default function ChatArea({ conversationId, onBack }) {
                   setFocusedMessage(null);
                   textareaRef.current?.focus();
                 }}
-                className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-brand-mint text-bg-base text-xs font-bold hover:bg-brand-mint/90 transition-colors cursor-pointer"
+                className="zn-btn-primary min-h-[44px] flex items-center justify-center gap-2 text-xs"
               >
                 <Reply className="w-3.5 h-3.5" />
                 <span>Reply</span>
@@ -2916,7 +2916,7 @@ export default function ChatArea({ conversationId, onBack }) {
                   navigator.clipboard.writeText(focusedMessage.body);
                   toast.success('Copied text to clipboard');
                 }}
-                className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-surface-elevated/60 hover:bg-surface-elevated text-text-primary text-xs font-semibold border border-border transition-colors cursor-pointer"
+                className="zn-btn-secondary min-h-[44px] flex items-center justify-center gap-2 text-xs"
               >
                 <Copy className="w-3.5 h-3.5" />
                 <span>Copy</span>

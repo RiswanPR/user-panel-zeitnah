@@ -118,11 +118,11 @@ export default function ComposerCollapsed({
           </button>
         </div>
 
-        {/* Post Button — Brand Energy Gradient */}
+        {/* Post Button */}
         <button
           type="button"
           onClick={onExpand}
-          className="min-h-[44px] px-4 py-2 rounded-xl bg-gradient-to-r from-brand-mint to-brand-yellow text-bg-base font-bold text-xs hover:brightness-105 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shadow-[0_0_12px_rgba(159,213,178,0.25)]"
+          className="zn-btn-primary min-h-[44px] px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
           aria-label="Open post composer"
         >
           <Send className="w-3.5 h-3.5" />

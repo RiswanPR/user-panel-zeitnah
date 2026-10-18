@@ -199,7 +199,7 @@ export default function ConversationList({
               Messages
             </h2>
             {unreadCounts?.unreadMessages > 0 && (
-              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-brand-mint/15 text-brand-mint border border-brand-mint/30 text-[10px] font-mono font-bold tracking-tight">
+              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-brand-mint/15 text-brand-navy dark:text-brand-mint border border-brand-mint/30 text-[10px] font-mono font-bold tracking-tight">
                 {unreadCounts.unreadMessages}
               </span>
             )}
@@ -227,7 +227,7 @@ export default function ConversationList({
             <button
               type="button"
               onClick={onNewChat}
-              className="rounded-xl bg-brand-mint/15 text-brand-mint hover:bg-brand-mint/25 transition-colors focus-ring cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center shadow-sm"
+              className="rounded-xl bg-brand-mint/15 text-brand-navy dark:text-brand-mint hover:bg-brand-mint/25 transition-colors focus-ring cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center shadow-sm"
               title="New Direct Message"
               aria-label="Start new direct message"
             >
@@ -256,7 +256,7 @@ export default function ConversationList({
             <Inbox className="w-3.5 h-3.5 shrink-0" />
             <span className="truncate">Chats</span>
             {unreadCounts?.unreadMessages > 0 && (
-              <span className="min-w-4 h-4 px-1 rounded-full bg-brand-mint text-bg-base text-[10px] font-bold flex items-center justify-center shrink-0">
+              <span className="min-w-4 h-4 px-1 rounded-full bg-brand-mint text-brand-navy text-[10px] font-bold flex items-center justify-center shrink-0">
                 {unreadCounts.unreadMessages > 99
                   ? '99+'
                   : unreadCounts.unreadMessages}
@@ -278,7 +278,7 @@ export default function ConversationList({
             <Sparkles className="w-3.5 h-3.5 shrink-0" />
             <span className="truncate">Requests</span>
             {unreadCounts?.unreadRequests > 0 && (
-              <span className="min-w-4 h-4 px-1 rounded-full bg-brand-gold text-bg-base text-[10px] font-bold flex items-center justify-center shrink-0">
+              <span className="min-w-4 h-4 px-1 rounded-full bg-brand-gold text-brand-navy text-[10px] font-bold flex items-center justify-center shrink-0">
                 {unreadCounts.unreadRequests}
               </span>
             )}
@@ -374,13 +374,13 @@ export default function ConversationList({
                   onClick={() => handleSubFilterSelect(f.id)}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all shrink-0 cursor-pointer flex items-center gap-1 min-h-[32px] ${
                     active
-                      ? 'bg-brand-mint/15 text-brand-mint border border-brand-mint/30 font-semibold'
+                      ? 'bg-brand-mint/15 text-brand-navy dark:text-brand-mint border border-brand-mint/30 font-semibold'
                       : 'bg-surface-elevated/40 text-text-muted hover:text-text-primary border border-border/60 hover:bg-surface-elevated'
                   }`}
                 >
                   <span>{f.label}</span>
                   {Boolean(f.count) && f.count > 0 && (
-                    <span className="min-w-3.5 h-3.5 px-1 rounded-full bg-brand-mint text-bg-base text-[9px] font-extrabold flex items-center justify-center">
+                    <span className="min-w-3.5 h-3.5 px-1 rounded-full bg-brand-mint text-brand-navy text-[9px] font-extrabold flex items-center justify-center">
                       {f.count}
                     </span>
                   )}
@@ -455,7 +455,7 @@ export default function ConversationList({
               <button
                 type="button"
                 onClick={onNewChat}
-                className="mt-4 px-4 py-2 rounded-xl bg-brand-mint text-bg-base text-xs font-bold hover:bg-brand-mint/90 transition-all cursor-pointer shadow-md inline-flex items-center gap-1.5 focus-ring min-h-[40px]"
+                className="zn-btn-primary mt-4 min-h-[40px] text-xs inline-flex items-center gap-1.5"
               >
                 <MessageSquarePlus className="w-3.5 h-3.5" />
                 <span>Start Direct Message</span>
@@ -682,7 +682,7 @@ export default function ConversationList({
                         </span>
                       )}
                       {unreadCount > 0 && (
-                        <span className="min-w-4 h-4 px-1.5 rounded-full bg-brand-mint text-bg-base text-[10px] font-extrabold flex items-center justify-center shadow-sm shrink-0">
+                        <span className="min-w-4 h-4 px-1.5 rounded-full bg-brand-mint text-brand-navy text-[10px] font-extrabold flex items-center justify-center shadow-sm shrink-0">
                           {unreadCount > 99 ? '99+' : unreadCount}
                         </span>
                       )}

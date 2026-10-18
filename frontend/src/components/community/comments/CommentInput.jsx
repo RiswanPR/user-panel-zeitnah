@@ -86,17 +86,17 @@ export default function CommentInput({
             }}
             placeholder={replyingTo ? `Reply to @${replyAuthorName}...` : placeholder}
             maxLength={500}
-            className="w-full bg-surface-elevated border border-border focus:border-brand-mint/50 focus:bg-surface-card rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-text-primary placeholder-text-faint focus:outline-none focus:ring-2 focus:ring-brand-mint/25 focus:shadow-[0_0_12px_rgba(159,213,178,0.2)] transition-all"
+            className="w-full bg-surface-elevated border border-border focus:border-brand-mint/50 focus:bg-surface-card rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand-mint/25 focus:shadow-[0_0_12px_rgba(159,213,178,0.2)] transition-all"
           />
         </div>
 
-        {/* Submit Button — Brand Energy Gradient */}
+        {/* Submit Button */}
         <button
           id="comment-drawer-submit"
           data-testid="comment-drawer-submit"
           type="submit"
           disabled={!value.trim() || isSubmitting}
-          className="min-h-[44px] min-w-[44px] px-3.5 py-2.5 bg-gradient-to-r from-brand-mint to-brand-yellow text-bg-base font-bold rounded-xl text-xs flex items-center justify-center hover:brightness-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_14px_rgba(159,213,178,0.3),0_0_10px_rgba(246,237,74,0.15)] focus:outline-none focus:ring-2 focus:ring-brand-mint/50"
+          className="zn-btn-primary min-h-[44px] min-w-[44px] px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-center hover:brightness-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-mint/50"
           aria-label="Post comment"
         >
           {isSubmitting ? (

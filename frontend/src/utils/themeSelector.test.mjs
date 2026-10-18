@@ -188,7 +188,10 @@ describe('Zeitnah — Phase 3: Settings Theme Selector Unit Tests', () => {
 
     // Accessibility attributes
     assert.ok(fileContent.includes('role="radiogroup"'));
-    assert.ok(fileContent.includes('aria-label="Theme preference options"'));
+    assert.ok(
+      fileContent.includes('aria-label="Theme preference"') ||
+      fileContent.includes('aria-label="Theme preference options"')
+    );
     assert.ok(fileContent.includes('role="radio"'));
     assert.ok(fileContent.includes('aria-checked={isSelected}'));
     assert.ok(fileContent.includes('tabIndex={isSelected ? 0 : -1}'));
@@ -198,7 +201,10 @@ describe('Zeitnah — Phase 3: Settings Theme Selector Unit Tests', () => {
     assert.ok(fileContent.includes('ArrowLeft'));
     assert.ok(fileContent.includes('ArrowDown'));
     assert.ok(fileContent.includes('ArrowUp'));
+    assert.ok(fileContent.includes('Home'));
+    assert.ok(fileContent.includes('End'));
     assert.ok(fileContent.includes('Enter'));
+
   });
 
   // ── TEST 9: Existing Settings behavior remains intact ──

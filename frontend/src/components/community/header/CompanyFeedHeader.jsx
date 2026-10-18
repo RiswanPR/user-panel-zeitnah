@@ -104,7 +104,7 @@ export default function CompanyFeedHeader({
             <button
               type="button"
               onClick={onOpenCreate}
-              className="min-h-[44px] px-3.5 py-1.5 rounded-xl bg-brand-mint text-bg-base hover:bg-brand-mint/90 font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm hover:shadow-brand-mint/20"
+              className="zn-btn-primary min-h-[44px] px-3.5 py-1.5 rounded-xl font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm"
               aria-label={`Create content as ${businessName}`}
               title={`Create as ${businessName}`}
             >
@@ -123,7 +123,7 @@ export default function CompanyFeedHeader({
             >
               <Search className="w-3.5 h-3.5 text-brand-mint" />
               <span className="hidden sm:inline font-medium">Search</span>
-              <kbd className="hidden lg:inline-block px-1 py-0.2 text-[9px] font-mono rounded bg-surface-card border border-border text-text-faint">
+              <kbd className="hidden lg:inline-block px-1 py-0.2 text-[9px] font-mono rounded bg-surface-card border border-border text-text-muted">
                 ⌘K
               </kbd>
             </button>

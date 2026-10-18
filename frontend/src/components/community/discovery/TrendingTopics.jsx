@@ -48,18 +48,18 @@ export default function TrendingTopics({
                   border transition-all duration-150 cursor-pointer
                   ${
                     isSelected
-                      ? 'bg-gradient-to-r from-brand-mint to-brand-yellow text-bg-base border-transparent font-bold shadow-[0_0_14px_rgba(159,213,178,0.35)]'
+                      ? 'bg-brand-navy text-white dark:bg-gradient-to-r dark:from-brand-mint dark:to-brand-yellow dark:text-brand-navy border-transparent font-bold shadow-sm dark:shadow-[0_0_14px_rgba(159,213,178,0.35)]'
                       : 'bg-surface-elevated hover:bg-surface-card text-text-secondary hover:text-text-primary border border-border hover:border-brand-mint/30'
                   }
                 `}
                 aria-label={`Filter by #${tag}`}
               >
-                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSelected ? 'bg-bg-base' : 'bg-gradient-to-r from-brand-mint to-brand-yellow'}`} />
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSelected ? 'bg-brand-mint' : 'bg-gradient-to-r from-brand-mint to-brand-yellow'}`} />
                 <span>#{tag}</span>
                 {count > 1 && (
                   <span
                     className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                      isSelected ? 'bg-black/20 text-bg-base' : 'bg-surface-card text-brand-yellow/90 border border-brand-yellow/20'
+                      isSelected ? 'bg-white/20 text-white dark:bg-black/20 dark:text-brand-navy' : 'bg-surface-card text-brand-yellow/90 border border-brand-yellow/20'
                     }`}
                   >
                     {count}

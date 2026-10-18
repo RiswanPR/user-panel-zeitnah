@@ -171,7 +171,7 @@ describe('Zeitnah Production Incident — 401 Unauthorized & Profile Avatar Veri
       const content = fs.readFileSync(heroPath, 'utf8');
 
       // className has refined border
-      assert.match(content, /className=["']border-2 sm:border-4 border-\[#0A0F18\] shadow-2xl["']/);
+      assert.match(content, /className=["']border-2 sm:border-4 border-(surface-card|\[#0A0F18\]) shadow-2xl["']/);
 
       // Owner Avatar Change button prevents capturing clicks when hidden
       assert.match(content, /pointer-events-none group-hover:pointer-events-auto/);

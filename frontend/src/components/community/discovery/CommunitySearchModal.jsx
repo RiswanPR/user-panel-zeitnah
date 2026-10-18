@@ -308,7 +308,7 @@ export default function CommunitySearchModal({
                         flex items-center gap-1.5 transition-all duration-150 cursor-pointer shrink-0
                         ${
                           isSelected
-                            ? 'bg-brand-mint text-bg-base shadow-sm'
+                            ? 'bg-brand-navy text-white dark:bg-brand-mint dark:text-brand-navy shadow-sm font-bold'
                             : 'bg-surface-elevated text-text-muted hover:text-text-primary hover:bg-surface-card border border-border'
                         }
                       `}
@@ -394,7 +394,7 @@ export default function CommunitySearchModal({
                 <button
                   type="button"
                   onClick={() => refetch()}
-                  className="min-h-[38px] px-4 py-1.5 rounded-xl bg-brand-mint text-bg-base text-xs font-bold hover:opacity-90 transition-opacity cursor-pointer"
+                  className="zn-btn-primary min-h-[38px] px-4 py-1.5 text-xs font-bold"
                 >
                   Retry Search
                 </button>

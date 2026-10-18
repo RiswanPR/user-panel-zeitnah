@@ -421,7 +421,7 @@ export default function NetworkConnections({
                       isActive
                         ? "bg-surface-elevated text-text-primary"
                         : tab.hasAttention
-                        ? "bg-amber-400/15 text-amber-200 border border-amber-400/25"
+                        ? "bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-500/30 dark:border-amber-400/25"
                         : "bg-surface-elevated/60 text-text-muted"
                     }`}
                   >
@@ -846,7 +846,7 @@ export default function NetworkConnections({
                   Connection Requests
                 </h2>
                 {incomingRequestsCount > 0 && (
-                  <span className="text-xs font-mono font-bold text-amber-200 bg-amber-400/15 border border-amber-400/25 px-2 py-0.5 rounded-full">
+                  <span className="text-xs font-mono font-bold text-amber-800 dark:text-amber-200 bg-amber-500/15 dark:bg-amber-400/15 border border-amber-500/30 dark:border-amber-400/25 px-2 py-0.5 rounded-full">
                     {incomingRequestsCount < 10 ? `0${incomingRequestsCount}` : incomingRequestsCount}
                   </span>
                 )}

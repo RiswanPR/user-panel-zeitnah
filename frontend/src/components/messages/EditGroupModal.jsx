@@ -135,7 +135,7 @@ export default function EditGroupModal({ isOpen, conversation, onClose }) {
             <button
               type="button"
               onClick={onClose}
-              className="min-h-[44px] px-4 py-2 rounded-xl border border-border text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-surface-elevated transition-colors"
+              className="zn-btn-secondary min-h-[44px] px-4 py-2 text-xs"
             >
               Cancel
             </button>
@@ -143,7 +143,7 @@ export default function EditGroupModal({ isOpen, conversation, onClose }) {
               type="button"
               onClick={() => updateMutation.mutate()}
               disabled={!name.trim() || updateMutation.isPending}
-              className="min-h-[44px] px-4 py-2 rounded-xl bg-brand-mint hover:bg-brand-mint/90 disabled:opacity-40 disabled:hover:bg-brand-mint text-bg-base font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              className="zn-btn-primary min-h-[44px] px-4 py-2 text-xs flex items-center gap-1.5 disabled:opacity-40"
             >
               {updateMutation.isPending && (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />

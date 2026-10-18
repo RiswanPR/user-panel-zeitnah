@@ -889,7 +889,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                   onClick={() => setViewMode('EDIT')}
                   className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                     viewMode === 'EDIT'
-                      ? 'bg-brand-mint text-bg-base font-semibold shadow-sm'
+                      ? 'bg-brand-navy text-white dark:bg-brand-mint dark:text-brand-navy font-semibold shadow-sm'
                       : 'text-text-muted hover:text-text-primary'
                   }`}
                 >
@@ -901,7 +901,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                   onClick={() => setViewMode('PREVIEW')}
                   className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                     viewMode === 'PREVIEW'
-                      ? 'bg-brand-mint text-bg-base font-semibold shadow-sm'
+                      ? 'bg-brand-navy text-white dark:bg-brand-mint dark:text-brand-navy font-semibold shadow-sm'
                       : 'text-text-muted hover:text-text-primary'
                   }`}
                 >
@@ -915,7 +915,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                 type="button"
                 onClick={handlePublish}
                 disabled={isUploading || createPostMutation.isPending}
-                className="sm:hidden px-3.5 py-1.5 rounded-xl bg-brand-mint text-bg-base font-bold text-xs hover:opacity-90 disabled:opacity-40 transition-all cursor-pointer"
+                className="sm:hidden min-h-[36px] px-3.5 py-1.5 rounded-xl community-btn-create font-bold text-xs hover:opacity-90 disabled:opacity-40 transition-all cursor-pointer inline-flex items-center justify-center"
               >
                 {isUploading ? 'Posting...' : 'Post'}
               </button>
@@ -933,7 +933,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                 <button
                   type="button"
                   onClick={handleRestoreDraft}
-                  className="font-semibold text-brand-mint hover:underline cursor-pointer"
+                  className="font-semibold text-brand-navy dark:text-brand-mint hover:underline cursor-pointer"
                 >
                   Resume
                 </button>
@@ -976,14 +976,14 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                     <button
                       type="button"
                       onClick={() => handlePublish()}
-                      className="px-4 py-2 rounded-xl bg-brand-mint text-bg-base text-xs font-bold hover:opacity-90 transition-all cursor-pointer"
+                      className="zn-btn-primary min-h-[44px] px-4 py-2 text-xs font-bold"
                     >
                       Retry
                     </button>
                     <button
                       type="button"
                       onClick={() => setStep('DETAILS')}
-                      className="px-4 py-2 rounded-xl bg-surface-card text-text-primary hover:bg-surface-card/80 border border-border text-xs font-semibold transition-all cursor-pointer"
+                      className="zn-btn-secondary min-h-[44px] px-4 py-2 text-xs font-semibold"
                     >
                       Keep editing
                     </button>
@@ -1494,7 +1494,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                             onClick={() => (isAdded ? handleRemoveTag(hashtag) : handleAddTag(hashtag))}
                             className={`px-2 py-0.5 rounded-lg text-[10px] font-medium transition-colors cursor-pointer ${
                               isAdded
-                                ? 'bg-brand-mint text-bg-base font-semibold'
+                                ? 'bg-brand-mint text-brand-navy font-semibold'
                                 : 'bg-surface-elevated text-text-muted hover:text-text-primary border border-border'
                             }`}
                           >
@@ -1567,8 +1567,8 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                 disabled={isUploading || createPostMutation.isPending}
                 className={`min-h-[44px] px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md cursor-pointer disabled:opacity-50 inline-flex items-center justify-center ${
                   createPostMutation.isPending || isUploading
-                    ? 'community-shimmer-btn text-bg-base'
-                    : 'bg-gradient-to-r from-brand-mint to-brand-yellow text-bg-base hover:shadow-[0_0_24px_rgba(159,213,178,0.4),0_0_14px_rgba(246,237,74,0.2)] hover:brightness-105 active:scale-95'
+                    ? 'community-shimmer-btn'
+                    : 'community-btn-create hover:brightness-105 active:scale-95'
                 }`}
               >
                 {createPostMutation.isPending || isUploading ? 'Publishing…' : 'Publish Post →'}
@@ -1602,7 +1602,7 @@ export default function CreatePostModal({ isOpen, onClose, publishingContext: pr
                   <button
                     type="button"
                     onClick={handleSaveDraft}
-                    className="w-full py-2.5 rounded-xl bg-brand-mint text-bg-base font-bold text-xs hover:opacity-90 transition-all cursor-pointer"
+                    className="w-full min-h-[44px] py-2.5 rounded-xl zn-btn-primary font-bold text-xs inline-flex items-center justify-center cursor-pointer"
                   >
                     Save as draft
                   </button>

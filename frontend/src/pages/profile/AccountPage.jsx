@@ -35,7 +35,7 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto pb-16">
+    <div className="space-y-5 sm:space-y-6 max-w-5xl mx-auto pb-16">
       {/* ── 01. TOP-LEVEL PROFILE NAVIGATION (Highlights Account) ── */}
       <ProfileNav />
 
@@ -43,20 +43,20 @@ export default function AccountPage() {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl bg-surface-card border border-border p-6 sm:p-8 shadow-sm"
+        className="relative overflow-hidden rounded-2xl bg-surface-card border border-border p-4 sm:p-5 shadow-sm"
       >
         <div
           className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-mint/35 to-transparent pointer-events-none"
           aria-hidden="true"
         />
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-mint/10 border border-brand-mint/20 text-brand-mint text-xs font-semibold uppercase tracking-wider">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-brand-mint/10 border border-brand-mint/20 text-brand-mint text-[11px] font-semibold uppercase tracking-wider">
               <Shield className="w-3.5 h-3.5" />
               Unified Account Area
             </div>
-            <h1 className="text-2xl sm:text-3xl font-heading font-black text-text-primary tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-heading font-black text-text-primary tracking-tight">
               Account, Trust & Security
             </h1>
             <p className="text-text-muted text-xs sm:text-sm max-w-2xl leading-relaxed">

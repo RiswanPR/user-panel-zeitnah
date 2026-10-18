@@ -74,7 +74,7 @@ export default function OpportunityCard({ opp, opportunity, onSelect }) {
         <div>
           {/* Header Pills: Opportunity Type & Work Mode */}
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-brand-mint/15 text-brand-mint border border-brand-mint/30">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-brand-mint/15 text-brand-primary dark:text-brand-mint border border-brand-mint/30">
               {data.type?.replace(/_/g, " ") || "OPPORTUNITY"}
             </span>
 
@@ -89,19 +89,19 @@ export default function OpportunityCard({ opp, opportunity, onSelect }) {
           </div>
 
           {/* Role Title */}
-          <h3 className="font-heading font-bold text-base text-text-primary mt-3 line-clamp-1 group-hover:text-brand-mint transition-colors">
+          <h3 className="font-heading font-bold text-base text-text-primary mt-3 line-clamp-1 group-hover:text-brand-primary dark:group-hover:text-brand-mint transition-colors">
             {data.title}
           </h3>
 
           {/* Organization Name + Verified Badge */}
           <div className="flex items-center gap-1.5 mt-1.5">
-            <Building2 className="w-3.5 h-3.5 text-brand-mint/80 shrink-0" aria-hidden="true" />
+            <Building2 className="w-3.5 h-3.5 text-brand-primary dark:text-brand-mint shrink-0" aria-hidden="true" />
             <span className="text-xs font-semibold text-text-secondary truncate">
               {org.name || "Partner Organization"}
             </span>
             {isVerified && (
               <span title="Verified Enterprise" aria-label="Verified Enterprise">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               </span>
             )}
           </div>
@@ -141,7 +141,7 @@ export default function OpportunityCard({ opp, opportunity, onSelect }) {
           <button
             type="button"
             onClick={handleOpen}
-            className="px-3.5 py-1.5 rounded-xl bg-surface-elevated hover:bg-brand-mint text-text-primary hover:text-black font-semibold text-xs transition-all cursor-pointer flex items-center gap-1 shrink-0 border border-border focus-ring"
+            className="px-3.5 py-1.5 rounded-xl bg-surface-elevated hover:bg-brand-primary hover:text-white dark:hover:bg-brand-mint dark:hover:text-brand-navy text-text-primary font-semibold text-xs transition-all cursor-pointer flex items-center gap-1 shrink-0 border border-border focus-ring"
           >
             <span>View Details</span>
             <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -178,7 +178,7 @@ export default function OpportunityCard({ opp, opportunity, onSelect }) {
                   <div className="flex items-center gap-2 text-xs text-text-muted mt-1">
                     <span className="font-semibold text-text-secondary">{org.name}</span>
                     {isVerified && (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" aria-label="Verified" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-label="Verified" />
                     )}
                     <span>•</span>
                     <span>{data.location || "Remote"}</span>
@@ -254,7 +254,7 @@ export default function OpportunityCard({ opp, opportunity, onSelect }) {
                   type="button"
                   disabled={isApplying}
                   onClick={handleApply}
-                  className="px-5 py-2.5 rounded-xl bg-brand-mint hover:bg-brand-mint/90 text-black font-heading font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-brand-mint/20 transition-all cursor-pointer disabled:opacity-50"
+                  className="zn-btn-primary px-5 py-2.5 rounded-xl font-heading font-extrabold text-xs uppercase tracking-wider shadow-lg transition-all cursor-pointer disabled:opacity-50 min-h-[44px]"
                 >
                   {isApplying ? "Submitting..." : "Apply with Zeitnah Profile"}
                 </button>

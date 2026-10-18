@@ -1149,29 +1149,8 @@ const ZeitnahZMotif = memo(
                     ? `url(#${glowId})`
                     : undefined
                 }
-
-                animate={
-                  shouldAnimate
-                    ? {
-                      d: [
-                        ORGANIC_Z_PATH,
-                        ORGANIC_Z_BREATH_PATH,
-                        ORGANIC_Z_PATH,
-                      ],
-                    }
-                    : undefined
-                }
-
-                transition={
-                  shouldAnimate
-                    ? {
-                      duration: 11,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    }
-                    : undefined
-                }
               />
+
 
               {/* ================================================
                   FLOWING SHIMMER

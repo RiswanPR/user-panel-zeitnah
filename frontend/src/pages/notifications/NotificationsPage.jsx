@@ -117,12 +117,12 @@ export default function NotificationsPage() {
           aria-label="Go back"
           className="inline-flex items-center gap-2 text-xs font-semibold text-text-muted hover:text-text-primary transition-colors py-1.5 px-2.5 -ml-2.5 rounded-xl hover:bg-surface-elevated focus-ring cursor-pointer"
         >
-          <ArrowLeft className="w-4 h-4 text-brand-mint" aria-hidden="true" />
+          <ArrowLeft className="w-4 h-4 text-brand-navy dark:text-brand-mint" aria-hidden="true" />
           <span>Back</span>
         </button>
 
         {unreadCount > 0 && (
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-brand-mint/15 text-brand-mint border border-brand-mint/30 shadow-sm">
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-brand-mint/15 text-brand-navy dark:text-brand-mint border border-brand-mint/30 shadow-sm">
             {unreadCount} unread
           </span>
         )}
@@ -149,7 +149,7 @@ export default function NotificationsPage() {
               onClick={() => markAllAsRead(categoryParam)}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-elevated hover:bg-surface-card border border-border text-xs font-semibold text-text-primary transition-all cursor-pointer focus-ring shadow-sm"
             >
-              <CheckCheck className="w-4 h-4 text-brand-mint" aria-hidden="true" />
+              <CheckCheck className="w-4 h-4 text-brand-navy dark:text-brand-mint" aria-hidden="true" />
               <span>Mark all as read</span>
             </button>
           )}
@@ -202,7 +202,7 @@ export default function NotificationsPage() {
                 onClick={() => handleTabChange(tab.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer focus-ring ${
                   isActive
-                    ? 'bg-brand-mint text-brand-navy font-bold shadow-[0_0_12px_rgba(159,213,178,0.25)]'
+                    ? 'bg-brand-navy text-white dark:bg-brand-mint dark:text-brand-navy font-bold shadow-sm'
                     : 'bg-surface-elevated text-text-muted border border-border hover:bg-surface-card hover:text-text-primary'
                 }`}
               >
@@ -240,7 +240,7 @@ export default function NotificationsPage() {
       ) : filteredNotifications.length === 0 ? (
         <div className="py-20 px-4 text-center rounded-3xl bg-surface-card border border-border max-w-md mx-auto">
           <div className="w-12 h-12 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center mx-auto mb-3.5 text-text-faint">
-            <Inbox className="w-6 h-6 text-brand-mint/60" />
+            <Inbox className="w-6 h-6 text-brand-navy/60 dark:text-brand-mint/60" />
           </div>
           <h3 className="font-heading font-bold text-base text-text-primary">
             {searchQuery ? 'No matching notifications' : 'No notifications'}

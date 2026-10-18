@@ -246,7 +246,7 @@ export default function MessageRequestsView({ onSelectConversation }) {
                         type="button"
                         onClick={() => acceptMutation.mutate(convId)}
                         disabled={acceptMutation.isPending}
-                        className="px-4 py-2 rounded-xl bg-brand-mint text-bg-base text-xs font-bold hover:bg-brand-mint/90 transition-all cursor-pointer inline-flex items-center gap-1.5 focus-ring disabled:opacity-50 min-h-[44px] shadow-sm shadow-brand-mint/10"
+                        className="zn-btn-primary min-h-[44px] text-xs gap-1.5 disabled:opacity-50"
                       >
                         <Check className="w-3.5 h-3.5" />
                         <span>Accept Request</span>
@@ -256,7 +256,7 @@ export default function MessageRequestsView({ onSelectConversation }) {
                         type="button"
                         onClick={() => declineMutation.mutate(convId)}
                         disabled={declineMutation.isPending}
-                        className="px-3.5 py-2 rounded-xl bg-surface-elevated/60 hover:bg-surface-elevated text-text-secondary hover:text-text-primary border border-border text-xs font-semibold transition-all cursor-pointer inline-flex items-center gap-1.5 focus-ring disabled:opacity-50 min-h-[44px]"
+                        className="zn-btn-secondary min-h-[44px] text-xs gap-1.5 disabled:opacity-50"
                       >
                         <X className="w-3.5 h-3.5" />
                         <span>Decline</span>

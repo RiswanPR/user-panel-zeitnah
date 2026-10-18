@@ -87,7 +87,7 @@ export default function ProfileHero({
       />
 
       {/* ── 1. COVER BANNER ── */}
-      <div className="relative h-48 sm:h-60 md:h-72 lg:h-80 w-full overflow-hidden bg-[#070B14]">
+      <div className="relative h-48 sm:h-60 md:h-72 lg:h-80 w-full overflow-hidden bg-surface-elevated">
         {bannerUrl ? (
           <img
             src={bannerUrl}
@@ -95,7 +95,7 @@ export default function ProfileHero({
             className="w-full h-full object-cover object-center"
           />
         ) : (
-          <div className="w-full h-full relative overflow-hidden bg-[#070B14] flex items-center justify-center">
+          <div className="w-full h-full relative overflow-hidden bg-gradient-to-br from-brand-navy/90 via-surface-card to-surface-elevated flex items-center justify-center">
             {/* Subtle architectural grid pattern */}
             <div
               className="absolute inset-0 opacity-[0.06] pointer-events-none"
@@ -108,9 +108,9 @@ export default function ProfileHero({
             {/* Ambient lighting meshes */}
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-10%,rgba(159,213,178,0.18),transparent)]" />
             <div className="absolute right-12 bottom-8 w-72 h-72 rounded-full bg-brand-yellow/[0.04] blur-3xl pointer-events-none" />
-            <div className="absolute left-10 top-6 w-72 h-72 rounded-full bg-brand-mint/[0.05] blur-3xl pointer-events-none" />
-            <div className="text-center opacity-30 select-none pointer-events-none">
-              <span className="font-mono text-[11px] sm:text-xs uppercase tracking-[0.35em] text-brand-mint/90 font-bold">
+            <div className="absolute left-10 top-6 w-72 h-72 rounded-full bg-brand-mint/[0.06] blur-3xl pointer-events-none" />
+            <div className="text-center opacity-40 select-none pointer-events-none">
+              <span className="font-mono text-[11px] sm:text-xs uppercase tracking-[0.35em] text-brand-mint font-bold">
                 Zeitnah Identity
               </span>
             </div>
@@ -121,7 +121,7 @@ export default function ProfileHero({
         <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
 
         {/* Ambient bottom fade for contrast against avatar and profile card */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0F18] via-[#0A0F18]/50 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-surface-card via-surface-card/40 to-transparent pointer-events-none" />
 
         {/* Banner Change Trigger for Owner */}
         {isOwner && onBannerUpload && (
@@ -166,7 +166,7 @@ export default function ProfileHero({
                 size="xl"
                 shape="circle"
                 availability={profile.availability}
-                className="border-2 sm:border-4 border-[#0A0F18] shadow-2xl"
+                className="border-2 sm:border-4 border-surface-card shadow-2xl"
               >
                 {/* Owner Avatar Change Overlay */}
                 {isOwner && onAvatarUpload && (

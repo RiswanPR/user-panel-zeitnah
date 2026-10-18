@@ -121,7 +121,7 @@ export default function NotificationCenterPage() {
   });
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-16">
+    <div className="space-y-6 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -130,7 +130,7 @@ export default function NotificationCenterPage() {
               Notification Center
             </h1>
             {unreadCount > 0 && (
-              <span className="px-2.5 py-0.5 rounded-full bg-brand-mint/15 border border-brand-mint/30 text-xs font-mono font-bold text-brand-mint">
+              <span className="px-2.5 py-0.5 rounded-full bg-brand-mint/15 border border-brand-mint/30 text-xs font-mono font-bold text-brand-navy dark:text-brand-mint">
                 {unreadCount} unread
               </span>
             )}
@@ -147,7 +147,7 @@ export default function NotificationCenterPage() {
             onClick={() => markAllAsRead(categoryParam)}
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-surface-elevated hover:bg-surface-card text-xs font-semibold text-text-secondary hover:text-text-primary transition-all focus-ring cursor-pointer"
           >
-            <CheckCheck className="w-3.5 h-3.5 text-brand-mint" />
+            <CheckCheck className="w-3.5 h-3.5 text-brand-navy dark:text-brand-mint" />
             <span>Mark all read</span>
           </button>
 
@@ -187,7 +187,7 @@ export default function NotificationCenterPage() {
                 }}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all focus-ring cursor-pointer ${
                   isActive
-                    ? 'bg-brand-mint text-brand-navy font-bold shadow-[0_0_12px_rgba(159,213,178,0.25)]'
+                    ? 'bg-brand-navy text-white dark:bg-brand-mint dark:text-brand-navy font-bold shadow-sm'
                     : 'bg-surface-elevated text-text-muted hover:bg-surface-card hover:text-text-primary'
                 }`}
               >

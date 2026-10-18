@@ -121,22 +121,22 @@ export default function PostHeader({
             ) : null}
 
             {post?.acceptedAnswerId && (
-              <div className="bg-brand-mint/15 text-brand-mint px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider flex items-center gap-0.5 border border-brand-mint/20">
+              <div className="bg-brand-mint/15 text-brand-navy dark:text-brand-mint px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider flex items-center gap-0.5 border border-brand-mint/20">
                 <Check className="w-3 h-3" /> Answered
               </div>
             )}
           </div>
 
-          <p className="text-[11px] text-text-muted/70 mt-0.5 flex items-center gap-1 font-normal">
+          <p className="text-[11px] text-text-secondary mt-0.5 flex items-center gap-1 font-normal">
             {authorUsername && (
               <>
-                <span className="truncate max-w-[110px] text-text-muted/80">{authorUsername}</span>
-                <span className="text-text-faint">·</span>
+                <span className="truncate max-w-[110px] text-text-secondary">{authorUsername}</span>
+                <span className="text-text-muted">·</span>
               </>
             )}
             <span>{formatRelativeTime(post?.createdAt)}</span>
-            <span className="text-text-faint">·</span>
-            <span className="capitalize text-text-muted/65">
+            <span className="text-text-muted">·</span>
+            <span className="capitalize text-text-secondary">
               {audienceLabel === 'PUBLIC' ? 'Public' : audienceLabel === 'COURSE' ? 'Course' : 'Private'}
             </span>
           </p>
@@ -150,7 +150,7 @@ export default function PostHeader({
           data-testid="post-options-btn"
           type="button"
           onClick={() => setShowMenu((prev) => !prev)}
-          className="min-w-[44px] min-h-[44px] p-2 text-text-muted hover:text-text-primary hover:bg-surface-elevated rounded-full transition-colors cursor-pointer flex items-center justify-center focus:outline-none focus:ring-1 focus:ring-brand-mint/40"
+          className="min-w-[44px] min-h-[44px] p-2 text-text-secondary hover:text-text-primary hover:bg-surface-elevated rounded-full transition-colors cursor-pointer flex items-center justify-center focus:outline-none focus:ring-1 focus:ring-brand-mint/40"
           aria-label="Post options"
           aria-expanded={showMenu}
         >

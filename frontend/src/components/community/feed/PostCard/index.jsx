@@ -334,7 +334,7 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, isHighlighted, on
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 placeholder="Write a comment..."
-                className="flex-1 bg-surface-elevated border border-border focus:border-brand-mint/50 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-text-primary placeholder-text-faint focus:outline-none transition-colors"
+                className="flex-1 bg-surface-elevated border border-border focus:border-brand-mint/50 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-text-primary placeholder-text-muted focus:outline-none transition-colors"
                 maxLength={500}
               />
               <button
@@ -342,7 +342,7 @@ function PostCard({ post, onOpenComments, isActiveCommentPost, isHighlighted, on
                 data-testid="comment-submit"
                 type="submit"
                 disabled={!commentText.trim() || createCommentMutation.isPending}
-                className="min-h-[40px] px-3.5 py-2 bg-brand-mint text-bg-base font-semibold rounded-xl text-xs flex items-center justify-center hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                className="zn-btn-primary min-h-[44px] min-w-[44px] px-3.5 py-2 rounded-xl text-xs flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                 aria-label="Submit comment"
               >
                 {createCommentMutation.isPending ? (

@@ -127,6 +127,22 @@ export function resolveEffectiveTheme(preference, deviceTheme = FALLBACK_EFFECTI
 }
 
 /**
+ * Safely resolves the browser's localStorage implementation if available and accessible.
+ * Handles SecurityError/privacy restrictions when localStorage is disabled or sandboxed.
+ * @returns {Storage | null}
+ */
+export function getBrowserStorage() {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage;
+    }
+  } catch {
+    // Storage access restricted (e.g. sandboxed iframe or private browsing)
+  }
+  return null;
+}
+
+/**
  * Safely reads the stored theme preference from the storage abstraction or localStorage.
  * Guaranteed never to throw; safely returns 'system' on any error, missing key, or invalid data.
  * @param {{ getItem: (key: string) => string | null } | null} [storageImpl] Storage implementation.
@@ -134,10 +150,7 @@ export function resolveEffectiveTheme(preference, deviceTheme = FALLBACK_EFFECTI
  */
 export function readStoredThemePreference(storageImpl) {
   try {
-    const impl =
-      storageImpl ||
-      storage ||
-      (typeof window !== 'undefined' && window.localStorage ? window.localStorage : null);
+    const impl = storageImpl !== undefined ? storageImpl : getBrowserStorage();
 
     if (!impl || typeof impl.getItem !== 'function') {
       return DEFAULT_PREFERENCE;
@@ -160,10 +173,7 @@ export function readStoredThemePreference(storageImpl) {
 export function writeStoredThemePreference(preference, storageImpl) {
   try {
     const normalized = normalizePreference(preference);
-    const impl =
-      storageImpl ||
-      storage ||
-      (typeof window !== 'undefined' && window.localStorage ? window.localStorage : null);
+    const impl = storageImpl !== undefined ? storageImpl : getBrowserStorage();
 
     if (!impl || typeof impl.setItem !== 'function') {
       return false;
@@ -175,6 +185,7 @@ export function writeStoredThemePreference(preference, storageImpl) {
     return false;
   }
 }
+
 
 /**
  * Applies the effective theme ('light' | 'dark') to the root documentElement

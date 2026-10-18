@@ -44,6 +44,12 @@ export default function ThemeSelector({ className = '', showHeader = true }) {
     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
       e.preventDefault();
       nextIndex = (index - 1 + THEME_OPTIONS.length) % THEME_OPTIONS.length;
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      nextIndex = 0;
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      nextIndex = THEME_OPTIONS.length - 1;
     } else if (e.key === ' ' || e.key === 'Enter') {
       e.preventDefault();
       handleSelect(THEME_OPTIONS[index].value);
@@ -107,7 +113,7 @@ export default function ThemeSelector({ className = '', showHeader = true }) {
       {/* Interactive 3-way Option Radiogroup */}
       <div
         role="radiogroup"
-        aria-label="Theme preference options"
+        aria-label="Theme preference"
         className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4"
       >
         {THEME_OPTIONS.map((opt, index) => {
@@ -120,6 +126,8 @@ export default function ThemeSelector({ className = '', showHeader = true }) {
               ref={(el) => (optionsRef.current[index] = el)}
               type="button"
               role="radio"
+              aria-label={opt.label}
+              data-theme-option={opt.value}
               aria-checked={isSelected}
               tabIndex={isSelected ? 0 : -1}
               onClick={() => handleSelect(opt.value)}
@@ -182,7 +190,7 @@ export default function ThemeSelector({ className = '', showHeader = true }) {
 
                   {opt.value === THEME_PREFERENCES.SYSTEM && isSelected && (
                     <span className="text-[11px] font-mono px-1.5 py-0.2 rounded bg-surface-elevated text-brand-yellow font-semibold">
-                      {effectiveTheme === 'dark' ? 'Resolving Dark' : 'Resolving Light'}
+                      {effectiveTheme === 'dark' ? 'Active: Dark' : 'Active: Light'}
                     </span>
                   )}
                 </div>

@@ -157,16 +157,16 @@ export default function JobDetailPage() {
                 {org.slug ? (
                   <Link
                     to={`/businesses/${org.slug}`}
-                    className="font-bold text-sm text-brand-mint hover:underline"
+                    className="font-bold text-sm text-brand-primary dark:text-brand-mint hover:underline"
                   >
                     {org.name}
                   </Link>
                 ) : (
-                  <span className="font-bold text-sm text-brand-mint">{org.name}</span>
+                  <span className="font-bold text-sm text-brand-primary dark:text-brand-mint">{org.name}</span>
                 )}
 
                 {isVerified && (
-                  <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                  <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Verified</span>
                   </span>
@@ -201,11 +201,11 @@ export default function JobDetailPage() {
           <div className="flex items-center gap-3 shrink-0 self-stretch sm:self-auto justify-end">
             <button
               onClick={() => toggleSaveMutation.mutate()}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-surface-elevated hover:bg-surface-elevated/80 text-xs font-semibold text-text-primary border border-border transition-all cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-surface-elevated hover:bg-surface-elevated/80 text-xs font-semibold text-text-primary border border-border transition-all cursor-pointer min-h-[44px]"
             >
               {job.isSaved ? (
                 <>
-                  <BookmarkCheck className="w-4 h-4 text-brand-mint" />
+                  <BookmarkCheck className="w-4 h-4 text-brand-primary dark:text-brand-mint" />
                   <span>Saved</span>
                 </>
               ) : (
@@ -217,14 +217,14 @@ export default function JobDetailPage() {
             </button>
 
             {hasApplied ? (
-              <span className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-bold text-xs">
+              <span className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 font-bold text-xs min-h-[44px]">
                 <FileCheck2 className="w-4 h-4" />
                 <span>Applied</span>
               </span>
             ) : (
               <button
                 onClick={() => setIsApplyModalOpen(true)}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-gradient-to-r from-brand-mint to-cyan-400 text-brand-navy font-extrabold text-xs shadow-lg shadow-brand-mint/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+                className="zn-btn-primary min-h-[44px] rounded-2xl px-6 py-2.5 font-extrabold text-xs shadow-lg transition-all cursor-pointer flex items-center gap-2"
               >
                 <Send className="w-4 h-4" />
                 <span>Apply Now</span>
@@ -247,7 +247,7 @@ export default function JobDetailPage() {
           </div>
           <div>
             <span className="text-[11px] text-text-muted block">Compensation</span>
-            <span className="font-semibold text-brand-mint mt-0.5 block">
+            <span className="font-semibold text-emerald-700 dark:text-brand-mint mt-0.5 block">
               {job.salaryMin && job.salaryMax
                 ? `${job.currency} ${job.salaryMin.toLocaleString()} – ${job.salaryMax.toLocaleString()}`
                 : 'Competitive Industry Standards'}

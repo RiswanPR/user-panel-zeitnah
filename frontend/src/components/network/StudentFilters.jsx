@@ -432,7 +432,7 @@ export default function StudentFilters({
                   onClick={() => handleSelect("course", "")}
                   className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${
                     !course
-                      ? "bg-brand-mint text-bg-base font-bold"
+                      ? "bg-brand-primary text-white dark:bg-brand-mint dark:text-brand-navy font-bold"
                       : "border border-border bg-surface-elevated text-text-secondary hover:text-text-primary"
                   }`}
                 >
@@ -445,7 +445,7 @@ export default function StudentFilters({
                     onClick={() => handleSelect("course", c)}
                     className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${
                       course.toLowerCase() === c.toLowerCase()
-                        ? "bg-brand-mint text-bg-base font-bold"
+                        ? "bg-brand-primary text-white dark:bg-brand-mint dark:text-brand-navy font-bold"
                         : "border border-border bg-surface-elevated text-text-secondary hover:text-text-primary"
                     }`}
                   >
@@ -466,7 +466,7 @@ export default function StudentFilters({
                   onClick={() => handleSelect("level", "")}
                   className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${
                     !level
-                      ? "bg-brand-mint text-bg-base font-bold"
+                      ? "bg-brand-primary text-white dark:bg-brand-mint dark:text-brand-navy font-bold"
                       : "border border-border bg-surface-elevated text-text-secondary hover:text-text-primary"
                   }`}
                 >
@@ -479,7 +479,7 @@ export default function StudentFilters({
                     onClick={() => handleSelect("level", l)}
                     className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${
                       level.toLowerCase() === l.toLowerCase()
-                        ? "bg-brand-mint text-bg-base font-bold"
+                        ? "bg-brand-primary text-white dark:bg-brand-mint dark:text-brand-navy font-bold"
                         : "border border-border bg-surface-elevated text-text-secondary hover:text-text-primary"
                     }`}
                   >
@@ -501,7 +501,7 @@ export default function StudentFilters({
                     onClick={() => handleSelect("interest", "")}
                     className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${
                       !interest
-                        ? "bg-brand-mint text-bg-base font-bold"
+                        ? "bg-brand-primary text-white dark:bg-brand-mint dark:text-brand-navy font-bold"
                         : "border border-border bg-surface-elevated text-text-secondary hover:text-text-primary"
                     }`}
                   >
@@ -514,7 +514,7 @@ export default function StudentFilters({
                       onClick={() => handleSelect("interest", item)}
                       className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${
                         interest.toLowerCase() === item.toLowerCase()
-                          ? "bg-brand-mint text-bg-base font-bold"
+                          ? "bg-brand-primary text-white dark:bg-brand-mint dark:text-brand-navy font-bold"
                           : "border border-border bg-surface-elevated text-text-secondary hover:text-text-primary"
                       }`}
                     >
@@ -537,7 +537,7 @@ export default function StudentFilters({
                     onClick={() => handleSelect("institution", "")}
                     className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${
                       !institution
-                        ? "bg-brand-mint text-bg-base font-bold"
+                        ? "bg-brand-primary text-white dark:bg-brand-mint dark:text-brand-navy font-bold"
                         : "border border-border bg-surface-elevated text-text-secondary hover:text-text-primary"
                     }`}
                   >
@@ -550,7 +550,7 @@ export default function StudentFilters({
                       onClick={() => handleSelect("institution", inst)}
                       className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${
                         institution.toLowerCase() === inst.toLowerCase()
-                          ? "bg-brand-mint text-bg-base font-bold"
+                          ? "bg-brand-primary text-white dark:bg-brand-mint dark:text-brand-navy font-bold"
                           : "border border-border bg-surface-elevated text-text-secondary hover:text-text-primary"
                       }`}
                     >
@@ -573,7 +573,7 @@ export default function StudentFilters({
               <button
                 type="button"
                 onClick={() => setIsMobileOpen(false)}
-                className="flex-1 py-2.5 rounded-xl bg-brand-yellow text-bg-base text-xs font-bold shadow-md"
+                className="flex-1 py-2.5 rounded-xl bg-brand-primary text-white hover:bg-brand-primary/90 dark:bg-brand-mint dark:text-brand-navy dark:hover:bg-brand-mint/90 text-xs font-bold shadow-md min-h-[40px]"
               >
                 Apply Filters
               </button>

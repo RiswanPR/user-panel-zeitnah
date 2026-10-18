@@ -173,10 +173,10 @@ export default function AuditLogs({ hideProfileNav = false }) {
               key={option.value}
               type="button"
               onClick={() => setSeverity(option.value)}
-              className={`px-3 py-1.5 rounded-xl border text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg border text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer focus-ring ${
                 severity === option.value
-                  ? "bg-brand-mint/10 border-brand-mint/30 text-brand-mint shadow-sm"
-                  : "border-border-default text-text-muted hover:text-text-primary hover:border-border-accent"
+                  ? "bg-brand-mint/15 border-brand-mint/40 text-brand-mint shadow-sm font-bold"
+                  : "border-border bg-surface-elevated/40 text-text-muted hover:text-text-primary hover:border-border-accent"
               }`}
             >
               {option.label}

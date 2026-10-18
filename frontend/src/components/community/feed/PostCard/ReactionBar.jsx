@@ -191,8 +191,8 @@ export default function ReactionBar({
         }}
         className={`min-h-[44px] min-w-[44px] p-2 rounded-full text-xs font-semibold flex items-center justify-center transition-all duration-150 cursor-pointer active:scale-90 motion-reduce:transform-none focus:outline-none focus:ring-1 focus:ring-brand-mint/40 ${
           isLiked
-            ? `${activeReaction?.color || 'text-rose-500'} bg-surface-elevated/60`
-            : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated'
+            ? `${activeReaction?.color || 'text-rose-500'} bg-surface-elevated`
+            : 'text-text-secondary hover:text-text-primary hover:bg-surface-elevated'
         }`}
         aria-label={isLiked ? `Remove ${activeReaction?.label || 'Like'}` : 'React to post'}
         aria-haspopup="true"

@@ -258,4 +258,65 @@ describe('Zeitnah — Phase 2: Theme Preference Engine Unit Tests', () => {
     assert.doesNotMatch(appJsx, /ThemeSelector/);
     assert.doesNotMatch(appJsx, /ThemeToggle/);
   });
+
+  // ── DEF-001 REGRESSION: Browser Storage Safe Access & Persistence ──
+  it('DEF-001: getBrowserStorage safely resolves or returns null without throwing', () => {
+    // When window is undefined (e.g. Node)
+    const originalWindow = globalThis.window;
+    try {
+      delete globalThis.window;
+      // read/write without args in headless/node
+      assert.equal(readStoredThemePreference(), THEME_PREFERENCES.SYSTEM);
+      assert.equal(writeStoredThemePreference(THEME_PREFERENCES.LIGHT), false);
+
+      // When window is present with localStorage
+      const mockStore = new Map();
+      globalThis.window = {
+        localStorage: {
+          getItem: (k) => mockStore.get(k) || null,
+          setItem: (k, v) => mockStore.set(k, v),
+        },
+      };
+
+      // Successful write without passing storage argument
+      const writeSuccess = writeStoredThemePreference(THEME_PREFERENCES.LIGHT);
+      assert.equal(writeSuccess, true);
+      assert.equal(mockStore.get(THEME_STORAGE_KEY), 'light');
+
+      // Successful read without passing storage argument
+      const readVal = readStoredThemePreference();
+      assert.equal(readVal, THEME_PREFERENCES.LIGHT);
+
+      // Storage throwing on write (e.g. QuotaExceededError)
+      globalThis.window.localStorage.setItem = () => {
+        throw new Error('QuotaExceededError');
+      };
+      assert.equal(writeStoredThemePreference(THEME_PREFERENCES.DARK), false);
+
+      // Storage throwing on read (e.g. SecurityError)
+      globalThis.window.localStorage.getItem = () => {
+        throw new Error('SecurityError: Storage is disabled');
+      };
+      assert.equal(readStoredThemePreference(), THEME_PREFERENCES.SYSTEM);
+
+      // Restricted window where accessing window.localStorage itself throws
+      Object.defineProperty(globalThis.window, 'localStorage', {
+        get() {
+          throw new Error('SecurityError: Access denied');
+        },
+        configurable: true,
+      });
+
+      assert.doesNotThrow(() => {
+        assert.equal(readStoredThemePreference(), THEME_PREFERENCES.SYSTEM);
+        assert.equal(writeStoredThemePreference(THEME_PREFERENCES.LIGHT), false);
+      });
+    } finally {
+      if (originalWindow !== undefined) {
+        globalThis.window = originalWindow;
+      } else {
+        delete globalThis.window;
+      }
+    }
+  });
 });

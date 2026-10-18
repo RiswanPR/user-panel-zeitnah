@@ -689,7 +689,7 @@ export default function CommunityHome({ initialCreateMode } = {}) {
                         <button
                           type="button"
                           onClick={() => fetchNextPage()}
-                          className="min-h-[44px] min-w-[44px] px-4 py-2 bg-brand-mint text-bg-base font-semibold rounded-xl text-xs hover:opacity-90 transition-opacity cursor-pointer inline-flex items-center gap-1.5"
+                          className="zn-btn-primary min-h-[44px] min-w-[44px] px-4 py-2 font-semibold rounded-xl text-xs cursor-pointer inline-flex items-center gap-1.5"
                         >
                           Try again
                         </button>

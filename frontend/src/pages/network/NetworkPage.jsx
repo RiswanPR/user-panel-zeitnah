@@ -167,7 +167,7 @@ export default function NetworkPage() {
       subLabel: "Candidates & Peers",
       icon: Users,
       badge: countsData?.incomingRequestsCount > 0 ? `${countsData.incomingRequestsCount} new` : null,
-      badgeColor: "bg-brand-yellow/15 text-brand-yellow border-brand-yellow/30",
+      badgeColor: "bg-amber-500/15 dark:bg-brand-yellow/15 text-amber-800 dark:text-brand-yellow border-amber-500/30 dark:border-brand-yellow/30",
     },
     {
       id: "opportunities",

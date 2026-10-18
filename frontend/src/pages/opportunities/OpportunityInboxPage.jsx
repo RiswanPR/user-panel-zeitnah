@@ -199,7 +199,11 @@ export default function OpportunityInboxPage() {
         </div>
 
         {/* ── TABS ── */}
-        <div className="flex items-center gap-2 mt-8 border-b border-border pb-1 overflow-x-auto no-scrollbar">
+        <div
+          role="tablist"
+          aria-label="Opportunity Inbox Tabs"
+          className="flex items-center gap-2 mt-8 border-b border-border pb-1 overflow-x-auto no-scrollbar"
+        >
           {[
             { id: 'new', label: 'New & Active', icon: Inbox },
             { id: 'interested', label: 'Interested', icon: CheckCircle2 },
@@ -211,6 +215,9 @@ export default function OpportunityInboxPage() {
             return (
               <button
                 key={tab.id}
+                role="tab"
+                id={`opportunity-tab-${tab.id}`}
+                aria-selected={active}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
                 className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer ${
@@ -219,10 +226,10 @@ export default function OpportunityInboxPage() {
                     : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated/40'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${active ? 'text-brand-mint' : 'text-text-faint'}`} />
+                <Icon className={`w-4 h-4 ${active ? 'text-brand-primary dark:text-brand-mint' : 'text-text-faint'}`} />
                 {tab.label}
                 {tab.id === 'new' && unreadCount > 0 && (
-                  <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-brand-mint text-brand-navy">
+                  <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-brand-primary text-white dark:bg-brand-mint dark:text-brand-navy">
                     {unreadCount}
                   </span>
                 )}
@@ -255,7 +262,7 @@ export default function OpportunityInboxPage() {
             <div className="pt-2">
               <Link
                 to="/profile/edit"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-mint text-brand-navy text-xs font-bold font-heading hover:bg-brand-mint/90 transition-all shadow-sm"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-primary text-white hover:bg-brand-primary/90 dark:bg-brand-mint dark:text-brand-navy dark:hover:bg-brand-mint/90 text-xs font-bold font-heading transition-all shadow-sm min-h-[40px]"
               >
                 Boost Profile Completeness
               </Link>
@@ -301,22 +308,22 @@ export default function OpportunityInboxPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <Link
                           to={biz?.slug ? `/businesses/${biz.slug}` : '#'}
-                          className="text-sm font-bold text-text-primary hover:text-brand-mint transition-colors flex items-center gap-1.5"
+                          className="text-sm font-bold text-text-primary hover:text-brand-primary dark:hover:text-brand-mint transition-colors flex items-center gap-1.5"
                         >
                           {biz?.name || 'Infrastructure Enterprise'}
-                          <ShieldCheck className="w-4 h-4 text-brand-mint" title="Verified Business" />
+                          <ShieldCheck className="w-4 h-4 text-brand-primary dark:text-brand-mint" title="Verified Business" />
                         </Link>
                         {isNew && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-brand-mint text-brand-navy uppercase">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-brand-primary text-white dark:bg-brand-mint dark:text-brand-navy uppercase">
                             New Opportunity
                           </span>
                         )}
                         <span
                           className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase ${
                             opp.status === 'INTERESTED'
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                              ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20'
                               : opp.status === 'DECLINED'
-                              ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                              ? 'bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20'
                               : opp.status === 'EXPIRED'
                               ? 'bg-surface-elevated text-text-muted border border-border'
                               : 'bg-surface-elevated text-text-secondary'
@@ -411,7 +418,7 @@ export default function OpportunityInboxPage() {
                           type="button"
                           disabled={actionLoading}
                           onClick={() => handleMarkInterested(opp)}
-                          className="px-4 py-1.5 rounded-xl bg-brand-mint text-brand-navy text-xs font-bold font-heading hover:bg-brand-mint/90 transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                          className="px-4 py-1.5 rounded-xl bg-brand-primary text-white hover:bg-brand-primary/90 dark:bg-brand-mint dark:text-brand-navy dark:hover:bg-brand-mint/90 text-xs font-bold font-heading transition-all shadow-sm flex items-center gap-1.5 cursor-pointer min-h-[38px]"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" /> I'm Interested
                         </button>
@@ -419,7 +426,7 @@ export default function OpportunityInboxPage() {
                           type="button"
                           disabled={actionLoading}
                           onClick={() => handleOpenDeclineModal(opp)}
-                          className="px-3.5 py-1.5 rounded-xl border border-red-500/30 hover:border-red-500/50 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer"
+                          className="px-3.5 py-1.5 rounded-xl border border-red-500/30 hover:border-red-500/50 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer min-h-[38px]"
                         >
                           <XCircle className="w-3.5 h-3.5" /> Decline
                         </button>
@@ -430,14 +437,14 @@ export default function OpportunityInboxPage() {
                       <>
                         <Link
                           to={`/messages?user=${sender?._id || sender}`}
-                          className="px-4 py-1.5 rounded-xl bg-brand-mint/15 border border-brand-mint/30 text-brand-mint text-xs font-bold hover:bg-brand-mint/25 transition-all flex items-center gap-1.5"
+                          className="px-4 py-1.5 rounded-xl bg-brand-mint/15 border border-brand-mint/30 text-brand-primary dark:text-brand-mint text-xs font-bold hover:bg-brand-mint/25 transition-all flex items-center gap-1.5 min-h-[38px]"
                         >
                           <MessageSquare className="w-3.5 h-3.5" /> Message Recruiter
                         </Link>
                         {job?._id && (
                           <Link
                             to={`/jobs/${job._id}`}
-                            className="px-4 py-1.5 rounded-xl bg-brand-mint text-brand-navy text-xs font-bold hover:bg-brand-mint/90 transition-all flex items-center gap-1.5"
+                            className="px-4 py-1.5 rounded-xl bg-brand-primary text-white hover:bg-brand-primary/90 dark:bg-brand-mint dark:text-brand-navy dark:hover:bg-brand-mint/90 text-xs font-bold hover:bg-brand-mint/90 transition-all flex items-center gap-1.5 min-h-[38px]"
                           >
                             <Briefcase className="w-3.5 h-3.5" /> Apply Now
                           </Link>

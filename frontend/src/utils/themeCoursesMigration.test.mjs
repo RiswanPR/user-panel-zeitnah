@@ -239,4 +239,26 @@ describe('Zeitnah — Phase 5B: Courses & Learning Experience Theme Migration Un
       assert.doesNotMatch(content, /bg-bg-surface/, `${name} modal window must not use raw bg-bg-surface`);
     }
   });
+
+  // ── TEST 9: DEF-006 Regression — ZeitnahZMotif SVG Path Invariant ──
+  it('9. DEF-006: ZeitnahZMotif uses valid SVG path string and avoids undefined d animation', () => {
+    const motifPath = path.resolve(__dirname, '../components/courses/ZeitnahZMotif.jsx');
+    const motifContent = fs.readFileSync(motifPath, 'utf8');
+
+    // Must define valid ORGANIC_Z_PATH starting with 'M'
+    assert.ok(motifContent.includes('const ORGANIC_Z_PATH = `'), 'ZeitnahZMotif must define ORGANIC_Z_PATH');
+    assert.ok(motifContent.includes('M 8.2 9.2'), 'ORGANIC_Z_PATH must start with valid M command');
+
+    // Main motion.path must bind d to ORGANIC_Z_PATH directly
+    assert.ok(
+      motifContent.includes('d={ORGANIC_Z_PATH}'),
+      'ZeitnahZMotif main path must bind d to ORGANIC_Z_PATH'
+    );
+
+    // Must NOT animate d attribute across an array without a path morpher
+    assert.ok(
+      !motifContent.includes('d: [\n                        ORGANIC_Z_PATH,'),
+      'ZeitnahZMotif must not animate d across an array, preventing d="undefined"'
+    );
+  });
 });

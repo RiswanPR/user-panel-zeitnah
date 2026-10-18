@@ -90,9 +90,22 @@ export const opportunityService = {
   // PHASE 8: CANDIDATE OPPORTUNITY INBOX & OUTREACH
   // =========================================================================
 
-  async getInbox(params = {}) {
-    const res = await api.get('/opportunities/inbox', { params });
+  async getCandidateInbox(tab = 'new', params = {}) {
+    const queryParams =
+      typeof tab === 'object' && tab !== null
+        ? tab
+        : { tab, ...params };
+    const res = await api.get('/opportunities/inbox', { params: queryParams });
     return res.data;
+  },
+
+  async getCandidateOpportunityById(id) {
+    const res = await api.get(`/opportunities/inbox/${id}`);
+    return res.data;
+  },
+
+  async getInbox(params = {}) {
+    return this.getCandidateInbox(params);
   },
 
   async getInboxUnreadCount() {
@@ -101,8 +114,7 @@ export const opportunityService = {
   },
 
   async getInboxDetail(id) {
-    const res = await api.get(`/opportunities/inbox/${id}`);
-    return res.data;
+    return this.getCandidateOpportunityById(id);
   },
 
   async markInterested(id) {

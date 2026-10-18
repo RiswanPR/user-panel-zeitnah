@@ -238,8 +238,8 @@ export default function ReelsViewer({
               onClick={() => onChangeTab('latest')}
               className={`min-h-[36px] px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === 'latest'
-                  ? 'bg-brand-mint text-bg-base shadow-sm'
-                  : 'text-text-muted hover:text-white'
+                  ? 'bg-brand-mint text-brand-navy font-bold shadow-sm'
+                  : 'text-slate-300 hover:text-white'
               }`}
             >
               Latest
@@ -249,8 +249,8 @@ export default function ReelsViewer({
               onClick={() => onChangeTab('trending')}
               className={`min-h-[36px] px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer ${
                 activeTab === 'trending'
-                  ? 'bg-brand-mint text-bg-base shadow-sm'
-                  : 'text-text-muted hover:text-white'
+                  ? 'bg-brand-mint text-brand-navy font-bold shadow-sm'
+                  : 'text-slate-300 hover:text-white'
               }`}
             >
               <Flame className="w-3 h-3 text-brand-yellow" />
@@ -365,7 +365,7 @@ export default function ReelsViewer({
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2 rounded-xl bg-brand-mint text-bg-base font-semibold text-xs cursor-pointer shadow-md"
+              className="zn-btn-primary min-h-[44px] px-4 py-2 rounded-xl font-bold text-xs cursor-pointer shadow-md inline-flex items-center justify-center"
             >
               Back to Community
             </button>

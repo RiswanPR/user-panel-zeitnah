@@ -112,8 +112,8 @@ export default function PeopleCard({
           </div>
 
           <div className="flex items-center gap-2 text-[11px] text-text-muted mt-0.5 truncate">
-            {username && <span className="text-text-faint truncate">{username}</span>}
-            {username && headline && <span className="text-text-faint">•</span>}
+            {username && <span className="text-text-muted truncate">{username}</span>}
+            {username && headline && <span className="text-text-muted/60">•</span>}
             {headline && <span className="truncate">{headline}</span>}
           </div>
         </div>
@@ -122,7 +122,7 @@ export default function PeopleCard({
       {/* Connect / Status Action */}
       <div className="shrink-0 flex items-center gap-1.5">
         {connectionStatus === 'connected' ? (
-          <span className="min-h-[36px] px-3 py-1 rounded-lg bg-brand-mint/10 border border-brand-mint/20 text-brand-mint text-xs font-semibold flex items-center gap-1">
+          <span className="min-h-[36px] px-3 py-1 rounded-lg bg-brand-mint/10 border border-brand-mint/20 text-brand-navy dark:text-brand-mint text-xs font-semibold flex items-center gap-1">
             <Check className="w-3.5 h-3.5" />
             <span className={compact ? 'hidden' : 'inline'}>Connected</span>
           </span>
@@ -138,7 +138,7 @@ export default function PeopleCard({
             disabled={isPending}
             className={`
               min-h-[36px] px-3 py-1 rounded-lg text-xs font-bold
-              bg-brand-mint text-bg-base hover:opacity-95 active:scale-[0.97]
+              zn-btn-primary hover:opacity-95 active:scale-[0.97]
               transition-all duration-150 flex items-center gap-1 cursor-pointer
               disabled:opacity-50 disabled:cursor-not-allowed
             `}
@@ -151,7 +151,7 @@ export default function PeopleCard({
 
         <Link
           to={profileUrl}
-          className="min-w-[36px] min-h-[36px] rounded-lg bg-surface-elevated hover:bg-surface-card border border-border text-text-faint hover:text-text-primary flex items-center justify-center transition-colors cursor-pointer"
+          className="min-w-[36px] min-h-[36px] rounded-lg bg-surface-elevated hover:bg-surface-card border border-border text-text-muted hover:text-text-primary flex items-center justify-center transition-colors cursor-pointer"
           aria-label={`Open ${name}'s profile`}
           title="View profile"
         >

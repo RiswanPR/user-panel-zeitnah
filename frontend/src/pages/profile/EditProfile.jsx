@@ -2153,8 +2153,8 @@ export default function EditProfile() {
 
                           {/* Grade / Honors badge if detected */}
                           {honorsInfo.grade && (
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs font-semibold text-amber-300">
-                              <Award className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-yellow/10 border border-brand-yellow/20 text-xs font-semibold text-brand-yellow">
+                              <Award className="w-3.5 h-3.5 text-brand-yellow shrink-0" />
                               <span>{honorsInfo.grade}</span>
                             </div>
                           )}

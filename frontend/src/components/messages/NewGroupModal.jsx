@@ -207,7 +207,7 @@ export default function NewGroupModal({ onClose, onSelectConversation }) {
                       <div
                         className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-colors ${
                           isSelected
-                            ? 'bg-brand-mint border-brand-mint text-bg-base'
+                            ? 'bg-brand-mint border-brand-mint text-brand-navy'
                             : 'border-border bg-surface-elevated'
                         }`}
                       >
@@ -226,7 +226,7 @@ export default function NewGroupModal({ onClose, onSelectConversation }) {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-surface-elevated text-text-secondary hover:text-text-primary text-xs font-semibold transition-colors cursor-pointer min-h-[44px]"
+              className="zn-btn-secondary min-h-[44px] text-xs px-4 py-2"
             >
               Cancel
             </button>
@@ -238,7 +238,7 @@ export default function NewGroupModal({ onClose, onSelectConversation }) {
                 !title.trim() ||
                 selectedUserIds.length === 0
               }
-              className="px-5 py-2 rounded-xl bg-brand-mint text-bg-base text-xs font-bold hover:bg-brand-mint/90 transition-all disabled:opacity-40 cursor-pointer min-h-[44px] shadow-sm shadow-brand-mint/10 inline-flex items-center gap-1.5"
+              className="zn-btn-primary min-h-[44px] text-xs px-5 py-2 inline-flex items-center gap-1.5 disabled:opacity-40"
             >
               {createGroupMutation.isPending && (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />

@@ -111,6 +111,13 @@ describe('Zeitnah — Phase 4B: Profile and Account Theme Migration Unit Tests',
     assert.ok(heroContent.includes('text-text-primary'), 'ProfileHero must use text-text-primary for name & headlines');
     assert.ok(heroContent.includes('border-border'), 'ProfileHero must use border-border for adaptive borders');
     assert.ok(heroContent.includes('bg-surface-card'), 'ProfileHero must use bg-surface-card');
+    assert.ok(heroContent.includes('bg-surface-elevated'), 'ProfileHero cover banner container must use bg-surface-elevated');
+    assert.ok(heroContent.includes('from-surface-card'), 'ProfileHero bottom fade must use from-surface-card');
+    assert.ok(heroContent.includes('border-surface-card'), 'ProfileHero avatar frame must use border-surface-card');
+    assert.doesNotMatch(heroContent, /bg-\[#070B14\]/, 'ProfileHero must not contain bg-[#070B14]');
+    assert.doesNotMatch(heroContent, /from-\[#0A0F18\]/, 'ProfileHero must not contain from-[#0A0F18]');
+    assert.doesNotMatch(heroContent, /border-\[#0A0F18\]/, 'ProfileHero must not contain border-[#0A0F18]');
+
 
     // ProfileCompletionCard
     assert.ok(completionContent.includes('text-text-primary'), 'ProfileCompletionCard must use text-text-primary');
