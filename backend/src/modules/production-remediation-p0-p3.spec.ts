@@ -377,6 +377,57 @@ describe('Production Remediation P0–P3 Verification Suite', () => {
       expect(loggerSpyWarn).not.toHaveBeenCalled();
     });
 
+    it('✓ Mongoose ValidationError is caught as 400 Bad Request with VALIDATION_ERROR code and without leaking stack traces', () => {
+      const filter = new GlobalExceptionFilter();
+      const loggerSpyWarn = jest
+        .spyOn((filter as any).logger, 'warn')
+        .mockImplementation();
+      const loggerSpyError = jest
+        .spyOn((filter as any).logger, 'error')
+        .mockImplementation();
+
+      const mockRequest: any = {
+        method: 'PUT',
+        url: '/api/profile/experience/23cd74b9-c639-4269-b65d-3eecb3d00a96',
+        headers: {},
+      };
+
+      let responseStatus = 0;
+      let responseBody: any = null;
+      const mockResponse: any = {
+        status: jest.fn().mockImplementation((s: number) => {
+          responseStatus = s;
+          return mockResponse;
+        }),
+        json: jest.fn().mockImplementation((body: any) => {
+          responseBody = body;
+          return mockResponse;
+        }),
+      };
+
+      const mockHost: any = {
+        switchToHttp: () => ({
+          getRequest: () => mockRequest,
+          getResponse: () => mockResponse,
+        }),
+      };
+
+      const mongooseValidationError = new Error(
+        'User validation failed: experience.0.id: Path `id` is required.',
+      );
+      mongooseValidationError.name = 'ValidationError';
+
+      filter.catch(mongooseValidationError, mockHost);
+
+      expect(responseStatus).toBe(400);
+      expect(responseBody.success).toBe(false);
+      expect(responseBody.code).toBe('VALIDATION_ERROR');
+      expect(responseBody.message).toContain('Path `id` is required.');
+      expect(responseBody.stack).toBeUndefined();
+      expect(loggerSpyError).not.toHaveBeenCalled();
+      expect(loggerSpyWarn).toHaveBeenCalled();
+    });
+
     it('✓ errorCapture.ts defines all 7 required ErrorCategory classifications', () => {
       const errorCapturePath = path.resolve(
         __dirname,

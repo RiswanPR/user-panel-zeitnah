@@ -7,7 +7,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ProfileService } from './profile.service';
-import { User } from '../auth/schemas/user.schema';
+import mongoose from 'mongoose';
+import { User, UserSchema } from '../auth/schemas/user.schema';
 import { Recommendation } from './schemas/recommendation.schema';
 import { UploadService } from '../../common/aws/upload.service';
 import { SignedUrlService } from '../../common/aws/signed-url.service';
@@ -693,6 +694,325 @@ describe('ProfileService', () => {
           currentlyActive: true,
         }),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it('✓ Creating an experience generates a valid UUID ID', async () => {
+      const mockUser: any = {
+        _id: 'user_123',
+        experience: [],
+        gamification: { rewardedMilestones: [], totalPoints: 0 },
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      const res = await service.addExperience('user_123', {
+        organization: 'EPC Infra Corp',
+        role: 'Site Engineer',
+        employmentType: 'Full-time',
+        startDate: '2024-01-01',
+        currentlyActive: true,
+      });
+
+      expect(res.experience[0].id).toBeDefined();
+      expect(typeof res.experience[0].id).toBe('string');
+      expect(res.experience[0].id).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+      );
+    });
+
+    it('✓ Updating an experience preserves its existing ID', async () => {
+      const existingId = '23cd74b9-c639-4269-b65d-3eecb3d00a96';
+      const mockUser: any = {
+        _id: 'user_123',
+        experience: [
+          {
+            id: existingId,
+            organization: 'Original Org',
+            role: 'Junior Engineer',
+            employmentType: 'Full-time',
+            location: 'Bangalore',
+            startDate: new Date('2022-01-01'),
+            endDate: null,
+            currentlyActive: true,
+            description: 'Original description',
+            skillsUsed: ['Surveying'],
+            softwareUsed: ['AutoCAD'],
+            infrastructureSector: 'Highways',
+          },
+        ],
+        gamification: { rewardedMilestones: [], totalPoints: 0 },
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      const res = await service.updateExperience('user_123', existingId, {
+        organization: 'Updated Org',
+        role: 'Senior Project Lead',
+        startDate: '2022-01-01',
+        currentlyActive: true,
+      });
+
+      expect(res.message).toBe('Experience updated successfully');
+      expect(mockUser.experience[0].id).toBe(existingId);
+      expect(res.experience[0].id).toBe(existingId);
+      expect(mockUser.experience[0].organization).toBe('Updated Org');
+      expect(mockUser.experience[0].role).toBe('Senior Project Lead');
+      expect(mockUser.save).toHaveBeenCalled();
+    });
+
+    it('✓ Updating one experience does not remove IDs from other entries', async () => {
+      const id1 = '11111111-1111-4111-8111-111111111111';
+      const id2 = '22222222-2222-4222-8222-222222222222';
+      const mockUser: any = {
+        _id: 'user_123',
+        experience: [
+          {
+            id: id1,
+            organization: 'Company One',
+            role: 'Role One',
+            startDate: new Date('2021-01-01'),
+            endDate: new Date('2022-01-01'),
+            currentlyActive: false,
+          },
+          {
+            id: id2,
+            organization: 'Company Two',
+            role: 'Role Two',
+            startDate: new Date('2022-02-01'),
+            endDate: null,
+            currentlyActive: true,
+          },
+        ],
+        gamification: { rewardedMilestones: [], totalPoints: 0 },
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await service.updateExperience('user_123', id2, {
+        organization: 'Company Two Updated',
+        role: 'Role Two Promoted',
+        startDate: '2022-02-01',
+        currentlyActive: true,
+      });
+
+      expect(mockUser.experience[0].id).toBe(id1);
+      expect(mockUser.experience[1].id).toBe(id2);
+      expect(mockUser.experience[1].organization).toBe('Company Two Updated');
+    });
+
+    it('✓ Partial updates do not erase IDs or unrelated fields', async () => {
+      const expId = '23cd74b9-c639-4269-b65d-3eecb3d00a96';
+      const mockUser: any = {
+        _id: 'user_123',
+        experience: [
+          {
+            id: expId,
+            organization: 'Mega Infra Ltd',
+            role: 'Bridge Engineer',
+            employmentType: 'Contract',
+            location: 'Mumbai',
+            startDate: new Date('2023-01-01'),
+            endDate: null,
+            currentlyActive: true,
+            description: 'Designing pre-stressed concrete girders',
+            skillsUsed: ['Structural Design', 'Concrete Analysis'],
+            softwareUsed: ['STAAD.Pro', 'MIDAS'],
+            infrastructureSector: 'Bridges & Structures',
+          },
+        ],
+        gamification: { rewardedMilestones: [], totalPoints: 0 },
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      // Partial update only updating role and organization
+      await service.updateExperience('user_123', expId, {
+        organization: 'Mega Infra Ltd (Acquired)',
+        role: 'Lead Bridge Engineer',
+        startDate: '2023-01-01',
+        currentlyActive: true,
+      });
+
+      const updated = mockUser.experience[0];
+      expect(updated.id).toBe(expId);
+      expect(updated.organization).toBe('Mega Infra Ltd (Acquired)');
+      expect(updated.role).toBe('Lead Bridge Engineer');
+      expect(updated.employmentType).toBe('Contract');
+      expect(updated.location).toBe('Mumbai');
+      expect(updated.description).toBe('Designing pre-stressed concrete girders');
+      expect(updated.skillsUsed).toEqual([
+        'Structural Design',
+        'Concrete Analysis',
+      ]);
+      expect(updated.softwareUsed).toEqual(['STAAD.Pro', 'MIDAS']);
+      expect(updated.infrastructureSector).toBe('Bridges & Structures');
+    });
+
+    it('✓ Updating a nonexistent experience follows the established not-found behavior', async () => {
+      const mockUser: any = {
+        _id: 'user_123',
+        experience: [
+          {
+            id: 'real-id-123',
+            organization: 'Some Org',
+            role: 'Lead',
+            startDate: new Date('2023-01-01'),
+            currentlyActive: true,
+          },
+        ],
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await expect(
+        service.updateExperience('user_123', 'nonexistent-uuid-999', {
+          organization: 'Any Org',
+          role: 'Any Role',
+          startDate: '2023-01-01',
+          currentlyActive: true,
+        }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('✓ Invalid payloads are rejected safely on update', async () => {
+      const expId = '23cd74b9-c639-4269-b65d-3eecb3d00a96';
+      const mockUser: any = {
+        _id: 'user_123',
+        experience: [
+          {
+            id: expId,
+            organization: 'Test Org',
+            role: 'Engineer',
+            startDate: new Date('2023-01-01'),
+            currentlyActive: true,
+          },
+        ],
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      // Malformed start date
+      await expect(
+        service.updateExperience('user_123', expId, {
+          organization: 'Test Org',
+          role: 'Engineer',
+          startDate: 'invalid-date',
+          currentlyActive: true,
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      // End date before start date
+      await expect(
+        service.updateExperience('user_123', expId, {
+          organization: 'Test Org',
+          role: 'Engineer',
+          startDate: '2023-05-01',
+          endDate: '2023-01-01',
+          currentlyActive: false,
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      // Missing end date for past role
+      await expect(
+        service.updateExperience('user_123', expId, {
+          organization: 'Test Org',
+          role: 'Engineer',
+          startDate: '2023-01-01',
+          currentlyActive: false,
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('✓ Legacy entries missing IDs are handled according to the confirmed repair strategy', async () => {
+      const targetId = '23cd74b9-c639-4269-b65d-3eecb3d00a96';
+      const mockUser: any = {
+        _id: 'user_123',
+        experience: [
+          {
+            // Legacy record missing id property
+            organization: 'Legacy Civil Contractors',
+            role: 'Site Trainee',
+            startDate: new Date('2019-01-01'),
+            endDate: new Date('2020-01-01'),
+            currentlyActive: false,
+          },
+          {
+            id: targetId,
+            organization: 'Modern Infra Corp',
+            role: 'Project Manager',
+            startDate: new Date('2021-01-01'),
+            currentlyActive: true,
+          },
+        ],
+        gamification: { rewardedMilestones: [], totalPoints: 0 },
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      };
+      mockUserModel.findById.mockResolvedValue(mockUser);
+
+      await service.updateExperience('user_123', targetId, {
+        organization: 'Modern Infra Corp (Updated)',
+        role: 'Senior Project Manager',
+        startDate: '2021-01-01',
+        currentlyActive: true,
+      });
+
+      // Target entry preserved its ID
+      expect(mockUser.experience[1].id).toBe(targetId);
+      // Legacy entry received a valid UUID repair without throwing or corrupting data
+      expect(mockUser.experience[0].id).toBeDefined();
+      expect(typeof mockUser.experience[0].id).toBe('string');
+      expect(mockUser.experience[0].id).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+      );
+      expect(mockUser.experience[0].organization).toBe(
+        'Legacy Civil Contractors',
+      );
+    });
+
+    it('✓ Real Mongoose Document validates successfully after updateExperience (no ValidationError: experience.0.id)', async () => {
+      const TestUserModel =
+        mongoose.models['RealMongooseExpTest'] ||
+        mongoose.model('RealMongooseExpTest', UserSchema);
+
+      const targetId = '23cd74b9-c639-4269-b65d-3eecb3d00a96';
+      const realUserDoc: any = new TestUserModel({
+        email: 'mongoose_test@zeitnah.test',
+        username: 'mongotestuser',
+        name: 'Mongoose Test User',
+        experience: [
+          {
+            id: targetId,
+            organization: 'Original Builder',
+            role: 'Planning Engineer',
+            startDate: new Date('2023-01-01'),
+            currentlyActive: true,
+          },
+        ],
+      });
+
+      // Confirm subdocument has id before update
+      expect(realUserDoc.experience[0].id).toBe(targetId);
+
+      realUserDoc.save = jest.fn().mockImplementation(async () => {
+        await realUserDoc.validate();
+        return realUserDoc;
+      });
+
+      mockUserModel.findById.mockResolvedValue(realUserDoc);
+
+      await service.updateExperience('user_123', targetId, {
+        organization: 'Original Builder (Updated)',
+        role: 'Senior Planning Engineer',
+        startDate: '2023-01-01',
+        currentlyActive: true,
+      });
+
+      // CRITICAL: Ensure id was NOT lost and validate() does NOT throw ValidationError
+      expect(realUserDoc.experience[0].id).toBe(targetId);
+      await expect(realUserDoc.validate()).resolves.toBeUndefined();
     });
   });
 

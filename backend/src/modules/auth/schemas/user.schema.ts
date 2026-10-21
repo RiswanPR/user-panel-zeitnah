@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 import { Document } from 'mongoose';
+import { v4 as uuidv4 } from 'uuid';
 import {
   normalizeCanonicalPrimaryRole,
   CANONICAL_COMMUNITY_ROLES,
@@ -993,7 +994,7 @@ export class User {
   @Prop({
     type: [
       {
-        id: { type: String, required: true },
+        id: { type: String, required: true, default: () => uuidv4() },
         organization: { type: String, required: true, trim: true },
         role: { type: String, required: true, trim: true },
         employmentType: { type: String, default: 'Full-time' },
@@ -1251,6 +1252,14 @@ export function normalizeLegacyRoleValue(
 }
 
 UserSchema.pre('validate', function () {
+  if (Array.isArray(this.experience)) {
+    for (const exp of this.experience) {
+      if (!exp.id || typeof exp.id !== 'string' || !exp.id.trim()) {
+        exp.id = (exp as any)._id ? String((exp as any)._id) : uuidv4();
+      }
+    }
+  }
+
   if (this.role) {
     const normalized = normalizeLegacyRoleValue(this.role);
     if (normalized) {

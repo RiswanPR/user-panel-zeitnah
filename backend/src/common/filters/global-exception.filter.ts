@@ -25,11 +25,17 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         (exception.name === 'BSONError' &&
           /invalid.*objectid|must be.*24 character/i.test(exception.message)));
 
-    const status = isCastError
-      ? HttpStatus.BAD_REQUEST
-      : exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+    const isMongooseValidationError =
+      exception instanceof Error &&
+      exception.name === 'ValidationError' &&
+      !(exception instanceof HttpException);
+
+    const status =
+      isCastError || isMongooseValidationError
+        ? HttpStatus.BAD_REQUEST
+        : exception instanceof HttpException
+          ? exception.getStatus()
+          : HttpStatus.INTERNAL_SERVER_ERROR;
 
     const correlationId = request.headers['x-correlation-id'] || uuidv4();
 
@@ -40,6 +46,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       // Mongoose/BSON invalid ID — client sent a malformed identifier
       code = 'INVALID_ID_FORMAT';
       message = 'The provided ID format is invalid.';
+    } else if (isMongooseValidationError) {
+      code = 'VALIDATION_ERROR';
+      message = exception.message || 'The submitted data failed validation.';
     } else if (exception instanceof HttpException) {
       const responseBody = exception.getResponse() as any;
       const rawMsg = responseBody?.message || exception.message;

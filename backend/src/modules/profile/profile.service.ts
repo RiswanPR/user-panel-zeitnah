@@ -1492,6 +1492,14 @@ export class ProfileService {
     if (!Array.isArray(user.experience)) {
       user.experience = [];
     }
+
+    // Narrowly scoped repair: ensure any legacy entries in user's experience array have a valid UUID
+    for (const item of user.experience) {
+      if (!item.id || typeof item.id !== 'string' || !item.id.trim()) {
+        item.id = (item as any)._id ? String((item as any)._id) : uuidv4();
+      }
+    }
+
     user.experience.unshift(entry);
 
     const { newlyAwarded, completion } = evaluateProfileMilestones(user);
@@ -1518,7 +1526,11 @@ export class ProfileService {
     const user = await this.userModel.findById(userId);
     if (!user) throw new UnauthorizedException('User not found');
 
-    const idx = (user.experience || []).findIndex((e) => e.id === experienceId);
+    const idx = (user.experience || []).findIndex(
+      (e: any) =>
+        e.id === experienceId ||
+        (e._id && String(e._id) === experienceId),
+    );
     if (idx === -1) throw new NotFoundException('Experience record not found');
 
     const isOngoing = Boolean(
@@ -1540,29 +1552,54 @@ export class ProfileService {
       throw new BadRequestException('End date cannot be before start date.');
     }
 
+    const currentEntry = user.experience[idx];
+    // Preserve existing valid ID - never replace with undefined, null, or empty string
+    const preservedId =
+      (currentEntry.id && typeof currentEntry.id === 'string' && currentEntry.id.trim()) ||
+      (experienceId && typeof experienceId === 'string' && experienceId.trim()) ||
+      uuidv4();
+
     user.experience[idx] = {
-      ...user.experience[idx],
+      id: preservedId,
       organization: dto.organization.trim(),
       role: dto.role.trim(),
-      employmentType: dto.employmentType || 'Full-time',
-      location: dto.location || '',
+      employmentType:
+        dto.employmentType !== undefined
+          ? dto.employmentType
+          : currentEntry.employmentType || 'Full-time',
+      location:
+        dto.location !== undefined
+          ? dto.location
+          : currentEntry.location || '',
       startDate: start,
       endDate: isOngoing ? null : end,
       currentlyActive: isOngoing,
-      description: dto.description || '',
+      description:
+        dto.description !== undefined
+          ? dto.description
+          : currentEntry.description || '',
       skillsUsed:
         dto.skillsUsed !== undefined
           ? dto.skillsUsed
-          : user.experience[idx].skillsUsed || [],
+          : currentEntry.skillsUsed || [],
       softwareUsed:
         dto.softwareUsed !== undefined
           ? dto.softwareUsed
-          : user.experience[idx].softwareUsed || [],
+          : currentEntry.softwareUsed || [],
       infrastructureSector:
         dto.infrastructureSector !== undefined
           ? dto.infrastructureSector.trim()
-          : user.experience[idx].infrastructureSector || '',
+          : currentEntry.infrastructureSector || '',
     };
+
+    // Narrowly scoped repair: ensure any legacy entries in user's experience array have a valid UUID
+    if (Array.isArray(user.experience)) {
+      for (const item of user.experience) {
+        if (!item.id || typeof item.id !== 'string' || !item.id.trim()) {
+          item.id = (item as any)._id ? String((item as any)._id) : uuidv4();
+        }
+      }
+    }
 
     const { newlyAwarded, completion } = evaluateProfileMilestones(user);
     syncGamificationStats(user);
@@ -1585,8 +1622,20 @@ export class ProfileService {
     if (!user) throw new UnauthorizedException('User not found');
 
     user.experience = (user.experience || []).filter(
-      (e) => e.id !== experienceId,
+      (e: any) =>
+        e.id !== experienceId &&
+        (!e._id || String(e._id) !== experienceId),
     );
+
+    // Narrowly scoped repair: ensure any legacy entries in user's experience array have a valid UUID
+    if (Array.isArray(user.experience)) {
+      for (const item of user.experience) {
+        if (!item.id || typeof item.id !== 'string' || !item.id.trim()) {
+          item.id = (item as any)._id ? String((item as any)._id) : uuidv4();
+        }
+      }
+    }
+
     const { newlyAwarded, completion } = evaluateProfileMilestones(user);
     syncGamificationStats(user);
     user.markModified('experience');
