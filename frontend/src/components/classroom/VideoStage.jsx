@@ -176,6 +176,7 @@ export default function VideoStage({
                   className="h-full w-full block border-0"
                   allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
                   allowFullScreen
+                  referrerPolicy="strict-origin-when-cross-origin"
                   title={classTitle || 'Video Lecture'}
                 />
                 {vdoPlayerError && (
@@ -184,12 +185,15 @@ export default function VideoStage({
                       <WifiOff className="w-6 h-6" />
                     </div>
                     <h3 className="text-base sm:text-lg font-bold mb-2">
-                      Video Stream Notice
+                      {typeof vdoPlayerError === 'object' && vdoPlayerError?.title
+                        ? vdoPlayerError.title
+                        : 'Video Stream Notice'}
                     </h3>
                     <p className="text-xs sm:text-sm text-white/60 text-center max-w-sm mb-5">
                       {typeof vdoPlayerError === 'string'
                         ? vdoPlayerError
-                        : 'Stream interrupted by network jitter. Click below to fetch a fresh authenticated session.'}
+                        : vdoPlayerError?.message ||
+                          'Stream interrupted by network jitter. Click below to fetch a fresh authenticated session.'}
                     </p>
                     <div className="flex flex-wrap items-center justify-center gap-3">
                       <button
@@ -200,14 +204,18 @@ export default function VideoStage({
                         <RefreshCw className="w-4 h-4" />
                         Reload Player
                       </button>
-                      <button
-                        type="button"
-                        onClick={handleOpenInSafari}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 min-h-[44px] bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-white/20"
-                      >
-                        <Compass className="w-4 h-4 text-brand-mint" />
-                        Open in Safari
-                      </button>
+                      {(typeof vdoPlayerError === 'object'
+                        ? vdoPlayerError?.showSafariFallback
+                        : isIOSRestricted) && (
+                        <button
+                          type="button"
+                          onClick={handleOpenInSafari}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 min-h-[44px] bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-white/20"
+                        >
+                          <Compass className="w-4 h-4 text-brand-mint" />
+                          Open in Safari
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}

@@ -23,6 +23,7 @@ import {
   getClassVideoSource,
   getUploadUrl,
   getVdoCipherEmbedUrl,
+  formatVdoPlayerError,
 } from "../../utils/courseUi";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../components/ui/Toast";
@@ -831,28 +832,9 @@ function ClassView() {
 
         const handlePlayerError = (err) => {
           recordVdoError(err);
-          const code = err?.code || player?.video?.error?.code;
-          const msg = err?.message || player?.video?.error?.message || err?.payload?.message || "";
-          console.warn("[VdoCipher] Player error intercepted:", code, msg, err);
-
-          const lowerMsg = String(msg).toLowerCase();
-          if (lowerMsg.includes("safari") || lowerMsg.includes("fairplay")) {
-            setVdoPlayerError(
-              "Apple FairPlay DRM requires opening this video in Safari Browser."
-            );
-          } else if (code === 60072014 || lowerMsg.includes("domain")) {
-            setVdoPlayerError(
-              "Domain authorization notice: This domain must be allowed in VdoCipher dashboard settings. Click below to refresh the stream."
-            );
-          } else if (code === 4 || lowerMsg.includes("drm") || lowerMsg.includes("license") || lowerMsg.includes("protected")) {
-            setVdoPlayerError(
-              "Protected content could not be verified in this view. On iOS devices, please tap below to open and watch in Safari Browser."
-            );
-          } else if (code && code !== 1) {
-            setVdoPlayerError(
-              "Playback session was interrupted. Click below to fetch a fresh authenticated session."
-            );
-          }
+          console.warn("[VdoCipher] Player error intercepted:", err);
+          const formatted = formatVdoPlayerError(err);
+          setVdoPlayerError(formatted);
         };
 
         const handlePostMessage = (event) => {
@@ -861,12 +843,9 @@ function ClassView() {
               const payload = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
               if (payload && (payload.event === "error" || payload.type === "error" || payload.error)) {
                 recordVdoError(payload);
-                const rawMsg = String(payload?.error?.message || payload?.message || payload?.error || "").toLowerCase();
-                if (rawMsg.includes("safari") || rawMsg.includes("fairplay")) {
-                  setVdoPlayerError(
-                    "Apple FairPlay DRM requires opening this video in Safari Browser."
-                  );
-                }
+                console.warn("[VdoCipher] PostMessage error intercepted:", payload);
+                const formatted = formatVdoPlayerError(payload?.error || payload);
+                setVdoPlayerError(formatted);
               }
             } catch {}
           }

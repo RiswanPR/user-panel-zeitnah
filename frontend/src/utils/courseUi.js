@@ -167,16 +167,18 @@ export function getBunnyEmbedUrl(videoReference) {
   return `https://iframe.mediadelivery.net/play/${value}`;
 }
 
-export function isIOSAppOrWebView() {
-  if (typeof window === "undefined" || typeof navigator === "undefined") return false;
-  const ua = navigator.userAgent || "";
+export function isIOSAppOrWebView(win = typeof window !== "undefined" ? window : null) {
+  if (!win || !win.navigator) return false;
+  const ua = win.navigator.userAgent || "";
+  const platform = win.navigator.platform || "";
+  const maxTouchPoints = Number(win.navigator.maxTouchPoints || 0);
   const isIOS =
     /iPad|iPhone|iPod/.test(ua) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    (platform === "MacIntel" && maxTouchPoints > 1);
   if (!isIOS) return false;
 
   // 1. Direct React Native WebView injection check (100% definitive inside ZeitnahMobile)
-  if (typeof window.ReactNativeWebView !== "undefined") {
+  if (typeof win.ReactNativeWebView !== "undefined") {
     return true;
   }
 
@@ -187,15 +189,15 @@ export function isIOSAppOrWebView() {
 
   // 3. WebKit messageHandlers present (indicates third-party in-app WKWebView container)
   if (
-    typeof window.webkit !== "undefined" &&
-    typeof window.webkit.messageHandlers !== "undefined" &&
-    !window.MSStream
+    typeof win.webkit !== "undefined" &&
+    typeof win.webkit.messageHandlers !== "undefined" &&
+    !win.MSStream
   ) {
     return true;
   }
 
   // 4. Standalone PWA mode (runs in WebKit standalone without FairPlay EME support)
-  if (window.navigator.standalone === true) {
+  if (win.navigator.standalone === true) {
     return true;
   }
 
@@ -216,4 +218,184 @@ export function isIOSAppOrWebView() {
 
 // Backward-compatible alias
 export const isIOSNonSafari = isIOSAppOrWebView;
+
+/**
+ * Detects whether the runtime is genuine desktop Safari on macOS.
+ * Accurately distinguishes macOS Safari from iOS/iPadOS, Chrome on Mac, Firefox on Mac, Edge, and WebViews.
+ */
+export function isMacOSDesktopSafari(win = typeof window !== "undefined" ? window : null) {
+  if (!win || !win.navigator) return false;
+  const ua = win.navigator.userAgent || "";
+  const platform = win.navigator.platform || "";
+  const maxTouchPoints = Number(win.navigator.maxTouchPoints || 0);
+
+  // Must be a Mac platform without touch screens (iPadOS desktop UA has maxTouchPoints > 1)
+  const isMac = /Mac(intosh|Intel|PPC|68K)/i.test(platform) || (platform === "MacIntel" && maxTouchPoints <= 1);
+  if (!isMac) return false;
+
+  // Exclude iOS devices (iPhone, iPad, iPod) or iPad in desktop mode
+  if (/iPad|iPhone|iPod/i.test(ua) || (platform === "MacIntel" && maxTouchPoints > 1)) {
+    return false;
+  }
+
+  // Must contain Safari/ and Version/ tokens
+  const hasSafari = /Safari/i.test(ua);
+  const hasVersion = /Version\//i.test(ua);
+  if (!hasSafari || !hasVersion) return false;
+
+  // Exclude other desktop browsers on macOS (Chrome, Chromium, Firefox, Edge, Opera, Brave, Vivaldi, etc.)
+  if (/Chrome|Chromium|CriOS|Edg|OPR|Opera|Firefox|FxiOS|Vivaldi|YaBrowser|Brave/i.test(ua)) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Detects whether the runtime is native Safari on iOS (iPhone / iPad).
+ */
+export function isIOSSafari(win = typeof window !== "undefined" ? window : null) {
+  if (!win || !win.navigator) return false;
+  const ua = win.navigator.userAgent || "";
+  const platform = win.navigator.platform || "";
+  const maxTouchPoints = Number(win.navigator.maxTouchPoints || 0);
+
+  const isIOS =
+    /iPad|iPhone|iPod/i.test(ua) ||
+    (platform === "MacIntel" && maxTouchPoints > 1);
+  if (!isIOS) return false;
+
+  // Must NOT be an in-app WebView, standalone PWA, or third-party iOS browser
+  if (isIOSAppOrWebView(win)) return false;
+
+  // Must have Safari and Version
+  return /Safari/i.test(ua) && /Version\//i.test(ua);
+}
+
+/**
+ * Formats VdoCipher player error events and postMessage payloads into user-friendly,
+ * environment-aware diagnostic messages without exposing DRM secrets or tokens.
+ *
+ * Specifically handles the provider's "Browser failed / Please view in updated Google Chrome browser"
+ * message on Safari without erroneously directing Safari users to install Chrome.
+ */
+export function formatVdoPlayerError(err, win = typeof window !== "undefined" ? window : null) {
+  const code = err?.code || err?.payload?.code;
+  const rawMsg = String(err?.message || err?.payload?.message || err?.error?.message || err?.error || err || "");
+  const lowerMsg = rawMsg.toLowerCase();
+
+  const isMacSafari = isMacOSDesktopSafari(win);
+  const isIOSRestricted = isIOSAppOrWebView(win);
+  const isIOSNativeSafari = isIOSSafari(win);
+
+  // 1. Provider's "Browser failed / Please view in updated Google Chrome browser"
+  if (
+    lowerMsg.includes("browser failed") ||
+    lowerMsg.includes("chrome browser") ||
+    lowerMsg.includes("google chrome")
+  ) {
+    if (isMacSafari) {
+      return {
+        title: "Playback Interrupted",
+        message: "Video playback could not be initialized in Safari. FairPlay DRM or certificate authorization failed. Click below to reload the player session.",
+        isRetryable: true,
+        showSafariFallback: false,
+        category: "drm_safari_blocked",
+      };
+    }
+    if (isIOSRestricted) {
+      return {
+        title: "Play in Safari Browser",
+        message: "Apple FairPlay DRM requires opening this video in the official Safari browser on iOS.",
+        isRetryable: true,
+        showSafariFallback: true,
+        category: "ios_webview_restricted",
+      };
+    }
+    return {
+      title: "Browser Playback Notice",
+      message: "Protected content playback failed in this browser. Please verify browser permissions or reload.",
+      isRetryable: true,
+      showSafariFallback: false,
+      category: "browser_unsupported",
+    };
+  }
+
+  // 2. Domain authorization notice (VdoCipher code 60072014)
+  if (code === 60072014 || lowerMsg.includes("domain")) {
+    return {
+      title: "Domain Authorization Notice",
+      message: "Domain authorization notice: This domain must be allowed in VdoCipher dashboard settings. Click below to refresh the stream.",
+      isRetryable: true,
+      showSafariFallback: false,
+      category: "domain_restricted",
+    };
+  }
+
+  // 3. FairPlay / DRM / License errors
+  if (
+    lowerMsg.includes("safari") ||
+    lowerMsg.includes("fairplay") ||
+    lowerMsg.includes("drm") ||
+    lowerMsg.includes("license") ||
+    lowerMsg.includes("protected") ||
+    code === 4
+  ) {
+    if (isIOSRestricted) {
+      return {
+        title: "Play in Safari Browser",
+        message: "Apple FairPlay DRM requires opening this video in Safari Browser on iOS devices.",
+        isRetryable: true,
+        showSafariFallback: true,
+        category: "ios_webview_restricted",
+      };
+    }
+
+    if (isMacSafari || isIOSNativeSafari) {
+      return {
+        title: "DRM Authorization Notice",
+        message: "Video stream authorization was interrupted. Click below to fetch a fresh authenticated session.",
+        isRetryable: true,
+        showSafariFallback: false,
+        category: "drm_safari_session",
+      };
+    }
+
+    return {
+      title: "Protected Stream Notice",
+      message: "Protected content could not be verified in this view. Click below to fetch a fresh authenticated session.",
+      isRetryable: true,
+      showSafariFallback: false,
+      category: "drm_verification_failed",
+    };
+  }
+
+  // 4. Network / Jitter / Timeout errors
+  if (
+    code === 1002 ||
+    code === 2 ||
+    lowerMsg.includes("network") ||
+    lowerMsg.includes("offline") ||
+    lowerMsg.includes("timeout")
+  ) {
+    return {
+      title: "Network Notice",
+      message: "Stream interrupted by network connectivity. Click below to retry playback.",
+      isRetryable: true,
+      showSafariFallback: false,
+      category: "network_error",
+    };
+  }
+
+  // 5. Default generic playback interruption
+  return {
+    title: "Video Stream Notice",
+    message: rawMsg && rawMsg !== "[object Object]" && !lowerMsg.includes("error")
+      ? rawMsg
+      : "Playback session was interrupted. Click below to fetch a fresh authenticated session.",
+    isRetryable: true,
+    showSafariFallback: isIOSRestricted,
+    category: "general_interruption",
+  };
+}
 
