@@ -38,10 +38,24 @@ export default function VideoStage({
     return coverImage ? getUploadUrl(coverImage) : null;
   }, [coverImage]);
 
-  // Track auto-launch and dismissal state per lesson key
+  // Track auto-launch, dismissal state, and embedded stage container ref
+  const stageContainerRef = useRef(null);
   const hasAutoLaunchedRef = useRef({});
   const userDismissedRef = useRef({});
   const isNativePlayerOpenRef = useRef(false);
+
+  const getPlayerLayout = useCallback(() => {
+    if (!stageContainerRef.current) return null;
+    const rect = stageContainerRef.current.getBoundingClientRect();
+    const isOffscreen = rect.bottom <= 0 || rect.top >= window.innerHeight;
+    return {
+      x: Math.round(rect.left),
+      y: Math.round(rect.top),
+      width: Math.round(rect.width),
+      height: Math.round(rect.height),
+      visible: !isOffscreen && rect.width > 0 && rect.height > 0,
+    };
+  }, []);
 
   // Continuously verify if bridge attaches after initial render tick (prevents race conditions)
   useEffect(() => {
@@ -82,6 +96,8 @@ export default function VideoStage({
     userDismissedRef.current[currentLessonKey] = false;
     isNativePlayerOpenRef.current = true;
 
+    const layout = getPlayerLayout();
+
     try {
       bridge.postMessage(
         JSON.stringify({
@@ -91,6 +107,7 @@ export default function VideoStage({
             playbackInfo: vdoCipher.playbackInfo,
             classId: classProgress?.classId,
             title: classTitle || 'Lesson Video',
+            layout,
           },
         })
       );
@@ -100,7 +117,7 @@ export default function VideoStage({
       setNativeError('Failed to open native player. Tap to retry.');
       return false;
     }
-  }, [vdoCipher, classProgress, classTitle, currentLessonKey]);
+  }, [vdoCipher, classProgress, classTitle, currentLessonKey, getPlayerLayout]);
 
   // Auto-launch native hardware player when lesson loads with valid credentials
   useEffect(() => {
@@ -138,7 +155,7 @@ export default function VideoStage({
     };
   }, [onProgressUpdate, currentLessonKey]);
 
-  // Ensure modal is cleanly closed if user navigates away while open
+  // Ensure embedded player is cleanly closed if user navigates away or switches lessons
   useEffect(() => {
     return () => {
       if (isNativePlayerOpenRef.current) {
@@ -151,7 +168,39 @@ export default function VideoStage({
         }
       }
     };
-  }, []);
+  }, [currentLessonKey]);
+
+  // Keep native embedded player layout synchronized when scrolling or resizing
+  useEffect(() => {
+    if (!isNativeApp) return;
+
+    let rafId = null;
+    const handleScrollOrResize = () => {
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = null;
+        if (!isNativePlayerOpenRef.current) return;
+        const layout = getPlayerLayout();
+        if (layout && window.ReactNativeWebView?.postMessage) {
+          window.ReactNativeWebView.postMessage(
+            JSON.stringify({
+              type: 'UPDATE_VDOCIPHER_LAYOUT',
+              payload: { layout },
+            })
+          );
+        }
+      });
+    };
+
+    window.addEventListener('scroll', handleScrollOrResize, { passive: true });
+    window.addEventListener('resize', handleScrollOrResize, { passive: true });
+
+    return () => {
+      if (rafId) window.cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', handleScrollOrResize);
+      window.removeEventListener('resize', handleScrollOrResize);
+    };
+  }, [isNativeApp, getPlayerLayout]);
 
   const getCleanLessonUrl = () => {
     try {
@@ -209,7 +258,10 @@ export default function VideoStage({
 
       {/* Video Box with strict 16:9 Aspect Ratio (preserved dark stage) */}
       <FeatureErrorBoundary featureName="Video Player">
-        <div className="relative aspect-video w-full bg-black overflow-hidden flex items-center justify-center">
+        <div
+          ref={stageContainerRef}
+          className="relative aspect-video w-full bg-black overflow-hidden flex items-center justify-center"
+        >
           {/* Dynamic Floating Watermark for non-S3/VdoCipher videos */}
           {!isS3Video && <VideoWatermark user={user} />}
 
