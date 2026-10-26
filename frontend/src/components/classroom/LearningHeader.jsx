@@ -54,6 +54,13 @@ export default function LearningHeader({
           <button
             type="button"
             onClick={() => {
+              try {
+                window.ReactNativeWebView?.postMessage?.(
+                  JSON.stringify({ type: 'CLOSE_VDOCIPHER_NATIVE' })
+                );
+              } catch {
+                // Ignore
+              }
               if (course?._id) {
                 navigate(`/courses/${course._id}/chapters`);
               } else {

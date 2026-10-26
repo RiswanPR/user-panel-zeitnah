@@ -254,6 +254,19 @@ function ClassView() {
     void runPwaVideoDiagnostics();
   }, []);
 
+  // Ensure native video player is closed when unmounting ClassView (e.g. navigating away)
+  useEffect(() => {
+    return () => {
+      try {
+        window.ReactNativeWebView?.postMessage?.(
+          JSON.stringify({ type: 'CLOSE_VDOCIPHER_NATIVE' })
+        );
+      } catch {
+        // Ignore
+      }
+    };
+  }, []);
+
   const handleToggleAutoPlay = (val) => {
     setAutoPlayNext(val);
     try {
@@ -1110,6 +1123,14 @@ function ClassView() {
     }
     const targetId = lesson._id || lesson.id;
     if (targetId && targetId !== activeClassId) {
+      // 0. Ensure previous native video player is closed before transitioning
+      try {
+        window.ReactNativeWebView?.postMessage?.(
+          JSON.stringify({ type: 'CLOSE_VDOCIPHER_NATIVE' })
+        );
+      } catch {
+        // Ignore
+      }
       // 1. Flush/save current lesson progress snapshot if dirty
       if (latestSnapshotRef.current && activeClassId) {
         api.post(`/courses/class/${activeClassId}/progress`, latestSnapshotRef.current).catch(() => {});
@@ -1333,6 +1354,7 @@ function ClassView() {
               videoData={videoData}
               videoUrl={videoUrl}
               vdoCipher={cls?.vdoCipher}
+              classId={cls?._id || activeClassId}
               classTitle={cls.title}
               classProgress={classProgress}
               isClassCompleted={isClassCompleted}
@@ -1344,6 +1366,13 @@ function ClassView() {
               onVdoReload={handleVdoReload}
               onRefreshPlaybackUrl={refreshPlaybackUrl}
               onProgressUpdate={handleS3ProgressUpdate}
+              isOverlayOpen={Boolean(
+                curriculumOpen ||
+                chapterCompleteModalOpen ||
+                shortcutsModalOpen ||
+                issueModalOpen ||
+                previewResource
+              )}
             />
 
             {/* Editorial Lesson Title & Identity Banner */}

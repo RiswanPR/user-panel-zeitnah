@@ -12,6 +12,7 @@ export default function VideoStage({
   videoData,
   videoUrl,
   vdoCipher,
+  classId,
   classTitle,
   classProgress,
   isClassCompleted,
@@ -23,6 +24,7 @@ export default function VideoStage({
   onVdoReload,
   onRefreshPlaybackUrl,
   onProgressUpdate,
+  isOverlayOpen = false,
 }) {
   const [showEmbeddedAnyway, setShowEmbeddedAnyway] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -32,8 +34,8 @@ export default function VideoStage({
 
   // Distinct identifier for the current lesson to manage auto-launch & dismissal state
   const currentLessonKey = useMemo(() => {
-    return classProgress?.classId || vdoCipher?.playbackInfo || classTitle || 'current';
-  }, [classProgress?.classId, vdoCipher?.playbackInfo, classTitle]);
+    return classId || classProgress?.classId || vdoCipher?.playbackInfo || classTitle || 'current';
+  }, [classId, classProgress?.classId, vdoCipher?.playbackInfo, classTitle]);
 
   const posterUrl = useMemo(() => {
     return coverImage ? getUploadUrl(coverImage) : null;
@@ -46,9 +48,16 @@ export default function VideoStage({
   const isNativePlayerOpenRef = useRef(false);
 
   const getPlayerLayout = useCallback(() => {
+    if (isOverlayOpen) {
+      return { x: 0, y: 0, width: 0, height: 0, visible: false };
+    }
     if (!stageContainerRef.current) return null;
     const rect = stageContainerRef.current.getBoundingClientRect();
-    const isOffscreen = rect.bottom <= 0 || rect.top >= window.innerHeight;
+    const isOffscreen =
+      rect.bottom <= 0 ||
+      rect.top >= window.innerHeight ||
+      rect.right <= 0 ||
+      rect.left >= window.innerWidth;
     return {
       x: Math.round(rect.left),
       y: Math.round(rect.top),
@@ -56,7 +65,7 @@ export default function VideoStage({
       height: Math.round(rect.height),
       visible: !isOffscreen && rect.width > 0 && rect.height > 0,
     };
-  }, []);
+  }, [isOverlayOpen]);
 
   // Continuously verify if bridge attaches after initial render tick (prevents race conditions)
   useEffect(() => {
@@ -112,7 +121,7 @@ export default function VideoStage({
           payload: {
             otp: vdoCipher.otp,
             playbackInfo: vdoCipher.playbackInfo,
-            classId: classProgress?.classId,
+            classId: classProgress?.classId || classId,
             title: classTitle || 'Lesson Video',
             resumeTimeMs,
             layout,
@@ -125,7 +134,7 @@ export default function VideoStage({
       setNativeError('Failed to open native player. Tap to retry.');
       return false;
     }
-  }, [vdoCipher, classProgress, classProgressPercent, classTitle, currentLessonKey, getPlayerLayout]);
+  }, [vdoCipher, classId, classProgress, classProgressPercent, classTitle, currentLessonKey, getPlayerLayout]);
 
   // Auto-launch native hardware player when lesson loads with valid credentials
   useEffect(() => {
@@ -141,10 +150,29 @@ export default function VideoStage({
     handlePlayNative();
   }, [isNativeApp, vdoCipher?.otp, vdoCipher?.playbackInfo, currentLessonKey, handlePlayNative]);
 
+  // Synchronize native player visibility immediately when overlay or modal drawer opens/closes
+  useEffect(() => {
+    if (!isNativeApp || !isNativePlayerOpenRef.current) return;
+    const layout = getPlayerLayout();
+    if (layout && window.ReactNativeWebView?.postMessage) {
+      try {
+        window.ReactNativeWebView.postMessage(
+          JSON.stringify({
+            type: 'UPDATE_VDOCIPHER_LAYOUT',
+            payload: { layout },
+          })
+        );
+      } catch {
+        // Ignore
+      }
+    }
+  }, [isOverlayOpen, isNativeApp, getPlayerLayout]);
+
   useEffect(() => {
     window.__onNativeVdoProgress = (event) => {
       // Guard against stale callbacks from a previous lesson
-      if (event?.classId && classProgress?.classId && event.classId !== classProgress.classId) {
+      const activeClassIdentifier = classId || classProgress?.classId;
+      if (event?.classId && activeClassIdentifier && event.classId !== activeClassIdentifier) {
         return;
       }
 
@@ -193,7 +221,7 @@ export default function VideoStage({
       delete window.__onNativeVdoError;
       delete window.__onNativeVdoPlayerClosed;
     };
-  }, [onProgressUpdate, currentLessonKey, classProgress?.classId]);
+  }, [onProgressUpdate, currentLessonKey, classId, classProgress?.classId]);
 
   // Ensure embedded player is cleanly closed if user navigates away or switches lessons
   useEffect(() => {
@@ -206,11 +234,12 @@ export default function VideoStage({
         } catch {
           // Ignore unmount postMessage error
         }
+        isNativePlayerOpenRef.current = false;
       }
     };
   }, [currentLessonKey]);
 
-  // Keep native embedded player layout synchronized when scrolling or resizing
+  // Keep native embedded player layout synchronized when scrolling, resizing, or switching orientation
   useEffect(() => {
     if (!isNativeApp) return;
 
@@ -222,23 +251,41 @@ export default function VideoStage({
         if (!isNativePlayerOpenRef.current) return;
         const layout = getPlayerLayout();
         if (layout && window.ReactNativeWebView?.postMessage) {
-          window.ReactNativeWebView.postMessage(
-            JSON.stringify({
-              type: 'UPDATE_VDOCIPHER_LAYOUT',
-              payload: { layout },
-            })
-          );
+          try {
+            window.ReactNativeWebView.postMessage(
+              JSON.stringify({
+                type: 'UPDATE_VDOCIPHER_LAYOUT',
+                payload: { layout },
+              })
+            );
+          } catch {
+            // Ignore
+          }
         }
       });
     };
 
-    window.addEventListener('scroll', handleScrollOrResize, { passive: true });
+    window.addEventListener('scroll', handleScrollOrResize, { passive: true, capture: true });
     window.addEventListener('resize', handleScrollOrResize, { passive: true });
+    window.addEventListener('orientationchange', handleScrollOrResize, { passive: true });
+
+    let observer = null;
+    if (typeof IntersectionObserver !== 'undefined' && stageContainerRef.current) {
+      observer = new IntersectionObserver(
+        () => {
+          handleScrollOrResize();
+        },
+        { threshold: [0, 0.1, 0.5, 1.0] }
+      );
+      observer.observe(stageContainerRef.current);
+    }
 
     return () => {
       if (rafId) window.cancelAnimationFrame(rafId);
-      window.removeEventListener('scroll', handleScrollOrResize);
+      window.removeEventListener('scroll', handleScrollOrResize, { capture: true });
       window.removeEventListener('resize', handleScrollOrResize);
+      window.removeEventListener('orientationchange', handleScrollOrResize);
+      if (observer) observer.disconnect();
     };
   }, [isNativeApp, getPlayerLayout]);
 
