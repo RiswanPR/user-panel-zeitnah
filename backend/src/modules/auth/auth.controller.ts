@@ -279,7 +279,8 @@ export class AuthController {
     const rawAvatar = (req.user as any).avatar || '';
     let signedAvatar = rawAvatar;
     if (rawAvatar && this.signedUrlService) {
-      signedAvatar = await this.signedUrlService.generateSignedImageUrl(rawAvatar);
+      signedAvatar =
+        await this.signedUrlService.generateSignedImageUrl(rawAvatar);
     }
 
     return {

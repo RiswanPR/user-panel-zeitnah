@@ -43,18 +43,20 @@ describe('Zeitnah Community — Phase A: Moderation Reporting Pipeline Verificat
       findOne: jest.fn(),
       find: jest.fn().mockReturnThis(),
       findById: jest.fn(),
-      findOneAndUpdate: jest.fn().mockImplementation(async (filter: any, update: any) => {
-        const id = filter?._id ? String(filter._id) : '';
-        const doc = await mockReportModel.findById(id);
-        if (!doc) return null;
-        if (filter.status?.$in && !filter.status.$in.includes(doc.status)) {
-          return null; // Atomic CAS mismatch: already transitioned
-        }
-        if (update?.$set) {
-          Object.assign(doc, update.$set);
-        }
-        return doc;
-      }),
+      findOneAndUpdate: jest
+        .fn()
+        .mockImplementation(async (filter: any, update: any) => {
+          const id = filter?._id ? String(filter._id) : '';
+          const doc = await mockReportModel.findById(id);
+          if (!doc) return null;
+          if (filter.status?.$in && !filter.status.$in.includes(doc.status)) {
+            return null; // Atomic CAS mismatch: already transitioned
+          }
+          if (update?.$set) {
+            Object.assign(doc, update.$set);
+          }
+          return doc;
+        }),
       sort: jest.fn().mockReturnThis(),
       skip: jest.fn().mockReturnThis(),
       limit: jest.fn().mockReturnThis(),
@@ -72,18 +74,20 @@ describe('Zeitnah Community — Phase A: Moderation Reporting Pipeline Verificat
     mockLegacyReportModel = {
       find: jest.fn().mockReturnThis(),
       findById: jest.fn(),
-      findOneAndUpdate: jest.fn().mockImplementation(async (filter: any, update: any) => {
-        const id = filter?._id ? String(filter._id) : '';
-        const doc = await mockLegacyReportModel.findById(id);
-        if (!doc) return null;
-        if (filter.status?.$in && !filter.status.$in.includes(doc.status)) {
-          return null;
-        }
-        if (update?.$set) {
-          Object.assign(doc, update.$set);
-        }
-        return doc;
-      }),
+      findOneAndUpdate: jest
+        .fn()
+        .mockImplementation(async (filter: any, update: any) => {
+          const id = filter?._id ? String(filter._id) : '';
+          const doc = await mockLegacyReportModel.findById(id);
+          if (!doc) return null;
+          if (filter.status?.$in && !filter.status.$in.includes(doc.status)) {
+            return null;
+          }
+          if (update?.$set) {
+            Object.assign(doc, update.$set);
+          }
+          return doc;
+        }),
       sort: jest.fn().mockReturnThis(),
       skip: jest.fn().mockReturnThis(),
       limit: jest.fn().mockReturnThis(),
@@ -107,16 +111,13 @@ describe('Zeitnah Community — Phase A: Moderation Reporting Pipeline Verificat
       softDelete: jest.fn().mockResolvedValue(true),
     };
 
-    moderationService = new ModerationService(
-      mockBlockModel as any,
-      mockReportModel as any,
-    );
+    moderationService = new ModerationService(mockBlockModel, mockReportModel);
 
     communityModService = new CommunityModerationService(
-      mockLegacyReportModel as any,
-      mockModLogModel as any,
-      mockPostRepository as any,
-      mockCommentRepository as any,
+      mockLegacyReportModel,
+      mockModLogModel,
+      mockPostRepository,
+      mockCommentRepository,
       moderationService,
     );
 
@@ -527,7 +528,9 @@ describe('Zeitnah Community — Phase A: Moderation Reporting Pipeline Verificat
       );
 
       expect(mockReport.status).toBe(ReportStatus.DISMISSED);
-      expect(mockReport.details).toContain('[Mod ' + validModeratorId + ']: Not a violation');
+      expect(mockReport.details).toContain(
+        '[Mod ' + validModeratorId + ']: Not a violation',
+      );
       expect(result.status).toBe(ReportStatus.DISMISSED);
       expect(mockPostRepository.softDelete).not.toHaveBeenCalled();
     });
@@ -547,7 +550,10 @@ describe('Zeitnah Community — Phase A: Moderation Reporting Pipeline Verificat
       };
 
       mockReportModel.findById.mockResolvedValue(mockReport);
-      mockPostRepository.findById.mockResolvedValue({ _id: validPostId, content: 'Bad post' });
+      mockPostRepository.findById.mockResolvedValue({
+        _id: validPostId,
+        content: 'Bad post',
+      });
 
       const req = { user: { role: 'moderator', userId: validModeratorId } };
       const result = await communityModController.resolveReport(
@@ -578,7 +584,9 @@ describe('Zeitnah Community — Phase A: Moderation Reporting Pipeline Verificat
         'Abusive language',
       );
 
-      expect(mockCommentRepository.softDelete).toHaveBeenCalledWith(validCommentId);
+      expect(mockCommentRepository.softDelete).toHaveBeenCalledWith(
+        validCommentId,
+      );
       expect(mockPostRepository.update).toHaveBeenCalledWith(
         validPostId,
         expect.objectContaining({
@@ -690,7 +698,10 @@ describe('Zeitnah Community — Phase A: Moderation Reporting Pipeline Verificat
       };
 
       mockReportModel.findById.mockImplementation(async () => sharedDoc);
-      mockPostRepository.findById.mockResolvedValue({ _id: validPostId, content: 'Spam post' });
+      mockPostRepository.findById.mockResolvedValue({
+        _id: validPostId,
+        content: 'Spam post',
+      });
       mockPostRepository.softDelete.mockResolvedValue(true);
 
       const modLogSpy = jest.fn().mockImplementation((dto) => ({

@@ -175,13 +175,15 @@ describe('NotificationsService - Lifecycle & Preferences', () => {
 
       mockPrefModel.find.mockReturnValue({
         select: jest.fn().mockReturnValue({
-          lean: jest.fn().mockResolvedValue([
-            { userId: userB },
-          ]),
+          lean: jest.fn().mockResolvedValue([{ userId: userB }]),
         }),
       });
 
-      const result = await service.getInAppOptedOutUserIds([userA, userB, userC]);
+      const result = await service.getInAppOptedOutUserIds([
+        userA,
+        userB,
+        userC,
+      ]);
 
       expect(mockPrefModel.find).toHaveBeenCalledWith({
         userId: { $in: [userA, userB, userC] },
@@ -219,8 +221,8 @@ describe('NotificationsService - Lifecycle & Preferences', () => {
         userA,
         userA.toHexString(), // duplicate
         'invalid-id-format',
-        null as any,
-        undefined as any,
+        null,
+        undefined,
         userB,
       ]);
 
@@ -449,7 +451,9 @@ describe('NotificationsService - Lifecycle & Preferences', () => {
       }));
 
       mockNotificationModel.insertMany.mockImplementation((chunk) =>
-        Promise.resolve(chunk.map((c: any) => ({ ...c, _id: new Types.ObjectId() }))),
+        Promise.resolve(
+          chunk.map((c: any) => ({ ...c, _id: new Types.ObjectId() })),
+        ),
       );
 
       // Call with chunkSize = 2
@@ -483,7 +487,10 @@ describe('NotificationsService - Lifecycle & Preferences', () => {
         type: 'company_post',
         title: 'Valid recipient',
         message: 'Will be inserted',
-        toObject: () => ({ recipientId: validRecipient, title: 'Valid recipient' }),
+        toObject: () => ({
+          recipientId: validRecipient,
+          title: 'Valid recipient',
+        }),
       };
 
       mockNotificationModel.insertMany.mockResolvedValue([insertedDoc]);
@@ -505,9 +512,19 @@ describe('NotificationsService - Lifecycle & Preferences', () => {
 
     it('safely returns empty array for an entirely invalid batch without calling insertMany or gateway', async () => {
       const dtos = [
-        { recipientId: 'bad-id-1', title: 'Bad 1', message: 'M1', type: 'system' },
+        {
+          recipientId: 'bad-id-1',
+          title: 'Bad 1',
+          message: 'M1',
+          type: 'system',
+        },
         { recipientId: '', title: 'Bad 2', message: 'M2', type: 'system' },
-        { recipientId: null as any, title: 'Bad 3', message: 'M3', type: 'system' },
+        {
+          recipientId: null as any,
+          title: 'Bad 3',
+          message: 'M3',
+          type: 'system',
+        },
       ];
 
       const result = await service.createNotificationsBatch(dtos);
@@ -536,7 +553,10 @@ describe('NotificationsService - Lifecycle & Preferences', () => {
         type: 'company_post',
         title: 'Optional field test',
         message: 'Valid with cleaned optional refs',
-        toObject: () => ({ recipientId: validRecipient, title: 'Optional field test' }),
+        toObject: () => ({
+          recipientId: validRecipient,
+          title: 'Optional field test',
+        }),
       };
 
       mockNotificationModel.insertMany.mockResolvedValue([insertedDoc]);
@@ -553,8 +573,18 @@ describe('NotificationsService - Lifecycle & Preferences', () => {
     it('handles MongooseBulkWriteError (validation failures) and recovers confirmed persisted docs from results', async () => {
       const validRecipient = new Types.ObjectId();
       const dtos = [
-        { recipientId: new Types.ObjectId(), title: 'Doc 1', message: 'M1', type: 'general' },
-        { recipientId: validRecipient, title: 'Doc 2', message: 'M2', type: 'general' },
+        {
+          recipientId: new Types.ObjectId(),
+          title: 'Doc 1',
+          message: 'M1',
+          type: 'general',
+        },
+        {
+          recipientId: validRecipient,
+          title: 'Doc 2',
+          message: 'M2',
+          type: 'general',
+        },
       ];
 
       const validationErr = new Error('Path `title` is required.');
@@ -567,7 +597,11 @@ describe('NotificationsService - Lifecycle & Preferences', () => {
         message: 'M2',
         type: 'general',
         isNew: false,
-        toObject: () => ({ recipientId: validRecipient, title: 'Doc 2', message: 'M2' }),
+        toObject: () => ({
+          recipientId: validRecipient,
+          title: 'Doc 2',
+          message: 'M2',
+        }),
       };
 
       const mongooseBulkError: any = new Error(
@@ -603,7 +637,10 @@ describe('NotificationsService - Lifecycle & Preferences', () => {
         message: 'Has _id and recipientId but was not persisted',
         type: 'general',
         isNew: true, // Not persisted to MongoDB
-        toObject: () => ({ recipientId: recipient, title: 'Unverified In-Memory Object' }),
+        toObject: () => ({
+          recipientId: recipient,
+          title: 'Unverified In-Memory Object',
+        }),
       };
 
       // Generic error with results array but no insertedDocs, no MongooseBulkWriteError
@@ -613,7 +650,12 @@ describe('NotificationsService - Lifecycle & Preferences', () => {
       mockNotificationModel.insertMany.mockRejectedValue(genericError);
 
       const dtos = [
-        { recipientId: recipient, title: 'Test', message: 'Content', type: 'general' },
+        {
+          recipientId: recipient,
+          title: 'Test',
+          message: 'Content',
+          type: 'general',
+        },
       ];
 
       const result = await service.createNotificationsBatch(dtos);
@@ -637,7 +679,9 @@ describe('NotificationsService - Lifecycle & Preferences', () => {
       const validationErr = new Error('Validation failed');
       validationErr.name = 'ValidationError';
 
-      const mongooseBulkError: any = new Error('insertMany failed with validation errors');
+      const mongooseBulkError: any = new Error(
+        'insertMany failed with validation errors',
+      );
       mongooseBulkError.name = 'MongooseBulkWriteError';
       mongooseBulkError.validationErrors = [validationErr];
       mongooseBulkError.results = [validationErr, unconfirmedDoc];
@@ -647,8 +691,18 @@ describe('NotificationsService - Lifecycle & Preferences', () => {
       mockNotificationModel.insertMany.mockRejectedValue(mongooseBulkError);
 
       const dtos = [
-        { recipientId: new Types.ObjectId(), title: 'Bad', message: 'M', type: 'general' },
-        { recipientId: recipient, title: 'Unconfirmed', message: 'M', type: 'general' },
+        {
+          recipientId: new Types.ObjectId(),
+          title: 'Bad',
+          message: 'M',
+          type: 'general',
+        },
+        {
+          recipientId: recipient,
+          title: 'Unconfirmed',
+          message: 'M',
+          type: 'general',
+        },
       ];
 
       const result = await service.createNotificationsBatch(dtos);
@@ -662,7 +716,9 @@ describe('NotificationsService - Lifecycle & Preferences', () => {
       const validationErr = new Error('Validation failed');
       validationErr.name = 'ValidationError';
 
-      const mongooseBulkError: any = new Error('insertMany failed with validation errors');
+      const mongooseBulkError: any = new Error(
+        'insertMany failed with validation errors',
+      );
       mongooseBulkError.name = 'MongooseBulkWriteError';
       mongooseBulkError.validationErrors = [validationErr];
       mongooseBulkError.results = [validationErr];
@@ -671,7 +727,12 @@ describe('NotificationsService - Lifecycle & Preferences', () => {
       mockNotificationModel.insertMany.mockRejectedValue(mongooseBulkError);
 
       const dtos = [
-        { recipientId: new Types.ObjectId(), title: 'Test', message: 'Content', type: 'system' },
+        {
+          recipientId: new Types.ObjectId(),
+          title: 'Test',
+          message: 'Content',
+          type: 'system',
+        },
       ];
 
       const result = await service.createNotificationsBatch(dtos);
@@ -683,9 +744,24 @@ describe('NotificationsService - Lifecycle & Preferences', () => {
     it('handles mixed validation and duplicate-key failures by extracting only confirmed persisted documents', async () => {
       const validRecipient = new Types.ObjectId();
       const dtos = [
-        { recipientId: new Types.ObjectId(), title: 'Val error', message: 'M', type: 't' },
-        { recipientId: new Types.ObjectId(), title: 'Dup key', message: 'M', type: 't' },
-        { recipientId: validRecipient, title: 'Success', message: 'M', type: 't' },
+        {
+          recipientId: new Types.ObjectId(),
+          title: 'Val error',
+          message: 'M',
+          type: 't',
+        },
+        {
+          recipientId: new Types.ObjectId(),
+          title: 'Dup key',
+          message: 'M',
+          type: 't',
+        },
+        {
+          recipientId: validRecipient,
+          title: 'Success',
+          message: 'M',
+          type: 't',
+        },
       ];
 
       const validationErr = new Error('Validation failure');
@@ -740,7 +816,12 @@ describe('NotificationsService - Lifecycle & Preferences', () => {
       mockNotificationModel.insertMany.mockRejectedValue(bulkError);
 
       const dtos = [
-        { recipientId: new Types.ObjectId(), title: 'No retry test', message: 'M', type: 'system' },
+        {
+          recipientId: new Types.ObjectId(),
+          title: 'No retry test',
+          message: 'M',
+          type: 'system',
+        },
       ];
 
       await service.createNotificationsBatch(dtos);

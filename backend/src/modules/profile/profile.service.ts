@@ -694,16 +694,20 @@ export class ProfileService {
         backgroundImage: userObj.backgroundImage || '',
         headline: userObj.headline || '',
         currentRole: userObj.currentRole || '',
-        professionalIdentity: userObj.professionalIdentity || (userObj.currentRole ? {
-          departmentId: null,
-          departmentName: null,
-          titleId: null,
-          titleName: userObj.currentRole,
-          isCustomTitle: false,
-          isLegacyTitle: true,
-          catalogueVersion: null,
-          updatedAt: null,
-        } : null),
+        professionalIdentity:
+          userObj.professionalIdentity ||
+          (userObj.currentRole
+            ? {
+                departmentId: null,
+                departmentName: null,
+                titleId: null,
+                titleName: userObj.currentRole,
+                isCustomTitle: false,
+                isLegacyTitle: true,
+                catalogueVersion: null,
+                updatedAt: null,
+              }
+            : null),
         location: userObj.location || '',
         industry: userObj.industry || '',
         bio: userObj.bio || '',
@@ -742,7 +746,9 @@ export class ProfileService {
           educationVisibility: isEduVisible ? 'PUBLIC' : 'PRIVATE',
           certificationsVisibility: isCertVisible ? 'PUBLIC' : 'PRIVATE',
           projectsVisibility: isProjectsPrivate ? 'PRIVATE' : 'PUBLIC',
-          careerPreferencesVisibility: isCareerPrefsVisible ? 'PUBLIC' : 'PRIVATE',
+          careerPreferencesVisibility: isCareerPrefsVisible
+            ? 'PUBLIC'
+            : 'PRIVATE',
         },
 
         recommendations: signedRecommendations,
@@ -764,8 +770,12 @@ export class ProfileService {
           bio: '',
           available: false,
         },
-        companyName: userObj.companyName || userObj.recruiterContext?.companyName || '',
-        currentPosition: userObj.currentPosition || userObj.recruiterContext?.currentPosition || '',
+        companyName:
+          userObj.companyName || userObj.recruiterContext?.companyName || '',
+        currentPosition:
+          userObj.currentPosition ||
+          userObj.recruiterContext?.currentPosition ||
+          '',
         recruiterContext: userObj.recruiterContext || null,
         verification: userObj.verification || {
           status: VerificationStatus.UNVERIFIED,
@@ -871,7 +881,8 @@ export class ProfileService {
     }
 
     // Validate structured professional identity first (atomic validation)
-    let resolvedProfessionalIdentity: ValidatedProfessionalIdentity | null = null;
+    let resolvedProfessionalIdentity: ValidatedProfessionalIdentity | null =
+      null;
     let customTitleRequestResult: TitleRequestOperationResult | null = null;
 
     if (data.professionalIdentity !== undefined) {
@@ -973,7 +984,8 @@ export class ProfileService {
     const effectiveRole =
       incomingRole !== undefined
         ? normalizeCanonicalPrimaryRole(incomingRole)
-        : normalizeCanonicalPrimaryRole(user.primaryRole || 'STUDENT') || 'STUDENT';
+        : normalizeCanonicalPrimaryRole(user.primaryRole || 'STUDENT') ||
+          'STUDENT';
 
     // Role-specific validation and persistence for Recruiter
     if (effectiveRole === 'RECRUITER') {
@@ -987,37 +999,53 @@ export class ProfileService {
           data.companyName !== undefined
             ? data.companyName
             : data.recruiterContext?.companyName !== undefined
-            ? data.recruiterContext.companyName
-            : user.companyName || user.recruiterContext?.companyName || '';
+              ? data.recruiterContext.companyName
+              : user.companyName || user.recruiterContext?.companyName || '';
 
         const rawPosition =
           data.currentPosition !== undefined
             ? data.currentPosition
             : data.recruiterContext?.currentPosition !== undefined
-            ? data.recruiterContext.currentPosition
-            : user.currentPosition || user.recruiterContext?.currentPosition || '';
+              ? data.recruiterContext.currentPosition
+              : user.currentPosition ||
+                user.recruiterContext?.currentPosition ||
+                '';
 
-        const cleanCompany = typeof rawCompany === 'string' ? rawCompany.trim() : '';
-        const cleanPosition = typeof rawPosition === 'string' ? rawPosition.trim() : '';
+        const cleanCompany =
+          typeof rawCompany === 'string' ? rawCompany.trim() : '';
+        const cleanPosition =
+          typeof rawPosition === 'string' ? rawPosition.trim() : '';
 
         if (!cleanCompany) {
-          throw new BadRequestException('Company Name is required for Recruiter.');
+          throw new BadRequestException(
+            'Company Name is required for Recruiter.',
+          );
         }
         if (cleanCompany.length > 100) {
-          throw new BadRequestException('Company Name must not exceed 100 characters.');
+          throw new BadRequestException(
+            'Company Name must not exceed 100 characters.',
+          );
         }
         if (/<[^>]*>/i.test(cleanCompany)) {
-          throw new BadRequestException('Company Name must be plain text without HTML.');
+          throw new BadRequestException(
+            'Company Name must be plain text without HTML.',
+          );
         }
 
         if (!cleanPosition) {
-          throw new BadRequestException('Current Position is required for Recruiter.');
+          throw new BadRequestException(
+            'Current Position is required for Recruiter.',
+          );
         }
         if (cleanPosition.length > 100) {
-          throw new BadRequestException('Current Position must not exceed 100 characters.');
+          throw new BadRequestException(
+            'Current Position must not exceed 100 characters.',
+          );
         }
         if (/<[^>]*>/i.test(cleanPosition)) {
-          throw new BadRequestException('Current Position must be plain text without HTML.');
+          throw new BadRequestException(
+            'Current Position must be plain text without HTML.',
+          );
         }
 
         user.companyName = cleanCompany;
@@ -1029,13 +1057,19 @@ export class ProfileService {
             : data.recruiterContext?.specializations;
 
         user.recruiterContext = {
-          ...(user.recruiterContext || { organizationId: '', hiringInterests: [], opportunityTypes: [] }),
+          ...(user.recruiterContext || {
+            organizationId: '',
+            hiringInterests: [],
+            opportunityTypes: [],
+          }),
           ...(data.recruiterContext || {}),
           companyName: cleanCompany,
           currentPosition: cleanPosition,
           specializations: Array.isArray(recruiterSpecs)
             ? recruiterSpecs
-            : user.recruiterContext?.specializations || user.specializations || [],
+            : user.recruiterContext?.specializations ||
+              user.specializations ||
+              [],
         };
         user.markModified('recruiterContext');
       }
@@ -1122,11 +1156,12 @@ export class ProfileService {
         incomingPrefs.openToOpportunities !== undefined
           ? Boolean(incomingPrefs.openToOpportunities)
           : incomingPrefs.activelyLooking !== undefined
-          ? Boolean(incomingPrefs.activelyLooking)
-          : existingPrefs.openToOpportunities;
+            ? Boolean(incomingPrefs.activelyLooking)
+            : existingPrefs.openToOpportunities;
       const preferredWorkMode =
         incomingPrefs.preferredWorkMode ??
-        (Array.isArray(incomingPrefs.workModes) && incomingPrefs.workModes[0]) ??
+        (Array.isArray(incomingPrefs.workModes) &&
+          incomingPrefs.workModes[0]) ??
         existingPrefs.preferredWorkMode ??
         'On-site';
       const availability =
@@ -1226,13 +1261,9 @@ export class ProfileService {
         existingPrivacy.contactInfo ??
         'NETWORK';
       const messaging =
-        incomingPrivacy.messaging ??
-        existingPrivacy.messaging ??
-        'ANYONE';
+        incomingPrivacy.messaging ?? existingPrivacy.messaging ?? 'ANYONE';
       const readReceipts =
-        incomingPrivacy.readReceipts ??
-        existingPrivacy.readReceipts ??
-        true;
+        incomingPrivacy.readReceipts ?? existingPrivacy.readReceipts ?? true;
       const onlinePresence =
         incomingPrivacy.onlinePresence ??
         existingPrivacy.onlinePresence ??
@@ -1251,7 +1282,6 @@ export class ProfileService {
         onlinePresence: Boolean(onlinePresence),
       };
     }
-
 
     if (data.capabilities !== undefined) user.capabilities = data.capabilities;
     if (data.availability !== undefined)
@@ -1528,8 +1558,7 @@ export class ProfileService {
 
     const idx = (user.experience || []).findIndex(
       (e: any) =>
-        e.id === experienceId ||
-        (e._id && String(e._id) === experienceId),
+        e.id === experienceId || (e._id && String(e._id) === experienceId),
     );
     if (idx === -1) throw new NotFoundException('Experience record not found');
 
@@ -1555,8 +1584,12 @@ export class ProfileService {
     const currentEntry = user.experience[idx];
     // Preserve existing valid ID - never replace with undefined, null, or empty string
     const preservedId =
-      (currentEntry.id && typeof currentEntry.id === 'string' && currentEntry.id.trim()) ||
-      (experienceId && typeof experienceId === 'string' && experienceId.trim()) ||
+      (currentEntry.id &&
+        typeof currentEntry.id === 'string' &&
+        currentEntry.id.trim()) ||
+      (experienceId &&
+        typeof experienceId === 'string' &&
+        experienceId.trim()) ||
       uuidv4();
 
     user.experience[idx] = {
@@ -1568,9 +1601,7 @@ export class ProfileService {
           ? dto.employmentType
           : currentEntry.employmentType || 'Full-time',
       location:
-        dto.location !== undefined
-          ? dto.location
-          : currentEntry.location || '',
+        dto.location !== undefined ? dto.location : currentEntry.location || '',
       startDate: start,
       endDate: isOngoing ? null : end,
       currentlyActive: isOngoing,
@@ -1623,8 +1654,7 @@ export class ProfileService {
 
     user.experience = (user.experience || []).filter(
       (e: any) =>
-        e.id !== experienceId &&
-        (!e._id || String(e._id) !== experienceId),
+        e.id !== experienceId && (!e._id || String(e._id) !== experienceId),
     );
 
     // Narrowly scoped repair: ensure any legacy entries in user's experience array have a valid UUID
@@ -2337,16 +2367,20 @@ export class ProfileService {
         avatar: user.avatar,
         headline: user.portfolio?.customHeadline || user.headline,
         currentRole: user.currentRole,
-        professionalIdentity: user.professionalIdentity || (user.currentRole ? {
-          departmentId: null,
-          departmentName: null,
-          titleId: null,
-          titleName: user.currentRole,
-          isCustomTitle: false,
-          isLegacyTitle: true,
-          catalogueVersion: null,
-          updatedAt: null,
-        } : null),
+        professionalIdentity:
+          user.professionalIdentity ||
+          (user.currentRole
+            ? {
+                departmentId: null,
+                departmentName: null,
+                titleId: null,
+                titleName: user.currentRole,
+                isCustomTitle: false,
+                isLegacyTitle: true,
+                catalogueVersion: null,
+                updatedAt: null,
+              }
+            : null),
         primaryRole: user.primaryRole,
         primaryDiscipline: user.primaryDiscipline,
         infrastructureSectors: user.infrastructureSectors || [],

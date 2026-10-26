@@ -70,16 +70,18 @@ describe('Zeitnah Community — Phase 6: Cross-Feature Quality, Stability & Prod
         if (!p || p.isDeleted) return Promise.resolve(null);
         return Promise.resolve(p);
       }),
-      findByIdPopulated: jest.fn().mockImplementation((id: string, viewerId?: string) => {
-        const p = posts[id];
-        if (!p || p.isDeleted) return Promise.resolve(null);
-        return Promise.resolve({
-          ...p,
-          author: { _id: p.authorId, name: 'User A' },
-          isLikedByMe: false,
-          isSaved: false,
-        });
-      }),
+      findByIdPopulated: jest
+        .fn()
+        .mockImplementation((id: string, viewerId?: string) => {
+          const p = posts[id];
+          if (!p || p.isDeleted) return Promise.resolve(null);
+          return Promise.resolve({
+            ...p,
+            author: { _id: p.authorId, name: 'User A' },
+            isLikedByMe: false,
+            isSaved: false,
+          });
+        }),
       findFeed: jest.fn().mockImplementation((params: any) => {
         const { excludedUserIds = [], organizationId, filter } = params;
         let items = Object.values(posts).filter((p) => !p.isDeleted);
@@ -102,10 +104,16 @@ describe('Zeitnah Community — Phase 6: Cross-Feature Quality, Stability & Prod
           topics: [],
         });
       }),
-      addReaction: jest.fn().mockResolvedValue({ action: 'added', myReactionType: 'like' }),
+      addReaction: jest
+        .fn()
+        .mockResolvedValue({ action: 'added', myReactionType: 'like' }),
       removeReaction: jest.fn().mockResolvedValue({ action: 'removed' }),
       findActiveRepost: jest.fn().mockResolvedValue(null),
-      create: jest.fn().mockImplementation((data: any) => Promise.resolve({ _id: 'new-id', ...data })),
+      create: jest
+        .fn()
+        .mockImplementation((data: any) =>
+          Promise.resolve({ _id: 'new-id', ...data }),
+        ),
       adjustRepostCount: jest.fn().mockResolvedValue(null),
       softDelete: jest.fn().mockImplementation((id: string) => {
         const p = posts[id];
@@ -116,13 +124,34 @@ describe('Zeitnah Community — Phase 6: Cross-Feature Quality, Stability & Prod
     };
 
     mockCommentRepo = {
-      findByPostId: jest.fn().mockImplementation((postId: string, limit: number, skip: number, excludedUserIds: string[] = []) => {
-        return Promise.resolve([
-          { _id: 'comment-1', postId, authorId: userA, content: 'Insightful comment' },
-        ].filter((c) => !excludedUserIds.includes(c.authorId)));
-      }),
+      findByPostId: jest
+        .fn()
+        .mockImplementation(
+          (
+            postId: string,
+            limit: number,
+            skip: number,
+            excludedUserIds: string[] = [],
+          ) => {
+            return Promise.resolve(
+              [
+                {
+                  _id: 'comment-1',
+                  postId,
+                  authorId: userA,
+                  content: 'Insightful comment',
+                },
+              ].filter((c) => !excludedUserIds.includes(c.authorId)),
+            );
+          },
+        ),
       create: jest.fn().mockResolvedValue({ _id: 'comment-new' }),
-      findById: jest.fn().mockResolvedValue({ _id: 'comment-1', postId: personalPostId, authorId: userA, isDeleted: false }),
+      findById: jest.fn().mockResolvedValue({
+        _id: 'comment-1',
+        postId: personalPostId,
+        authorId: userA,
+        isDeleted: false,
+      }),
       softDelete: jest.fn().mockResolvedValue(true),
       update: jest.fn().mockResolvedValue({}),
     };
@@ -138,19 +167,27 @@ describe('Zeitnah Community — Phase 6: Cross-Feature Quality, Stability & Prod
     };
 
     mockOrganizationsService = {
-      validateCompanyPublishingAccess: jest.fn().mockResolvedValue({ organization: { _id: companyId } }),
+      validateCompanyPublishingAccess: jest
+        .fn()
+        .mockResolvedValue({ organization: { _id: companyId } }),
       validateCompanyFeedAccess: jest.fn().mockResolvedValue(true),
     };
 
     mockModerationService = {
-      hasBlockRelationship: jest.fn().mockImplementation(async (u1: string, u2: string) => {
-        return (u1 === userA && u2 === userB) || (u1 === userB && u2 === userA);
-      }),
-      getExcludedUserIds: jest.fn().mockImplementation(async (userId: string) => {
-        if (userId === userA) return [userB];
-        if (userId === userB) return [userA];
-        return [];
-      }),
+      hasBlockRelationship: jest
+        .fn()
+        .mockImplementation(async (u1: string, u2: string) => {
+          return (
+            (u1 === userA && u2 === userB) || (u1 === userB && u2 === userA)
+          );
+        }),
+      getExcludedUserIds: jest
+        .fn()
+        .mockImplementation(async (userId: string) => {
+          if (userId === userA) return [userB];
+          if (userId === userB) return [userA];
+          return [];
+        }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -173,7 +210,9 @@ describe('Zeitnah Community — Phase 6: Cross-Feature Quality, Stability & Prod
   describe('Audit Scope A: Feed & Search Block Rules Integration', () => {
     it('excludes posts by blocked users in general feed queries', async () => {
       const feed = await postService.getFeed(userB, [], 10);
-      expect(mockModerationService.getExcludedUserIds).toHaveBeenCalledWith(userB);
+      expect(mockModerationService.getExcludedUserIds).toHaveBeenCalledWith(
+        userB,
+      );
       expect(mockPostRepo.findFeed).toHaveBeenCalledWith(
         expect.objectContaining({
           excludedUserIds: [userA],
@@ -184,8 +223,12 @@ describe('Zeitnah Community — Phase 6: Cross-Feature Quality, Stability & Prod
     });
 
     it('excludes posts by blocked users in searchCommunity queries', async () => {
-      const results = await postService.searchCommunity(userB, [], { q: 'design' });
-      expect(mockModerationService.getExcludedUserIds).toHaveBeenCalledWith(userB);
+      const results = await postService.searchCommunity(userB, [], {
+        q: 'design',
+      });
+      expect(mockModerationService.getExcludedUserIds).toHaveBeenCalledWith(
+        userB,
+      );
       expect(mockPostRepo.searchCommunity).toHaveBeenCalledWith(
         expect.objectContaining({
           excludedUserIds: [userA],
@@ -196,7 +239,9 @@ describe('Zeitnah Community — Phase 6: Cross-Feature Quality, Stability & Prod
 
     it('excludes posts by blocked users in getSavedPosts queries', async () => {
       await postService.getSavedPosts(userB, [], 10);
-      expect(mockModerationService.getExcludedUserIds).toHaveBeenCalledWith(userB);
+      expect(mockModerationService.getExcludedUserIds).toHaveBeenCalledWith(
+        userB,
+      );
       expect(mockPostRepo.findFeed).toHaveBeenCalledWith(
         expect.objectContaining({
           filter: 'saved',
@@ -221,7 +266,13 @@ describe('Zeitnah Community — Phase 6: Cross-Feature Quality, Stability & Prod
 
     it('blocks a blocked user from quoting a post by blocker with ForbiddenException', async () => {
       await expect(
-        postService.quotePost(personalPostId, userB, { content: 'Quoting' }, [], 'student'),
+        postService.quotePost(
+          personalPostId,
+          userB,
+          { content: 'Quoting' },
+          [],
+          'student',
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -252,7 +303,12 @@ describe('Zeitnah Community — Phase 6: Cross-Feature Quality, Stability & Prod
     });
 
     it('allows permitted user to retrieve comments on active post while filtering blocked authors', async () => {
-      const comments = await commentService.getCommentsByPost(personalPostId, 20, 0, userA);
+      const comments = await commentService.getCommentsByPost(
+        personalPostId,
+        20,
+        0,
+        userA,
+      );
       expect(comments).toBeDefined();
       expect(mockCommentRepo.findByPostId).toHaveBeenCalledWith(
         personalPostId,

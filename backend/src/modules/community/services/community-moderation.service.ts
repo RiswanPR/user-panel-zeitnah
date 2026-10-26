@@ -213,24 +213,29 @@ export class CommunityModerationService {
         const legacyReport = await this.reportModel.findById(reportId);
         if (legacyReport) {
           const currentStatus = String(legacyReport.status || '').toLowerCase();
-          if (
-            currentStatus === 'resolved' ||
-            currentStatus === 'dismissed'
-          ) {
+          if (currentStatus === 'resolved' || currentStatus === 'dismissed') {
             report = legacyReport;
             entityId = String(legacyReport.entityId || '');
-            entityType = String(legacyReport.entityType || 'post').toLowerCase();
+            entityType = String(
+              legacyReport.entityType || 'post',
+            ).toLowerCase();
             isLegacy = true;
             transitioned = false;
           } else {
-            const normalizedAction = String(action || '').toLowerCase().trim();
+            const normalizedAction = String(action || '')
+              .toLowerCase()
+              .trim();
             const newLegacyStatus =
               normalizedAction === 'dismiss' || normalizedAction === 'dismissed'
                 ? 'dismissed'
                 : 'resolved';
 
-            if (typeof (this.reportModel as any).findOneAndUpdate === 'function') {
-              const updatedLegacy = await (this.reportModel as any).findOneAndUpdate(
+            if (
+              typeof (this.reportModel as any).findOneAndUpdate === 'function'
+            ) {
+              const updatedLegacy = await (
+                this.reportModel as any
+              ).findOneAndUpdate(
                 {
                   _id: reportId,
                   status: { $in: ['pending', 'reviewed'] },
@@ -287,7 +292,9 @@ export class CommunityModerationService {
 
     // 3. Side effects: ONLY execute if status transitioned in this atomic invocation
     if (transitioned) {
-      const normalizedAction = String(action || '').toLowerCase().trim();
+      const normalizedAction = String(action || '')
+        .toLowerCase()
+        .trim();
       if (normalizedAction === 'hide' && entityId) {
         await this.hideEntity(entityId, entityType, moderatorId, notes);
       }
@@ -313,7 +320,9 @@ export class CommunityModerationService {
   ): Promise<boolean> {
     if (!entityId || !entityId.trim()) return false;
 
-    const normalizedType = String(entityType || '').toLowerCase().trim();
+    const normalizedType = String(entityType || '')
+      .toLowerCase()
+      .trim();
 
     // 1. If explicitly a comment
     if (normalizedType === 'comment') {

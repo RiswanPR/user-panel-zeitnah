@@ -65,8 +65,9 @@ export class CatalogueTitleRequest {
   updatedAt?: Date;
 }
 
-export const CatalogueTitleRequestSchema =
-  SchemaFactory.createForClass(CatalogueTitleRequest);
+export const CatalogueTitleRequestSchema = SchemaFactory.createForClass(
+  CatalogueTitleRequest,
+);
 
 // Compound indexes for performant querying and duplicate detection
 CatalogueTitleRequestSchema.index({

@@ -1,4 +1,8 @@
-import { BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Types } from 'mongoose';
 import { OrganizationsService } from './organizations.service';
 import {
@@ -34,14 +38,18 @@ describe('OrganizationsService — Phase 3 Company Following & Notification Pref
   beforeEach(() => {
     mockOrgModel = {
       findById: jest.fn().mockImplementation((id) => ({
-        lean: jest.fn().mockResolvedValue(
-          String(id) === validOrgId ? { ...eligiblePublicOrg } : null,
-        ),
+        lean: jest
+          .fn()
+          .mockResolvedValue(
+            String(id) === validOrgId ? { ...eligiblePublicOrg } : null,
+          ),
       })),
       findOne: jest.fn().mockImplementation((query) => ({
-        lean: jest.fn().mockResolvedValue(
-          query.slug === 'acme-infra-corp' ? { ...eligiblePublicOrg } : null,
-        ),
+        lean: jest
+          .fn()
+          .mockResolvedValue(
+            query.slug === 'acme-infra-corp' ? { ...eligiblePublicOrg } : null,
+          ),
       })),
       countDocuments: jest.fn().mockResolvedValue(1),
     };
@@ -115,7 +123,9 @@ describe('OrganizationsService — Phase 3 Company Following & Notification Pref
         emailNotifications: true,
         categories: { community: true, announcements: true },
       }),
-      createNotification: jest.fn().mockResolvedValue({ _id: new Types.ObjectId() }),
+      createNotification: jest
+        .fn()
+        .mockResolvedValue({ _id: new Types.ObjectId() }),
     };
 
     service = new OrganizationsService(
@@ -151,7 +161,10 @@ describe('OrganizationsService — Phase 3 Company Following & Notification Pref
 
     it('handles repeated follow requests idempotently without inflating count or creating duplicates', async () => {
       await service.followOrganization(validUserId, validOrgId);
-      const secondRes = await service.followOrganization(validUserId, validOrgId);
+      const secondRes = await service.followOrganization(
+        validUserId,
+        validOrgId,
+      );
 
       expect(secondRes.success).toBe(true);
       expect(secondRes.isFollowing).toBe(true);
@@ -161,29 +174,39 @@ describe('OrganizationsService — Phase 3 Company Following & Notification Pref
     it('unfollow removes only the requesting user relationship and decrements follower count', async () => {
       await service.followOrganization(validUserId, validOrgId);
       await service.followOrganization(anotherUserId, validOrgId);
-      expect(await mockFollowModel.countDocuments({ organizationId: new Types.ObjectId(validOrgId) })).toBe(2);
+      expect(
+        await mockFollowModel.countDocuments({
+          organizationId: new Types.ObjectId(validOrgId),
+        }),
+      ).toBe(2);
 
-      const unfollowRes = await service.unfollowOrganization(validUserId, validOrgId);
+      const unfollowRes = await service.unfollowOrganization(
+        validUserId,
+        validOrgId,
+      );
       expect(unfollowRes.success).toBe(true);
       expect(unfollowRes.isFollowing).toBe(false);
       expect(unfollowRes.followersCount).toBe(1);
 
       // Verify another user is still following
-      const anotherStatus = await service.getFollowStatus(anotherUserId, validOrgId);
+      const anotherStatus = await service.getFollowStatus(
+        anotherUserId,
+        validOrgId,
+      );
       expect(anotherStatus.isFollowing).toBe(true);
     });
 
     it('rejects follow requests for invalid organization ID format with 400 Bad Request', async () => {
-      await expect(service.followOrganization(validUserId, 'invalid-id-format')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.followOrganization(validUserId, 'invalid-id-format'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('rejects following when organization is not found with 404 Not Found', async () => {
       const missingId = new Types.ObjectId().toHexString();
-      await expect(service.followOrganization(validUserId, missingId)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.followOrganization(validUserId, missingId),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('rejects following when organization is suspended with 400 Bad Request', async () => {
@@ -194,9 +217,9 @@ describe('OrganizationsService — Phase 3 Company Following & Notification Pref
         }),
       });
 
-      await expect(service.followOrganization(validUserId, validOrgId)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.followOrganization(validUserId, validOrgId),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('rejects following when organization is private with 400 Bad Request', async () => {
@@ -207,19 +230,22 @@ describe('OrganizationsService — Phase 3 Company Following & Notification Pref
         }),
       });
 
-      await expect(service.followOrganization(validUserId, validOrgId)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.followOrganization(validUserId, validOrgId),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('prevents self-following (creator cannot follow own business)', async () => {
-      await expect(service.followOrganization(creatorUserId, validOrgId)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.followOrganization(creatorUserId, validOrgId),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('resolves organization by slug when following via slug', async () => {
-      const res = await service.followOrganization(validUserId, 'acme-infra-corp');
+      const res = await service.followOrganization(
+        validUserId,
+        'acme-infra-corp',
+      );
       expect(res.success).toBe(true);
       expect(res.isFollowing).toBe(true);
       expect(res.organizationId).toBe(validOrgId);
@@ -239,7 +265,11 @@ describe('OrganizationsService — Phase 3 Company Following & Notification Pref
       };
       mockFollowModel.findOne.mockResolvedValue(followDoc);
 
-      const res = await service.updateNotificationPreferences(validUserId, validOrgId, false);
+      const res = await service.updateNotificationPreferences(
+        validUserId,
+        validOrgId,
+        false,
+      );
       expect(res.success).toBe(true);
       expect(res.notificationsEnabled).toBe(false);
       expect(followDoc.notificationsEnabled).toBe(false);
@@ -269,14 +299,17 @@ describe('OrganizationsService — Phase 3 Company Following & Notification Pref
         _id: new Types.ObjectId(),
         authorId: new Types.ObjectId(creatorUserId),
         organizationId: new Types.ObjectId(validOrgId),
-        content: 'Excited to announce our new smart infrastructure partnership!',
+        content:
+          'Excited to announce our new smart infrastructure partnership!',
         audience: 'PUBLIC',
       };
 
       await service.notifyFollowersOfNewPost(post, eligiblePublicOrg);
 
       // Both followers should be notified
-      expect(mockNotificationsService.createNotification).toHaveBeenCalledTimes(2);
+      expect(mockNotificationsService.createNotification).toHaveBeenCalledTimes(
+        2,
+      );
       expect(mockNotificationsService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
           recipientId: new Types.ObjectId(followerA),
@@ -292,7 +325,10 @@ describe('OrganizationsService — Phase 3 Company Following & Notification Pref
 
       mockFollowModel.find.mockReturnValue({
         lean: jest.fn().mockResolvedValue([
-          { userId: new Types.ObjectId(followerA), notificationsEnabled: true },
+          {
+            userId: new Types.ObjectId(followerA),
+            notificationsEnabled: true,
+          },
         ]),
       });
 
@@ -311,13 +347,18 @@ describe('OrganizationsService — Phase 3 Company Following & Notification Pref
 
       await service.notifyFollowersOfNewPost(post, eligiblePublicOrg);
 
-      expect(mockNotificationsService.createNotification).not.toHaveBeenCalled();
+      expect(
+        mockNotificationsService.createNotification,
+      ).not.toHaveBeenCalled();
     });
 
     it('does not notify author if author also follows their company', async () => {
       mockFollowModel.find.mockReturnValue({
         lean: jest.fn().mockResolvedValue([
-          { userId: new Types.ObjectId(creatorUserId), notificationsEnabled: true },
+          {
+            userId: new Types.ObjectId(creatorUserId),
+            notificationsEnabled: true,
+          },
         ]),
       });
 
@@ -331,7 +372,9 @@ describe('OrganizationsService — Phase 3 Company Following & Notification Pref
 
       await service.notifyFollowersOfNewPost(post, eligiblePublicOrg);
 
-      expect(mockNotificationsService.createNotification).not.toHaveBeenCalled();
+      expect(
+        mockNotificationsService.createNotification,
+      ).not.toHaveBeenCalled();
     });
   });
 
@@ -345,13 +388,21 @@ describe('OrganizationsService — Phase 3 Company Following & Notification Pref
         lean: jest.fn().mockResolvedValue([
           { userId: new Types.ObjectId(followerA), notificationsEnabled: true },
           { userId: new Types.ObjectId(followerB), notificationsEnabled: true },
-          { userId: new Types.ObjectId(followerOptOut), notificationsEnabled: true },
-          { userId: new Types.ObjectId(creatorUserId), notificationsEnabled: true }, // author
+          {
+            userId: new Types.ObjectId(followerOptOut),
+            notificationsEnabled: true,
+          },
+          {
+            userId: new Types.ObjectId(creatorUserId),
+            notificationsEnabled: true,
+          }, // author
         ]),
       });
 
       const batchMock = {
-        getInAppOptedOutUserIds: jest.fn().mockResolvedValue(new Set([followerOptOut])),
+        getInAppOptedOutUserIds: jest
+          .fn()
+          .mockResolvedValue(new Set([followerOptOut])),
         createNotificationsBatch: jest.fn().mockResolvedValue([]),
         getPreferences: jest.fn(),
         createNotification: jest.fn(),
@@ -402,7 +453,8 @@ describe('OrganizationsService — Phase 3 Company Following & Notification Pref
             category: 'community',
             priority: 'NORMAL',
             title: 'New post from Acme Infra Corp',
-            message: 'Acme Infra Corp: "Optimized batched company announcement!"',
+            message:
+              'Acme Infra Corp: "Optimized batched company announcement!"',
             actionUrl: `/community?organizationId=${validOrgId}`,
             targetUrl: `/community?organizationId=${validOrgId}`,
             idempotencyKey: `company_post_${post._id}_${followerA}`,
@@ -429,13 +481,21 @@ describe('OrganizationsService — Phase 3 Company Following & Notification Pref
 
       mockFollowModel.find.mockReturnValue({
         lean: jest.fn().mockResolvedValue([
-          { userId: new Types.ObjectId(followerOptOut), notificationsEnabled: true },
-          { userId: new Types.ObjectId(creatorUserId), notificationsEnabled: true },
+          {
+            userId: new Types.ObjectId(followerOptOut),
+            notificationsEnabled: true,
+          },
+          {
+            userId: new Types.ObjectId(creatorUserId),
+            notificationsEnabled: true,
+          },
         ]),
       });
 
       const batchMock = {
-        getInAppOptedOutUserIds: jest.fn().mockResolvedValue(new Set([followerOptOut])),
+        getInAppOptedOutUserIds: jest
+          .fn()
+          .mockResolvedValue(new Set([followerOptOut])),
         createNotificationsBatch: jest.fn().mockResolvedValue([]),
       };
 

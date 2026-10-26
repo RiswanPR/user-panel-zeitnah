@@ -44,7 +44,11 @@ describe('Professional Identity Integration (Phase 2)', () => {
       countDocuments: jest.fn().mockResolvedValue(0),
       findById: jest.fn(),
       findByIdAndDelete: jest.fn().mockResolvedValue(true),
-      create: jest.fn().mockImplementation((doc) => Promise.resolve({ ...doc, _id: 'rec_123' })),
+      create: jest
+        .fn()
+        .mockImplementation((doc) =>
+          Promise.resolve({ ...doc, _id: 'rec_123' }),
+        ),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -84,7 +88,9 @@ describe('Professional Identity Integration (Phase 2)', () => {
     }).compile();
 
     profileService = module.get<ProfileService>(ProfileService);
-    catalogueService = module.get<ProfessionalCatalogueService>(ProfessionalCatalogueService);
+    catalogueService = module.get<ProfessionalCatalogueService>(
+      ProfessionalCatalogueService,
+    );
     controller = module.get<ProfileController>(ProfileController);
   });
 
@@ -124,10 +130,22 @@ describe('Professional Identity Integration (Phase 2)', () => {
   // =========================================================================
   describe('2. Repeated Labels Disambiguation', () => {
     it('should keep "Project manager" distinct across Civil, Mech, Elect, and Inst departments', () => {
-      const civilPm = getTitleById('civil-engineering', 'civil-engineering:project-manager');
-      const mechPm = getTitleById('mechanical-engineering', 'mechanical-engineering:project-manager');
-      const electPm = getTitleById('electrical-engineering', 'electrical-engineering:project-manager');
-      const instPm = getTitleById('instrumentation-engineering', 'instrumentation-engineering:project-manager');
+      const civilPm = getTitleById(
+        'civil-engineering',
+        'civil-engineering:project-manager',
+      );
+      const mechPm = getTitleById(
+        'mechanical-engineering',
+        'mechanical-engineering:project-manager',
+      );
+      const electPm = getTitleById(
+        'electrical-engineering',
+        'electrical-engineering:project-manager',
+      );
+      const instPm = getTitleById(
+        'instrumentation-engineering',
+        'instrumentation-engineering:project-manager',
+      );
 
       expect(civilPm).toBeDefined();
       expect(mechPm).toBeDefined();
@@ -145,7 +163,10 @@ describe('Professional Identity Integration (Phase 2)', () => {
     });
 
     it('should keep "Welding Inspector" distinct between Mechanical and QA/QC', () => {
-      const mechWelding = getTitleById('mechanical-engineering', 'mechanical-engineering:welding-inspector');
+      const mechWelding = getTitleById(
+        'mechanical-engineering',
+        'mechanical-engineering:welding-inspector',
+      );
       const qawelding = getTitleById('qa-qc', 'qa-qc:welding-inspector');
 
       expect(mechWelding).toBeDefined();
@@ -156,8 +177,14 @@ describe('Professional Identity Integration (Phase 2)', () => {
     });
 
     it('should keep "Marine surveyor" distinct between Land Surveying and Offshore Operations', () => {
-      const landMarine = getTitleById('land-surveying-geomatics', 'land-surveying-geomatics:marine-surveyor');
-      const offshoreMarine = getTitleById('offshore-operations-marine', 'offshore-operations-marine:marine-surveyor');
+      const landMarine = getTitleById(
+        'land-surveying-geomatics',
+        'land-surveying-geomatics:marine-surveyor',
+      );
+      const offshoreMarine = getTitleById(
+        'offshore-operations-marine',
+        'offshore-operations-marine:marine-surveyor',
+      );
 
       expect(landMarine).toBeDefined();
       expect(offshoreMarine).toBeDefined();
@@ -268,7 +295,9 @@ describe('Professional Identity Integration (Phase 2)', () => {
           departmentId: 'civil-engineering',
           titleId: 'architectural-design:architectural-cad-draftsman',
         });
-      }).toThrow(/belongs to department 'Architectural Design', not 'Civil Engineering'/);
+      }).toThrow(
+        /belongs to department 'Architectural Design', not 'Civil Engineering'/,
+      );
     });
   });
 
@@ -344,7 +373,9 @@ describe('Professional Identity Integration (Phase 2)', () => {
 
       expect(mockUser.professionalIdentity.isCustomTitle).toBe(true);
       expect(mockUser.professionalIdentity.titleId).toBeNull();
-      expect(mockUser.professionalIdentity.titleName).toBe('Coastal Structure Specialist');
+      expect(mockUser.professionalIdentity.titleName).toBe(
+        'Coastal Structure Specialist',
+      );
       expect(mockUser.currentRole).toBe('Coastal Structure Specialist');
     });
   });
@@ -447,7 +478,9 @@ describe('Professional Identity Integration (Phase 2)', () => {
       // Verify that user fields and save were untouched
       expect(mockUser.name).toBe('Original Name');
       expect(mockUser.currentRole).toBe('Site Engineer');
-      expect(mockUser.professionalIdentity.titleId).toBe('civil-engineering:site-engineer');
+      expect(mockUser.professionalIdentity.titleId).toBe(
+        'civil-engineering:site-engineer',
+      );
       expect(mockUser.save).not.toHaveBeenCalled();
     });
   });
@@ -636,7 +669,9 @@ describe('Professional Identity Integration (Phase 2)', () => {
         headline: 'High-Voltage Grid Specialist | 500kV Substation Designer',
       });
 
-      expect(mockUser.headline).toBe('High-Voltage Grid Specialist | 500kV Substation Designer');
+      expect(mockUser.headline).toBe(
+        'High-Voltage Grid Specialist | 500kV Substation Designer',
+      );
       expect(mockUser.currentRole).toBe('Power Systems Engineer');
       expect(mockUser.professionalIdentity).toEqual(initialIdentity);
     });
@@ -674,7 +709,9 @@ describe('Professional Identity Integration (Phase 2)', () => {
           },
           'student',
         ),
-      ).rejects.toThrow(/The educator role can only be assigned by a Zeitnah administrator/);
+      ).rejects.toThrow(
+        /The educator role can only be assigned by a Zeitnah administrator/,
+      );
     });
   });
 
@@ -684,17 +721,26 @@ describe('Professional Identity Integration (Phase 2)', () => {
   describe('14. Deterministic Ordering and Exact Source Labels', () => {
     it('should preserve verbatim source labels including unusual punctuation and casings', () => {
       // Dept 3: "Corrosion Engineer," (trailing comma)
-      const corrosionEng = getTitleById('mechanical-engineering', 'mechanical-engineering:corrosion-engineer');
+      const corrosionEng = getTitleById(
+        'mechanical-engineering',
+        'mechanical-engineering:corrosion-engineer',
+      );
       expect(corrosionEng).toBeDefined();
       expect(corrosionEng?.label).toBe('Corrosion Engineer,');
 
       // Dept 2: "Construction Manager(civil)" (missing space before paren)
-      const cmCivil = getTitleById('civil-engineering', 'civil-engineering:construction-manager-civil');
+      const cmCivil = getTitleById(
+        'civil-engineering',
+        'civil-engineering:construction-manager-civil',
+      );
       expect(cmCivil).toBeDefined();
       expect(cmCivil?.label).toBe('Construction Manager(civil)');
 
       // Dept 2: "civil Supervisor" (lowercase civil)
-      const civilSupervisor = getTitleById('civil-engineering', 'civil-engineering:civil-supervisor');
+      const civilSupervisor = getTitleById(
+        'civil-engineering',
+        'civil-engineering:civil-supervisor',
+      );
       expect(civilSupervisor).toBeDefined();
       expect(civilSupervisor?.label).toBe('civil Supervisor');
 
@@ -704,7 +750,10 @@ describe('Professional Identity Integration (Phase 2)', () => {
       expect(planningDept?.name).toBe('Planning engineering');
 
       // Dept 14: "Piping BIM modular" (verbatim source label)
-      const pipingBimModular = getTitleById('piping-pipeline-engineering-design', 'piping-pipeline-engineering-design:piping-bim-modular');
+      const pipingBimModular = getTitleById(
+        'piping-pipeline-engineering-design',
+        'piping-pipeline-engineering-design:piping-bim-modular',
+      );
       expect(pipingBimModular).toBeDefined();
       expect(pipingBimModular?.label).toBe('Piping BIM modular');
     });
@@ -768,11 +817,20 @@ describe('Professional Identity Integration (Phase 2)', () => {
       expect(mockUser.primaryRole).toBe('RECRUITER');
       expect(mockUser.companyName).toBe('Apex Infrastructure Group');
       expect(mockUser.currentPosition).toBe('Talent Acquisition Director');
-      expect(mockUser.recruiterContext.companyName).toBe('Apex Infrastructure Group');
-      expect(mockUser.recruiterContext.currentPosition).toBe('Talent Acquisition Director');
-      expect(mockUser.recruiterContext.specializations).toEqual(['Civil & Structural', 'BIM Modelling']);
+      expect(mockUser.recruiterContext.companyName).toBe(
+        'Apex Infrastructure Group',
+      );
+      expect(mockUser.recruiterContext.currentPosition).toBe(
+        'Talent Acquisition Director',
+      );
+      expect(mockUser.recruiterContext.specializations).toEqual([
+        'Civil & Structural',
+        'BIM Modelling',
+      ]);
       // Preserves existing engineering identity without wiping it
-      expect(mockUser.professionalIdentity.departmentId).toBe('civil-engineering');
+      expect(mockUser.professionalIdentity.departmentId).toBe(
+        'civil-engineering',
+      );
       expect(mockUser.currentRole).toBe('Site Engineer');
       expect(mockUser.save).toHaveBeenCalled();
     });
@@ -945,7 +1003,9 @@ describe('Professional Identity Integration (Phase 2)', () => {
       expect(userDoc.companyName).toBe('Arup Talent');
       expect(userDoc.currentPosition).toBe('Engineering Recruiter');
       // Engineering identity remains intact
-      expect(userDoc.professionalIdentity.departmentId).toBe('structural-engineering-design');
+      expect(userDoc.professionalIdentity.departmentId).toBe(
+        'structural-engineering-design',
+      );
       expect(userDoc.currentRole).toBe('Structural Engineer');
 
       // Step 2: Switch back to Professional
@@ -959,7 +1019,9 @@ describe('Professional Identity Integration (Phase 2)', () => {
       });
 
       expect(userDoc.primaryRole).toBe('PROFESSIONAL');
-      expect(userDoc.professionalIdentity.departmentId).toBe('structural-engineering-design');
+      expect(userDoc.professionalIdentity.departmentId).toBe(
+        'structural-engineering-design',
+      );
       // Recruiter context was preserved and not cleared
       expect(userDoc.companyName).toBe('Arup Talent');
       expect(userDoc.currentPosition).toBe('Engineering Recruiter');

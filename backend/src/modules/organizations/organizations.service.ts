@@ -481,7 +481,11 @@ export class OrganizationsService {
 
     let isFollowing = false;
     let notificationsEnabled = false;
-    if (viewerUserId && Types.ObjectId.isValid(viewerUserId) && this.followModel) {
+    if (
+      viewerUserId &&
+      Types.ObjectId.isValid(viewerUserId) &&
+      this.followModel
+    ) {
       const follow = await this.followModel
         .findOne({
           organizationId: org._id,
@@ -1170,7 +1174,7 @@ export class OrganizationsService {
     const isSuspendedOrRejected =
       org.status === BusinessStatus.SUSPENDED ||
       org.status === BusinessStatus.REJECTED;
-    const isDeleted = (org as any).isDeleted === true;
+    const isDeleted = org.isDeleted === true;
     const isApproved =
       org.status === BusinessStatus.APPROVED ||
       org.verificationStatus === OrganizationVerificationStatus.VERIFIED;
@@ -1349,7 +1353,7 @@ export class OrganizationsService {
           org.visibility === OrganizationVisibility.PUBLIC &&
           org.status !== BusinessStatus.SUSPENDED &&
           org.status !== BusinessStatus.REJECTED &&
-          (org as any).isDeleted !== true
+          org.isDeleted !== true
         );
       })
       .map((f: any) => ({
@@ -1428,10 +1432,9 @@ export class OrganizationsService {
         'function'
       ) {
         const followerUserIds = eligibleFollowers.map((f) => f.userId);
-        const optedOutSet =
-          await (this.notificationsService as any).getInAppOptedOutUserIds(
-            followerUserIds,
-          );
+        const optedOutSet = await (
+          this.notificationsService as any
+        ).getInAppOptedOutUserIds(followerUserIds);
         optedInFollowers = eligibleFollowers.filter(
           (f) => !optedOutSet.has(String(f.userId)),
         );

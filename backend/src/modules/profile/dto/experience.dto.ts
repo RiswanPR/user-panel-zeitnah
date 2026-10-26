@@ -33,8 +33,10 @@ export class ExperienceDto {
   @IsDateString({}, { message: 'Valid start date is required.' })
   startDate!: string;
 
-  @Transform(({ value }) => (value === '' || value === undefined ? null : value))
-  @ValidateIf((o) => !Boolean(o.currentlyActive || o.isCurrent || o.current))
+  @Transform(({ value }) =>
+    value === '' || value === undefined ? null : value,
+  )
+  @ValidateIf((o) => !(o.currentlyActive || o.isCurrent || o.current))
   @IsNotEmpty({ message: 'End date is required for past roles.' })
   @IsDateString({}, { message: 'End date must be a valid date.' })
   endDate?: string | null;

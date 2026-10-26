@@ -43,7 +43,9 @@ describe('Professional Identity — Phase 5: Search, Filters & Catalogue Compati
   const mockCourseModel = {
     find: jest.fn().mockReturnValue({
       select: jest.fn().mockReturnValue({
-        lean: jest.fn().mockResolvedValue([{ name: 'Civil Engineering B.Tech' }]),
+        lean: jest
+          .fn()
+          .mockResolvedValue([{ name: 'Civil Engineering B.Tech' }]),
       }),
     }),
   };
@@ -63,7 +65,9 @@ describe('Professional Identity — Phase 5: Search, Filters & Catalogue Compati
   const blockedUserId = new Types.ObjectId().toHexString();
 
   const mockSignedUrlService = {
-    getSignedDownloadUrl: jest.fn().mockResolvedValue('https://signed.url/avatar.jpg'),
+    getSignedDownloadUrl: jest
+      .fn()
+      .mockResolvedValue('https://signed.url/avatar.jpg'),
   };
 
   const mockNotificationsService = {
@@ -124,7 +128,9 @@ describe('Professional Identity — Phase 5: Search, Filters & Catalogue Compati
       ],
     }).compile();
 
-    networkConnectionsService = module.get<NetworkConnectionsService>(NetworkConnectionsService);
+    networkConnectionsService = module.get<NetworkConnectionsService>(
+      NetworkConnectionsService,
+    );
     networkService = module.get<NetworkService>(NetworkService);
 
     // Setup base default stubs
@@ -166,7 +172,9 @@ describe('Professional Identity — Phase 5: Search, Filters & Catalogue Compati
 
       expect(mockUserModel.find).toHaveBeenCalled();
       const filter = mockUserModel.find.mock.calls[0][0];
-      expect(filter['professionalIdentity.departmentId']).toBe('civil-engineering');
+      expect(filter['professionalIdentity.departmentId']).toBe(
+        'civil-engineering',
+      );
     });
 
     it('works for other valid catalogue departments (e.g., architectural-design)', async () => {
@@ -176,7 +184,9 @@ describe('Professional Identity — Phase 5: Search, Filters & Catalogue Compati
 
       expect(mockUserModel.find).toHaveBeenCalled();
       const filter = mockUserModel.find.mock.calls[0][0];
-      expect(filter['professionalIdentity.departmentId']).toBe('architectural-design');
+      expect(filter['professionalIdentity.departmentId']).toBe(
+        'architectural-design',
+      );
     });
 
     it('throws BadRequestException when departmentId is invalid or unknown', async () => {
@@ -256,9 +266,13 @@ describe('Professional Identity — Phase 5: Search, Filters & Catalogue Compati
       // - Custom civil matches (departmentId is civil-engineering)
       // - Mechanical user does NOT match (departmentId is mechanical-engineering)
       // - Legacy unclassified user does NOT match (departmentId is missing/null)
-      const civilFilter = { 'professionalIdentity.departmentId': 'civil-engineering' };
+      const civilFilter = {
+        'professionalIdentity.departmentId': 'civil-engineering',
+      };
 
-      const matchFilter = (u: any) => u.professionalIdentity?.departmentId === civilFilter['professionalIdentity.departmentId'];
+      const matchFilter = (u: any) =>
+        u.professionalIdentity?.departmentId ===
+        civilFilter['professionalIdentity.departmentId'];
 
       expect(matchFilter(predefinedCivilUser)).toBe(true);
       expect(matchFilter(customCivilUser)).toBe(true);
@@ -273,7 +287,9 @@ describe('Professional Identity — Phase 5: Search, Filters & Catalogue Compati
 
       const filter = mockUserModel.find.mock.calls[0][0];
       // Department filter is strictly on professionalIdentity.departmentId
-      expect(filter['professionalIdentity.departmentId']).toBe('civil-engineering');
+      expect(filter['professionalIdentity.departmentId']).toBe(
+        'civil-engineering',
+      );
       expect(filter.currentRole).toBeUndefined();
       expect(filter.primaryDiscipline).toBeUndefined();
     });
@@ -291,22 +307,33 @@ describe('Professional Identity — Phase 5: Search, Filters & Catalogue Compati
       const filter = mockUserModel.find.mock.calls[0][0];
 
       // Exact department filter
-      expect(filter['professionalIdentity.departmentId']).toBe('civil-engineering');
+      expect(filter['professionalIdentity.departmentId']).toBe(
+        'civil-engineering',
+      );
 
       // $and contains the role condition and the q search condition
       expect(filter.$and).toBeDefined();
       expect(filter.$and.length).toBeGreaterThanOrEqual(2);
 
       // Verify q search includes professionalIdentity.titleName
-      const qCondition = filter.$and.find((c: any) =>
-        Array.isArray(c.$or) &&
-        c.$or.some((item: any) => item['professionalIdentity.titleName'] !== undefined),
+      const qCondition = filter.$and.find(
+        (c: any) =>
+          Array.isArray(c.$or) &&
+          c.$or.some(
+            (item: any) => item['professionalIdentity.titleName'] !== undefined,
+          ),
       );
       expect(qCondition).toBeDefined();
 
-      const titleNameClause = qCondition.$or.find((item: any) => item['professionalIdentity.titleName'] !== undefined);
-      expect(titleNameClause['professionalIdentity.titleName']).toBeInstanceOf(RegExp);
-      expect(titleNameClause['professionalIdentity.titleName'].source).toContain('Bridge');
+      const titleNameClause = qCondition.$or.find(
+        (item: any) => item['professionalIdentity.titleName'] !== undefined,
+      );
+      expect(titleNameClause['professionalIdentity.titleName']).toBeInstanceOf(
+        RegExp,
+      );
+      expect(
+        titleNameClause['professionalIdentity.titleName'].source,
+      ).toContain('Bridge');
     });
 
     it('free-text search q includes professionalIdentity.titleName even without department filter', async () => {
@@ -317,9 +344,12 @@ describe('Professional Identity — Phase 5: Search, Filters & Catalogue Compati
       const filter = mockUserModel.find.mock.calls[0][0];
       expect(filter.$and).toBeDefined();
 
-      const qCondition = filter.$and.find((c: any) =>
-        Array.isArray(c.$or) &&
-        c.$or.some((item: any) => item['professionalIdentity.titleName'] !== undefined),
+      const qCondition = filter.$and.find(
+        (c: any) =>
+          Array.isArray(c.$or) &&
+          c.$or.some(
+            (item: any) => item['professionalIdentity.titleName'] !== undefined,
+          ),
       );
       expect(qCondition).toBeDefined();
     });
@@ -381,22 +411,30 @@ describe('Professional Identity — Phase 5: Search, Filters & Catalogue Compati
       };
       mockUserModel.find.mockReturnValue(chain);
 
-      await networkService.getStudents({
-        departmentId: 'electrical-engineering',
-        page: 1,
-        limit: 12,
-      }, callerId);
+      await networkService.getStudents(
+        {
+          departmentId: 'electrical-engineering',
+          page: 1,
+          limit: 12,
+        },
+        callerId,
+      );
 
       expect(mockUserModel.find).toHaveBeenCalled();
       const query = mockUserModel.find.mock.calls[0][0];
-      expect(query['professionalIdentity.departmentId']).toBe('electrical-engineering');
+      expect(query['professionalIdentity.departmentId']).toBe(
+        'electrical-engineering',
+      );
     });
 
     it('throws BadRequestException for invalid departmentId in getStudents', async () => {
       await expect(
-        networkService.getStudents({
-          departmentId: 'non-existent-engineering',
-        }, callerId),
+        networkService.getStudents(
+          {
+            departmentId: 'non-existent-engineering',
+          },
+          callerId,
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -411,9 +449,12 @@ describe('Professional Identity — Phase 5: Search, Filters & Catalogue Compati
       };
       mockUserModel.find.mockReturnValue(chain);
 
-      await networkService.getStudents({
-        q: 'Draftsman',
-      }, callerId);
+      await networkService.getStudents(
+        {
+          q: 'Draftsman',
+        },
+        callerId,
+      );
 
       const query = mockUserModel.find.mock.calls[0][0];
       expect(query.$or).toBeDefined();
@@ -432,8 +473,12 @@ describe('Professional Identity — Phase 5: Search, Filters & Catalogue Compati
 
       expect(filters.departments).toBeDefined();
       expect(filters.departments?.length).toBe(18);
-      expect(filters.departments?.some((d) => d.id === 'civil-engineering')).toBe(true);
-      expect(filters.departments?.some((d) => d.id === 'architectural-design')).toBe(true);
+      expect(
+        filters.departments?.some((d) => d.id === 'civil-engineering'),
+      ).toBe(true);
+      expect(
+        filters.departments?.some((d) => d.id === 'architectural-design'),
+      ).toBe(true);
     });
   });
 

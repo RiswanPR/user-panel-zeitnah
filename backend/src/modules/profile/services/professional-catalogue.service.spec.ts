@@ -67,7 +67,9 @@ describe('ProfessionalCatalogueService (Phase 5: User Panel DB Integration)', ()
 
   beforeEach(() => {
     mockRepository = {
-      findActiveDepartments: jest.fn().mockResolvedValue([...sampleDbDepartments]),
+      findActiveDepartments: jest
+        .fn()
+        .mockResolvedValue([...sampleDbDepartments]),
       findActiveTitles: jest.fn().mockResolvedValue([...sampleDbTitles]),
       findAllTitles: jest.fn().mockResolvedValue([...sampleDbTitles]),
       getCollectionCounts: jest.fn().mockResolvedValue({
@@ -103,14 +105,16 @@ describe('ProfessionalCatalogueService (Phase 5: User Panel DB Integration)', ()
 
     it('should successfully load and validate all 18 departments and 254 titles matching the seeded database', async () => {
       const allDepts = getAllDepartments();
-      const rawDepts: RawCatalogueDepartmentRecord[] = allDepts.map((d, dIdx) => ({
-        id: d.id,
-        name: d.name,
-        status: 'active',
-        displayOrder: dIdx + 1,
-        catalogueVersion: '2026.1',
-        aliases: d.aliases,
-      }));
+      const rawDepts: RawCatalogueDepartmentRecord[] = allDepts.map(
+        (d, dIdx) => ({
+          id: d.id,
+          name: d.name,
+          status: 'active',
+          displayOrder: dIdx + 1,
+          catalogueVersion: '2026.1',
+          aliases: d.aliases,
+        }),
+      );
       const rawTitles: RawCatalogueTitleRecord[] = allDepts.flatMap((d) =>
         d.titles.map((t, tIdx) => ({
           id: t.id,
@@ -184,14 +188,22 @@ describe('ProfessionalCatalogueService (Phase 5: User Panel DB Integration)', ()
       expect(catalogue.departments[1].id).toBe('alpha-dept-b');
       expect(catalogue.departments[2].id).toBe('zebra-dept');
 
-      expect(catalogue.departments[0].titles[0].id).toBe('alpha-dept-a:title-1');
-      expect(catalogue.departments[0].titles[1].id).toBe('alpha-dept-a:title-2');
+      expect(catalogue.departments[0].titles[0].id).toBe(
+        'alpha-dept-a:title-1',
+      );
+      expect(catalogue.departments[0].titles[1].id).toBe(
+        'alpha-dept-a:title-2',
+      );
     });
 
     it('should strictly scope titles to their parent department', async () => {
       const catalogue = await service.loadCatalogue();
-      const civil = catalogue.departments.find((d) => d.id === 'civil-engineering');
-      const mech = catalogue.departments.find((d) => d.id === 'mechanical-engineering');
+      const civil = catalogue.departments.find(
+        (d) => d.id === 'civil-engineering',
+      );
+      const mech = catalogue.departments.find(
+        (d) => d.id === 'mechanical-engineering',
+      );
 
       expect(civil?.titles.map((t) => t.id)).toEqual([
         'civil-engineering:project-manager',
@@ -209,7 +221,9 @@ describe('ProfessionalCatalogueService (Phase 5: User Panel DB Integration)', ()
   describe('2. Missing and Empty Collections Handling', () => {
     it('should safely fall back to static 2026.1 catalogue when departments collection is empty', async () => {
       mockRepository.findActiveDepartments.mockResolvedValueOnce([]);
-      mockRepository.findActiveTitles.mockResolvedValueOnce([...sampleDbTitles]);
+      mockRepository.findActiveTitles.mockResolvedValueOnce([
+        ...sampleDbTitles,
+      ]);
 
       const catalogue = await service.loadCatalogue(true);
 
@@ -224,7 +238,9 @@ describe('ProfessionalCatalogueService (Phase 5: User Panel DB Integration)', ()
     });
 
     it('should safely fall back to static catalogue when titles collection is empty', async () => {
-      mockRepository.findActiveDepartments.mockResolvedValueOnce([...sampleDbDepartments]);
+      mockRepository.findActiveDepartments.mockResolvedValueOnce([
+        ...sampleDbDepartments,
+      ]);
       mockRepository.findActiveTitles.mockResolvedValueOnce([]);
 
       const catalogue = await service.loadCatalogue(true);
@@ -256,7 +272,12 @@ describe('ProfessionalCatalogueService (Phase 5: User Panel DB Integration)', ()
 
     it('should reject malformed department record (missing name) and fall back safely', async () => {
       mockRepository.findActiveDepartments.mockResolvedValueOnce([
-        { id: 'civil-engineering', name: '', status: 'active', displayOrder: 1 },
+        {
+          id: 'civil-engineering',
+          name: '',
+          status: 'active',
+          displayOrder: 1,
+        },
       ]);
 
       const catalogue = await service.loadCatalogue(true);
@@ -313,8 +334,18 @@ describe('ProfessionalCatalogueService (Phase 5: User Panel DB Integration)', ()
 
     it('should reject duplicate department IDs in database payload', async () => {
       mockRepository.findActiveDepartments.mockResolvedValueOnce([
-        { id: 'civil-engineering', name: 'Civil 1', status: 'active', displayOrder: 1 },
-        { id: 'civil-engineering', name: 'Civil 2', status: 'active', displayOrder: 2 },
+        {
+          id: 'civil-engineering',
+          name: 'Civil 1',
+          status: 'active',
+          displayOrder: 1,
+        },
+        {
+          id: 'civil-engineering',
+          name: 'Civil 2',
+          status: 'active',
+          displayOrder: 2,
+        },
       ]);
 
       const catalogue = await service.loadCatalogue(true);
@@ -381,7 +412,9 @@ describe('ProfessionalCatalogueService (Phase 5: User Panel DB Integration)', ()
       );
 
       // Fire 10 concurrent requests while initial refresh is pending
-      const promises = Array.from({ length: 10 }, () => service.loadCatalogue());
+      const promises = Array.from({ length: 10 }, () =>
+        service.loadCatalogue(),
+      );
 
       // Resolve background query
       resolveDepts([...sampleDbDepartments]);
@@ -415,7 +448,9 @@ describe('ProfessionalCatalogueService (Phase 5: User Panel DB Integration)', ()
       // Should preserve previously validated 2-department database snapshot, NOT reset
       expect(refreshed.departments).toHaveLength(2);
       expect(service.getActiveSource()).toBe('CACHE');
-      expect(service.getDiagnostics().warning).toContain('MongoDB Connection Outage');
+      expect(service.getDiagnostics().warning).toContain(
+        'MongoDB Connection Outage',
+      );
     });
   });
 

@@ -23,8 +23,7 @@ export const CANONICAL_COMMUNITY_ROLES = [
   'EDUCATOR',
 ] as const;
 
-export type CanonicalCommunityRole =
-  (typeof CANONICAL_COMMUNITY_ROLES)[number];
+export type CanonicalCommunityRole = (typeof CANONICAL_COMMUNITY_ROLES)[number];
 
 export const SYSTEM_ADMIN_ROLE = 'ADMIN' as const;
 
@@ -81,7 +80,7 @@ export function normalizeCanonicalPrimaryRoleWithFallback(
   const normalized = normalizeCanonicalPrimaryRole(raw);
   if (normalized) return normalized;
   const normalizedFallback = normalizeCanonicalPrimaryRole(fallback);
-  return (normalizedFallback as PlatformRole) || 'STUDENT';
+  return normalizedFallback || 'STUDENT';
 }
 
 /**

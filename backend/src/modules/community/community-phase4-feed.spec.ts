@@ -308,7 +308,7 @@ describe('Phase 4: Community Feed & Creator Experience 2.0', () => {
         postId,
         authorObjectId.toString(),
         'user',
-        { content: 'Updated content' } as any,
+        { content: 'Updated content' },
       );
       expect(result).toBeDefined();
       expect(result.content).toBe('Updated content');
@@ -322,12 +322,9 @@ describe('Phase 4: Community Feed & Creator Experience 2.0', () => {
       });
 
       await expect(
-        postService.updatePost(
-          postId,
-          'intruder-456',
-          'user',
-          { content: 'Hacked' } as any,
-        ),
+        postService.updatePost(postId, 'intruder-456', 'user', {
+          content: 'Hacked',
+        } as any),
       ).rejects.toThrow(ForbiddenException);
     });
   });

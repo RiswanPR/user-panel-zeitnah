@@ -44,12 +44,19 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
     };
 
     mockOrgService = {
-      validateCompanyPublishingAccess: jest.fn().mockImplementation(async (userId, orgId) => {
-        if (orgId === companyOrgId && (userId === manager1 || userId === manager2)) {
-          return true;
-        }
-        throw new ForbiddenException('Forbidden: user has no publishing access for this organization');
-      }),
+      validateCompanyPublishingAccess: jest
+        .fn()
+        .mockImplementation(async (userId, orgId) => {
+          if (
+            orgId === companyOrgId &&
+            (userId === manager1 || userId === manager2)
+          ) {
+            return true;
+          }
+          throw new ForbiddenException(
+            'Forbidden: user has no publishing access for this organization',
+          );
+        }),
       notifyFollowersOfNewPost: jest.fn().mockResolvedValue(true),
     };
 
@@ -110,20 +117,15 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
         content: 'Updated draft',
       });
 
-      const result = await postService.updatePost(
-        postId,
-        userA,
-        'student',
-        {
-          content: 'Updated draft',
-          media: [
-            {
-              url: originalMediaUrl,
-              type: 'image',
-            },
-          ],
-        } as any,
-      );
+      const result = await postService.updatePost(postId, userA, 'student', {
+        content: 'Updated draft',
+        media: [
+          {
+            url: originalMediaUrl,
+            type: 'image',
+          },
+        ],
+      });
 
       expect(result).toBeDefined();
       expect(mockPostRepo.update).toHaveBeenCalledWith(
@@ -181,26 +183,20 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
         content: 'Manager 2 updated announcement',
       });
 
-      const result = await postService.updatePost(
-        postId,
-        manager2,
-        'student',
-        {
-          content: 'Manager 2 updated announcement',
-          media: [
-            {
-              url: manager1MediaUrl,
-              type: 'image',
-            },
-          ],
-        } as any,
-      );
+      const result = await postService.updatePost(postId, manager2, 'student', {
+        content: 'Manager 2 updated announcement',
+        media: [
+          {
+            url: manager1MediaUrl,
+            type: 'image',
+          },
+        ],
+      });
 
       expect(result).toBeDefined();
-      expect(mockOrgService.validateCompanyPublishingAccess).toHaveBeenCalledWith(
-        manager2,
-        companyOrgId,
-      );
+      expect(
+        mockOrgService.validateCompanyPublishingAccess,
+      ).toHaveBeenCalledWith(manager2, companyOrgId);
 
       expect(mockPostRepo.update).toHaveBeenCalledWith(
         postId,
@@ -246,15 +242,10 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
       mockPostRepo.findById.mockResolvedValue(existingPost);
 
       await expect(
-        postService.updatePost(
-          postId,
-          unauthorizedUser,
-          'student',
-          {
-            content: 'Tampered content',
-            media: [{ url: manager1MediaUrl, type: 'image' }],
-          } as any,
-        ),
+        postService.updatePost(postId, unauthorizedUser, 'student', {
+          content: 'Tampered content',
+          media: [{ url: manager1MediaUrl, type: 'image' }],
+        } as any),
       ).rejects.toThrow(ForbiddenException);
 
       expect(mockPostRepo.update).not.toHaveBeenCalled();
@@ -285,19 +276,14 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
 
       // Manager 2 tries to attach 'different-post-confidential.png' which is NOT attached to post-company-1
       await expect(
-        postService.updatePost(
-          postId,
-          manager2,
-          'student',
-          {
-            media: [
-              {
-                url: foreignMediaUrl,
-                type: 'image',
-              },
-            ],
-          } as any,
-        ),
+        postService.updatePost(postId, manager2, 'student', {
+          media: [
+            {
+              url: foreignMediaUrl,
+              type: 'image',
+            },
+          ],
+        } as any),
       ).rejects.toThrow(ForbiddenException);
 
       expect(mockPostRepo.update).not.toHaveBeenCalled();
@@ -326,19 +312,14 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
       mockPostRepo.findById.mockResolvedValue(existingPost);
 
       await expect(
-        postService.updatePost(
-          postId,
-          manager2,
-          'student',
-          {
-            media: [
-              {
-                url: arbitraryVictimKey,
-                type: 'document',
-              },
-            ],
-          } as any,
-        ),
+        postService.updatePost(postId, manager2, 'student', {
+          media: [
+            {
+              url: arbitraryVictimKey,
+              type: 'document',
+            },
+          ],
+        } as any),
       ).rejects.toThrow(ForbiddenException);
 
       expect(mockPostRepo.update).not.toHaveBeenCalled();
@@ -376,17 +357,12 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
         ],
       });
 
-      const result = await postService.updatePost(
-        postId,
-        manager2,
-        'student',
-        {
-          media: [
-            { url: retainedUrl, type: 'image' },
-            { url: newUploadUrl, type: 'image', size: 400000 },
-          ],
-        } as any,
-      );
+      const result = await postService.updatePost(postId, manager2, 'student', {
+        media: [
+          { url: retainedUrl, type: 'image' },
+          { url: newUploadUrl, type: 'image', size: 400000 },
+        ],
+      });
 
       expect(result).toBeDefined();
       expect(mockPostRepo.update).toHaveBeenCalledWith(
@@ -416,17 +392,12 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
       mockPostRepo.findById.mockResolvedValue(existingPost);
 
       await expect(
-        postService.updatePost(
-          postId,
-          manager2,
-          'student',
-          {
-            media: [
-              { url: retainedUrl, type: 'image' },
-              { url: foreignNewUrl, type: 'image' },
-            ],
-          } as any,
-        ),
+        postService.updatePost(postId, manager2, 'student', {
+          media: [
+            { url: retainedUrl, type: 'image' },
+            { url: foreignNewUrl, type: 'image' },
+          ],
+        } as any),
       ).rejects.toThrow(ForbiddenException);
 
       expect(mockPostRepo.update).not.toHaveBeenCalled();
@@ -449,20 +420,15 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
 
       // Photo size > 8MB
       await expect(
-        postService.updatePost(
-          postId,
-          manager2,
-          'student',
-          {
-            media: [
-              {
-                url: oversizedUrl,
-                type: 'image',
-                size: 9 * 1024 * 1024,
-              },
-            ],
-          } as any,
-        ),
+        postService.updatePost(postId, manager2, 'student', {
+          media: [
+            {
+              url: oversizedUrl,
+              type: 'image',
+              size: 9 * 1024 * 1024,
+            },
+          ],
+        } as any),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -497,17 +463,12 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
       });
 
       // Manager 2 reorders [C, A] and omits B
-      const result = await postService.updatePost(
-        postId,
-        manager2,
-        'student',
-        {
-          media: [
-            { url: mediaC, type: 'image' },
-            { url: mediaA, type: 'image' },
-          ],
-        } as any,
-      );
+      const result = await postService.updatePost(postId, manager2, 'student', {
+        media: [
+          { url: mediaC, type: 'image' },
+          { url: mediaA, type: 'image' },
+        ],
+      });
 
       expect(result).toBeDefined();
       const updatedMedia = mockPostRepo.update.mock.calls[0][1].media;
@@ -535,7 +496,10 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
         content: 'Company post with media',
         type: PostType.IMAGE,
         media: [
-          { url: `${s3Base}/community/uploads/${manager1}/photo.jpg`, type: 'image' },
+          {
+            url: `${s3Base}/community/uploads/${manager1}/photo.jpg`,
+            type: 'image',
+          },
         ],
       };
 
@@ -546,14 +510,9 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
         media: [],
       });
 
-      const result = await postService.updatePost(
-        postId,
-        manager2,
-        'student',
-        {
-          media: [],
-        } as any,
-      );
+      const result = await postService.updatePost(postId, manager2, 'student', {
+        media: [],
+      });
 
       expect(result).toBeDefined();
       expect(mockPostRepo.update).toHaveBeenCalledWith(
@@ -583,15 +542,14 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
 
       // Manager 2 tries to edit User A's personal post
       await expect(
-        postService.updatePost(
-          personalPostId,
-          manager2,
-          'student',
-          { content: 'Hijacked by company manager' } as any,
-        ),
+        postService.updatePost(personalPostId, manager2, 'student', {
+          content: 'Hijacked by company manager',
+        } as any),
       ).rejects.toThrow(ForbiddenException);
 
-      expect(mockOrgService.validateCompanyPublishingAccess).not.toHaveBeenCalled();
+      expect(
+        mockOrgService.validateCompanyPublishingAccess,
+      ).not.toHaveBeenCalled();
       expect(mockPostRepo.update).not.toHaveBeenCalled();
     });
   });
@@ -610,19 +568,14 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
       mockPostRepo.findById.mockResolvedValue(existingPost);
 
       await expect(
-        postService.updatePost(
-          postId,
-          manager2,
-          'student',
-          {
-            media: [
-              {
-                url: `${s3Base}/community/uploads/${manager2}/../${manager1}/secret.jpg`,
-                type: 'image',
-              },
-            ],
-          } as any,
-        ),
+        postService.updatePost(postId, manager2, 'student', {
+          media: [
+            {
+              url: `${s3Base}/community/uploads/${manager2}/../${manager1}/secret.jpg`,
+              type: 'image',
+            },
+          ],
+        } as any),
       ).rejects.toThrow(ForbiddenException);
 
       expect(mockPostRepo.update).not.toHaveBeenCalled();
@@ -642,36 +595,26 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
 
       // Null byte
       await expect(
-        postService.updatePost(
-          postId,
-          manager2,
-          'student',
-          {
-            media: [
-              {
-                url: `${s3Base}/community/uploads/${manager2}/test.jpg\0.png`,
-                type: 'image',
-              },
-            ],
-          } as any,
-        ),
+        postService.updatePost(postId, manager2, 'student', {
+          media: [
+            {
+              url: `${s3Base}/community/uploads/${manager2}/test.jpg\0.png`,
+              type: 'image',
+            },
+          ],
+        } as any),
       ).rejects.toThrow(ForbiddenException);
 
       // Javascript protocol
       await expect(
-        postService.updatePost(
-          postId,
-          manager2,
-          'student',
-          {
-            media: [
-              {
-                url: 'javascript:alert(1)',
-                type: 'image',
-              },
-            ],
-          } as any,
-        ),
+        postService.updatePost(postId, manager2, 'student', {
+          media: [
+            {
+              url: 'javascript:alert(1)',
+              type: 'image',
+            },
+          ],
+        } as any),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -708,27 +651,22 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
       mockPostRepo.findByIdPopulated.mockResolvedValue(existingPost);
 
       // Manager 2 submits retained media with spoofed duration, size, posterUrl, and processedUrl
-      await postService.updatePost(
-        postId,
-        manager2,
-        'student',
-        {
-          media: [
-            {
-              url: videoUrl,
-              type: 'video',
-              size: 1, // Spoofed
-              duration: 999, // Spoofed
-              width: 10, // Spoofed
-              height: 10, // Spoofed
-              posterUrl: `${s3Base}/community/uploads/${victimUser}/fake-poster.jpg`, // Spoofed
-              processedUrl: `${s3Base}/community/uploads/${victimUser}/fake-processed.mp4`, // Spoofed
-              mediaId: 'fake-media-id', // Spoofed
-              audioConfig: { audioMode: 'MUSIC_ONLY', musicTitle: 'Hacked' }, // Spoofed
-            },
-          ],
-        } as any,
-      );
+      await postService.updatePost(postId, manager2, 'student', {
+        media: [
+          {
+            url: videoUrl,
+            type: 'video',
+            size: 1, // Spoofed
+            duration: 999, // Spoofed
+            width: 10, // Spoofed
+            height: 10, // Spoofed
+            posterUrl: `${s3Base}/community/uploads/${victimUser}/fake-poster.jpg`, // Spoofed
+            processedUrl: `${s3Base}/community/uploads/${victimUser}/fake-processed.mp4`, // Spoofed
+            mediaId: 'fake-media-id', // Spoofed
+            audioConfig: { audioMode: 'MUSIC_ONLY', musicTitle: 'Hacked' }, // Spoofed
+          },
+        ],
+      } as any);
 
       expect(mockPostRepo.update).toHaveBeenCalledTimes(1);
       const updatedMedia = mockPostRepo.update.mock.calls[0][1].media;
@@ -770,18 +708,13 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
       mockPostRepo.findByIdPopulated.mockResolvedValue(existingPost);
 
       // Client passes the same media twice: once with query params, once without
-      await postService.updatePost(
-        postId,
-        manager2,
-        'student',
-        {
-          media: [
-            { url: mediaUrl, type: 'image' },
-            { url: `${mediaUrl}?X-Amz-Signature=fake123`, type: 'image' },
-            { url: `community/uploads/${manager1}/slide.jpg`, type: 'image' },
-          ],
-        } as any,
-      );
+      await postService.updatePost(postId, manager2, 'student', {
+        media: [
+          { url: mediaUrl, type: 'image' },
+          { url: `${mediaUrl}?X-Amz-Signature=fake123`, type: 'image' },
+          { url: `community/uploads/${manager1}/slide.jpg`, type: 'image' },
+        ],
+      });
 
       expect(mockPostRepo.update).toHaveBeenCalledTimes(1);
       const updatedMedia = mockPostRepo.update.mock.calls[0][1].media;
@@ -812,15 +745,10 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
       );
 
       await expect(
-        postService.updatePost(
-          postId,
-          manager2,
-          'student',
-          {
-            content: 'Failing update',
-            media: [],
-          } as any,
-        ),
+        postService.updatePost(postId, manager2, 'student', {
+          content: 'Failing update',
+          media: [],
+        } as any),
       ).rejects.toThrow('Mongo network timeout during post update');
 
       // replaceMedia was called first to clear media
@@ -859,15 +787,10 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
       // findMediaByPostId returns empty
       mockPostRepo.findMediaByPostId.mockResolvedValue([]);
 
-      const result = await postService.updatePost(
-        postId,
-        manager2,
-        'student',
-        {
-          content: 'Updated legacy post',
-          media: [{ url: legacyUrl, type: 'image' }],
-        } as any,
-      );
+      const result = await postService.updatePost(postId, manager2, 'student', {
+        content: 'Updated legacy post',
+        media: [{ url: legacyUrl, type: 'image' }],
+      });
 
       expect(result).toBeDefined();
       expect(mockPostRepo.replaceMedia).toHaveBeenCalledWith(
@@ -908,14 +831,9 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
         { url: separateMediaUrl, type: 'image', size: 54321 },
       ]);
 
-      const result = await postService.updatePost(
-        postId,
-        manager2,
-        'student',
-        {
-          media: [{ url: separateMediaUrl, type: 'image' }],
-        } as any,
-      );
+      const result = await postService.updatePost(postId, manager2, 'student', {
+        media: [{ url: separateMediaUrl, type: 'image' }],
+      });
 
       expect(result).toBeDefined();
       expect(mockPostRepo.update).toHaveBeenCalledWith(
@@ -953,20 +871,14 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
       mockPostRepo.findByIdPopulated.mockResolvedValue(existingPost);
 
       // First update request
-      await postService.updatePost(
-        postId,
-        manager2,
-        'student',
-        { media: [{ url: mediaUrl, type: 'image' }] } as any,
-      );
+      await postService.updatePost(postId, manager2, 'student', {
+        media: [{ url: mediaUrl, type: 'image' }],
+      });
 
       // Second identical update request (e.g. double click or retry)
-      await postService.updatePost(
-        postId,
-        manager2,
-        'student',
-        { media: [{ url: mediaUrl, type: 'image' }] } as any,
-      );
+      await postService.updatePost(postId, manager2, 'student', {
+        media: [{ url: mediaUrl, type: 'image' }],
+      });
 
       expect(mockPostRepo.replaceMedia).toHaveBeenCalledTimes(2);
       // Each call cleanly replaces media with exactly 1 record
@@ -977,4 +889,3 @@ describe('Zeitnah Community — Phase B: Company Post Media Ownership Fix', () =
     });
   });
 });
-

@@ -163,9 +163,7 @@ export class ModerationService {
 
     if (
       !dto.targetType ||
-      !Object.values(ReportTargetType).includes(
-        dto.targetType as ReportTargetType,
-      )
+      !Object.values(ReportTargetType).includes(dto.targetType)
     ) {
       throw new BadRequestException({
         statusCode: 400,
@@ -186,11 +184,7 @@ export class ModerationService {
       });
     }
 
-    if (
-      !dto.reason ||
-      typeof dto.reason !== 'string' ||
-      !dto.reason.trim()
-    ) {
+    if (!dto.reason || typeof dto.reason !== 'string' || !dto.reason.trim()) {
       throw new BadRequestException({
         statusCode: 400,
         code: 'INVALID_REASON',
@@ -301,9 +295,7 @@ export class ModerationService {
       return null;
     }
     const res = this.reportModel.findById(reportId);
-    return typeof (res as any)?.exec === 'function'
-      ? (res as any).exec()
-      : res;
+    return typeof (res as any)?.exec === 'function' ? (res as any).exec() : res;
   }
 
   /**
@@ -319,13 +311,15 @@ export class ModerationService {
       return { report: null, transitioned: false };
     }
 
-    const normalizedAction = String(action || '').trim().toLowerCase();
+    const normalizedAction = String(action || '')
+      .trim()
+      .toLowerCase();
     const newStatus =
       normalizedAction === 'dismiss' || normalizedAction === 'dismissed'
         ? ReportStatus.DISMISSED
         : normalizedAction === 'review' || normalizedAction === 'reviewed'
-        ? ReportStatus.REVIEWED
-        : ReportStatus.RESOLVED;
+          ? ReportStatus.REVIEWED
+          : ReportStatus.RESOLVED;
 
     const trimmedNotes = (notes || '').trim();
     const noteEntry = trimmedNotes
@@ -350,8 +344,8 @@ export class ModerationService {
     const newDetails = existing.details
       ? `${existing.details}${noteEntry}`
       : trimmedNotes
-      ? `[Mod ${moderatorId}]: ${trimmedNotes}`
-      : '';
+        ? `[Mod ${moderatorId}]: ${trimmedNotes}`
+        : '';
 
     // Atomic compare-and-swap: only update if status is currently PENDING or REVIEWED
     if (typeof (this.reportModel as any).findOneAndUpdate === 'function') {

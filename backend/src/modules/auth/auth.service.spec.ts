@@ -17,6 +17,7 @@ describe('AuthService', () => {
   let usernameService: UsernameService;
   let auditLogsService: any;
   let jwtService: any;
+  let resendSpy: any;
 
   beforeEach(async () => {
     userModel = {
@@ -43,7 +44,7 @@ describe('AuthService', () => {
     };
 
     // Spy on resend email send
-    jest
+    resendSpy = jest
       .spyOn(resend.emails, 'send')
       .mockResolvedValue({ data: { id: 'email_123' }, error: null } as any);
 
@@ -450,6 +451,560 @@ describe('AuthService', () => {
           }),
         }),
       );
+    });
+  });
+
+  describe('Dedicated App Review Access', () => {
+    const REVIEW_EMAIL = 'apple-review@zeitnahacademy.com';
+    const REVIEW_OTP = '849201';
+    let reviewOtpHashed: string;
+    const ORIGINAL_ENV = process.env;
+
+    beforeAll(async () => {
+      reviewOtpHashed = await bcrypt.hash(REVIEW_OTP, 10);
+    });
+
+    beforeEach(() => {
+      process.env = {
+        ...ORIGINAL_ENV,
+        APP_REVIEW_ACCESS_ENABLED: 'true',
+        APP_REVIEW_EMAIL: REVIEW_EMAIL,
+        APP_REVIEW_OTP_HASH: reviewOtpHashed,
+      };
+    });
+
+    afterEach(() => {
+      process.env = ORIGINAL_ENV;
+    });
+
+    describe('loginSendOtp for App Review', () => {
+      it('should succeed for configured review account without sending email via Resend', async () => {
+        const mockReviewUser: any = {
+          _id: '507f1f77bcf86cd799439020',
+          name: 'App Store Reviewer',
+          email: REVIEW_EMAIL,
+          username: 'applereviewer',
+          role: 'student',
+          primaryRole: 'STUDENT',
+          account_Status: {
+            isVerified: true,
+            isActive: true,
+            isBlocked: false,
+            isDeleted: false,
+          },
+        };
+
+        userModel.findOne.mockResolvedValue(mockReviewUser);
+
+        const result = await service.loginSendOtp(REVIEW_EMAIL);
+
+        expect(result).toEqual({ message: 'OTP sent successfully' });
+        // Email service should NOT be called for review account in loginSendOtp
+        expect(resendSpy).not.toHaveBeenCalled();
+        expect(auditLogsService.record).toHaveBeenCalledWith(
+          expect.objectContaining({
+            action: 'APP_REVIEW_OTP_REQUESTED',
+            metadata: { email: REVIEW_EMAIL },
+          }),
+        );
+      });
+
+      it('should reject loginSendOtp if review account is blocked', async () => {
+        const blockedReviewUser: any = {
+          _id: '507f1f77bcf86cd799439021',
+          email: REVIEW_EMAIL,
+          role: 'student',
+          account_Status: { isBlocked: true },
+        };
+
+        userModel.findOne.mockResolvedValue(blockedReviewUser);
+
+        await expect(service.loginSendOtp(REVIEW_EMAIL)).rejects.toThrow(
+          new UnauthorizedException('Account restricted'),
+        );
+      });
+
+      it('should reject loginSendOtp if review account is marked isDeleted', async () => {
+        const deletedReviewUser: any = {
+          _id: '507f1f77bcf86cd799439022',
+          email: REVIEW_EMAIL,
+          role: 'student',
+          account_Status: { isDeleted: true },
+        };
+
+        userModel.findOne.mockResolvedValue(deletedReviewUser);
+
+        await expect(service.loginSendOtp(REVIEW_EMAIL)).rejects.toThrow(
+          new UnauthorizedException('Account restricted'),
+        );
+      });
+
+      it('should reject loginSendOtp if review account isActive is false', async () => {
+        const inactiveReviewUser: any = {
+          _id: '507f1f77bcf86cd799439023',
+          email: REVIEW_EMAIL,
+          role: 'student',
+          account_Status: { isActive: false },
+        };
+
+        userModel.findOne.mockResolvedValue(inactiveReviewUser);
+
+        await expect(service.loginSendOtp(REVIEW_EMAIL)).rejects.toThrow(
+          new UnauthorizedException('Account inactive'),
+        );
+      });
+
+      it('should strictly reject loginSendOtp if review account has admin role', async () => {
+        const adminReviewUser: any = {
+          _id: '507f1f77bcf86cd799439024',
+          email: REVIEW_EMAIL,
+          role: 'admin',
+          primaryRole: 'ADMIN',
+          account_Status: {
+            isBlocked: false,
+            isDeleted: false,
+            isActive: true,
+          },
+        };
+
+        userModel.findOne.mockResolvedValue(adminReviewUser);
+
+        await expect(service.loginSendOtp(REVIEW_EMAIL)).rejects.toThrow(
+          new UnauthorizedException(
+            'Review access not permitted for privileged accounts',
+          ),
+        );
+      });
+    });
+
+    describe('loginVerifyOtp for App Review', () => {
+      it('should successfully authenticate review account using configured review OTP and create valid session', async () => {
+        const mockReviewUser: any = {
+          _id: '507f1f77bcf86cd799439025',
+          name: 'App Reviewer',
+          email: REVIEW_EMAIL,
+          username: 'applestudent',
+          role: 'student',
+          primaryRole: 'STUDENT',
+          account_Status: {
+            isVerified: true,
+            isActive: true,
+            isBlocked: false,
+            isDeleted: false,
+          },
+          devices: [],
+        };
+
+        userModel.findOne.mockResolvedValue(mockReviewUser);
+
+        const result = await service.loginVerifyOtp(
+          {
+            email: REVIEW_EMAIL,
+            otp: REVIEW_OTP,
+            deviceId: 'apple_test_device_1',
+            deviceType: 'mobile',
+            browser: 'Mobile Safari',
+            os: 'iOS',
+          },
+          '17.0.0.1',
+        );
+
+        expect(result.message).toBe('Login successful');
+        expect(result.accessToken).toBe('mock-jwt-token');
+        expect(result.refreshToken).toBe('mock-jwt-token');
+        expect(result.user.email).toBe(REVIEW_EMAIL);
+        expect(result.user.primaryRole).toBe('STUDENT');
+        expect(auditLogsService.record).toHaveBeenCalledWith(
+          expect.objectContaining({
+            action: 'APP_REVIEW_LOGIN_SUCCESS',
+            metadata: expect.objectContaining({ email: REVIEW_EMAIL }),
+          }),
+        );
+      });
+
+      it('should reject login if review OTP is incorrect', async () => {
+        const mockReviewUser: any = {
+          _id: '507f1f77bcf86cd799439026',
+          email: REVIEW_EMAIL,
+          role: 'student',
+          primaryRole: 'STUDENT',
+          account_Status: {
+            isActive: true,
+            isBlocked: false,
+            isDeleted: false,
+          },
+          devices: [],
+        };
+
+        userModel.findOne.mockResolvedValue(mockReviewUser);
+
+        await expect(
+          service.loginVerifyOtp(
+            {
+              email: REVIEW_EMAIL,
+              otp: '000000', // Invalid review OTP
+              deviceId: 'apple_test_device_1',
+              deviceType: 'mobile',
+              browser: 'Mobile Safari',
+              os: 'iOS',
+            },
+            '17.0.0.1',
+          ),
+        ).rejects.toThrow(new UnauthorizedException('Invalid OTP'));
+      });
+
+      it('should NOT fall back to checking user.otp when review credential fails', async () => {
+        // Even if user.otp has a valid code from another source, review branch must reject mismatch
+        const fallbackOtp = '654321';
+        const fallbackOtpHashed = await bcrypt.hash(fallbackOtp, 10);
+
+        const mockReviewUser: any = {
+          _id: '507f1f77bcf86cd799439027',
+          email: REVIEW_EMAIL,
+          otp: fallbackOtpHashed,
+          otpExpiry: new Date(Date.now() + 60000),
+          role: 'student',
+          primaryRole: 'STUDENT',
+          account_Status: {
+            isActive: true,
+            isBlocked: false,
+            isDeleted: false,
+          },
+          devices: [],
+        };
+
+        userModel.findOne.mockResolvedValue(mockReviewUser);
+
+        // Attempting to pass fallback OTP when review access is enabled must fail!
+        await expect(
+          service.loginVerifyOtp(
+            {
+              email: REVIEW_EMAIL,
+              otp: fallbackOtp,
+              deviceId: 'apple_test_device_1',
+              deviceType: 'mobile',
+              browser: 'Mobile Safari',
+              os: 'iOS',
+            },
+            '17.0.0.1',
+          ),
+        ).rejects.toThrow(new UnauthorizedException('Invalid OTP'));
+      });
+
+      it('should reject review OTP when APP_REVIEW_ACCESS_ENABLED is "false"', async () => {
+        process.env.APP_REVIEW_ACCESS_ENABLED = 'false';
+
+        const mockReviewUser: any = {
+          _id: '507f1f77bcf86cd799439028',
+          email: REVIEW_EMAIL,
+          role: 'student',
+          account_Status: {
+            isActive: true,
+            isBlocked: false,
+            isDeleted: false,
+          },
+          otp: null,
+          otpExpiry: null,
+          devices: [],
+        };
+
+        userModel.findOne.mockResolvedValue(mockReviewUser);
+
+        // Falls back to normal OTP flow where user.otp is null -> OTP expired or not found
+        await expect(
+          service.loginVerifyOtp(
+            {
+              email: REVIEW_EMAIL,
+              otp: REVIEW_OTP,
+              deviceId: 'apple_test_device_1',
+              deviceType: 'mobile',
+              browser: 'Mobile Safari',
+              os: 'iOS',
+            },
+            '17.0.0.1',
+          ),
+        ).rejects.toThrow(UnauthorizedException);
+      });
+
+      it('should reject review OTP when APP_REVIEW_ACCESS_ENABLED is unset', async () => {
+        delete process.env.APP_REVIEW_ACCESS_ENABLED;
+
+        const mockReviewUser: any = {
+          _id: '507f1f77bcf86cd799439029',
+          email: REVIEW_EMAIL,
+          role: 'student',
+          account_Status: {
+            isActive: true,
+            isBlocked: false,
+            isDeleted: false,
+          },
+          otp: null,
+          devices: [],
+        };
+
+        userModel.findOne.mockResolvedValue(mockReviewUser);
+
+        await expect(
+          service.loginVerifyOtp(
+            {
+              email: REVIEW_EMAIL,
+              otp: REVIEW_OTP,
+              deviceId: 'apple_test_device_1',
+              deviceType: 'mobile',
+              browser: 'Mobile Safari',
+              os: 'iOS',
+            },
+            '17.0.0.1',
+          ),
+        ).rejects.toThrow(UnauthorizedException);
+      });
+
+      it('should reject review OTP when APP_REVIEW_OTP_HASH is missing', async () => {
+        delete process.env.APP_REVIEW_OTP_HASH;
+
+        const mockReviewUser: any = {
+          _id: '507f1f77bcf86cd799439030',
+          email: REVIEW_EMAIL,
+          role: 'student',
+          account_Status: {
+            isActive: true,
+            isBlocked: false,
+            isDeleted: false,
+          },
+          devices: [],
+        };
+
+        userModel.findOne.mockResolvedValue(mockReviewUser);
+
+        // When hash is missing, isAppReviewAccount returns false and normal OTP check runs
+        await expect(
+          service.loginVerifyOtp(
+            {
+              email: REVIEW_EMAIL,
+              otp: REVIEW_OTP,
+              deviceId: 'apple_test_device_1',
+              deviceType: 'mobile',
+              browser: 'Mobile Safari',
+              os: 'iOS',
+            },
+            '17.0.0.1',
+          ),
+        ).rejects.toThrow(UnauthorizedException);
+      });
+
+      it('should reject review OTP when entered for any other user email', async () => {
+        const regularUserEmail = 'regular.student@example.com';
+        const regularUser: any = {
+          _id: '507f1f77bcf86cd799439031',
+          email: regularUserEmail,
+          role: 'student',
+          primaryRole: 'STUDENT',
+          otp: await bcrypt.hash('112233', 10),
+          otpExpiry: new Date(Date.now() + 60000),
+          account_Status: {
+            isActive: true,
+            isBlocked: false,
+            isDeleted: false,
+          },
+          devices: [],
+        };
+
+        userModel.findOne.mockResolvedValue(regularUser);
+
+        // Submitting review OTP for a regular user MUST fail against regular user's OTP
+        await expect(
+          service.loginVerifyOtp(
+            {
+              email: regularUserEmail,
+              otp: REVIEW_OTP, // Attempting review OTP on non-review account
+              deviceId: 'dev_some_device',
+              deviceType: 'mobile',
+              browser: 'Chrome',
+              os: 'Android',
+            },
+            '127.0.0.1',
+          ),
+        ).rejects.toThrow(new UnauthorizedException('Invalid OTP'));
+      });
+
+      it('should reject review login if account does not exist in database', async () => {
+        userModel.findOne.mockResolvedValue(null);
+
+        await expect(
+          service.loginVerifyOtp(
+            {
+              email: REVIEW_EMAIL,
+              otp: REVIEW_OTP,
+              deviceId: 'apple_device_x',
+              deviceType: 'mobile',
+              browser: 'Safari',
+              os: 'iOS',
+            },
+            '17.0.0.1',
+          ),
+        ).rejects.toThrow(new UnauthorizedException('User not found'));
+      });
+
+      it('should reject review login if review account is blocked', async () => {
+        const blockedReviewUser: any = {
+          _id: '507f1f77bcf86cd799439032',
+          email: REVIEW_EMAIL,
+          role: 'student',
+          account_Status: { isBlocked: true },
+        };
+
+        userModel.findOne.mockResolvedValue(blockedReviewUser);
+
+        await expect(
+          service.loginVerifyOtp(
+            {
+              email: REVIEW_EMAIL,
+              otp: REVIEW_OTP,
+              deviceId: 'apple_device_x',
+              deviceType: 'mobile',
+              browser: 'Safari',
+              os: 'iOS',
+            },
+            '17.0.0.1',
+          ),
+        ).rejects.toThrow(new UnauthorizedException('Account restricted'));
+      });
+
+      it('should reject review login if review account is marked isDeleted', async () => {
+        const deletedReviewUser: any = {
+          _id: '507f1f77bcf86cd799439033',
+          email: REVIEW_EMAIL,
+          role: 'student',
+          account_Status: { isDeleted: true },
+        };
+
+        userModel.findOne.mockResolvedValue(deletedReviewUser);
+
+        await expect(
+          service.loginVerifyOtp(
+            {
+              email: REVIEW_EMAIL,
+              otp: REVIEW_OTP,
+              deviceId: 'apple_device_x',
+              deviceType: 'mobile',
+              browser: 'Safari',
+              os: 'iOS',
+            },
+            '17.0.0.1',
+          ),
+        ).rejects.toThrow(new UnauthorizedException('Account restricted'));
+      });
+
+      it('should reject review login if review account isActive is false', async () => {
+        const inactiveReviewUser: any = {
+          _id: '507f1f77bcf86cd799439034',
+          email: REVIEW_EMAIL,
+          role: 'student',
+          account_Status: { isActive: false },
+        };
+
+        userModel.findOne.mockResolvedValue(inactiveReviewUser);
+
+        await expect(
+          service.loginVerifyOtp(
+            {
+              email: REVIEW_EMAIL,
+              otp: REVIEW_OTP,
+              deviceId: 'apple_device_x',
+              deviceType: 'mobile',
+              browser: 'Safari',
+              os: 'iOS',
+            },
+            '17.0.0.1',
+          ),
+        ).rejects.toThrow(new UnauthorizedException('Account inactive'));
+      });
+
+      it('should strictly reject review login if review account has admin role', async () => {
+        const adminReviewUser: any = {
+          _id: '507f1f77bcf86cd799439035',
+          email: REVIEW_EMAIL,
+          role: 'admin',
+          primaryRole: 'ADMIN',
+          account_Status: {
+            isBlocked: false,
+            isDeleted: false,
+            isActive: true,
+          },
+        };
+
+        userModel.findOne.mockResolvedValue(adminReviewUser);
+
+        await expect(
+          service.loginVerifyOtp(
+            {
+              email: REVIEW_EMAIL,
+              otp: REVIEW_OTP,
+              deviceId: 'apple_device_x',
+              deviceType: 'mobile',
+              browser: 'Safari',
+              os: 'iOS',
+            },
+            '17.0.0.1',
+          ),
+        ).rejects.toThrow(
+          new UnauthorizedException(
+            'Review access not permitted for privileged accounts',
+          ),
+        );
+      });
+
+      it('should automatically manage device slots for review account so reviewers on multiple devices are not blocked', async () => {
+        const mockReviewUser: any = {
+          _id: '507f1f77bcf86cd799439036',
+          name: 'App Reviewer',
+          email: REVIEW_EMAIL,
+          username: 'applestudent',
+          role: 'student',
+          primaryRole: 'STUDENT',
+          account_Status: {
+            isVerified: true,
+            isActive: true,
+            isBlocked: false,
+            isDeleted: false,
+          },
+          devices: [
+            {
+              deviceId: 'prior_apple_device_1',
+              deviceType: 'mobile',
+              refreshTokenExpiry: new Date(Date.now() + 1000000),
+            },
+            {
+              deviceId: 'prior_apple_device_2',
+              deviceType: 'desktop',
+              refreshTokenExpiry: new Date(Date.now() + 1000000),
+            },
+          ],
+        };
+
+        userModel.findOne.mockResolvedValue(mockReviewUser);
+
+        const result = await service.loginVerifyOtp(
+          {
+            email: REVIEW_EMAIL,
+            otp: REVIEW_OTP,
+            deviceId: 'new_apple_ipad_3',
+            deviceType: 'tablet',
+            browser: 'Safari',
+            os: 'iPadOS',
+          },
+          '17.0.0.1',
+        );
+
+        expect(result.message).toBe('Login successful');
+        // Total devices must be capped at 2, oldest pruned, and new added without throwing limit exceeded
+        expect(mockReviewUser.devices).toHaveLength(2);
+        expect(
+          mockReviewUser.devices.some(
+            (d: any) => d.deviceId === 'new_apple_ipad_3',
+          ),
+        ).toBe(true);
+      });
     });
   });
 });

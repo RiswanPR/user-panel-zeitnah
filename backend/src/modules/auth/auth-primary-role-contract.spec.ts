@@ -352,8 +352,12 @@ describe('Auth Primary Role Contract & Identity Regression Tests', () => {
       expect(normalizeCanonicalPrimaryRole('STUDENT')).toBe('STUDENT');
       expect(normalizeCanonicalPrimaryRole('student')).toBe('STUDENT');
       expect(normalizeCanonicalPrimaryRole(' Student ')).toBe('STUDENT');
-      expect(normalizeCanonicalPrimaryRole('PROFESSIONAL')).toBe('PROFESSIONAL');
-      expect(normalizeCanonicalPrimaryRole('professional')).toBe('PROFESSIONAL');
+      expect(normalizeCanonicalPrimaryRole('PROFESSIONAL')).toBe(
+        'PROFESSIONAL',
+      );
+      expect(normalizeCanonicalPrimaryRole('professional')).toBe(
+        'PROFESSIONAL',
+      );
       expect(normalizeCanonicalPrimaryRole('RECRUITER')).toBe('RECRUITER');
       expect(normalizeCanonicalPrimaryRole('recruiter')).toBe('RECRUITER');
       expect(normalizeCanonicalPrimaryRole('EDUCATOR')).toBe('EDUCATOR');
@@ -381,11 +385,21 @@ describe('Auth Primary Role Contract & Identity Regression Tests', () => {
     });
 
     it('normalizeCanonicalPrimaryRoleWithFallback uses legacy LMS role as fallback', () => {
-      expect(normalizeCanonicalPrimaryRoleWithFallback(null, 'teacher')).toBe('EDUCATOR');
-      expect(normalizeCanonicalPrimaryRoleWithFallback(undefined, 'recruiter')).toBe('RECRUITER');
-      expect(normalizeCanonicalPrimaryRoleWithFallback('', 'student')).toBe('STUDENT');
-      expect(normalizeCanonicalPrimaryRoleWithFallback('founder', 'student')).toBe('RECRUITER');
-      expect(normalizeCanonicalPrimaryRoleWithFallback(null, null)).toBe('STUDENT');
+      expect(normalizeCanonicalPrimaryRoleWithFallback(null, 'teacher')).toBe(
+        'EDUCATOR',
+      );
+      expect(
+        normalizeCanonicalPrimaryRoleWithFallback(undefined, 'recruiter'),
+      ).toBe('RECRUITER');
+      expect(normalizeCanonicalPrimaryRoleWithFallback('', 'student')).toBe(
+        'STUDENT',
+      );
+      expect(
+        normalizeCanonicalPrimaryRoleWithFallback('founder', 'student'),
+      ).toBe('RECRUITER');
+      expect(normalizeCanonicalPrimaryRoleWithFallback(null, null)).toBe(
+        'STUDENT',
+      );
     });
 
     it('isCanonicalCommunityRole validates only canonical roles', () => {
@@ -397,7 +411,9 @@ describe('Auth Primary Role Contract & Identity Regression Tests', () => {
       expect(isCanonicalCommunityRole('MENTOR')).toBe(false);
       expect(isCanonicalCommunityRole('ADMIN')).toBe(false);
       expect(isCanonicalCommunityRole('student')).toBe(false); // must be canonical uppercase
-      expect(isCanonicalCommunityRole(normalizeCanonicalPrimaryRole('student'))).toBe(true);
+      expect(
+        isCanonicalCommunityRole(normalizeCanonicalPrimaryRole('student')),
+      ).toBe(true);
     });
   });
 });

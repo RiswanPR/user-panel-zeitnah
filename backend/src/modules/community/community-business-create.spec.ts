@@ -416,10 +416,9 @@ describe('Community Business Content Creation — Phase 4 Backend Validation', (
         'user',
       );
       expect(result).toBe(true);
-      expect(mockOrgService.validateCompanyPublishingAccess).toHaveBeenCalledWith(
-        orgOwnerId,
-        companyAId,
-      );
+      expect(
+        mockOrgService.validateCompanyPublishingAccess,
+      ).toHaveBeenCalledWith(orgOwnerId, companyAId);
     });
 
     it('blocks non-owner non-admin user without org authority from deleting story', async () => {

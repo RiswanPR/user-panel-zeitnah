@@ -181,10 +181,7 @@ describe('Zeitnah Community — Phase 2: Feed Foundation & Backend Reliability',
         { organizationId: '' },
       ]);
       expect(personalBranch.$and[1].$or).toEqual(
-        expect.arrayContaining([
-          { audience: 'PUBLIC' },
-          { authorId: userA },
-        ]),
+        expect.arrayContaining([{ audience: 'PUBLIC' }, { authorId: userA }]),
       );
     });
 
@@ -382,16 +379,14 @@ describe('Zeitnah Community — Phase 2: Feed Foundation & Backend Reliability',
       expect(page1.items[0]._id).toBe('post-uuid-z');
       expect(page1.items[1]._id).toBe('post-uuid-m');
       // Cursor strictly incorporates the last item's timestamp AND id
-      expect(page1.nextCursor).toBe(
-        `${timestamp.toISOString()}_post-uuid-m`,
-      );
+      expect(page1.nextCursor).toBe(`${timestamp.toISOString()}_post-uuid-m`);
 
       // Now request Page 2 using that exact cursor
       await repo.findFeed({
         userId: userA,
         filter: 'all',
         limit: 2,
-        cursor: page1.nextCursor!,
+        cursor: page1.nextCursor,
       });
 
       const page2Match = capturedPipeline[0].$match;

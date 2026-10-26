@@ -1,9 +1,6 @@
 /// <reference types="jest" />
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { PostService } from './services/post.service';
 import { CommentService } from './services/comment.service';
 import { PostRepository } from './repositories/mongo-post.repository';
@@ -102,7 +99,9 @@ describe('Zeitnah Community — Phase D.1: Notification Correctness', () => {
       });
 
       // Exactly 2 notifications: one for Alice (parent), one for Carol (post author)
-      expect(mockNotificationsService.createNotification).toHaveBeenCalledTimes(2);
+      expect(mockNotificationsService.createNotification).toHaveBeenCalledTimes(
+        2,
+      );
 
       // Alice (parent comment author) receives reply notification
       expect(mockNotificationsService.createNotification).toHaveBeenCalledWith(
@@ -154,7 +153,9 @@ describe('Zeitnah Community — Phase D.1: Notification Correctness', () => {
       });
 
       // Only 1 notification: Carol should not receive self-notification
-      expect(mockNotificationsService.createNotification).toHaveBeenCalledTimes(1);
+      expect(mockNotificationsService.createNotification).toHaveBeenCalledTimes(
+        1,
+      );
       expect(mockNotificationsService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
           recipientId: 'user-alice',
@@ -197,7 +198,9 @@ describe('Zeitnah Community — Phase D.1: Notification Correctness', () => {
       });
 
       // Alice must receive only 1 notification (reply notification), not duplicate
-      expect(mockNotificationsService.createNotification).toHaveBeenCalledTimes(1);
+      expect(mockNotificationsService.createNotification).toHaveBeenCalledTimes(
+        1,
+      );
       expect(mockNotificationsService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
           recipientId: 'user-alice',
@@ -234,7 +237,9 @@ describe('Zeitnah Community — Phase D.1: Notification Correctness', () => {
       });
 
       // Bob should not be notified; Carol (post author) should be notified
-      expect(mockNotificationsService.createNotification).toHaveBeenCalledTimes(1);
+      expect(mockNotificationsService.createNotification).toHaveBeenCalledTimes(
+        1,
+      );
       expect(mockNotificationsService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
           recipientId: 'user-carol',
@@ -270,7 +275,9 @@ describe('Zeitnah Community — Phase D.1: Notification Correctness', () => {
         parentId: 'comment-carol-1',
       });
 
-      expect(mockNotificationsService.createNotification).not.toHaveBeenCalled();
+      expect(
+        mockNotificationsService.createNotification,
+      ).not.toHaveBeenCalled();
     });
 
     it('throws NotFoundException when parent comment does not exist', async () => {
@@ -284,7 +291,9 @@ describe('Zeitnah Community — Phase D.1: Notification Correctness', () => {
         }),
       ).rejects.toThrow(NotFoundException);
 
-      expect(mockNotificationsService.createNotification).not.toHaveBeenCalled();
+      expect(
+        mockNotificationsService.createNotification,
+      ).not.toHaveBeenCalled();
     });
 
     it('throws NotFoundException when parent comment is soft-deleted', async () => {
@@ -303,7 +312,9 @@ describe('Zeitnah Community — Phase D.1: Notification Correctness', () => {
         }),
       ).rejects.toThrow(NotFoundException);
 
-      expect(mockNotificationsService.createNotification).not.toHaveBeenCalled();
+      expect(
+        mockNotificationsService.createNotification,
+      ).not.toHaveBeenCalled();
     });
 
     it('throws BadRequestException when parent comment belongs to a different post', async () => {
@@ -322,7 +333,9 @@ describe('Zeitnah Community — Phase D.1: Notification Correctness', () => {
         }),
       ).rejects.toThrow(BadRequestException);
 
-      expect(mockNotificationsService.createNotification).not.toHaveBeenCalled();
+      expect(
+        mockNotificationsService.createNotification,
+      ).not.toHaveBeenCalled();
     });
 
     it('preserves top-level comment notifications with deterministic idempotency keys', async () => {
@@ -341,7 +354,9 @@ describe('Zeitnah Community — Phase D.1: Notification Correctness', () => {
         content: 'Top level comment',
       });
 
-      expect(mockNotificationsService.createNotification).toHaveBeenCalledTimes(1);
+      expect(mockNotificationsService.createNotification).toHaveBeenCalledTimes(
+        1,
+      );
       expect(mockNotificationsService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
           recipientId: 'user-carol',
@@ -374,7 +389,9 @@ describe('Zeitnah Community — Phase D.1: Notification Correctness', () => {
 
       await postService.addReaction(postId, 'user-fan', 'like');
 
-      expect(mockNotificationsService.createNotification).toHaveBeenCalledTimes(1);
+      expect(mockNotificationsService.createNotification).toHaveBeenCalledTimes(
+        1,
+      );
       expect(mockNotificationsService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
           recipientId: 'user-author',
@@ -395,7 +412,9 @@ describe('Zeitnah Community — Phase D.1: Notification Correctness', () => {
 
       await postService.addReaction(postId, 'user-fan', 'like');
 
-      expect(mockNotificationsService.createNotification).not.toHaveBeenCalled();
+      expect(
+        mockNotificationsService.createNotification,
+      ).not.toHaveBeenCalled();
     });
 
     it('does not send notification when reaction is changed per existing product behavior', async () => {
@@ -409,7 +428,9 @@ describe('Zeitnah Community — Phase D.1: Notification Correctness', () => {
 
       await postService.addReaction(postId, 'user-fan', 'love');
 
-      expect(mockNotificationsService.createNotification).not.toHaveBeenCalled();
+      expect(
+        mockNotificationsService.createNotification,
+      ).not.toHaveBeenCalled();
     });
 
     it('does not send notification when author reacts to their own post', async () => {
@@ -423,7 +444,9 @@ describe('Zeitnah Community — Phase D.1: Notification Correctness', () => {
 
       await postService.addReaction(postId, 'user-author', 'like');
 
-      expect(mockNotificationsService.createNotification).not.toHaveBeenCalled();
+      expect(
+        mockNotificationsService.createNotification,
+      ).not.toHaveBeenCalled();
     });
 
     it('allows legitimate subsequent re-reaction after unlike to deliver with a new reactionId', async () => {
@@ -435,7 +458,9 @@ describe('Zeitnah Community — Phase D.1: Notification Correctness', () => {
         reactionId: 'reaction-doc-10',
       });
       await postService.addReaction(postId, 'user-fan', 'like');
-      expect(mockNotificationsService.createNotification).toHaveBeenLastCalledWith(
+      expect(
+        mockNotificationsService.createNotification,
+      ).toHaveBeenLastCalledWith(
         expect.objectContaining({
           idempotencyKey: 'reaction:post-100:user-fan:reaction-doc-10',
         }),
@@ -446,7 +471,9 @@ describe('Zeitnah Community — Phase D.1: Notification Correctness', () => {
         action: 'removed',
       });
       await postService.addReaction(postId, 'user-fan', 'like');
-      expect(mockNotificationsService.createNotification).toHaveBeenCalledTimes(1);
+      expect(mockNotificationsService.createNotification).toHaveBeenCalledTimes(
+        1,
+      );
 
       // Step C: Re-reacted later (produces new document with new reactionId)
       mockPostRepository.addReaction.mockResolvedValueOnce({
@@ -454,8 +481,12 @@ describe('Zeitnah Community — Phase D.1: Notification Correctness', () => {
         reactionId: 'reaction-doc-20',
       });
       await postService.addReaction(postId, 'user-fan', 'like');
-      expect(mockNotificationsService.createNotification).toHaveBeenCalledTimes(2);
-      expect(mockNotificationsService.createNotification).toHaveBeenLastCalledWith(
+      expect(mockNotificationsService.createNotification).toHaveBeenCalledTimes(
+        2,
+      );
+      expect(
+        mockNotificationsService.createNotification,
+      ).toHaveBeenLastCalledWith(
         expect.objectContaining({
           idempotencyKey: 'reaction:post-100:user-fan:reaction-doc-20',
         }),
@@ -541,8 +572,10 @@ describe('Zeitnah Community — Phase D.1: Notification Correctness', () => {
         expect.objectContaining({
           recipientId: 'author-admin',
           type: 'COMMUNITY_REPOST',
-          actionUrl: '/community?organizationId=org-apple-99&post=post-company-200#post-company-200',
-          targetUrl: '/community?organizationId=org-apple-99&post=post-company-200#post-company-200',
+          actionUrl:
+            '/community?organizationId=org-apple-99&post=post-company-200#post-company-200',
+          targetUrl:
+            '/community?organizationId=org-apple-99&post=post-company-200#post-company-200',
           metadata: expect.objectContaining({
             canonicalPostId: 'post-company-200',
             originalPostId: 'post-company-200',
@@ -609,10 +642,16 @@ describe('Zeitnah Community — Phase D.1: Notification Correctness', () => {
       mockPostRepository.findByIdPopulated.mockResolvedValue(selfPost);
 
       await postService.repostPost('post-self-500', 'user-same');
-      expect(mockNotificationsService.createNotification).not.toHaveBeenCalled();
+      expect(
+        mockNotificationsService.createNotification,
+      ).not.toHaveBeenCalled();
 
-      await postService.quotePost('post-self-500', 'user-same', { content: 'Quoting myself' });
-      expect(mockNotificationsService.createNotification).not.toHaveBeenCalled();
+      await postService.quotePost('post-self-500', 'user-same', {
+        content: 'Quoting myself',
+      });
+      expect(
+        mockNotificationsService.createNotification,
+      ).not.toHaveBeenCalled();
     });
   });
 });

@@ -721,7 +721,14 @@ export class User {
       hiringInterests: { type: [String], default: [] },
       opportunityTypes: { type: [String], default: [] },
     },
-    default: { organizationId: '', companyName: '', currentPosition: '', specializations: [], hiringInterests: [], opportunityTypes: [] },
+    default: {
+      organizationId: '',
+      companyName: '',
+      currentPosition: '',
+      specializations: [],
+      hiringInterests: [],
+      opportunityTypes: [],
+    },
   })
   recruiterContext!: {
     organizationId?: string;
@@ -1269,7 +1276,8 @@ UserSchema.pre('validate', function () {
 
   if (this.primaryRole) {
     const canonical = normalizeCanonicalPrimaryRole(this.primaryRole);
-    this.primaryRole = canonical || String(this.primaryRole).trim().toUpperCase();
+    this.primaryRole =
+      canonical || String(this.primaryRole).trim().toUpperCase();
   } else if (this.role) {
     const cleanRole = String(this.role).trim().toLowerCase();
     if (cleanRole === 'teacher') this.primaryRole = 'EDUCATOR';

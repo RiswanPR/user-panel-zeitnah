@@ -15,7 +15,12 @@ describe('CatalogueRepository', () => {
         sort: jest.fn().mockReturnValue({
           lean: jest.fn().mockReturnValue({
             exec: jest.fn().mockResolvedValue([
-              { id: 'civil-engineering', name: 'Civil Engineering', status: 'active', displayOrder: 1 },
+              {
+                id: 'civil-engineering',
+                name: 'Civil Engineering',
+                status: 'active',
+                displayOrder: 1,
+              },
             ]),
           }),
         }),
@@ -68,7 +73,10 @@ describe('CatalogueRepository', () => {
       const result = await repository.findActiveDepartments();
 
       expect(mockDeptModel.find).toHaveBeenCalledWith({ status: 'active' });
-      expect(mockDeptModel.find().sort).toHaveBeenCalledWith({ displayOrder: 1, id: 1 });
+      expect(mockDeptModel.find().sort).toHaveBeenCalledWith({
+        displayOrder: 1,
+        id: 1,
+      });
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('civil-engineering');
     });
@@ -79,7 +87,10 @@ describe('CatalogueRepository', () => {
       const result = await repository.findActiveTitles();
 
       expect(mockTitleModel.find).toHaveBeenCalledWith({ status: 'active' });
-      expect(mockTitleModel.find().sort).toHaveBeenCalledWith({ displayOrder: 1, id: 1 });
+      expect(mockTitleModel.find().sort).toHaveBeenCalledWith({
+        displayOrder: 1,
+        id: 1,
+      });
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('civil-engineering:site-engineer');
     });
@@ -90,7 +101,10 @@ describe('CatalogueRepository', () => {
       const result = await repository.findAllTitles();
 
       expect(mockTitleModel.find).toHaveBeenCalledWith({});
-      expect(mockTitleModel.find().sort).toHaveBeenCalledWith({ displayOrder: 1, id: 1 });
+      expect(mockTitleModel.find().sort).toHaveBeenCalledWith({
+        displayOrder: 1,
+        id: 1,
+      });
       expect(result).toHaveLength(1);
     });
   });

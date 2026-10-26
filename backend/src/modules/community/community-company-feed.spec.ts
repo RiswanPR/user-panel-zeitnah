@@ -748,16 +748,11 @@ describe('Community Company Feed — Phase 3 Backend Scoping & Authorization', (
       mockPostRepo.softDelete = jest.fn().mockResolvedValue(true);
       mockOrgService.validateCompanyPublishingAccess.mockResolvedValue(true);
 
-      const result = await postService.deletePost(
-        postId,
-        orgOwnerId,
-        'user',
-      );
+      const result = await postService.deletePost(postId, orgOwnerId, 'user');
       expect(result).toBe(true);
-      expect(mockOrgService.validateCompanyPublishingAccess).toHaveBeenCalledWith(
-        orgOwnerId,
-        companyAId,
-      );
+      expect(
+        mockOrgService.validateCompanyPublishingAccess,
+      ).toHaveBeenCalledWith(orgOwnerId, companyAId);
     });
 
     it('blocks non-owner non-admin user without org authority from deleting post', async () => {

@@ -95,10 +95,7 @@ export class PostRepository extends BaseRepository<PostDocument> {
           visibility: 'PUBLIC',
           status: { $nin: ['SUSPENDED', 'REJECTED', 'DELETED'] },
           isDeleted: { $ne: true },
-          $or: [
-            { status: 'APPROVED' },
-            { verificationStatus: 'VERIFIED' },
-          ],
+          $or: [{ status: 'APPROVED' }, { verificationStatus: 'VERIFIED' }],
         })
         .toArray();
 

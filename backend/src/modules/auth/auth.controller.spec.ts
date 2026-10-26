@@ -9,9 +9,11 @@ describe('AuthController', () => {
 
   beforeEach(async () => {
     mockSignedUrlService = {
-      generateSignedImageUrl: jest.fn().mockImplementation(async (key: string) => {
-        return `https://s3.signed.cdn/${key}?signature=valid_sig`;
-      }),
+      generateSignedImageUrl: jest
+        .fn()
+        .mockImplementation(async (key: string) => {
+          return `https://s3.signed.cdn/${key}?signature=valid_sig`;
+        }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -68,7 +70,8 @@ describe('AuthController', () => {
           primaryRole: 'STUDENT',
           role: 'student',
           deviceId: 'dev-abc',
-          avatar: 'https://s3.signed.cdn/profiles/jane-123.jpg?signature=valid_sig',
+          avatar:
+            'https://s3.signed.cdn/profiles/jane-123.jpg?signature=valid_sig',
         },
       });
     });
@@ -90,7 +93,9 @@ describe('AuthController', () => {
 
       const result = await controller.getMe(mockReq);
 
-      expect(mockSignedUrlService.generateSignedImageUrl).not.toHaveBeenCalled();
+      expect(
+        mockSignedUrlService.generateSignedImageUrl,
+      ).not.toHaveBeenCalled();
       expect(result.user.avatar).toBe('');
       expect(result.user.primaryRole).toBe('EDUCATOR');
     });
@@ -118,4 +123,3 @@ describe('AuthController', () => {
     });
   });
 });
-

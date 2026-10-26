@@ -124,7 +124,9 @@ export class UpdateProfileDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(100, { message: 'Current position must not exceed 100 characters.' })
+  @MaxLength(100, {
+    message: 'Current position must not exceed 100 characters.',
+  })
   currentPosition?: string;
 
   @IsOptional()
@@ -242,4 +244,3 @@ export class UpdateProfileDto {
     showExactLocationToPublic?: boolean;
   };
 }
-

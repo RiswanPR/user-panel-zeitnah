@@ -242,7 +242,11 @@ export class PostService {
       if (!allowedTypes.includes(mediaType)) {
         throw new BadRequestException(`Invalid media type: ${mediaType}`);
       }
-      if (retainedItem && retainedItem.type && retainedItem.type !== mediaType) {
+      if (
+        retainedItem &&
+        retainedItem.type &&
+        retainedItem.type !== mediaType
+      ) {
         throw new BadRequestException(
           'Media type cannot be changed for existing media',
         );
@@ -739,7 +743,8 @@ export class PostService {
       if (
         cleanOrgId &&
         postData.audience === 'PUBLIC' &&
-        typeof this.organizationsService?.notifyFollowersOfNewPost === 'function'
+        typeof this.organizationsService?.notifyFollowersOfNewPost ===
+          'function'
       ) {
         this.organizationsService
           .notifyFollowersOfNewPost(createdPost)
@@ -972,8 +977,10 @@ export class PostService {
         }
       }
       try {
-        const existingPopulated =
-          await this.postRepository.findByIdPopulated(id, userId);
+        const existingPopulated = await this.postRepository.findByIdPopulated(
+          id,
+          userId,
+        );
         if (existingPopulated && Array.isArray(existingPopulated.media)) {
           for (const m of existingPopulated.media) {
             if (!existingMediaList.some((e) => isDuplicateItem(e, m))) {
@@ -1321,7 +1328,9 @@ export class PostService {
             canonicalPostId: canonicalPostIdStr,
             originalPostId: canonicalPostIdStr,
             postId: canonicalPostIdStr,
-            repostId: createdRepost?._id ? String(createdRepost._id) : undefined,
+            repostId: createdRepost?._id
+              ? String(createdRepost._id)
+              : undefined,
             ...(orgIdStr ? { organizationId: orgIdStr } : {}),
           },
         });

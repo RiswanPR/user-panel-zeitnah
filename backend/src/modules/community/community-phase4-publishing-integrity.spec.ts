@@ -144,7 +144,7 @@ describe('Zeitnah Community — Phase 4: Publishing Workflow & Ownership Integri
         audience: PostAudience.PUBLIC,
       };
 
-      const result = await postService.createPost(authUserA, spoofedPayload as any);
+      const result = await postService.createPost(authUserA, spoofedPayload);
 
       expect(result).toBeDefined();
       const createdData = mockPostRepo.create.mock.calls[0][0];
@@ -302,7 +302,7 @@ describe('Zeitnah Community — Phase 4: Publishing Workflow & Ownership Integri
         'post-personal-a',
         authUserA,
         'student',
-        maliciousEdit as any,
+        maliciousEdit,
       );
 
       expect(mockPostRepo.update).toHaveBeenCalledTimes(1);
@@ -319,12 +319,9 @@ describe('Zeitnah Community — Phase 4: Publishing Workflow & Ownership Integri
 
     it('rejects updatePost by an unauthorized user on a personal post', async () => {
       await expect(
-        postService.updatePost(
-          'post-personal-a',
-          attackerUser,
-          'student',
-          { content: 'Unauthorized edit' } as any,
-        ),
+        postService.updatePost('post-personal-a', attackerUser, 'student', {
+          content: 'Unauthorized edit',
+        } as any),
       ).rejects.toThrow(ForbiddenException);
 
       expect(mockPostRepo.update).not.toHaveBeenCalled();
@@ -336,7 +333,7 @@ describe('Zeitnah Community — Phase 4: Publishing Workflow & Ownership Integri
         'post-company-a',
         authUserA,
         'student',
-        { content: 'Manager updated announcement' } as any,
+        { content: 'Manager updated announcement' },
       );
 
       expect(result).toBeDefined();

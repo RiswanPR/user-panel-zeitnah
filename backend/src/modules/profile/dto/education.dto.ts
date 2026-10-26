@@ -28,8 +28,10 @@ export class EducationDto {
   @IsDateString({}, { message: 'Valid start date is required.' })
   startDate!: string;
 
-  @Transform(({ value }) => (value === '' || value === undefined ? null : value))
-  @ValidateIf((o) => !Boolean(o.currentlyStudying))
+  @Transform(({ value }) =>
+    value === '' || value === undefined ? null : value,
+  )
+  @ValidateIf((o) => !o.currentlyStudying)
   @IsOptional()
   @IsDateString({}, { message: 'End date must be a valid date.' })
   endDate?: string | null;

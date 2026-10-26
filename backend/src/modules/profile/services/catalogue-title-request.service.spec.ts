@@ -99,12 +99,21 @@ describe('CatalogueTitleRequestService (Phase 3 & Phase 6)', () => {
         if (deptId === 'retired-dept') return mockRetiredDepartment;
         return undefined;
       }),
-      getTitle: jest.fn().mockImplementation((deptId: string, titleId: string) => {
-        if (deptId === 'civil-engineering' && titleId === 'geothermal-specialist') {
-          return { id: 'geothermal-specialist', label: 'Geothermal Specialist', status: 'active' };
-        }
-        return undefined;
-      }),
+      getTitle: jest
+        .fn()
+        .mockImplementation((deptId: string, titleId: string) => {
+          if (
+            deptId === 'civil-engineering' &&
+            titleId === 'geothermal-specialist'
+          ) {
+            return {
+              id: 'geothermal-specialist',
+              label: 'Geothermal Specialist',
+              status: 'active',
+            };
+          }
+          return undefined;
+        }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -499,7 +508,9 @@ describe('CatalogueTitleRequestService (Phase 3 & Phase 6)', () => {
       expect(res.isOfficialTitle).toBe(false);
       expect(res.request).toBeDefined();
       expect(res.request?.requestedTitle).toBe('Coastal Protection Specialist');
-      expect(res.request?.normalizedTitle).toBe('coastal protection specialist');
+      expect(res.request?.normalizedTitle).toBe(
+        'coastal protection specialist',
+      );
       expect(res.request?.status).toBe('pending');
     });
 
@@ -591,7 +602,9 @@ describe('CatalogueTitleRequestService (Phase 3 & Phase 6)', () => {
 
       expect(res.action).toBe('ALREADY_APPROVED');
       expect(res.isOfficialTitle).toBe(true);
-      expect(res.resolvedTitleId).toBe('civil-engineering:geothermal-specialist');
+      expect(res.resolvedTitleId).toBe(
+        'civil-engineering:geothermal-specialist',
+      );
       expect(res.request?.id).toBe('req_prev_approved');
     });
 
@@ -618,7 +631,9 @@ describe('CatalogueTitleRequestService (Phase 3 & Phase 6)', () => {
       expect(res.request?.status).toBe('pending');
 
       // The rejected record remains preserved in the database
-      const rejectedDoc = storedRequests.find((r) => r.id === 'req_prior_rejected');
+      const rejectedDoc = storedRequests.find(
+        (r) => r.id === 'req_prior_rejected',
+      );
       expect(rejectedDoc).toBeDefined();
       expect(rejectedDoc.status).toBe('rejected');
     });

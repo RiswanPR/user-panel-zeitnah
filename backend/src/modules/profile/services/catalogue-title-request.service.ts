@@ -51,10 +51,7 @@ export class CatalogueTitleRequestService {
    * trims, lowercases, and collapses multiple consecutive spaces.
    */
   static normalizeTitle(title: string): string {
-    return (title || '')
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, ' ');
+    return (title || '').trim().toLowerCase().replace(/\s+/g, ' ');
   }
 
   /**
@@ -117,9 +114,7 @@ export class CatalogueTitleRequestService {
     // Check 1: Does this title already exist in the department catalogue?
     const existingTitles = department.titles || [];
     for (const t of existingTitles) {
-      if (
-        CatalogueTitleRequestService.normalizeTitle(t.label) === normalized
-      ) {
+      if (CatalogueTitleRequestService.normalizeTitle(t.label) === normalized) {
         throw new BadRequestException(
           `Title "${rawTitle}" already exists in the ${department.name} department catalogue. Please select it from the available catalogue titles.`,
         );
@@ -279,7 +274,8 @@ export class CatalogueTitleRequestService {
       );
     }
 
-    const normalized = CatalogueTitleRequestService.normalizeTitle(trimmedTitle);
+    const normalized =
+      CatalogueTitleRequestService.normalizeTitle(trimmedTitle);
 
     // Check 1: Does this match an official active catalogue title or alias in this department?
     const matchingOfficialTitles: any[] = [];
@@ -291,7 +287,9 @@ export class CatalogueTitleRequestService {
       }
       if (Array.isArray(t.aliases)) {
         for (const alias of t.aliases) {
-          if (CatalogueTitleRequestService.normalizeTitle(alias) === normalized) {
+          if (
+            CatalogueTitleRequestService.normalizeTitle(alias) === normalized
+          ) {
             matchingOfficialTitles.push(t);
             break;
           }
@@ -330,10 +328,13 @@ export class CatalogueTitleRequestService {
       .exec();
 
     if (alreadyApproved) {
-      let resolvedId = alreadyApproved.createdTitleId || null;
+      const resolvedId = alreadyApproved.createdTitleId || null;
       let resolvedName = alreadyApproved.requestedTitle || trimmedTitle;
       if (resolvedId && typeof this.catalogueService?.getTitle === 'function') {
-        const catTitle = this.catalogueService.getTitle(department.id, resolvedId);
+        const catTitle = this.catalogueService.getTitle(
+          department.id,
+          resolvedId,
+        );
         if (catTitle) {
           resolvedName = catTitle.label;
         }
@@ -461,8 +462,7 @@ export class CatalogueTitleRequestService {
   async getUserRequests(
     userId: string,
     statusOrOptions?:
-      | string
-      | { status?: string; page?: number; limit?: number },
+      string | { status?: string; page?: number; limit?: number },
   ): Promise<CatalogueTitleRequest[]> {
     if (!userId) return [];
     let status: string | undefined;

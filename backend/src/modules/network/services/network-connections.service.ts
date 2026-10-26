@@ -544,16 +544,20 @@ export class NetworkConnectionsService {
           avatarUrl,
           headline,
           currentRole: u.currentRole || '',
-          professionalIdentity: u.professionalIdentity || (u.currentRole ? {
-            departmentId: null,
-            departmentName: null,
-            titleId: null,
-            titleName: u.currentRole,
-            isCustomTitle: false,
-            isLegacyTitle: true,
-            catalogueVersion: null,
-            updatedAt: null,
-          } : null),
+          professionalIdentity:
+            u.professionalIdentity ||
+            (u.currentRole
+              ? {
+                  departmentId: null,
+                  departmentName: null,
+                  titleId: null,
+                  titleName: u.currentRole,
+                  isCustomTitle: false,
+                  isLegacyTitle: true,
+                  catalogueVersion: null,
+                  updatedAt: null,
+                }
+              : null),
           course: primaryCourse,
           skills: combinedSkills,
           interests: combinedSkills,
@@ -633,16 +637,20 @@ export class NetworkConnectionsService {
       avatarUrl: avatar,
       role: raw.role || 'student',
       currentRole: raw.currentRole || '',
-      professionalIdentity: raw.professionalIdentity || (raw.currentRole ? {
-        departmentId: null,
-        departmentName: null,
-        titleId: null,
-        titleName: raw.currentRole,
-        isCustomTitle: false,
-        isLegacyTitle: true,
-        catalogueVersion: null,
-        updatedAt: null,
-      } : null),
+      professionalIdentity:
+        raw.professionalIdentity ||
+        (raw.currentRole
+          ? {
+              departmentId: null,
+              departmentName: null,
+              titleId: null,
+              titleName: raw.currentRole,
+              isCustomTitle: false,
+              isLegacyTitle: true,
+              catalogueVersion: null,
+              updatedAt: null,
+            }
+          : null),
       headline,
       course: primaryCourse,
       skills: Array.isArray(raw.skills) ? raw.skills : [],

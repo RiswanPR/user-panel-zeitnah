@@ -28,7 +28,9 @@ describe('Auth Session Duration & 90-Day Policy Tests', () => {
       findById: jest.fn(),
       exists: jest.fn(),
       create: jest.fn(),
-      updateOne: jest.fn().mockResolvedValue({ acknowledged: true, modifiedCount: 1 }),
+      updateOne: jest
+        .fn()
+        .mockResolvedValue({ acknowledged: true, modifiedCount: 1 }),
     };
 
     auditLogsService = {
@@ -100,7 +102,9 @@ describe('Auth Session Duration & 90-Day Policy Tests', () => {
   describe('1. Configured Session & Token Expiry Policy', () => {
     it('✓ configured default session duration is exactly 90 days in milliseconds (7,776,000,000 ms)', () => {
       expect(authService.getRefreshTokenExpiryMs()).toBe(NINETY_DAYS_MS);
-      expect(authService.getRefreshTokenExpiryMs()).toBe(90 * 24 * 60 * 60 * 1000);
+      expect(authService.getRefreshTokenExpiryMs()).toBe(
+        90 * 24 * 60 * 60 * 1000,
+      );
     });
 
     it('✓ configured default refresh token expiration is 90d string', () => {
@@ -117,7 +121,10 @@ describe('Auth Session Duration & 90-Day Policy Tests', () => {
       };
 
       // Call private generateAuthTokens via any cast
-      const tokens = await (authService as any).generateAuthTokens(mockUser, 'dev_test_1');
+      const tokens = await (authService as any).generateAuthTokens(
+        mockUser,
+        'dev_test_1',
+      );
 
       // Refresh token JWT sign call received expiresIn: '90d'
       expect(jwtService.sign).toHaveBeenCalledWith(
@@ -161,7 +168,9 @@ describe('Auth Session Duration & 90-Day Policy Tests', () => {
         refreshTokenExpiry: new Date(Date.now() + 89 * 24 * 60 * 60 * 1000),
       };
 
-      const isExpired = (authService as any).isSessionExpired(deviceWithinLifetime);
+      const isExpired = (authService as any).isSessionExpired(
+        deviceWithinLifetime,
+      );
       expect(isExpired).toBe(false);
     });
 
@@ -173,7 +182,9 @@ describe('Auth Session Duration & 90-Day Policy Tests', () => {
         lastSeen: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
       };
 
-      const isExpired = (authService as any).isSessionExpired(deviceFallbackValid);
+      const isExpired = (authService as any).isSessionExpired(
+        deviceFallbackValid,
+      );
       expect(isExpired).toBe(false);
     });
   });
@@ -239,9 +250,9 @@ describe('Auth Session Duration & 90-Day Policy Tests', () => {
         lean: jest.fn().mockResolvedValue(mockUser),
       });
 
-      await expect(authService.refreshToken('valid-looking-token')).rejects.toThrow(
-        new UnauthorizedException('Device session expired'),
-      );
+      await expect(
+        authService.refreshToken('valid-looking-token'),
+      ).rejects.toThrow(new UnauthorizedException('Device session expired'));
     });
 
     it('✓ refresh token rejects invalid JWT token signature', async () => {
@@ -270,9 +281,9 @@ describe('Auth Session Duration & 90-Day Policy Tests', () => {
         lean: jest.fn().mockResolvedValue(mockUser),
       });
 
-      await expect(authService.refreshToken('current-token-does-not-match')).rejects.toThrow(
-        new UnauthorizedException('Invalid refresh token'),
-      );
+      await expect(
+        authService.refreshToken('current-token-does-not-match'),
+      ).rejects.toThrow(new UnauthorizedException('Invalid refresh token'));
     });
   });
 
@@ -388,10 +399,7 @@ describe('Auth Session Duration & 90-Day Policy Tests', () => {
     it('✓ logout removes device session from user document and records audit event', async () => {
       const mockUser: any = {
         _id: '507f1f77bcf86cd799439011',
-        devices: [
-          { deviceId: 'dev_logout_1' },
-          { deviceId: 'dev_retained_2' },
-        ],
+        devices: [{ deviceId: 'dev_logout_1' }, { deviceId: 'dev_retained_2' }],
       };
 
       userModel.findById.mockResolvedValue(mockUser);
@@ -419,10 +427,7 @@ describe('Auth Session Duration & 90-Day Policy Tests', () => {
     it('✓ revokeSession terminates specific session and leaves others intact', async () => {
       const mockUser: any = {
         _id: '507f1f77bcf86cd799439011',
-        devices: [
-          { deviceId: 'dev_current' },
-          { deviceId: 'dev_to_revoke' },
-        ],
+        devices: [{ deviceId: 'dev_current' }, { deviceId: 'dev_to_revoke' }],
       };
 
       userModel.findById.mockResolvedValue(mockUser);
@@ -501,8 +506,14 @@ describe('Auth Session Duration & 90-Day Policy Tests', () => {
 
       await authController.logout(mockReq, mockRes);
 
-      expect(mockRes.clearCookie).toHaveBeenCalledWith('token', expect.any(Object));
-      expect(mockRes.clearCookie).toHaveBeenCalledWith('refreshToken', expect.any(Object));
+      expect(mockRes.clearCookie).toHaveBeenCalledWith(
+        'token',
+        expect.any(Object),
+      );
+      expect(mockRes.clearCookie).toHaveBeenCalledWith(
+        'refreshToken',
+        expect.any(Object),
+      );
     });
   });
 });

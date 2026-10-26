@@ -849,13 +849,13 @@ export class AuthService {
         primaryRole:
           normalizeCanonicalPrimaryRole(
             user.primaryRole ||
-            (user.role === 'teacher'
-              ? 'EDUCATOR'
-              : user.role === 'recruiter'
-                ? 'RECRUITER'
-                : user.role === 'admin'
-                  ? 'ADMIN'
-                  : 'STUDENT'),
+              (user.role === 'teacher'
+                ? 'EDUCATOR'
+                : user.role === 'recruiter'
+                  ? 'RECRUITER'
+                  : user.role === 'admin'
+                    ? 'ADMIN'
+                    : 'STUDENT'),
           ) || 'STUDENT',
 
         role: user.role,
@@ -864,6 +864,28 @@ export class AuthService {
       },
     };
   }
+  private isAppReviewAccount(email?: string | null): boolean {
+    if (!email) {
+      return false;
+    }
+    const isEnabled = process.env.APP_REVIEW_ACCESS_ENABLED === 'true';
+    if (!isEnabled) {
+      return false;
+    }
+    const configuredEmail = (process.env.APP_REVIEW_EMAIL || '')
+      .trim()
+      .toLowerCase();
+    if (!configuredEmail) {
+      return false;
+    }
+    const configuredHash = (process.env.APP_REVIEW_OTP_HASH || '').trim();
+    if (!configuredHash) {
+      return false;
+    }
+    const normalizedEmail = email.trim().toLowerCase();
+    return normalizedEmail === configuredEmail;
+  }
+
   // ==================================================
   // LOGIN SEND OTP
   // ==================================================
@@ -885,6 +907,86 @@ export class AuthService {
 
     if (!user) {
       throw new UnauthorizedException('User not found');
+    }
+
+    if (this.isAppReviewAccount(cleanEmail)) {
+      if (user.account_Status?.isBlocked || user.account_Status?.isDeleted) {
+        throw new UnauthorizedException('Account restricted');
+      }
+      if (user.account_Status?.isActive === false) {
+        throw new UnauthorizedException('Account inactive');
+      }
+      if (user.role === 'admin' || user.primaryRole === 'ADMIN') {
+        this.logAuthEvent('APP_REVIEW_ADMIN_REJECTED', {
+          userId: user._id.toString(),
+          email: cleanEmail,
+        });
+        throw new UnauthorizedException(
+          'Review access not permitted for privileged accounts',
+        );
+      }
+
+      // Ensure user has a valid, compliant username (<= 20 chars, schema compliant) before saving
+      if (
+        !user.username ||
+        !this.usernameService.validate(user.username).valid
+      ) {
+        try {
+          const safeUsername =
+            await this.usernameService.generateUniqueUsername({
+              source: user.username,
+              name: user.name,
+              email: user.email,
+              isTaken: async (cand) => {
+                const exists = await this.userModel.exists({
+                  username: cand,
+                  _id: { $ne: user._id },
+                });
+                return Boolean(exists);
+              },
+            });
+          user.username = safeUsername;
+          if (
+            user.usernameClaimed === undefined ||
+            user.usernameClaimed === null
+          ) {
+            user.usernameClaimed = false;
+          }
+          await this.userModel.updateOne(
+            { _id: user._id },
+            {
+              $set: {
+                username: user.username,
+                usernameClaimed: user.usernameClaimed,
+              },
+            },
+          );
+        } catch (err: any) {
+          this.logger.error(
+            `Failed to assign valid username in loginSendOtp for review user ${user._id}: ${err?.message}`,
+          );
+          throw new BadRequestException(
+            'Could not assign a valid username to your account. Please contact support.',
+          );
+        }
+      }
+
+      await this.auditLogsService.record({
+        actor: user._id,
+        action: 'APP_REVIEW_OTP_REQUESTED',
+        entityType: 'auth',
+        entityId: user._id.toString(),
+        message: 'App review login OTP requested',
+        metadata: {
+          email: cleanEmail,
+        },
+      });
+
+      this.logAuthEvent('APP_REVIEW_OTP_REQUESTED', { email: cleanEmail });
+
+      return {
+        message: 'OTP sent successfully',
+      };
     }
 
     // Ensure user has a valid, compliant username (<= 20 chars, schema compliant) before saving
@@ -980,25 +1082,85 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
-    if (user.account_Status?.isBlocked) {
-      throw new UnauthorizedException('Account blocked');
+    if (user.account_Status?.isBlocked || user.account_Status?.isDeleted) {
+      throw new UnauthorizedException('Account restricted');
+    }
+    if (user.account_Status?.isActive === false) {
+      throw new UnauthorizedException('Account inactive');
     }
 
-    // OTP Expiry
-    if (!user.otpExpiry || new Date() > user.otpExpiry) {
-      throw new UnauthorizedException('OTP expired');
-    }
+    const loginMetadata = this.resolveLoginMetadata(data, ip);
+    const requestIp = loginMetadata.ip;
+    const loginLocation = loginMetadata.location;
 
-    // OTP Exists
-    if (!user.otp) {
-      throw new UnauthorizedException('OTP not found');
-    }
+    const isReview = this.isAppReviewAccount(email);
 
-    // Compare OTP
-    const isOtpValid = await bcrypt.compare(data.otp, user.otp);
+    if (isReview) {
+      if (user.role === 'admin' || user.primaryRole === 'ADMIN') {
+        this.logAuthEvent('APP_REVIEW_ADMIN_REJECTED', {
+          userId: user._id.toString(),
+          email,
+        });
+        throw new UnauthorizedException(
+          'Review access not permitted for privileged accounts',
+        );
+      }
 
-    if (!isOtpValid) {
-      throw new UnauthorizedException('Invalid OTP');
+      const reviewOtpHash = (process.env.APP_REVIEW_OTP_HASH || '').trim();
+      if (!reviewOtpHash) {
+        this.logger.error('APP_REVIEW_OTP_HASH is missing or empty');
+        throw new UnauthorizedException('Review authentication unavailable');
+      }
+
+      const isReviewOtpValid = await bcrypt.compare(data.otp, reviewOtpHash);
+      if (!isReviewOtpValid) {
+        this.logAuthEvent('APP_REVIEW_OTP_INVALID', {
+          userId: user._id.toString(),
+          email,
+        });
+        throw new UnauthorizedException('Invalid OTP');
+      }
+
+      await this.auditLogsService.record({
+        actor: user._id,
+        action: 'APP_REVIEW_LOGIN_SUCCESS',
+        entityType: 'auth',
+        entityId: user._id.toString(),
+        severity: 'info',
+        ipAddress: requestIp,
+        deviceId: data.deviceId,
+        message: 'Dedicated App Review account authenticated successfully',
+        metadata: {
+          email,
+          deviceType: data.deviceType,
+          browser: data.browser,
+          os: data.os,
+          location: loginLocation,
+        },
+      });
+
+      this.logAuthEvent('APP_REVIEW_LOGIN_SUCCESS', {
+        userId: user._id.toString(),
+        email,
+        deviceId: data.deviceId,
+      });
+    } else {
+      // OTP Expiry
+      if (!user.otpExpiry || new Date() > user.otpExpiry) {
+        throw new UnauthorizedException('OTP expired');
+      }
+
+      // OTP Exists
+      if (!user.otp) {
+        throw new UnauthorizedException('OTP not found');
+      }
+
+      // Compare OTP
+      const isOtpValid = await bcrypt.compare(data.otp, user.otp);
+
+      if (!isOtpValid) {
+        throw new UnauthorizedException('Invalid OTP');
+      }
     }
 
     // =========================
@@ -1008,19 +1170,18 @@ export class AuthService {
     // Clean up expired device sessions first so stale devices never block login
     this.removeExpiredSessions(user);
 
-    const loginMetadata = this.resolveLoginMetadata(data, ip);
-    const requestIp = loginMetadata.ip;
-    const loginLocation = loginMetadata.location;
     const knownDevices = [...user.devices];
 
-    const suspiciousLogin = this.detectSuspiciousLogin(knownDevices, {
-      deviceId: data.deviceId,
-      deviceType: data.deviceType,
-      browser: data.browser,
-      os: data.os,
-      ip: requestIp,
-      location: loginLocation,
-    });
+    const suspiciousLogin = isReview
+      ? { isSuspicious: false, reasons: [] }
+      : this.detectSuspiciousLogin(knownDevices, {
+          deviceId: data.deviceId,
+          deviceType: data.deviceType,
+          browser: data.browser,
+          os: data.os,
+          ip: requestIp,
+          location: loginLocation,
+        });
 
     const existingDevice = user.devices.find(
       (device) => device.deviceId === data.deviceId,
@@ -1036,10 +1197,9 @@ export class AuthService {
       // SAME TYPE DEVICE EXISTS
       if (sameTypeDevice) {
         // ASK REPLACE DEVICE
-        if (!data.forceLogin) {
+        if (!data.forceLogin && !isReview) {
           return {
             replaceDevice: true,
-
             message: `Another ${data.deviceType} device is already logged in`,
           };
         }
@@ -1050,124 +1210,115 @@ export class AuthService {
         );
       }
 
-      // MAX TOTAL DEVICES
-      if (user.devices.length >= 2) {
+      // For the dedicated review account, auto-prune oldest device if needed
+      // so reviewers are never blocked by a device limit error
+      if (isReview) {
+        while (user.devices.length >= 2) {
+          user.devices.shift();
+        }
+      } else if (user.devices.length >= 2) {
         throw new UnauthorizedException('Device limit exceeded');
       }
 
       // ADD NEW DEVICE
       user.devices.push({
         deviceId: data.deviceId,
-
         deviceType: data.deviceType,
-
         browser: data.browser,
-
         os: data.os,
-
         ip: requestIp,
-
         location: loginLocation,
-
         lastSeen: new Date(),
-
         refreshToken: null,
-
         refreshTokenExpiry: null,
       });
     }
 
     await this.loginHistoryService.create({
       user: user._id,
-
       deviceId: data.deviceId,
-
       deviceType: data.deviceType,
-
       browser: data.browser,
-
       os: data.os,
-
       ipAddress: requestIp,
-
       location: loginLocation,
-
       isSuspicious: suspiciousLogin.isSuspicious,
-
       suspiciousReasons: suspiciousLogin.reasons,
     });
 
-    await this.auditLogsService.record({
-      actor: user._id,
-      action: 'LOGIN_SUCCESS',
-      entityType: 'auth',
-      entityId: user._id.toString(),
-      severity: suspiciousLogin.isSuspicious ? 'warning' : 'info',
-      ipAddress: requestIp,
-      deviceId: data.deviceId,
-      message: suspiciousLogin.isSuspicious
-        ? 'User logged in with suspicious signals'
-        : 'User logged in',
-      metadata: {
-        deviceType: data.deviceType,
-        browser: data.browser,
-        os: data.os,
-        location: loginLocation,
-        suspiciousReasons: suspiciousLogin.reasons,
-      },
-    });
-
-    if (suspiciousLogin.isSuspicious) {
+    if (!isReview) {
       await this.auditLogsService.record({
         actor: user._id,
-        action: 'SUSPICIOUS_LOGIN_DETECTED',
+        action: 'LOGIN_SUCCESS',
         entityType: 'auth',
         entityId: user._id.toString(),
-        severity: 'warning',
+        severity: suspiciousLogin.isSuspicious ? 'warning' : 'info',
         ipAddress: requestIp,
         deviceId: data.deviceId,
-        message: 'Suspicious login detected',
+        message: suspiciousLogin.isSuspicious
+          ? 'User logged in with suspicious signals'
+          : 'User logged in',
         metadata: {
-          reasons: suspiciousLogin.reasons,
           deviceType: data.deviceType,
           browser: data.browser,
           os: data.os,
           location: loginLocation,
+          suspiciousReasons: suspiciousLogin.reasons,
         },
       });
 
-      await this.sendSuspiciousLoginEmail(
-        user,
-        {
+      if (suspiciousLogin.isSuspicious) {
+        await this.auditLogsService.record({
+          actor: user._id,
+          action: 'SUSPICIOUS_LOGIN_DETECTED',
+          entityType: 'auth',
+          entityId: user._id.toString(),
+          severity: 'warning',
+          ipAddress: requestIp,
           deviceId: data.deviceId,
-          deviceType: data.deviceType,
-          browser: data.browser,
-          os: data.os,
-          ip: requestIp,
-          location: loginLocation,
-        },
-        suspiciousLogin.reasons,
-      );
-    }
+          message: 'Suspicious login detected',
+          metadata: {
+            reasons: suspiciousLogin.reasons,
+            deviceType: data.deviceType,
+            browser: data.browser,
+            os: data.os,
+            location: loginLocation,
+          },
+        });
 
-    // Dispatch security.new_login / security.suspicious_activity notification
-    try {
-      await this.notificationsService.createNotification({
-        recipientId: user._id.toString(),
-        type: suspiciousLogin.isSuspicious
-          ? 'security.suspicious_activity'
-          : 'security.new_login',
-        category: 'security',
-        priority: 'critical',
-        title: suspiciousLogin.isSuspicious
-          ? 'Suspicious Login Detected'
-          : 'New Login to Your Account',
-        message: `Signed in on ${data.deviceType || 'device'} (${data.browser || 'browser'}) from ${loginLocation || 'Unknown location'}.`,
-        actionUrl: '/active-sessions',
-        idempotencyKey: `login_${user._id.toString()}_${data.deviceId}_${Date.now()}`,
-      });
-    } catch (err: any) {
-      // safe fallback
+        await this.sendSuspiciousLoginEmail(
+          user,
+          {
+            deviceId: data.deviceId,
+            deviceType: data.deviceType,
+            browser: data.browser,
+            os: data.os,
+            ip: requestIp,
+            location: loginLocation,
+          },
+          suspiciousLogin.reasons,
+        );
+      }
+
+      // Dispatch security.new_login / security.suspicious_activity notification
+      try {
+        await this.notificationsService.createNotification({
+          recipientId: user._id.toString(),
+          type: suspiciousLogin.isSuspicious
+            ? 'security.suspicious_activity'
+            : 'security.new_login',
+          category: 'security',
+          priority: 'critical',
+          title: suspiciousLogin.isSuspicious
+            ? 'Suspicious Login Detected'
+            : 'New Login to Your Account',
+          message: `Signed in on ${data.deviceType || 'device'} (${data.browser || 'browser'}) from ${loginLocation || 'Unknown location'}.`,
+          actionUrl: '/active-sessions',
+          idempotencyKey: `login_${user._id.toString()}_${data.deviceId}_${Date.now()}`,
+        });
+      } catch (err: any) {
+        // safe fallback
+      }
     }
     // =========================
     // GENERATE JWT
@@ -1256,13 +1407,13 @@ export class AuthService {
         primaryRole:
           normalizeCanonicalPrimaryRole(
             user.primaryRole ||
-            (user.role === 'teacher'
-              ? 'EDUCATOR'
-              : user.role === 'recruiter'
-                ? 'RECRUITER'
-                : user.role === 'admin'
-                  ? 'ADMIN'
-                  : 'STUDENT'),
+              (user.role === 'teacher'
+                ? 'EDUCATOR'
+                : user.role === 'recruiter'
+                  ? 'RECRUITER'
+                  : user.role === 'admin'
+                    ? 'ADMIN'
+                    : 'STUDENT'),
           ) || (user.role === 'admin' ? 'ADMIN' : 'STUDENT'),
 
         role: user.role,
@@ -1408,13 +1559,13 @@ export class AuthService {
         primaryRole:
           normalizeCanonicalPrimaryRole(
             user.primaryRole ||
-            (user.role === 'teacher'
-              ? 'EDUCATOR'
-              : user.role === 'recruiter'
-                ? 'RECRUITER'
-                : user.role === 'admin'
-                  ? 'ADMIN'
-                  : 'STUDENT'),
+              (user.role === 'teacher'
+                ? 'EDUCATOR'
+                : user.role === 'recruiter'
+                  ? 'RECRUITER'
+                  : user.role === 'admin'
+                    ? 'ADMIN'
+                    : 'STUDENT'),
           ) || (user.role === 'admin' ? 'ADMIN' : 'STUDENT'),
 
         role: user.role,

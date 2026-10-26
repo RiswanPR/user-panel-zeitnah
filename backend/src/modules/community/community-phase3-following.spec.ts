@@ -23,84 +23,86 @@ describe('Community Unified Following Feed & Company Feed — Phase 3 Backend Ve
       };
     });
 
-    const mockDbCollection = jest.fn().mockImplementation((collName: string) => {
-      if (collName === 'organizations') {
+    const mockDbCollection = jest
+      .fn()
+      .mockImplementation((collName: string) => {
+        if (collName === 'organizations') {
+          return {
+            find: jest.fn().mockReturnValue({
+              toArray: jest.fn().mockResolvedValue([
+                {
+                  _id: new Types.ObjectId(eligibleCompanyA),
+                  visibility: 'PUBLIC',
+                  status: 'APPROVED',
+                  verificationStatus: 'VERIFIED',
+                },
+                {
+                  _id: new Types.ObjectId(eligibleCompanyB),
+                  visibility: 'PUBLIC',
+                  status: 'APPROVED',
+                  verificationStatus: 'VERIFIED',
+                },
+              ]),
+            }),
+            findOne: jest.fn().mockResolvedValue({
+              _id: new Types.ObjectId(eligibleCompanyA),
+              createdBy: new Types.ObjectId(),
+              visibility: 'PUBLIC',
+            }),
+          };
+        }
+
+        if (collName === 'network_connections') {
+          return {
+            find: jest.fn().mockReturnValue({
+              toArray: jest.fn().mockResolvedValue([
+                {
+                  requesterId: new Types.ObjectId(currentUserId),
+                  recipientId: new Types.ObjectId(followedUserA),
+                  status: 'accepted',
+                },
+                {
+                  requesterId: new Types.ObjectId(followedUserB),
+                  recipientId: new Types.ObjectId(currentUserId),
+                  status: 'accepted',
+                },
+              ]),
+            }),
+          };
+        }
+
+        if (collName === 'organization_follows') {
+          return {
+            find: jest.fn().mockReturnValue({
+              toArray: jest.fn().mockResolvedValue([
+                {
+                  userId: new Types.ObjectId(currentUserId),
+                  organizationId: new Types.ObjectId(eligibleCompanyA),
+                  notificationsEnabled: true,
+                },
+                {
+                  userId: new Types.ObjectId(currentUserId),
+                  organizationId: new Types.ObjectId(suspendedCompany),
+                  notificationsEnabled: true,
+                },
+              ]),
+            }),
+          };
+        }
+
+        if (collName === 'organization_memberships') {
+          return {
+            findOne: jest.fn().mockResolvedValue(null),
+          };
+        }
+
         return {
           find: jest.fn().mockReturnValue({
-            toArray: jest.fn().mockResolvedValue([
-              {
-                _id: new Types.ObjectId(eligibleCompanyA),
-                visibility: 'PUBLIC',
-                status: 'APPROVED',
-                verificationStatus: 'VERIFIED',
-              },
-              {
-                _id: new Types.ObjectId(eligibleCompanyB),
-                visibility: 'PUBLIC',
-                status: 'APPROVED',
-                verificationStatus: 'VERIFIED',
-              },
-            ]),
+            toArray: jest.fn().mockResolvedValue([]),
           }),
-          findOne: jest.fn().mockResolvedValue({
-            _id: new Types.ObjectId(eligibleCompanyA),
-            createdBy: new Types.ObjectId(),
-            visibility: 'PUBLIC',
-          }),
-        };
-      }
-
-      if (collName === 'network_connections') {
-        return {
-          find: jest.fn().mockReturnValue({
-            toArray: jest.fn().mockResolvedValue([
-              {
-                requesterId: new Types.ObjectId(currentUserId),
-                recipientId: new Types.ObjectId(followedUserA),
-                status: 'accepted',
-              },
-              {
-                requesterId: new Types.ObjectId(followedUserB),
-                recipientId: new Types.ObjectId(currentUserId),
-                status: 'accepted',
-              },
-            ]),
-          }),
-        };
-      }
-
-      if (collName === 'organization_follows') {
-        return {
-          find: jest.fn().mockReturnValue({
-            toArray: jest.fn().mockResolvedValue([
-              {
-                userId: new Types.ObjectId(currentUserId),
-                organizationId: new Types.ObjectId(eligibleCompanyA),
-                notificationsEnabled: true,
-              },
-              {
-                userId: new Types.ObjectId(currentUserId),
-                organizationId: new Types.ObjectId(suspendedCompany),
-                notificationsEnabled: true,
-              },
-            ]),
-          }),
-        };
-      }
-
-      if (collName === 'organization_memberships') {
-        return {
           findOne: jest.fn().mockResolvedValue(null),
         };
-      }
-
-      return {
-        find: jest.fn().mockReturnValue({
-          toArray: jest.fn().mockResolvedValue([]),
-        }),
-        findOne: jest.fn().mockResolvedValue(null),
-      };
-    });
+      });
 
     mockPostModel = {
       aggregate: mockAggregate,
@@ -110,7 +112,7 @@ describe('Community Unified Following Feed & Company Feed — Phase 3 Backend Ve
     };
 
     repo = new PostRepository(
-      mockPostModel as any,
+      mockPostModel,
       {} as any,
       {} as any,
       {} as any,
@@ -134,7 +136,9 @@ describe('Community Unified Following Feed & Company Feed — Phase 3 Backend Ve
       const andConditions = matchStage.$and;
       expect(Array.isArray(andConditions)).toBe(true);
 
-      const followingOr = andConditions.find((c: any) => c.$or && c.$or.length === 2);
+      const followingOr = andConditions.find(
+        (c: any) => c.$or && c.$or.length === 2,
+      );
       expect(followingOr).toBeDefined();
 
       const [personalCond, companyCond] = followingOr.$or;
@@ -159,51 +163,55 @@ describe('Community Unified Following Feed & Company Feed — Phase 3 Backend Ve
       expect(companyCond.audience).toBe('PUBLIC');
 
       // Ineligible/suspended company must NOT be in the condition
-      const orgIdsInQuery = companyCond.organizationId.$in.map((id: any) => String(id));
+      const orgIdsInQuery = companyCond.organizationId.$in.map((id: any) =>
+        String(id),
+      );
       expect(orgIdsInQuery).not.toContain(suspendedCompany);
     });
 
     it('returns company posts in Following feed when user follows companies but 0 individuals', async () => {
       // Mock network_connections returning 0 connections
-      mockPostModel.db.collection = jest.fn().mockImplementation((collName: string) => {
-        if (collName === 'network_connections') {
+      mockPostModel.db.collection = jest
+        .fn()
+        .mockImplementation((collName: string) => {
+          if (collName === 'network_connections') {
+            return {
+              find: jest.fn().mockReturnValue({
+                toArray: jest.fn().mockResolvedValue([]),
+              }),
+            };
+          }
+          if (collName === 'organization_follows') {
+            return {
+              find: jest.fn().mockReturnValue({
+                toArray: jest.fn().mockResolvedValue([
+                  {
+                    userId: new Types.ObjectId(currentUserId),
+                    organizationId: new Types.ObjectId(eligibleCompanyA),
+                  },
+                ]),
+              }),
+            };
+          }
+          if (collName === 'organizations') {
+            return {
+              find: jest.fn().mockReturnValue({
+                toArray: jest.fn().mockResolvedValue([
+                  {
+                    _id: new Types.ObjectId(eligibleCompanyA),
+                    visibility: 'PUBLIC',
+                    status: 'APPROVED',
+                  },
+                ]),
+              }),
+            };
+          }
           return {
             find: jest.fn().mockReturnValue({
               toArray: jest.fn().mockResolvedValue([]),
             }),
           };
-        }
-        if (collName === 'organization_follows') {
-          return {
-            find: jest.fn().mockReturnValue({
-              toArray: jest.fn().mockResolvedValue([
-                {
-                  userId: new Types.ObjectId(currentUserId),
-                  organizationId: new Types.ObjectId(eligibleCompanyA),
-                },
-              ]),
-            }),
-          };
-        }
-        if (collName === 'organizations') {
-          return {
-            find: jest.fn().mockReturnValue({
-              toArray: jest.fn().mockResolvedValue([
-                {
-                  _id: new Types.ObjectId(eligibleCompanyA),
-                  visibility: 'PUBLIC',
-                  status: 'APPROVED',
-                },
-              ]),
-            }),
-          };
-        }
-        return {
-          find: jest.fn().mockReturnValue({
-            toArray: jest.fn().mockResolvedValue([]),
-          }),
-        };
-      });
+        });
 
       await repo.findFeed({
         userId: currentUserId,
@@ -212,7 +220,10 @@ describe('Community Unified Following Feed & Company Feed — Phase 3 Backend Ve
 
       const matchStage = capturedPipeline[0].$match;
       expect(matchStage.organizationId.$in).toEqual(
-        expect.arrayContaining([eligibleCompanyA, new Types.ObjectId(eligibleCompanyA)]),
+        expect.arrayContaining([
+          eligibleCompanyA,
+          new Types.ObjectId(eligibleCompanyA),
+        ]),
       );
       expect(matchStage.$and).toEqual(
         expect.arrayContaining([{ audience: 'PUBLIC' }]),

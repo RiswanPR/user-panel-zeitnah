@@ -10,7 +10,10 @@ import { PostRepository } from './repositories/mongo-post.repository';
 import { NotificationsService } from '../notifications/notifications.service';
 import { OrganizationsService } from '../organizations/organizations.service';
 import { ModerationService } from '../moderation/moderation.service';
-import { ReportTargetType, ReportStatus } from '../moderation/schemas/report.schema';
+import {
+  ReportTargetType,
+  ReportStatus,
+} from '../moderation/schemas/report.schema';
 import { Types } from 'mongoose';
 
 describe('Zeitnah Community — Phase 5: Comments, Moderation & Interaction Integrity', () => {
@@ -97,13 +100,18 @@ describe('Zeitnah Community — Phase 5: Comments, Moderation & Interaction Inte
     };
 
     mockPostRepo = {
-      findById: jest.fn().mockImplementation((id: string) => Promise.resolve(posts[id] || null)),
+      findById: jest
+        .fn()
+        .mockImplementation((id: string) => Promise.resolve(posts[id] || null)),
       update: jest.fn().mockImplementation((id: string, updateQuery: any) => {
         const post = posts[id];
         if (!post) return Promise.resolve(null);
         if (updateQuery.$inc) {
           if (updateQuery.$inc['stats.comments']) {
-            post.stats.comments = Math.max(0, (post.stats.comments || 0) + updateQuery.$inc['stats.comments']);
+            post.stats.comments = Math.max(
+              0,
+              (post.stats.comments || 0) + updateQuery.$inc['stats.comments'],
+            );
           }
         }
         return Promise.resolve(post);
@@ -133,17 +141,32 @@ describe('Zeitnah Community — Phase 5: Comments, Moderation & Interaction Inte
         if (!c || c.isDeleted) return Promise.resolve(null);
         return Promise.resolve({ ...c, author: { name: 'Commenter' } });
       }),
-      findByPostId: jest.fn().mockImplementation((postId: string, limit: number, skip: number, excludedUserIds: string[] = []) => {
-        const filtered = Object.values(comments).filter(
-          (c) => c.postId === postId && !c.isDeleted && !excludedUserIds.includes(c.authorId),
-        );
-        return Promise.resolve(filtered.slice(skip, skip + limit));
-      }),
+      findByPostId: jest
+        .fn()
+        .mockImplementation(
+          (
+            postId: string,
+            limit: number,
+            skip: number,
+            excludedUserIds: string[] = [],
+          ) => {
+            const filtered = Object.values(comments).filter(
+              (c) =>
+                c.postId === postId &&
+                !c.isDeleted &&
+                !excludedUserIds.includes(c.authorId),
+            );
+            return Promise.resolve(filtered.slice(skip, skip + limit));
+          },
+        ),
       update: jest.fn().mockImplementation((id: string, updateQuery: any) => {
         const c = comments[id];
         if (!c || c.isDeleted) return Promise.resolve(null);
         if (updateQuery.$inc && updateQuery.$inc['stats.replies']) {
-          c.stats.replies = Math.max(0, (c.stats.replies || 0) + updateQuery.$inc['stats.replies']);
+          c.stats.replies = Math.max(
+            0,
+            (c.stats.replies || 0) + updateQuery.$inc['stats.replies'],
+          );
         }
         if (updateQuery.content) {
           c.content = updateQuery.content;
@@ -164,35 +187,52 @@ describe('Zeitnah Community — Phase 5: Comments, Moderation & Interaction Inte
     };
 
     mockOrganizationsService = {
-      validateCompanyPublishingAccess: jest.fn().mockImplementation(async (userId: string, orgId: string) => {
-        if (userId === companyManagerId && orgId === companyId) {
-          return {
-            organization: { _id: companyId, name: 'Zeitnah' },
-            membership: { role: 'admin', status: 'ACTIVE' },
-          };
-        }
-        if (userId === unauthorizedCompanyManagerId) {
-          throw new ForbiddenException('Forbidden: User is not authorized to act on behalf of this company');
-        }
-        if (userId === formerManagerId) {
-          throw new ForbiddenException('Forbidden: Membership is inactive or removed');
-        }
-        if (userId === followerId) {
-          throw new ForbiddenException('Forbidden: Company followers do not have management authority');
-        }
-        throw new ForbiddenException('Forbidden: User does not have company publishing access');
-      }),
+      validateCompanyPublishingAccess: jest
+        .fn()
+        .mockImplementation(async (userId: string, orgId: string) => {
+          if (userId === companyManagerId && orgId === companyId) {
+            return {
+              organization: { _id: companyId, name: 'Zeitnah' },
+              membership: { role: 'admin', status: 'ACTIVE' },
+            };
+          }
+          if (userId === unauthorizedCompanyManagerId) {
+            throw new ForbiddenException(
+              'Forbidden: User is not authorized to act on behalf of this company',
+            );
+          }
+          if (userId === formerManagerId) {
+            throw new ForbiddenException(
+              'Forbidden: Membership is inactive or removed',
+            );
+          }
+          if (userId === followerId) {
+            throw new ForbiddenException(
+              'Forbidden: Company followers do not have management authority',
+            );
+          }
+          throw new ForbiddenException(
+            'Forbidden: User does not have company publishing access',
+          );
+        }),
     };
 
     mockModerationService = {
-      hasBlockRelationship: jest.fn().mockImplementation(async (uA: string, uB: string) => {
-        return (uA === blockedUserId && uB === postOwnerId) || (uA === postOwnerId && uB === blockedUserId);
-      }),
-      getExcludedUserIds: jest.fn().mockImplementation(async (userId: string) => {
-        if (userId === postOwnerId) return [blockedUserId];
-        if (userId === blockedUserId) return [postOwnerId];
-        return [];
-      }),
+      hasBlockRelationship: jest
+        .fn()
+        .mockImplementation(async (uA: string, uB: string) => {
+          return (
+            (uA === blockedUserId && uB === postOwnerId) ||
+            (uA === postOwnerId && uB === blockedUserId)
+          );
+        }),
+      getExcludedUserIds: jest
+        .fn()
+        .mockImplementation(async (userId: string) => {
+          if (userId === postOwnerId) return [blockedUserId];
+          if (userId === blockedUserId) return [postOwnerId];
+          return [];
+        }),
       createReport: jest.fn(),
     };
 
@@ -212,7 +252,11 @@ describe('Zeitnah Community — Phase 5: Comments, Moderation & Interaction Inte
 
   describe('1. Comment Permissions & Deletion Matrix', () => {
     it('allows comment author to delete their own comment', async () => {
-      const result = await commentService.deleteComment(comment1Id, commentAuthorId, 'student');
+      const result = await commentService.deleteComment(
+        comment1Id,
+        commentAuthorId,
+        'student',
+      );
       expect(result).toBe(true);
       expect(mockCommentRepo.softDelete).toHaveBeenCalledWith(comment1Id);
       // Decrements post comments count
@@ -222,7 +266,11 @@ describe('Zeitnah Community — Phase 5: Comments, Moderation & Interaction Inte
     });
 
     it('allows post owner to moderate comments on their post', async () => {
-      const result = await commentService.deleteComment(comment1Id, postOwnerId, 'student');
+      const result = await commentService.deleteComment(
+        comment1Id,
+        postOwnerId,
+        'student',
+      );
       expect(result).toBe(true);
       expect(mockCommentRepo.softDelete).toHaveBeenCalledWith(comment1Id);
     });
@@ -241,11 +289,12 @@ describe('Zeitnah Community — Phase 5: Comments, Moderation & Interaction Inte
         'student',
       );
       expect(result).toBe(true);
-      expect(mockOrganizationsService.validateCompanyPublishingAccess).toHaveBeenCalledWith(
-        companyManagerId,
-        companyId,
+      expect(
+        mockOrganizationsService.validateCompanyPublishingAccess,
+      ).toHaveBeenCalledWith(companyManagerId, companyId);
+      expect(mockCommentRepo.softDelete).toHaveBeenCalledWith(
+        companyComment._id,
       );
-      expect(mockCommentRepo.softDelete).toHaveBeenCalledWith(companyComment._id);
     });
 
     it('rejects manager of an unrelated company with ForbiddenException', async () => {
@@ -272,7 +321,11 @@ describe('Zeitnah Community — Phase 5: Comments, Moderation & Interaction Inte
       });
 
       await expect(
-        commentService.deleteComment(companyComment._id, formerManagerId, 'student'),
+        commentService.deleteComment(
+          companyComment._id,
+          formerManagerId,
+          'student',
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -308,13 +361,27 @@ describe('Zeitnah Community — Phase 5: Comments, Moderation & Interaction Inte
   describe('2. Safe Deletion & Data Integrity', () => {
     it('verifies that comment deletion cannot affect another post comment counts', async () => {
       // Deleting a comment on personalPostId only touches personalPostId
-      await commentService.deleteComment(comment1Id, commentAuthorId, 'student');
-      expect(mockPostRepo.update).toHaveBeenCalledWith(personalPostId, expect.anything());
-      expect(mockPostRepo.update).not.toHaveBeenCalledWith(otherPostId, expect.anything());
+      await commentService.deleteComment(
+        comment1Id,
+        commentAuthorId,
+        'student',
+      );
+      expect(mockPostRepo.update).toHaveBeenCalledWith(
+        personalPostId,
+        expect.anything(),
+      );
+      expect(mockPostRepo.update).not.toHaveBeenCalledWith(
+        otherPostId,
+        expect.anything(),
+      );
     });
 
     it('updates reply counts correctly on parent comment when reply is deleted', async () => {
-      const result = await commentService.deleteComment(reply1Id, commentAuthorId, 'student');
+      const result = await commentService.deleteComment(
+        reply1Id,
+        commentAuthorId,
+        'student',
+      );
       expect(result).toBe(true);
       // Decrements parent comment replies count
       expect(mockCommentRepo.update).toHaveBeenCalledWith(comment1Id, {
@@ -324,7 +391,11 @@ describe('Zeitnah Community — Phase 5: Comments, Moderation & Interaction Inte
 
     it('prevents repeated deletion from double-decrementing counts', async () => {
       // First deletion succeeds
-      await commentService.deleteComment(comment1Id, commentAuthorId, 'student');
+      await commentService.deleteComment(
+        comment1Id,
+        commentAuthorId,
+        'student',
+      );
       // Second deletion on soft-deleted comment throws NotFoundException
       await expect(
         commentService.deleteComment(comment1Id, commentAuthorId, 'student'),
@@ -353,10 +424,14 @@ describe('Zeitnah Community — Phase 5: Comments, Moderation & Interaction Inte
 
   describe('3. Reply Hierarchy & Parent-Post Ownership Validation', () => {
     it('successfully creates reply when parent comment belongs to the same post', async () => {
-      const reply = await commentService.createComment(commentAuthorId, personalPostId, {
-        content: 'Valid threaded reply',
-        parentId: comment1Id,
-      });
+      const reply = await commentService.createComment(
+        commentAuthorId,
+        personalPostId,
+        {
+          content: 'Valid threaded reply',
+          parentId: comment1Id,
+        },
+      );
       expect(reply).toBeDefined();
       expect(mockCommentRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -415,14 +490,18 @@ describe('Zeitnah Community — Phase 5: Comments, Moderation & Interaction Inte
         0,
         postOwnerId,
       );
-      expect(mockModerationService.getExcludedUserIds).toHaveBeenCalledWith(postOwnerId);
+      expect(mockModerationService.getExcludedUserIds).toHaveBeenCalledWith(
+        postOwnerId,
+      );
       expect(mockCommentRepo.findByPostId).toHaveBeenCalledWith(
         personalPostId,
         20,
         0,
         [blockedUserId],
       );
-      expect(comments.every((c: any) => c.authorId !== blockedUserId)).toBe(true);
+      expect(comments.every((c: any) => c.authorId !== blockedUserId)).toBe(
+        true,
+      );
     });
   });
 
@@ -444,7 +523,8 @@ describe('Zeitnah Community — Phase 5: Comments, Moderation & Interaction Inte
       };
       const mockBlockModel: any = {};
 
-      const { ModerationService } = await import('../moderation/moderation.service');
+      const { ModerationService } =
+        await import('../moderation/moderation.service');
       const modService = new ModerationService(mockBlockModel, mockReportModel);
 
       const res = await modService.createReport(commentAuthorId, {
@@ -473,7 +553,8 @@ describe('Zeitnah Community — Phase 5: Comments, Moderation & Interaction Inte
       };
       const mockBlockModel: any = {};
 
-      const { ModerationService } = await import('../moderation/moderation.service');
+      const { ModerationService } =
+        await import('../moderation/moderation.service');
       const modService = new ModerationService(mockBlockModel, mockReportModel);
 
       const res = await modService.createReport(commentAuthorId, {
@@ -487,7 +568,8 @@ describe('Zeitnah Community — Phase 5: Comments, Moderation & Interaction Inte
     });
 
     it('rejects invalid reporterId or missing targetId with BadRequestException', async () => {
-      const { ModerationService } = await import('../moderation/moderation.service');
+      const { ModerationService } =
+        await import('../moderation/moderation.service');
       const modService = new ModerationService({} as any, {} as any);
 
       await expect(

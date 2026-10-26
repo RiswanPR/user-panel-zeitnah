@@ -242,16 +242,20 @@ export class NetworkService {
       avatarUrl,
       headline: user.headline || user.currentRole || '',
       currentRole: user.currentRole || '',
-      professionalIdentity: (user as any).professionalIdentity || (user.currentRole ? {
-        departmentId: null,
-        departmentName: null,
-        titleId: null,
-        titleName: user.currentRole,
-        isCustomTitle: false,
-        isLegacyTitle: true,
-        catalogueVersion: null,
-        updatedAt: null,
-      } : null),
+      professionalIdentity:
+        (user as any).professionalIdentity ||
+        (user.currentRole
+          ? {
+              departmentId: null,
+              departmentName: null,
+              titleId: null,
+              titleName: user.currentRole,
+              isCustomTitle: false,
+              isLegacyTitle: true,
+              catalogueVersion: null,
+              updatedAt: null,
+            }
+          : null),
       course: primaryCourse,
       interests: Array.isArray(user.skills) ? user.skills : [],
       institution,
@@ -1369,16 +1373,20 @@ export class NetworkService {
         avatarUrl,
         headline: u.headline || u.currentRole || '',
         currentRole: u.currentRole || '',
-        professionalIdentity: u.professionalIdentity || (u.currentRole ? {
-          departmentId: null,
-          departmentName: null,
-          titleId: null,
-          titleName: u.currentRole,
-          isCustomTitle: false,
-          isLegacyTitle: true,
-          catalogueVersion: null,
-          updatedAt: null,
-        } : null),
+        professionalIdentity:
+          u.professionalIdentity ||
+          (u.currentRole
+            ? {
+                departmentId: null,
+                departmentName: null,
+                titleId: null,
+                titleName: u.currentRole,
+                isCustomTitle: false,
+                isLegacyTitle: true,
+                catalogueVersion: null,
+                updatedAt: null,
+              }
+            : null),
         role: u.role || 'student',
         isFollowing,
         isFollowedBy,

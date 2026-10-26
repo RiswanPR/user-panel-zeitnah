@@ -138,7 +138,8 @@ export class ProfessionalCatalogueService implements OnModuleInit {
         summary: current.summary,
       });
 
-      return hybrid as unknown as CatalogueResponse & Promise<CatalogueResponse>;
+      return hybrid as unknown as CatalogueResponse &
+        Promise<CatalogueResponse>;
     }
 
     // Cache hit or static fallback
@@ -150,7 +151,8 @@ export class ProfessionalCatalogueService implements OnModuleInit {
       summary: current.summary,
     });
 
-    return resolvedP as unknown as CatalogueResponse & Promise<CatalogueResponse>;
+    return resolvedP as unknown as CatalogueResponse &
+      Promise<CatalogueResponse>;
   }
 
   /**
@@ -292,11 +294,14 @@ export class ProfessionalCatalogueService implements OnModuleInit {
         throw new Error('Malformed title document in database.');
       }
       const titleId = typeof t.id === 'string' ? t.id.trim() : '';
-      const deptId = typeof t.departmentId === 'string' ? t.departmentId.trim() : '';
+      const deptId =
+        typeof t.departmentId === 'string' ? t.departmentId.trim() : '';
       const titleLabel = typeof t.label === 'string' ? t.label.trim() : '';
 
       if (!titleId || !deptId || !titleLabel) {
-        throw new Error('Title record is missing required id, departmentId, or label.');
+        throw new Error(
+          'Title record is missing required id, departmentId, or label.',
+        );
       }
       if (titleIdSet.has(titleId)) {
         throw new Error(`Duplicate title ID across database: '${titleId}'.`);
@@ -351,7 +356,9 @@ export class ProfessionalCatalogueService implements OnModuleInit {
         return a.id.localeCompare(b.id);
       });
 
-      const titles: CatalogueTitle[] = rawDeptTitles.map(({ displayOrder, ...rest }) => rest);
+      const titles: CatalogueTitle[] = rawDeptTitles.map(
+        ({ displayOrder, ...rest }) => rest,
+      );
 
       return {
         id: d.id,
@@ -503,15 +510,19 @@ export class ProfessionalCatalogueService implements OnModuleInit {
 
     const isCustom = Boolean(
       input.isCustomTitle ||
-        (input.customTitle && input.customTitle.trim().length > 0) ||
-        (!input.titleId && input.titleName && input.titleName.trim().length > 0),
+      (input.customTitle && input.customTitle.trim().length > 0) ||
+      (!input.titleId && input.titleName && input.titleName.trim().length > 0),
     );
 
     const version =
       this.cachedSnapshot?.version || PROFESSIONAL_CATALOGUE_VERSION;
 
     if (isCustom) {
-      const rawCustomTitle = (input.customTitle || input.titleName || '').trim();
+      const rawCustomTitle = (
+        input.customTitle ||
+        input.titleName ||
+        ''
+      ).trim();
       if (!rawCustomTitle) {
         throw new BadRequestException('Custom title cannot be empty');
       }

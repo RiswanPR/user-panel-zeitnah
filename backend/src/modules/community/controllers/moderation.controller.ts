@@ -18,7 +18,9 @@ export class ModerationController {
   constructor(private readonly modService: CommunityModerationService) {}
 
   private checkModerator(req: any) {
-    const role = String(req.user?.role || '').trim().toLowerCase();
+    const role = String(req.user?.role || '')
+      .trim()
+      .toLowerCase();
     if (role !== 'admin' && role !== 'moderator' && role !== 'superadmin') {
       throw new ForbiddenException('Only moderators can access this endpoint');
     }

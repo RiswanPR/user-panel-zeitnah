@@ -533,7 +533,9 @@ export class NotificationsService {
    * Helper to safely extract newly persisted notification documents after
    * an insertMany unordered partial failure across Mongoose and MongoDB driver versions.
    */
-  private extractPersistedDocsFromInsertError(err: any): NotificationDocument[] {
+  private extractPersistedDocsFromInsertError(
+    err: any,
+  ): NotificationDocument[] {
     if (!err) return [];
 
     const isBasicDoc = (doc: any): doc is NotificationDocument => {
@@ -541,7 +543,8 @@ export class NotificationsService {
       // Exclude Error instances (e.g. Mongoose ValidationError)
       if (doc instanceof Error) return false;
       // Exclude MongoDB driver WriteError instances (which expose code/errmsg, not recipientId)
-      if (doc.errmsg !== undefined || (doc.err && doc.err.errmsg !== undefined)) return false;
+      if (doc.errmsg !== undefined || (doc.err && doc.err.errmsg !== undefined))
+        return false;
       // A persisted NotificationDocument has an _id and recipientId
       return Boolean(doc._id && doc.recipientId);
     };
@@ -554,7 +557,10 @@ export class NotificationsService {
     }
 
     // 2. MongooseBulkWriteError path (client-side validation errors mixed with partial driver success)
-    if (err.name === 'MongooseBulkWriteError' || Array.isArray(err.validationErrors)) {
+    if (
+      err.name === 'MongooseBulkWriteError' ||
+      Array.isArray(err.validationErrors)
+    ) {
       // If rawResult is explicitly null or reported 0 inserts, no documents were written to MongoDB
       if (err.rawResult === null || err.rawResult?.insertedCount === 0) {
         return [];
@@ -563,28 +569,35 @@ export class NotificationsService {
       if (Array.isArray(err.results)) {
         // Build set of driver-confirmed inserted IDs if available from MongoDB driver rawResult
         let insertedIdSet: Set<string> | undefined;
-        if (err.rawResult?.insertedIds && typeof err.rawResult.insertedIds === 'object') {
+        if (
+          err.rawResult?.insertedIds &&
+          typeof err.rawResult.insertedIds === 'object'
+        ) {
           insertedIdSet = new Set(
-            Object.values(err.rawResult.insertedIds).map((id: any) => String(id)),
+            Object.values(err.rawResult.insertedIds).map((id: any) =>
+              String(id),
+            ),
           );
         }
 
         // A candidate is only accepted if there is reliable per-document evidence:
         // either confirmed by rawResult.insertedIds, or explicitly marked isNew === false by Mongoose
-        const verifiedDocs = err.results.filter((doc: any): doc is NotificationDocument => {
-          if (!isBasicDoc(doc)) return false;
+        const verifiedDocs = err.results.filter(
+          (doc: any): doc is NotificationDocument => {
+            if (!isBasicDoc(doc)) return false;
 
-          const docIdStr = doc._id.toString();
-          if (insertedIdSet && insertedIdSet.has(docIdStr)) {
-            return true;
-          }
+            const docIdStr = doc._id.toString();
+            if (insertedIdSet && insertedIdSet.has(docIdStr)) {
+              return true;
+            }
 
-          if (doc.isNew === false) {
-            return true;
-          }
+            if (doc.isNew === false) {
+              return true;
+            }
 
-          return false;
-        });
+            return false;
+          },
+        );
 
         if (verifiedDocs.length > 0) {
           return verifiedDocs;
