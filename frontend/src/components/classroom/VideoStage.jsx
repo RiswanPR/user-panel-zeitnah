@@ -5,6 +5,7 @@ import VideoPlayer from '../player/VideoPlayer';
 import VideoWatermark from '../player/VideoWatermark';
 import FeatureErrorBoundary from '../common/FeatureErrorBoundary';
 import { isIOSAppOrWebView, isZeitnahNativeApp, getUploadUrl } from '../../utils/courseUi';
+import { toMilliseconds, normalizeToSeconds } from '../../utils/playerUnits';
 
 export default function VideoStage({
   isS3Video,
@@ -98,6 +99,12 @@ export default function VideoStage({
 
     const layout = getPlayerLayout();
 
+    // Calculate resume position in milliseconds (replays of completed classes start at 0)
+    const isAlreadyCompleted = Boolean(classProgress?.completed) || Number(classProgressPercent || 0) >= 90;
+    const resumeTimeMs = !isAlreadyCompleted && Number(classProgress?.lastPositionSeconds || 0) > 2
+      ? toMilliseconds(classProgress.lastPositionSeconds)
+      : 0;
+
     try {
       bridge.postMessage(
         JSON.stringify({
@@ -107,6 +114,7 @@ export default function VideoStage({
             playbackInfo: vdoCipher.playbackInfo,
             classId: classProgress?.classId,
             title: classTitle || 'Lesson Video',
+            resumeTimeMs,
             layout,
           },
         })
@@ -117,7 +125,7 @@ export default function VideoStage({
       setNativeError('Failed to open native player. Tap to retry.');
       return false;
     }
-  }, [vdoCipher, classProgress, classTitle, currentLessonKey, getPlayerLayout]);
+  }, [vdoCipher, classProgress, classProgressPercent, classTitle, currentLessonKey, getPlayerLayout]);
 
   // Auto-launch native hardware player when lesson loads with valid credentials
   useEffect(() => {
@@ -135,8 +143,40 @@ export default function VideoStage({
 
   useEffect(() => {
     window.__onNativeVdoProgress = (event) => {
-      if (typeof event?.currentTime === 'number' && onProgressUpdate) {
-        onProgressUpdate({ currentTime: event.currentTime });
+      // Guard against stale callbacks from a previous lesson
+      if (event?.classId && classProgress?.classId && event.classId !== classProgress.classId) {
+        return;
+      }
+
+      if (event?.completed) {
+        if (onProgressUpdate) {
+          onProgressUpdate({ completed: true });
+        }
+        return;
+      }
+
+      // Explicitly normalize units: native SDK passes ms, web handlers require seconds
+      const currentTimeSeconds =
+        typeof event?.currentTimeSeconds === 'number'
+          ? event.currentTimeSeconds
+          : typeof event?.currentTimeMs === 'number'
+          ? normalizeToSeconds(event.currentTimeMs)
+          : typeof event?.currentTime === 'number'
+          ? normalizeToSeconds(event.currentTime)
+          : 0;
+
+      const durationSeconds =
+        typeof event?.durationSeconds === 'number' && event.durationSeconds > 0
+          ? event.durationSeconds
+          : typeof event?.durationMs === 'number' && event.durationMs > 0
+          ? normalizeToSeconds(event.durationMs)
+          : undefined;
+
+      if (typeof currentTimeSeconds === 'number' && onProgressUpdate) {
+        onProgressUpdate({
+          currentTime: currentTimeSeconds,
+          ...(typeof durationSeconds === 'number' ? { duration: durationSeconds } : {}),
+        });
       }
     };
     window.__onNativeVdoError = (errorMsg) => {
@@ -153,7 +193,7 @@ export default function VideoStage({
       delete window.__onNativeVdoError;
       delete window.__onNativeVdoPlayerClosed;
     };
-  }, [onProgressUpdate, currentLessonKey]);
+  }, [onProgressUpdate, currentLessonKey, classProgress?.classId]);
 
   // Ensure embedded player is cleanly closed if user navigates away or switches lessons
   useEffect(() => {

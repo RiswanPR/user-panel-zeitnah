@@ -24,7 +24,9 @@ import {
   getUploadUrl,
   getVdoCipherEmbedUrl,
   formatVdoPlayerError,
+  isZeitnahNativeApp,
 } from "../../utils/courseUi";
+import { calculatePlaybackProgress } from "../../utils/playerUnits";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../components/ui/Toast";
 import storage, { getDeviceId, getBrowserFingerprint } from "../../services/storage";
@@ -955,46 +957,66 @@ function ClassView() {
   } = unifiedCurriculum;
 
   // ══════════════════════════════════════════════════════════
-  // S3 HLS PROGRESS & VIDEO COMPLETION (Fixes VR-003 & PERF-001)
-  // Double-save race guarded, throttled state updates
+  // S3 HLS & NATIVE PROGRESS & VIDEO COMPLETION
+  // Double-save race guarded, seek-jump filtered, throttled state updates
   // ══════════════════════════════════════════════════════════
   const handleS3ProgressUpdate = useCallback(
-    ({ currentTime, duration }) => {
-      setCurrentVideoTime(currentTime);
-
+    ({ currentTime, duration, completed: isExplicitlyCompleted }) => {
       const s3State = s3ProgressRef.current;
       const now = Date.now();
-      const isEnding = duration > 0 && currentTime >= duration - 2;
 
-      // Track clock delta
-      if (s3State.lastTickTime > 0) {
-        const deltaMs = now - s3State.lastTickTime;
-        if (deltaMs > 0 && deltaMs < 2000) {
-          s3State.sessionElapsed += deltaMs / 1000;
-        }
+      const effectiveCurrentTime =
+        typeof currentTime === "number" && !isNaN(currentTime)
+          ? currentTime
+          : s3State.lastCurrentTime || 0;
+      setCurrentVideoTime(effectiveCurrentTime);
+
+      const effectiveDuration =
+        typeof duration === "number" && duration > 0
+          ? duration
+          : s3State.duration || 0;
+      if (effectiveDuration > 0) {
+        s3State.duration = effectiveDuration;
       }
+
+      // Compute actual playback coverage and anti-false-completion metrics
+      const progressMetrics = calculatePlaybackProgress({
+        currentTime: effectiveCurrentTime,
+        previousCurrentTime: s3State.lastCurrentTime,
+        durationSeconds: effectiveDuration,
+        sessionElapsed: s3State.sessionElapsed,
+        lastTickTime: s3State.lastTickTime,
+        now,
+        maxCoveredSeconds: s3State.maxCoveredSeconds,
+      });
+
+      s3State.sessionElapsed = progressMetrics.sessionElapsed;
+      s3State.maxCoveredSeconds = progressMetrics.maxCoveredSeconds;
       s3State.lastTickTime = now;
 
+      const isEnding =
+        isExplicitlyCompleted ||
+        progressMetrics.isLegitimateCompletion ||
+        (effectiveDuration > 0 &&
+          effectiveCurrentTime >= effectiveDuration - 2 &&
+          s3State.maxCoveredSeconds >= effectiveDuration * 0.85);
+
       const shouldSave = now - s3State.lastSaveTime > 15000 || isEnding;
-      if (isEnding && s3State.lastCurrentTime === currentTime) return;
+      if (isEnding && s3State.lastCurrentTime === effectiveCurrentTime && !isExplicitlyCompleted) return;
       if (!shouldSave || s3State.saveInFlight || !activeClassId) return;
 
       s3State.lastSaveTime = now;
-      s3State.lastCurrentTime = currentTime;
+      s3State.lastCurrentTime = effectiveCurrentTime;
       s3State.saveInFlight = true;
 
       const savedBase = savedProgressBaseRef.current;
-      s3State.maxCoveredSeconds = Math.max(
-        s3State.maxCoveredSeconds || 0,
-        savedBase.coveredSeconds || 0,
-        currentTime || 0
-      );
-
       const snapshot = {
         completed: isEnding,
-        currentTimeSeconds: Math.round(currentTime),
-        durationSeconds: Math.round(duration),
-        totalCoveredSeconds: Math.round(s3State.maxCoveredSeconds),
+        currentTimeSeconds: Math.round(effectiveCurrentTime),
+        durationSeconds: Math.round(effectiveDuration),
+        totalCoveredSeconds: Math.round(
+          Math.max(s3State.maxCoveredSeconds, savedBase.coveredSeconds || 0)
+        ),
         totalPlayedSeconds: Math.round(
           (savedBase.watchedSeconds || 0) + s3State.sessionElapsed
         ),
@@ -1035,7 +1057,51 @@ function ClassView() {
     [activeClassId, autoPlayNext, navigate, toast]
   );
 
-  // Switch to selected lesson seamlessly
+  // Cross-platform video seek handler (Native VdoCipher App + Web Iframe Player)
+  const handleSeek = useCallback(
+    (seconds) => {
+      const targetSeconds = Math.max(0, Number(seconds) || 0);
+      setCurrentVideoTime(targetSeconds);
+
+      // 1. Post to native app bridge if running in Zeitnah iOS/Android app
+      if (isZeitnahNativeApp()) {
+        try {
+          window.ReactNativeWebView?.postMessage?.(
+            JSON.stringify({
+              type: "SEEK_VDOCIPHER_NATIVE",
+              payload: {
+                timeSeconds: targetSeconds,
+                timeMs: Math.round(targetSeconds * 1000),
+              },
+            })
+          );
+        } catch (err) {
+          console.warn("[ClassView] Native seek error:", err);
+        }
+      }
+
+      // 2. Seek web VdoPlayer or iframe if available
+      if (playerRef.current?.video) {
+        try {
+          playerRef.current.video.currentTime = targetSeconds;
+        } catch (err) {
+          console.warn("[ClassView] Web video seek error:", err);
+        }
+      } else if (iframeRef.current?.contentWindow) {
+        try {
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: "seek", value: targetSeconds }),
+            "*"
+          );
+        } catch (err) {
+          console.warn("[ClassView] Iframe seek error:", err);
+        }
+      }
+    },
+    [iframeRef]
+  );
+
+  // Switch to selected lesson seamlessly with progress flush and state reset
   const handleSelectLesson = (lesson) => {
     if (!lesson) return;
     if (lesson.locked || lesson.isLocked) {
@@ -1044,6 +1110,23 @@ function ClassView() {
     }
     const targetId = lesson._id || lesson.id;
     if (targetId && targetId !== activeClassId) {
+      // 1. Flush/save current lesson progress snapshot if dirty
+      if (latestSnapshotRef.current && activeClassId) {
+        api.post(`/courses/class/${activeClassId}/progress`, latestSnapshotRef.current).catch(() => {});
+      }
+      // 2. Reset lesson-specific UI state
+      setCurrentVideoTime(0);
+      setVdoPlayerError(false);
+      setSyncState("idle");
+      s3ProgressRef.current = {
+        lastSaveTime: 0,
+        lastCurrentTime: 0,
+        saveInFlight: false,
+        sessionElapsed: 0,
+        lastTickTime: 0,
+        maxCoveredSeconds: 0,
+        hasTriggeredCompletionModal: false,
+      };
       setCurriculumOpen(false);
       setActiveClassId(targetId);
       navigate(`/courses/class/${targetId}`);
@@ -1314,7 +1397,7 @@ function ClassView() {
               onOpenCurriculum={() => setCurriculumOpen(true)}
             />
 
-            {/* Lesson Workspace Tabs (Overview, Lazy Resources, Notes, Progress) */}
+            {/* Lesson Workspace Tabs (Overview, Chapters, Bookmarks, Notes, Resources, Progress) */}
             <LessonTabs
               currentClass={cls}
               chapter={chapter}
@@ -1324,7 +1407,9 @@ function ClassView() {
               isClassCompleted={isClassCompleted}
               classProgressPercent={classProgressPercent}
               currentVideoTime={currentVideoTime}
+              user={user}
               onPreviewResource={(res) => setPreviewResource(res)}
+              onSeek={handleSeek}
             />
           </div>
 
