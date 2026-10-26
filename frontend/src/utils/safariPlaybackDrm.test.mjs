@@ -448,8 +448,12 @@ describe('Safari & Multi-DRM Playback Behavioral Tests', () => {
       assert.match(content, /Try In-App Player/);
     });
 
-    it('verifies ZeitnahMobile index.tsx handles PLAY_VDOCIPHER_NATIVE with duplicate prevention and CLOSE_VDOCIPHER_NATIVE', () => {
+    it('verifies ZeitnahMobile index.tsx handles PLAY_VDOCIPHER_NATIVE with duplicate prevention and CLOSE_VDOCIPHER_NATIVE', (t) => {
       const mobileIndexPath = path.resolve(__dirname, '../../../../ZeitnahMobile/src/app/index.tsx');
+      if (!fs.existsSync(mobileIndexPath)) {
+        t.skip('ZeitnahMobile workspace directory not present in standalone frontend environment');
+        return;
+      }
       const content = fs.readFileSync(mobileIndexPath, 'utf8');
 
       // Duplicate prevention
