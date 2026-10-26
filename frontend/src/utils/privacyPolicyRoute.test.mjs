@@ -126,4 +126,23 @@ describe('Zeitnah LMS Privacy Policy Production Integrity Suite', () => {
     assert.match(indexContent, /Zeitnah LMS — Privacy Policy/);
     assert.match(indexContent, /Apple Guideline 5\.1\.1\(v\)/);
   });
+
+  it('verifies api.ts includes /privacy-policy and /privacy in publicPaths to prevent forceLogout redirect', () => {
+    const apiTsPath = path.resolve('src/services/api.ts');
+    assert.ok(fs.existsSync(apiTsPath), 'src/services/api.ts must exist');
+    const content = fs.readFileSync(apiTsPath, 'utf8');
+
+    assert.match(content, /const\s+publicPaths\s*=\s*\[[\s\S]*?["']\/privacy-policy["'][\s\S]*?\]/);
+    assert.match(content, /const\s+publicPaths\s*=\s*\[[\s\S]*?["']\/privacy["'][\s\S]*?\]/);
+  });
+
+  it('verifies usePlatformAnnouncements is guarded with authentication check to prevent 401 on public pages', () => {
+    const hookPath = path.resolve('src/hooks/usePlatformAnnouncements.js');
+    assert.ok(fs.existsSync(hookPath), 'src/hooks/usePlatformAnnouncements.js must exist');
+    const content = fs.readFileSync(hookPath, 'utf8');
+
+    assert.match(content, /AuthContext/);
+    assert.match(content, /enabled:\s*Boolean\(currentUserId\s*&&\s*!isAuthLoading\)/);
+  });
 });
+

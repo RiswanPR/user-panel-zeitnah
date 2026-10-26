@@ -418,6 +418,15 @@ function forceLogout() {
       "/register",
       "/verify-login-otp",
       "/verify-register-otp",
+      "/privacy-policy",
+      "/privacy",
+      "/terms-of-service",
+      "/terms",
+      "/support",
+      "/help",
+      "/about",
+      "/u/",
+      "/profile/u/",
     ];
     const isPublic = publicPaths.some((p) =>
       window.location.pathname.startsWith(p),

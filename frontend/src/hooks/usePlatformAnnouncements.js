@@ -1,12 +1,18 @@
+import { useContext } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { announcementsApi } from '../services/announcementsApi';
+import { AuthContext } from '../context/AuthContext';
 
 export function usePlatformAnnouncements() {
   const queryClient = useQueryClient();
+  const auth = useContext(AuthContext);
+  const currentUserId = auth?.user?._id || auth?.user?.userId || auth?.user?.id;
+  const isAuthLoading = auth?.loading ?? false;
 
   const query = useQuery({
     queryKey: ['platform-announcements'],
     queryFn: () => announcementsApi.getPlatformAnnouncements(),
+    enabled: Boolean(currentUserId && !isAuthLoading),
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
 

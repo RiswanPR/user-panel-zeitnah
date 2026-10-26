@@ -3,6 +3,7 @@ import { Bell, CheckCheck, ExternalLink, RefreshCw, Sparkles, Inbox } from 'luci
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { NotificationContext } from '../../context/NotificationContext';
+import { AuthContext } from '../../context/AuthContext';
 import notificationService from '../../services/notificationService';
 import NotificationItem from './NotificationItem';
 
@@ -15,6 +16,8 @@ const DROPDOWN_TABS = [
 
 export default function NotificationBell({ className = '' }) {
   const notifContext = useContext(NotificationContext);
+  const authContext = useContext(AuthContext);
+  const authUser = authContext?.user;
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   const dropdownRef = useRef(null);
@@ -30,7 +33,7 @@ export default function NotificationBell({ className = '' }) {
   const categoryParam = activeTab === 'all' || activeTab === 'unread' ? '' : activeTab;
   const unreadOnly = activeTab === 'unread';
 
-  // Desktop quick notification query (enabled only when dropdown is open on desktop)
+  // Desktop quick notification query (enabled only when dropdown is open on desktop and user is authenticated)
   const {
     data,
     isLoading,
@@ -45,7 +48,7 @@ export default function NotificationBell({ className = '' }) {
         category: categoryParam,
         unreadOnly,
       }),
-    enabled: isOpen,
+    enabled: Boolean(isOpen && authUser),
     staleTime: 1000 * 20,
     retry: 1,
   });
