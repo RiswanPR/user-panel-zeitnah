@@ -4,7 +4,7 @@ import { WifiOff, RefreshCw, Loader2, Lock, Compass, ExternalLink, Copy, Check, 
 import VideoPlayer from '../player/VideoPlayer';
 import VideoWatermark from '../player/VideoWatermark';
 import FeatureErrorBoundary from '../common/FeatureErrorBoundary';
-import { isIOSAppOrWebView, isZeitnahNativeApp } from '../../utils/courseUi';
+import { isIOSAppOrWebView, isZeitnahNativeApp, getUploadUrl } from '../../utils/courseUi';
 
 export default function VideoStage({
   isS3Video,
@@ -18,6 +18,7 @@ export default function VideoStage({
   user,
   iframeRef,
   vdoPlayerError,
+  coverImage,
   onVdoReload,
   onRefreshPlaybackUrl,
   onProgressUpdate,
@@ -27,6 +28,20 @@ export default function VideoStage({
   const [nativeError, setNativeError] = useState(null);
   const isIOSRestricted = useMemo(() => isIOSAppOrWebView(), []);
   const [isNativeApp, setIsNativeApp] = useState(() => isZeitnahNativeApp());
+
+  // Distinct identifier for the current lesson to manage auto-launch & dismissal state
+  const currentLessonKey = useMemo(() => {
+    return classProgress?.classId || vdoCipher?.playbackInfo || classTitle || 'current';
+  }, [classProgress?.classId, vdoCipher?.playbackInfo, classTitle]);
+
+  const posterUrl = useMemo(() => {
+    return coverImage ? getUploadUrl(coverImage) : null;
+  }, [coverImage]);
+
+  // Track auto-launch and dismissal state per lesson key
+  const hasAutoLaunchedRef = useRef({});
+  const userDismissedRef = useRef({});
+  const isNativePlayerOpenRef = useRef(false);
 
   // Continuously verify if bridge attaches after initial render tick (prevents race conditions)
   useEffect(() => {
@@ -54,28 +69,52 @@ export default function VideoStage({
 
     const bridge = window.ReactNativeWebView;
     if (!bridge || typeof bridge.postMessage !== 'function') {
-      setNativeError('Native app bridge is connecting. Please try again in a moment or watch in Safari Browser.');
+      setNativeError('Native app bridge is connecting. Tap to retry.');
       return false;
     }
 
     if (!vdoCipher?.otp || !vdoCipher?.playbackInfo) {
-      setNativeError('Secure video credentials could not be loaded. Please reload player or watch in Safari Browser.');
+      setNativeError('Preparing video stream. Please wait a moment.');
       return false;
     }
 
-    bridge.postMessage(
-      JSON.stringify({
-        type: 'PLAY_VDOCIPHER_NATIVE',
-        payload: {
-          otp: vdoCipher.otp,
-          playbackInfo: vdoCipher.playbackInfo,
-          classId: classProgress?.classId,
-          title: classTitle || 'Lesson Video',
-        },
-      })
-    );
-    return true;
-  }, [vdoCipher, classProgress, classTitle]);
+    // Reset dismissal flag when user explicitly triggers playback
+    userDismissedRef.current[currentLessonKey] = false;
+    isNativePlayerOpenRef.current = true;
+
+    try {
+      bridge.postMessage(
+        JSON.stringify({
+          type: 'PLAY_VDOCIPHER_NATIVE',
+          payload: {
+            otp: vdoCipher.otp,
+            playbackInfo: vdoCipher.playbackInfo,
+            classId: classProgress?.classId,
+            title: classTitle || 'Lesson Video',
+          },
+        })
+      );
+      return true;
+    } catch {
+      isNativePlayerOpenRef.current = false;
+      setNativeError('Failed to open native player. Tap to retry.');
+      return false;
+    }
+  }, [vdoCipher, classProgress, classTitle, currentLessonKey]);
+
+  // Auto-launch native hardware player when lesson loads with valid credentials
+  useEffect(() => {
+    if (!isNativeApp) return;
+    if (!vdoCipher?.otp || !vdoCipher?.playbackInfo) return;
+
+    // Do not auto-launch if already launched for this lesson or if dismissed by user
+    if (hasAutoLaunchedRef.current[currentLessonKey]) return;
+    if (userDismissedRef.current[currentLessonKey]) return;
+    if (isNativePlayerOpenRef.current) return;
+
+    hasAutoLaunchedRef.current[currentLessonKey] = true;
+    handlePlayNative();
+  }, [isNativeApp, vdoCipher?.otp, vdoCipher?.playbackInfo, currentLessonKey, handlePlayNative]);
 
   useEffect(() => {
     window.__onNativeVdoProgress = (event) => {
@@ -84,13 +123,35 @@ export default function VideoStage({
       }
     };
     window.__onNativeVdoError = (errorMsg) => {
+      isNativePlayerOpenRef.current = false;
       setNativeError(typeof errorMsg === 'string' ? errorMsg : 'Native player encountered an error');
+    };
+    window.__onNativeVdoPlayerClosed = () => {
+      isNativePlayerOpenRef.current = false;
+      // Mark as dismissed so we never auto-reopen this lesson after user closes it
+      userDismissedRef.current[currentLessonKey] = true;
     };
     return () => {
       delete window.__onNativeVdoProgress;
       delete window.__onNativeVdoError;
+      delete window.__onNativeVdoPlayerClosed;
     };
-  }, [onProgressUpdate]);
+  }, [onProgressUpdate, currentLessonKey]);
+
+  // Ensure modal is cleanly closed if user navigates away while open
+  useEffect(() => {
+    return () => {
+      if (isNativePlayerOpenRef.current) {
+        try {
+          window.ReactNativeWebView?.postMessage?.(
+            JSON.stringify({ type: 'CLOSE_VDOCIPHER_NATIVE' })
+          );
+        } catch {
+          // Ignore unmount postMessage error
+        }
+      }
+    };
+  }, []);
 
   const getCleanLessonUrl = () => {
     try {
@@ -189,55 +250,130 @@ export default function VideoStage({
               </div>
             )
           ) : videoUrl ? (
-            isIOSRestricted && !showEmbeddedAnyway ? (
-              /* Dedicated Apple FairPlay DRM Stage for iOS In-App WebViews (Prevents initializing broken iframe) */
+            isNativeApp ? (
+              /* Unified Native Video Player Surface for ZeitnahMobile App */
+              <div
+                role="button"
+                tabIndex={0}
+                aria-label={vdoCipher?.otp ? `Play ${classTitle || 'lesson video'}` : 'Preparing video player'}
+                onClick={handlePlayNative}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handlePlayNative();
+                  }
+                }}
+                className="absolute inset-0 z-20 w-full h-full bg-black flex items-center justify-center cursor-pointer select-none group overflow-hidden focus:outline-none focus:ring-2 focus:ring-brand-mint/60 focus:ring-offset-2 focus:ring-offset-black"
+              >
+                {/* Poster Image / Backdrop */}
+                {posterUrl ? (
+                  <img
+                    src={posterUrl}
+                    alt={classTitle || 'Lesson Thumbnail'}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-neutral-950 via-[#070B14] to-neutral-900" />
+                )}
+
+                {/* Dark Scrim / Vignette overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/30 pointer-events-none" />
+
+                {/* Ambient Center Glow */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-40 bg-brand-mint/15 rounded-full blur-3xl pointer-events-none group-hover:bg-brand-mint/25 transition-all duration-500" />
+
+                {/* Top Subtle HD Native Player Badge */}
+                <div className="absolute top-3.5 left-3.5 sm:top-4 sm:left-4 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[10px] sm:text-xs font-mono uppercase tracking-wider text-white/90 shadow-lg pointer-events-none">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-mint animate-pulse" />
+                  <span className="font-bold text-brand-mint">HD</span>
+                  <span className="text-white/30">•</span>
+                  <span>Native Player</span>
+                </div>
+
+                {/* Center Action (Play Icon or Spinner) */}
+                <div className="relative z-10 flex flex-col items-center justify-center space-y-3">
+                  {!vdoCipher?.otp || !vdoCipher?.playbackInfo ? (
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-2xl">
+                        <Loader2 className="w-8 h-8 text-brand-mint animate-spin" />
+                      </div>
+                      <span className="text-xs font-medium text-white/70 tracking-wide drop-shadow">
+                        Preparing secure stream...
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center space-y-2 group-hover:scale-110 active:scale-95 transition-transform duration-300 ease-out">
+                      <div className="relative flex items-center justify-center">
+                        <div className="absolute inset-0 rounded-full bg-brand-mint/30 blur-xl group-hover:bg-brand-mint/50 transition-all duration-300" />
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-brand-mint text-brand-navy flex items-center justify-center shadow-2xl shadow-brand-mint/40 group-hover:bg-brand-mint/95 transition-all">
+                          <Play className="w-7 h-7 sm:w-8 sm:h-8 fill-brand-navy translate-x-0.5" />
+                        </div>
+                      </div>
+                      <span className="text-xs font-semibold text-white/90 tracking-wide drop-shadow">
+                        Tap to play
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bottom Lesson Title Bar */}
+                <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 right-3 sm:right-4 z-10 pointer-events-none">
+                  <h3 className="text-xs sm:text-sm font-semibold text-white/90 truncate drop-shadow-md">
+                    {classTitle || 'Lesson Video'}
+                  </h3>
+                </div>
+
+                {/* Optional Error Notification Banner (Kept accessible only when genuinely needed) */}
+                {nativeError && (
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute inset-x-4 top-14 sm:top-16 z-30 mx-auto max-w-md p-3 rounded-xl bg-neutral-950/95 backdrop-blur-md border border-rose-500/30 text-white shadow-2xl flex items-center justify-between gap-3 text-xs"
+                  >
+                    <div className="flex items-center gap-2 text-rose-300 flex-1 min-w-0">
+                      <WifiOff className="w-4 h-4 shrink-0 text-rose-400" />
+                      <span className="truncate">{nativeError}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={handlePlayNative}
+                        className="px-2.5 py-1 min-h-[32px] rounded-lg bg-brand-mint text-brand-navy font-bold text-[11px] uppercase tracking-wider hover:bg-brand-mint/90 transition-all cursor-pointer"
+                      >
+                        Retry
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleOpenInSafari}
+                        className="px-2.5 py-1 min-h-[32px] rounded-lg border border-white/20 bg-white/10 text-white font-medium text-[11px] hover:bg-white/20 transition-all cursor-pointer"
+                      >
+                        Safari
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : isIOSRestricted && !showEmbeddedAnyway ? (
+              /* Dedicated Apple FairPlay DRM Stage for iOS In-App WebViews outside ZeitnahMobile */
               <div className="absolute inset-0 z-20 bg-[#070B14] flex flex-col items-center justify-center p-6 text-center text-white select-none">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-36 bg-brand-mint/10 rounded-full blur-3xl pointer-events-none" />
 
                 <div className="w-14 h-14 rounded-2xl bg-brand-mint/10 border border-brand-mint/30 flex items-center justify-center text-brand-mint mb-4 shadow-lg shadow-brand-mint/10 relative z-10">
-                  {isNativeApp ? (
-                    <Play className="w-7 h-7 text-brand-mint fill-brand-mint/20" />
-                  ) : (
-                    <Compass className="w-7 h-7 text-brand-mint" />
-                  )}
+                  <Compass className="w-7 h-7 text-brand-mint" />
                 </div>
 
                 <h3 className="text-base sm:text-lg font-heading font-extrabold text-white mb-2 relative z-10 tracking-tight">
-                  {isNativeApp ? 'Watch with Native Player' : 'Play in Safari Browser'}
+                  Play in Safari Browser
                 </h3>
 
                 <p className="text-xs sm:text-sm text-text-muted max-w-sm mb-5 relative z-10 leading-relaxed">
-                  {isNativeApp
-                    ? 'Watch this lesson in full HD using the native hardware player with Apple FairPlay DRM acceleration.'
-                    : 'Apple FairPlay DRM requires the official Safari browser on iOS devices. Tap below to watch this lesson in full HD.'}
+                  Apple FairPlay DRM requires the official Safari browser on iOS devices. Tap below to watch this lesson in full HD.
                 </p>
 
-                {nativeError && (
-                  <div className="mb-4 px-3.5 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs text-center max-w-sm relative z-10">
-                    {nativeError}
-                  </div>
-                )}
-
                 <div className="flex flex-col sm:flex-row items-center gap-3 relative z-10">
-                  {isNativeApp && (
-                    <button
-                      type="button"
-                      onClick={handlePlayNative}
-                      className="inline-flex items-center gap-2 px-6 py-3 min-h-[44px] bg-brand-mint text-brand-navy font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-brand-mint/90 active:scale-95 transition-all cursor-pointer shadow-lg shadow-brand-mint/20"
-                    >
-                      <Play className="w-4 h-4 fill-current" />
-                      Play in App
-                    </button>
-                  )}
-
                   <button
                     type="button"
                     onClick={handleOpenInSafari}
-                    className={`inline-flex items-center gap-2 px-6 py-3 min-h-[44px] ${
-                      isNativeApp
-                        ? 'rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs font-semibold uppercase tracking-wider'
-                        : 'bg-brand-mint text-brand-navy font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-brand-mint/90 shadow-lg shadow-brand-mint/20'
-                    } active:scale-95 transition-all cursor-pointer`}
+                    className="inline-flex items-center gap-2 px-6 py-3 min-h-[44px] bg-brand-mint text-brand-navy font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-brand-mint/90 shadow-lg shadow-brand-mint/20 active:scale-95 transition-all cursor-pointer"
                   >
                     <ExternalLink className="w-4 h-4" />
                     Watch in Safari Browser
@@ -297,16 +433,6 @@ export default function VideoStage({
                         <RefreshCw className="w-4 h-4" />
                         Reload Player
                       </button>
-                      {isNativeApp && (
-                        <button
-                          type="button"
-                          onClick={handlePlayNative}
-                          className="inline-flex items-center gap-2 px-5 py-2.5 min-h-[44px] bg-brand-mint text-brand-navy font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-brand-mint/90 transition-all cursor-pointer shadow-lg shadow-brand-mint/20"
-                        >
-                          <Play className="w-4 h-4 fill-current" />
-                          Play in App
-                        </button>
-                      )}
                       {(typeof vdoPlayerError === 'object'
                         ? vdoPlayerError?.showSafariFallback
                         : isIOSRestricted) && (

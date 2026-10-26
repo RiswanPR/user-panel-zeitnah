@@ -393,18 +393,77 @@ describe('Safari & Multi-DRM Playback Behavioral Tests', () => {
       assert.match(content, /title:\s*classTitle/);
     });
 
-    it('verifies VideoStage renders Play in App when isNativeApp is true and retains Safari fallback', () => {
+    it('verifies VideoStage renders a unified video player surface in native app without redundant button cards', () => {
       const videoStagePath = path.resolve(__dirname, '../components/classroom/VideoStage.jsx');
       const content = fs.readFileSync(videoStagePath, 'utf8');
 
-      // Check "Play in App" button
-      assert.match(content, /Play in App/);
-      // Check "Watch with Native Player" heading
-      assert.match(content, /Watch with Native Player/);
-      // Check that Safari fallback button is preserved
+      // 1. Checks that native player surface is rendered with accessible button role and tap-to-play
+      assert.match(content, /Unified Native Video Player Surface for ZeitnahMobile App/);
+      assert.match(content, /role="button"/);
+      assert.match(content, /onClick=\{handlePlayNative\}/);
+      assert.match(content, /Tap to play/);
+      assert.match(content, /HD.*Native Player/);
+
+      // 2. Checks that redundant action button cards ("Play in App", "Watch in Safari Browser", "Copy Lesson Link") are NOT inside the native player surface
+      const nativeSurfaceBlock = content.slice(
+        content.indexOf('Unified Native Video Player Surface for ZeitnahMobile App'),
+        content.indexOf('Dedicated Apple FairPlay DRM Stage for iOS In-App WebViews outside ZeitnahMobile')
+      );
+
+      assert.doesNotMatch(nativeSurfaceBlock, /Play in App/);
+      assert.doesNotMatch(nativeSurfaceBlock, /Watch in Safari Browser/);
+      assert.doesNotMatch(nativeSurfaceBlock, /Copy Lesson Link/);
+      assert.doesNotMatch(nativeSurfaceBlock, /Try In-App Player/);
+
+      // 3. Error fallback is only displayed when genuine native error occurs
+      assert.match(nativeSurfaceBlock, /\{nativeError\s*&&/);
+    });
+
+    it('verifies VideoStage implements auto-launch, duplicate prevention, and dismissal lifecycle', () => {
+      const videoStagePath = path.resolve(__dirname, '../components/classroom/VideoStage.jsx');
+      const content = fs.readFileSync(videoStagePath, 'utf8');
+
+      // Auto-launch effect with credential check
+      assert.match(content, /hasAutoLaunchedRef\.current\[currentLessonKey\]/);
+      assert.match(content, /userDismissedRef\.current\[currentLessonKey\]/);
+      assert.match(content, /isNativePlayerOpenRef\.current/);
+
+      // User dismissal handler prevents automatic reopening
+      assert.match(content, /window\.__onNativeVdoPlayerClosed/);
+      assert.match(content, /userDismissedRef\.current\[currentLessonKey\]\s*=\s*true/);
+
+      // Cleanup on unmount sends CLOSE_VDOCIPHER_NATIVE
+      assert.match(content, /type:\s*['"]CLOSE_VDOCIPHER_NATIVE['"]/);
+    });
+
+    it('verifies Safari fallback is preserved for ordinary iOS browsers outside the app', () => {
+      const videoStagePath = path.resolve(__dirname, '../components/classroom/VideoStage.jsx');
+      const content = fs.readFileSync(videoStagePath, 'utf8');
+
+      // Verifies fallback for external iOS browsers/webviews outside ZeitnahMobile
+      assert.match(content, /Dedicated Apple FairPlay DRM Stage for iOS In-App WebViews outside ZeitnahMobile/);
+      assert.match(content, /Play in Safari Browser/);
       assert.match(content, /Watch in Safari Browser/);
-      // Check that Copy Lesson Link is preserved
       assert.match(content, /Copy Lesson Link/);
+      assert.match(content, /Try In-App Player/);
+    });
+
+    it('verifies ZeitnahMobile index.tsx handles PLAY_VDOCIPHER_NATIVE with duplicate prevention and CLOSE_VDOCIPHER_NATIVE', () => {
+      const mobileIndexPath = path.resolve(__dirname, '../../../../ZeitnahMobile/src/app/index.tsx');
+      const content = fs.readFileSync(mobileIndexPath, 'utf8');
+
+      // Duplicate prevention
+      assert.match(content, /isNativePlayerVisibleRef\.current/);
+      assert.match(content, /nativePlayerEmbedInfoRef\.current\?\.otp\s*===\s*payload\.otp/);
+
+      // CLOSE_VDOCIPHER_NATIVE bridge message
+      assert.match(content, /data\?\.type\s*===\s*['"]CLOSE_VDOCIPHER_NATIVE['"]/);
+      assert.match(content, /handleCloseNativePlayer\(\)/);
+
+      // Window bridge events dispatched to webview
+      assert.match(content, /__onNativeVdoPlayerClosed/);
+      assert.match(content, /__onNativeVdoProgress/);
+      assert.match(content, /__onNativeVdoError/);
     });
   });
 });

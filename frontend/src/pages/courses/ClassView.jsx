@@ -1257,6 +1257,7 @@ function ClassView() {
               user={user}
               iframeRef={iframeRef}
               vdoPlayerError={vdoPlayerError}
+              coverImage={cls?.coverImage || course?.coverImage}
               onVdoReload={handleVdoReload}
               onRefreshPlaybackUrl={refreshPlaybackUrl}
               onProgressUpdate={handleS3ProgressUpdate}
