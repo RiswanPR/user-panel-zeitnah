@@ -7,6 +7,7 @@ import {
   isMacOSDesktopSafari,
   isIOSSafari,
   isIOSAppOrWebView,
+  isZeitnahNativeApp,
   formatVdoPlayerError,
 } from './courseUi.js';
 
@@ -337,6 +338,73 @@ describe('Safari & Multi-DRM Playback Behavioral Tests', () => {
 
       // Ensures the "Open in Safari" button is conditionally gated by showSafariFallback
       assert.match(content, /typeof vdoPlayerError === 'object'\s*\?\s*vdoPlayerError\?\.showSafariFallback\s*:\s*isIOSRestricted/);
+    });
+  });
+
+  describe('5. Native React Native Player Integration & Handoff Audit', () => {
+    it('identifies Zeitnah mobile app with active ReactNativeWebView bridge', () => {
+      const mockWin = {
+        ReactNativeWebView: {
+          postMessage: () => {},
+        },
+        navigator: {
+          userAgent: IOS_IPHONE_SAFARI_UA,
+        },
+      };
+
+      assert.equal(isZeitnahNativeApp(mockWin), true);
+    });
+
+    it('identifies Zeitnah mobile app from ZeitnahMobile user agent token', () => {
+      const mockWin = {
+        navigator: {
+          userAgent: `${IOS_IPHONE_SAFARI_UA} ZeitnahMobile/1.0.3`,
+        },
+      };
+
+      assert.equal(isZeitnahNativeApp(mockWin), true);
+    });
+
+    it('rejects ordinary mobile Safari and desktop browsers from native app detection', () => {
+      const safariWin = {
+        navigator: {
+          userAgent: IOS_IPHONE_SAFARI_UA,
+        },
+      };
+      const macWin = {
+        navigator: {
+          userAgent: MACOS_SAFARI_UA,
+        },
+      };
+
+      assert.equal(isZeitnahNativeApp(safariWin), false);
+      assert.equal(isZeitnahNativeApp(macWin), false);
+    });
+
+    it('verifies VideoStage dispatches PLAY_VDOCIPHER_NATIVE message contract with all required fields', () => {
+      const videoStagePath = path.resolve(__dirname, '../components/classroom/VideoStage.jsx');
+      const content = fs.readFileSync(videoStagePath, 'utf8');
+
+      // Verifies exact action type and payload contract
+      assert.match(content, /type:\s*['"]PLAY_VDOCIPHER_NATIVE['"]/);
+      assert.match(content, /otp:\s*vdoCipher\.otp/);
+      assert.match(content, /playbackInfo:\s*vdoCipher\.playbackInfo/);
+      assert.match(content, /classId:\s*classProgress\?\.classId/);
+      assert.match(content, /title:\s*classTitle/);
+    });
+
+    it('verifies VideoStage renders Play in App when isNativeApp is true and retains Safari fallback', () => {
+      const videoStagePath = path.resolve(__dirname, '../components/classroom/VideoStage.jsx');
+      const content = fs.readFileSync(videoStagePath, 'utf8');
+
+      // Check "Play in App" button
+      assert.match(content, /Play in App/);
+      // Check "Watch with Native Player" heading
+      assert.match(content, /Watch with Native Player/);
+      // Check that Safari fallback button is preserved
+      assert.match(content, /Watch in Safari Browser/);
+      // Check that Copy Lesson Link is preserved
+      assert.match(content, /Copy Lesson Link/);
     });
   });
 });

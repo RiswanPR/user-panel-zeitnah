@@ -1,10 +1,10 @@
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useRef, useState, useMemo, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { WifiOff, RefreshCw, Loader2, Lock, Compass, ExternalLink, Copy, Check } from 'lucide-react';
+import { WifiOff, RefreshCw, Loader2, Lock, Compass, ExternalLink, Copy, Check, Play } from 'lucide-react';
 import VideoPlayer from '../player/VideoPlayer';
 import VideoWatermark from '../player/VideoWatermark';
 import FeatureErrorBoundary from '../common/FeatureErrorBoundary';
-import { isIOSAppOrWebView } from '../../utils/courseUi';
+import { isIOSAppOrWebView, isZeitnahNativeApp } from '../../utils/courseUi';
 
 export default function VideoStage({
   isS3Video,
@@ -24,7 +24,73 @@ export default function VideoStage({
 }) {
   const [showEmbeddedAnyway, setShowEmbeddedAnyway] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [nativeError, setNativeError] = useState(null);
   const isIOSRestricted = useMemo(() => isIOSAppOrWebView(), []);
+  const [isNativeApp, setIsNativeApp] = useState(() => isZeitnahNativeApp());
+
+  // Continuously verify if bridge attaches after initial render tick (prevents race conditions)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (isZeitnahNativeApp()) {
+      setIsNativeApp(true);
+      return;
+    }
+    const checkBridge = () => {
+      if (isZeitnahNativeApp()) {
+        setIsNativeApp(true);
+      }
+    };
+    const interval = setInterval(checkBridge, 100);
+    const timer = setTimeout(() => clearInterval(interval), 2000);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timer);
+    };
+  }, []);
+
+  const handlePlayNative = useCallback(() => {
+    setNativeError(null);
+    if (typeof window === 'undefined') return false;
+
+    const bridge = window.ReactNativeWebView;
+    if (!bridge || typeof bridge.postMessage !== 'function') {
+      setNativeError('Native app bridge is connecting. Please try again in a moment or watch in Safari Browser.');
+      return false;
+    }
+
+    if (!vdoCipher?.otp || !vdoCipher?.playbackInfo) {
+      setNativeError('Secure video credentials could not be loaded. Please reload player or watch in Safari Browser.');
+      return false;
+    }
+
+    bridge.postMessage(
+      JSON.stringify({
+        type: 'PLAY_VDOCIPHER_NATIVE',
+        payload: {
+          otp: vdoCipher.otp,
+          playbackInfo: vdoCipher.playbackInfo,
+          classId: classProgress?.classId,
+          title: classTitle || 'Lesson Video',
+        },
+      })
+    );
+    return true;
+  }, [vdoCipher, classProgress, classTitle]);
+
+  useEffect(() => {
+    window.__onNativeVdoProgress = (event) => {
+      if (typeof event?.currentTime === 'number' && onProgressUpdate) {
+        onProgressUpdate({ currentTime: event.currentTime });
+      }
+    };
+    window.__onNativeVdoError = (errorMsg) => {
+      setNativeError(typeof errorMsg === 'string' ? errorMsg : 'Native player encountered an error');
+    };
+    return () => {
+      delete window.__onNativeVdoProgress;
+      delete window.__onNativeVdoError;
+    };
+  }, [onProgressUpdate]);
 
   const getCleanLessonUrl = () => {
     try {
@@ -129,22 +195,49 @@ export default function VideoStage({
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-36 bg-brand-mint/10 rounded-full blur-3xl pointer-events-none" />
 
                 <div className="w-14 h-14 rounded-2xl bg-brand-mint/10 border border-brand-mint/30 flex items-center justify-center text-brand-mint mb-4 shadow-lg shadow-brand-mint/10 relative z-10">
-                  <Compass className="w-7 h-7 text-brand-mint" />
+                  {isNativeApp ? (
+                    <Play className="w-7 h-7 text-brand-mint fill-brand-mint/20" />
+                  ) : (
+                    <Compass className="w-7 h-7 text-brand-mint" />
+                  )}
                 </div>
 
                 <h3 className="text-base sm:text-lg font-heading font-extrabold text-white mb-2 relative z-10 tracking-tight">
-                  Play in Safari Browser
+                  {isNativeApp ? 'Watch with Native Player' : 'Play in Safari Browser'}
                 </h3>
 
                 <p className="text-xs sm:text-sm text-text-muted max-w-sm mb-5 relative z-10 leading-relaxed">
-                  Apple FairPlay DRM requires the official Safari browser on iOS devices. Tap below to watch this lesson in full HD.
+                  {isNativeApp
+                    ? 'Watch this lesson in full HD using the native hardware player with Apple FairPlay DRM acceleration.'
+                    : 'Apple FairPlay DRM requires the official Safari browser on iOS devices. Tap below to watch this lesson in full HD.'}
                 </p>
 
+                {nativeError && (
+                  <div className="mb-4 px-3.5 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs text-center max-w-sm relative z-10">
+                    {nativeError}
+                  </div>
+                )}
+
                 <div className="flex flex-col sm:flex-row items-center gap-3 relative z-10">
+                  {isNativeApp && (
+                    <button
+                      type="button"
+                      onClick={handlePlayNative}
+                      className="inline-flex items-center gap-2 px-6 py-3 min-h-[44px] bg-brand-mint text-brand-navy font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-brand-mint/90 active:scale-95 transition-all cursor-pointer shadow-lg shadow-brand-mint/20"
+                    >
+                      <Play className="w-4 h-4 fill-current" />
+                      Play in App
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={handleOpenInSafari}
-                    className="inline-flex items-center gap-2 px-6 py-3 min-h-[44px] bg-brand-mint text-brand-navy font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-brand-mint/90 active:scale-95 transition-all cursor-pointer shadow-lg shadow-brand-mint/20"
+                    className={`inline-flex items-center gap-2 px-6 py-3 min-h-[44px] ${
+                      isNativeApp
+                        ? 'rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs font-semibold uppercase tracking-wider'
+                        : 'bg-brand-mint text-brand-navy font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-brand-mint/90 shadow-lg shadow-brand-mint/20'
+                    } active:scale-95 transition-all cursor-pointer`}
                   >
                     <ExternalLink className="w-4 h-4" />
                     Watch in Safari Browser
@@ -204,6 +297,16 @@ export default function VideoStage({
                         <RefreshCw className="w-4 h-4" />
                         Reload Player
                       </button>
+                      {isNativeApp && (
+                        <button
+                          type="button"
+                          onClick={handlePlayNative}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 min-h-[44px] bg-brand-mint text-brand-navy font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-brand-mint/90 transition-all cursor-pointer shadow-lg shadow-brand-mint/20"
+                        >
+                          <Play className="w-4 h-4 fill-current" />
+                          Play in App
+                        </button>
+                      )}
                       {(typeof vdoPlayerError === 'object'
                         ? vdoPlayerError?.showSafariFallback
                         : isIOSRestricted) && (

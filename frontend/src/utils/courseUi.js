@@ -220,6 +220,20 @@ export function isIOSAppOrWebView(win = typeof window !== "undefined" ? window :
 export const isIOSNonSafari = isIOSAppOrWebView;
 
 /**
+ * Detects whether the runtime environment is the Zeitnah React Native mobile app.
+ * Matches both active window.ReactNativeWebView bridge injection and the ZeitnahMobile user-agent token.
+ */
+export function isZeitnahNativeApp(win = typeof window !== "undefined" ? window : null) {
+  if (!win) return false;
+  const hasBridge = Boolean(
+    win.ReactNativeWebView && typeof win.ReactNativeWebView.postMessage === "function"
+  );
+  const ua = win.navigator?.userAgent || "";
+  const hasAppUa = /ZeitnahMobile/i.test(ua);
+  return hasBridge || hasAppUa;
+}
+
+/**
  * Detects whether the runtime is genuine desktop Safari on macOS.
  * Accurately distinguishes macOS Safari from iOS/iPadOS, Chrome on Mac, Firefox on Mac, Edge, and WebViews.
  */
