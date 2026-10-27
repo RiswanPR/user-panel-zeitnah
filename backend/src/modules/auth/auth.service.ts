@@ -26,7 +26,9 @@ import { isReservedDocumentationDomain } from '../../common/utils/email-validati
 import { normalizeCanonicalPrimaryRole } from '../../common/utils/role-normalization.util';
 import {
   generateOtpEmailHtml,
+  generateOtpEmailText,
   generateSuspiciousLoginEmailHtml,
+  generateSuspiciousLoginEmailText,
 } from '../../common/templates/email-templates';
 
 import { User, UserDevice, UserDocument } from './schemas/user.schema';
@@ -431,6 +433,11 @@ export class AuthService {
           loginDetails,
           reasons,
         ),
+        text: generateSuspiciousLoginEmailText(
+          user.email,
+          loginDetails,
+          reasons,
+        ),
       });
     } catch (error) {
       this.logger.warn(
@@ -636,6 +643,7 @@ export class AuthService {
       to: data.email,
       subject: `${otp} is your Registration Code - Zeitnah`,
       html: generateOtpEmailHtml(otp, 'Registration'),
+      text: generateOtpEmailText(otp, 'Registration'),
     });
 
     this.logAuthEvent('REGISTER_OTP_SENT', { email: data.email });
@@ -1061,6 +1069,7 @@ export class AuthService {
       to: cleanEmail,
       subject: `${otp} is your Login Verification Code - Zeitnah`,
       html: generateOtpEmailHtml(otp, 'Login'),
+      text: generateOtpEmailText(otp, 'Login'),
     });
 
     this.logAuthEvent('LOGIN_OTP_SENT', { email });

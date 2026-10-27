@@ -14,10 +14,12 @@ import {
   CourseEnquirySchema,
 } from './schemas/course-enquiry.schema';
 import { AwsModule } from '../../common/aws/aws.module';
+import { EmailModule } from '../../common/email/email.module';
 
 @Module({
   imports: [
     AwsModule,
+    EmailModule,
     MongooseModule.forFeature([
       {
         name: Course.name,

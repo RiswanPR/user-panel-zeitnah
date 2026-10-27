@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import {
@@ -7,8 +7,12 @@ import {
   ErrorSeverity,
 } from './schemas/error-report.schema';
 import { SubmitReportDto } from './dto/submit-report.dto';
-import { resend } from '../../config/resend.config';
-import { generateTroubleshootEmailHtml } from '../../common/templates/email-templates';
+import { EmailService } from '../../common/email/email.service';
+import { ResendEmailProvider } from '../../common/email/resend-email.provider';
+import {
+  generateTroubleshootEmailHtml,
+  generateTroubleshootEmailText,
+} from '../../common/templates/email-templates';
 
 const getAlertRecipients = (): string[] => {
   const envEmails =
@@ -35,7 +39,16 @@ export class TroubleshootService {
   constructor(
     @InjectModel(TroubleshootReport.name)
     private errorReportModel: Model<TroubleshootReportDocument>,
+    @Optional()
+    private emailService?: EmailService,
   ) {}
+
+  private getEmailService(): EmailService {
+    if (!this.emailService) {
+      this.emailService = new EmailService(new ResendEmailProvider());
+    }
+    return this.emailService;
+  }
 
   /**
    * Submit a troubleshoot error report — save to DB and send email alert.
@@ -131,14 +144,17 @@ export class TroubleshootService {
       return;
     }
 
+    const textContent = generateTroubleshootEmailText(report, userEmail, sev);
+
     try {
-      await resend.emails.send({
+      await this.getEmailService().sendEmail({
         from:
           process.env.RESEND_FROM_EMAIL ||
           'Zeitnah Admin <onboarding@resend.dev>',
         to: recipients,
         subject: `${sev.emoji} [${sev.label}] Troubleshoot Report — ${report.title.substring(0, 60)}`,
         html,
+        text: textContent,
       });
     } catch (error) {
       console.error('[TroubleshootService] Resend email send failed:', error);

@@ -9,12 +9,15 @@ import { ActiveStream } from './schemas/active-stream.schema';
 import { CourseEnquiry } from './schemas/course-enquiry.schema';
 import { SignedUrlService } from '../../common/aws/signed-url.service';
 import { HlsService } from './hls.service';
+import { EmailService } from '../../common/email/email.service';
 
 describe('CoursesService — My Learning & Role Resilience', () => {
   let service: CoursesService;
   let mockUserModel: any;
   let mockCourseModel: any;
   let mockSignedUrlService: any;
+  let mockCourseEnquiryModel: any;
+  let mockEmailService: any;
 
   beforeEach(async () => {
     mockUserModel = {
@@ -42,6 +45,20 @@ describe('CoursesService — My Learning & Role Resilience', () => {
         .mockImplementation((key) => Promise.resolve(`signed-${key}`)),
     };
 
+    mockCourseEnquiryModel = {
+      create: jest
+        .fn()
+        .mockImplementation((dto) =>
+          Promise.resolve({ ...dto, _id: 'enquiry-123' }),
+        ),
+    };
+
+    mockEmailService = {
+      sendEmail: jest
+        .fn()
+        .mockResolvedValue({ success: true, messageId: 'enquiry-msg-1' }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CoursesService,
@@ -59,7 +76,7 @@ describe('CoursesService — My Learning & Role Resilience', () => {
         },
         {
           provide: getModelToken(CourseEnquiry.name),
-          useValue: {},
+          useValue: mockCourseEnquiryModel,
         },
         {
           provide: SignedUrlService,
@@ -68,6 +85,10 @@ describe('CoursesService — My Learning & Role Resilience', () => {
         {
           provide: HlsService,
           useValue: {},
+        },
+        {
+          provide: EmailService,
+          useValue: mockEmailService,
         },
       ],
     }).compile();
@@ -308,6 +329,38 @@ describe('CoursesService — My Learning & Role Resilience', () => {
       await expect(service.getChapterById('NON-EXISTENT')).rejects.toThrow(
         NotFoundException,
       );
+    });
+  });
+
+  describe('createCourseEnquiry()', () => {
+    it('creates enquiry record and dispatches notification via EmailService with plain-text fallback', async () => {
+      process.env.ENQUIRY_NOTIFICATION_EMAILS = 'admissions@zeitnah.com';
+
+      const dto = {
+        courseId: '507f1f77bcf86cd799439011',
+        courseName: 'Full Stack Web Development',
+        name: 'Jane Smith',
+        email: 'jane@example.com',
+        phone: '+91 9876543210',
+        message: 'Interested in the upcoming cohort.',
+      };
+
+      const result = await service.createCourseEnquiry(dto as any);
+
+      expect(result.message).toBe('Course enquiry submitted successfully');
+      expect(mockCourseEnquiryModel.create).toHaveBeenCalledTimes(1);
+      expect(mockEmailService.sendEmail).toHaveBeenCalledTimes(1);
+
+      const emailPayload = mockEmailService.sendEmail.mock.calls[0][0];
+      expect(emailPayload.to).toEqual(['admissions@zeitnah.com']);
+      expect(emailPayload.subject).toContain('Full Stack Web Development');
+      expect(emailPayload.subject).toContain('Jane Smith');
+      expect(emailPayload.html).toContain('Full Stack Web Development');
+      expect(emailPayload.text).toBeDefined();
+      expect(emailPayload.text).toContain('Course: Full Stack Web Development');
+      expect(emailPayload.text).toContain('Student: Jane Smith');
+      expect(emailPayload.text).toContain('Phone: +91 9876543210');
+      expect(emailPayload.text).toContain('Interested in the upcoming cohort.');
     });
   });
 });

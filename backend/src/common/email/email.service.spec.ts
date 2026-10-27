@@ -199,5 +199,51 @@ describe('Email Delivery Resilience & Fallback', () => {
       expect(sendSpy).toHaveBeenCalledTimes(1);
       sendSpy.mockRestore();
     });
+
+    it('forwards plain-text text property to Resend payload when provided', async () => {
+      const sendSpy = jest.spyOn(resend.emails, 'send').mockResolvedValueOnce({
+        data: { id: 'msg-text-123' },
+        error: null,
+      } as any);
+
+      const result = await provider.sendEmail({
+        to: 'user@verifieddomain.org',
+        subject: 'Verification Code',
+        html: '<p>Your code is 123456</p>',
+        text: 'Your code is 123456',
+      });
+
+      expect(result.success).toBe(true);
+      expect(sendSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: 'user@verifieddomain.org',
+          subject: 'Verification Code',
+          html: '<p>Your code is 123456</p>',
+          text: 'Your code is 123456',
+        }),
+      );
+      sendSpy.mockRestore();
+    });
+
+    it('omits text property when not provided to maintain HTML-only compatibility', async () => {
+      const sendSpy = jest.spyOn(resend.emails, 'send').mockResolvedValueOnce({
+        data: { id: 'msg-html-only-123' },
+        error: null,
+      } as any);
+
+      const result = await provider.sendEmail({
+        to: 'user@verifieddomain.org',
+        subject: 'HTML Only',
+        html: '<p>HTML Content</p>',
+      });
+
+      expect(result.success).toBe(true);
+      expect(sendSpy).toHaveBeenCalledWith(
+        expect.not.objectContaining({
+          text: expect.anything(),
+        }),
+      );
+      sendSpy.mockRestore();
+    });
   });
 });

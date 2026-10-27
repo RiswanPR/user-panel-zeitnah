@@ -7,6 +7,10 @@ import {
 } from './schemas/support-ticket.schema';
 import { CreateSupportTicketDto } from './dto/create-support-ticket.dto';
 import { EmailService } from '../../common/email/email.service';
+import {
+  generateSupportTicketEmailHtml,
+  generateSupportTicketEmailText,
+} from '../../common/templates/email-templates';
 
 @Injectable()
 export class SupportService {
@@ -109,23 +113,14 @@ export class SupportService {
 
     if (recipients.length === 0) return;
 
-    const emailHtml = `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f19; color: #f8fafc; padding: 24px; border-radius: 12px; border: 1px solid #1e293b;">
-        <h2 style="color: #9fd5b2; margin-top: 0;">🎫 New Support Ticket: ${ticket.ticketNumber}</h2>
-        <p style="color: #94a3b8; font-size: 14px;"><strong>From:</strong> ${ticket.name} (&lt;${ticket.email}&gt;)</p>
-        <p style="color: #94a3b8; font-size: 14px;"><strong>Category:</strong> ${ticket.category}</p>
-        <p style="color: #94a3b8; font-size: 14px;"><strong>Subject:</strong> ${ticket.subject}</p>
-        <div style="background-color: #111827; border-left: 4px solid #9fd5b2; padding: 16px; margin: 20px 0; border-radius: 4px;">
-          <p style="white-space: pre-wrap; font-size: 14px; line-height: 1.6; margin: 0; color: #e2e8f0;">${ticket.message}</p>
-        </div>
-        <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Zeitnah LMS Platform Support Notification Engine</p>
-      </div>
-    `;
+    const emailHtml = generateSupportTicketEmailHtml(ticket);
+    const textContent = generateSupportTicketEmailText(ticket);
 
     await this.emailService.sendEmail({
       to: recipients,
       subject: `[Zeitnah Support] ${ticket.category}: ${ticket.subject} (${ticket.ticketNumber})`,
       html: emailHtml,
+      text: textContent,
     });
   }
 }

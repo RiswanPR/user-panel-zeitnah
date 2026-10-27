@@ -5,6 +5,7 @@ import {
   NotFoundException,
   UnauthorizedException,
   BadRequestException,
+  Optional,
 } from '@nestjs/common';
 
 import axios from 'axios';
@@ -29,8 +30,12 @@ import {
   CourseEnquiryDocument,
 } from './schemas/course-enquiry.schema';
 import { CreateCourseEnquiryDto } from './dto/create-course-enquiry.dto';
-import { resend } from '../../config/resend.config';
-import { generateCourseEnquiryNotificationEmailHtml } from '../../common/templates/email-templates';
+import { EmailService } from '../../common/email/email.service';
+import { ResendEmailProvider } from '../../common/email/resend-email.provider';
+import {
+  generateCourseEnquiryNotificationEmailHtml,
+  generateCourseEnquiryNotificationEmailText,
+} from '../../common/templates/email-templates';
 
 import {
   awardPoints,
@@ -58,7 +63,16 @@ export class CoursesService {
     private courseEnquiryModel: Model<CourseEnquiryDocument>,
     private signedUrlService: SignedUrlService,
     private hlsService: HlsService,
+    @Optional()
+    private emailService?: EmailService,
   ) {}
+
+  private getEmailService(): EmailService {
+    if (!this.emailService) {
+      this.emailService = new EmailService(new ResendEmailProvider());
+    }
+    return this.emailService;
+  }
 
   private parseDurationToSeconds(duration: any) {
     if (duration === null || duration === undefined) {
@@ -1980,14 +1994,17 @@ export class CoursesService {
         message: dto.message,
       });
 
+      const textContent = generateCourseEnquiryNotificationEmailText(dto);
+
       try {
-        await resend.emails.send({
+        await this.getEmailService().sendEmail({
           from:
             process.env.RESEND_FROM_EMAIL ||
             'Zeitnah Enquiries <onboarding@resend.dev>',
           to: recipients,
           subject: `🎓 New Course Enquiry: ${dto.courseName} - ${dto.name}`,
           html: emailHtml,
+          text: textContent,
         });
       } catch (err) {
         console.error('[CoursesService] Failed to send enquiry email:', err);

@@ -111,11 +111,18 @@ export class ResendEmailProvider implements EmailProvider {
     const timeoutMs = options.timeoutMs || 7000;
     const defaultFrom =
       process.env.RESEND_FROM_EMAIL || 'Zeitnah <onboarding@resend.dev>';
-    const payload = {
+    const payload: {
+      from: string;
+      to: string | string[];
+      subject: string;
+      html: string;
+      text?: string;
+    } = {
       from: options.from || defaultFrom,
       to: options.to,
       subject: options.subject,
       html: options.html,
+      ...(options.text ? { text: options.text } : {}),
     };
 
     const maxAttempts = 2;

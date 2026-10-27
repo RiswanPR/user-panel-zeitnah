@@ -8,8 +8,11 @@ import {
   TroubleshootReportSchema,
 } from './schemas/error-report.schema';
 
+import { EmailModule } from '../../common/email/email.module';
+
 @Module({
   imports: [
+    EmailModule,
     MongooseModule.forFeature([
       {
         name: TroubleshootReport.name,
