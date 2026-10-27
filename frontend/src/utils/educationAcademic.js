@@ -64,7 +64,7 @@ export function parseEducationDateSafe(dateVal) {
  */
 export function isEducationOngoing(edu) {
   if (!edu) return false;
-  if (Boolean(edu.currentlyStudying)) return true;
+  if (edu.currentlyStudying) return true;
   const hasValidStart = parseEducationDateSafe(edu.startDate) !== null;
   const hasNoEnd = edu.endDate === null || edu.endDate === undefined || edu.endDate === "";
   return hasValidStart && hasNoEnd;

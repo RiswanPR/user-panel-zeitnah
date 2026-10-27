@@ -65,7 +65,9 @@ export default function ReelsViewer({
 
   const [activeIndex, setActiveIndex] = useState(startingIndex);
   const activeIndexRef = useRef(startingIndex);
-  activeIndexRef.current = activeIndex;
+  useEffect(() => {
+    activeIndexRef.current = activeIndex;
+  }, [activeIndex]);
 
   // React Query Mutations for Reactions & Saves
   const reactMutation = useReactToPost();

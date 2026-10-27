@@ -25,6 +25,12 @@ import {
   getVdoCipherEmbedUrl,
   formatVdoPlayerError,
   isZeitnahNativeApp,
+  createProgressSnapshot,
+  sanitizeProgressPayload,
+  isWorkspaceResponseStale,
+  resolveProgressEndpoint,
+  shouldSyncProgressRefs,
+  isReloadRequestSuperseded,
 } from "../../utils/courseUi";
 import { calculatePlaybackProgress } from "../../utils/playerUnits";
 import { AuthContext } from "../../context/AuthContext";
@@ -64,6 +70,7 @@ function loadVdoCipherApi() {
       };
       const onError = () => {
         settled = true;
+        existing.remove();
         reject(new Error("VdoCipher script failed to load"));
       };
       existing.addEventListener("load", onLoad, { once: true });
@@ -80,8 +87,11 @@ function loadVdoCipherApi() {
             script.src = "https://player.vdocipher.com/v2/api.js";
             script.async = true;
             script.dataset.vdocipherApi = "true";
-            script.onload = resolve;
-            script.onerror = reject;
+            script.onload = () => resolve();
+            script.onerror = () => {
+              script.remove();
+              reject(new Error("VdoCipher script failed to load"));
+            };
             document.body.appendChild(script);
           }
         }
@@ -92,8 +102,11 @@ function loadVdoCipherApi() {
     script.src = "https://player.vdocipher.com/v2/api.js";
     script.async = true;
     script.dataset.vdocipherApi = "true";
-    script.onload = resolve;
-    script.onerror = reject;
+    script.onload = () => resolve();
+    script.onerror = () => {
+      script.remove();
+      reject(new Error("VdoCipher script failed to load"));
+    };
     document.body.appendChild(script);
   });
 }
@@ -218,6 +231,13 @@ function ClassView() {
 
   // Authoritative active class ID state
   const [activeClassId, setActiveClassId] = useState(routeClassId || null);
+  const activeClassIdRef = useRef(activeClassId);
+  const latestRequestedClassIdRef = useRef(activeClassId);
+  const reloadSequenceRef = useRef(0);
+
+  useEffect(() => {
+    activeClassIdRef.current = activeClassId;
+  }, [activeClassId]);
 
   // Loading & Data State
   const [loading, setLoading] = useState(true);
@@ -229,6 +249,7 @@ function ClassView() {
   const [progressState, setProgressState] = useState(null);
   const [syncState, setSyncState] = useState("idle"); // "idle" | "saving" | "saved" | "watching" | "error"
   const [vdoPlayerError, setVdoPlayerError] = useState(false);
+  const [vdoReloadCount, setVdoReloadCount] = useState(0);
 
   // UI & Workspace State
   const [curriculumOpen, setCurriculumOpen] = useState(false);
@@ -307,6 +328,8 @@ function ClassView() {
   // Keep routeClassId synchronized if navigation occurs
   useEffect(() => {
     if (routeClassId && routeClassId !== activeClassId) {
+      reloadSequenceRef.current++;
+      latestRequestedClassIdRef.current = routeClassId;
       setActiveClassId(routeClassId);
     }
   }, [routeClassId]);
@@ -363,6 +386,7 @@ function ClassView() {
   // ══════════════════════════════════════════════════════════
   const loadWorkspace = useCallback(async (targetId) => {
     if (!targetId) return;
+    latestRequestedClassIdRef.current = targetId;
     try {
       setLoading(true);
       setLoadError(null);
@@ -371,6 +395,7 @@ function ClassView() {
 
       // 1. Authoritative Class Details
       const classRes = await api.get(`/courses/class/${targetId}`);
+      if (isWorkspaceResponseStale(targetId, latestRequestedClassIdRef.current)) return;
       const classPayload = classRes.data;
       setData(classPayload);
       dataRef.current = classPayload;
@@ -399,10 +424,16 @@ function ClassView() {
         parallelRequests.push(
           api
             .get(`/courses/video/${targetId}`)
-            .then((vRes) => setVideoData(vRes.data))
+            .then((vRes) => {
+              if (!isWorkspaceResponseStale(targetId, latestRequestedClassIdRef.current)) {
+                setVideoData(vRes.data);
+              }
+            })
             .catch((vErr) => {
-              console.warn("Failed to load S3 video stream:", vErr);
-              setVideoData({ error: true });
+              if (!isWorkspaceResponseStale(targetId, latestRequestedClassIdRef.current)) {
+                console.warn("Failed to load S3 video stream:", vErr);
+                setVideoData({ error: true });
+              }
             })
         );
       }
@@ -413,8 +444,10 @@ function ClassView() {
           api
             .get(`/courses/${courseId}/chapters`)
             .then((cRes) => {
-              const chaptersList = cRes.data?.course?.chapters || cRes.data?.chapters || [];
-              setCourseChapters(chaptersList);
+              if (!isWorkspaceResponseStale(targetId, latestRequestedClassIdRef.current)) {
+                const chaptersList = cRes.data?.course?.chapters || cRes.data?.chapters || [];
+                setCourseChapters(chaptersList);
+              }
             })
             .catch((cErr) => console.warn("Could not load course curriculum:", cErr))
         );
@@ -425,13 +458,18 @@ function ClassView() {
         parallelRequests.push(
           api
             .get(`/courses/${courseId}/chapters/${chCode}/classes`)
-            .then((sRes) => setChapterClasses(sRes.data?.classes || []))
+            .then((sRes) => {
+              if (!isWorkspaceResponseStale(targetId, latestRequestedClassIdRef.current)) {
+                setChapterClasses(sRes.data?.classes || []);
+              }
+            })
             .catch((sErr) => console.warn("Could not load sibling chapter classes:", sErr))
         );
       }
 
       await Promise.allSettled(parallelRequests);
     } catch (error) {
+      if (isWorkspaceResponseStale(targetId, latestRequestedClassIdRef.current)) return;
       const isTimeout = error?.isTimeout || error?.code === "ECONNABORTED";
       setLoadError({
         message: isTimeout
@@ -442,7 +480,9 @@ function ClassView() {
         isTimeout,
       });
     } finally {
-      setLoading(false);
+      if (!isWorkspaceResponseStale(targetId, latestRequestedClassIdRef.current)) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -632,7 +672,15 @@ function ClassView() {
   // PROGRESS REFS SYNCHRONIZATION
   // ══════════════════════════════════════════════════════════
   useEffect(() => {
+    const classIdInData = data?.class?._id || data?.class?.id;
+    if (!shouldSyncProgressRefs(classIdInData, activeClassId)) {
+      // Data belongs to previous lesson while new workspace request is in flight.
+      // Do not corrupt newly reset refs with stale lesson data.
+      return;
+    }
+
     const initial = data?.progress?.classProgress;
+    const lessonId = classIdInData || activeClassId;
     lastSyncedRef.current = {
       currentTime: initial?.lastPositionSeconds || 0,
       duration: initial?.durationSeconds || 0,
@@ -644,28 +692,37 @@ function ClassView() {
       watchedSeconds: initial?.watchedSeconds || 0,
     };
     s3ProgressRef.current.maxCoveredSeconds = initial?.coveredSeconds || 0;
-    latestSnapshotRef.current = initial
-      ? {
+    latestSnapshotRef.current = initial && lessonId
+      ? createProgressSnapshot({
+          classId: lessonId,
           completed: Boolean(initial.completed),
           currentTimeSeconds: initial.lastPositionSeconds || 0,
           durationSeconds: initial.durationSeconds || 0,
           totalCoveredSeconds: initial.coveredSeconds || 0,
           totalPlayedSeconds: initial.watchedSeconds || 0,
-        }
+        })
       : null;
     dataRef.current = data;
-  }, [data]);
+  }, [data, activeClassId]);
 
   // ══════════════════════════════════════════════════════════
-  // VDOCIPHER PLAYER LIFECYCLE (Preserved with token guard)
+  // VDOCIPHER PLAYER LIFECYCLE (Preserved with token guard & credential rebinding)
   // ══════════════════════════════════════════════════════════
   useEffect(() => {
-    const classData = dataRef.current?.class;
+    const classData = data?.class;
+    const boundClassId = classData?._id;
     const videoSource = getClassVideoSource(
-      dataRef.current?.course?.type,
+      data?.course?.type,
       classData?.videoSource
     );
-    if (videoSource === "s3" || !classData?.vdoCipher || !iframeRef.current) {
+    if (
+      videoSource === "s3" ||
+      !classData?.vdoCipher?.otp ||
+      !classData?.vdoCipher?.playbackInfo ||
+      !iframeRef.current ||
+      !boundClassId ||
+      boundClassId !== activeClassId
+    ) {
       return undefined;
     }
     let cancelled = false;
@@ -687,13 +744,14 @@ function ClassView() {
         savedBase.coveredSeconds,
         Number(sessionCoveredSeconds) || 0
       );
-      const snapshot = {
+      const snapshot = createProgressSnapshot({
+        classId: boundClassId,
         completed,
         currentTimeSeconds: Math.round(currentTimeSeconds),
         durationSeconds: Math.round(durationSeconds),
         totalCoveredSeconds: Math.round(totalCoveredSeconds),
         totalPlayedSeconds: Math.round(totalPlayedSeconds),
-      };
+      });
       latestSnapshotRef.current = snapshot;
       return snapshot;
     };
@@ -702,7 +760,7 @@ function ClassView() {
       completed = false,
       force = false,
     } = {}) => {
-      if (cancelled || !playerRef.current || saveInFlightRef.current || !activeClassId) return;
+      if (cancelled || !playerRef.current || saveInFlightRef.current || !boundClassId) return;
       try {
         const snapshot = await buildProgressSnapshot(completed);
         if (!snapshot) return;
@@ -721,36 +779,139 @@ function ClassView() {
           Math.abs(snapshot.currentTimeSeconds - previous.currentTime) < 15
         )
           return;
+
+        const { targetClassId, body } = sanitizeProgressPayload(snapshot, boundClassId);
+        const endpoint = resolveProgressEndpoint(targetClassId);
+        if (!targetClassId || !endpoint || !body) return;
+
         saveInFlightRef.current = true;
-        setSyncState("saving");
-        const res = await api.post(
-          `/courses/class/${activeClassId}/progress`,
-          snapshot
-        );
-        lastSyncedRef.current = {
-          currentTime: snapshot.currentTimeSeconds,
-          duration: snapshot.durationSeconds,
-          totalCovered: snapshot.totalCoveredSeconds,
-          totalPlayed: snapshot.totalPlayedSeconds,
-        };
-        setProgressState(res.data);
-        setSyncState("saved");
+        if (targetClassId === activeClassIdRef.current) {
+          setSyncState("saving");
+        }
+
+        const res = await api.post(endpoint, body);
+
+        if (targetClassId === activeClassIdRef.current) {
+          lastSyncedRef.current = {
+            currentTime: snapshot.currentTimeSeconds,
+            duration: snapshot.durationSeconds,
+            totalCovered: snapshot.totalCoveredSeconds,
+            totalPlayed: snapshot.totalPlayedSeconds,
+          };
+          setProgressState(res.data);
+          setSyncState("saved");
+        }
       } catch (error) {
         console.warn("[VdoCipher] Progress save error:", error);
-        setSyncState("error");
+        if (boundClassId === activeClassIdRef.current) {
+          setSyncState("error");
+        }
       } finally {
         saveInFlightRef.current = false;
       }
     };
 
-    const setupPlayer = async () => {
+    const flushLatestProgress = () => {
+      const snapshot = latestSnapshotRef.current;
+      const token = storage.getAccessToken();
+      const targetLessonId = snapshot?.classId || boundClassId;
+      if (!snapshot || !token || !targetLessonId) return;
+
       try {
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1]));
+          if (payload?.exp && payload.exp * 1000 < Date.now()) {
+            // Token already expired; do not send expired token beacon
+            return;
+          }
+        }
+      } catch {
+        // Proceed
+      }
+
+      const { targetClassId, body } = sanitizeProgressPayload(snapshot, targetLessonId);
+      const baseUrl = api.defaults.baseURL || "https://zeitnahacademy.com/api";
+      const endpoint = resolveProgressEndpoint(targetClassId, baseUrl);
+      if (!endpoint || !body) return;
+
+      void fetch(endpoint, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+        keepalive: true,
+      });
+    };
+
+    const captureFinalSnapshotSync = () => {
+      if (!playerRef.current?.video || !boundClassId) return latestSnapshotRef.current;
+      try {
+        const player = playerRef.current;
+        const currentTimeSeconds = Number(player.video.currentTime) || 0;
+        const durationSeconds = Number(player.video.duration) || 0;
+        const prevSnapshot = latestSnapshotRef.current;
+        const savedBase = savedProgressBaseRef.current;
+        const snapshot = createProgressSnapshot({
+          classId: boundClassId,
+          completed: prevSnapshot?.completed || false,
+          currentTimeSeconds: Math.round(currentTimeSeconds),
+          durationSeconds: Math.round(durationSeconds) || prevSnapshot?.durationSeconds || 0,
+          totalCoveredSeconds: Math.max(
+            prevSnapshot?.totalCoveredSeconds || 0,
+            savedBase.coveredSeconds || 0,
+            Math.round(currentTimeSeconds)
+          ),
+          totalPlayedSeconds: Math.max(
+            prevSnapshot?.totalPlayedSeconds || 0,
+            savedBase.watchedSeconds || 0,
+            Math.round(currentTimeSeconds)
+          ),
+        });
+        latestSnapshotRef.current = snapshot;
+        return snapshot;
+      } catch {
+        return latestSnapshotRef.current;
+      }
+    };
+
+    const setupPlayer = async () => {
+      let watchdogTimer = null;
+      const clearWatchdog = () => {
+        if (watchdogTimer) {
+          window.clearTimeout(watchdogTimer);
+          watchdogTimer = null;
+        }
+      };
+
+      try {
+        // Bounded 25-second initialization watchdog:
+        // Detects silent network hangs, DNS failures, or adblockers where iframe hangs without postMessage
+        watchdogTimer = window.setTimeout(() => {
+          if (cancelled || boundClassId !== activeClassIdRef.current) return;
+          if (playerRef.current?.video?.readyState >= 1) return;
+          console.warn("[VdoCipher] Player initialization timed out after 25s");
+          setSyncState("error");
+          const formatted = formatVdoPlayerError({
+            code: "INITIALIZATION_TIMEOUT",
+            message: "Video player initialization timed out. Please check your internet connection and reload.",
+          });
+          setVdoPlayerError(formatted);
+        }, 25000);
+
         await loadVdoCipherApi();
-        if (cancelled || !iframeRef.current || !window.VdoPlayer) return;
+        if (cancelled || !iframeRef.current || !window.VdoPlayer || boundClassId !== activeClassIdRef.current) {
+          clearWatchdog();
+          return;
+        }
         const player = window.VdoPlayer.getInstance(iframeRef.current);
         playerRef.current = player;
 
         const onLoadedMetadata = () => {
+          clearWatchdog();
+          if (cancelled || boundClassId !== activeClassIdRef.current) return;
           const resumeAt = Number(
             dataRef.current?.progress?.classProgress?.lastPositionSeconds
           );
@@ -764,23 +925,31 @@ function ClassView() {
           void persistProgress({ force: true });
         };
         const onTimeUpdate = () => {
+          clearWatchdog();
+          if (cancelled || boundClassId !== activeClassIdRef.current) return;
           setCurrentVideoTime(player.video.currentTime || 0);
           void persistProgress();
         };
         const onPlay = () => {
+          clearWatchdog();
+          if (cancelled || boundClassId !== activeClassIdRef.current) return;
           setSyncState("watching");
           void buildProgressSnapshot(false);
         };
         const onPause = () => {
+          if (cancelled) return;
           void persistProgress({ force: true });
         };
         const onSeeked = () => {
+          if (cancelled) return;
           void persistProgress({ force: true });
         };
         const onEnded = () => {
+          if (cancelled) return;
           void persistProgress({ completed: true, force: true });
         };
         const progressInterval = window.setInterval(async () => {
+          if (cancelled || boundClassId !== activeClassIdRef.current) return;
           const token = storage.getAccessToken();
           if (token) {
             try {
@@ -797,36 +966,6 @@ function ClassView() {
           }
           void persistProgress({ force: true });
         }, 15000);
-
-        const flushLatestProgress = () => {
-          const snapshot = latestSnapshotRef.current;
-          const token = storage.getAccessToken();
-          if (!snapshot || !token || !activeClassId) return;
-
-          try {
-            const parts = token.split('.');
-            if (parts.length === 3) {
-              const payload = JSON.parse(atob(parts[1]));
-              if (payload?.exp && payload.exp * 1000 < Date.now()) {
-                // Token already expired; do not send expired token beacon
-                return;
-              }
-            }
-          } catch {
-            // Proceed
-          }
-
-          const baseUrl = api.defaults.baseURL || "https://zeitnahacademy.com/api";
-          void fetch(`${baseUrl}/courses/class/${activeClassId}/progress`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(snapshot),
-            keepalive: true,
-          });
-        };
 
         const onPageHide = () => {
           flushLatestProgress();
@@ -846,6 +985,7 @@ function ClassView() {
         player.video.addEventListener("ended", onEnded);
 
         const handlePlayerError = (err) => {
+          clearWatchdog();
           recordVdoError(err);
           console.warn("[VdoCipher] Player error intercepted:", err);
           const formatted = formatVdoPlayerError(err);
@@ -856,12 +996,18 @@ function ClassView() {
           if (event?.origin && event.origin.includes("vdocipher.com")) {
             try {
               const payload = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-              if (payload && (payload.event === "error" || payload.type === "error" || payload.error)) {
+              if (!payload || typeof payload !== "object") return;
+
+              // Provider error interception: clear watchdog and surface error
+              if (payload.event === "error" || payload.type === "error" || payload.error) {
+                clearWatchdog();
                 recordVdoError(payload);
                 console.warn("[VdoCipher] PostMessage error intercepted:", payload);
                 const formatted = formatVdoPlayerError(payload?.error || payload);
                 setVdoPlayerError(formatted);
               }
+              // Note: Readiness cancellation is strictly handled via verified player.video
+              // listeners (loadedmetadata, play, timeupdate). Raw postMessages do NOT clear watchdog.
             } catch {}
           }
         };
@@ -877,6 +1023,7 @@ function ClassView() {
         document.addEventListener("visibilitychange", onVisibilityChange);
 
         cleanup = () => {
+          clearWatchdog();
           window.clearInterval(progressInterval);
           player.video.removeEventListener("loadedmetadata", onLoadedMetadata);
           player.video.removeEventListener("play", onPlay);
@@ -893,32 +1040,69 @@ function ClassView() {
           window.removeEventListener("message", handlePostMessage);
           window.removeEventListener("pagehide", onPageHide);
           document.removeEventListener("visibilitychange", onVisibilityChange);
-          void persistProgress({ force: true });
         };
       } catch (error) {
+        clearWatchdog();
+        if (cancelled || boundClassId !== activeClassIdRef.current) return;
         console.warn("[VdoCipher] setup error:", error);
         setSyncState("error");
+        const formatted = formatVdoPlayerError({
+          code: "SDK_LOAD_FAILED",
+          message: error?.message || "The video player engine could not be loaded",
+        });
+        setVdoPlayerError(formatted);
       }
     };
 
     void setupPlayer();
     return () => {
       cancelled = true;
+      captureFinalSnapshotSync();
       cleanup();
+      flushLatestProgress();
       playerRef.current = null;
     };
-  }, [activeClassId, data?.class?._id]);
+  }, [activeClassId, data?.class?._id, data?.class?.vdoCipher?.otp, data?.class?.vdoCipher?.playbackInfo, vdoReloadCount]);
 
-  // VdoCipher reload handler
+  // VdoCipher reload handler with request sequencing
   const handleVdoReload = useCallback(async () => {
     setVdoPlayerError(false);
+    setVdoReloadCount((c) => c + 1);
     if (!activeClassId) return;
+    const requestedLessonId = activeClassId;
+    const currentSeq = ++reloadSequenceRef.current;
+
     try {
-      const res = await api.get(`/courses/class/${activeClassId}`);
+      const res = await api.get(`/courses/class/${requestedLessonId}`);
+      if (
+        isReloadRequestSuperseded(
+          currentSeq,
+          reloadSequenceRef.current,
+          requestedLessonId,
+          latestRequestedClassIdRef.current
+        )
+      ) {
+        return;
+      }
       setData(res.data);
       setProgressState(res.data.progress || null);
     } catch (err) {
+      if (
+        isReloadRequestSuperseded(
+          currentSeq,
+          reloadSequenceRef.current,
+          requestedLessonId,
+          latestRequestedClassIdRef.current
+        )
+      ) {
+        return;
+      }
       console.error("Failed to reload class data:", err);
+      setVdoPlayerError({
+        title: "Playback Reload Failed",
+        message: "Could not reload the video stream credentials. Please check your connection and retry.",
+        isRetryable: true,
+      });
       toast.error("Reload failed", "Could not reload the video. Please try again.");
     }
   }, [activeClassId, toast]);
@@ -974,7 +1158,10 @@ function ClassView() {
   // Double-save race guarded, seek-jump filtered, throttled state updates
   // ══════════════════════════════════════════════════════════
   const handleS3ProgressUpdate = useCallback(
-    ({ currentTime, duration, completed: isExplicitlyCompleted }) => {
+    ({ currentTime, duration, completed: isExplicitlyCompleted, classId: eventClassId }) => {
+      const targetClassId = eventClassId || dataRef.current?.class?._id || activeClassIdRef.current;
+      if (!targetClassId) return;
+
       const s3State = s3ProgressRef.current;
       const now = Date.now();
 
@@ -982,7 +1169,9 @@ function ClassView() {
         typeof currentTime === "number" && !isNaN(currentTime)
           ? currentTime
           : s3State.lastCurrentTime || 0;
-      setCurrentVideoTime(effectiveCurrentTime);
+      if (targetClassId === activeClassIdRef.current) {
+        setCurrentVideoTime(effectiveCurrentTime);
+      }
 
       const effectiveDuration =
         typeof duration === "number" && duration > 0
@@ -1016,14 +1205,15 @@ function ClassView() {
 
       const shouldSave = now - s3State.lastSaveTime > 15000 || isEnding;
       if (isEnding && s3State.lastCurrentTime === effectiveCurrentTime && !isExplicitlyCompleted) return;
-      if (!shouldSave || s3State.saveInFlight || !activeClassId) return;
+      if (!shouldSave || s3State.saveInFlight) return;
 
       s3State.lastSaveTime = now;
       s3State.lastCurrentTime = effectiveCurrentTime;
       s3State.saveInFlight = true;
 
       const savedBase = savedProgressBaseRef.current;
-      const snapshot = {
+      const snapshot = createProgressSnapshot({
+        classId: targetClassId,
         completed: isEnding,
         currentTimeSeconds: Math.round(effectiveCurrentTime),
         durationSeconds: Math.round(effectiveDuration),
@@ -1033,41 +1223,52 @@ function ClassView() {
         totalPlayedSeconds: Math.round(
           (savedBase.watchedSeconds || 0) + s3State.sessionElapsed
         ),
-      };
+      });
 
       latestSnapshotRef.current = snapshot;
-      setSyncState("saving");
+      if (targetClassId === activeClassIdRef.current) {
+        setSyncState("saving");
+      }
+
+      const { targetClassId: sendClassId, body } = sanitizeProgressPayload(snapshot, targetClassId);
+      const endpoint = resolveProgressEndpoint(sendClassId);
+      if (!endpoint || !body) return;
 
       api
-        .post(`/courses/class/${activeClassId}/progress`, snapshot)
+        .post(endpoint, body)
         .then((res) => {
-          setProgressState(res.data);
-          setSyncState("saved");
+          if (sendClassId === activeClassIdRef.current) {
+            setProgressState(res.data);
+            setSyncState("saved");
 
-          // Chapter Completion & Autoplay Trigger (Cross-Chapter Enabled)
-          if (isEnding && !s3State.hasTriggeredCompletionModal) {
-            s3State.hasTriggeredCompletionModal = true;
-            const currentCurriculum = unifiedCurriculumRef.current;
-            const isLast = currentCurriculum?.isLastLessonInChapter;
-            const nextOne = currentCurriculum?.nextLesson;
+            // Chapter Completion & Autoplay Trigger (Cross-Chapter Enabled)
+            if (isEnding && !s3State.hasTriggeredCompletionModal) {
+              s3State.hasTriggeredCompletionModal = true;
+              const currentCurriculum = unifiedCurriculumRef.current;
+              const isLast = currentCurriculum?.isLastLessonInChapter;
+              const nextOne = currentCurriculum?.nextLesson;
 
-            if (isLast) {
-              setChapterCompleteModalOpen(true);
-            } else if (autoPlayNext && nextOne && nextOne.id && !nextOne.locked && !nextOne.isLocked) {
-              toast.info("Autoplay", `Loading next lesson: ${nextOne.title}`);
-              setTimeout(() => {
-                setActiveClassId(nextOne.id);
-                navigate(`/courses/class/${nextOne.id}`);
-              }, 1500);
+              if (isLast) {
+                setChapterCompleteModalOpen(true);
+              } else if (autoPlayNext && nextOne && nextOne.id && !nextOne.locked && !nextOne.isLocked) {
+                toast.info("Autoplay", `Loading next lesson: ${nextOne.title}`);
+                setTimeout(() => {
+                  handleSelectLesson(nextOne);
+                }, 1500);
+              }
             }
           }
         })
-        .catch(() => setSyncState("error"))
+        .catch(() => {
+          if (sendClassId === activeClassIdRef.current) {
+            setSyncState("error");
+          }
+        })
         .finally(() => {
           s3State.saveInFlight = false;
         });
     },
-    [activeClassId, autoPlayNext, navigate, toast]
+    [autoPlayNext, toast]
   );
 
   // Cross-platform video seek handler (Native VdoCipher App + Web Iframe Player)
@@ -1131,11 +1332,30 @@ function ClassView() {
       } catch {
         // Ignore
       }
+
       // 1. Flush/save current lesson progress snapshot if dirty
-      if (latestSnapshotRef.current && activeClassId) {
-        api.post(`/courses/class/${activeClassId}/progress`, latestSnapshotRef.current).catch(() => {});
+      const snapshotToFlush = latestSnapshotRef.current;
+      const lessonToFlush = snapshotToFlush?.classId || activeClassId;
+      if (snapshotToFlush && lessonToFlush) {
+        const { targetClassId, body } = sanitizeProgressPayload(snapshotToFlush, lessonToFlush);
+        const endpoint = resolveProgressEndpoint(targetClassId);
+        if (endpoint && body) {
+          api.post(endpoint, body).catch(() => {});
+        }
       }
-      // 2. Reset lesson-specific UI state
+
+      // 2. Reset lesson-specific refs and UI state for the transition
+      latestSnapshotRef.current = null;
+      savedProgressBaseRef.current = { coveredSeconds: 0, watchedSeconds: 0 };
+      lastSyncedRef.current = {
+        currentTime: 0,
+        duration: 0,
+        totalCovered: 0,
+        totalPlayed: 0,
+      };
+      playerRef.current = null;
+      reloadSequenceRef.current++;
+
       setCurrentVideoTime(0);
       setVdoPlayerError(false);
       setSyncState("idle");
@@ -1149,6 +1369,8 @@ function ClassView() {
         hasTriggeredCompletionModal: false,
       };
       setCurriculumOpen(false);
+
+      latestRequestedClassIdRef.current = targetId;
       setActiveClassId(targetId);
       navigate(`/courses/class/${targetId}`);
     }

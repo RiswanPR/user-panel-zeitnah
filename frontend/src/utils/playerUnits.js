@@ -176,7 +176,7 @@ export function sanitizeChapters(chapters, durationSeconds = Infinity) {
   for (const ch of chapters) {
     if (!ch || typeof ch !== 'object') continue;
     const title = typeof ch.title === 'string' ? ch.title.trim() : '';
-    let parsedTime = null;
+    let parsedTime;
     if (typeof ch.timestampSeconds === 'number') {
       parsedTime = ch.timestampSeconds;
     } else if (typeof ch.timeSeconds === 'number') {

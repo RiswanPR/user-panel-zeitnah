@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { X, Sparkles, Smile, Loader2 } from 'lucide-react';
 import { communityApi } from '../../../services/communityApi';
 import StickerIcon from './StickerIcon';
@@ -111,28 +111,31 @@ export default function ReelStickerPicker({
     }
   }, [isOpen, selectedCategory]);
 
+  const handlePick = useCallback(
+    (sticker) => {
+      const st = Math.min(currentTime, Math.max(0, duration - 3));
+      const en = Math.min(duration, st + 4);
+
+      onSelectSticker?.({
+        id: `sticker-${Date.now()}`,
+        type: 'STICKER',
+        stickerId: sticker.id,
+        name: sticker.name,
+        svg: sticker.svg,
+        start: Number(st.toFixed(1)),
+        end: Number(en.toFixed(1)),
+        x: 0.5,
+        y: 0.5,
+        scale: 1.0,
+        rotation: 0,
+        opacity: 1.0,
+      });
+      onClose?.();
+    },
+    [currentTime, duration, onSelectSticker, onClose]
+  );
+
   if (!isOpen) return null;
-
-  const handlePick = (sticker) => {
-    const st = Math.min(currentTime, Math.max(0, duration - 3));
-    const en = Math.min(duration, st + 4);
-
-    onSelectSticker?.({
-      id: `sticker-${Date.now()}`,
-      type: 'STICKER',
-      stickerId: sticker.id,
-      name: sticker.name,
-      svg: sticker.svg,
-      start: Number(st.toFixed(1)),
-      end: Number(en.toFixed(1)),
-      x: 0.5,
-      y: 0.5,
-      scale: 1.0,
-      rotation: 0,
-      opacity: 1.0,
-    });
-    onClose?.();
-  };
 
   const filteredStickers =
     selectedCategory === 'ALL'

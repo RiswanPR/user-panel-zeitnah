@@ -31,6 +31,10 @@ export default function VideoStage({
   const [nativeError, setNativeError] = useState(null);
   const isIOSRestricted = useMemo(() => isIOSAppOrWebView(), []);
   const [isNativeApp, setIsNativeApp] = useState(() => isZeitnahNativeApp());
+  const [isBridgeChecking, setIsBridgeChecking] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return isIOSAppOrWebView() && !isZeitnahNativeApp();
+  });
 
   // Distinct identifier for the current lesson to manage auto-launch & dismissal state
   const currentLessonKey = useMemo(() => {
@@ -46,6 +50,7 @@ export default function VideoStage({
   const hasAutoLaunchedRef = useRef({});
   const userDismissedRef = useRef({});
   const isNativePlayerOpenRef = useRef(false);
+  const lastLayoutRef = useRef(null);
 
   const getPlayerLayout = useCallback(() => {
     if (isOverlayOpen) {
@@ -67,20 +72,51 @@ export default function VideoStage({
     };
   }, [isOverlayOpen]);
 
+  const sendLayoutUpdate = useCallback((layout) => {
+    if (!layout || !window.ReactNativeWebView?.postMessage) return;
+    const prev = lastLayoutRef.current;
+    if (
+      prev &&
+      prev.x === layout.x &&
+      prev.y === layout.y &&
+      prev.width === layout.width &&
+      prev.height === layout.height &&
+      prev.visible === layout.visible
+    ) {
+      return;
+    }
+    lastLayoutRef.current = layout;
+    try {
+      window.ReactNativeWebView.postMessage(
+        JSON.stringify({
+          type: 'UPDATE_VDOCIPHER_LAYOUT',
+          payload: { layout },
+        })
+      );
+    } catch {
+      // Ignore
+    }
+  }, []);
+
   // Continuously verify if bridge attaches after initial render tick (prevents race conditions)
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (isZeitnahNativeApp()) {
       setIsNativeApp(true);
+      setIsBridgeChecking(false);
       return;
     }
     const checkBridge = () => {
       if (isZeitnahNativeApp()) {
         setIsNativeApp(true);
+        setIsBridgeChecking(false);
       }
     };
-    const interval = setInterval(checkBridge, 100);
-    const timer = setTimeout(() => clearInterval(interval), 2000);
+    const interval = setInterval(checkBridge, 50);
+    const timer = setTimeout(() => {
+      clearInterval(interval);
+      setIsBridgeChecking(false);
+    }, 400);
     return () => {
       clearInterval(interval);
       clearTimeout(timer);
@@ -107,6 +143,7 @@ export default function VideoStage({
     isNativePlayerOpenRef.current = true;
 
     const layout = getPlayerLayout();
+    lastLayoutRef.current = layout;
 
     // Calculate resume position in milliseconds (replays of completed classes start at 0)
     const isAlreadyCompleted = Boolean(classProgress?.completed) || Number(classProgressPercent || 0) >= 90;
@@ -131,6 +168,7 @@ export default function VideoStage({
       return true;
     } catch {
       isNativePlayerOpenRef.current = false;
+      lastLayoutRef.current = null;
       setNativeError('Failed to open native player. Tap to retry.');
       return false;
     }
@@ -153,20 +191,12 @@ export default function VideoStage({
   // Synchronize native player visibility immediately when overlay or modal drawer opens/closes
   useEffect(() => {
     if (!isNativeApp || !isNativePlayerOpenRef.current) return;
+    if (typeof window !== 'undefined' && window.__isNativeVdoFullscreen) return;
     const layout = getPlayerLayout();
-    if (layout && window.ReactNativeWebView?.postMessage) {
-      try {
-        window.ReactNativeWebView.postMessage(
-          JSON.stringify({
-            type: 'UPDATE_VDOCIPHER_LAYOUT',
-            payload: { layout },
-          })
-        );
-      } catch {
-        // Ignore
-      }
+    if (layout) {
+      sendLayoutUpdate(layout);
     }
-  }, [isOverlayOpen, isNativeApp, getPlayerLayout]);
+  }, [isOverlayOpen, isNativeApp, getPlayerLayout, sendLayoutUpdate]);
 
   useEffect(() => {
     window.__onNativeVdoProgress = (event) => {
@@ -178,7 +208,7 @@ export default function VideoStage({
 
       if (event?.completed) {
         if (onProgressUpdate) {
-          onProgressUpdate({ completed: true });
+          onProgressUpdate({ completed: true, classId: event?.classId || activeClassIdentifier });
         }
         return;
       }
@@ -204,17 +234,32 @@ export default function VideoStage({
         onProgressUpdate({
           currentTime: currentTimeSeconds,
           ...(typeof durationSeconds === 'number' ? { duration: durationSeconds } : {}),
+          classId: event?.classId || activeClassIdentifier,
         });
       }
     };
     window.__onNativeVdoError = (errorMsg) => {
       isNativePlayerOpenRef.current = false;
+      lastLayoutRef.current = null;
       setNativeError(typeof errorMsg === 'string' ? errorMsg : 'Native player encountered an error');
     };
-    window.__onNativeVdoPlayerClosed = () => {
-      isNativePlayerOpenRef.current = false;
-      // Mark as dismissed so we never auto-reopen this lesson after user closes it
-      userDismissedRef.current[currentLessonKey] = true;
+    window.__onNativeVdoPlayerClosed = (closedLessonId) => {
+      const activeClassIdentifier = classId || classProgress?.classId || currentLessonKey;
+
+      if (closedLessonId && typeof closedLessonId === 'string') {
+        userDismissedRef.current[closedLessonId] = true;
+        // Ignore stale close callbacks from another lesson to prevent dismissing current lesson
+        if (closedLessonId !== activeClassIdentifier && closedLessonId !== currentLessonKey) {
+          return;
+        }
+        isNativePlayerOpenRef.current = false;
+        lastLayoutRef.current = null;
+        return;
+      }
+
+      // Legacy unparameterized callbacks (missing/null closedLessonId):
+      // A callback with no lesson ID must never mark the currently active lesson as user-dismissed,
+      // and must never clear or overwrite a newer lesson's launch/open flags.
     };
     return () => {
       delete window.__onNativeVdoProgress;
@@ -235,6 +280,7 @@ export default function VideoStage({
           // Ignore unmount postMessage error
         }
         isNativePlayerOpenRef.current = false;
+        lastLayoutRef.current = null;
       }
     };
   }, [currentLessonKey]);
@@ -245,22 +291,15 @@ export default function VideoStage({
 
     let rafId = null;
     const handleScrollOrResize = () => {
+      if (typeof window !== 'undefined' && window.__isNativeVdoFullscreen) return;
       if (rafId) return;
       rafId = window.requestAnimationFrame(() => {
         rafId = null;
         if (!isNativePlayerOpenRef.current) return;
+        if (typeof window !== 'undefined' && window.__isNativeVdoFullscreen) return;
         const layout = getPlayerLayout();
-        if (layout && window.ReactNativeWebView?.postMessage) {
-          try {
-            window.ReactNativeWebView.postMessage(
-              JSON.stringify({
-                type: 'UPDATE_VDOCIPHER_LAYOUT',
-                payload: { layout },
-              })
-            );
-          } catch {
-            // Ignore
-          }
+        if (layout) {
+          sendLayoutUpdate(layout);
         }
       });
     };
@@ -287,7 +326,7 @@ export default function VideoStage({
       window.removeEventListener('orientationchange', handleScrollOrResize);
       if (observer) observer.disconnect();
     };
-  }, [isNativeApp, getPlayerLayout]);
+  }, [isNativeApp, getPlayerLayout, sendLayoutUpdate]);
 
   const getCleanLessonUrl = () => {
     try {
@@ -491,6 +530,16 @@ export default function VideoStage({
                   </div>
                 )}
               </div>
+            ) : isBridgeChecking ? (
+              /* Transient bridge-check stage while ZeitnahMobile attaches bridge; prevents Safari fallback flicker */
+              <div className="absolute inset-0 z-20 bg-[#070B14] flex flex-col items-center justify-center p-6 text-center text-white select-none">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-2xl mb-3">
+                  <Loader2 className="w-8 h-8 text-brand-mint animate-spin" />
+                </div>
+                <span className="text-xs font-medium text-white/70 tracking-wide drop-shadow">
+                  Connecting player...
+                </span>
+              </div>
             ) : isIOSRestricted && !showEmbeddedAnyway ? (
               /* Dedicated Apple FairPlay DRM Stage for iOS In-App WebViews outside ZeitnahMobile */
               <div className="absolute inset-0 z-20 bg-[#070B14] flex flex-col items-center justify-center p-6 text-center text-white select-none">
@@ -539,6 +588,7 @@ export default function VideoStage({
             ) : (
               <>
                 <iframe
+                  key={vdoCipher?.otp || videoUrl}
                   ref={iframeRef}
                   src={videoUrl}
                   className="h-full w-full block border-0"

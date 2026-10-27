@@ -209,7 +209,7 @@ export function resolveNotificationRoute(notif) {
         rawUrl = '/community/reels';
       }
     } else {
-      let targetPostId = '';
+      let targetPostId;
       if (typeUpper === 'COMMUNITY_REPOST') {
         targetPostId =
           notif.metadata?.originalPostId ||

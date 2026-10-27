@@ -185,8 +185,8 @@ export function getStorageAvailability(win = typeof window !== 'undefined' ? win
     };
   }
 
-  let localStorageOk = false;
-  let sessionStorageOk = false;
+  let localStorageOk;
+  let sessionStorageOk;
 
   try {
     const testKey = '__pwa_drm_diag_test__';

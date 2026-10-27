@@ -37,7 +37,7 @@ export default function ThemeSelector({ className = '', showHeader = true }) {
   };
 
   const handleKeyDown = (e, index) => {
-    let nextIndex = index;
+    let nextIndex;
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
       e.preventDefault();
       nextIndex = (index + 1) % THEME_OPTIONS.length;

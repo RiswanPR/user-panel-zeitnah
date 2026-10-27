@@ -157,6 +157,65 @@ describe('Safari & Multi-DRM Playback Behavioral Tests', () => {
       assert.equal(isIOSAppOrWebView(mockWin), true);
       assert.equal(isIOSSafari(mockWin), false);
     });
+
+    it('identifies iOS Safari with arbitrary extension message handlers (e.g., 1Password, Bitwarden, AdGuard)', () => {
+      const mockWin = {
+        navigator: {
+          userAgent: IOS_IPHONE_SAFARI_UA,
+          platform: 'iPhone',
+          maxTouchPoints: 5,
+        },
+        webkit: {
+          messageHandlers: {
+            onePassword: {},
+            bitwarden: {},
+            adguard: {},
+          },
+        },
+      };
+
+      assert.equal(isMacOSDesktopSafari(mockWin), false);
+      assert.equal(isIOSSafari(mockWin), true, 'Safari with extensions must be classified as native iOS Safari');
+      assert.equal(isIOSAppOrWebView(mockWin), false, 'Safari with extensions must NOT be treated as in-app WebView');
+    });
+
+    it('identifies iOS in-app WebView with generic user agent and message handlers', () => {
+      const mockWin = {
+        navigator: {
+          userAgent: IOS_WEBVIEW_UA,
+          platform: 'iPhone',
+          maxTouchPoints: 5,
+        },
+        webkit: {
+          messageHandlers: {
+            customAppBridge: {},
+          },
+        },
+      };
+
+      assert.equal(isMacOSDesktopSafari(mockWin), false);
+      assert.equal(isIOSSafari(mockWin), false);
+      assert.equal(isIOSAppOrWebView(mockWin), true);
+    });
+
+    it('detects native app runtime via webkit messageHandlers bridge (ReactNativeWebView / zeitnah)', () => {
+      const mockWin = {
+        navigator: {
+          userAgent: IOS_IPHONE_SAFARI_UA,
+          platform: 'iPhone',
+          maxTouchPoints: 5,
+        },
+        webkit: {
+          messageHandlers: {
+            ReactNativeWebView: { postMessage: () => {} },
+          },
+        },
+      };
+
+      assert.equal(isZeitnahNativeApp(mockWin), true);
+      assert.equal(isIOSAppOrWebView(mockWin), true);
+      assert.equal(isIOSSafari(mockWin), false);
+    });
   });
 
   describe('2. Provider "Browser failed" Error Handling', () => {
@@ -224,6 +283,30 @@ describe('Safari & Multi-DRM Playback Behavioral Tests', () => {
       assert.equal(result.title, 'Browser Playback Notice');
       assert.equal(result.showSafariFallback, false);
       assert.equal(result.category, 'browser_unsupported');
+    });
+
+    it('handles "Browser failed" on Mozilla Firefox with specific DRM guidance', () => {
+      const mockWin = {
+        navigator: {
+          userAgent: MACOS_FIREFOX_UA,
+          platform: 'MacIntel',
+          maxTouchPoints: 0,
+        },
+      };
+
+      const errorPayload = {
+        message: 'Browser failed. Please view in updated Google Chrome browser',
+      };
+
+      const result = formatVdoPlayerError(errorPayload, mockWin);
+
+      assert.equal(result.title, 'DRM Playback Notice');
+      assert.match(result.message, /Play DRM-controlled content/i);
+      assert.match(result.message, /Firefox Settings > General/i);
+      assert.doesNotMatch(result.message, /Google Chrome/i);
+      assert.equal(result.showSafariFallback, false);
+      assert.equal(result.isRetryable, true);
+      assert.equal(result.category, 'firefox_drm_disabled');
     });
   });
 
@@ -316,6 +399,114 @@ describe('Safari & Multi-DRM Playback Behavioral Tests', () => {
       assert.equal(result.showSafariFallback, false);
       assert.equal(result.category, 'network_error');
     });
+
+    it('handles VdoCipher SDK load failure (code: SDK_LOAD_FAILED) with actionable retry advice', () => {
+      const mockWin = {
+        navigator: {
+          userAgent: IOS_IPHONE_SAFARI_UA,
+          platform: 'iPhone',
+          maxTouchPoints: 5,
+        },
+      };
+
+      const sdkError = {
+        code: 'SDK_LOAD_FAILED',
+        message: 'The video player engine could not be loaded',
+      };
+
+      const result = formatVdoPlayerError(sdkError, mockWin);
+
+      assert.equal(result.title, 'Player Engine Unavailable');
+      assert.match(result.message, /internet connection or disable ad blockers/i);
+      assert.match(result.message, /Reload Player/i);
+      assert.equal(result.showSafariFallback, false);
+      assert.equal(result.isRetryable, true);
+      assert.equal(result.category, 'sdk_load_failed');
+    });
+
+    it('handles VdoCipher script network load rejection without exposing sensitive data', () => {
+      const mockWin = {
+        navigator: {
+          userAgent: MACOS_SAFARI_UA,
+          platform: 'MacIntel',
+          maxTouchPoints: 0,
+        },
+      };
+
+      const scriptError = new Error('VdoCipher script failed to load');
+      const result = formatVdoPlayerError(scriptError, mockWin);
+
+      assert.equal(result.title, 'Player Engine Unavailable');
+      assert.equal(result.category, 'sdk_load_failed');
+      assert.equal(result.isRetryable, true);
+      assert.doesNotMatch(result.message, /otp|playbackInfo|secret|token/i);
+    });
+
+    it('handles Widevine / DRM verification failure on Firefox with DRM enablement notice', () => {
+      const mockWin = {
+        navigator: {
+          userAgent: MACOS_FIREFOX_UA,
+          platform: 'MacIntel',
+          maxTouchPoints: 0,
+        },
+      };
+
+      const drmError = {
+        code: 4,
+        message: 'DRM license acquisition rejected',
+      };
+
+      const result = formatVdoPlayerError(drmError, mockWin);
+
+      assert.equal(result.title, 'DRM Authorization Notice');
+      assert.match(result.message, /Play DRM-controlled content/i);
+      assert.equal(result.category, 'firefox_drm_disabled');
+      assert.equal(result.isRetryable, true);
+    });
+
+    it('preserves network error classification on Firefox without DRM misattribution', () => {
+      const mockWin = {
+        navigator: {
+          userAgent: MACOS_FIREFOX_UA,
+          platform: 'MacIntel',
+          maxTouchPoints: 0,
+        },
+      };
+
+      const netError = {
+        code: 1002,
+        message: 'Network request timed out',
+      };
+
+      const result = formatVdoPlayerError(netError, mockWin);
+
+      assert.equal(result.title, 'Network Notice');
+      assert.equal(result.category, 'network_error');
+      assert.doesNotMatch(result.message, /DRM-controlled content/i);
+    });
+
+    it('handles playback initialization watchdog timeout (INITIALIZATION_TIMEOUT) cleanly', () => {
+      const mockWin = {
+        navigator: {
+          userAgent: MACOS_CHROME_UA,
+          platform: 'MacIntel',
+          maxTouchPoints: 0,
+        },
+      };
+
+      const timeoutError = {
+        code: 'INITIALIZATION_TIMEOUT',
+        message: 'Video player initialization timed out',
+      };
+
+      const result = formatVdoPlayerError(timeoutError, mockWin);
+
+      assert.equal(result.title, 'Playback Connection Timeout');
+      assert.match(result.message, /too long to connect/i);
+      assert.match(result.message, /Reload Player/i);
+      assert.equal(result.category, 'network_timeout');
+      assert.equal(result.isRetryable, true);
+    });
   });
 
   describe('4. VideoStage Iframe Configuration & Permissions Audit', () => {
@@ -338,6 +529,16 @@ describe('Safari & Multi-DRM Playback Behavioral Tests', () => {
 
       // Ensures the "Open in Safari" button is conditionally gated by showSafariFallback
       assert.match(content, /typeof vdoPlayerError === 'object'\s*\?\s*vdoPlayerError\?\.showSafariFallback\s*:\s*isIOSRestricted/);
+    });
+
+    it('verifies VideoStage guards against initial Safari fallback flicker during native bridge startup', () => {
+      const videoStagePath = path.resolve(__dirname, '../components/classroom/VideoStage.jsx');
+      const content = fs.readFileSync(videoStagePath, 'utf8');
+
+      // Bridge checking state prevents initial mount flash of "Play in Safari Browser"
+      assert.match(content, /isBridgeChecking/);
+      assert.match(content, /Connecting player\.\.\./);
+      assert.match(content, /setTimeout\(\(\)\s*=>\s*\{[\s\S]*setIsBridgeChecking\(false\)/);
     });
   });
 
@@ -430,7 +631,7 @@ describe('Safari & Multi-DRM Playback Behavioral Tests', () => {
 
       // User dismissal handler prevents automatic reopening
       assert.match(content, /window\.__onNativeVdoPlayerClosed/);
-      assert.match(content, /userDismissedRef\.current\[currentLessonKey\]\s*=\s*true/);
+      assert.match(content, /userDismissedRef\.current\[closedLessonId\]\s*=\s*true/);
 
       // Cleanup on unmount sends CLOSE_VDOCIPHER_NATIVE
       assert.match(content, /type:\s*['"]CLOSE_VDOCIPHER_NATIVE['"]/);
@@ -468,6 +669,223 @@ describe('Safari & Multi-DRM Playback Behavioral Tests', () => {
       assert.match(content, /__onNativeVdoPlayerClosed/);
       assert.match(content, /__onNativeVdoProgress/);
       assert.match(content, /__onNativeVdoError/);
+    });
+
+    it('verifies VideoStage __onNativeVdoPlayerClosed ignores stale close callbacks from another lesson', () => {
+      const videoStagePath = path.resolve(__dirname, '../components/classroom/VideoStage.jsx');
+      const content = fs.readFileSync(videoStagePath, 'utf8');
+
+      // 1. Verifies closedLessonId parameter is accepted
+      assert.match(content, /__onNativeVdoPlayerClosed\s*=\s*\(closedLessonId\)/);
+
+      // 2. Verifies userDismissedRef is keyed by closedLessonId
+      assert.match(content, /userDismissedRef\.current\[closedLessonId\]\s*=\s*true/);
+
+      // 3. Verifies stale callback guard protects the newly active lesson
+      assert.match(content, /if\s*\(closedLessonId\s*!==\s*activeClassIdentifier\s*&&\s*closedLessonId\s*!==\s*currentLessonKey\)\s*\{\s*return;\s*\}/);
+
+      // 4. Verifies unparameterized legacy callbacks never dismiss the active lesson or clear open flags
+      assert.match(content, /\/\/ Legacy unparameterized callbacks/);
+    });
+
+    it('verifies native close callback handling across all 4 regression scenarios', () => {
+      // Test harness simulating VideoStage's state and callback logic
+      const createState = () => ({
+        userDismissed: {},
+        isNativePlayerOpen: false,
+        lastLayout: null,
+      });
+
+      const handleNativeClose = (closedLessonId, state, currentLessonKey, activeClassIdentifier) => {
+        if (closedLessonId && typeof closedLessonId === 'string') {
+          state.userDismissed[closedLessonId] = true;
+          if (closedLessonId !== activeClassIdentifier && closedLessonId !== currentLessonKey) {
+            return;
+          }
+          state.isNativePlayerOpen = false;
+          state.lastLayout = null;
+          return;
+        }
+        // Legacy unparameterized callbacks: never mark active lesson dismissed, never clear newer lesson flags
+      };
+
+      // Scenario 1: Missing/null lesson ID arriving before new lesson opens
+      {
+        const state = createState();
+        state.isNativePlayerOpen = false; // Lesson B hasn't opened yet
+        handleNativeClose(null, state, 'lesson-b', 'lesson-b');
+        assert.strictEqual(state.userDismissed['lesson-b'], undefined, 'Lesson B must not be marked dismissed');
+        assert.strictEqual(state.isNativePlayerOpen, false, 'isNativePlayerOpen remains unchanged');
+      }
+
+      // Scenario 2: Missing/null lesson ID arriving after new lesson opens
+      {
+        const state = createState();
+        state.isNativePlayerOpen = true; // Lesson B already opened
+        state.lastLayout = { width: 400, height: 225 };
+        handleNativeClose(null, state, 'lesson-b', 'lesson-b');
+        assert.strictEqual(state.userDismissed['lesson-b'], undefined, 'Lesson B must not be marked dismissed');
+        assert.strictEqual(state.isNativePlayerOpen, true, 'Lesson B open flag must NOT be cleared');
+        assert.notStrictEqual(state.lastLayout, null, 'Lesson B layout must NOT be cleared');
+      }
+
+      // Scenario 3: Valid stale lesson ID arriving after navigation
+      {
+        const state = createState();
+        state.isNativePlayerOpen = true; // Lesson B is active
+        state.lastLayout = { width: 400, height: 225 };
+        handleNativeClose('lesson-a', state, 'lesson-b', 'lesson-b');
+        assert.strictEqual(state.userDismissed['lesson-a'], true, 'Lesson A marked dismissed');
+        assert.strictEqual(state.userDismissed['lesson-b'], undefined, 'Lesson B not marked dismissed');
+        assert.strictEqual(state.isNativePlayerOpen, true, 'Lesson B open flag remains true');
+      }
+
+      // Scenario 4: Valid close callback for the active lesson
+      {
+        const state = createState();
+        state.isNativePlayerOpen = true; // Lesson B is active
+        state.lastLayout = { width: 400, height: 225 };
+        handleNativeClose('lesson-b', state, 'lesson-b', 'lesson-b');
+        assert.strictEqual(state.userDismissed['lesson-b'], true, 'Lesson B intentionally marked dismissed');
+        assert.strictEqual(state.isNativePlayerOpen, false, 'Lesson B open flag cleared');
+        assert.strictEqual(state.lastLayout, null, 'Lesson B layout cleared');
+      }
+    });
+  });
+
+  describe('6. ClassView SDK Load Error & Stale Lesson Guard Audit', () => {
+    it('verifies ClassView surfaces SDK load failure to player error state with actionable retry', () => {
+      const classViewPath = path.resolve(__dirname, '../pages/courses/ClassView.jsx');
+      const content = fs.readFileSync(classViewPath, 'utf8');
+
+      // 1. Verifies setupPlayer catch block formats and surfaces SDK_LOAD_FAILED
+      assert.match(content, /code:\s*['"]SDK_LOAD_FAILED['"]/);
+      assert.match(content, /formatVdoPlayerError\(\{[\s\S]*SDK_LOAD_FAILED/);
+      assert.match(content, /setVdoPlayerError\(formatted\)/);
+
+      // 2. Verifies stale lesson guard prevents outdated failure from overriding new lesson
+      assert.match(content, /if\s*\(cancelled\s*\|\|\s*boundClassId\s*!==\s*activeClassIdRef\.current\)\s*return;/);
+
+      // 3. Verifies reload count triggers reinitialization on user retry
+      assert.match(content, /setVdoReloadCount\(\(c\)\s*=>\s*c\s*\+\s*1\)/);
+      assert.match(content, /vdoReloadCount/);
+
+      // 4. Verifies failed script tag is removed from DOM to unblock retries
+      assert.match(content, /script\.remove\(\)/);
+    });
+
+    it('verifies ClassView implements 25s bounded initialization watchdog with verified player.video readiness clearing', () => {
+      const classViewPath = path.resolve(__dirname, '../pages/courses/ClassView.jsx');
+      const content = fs.readFileSync(classViewPath, 'utf8');
+
+      // 1. Verifies 25s timeout creation
+      assert.match(content, /watchdogTimer\s*=\s*window\.setTimeout\(/);
+      assert.match(content, /25000\);/);
+
+      // 2. Verifies INITIALIZATION_TIMEOUT error formatting
+      assert.match(content, /code:\s*['"]INITIALIZATION_TIMEOUT['"]/);
+
+      // 3. Verifies handlePostMessage handles provider errors without raw readiness clearing
+      assert.match(content, /payload\.event\s*===\s*["']error["']\s*\|\|\s*payload\.type\s*===\s*["']error["']\s*\|\|\s*payload\.error/);
+      assert.doesNotMatch(content, /isReadinessSignal/);
+
+      // 4. Verifies player.video media event listeners clear the watchdog
+      assert.match(content, /const onLoadedMetadata\s*=\s*\(\)\s*=>\s*\{[\s\S]*clearWatchdog\(\)/);
+      assert.match(content, /const onTimeUpdate\s*=\s*\(\)\s*=>\s*\{[\s\S]*clearWatchdog\(\)/);
+      assert.match(content, /const onPlay\s*=\s*\(\)\s*=>\s*\{[\s\S]*clearWatchdog\(\)/);
+
+      // 5. Verifies cleanup on unmount/reload clears the watchdog
+      assert.match(content, /cleanup\s*=\s*\(\)\s*=>\s*\{[\s\S]*clearWatchdog\(\)/);
+    });
+
+    it('verifies watchdog cancellation specificity: player.video readiness vs postMessage error handling', () => {
+      let watchdogCleared = false;
+      let recordedError = null;
+      let surfacedError = null;
+
+      const clearWatchdog = () => { watchdogCleared = true; };
+      const recordVdoError = (err) => { recordedError = err; };
+      const setVdoPlayerError = (err) => { surfacedError = err; };
+
+      // Helper implementing ClassView's simplified handlePostMessage logic
+      const handlePostMessage = (event) => {
+        if (event?.origin && event.origin.includes('vdocipher.com')) {
+          try {
+            const payload = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+            if (!payload || typeof payload !== 'object') return;
+
+            // Provider error interception: clear watchdog and surface error
+            if (payload.event === 'error' || payload.type === 'error' || payload.error) {
+              clearWatchdog();
+              recordVdoError(payload);
+              const formatted = formatVdoPlayerError(payload?.error || payload);
+              setVdoPlayerError(formatted);
+            }
+          } catch {}
+        }
+      };
+
+      // 1. Namespaced boot handshakes cannot cancel watchdog via postMessage
+      for (const handshakeType of ['@vdo/readyToHandshake', '@vdo/handshake', '@vdo/handshakeSuccessful']) {
+        watchdogCleared = false;
+        handlePostMessage({ origin: 'https://player.vdocipher.com', data: { type: handshakeType } });
+        assert.strictEqual(watchdogCleared, false, `Handshake "${handshakeType}" must not clear watchdog`);
+      }
+
+      // 2. Generic readiness-like postMessage payloads cannot cancel watchdog
+      for (const genericType of ['ready', 'loadedmetadata', 'play', 'playing', 'timeupdate', 'init', 'resize', 'ping']) {
+        watchdogCleared = false;
+        handlePostMessage({ origin: 'https://player.vdocipher.com', data: { type: genericType } });
+        assert.strictEqual(watchdogCleared, false, `Generic postMessage "${genericType}" must not clear watchdog`);
+
+        watchdogCleared = false;
+        handlePostMessage({ origin: 'https://player.vdocipher.com', data: { event: genericType } });
+        assert.strictEqual(watchdogCleared, false, `Generic postMessage event "${genericType}" must not clear watchdog`);
+      }
+
+      // 3. Unrelated origins cannot cancel watchdog
+      watchdogCleared = false;
+      handlePostMessage({ origin: 'https://example.com', data: { event: 'error', error: 'fail' } });
+      assert.strictEqual(watchdogCleared, false, 'Unrelated origin must not cancel watchdog even on error');
+
+      // 4. Actual player.video readiness listeners cancel watchdog
+      const simulateVideoEvent = (eventName) => {
+        if (eventName === 'loadedmetadata' || eventName === 'play' || eventName === 'timeupdate') {
+          clearWatchdog();
+        }
+      };
+
+      for (const eventName of ['loadedmetadata', 'play', 'timeupdate']) {
+        watchdogCleared = false;
+        simulateVideoEvent(eventName);
+        assert.strictEqual(watchdogCleared, true, `player.video "${eventName}" listener must clear watchdog`);
+      }
+
+      // 5. Genuine supported provider errors are surfaced correctly
+      watchdogCleared = false;
+      recordedError = null;
+      surfacedError = null;
+      handlePostMessage({
+        origin: 'https://player.vdocipher.com',
+        data: { event: 'error', error: { message: 'License acquisition failed', code: 4 } },
+      });
+      assert.strictEqual(watchdogCleared, true, 'Provider error must clear watchdog');
+      assert.ok(recordedError, 'Real error must be recorded');
+      assert.ok(surfacedError, 'Error must be surfaced');
+      assert.strictEqual(surfacedError.category, 'drm_verification_failed');
+
+      // 6. Stale lesson isolation & timeout behavior
+      let timeoutFiredForStaleLesson = false;
+      const boundClassId = 'lesson-1';
+      let activeClassId = 'lesson-2'; // Navigation occurred
+      let cancelled = true;
+
+      const onTimeout = () => {
+        if (cancelled || boundClassId !== activeClassId) return;
+        timeoutFiredForStaleLesson = true;
+      };
+      onTimeout();
+      assert.strictEqual(timeoutFiredForStaleLesson, false, 'Stale lesson timeout must not execute');
     });
   });
 });

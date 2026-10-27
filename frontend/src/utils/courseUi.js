@@ -167,6 +167,24 @@ export function getBunnyEmbedUrl(videoReference) {
   return `https://iframe.mediadelivery.net/play/${value}`;
 }
 
+/**
+ * Detects whether the runtime environment is the Zeitnah React Native mobile app.
+ * Matches active window.ReactNativeWebView bridge injection, native WebKit script message handlers,
+ * and the ZeitnahMobile user-agent token.
+ */
+export function isZeitnahNativeApp(win = typeof window !== "undefined" ? window : null) {
+  if (!win) return false;
+  const hasBridge = Boolean(
+    (win.ReactNativeWebView && typeof win.ReactNativeWebView.postMessage === "function") ||
+    win.webkit?.messageHandlers?.ReactNativeWebView ||
+    win.webkit?.messageHandlers?.zeitnah ||
+    win.webkit?.messageHandlers?.ZeitnahMobile
+  );
+  const ua = win.navigator?.userAgent || "";
+  const hasAppUa = /ZeitnahMobile/i.test(ua);
+  return hasBridge || hasAppUa;
+}
+
 export function isIOSAppOrWebView(win = typeof window !== "undefined" ? window : null) {
   if (!win || !win.navigator) return false;
   const ua = win.navigator.userAgent || "";
@@ -177,39 +195,45 @@ export function isIOSAppOrWebView(win = typeof window !== "undefined" ? window :
     (platform === "MacIntel" && maxTouchPoints > 1);
   if (!isIOS) return false;
 
-  // 1. Direct React Native WebView injection check (100% definitive inside ZeitnahMobile)
-  if (typeof win.ReactNativeWebView !== "undefined") {
+  // 1. Direct Zeitnah React Native container detection
+  if (isZeitnahNativeApp(win) || typeof win.ReactNativeWebView !== "undefined") {
     return true;
   }
 
-  // 2. Zeitnah mobile app user agent signature
-  if (/ZeitnahMobile/i.test(ua)) {
-    return true;
-  }
-
-  // 3. WebKit messageHandlers present (indicates third-party in-app WKWebView container)
-  if (
-    typeof win.webkit !== "undefined" &&
-    typeof win.webkit.messageHandlers !== "undefined" &&
-    !win.MSStream
-  ) {
-    return true;
-  }
-
-  // 4. Standalone PWA mode (runs in WebKit standalone without FairPlay EME support)
+  // 2. Standalone PWA mode (runs in WebKit standalone without FairPlay EME / fullscreen support)
   if (win.navigator.standalone === true) {
     return true;
   }
 
-  // 5. Third-party iOS browsers (Chrome CriOS, Firefox FxiOS, Edge EdgiOS, Opera OPiOS, in-app webviews)
-  if (/CriOS|FxiOS|OPiOS|EdgiOS|mercury|FBAN|FBAV|Instagram|Line|Twitter|Snapchat/i.test(ua)) {
+  // 3. Third-party iOS browsers (Chrome CriOS, Firefox FxiOS, Edge EdgiOS, Opera OPiOS, etc.)
+  if (/CriOS|FxiOS|OPiOS|EdgiOS|mercury/i.test(ua)) {
     return true;
   }
 
-  // 6. Missing Safari or Version tokens (classic webview)
+  // 4. Known in-app social & messaging WebViews (Facebook, Instagram, Line, Twitter/X, Snapchat, TikTok, WeChat)
+  if (/FBAN|FBAV|Instagram|Line\/|Twitter|Snapchat|musical_ly|ByteLocale|TikTok|MicroMessenger/i.test(ua)) {
+    return true;
+  }
+
+  // 5. Classic WKWebView signature: WKWebView on iOS by default does NOT include 'Version/' or 'Safari/' tokens
   const hasSafari = /Safari/i.test(ua);
   const hasVersion = /Version\//i.test(ua);
   if (!hasSafari || !hasVersion) {
+    return true;
+  }
+
+  // 6. Explicit native container bridge messageHandlers (e.g., custom host app bridges).
+  // Note: On iOS 15+, genuine Safari exposes window.webkit.messageHandlers whenever a user has
+  // one or more Safari Web Extensions enabled (e.g., 1Password, Bitwarden, AdGuard, Grammarly).
+  // Therefore, presence of window.webkit.messageHandlers alone MUST NOT classify a browser as an
+  // in-app WebView when standard Safari tokens (hasSafari && hasVersion) are present, unless
+  // a known host application bridge is explicitly registered.
+  const hasNativeBridge = Boolean(
+    win.webkit?.messageHandlers?.ReactNativeWebView ||
+    win.webkit?.messageHandlers?.zeitnah ||
+    win.webkit?.messageHandlers?.ZeitnahMobile
+  );
+  if (hasNativeBridge) {
     return true;
   }
 
@@ -218,20 +242,6 @@ export function isIOSAppOrWebView(win = typeof window !== "undefined" ? window :
 
 // Backward-compatible alias
 export const isIOSNonSafari = isIOSAppOrWebView;
-
-/**
- * Detects whether the runtime environment is the Zeitnah React Native mobile app.
- * Matches both active window.ReactNativeWebView bridge injection and the ZeitnahMobile user-agent token.
- */
-export function isZeitnahNativeApp(win = typeof window !== "undefined" ? window : null) {
-  if (!win) return false;
-  const hasBridge = Boolean(
-    win.ReactNativeWebView && typeof win.ReactNativeWebView.postMessage === "function"
-  );
-  const ua = win.navigator?.userAgent || "";
-  const hasAppUa = /ZeitnahMobile/i.test(ua);
-  return hasBridge || hasAppUa;
-}
 
 /**
  * Detects whether the runtime is genuine desktop Safari on macOS.
@@ -301,6 +311,7 @@ export function formatVdoPlayerError(err, win = typeof window !== "undefined" ? 
   const isMacSafari = isMacOSDesktopSafari(win);
   const isIOSRestricted = isIOSAppOrWebView(win);
   const isIOSNativeSafari = isIOSSafari(win);
+  const isFirefox = /Firefox|FxiOS/i.test(win?.navigator?.userAgent || "");
 
   // 1. Provider's "Browser failed / Please view in updated Google Chrome browser"
   if (
@@ -326,6 +337,15 @@ export function formatVdoPlayerError(err, win = typeof window !== "undefined" ? 
         category: "ios_webview_restricted",
       };
     }
+    if (isFirefox) {
+      return {
+        title: "DRM Playback Notice",
+        message: "Firefox requires DRM playback to be enabled. Please ensure 'Play DRM-controlled content' is checked in Firefox Settings > General, or try another supported browser.",
+        isRetryable: true,
+        showSafariFallback: false,
+        category: "firefox_drm_disabled",
+      };
+    }
     return {
       title: "Browser Playback Notice",
       message: "Protected content playback failed in this browser. Please verify browser permissions or reload.",
@@ -335,7 +355,24 @@ export function formatVdoPlayerError(err, win = typeof window !== "undefined" ? 
     };
   }
 
-  // 2. Domain authorization notice (VdoCipher code 60072014)
+  // 2. SDK load failure / script blockage
+  if (
+    code === "SDK_LOAD_FAILED" ||
+    lowerMsg.includes("script failed") ||
+    lowerMsg.includes("player engine") ||
+    lowerMsg.includes("vdocipher api") ||
+    lowerMsg.includes("vdocipher script")
+  ) {
+    return {
+      title: "Player Engine Unavailable",
+      message: "The video player engine could not be loaded. Please check your internet connection or disable ad blockers and click Reload Player.",
+      isRetryable: true,
+      showSafariFallback: false,
+      category: "sdk_load_failed",
+    };
+  }
+
+  // 3. Domain authorization notice (VdoCipher code 60072014)
   if (code === 60072014 || lowerMsg.includes("domain")) {
     return {
       title: "Domain Authorization Notice",
@@ -346,7 +383,22 @@ export function formatVdoPlayerError(err, win = typeof window !== "undefined" ? 
     };
   }
 
-  // 3. FairPlay / DRM / License errors
+  // 4. Playback connection / initialization watchdog timeout
+  if (
+    code === "INITIALIZATION_TIMEOUT" ||
+    lowerMsg.includes("initialization timed out") ||
+    lowerMsg.includes("connection timed out")
+  ) {
+    return {
+      title: "Playback Connection Timeout",
+      message: "The video stream took too long to connect. Please check your internet connection and click Reload Player.",
+      isRetryable: true,
+      showSafariFallback: false,
+      category: "network_timeout",
+    };
+  }
+
+  // 5. FairPlay / DRM / License errors
   if (
     lowerMsg.includes("safari") ||
     lowerMsg.includes("fairplay") ||
@@ -372,6 +424,16 @@ export function formatVdoPlayerError(err, win = typeof window !== "undefined" ? 
         isRetryable: true,
         showSafariFallback: false,
         category: "drm_safari_session",
+      };
+    }
+
+    if (isFirefox) {
+      return {
+        title: "DRM Authorization Notice",
+        message: "Protected content could not be verified in Firefox. Please ensure 'Play DRM-controlled content' is enabled in Firefox Settings > General, or reload the session.",
+        isRetryable: true,
+        showSafariFallback: false,
+        category: "firefox_drm_disabled",
       };
     }
 
@@ -411,5 +473,89 @@ export function formatVdoPlayerError(err, win = typeof window !== "undefined" ? 
     showSafariFallback: isIOSRestricted,
     category: "general_interruption",
   };
+}
+
+/**
+ * Creates an authoritative progress snapshot stamped with its originating class ID.
+ */
+export function createProgressSnapshot({
+  classId,
+  completed = false,
+  currentTimeSeconds = 0,
+  durationSeconds = 0,
+  totalCoveredSeconds = 0,
+  totalPlayedSeconds = 0,
+}) {
+  return {
+    classId: classId ? String(classId).trim() : null,
+    completed: Boolean(completed),
+    currentTimeSeconds: Math.round(Number(currentTimeSeconds) || 0),
+    durationSeconds: Math.round(Number(durationSeconds) || 0),
+    totalCoveredSeconds: Math.round(Number(totalCoveredSeconds) || 0),
+    totalPlayedSeconds: Math.round(Number(totalPlayedSeconds) || 0),
+  };
+}
+
+/**
+ * Extracts the target class ID and whitelisted DTO payload for POST /courses/class/:id/progress.
+ * Strips classId from the body to comply with backend forbidNonWhitelisted validation rules.
+ */
+export function sanitizeProgressPayload(snapshot, fallbackClassId = null) {
+  if (!snapshot || typeof snapshot !== "object") {
+    return {
+      targetClassId: fallbackClassId ? String(fallbackClassId).trim() : null,
+      dtoPayload: null,
+    };
+  }
+
+  const rawTarget = snapshot.classId || fallbackClassId;
+  const targetClassId = rawTarget ? String(rawTarget).trim() : null;
+
+  const dtoPayload = {
+    completed: Boolean(snapshot.completed),
+    currentTimeSeconds: Math.round(Number(snapshot.currentTimeSeconds) || 0),
+    durationSeconds: Math.round(Number(snapshot.durationSeconds) || 0),
+    totalCoveredSeconds: Math.round(Number(snapshot.totalCoveredSeconds) || 0),
+    totalPlayedSeconds: Math.round(Number(snapshot.totalPlayedSeconds) || 0),
+  };
+
+  return { targetClassId, body: dtoPayload, dtoPayload };
+}
+
+/**
+ * Resolves progress API endpoint URL for a given class ID.
+ */
+export function resolveProgressEndpoint(classId, baseUrl = "") {
+  if (!classId) return null;
+  const cleanBase = baseUrl ? baseUrl.replace(/\/+$/, "") : "";
+  return `${cleanBase}/courses/class/${encodeURIComponent(String(classId).trim())}/progress`;
+}
+
+/**
+ * Determines whether an asynchronous workspace response belongs to an outdated lesson request.
+ */
+export function isWorkspaceResponseStale(requestedClassId, latestRequestedClassId) {
+  if (!requestedClassId || !latestRequestedClassId) return false;
+  return String(requestedClassId).trim() !== String(latestRequestedClassId).trim();
+}
+
+/**
+ * Evaluates whether current data belongs to the active class ID to prevent cross-lesson ref pollution.
+ */
+export function shouldSyncProgressRefs(dataClassId, activeClassId) {
+  if (!dataClassId || !activeClassId) return true;
+  return String(dataClassId).trim() === String(activeClassId).trim();
+}
+
+/**
+ * Determines whether an asynchronous reload response or failure has been superseded by a newer reload
+ * or a lesson navigation event.
+ */
+export function isReloadRequestSuperseded(requestSeq, latestSeq, requestedClassId, latestRequestedClassId) {
+  if (requestSeq !== latestSeq) return true;
+  if (requestedClassId && latestRequestedClassId && String(requestedClassId).trim() !== String(latestRequestedClassId).trim()) {
+    return true;
+  }
+  return false;
 }
 

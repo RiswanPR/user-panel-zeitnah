@@ -349,7 +349,7 @@ export function calculateTotalExperience(experiences, referenceDate = new Date()
     if (startEpoch === null) continue;
 
     const isOngoing = isExperienceOngoing(exp);
-    let endEpoch = null;
+    let endEpoch;
 
     if (isOngoing) {
       endEpoch = refEpoch;
