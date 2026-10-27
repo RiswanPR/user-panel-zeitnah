@@ -141,14 +141,14 @@ const FAQS = [
     category: "ACCOUNT_LOGIN",
     question: "How do I log in or register for a Zeitnah LMS account?",
     answer:
-      "Zeitnah LMS uses a secure, passwordless email OTP (One-Time Password) workflow. Simply enter your registered email address on the Login or Register page. A 6-digit verification code will be dispatched to your inbox. Enter the code within 10 minutes to verify your identity and access your dashboard. If you don't see the code, please verify your spam/junk folder.",
+      "Zeitnah LMS uses a secure, passwordless email OTP (One-Time Password) workflow. Simply enter your registered email address on the Login or Register page. A 6-digit verification code will be dispatched to your inbox. Enter the code within 3 minutes to verify your identity and access your dashboard. If you don't see the code, please verify your spam/junk folder.",
   },
   {
     id: "faq-account-recovery",
     category: "ACCOUNT_RECOVERY",
     question: "How do I recover access to my account or handle expired verification codes?",
     answer:
-      "Because Zeitnah LMS uses email-based OTP verification, ensure your email provider is not filtering emails from noreply@zeitnahacademy.com into Spam, Junk, or Promotions. If your verification code has expired after 10 minutes, click 'Resend Code' on the login screen. If you have lost access to your registered email account, submit an account recovery ticket below or contact your academy coordinator.",
+      "Because Zeitnah LMS uses email-based OTP verification, ensure your email provider is not filtering emails from noreply@zeitnahacademy.com into Spam, Junk, or Promotions. If your verification code has expired after 3 minutes, click 'Resend Code' on the login screen. If you have lost access to your registered email account, submit an account recovery ticket below or contact your academy coordinator.",
   },
   {
     id: "faq-video-watermark",

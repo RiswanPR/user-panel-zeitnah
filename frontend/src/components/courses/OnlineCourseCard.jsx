@@ -49,7 +49,7 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
   const imageUrl =
     getUploadUrl(course.coverImage) ||
     course.coverImage ||
-    "https://placehold.co/1920x1080/07090B/FFFFFF?text=Online+Class";
+    "https://placehold.co/1920x1080/F5F7F6/12314C?text=Online+Class";
 
   const handleCardClick = () => navigate(`/courses/${course._id}/chapters`);
 
@@ -104,8 +104,8 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
               <span
                 className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider border backdrop-blur-md ${
                   completed
-                    ? "border-brand-mint/30 bg-brand-mint/15 text-brand-mint"
-                    : "border-brand-yellow/30 bg-brand-yellow/15 text-brand-yellow"
+                    ? "border-emerald-600/30 bg-emerald-600/15 text-emerald-950 dark:border-brand-mint/30 dark:bg-brand-mint/15 dark:text-brand-mint"
+                    : "border-amber-500/40 bg-amber-500/15 text-amber-950 dark:border-brand-yellow/30 dark:bg-brand-yellow/15 dark:text-brand-yellow"
                 }`}
               >
                 {completed ? "Completed" : "Enrolled"}
@@ -118,7 +118,7 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
         <div className="flex flex-1 flex-col justify-between p-5 gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-[10px] font-mono text-text-muted uppercase">
-              <BookOpen className="w-3 h-3 text-brand-mint" />
+              <BookOpen className="w-3 h-3 text-emerald-800 dark:text-brand-mint" />
               <span>
                 {chapterCount} {chapterCount === 1 ? "Module" : "Modules"}
               </span>
@@ -126,7 +126,7 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
               <span>Interactive Workshop</span>
             </div>
 
-            <h3 className="font-heading text-lg font-extrabold text-text-primary tracking-tight leading-snug line-clamp-2 group-hover:text-brand-mint transition-colors">
+            <h3 className="font-heading text-lg font-extrabold text-text-primary tracking-tight leading-snug line-clamp-2 group-hover:text-brand-primary dark:group-hover:text-brand-mint transition-colors">
               {course.name}
             </h3>
 
@@ -160,7 +160,7 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
                   e.stopPropagation();
                   navigate(`/courses/${course._id}/chapters`);
                 }}
-                className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-brand-mint/10 border border-brand-mint/30 text-brand-mint hover:bg-brand-mint hover:text-bg-base transition-all cursor-pointer shadow-sm min-h-[44px]"
+                className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-brand-surface-subtle dark:bg-brand-mint/10 border border-emerald-600/30 dark:border-brand-mint/30 text-emerald-950 dark:text-brand-mint hover:bg-brand-primary hover:text-white dark:hover:bg-brand-mint dark:hover:text-brand-navy transition-all cursor-pointer shadow-sm min-h-[44px]"
               >
                 {completed ? (
                   <>
@@ -195,7 +195,7 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
                   }}
                   className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider border border-border bg-surface-elevated text-text-primary hover:bg-surface-card hover:border-brand-mint/30 transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
                 >
-                  <HelpCircle className="w-3 h-3 text-brand-mint" />
+                  <HelpCircle className="w-3 h-3 text-emerald-800 dark:text-brand-mint" />
                   Details
                 </button>
               </div>

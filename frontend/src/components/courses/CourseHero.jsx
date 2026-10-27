@@ -52,9 +52,9 @@ const CourseHero = memo(function CourseHero({
       className="relative overflow-hidden rounded-3xl bg-surface-card border border-border p-6 sm:p-10 lg:p-14"
     >
       {/* ── AMBIENT GLOWS ── */}
-      <div className="pointer-events-none absolute -top-32 -left-32 w-96 h-96 rounded-full bg-brand-mint/10 blur-[120px] mix-blend-screen" />
-      <div className="pointer-events-none absolute -bottom-32 -right-20 w-96 h-96 rounded-full bg-brand-yellow/8 blur-[130px] mix-blend-screen" />
-      <div className="pointer-events-none absolute top-1/2 left-1/3 -translate-y-1/2 w-[500px] h-[300px] bg-brand-mint/5 blur-[100px]" />
+      <div className="pointer-events-none absolute -top-32 -left-32 w-96 h-96 rounded-full bg-brand-mint/10 blur-[120px] mix-blend-screen opacity-40 dark:opacity-100" />
+      <div className="pointer-events-none absolute -bottom-32 -right-20 w-96 h-96 rounded-full bg-brand-yellow/8 blur-[130px] mix-blend-screen opacity-40 dark:opacity-100" />
+      <div className="pointer-events-none absolute top-1/2 left-1/3 -translate-y-1/2 w-[500px] h-[300px] bg-brand-mint/5 blur-[100px] opacity-40 dark:opacity-100" />
 
       {/* ── SPATIAL ORGANIC Z MOTIF (Large-scale, low opacity, asymmetrical bleed) ── */}
       <div className="pointer-events-none absolute -right-16 sm:-right-8 -bottom-20 sm:-bottom-16 w-80 sm:w-96 md:w-[480px] h-80 sm:h-96 md:h-[480px] select-none">
@@ -73,13 +73,13 @@ const CourseHero = memo(function CourseHero({
             initial={{ opacity: 0, x: -12 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.1, ease: easePremium }}
-            className="inline-flex items-center gap-2.5 rounded-full bg-brand-mint/10 border border-brand-mint/25 px-3.5 py-1.5 backdrop-blur-md shadow-sm"
+            className="inline-flex items-center gap-2.5 rounded-full bg-brand-surface-subtle dark:bg-brand-mint/10 border border-emerald-600/20 dark:border-brand-mint/25 px-3.5 py-1.5 backdrop-blur-md shadow-sm"
           >
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-mint opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-mint" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-primary dark:bg-brand-mint opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-primary dark:bg-brand-mint" />
             </span>
-            <span className="text-[10px] sm:text-[11px] font-mono font-bold tracking-[0.2em] uppercase text-brand-mint">
+            <span className="text-[10px] sm:text-[11px] font-mono font-bold tracking-[0.2em] uppercase text-brand-primary dark:text-brand-mint">
               {firstName ? `LEARNER TELEMETRY // ${firstName}` : "ZEITNAH // SEE THE UNSEEN"}
             </span>
           </motion.div>
@@ -94,9 +94,9 @@ const CourseHero = memo(function CourseHero({
             <h1 className="display-headline text-4xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-text-primary leading-[0.92]">
               BUILD
               <br />
-              <span className="text-text-muted/60">CONNECT</span>
+              <span className="text-text-muted">CONNECT</span>
               <br />
-              <span className="bg-gradient-to-r from-text-primary via-text-primary to-brand-mint bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-text-primary via-text-primary to-emerald-700 dark:to-brand-mint bg-clip-text text-transparent">
                 DISCOVER.
               </span>
             </h1>
@@ -134,13 +134,13 @@ const CourseHero = memo(function CourseHero({
                   label: "ENROLLED",
                   value: String(stats.enrolled).padStart(2, "0"),
                   icon: GraduationCap,
-                  accent: "text-brand-mint",
+                  accent: "text-emerald-700 dark:text-brand-mint",
                 },
                 {
                   label: "RECORDED",
                   value: String(stats.recordings).padStart(2, "0"),
                   icon: Play,
-                  accent: "text-brand-yellow",
+                  accent: "text-amber-600 dark:text-brand-yellow",
                 },
               ].map((item) => (
                 <div
@@ -163,11 +163,11 @@ const CourseHero = memo(function CourseHero({
 
           {/* Real Learning Signal Instrument (Zero fabricated numbers) */}
           {learningSignal && (
-            <div className="rounded-2xl border border-brand-mint/20 bg-surface-elevated p-4 space-y-2.5 shadow-sm">
+            <div className="rounded-2xl border border-emerald-600/20 dark:border-brand-mint/20 bg-surface-elevated p-4 space-y-2.5 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Activity className="w-3.5 h-3.5 text-brand-mint" />
-                  <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-brand-mint">
+                  <Activity className="w-3.5 h-3.5 text-emerald-700 dark:text-brand-mint" />
+                  <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-emerald-800 dark:text-brand-mint">
                     LEARNING SIGNAL
                   </span>
                 </div>

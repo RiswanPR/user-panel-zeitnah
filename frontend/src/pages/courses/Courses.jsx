@@ -373,8 +373,8 @@ function Courses() {
           ERROR STATE WITH CALM RETRY
           ══════════════════════════════════════════════════════════ */}
       {error && !loading && (
-        <div className="rounded-3xl border border-brand-yellow/20 bg-surface-card p-8 sm:p-12 text-center space-y-5 max-w-lg mx-auto shadow-2xl relative overflow-hidden">
-          <div className="w-12 h-12 rounded-2xl bg-brand-yellow/10 border border-brand-yellow/25 flex items-center justify-center mx-auto text-brand-yellow">
+        <div className="rounded-3xl border border-amber-500/25 dark:border-brand-yellow/20 bg-surface-card p-8 sm:p-12 text-center space-y-5 max-w-lg mx-auto shadow-2xl relative overflow-hidden">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 dark:bg-brand-yellow/10 border border-amber-500/30 dark:border-brand-yellow/25 flex items-center justify-center mx-auto text-amber-700 dark:text-brand-yellow">
             <RefreshCw className="w-5 h-5" />
           </div>
           <div className="space-y-1.5">
@@ -417,12 +417,12 @@ function Courses() {
       {!loading && !error && allFiltered.length === 0 && (
         <div className="relative overflow-hidden rounded-3xl border border-border bg-surface-card p-10 sm:p-16 text-center max-w-lg mx-auto space-y-6 shadow-2xl">
           {/* Spatial Z motif */}
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.03]">
-            <ZeitnahZMotif variant="white" className="w-72 h-72" />
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.035]">
+            <ZeitnahZMotif variant="gradient" className="w-72 h-72" />
           </div>
 
           <div className="relative z-10 space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-brand-navy/60 border border-brand-mint/30 flex items-center justify-center mx-auto text-brand-mint shadow-md">
+            <div className="w-14 h-14 rounded-2xl bg-brand-surface-subtle dark:bg-brand-navy/60 border border-emerald-600/30 dark:border-brand-mint/30 flex items-center justify-center mx-auto text-brand-primary dark:text-brand-mint shadow-md">
               {search ? <Search className="w-6 h-6" /> : <BookOpen className="w-6 h-6" />}
             </div>
 

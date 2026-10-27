@@ -83,13 +83,13 @@ const CourseNavbar = memo(function CourseNavbar({
                 {active && (
                   <motion.div
                     layoutId="course-tab-active-indicator"
-                    className="absolute inset-0 rounded-xl bg-brand-mint/15 dark:bg-[#12314C] border border-brand-mint/30 shadow-[0_0_20px_rgba(159,213,178,0.12)]"
+                    className="absolute inset-0 rounded-xl bg-brand-surface-subtle dark:bg-[#12314C] border border-emerald-600/30 dark:border-brand-mint/30 shadow-sm"
                     transition={{ type: "spring", stiffness: 450, damping: 34 }}
                   />
                 )}
                 <Icon
                   className={`relative z-10 w-3.5 h-3.5 shrink-0 transition-colors ${
-                    active ? "text-brand-mint" : "text-text-faint"
+                    active ? "text-brand-primary dark:text-brand-mint" : "text-text-faint"
                   }`}
                 />
                 <span className="relative z-10">{tab.label}</span>
@@ -144,7 +144,7 @@ const CourseNavbar = memo(function CourseNavbar({
             aria-expanded={open}
             className="flex h-12 px-4 shrink-0 items-center gap-2 rounded-2xl bg-surface-card border border-border text-text-primary hover:bg-surface-elevated active:scale-95 transition-all cursor-pointer focus-ring shadow-md min-h-[44px]"
           >
-            <SlidersHorizontal className="w-4 h-4 text-brand-mint" />
+            <SlidersHorizontal className="w-4 h-4 text-brand-primary dark:text-brand-mint" />
             <span className="text-xs font-mono font-bold uppercase tracking-wider">
               {tabs.find((t) => t.key === activeTab)?.label || "Filter"}
             </span>
@@ -235,14 +235,14 @@ const CourseNavbar = memo(function CourseNavbar({
                         }}
                         className={`inline-flex items-center justify-between rounded-2xl px-5 py-4 min-h-[52px] text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer w-full focus-ring ${
                           active
-                            ? "bg-brand-mint/15 dark:bg-[#12314C] text-text-primary border border-brand-mint/40 shadow-[0_0_20px_rgba(159,213,178,0.1)]"
+                            ? "bg-brand-surface-subtle dark:bg-[#12314C] text-text-primary border border-emerald-600/30 dark:border-brand-mint/40 shadow-sm"
                             : "text-text-muted hover:text-text-primary hover:bg-surface-elevated border border-transparent"
                         }`}
                       >
                         <div className="flex items-center gap-3.5">
                           <Icon
                             className={`w-4 h-4 shrink-0 ${
-                              active ? "text-brand-mint" : "text-text-faint"
+                              active ? "text-brand-primary dark:text-brand-mint" : "text-text-faint"
                             }`}
                           />
                           <span>{tab.label}</span>

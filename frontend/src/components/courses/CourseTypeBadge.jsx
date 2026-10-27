@@ -28,7 +28,7 @@ export default function CourseTypeBadge({
     if (s === "completed") {
       return (
         <span
-          className={`inline-flex items-center font-mono font-bold uppercase tracking-wider rounded-lg border backdrop-blur-md border-brand-mint/30 bg-brand-mint/15 text-brand-mint ${
+          className={`inline-flex items-center font-mono font-bold uppercase tracking-wider rounded-lg border backdrop-blur-md border-emerald-600/30 bg-emerald-600/15 text-emerald-950 dark:border-brand-mint/30 dark:bg-brand-mint/15 dark:text-brand-mint ${
             size === "sm"
               ? "px-2 py-0.5 text-[9px] gap-1"
               : size === "lg"
@@ -60,7 +60,7 @@ export default function CourseTypeBadge({
     if (s === "enrolled") {
       return (
         <span
-          className={`inline-flex items-center font-mono font-bold uppercase tracking-wider rounded-lg border backdrop-blur-md border-brand-yellow/30 bg-brand-yellow/15 text-brand-yellow ${
+          className={`inline-flex items-center font-mono font-bold uppercase tracking-wider rounded-lg border backdrop-blur-md border-amber-500/40 bg-amber-500/15 text-amber-950 dark:border-brand-yellow/30 dark:bg-brand-yellow/15 dark:text-brand-yellow ${
             size === "sm"
               ? "px-2 py-0.5 text-[9px] gap-1"
               : size === "lg"
@@ -90,14 +90,14 @@ export default function CourseTypeBadge({
     lg: "w-3.5 h-3.5",
   };
 
-  /* ── Colour tokens per type ── */
+  /* ── Colour tokens per type (high contrast light mode + glowing dark mode) ── */
   const baseClasses = isRecording
-    ? "border-brand-yellow/30 bg-brand-yellow/10 text-brand-yellow"
-    : "border-brand-mint/30 bg-brand-mint/10 text-brand-mint";
+    ? "border-amber-500/40 bg-amber-500/15 text-amber-950 dark:border-brand-yellow/30 dark:bg-brand-yellow/10 dark:text-brand-yellow"
+    : "border-emerald-600/30 bg-emerald-600/15 text-emerald-950 dark:border-brand-mint/30 dark:bg-brand-mint/10 dark:text-brand-mint";
 
   const prominentClasses = isRecording
-    ? "border-brand-yellow/40 bg-brand-yellow/15 text-brand-yellow shadow-[0_0_12px_rgba(246,237,74,0.15)]"
-    : "border-brand-mint/40 bg-brand-mint/15 text-brand-mint shadow-[0_0_12px_rgba(159,213,178,0.15)]";
+    ? "border-amber-500/50 bg-amber-500/20 text-amber-950 shadow-sm dark:border-brand-yellow/40 dark:bg-brand-yellow/15 dark:text-brand-yellow dark:shadow-[0_0_12px_rgba(246,237,74,0.15)]"
+    : "border-emerald-600/40 bg-emerald-600/20 text-emerald-950 shadow-sm dark:border-brand-mint/40 dark:bg-brand-mint/15 dark:text-brand-mint dark:shadow-[0_0_12px_rgba(159,213,178,0.15)]";
 
   return (
     <span

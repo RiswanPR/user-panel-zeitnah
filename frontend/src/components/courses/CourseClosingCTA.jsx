@@ -38,8 +38,8 @@ const CourseClosingCTA = memo(function CourseClosingCTA({ onBrowseCatalog }) {
 
       <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-8">
         <div className="space-y-3 max-w-xl">
-          <div className="inline-flex items-center gap-2 rounded-full bg-brand-mint/10 border border-brand-mint/20 px-3 py-1 text-[10px] font-mono font-bold tracking-[0.2em] uppercase text-brand-mint">
-            <Sparkles className="w-3 h-3 text-brand-yellow" />
+          <div className="inline-flex items-center gap-2 rounded-full bg-brand-surface-subtle dark:bg-brand-mint/10 border border-emerald-600/20 dark:border-brand-mint/20 px-3 py-1 text-[10px] font-mono font-bold tracking-[0.2em] uppercase text-brand-primary dark:text-brand-mint">
+            <Sparkles className="w-3 h-3 text-amber-600 dark:text-brand-yellow" />
             ENGINEERING & PRODUCT MASTERY
           </div>
 
@@ -56,7 +56,7 @@ const CourseClosingCTA = memo(function CourseClosingCTA({ onBrowseCatalog }) {
           <button
             type="button"
             onClick={onBrowseCatalog}
-            className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-brand-yellow text-black font-heading font-extrabold text-xs uppercase tracking-wider shadow-xl hover:bg-brand-yellow/90 hover:shadow-[0_0_28px_rgba(246,237,74,0.35)] transition-all cursor-pointer select-none active:scale-[0.98] min-h-[44px]"
+            className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-brand-yellow text-brand-navy font-heading font-extrabold text-xs uppercase tracking-wider shadow-xl hover:bg-brand-yellow/90 hover:shadow-[0_0_28px_rgba(246,237,74,0.35)] transition-all cursor-pointer select-none active:scale-[0.98] min-h-[44px]"
           >
             <span>Explore Entire Library</span>
             <ArrowRight className="w-4 h-4" />

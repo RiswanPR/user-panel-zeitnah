@@ -42,7 +42,7 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
   const imageUrl =
     getUploadUrl(coverImage) ||
     coverImage ||
-    "https://placehold.co/1920x1080/07090B/FFFFFF?text=Course";
+    "https://placehold.co/1920x1080/F5F7F6/12314C?text=Course";
 
   const handleContinue = () => {
     // 1. Direct class jump if chapters/classes are available
@@ -140,9 +140,9 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-12 h-12 rounded-2xl bg-black/50 border border-white/20 backdrop-blur-md flex items-center justify-center group-hover:bg-brand-yellow group-hover:border-brand-yellow transition-all duration-300 shadow-lg">
                 {isCompleted ? (
-                  <CheckCircle2 className="w-5 h-5 text-white group-hover:text-black transition-colors" />
+                  <CheckCircle2 className="w-5 h-5 text-white group-hover:text-brand-navy transition-colors" />
                 ) : (
-                  <Play className="w-5 h-5 text-white group-hover:text-black fill-current ml-0.5 transition-colors" />
+                  <Play className="w-5 h-5 text-white group-hover:text-brand-navy fill-current ml-0.5 transition-colors" />
                 )}
               </div>
             </div>
@@ -153,7 +153,7 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
             <div className="space-y-2">
               {/* Type & Real Chapter breadcrumb */}
               <div className="flex flex-wrap items-center gap-2 text-[10px] sm:text-[11px] font-mono font-bold uppercase tracking-[0.16em]">
-                <span className="inline-flex items-center gap-1.5 text-brand-mint">
+                <span className="inline-flex items-center gap-1.5 text-emerald-800 dark:text-brand-mint">
                   <BookOpen className="w-3.5 h-3.5" />
                   {String(type || "").trim().toLowerCase() === "recording"
                     ? "RECORDED MASTERCLASS"
@@ -170,7 +170,7 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
               </div>
 
               {/* Course Title */}
-              <h3 className="font-heading text-xl sm:text-2xl lg:text-3xl font-extrabold text-text-primary tracking-tight leading-tight line-clamp-2 group-hover:text-brand-mint transition-colors">
+              <h3 className="font-heading text-xl sm:text-2xl lg:text-3xl font-extrabold text-text-primary tracking-tight leading-tight line-clamp-2 group-hover:text-brand-primary dark:group-hover:text-brand-mint transition-colors">
                 {name}
               </h3>
             </div>
@@ -181,7 +181,7 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
                 <span className="text-text-muted uppercase tracking-wider text-[10px]">
                   TRACK TELEMETRY
                 </span>
-                <span className="text-brand-mint">
+                <span className="text-emerald-800 dark:text-brand-mint">
                   {progress}% COMPLETED
                 </span>
               </div>

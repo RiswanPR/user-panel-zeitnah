@@ -41,7 +41,7 @@ const CourseCard = memo(function CourseCard({ course }) {
   const imageUrl =
     getUploadUrl(course.coverImage) ||
     course.coverImage ||
-    "https://placehold.co/1920x1080/07090B/FFFFFF?text=Course";
+    "https://placehold.co/1920x1080/F5F7F6/12314C?text=Course";
 
   const handleCardClick = () => navigate(`/courses/${course._id}/chapters`);
 

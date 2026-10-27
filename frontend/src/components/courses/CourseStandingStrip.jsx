@@ -51,7 +51,7 @@ const CourseStandingStrip = memo(function CourseStandingStrip() {
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           {/* ── Left: Standing Telemetry & Rank ── */}
           <div className="flex items-center gap-4 sm:gap-5 min-w-0">
-            <div className="w-12 h-12 rounded-2xl bg-brand-yellow/10 border border-brand-yellow/30 flex items-center justify-center text-brand-yellow shrink-0 shadow-md">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 dark:bg-brand-yellow/10 dark:border-brand-yellow/30 flex items-center justify-center text-amber-700 dark:text-brand-yellow shrink-0 shadow-md">
               <Trophy className="w-6 h-6" />
             </div>
 
@@ -60,8 +60,8 @@ const CourseStandingStrip = memo(function CourseStandingStrip() {
                 <span className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-text-muted">
                   GLOBAL STANDING
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-md bg-brand-mint/10 border border-brand-mint/25 px-2 py-0.5 text-[9px] font-mono font-bold text-brand-mint">
-                  <Award className="w-2.5 h-2.5 text-brand-mint" />
+                <span className="inline-flex items-center gap-1 rounded-md bg-brand-surface-subtle dark:bg-brand-mint/10 border border-emerald-600/20 dark:border-brand-mint/25 px-2 py-0.5 text-[9px] font-mono font-bold text-brand-primary dark:text-brand-mint">
+                  <Award className="w-2.5 h-2.5 text-brand-primary dark:text-brand-mint" />
                   LEVEL {position.level || 1}
                 </span>
               </div>
@@ -98,7 +98,7 @@ const CourseStandingStrip = memo(function CourseStandingStrip() {
             className="inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl bg-surface-elevated border border-border text-xs font-mono font-bold uppercase tracking-wider text-text-primary hover:bg-surface-card hover:border-brand-mint/35 transition-all cursor-pointer shrink-0 self-start sm:self-auto group active:scale-[0.98] shadow-sm min-h-[44px]"
           >
             <span>View Standings</span>
-            <ArrowRight className="w-3.5 h-3.5 text-text-muted group-hover:text-brand-mint group-hover:translate-x-1 transition-all" />
+            <ArrowRight className="w-3.5 h-3.5 text-text-muted group-hover:text-brand-primary dark:group-hover:text-brand-mint group-hover:translate-x-1 transition-all" />
           </Link>
         </div>
       </div>

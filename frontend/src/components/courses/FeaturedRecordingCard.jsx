@@ -50,7 +50,7 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
   const imageUrl =
     getUploadUrl(course.coverImage) ||
     course.coverImage ||
-    "https://placehold.co/1920x1080/07090B/FFFFFF?text=Masterclass";
+    "https://placehold.co/1920x1080/F5F7F6/12314C?text=Masterclass";
 
   const handleCardClick = () => navigate(`/courses/${course._id}/chapters`);
 
@@ -122,7 +122,7 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
             />
 
             {/* Dark gradient overlay blending with panel */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-black/40 lg:to-black/60 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent dark:lg:bg-gradient-to-r dark:lg:from-transparent dark:lg:via-black/40 dark:lg:to-black/60 pointer-events-none" />
           </div>
 
           {/* ── EDITORIAL CONTENT PANEL ── */}
@@ -138,8 +138,8 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
                     <span
                       className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border ${
                         completed
-                          ? "border-brand-mint/30 bg-brand-mint/10 text-brand-mint"
-                          : "border-brand-yellow/30 bg-brand-yellow/10 text-brand-yellow"
+                          ? "border-emerald-600/30 bg-emerald-600/15 text-emerald-950 dark:border-brand-mint/30 dark:bg-brand-mint/10 dark:text-brand-mint"
+                          : "border-amber-500/40 bg-amber-500/15 text-amber-950 dark:border-brand-yellow/30 dark:bg-brand-yellow/10 dark:text-brand-yellow"
                       }`}
                     >
                       {completed && <CheckCircle2 className="w-2.5 h-2.5" />}
@@ -148,7 +148,7 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
                   )}
                 </div>
 
-                <div className="inline-flex items-center gap-1.5 text-brand-mint font-semibold">
+                <div className="inline-flex items-center gap-1.5 text-emerald-800 dark:text-brand-mint font-semibold">
                   <BookOpen className="w-3.5 h-3.5" />
                   <span>
                     {chapterCount} {chapterCount === 1 ? "Chapter" : "Chapters"}
@@ -157,7 +157,7 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
               </div>
 
               {/* Course Title */}
-              <h3 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold text-text-primary tracking-tight leading-[1.05] line-clamp-2 group-hover:text-brand-mint transition-colors">
+              <h3 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold text-text-primary tracking-tight leading-[1.05] line-clamp-2 group-hover:text-brand-primary dark:group-hover:text-brand-mint transition-colors">
                 {course.name}
               </h3>
 
@@ -173,7 +173,7 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
               <div className="rounded-2xl border border-border bg-surface-elevated/40 p-4 space-y-2.5">
                 <div className="flex items-center justify-between text-xs font-mono">
                   <span className="inline-flex items-center gap-1.5 text-text-muted text-[10px] uppercase">
-                    <TrendingUp className="w-3.5 h-3.5 text-brand-mint" />
+                    <TrendingUp className="w-3.5 h-3.5 text-emerald-700 dark:text-brand-mint" />
                     Course Progress
                   </span>
                   <span className="font-bold text-text-primary">{progress}%</span>
@@ -193,7 +193,7 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
                 <button
                   type="button"
                   onClick={handleCTA}
-                  className="w-full inline-flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-brand-yellow text-black font-heading font-extrabold text-xs uppercase tracking-wider shadow-lg hover:bg-brand-yellow/90 group-hover:shadow-[0_0_24px_rgba(246,237,74,0.3)] transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
+                  className="w-full inline-flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-brand-yellow text-brand-navy font-heading font-extrabold text-xs uppercase tracking-wider shadow-lg hover:bg-brand-yellow/90 group-hover:shadow-[0_0_24px_rgba(246,237,74,0.3)] transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
                 >
                   <Play className="w-4 h-4 fill-current" />
                   <span>{completed ? "Review Course" : "Continue Learning"}</span>
@@ -207,7 +207,7 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
                       e.stopPropagation();
                       navigate(`/courses/${course._id}/chapters`);
                     }}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 px-4 text-xs font-heading font-extrabold uppercase tracking-wider bg-brand-yellow text-black hover:bg-brand-yellow/90 shadow-md transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 px-4 text-xs font-heading font-extrabold uppercase tracking-wider bg-brand-yellow text-brand-navy hover:bg-brand-yellow/90 shadow-md transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
                   >
                     <Play className="w-3.5 h-3.5 fill-current" />
                     View Course
@@ -220,7 +220,7 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
                     }}
                     className="inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 px-4 text-xs font-mono font-bold uppercase tracking-wider border border-border bg-surface-elevated text-text-primary hover:bg-surface-card hover:border-brand-mint/40 transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
                   >
-                    <HelpCircle className="w-3.5 h-3.5 text-brand-mint" />
+                    <HelpCircle className="w-3.5 h-3.5 text-emerald-800 dark:text-brand-mint" />
                     Enquire
                   </button>
                 </div>

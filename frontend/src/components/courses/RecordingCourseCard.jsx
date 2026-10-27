@@ -48,7 +48,7 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
   const imageUrl =
     getUploadUrl(course.coverImage) ||
     course.coverImage ||
-    "https://placehold.co/1920x1080/07090B/FFFFFF?text=Masterclass";
+    "https://placehold.co/1920x1080/F5F7F6/12314C?text=Masterclass";
 
   const handleCardClick = () => navigate(`/courses/${course._id}/chapters`);
 
@@ -159,7 +159,7 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
                   e.stopPropagation();
                   navigate(`/courses/${course._id}/chapters`);
                 }}
-                className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-brand-mint/10 border border-brand-mint/30 text-brand-primary dark:text-brand-mint hover:bg-brand-primary hover:text-white dark:hover:bg-brand-mint dark:hover:text-brand-navy transition-all cursor-pointer shadow-sm min-h-[44px]"
+                className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-brand-surface-subtle dark:bg-brand-mint/10 border border-emerald-600/30 dark:border-brand-mint/30 text-brand-primary dark:text-brand-mint hover:bg-brand-primary hover:text-white dark:hover:bg-brand-mint dark:hover:text-brand-navy transition-all cursor-pointer shadow-sm min-h-[44px]"
               >
                 {completed ? (
                   <>
@@ -194,7 +194,7 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
                   }}
                   className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider border border-border bg-surface-elevated text-text-primary hover:bg-surface-card hover:border-brand-mint/30 transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
                 >
-                  <HelpCircle className="w-3 h-3 text-brand-mint" />
+                  <HelpCircle className="w-3 h-3 text-emerald-800 dark:text-brand-mint" />
                   Enquire
                 </button>
               </div>

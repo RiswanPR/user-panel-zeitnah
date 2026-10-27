@@ -75,7 +75,7 @@ const LearningProgressStrip = memo(function LearningProgressStrip({ courses = []
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           {/* ── Left Indicator Label ── */}
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-brand-mint/10 border border-brand-mint/25 flex items-center justify-center text-brand-mint shrink-0 shadow-sm">
+            <div className="w-9 h-9 rounded-xl bg-brand-surface-subtle dark:bg-brand-mint/10 border border-emerald-600/20 dark:border-brand-mint/25 flex items-center justify-center text-brand-primary dark:text-brand-mint shrink-0 shadow-sm">
               <TrendingUp className="w-4 h-4" />
             </div>
             <div>
@@ -104,7 +104,7 @@ const LearningProgressStrip = memo(function LearningProgressStrip({ courses = []
             {/* 2. In Progress */}
             <div className="border-l border-border pl-3">
               <div className="flex items-center gap-1.5 text-[10px] font-mono text-text-muted uppercase">
-                <Layers className="w-3 h-3 text-brand-yellow" />
+                <Layers className="w-3 h-3 text-amber-600 dark:text-brand-yellow" />
                 <span>Active Tracks</span>
               </div>
               <p className="font-heading font-extrabold text-lg sm:text-xl text-text-primary font-mono mt-0.5">
@@ -115,7 +115,7 @@ const LearningProgressStrip = memo(function LearningProgressStrip({ courses = []
             {/* 3. Completed */}
             <div className="border-l border-border pl-3">
               <div className="flex items-center gap-1.5 text-[10px] font-mono text-text-muted uppercase">
-                <CheckCircle2 className="w-3 h-3 text-brand-mint" />
+                <CheckCircle2 className="w-3 h-3 text-emerald-700 dark:text-brand-mint" />
                 <span>Completed</span>
               </div>
               <p className="font-heading font-extrabold text-lg sm:text-xl text-text-primary font-mono mt-0.5">
@@ -129,7 +129,7 @@ const LearningProgressStrip = memo(function LearningProgressStrip({ courses = []
                 Average Completion
               </div>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="font-heading font-extrabold text-lg sm:text-xl text-brand-mint font-mono">
+                <span className="font-heading font-extrabold text-lg sm:text-xl text-brand-primary dark:text-brand-mint font-mono">
                   {telemetry.averageProgress}%
                 </span>
                 <div className="w-16 h-1.5 rounded-full bg-surface-elevated border border-border/40 overflow-hidden hidden sm:block">
