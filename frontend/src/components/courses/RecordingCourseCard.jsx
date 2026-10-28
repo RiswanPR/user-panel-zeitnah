@@ -13,14 +13,17 @@ import CourseTypeBadge from "./CourseTypeBadge";
 import CourseEnquiryModal from "./CourseEnquiryModal";
 import ZeitnahZMotif from "./ZeitnahZMotif";
 import { getUploadUrl } from "../../utils/courseUi";
+import { useCardSpotlight } from "../../hooks/useCardSpotlight";
 
 /**
  * RecordingCourseCard
  *
  * Editorial card for Recorded Masterclasses in the grid.
- * Features:
+ * Directly grounded in the Zeitnah Group of Institution Brand Guideline.
+ *
+ * Features & Effects:
  * - Dominant 16:9 cinematic aspect ratio container with subtle zoom
- * - Deep charcoal (#0A0F14 / #0D141A) editorial panel
+ * - Mouse-tracking tactile radial spotlight in Light Mode
  * - High-contrast typography & mint telemetry
  * - Distinct yellow CTA for discovery & mint CTA for active learning
  * - Micro-interactions: lift, image zoom, border brightening
@@ -30,6 +33,9 @@ import { getUploadUrl } from "../../utils/courseUi";
 const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
   const navigate = useNavigate();
   const [enquiryModalOpen, setEnquiryModalOpen] = useState(false);
+  const { onMouseMove, onMouseLeave, spotlightStyle } = useCardSpotlight({
+    radius: 420,
+  });
 
   if (!course) return null;
 
@@ -60,6 +66,8 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: easePremium }}
+        onMouseMove={onMouseMove}
+        onMouseLeave={onMouseLeave}
         onClick={handleCardClick}
         tabIndex={0}
         role="button"
@@ -70,19 +78,25 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
           }
         }}
         aria-label={`Masterclass: ${course.name}`}
-        className="group relative flex flex-col overflow-hidden rounded-2xl border border-border hover:border-emerald-600/35 dark:hover:border-brand-mint/40 bg-surface-card bg-white dark:bg-surface-card cursor-pointer w-full transition-all duration-300 shadow-xs hover:-translate-y-0.5 hover:shadow-md focus-ring"
+        className="group relative flex flex-col overflow-hidden rounded-2xl border border-border hover:border-emerald-600/40 dark:hover:border-brand-mint/40 bg-surface-card bg-white dark:bg-surface-card cursor-pointer w-full transition-all duration-300 shadow-xs hover:-translate-y-1 hover:shadow-lg focus-ring select-none"
       >
         {/* Subtle top hairline */}
-        <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-brand-mint/35 to-transparent pointer-events-none" />
+        <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-brand-mint/35 to-transparent pointer-events-none z-10" />
+
+        {/* ── INTERACTIVE MOUSE SPOTLIGHT (Light Mode Tactile Sheen) ── */}
+        <div
+          className="pointer-events-none absolute inset-0 z-0"
+          style={spotlightStyle}
+        />
 
         {/* Spatial subtle Z watermark */}
-        <div className="pointer-events-none absolute -right-6 -bottom-6 w-32 h-32 select-none opacity-[0.03] group-hover:opacity-[0.06] transition-opacity duration-300">
+        <div className="pointer-events-none absolute -right-6 -bottom-6 w-32 h-32 select-none opacity-[0.03] group-hover:opacity-[0.06] transition-opacity duration-300 z-0">
           <ZeitnahZMotif variant="white" className="w-full h-full rotate-6" />
         </div>
 
         {/* ── 16:9 Media Cover ── */}
         <div
-          className="relative aspect-video w-full shrink-0 overflow-hidden bg-surface-elevated"
+          className="relative aspect-video w-full shrink-0 overflow-hidden bg-surface-elevated z-10"
           style={{ aspectRatio: "16 / 9" }}
         >
           <OptimizedImage
@@ -112,10 +126,10 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
         </div>
 
         {/* ── Editorial Content Body ── */}
-        <div className="flex flex-1 flex-col justify-between p-5 gap-4">
+        <div className="relative z-10 flex flex-1 flex-col justify-between p-5 gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-[10px] font-mono text-text-muted uppercase">
-              <BookOpen className="w-3 h-3 text-brand-mint" />
+              <BookOpen className="w-3 h-3 text-emerald-800 dark:text-brand-mint" />
               <span>
                 {chapterCount} {chapterCount === 1 ? "Chapter" : "Chapters"}
               </span>
@@ -128,7 +142,7 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
             </h3>
 
             {course.description && (
-              <p className="text-xs text-text-secondary leading-relaxed line-clamp-2">
+              <p className="text-xs text-text-secondary leading-relaxed line-clamp-2 font-normal">
                 {course.description}
               </p>
             )}
@@ -182,7 +196,7 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
                     e.stopPropagation();
                     navigate(`/courses/${course._id}/chapters`);
                   }}
-                  className="w-full inline-flex items-center justify-center py-2.5 rounded-xl text-xs font-heading font-extrabold uppercase tracking-wider bg-brand-yellow text-brand-navy hover:bg-brand-yellow/90 shadow-sm transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
+                  className="w-full inline-flex items-center justify-center py-2.5 rounded-xl text-xs font-heading font-extrabold uppercase tracking-wider bg-brand-yellow text-brand-navy hover:bg-brand-yellow/90 shadow-sm hover:shadow-[0_0_20px_rgba(246,237,74,0.35)] transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
                 >
                   View
                 </button>
@@ -192,7 +206,7 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
                     e.stopPropagation();
                     setEnquiryModalOpen(true);
                   }}
-                  className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider border border-border bg-surface-elevated text-text-primary hover:bg-surface-card hover:border-brand-mint/30 transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
+                  className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider border border-border bg-surface-elevated text-text-primary hover:bg-surface-card hover:border-brand-mint/40 transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
                 >
                   <HelpCircle className="w-3 h-3 text-emerald-800 dark:text-brand-mint" />
                   Enquire

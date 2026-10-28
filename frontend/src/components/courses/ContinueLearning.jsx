@@ -6,18 +6,28 @@ import OptimizedImage from "../ui/OptimizedImage";
 import ZeitnahZMotif from "./ZeitnahZMotif";
 import { getUploadUrl } from "../../utils/courseUi";
 import { normalizeCurriculum } from "../../utils/courseCurriculum";
+import { useCardSpotlight } from "../../hooks/useCardSpotlight";
 
 /**
  * ContinueLearning
  *
  * Ultra-premium flagship "Continue Learning" media card.
  * Designed to feel like a standalone product hero.
- * Uses 100% authentic API telemetry — no fabricated numbers or durations.
+ * Directly grounded in the Zeitnah Group of Institution Brand Guideline.
+ *
+ * Features & Effects:
+ * - Interactive mouse-tracking tactile radial spotlight in Light Mode
+ * - 16:9 cinematic aspect ratio container with architectural curve
+ * - Authentic API telemetry (zero fabricated data)
+ * - Brand Yellow (#F6ED4A) CTA with Brand Navy text (#12314C)
  *
  * @param {object} course – The most-in-progress enrolled course
  */
 const ContinueLearning = memo(function ContinueLearning({ course }) {
   const navigate = useNavigate();
+  const { onMouseMove, onMouseLeave, spotlightStyle } = useCardSpotlight({
+    radius: 500,
+  });
 
   if (
     !course ||
@@ -79,7 +89,7 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
       {/* ── Section Header / Eyebrow ── */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2.5">
-          <span className="w-2 h-2 rounded-full bg-brand-yellow" />
+          <span className="w-2 h-2 rounded-full bg-brand-yellow shadow-[0_0_6px_#F6ED4A]" />
           <h2 className="text-[11px] sm:text-xs font-mono font-bold tracking-[0.2em] uppercase text-text-primary">
             CONTINUE LEARNING
           </h2>
@@ -96,6 +106,8 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
 
       {/* ── Flagship Horizontal Media Card ── */}
       <div
+        onMouseMove={onMouseMove}
+        onMouseLeave={onMouseLeave}
         onClick={handleContinue}
         role="button"
         tabIndex={0}
@@ -106,17 +118,23 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
           }
         }}
         aria-label={`Resume learning ${name}`}
-        className="group relative overflow-hidden rounded-3xl border border-border hover:border-emerald-600/35 dark:hover:border-brand-mint/35 bg-surface-card bg-gradient-to-r from-white via-white to-[#E8F3EC]/40 dark:from-transparent dark:to-transparent p-5 sm:p-7 lg:p-8 cursor-pointer transition-all duration-300 shadow-md hover:shadow-xl focus-ring"
+        className="group relative overflow-hidden rounded-3xl border border-border hover:border-emerald-600/35 dark:hover:border-brand-mint/35 bg-surface-card bg-gradient-to-r from-white via-white to-[#E8F3EC]/40 dark:from-transparent dark:to-transparent p-5 sm:p-7 lg:p-8 cursor-pointer transition-all duration-300 shadow-md hover:shadow-xl hover:-translate-y-0.5 focus-ring"
       >
         {/* Subtle Top Accent Hairline */}
         <div className="zn-hairline-mint" />
 
+        {/* ── INTERACTIVE MOUSE SPOTLIGHT (Light Mode Tactile Sheen) ── */}
+        <div
+          className="pointer-events-none absolute inset-0 z-0"
+          style={spotlightStyle}
+        />
+
         {/* Ambient Glows */}
-        <div className="pointer-events-none absolute -left-20 -top-20 w-64 h-64 rounded-full bg-brand-mint/8 blur-[80px]" />
-        <div className="pointer-events-none absolute -right-20 -bottom-20 w-64 h-64 rounded-full bg-brand-yellow/6 blur-[90px]" />
+        <div className="pointer-events-none absolute -left-20 -top-20 w-64 h-64 rounded-full bg-brand-mint/12 blur-[80px]" />
+        <div className="pointer-events-none absolute -right-20 -bottom-20 w-64 h-64 rounded-full bg-brand-yellow/10 blur-[90px]" />
 
         {/* Spatial Z Motif Watermark */}
-        <div className="pointer-events-none absolute right-4 sm:right-12 -bottom-10 w-64 h-64 select-none opacity-[0.04] group-hover:opacity-[0.07] transition-opacity duration-500">
+        <div className="pointer-events-none absolute right-4 sm:right-12 -bottom-10 w-64 h-64 select-none opacity-[0.04] group-hover:opacity-[0.07] transition-opacity duration-500 z-0">
           <ZeitnahZMotif variant="white" className="w-full h-full rotate-[-8deg]" />
         </div>
 

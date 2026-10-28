@@ -6,7 +6,7 @@ import {
   HelpCircle,
   ArrowRight,
   Play,
-  Calendar,
+  Sparkles,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import OptimizedImage from "../ui/OptimizedImage";
@@ -14,16 +14,20 @@ import CourseTypeBadge from "./CourseTypeBadge";
 import CourseEnquiryModal from "./CourseEnquiryModal";
 import ZeitnahZMotif from "./ZeitnahZMotif";
 import { getUploadUrl } from "../../utils/courseUi";
+import { useCardSpotlight } from "../../hooks/useCardSpotlight";
 
 /**
  * OnlineCourseCard
  *
  * Card for Online Classes & Cohorts in the "HAPPENING AT ZEITNAH" carousel.
- * Features:
+ * Directly grounded in the Zeitnah Group of Institution Brand Guideline.
+ *
+ * Features & Effects:
  * - 16:9 cinematic aspect ratio container
- * - Yellow live/cohort badge and mint secondary accents
- * - Schedule details if present in API
- * - Interactive carousel card ergonomics
+ * - Mouse-tracking tactile radial spotlight in Light Mode
+ * - Yellow live/cohort pulse beacon and mint secondary accents
+ * - Brand Yellow (#F6ED4A) CTA with Brand Navy text (#12314C)
+ * - Interactive carousel card ergonomics with hover lift
  *
  * @param {object} course - Course data from API
  * @param {boolean} compact - Compact variant flag
@@ -31,6 +35,9 @@ import { getUploadUrl } from "../../utils/courseUi";
 const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = false }) {
   const navigate = useNavigate();
   const [enquiryModalOpen, setEnquiryModalOpen] = useState(false);
+  const { onMouseMove, onMouseLeave, spotlightStyle } = useCardSpotlight({
+    radius: 400,
+  });
 
   if (!course) return null;
 
@@ -61,6 +68,8 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: easePremium }}
+        onMouseMove={onMouseMove}
+        onMouseLeave={onMouseLeave}
         onClick={handleCardClick}
         tabIndex={0}
         role="button"
@@ -71,18 +80,25 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
           }
         }}
         aria-label={`Online cohort: ${course.name}`}
-        className="carousel-card group relative flex flex-col overflow-hidden rounded-2xl border border-border hover:border-amber-500/35 dark:hover:border-brand-yellow/40 bg-surface-card bg-white dark:bg-surface-card cursor-pointer w-full h-full transition-all duration-300 shadow-xs hover:-translate-y-0.5 hover:shadow-md focus-ring select-none"
+        className="carousel-card group relative flex flex-col overflow-hidden rounded-2xl border border-border hover:border-amber-500/40 dark:hover:border-brand-yellow/40 bg-surface-card bg-white dark:bg-surface-card cursor-pointer w-full h-full transition-all duration-300 shadow-xs hover:-translate-y-1 hover:shadow-lg focus-ring select-none"
       >
-        <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-brand-yellow/35 to-transparent pointer-events-none" />
+        {/* Subtle top hairline */}
+        <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-brand-yellow/40 to-transparent pointer-events-none z-10" />
+
+        {/* ── INTERACTIVE MOUSE SPOTLIGHT (Light Mode Tactile Sheen) ── */}
+        <div
+          className="pointer-events-none absolute inset-0 z-0"
+          style={spotlightStyle}
+        />
 
         {/* Spatial Z watermark */}
-        <div className="pointer-events-none absolute -right-6 -bottom-6 w-32 h-32 select-none opacity-[0.03] group-hover:opacity-[0.06] transition-opacity duration-300">
+        <div className="pointer-events-none absolute -right-6 -bottom-6 w-32 h-32 select-none opacity-[0.03] group-hover:opacity-[0.06] transition-opacity duration-300 z-0">
           <ZeitnahZMotif variant="yellow" className="w-full h-full rotate-6" />
         </div>
 
         {/* ── 16:9 Image Cover ── */}
         <div
-          className="relative aspect-video w-full shrink-0 overflow-hidden bg-surface-elevated"
+          className="relative aspect-video w-full shrink-0 overflow-hidden bg-surface-elevated z-10"
           style={{ aspectRatio: "16 / 9" }}
         >
           <OptimizedImage
@@ -95,8 +111,8 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
 
           {/* Badges */}
           <div className="absolute left-3 top-3 z-10 flex flex-wrap gap-1.5">
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 dark:bg-black/75 px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider text-amber-900 dark:text-brand-yellow backdrop-blur-md shadow-xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-yellow animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-white/95 dark:bg-black/75 px-2.5 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider text-amber-900 dark:text-brand-yellow backdrop-blur-md shadow-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-yellow animate-pulse shadow-[0_0_6px_#F6ED4A]" />
               ONLINE COHORT
             </span>
 
@@ -115,7 +131,7 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
         </div>
 
         {/* ── Content Body ── */}
-        <div className="flex flex-1 flex-col justify-between p-5 gap-4">
+        <div className="relative z-10 flex flex-1 flex-col justify-between p-5 gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-[10px] font-mono text-text-muted uppercase">
               <BookOpen className="w-3 h-3 text-emerald-800 dark:text-brand-mint" />
@@ -131,7 +147,7 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
             </h3>
 
             {!compact && course.description && (
-              <p className="text-xs text-text-secondary leading-relaxed line-clamp-2">
+              <p className="text-xs text-text-secondary leading-relaxed line-clamp-2 font-normal">
                 {course.description}
               </p>
             )}
@@ -183,7 +199,7 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
                     e.stopPropagation();
                     navigate(`/courses/${course._id}/chapters`);
                   }}
-                  className="w-full inline-flex items-center justify-center py-2.5 rounded-xl text-xs font-heading font-extrabold uppercase tracking-wider bg-brand-yellow text-brand-navy hover:bg-brand-yellow/90 shadow-sm transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
+                  className="w-full inline-flex items-center justify-center py-2.5 rounded-xl text-xs font-heading font-extrabold uppercase tracking-wider bg-brand-yellow text-brand-navy hover:bg-brand-yellow/90 shadow-sm hover:shadow-[0_0_20px_rgba(246,237,74,0.35)] transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
                 >
                   Join
                 </button>
@@ -193,7 +209,7 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
                     e.stopPropagation();
                     setEnquiryModalOpen(true);
                   }}
-                  className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider border border-border bg-surface-elevated text-text-primary hover:bg-surface-card hover:border-brand-mint/30 transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
+                  className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider border border-border bg-surface-elevated text-text-primary hover:bg-surface-card hover:border-brand-mint/40 transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
                 >
                   <HelpCircle className="w-3 h-3 text-emerald-800 dark:text-brand-mint" />
                   Details

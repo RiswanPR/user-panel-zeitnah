@@ -17,6 +17,7 @@ import OnlineCourseCarousel from "../../components/courses/OnlineCourseCarousel"
 import CourseStandingStrip from "../../components/courses/CourseStandingStrip";
 import CourseClosingCTA from "../../components/courses/CourseClosingCTA";
 import ZeitnahZMotif from "../../components/courses/ZeitnahZMotif";
+import ZeitnahTopographyPattern from "../../components/courses/ZeitnahTopographyPattern";
 import api from "../../services/api";
 import { useImagePreloader } from "../../hooks/useImagePreloader";
 import { AuthContext } from "../../context/AuthContext";
@@ -505,8 +506,14 @@ function Courses() {
           subtitle="Live engineering cohorts, interactive workshops, and scheduled sessions."
           accentColor="yellow"
         >
-          <div className="rounded-3xl border border-border/70 bg-gradient-to-b from-[#E8F3EC]/30 via-transparent to-transparent dark:from-surface-card/30 dark:to-transparent p-4 sm:p-6 shadow-xs">
-            <OnlineCourseCarousel courses={onlineCourses} />
+          <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-b from-[#E8F3EC]/40 via-white/80 to-transparent dark:from-surface-card/30 dark:to-transparent p-4 sm:p-6 shadow-xs">
+            {/* Ambient subtle topography watermark */}
+            <div className="pointer-events-none absolute -right-10 -top-10 w-72 h-72 opacity-25 dark:opacity-10 z-0">
+              <ZeitnahTopographyPattern variant="yellow" opacity={0.35} animated={true} />
+            </div>
+            <div className="relative z-10">
+              <OnlineCourseCarousel courses={onlineCourses} />
+            </div>
           </div>
         </CourseSection>
       )}

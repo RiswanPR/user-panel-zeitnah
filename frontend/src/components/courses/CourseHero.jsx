@@ -2,18 +2,25 @@ import { memo, useMemo } from "react";
 import { motion } from "framer-motion";
 import { BookOpen, GraduationCap, Play, Activity } from "lucide-react";
 import ZeitnahZMotif from "./ZeitnahZMotif";
+import ZeitnahTopographyPattern from "./ZeitnahTopographyPattern";
+import BrandSticker from "./BrandSticker";
+import BrandArrowBadge from "./BrandArrowBadge";
+import { useCardSpotlight } from "../../hooks/useCardSpotlight";
 
 /**
  * CourseHero
  *
- * Cinematic dark editorial learning hero for Zeitnah Courses.
- * Features:
- * - Structural navy #12314C / deep charcoal #0A0F14 canvas with technical grid
- * - Ambient mint & yellow glow
- * - Large-scale asymmetrical organic "Z" motif watermark
- * - Massive editorial typography: "Build Connect Discover"
- * - Instrument-panel "Learning Signal" telemetry (real progress only, zero fabrication)
- * - Premium Framer Motion entry with ease [0.16, 1, 0.3, 1]
+ * Cinematic Light Editorial Learning Hero for Zeitnah Courses.
+ * Directly grounded in the Zeitnah Group of Institution Brand Guideline.
+ *
+ * Premium Features & Effects:
+ * - Fluid organic Topographic Contour lines (Brand Guideline Pages 1, 3, 5)
+ * - Tilted paper Brand Sticker "EVERYTHING ABOUT" (Pages 1 & 3)
+ * - Interactive Brand Yellow circular arrow badge (Page 1)
+ * - Mouse-tracking tactile radial spotlight in Light Mode
+ * - Massive Degular-style editorial display typography (Page 3)
+ * - Authentic telemetry tiles & real instrument learning signal
+ * - Large-scale organic Z watermark with fluid breathing
  */
 const CourseHero = memo(function CourseHero({
   stats,
@@ -22,8 +29,11 @@ const CourseHero = memo(function CourseHero({
   loading = false,
 }) {
   const firstName = user?.name ? user.name.trim().split(/\s+/)[0] : null;
+  const { onMouseMove, onMouseLeave, spotlightStyle } = useCardSpotlight({
+    radius: 500,
+  });
 
-  // Compute real average progress for enrolled courses
+  // Compute real average progress for enrolled courses (zero fabricated data)
   const learningSignal = useMemo(() => {
     if (!enrolledCourses || enrolledCourses.length === 0) return null;
     const progressValues = enrolledCourses
@@ -48,19 +58,37 @@ const CourseHero = memo(function CourseHero({
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: easePremium }}
+      onMouseMove={onMouseMove}
+      onMouseLeave={onMouseLeave}
       aria-label="Zeitnah Courses Hero"
-      className="relative overflow-hidden rounded-3xl bg-surface-card zn-gradient-hero border border-border p-6 sm:p-10 lg:p-14 shadow-sm"
+      className="group relative overflow-hidden rounded-3xl bg-surface-card zn-gradient-hero border border-border p-6 sm:p-10 lg:p-14 shadow-sm transition-all duration-300 hover:shadow-md"
     >
-      {/* ── SUBTLE TOP HAIRLINE ── */}
+      {/* ── TOP HAIRLINE ACCENT ── */}
       <div className="zn-hairline-mint" />
 
-      {/* ── RESTRAINED AMBIENT GLOWS (Calm Atmospheric Mint & Yellow) ── */}
-      <div className="pointer-events-none absolute -top-24 -left-20 w-80 h-80 rounded-full bg-brand-mint/15 dark:bg-brand-mint/10 blur-[90px] dark:mix-blend-screen" />
-      <div className="pointer-events-none absolute -bottom-24 -right-16 w-72 h-72 rounded-full bg-brand-yellow/12 dark:bg-brand-yellow/8 blur-[100px] dark:mix-blend-screen" />
-      <div className="pointer-events-none absolute top-1/2 left-1/3 -translate-y-1/2 w-[420px] h-[240px] bg-brand-mint/8 blur-[90px] dark:opacity-80" />
+      {/* ── INTERACTIVE MOUSE SPOTLIGHT (Light Mode Tactile Sheen) ── */}
+      <div
+        className="pointer-events-none absolute inset-0 z-0"
+        style={spotlightStyle}
+      />
+
+      {/* ── RESTRAINED AMBIENT GLOWS (Mint & Sunlight Yellow) ── */}
+      <div className="pointer-events-none absolute -top-24 -left-20 w-80 h-80 rounded-full bg-brand-mint/20 dark:bg-brand-mint/10 blur-[90px] dark:mix-blend-screen" />
+      <div className="pointer-events-none absolute -bottom-24 -right-16 w-72 h-72 rounded-full bg-brand-yellow/18 dark:bg-brand-yellow/8 blur-[100px] dark:mix-blend-screen" />
+      <div className="pointer-events-none absolute top-1/2 left-1/3 -translate-y-1/2 w-[420px] h-[240px] bg-brand-mint/10 blur-[90px]" />
+
+      {/* ── SIGNATURE BRAND TOPOGRAPHIC CONTOUR WAVE PATTERN ── */}
+      <div className="pointer-events-none absolute -right-20 -top-16 w-[420px] sm:w-[540px] h-[420px] sm:h-[540px] z-0 opacity-40 dark:opacity-15">
+        <ZeitnahTopographyPattern
+          variant="mint"
+          opacity={0.35}
+          animated={true}
+          className="w-full h-full"
+        />
+      </div>
 
       {/* ── SPATIAL ORGANIC Z MOTIF (Large-scale, low opacity, asymmetrical bleed) ── */}
-      <div className="pointer-events-none absolute -right-16 sm:-right-8 -bottom-20 sm:-bottom-16 w-80 sm:w-96 md:w-[480px] h-80 sm:h-96 md:h-[480px] select-none">
+      <div className="pointer-events-none absolute -right-16 sm:-right-8 -bottom-20 sm:-bottom-16 w-80 sm:w-96 md:w-[480px] h-80 sm:h-96 md:h-[480px] select-none z-0">
         <ZeitnahZMotif
           variant="gradient"
           opacity={0.065}
@@ -71,28 +99,34 @@ const CourseHero = memo(function CourseHero({
       <div className="relative z-10 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 lg:gap-12">
         {/* ── LEFT: Editorial Typography & Statement ── */}
         <div className="space-y-6 max-w-2xl">
-          {/* Eyebrow / Learning Status Indicator */}
-          <motion.div
-            initial={{ opacity: 0, x: -12 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.1, ease: easePremium }}
-            className="inline-flex items-center gap-2.5 rounded-full bg-brand-surface-subtle dark:bg-brand-mint/10 border border-emerald-600/20 dark:border-brand-mint/25 px-3.5 py-1.5 backdrop-blur-md shadow-xs"
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-primary dark:bg-brand-mint opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-primary dark:bg-brand-mint" />
-            </span>
-            <span className="text-[10px] sm:text-[11px] font-mono font-bold tracking-[0.2em] uppercase text-brand-primary dark:text-brand-mint">
-              {firstName ? `LEARNER TELEMETRY // ${firstName}` : "ZEITNAH // SEE THE UNSEEN"}
-            </span>
-          </motion.div>
+          {/* Eyebrow & Brand Sticker Tag Group */}
+          <div className="flex flex-wrap items-center gap-3">
+            <BrandSticker variant="white" rotation={-5}>
+              EVERYTHING ABOUT
+            </BrandSticker>
 
-          {/* Massive Display Heading */}
+            <motion.div
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.1, ease: easePremium }}
+              className="inline-flex items-center gap-2 rounded-full bg-brand-surface-subtle dark:bg-brand-mint/10 border border-emerald-600/20 dark:border-brand-mint/25 px-3 py-1 backdrop-blur-md shadow-xs"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-primary dark:bg-brand-mint opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-primary dark:bg-brand-mint" />
+              </span>
+              <span className="text-[10px] sm:text-[11px] font-mono font-bold tracking-[0.2em] uppercase text-brand-primary dark:text-brand-mint">
+                {firstName ? `LEARNER // ${firstName}` : "ZEITNAH // SEE THE UNSEEN"}
+              </span>
+            </motion.div>
+          </div>
+
+          {/* Massive Display Heading with Brand Arrow Badge */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65, delay: 0.18, ease: easePremium }}
-            className="space-y-1"
+            className="space-y-1 relative"
           >
             <h1 className="display-headline text-4xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-text-primary leading-[0.92]">
               BUILD
@@ -103,6 +137,17 @@ const CourseHero = memo(function CourseHero({
                 DISCOVER.
               </span>
             </h1>
+
+            {/* Brand Arrow Badge docked right on large screens */}
+            <div className="absolute right-0 bottom-4 hidden sm:block">
+              <BrandArrowBadge
+                size={48}
+                onClick={() => {
+                  const el = document.getElementById("section-recorded-masterclasses");
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }}
+              />
+            </div>
           </motion.div>
 
           {/* Confident Editorial Subheading */}
@@ -148,7 +193,7 @@ const CourseHero = memo(function CourseHero({
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-2xl border border-border/80 bg-white/80 dark:bg-surface-elevated backdrop-blur-xs p-3.5 sm:p-4 flex flex-col justify-between transition-all hover:border-emerald-600/30 dark:hover:border-brand-mint/25 hover:shadow-xs group"
+                  className="rounded-2xl border border-border/80 bg-white/90 dark:bg-surface-elevated backdrop-blur-xs p-3.5 sm:p-4 flex flex-col justify-between transition-all duration-300 hover:border-emerald-600/40 dark:hover:border-brand-mint/25 hover:shadow-sm hover:-translate-y-0.5 group"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[9px] sm:text-[10px] font-mono font-bold tracking-[0.18em] text-text-muted">

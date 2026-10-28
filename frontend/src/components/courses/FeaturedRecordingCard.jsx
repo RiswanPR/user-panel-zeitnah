@@ -7,23 +7,28 @@ import {
   Play,
   ArrowRight,
   TrendingUp,
+  Sparkles,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import OptimizedImage from "../ui/OptimizedImage";
 import CourseTypeBadge from "./CourseTypeBadge";
 import CourseEnquiryModal from "./CourseEnquiryModal";
 import ZeitnahZMotif from "./ZeitnahZMotif";
+import ZeitnahTopographyPattern from "./ZeitnahTopographyPattern";
 import { getUploadUrl } from "../../utils/courseUi";
+import { useCardSpotlight } from "../../hooks/useCardSpotlight";
 
 /**
  * FeaturedRecordingCard
  *
  * Flagship Recorded Masterclass experience.
- * Features:
- * - 16:9 cinematic aspect ratio container with subtle zoom
- * - Deep navy (#12314C) / deep charcoal (#0A0F14) content architecture
- * - Oversized typography & mint metadata
- * - Brand Yellow (#F6ED4A) primary action CTA
+ * Directly grounded in the Zeitnah Group of Institution Brand Guideline.
+ *
+ * Features & Effects:
+ * - 16:9 cinematic aspect ratio container with architectural curved border
+ * - Interactive mouse-tracking tactile radial spotlight in Light Mode
+ * - Flowing organic contour topography watermark in editorial panel
+ * - Brand Yellow (#F6ED4A) primary action CTA with tactile micro-interaction
  * - Authentic chapter count, enrollment detection, and completion percentage
  * - Subdued spatial organic Z brand watermark
  *
@@ -32,6 +37,9 @@ import { getUploadUrl } from "../../utils/courseUi";
 const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
   const navigate = useNavigate();
   const [enquiryModalOpen, setEnquiryModalOpen] = useState(false);
+  const { onMouseMove, onMouseLeave, spotlightStyle } = useCardSpotlight({
+    radius: 550,
+  });
 
   if (!course) return null;
 
@@ -71,6 +79,8 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: easePremium }}
+        onMouseMove={onMouseMove}
+        onMouseLeave={onMouseLeave}
         onClick={handleCardClick}
         tabIndex={0}
         role="button"
@@ -81,31 +91,42 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
           }
         }}
         aria-label={`Featured masterclass: ${course.name}`}
-        className="group relative overflow-hidden rounded-3xl border border-border hover:border-emerald-600/35 dark:hover:border-brand-mint/40 bg-surface-card zn-gradient-card-subtle cursor-pointer transition-all duration-300 shadow-md hover:shadow-xl focus-ring"
+        className="group relative overflow-hidden rounded-3xl border border-border hover:border-emerald-600/40 dark:hover:border-brand-mint/40 bg-surface-card zn-gradient-card-subtle cursor-pointer transition-all duration-300 shadow-md hover:shadow-xl hover:-translate-y-0.5 focus-ring"
       >
         {/* Subtle accent hairline */}
         <div className="zn-hairline-mint" />
 
+        {/* ── INTERACTIVE MOUSE SPOTLIGHT (Light Mode Tactile Sheen) ── */}
+        <div
+          className="pointer-events-none absolute inset-0 z-0"
+          style={spotlightStyle}
+        />
+
         {/* Ambient Glows */}
-        <div className="pointer-events-none absolute -right-24 -top-24 w-80 h-80 rounded-full bg-brand-yellow/8 blur-[100px]" />
-        <div className="pointer-events-none absolute -left-12 bottom-0 w-72 h-72 rounded-full bg-brand-mint/8 blur-[90px]" />
+        <div className="pointer-events-none absolute -right-24 -top-24 w-80 h-80 rounded-full bg-brand-yellow/12 blur-[100px]" />
+        <div className="pointer-events-none absolute -left-12 bottom-0 w-72 h-72 rounded-full bg-brand-mint/12 blur-[90px]" />
+
+        {/* Brand Topography Contour Lines Watermark */}
+        <div className="pointer-events-none absolute right-0 top-0 w-80 h-80 opacity-20 dark:opacity-10 z-0">
+          <ZeitnahTopographyPattern variant="mint" opacity={0.3} animated={true} />
+        </div>
 
         {/* Spatial Z Motif watermark */}
-        <div className="pointer-events-none absolute right-4 bottom-4 w-72 h-72 select-none opacity-[0.035] group-hover:opacity-[0.06] transition-opacity duration-500">
+        <div className="pointer-events-none absolute right-4 bottom-4 w-72 h-72 select-none opacity-[0.035] group-hover:opacity-[0.07] transition-opacity duration-500 z-0">
           <ZeitnahZMotif variant="gradient" className="w-full h-full rotate-12" />
         </div>
 
         {/* ── LAYOUT: 16:9 Media Left / Editorial Content Right ── */}
-        <div className="flex flex-col lg:flex-row items-stretch">
-          {/* ── MEDIA CONTAINER (Strict 16:9) ── */}
+        <div className="relative z-10 flex flex-col lg:flex-row items-stretch">
+          {/* ── MEDIA CONTAINER (Strict 16:9 with Architectural Curve) ── */}
           <div
             className="relative w-full lg:w-1/2 shrink-0 aspect-video overflow-hidden bg-surface-elevated"
             style={{ aspectRatio: "16 / 9" }}
           >
             {/* Top Badges */}
             <div className="absolute left-4 top-4 z-20 flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 dark:bg-black/75 px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-900 dark:text-brand-yellow backdrop-blur-md shadow-xs">
-                <span className="w-1.5 h-1.5 rounded-full bg-brand-yellow" />
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-white/95 dark:bg-black/75 px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-900 dark:text-brand-yellow backdrop-blur-md shadow-sm">
+                <span className="w-2 h-2 rounded-full bg-brand-yellow shadow-[0_0_8px_#F6ED4A]" />
                 FLAGSHIP MASTERCLASS
               </span>
               <CourseTypeBadge type={course.type} size="sm" prominent />
@@ -131,7 +152,8 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
               {/* Telemetry Status & Chapter Count */}
               <div className="flex items-center justify-between gap-3 text-xs font-mono">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-text-muted">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-text-muted">
+                    <Sparkles className="w-3 h-3 text-brand-mint" />
                     CURRICULUM SPEC
                   </span>
                   {purchased && (
@@ -148,7 +170,7 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
                   )}
                 </div>
 
-                <div className="inline-flex items-center gap-1.5 text-emerald-800 dark:text-brand-mint font-semibold">
+                <div className="inline-flex items-center gap-1.5 text-emerald-800 dark:text-brand-mint font-semibold bg-brand-surface-subtle dark:bg-brand-mint/10 px-2.5 py-1 rounded-lg border border-emerald-600/20 dark:border-brand-mint/20">
                   <BookOpen className="w-3.5 h-3.5" />
                   <span>
                     {chapterCount} {chapterCount === 1 ? "Chapter" : "Chapters"}
@@ -170,7 +192,7 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
 
             {/* Progress section if enrolled */}
             {purchased && (
-              <div className="rounded-2xl border border-border bg-surface-elevated/40 p-4 space-y-2.5">
+              <div className="rounded-2xl border border-border bg-surface-elevated/60 backdrop-blur-xs p-4 space-y-2.5 shadow-xs">
                 <div className="flex items-center justify-between text-xs font-mono">
                   <span className="inline-flex items-center gap-1.5 text-text-muted text-[10px] uppercase">
                     <TrendingUp className="w-3.5 h-3.5 text-emerald-700 dark:text-brand-mint" />
@@ -193,7 +215,7 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
                 <button
                   type="button"
                   onClick={handleCTA}
-                  className="w-full inline-flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-brand-yellow text-brand-navy font-heading font-extrabold text-xs uppercase tracking-wider shadow-lg hover:bg-brand-yellow/90 group-hover:shadow-[0_0_24px_rgba(246,237,74,0.3)] transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
+                  className="w-full inline-flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-brand-yellow text-brand-navy font-heading font-extrabold text-xs uppercase tracking-wider shadow-lg hover:bg-brand-yellow/90 hover:shadow-[0_0_28px_rgba(246,237,74,0.4)] transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
                 >
                   <Play className="w-4 h-4 fill-current" />
                   <span>{completed ? "Review Course" : "Continue Learning"}</span>
@@ -207,7 +229,7 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
                       e.stopPropagation();
                       navigate(`/courses/${course._id}/chapters`);
                     }}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 px-4 text-xs font-heading font-extrabold uppercase tracking-wider bg-brand-yellow text-brand-navy hover:bg-brand-yellow/90 shadow-md transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 px-4 text-xs font-heading font-extrabold uppercase tracking-wider bg-brand-yellow text-brand-navy hover:bg-brand-yellow/90 shadow-md hover:shadow-[0_0_24px_rgba(246,237,74,0.35)] transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
                   >
                     <Play className="w-3.5 h-3.5 fill-current" />
                     View Course
@@ -218,7 +240,7 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
                       e.stopPropagation();
                       setEnquiryModalOpen(true);
                     }}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 px-4 text-xs font-mono font-bold uppercase tracking-wider border border-border bg-surface-elevated text-text-primary hover:bg-surface-card hover:border-brand-mint/40 transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 px-4 text-xs font-mono font-bold uppercase tracking-wider border border-border bg-surface-elevated text-text-primary hover:bg-surface-card hover:border-brand-mint/50 transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
                   >
                     <HelpCircle className="w-3.5 h-3.5 text-emerald-800 dark:text-brand-mint" />
                     Enquire
