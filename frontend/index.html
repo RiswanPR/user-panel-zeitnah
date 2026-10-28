@@ -98,7 +98,7 @@
           var key = 'zn_theme_preference_v1';
           var pref = localStorage.getItem(key);
           var m = window.matchMedia('(prefers-color-scheme: dark)');
-          var isDark = pref === 'dark' || (pref !== 'light' && (!m || m.matches));
+          var isDark = pref === 'system' ? (!m || m.matches) : pref !== 'light';
           var theme = isDark ? 'dark' : 'light';
           document.documentElement.setAttribute('data-theme', theme);
           var metaTheme = document.querySelector('meta[name="theme-color"]');

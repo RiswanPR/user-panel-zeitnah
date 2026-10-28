@@ -26,8 +26,8 @@ const MAIN_JSX_PATH = path.resolve(__dirname, '../main.jsx');
 const APP_JSX_PATH = path.resolve(__dirname, '../App.jsx');
 
 describe('Zeitnah — Phase 2: Theme Preference Engine Unit Tests', () => {
-  // ── TEST 1: Missing preference defaults to system ──
-  it('1. missing preference in storage defaults to "system"', () => {
+  // ── TEST 1: Missing preference defaults to dark ──
+  it('1. missing preference in storage defaults to "dark"', () => {
     const mockStorage = {
       getItem: (key) => {
         assert.equal(key, THEME_STORAGE_KEY);
@@ -35,7 +35,7 @@ describe('Zeitnah — Phase 2: Theme Preference Engine Unit Tests', () => {
       },
     };
     const preference = readStoredThemePreference(mockStorage);
-    assert.equal(preference, THEME_PREFERENCES.SYSTEM);
+    assert.equal(preference, THEME_PREFERENCES.DARK);
     assert.equal(preference, DEFAULT_PREFERENCE);
   });
 
@@ -63,18 +63,17 @@ describe('Zeitnah — Phase 2: Theme Preference Engine Unit Tests', () => {
     assert.equal(effective, EFFECTIVE_THEMES.DARK);
   });
 
-  // ── TEST 6: Invalid preference falls back to system ──
-  it('6. invalid or unknown preference values safely fall back to "system"', () => {
+  // ── TEST 6: Invalid preference falls back to dark default ──
+  it('6. invalid or unknown preference values safely fall back to "dark"', () => {
     const invalidValues = ['blue', 'neon', 'auto', '', 123, null, undefined, {}, []];
     for (const val of invalidValues) {
       assert.equal(
         normalizePreference(val),
-        THEME_PREFERENCES.SYSTEM,
-        `Expected ${JSON.stringify(val)} to normalize to "system"`
+        THEME_PREFERENCES.DARK,
+        `Expected ${JSON.stringify(val)} to normalize to "dark"`
       );
-      // When normalized to system with a light device, resolves to light
-      assert.equal(resolveEffectiveTheme(val, 'light'), EFFECTIVE_THEMES.LIGHT);
-      // When normalized to system with a dark device, resolves to dark
+      // When normalized to dark, always resolves to dark
+      assert.equal(resolveEffectiveTheme(val, 'light'), EFFECTIVE_THEMES.DARK);
       assert.equal(resolveEffectiveTheme(val, 'dark'), EFFECTIVE_THEMES.DARK);
     }
   });
@@ -119,10 +118,10 @@ describe('Zeitnah — Phase 2: Theme Preference Engine Unit Tests', () => {
         throw new Error('SecurityError: Access denied to localStorage');
       },
     };
-    // Must not throw, returns default 'system'
+    // Must not throw, returns default 'dark'
     assert.doesNotThrow(() => {
       const pref = readStoredThemePreference(throwingReader);
-      assert.equal(pref, THEME_PREFERENCES.SYSTEM);
+      assert.equal(pref, THEME_PREFERENCES.DARK);
     });
 
     const throwingWriter = {
@@ -137,7 +136,7 @@ describe('Zeitnah — Phase 2: Theme Preference Engine Unit Tests', () => {
     });
 
     // Null or undefined storage
-    assert.equal(readStoredThemePreference(null), THEME_PREFERENCES.SYSTEM);
+    assert.equal(readStoredThemePreference(null), THEME_PREFERENCES.DARK);
     assert.equal(writeStoredThemePreference(THEME_PREFERENCES.LIGHT, null), false);
   });
 
@@ -266,7 +265,7 @@ describe('Zeitnah — Phase 2: Theme Preference Engine Unit Tests', () => {
     try {
       delete globalThis.window;
       // read/write without args in headless/node
-      assert.equal(readStoredThemePreference(), THEME_PREFERENCES.SYSTEM);
+      assert.equal(readStoredThemePreference(), THEME_PREFERENCES.DARK);
       assert.equal(writeStoredThemePreference(THEME_PREFERENCES.LIGHT), false);
 
       // When window is present with localStorage
@@ -297,7 +296,7 @@ describe('Zeitnah — Phase 2: Theme Preference Engine Unit Tests', () => {
       globalThis.window.localStorage.getItem = () => {
         throw new Error('SecurityError: Storage is disabled');
       };
-      assert.equal(readStoredThemePreference(), THEME_PREFERENCES.SYSTEM);
+      assert.equal(readStoredThemePreference(), THEME_PREFERENCES.DARK);
 
       // Restricted window where accessing window.localStorage itself throws
       Object.defineProperty(globalThis.window, 'localStorage', {
@@ -308,7 +307,7 @@ describe('Zeitnah — Phase 2: Theme Preference Engine Unit Tests', () => {
       });
 
       assert.doesNotThrow(() => {
-        assert.equal(readStoredThemePreference(), THEME_PREFERENCES.SYSTEM);
+        assert.equal(readStoredThemePreference(), THEME_PREFERENCES.DARK);
         assert.equal(writeStoredThemePreference(THEME_PREFERENCES.LIGHT), false);
       });
     } finally {

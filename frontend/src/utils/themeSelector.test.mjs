@@ -170,10 +170,10 @@ describe('Zeitnah — Phase 3: Settings Theme Selector Unit Tests', () => {
       assert.equal(ok, false);
     });
 
-    // Read falls back to system
+    // Read falls back to default dark
     assert.doesNotThrow(() => {
       const pref = readStoredThemePreference(throwingStorage);
-      assert.equal(pref, THEME_PREFERENCES.SYSTEM);
+      assert.equal(pref, THEME_PREFERENCES.DARK);
     });
 
     // ThemeSelector contains graceful failure alert

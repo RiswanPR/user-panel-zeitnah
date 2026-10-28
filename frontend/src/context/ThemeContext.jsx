@@ -13,7 +13,7 @@ export const ThemeContext = createContext({
   preference: DEFAULT_PREFERENCE,
   effectiveTheme: 'dark',
   setPreference: () => {},
-  isSystem: true,
+  isSystem: false,
 });
 
 /**

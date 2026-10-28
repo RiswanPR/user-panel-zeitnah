@@ -182,7 +182,7 @@ describe('Zeitnah — Stage 1 Phase 1: Shared Design Foundation Tests', () => {
       assert.equal(THEME_PREFERENCES.LIGHT, 'light');
       assert.equal(THEME_PREFERENCES.DARK, 'dark');
       assert.equal(THEME_STORAGE_KEY, 'zn_theme_preference_v1');
-      assert.equal(DEFAULT_PREFERENCE, 'system');
+      assert.equal(DEFAULT_PREFERENCE, 'dark');
     });
 
     it('validates and normalizes preferences correctly', () => {
@@ -196,8 +196,8 @@ describe('Zeitnah — Stage 1 Phase 1: Shared Design Foundation Tests', () => {
       assert.equal(normalizePreference('system'), 'system');
       assert.equal(normalizePreference('light'), 'light');
       assert.equal(normalizePreference('dark'), 'dark');
-      assert.equal(normalizePreference('invalid'), 'system');
-      assert.equal(normalizePreference(null), 'system');
+      assert.equal(normalizePreference('invalid'), 'dark');
+      assert.equal(normalizePreference(null), 'dark');
     });
 
     it('resolves effective theme according to pure deterministic rules', () => {
@@ -213,8 +213,8 @@ describe('Zeitnah — Stage 1 Phase 1: Shared Design Foundation Tests', () => {
       assert.equal(resolveEffectiveTheme('system', 'dark'), 'dark');
       assert.equal(resolveEffectiveTheme('system', 'light'), 'light');
 
-      // Unknown/corrupted values safely fall back to device theme
-      assert.equal(resolveEffectiveTheme('corrupted', 'light'), 'light');
+      // Unknown/corrupted values safely fall back to default dark theme
+      assert.equal(resolveEffectiveTheme('corrupted', 'light'), 'dark');
       assert.equal(resolveEffectiveTheme('corrupted', 'dark'), 'dark');
     });
 

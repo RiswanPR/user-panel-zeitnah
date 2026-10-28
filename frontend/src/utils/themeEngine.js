@@ -21,7 +21,7 @@ export const EFFECTIVE_THEMES = Object.freeze({
 });
 
 export const THEME_STORAGE_KEY = 'zn_theme_preference_v1';
-export const DEFAULT_PREFERENCE = THEME_PREFERENCES.SYSTEM;
+export const DEFAULT_PREFERENCE = THEME_PREFERENCES.DARK;
 export const FALLBACK_EFFECTIVE_THEME = EFFECTIVE_THEMES.DARK;
 
 export const THEME_OPTIONS = Object.freeze([
