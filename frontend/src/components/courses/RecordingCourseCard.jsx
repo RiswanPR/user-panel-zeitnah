@@ -70,10 +70,10 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
           }
         }}
         aria-label={`Masterclass: ${course.name}`}
-        className="group relative flex flex-col overflow-hidden rounded-2xl border border-border hover:border-brand-mint/40 bg-surface-card cursor-pointer w-full transition-all duration-300 shadow-md hover:-translate-y-1 hover:shadow-2xl focus-ring"
+        className="group relative flex flex-col overflow-hidden rounded-2xl border border-border hover:border-emerald-600/35 dark:hover:border-brand-mint/40 bg-surface-card bg-white dark:bg-surface-card cursor-pointer w-full transition-all duration-300 shadow-xs hover:-translate-y-0.5 hover:shadow-md focus-ring"
       >
         {/* Subtle top hairline */}
-        <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-brand-mint/20 to-transparent pointer-events-none" />
+        <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-brand-mint/35 to-transparent pointer-events-none" />
 
         {/* Spatial subtle Z watermark */}
         <div className="pointer-events-none absolute -right-6 -bottom-6 w-32 h-32 select-none opacity-[0.03] group-hover:opacity-[0.06] transition-opacity duration-300">
@@ -140,11 +140,11 @@ const RecordingCourseCard = memo(function RecordingCourseCard({ course }) {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-[10px] font-mono text-text-muted uppercase">
                   <span>{completed ? "Status" : "Progress"}</span>
-                  <span className="font-bold text-text-primary">{progress}%</span>
+                  <span className="font-bold font-mono text-brand-navy dark:text-text-primary">{progress}%</span>
                 </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated border border-border/40">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-surface-elevated border border-border/40">
                   <div
-                    className="h-full rounded-full bg-brand-mint transition-all duration-500"
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-brand-mint dark:from-brand-mint dark:to-brand-mint transition-all duration-500"
                     style={{ width: `${progress}%` }}
                   />
                 </div>

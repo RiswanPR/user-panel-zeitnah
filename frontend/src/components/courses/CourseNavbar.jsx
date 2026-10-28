@@ -57,9 +57,9 @@ const CourseNavbar = memo(function CourseNavbar({
   return (
     <nav aria-label="Course navigation and filters" className="w-full">
       {/* ═══ DESKTOP EDITORIAL NAVIGATION BAR ═══ */}
-      <div className="hidden lg:flex items-center justify-between gap-6 rounded-2xl bg-surface-card border border-border backdrop-blur-2xl p-2 relative shadow-lg">
+      <div className="hidden lg:flex items-center justify-between gap-6 rounded-2xl bg-surface-card bg-white/95 dark:bg-surface-card border border-border backdrop-blur-2xl p-2 relative shadow-sm">
         {/* Subtle top hairline */}
-        <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-brand-mint/30 to-transparent pointer-events-none" />
+        <div className="zn-hairline-mint" />
 
         {/* Tab buttons */}
         <div className="flex items-center gap-1.5" role="tablist">
@@ -83,7 +83,7 @@ const CourseNavbar = memo(function CourseNavbar({
                 {active && (
                   <motion.div
                     layoutId="course-tab-active-indicator"
-                    className="absolute inset-0 rounded-xl bg-brand-surface-subtle dark:bg-[#12314C] border border-emerald-600/30 dark:border-brand-mint/30 shadow-sm"
+                    className="absolute inset-0 rounded-xl bg-brand-surface-subtle bg-gradient-to-r from-[#E8F3EC] to-white dark:from-[#12314C] dark:to-[#12314C] dark:bg-[#12314C] border border-emerald-600/30 dark:border-brand-mint/30 shadow-xs"
                     transition={{ type: "spring", stiffness: 450, damping: 34 }}
                   />
                 )}
@@ -235,7 +235,7 @@ const CourseNavbar = memo(function CourseNavbar({
                         }}
                         className={`inline-flex items-center justify-between rounded-2xl px-5 py-4 min-h-[52px] text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer w-full focus-ring ${
                           active
-                            ? "bg-brand-surface-subtle dark:bg-[#12314C] text-text-primary border border-emerald-600/30 dark:border-brand-mint/40 shadow-sm"
+                            ? "bg-brand-surface-subtle bg-gradient-to-r from-[#E8F3EC] to-white dark:from-[#12314C] dark:to-[#12314C] dark:bg-[#12314C] text-text-primary border border-emerald-600/30 dark:border-brand-mint/40 shadow-xs"
                             : "text-text-muted hover:text-text-primary hover:bg-surface-elevated border border-transparent"
                         }`}
                       >

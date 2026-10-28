@@ -35,9 +35,9 @@ const CourseStandingStrip = memo(function CourseStandingStrip() {
 
   return (
     <section aria-label="Learning Standing & Standings" className="pt-2">
-      <div className="relative overflow-hidden rounded-3xl border border-border bg-surface-card p-5 sm:p-7 shadow-xl">
+      <div className="relative overflow-hidden rounded-3xl border border-border/80 bg-surface-card bg-gradient-to-r from-white via-amber-50/20 to-white dark:from-transparent dark:to-transparent p-5 sm:p-7 shadow-xs">
         {/* Subtle accent hairline */}
-        <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-brand-yellow/30 to-transparent pointer-events-none" />
+        <div className="zn-hairline-yellow" />
 
         {/* Ambient subtle glow */}
         <div className="pointer-events-none absolute -right-16 -top-16 w-56 h-56 rounded-full bg-brand-yellow/6 blur-[70px]" />

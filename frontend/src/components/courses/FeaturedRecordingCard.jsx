@@ -81,10 +81,10 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
           }
         }}
         aria-label={`Featured masterclass: ${course.name}`}
-        className="group relative overflow-hidden rounded-3xl border border-border hover:border-brand-mint/40 bg-surface-card cursor-pointer transition-all duration-300 shadow-2xl focus-ring"
+        className="group relative overflow-hidden rounded-3xl border border-border hover:border-emerald-600/35 dark:hover:border-brand-mint/40 bg-surface-card zn-gradient-card-subtle cursor-pointer transition-all duration-300 shadow-md hover:shadow-xl focus-ring"
       >
         {/* Subtle accent hairline */}
-        <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-brand-mint/40 to-transparent pointer-events-none" />
+        <div className="zn-hairline-mint" />
 
         {/* Ambient Glows */}
         <div className="pointer-events-none absolute -right-24 -top-24 w-80 h-80 rounded-full bg-brand-yellow/8 blur-[100px]" />
@@ -104,7 +104,7 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
           >
             {/* Top Badges */}
             <div className="absolute left-4 top-4 z-20 flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-lg border border-brand-yellow/30 bg-black/75 px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-brand-yellow backdrop-blur-md shadow-sm">
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 dark:bg-black/75 px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-900 dark:text-brand-yellow backdrop-blur-md shadow-xs">
                 <span className="w-1.5 h-1.5 rounded-full bg-brand-yellow" />
                 FLAGSHIP MASTERCLASS
               </span>
@@ -176,11 +176,11 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
                     <TrendingUp className="w-3.5 h-3.5 text-emerald-700 dark:text-brand-mint" />
                     Course Progress
                   </span>
-                  <span className="font-bold text-text-primary">{progress}%</span>
+                  <span className="font-bold font-mono text-brand-navy dark:text-text-primary">{progress}%</span>
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-surface-card border border-border/40">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-surface-card border border-border/40">
                   <div
-                    className="h-full rounded-full bg-brand-mint transition-all duration-700 ease-out"
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-brand-mint dark:from-brand-mint dark:to-brand-mint transition-all duration-700 ease-out"
                     style={{ width: `${progress}%` }}
                   />
                 </div>

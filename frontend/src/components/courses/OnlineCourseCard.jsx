@@ -71,9 +71,9 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
           }
         }}
         aria-label={`Online cohort: ${course.name}`}
-        className="carousel-card group relative flex flex-col overflow-hidden rounded-2xl border border-border hover:border-brand-mint/40 bg-surface-card cursor-pointer w-full h-full transition-all duration-300 shadow-md hover:-translate-y-1 hover:shadow-2xl focus-ring select-none"
+        className="carousel-card group relative flex flex-col overflow-hidden rounded-2xl border border-border hover:border-amber-500/35 dark:hover:border-brand-yellow/40 bg-surface-card bg-white dark:bg-surface-card cursor-pointer w-full h-full transition-all duration-300 shadow-xs hover:-translate-y-0.5 hover:shadow-md focus-ring select-none"
       >
-        <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-brand-yellow/30 to-transparent pointer-events-none" />
+        <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-brand-yellow/35 to-transparent pointer-events-none" />
 
         {/* Spatial Z watermark */}
         <div className="pointer-events-none absolute -right-6 -bottom-6 w-32 h-32 select-none opacity-[0.03] group-hover:opacity-[0.06] transition-opacity duration-300">
@@ -95,7 +95,7 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
 
           {/* Badges */}
           <div className="absolute left-3 top-3 z-10 flex flex-wrap gap-1.5">
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-brand-yellow/30 bg-black/75 px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider text-brand-yellow backdrop-blur-md shadow-sm">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 dark:bg-black/75 px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider text-amber-900 dark:text-brand-yellow backdrop-blur-md shadow-xs">
               <span className="w-1.5 h-1.5 rounded-full bg-brand-yellow animate-pulse" />
               ONLINE COHORT
             </span>
@@ -142,11 +142,11 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-[10px] font-mono text-text-muted uppercase">
                   <span>{completed ? "Status" : "Progress"}</span>
-                  <span className="font-bold text-text-primary">{progress}%</span>
+                  <span className="font-bold font-mono text-brand-navy dark:text-text-primary">{progress}%</span>
                 </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated border border-border/40">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-surface-elevated border border-border/40">
                   <div
-                    className="h-full rounded-full bg-brand-mint transition-all duration-500"
+                    className="h-full rounded-full bg-gradient-to-r from-amber-500 to-brand-yellow dark:from-brand-yellow dark:to-brand-yellow transition-all duration-500"
                     style={{ width: `${progress}%` }}
                   />
                 </div>

@@ -68,9 +68,9 @@ const LearningProgressStrip = memo(function LearningProgressStrip({ courses = []
       aria-label="Student Learning Progress Intelligence"
       className="w-full"
     >
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-surface-card p-4 sm:p-5 shadow-lg">
+      <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-surface-card bg-gradient-to-r from-white via-[#E8F3EC]/35 to-white dark:from-transparent dark:to-transparent p-4 sm:p-5 shadow-xs">
         {/* Subtle accent hairline */}
-        <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-brand-mint/30 to-transparent pointer-events-none" />
+        <div className="zn-hairline-mint" />
 
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           {/* ── Left Indicator Label ── */}
@@ -129,12 +129,12 @@ const LearningProgressStrip = memo(function LearningProgressStrip({ courses = []
                 Average Completion
               </div>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="font-heading font-extrabold text-lg sm:text-xl text-brand-primary dark:text-brand-mint font-mono">
+                <span className="font-heading font-extrabold text-lg sm:text-xl text-brand-navy dark:text-brand-mint font-mono">
                   {telemetry.averageProgress}%
                 </span>
-                <div className="w-16 h-1.5 rounded-full bg-surface-elevated border border-border/40 overflow-hidden hidden sm:block">
+                <div className="w-16 h-1.5 rounded-full bg-slate-100 dark:bg-surface-elevated border border-border/40 overflow-hidden hidden sm:block">
                   <div
-                    className="h-full rounded-full bg-brand-mint"
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-brand-mint dark:from-brand-mint dark:to-brand-mint"
                     style={{ width: `${telemetry.averageProgress}%` }}
                   />
                 </div>

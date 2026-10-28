@@ -22,10 +22,10 @@ const CourseClosingCTA = memo(function CourseClosingCTA({ onBrowseCatalog }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: easePremium }}
       aria-label="Closing Call to Action"
-      className="relative overflow-hidden rounded-3xl border border-border bg-surface-card p-8 sm:p-12 lg:p-16 text-center sm:text-left shadow-2xl bg-technical-grid"
+      className="relative overflow-hidden rounded-3xl border border-border/80 bg-surface-card zn-gradient-hero p-8 sm:p-12 lg:p-16 text-center sm:text-left shadow-lg"
     >
       {/* Subtle top hairline */}
-      <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-brand-mint/40 to-transparent pointer-events-none" />
+      <div className="zn-hairline-mint" />
 
       {/* Ambient Glows */}
       <div className="pointer-events-none absolute -left-20 -top-20 w-80 h-80 rounded-full bg-brand-mint/10 blur-[100px]" />

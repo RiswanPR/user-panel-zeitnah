@@ -89,7 +89,7 @@ function CourseSection({
       aria-labelledby={sectionId}
       className="space-y-6 pt-4"
     >
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-border pb-4">
+      <div className="relative flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-border pb-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span
@@ -120,6 +120,14 @@ function CourseSection({
           )}
         </div>
         {headerRight && <div className="shrink-0">{headerRight}</div>}
+        {/* Subtle accent hairline on active section */}
+        <div
+          className={`absolute -bottom-px left-0 w-28 h-0.5 pointer-events-none ${
+            accentColor === "yellow"
+              ? "bg-gradient-to-r from-amber-500/80 to-transparent"
+              : "bg-gradient-to-r from-emerald-600/80 dark:from-brand-mint/80 to-transparent"
+          }`}
+        />
       </div>
       {children}
     </motion.section>
@@ -497,7 +505,9 @@ function Courses() {
           subtitle="Live engineering cohorts, interactive workshops, and scheduled sessions."
           accentColor="yellow"
         >
-          <OnlineCourseCarousel courses={onlineCourses} />
+          <div className="rounded-3xl border border-border/70 bg-gradient-to-b from-[#E8F3EC]/30 via-transparent to-transparent dark:from-surface-card/30 dark:to-transparent p-4 sm:p-6 shadow-xs">
+            <OnlineCourseCarousel courses={onlineCourses} />
+          </div>
         </CourseSection>
       )}
 

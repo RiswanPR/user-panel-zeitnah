@@ -536,6 +536,47 @@ html, body {
    PREMIUM EFFECTS LIBRARY
    ═══════════════════════════════════════════════════════════════ */
 
+/* ── Editorial Calm Gradient System ── */
+.zn-gradient-hero {
+  background: linear-gradient(135deg, rgba(232, 243, 236, 0.75) 0%, rgba(255, 255, 255, 0.95) 45%, rgba(245, 247, 246, 0.6) 100%);
+}
+
+[data-theme="dark"] .zn-gradient-hero,
+.dark .zn-gradient-hero {
+  background: var(--zn-token-surface-card);
+}
+
+.zn-gradient-card-subtle {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(248, 250, 249, 1) 50%, rgba(232, 243, 236, 0.35) 100%);
+}
+
+[data-theme="dark"] .zn-gradient-card-subtle,
+.dark .zn-gradient-card-subtle {
+  background: var(--zn-token-surface-card);
+}
+
+.zn-hairline-mint {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent 0%, rgba(159, 213, 178, 0.45) 50%, transparent 100%);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.zn-hairline-yellow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent 0%, rgba(246, 237, 74, 0.35) 50%, transparent 100%);
+  pointer-events: none;
+  z-index: 10;
+}
+
 /* Gradient accent line (top of cards) */
 .gradient-line-top {
   position: absolute;

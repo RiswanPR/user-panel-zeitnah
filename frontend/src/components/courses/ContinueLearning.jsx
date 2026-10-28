@@ -106,10 +106,10 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
           }
         }}
         aria-label={`Resume learning ${name}`}
-        className="group relative overflow-hidden rounded-3xl border border-border hover:border-brand-mint/35 bg-surface-card p-5 sm:p-7 lg:p-8 cursor-pointer transition-all duration-300 shadow-xl focus-ring"
+        className="group relative overflow-hidden rounded-3xl border border-border hover:border-emerald-600/35 dark:hover:border-brand-mint/35 bg-surface-card bg-gradient-to-r from-white via-white to-[#E8F3EC]/40 dark:from-transparent dark:to-transparent p-5 sm:p-7 lg:p-8 cursor-pointer transition-all duration-300 shadow-md hover:shadow-xl focus-ring"
       >
         {/* Subtle Top Accent Hairline */}
-        <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-brand-mint/40 to-transparent pointer-events-none" />
+        <div className="zn-hairline-mint" />
 
         {/* Ambient Glows */}
         <div className="pointer-events-none absolute -left-20 -top-20 w-64 h-64 rounded-full bg-brand-mint/8 blur-[80px]" />
@@ -185,9 +185,9 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
                   {progress}% COMPLETED
                 </span>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-surface-elevated border border-border/40">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-surface-elevated border border-border/40">
                 <div
-                  className="h-full rounded-full bg-brand-mint transition-all duration-700 ease-out"
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-brand-mint dark:from-brand-mint dark:to-brand-mint transition-all duration-700 ease-out"
                   style={{ width: `${progress}%` }}
                 />
               </div>

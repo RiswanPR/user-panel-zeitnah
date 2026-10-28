@@ -63,9 +63,9 @@ const CourseCard = memo(function CourseCard({ course }) {
           }
         }}
         aria-label={`Course: ${course.name}`}
-        className="group relative flex flex-col overflow-hidden rounded-2xl border border-border hover:border-brand-mint/40 bg-surface-card cursor-pointer w-full transition-all duration-300 shadow-md hover:-translate-y-1 hover:shadow-2xl focus-ring"
+        className="group relative flex flex-col overflow-hidden rounded-2xl border border-border hover:border-emerald-600/35 dark:hover:border-brand-mint/40 bg-surface-card bg-white dark:bg-surface-card cursor-pointer w-full transition-all duration-300 shadow-xs hover:-translate-y-0.5 hover:shadow-md focus-ring"
       >
-        <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-brand-mint/20 to-transparent pointer-events-none" />
+        <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-brand-mint/35 to-transparent pointer-events-none" />
 
         <div className="pointer-events-none absolute -right-6 -bottom-6 w-32 h-32 select-none opacity-[0.03] group-hover:opacity-[0.06] transition-opacity duration-300">
           <ZeitnahZMotif variant="white" className="w-full h-full rotate-6" />
