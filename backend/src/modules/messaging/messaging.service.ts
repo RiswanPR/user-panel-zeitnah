@@ -78,12 +78,45 @@ export class MessagingService {
     private readonly signedUrlService?: SignedUrlService,
   ) {}
 
-  private toObjectId(id: string | Types.ObjectId): Types.ObjectId {
+  private parseObjectId(id: unknown): Types.ObjectId | null {
     if (id instanceof Types.ObjectId) return id;
     if (typeof id === 'string' && Types.ObjectId.isValid(id)) {
       return new Types.ObjectId(id);
     }
-    throw new BadRequestException('Invalid ID format');
+    return null;
+  }
+
+  private toObjectId(id: string | Types.ObjectId): Types.ObjectId {
+    const parsed = this.parseObjectId(id);
+    if (!parsed) {
+      throw new BadRequestException('Invalid ID format');
+    }
+    return parsed;
+  }
+
+  /**
+   * Verifies whether a user is a participant in the specified conversation.
+   * Fails closed (returns false) for invalid IDs or database errors.
+   */
+  async isUserParticipant(
+    conversationId: string | Types.ObjectId,
+    userId: string | Types.ObjectId,
+  ): Promise<boolean> {
+    const convObjId = this.parseObjectId(conversationId);
+    const userObjId = this.parseObjectId(userId);
+    if (!convObjId || !userObjId) {
+      return false;
+    }
+
+    try {
+      const match = await this.conversationModel.exists({
+        _id: convObjId,
+        participants: userObjId,
+      });
+      return Boolean(match);
+    } catch {
+      return false;
+    }
   }
 
   /**
