@@ -118,20 +118,20 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
           }
         }}
         aria-label={`Resume learning ${name}`}
-        className="group relative overflow-hidden rounded-3xl border border-border hover:border-emerald-600/35 dark:hover:border-brand-mint/35 bg-surface-card bg-gradient-to-r from-white via-white to-[#E8F3EC]/40 dark:from-transparent dark:to-transparent p-5 sm:p-7 lg:p-8 cursor-pointer transition-all duration-300 shadow-md hover:shadow-xl hover:-translate-y-0.5 focus-ring"
+        className="group relative overflow-hidden rounded-3xl border border-border/80 hover:border-brand-mint/35 bg-surface-card bg-gradient-to-br from-surface-card via-surface-card to-surface-elevated/40 p-5 sm:p-7 lg:p-8 cursor-pointer transition-all duration-300 shadow-md hover:shadow-xl hover:-translate-y-0.5 focus-ring"
       >
         {/* Subtle Top Accent Hairline */}
         <div className="zn-hairline-mint" />
 
-        {/* ── INTERACTIVE MOUSE SPOTLIGHT (Light Mode Tactile Sheen) ── */}
+        {/* ── INTERACTIVE MOUSE SPOTLIGHT (Tactile Sheen) ── */}
         <div
           className="pointer-events-none absolute inset-0 z-0"
           style={spotlightStyle}
         />
 
         {/* Ambient Glows */}
-        <div className="pointer-events-none absolute -left-20 -top-20 w-64 h-64 rounded-full bg-brand-mint/12 blur-[80px]" />
-        <div className="pointer-events-none absolute -right-20 -bottom-20 w-64 h-64 rounded-full bg-brand-yellow/10 blur-[90px]" />
+        <div className="pointer-events-none absolute -left-20 -top-20 w-64 h-64 rounded-full bg-brand-mint/8 blur-[80px]" />
+        <div className="pointer-events-none absolute -right-20 -bottom-20 w-64 h-64 rounded-full bg-brand-yellow/8 blur-[90px]" />
 
         {/* Spatial Z Motif Watermark */}
         <div className="pointer-events-none absolute right-4 sm:right-12 -bottom-10 w-64 h-64 select-none opacity-[0.04] group-hover:opacity-[0.07] transition-opacity duration-500 z-0">
@@ -171,7 +171,7 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
             <div className="space-y-2">
               {/* Type & Real Chapter breadcrumb */}
               <div className="flex flex-wrap items-center gap-2 text-[10px] sm:text-[11px] font-mono font-bold uppercase tracking-[0.16em]">
-                <span className="inline-flex items-center gap-1.5 text-emerald-800 dark:text-brand-mint">
+                <span className="inline-flex items-center gap-1.5 text-brand-mint">
                   <BookOpen className="w-3.5 h-3.5" />
                   {String(type || "").trim().toLowerCase() === "recording"
                     ? "RECORDED MASTERCLASS"
@@ -188,7 +188,7 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
               </div>
 
               {/* Course Title */}
-              <h3 className="font-heading text-xl sm:text-2xl lg:text-3xl font-extrabold text-text-primary tracking-tight leading-tight line-clamp-2 group-hover:text-brand-primary dark:group-hover:text-brand-mint transition-colors">
+              <h3 className="font-heading text-xl sm:text-2xl lg:text-3xl font-extrabold text-text-primary tracking-tight leading-tight line-clamp-2 group-hover:text-brand-mint transition-colors">
                 {name}
               </h3>
             </div>
@@ -199,13 +199,13 @@ const ContinueLearning = memo(function ContinueLearning({ course }) {
                 <span className="text-text-muted uppercase tracking-wider text-[10px]">
                   TRACK TELEMETRY
                 </span>
-                <span className="text-emerald-800 dark:text-brand-mint">
+                <span className="text-brand-mint">
                   {progress}% COMPLETED
                 </span>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-surface-elevated border border-border/40">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-surface-elevated border border-border/40">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-brand-mint dark:from-brand-mint dark:to-brand-mint transition-all duration-700 ease-out"
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-brand-mint transition-all duration-700 ease-out"
                   style={{ width: `${progress}%` }}
                 />
               </div>

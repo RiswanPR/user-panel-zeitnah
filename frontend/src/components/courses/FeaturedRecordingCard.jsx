@@ -125,7 +125,7 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
           >
             {/* Top Badges */}
             <div className="absolute left-4 top-4 z-20 flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-white/95 dark:bg-black/75 px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-900 dark:text-brand-yellow backdrop-blur-md shadow-sm">
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-black/75 px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-brand-yellow backdrop-blur-md shadow-sm">
                 <span className="w-2 h-2 rounded-full bg-brand-yellow shadow-[0_0_8px_#F6ED4A]" />
                 FLAGSHIP MASTERCLASS
               </span>
@@ -160,8 +160,8 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
                     <span
                       className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border ${
                         completed
-                          ? "border-emerald-600/30 bg-emerald-600/15 text-emerald-950 dark:border-brand-mint/30 dark:bg-brand-mint/10 dark:text-brand-mint"
-                          : "border-amber-500/40 bg-amber-500/15 text-amber-950 dark:border-brand-yellow/30 dark:bg-brand-yellow/10 dark:text-brand-yellow"
+                          ? "border-brand-mint/30 bg-brand-mint/15 text-brand-mint"
+                          : "border-brand-yellow/30 bg-brand-yellow/15 text-brand-yellow"
                       }`}
                     >
                       {completed && <CheckCircle2 className="w-2.5 h-2.5" />}
@@ -170,7 +170,7 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
                   )}
                 </div>
 
-                <div className="inline-flex items-center gap-1.5 text-emerald-800 dark:text-brand-mint font-semibold bg-brand-surface-subtle dark:bg-brand-mint/10 px-2.5 py-1 rounded-lg border border-emerald-600/20 dark:border-brand-mint/20">
+                <div className="inline-flex items-center gap-1.5 text-brand-mint font-semibold bg-brand-mint/10 px-2.5 py-1 rounded-lg border border-brand-mint/20">
                   <BookOpen className="w-3.5 h-3.5" />
                   <span>
                     {chapterCount} {chapterCount === 1 ? "Chapter" : "Chapters"}
@@ -179,7 +179,7 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
               </div>
 
               {/* Course Title */}
-              <h3 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold text-text-primary tracking-tight leading-[1.05] line-clamp-2 group-hover:text-brand-primary dark:group-hover:text-brand-mint transition-colors">
+              <h3 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold text-text-primary tracking-tight leading-[1.05] line-clamp-2 group-hover:text-brand-mint transition-colors">
                 {course.name}
               </h3>
 
@@ -195,14 +195,14 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
               <div className="rounded-2xl border border-border bg-surface-elevated/60 backdrop-blur-xs p-4 space-y-2.5 shadow-xs">
                 <div className="flex items-center justify-between text-xs font-mono">
                   <span className="inline-flex items-center gap-1.5 text-text-muted text-[10px] uppercase">
-                    <TrendingUp className="w-3.5 h-3.5 text-emerald-700 dark:text-brand-mint" />
+                    <TrendingUp className="w-3.5 h-3.5 text-brand-mint" />
                     Course Progress
                   </span>
-                  <span className="font-bold font-mono text-brand-navy dark:text-text-primary">{progress}%</span>
+                  <span className="font-bold font-mono text-text-primary">{progress}%</span>
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-surface-card border border-border/40">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-surface-card border border-border/40">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-brand-mint dark:from-brand-mint dark:to-brand-mint transition-all duration-700 ease-out"
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-brand-mint transition-all duration-700 ease-out"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -242,7 +242,7 @@ const FeaturedRecordingCard = memo(function FeaturedRecordingCard({ course }) {
                     }}
                     className="inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 px-4 text-xs font-mono font-bold uppercase tracking-wider border border-border bg-surface-elevated text-text-primary hover:bg-surface-card hover:border-brand-mint/50 transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
                   >
-                    <HelpCircle className="w-3.5 h-3.5 text-emerald-800 dark:text-brand-mint" />
+                    <HelpCircle className="w-3.5 h-3.5 text-brand-mint" />
                     Enquire
                   </button>
                 </div>

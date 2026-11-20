@@ -81,6 +81,7 @@ const OnlineCourseCarousel = memo(function OnlineCourseCarousel({ courses }) {
     if (!track) return;
     dragState.current = { active: true, startX: e.pageX, scrollLeft: track.scrollLeft };
     track.classList.add("cursor-grabbing");
+    track.style.scrollSnapType = "none";
   };
 
   const handleMouseMove = (e) => {
@@ -93,8 +94,12 @@ const OnlineCourseCarousel = memo(function OnlineCourseCarousel({ courses }) {
   };
 
   const endDrag = () => {
+    if (!dragState.current.active) return;
     dragState.current.active = false;
-    trackRef.current?.classList.remove("cursor-grabbing");
+    if (trackRef.current) {
+      trackRef.current.classList.remove("cursor-grabbing");
+      trackRef.current.style.scrollSnapType = "";
+    }
   };
 
   /* ── Keyboard accessible navigation ── */
@@ -158,12 +163,13 @@ const OnlineCourseCarousel = memo(function OnlineCourseCarousel({ courses }) {
         onMouseUp={endDrag}
         onMouseLeave={endDrag}
         onKeyDown={handleKeyDown}
-        className="flex gap-4 sm:gap-5 overflow-x-auto no-scrollbar snap-x snap-mandatory py-1 px-0.5 -mx-0.5 outline-none cursor-grab"
+        style={{ WebkitOverflowScrolling: "touch" }}
+        className="flex gap-4 sm:gap-5 overflow-x-auto no-scrollbar snap-x snap-mandatory py-3 px-1 -mx-1 outline-none cursor-grab"
       >
         {courses.map((course, i) => (
           <div
             key={course._id}
-            className="carousel-card flex-none w-[calc(85vw-1rem)] sm:w-[320px] md:w-[360px] snap-start"
+            className="carousel-card flex-none w-[calc(85vw-1.5rem)] xs:w-[300px] sm:w-[320px] md:w-[360px] lg:w-[370px] snap-start"
           >
             <motion.div
               initial={{ opacity: 0, y: 16 }}

@@ -80,12 +80,12 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
           }
         }}
         aria-label={`Online cohort: ${course.name}`}
-        className="carousel-card group relative flex flex-col overflow-hidden rounded-2xl border border-border hover:border-amber-500/40 dark:hover:border-brand-yellow/40 bg-surface-card bg-white dark:bg-surface-card cursor-pointer w-full h-full transition-all duration-300 shadow-xs hover:-translate-y-1 hover:shadow-lg focus-ring select-none"
+        className="carousel-card group relative flex flex-col overflow-hidden rounded-2xl border border-border hover:border-brand-yellow/40 bg-surface-card cursor-pointer w-full h-full transition-all duration-300 shadow-xs hover:-translate-y-1 hover:shadow-lg focus-ring select-none"
       >
         {/* Subtle top hairline */}
         <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-brand-yellow/40 to-transparent pointer-events-none z-10" />
 
-        {/* ── INTERACTIVE MOUSE SPOTLIGHT (Light Mode Tactile Sheen) ── */}
+        {/* ── INTERACTIVE MOUSE SPOTLIGHT (Tactile Sheen) ── */}
         <div
           className="pointer-events-none absolute inset-0 z-0"
           style={spotlightStyle}
@@ -111,7 +111,7 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
 
           {/* Badges */}
           <div className="absolute left-3 top-3 z-10 flex flex-wrap gap-1.5">
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-white/95 dark:bg-black/75 px-2.5 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider text-amber-900 dark:text-brand-yellow backdrop-blur-md shadow-xs">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-black/75 px-2.5 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider text-brand-yellow backdrop-blur-md shadow-xs">
               <span className="w-1.5 h-1.5 rounded-full bg-brand-yellow animate-pulse shadow-[0_0_6px_#F6ED4A]" />
               ONLINE COHORT
             </span>
@@ -120,8 +120,8 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
               <span
                 className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider border backdrop-blur-md ${
                   completed
-                    ? "border-emerald-600/30 bg-emerald-600/15 text-emerald-950 dark:border-brand-mint/30 dark:bg-brand-mint/15 dark:text-brand-mint"
-                    : "border-amber-500/40 bg-amber-500/15 text-amber-950 dark:border-brand-yellow/30 dark:bg-brand-yellow/15 dark:text-brand-yellow"
+                    ? "border-brand-mint/30 bg-brand-mint/15 text-brand-mint"
+                    : "border-brand-yellow/30 bg-brand-yellow/15 text-brand-yellow"
                 }`}
               >
                 {completed ? "Completed" : "Enrolled"}
@@ -134,7 +134,7 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
         <div className="relative z-10 flex flex-1 flex-col justify-between p-5 gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-[10px] font-mono text-text-muted uppercase">
-              <BookOpen className="w-3 h-3 text-emerald-800 dark:text-brand-mint" />
+              <BookOpen className="w-3 h-3 text-brand-mint" />
               <span>
                 {chapterCount} {chapterCount === 1 ? "Module" : "Modules"}
               </span>
@@ -142,32 +142,32 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
               <span>Interactive Workshop</span>
             </div>
 
-            <h3 className="font-heading text-lg font-extrabold text-text-primary tracking-tight leading-snug line-clamp-2 group-hover:text-brand-primary dark:group-hover:text-brand-mint transition-colors">
+            <h3 className="font-heading text-lg font-extrabold text-text-primary tracking-tight leading-snug line-clamp-2 min-h-[3.25rem] group-hover:text-brand-yellow transition-colors">
               {course.name}
             </h3>
 
             {!compact && course.description && (
-              <p className="text-xs text-text-secondary leading-relaxed line-clamp-2 font-normal">
+              <p className="text-xs text-text-secondary leading-relaxed line-clamp-2 font-normal min-h-[2.25rem]">
                 {course.description}
               </p>
             )}
           </div>
 
-          <div className="space-y-3 pt-2 border-t border-border">
-            {purchased && (
+          <div className="space-y-3 pt-3 border-t border-border mt-auto">
+            {purchased ? (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-[10px] font-mono text-text-muted uppercase">
                   <span>{completed ? "Status" : "Progress"}</span>
-                  <span className="font-bold font-mono text-brand-navy dark:text-text-primary">{progress}%</span>
+                  <span className="font-bold font-mono text-text-primary">{progress}%</span>
                 </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-surface-elevated border border-border/40">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated border border-border/40">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-amber-500 to-brand-yellow dark:from-brand-yellow dark:to-brand-yellow transition-all duration-500"
+                    className="h-full rounded-full bg-gradient-to-r from-amber-500 to-brand-yellow transition-all duration-500"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
               </div>
-            )}
+            ) : null}
 
             {purchased ? (
               <button
@@ -176,7 +176,7 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
                   e.stopPropagation();
                   navigate(`/courses/${course._id}/chapters`);
                 }}
-                className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-brand-surface-subtle dark:bg-brand-mint/10 border border-emerald-600/30 dark:border-brand-mint/30 text-emerald-950 dark:text-brand-mint hover:bg-brand-primary hover:text-white dark:hover:bg-brand-mint dark:hover:text-brand-navy transition-all cursor-pointer shadow-sm min-h-[44px]"
+                className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-brand-mint/10 border border-brand-mint/30 text-brand-mint hover:bg-brand-mint hover:text-brand-navy transition-all cursor-pointer shadow-sm min-h-[44px]"
               >
                 {completed ? (
                   <>
@@ -211,7 +211,7 @@ const OnlineCourseCard = memo(function OnlineCourseCard({ course, compact = fals
                   }}
                   className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider border border-border bg-surface-elevated text-text-primary hover:bg-surface-card hover:border-brand-mint/40 transition-all cursor-pointer active:scale-[0.98] min-h-[44px]"
                 >
-                  <HelpCircle className="w-3 h-3 text-emerald-800 dark:text-brand-mint" />
+                  <HelpCircle className="w-3 h-3 text-brand-mint" />
                   Details
                 </button>
               </div>

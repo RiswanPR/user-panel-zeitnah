@@ -63,7 +63,7 @@ const CourseCard = memo(function CourseCard({ course }) {
           }
         }}
         aria-label={`Course: ${course.name}`}
-        className="group relative flex flex-col overflow-hidden rounded-2xl border border-border hover:border-emerald-600/35 dark:hover:border-brand-mint/40 bg-surface-card bg-white dark:bg-surface-card cursor-pointer w-full transition-all duration-300 shadow-xs hover:-translate-y-0.5 hover:shadow-md focus-ring"
+        className="group relative flex flex-col overflow-hidden rounded-2xl border border-border hover:border-brand-mint/40 bg-surface-card cursor-pointer w-full h-full transition-all duration-300 shadow-xs hover:-translate-y-0.5 hover:shadow-md focus-ring"
       >
         <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-brand-mint/35 to-transparent pointer-events-none" />
 
@@ -110,18 +110,18 @@ const CourseCard = memo(function CourseCard({ course }) {
               </span>
             </div>
 
-            <h3 className="font-heading text-lg font-extrabold text-text-primary tracking-tight leading-snug line-clamp-2 group-hover:text-brand-mint transition-colors">
+            <h3 className="font-heading text-lg font-extrabold text-text-primary tracking-tight leading-snug line-clamp-2 min-h-[3.25rem] group-hover:text-brand-mint transition-colors">
               {course.name}
             </h3>
 
             {course.description && (
-              <p className="text-xs text-text-secondary leading-relaxed line-clamp-2">
+              <p className="text-xs text-text-secondary leading-relaxed line-clamp-2 min-h-[2.25rem]">
                 {course.description}
               </p>
             )}
           </div>
 
-          <div className="space-y-3 pt-2 border-t border-border/60">
+          <div className="space-y-3 pt-2 border-t border-border/60 mt-auto">
             {purchased && (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-[10px] font-mono text-text-muted uppercase">
